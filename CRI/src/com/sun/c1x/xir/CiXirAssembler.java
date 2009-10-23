@@ -37,22 +37,25 @@ import com.sun.c1x.ci.CiRegister;
  */
 public abstract class CiXirAssembler {
 
-	protected XirVariable resultOperand;
+	protected XirOperand resultOperand;
+	protected boolean allocateResultOperand;
 
     protected final List<XirInstruction> instructions = new ArrayList<XirInstruction>();
     protected final List<XirLabel> labels = new ArrayList<XirLabel>();
     protected final List<XirParameter> parameters = new ArrayList<XirParameter>();
     protected final List<XirTemp> temps = new ArrayList<XirTemp>();
     protected final List<XirConstant> constants = new ArrayList<XirConstant>();
-    
+
+    protected int variableCount;
+    protected boolean finished = true;
 
     /**
      * Class that represents additional address calculation information.
      */
     public static class AddressAccessInformation {
     	
-    	public final XirVariable scaling;
-    	public final XirVariable offset;
+    	public final XirConstantOperand scaling;
+    	public final XirConstantOperand offset;
     	public final boolean canTrap;
 
     	private AddressAccessInformation(boolean canTrap) {
@@ -61,24 +64,18 @@ public abstract class CiXirAssembler {
     		this.offset = null;
     	}
     	
-    	private AddressAccessInformation(boolean canTrap, XirVariable offset) {
+    	private AddressAccessInformation(boolean canTrap, XirConstantOperand offset) {
     		this.canTrap = canTrap;
     		this.scaling = null;
     		this.offset = offset;
-    		assert offset.isConstant();
     	}
     	
-    	private AddressAccessInformation(boolean canTrap, XirVariable offset, XirVariable scaling) {
+    	private AddressAccessInformation(boolean canTrap, XirConstantOperand offset, XirConstantOperand scaling) {
     		this.canTrap = canTrap;
     		this.scaling = scaling;
     		this.offset = offset;
-    		assert scaling.isConstant() && offset.isConstant();
     	}
     }
-
-
-    protected int variableCount;
-    protected boolean finished;
 
     public class XirLabel {
     	public final String name;
@@ -96,50 +93,40 @@ public abstract class CiXirAssembler {
         	return name;
         }
     }
+    
+    
+    
+    public interface XirConstantOperand {
+    	int getIndex();
+    }
 
-    public abstract class XirVariable {
-        public boolean written;
+    public abstract class XirOperand {
         public final CiKind kind;
         public final int index;
-        public final boolean constant;
-
-        public XirVariable(CiKind kind, boolean constant) {
-            this.kind = kind;
-            this.index = variableCount++;
-            this.constant = constant;
-        }
-
-		public boolean isConstant() {
-			return constant;
-		}
-    }
-
-    public final class XirResult extends XirVariable {
-
-    	public XirResult(CiKind kind, int index) {
-    		super(kind, false);
-    	}
-
-    	public String toString() {
-    		return "result";
-    	}
-    }
-
-    public class XirParameter extends XirVariable {
-        public final CiConstant value;
         public final String name;
-        public final int parameterIndex;
 
-        XirParameter(String name, CiKind kind, boolean unknownConstant, CiConstant value, int parameterIndex) {
-            super(kind, unknownConstant);
-            this.parameterIndex = parameterIndex;
-            this.value = value;
+        public XirOperand(String name, CiKind kind) {
+            this.kind = kind;
             this.name = name;
+            this.index = variableCount++;
+        }
+        
+        public int getIndex() {
+        	return index;
         }
 
         @Override
         public String toString() {
         	return name;
+        }
+    }
+
+    public class XirParameter extends XirOperand {
+        public final int parameterIndex;
+
+        XirParameter(String name, CiKind kind, int parameterIndex) {
+            super(name, kind);
+            this.parameterIndex = parameterIndex;
         }
 
         public String detailedToString() {
@@ -149,24 +136,28 @@ public abstract class CiXirAssembler {
         	sb.append(name);
         	sb.append('$');
         	sb.append(super.kind.typeChar);
-        	if (isConstant()) {
-        		sb.append("$const");
-        	}
         	return sb.toString();
         }
     }
-
-    public class XirConstant extends XirVariable {
+    
+    public class XirConstantParameter extends XirParameter implements XirConstantOperand {
+    	XirConstantParameter(String name, CiKind kind, int parameterIndex) {
+    		super(name, kind, parameterIndex);
+        }
+    }
+    
+    public class XirVariableParameter extends XirParameter {
+    	XirVariableParameter(String name, CiKind kind, int parameterIndex) {
+    		super(name, kind, parameterIndex);
+        }
+    }
+    
+    public class XirConstant extends XirOperand implements XirConstantOperand {
         public final CiConstant value;
 
-        XirConstant(CiConstant value) {
-        	super(value.basicType, true);
+        XirConstant(String name, CiConstant value) {
+        	super(name, value.basicType);
         	this.value = value;
-        }
-
-        @Override
-        public String toString() {
-        	return value.valueString();
         }
 
         public String detailedToString() {
@@ -178,17 +169,9 @@ public abstract class CiXirAssembler {
         }
     }
 
-    public class XirTemp extends XirVariable {
-        public final String name;
-
+    public class XirTemp extends XirOperand {
         XirTemp(String name, CiKind kind) {
-            super(kind, false);
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-        	return name;
+            super(name, kind);
         }
 
         public String detailedToString() {
@@ -214,13 +197,17 @@ public abstract class CiXirAssembler {
     	resultOperand = null;
     }
 
-    public void restart(CiKind kind) {
+    public XirOperand restart(CiKind kind) {
         reset();
-        resultOperand = new XirResult(kind, 0);
+        resultOperand = new XirTemp("result", kind);
+        allocateResultOperand = true;
+        return resultOperand;
     }
 
     private void reset() {
-        variableCount = 0;
+    	assert finished : "must be finished before!";
+    	variableCount = 0;
+    	allocateResultOperand = false;
         finished = false;
         instructions.clear();
         labels.clear();
@@ -228,21 +215,19 @@ public abstract class CiXirAssembler {
         temps.clear();
         constants.clear();
     }
-    
-    protected final XirInstruction NOP = new XirInstruction(CiKind.Illegal, XirOp.Nop, null);
 
     public class XirInstruction {
         public final CiKind kind;
         public final XirOp op;
-        public final XirVariable result;
-        public final XirVariable[] arguments;
+        public final XirOperand result;
+        public final XirOperand[] arguments;
         public final Object extra;
 
-        public XirInstruction(CiKind kind, XirOp op, XirVariable result, XirVariable... arguments) {
+        public XirInstruction(CiKind kind, XirOp op, XirOperand result, XirOperand... arguments) {
             this(kind, null, op, result, arguments);
         }
 
-        public XirInstruction(CiKind kind, Object extra, XirOp op, XirVariable result, XirVariable... arguments) {
+        public XirInstruction(CiKind kind, Object extra, XirOp op, XirOperand result, XirOperand... arguments) {
             this.extra = extra;
             this.kind = kind;
             this.op = op;
@@ -250,17 +235,17 @@ public abstract class CiXirAssembler {
             this.arguments = arguments;
         }
 
-        public XirVariable x() {
+        public XirOperand x() {
             assert arguments.length > 0 : "no x operand for this instruction";
             return arguments[0];
         }
 
-        public XirVariable y() {
+        public XirOperand y() {
             assert arguments.length > 1 : "no y operand for this instruction";
             return arguments[1];
         }
 
-        public XirVariable z() {
+        public XirOperand z() {
             assert arguments.length > 2 : "no z operand for this instruction";
             return arguments[2];
         }
@@ -304,7 +289,6 @@ public abstract class CiXirAssembler {
     }
 
     public enum XirOp {
-    	Nop,
         Mov,
         Add,
         Sub,
@@ -332,13 +316,11 @@ public abstract class CiXirAssembler {
         Jugteq,
         Jlt,
         Jlteq,
-        Bind,
-        Ret
+        Bind
     }
 
     private void append(XirInstruction xirInstruction) {
-    	// (tw) TODO: Check that return or java call is always the last instruction
-    	//assert !finished;
+    	assert !finished : "no instructions can be added to finished template";
         instructions.add(xirInstruction);
     }
 
@@ -354,83 +336,83 @@ public abstract class CiXirAssembler {
         return result;
     }
 
-    public void mov(XirVariable result, XirVariable a) {
+    public void mov(XirOperand result, XirOperand a) {
         append(new XirInstruction(result.kind, XirOp.Mov, result, a));
     }
 
-    public void add(XirVariable result, XirVariable a, XirVariable b) {
+    public void add(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.Add, result, a, b));
     }
 
-    public void sub(XirVariable result, XirVariable a, XirVariable b) {
+    public void sub(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.Sub, result, a, b));
     }
 
-    public void div(XirVariable result, XirVariable a, XirVariable b) {
+    public void div(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.Div, result, a, b));
     }
 
-    public void mul(XirVariable result, XirVariable a, XirVariable b) {
+    public void mul(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.Mul, result, a, b));
     }
 
-    public void mod(XirVariable result, XirVariable a, XirVariable b) {
+    public void mod(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.Mod, result, a, b));
     }
 
-    public void shl(XirVariable result, XirVariable a, XirVariable b) {
+    public void shl(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.Shl, result, a, b));
     }
 
-    public void shr(XirVariable result, XirVariable a, XirVariable b) {
+    public void shr(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.Shr, result, a, b));
     }
 
-    public void and(XirVariable result, XirVariable a, XirVariable b) {
+    public void and(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.And, result, a, b));
     }
 
-    public void or(XirVariable result, XirVariable a, XirVariable b) {
+    public void or(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.Or, result, a, b));
     }
 
-    public void xor(XirVariable result, XirVariable a, XirVariable b) {
+    public void xor(XirOperand result, XirOperand a, XirOperand b) {
         append(new XirInstruction(result.kind, XirOp.Xor, result, a, b));
     }
 
-    public void pload(CiKind kind, XirVariable result, XirVariable pointer, boolean canTrap) {
+    public void pload(CiKind kind, XirOperand result, XirOperand pointer, boolean canTrap) {
         append(new XirInstruction(kind, canTrap, XirOp.PointerLoad, result, pointer));
     }
 
-    public void pstore(CiKind kind, XirVariable pointer, XirVariable value, boolean canTrap) {
-        append(new XirInstruction(kind, canTrap, XirOp.PointerStore, (XirVariable) null, pointer, value));
+    public void pstore(CiKind kind, XirOperand pointer, XirOperand value, boolean canTrap) {
+        append(new XirInstruction(kind, canTrap, XirOp.PointerStore, (XirOperand) null, pointer, value));
     }
 
-    public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp, boolean canTrap) {
+    public void pload(CiKind kind, XirOperand result, XirOperand pointer, XirOperand disp, boolean canTrap) {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap), XirOp.PointerLoadDisp, result, pointer, disp));
     }
 
-    public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value, boolean canTrap) {
-        append(new XirInstruction(kind, new AddressAccessInformation(canTrap), XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
+    public void pstore(CiKind kind, XirOperand pointer, XirOperand disp, XirOperand value, boolean canTrap) {
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap), XirOp.PointerStoreDisp, (XirOperand) null, pointer, disp, value));
     }
 
-    public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp, XirVariable offset, boolean canTrap) {
+    public void pload(CiKind kind, XirOperand result, XirOperand pointer, XirOperand disp, XirConstantOperand offset, boolean canTrap) {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), XirOp.PointerLoadDisp, result, pointer, disp));
     }
 
-    public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value, XirVariable offset, boolean canTrap) {
-        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
+    public void pstore(CiKind kind, XirOperand pointer, XirOperand disp, XirOperand value, XirConstantOperand offset, boolean canTrap) {
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), XirOp.PointerStoreDisp, (XirOperand) null, pointer, disp, value));
     }
     
-    public void pload(CiKind kind, XirVariable result, XirVariable pointer, XirVariable disp, XirVariable offset, XirVariable scaling,  boolean canTrap) {
+    public void pload(CiKind kind, XirOperand result, XirOperand pointer, XirOperand disp, XirConstantOperand offset, XirConstantOperand scaling,  boolean canTrap) {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerLoadDisp, result, pointer, disp));
     }
 
-    public void pstore(CiKind kind, XirVariable pointer, XirVariable disp, XirVariable value, XirVariable offset, XirVariable scaling, boolean canTrap) {
-        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerStoreDisp, (XirVariable) null, pointer, disp, value));
+    public void pstore(CiKind kind, XirOperand pointer, XirOperand disp, XirOperand value, XirConstantOperand offset, XirConstantOperand scaling, boolean canTrap) {
+        append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerStoreDisp, (XirOperand) null, pointer, disp, value));
     }
     
-    public void pcas(CiKind kind, XirVariable result, XirVariable pointer, XirVariable value, XirVariable expectedValue) {
+    public void pcas(CiKind kind, XirOperand result, XirOperand pointer, XirOperand value, XirOperand expectedValue) {
         append(new XirInstruction(kind, XirOp.PointerLoad, result, pointer, value, expectedValue));
     }
 
@@ -438,35 +420,35 @@ public abstract class CiXirAssembler {
         append(new XirInstruction(CiKind.Void, l, XirOp.Jmp, null));
     }
 
-    public void jeq(XirLabel l, XirVariable a, XirVariable b) {
+    public void jeq(XirLabel l, XirOperand a, XirOperand b) {
         jcc(XirOp.Jeq, l, a, b);
     }
 
-    private void jcc(XirOp op, XirLabel l, XirVariable a, XirVariable b) {
+    private void jcc(XirOp op, XirLabel l, XirOperand a, XirOperand b) {
         append(new XirInstruction(CiKind.Void, l, op, null, a, b));
     }
 
-    public void jneq(XirLabel l, XirVariable a, XirVariable b) {
+    public void jneq(XirLabel l, XirOperand a, XirOperand b) {
         jcc(XirOp.Jneq, l, a, b);
     }
 
-    public void jgt(XirLabel l, XirVariable a, XirVariable b) {
+    public void jgt(XirLabel l, XirOperand a, XirOperand b) {
         jcc(XirOp.Jgt, l, a, b);
     }
 
-    public void jgteq(XirLabel l, XirVariable a, XirVariable b) {
+    public void jgteq(XirLabel l, XirOperand a, XirOperand b) {
         jcc(XirOp.Jgteq, l, a, b);
     }
 
-    public void jugteq(XirLabel l, XirVariable a, XirVariable b) {
+    public void jugteq(XirLabel l, XirOperand a, XirOperand b) {
         jcc(XirOp.Jugteq, l, a, b);
     }
 
-    public void jlt(XirLabel l, XirVariable a, XirVariable b) {
+    public void jlt(XirLabel l, XirOperand a, XirOperand b) {
         jcc(XirOp.Jlt, l, a, b);
     }
 
-    public void jlteq(XirLabel l, XirVariable a, XirVariable b) {
+    public void jlteq(XirLabel l, XirOperand a, XirOperand b) {
         jcc(XirOp.Jlteq, l, a, b);
     }
 
@@ -480,89 +462,110 @@ public abstract class CiXirAssembler {
         append(new XirInstruction(CiKind.Void, l, XirOp.Bind, null));
     }
 
-    public void callJava(XirVariable destination) {
-    	this.resultOperand = destination;
-    	end();
-    }
-
-    public void callStub(XirTemplate stub, XirVariable result, XirVariable... args) {
+    public void callStub(XirTemplate stub, XirOperand result, XirOperand... args) {
         CiKind resultKind = result == null ? CiKind.Void : result.kind;
         append(new XirInstruction(resultKind, stub, XirOp.CallStub, result, args));
     }
 
-    public void callRuntime(Object rt, XirVariable result, XirVariable... args) {
+    public void callRuntime(Object rt, XirOperand result, XirOperand... args) {
         CiKind resultKind = result == null ? CiKind.Void : result.kind;
         append(new XirInstruction(resultKind, rt, XirOp.CallRuntime, result, args));
     }
 
-    public void end() {
-        append(new XirInstruction(CiKind.Void, XirOp.Ret, null));
+    private void end() {
+    	assert !finished : "template may only be finished once!";
         finished = true;
+        assert resultOperand != null;
     }
-
-    public void ret(CiKind kind, XirVariable result) {
-        append(new XirInstruction(kind, XirOp.Ret, result));
-    }
-
-    public XirParameter createInputParameter(String name, CiKind kind) {
-        XirParameter param = new XirParameter(name, kind, false, null, parameters.size());
+    
+    public XirVariableParameter createInputParameter(String name, CiKind kind) {
+    	assert !finished;
+    	XirVariableParameter param = new XirVariableParameter(name, kind, parameters.size());
         parameters.add(param);
         return param;
     }
 
-    public XirParameter createConstantInputParameter(String name, CiKind kind) {
-        XirParameter param = new XirParameter(name, kind, true, null, parameters.size());
+    public XirConstantParameter createConstantInputParameter(String name, CiKind kind) {
+    	assert !finished;
+    	XirConstantParameter param = new XirConstantParameter(name, kind, parameters.size());
         parameters.add(param);
         return param;
     }
 
-    public XirConstant createConstant(CiConstant constant) {
-    	XirConstant temp = new XirConstant(constant);
+    public XirConstant createConstant(String name, CiConstant constant) {
+    	assert !finished;
+    	XirConstant temp = new XirConstant(name, constant);
         constants.add(temp);
         return temp;
     }
 
-    public XirVariable createTemp(String name, CiKind kind) {
+    public XirOperand createTemp(String name, CiKind kind) {
+    	assert !finished;
         XirTemp temp = new XirTemp(name, kind);
         temps.add(temp);
         return temp;
     }
 
-    public XirVariable createRegister(String name, CiKind kind, CiRegister register) {
+    public XirOperand createRegister(String name, CiKind kind, CiRegister register) {
+    	assert !finished;
         XirFixed fixed = new XirFixed(name, new CiLocation(kind, register));
         temps.add(fixed);
         return fixed;
     }
 
-    public XirVariable i(int b) {
-        return createConstant(CiConstant.forInt(b));
+    public XirConstant i(int b) {
+    	return i(Integer.toString(b), b);
     }
 
-    public XirVariable b(boolean t) {
-        return createConstant(CiConstant.forBoolean(t));
+    public XirConstant b(boolean t) {
+    	return b(Boolean.toString(t), t);
     }
 
-    public XirVariable w(long b) {
-        return createConstant(CiConstant.forWord(b));
+    public XirConstant w(long b) {
+    	return w(Long.toString(b), b);
     }
 
-    public XirVariable o(Object obj) {
-        return createConstant(CiConstant.forObject(obj));
+    public XirConstant o(Object obj) {
+    	return o("" + obj, obj);
     }
 
-    public XirVariable getResultOperand() {
-        return resultOperand;
+    public XirConstant i(String name, int b) {
+        return createConstant(name, CiConstant.forInt(b));
     }
 
+    public XirConstant b(String name, boolean t) {
+        return createConstant(name, CiConstant.forBoolean(t));
+    }
+
+    public XirConstant w(String name, long b) {
+        return createConstant(name, CiConstant.forWord(b));
+    }
+
+    public XirConstant o(String name, Object obj) {
+        return createConstant(name, CiConstant.forObject(obj));
+    }
+
+    public XirTemplate finishTemplate(XirOperand result, String name) {
+		assert this.resultOperand == null;
+		assert result != null;
+		this.resultOperand = result;
+        final XirTemplate template = buildTemplate(name, false);
+        end();
+        return template;
+    }
     public XirTemplate finishTemplate(String name) {
-        return buildTemplate(name, false);
+        final XirTemplate template = buildTemplate(name, false);
+        end();
+        return template;
     }
 
     public XirTemplate finishStub(String name) {
-        return buildTemplate(name, true);
+        final XirTemplate template = buildTemplate(name, true);
+    	end();
+    	return template;
     }
-
 
     protected abstract XirTemplate buildTemplate(String name, boolean isStub);
     public abstract CiXirAssembler copy();
+
 }

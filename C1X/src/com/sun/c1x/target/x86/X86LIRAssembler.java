@@ -2936,8 +2936,8 @@ public class X86LIRAssembler extends LIRAssembler {
                         addCallInfoHere(xir.info);
                     }
 
-                    LIRAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromInt(((LIRConstant) ops[addressInformation.scaling.index]).asInt());
-                    int displacement = (addressInformation.offset == null) ? 0 : ((LIRConstant) ops[addressInformation.offset.index]).asInt();
+                    LIRAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromInt(((LIRConstant) ops[addressInformation.scaling.getIndex()]).asInt());
+                    int displacement = (addressInformation.offset == null) ? 0 : ((LIRConstant) ops[addressInformation.offset.getIndex()]).asInt();
 
                     LIROperand result = ops[inst.result.index];
                     LIROperand pointer = ops[inst.x().index];
@@ -2966,8 +2966,8 @@ public class X86LIRAssembler extends LIRAssembler {
                         addCallInfoHere(xir.info);
                     }
 
-                    LIRAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromInt(((LIRConstant) ops[addressInformation.scaling.index]).asInt());
-                    int displacement = (addressInformation.offset == null) ? 0 : ((LIRConstant) ops[addressInformation.offset.index]).asInt();
+                    LIRAddress.Scale scale = (addressInformation.scaling == null) ? Scale.Times1 : Scale.fromInt(((LIRConstant) ops[addressInformation.scaling.getIndex()]).asInt());
+                    int displacement = (addressInformation.offset == null) ? 0 : ((LIRConstant) ops[addressInformation.offset.getIndex()]).asInt();
 
                     LIROperand value = ops[inst.z().index];
                     LIROperand pointer = ops[inst.x().index];
