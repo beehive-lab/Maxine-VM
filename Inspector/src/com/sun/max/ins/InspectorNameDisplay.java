@@ -524,12 +524,14 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleHub teleHub = (TeleHub) teleObject;
+            //final Class javaType = teleHub.classActorForType().toJava();
             final Class javaType = teleHub.hub().classActor.toJava();
             return objectReference(null, teleHub, teleHub.maxineTerseRole(), javaType.getSimpleName());
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
             final TeleHub teleHub = (TeleHub) teleObject;
+            //final Class javaType = teleHub.classActorForType().toJava();
             final Class javaType = teleHub.hub().classActor.toJava();
             if (!(javaType.isPrimitive() || Word.class.isAssignableFrom(javaType))) {
                 return objectReference(null, teleHub, teleHub.maxineRole(), javaType.getName());
@@ -626,6 +628,9 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleString teleString = (TeleString) teleObject;
             final String s = teleString.getString();
+            if (s == null) {
+                return "unknown";
+            }
             if (s.length() > style().maxStringInlineDisplayLength()) {
                 return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
             }

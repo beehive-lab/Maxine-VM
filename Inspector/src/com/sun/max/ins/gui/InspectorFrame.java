@@ -122,6 +122,10 @@ public final class InspectorFrame extends JInternalFrame implements Prober {
         repaint();
     }
 
+    public void setStateColor(Color color) {
+        menuBar.setBackground(color);
+    }
+
     @Override
     public void dispose() {
         super.dispose();

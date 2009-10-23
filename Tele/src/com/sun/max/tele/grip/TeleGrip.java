@@ -26,10 +26,23 @@ import com.sun.max.vm.reference.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Hannes Payer
  */
 public abstract class TeleGrip extends Grip {
 
     private long gripOID = 0;
+
+    protected TeleGrip forwardedTeleGrip = null;
+
+    protected boolean collectedByGC = false;
+
+    public enum State {
+        LIVE,
+        OBSOLETE,
+        DEAD;
+    }
+
+    private State state = State.LIVE;
 
     protected TeleGrip() {
     }
@@ -64,7 +77,26 @@ public abstract class TeleGrip extends Grip {
         return false;
     }
 
+    public final void setForwardedTeleGrip(TeleGrip forwardedMutableTeleGrip) {
+        this.forwardedTeleGrip = forwardedMutableTeleGrip;
+    }
+
+    public final TeleGrip getForwardedTeleGrip() {
+        if (forwardedTeleGrip != null) {
+            return forwardedTeleGrip.getForwardedTeleGrip();
+        }
+        return this;
+    }
+
+    public abstract State getState();
+
     public static final TeleGrip ZERO = new TeleGrip() {
+
+        @Override
+        public State getState() {
+            return State.DEAD;
+        }
+
         @Override
         public Reference makeReference(TeleReferenceScheme teleReferenceScheme) {
             return TeleReference.ZERO;

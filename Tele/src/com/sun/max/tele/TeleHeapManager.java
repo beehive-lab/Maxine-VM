@@ -25,16 +25,18 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.grip.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.tele.*;
 
 
 /**
- * Singleton class that caches information about the heap in the {@link TeleVM}.
+ * Singleton cache of information about the heap in the VM.
  *<br>
  * Initialization between this manager and {@link TeleClassRegistry} are mutually
  * dependent.  The cycle is broken by creating this manager in a partially initialized
@@ -47,21 +49,45 @@ import com.sun.max.vm.reference.*;
  * It also provides access to a special root table in the VM, active
  * only when being inspected, that allows Inspector references
  * to track object locations when they are relocated by GC.
+ * <br>
+ * The manager needs to be specialized by a helper class working in
+ * association with a particular heap implementation.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  *
  * @see InspectableHeapInfo
  * @see TeleRoots
+ * @see HeapScheme
+ * @see TeleHeapScheme
  */
 public final class TeleHeapManager extends AbstractTeleVMHolder {
 
     private static final int TRACE_VALUE = 2;
 
-    private static TeleHeapManager teleHeapManager;
+    protected static TeleHeapManager teleHeapManager;
 
+    /**
+     * Returns the singleton manager of cached information about the heap in the VM,
+     * specialized for the particular implementation of {@link HeapScheme} in the VM.
+     * <br>
+     * Not usable until after a call to {@link #initialize(long)}, which must be called
+     * after the {@link TeleClassRegistray} is fully initialized; otherwise, a circular
+     * dependency will cause breakage.
+     */
     public static TeleHeapManager make(TeleVM teleVM) {
+        // TODO (mlvdv) Replace this hard-wired GC-specific dispatch with something more sensible.
         if (teleHeapManager ==  null) {
-            teleHeapManager = new TeleHeapManager(teleVM);
+            final String heapSchemeName = teleVM.vmConfiguration().heapScheme().name();
+            TeleHeapScheme teleHeapScheme = null;
+            if (heapSchemeName.equals("SemiSpaceHeapScheme")) {
+                teleHeapScheme = new TeleSemiSpaceHeapScheme(teleVM);
+            } else {
+                teleHeapScheme = new TeleUnknownHeapScheme(teleVM);
+                ProgramWarning.message("Unable to locate implementation of TeleHeapScheme for HeapScheme=" + heapSchemeName + ", using default");
+            }
+            teleHeapManager = new TeleHeapManager(teleVM, teleHeapScheme);
+            Trace.line(1, "[TeleHeapManager] Scheme=" + heapSchemeName + " using TeleHeapScheme=" + teleHeapScheme.getClass().getSimpleName());
         }
         return teleHeapManager;
     }
@@ -71,9 +97,9 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
     private TeleRuntimeMemoryRegion teleImmortalHeapRegion = null;
 
     /**
-     * Surrogates for each of the heap regions created by GC implementations in the {@link TeleVM}.
+     * Surrogates for each of the heap regions created by GC implementations in the VM.
      */
-    private TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
+    protected TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
 
     private Pointer teleRuntimeMemoryRegionRegistrationPointer = Pointer.zero();
 
@@ -89,8 +115,11 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
 
     private TeleRuntimeMemoryRegion teleRootsRegion = null;
 
-    private TeleHeapManager(TeleVM teleVM) {
+    private final TeleHeapScheme teleHeapScheme;
+
+    protected TeleHeapManager(TeleVM teleVM, TeleHeapScheme teleHeapScheme) {
         super(teleVM);
+        this.teleHeapScheme = teleHeapScheme;
     }
 
     /**
@@ -101,7 +130,6 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      * dynamically allocated regions.
      *
      * @return whether this manager has been fully initialized.
-     *
      */
     private boolean isInitialized() {
         return teleBootHeapRegion != null;
@@ -135,7 +163,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
     private boolean updatingHeapMemoryRegions = false;
 
     /**
-     * Updates local cache of information about dynamically allocated heap regions in the {@link TeleVM}.
+     * Updates local cache of information about dynamically allocated heap regions in the VM.
      * During this update, any method calls to check heap containment are handled specially.
      */
     public void refresh(long processEpoch) {
@@ -192,21 +220,21 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
     }
 
     /**
-     * @return surrogate for the special heap {@link RuntimeMemoryRegion} in the {@link BootImage} of the {@link TeleVM}.
+     * @return surrogate for the special heap {@link RuntimeMemoryRegion} in the {@link BootImage} of the VM.
      */
     public TeleRuntimeMemoryRegion teleBootHeapRegion() {
         return teleBootHeapRegion;
     }
 
     /**
-     * @return surrogate for the immortal heap {@link RuntimeMemoryRegion} of the {@link TeleVM}.
+     * @return surrogate for the immortal heap {@link RuntimeMemoryRegion} of the VM.
      */
     public TeleRuntimeMemoryRegion teleImmortalHeapRegion() {
         return teleImmortalHeapRegion;
     }
 
     /**
-     * @return surrogates for all {@link RuntimeMemoryRegion}s in the {@link Heap} of the {@link TeleVM}.
+     * @return surrogates for all {@link RuntimeMemoryRegion}s in the {@link Heap} of the VM.
      * Sorted in order of allocation.  Does not include the boot heap region.
      * @see InspectableHeapInfo
      */
@@ -245,7 +273,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
     }
 
     /**
-     * @return the allocated heap {@link RuntimeMemoryRegion} in the {@link TeleVM} that contains the address,
+     * @return the allocated heap {@link RuntimeMemoryRegion} in the VM that contains the address,
      * possibly the boot heap; null if none.
      */
     public TeleRuntimeMemoryRegion regionContaining(Address address) {
@@ -265,7 +293,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
     }
 
     /**
-     * @return whether any of the heap regions in the {@link TeleVM} contain the address; always returns true
+     * @return whether any of the heap regions in the VM contain the address; always returns true
      * in the context of a call in progress to {@link #refresh()}, in order to avoid a circularity.
      */
     public boolean contains(Address address) {
@@ -285,7 +313,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
     }
 
     /**
-     * @return whether an of the dynamically allocated heap regions in the {@link TeleVM} contain the address; handle
+     * @return whether an of the dynamically allocated heap regions in the VM contain the address; handle
      * specially in the context of a call in progress to {@link #refresh()}, in order to avoid a circularity.
      */
     public boolean dynamicHeapContains(Address address) {
@@ -300,11 +328,6 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         }
         for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
             if (teleHeapRegion.contains(address)) {
-                return true;
-            }
-        }
-        if (teleImmortalHeapRegion != null) {
-            if (teleImmortalHeapRegion.contains(address)) {
                 return true;
             }
         }
@@ -332,6 +355,17 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
      */
     public boolean isInGC() {
         return readCollectionEpoch() != readRootEpoch();
+    }
+
+    /**
+     * Determines whether the specific heap implementation considers
+     * a memory location to be "live".
+     *
+     * @param address a memory location in the VM
+     * @return whether the location is in a live area of the heap.
+     */
+    public boolean isInLiveMemory(Address address) {
+        return teleHeapScheme.isInLiveMemory(address);
     }
 
     /**

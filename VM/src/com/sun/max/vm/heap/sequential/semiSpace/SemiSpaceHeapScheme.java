@@ -24,7 +24,6 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -37,6 +36,7 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -52,6 +52,13 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  */
 public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements HeapScheme, CellVisitor {
+
+    public static final String FROM_REGION_NAME = "Heap-From";
+    public static final String TO_REGION_NAME = "Heap-To";
+    public static final String FROM_GROW_REGION_NAME = "Heap-From-Grow";
+    public static final String TO_GROW_REGION_NAME = "Heap-To-Grow";
+    public static final String LINEAR_GROW_POLICY_NAME = "Linear";
+    public static final String DOUBLE_GROW_POLICY_NAME = "Double";
 
     /**
      * A VM option for specifying how heap memory is to be allocated.
@@ -71,7 +78,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             "is the maximum of this option's value and the size of a TLAB."), MaxineVM.Phase.PRISTINE);
 
     private static final VMStringOption growPolicyOption =
-        register(new VMStringOption("-XX:HeapGrowPolicy=", false, "Double", "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
+        register(new VMStringOption("-XX:HeapGrowPolicy=", false, DOUBLE_GROW_POLICY_NAME, "Grow policy for heap (Linear|Double)."), MaxineVM.Phase.STARTING);
 
     /**
      * Procedure used to update a grip so that it points to an object in 'toSpace'.
@@ -115,12 +122,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final RuntimeMemoryRegion growFromSpace = new RuntimeMemoryRegion("Heap-From-Grow");
+    private final RuntimeMemoryRegion growFromSpace = new RuntimeMemoryRegion(FROM_GROW_REGION_NAME);
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final RuntimeMemoryRegion growToSpace = new RuntimeMemoryRegion("Heap-To-Grow");
+    private final RuntimeMemoryRegion growToSpace = new RuntimeMemoryRegion(TO_GROW_REGION_NAME);
 
     /**
      * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
@@ -137,11 +144,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      * The global allocation limit (minus the {@linkplain #safetyZoneSize safety zone}).
      */
     private Address top;
-
-    /**
-     * The global allocation mark.
-     */
-    private final AtomicWord allocationMark = new AtomicWord();
 
     private final ResetTLAB resetTLAB = new ResetTLAB(){
         @Override
@@ -184,8 +186,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
             try {
                 Heap.enableImmortalMemoryAllocation();
-                fromSpace = new RuntimeMemoryRegion("Heap-From");
-                toSpace = new RuntimeMemoryRegion("Heap-To");
+                fromSpace = new RuntimeMemoryRegion(FROM_REGION_NAME);
+                toSpace = new RuntimeMemoryRegion(TO_REGION_NAME);
             } finally {
                 Heap.disableImmortalMemoryAllocation();
             }
@@ -200,7 +202,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
             safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), initialTlabSize().toInt());
 
-            allocationMark.set(toSpace.start());
             top = toSpace.end().minus(safetyZoneSize);
 
             if (MaxineVM.isDebug()) {
@@ -216,9 +217,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             InspectableHeapInfo.init(toSpace, fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             final String growPolicy = growPolicyOption.getValue();
-            if (growPolicy.equals("Double")) {
+            if (growPolicy.equals(DOUBLE_GROW_POLICY_NAME)) {
                 this.growPolicy = new DoubleGrowPolicy();
-            } else if (growPolicy.equals("Linear")) {
+            } else if (growPolicy.equals(LINEAR_GROW_POLICY_NAME)) {
                 this.growPolicy = new LinearGrowPolicy(growPolicy);
             } else {
                 Log.print("Unknown heap growth policy, using default policy");
@@ -232,7 +233,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     @INLINE
     private Address allocationMark() {
-        return allocationMark.get().asAddress();
+        return toSpace.mark().asAddress();
     }
 
     private static void startTimer(Timer timer) {
@@ -449,7 +450,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         toSpace.setSize(oldFromSpaceSize);
         toSpace.mark.set(toSpace.start());  // for debugging
 
-        allocationMark.set(toSpace.start());
+        //allocationMark.set(toSpace.start());
         top = toSpace.end();
         // If we are currently using the safety zone, we must not install it in the swapped space
         // as that could cause gcAllocate to fail trying to copying too much live data.
@@ -741,7 +742,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         if (MaxineVM.isDebug()) {
             cell = cell.plusWords(1);
         }
-        allocationMark.set(cell.plus(size));
+        toSpace.mark.set(cell.plus(size));
         FatalError.check(allocationMark().lessThan(top), "GC allocation overflow");
         return cell;
     }
@@ -888,7 +889,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
                 end = cell.plus(size);
             }
-        } while (allocationMark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
+        } while (toSpace.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
         return cell;
     }
 
@@ -1151,5 +1152,25 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     @Override
     public long maxObjectInspectionAge() {
         return System.currentTimeMillis() - lastGCTime;
+    }
+    public boolean isForwardingPointer(Pointer pointer) {
+        return (!pointer.isZero()) &&  pointer.and(1).toLong() == 1;
+    }
+
+    public Pointer getTrueLocationFromPointer(Pointer pointer) {
+        return isForwardingPointer(pointer) ? pointer.minus(1) : pointer;
+    }
+
+    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
+        if (!objectPointer.isZero()) {
+            Pointer pointer = dataAccess.readWord(objectPointer.plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer();
+            if (isForwardingPointer(pointer)) {
+                final Pointer newPointer = getTrueLocationFromPointer(pointer);
+                if (!newPointer.isZero()) {
+                    return newPointer;
+                }
+            }
+        }
+        return objectPointer;
     }
 }

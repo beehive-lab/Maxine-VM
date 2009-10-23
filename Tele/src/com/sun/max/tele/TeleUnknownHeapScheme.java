@@ -18,50 +18,41 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.reference;
+package com.sun.max.tele;
 
-import com.sun.max.tele.grip.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 
 /**
- * @author Bernd Mathiske
+ * Implementation details about the heap in the VM, specialized
+ * for situations where there is no specialization code available for the heap scheme.
+ *<br>
+ * Assume that any address in a region known to be a heap region is live, and that
+ * anything else is not.
+ *
+ * @author Michael Van De Vanter
  */
-public abstract class TeleReference extends Reference {
+public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements TeleHeapScheme{
 
-    private TeleGrip grip;
-
-    public TeleGrip grip() {
-//        if (grip.getForwardedTeleGrip() != null) {
-//            grip = grip.getForwardedTeleGrip();
-//        }
-        return grip;
+    protected TeleUnknownHeapScheme(TeleVM teleVM) {
+        super(teleVM);
     }
 
-    protected TeleReference(TeleGrip grip) {
-        this.grip = grip;
+    public Class heapSchemeClass() {
+        return null;
     }
 
     @Override
-    public int hashCode() {
-        return grip().hashCode();
-    }
-
-    /**
-     * @return a non-zero integer uniquely identifying the referred-to object in the tele VM
-     */
-    public long makeOID() {
-        return grip().makeOID();
-    }
-
-    public boolean isLocal() {
-        return grip().isLocal();
-    }
-
-    public static final TeleReference ZERO = new TeleReference(TeleGrip.ZERO) {};
-
-    @Override
-    public String toString() {
-        return grip().toString();
+    public boolean isInLiveMemory(Address address) {
+        if (teleVM().isInGC()) {
+            return true;
+        }
+        for (TeleRuntimeMemoryRegion teleHeapRegion : teleVM().teleHeapRegions()) {
+            if (teleHeapRegion.contains(address)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

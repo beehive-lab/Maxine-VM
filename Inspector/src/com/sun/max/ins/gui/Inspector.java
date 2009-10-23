@@ -370,6 +370,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         frame.setSelected();
     }
 
+    protected void setStateColor(Color color) {
+        frame.setStateColor(color);
+    }
+
     /**
      * Calls this inspector to the users attention:  move to front, select, and flash.
      */
