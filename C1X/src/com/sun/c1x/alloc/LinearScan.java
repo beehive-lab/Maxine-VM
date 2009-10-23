@@ -2704,6 +2704,10 @@ public class LinearScan {
             C1XTimers.DEBUG_INFO.start();
         }
 
+        if (C1XOptions.PrintMetrics) {
+            C1XMetrics.LSRA_NumberOfSpills += maxSpills;
+        }
+
         // fill in number of spill slots into frameMap
         frameMap.finalizeFrame(maxSpills);
 

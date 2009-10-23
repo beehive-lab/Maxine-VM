@@ -304,7 +304,9 @@ public enum C1XIntrinsic {
         reflectMethod.setAccessible(true);
         foldableMap.put(riMethod, reflectMethod);
         anyFoldables = true;
-        C1XMetrics.FoldableMethodsRegistered++;
+        if (C1XOptions.PrintMetrics) {
+            C1XMetrics.FoldableMethodsRegistered++;
+        }
     }
 
     /**

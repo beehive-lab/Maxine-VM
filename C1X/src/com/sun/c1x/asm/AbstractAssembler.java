@@ -62,7 +62,9 @@ public abstract class AbstractAssembler {
 
     public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList, int registerRestoreEpilogueOffset) {
 
-        C1XMetrics.TargetMethods++;
+        if (C1XOptions.PrintMetrics) {
+            C1XMetrics.TargetMethods++;
+        }
 
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());

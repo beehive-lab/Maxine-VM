@@ -151,7 +151,9 @@ final class ControlFlowOptimizer {
 
                 // adjust successor and predecessor lists
                 ir.replaceBlock(block, newTarget);
-                C1XMetrics.BlocksDeleted++;
+                if (C1XOptions.PrintMetrics) {
+                    C1XMetrics.BlocksDeleted++;
+                }
             } else {
                 // adjust position of this block in the block list if blocks before
                 // have been deleted

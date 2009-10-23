@@ -29,7 +29,8 @@ package jtt.except;
  */
 public class Catch_StackOverflowError_03 {
 
-    private static final int EXTRA_DEPTH_PRINT = 8;
+    private static final int PASS = 0;
+    private static final int FAIL = 1;
 
     private static void recurseA() {
         recurseB();
@@ -49,21 +50,28 @@ public class Catch_StackOverflowError_03 {
             String lastMethodName = elements[0].getMethodName();
             for (int i = 1; i < elements.length; ++i) {
                 String methodName = elements[i].getMethodName();
+
+                // Skip top-of-stack until we find a method with name "recurse*".
+                if (!methodName.startsWith("recurse")) {
+                    continue;
+                }
+
+                // We reached the test method => done.
                 if (methodName.equals("test")) {
                     break;
                 }
-                if (lastMethodName.equals(methodName) || !methodName.startsWith("recurse")) {
-// JTT tests are not allowed to print anything
-//                  for (int j = 0; j < elements.length && j < i + EXTRA_DEPTH_PRINT; ++j) {
-//                      System.err.println(elements[j]);
-//                  }
-//                  System.err.println("....");
-//
-                    return 1;
+
+                // Stack elements must alternate between recurseA and recurseB
+                if (lastMethodName.equals(methodName) || (!methodName.equals("recurseA") && !methodName.equals("recurseB"))) {
+                    return FAIL;
                 }
+
                 lastMethodName = methodName;
             }
+
+            return PASS;
         }
-        return 0;
+
+        return FAIL;
     }
 }

@@ -81,7 +81,9 @@ public class GlobalValueNumberer {
                 // attempt value numbering
                 Instruction f = currentMap.findInsert(instr);
                 if (f != instr) {
-                    C1XMetrics.GlobalValueNumberHits++;
+                    if (C1XOptions.PrintMetrics) {
+                        C1XMetrics.GlobalValueNumberHits++;
+                    }
                     assert !f.hasSubst() : "can't have a substitution";
                     instr.setSubst(f);
                     substCount++;
