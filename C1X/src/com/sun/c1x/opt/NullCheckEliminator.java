@@ -200,7 +200,9 @@ public class NullCheckEliminator extends ValueVisitor {
         // calculate the {in} sets
         if (localUses.size() > 0) {
             // only perform iterative flow analysis if there are checks remaining to eliminate
-            C1XMetrics.NullCheckIterations++;
+            if (C1XOptions.PrintMetrics) {
+                C1XMetrics.NullCheckIterations++;
+            }
             index = new HashMap<Value, Integer>();
             inBitmaps = new HashMap<BlockBegin, BitMap>();
             outBitmaps = new HashMap<BlockBegin, BitMap>();

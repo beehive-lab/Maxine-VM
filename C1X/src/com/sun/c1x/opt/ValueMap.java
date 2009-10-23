@@ -125,7 +125,9 @@ public class ValueMap {
 
 
     private void resize() {
-        C1XMetrics.ValueMapResizes++;
+        if (C1XOptions.PrintMetrics) {
+            C1XMetrics.ValueMapResizes++;
+        }
         Link[] ntable = new Link[table.length * 3 + 4];
         if (parent != null) {
             // first add all the parent's entries by cloning them

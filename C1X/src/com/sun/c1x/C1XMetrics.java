@@ -54,4 +54,19 @@ public class C1XMetrics {
     public static int DataPatches;
     public static int DirectCallSitesEmitted;
     public static int IndirectCallSitesEmitted;
+
+    /**
+     * The number of LIR instructions that were allocated during compilation.
+     */
+    public static int NumberOfLIRInstructions;
+
+    /**
+     * The number of interval objects that were allocated during linear scan register allocation.
+     */
+    public static int LSRA_IntervalsCreated;
+
+    /**
+     * The number of spill slots required for linear scan register allocation.
+     */
+    public static int LSRA_NumberOfSpills;
 }

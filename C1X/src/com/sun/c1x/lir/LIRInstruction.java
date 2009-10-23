@@ -149,6 +149,10 @@ public abstract class LIRInstruction {
             stub.setResultSlot(addOutput(stub.originalResult()));
         }
 
+        if (C1XOptions.PrintMetrics) {
+            C1XMetrics.NumberOfLIRInstructions++;
+        }
+
         id = -1;
         initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
     }
