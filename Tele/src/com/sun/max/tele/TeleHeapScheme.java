@@ -18,50 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.reference;
+package com.sun.max.tele;
 
-import com.sun.max.tele.grip.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.unsafe.*;
+
 
 /**
- * @author Bernd Mathiske
+ * Implementation details about a specific implementation of {@link HeapScheme} in the VM.
+ *
+ * @author Michael Van De Vanter
  */
-public abstract class TeleReference extends Reference {
-
-    private TeleGrip grip;
-
-    public TeleGrip grip() {
-//        if (grip.getForwardedTeleGrip() != null) {
-//            grip = grip.getForwardedTeleGrip();
-//        }
-        return grip;
-    }
-
-    protected TeleReference(TeleGrip grip) {
-        this.grip = grip;
-    }
-
-    @Override
-    public int hashCode() {
-        return grip().hashCode();
-    }
+public interface TeleHeapScheme {
 
     /**
-     * @return a non-zero integer uniquely identifying the referred-to object in the tele VM
+     * @return the implementation class for which details are being provided.
      */
-    public long makeOID() {
-        return grip().makeOID();
-    }
+    Class heapSchemeClass();
 
-    public boolean isLocal() {
-        return grip().isLocal();
-    }
-
-    public static final TeleReference ZERO = new TeleReference(TeleGrip.ZERO) {};
-
-    @Override
-    public String toString() {
-        return grip().toString();
-    }
-
+    /**
+     * Checks whether a location is in a live area of the VM's heap.
+     *
+     * @param address a memory location in the VM
+     * @return whether the location is defined to be "live" by the implementation.
+     */
+    boolean isInLiveMemory(Address address);
 }

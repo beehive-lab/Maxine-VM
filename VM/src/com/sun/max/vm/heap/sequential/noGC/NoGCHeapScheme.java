@@ -350,4 +350,16 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     public void enableImmortalMemoryAllocation() {
         FatalError.unexpected("Non implemented");
     }
+    public boolean isForwardingPointer(Pointer pointer) {
+        return false;
+    }
+
+    public Pointer getTrueLocationFromPointer(Pointer forwardingPointer) {
+        return forwardingPointer;
+    }
+
+    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
+        return objectPointer;
+    }
+
 }

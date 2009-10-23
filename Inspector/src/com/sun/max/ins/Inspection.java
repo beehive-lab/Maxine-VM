@@ -192,6 +192,9 @@ public final class Inspection {
         sb.append(INSPECTOR_NAME);
         sb.append(" (");
         sb.append(maxVMState() == null ? "" : maxVMState().processState());
+        if (maxVMState().isInGC()) {
+            sb.append(" in GC");
+        }
         sb.append(") ");
         sb.append(bootImageFileName);
         return sb.toString();

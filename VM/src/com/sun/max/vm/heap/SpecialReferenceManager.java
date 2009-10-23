@@ -160,6 +160,16 @@ public class SpecialReferenceManager {
                 } else {
                     InspectableHeapInfo.rootsPointer().setWord(i, Pointer.zero());
                 }
+                if (Heap.traceGC()) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("Processed root table entry ");
+                    Log.print(i);
+                    Log.print(": set ");
+                    Log.print(rootPointer);
+                    Log.print(" to ");
+                    Log.println(InspectableHeapInfo.rootsPointer().getWord(i));
+                    Log.unlock(lockDisabledSafepoints);
+                }
             }
         }
     }

@@ -44,14 +44,12 @@ public abstract class TeleHub extends TeleHybridObject {
 
     private TeleClassActor teleClassActor = null;
 
-    /**
-     * @return surrogate for the {@ClassActor} in the VM that contains this {@link Hub}, i.e. for the type that this hub helps implement
-     */
     public TeleClassActor getTeleClassActor() {
-        if (teleClassActor == null) {
-            final Reference classActorReference = teleVM().fields().Hub_classActor.readReference(reference());
-            teleClassActor = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
-        }
+        Pointer pointer = teleVM().getForwardedObject(reference().toOrigin());
+        Reference classActorReference = teleVM().fields().Hub_classActor.readReference(Reference.fromOrigin(pointer));
+        pointer = teleVM().getForwardedObject(classActorReference.toOrigin());
+        classActorReference = Reference.fromOrigin(pointer);
+        teleClassActor = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
         return teleClassActor;
     }
 

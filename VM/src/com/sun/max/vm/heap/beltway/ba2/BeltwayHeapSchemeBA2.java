@@ -240,4 +240,19 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         // do nothing.
     }
 
+    public boolean isForwardingPointer(Pointer pointer) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    public Pointer getTrueLocationFromPointer(Pointer value) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }
