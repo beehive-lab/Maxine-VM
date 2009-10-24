@@ -32,6 +32,8 @@ public class C1XOptions {
     // Checkstyle: resume
 
 
+
+
     // inlining settings
     public static boolean InlineMethods                      = ____;
     public static boolean InlineMethodsWithExceptionHandlers = ____;
@@ -71,6 +73,7 @@ public class C1XOptions {
     public static boolean PrintIR                            = ____;
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
+    public static boolean GatherStaticHIRInstructionCount    = ____;
     public static boolean PrintTimers                        = ____;
     public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;

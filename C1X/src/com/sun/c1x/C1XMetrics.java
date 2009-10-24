@@ -20,6 +20,8 @@
  */
 package com.sun.c1x;
 
+import java.util.*;
+
 /**
  * This class contains a number of fields that collect metrics about compilation, particularly
  * the number of times certain optimizations are performed.
@@ -54,6 +56,8 @@ public class C1XMetrics {
     public static int DataPatches;
     public static int DirectCallSitesEmitted;
     public static int IndirectCallSitesEmitted;
+
+    public static Map<String, Integer> StaticHIRInstructionCount = new HashMap<String, Integer>();
 
     /**
      * The number of LIR instructions that were allocated during compilation.
