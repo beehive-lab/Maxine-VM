@@ -1912,6 +1912,18 @@ public abstract class LIRGenerator extends ValueVisitor {
             TTY.println("Operand for " + instr + " = " + instr.operand());
         }
 
+        if (C1XOptions.PrintMetrics && C1XOptions.GatherStaticHIRInstructionCount) {
+            String className = instr.getClass().getSimpleName();
+
+            synchronized(C1XMetrics.StaticHIRInstructionCount) {
+                if (!C1XMetrics.StaticHIRInstructionCount.containsKey(className)) {
+                    C1XMetrics.StaticHIRInstructionCount.put(className, 1);
+                } else {
+                    C1XMetrics.StaticHIRInstructionCount.put(className, C1XMetrics.StaticHIRInstructionCount.get(className) + 1);
+                }
+            }
+        }
+
         assert (!instr.operand().isIllegal()) || !isUsedForValue(instr) : "operand was not set for live instruction";
     }
 
