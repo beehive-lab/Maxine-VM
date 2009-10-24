@@ -574,6 +574,7 @@ public class BlockBegin extends Instruction {
                 hasFlag = true;
             }
         }
+
         builder.append("]");
         if (end != null) {
             builder.append(" -> ");

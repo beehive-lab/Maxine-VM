@@ -172,7 +172,7 @@ public @interface UNSAFE {
                                 isUnsafe.setValue(true);
                             }
                         } catch (NoSuchMethodError noSuchMethodError) {
-                            // probably a reference to a @PROTOTYPE_ONLY method - do nothing
+                            // probably a reference to a @HOSTED_ONLY method - do nothing
                         }
                     }
                 }

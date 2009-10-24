@@ -213,7 +213,7 @@ public class C1XOptions {
 
         MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
         ComputeStoresInLoops               = ____;
-        SimplifyPhis                       = ____;
+        SimplifyPhis                       = true;
 
         // turn off backend optimizations
         OptimizeControlFlow                = ____;

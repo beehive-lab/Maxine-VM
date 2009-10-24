@@ -32,12 +32,11 @@ import com.sun.max.vm.compiler.*;
  */
 public class Package extends VMPackage {
     public Package() {
-        new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
         registerScheme(RuntimeCompilerScheme.class, C1XCompilerScheme.class);
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return BootImageGenerator.calleeC1X;
+        return BootImageGenerator.calleeC1X || vmConfiguration.jitPackage.equals(this);
     }
 }
