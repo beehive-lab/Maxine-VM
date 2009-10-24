@@ -362,7 +362,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                     return method;
                 } catch (NoSuchMethodError noSuchMethodError) {
                     if (classMethodActor.isClassInitializer()) {
-                        ProgramWarning.message("NoSuchMethodError - probably caused by <clinit> referring to method with @PROTOTYPE_ONLY: " + noSuchMethodError);
+                        ProgramWarning.message("NoSuchMethodError - probably caused by <clinit> referring to method with @HOSTED_ONLY: " + noSuchMethodError);
                         return null;
                     }
                     throw noSuchMethodError;
@@ -440,7 +440,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                 }
 
                 if (classMethodActor.isInstanceInitializer() && InjectedReferenceFieldActor.class.equals(classActor.toJava().getEnclosingClass())) {
-                    // These anonymous inner classes call a super constructor that is annotated with PROTOTYPE_ONLY
+                    // These anonymous inner classes call a super constructor that is annotated with HOSTED_ONLY
                     continue;
                 }
 
