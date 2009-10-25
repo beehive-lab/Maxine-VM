@@ -215,6 +215,17 @@ public final class CiConstant extends CiValue {
         }
         throw new Error("Constant is not object: " + this);
     }
+    
+    /**
+     * Converts this constant to the jsr reference it represents.
+     * @return the object which this constant represents
+     */
+    public Object asJsr() {
+        if (basicType == CiKind.Jsr) {
+            return value;
+        }
+        throw new Error("Constant is not jsr: " + this);
+    }
 
     /**
      * Computes the hashcode of this constant.

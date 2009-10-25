@@ -945,7 +945,9 @@ public class GraphBuilder {
             loadLocal(0, CiKind.Object);
             append(new Intrinsic(CiKind.Void, C1XIntrinsic.java_lang_Object$init,
                                  null, curState.popArguments(1), false, curState.immutableCopy(), true, true));
-            C1XMetrics.InlinedFinalizerChecks++;
+            if (C1XOptions.PrintMetrics) {
+                C1XMetrics.InlinedFinalizerChecks++;
+            }
         }
 
     }
@@ -1158,7 +1160,9 @@ public class GraphBuilder {
             // look in the local value map
             Value r = localValueMap.findInsert(x);
             if (r != x) {
-                C1XMetrics.LocalValueNumberHits++;
+                if (C1XOptions.PrintMetrics) {
+                    C1XMetrics.LocalValueNumberHits++;
+                }
                 if (r instanceof Instruction) {
                     assert ((Instruction) r).isAppended() : "instruction " + r + "is not appended";
                 }
@@ -1359,7 +1363,9 @@ public class GraphBuilder {
             return cannotInline(target, "recursive inlining too deep");
         }
         if (compilation.runtime.mustInline(target)) {
-            C1XMetrics.InlineForcedMethods++;
+            if (C1XOptions.PrintMetrics) {
+                C1XMetrics.InlineForcedMethods++;
+            }
             return true;
         }
         if (scopeData.scope.level > C1XOptions.MaximumInlineLevel) {
@@ -1369,7 +1375,9 @@ public class GraphBuilder {
             return cannotInline(target, "compilation already too big " + "(" + compilation.stats.nodeCount + " nodes)");
         }
         if (compilation.runtime.mustNotInline(target)) {
-            C1XMetrics.InlineForbiddenMethods++;
+            if (C1XOptions.PrintMetrics) {
+                C1XMetrics.InlineForbiddenMethods++;
+            }
             return cannotInline(target, "inlining excluded by runtime");
         }
         if (compilation.runtime.mustNotCompile(target)) {

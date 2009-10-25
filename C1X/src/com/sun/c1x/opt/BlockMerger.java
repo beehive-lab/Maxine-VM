@@ -55,12 +55,16 @@ public class BlockMerger implements BlockClosure {
                 if (sux.numberOfPreds() == 1) {
                     // the successor has only one predecessor, merge it into this block
                     mergeBlocks(block, sux, end);
-                    C1XMetrics.BlocksMerged++;
+                    if (C1XOptions.PrintMetrics) {
+                        C1XMetrics.BlocksMerged++;
+                    }
                     continue;
                 } else if (C1XOptions.DoBlockSkipping && block.next() == end && !block.isExceptionEntry()) {
                     // the successor has multiple predecessors, but this block is empty
                     if (skipBlock(block, sux, end)) {
-                        C1XMetrics.BlocksSkipped++;
+                        if (C1XOptions.PrintMetrics) {
+                            C1XMetrics.BlocksSkipped++;
+                        }
                         continue;
                     }
                 }

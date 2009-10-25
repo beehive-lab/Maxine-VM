@@ -111,9 +111,6 @@ public class MaxXirGenerator extends RiXirGenerator {
     private XirPair[] putFieldTemplates;
     private XirPair[] getFieldTemplates;
 
-    private XirPair[] putStaticTemplates;
-    private XirPair[] getStaticTemplates;
-
     private XirPair[] invokeVirtualTemplates;
     private XirPair[] invokeInterfaceTemplates;
     private XirPair[] invokeSpecialTemplates;
@@ -176,9 +173,6 @@ public class MaxXirGenerator extends RiXirGenerator {
         putFieldTemplates = new XirPair[kinds.length];
         getFieldTemplates = new XirPair[kinds.length];
 
-        putStaticTemplates = new XirPair[kinds.length];
-        getStaticTemplates = new XirPair[kinds.length];
-
         invokeVirtualTemplates   = new XirPair[kinds.length];
         invokeInterfaceTemplates = new XirPair[kinds.length];
         invokeSpecialTemplates   = new XirPair[kinds.length];
@@ -208,16 +202,8 @@ public class MaxXirGenerator extends RiXirGenerator {
             if (kind != CiKind.Void) {
                 putFieldTemplates[index] = buildPutFieldTemplate(kind, kind == CiKind.Object);
                 getFieldTemplates[index] = buildGetFieldTemplate(kind);
-
-                putStaticTemplates[index] = buildPutStaticTemplate(kind, kind == CiKind.Object);
-                getStaticTemplates[index] = buildGetStaticTemplate(kind);
-
-                asm.restart(kind);
                 arrayLoadTemplates[index] = buildArrayLoad(kind, asm, true);
-
-                asm.restart(kind);
                 arrayStoreTemplates[index] = buildArrayStore(kind, asm, true, kind == CiKind.Object, kind == CiKind.Object);
-
                 newArrayTemplates[index] = buildNewArray(kind);
             }
             invokeVirtualTemplates[index] = buildResolvedInvokeVirtual(kind);
@@ -325,27 +311,13 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     @Override
-    public XirSnippet genGetStatic(RiField field) {
-        XirPair template = getStaticTemplates[field.kind().ordinal()];
-        if (field.isLoaded()) {
-            XirArgument offset = XirArgument.forInt(field.offset());
-            Object tuple = ((MaxRiField) field).fieldActor.holder().staticTuple();
-            return new XirSnippet(template.resolved, XirArgument.forObject(tuple), offset);
-        }
-        XirArgument guard = XirArgument.forObject(guardFor(field));
-        return new XirSnippet(template.unresolved, guard);
+    public XirSnippet genGetStatic(XirArgument staticTuple, RiField field) {
+        return genGetField(staticTuple, field);
     }
 
     @Override
-    public XirSnippet genPutStatic(XirArgument value, RiField field) {
-        XirPair template = putStaticTemplates[field.kind().ordinal()];
-        if (field.isLoaded()) {
-            XirArgument offset = XirArgument.forInt(field.offset());
-            Object tuple = ((MaxRiField) field).fieldActor.holder().staticTuple();
-            return new XirSnippet(template.resolved, XirArgument.forObject(tuple), value, offset);
-        }
-        XirArgument guard = XirArgument.forObject(guardFor(field));
-        return new XirSnippet(template.unresolved, value, guard);
+    public XirSnippet genPutStatic(XirArgument staticTuple, RiField field, XirArgument value) {
+        return genPutField(staticTuple, field, value);
     }
 
     @Override
@@ -390,23 +362,22 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     @Override
-    public XirSnippet genCheckCast(XirArgument receiver, RiType type) {
+    public XirSnippet genCheckCast(XirArgument receiver, XirArgument hub, RiType type) {
         if (type.isLoaded()) {
             XirTemplate template;
             if (type.isInterface()) {
                 template = checkcastForInterfaceTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
-                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), XirArgument.forObject(hubFor(type)));
-            } else if (type.isFinal()) {
+                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), hub);
+            } else if (type.isFinal() && !type.isArrayKlass()) {
                 template = checkcastForLeafTemplate.resolved;
             } else {
                 template = checkcastForClassTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
-                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), XirArgument.forObject(hubFor(type)));
+                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), hub);
             }
-            XirArgument hub = XirArgument.forObject(hubFor(type));
             return new XirSnippet(template, receiver, hub);
         }
         XirArgument guard = XirArgument.forObject(guardFor(type));
@@ -414,24 +385,23 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     @Override
-    public XirSnippet genInstanceOf(XirArgument receiver, RiType type) {
+    public XirSnippet genInstanceOf(XirArgument receiver, XirArgument hub, RiType type) {
         if (type.isLoaded()) {
             XirTemplate template;
             if (type.isInterface()) {
                 template = instanceofForInterfaceTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
-                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), XirArgument.forObject(hubFor(type)));
+                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), hub);
             }
 
-            XirArgument hub = XirArgument.forObject(hubFor(type));
-            if (type.isFinal()) {
+            if (type.isFinal() && !type.isArrayKlass()) {
                 template = instanceofForLeafTemplate.resolved;
             } else {
                 template = instanceofForClassTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
-                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), XirArgument.forObject(hubFor(type)));
+                return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), hub);
             }
             return new XirSnippet(template, receiver, hub);
         }
@@ -496,37 +466,38 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     private XirTemplate buildResolveClassObject() {
-        asm.restart(CiKind.Object);
+        XirOperand result = asm.restart(CiKind.Object);
         XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-        resolve(asm, "resolveClassObject", asm.getResultOperand(), guard);
+        resolve(asm, "resolveClassObject", result, guard);
         return finishTemplate(asm, "resolveClassObject");
     }
 
-    private void resolve(CiXirAssembler asm, String string, XirVariable result, XirParameter... guard) {
+    private void resolve(CiXirAssembler asm, String string, XirOperand result, XirParameter... guard) {
         callRuntimeThroughStub(asm, string, result, guard);
     }
 
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
-        XirVariable param = asm.createRegister("safepoint", CiKind.Word, X86.r14);
+        XirOperand param = asm.createRegister("safepoint", CiKind.Word, X86.r14);
         asm.pload(CiKind.Word, param, param, false);
         return finishTemplate(asm, "safepoint");
     }
 
     private XirTemplate buildArrayLength() {
-        asm.restart(CiKind.Int);
-        XirVariable param = asm.createInputParameter("param", CiKind.Object);
-        asm.pload(CiKind.Word, asm.getResultOperand(), param, asm.i(arrayLengthOffset), true);
+        XirOperand result = asm.restart(CiKind.Int);
+        XirOperand param = asm.createInputParameter("param", CiKind.Object);
+        asm.pload(CiKind.Word, result, param, asm.i(arrayLengthOffset), true);
         return finishTemplate(asm, "arraylength");
     }
 
     private XirTemplate buildArrayStore(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck, boolean genStoreCheck, boolean genWriteBarrier) {
+        asm.restart(CiKind.Void);
         XirParameter array = asm.createInputParameter("array", CiKind.Object);
         XirParameter index = asm.createInputParameter("index", CiKind.Int);
         XirParameter value = asm.createInputParameter("value", kind);
-        XirVariable length = asm.createTemp("length", CiKind.Int);
-        XirVariable valueHub = null;
-        XirVariable compHub = null;
+        XirOperand length = asm.createTemp("length", CiKind.Int);
+        XirOperand valueHub = null;
+        XirOperand compHub = null;
         XirLabel store = asm.createInlineLabel("store");
         XirLabel failBoundsCheck = null;
         XirLabel slowStoreCheck = null;
@@ -548,11 +519,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
         asm.bindInline(store);
         int elemSize = target.sizeInBytes(kind);
-        if (elemSize > 1) {
-            asm.shl(index, index, asm.i(Util.log2(elemSize)));
-        }
-        asm.add(index, index, asm.i(offsetOfFirstArrayElement));
-        asm.pstore(kind, array, index, value, !genBoundsCheck && !genStoreCheck);
+        asm.pstore(kind, array, index, value, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(elemSize)), !genBoundsCheck && !genStoreCheck);
         if (genWriteBarrier) {
             addWriteBarrier(asm, array, value);
         }
@@ -565,15 +532,14 @@ public class MaxXirGenerator extends RiXirGenerator {
             callRuntimeThroughStub(asm, "arrayHubStoreCheck", null, compHub, valueHub);
             asm.jmp(store);
         }
-        asm.end();
         return finishTemplate(asm, "arraystore<" + kind + ">");
     }
 
     private XirTemplate buildArrayLoad(CiKind kind, CiXirAssembler asm, boolean genBoundsCheck) {
+        XirOperand result = asm.restart(kind);
         XirParameter array = asm.createInputParameter("array", CiKind.Object);
         XirParameter index = asm.createInputParameter("index", CiKind.Int);
-        XirVariable length = asm.createTemp("length", CiKind.Int);
-        XirVariable result = asm.getResultOperand();
+        XirOperand length = asm.createTemp("length", CiKind.Int);
         XirLabel fail = null;
         if (genBoundsCheck) {
             // load the array length and check the index
@@ -582,12 +548,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jugteq(fail, index, length);
         }
         int elemSize = target.sizeInBytes(kind);
-        if (elemSize > 1) {
-            asm.shl(index, index, asm.i(Util.log2(elemSize)));
-        }
-        asm.add(index, index, asm.i(offsetOfFirstArrayElement));
-        asm.pload(kind, result, array, index, !genBoundsCheck);
-        asm.end();
+        asm.pload(kind, result, array, index, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(elemSize)), !genBoundsCheck);
         if (genBoundsCheck) {
             asm.bindOutOfLine(fail);
             callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, index);
@@ -602,17 +563,15 @@ public class MaxXirGenerator extends RiXirGenerator {
             // resolved invokestatic template
             asm.restart();
             XirParameter addr = asm.createConstantInputParameter("addr", CiKind.Word);
-            asm.callJava(addr);
-            resolved = finishTemplate(asm, "invokestatic");
+            resolved = finishTemplate(asm, addr, "invokestatic");
         }
         {
             // unresolved invokestatic template
             asm.restart();
             XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-            XirVariable addr = asm.createTemp("addr", CiKind.Word);
+            XirOperand addr = asm.createTemp("addr", CiKind.Word);
             resolve(asm, "resolveStaticMethod", addr, guard);
-            asm.callJava(addr);
-            unresolved = finishTemplate(asm, "invokestatic-unresolved");
+            unresolved = finishTemplate(asm, addr, "invokestatic-unresolved");
         }
         return new XirPair(resolved, unresolved);
     }
@@ -624,17 +583,15 @@ public class MaxXirGenerator extends RiXirGenerator {
             // resolved case
             asm.restart();
             XirParameter addr = asm.createConstantInputParameter("addr", CiKind.Word); // address to call
-            asm.callJava(addr);
-            resolved = finishTemplate(asm, "invokespecial<" + kind + ">");
+            resolved = finishTemplate(asm, addr, "invokespecial<" + kind + ">");
         }
         {
             // unresolved invokespecial template
             asm.restart();
             XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-            XirVariable addr = asm.createTemp("addr", CiKind.Word);
+            XirOperand addr = asm.createTemp("addr", CiKind.Word);
             resolve(asm, "resolveSpecialMethod", addr, guard);
-            asm.callJava(addr);
-            unresolved = finishTemplate(asm, "invokespecial-unresolved<" + kind + ">");
+            unresolved = finishTemplate(asm, addr, "invokespecial-unresolved<" + kind + ">");
         }
         return new XirPair(resolved, unresolved);
     }
@@ -648,36 +605,31 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object); // receiver object
             XirParameter interfaceID = asm.createConstantInputParameter("interfaceID", CiKind.Int);
             XirParameter methodIndex = asm.createConstantInputParameter("methodIndex", CiKind.Int);
-            XirVariable hub = asm.createTemp("hub", CiKind.Object);
-            XirVariable mtableLength = asm.createTemp("mtableLength", CiKind.Int);
-            XirVariable mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
-            XirVariable a = asm.createTemp("a", CiKind.Int);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
+            XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
+            XirOperand mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
+            XirOperand a = asm.createTemp("a", CiKind.Int);
             asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset), true);
             asm.pload(CiKind.Int, mtableLength, hub, asm.i(hub_mTableLength), false);
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.shl(a, a, asm.i(Util.log2(Ints.SIZE)));
-            asm.add(a, a, asm.i(offsetOfFirstArrayElement));
-            asm.pload(CiKind.Int, a, hub, a, false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
             asm.add(a, a, methodIndex);
-            asm.mul(a, a, asm.i(wordSize));
-            asm.add(a, a, asm.i(offsetOfFirstArrayElement));
-            asm.pload(CiKind.Word, a, hub, a, false);
-            asm.callJava(a);
-            resolved = finishTemplate(asm, "invokeinterface<" + kind + ">");
+            asm.pload(CiKind.Word, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
+            resolved = finishTemplate(asm, a, "invokeinterface<" + kind + ">");
         }
         {
             // unresolved invokeinterface
             asm.restart();
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object); // receiver object
             XirParameter guard = asm.createInputParameter("guard", CiKind.Object); // guard
-            XirVariable interfaceID = asm.createTemp("interfaceID", CiKind.Int);
-            XirVariable methodIndex = asm.createTemp("methodIndex", CiKind.Int);
-            XirVariable hub = asm.createTemp("hub", CiKind.Object);
-            XirVariable mtableLength = asm.createTemp("mtableLength", CiKind.Int);
-            XirVariable mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
-            XirVariable a = asm.createTemp("a", CiKind.Int);
+            XirOperand interfaceID = asm.createTemp("interfaceID", CiKind.Int);
+            XirOperand methodIndex = asm.createTemp("methodIndex", CiKind.Int);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
+            XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
+            XirOperand mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
+            XirOperand a = asm.createTemp("a", CiKind.Int);
 
             resolve(asm, "resolveInterfaceMethod", methodIndex, guard);
             resolve(asm, "resolveInterfaceID", interfaceID, guard);
@@ -686,15 +638,10 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.shl(a, a, asm.i(Util.log2(Ints.SIZE)));
-            asm.add(a, a, asm.i(offsetOfFirstArrayElement));
-            asm.pload(CiKind.Int, a, hub, a, false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
             asm.add(a, a, methodIndex);
-            asm.mul(a, a, asm.i(wordSize));
-            asm.add(a, a, asm.i(offsetOfFirstArrayElement));
-            asm.pload(CiKind.Word, a, hub, a, false);
-            asm.callJava(a);
-            unresolved = finishTemplate(asm, "invokeinterface<" + kind + ">-unresolved");
+            asm.pload(CiKind.Word, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
+            unresolved = finishTemplate(asm, a, "invokeinterface<" + kind + ">-unresolved");
         }
         return new XirPair(resolved, unresolved);
     }
@@ -707,26 +654,24 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.restart();
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object);
             XirParameter vtableOffset = asm.createConstantInputParameter("vtableOffset", CiKind.Int);
-            XirVariable hub = asm.createTemp("hub", CiKind.Object);
-            XirVariable addr = asm.createTemp("addr", CiKind.Word);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
+            XirOperand addr = asm.createTemp("addr", CiKind.Word);
             asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset), true);
             asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
-            asm.callJava(addr);
-            resolved = finishTemplate(asm, "invokevirtual<" + kind + ">");
+            resolved = finishTemplate(asm, addr, "invokevirtual<" + kind + ">");
         }
         {
             // unresolved invokevirtual template
             asm.restart();
             XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object); // receiver object
             XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-            XirVariable vtableOffset = asm.createTemp("vtableOffset", CiKind.Int);
+            XirOperand vtableOffset = asm.createTemp("vtableOffset", CiKind.Int);
             resolve(asm, "resolveVirtualMethod", vtableOffset, guard);
-            XirVariable hub = asm.createTemp("hub", CiKind.Object);
-            XirVariable addr = asm.createTemp("addr", CiKind.Word);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
+            XirOperand addr = asm.createTemp("addr", CiKind.Word);
             asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset), true);
             asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
-            asm.callJava(addr);
-            unresolved = finishTemplate(asm, "invokevirtual-unresolved<" + kind + ">");
+            unresolved = finishTemplate(asm, addr, "invokevirtual-unresolved<" + kind + ">");
         }
         return new XirPair(resolved, unresolved);
     }
@@ -737,30 +682,29 @@ public class MaxXirGenerator extends RiXirGenerator {
         if (kind == CiKind.Object) {
             {
                 // resolved new object array
-                asm.restart(CiKind.Object);
+                XirOperand result = asm.restart(CiKind.Object);
                 XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
                 XirParameter length = asm.createInputParameter("length", CiKind.Int);
-                callRuntimeThroughStub(asm, "allocateObjectArray", asm.getResultOperand(), hub, length);
+                callRuntimeThroughStub(asm, "allocateObjectArray", result, hub, length);
                 resolved = finishTemplate(asm, "anewarray<" + kind + ">");
             }
             {
                 // unresolved new object array
-                asm.restart(CiKind.Object);
+                XirOperand result = asm.restart(CiKind.Object);
                 XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
                 XirParameter length = asm.createInputParameter("length", CiKind.Int);
-                XirVariable hub = asm.createTemp("hub", CiKind.Object);
+                XirOperand hub = asm.createTemp("hub", CiKind.Object);
                 resolve(asm, "resolveNewArray", hub, guard);
-                callRuntimeThroughStub(asm, "allocateObjectArray", asm.getResultOperand(), hub, length);
-                asm.end();
+                callRuntimeThroughStub(asm, "allocateObjectArray", result, hub, length);
                 unresolved = finishTemplate(asm, "anewarray<" + kind + ">-unresolved");
             }
 
         } else {
             // XXX: specialized, inline templates for each kind
-            asm.restart(CiKind.Object);
+            XirOperand result = asm.restart(CiKind.Object);
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
             XirParameter length = asm.createInputParameter("length", CiKind.Int);
-            callRuntimeThroughStub(asm, "allocatePrimitiveArray", asm.getResultOperand(), hub, length);
+            callRuntimeThroughStub(asm, "allocatePrimitiveArray", result, hub, length);
             resolved = finishTemplate(asm, "newarray<" + kind + ">");
             unresolved = resolved;
         }
@@ -772,31 +716,29 @@ public class MaxXirGenerator extends RiXirGenerator {
         XirTemplate unresolved;
         if (rank < SMALL_MULTIANEWARRAY_RANK) {
             // "small" resolved multianewarray (rank 3 or less)
-            asm.restart(CiKind.Object);
+            XirOperand result = asm.restart(CiKind.Object);
             XirParameter[] lengths = new XirParameter[rank];
             for (int i = 0; i < rank; i++) {
                 lengths[i] = asm.createInputParameter("lengths[" + i + "]", CiKind.Int);
             }
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
-            callRuntimeThroughStub(asm, "allocateMultiArray" + rank, asm.getResultOperand(), Arrays.prepend(lengths, hub));
-            asm.end();
+            callRuntimeThroughStub(asm, "allocateMultiArray" + rank, result, Arrays.prepend(lengths, hub));
             resolved = finishTemplate(asm, "multianewarray<" + rank + ">");
         }
 
         // unresolved or large multianewarray
-        asm.restart(CiKind.Object);
+        XirOperand result = asm.restart(CiKind.Object);
         XirParameter[] lengths = new XirParameter[rank];
         for (int i = 0; i < rank; i++) {
             lengths[i] = asm.createInputParameter("lengths[" + i + "]", CiKind.Int);
         }
         XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-        XirVariable lengthArray = asm.createTemp("lengthArray", CiKind.Object);
+        XirOperand lengthArray = asm.createTemp("lengthArray", CiKind.Object);
         callRuntimeThroughStub(asm, "allocateIntArray", lengthArray, asm.i(rank));
         for (int i = 0; i < rank; i++) {
             asm.pstore(CiKind.Int, lengthArray, asm.i(offsetOfFirstArrayElement + i * target.sizeInBytes(CiKind.Int)), lengths[i], false);
         }
-        callRuntimeThroughStub(asm, "allocateMultiArrayN", asm.getResultOperand(), guard, lengthArray);
-        asm.end();
+        callRuntimeThroughStub(asm, "allocateMultiArrayN", result, guard, lengthArray);
         unresolved = finishTemplate(asm, "multianewarray-complex<" + rank + ">");
 
         return new XirPair(resolved == null ? unresolved : resolved, unresolved);
@@ -807,19 +749,18 @@ public class MaxXirGenerator extends RiXirGenerator {
         XirTemplate unresolved;
         {
             // resolved new instance
-            asm.restart(CiKind.Object);
+            XirOperand result = asm.restart(CiKind.Object);
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
-            callRuntimeThroughStub(asm, "allocateObject", asm.getResultOperand(), hub);
+            callRuntimeThroughStub(asm, "allocateObject", result, hub);
             resolved = finishTemplate(asm, "new");
         }
         {
             // unresolved new instance
-            asm.restart(CiKind.Object);
+            XirOperand result = asm.restart(CiKind.Object);
             XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
-            XirVariable hub = asm.createTemp("hub", CiKind.Object);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
             resolve(asm, "resolveNew", hub, guard);
-            callRuntimeThroughStub(asm, "allocateObject", asm.getResultOperand(), hub);
-            asm.end();
+            callRuntimeThroughStub(asm, "allocateObject", result, hub);
             unresolved = finishTemplate(asm, "new-unresolved");
         }
 
@@ -846,13 +787,12 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter value = asm.createInputParameter("value", kind);
             XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
-            XirVariable fieldOffset = asm.createTemp("fieldOffset", CiKind.Int);
+            XirOperand fieldOffset = asm.createTemp("fieldOffset", CiKind.Int);
             resolve(asm, "resolvePutField", fieldOffset, guard);
             asm.pstore(kind, object, fieldOffset, value, true);
             if (genWriteBarrier) {
                 addWriteBarrier(asm, object, value);
             }
-            asm.end();
             unresolved = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
         return new XirPair(resolved, unresolved);
@@ -863,87 +803,21 @@ public class MaxXirGenerator extends RiXirGenerator {
         XirTemplate unresolved;
         {
             // resolved case
-            asm.restart(kind);
+            XirOperand result = asm.restart(kind);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter fieldOffset = asm.createConstantInputParameter("fieldOffset", CiKind.Int);
-            XirVariable resultOperand = asm.getResultOperand();
-            asm.pload(kind, resultOperand, object, fieldOffset, true);
+            asm.pload(kind, result, object, fieldOffset, true);
             resolved = finishTemplate(asm, "getfield<" + kind + ">");
         }
         {
             // unresolved case
-            asm.restart(kind);
+            XirOperand result = asm.restart(kind);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
-            XirVariable resultOperand = asm.getResultOperand();
             XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
-            XirVariable fieldOffset = asm.createTemp("fieldOffset", CiKind.Int);
+            XirOperand fieldOffset = asm.createTemp("fieldOffset", CiKind.Int);
             resolve(asm, "resolveGetField", fieldOffset, guard);
-            asm.pload(kind, resultOperand, object, fieldOffset, true);
-            asm.end();
+            asm.pload(kind, result, object, fieldOffset, true);
             unresolved = finishTemplate(asm, "getfield<" + kind + ">-unresolved");
-        }
-        return new XirPair(resolved, unresolved);
-    }
-
-    private XirPair buildPutStaticTemplate(CiKind kind, boolean genWriteBarrier) {
-        XirTemplate resolved;
-        XirTemplate unresolved;
-        {
-            // XXX: this is identical to put field, except the tuple is a constant
-            asm.restart(CiKind.Void);
-            XirParameter tuple = asm.createConstantInputParameter("tuple", CiKind.Object);
-            XirParameter value = asm.createInputParameter("value", kind);
-            XirParameter fieldOffset = asm.createConstantInputParameter("fieldOffset", CiKind.Int);
-            asm.pstore(kind, tuple, fieldOffset, value, true);
-            if (genWriteBarrier) {
-                addWriteBarrier(asm, tuple, value);
-            }
-            asm.end();
-            resolved = finishTemplate(asm, "putstatic<" + kind + ", " + genWriteBarrier + ">");
-        }
-        {
-            // unresolved put static
-            asm.restart(CiKind.Void);
-            XirParameter value = asm.createInputParameter("value", kind);
-            XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
-            XirVariable tuple = asm.createTemp("tuple", CiKind.Object);
-            XirVariable fieldOffset = asm.createTemp("fieldOffset", CiKind.Int);
-            resolve(asm, "resolvePutStatic", fieldOffset, guard);
-            resolve(asm, "resolveStaticTuple", tuple, guard);
-            asm.pstore(kind, tuple, fieldOffset, value, true);
-            if (genWriteBarrier) {
-                addWriteBarrier(asm, tuple, value);
-            }
-            asm.end();
-            unresolved = finishTemplate(asm, "putstatic<" + kind + ", " + genWriteBarrier + ">-unresolved");
-        }
-        return new XirPair(resolved, unresolved);
-    }
-
-    private XirPair buildGetStaticTemplate(CiKind kind) {
-        XirTemplate resolved;
-        XirTemplate unresolved;
-        {
-            // resolved get static
-            asm.restart(kind);
-            XirParameter tuple = asm.createInputParameter("tuple", CiKind.Object);
-            XirParameter fieldOffset = asm.createConstantInputParameter("fieldOffset", CiKind.Int);
-            XirVariable resultOperand = asm.getResultOperand();
-            asm.pload(kind, resultOperand, tuple, fieldOffset, false);
-            resolved = finishTemplate(asm, "getstatic<" + kind + ">");
-        }
-        {
-            // unresolved get static
-            asm.restart(kind);
-            XirVariable resultOperand = asm.getResultOperand();
-            XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
-            XirVariable fieldOffset = asm.createTemp("fieldOffset", CiKind.Int);
-            XirVariable tuple = asm.createTemp("tuple", CiKind.Object);
-            resolve(asm, "resolveGetStatic", fieldOffset, guard);
-            resolve(asm, "resolveStaticTuple", tuple, guard);
-            asm.pload(kind, resultOperand, tuple, fieldOffset, false);
-            asm.end();
-            unresolved = finishTemplate(asm, "getstatic<" + kind + ">-unresolved");
         }
         return new XirPair(resolved, unresolved);
     }
@@ -967,10 +841,10 @@ public class MaxXirGenerator extends RiXirGenerator {
         XirTemplate unresolved;
         {
             // resolved checkcast for a leaf class
-            asm.restart(CiKind.Object);
+            asm.restart();
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
-            XirVariable temp = asm.createTemp("temp", CiKind.Object);
+            XirOperand temp = asm.createTemp("temp", CiKind.Object);
             XirLabel pass = asm.createInlineLabel("pass");
             XirLabel fail = asm.createOutOfLineLabel("fail");
             if (!nonnull) {
@@ -980,11 +854,9 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Object, temp, object, asm.i(hubOffset), !nonnull);
             asm.jneq(fail, temp, hub);
             asm.bindInline(pass);
-            asm.mov(asm.getResultOperand(), object);
-            asm.end();
             asm.bindOutOfLine(fail);
             callRuntimeThroughStub(asm, "throwClassCastException", null);
-            resolved = finishTemplate(asm, "checkcast-leaf<" + nonnull + ">");
+            resolved = finishTemplate(asm, object, "checkcast-leaf<" + nonnull + ">");
         }
         {
             // unresolved checkcast
@@ -998,14 +870,14 @@ public class MaxXirGenerator extends RiXirGenerator {
         XirTemplate unresolved;
         {
             // resolved checkcast against an interface class
-            asm.restart(CiKind.Object);
+            asm.restart();
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter interfaceID = asm.createConstantInputParameter("interfaceID", CiKind.Int);
             XirParameter checkedHub = asm.createConstantInputParameter("checkedHub", CiKind.Object);
-            XirVariable hub = asm.createTemp("hub", CiKind.Object);
-            XirVariable mtableLength = asm.createTemp("mtableLength", CiKind.Int);
-            XirVariable mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
-            XirVariable a = asm.createTemp("a", CiKind.Int);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
+            XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
+            XirOperand mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
+            XirOperand a = asm.createTemp("a", CiKind.Int);
             XirLabel pass = asm.createInlineLabel("pass");
             XirLabel fail = asm.createOutOfLineLabel("fail");
             // XXX: use a cache to check the last successful receiver type
@@ -1019,15 +891,13 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.mul(a, a, asm.i(wordSize));
-            asm.pload(CiKind.Int, a, hub, a, false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
-            asm.mov(asm.getResultOperand(), object);
-            asm.end();
             asm.bindOutOfLine(fail);
             callRuntimeThroughStub(asm, "throwClassCastException", null);
-            resolved = finishTemplate(asm, "checkcast-interface<" + nonnull + ">");
+            resolved = finishTemplate(asm, object, "checkcast-interface<" + nonnull + ">");
         }
         {
             unresolved = buildUnresolvedCheckcast(nonnull);
@@ -1036,11 +906,10 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     private XirTemplate buildUnresolvedCheckcast(boolean nonnull) {
-        XirTemplate unresolved;
-        asm.restart(CiKind.Object);
+        asm.restart();
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
         XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
-        XirVariable hub = asm.createTemp("hub", CiKind.Object);
+        XirOperand hub = asm.createTemp("hub", CiKind.Object);
         XirLabel pass = asm.createInlineLabel("pass");
         if (!nonnull) {
             // XXX: build a version that does not include a null check
@@ -1048,21 +917,17 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
         resolve(asm, "unresolvedCheckcast", hub, object, guard);
         asm.bindInline(pass);
-        asm.mov(asm.getResultOperand(), object);
-        asm.end();
-        unresolved = finishTemplate(asm, "checkcast-unresolved<" + nonnull + ">");
-        return unresolved;
+        return finishTemplate(asm, object, "checkcast-unresolved<" + nonnull + ">");
     }
 
     private XirPair buildInstanceofForLeaf(boolean nonnull) {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
-            asm.restart(CiKind.Boolean);
-            XirVariable result = asm.getResultOperand();
+            XirOperand result = asm.restart(CiKind.Boolean);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter hub = asm.createConstantInputParameter("hub", CiKind.Object);
-            XirVariable temp = asm.createTemp("temp", CiKind.Object);
+            XirOperand temp = asm.createTemp("temp", CiKind.Object);
             XirLabel pass = asm.createInlineLabel("pass");
             XirLabel fail = asm.createInlineLabel("fail");
             if (!nonnull) {
@@ -1073,10 +938,8 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.jneq(fail, temp, hub);
             asm.bindInline(pass);
             asm.mov(result, asm.b(true));
-            asm.end();
             asm.bindInline(fail);
             asm.mov(result, asm.b(false));
-            asm.end();
             resolved = finishTemplate(asm, "instanceof-leaf<" + nonnull + ">");
         }
         {
@@ -1091,15 +954,14 @@ public class MaxXirGenerator extends RiXirGenerator {
         XirTemplate unresolved;
         {
             // resolved instanceof for interface
-            asm.restart(CiKind.Boolean);
-            XirVariable result = asm.getResultOperand();
+            XirOperand result = asm.restart(CiKind.Boolean);
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter interfaceID = asm.createConstantInputParameter("interfaceID", CiKind.Int);
             XirParameter checkedHub = asm.createConstantInputParameter("checkedHub", CiKind.Object);
-            XirVariable hub = asm.createTemp("hub", CiKind.Object);
-            XirVariable mtableLength = asm.createTemp("mtableLength", CiKind.Int);
-            XirVariable mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
-            XirVariable a = asm.createTemp("a", CiKind.Int);
+            XirOperand hub = asm.createTemp("hub", CiKind.Object);
+            XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
+            XirOperand mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
+            XirOperand a = asm.createTemp("a", CiKind.Int);
             XirLabel pass = asm.createInlineLabel("pass");
             XirLabel fail = asm.createInlineLabel("fail");
             asm.mov(result, asm.b(false));
@@ -1114,13 +976,12 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
             asm.mod(a, interfaceID, mtableLength);
             asm.add(a, a, mtableStartIndex);
-            asm.mul(a, a, asm.i(wordSize));
-            asm.pload(CiKind.Int, a, hub, a, false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
+            asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
             asm.jneq(fail, a, interfaceID);
             asm.bindInline(pass);
             asm.mov(result, asm.b(true));
             asm.bindInline(fail);
-            asm.end();
             resolved = finishTemplate(asm, "instanceof-interface<" + nonnull + ">");
         }
         {
@@ -1132,7 +993,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     private XirTemplate buildUnresolvedInstanceOf(boolean nonnull) {
         XirTemplate unresolved;
-        asm.restart(CiKind.Boolean);
+        XirOperand result = asm.restart(CiKind.Boolean);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
         XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
         XirLabel fail = null;
@@ -1141,31 +1002,37 @@ public class MaxXirGenerator extends RiXirGenerator {
             fail = asm.createInlineLabel("fail");
             asm.jeq(fail, object, asm.o(null));
         }
-        callRuntimeThroughStub(asm, "unresolvedInstanceOf", asm.getResultOperand(), object, guard);
+        callRuntimeThroughStub(asm, "unresolvedInstanceOf", result, object, guard);
         if (!nonnull) {
             // null check failed
             XirLabel pass = asm.createInlineLabel("pass");
             asm.jmp(pass);
             asm.bindInline(fail);
-            asm.mov(asm.getResultOperand(), asm.b(false));
+            asm.mov(result, asm.b(false));
             asm.bindInline(pass);
         }
-        asm.end();
         unresolved = finishTemplate(asm, "instanceof-unresolved<" + nonnull + ">");
         return unresolved;
     }
 
 
-
-    private XirTemplate finishTemplate(CiXirAssembler asm, String name) {
-        final XirTemplate result = asm.finishTemplate(name);
+    private XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {
+        final XirTemplate template = asm.finishTemplate(result, name);
         if (C1XOptions.PrintXirTemplates) {
-            result.print(System.out);
+            template.print(System.out);
         }
-        return result;
+        return template;
     }
 
-    private void addWriteBarrier(CiXirAssembler asm, XirVariable object, XirVariable value) {
+    private XirTemplate finishTemplate(CiXirAssembler asm, String name) {
+        final XirTemplate template = asm.finishTemplate(name);
+        if (C1XOptions.PrintXirTemplates) {
+            template.print(System.out);
+        }
+        return template;
+    }
+
+    private void addWriteBarrier(CiXirAssembler asm, XirOperand object, XirOperand value) {
         // XXX: add write barrier mechanism
     }
 
@@ -1187,7 +1054,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         }
     }
 
-    private void callRuntimeThroughStub(CiXirAssembler asm, String method, XirVariable result, XirVariable... args) {
+    private void callRuntimeThroughStub(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
         XirTemplate stub = runtimeCallStubs.get(method);
         if (stub == null) {
             // search for the runtime call and create the stub
@@ -1206,7 +1073,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
                     assert signature.numberOfParameters() == args.length : "parameter mismatch in call to " + method;
                     CiXirAssembler stubAsm = asm.copy();
-                    stubAsm.restart(toCiKind(signature.resultKind()));
+                    XirOperand resultVariable = stubAsm.restart(toCiKind(signature.resultKind()));
 
                     XirParameter[] rtArgs = new XirParameter[signature.numberOfParameters()];
                     for (int i = 0; i < signature.numberOfParameters(); i++) {
@@ -1215,7 +1082,7 @@ public class MaxXirGenerator extends RiXirGenerator {
                         assert ciKind == args[i].kind : "type mismatch in call to " + method;
                         rtArgs[i] = stubAsm.createInputParameter("rtArgs[" + i + "]", ciKind);
                     }
-                    stubAsm.callRuntime(runtime.getRiMethod((ClassMethodActor) methodActor), stubAsm.getResultOperand(), rtArgs);
+                    stubAsm.callRuntime(runtime.getRiMethod((ClassMethodActor) methodActor), resultVariable, rtArgs);
                     stub = stubAsm.finishStub(method + "-stub");
 
                     if (C1XOptions.PrintXirTemplates) {

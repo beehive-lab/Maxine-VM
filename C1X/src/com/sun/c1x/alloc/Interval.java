@@ -22,6 +22,7 @@ package com.sun.c1x.alloc;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
@@ -319,6 +320,10 @@ public final class Interval {
     static final Interval EndMarker = new Interval(-1);
 
     Interval(int regNum) {
+
+        if (C1XOptions.PrintMetrics) {
+            C1XMetrics.LSRA_IntervalsCreated++;
+        }
 
         this.registerNumber = regNum;
         this.type = CiKind.Illegal;

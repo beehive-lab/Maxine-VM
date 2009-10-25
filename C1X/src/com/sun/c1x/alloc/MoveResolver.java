@@ -367,6 +367,7 @@ final class MoveResolver {
         // Util.traceLinearScan(4, "MoveResolver: adding mapping from %d (%d, %d) to %d (%d, %d)", fromInterval.registerNumber(), fromInterval.assignedReg(), fromInterval.assignedRegHi(), toInterval.registerNumber(),
         //                 toInterval.assignedReg(), toInterval.assignedRegHi());
 
+        assert fromInterval.type() == toInterval.type();
         mappingFrom.add(fromInterval);
         mappingFromOpr.add(LIROperandFactory.IllegalLocation);
         mappingTo.add(toInterval);

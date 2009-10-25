@@ -72,7 +72,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
 
-    private LIROperand allocateResultOperand(XirResult result) {
+    private LIROperand allocateResultOperand(XirOperand result) {
         return LIROperandFactory.address(X86.rsp, argumentIndexToStackOffset(0), result.kind);
     }
 
@@ -124,21 +124,21 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         LIROperand[] operands = new LIROperand[template.variableCount];
 
 
-        XirVariable resultOperand = template.resultOperand;
+        XirOperand resultOperand = template.resultOperand;
 
-        if (resultOperand instanceof XirResult) {
+        if (template.allocateResultOperand) {
             LIROperand outputOperand = LIROperandFactory.IllegalLocation;
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
-                outputOperand = allocateResultOperand((XirResult) resultOperand);
+                outputOperand = allocateResultOperand(resultOperand);
                 assert operands[resultOperand.index] == null;
             }
             operands[resultOperand.index] = outputOperand;
         }
 
         for (XirParameter param : template.parameters) {
-            assert !param.isConstant() : "constant parameters not supported for stubs";
+            assert !(param instanceof XirConstantOperand) : "constant parameters not supported for stubs";
             LIROperand op = allocateOperand(param, param.parameterIndex);
             assert operands[param.index] == null;
 
