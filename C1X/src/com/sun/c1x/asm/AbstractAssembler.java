@@ -62,10 +62,6 @@ public abstract class AbstractAssembler {
 
     public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList, int registerRestoreEpilogueOffset) {
 
-        if (C1XOptions.PrintMetrics) {
-            C1XMetrics.TargetMethods++;
-        }
-
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
@@ -83,6 +79,7 @@ public abstract class AbstractAssembler {
         }
 
         if (C1XOptions.PrintMetrics) {
+            C1XMetrics.TargetMethods++;
             C1XMetrics.CodeBytesEmitted += targetMethod.targetCodeSize();
             C1XMetrics.SafepointsEmitted += targetMethod.safepoints.size();
             C1XMetrics.DirectCallSitesEmitted += targetMethod.directCalls.size();

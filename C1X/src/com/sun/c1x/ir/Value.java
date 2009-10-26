@@ -150,9 +150,7 @@ public abstract class Value {
      */
     public final void redundantNullCheck() {
         if (clearNullCheck()) {
-            if (C1XOptions.PrintMetrics) {
-                C1XMetrics.NullChecksRedundant++;
-            }
+            C1XMetrics.NullChecksRedundant++;
         }
     }
 
@@ -163,9 +161,7 @@ public abstract class Value {
      */
     public final void eliminateNullCheck() {
         if (clearNullCheck()) {
-            if (C1XOptions.PrintMetrics) {
-                C1XMetrics.NullCheckEliminations++;
-            }
+            C1XMetrics.NullCheckEliminations++;
         }
     }
 

@@ -101,13 +101,9 @@ public class PhiSimplifier implements BlockClosure {
                     } else if (C1XOptions.MergeEquivalentConstants) {
                         // if the operand is the same constant, merge them
                         if (phiSubst.isConstant()) {
-                            if (C1XOptions.PrintMetrics) {
-                                C1XMetrics.EquivalentConstantsChecked++;
-                            }
+                            C1XMetrics.EquivalentConstantsChecked++;
                             if (phiSubst.asConstant().equivalent(newInstr.asConstant())) {
-                                if (C1XOptions.PrintMetrics) {
-                                    C1XMetrics.EquivalentConstantsMerged++;
-                                }
+                                C1XMetrics.EquivalentConstantsMerged++;
                                 continue;
                             }
                         }

@@ -55,49 +55,43 @@ public class BlockMerger implements BlockClosure {
                 if (sux.numberOfPreds() == 1) {
                     // the successor has only one predecessor, merge it into this block
                     mergeBlocks(block, sux, end);
-                    if (C1XOptions.PrintMetrics) {
-                        C1XMetrics.BlocksMerged++;
-                    }
+                    C1XMetrics.BlocksMerged++;
                     continue;
                 } else if (C1XOptions.DoBlockSkipping && block.next() == end && !block.isExceptionEntry()) {
                     // the successor has multiple predecessors, but this block is empty
-                    if (skipBlock(block, sux, end)) {
-                        if (C1XOptions.PrintMetrics) {
-                            C1XMetrics.BlocksSkipped++;
-                        }
-                        continue;
-                    }
+                    skipBlock(block, sux, end);
+                    break;
                 }
             }
             break;
         }
     }
 
-    private boolean skipBlock(BlockBegin block, BlockBegin sux, BlockEnd oldEnd) {
+    private void skipBlock(BlockBegin block, BlockBegin sux, BlockEnd oldEnd) {
         final ValueStack oldState = oldEnd.stateAfter();
         assert sux.stateBefore().scope() == oldState.scope();
         if (block.stateBefore().hasPhisFor(block)) {
             // can't skip a block that has phis
-            return false;
+            return;
         }
         for (BlockBegin pred : block.predecessors()) {
             final ValueStack predState = pred.end().stateAfter();
             if (predState.scope() != oldState.scope() || predState.stackSize() != oldState.stackSize()) {
                 // scopes would not match after skipping this block
                 // XXX: if phi's were smarter about scopes, this would not be necessary
-                return false;
+                return;
             }
             if (sux.stateBefore().hasPhisFor(sux)) {
                 Iterable<Phi> suxPhis = sux.stateBefore().allPhis(sux);
                 for (Phi phi : suxPhis) {
                     if (phi.operandIn(block.end().stateAfter()) != phi.operandIn(pred.end().stateAfter())) {
-                        return false;
+                        return;
                     }
                 }
             }
         }
         ir.replaceBlock(block, sux);
-        return true;
+        C1XMetrics.BlocksSkipped++;
     }
 
     private void mergeBlocks(BlockBegin block, BlockBegin sux, BlockEnd oldEnd) {

@@ -74,7 +74,7 @@ public class LivenessMarker {
                 while ((i = i.next()) != null) {
                     if (i.isLive()) {
                         prev.resetNext(i); // skip any previous dead instructions
-                    } else if (C1XOptions.PrintMetrics) {
+                    } else {
                         C1XMetrics.DeadCodeEliminated++;
                     }
                     prev = i;
