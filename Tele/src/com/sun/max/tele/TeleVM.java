@@ -1957,15 +1957,15 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public boolean isForwardingPointer(Pointer pointer) {
-        return VMConfiguration.hostOrTarget().heapScheme().isForwardingPointer(pointer);
+        return teleHeapManager.isForwardingPointer(pointer);
     }
 
     public Pointer getTrueLocationFromPointer(Pointer pointer) {
-        return VMConfiguration.hostOrTarget().heapScheme().getTrueLocationFromPointer(pointer);
+        return teleHeapManager.getTrueLocationFromPointer(pointer);
     }
 
     public Pointer getForwardedObject(Pointer pointer) {
-        return VMConfiguration.hostOrTarget().heapScheme().getForwardedObject(pointer, teleProcess.dataAccess());
+        return teleHeapManager.getForwardedObject(pointer, teleProcess.dataAccess());
     }
 
     /**

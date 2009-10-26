@@ -167,17 +167,4 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
     public void enableImmortalMemoryAllocation() {
         FatalError.unexpected("Non implemented");
     }
-
-    public boolean isForwardingPointer(Pointer pointer) {
-        return false;
-    }
-
-    public Pointer getTrueLocationFromPointer(Pointer value) {
-        return value;
-    }
-
-    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
-        return objectPointer;
-    }
-
 }
