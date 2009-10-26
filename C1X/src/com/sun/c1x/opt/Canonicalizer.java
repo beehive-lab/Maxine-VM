@@ -1244,9 +1244,7 @@ public class Canonicalizer extends ValueVisitor {
                 Object result = reflectMethod.invoke(recvr, argArray);
                 CiKind basicType = method.signatureType().returnBasicType();
                 // set the result of this instruction to be the result of invocation
-                if (C1XOptions.PrintMetrics) {
-                    C1XMetrics.MethodsFolded++;
-                }
+                C1XMetrics.MethodsFolded++;
                 return new CiConstant(basicType, result);
                 // note that for void, we will have a void constant with value null
             } catch (IllegalAccessException e) {

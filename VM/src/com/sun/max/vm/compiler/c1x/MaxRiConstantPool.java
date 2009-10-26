@@ -279,9 +279,7 @@ public class MaxRiConstantPool implements RiConstantPool {
 
     private boolean attemptResolution(ResolvableConstant constant) {
         if (C1XOptions.AggressivelyResolveCPEs) {
-            if (C1XOptions.PrintMetrics) {
-                C1XMetrics.ResolveCPEAttempts++;
-            }
+            C1XMetrics.ResolveCPEAttempts++;
             return constant.isResolvableWithoutClassLoading(constantPool);
         }
         return false;

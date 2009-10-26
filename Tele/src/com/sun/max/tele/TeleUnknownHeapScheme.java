@@ -42,7 +42,6 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
         return null;
     }
 
-    @Override
     public boolean isInLiveMemory(Address address) {
         if (teleVM().isInGC()) {
             return true;

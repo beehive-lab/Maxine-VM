@@ -36,6 +36,7 @@ public class C1XMetrics {
     public static int MethodsFolded;
     public static int InlineForcedMethods;
     public static int InlineForbiddenMethods;
+    public static int InlinedJsrs;
     public static int NullCheckIterations;
     public static int NullCheckEliminations;
     public static int NullChecksRedundant;
