@@ -30,6 +30,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.grip.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -154,14 +155,17 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public final String getTextForTitle() {
-        if (teleObject.isLive()) {
-            Pointer pointer = teleObject.getCurrentOrigin();
-            title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
-            return title;
-        } else if (teleObject.isObsolete()) {
-            return "OBSOLETE: " + title;
+        switch (teleObject.getTeleObjectMemoryState()) {
+            case LIVE:
+                Pointer pointer = teleObject.getCurrentOrigin();
+                title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
+                return title;
+            case OBSOLETE:
+                return TeleObjectMemory.State.OBSOLETE.label() + " " + title;
+            case DEAD:
+                return TeleObjectMemory.State.DEAD.label() + " " + title;
         }
-        return "DEAD: " + title;
+        return null;
     }
 
     @Override

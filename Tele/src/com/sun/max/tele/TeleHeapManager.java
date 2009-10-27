@@ -50,8 +50,8 @@ import com.sun.max.vm.tele.*;
  * only when being inspected, that allows Inspector references
  * to track object locations when they are relocated by GC.
  * <br>
- * The manager needs to be specialized by a helper class working in
- * association with a particular heap implementation.
+ * The manager needs to be specialized by a helper class that
+ * implements the interface {@link TeleHeapScheme}
  *
  * @author Michael Van De Vanter
  * @author Hannes Payer
@@ -61,7 +61,7 @@ import com.sun.max.vm.tele.*;
  * @see HeapScheme
  * @see TeleHeapScheme
  */
-public final class TeleHeapManager extends AbstractTeleVMHolder {
+public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleHeapScheme {
 
     private static final int TRACE_VALUE = 2;
 
@@ -357,15 +357,24 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
         return readCollectionEpoch() != readRootEpoch();
     }
 
-    /**
-     * Determines whether the specific heap implementation considers
-     * a memory location to be "live".
-     *
-     * @param address a memory location in the VM
-     * @return whether the location is in a live area of the heap.
-     */
+    public Class heapSchemeClass() {
+        return teleHeapScheme.heapSchemeClass();
+    }
+
     public boolean isInLiveMemory(Address address) {
         return teleHeapScheme.isInLiveMemory(address);
+    }
+
+    public boolean isForwardingPointer(Pointer pointer) {
+        return teleHeapScheme.isForwardingPointer(pointer);
+    }
+
+    public Pointer getTrueLocationFromPointer(Pointer pointer) {
+        return teleHeapScheme.getTrueLocationFromPointer(pointer);
+    }
+
+    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
+        return teleHeapScheme.getForwardedObject(objectPointer, dataAccess);
     }
 
     /**

@@ -48,7 +48,7 @@ import com.sun.max.vm.value.*;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectProvider {
+public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectProvider, TeleObjectMemory {
 
     /**
      * Identification for the three low-level Maxine heap objects implementations upon which all objects are implemented.
@@ -115,27 +115,21 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         lastValidPointer = Pointer.zero();
     }
 
-    /**
-     * The status of the object in the VM.  A new object is by definition "live", but
-     * once it has been freed by the VM's garbage collector, it is no longer a legitimate
-     * object.
-     * <br>
-     * Once an object is dead the memory most recently allocated to it might be
-     * reused by the VM.  For debugging purposes, however, a {@link TeleObject}
-     * continues to refer to the abandoned memory as if it were an object.
-     *
-     * @return whether the object in the VM is still live
-     */
+
+    public TeleObjectMemory.State getTeleObjectMemoryState() {
+        return reference.grip().getTeleObjectMemoryState();
+    }
+
     public boolean isLive() {
-        return reference.grip().getState() == TeleGrip.State.LIVE;
+        return reference.grip().isLive();
     }
 
     public boolean isObsolete() {
-        return reference.grip().getState() == TeleGrip.State.OBSOLETE;
+        return reference.grip().isObsolete();
     }
 
     public boolean isDead() {
-        return reference.grip().getState() == TeleGrip.State.DEAD;
+        return reference.grip().isDead();
     }
 
     public TeleObject getForwardedTeleObject() {
@@ -301,17 +295,9 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return the local surrogate for the Hub of this object
      */
     public TeleHub getTeleHub() {
-        Pointer pointer = teleVM().getForwardedObject(reference.toOrigin());
-        Word word = teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(Reference.fromOrigin(pointer));
-        pointer = teleVM().getForwardedObject(word.asPointer());
-        final Reference hubReference = teleVM().wordToReference(pointer);
-        TeleObject teleObjectTmp = teleVM().makeTeleObject(hubReference);
-        TeleHub teleHubTmp = null;
-        if (teleObjectTmp != null && teleObjectTmp instanceof TeleHub) {
-            teleHubTmp = (TeleHub) teleVM().makeTeleObject(hubReference);
-            teleHub = teleHubTmp;
-        } else {
-            return teleHub;
+        if (teleHub == null) {
+            final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
+            teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
         }
         return teleHub;
     }

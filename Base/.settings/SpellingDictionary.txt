@@ -8,6 +8,7 @@ Bernd
 Caprioli
 Christos
 Cintra
+Darwin
 David
 Daynes
 De
@@ -157,6 +158,9 @@ uncompiled
 undock
 undockable
 unix
+unpark
+unparks
 viewport
+vm
 watchpoint
 watchpoints
