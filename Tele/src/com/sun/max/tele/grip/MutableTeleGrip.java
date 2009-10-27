@@ -44,18 +44,18 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
     }
 
     @Override
-    public State getState() {
+    public TeleObjectMemory.State getTeleObjectMemoryState() {
         if (forwardedTeleGrip != null) {
             MutableTeleGrip forwardedTeleGrip = (MutableTeleGrip) getForwardedTeleGrip();
             if (forwardedTeleGrip.index() == -1) {
-                return State.DEAD;
+                return TeleObjectMemory.State.DEAD;
             }
-            return State.OBSOLETE;
+            return TeleObjectMemory.State.OBSOLETE;
         }
         if (index == -1) {
-            return State.DEAD;
+            return TeleObjectMemory.State.DEAD;
         }
-        return State.LIVE;
+        return TeleObjectMemory.State.LIVE;
     }
 
     @Override
@@ -93,7 +93,7 @@ public final class MutableTeleGrip extends RemoteTeleGrip {
 
     @Override
     public void finalize() throws Throwable {
-        if (getState() == State.LIVE) {
+        if (isLive()) {
             teleGripScheme().finalizeMutableTeleGrip(index);
         }
         super.finalize();
