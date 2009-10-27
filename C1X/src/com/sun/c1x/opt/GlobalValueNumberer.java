@@ -70,7 +70,11 @@ public class GlobalValueNumberer {
             assert valueMaps.get(dominator) != null : "value map of dominator must exist";
 
             // create new value map with increased nesting
-            currentMap = new ValueMap(valueMaps.get(dominator));
+            if (block.isExceptionEntry()) {
+                currentMap = new ValueMap();
+            } else {
+                currentMap = new ValueMap(valueMaps.get(dominator));
+            }
 
             assert numPreds > 1 || dominator == block.predAt(0) : "dominator must be equal to predecessor";
 
