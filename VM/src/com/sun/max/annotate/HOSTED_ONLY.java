@@ -39,7 +39,7 @@ import java.lang.annotation.*;
  *     return value;
  * }
  *
- * @PROTOTYPE_ONLY
+ * @HOSTED_ONLY
  * public int counter() {
  *     return counter;
  * }

@@ -258,29 +258,4 @@ public interface HeapScheme extends VMScheme {
      */
     void disableImmortalMemoryAllocation();
 
-    /**
-     * Determines if a pointer is a GC forwarding pointer.
-     *
-     * @param pointer a pointer to VM memory
-     * @return true iff the pointer is a GC forwarding pointer
-     */
-    boolean isForwardingPointer(Pointer pointer);
-
-    /**
-     * Get where a pointer actually points, even if it is a forwarding pointer.
-     *
-     * @param forwardingPointer a pointer that might be a forwarding pointer
-     * @return where the pointers points, whether or not it is a forwarding pointer.
-     */
-    Pointer getTrueLocationFromPointer(Pointer pointer);
-
-    /**
-     * Returns the true location of an object that might have been forwarded, either
-     * the new location (if forwarded) or the same location (if not forwarded).
-     *
-     * @param objectPointer an object pointer
-     * @param dataAccess data access
-     * @return the current, possibly forwarded, location of the object
-     */
-    Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess);
 }

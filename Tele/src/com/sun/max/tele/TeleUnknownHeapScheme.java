@@ -54,4 +54,16 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
         return false;
     }
 
+    public boolean isForwardingPointer(Pointer pointer) {
+        return false;
+    }
+
+    public Pointer getTrueLocationFromPointer(Pointer pointer) {
+        return pointer;
+    }
+
+    public Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess) {
+        return pointer;
+    }
+
 }

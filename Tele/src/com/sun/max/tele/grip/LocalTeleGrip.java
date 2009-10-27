@@ -36,8 +36,8 @@ public class LocalTeleGrip extends TeleGrip {
     }
 
     @Override
-    public State getState() {
-        return State.LIVE;
+    public TeleObjectMemory.State getTeleObjectMemoryState() {
+        return TeleObjectMemory.State.LIVE;
     }
 
     private final TeleGripScheme teleGripScheme;
