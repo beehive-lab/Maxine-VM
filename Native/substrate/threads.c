@@ -482,10 +482,10 @@ JNIEnv *thread_attach(NativeThreadLocals ntl) {
 #endif
 
     /* Obtain two pages for the thread locals, the lower of which will be page protected. */
-    int pageSize = virtualMemory_getPageSize();
     ThreadLocals triggered_tl;
 
 #if os_SOLARIS
+    int pageSize = virtualMemory_getPageSize();
     triggered_tl = (ThreadLocals) memalign(pageSize, 2 * pageSize);
     virtualMemory_protectPage(triggered_tl);
     triggered_tl += pageSize - sizeof(Address);
