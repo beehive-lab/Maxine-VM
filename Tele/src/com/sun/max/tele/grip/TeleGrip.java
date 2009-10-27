@@ -28,7 +28,7 @@ import com.sun.max.vm.reference.*;
  * @author Bernd Mathiske
  * @author Hannes Payer
  */
-public abstract class TeleGrip extends Grip {
+public abstract class TeleGrip extends Grip implements TeleObjectMemory {
 
     private long gripOID = 0;
 
@@ -36,13 +36,7 @@ public abstract class TeleGrip extends Grip {
 
     protected boolean collectedByGC = false;
 
-    public enum State {
-        LIVE,
-        OBSOLETE,
-        DEAD;
-    }
-
-    private State state = State.LIVE;
+    private TeleObjectMemory.State state = TeleObjectMemory.State.LIVE;
 
     protected TeleGrip() {
     }
@@ -88,13 +82,25 @@ public abstract class TeleGrip extends Grip {
         return this;
     }
 
-    public abstract State getState();
+    public abstract TeleObjectMemory.State getTeleObjectMemoryState();
+
+    public boolean isLive() {
+        return getTeleObjectMemoryState() == TeleObjectMemory.State.LIVE;
+    }
+
+    public boolean isObsolete() {
+        return getTeleObjectMemoryState() == TeleObjectMemory.State.OBSOLETE;
+    }
+
+    public boolean isDead() {
+        return getTeleObjectMemoryState() == TeleObjectMemory.State.DEAD;
+    }
 
     public static final TeleGrip ZERO = new TeleGrip() {
 
         @Override
-        public State getState() {
-            return State.DEAD;
+        public TeleObjectMemory.State getTeleObjectMemoryState() {
+            return TeleObjectMemory.State.DEAD;
         }
 
         @Override

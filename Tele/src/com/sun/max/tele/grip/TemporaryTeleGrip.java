@@ -36,7 +36,7 @@ public class TemporaryTeleGrip extends ConstantTeleGrip {
     }
 
     @Override
-    public State getState() {
-        return State.DEAD;
+    public TeleObjectMemory.State getTeleObjectMemoryState() {
+        return TeleObjectMemory.State.DEAD;
     }
 }

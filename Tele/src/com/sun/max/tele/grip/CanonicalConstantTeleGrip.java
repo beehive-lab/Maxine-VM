@@ -40,7 +40,7 @@ public class CanonicalConstantTeleGrip extends ConstantTeleGrip {
     }
 
     @Override
-    public State getState() {
-        return State.LIVE;
+    public TeleObjectMemory.State getTeleObjectMemoryState() {
+        return TeleObjectMemory.State.LIVE;
     }
 }
