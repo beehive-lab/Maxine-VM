@@ -41,11 +41,12 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Ben L. Titzer
  * @author Bernd Mathiske
+ * @author Paul Caprioli
  */
 public final class VmThreadMap {
 
     /**
-     * Specialised JavaMonitor intended to be bound to the
+     * Specialized JavaMonitor intended to be bound to the
      * VMThreadMap.ACTIVE object at image build time.
      *
      * MonitorEnter semantics are slightly modified to
@@ -54,8 +55,7 @@ public final class VmThreadMap {
      *
      * @author Simon Wilkinson
      */
-    static class VMThreadMapJavaMonitor extends StandardJavaMonitor {
-
+    static final class VMThreadMapJavaMonitor extends StandardJavaMonitor {
         @Override
         public void monitorEnter() {
             final VmThread currentThread = VmThread.current();
@@ -70,6 +70,69 @@ public final class VmThreadMap {
             } else {
                 super.monitorEnter();
             }
+        }
+    }
+
+    /**
+     * The {@code IDMap} class manages thread IDs and a mapping between thread IDs and
+     * the corresponding {@code VmThread} instance.
+     * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockword64}).
+     *
+     * Note that we synchronize explicitly on ACTIVE to ensure that we don't disturb the TERMINATED state
+     * during thread tear down.
+     */
+    private static final class IDMap {
+        private int nextID = 1;
+        private int[] freeList;
+        private VmThread[] vmThreads;
+
+        IDMap(int initialSize) {
+            freeList = new int[initialSize];
+            vmThreads = new VmThread[initialSize];
+            for (int i = 0; i < freeList.length; i++) {
+                freeList[i] = i + 1;
+            }
+        }
+
+        int acquire(VmThread vmThread) {
+            synchronized (ACTIVE) {
+                FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
+                final int length = freeList.length;
+                if (nextID >= length) {
+                    // grow the free list and initialize the new part
+                    final int[] newFreeList = Arrays.grow(freeList, length * 2);
+                    for (int i = length; i < newFreeList.length; i++) {
+                        newFreeList[i] = i + 1;
+                    }
+                    freeList = newFreeList;
+
+                    // grow the vmThreads list and copy
+                    final VmThread[] newVmThreads = new VmThread[length * 2];
+                    for (int i = 0; i < length; i++) {
+                        newVmThreads[i] = vmThreads[i];
+                    }
+                    vmThreads = newVmThreads;
+                }
+                final int id = nextID;
+                nextID = freeList[nextID];
+                vmThreads[id] = vmThread;
+                vmThread.setID(id);
+                return id;
+            }
+        }
+
+        void release(int id) {
+            synchronized (ACTIVE) {
+                freeList[id] = nextID;
+                vmThreads[id] = null;
+                nextID = id;
+            }
+        }
+
+        @INLINE
+        VmThread get(int id) {
+            // this operation may be performance critical, so avoid the bounds check
+            return UnsafeCast.asVmThread(ArrayAccess.getObject(vmThreads, id));
         }
     }
 
@@ -95,32 +158,79 @@ public final class VmThreadMap {
      */
     private Pointer threadLocalsListHead = Pointer.zero();
 
-    private VmThreadMap() {
+
+    @INLINE
+    private static Pointer getPrev(Pointer vmThreadLocals) {
+        return VmThreadLocal.BACKWARD_LINK.getConstantWord(vmThreadLocals).asPointer();
+    }
+
+    @INLINE
+    private static Pointer getNext(Pointer vmThreadLocals) {
+        return VmThreadLocal.FORWARD_LINK.getConstantWord(vmThreadLocals).asPointer();
+    }
+
+    @INLINE
+    private static void setPrev(Pointer vmThreadLocals, Pointer prev) {
+        if (!vmThreadLocals.isZero()) {
+            VmThreadLocal.BACKWARD_LINK.setConstantWord(vmThreadLocals, prev);
+        }
+    }
+
+    @INLINE
+    private static void setNext(Pointer vmThreadLocals, Pointer next) {
+        if (!vmThreadLocals.isZero()) {
+            VmThreadLocal.FORWARD_LINK.setConstantWord(vmThreadLocals, next);
+        }
+    }
+
+
+    /**
+     * Add the main thread (or an attached thread) to the thread map ACTIVE.
+     *
+     * @param vmThread the vmThread representing the main or attached thread
+     */
+    public static void addVmThread(VmThread vmThread) {
+        ACTIVE.idMap.acquire(vmThread);
     }
 
     /**
-     * Adds the specified thread locals to this thread map and initializes several of its
+     * Adds the specified thread locals to the ACTIVE thread map and initializes several of its
      * important values (such as its ID and VM thread reference).
      *
      * Note that this method does not perform synchronization on the thread map, because it must
      * only be executed in a newly created thread while the creating thread holds the lock on
-     * this thread map.
+     * the ACTIVE thread map.
      *
      * @param id the ID of the VM thread, which should match the ID of the VmThread
      * @param vmThreadLocals a pointer to the VM thread locals for the thread
      * @return a reference to the VmThread for this thread
      */
-    public VmThread addVmThreadLocals(int id, Pointer vmThreadLocals) {
-        final VmThread vmThread = idMap.get(id);
+    public static VmThread addVmThreadLocals(int id, Pointer vmThreadLocals) {
+        final VmThread vmThread = ACTIVE.idMap.get(id);
+        addVmThreadLocals(vmThread, vmThreadLocals);
+        return vmThread;
+    }
+
+    /**
+     * Adds the specified thread locals to the ACTIVE thread map and initializes several of its
+     * important values (such as its ID and VM thread reference).
+     *
+     * Note that this method does not perform synchronization on the thread map, because it must
+     * only be executed in a newly created thread while the creating thread holds the lock on
+     * the ACTIVE thread map.
+     *
+     * @param vmThread the VmThread to add
+     * @param vmThreadLocals a pointer to the VM thread locals for the thread
+     */
+    public static void addVmThreadLocals(VmThread vmThread, Pointer vmThreadLocals) {
         VmThreadLocal.VM_THREAD.setConstantReference(vmThreadLocals, Reference.fromJava(vmThread));
         // insert this thread locals into the list
-        setNext(vmThreadLocals, threadLocalsListHead);
-        setPrev(threadLocalsListHead, vmThreadLocals);
+        setNext(vmThreadLocals, ACTIVE.threadLocalsListHead);
+        setPrev(ACTIVE.threadLocalsListHead, vmThreadLocals);
         // at the head
-        threadLocalsListHead = vmThreadLocals;
+        ACTIVE.threadLocalsListHead = vmThreadLocals;
         // and signal that this thread has started up and joined the list
-        vmThreadStartCount++;
-        return vmThread;
+        ACTIVE.vmThreadStartCount++;
     }
 
     /**
@@ -148,40 +258,10 @@ public final class VmThreadMap {
         }
     }
 
-    /**
-     * Add the main thread to this thread map.
-     *
-     * @param vmThread the vmThread representing the main thread
-     */
-    public void addMainVmThread(VmThread vmThread) {
-        vmThread.setID(idMap.acquire(vmThread));
+
+    private VmThreadMap() {
     }
 
-    // Helper routines to manipulate the linked list of vm thread locals
-
-    @INLINE
-    private Pointer getPrev(Pointer vmThreadLocals) {
-        return VmThreadLocal.BACKWARD_LINK.getConstantWord(vmThreadLocals).asPointer();
-    }
-
-    @INLINE
-    private Pointer getNext(Pointer vmThreadLocals) {
-        return VmThreadLocal.FORWARD_LINK.getConstantWord(vmThreadLocals).asPointer();
-    }
-
-    @INLINE
-    private void setPrev(Pointer vmThreadLocals, Pointer prev) {
-        if (!vmThreadLocals.isZero()) {
-            VmThreadLocal.BACKWARD_LINK.setConstantWord(vmThreadLocals, prev);
-        }
-    }
-
-    @INLINE
-    private void setNext(Pointer vmThreadLocals, Pointer next) {
-        if (!vmThreadLocals.isZero()) {
-            VmThreadLocal.FORWARD_LINK.setConstantWord(vmThreadLocals, next);
-        }
-    }
 
     /**
      * Creates the native thread for a VM thread and start it running. This method acquires an ID
@@ -310,66 +390,4 @@ public final class VmThreadMap {
         return idMap.get(id);
     }
 
-    /**
-     * The {@code IDMap} class manages thread ids and a mapping between thread ids and
-     * the corresponding {@code VmThread} instance.
-     * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockword64}).
-     *
-     * Note that we synchronize explicitly on ACTIVE to ensure that we don't disturb the TERMINATED state
-     * during thread tear down.
-     */
-    private final class IDMap {
-        private int nextID = 1;
-        private int[] freeList;
-        private VmThread[] vmThreads;
-
-        IDMap(int initialSize) {
-            freeList = new int[initialSize];
-            vmThreads = new VmThread[initialSize];
-            for (int i = 0; i < freeList.length; i++) {
-                freeList[i] = i + 1;
-            }
-        }
-
-        int acquire(VmThread vmThread) {
-            synchronized (ACTIVE) {
-                FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
-                final int length = freeList.length;
-                if (nextID >= length) {
-                    // grow the free list and initialize the new part
-                    final int[] newFreeList = Arrays.grow(freeList, length * 2);
-                    for (int i = length; i < newFreeList.length; i++) {
-                        newFreeList[i] = i + 1;
-                    }
-                    freeList = newFreeList;
-
-                    // grow the vmThreads list and copy
-                    final VmThread[] newVmThreads = new VmThread[length * 2];
-                    for (int i = 0; i < length; i++) {
-                        newVmThreads[i] = vmThreads[i];
-                    }
-                    vmThreads = newVmThreads;
-                }
-                final int id = nextID;
-                nextID = freeList[nextID];
-                vmThreads[id] = vmThread;
-                vmThread.setID(id);
-                return id;
-            }
-        }
-
-        void release(int id) {
-            synchronized (ACTIVE) {
-                freeList[id] = nextID;
-                vmThreads[id] = null;
-                nextID = id;
-            }
-        }
-
-        @INLINE
-        VmThread get(int id) {
-            // this operation may be performance critical, so avoid the bounds check
-            return UnsafeCast.asVmThread(ArrayAccess.getObject(vmThreads, id));
-        }
-    }
 }

@@ -25,6 +25,8 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -74,4 +76,24 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
         return true;
     }
 
+    public boolean isForwardingPointer(Pointer pointer) {
+        return (!pointer.isZero()) &&  pointer.and(1).toLong() == 1;
+    }
+
+    public Pointer getTrueLocationFromPointer(Pointer pointer) {
+        return isForwardingPointer(pointer) ? pointer.minus(1) : pointer;
+    }
+
+    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
+        if (!objectPointer.isZero()) {
+            Pointer pointer = dataAccess.readWord(objectPointer.plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer();
+            if (isForwardingPointer(pointer)) {
+                final Pointer newPointer = getTrueLocationFromPointer(pointer);
+                if (!newPointer.isZero()) {
+                    return newPointer;
+                }
+            }
+        }
+        return objectPointer;
+    }
 }

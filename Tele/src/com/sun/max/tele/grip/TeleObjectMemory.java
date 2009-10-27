@@ -34,7 +34,9 @@ public interface TeleObjectMemory {
 
     public enum State {
         LIVE("Live", "The region of memory is in the live heap, represents an object that was reachable as of the most recent GC"),
+
         OBSOLETE("Obsolete", "The region of memory formerly represented an object, which has now been relocated by GC"),
+
         DEAD("Dead", "The region of memory formerly represented an object, which has now been collected by GC");
 
         private final String label;
