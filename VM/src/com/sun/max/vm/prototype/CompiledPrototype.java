@@ -469,9 +469,9 @@ public class CompiledPrototype extends Prototype {
         final Relationship vmEntryPoint = null;
 
         final RunScheme runScheme = vmConfiguration().runScheme();
-        add(BootImage.getRunMethodActor(MaxineVM.class), null, vmEntryPoint);
-        add(BootImage.getRunMethodActor(VmThread.class), null, vmEntryPoint);
-        add(BootImage.getRunMethodActor(runScheme.getClass()), null, vmEntryPoint);
+        add(BootImage.getMethodActorFor(BootImage.RUN, MaxineVM.class), null, vmEntryPoint);
+        add(BootImage.getMethodActorFor(BootImage.RUN, VmThread.class), null, vmEntryPoint);
+        add(BootImage.getMethodActorFor(BootImage.RUN, runScheme.getClass()), null, vmEntryPoint);
 
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, imageMethodActors, vmEntryPoint);

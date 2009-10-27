@@ -28,6 +28,7 @@
  *
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Paul Caprioli
  */
 #include <alloca.h>
 #include <stdarg.h>
@@ -817,8 +818,14 @@ jint JNICALL jni_DestroyJavaVM(JavaVM *vm) {
     return c_UNIMPLEMENTED();
 }
 
+/* TODO: Currently, the last argument (args) is ignored. */
 jint JNICALL jni_AttachCurrentThread(JavaVM *vm, void **penv, void *args) {
-    return c_UNIMPLEMENTED();
+    NativeThreadLocals ntl = calloc(1, sizeof(NativeThreadLocalsStruct));
+    if (ntl == NULL) {
+        return JNI_ENOMEM;
+    }
+    *penv = thread_attach(ntl);
+    return JNI_OK;
 }
 
 jint JNICALL jni_DetachCurrentThread(JavaVM *vm) {
@@ -842,3 +849,13 @@ const struct JNIInvokeInterface_ jni_InvokeInterface = {
 };
 
 struct JavaVM_ main_vm = {&jni_InvokeInterface};
+
+JNIEXPORT jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vm, jsize vmBufLen, jsize *nVMs) {
+    if (vmBufLen <= 0) {
+        return JNI_EINVAL;
+    }
+    *vm = (JavaVM *) (&main_vm);
+    *nVMs = 1;
+    return JNI_OK;
+}
+
