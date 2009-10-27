@@ -65,7 +65,7 @@ public final class CodeAttributePrinter {
      */
     public static void print(Writer writer, CodeAttribute codeAttribute) {
         final PrintWriter printWriter = (writer instanceof PrintWriter) ? (PrintWriter) writer : new PrintWriter(writer);
-        printWriter.println("Stack=" + codeAttribute.maxStack + ", Locals=" + codeAttribute.maxLocals);
+        printWriter.println("Stack=" + (int) codeAttribute.maxStack + ", Locals=" + (int) codeAttribute.maxLocals);
         final BytecodePrinter bytecodePrinter = new BytecodePrinter(printWriter, codeAttribute.constantPool);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
         try {
