@@ -321,10 +321,7 @@ public final class Interval {
 
     Interval(int regNum) {
 
-        if (C1XOptions.PrintMetrics) {
-            C1XMetrics.LSRA_IntervalsCreated++;
-        }
-
+        C1XMetrics.LSRA_IntervalsCreated++;
         this.registerNumber = regNum;
         this.type = CiKind.Illegal;
         this.first = Range.EndMarker;

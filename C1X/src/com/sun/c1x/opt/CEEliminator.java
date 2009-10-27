@@ -205,9 +205,7 @@ public class CEEliminator implements BlockClosure {
             hasSubstitution = true;
 
             // 3) successfully eliminated a conditional expression
-            if (C1XOptions.PrintMetrics) {
-                C1XMetrics.ConditionalEliminations++;
-            }
+            C1XMetrics.ConditionalEliminations++;
         }
     }
 
