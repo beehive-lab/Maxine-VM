@@ -22,6 +22,7 @@
  * @author Ben L. Titzer
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Paul Caprioli
  */
 #include <alloca.h>
 #include <unistd.h>
@@ -188,7 +189,7 @@ NativeThreadLocals thread_createSegments(int id, Size stackSize) {
     return ntl;
 }
 
-void initStackProtection(NativeThreadLocals ntl) {
+static void initStackProtection(NativeThreadLocals ntl) {
 #if os_GUESTVMXEN
 	// all page protection is handled in following call
 	guestvmXen_initStack(ntl);
@@ -196,11 +197,7 @@ void initStackProtection(NativeThreadLocals ntl) {
 	ntl->stackBlueZone = ntl->stackYellowZone;
     virtualMemory_protectPage(ntl->stackRedZone);
     virtualMemory_protectPage(ntl->stackYellowZone);
-#if !os_SOLARIS
-    virtualMemory_protectPage(virtualMemory_pageAlign(ntl->stackBase));
 #endif
-#endif
-
 }
 
 /**
@@ -208,38 +205,18 @@ void initStackProtection(NativeThreadLocals ntl) {
  *
  * @param ntl the data structure containing the address of the stack. The other members of this
  *            struct are initialized by this function.
- * @return the pointer to the safepoints-enabled thread locals for the current thread
+ * @param triggered_tl the address of the triggered thread locals.
+ * @return the pointer to the safepoints-enabled thread locals for the current thread.
  */
-ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
-    Address stackBottom;
-#if os_SOLARIS
-    /* we let the thread library allocate the stack for us. */
-    stack_t stackInfo;
-    int result = thr_stksegment(&stackInfo);
-
-    if (result != 0) {
-        log_exit(result, "thr_stksegment failed");
-    }
-
-    ntl->stackSize = stackInfo.ss_size;
-    ntl->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
-    /* the thread library protects a page below the stack for us. */
-    stackBottom = ntl->stackBase;
-#else
-    /* the stack is malloc'd on these platforms, protect a page for the thread locals */
-    /* N.B. do not read or write the contents of the stack until initStackProtection returns. */
-    stackBottom = virtualMemory_pageAlign(ntl->stackBase) + virtualMemory_getPageSize();
-#endif
+static ThreadLocals thread_initSegments(NativeThreadLocals ntl, ThreadLocals triggered_tl) {
     const int tlSize = threadLocalsSize();
     const int jfaSize = javaFrameAnchorSize();
-    Address current = stackBottom - sizeof(Address);
     Size refMapAreaSize = 1 + ntl->stackSize / sizeof(Address) / 8;
 
-    ThreadLocals triggered_tl = (ThreadLocals) (current + (tlSize * 0));
-    ThreadLocals enabled_tl   = (ThreadLocals) (current + (tlSize * 1));
-    ThreadLocals disabled_tl  = (ThreadLocals) (current + (tlSize * 2));
+    ThreadLocals enabled_tl  = triggered_tl + tlSize;
+    ThreadLocals disabled_tl = enabled_tl + tlSize;
 
-    current = (Address) disabled_tl + tlSize;
+    Address current = (Address) disabled_tl + tlSize;
     Address anchor = current;
     current += jfaSize;
     ntl->refMapArea = current;
@@ -248,6 +225,7 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     current += virtualMemory_getPageSize();
     ntl->stackYellowZone = current;
     current += virtualMemory_getPageSize();
+
     initStackProtection(ntl);
 
     /* Clear each of the thread local spaces: */
@@ -283,7 +261,6 @@ ThreadLocals thread_initSegments(NativeThreadLocals ntl) {
     log_println("thread %3d: stackBase = %p", id, ntl->stackBase);
     log_println("thread %3d: stackBase (aligned) = %p", id, virtualMemory_pageAlign(ntl->stackBase));
     log_println("thread %3d: stackSize = %d (%p)", id, ntl->stackSize, ntl->stackSize);
-    log_println("thread %3d: stackBottom = %p", id, stackBottom);
     log_println("thread %3d: triggeredVmThreadLocals = %p", id, triggered_tl);
     log_println("thread %3d: enabledVmThreadLocals   = %p", id, enabled_tl);
     log_println("thread %3d: disabledVmThreadLocals  = %p", id, disabled_tl);
@@ -441,7 +418,32 @@ void *thread_runJava(void *arg) {
 #endif
 
     /* set up the VM thread locals, guard pages, etc */
-    ThreadLocals tl = thread_initSegments(ntl);
+    Address stackBottom;
+#if os_SOLARIS
+    /* we let the thread library allocate the stack for us. */
+    stack_t stackInfo;
+    int result = thr_stksegment(&stackInfo);
+
+    if (result != 0) {
+        log_exit(result, "thr_stksegment failed");
+    }
+
+    ntl->stackSize = stackInfo.ss_size;
+    ntl->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
+    /* the thread library protects a page below the stack for us. */
+    stackBottom = ntl->stackBase;
+#elif os_GUESTVMXEN
+    /* all page protection will be handled for us. */
+    stackBottom = virtualMemory_pageAlign(ntl->stackBase) + virtualMemory_getPageSize();
+#else
+    /* the stack is malloc'd on these platforms, protect a page for the thread locals */
+    /* N.B. do not read or write the contents of the stack until initStackProtection returns. */
+    stackBottom = virtualMemory_pageAlign(ntl->stackBase);
+    virtualMemory_protectPage(stackBottom);
+    stackBottom += virtualMemory_getPageSize();
+#endif
+
+    ThreadLocals tl = thread_initSegments(ntl, stackBottom - sizeof(Address));
     thread_setThreadLocals(theThreadLocalsKey, (void *) tl);
 
     VMThreadRunMethod method = image_offset_as_address(VMThreadRunMethod, vmThreadRunMethodOffset);
@@ -460,7 +462,6 @@ void *thread_runJava(void *arg) {
               getThreadLocal(Address, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
               getThreadLocal(Address, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS),
               ntl->refMapArea,
-              ntl->stackRedZone,
               ntl->stackYellowZone,
               ntl->stackBase + ntl->stackSize);
 
@@ -472,6 +473,50 @@ void *thread_runJava(void *arg) {
 #endif
     /* Successful thread exit */
     return NULL;
+}
+
+JNIEnv *thread_attach(NativeThreadLocals ntl) {
+    Address nativeThread = (Address) thread_current();
+#if log_THREADS
+    log_println("thread_attach: BEGIN t=%p", nativeThread);
+#endif
+
+    /* Obtain two pages for the thread locals, the lower of which will be page protected. */
+    ThreadLocals triggered_tl;
+
+#if os_SOLARIS
+    int pageSize = virtualMemory_getPageSize();
+    triggered_tl = (ThreadLocals) memalign(pageSize, 2 * pageSize);
+    virtualMemory_protectPage(triggered_tl);
+    triggered_tl += pageSize - sizeof(Address);
+
+    stack_t stackInfo;
+    int result = thr_stksegment(&stackInfo);
+    if (result != 0) {
+        log_exit(result, "thr_stksegment failed");
+    }
+    ntl->stackSize = stackInfo.ss_size;
+    ntl->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
+#endif
+
+    ThreadLocals tl = thread_initSegments(ntl, triggered_tl);
+    thread_setThreadLocals(theThreadLocalsKey, (void *) tl);
+
+    VMThreadAttachMethod method = image_offset_as_address(VMThreadAttachMethod, vmThreadAttachMethodOffset);
+    (*method)(nativeThread,
+              ntl->stackBase,
+              getThreadLocal(Address, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
+              getThreadLocal(Address, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
+              getThreadLocal(Address, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS),
+              ntl->refMapArea,
+              ntl->stackYellowZone,
+              ntl->stackBase + ntl->stackSize);
+
+#if log_THREADS
+    log_println("thread_attach: id=%d, t=%p", ntl->id, nativeThread);
+#endif
+
+    return (JNIEnv *) getThreadLocalAddress(tl, JNI_ENV);
 }
 
 

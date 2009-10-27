@@ -199,6 +199,7 @@ public class BootImage {
 
         public final int vmRunMethodOffset;
         public final int vmThreadRunMethodOffset;
+        public final int vmThreadAttachMethodOffset;
         public final int runSchemeRunMethodOffset;
 
         public final int classRegistryOffset;
@@ -277,6 +278,7 @@ public class BootImage {
 
             vmRunMethodOffset = endian.readInt(dataInputStream);
             vmThreadRunMethodOffset = endian.readInt(dataInputStream);
+            vmThreadAttachMethodOffset = endian.readInt(dataInputStream);
             runSchemeRunMethodOffset = endian.readInt(dataInputStream);
             classRegistryOffset = endian.readInt(dataInputStream);
 
@@ -330,9 +332,10 @@ public class BootImage {
             wordSize = vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes;
             cacheAlignment = vmConfiguration.platform().processorKind.dataModel.cacheAlignment;
             pageSize = vmConfiguration.platform().pageSize;
-            vmRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
-            vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
-            runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
+            vmRunMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(RUN, MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
+            vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(RUN, VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
+            vmThreadAttachMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(ATTACH, VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
+            runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(RUN, vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
             classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.vmClassRegistry()).toInt();
             this.stringInfoSize = stringInfoSize;
             relocationDataSize = dataPrototype.relocationData().length;
@@ -603,22 +606,24 @@ public class BootImage {
         }
     }
 
-    private static final Utf8Constant run = SymbolTable.makeSymbol("run");
+    public static final Utf8Constant RUN = SymbolTable.makeSymbol("run");
+    public static final Utf8Constant ATTACH = SymbolTable.makeSymbol("attach");
 
     /**
-     * Gets the class method actor for the first method with the name "run" found
+     * Gets the class method actor for the first method with the specified name found
      * while traversing all the class method actors declared by a given class and
      * its super classes.
-     *
+     * @param name name the method name 
      * @param javaClass the class in which to start the search for a method named "run"
+     *
      * @return the found method or null
      */
-    public static ClassMethodActor getRunMethodActor(Class<?> javaClass) {
-        final ClassMethodActor runMethodActor = ClassActor.fromJava(javaClass).findLocalClassMethodActor(run, null);
+    public static ClassMethodActor getMethodActorFor(Utf8Constant name, Class<?> javaClass) {
+        final ClassMethodActor runMethodActor = ClassActor.fromJava(javaClass).findLocalClassMethodActor(name, null);
         if (runMethodActor != null) {
             return runMethodActor;
         }
-        return getRunMethodActor(javaClass.getSuperclass());
+        return getMethodActorFor(name, javaClass.getSuperclass());
     }
 
     public final Header header;
