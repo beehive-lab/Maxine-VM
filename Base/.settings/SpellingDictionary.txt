@@ -3,12 +3,12 @@ Appel
 Aritra
 Athul
 Bandyopadhyay
-Beltway
 Ben
 Bernd
 Caprioli
 Christos
 Cintra
+Darwin
 David
 Daynes
 De
@@ -79,6 +79,8 @@ hexadecimal
 hotspot
 iff
 initialize
+initialized
+initializer
 initializing
 inline
 inlined
@@ -137,7 +139,6 @@ semispace
 semispaces
 settable
 shootout
-solaris
 stderr
 stdout
 struct
@@ -157,6 +158,9 @@ uncompiled
 undock
 undockable
 unix
+unpark
+unparks
 viewport
+vm
 watchpoint
 watchpoints

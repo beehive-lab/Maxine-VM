@@ -45,7 +45,7 @@ import com.sun.max.vm.runtime.*;
 public final class VmThreadMap {
 
     /**
-     * Specialised JavaMonitor intended to be bound to the
+     * Specialized JavaMonitor intended to be bound to the
      * VMThreadMap.ACTIVE object at image build time.
      *
      * MonitorEnter semantics are slightly modified to
@@ -54,8 +54,7 @@ public final class VmThreadMap {
      *
      * @author Simon Wilkinson
      */
-    static class VMThreadMapJavaMonitor extends StandardJavaMonitor {
-
+    static final class VMThreadMapJavaMonitor extends StandardJavaMonitor {
         @Override
         public void monitorEnter() {
             final VmThread currentThread = VmThread.current();
@@ -70,6 +69,69 @@ public final class VmThreadMap {
             } else {
                 super.monitorEnter();
             }
+        }
+    }
+
+    /**
+     * The {@code IDMap} class manages thread IDs and a mapping between thread IDs and
+     * the corresponding {@code VmThread} instance.
+     * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockword64}).
+     *
+     * Note that we synchronize explicitly on ACTIVE to ensure that we don't disturb the TERMINATED state
+     * during thread tear down.
+     */
+    private static final class IDMap {
+        private int nextID = 1;
+        private int[] freeList;
+        private VmThread[] vmThreads;
+
+        IDMap(int initialSize) {
+            freeList = new int[initialSize];
+            vmThreads = new VmThread[initialSize];
+            for (int i = 0; i < freeList.length; i++) {
+                freeList[i] = i + 1;
+            }
+        }
+
+        int acquire(VmThread vmThread) {
+            synchronized (ACTIVE) {
+                FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
+                final int length = freeList.length;
+                if (nextID >= length) {
+                    // grow the free list and initialize the new part
+                    final int[] newFreeList = Arrays.grow(freeList, length * 2);
+                    for (int i = length; i < newFreeList.length; i++) {
+                        newFreeList[i] = i + 1;
+                    }
+                    freeList = newFreeList;
+
+                    // grow the vmThreads list and copy
+                    final VmThread[] newVmThreads = new VmThread[length * 2];
+                    for (int i = 0; i < length; i++) {
+                        newVmThreads[i] = vmThreads[i];
+                    }
+                    vmThreads = newVmThreads;
+                }
+                final int id = nextID;
+                nextID = freeList[nextID];
+                vmThreads[id] = vmThread;
+                vmThread.setID(id);
+                return id;
+            }
+        }
+
+        void release(int id) {
+            synchronized (ACTIVE) {
+                freeList[id] = nextID;
+                vmThreads[id] = null;
+                nextID = id;
+            }
+        }
+
+        @INLINE
+        VmThread get(int id) {
+            // this operation may be performance critical, so avoid the bounds check
+            return UnsafeCast.asVmThread(ArrayAccess.getObject(vmThreads, id));
         }
     }
 
@@ -310,66 +372,4 @@ public final class VmThreadMap {
         return idMap.get(id);
     }
 
-    /**
-     * The {@code IDMap} class manages thread ids and a mapping between thread ids and
-     * the corresponding {@code VmThread} instance.
-     * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockword64}).
-     *
-     * Note that we synchronize explicitly on ACTIVE to ensure that we don't disturb the TERMINATED state
-     * during thread tear down.
-     */
-    private final class IDMap {
-        private int nextID = 1;
-        private int[] freeList;
-        private VmThread[] vmThreads;
-
-        IDMap(int initialSize) {
-            freeList = new int[initialSize];
-            vmThreads = new VmThread[initialSize];
-            for (int i = 0; i < freeList.length; i++) {
-                freeList[i] = i + 1;
-            }
-        }
-
-        int acquire(VmThread vmThread) {
-            synchronized (ACTIVE) {
-                FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
-                final int length = freeList.length;
-                if (nextID >= length) {
-                    // grow the free list and initialize the new part
-                    final int[] newFreeList = Arrays.grow(freeList, length * 2);
-                    for (int i = length; i < newFreeList.length; i++) {
-                        newFreeList[i] = i + 1;
-                    }
-                    freeList = newFreeList;
-
-                    // grow the vmThreads list and copy
-                    final VmThread[] newVmThreads = new VmThread[length * 2];
-                    for (int i = 0; i < length; i++) {
-                        newVmThreads[i] = vmThreads[i];
-                    }
-                    vmThreads = newVmThreads;
-                }
-                final int id = nextID;
-                nextID = freeList[nextID];
-                vmThreads[id] = vmThread;
-                vmThread.setID(id);
-                return id;
-            }
-        }
-
-        void release(int id) {
-            synchronized (ACTIVE) {
-                freeList[id] = nextID;
-                vmThreads[id] = null;
-                nextID = id;
-            }
-        }
-
-        @INLINE
-        VmThread get(int id) {
-            // this operation may be performance critical, so avoid the bounds check
-            return UnsafeCast.asVmThread(ArrayAccess.getObject(vmThreads, id));
-        }
-    }
 }
