@@ -214,6 +214,14 @@ public class VMOption {
     @HOSTED_ONLY
     static String[] matchedVmArguments = null;
 
+    static {
+        // Simple way to set VM options via a system property when running in hosted mode
+        String value = System.getProperty("max.vmargs");
+        if (value != null) {
+            setVMArguments(value.split("\\s+"));
+        }
+    }
+
     /**
      * Sets the VM command line arguments that will be parsed for each {@link VMOption} created.
      * This allows some functionality/state controlled by VM options to be exercised and/or pre-set while
