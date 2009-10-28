@@ -296,25 +296,48 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         set(callWithResolutionAndClassInitialization(resolvable, operator));
     }
 
+    abstract class StaticTupleAccess {
+        final CirValue fieldActor;
+        StaticTupleAccess(CirValue fieldActor) {
+            this.fieldActor = fieldActor;
+        }
+        abstract CirCall makeCall(CirValue staticTuple);
+    }
+
+    CirCall callWithStaticTuple(StaticTupleAccess staticTupleAccess) {
+        if (staticTupleAccess.fieldActor.isConstant()) {
+            FieldActor fieldActor = (FieldActor) staticTupleAccess.fieldActor.value().asObject();
+            CirConstant staticTuple = new CirConstant(ReferenceValue.from(fieldActor.holder().staticTuple()));
+            return staticTupleAccess.makeCall(staticTuple);
+        }
+        final CirVariable staticTuple = variableFactory().createTemporary(Kind.REFERENCE);
+        return call(
+            CirSnippet.get(BuiltinsSnippet.GetStaticTuple.SNIPPET),
+            staticTupleAccess.fieldActor,
+            cont(
+                staticTuple,
+                staticTupleAccess.makeCall(staticTuple)),
+            ce());
+    }
+
     @Override
     public void visit(final GetStatic operator) {
         final Resolvable resolvable = new Resolvable(ResolveStaticFieldForReading.SNIPPET) {
             @Override
             CirCall makeCall(CirValue fieldActor) {
-                final CirSnippet fieldRead = CirSnippet.get(FieldReadSnippet.selectSnippet(operator.resultKind()));
-                final CirVariable staticTuple = variableFactory().createTemporary(Kind.REFERENCE);
-                return call(
-                    CirSnippet.get(BuiltinsSnippet.GetStaticTuple.SNIPPET),
-                    fieldActor,
-                    cont(
-                        staticTuple,
-                        call(
+                StaticTupleAccess staticTupleAccess = new StaticTupleAccess(fieldActor) {
+                    @Override
+                    CirCall makeCall(CirValue staticTuple) {
+                        final CirSnippet fieldRead = CirSnippet.get(FieldReadSnippet.selectSnippet(operator.resultKind()));
+                        return call(
                             fieldRead,
                             staticTuple,
                             fieldActor,
                             cc(),
-                            ce())),
-                    ce());
+                            ce());
+                    }
+                };
+                return callWithStaticTuple(staticTupleAccess);
             }
         };
         set(callWithResolutionAndClassInitialization(resolvable, operator));
