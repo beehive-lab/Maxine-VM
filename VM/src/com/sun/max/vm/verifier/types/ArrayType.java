@@ -72,19 +72,20 @@ public class ArrayType extends ObjectType {
         // up to an object or array of object.
         VerificationType thisElement = elementType();
         int thisDimension = JavaTypeDescriptor.getArrayDimensions(typeDescriptor());
-        if (!(thisElement instanceof ReferenceType)) {
-            thisElement = OBJECT;
-            thisDimension--;
-        }
-
         VerificationType fromElement = ((ArrayType) from).elementType();
         int fromDimension = JavaTypeDescriptor.getArrayDimensions(from.typeDescriptor());
-        if (!(fromElement instanceof ReferenceType)) {
-            fromElement = OBJECT;
-            fromDimension--;
+
+        if (thisDimension != fromDimension) {
+            if (thisElement == OBJECT && thisDimension < fromDimension) {
+                return true;
+            }
+            return false;
         }
 
-        return thisElement.isAssignableFrom(fromElement);
+        if (thisElement instanceof ReferenceType) {
+            return thisElement.isAssignableFrom(fromElement);
+        }
+        return thisElement == fromElement;
     }
 
     @Override
