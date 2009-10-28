@@ -39,7 +39,7 @@ public class MillClassLoader extends ClassLoader {
     @Override
     public Class<?> findClass(String name) {
         final Class result = defineClass(name, classfileBytes, 0, classfileBytes.length);
-        ClassfileReader.defineClassActor(name, this, classfileBytes, null, null);
+        ClassfileReader.defineClassActor(name, this, classfileBytes, null, null, false);
         return result;
     }
 

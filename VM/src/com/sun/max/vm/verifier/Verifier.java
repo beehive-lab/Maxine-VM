@@ -24,26 +24,171 @@ import static com.sun.max.vm.verifier.types.VerificationType.*;
 
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.types.*;
 
 /**
+ * Encapsulates the contexts an options for bytecode verification.
  *
  * @author Doug Simon
  */
 public class Verifier implements VerificationRegistry {
 
+    static final int TRACE_NONE = 0;
+    static final int TRACE_CLASS = 1;
+    static final int TRACE_METHOD = 2;
+
+    /**
+     * The level of bytecode verification tracing.
+     */
+    static int traceLevel;
+
+    /**
+     * If non-null, then the verification of any methods whose fully qualified name contains this field value as
+     * a substring is traced in detail.
+     */
+    static String methodToTrace;
+
+    /**
+     * Determines if verification is performed for classes loaded locally.
+     */
+    @RESET
+    private static boolean verifyLocal;
+
+    /**
+     * Determines if verification is performed for classes loaded over network.
+     */
+    private static boolean verifyRemote = true;
+
+    static {
+        // -XX:-BytecodeVerificationLocal option
+        VMOptions.register(new VMBooleanXXOption("-XX:-BytecodeVerificationLocal",
+            "Enables the Java bytecode verifier for local classes.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                if (super.parseValue(optionValue)) {
+                    verifyLocal = getValue();
+                    return true;
+                }
+                return false;
+            }
+        }, MaxineVM.Phase.STARTING);
+
+        // -XX:+BytecodeVerificationRemote option
+        VMOptions.register(new VMBooleanXXOption("-XX:+BytecodeVerificationRemote",
+            "Enables the Java bytecode verifier for remote classes.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                if (super.parseValue(optionValue)) {
+                    verifyRemote = getValue();
+                    return true;
+                }
+                return false;
+            }
+
+        }, MaxineVM.Phase.STARTING);
+
+        // -Xverify option
+        VMOptions.register(new VMOption("-Xverify",
+            "Enable verification process on classes loaded over network (default), all classes, or no classes respectively.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                if (CString.equals(optionValue, ":all") || CString.length(optionValue).isZero()) {
+                    verifyLocal = true;
+                    verifyRemote = true;
+                } else if (CString.equals(optionValue, ":none")) {
+                    verifyLocal = false;
+                    verifyRemote = false;
+                } else if (CString.equals(optionValue, ":remote")) {
+                    verifyLocal = false;
+                    verifyRemote = true;
+                } else {
+                    return false;
+                }
+                return true;
+            }
+            @Override
+            public void printHelp() {
+                VMOptions.printHelpForOption("-Xverify[:remote|all|none]", "", help);
+            }
+
+        }, MaxineVM.Phase.STARTING);
+
+        // -XX:TraceVerification=<value> option
+        VMOptions.register(new VMStringOption("-XX:TraceVerification=", false, "",
+            "Trace bytecode verification in detail of method(s) whose qualified name contains <value>.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                if (super.parseValue(optionValue)) {
+                    methodToTrace = getValue();
+                    return true;
+                }
+                return false;
+            }
+        }, MaxineVM.Phase.STARTING);
+
+        // -XX:TraceVerifierLevel=<value> option
+        VMOptions.register(new VMIntOption("-XX:TraceVerifierLevel=", 0,
+            "Trace bytecode verification level: 0 == none (default), 1 == class, 2 == methods.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                boolean result = super.parseValue(optionValue);
+                if (result) {
+                    traceLevel = getValue();
+                }
+                return result;
+            }
+        }, MaxineVM.Phase.STARTING);
+    }
+
+    /**
+     * Determines if a class loaded by a given class loader needs bytecode verification.
+     * The answer depends upon {@code classLoader} <i>and</i> the values of
+     * {@link #verifyLocal} and {@link #verifyRemote}.
+     *
+     * @param classLoader the class loader to test
+     * @param isRemote specifies if the stream is from a remote/untrusted (e.g. network) source. This is mainly used to
+     *            determine the default bytecode verification policy for the class.
+     * @return {@code true} if a class loaded by {@code classLoader} need bytecode verification
+     */
+    public static boolean shouldBeVerified(ClassLoader classLoader, boolean isRemote) {
+        if (classLoader == VmClassLoader.VM_CLASS_LOADER || classLoader == null || !isRemote) {
+            return verifyLocal;
+        }
+        return verifyRemote;
+    }
+
+    public static boolean relaxVerificationFor(ClassLoader classLoader) {
+        boolean trusted = isTrustedLoader(classLoader);
+        boolean needVerify =
+            // -Xverify:all
+            (verifyLocal && verifyRemote) ||
+            // -Xverify:remote
+            (!verifyLocal && verifyRemote && !trusted);
+        return !needVerify;
+    }
+
+    private static boolean isTrustedLoader(ClassLoader classLoader) {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        while (cl != null) {
+            if (cl == classLoader) {
+                return true;
+            }
+            cl = cl.getParent();
+        }
+        return false;
+    }
+
     private final ConstantPool constantPool;
-
     private final Map<TypeDescriptor, ObjectType> objectTypes;
-
     private final IntHashMap<UninitializedNewType> uninitializedNewTypes;
-
     private IntHashMap<Subroutine> subroutines;
-
     public boolean verbose;
 
     public Verifier(ConstantPool constantPool) {
