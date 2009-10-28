@@ -57,7 +57,7 @@ public final class InspectableClassInfo {
             if (classActorCount == classActors.length) {
                 classActors = Arrays.extend(classActors, classActorCount * 2);
             }
-            // The classActor needs to be set up before we increment _classActorCount
+            // The classActor needs to be set up before we increment classActorCount
             // otherwise we have a race condition where the Inspector might see
             // a null classActor.
             classActors[classActorCount] = classActor;

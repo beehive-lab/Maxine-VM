@@ -1108,7 +1108,14 @@ public final class ClassfileReader {
         return superClassActor;
     }
 
-    protected ClassActor loadClass0(Utf8Constant name) {
+    /**
+     * Loads a class from the configured {@linkplain #classfileStream class file stream}.
+     *
+     * @param name the expected name of the class in the stream
+     * @param isRemote specifies if the stream is from a remote/untrusted (e.g. network) source. This is mainly used to
+     *            determine the default bytecode verification policy for the class.
+     */
+    private ClassActor loadClass0(Utf8Constant name, boolean isRemote) {
         readMagic();
         final char minorVersionChar = (char) classfileStream.readUnsigned2();
         final char majorVersionChar = (char) classfileStream.readUnsigned2();
@@ -1215,6 +1222,10 @@ public final class ClassfileReader {
             }
         }
 
+        if (isRemote) {
+            classFlags |= Actor.REMOTE;
+        }
+
         // Ensure there are no trailing bytes
         classfileStream.checkEndOfFile();
 
@@ -1282,7 +1293,16 @@ public final class ClassfileReader {
         return classActor;
     }
 
-    private ClassActor loadClass(final Utf8Constant name, Object source) {
+    /**
+     * Loads a class from the configured {@linkplain #classfileStream class file stream}.
+     *
+     * @param name the expected name of the class in the stream
+     * @param source
+     * @param isRemote specifies if the stream is from a remote/untrusted (e.g. network) source. This is mainly used to
+     *            determine the default bytecode verification policy for the class.
+     * @return
+     */
+    private ClassActor loadClass(final Utf8Constant name, Object source, boolean isRemote) {
         try {
             String optSource = null;
             if (verboseOption.verboseClass) {
@@ -1299,7 +1319,7 @@ public final class ClassfileReader {
                     return "loading " + name;
                 }
             });
-            final ClassActor classActor = loadClass0(name);
+            final ClassActor classActor = loadClass0(name, isRemote);
 
             if (verboseOption.verboseClass) {
                 if (source != null) {
@@ -1340,13 +1360,15 @@ public final class ClassfileReader {
      * @param source a object whose {@code toString()} method describes source location of the bytes. This is purely
      *            informative detail. For example, it may be used to provide the output for verbose class loading. This
      *            value can be null.
+     * @param isRemote specifies if the stream is from a remote/untrusted (e.g. network) source. This is mainly used to
+     *            determine the default bytecode verification policy for the class.
      * @return the {@code ClassActor} object created from the data, and optional {@code ProtectionDomain}
      * @throws ClassFormatError if the data did not contain a valid class
      * @throws NoClassDefFoundError if {@code name} is not equal to the {@linkplain Class#getName() binary name} of the
      *             class specified by {@code bytes}
      */
-    public static ClassActor defineClassActor(String name, ClassLoader classLoader, byte[] bytes, ProtectionDomain protectionDomain, Object source) {
-        return defineClassActor(name, classLoader, bytes, 0, bytes.length, protectionDomain, source);
+    public static ClassActor defineClassActor(String name, ClassLoader classLoader, byte[] bytes, ProtectionDomain protectionDomain, Object source, boolean isRemote) {
+        return defineClassActor(name, classLoader, bytes, 0, bytes.length, protectionDomain, source, isRemote);
     }
 
     /**
@@ -1363,17 +1385,19 @@ public final class ClassfileReader {
      * @param source a object whose {@code toString()} method describes source location of the bytes. This is purely
      *            informative detail. For example, it may be used to provide the output for verbose class loading. This
      *            value can be null.
+     * @param isRemote specifies if the stream is from a remote/untrusted (e.g. network) source. This is mainly used to
+     *            determine the default bytecode verification policy for the class.
      * @return the {@code ClassActor} object created from the data, and optional {@code ProtectionDomain}
      * @throws ClassFormatError if the data did not contain a valid class
      * @throws NoClassDefFoundError if {@code name} is not equal to the {@linkplain Class#getName() binary name} of the
      *             class specified by {@code bytes}
      */
-    public static ClassActor defineClassActor(String name, ClassLoader classLoader, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, Object source) {
+    public static ClassActor defineClassActor(String name, ClassLoader classLoader, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, Object source, boolean isRemote) {
         traceBeforeDefineClass(name);
         try {
             final ClassfileStream classfileStream = new ClassfileStream(bytes, offset, length);
             final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
-            final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source);
+            final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
             classActor.setProtectionDomain(protectionDomain);
             return classActor;
         } finally {
