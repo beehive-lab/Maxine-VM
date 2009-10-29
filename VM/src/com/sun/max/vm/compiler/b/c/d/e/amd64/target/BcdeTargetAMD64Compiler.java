@@ -38,6 +38,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.*;
+import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
@@ -238,7 +239,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
 
-                final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
                 // frame pointer == stack pointer
                 final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
                 Pointer trapState = stackFrameWalker.trapState();
@@ -297,8 +297,14 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     break;
                 }
 
-                if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, stackPointer, ignoredOperandStackPointer, 0)) {
-                    return false;
+                if (targetMethod instanceof C1XTargetMethod) {
+                    targetMethod.prepareReferenceMap(isTopFrame, instructionPointer, stackPointer, Pointer.zero(), lastJavaCallee, preparer);
+                    // TODO: Prepare frame reference map for C1X method
+                } else {
+                    final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
+                    if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, stackPointer, ignoredOperandStackPointer, 0)) {
+                        return false;
+                    }
                 }
                 break;
             }
