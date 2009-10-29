@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.verifier;
 
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -33,7 +34,6 @@ import com.sun.max.vm.classfile.*;
 public abstract class ClassVerifier extends Verifier {
 
     public final ClassActor classActor;
-
     protected ClassVerifier(ClassActor classActor) {
         super(classActor.constantPool());
         this.classActor = classActor;
@@ -44,11 +44,23 @@ public abstract class ClassVerifier extends Verifier {
      * {@link ClassMethodActor#codeAttribute() code attribute}.
      */
     public synchronized void verify() {
+        if (traceLevel >= TRACE_CLASS) {
+            Log.println("[Verifying class " + classActor.name + "]");
+        }
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
             if (methodActor instanceof ClassMethodActor) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
+                if (traceLevel >= TRACE_METHOD) {
+                    Log.println(classMethodActor.format("[Verifying method %n(%P)]"));
+                }
                 classMethodActor.verify(this);
+                if (traceLevel >= TRACE_METHOD) {
+                    Log.println(classMethodActor.format("[Verified method %n(%P)]"));
+                }
             }
+        }
+        if (traceLevel >= TRACE_CLASS) {
+            Log.println("[Verified class " + classActor.name + "]");
         }
     }
 

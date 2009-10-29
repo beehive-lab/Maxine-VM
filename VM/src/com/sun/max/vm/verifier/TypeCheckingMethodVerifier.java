@@ -89,6 +89,10 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             Log.println();
             Log.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
 
+            Log.println("Input bytecode:");
+            CodeAttributePrinter.print(Log.out, codeAttribute());
+            Log.println();
+
             String prefix = "StackMapTable frames:";
             for (int i = 0; i != frameMap.length; ++i) {
                 final Frame recordedFrame = frameMap[i];

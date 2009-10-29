@@ -739,7 +739,7 @@ public class ClassfileWriter {
     @HOSTED_ONLY
     static class TestClassLoader extends ClassLoader {
         public void load(String className, byte[] classfileBytes) {
-            ClassfileReader.defineClassActor(className, this, classfileBytes, null, null);
+            ClassfileReader.defineClassActor(className, this, classfileBytes, null, null, false);
         }
     }
 

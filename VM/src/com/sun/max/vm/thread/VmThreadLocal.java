@@ -59,40 +59,11 @@ import com.sun.max.vm.stack.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Michael Van De Vanter
+ * @author Paul Caprioli
  */
 public class VmThreadLocal {
 
-    /**
-     * Specifies if this variable is a reference.
-     */
-    public final boolean isReference;
-
-    /**
-     * The name of this variable.
-     */
-    public final String name;
-
-    /**
-     * The index of this variable in the array returned by {@link #values()}.
-     */
-    public final int index;
-
-    /**
-     * The offset of this variable from the base of a thread locals.
-     */
-    public final int offset;
-
-    /**
-     * A very short string describing the variable, useful for debugging.
-     */
-    public final String description;
-
-    /**
-     * The stack trace element describing where this thread local is declared.
-     */
-    public final StackTraceElement declaration;
-
-    private static final AppendableIndexedSequence<VmThreadLocal> values = new ArrayListSequence<VmThreadLocal>();
+    private static final AppendableIndexedSequence<VmThreadLocal> VALUES = new ArrayListSequence<VmThreadLocal>();
 
     /**
      * Must be first as needed by {@link Safepoint#initializePrimordial(Pointer)}.
@@ -261,6 +232,40 @@ public class VmThreadLocal {
      */
     public static final VmThreadLocal NATIVE_CALL_STACK_SIZE = new VmThreadLocal("NATIVE_CALL_STACK_SIZE", false, "Size of the native call stack");
 
+    private static VmThreadLocal[] valuesNeedingInitialization;
+
+
+    /**
+     * Specifies if this variable is a reference.
+     */
+    public final boolean isReference;
+
+    /**
+     * The name of this variable.
+     */
+    public final String name;
+
+    /**
+     * The index of this variable in the array returned by {@link #values()}.
+     */
+    public final int index;
+
+    /**
+     * The offset of this variable from the base of a thread locals.
+     */
+    public final int offset;
+
+    /**
+     * A very short string describing the variable, useful for debugging.
+     */
+    public final String description;
+
+    /**
+     * The stack trace element describing where this thread local is declared.
+     */
+    public final StackTraceElement declaration;
+
+
     static {
         ProgramError.check(SAFEPOINT_LATCH.index == 0);
         // The C code in trap.c relies on the following relationships:
@@ -273,10 +278,8 @@ public class VmThreadLocal {
      * Gets the complete set of declared VM thread locals.
      */
     public static IndexedSequence<VmThreadLocal> values() {
-        return values;
+        return VALUES;
     }
-
-    private static VmThreadLocal[] valuesNeedingInitialization;
 
     /**
      * Gets the array of VM thread locals whose class overrides {@link #initialize(com.sun.max.vm.MaxineVM.Phase)}.
@@ -296,7 +299,7 @@ public class VmThreadLocal {
         try {
             final AppendableSequence<VmThreadLocal> valuesNeedingInitialization = new ArrayListSequence<VmThreadLocal>();
             final Method emptyInitializeMethod = VmThreadLocal.class.getMethod("initialize");
-            for (VmThreadLocal value : values) {
+            for (VmThreadLocal value : VALUES) {
                 if (!emptyInitializeMethod.equals(value.getClass().getMethod("initialize"))) {
                     valuesNeedingInitialization.append(value);
                 }
@@ -323,6 +326,117 @@ public class VmThreadLocal {
     }
 
     /**
+     * Gets the size of the storage required for a copy of the defined thread locals.
+     * This value is guaranteed to be word-aligned
+     */
+    public static Size threadLocalStorageSize() {
+        return Size.fromInt(VALUES.length() * Word.size());
+    }
+
+    @INLINE
+    public static Pointer fromJniEnv(Pointer jniEnv) {
+        return jniEnv.minusWords(JNI_ENV.index);
+    }
+
+    public static boolean inJava(Pointer vmThreadLocals) {
+        return JavaFrameAnchor.inJava(JavaFrameAnchor.from(vmThreadLocals));
+    }
+
+    // GC support:
+
+    /**
+     * Prepares a reference map for the stack of a VM thread executing or blocked in native code.
+     *
+     * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
+     * @return the amount of time taken to prepare the reference map
+     */
+    public static long prepareStackReferenceMap(Pointer vmThreadLocals) {
+        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+        final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
+        stackReferenceMapPreparer.prepareStackReferenceMap(vmThreadLocals);
+        return stackReferenceMapPreparer.preparationTime();
+    }
+
+    /**
+     * Prepares a reference map for the entire stack of a VM thread starting from a trap.
+     *
+     * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
+     * @param trapState a pointer to the trap state
+     */
+    public static void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer trapState) {
+        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
+    }
+
+    /**
+     * Prepares the stack reference map for the current thread. The prepared map ignores the frame of this
+     * particular method as it will not be at a stop from the stack reference map preparer's perspective.
+     * Due to the {@link NEVER_INLINE} annotation, this frame will be dead when the caller (i.e.
+     * the GC thread) calls the scheme-specific collector.
+     *
+     * @return the amount of time taken to prepare the reference map
+     */
+    @NEVER_INLINE
+    public static long prepareCurrentStackReferenceMap() {
+        return VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(),
+                                                                                VMRegister.getInstructionPointer(),
+                                                                                VMRegister.getAbiStackPointer(),
+                                                                                VMRegister.getAbiFramePointer(), true);
+    }
+
+    /**
+     * Scan all references on the stack, including the VM thread locals, including stored register values.
+     *
+     * This assumes that prepareStackReferenceMap() has been run for the same stack and that no mutator execution
+     * affecting this stack has occurred in between.
+     */
+    public static void scanReferences(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
+        Pointer anchor = JavaFrameAnchor.from(vmThreadLocals);
+        final Pointer lastJavaCallerStackPointer = JavaFrameAnchor.SP.get(anchor);
+        final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
+        final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+        final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+
+        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+        if (!vmThread.isGCThread() && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
+            Log.print("The stack for thread \"");
+            Log.printThread(vmThread, false);
+            Log.print("\" has slots between ");
+            Log.print(lastJavaCallerStackPointer);
+            Log.print(" and ");
+            Log.print(lowestActiveSlot);
+            Log.println(" are not covered by the reference map.");
+            Throw.stackDump("Stack trace for thread:", JavaFrameAnchor.PC.get(anchor), lastJavaCallerStackPointer, JavaFrameAnchor.FP.get(anchor));
+            FatalError.unexpected("Stack reference map does not cover all active slots");
+        }
+
+        boolean lockDisabledSafepoints = false;
+        if (Heap.traceRootScanning()) {
+            lockDisabledSafepoints = Log.lock(); // Note: as a side effect, this lock serializes stack reference map scanning
+            Log.print("Scanning stack reference map for thread ");
+            Log.printThread(vmThread, false);
+            Log.println(":");
+            Log.print("  Highest slot: ");
+            Log.println(highestSlot);
+            Log.print("  Lowest active slot: ");
+            Log.println(lowestActiveSlot);
+            Log.print("  Lowest slot: ");
+            Log.println(lowestSlot);
+        }
+
+        StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestSlot, vmThreadLocalsEnd(vmThreadLocals), wordPointerIndexVisitor);
+        StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestActiveSlot, highestSlot, wordPointerIndexVisitor);
+
+        if (Heap.traceRootScanning()) {
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    public static Pointer vmThreadLocalsEnd(Pointer vmThreadLocals) {
+        final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+        return lowestSlot.plus(threadLocalStorageSize().times(3));
+    }
+
+    /**
      * Creates a new thread local variable and adds a slot for it to the map.
      *
      * @param name name of the variable
@@ -333,24 +447,11 @@ public class VmThreadLocal {
     public VmThreadLocal(String name, boolean isReference, String description) {
         this.isReference = isReference;
         this.name = name;
-        this.index = values.length();
+        this.index = VALUES.length();
         this.offset = index * Word.size();
-        values.append(this);
+        VALUES.append(this);
         this.description = description;
         this.declaration = findDeclaration(name, new Throwable().getStackTrace());
-    }
-
-    /**
-     * Gets the size of the storage required for a copy of the defined thread locals.
-     * This value is guaranteed to be word-aligned
-     */
-    public static Size threadLocalStorageSize() {
-        return Size.fromInt(values.length() * Word.size());
-    }
-
-    @INLINE
-    public static Pointer fromJniEnv(Pointer jniEnv) {
-        return jniEnv.minusWords(JNI_ENV.index);
     }
 
     /**
@@ -581,104 +682,6 @@ public class VmThreadLocal {
     @INLINE
     public final Reference getVariableReference() {
         return getVariableReference(VmThread.currentVmThreadLocals());
-    }
-
-    public static boolean inJava(Pointer vmThreadLocals) {
-        return JavaFrameAnchor.inJava(JavaFrameAnchor.from(vmThreadLocals));
-    }
-
-    // GC support:
-
-    /**
-     * Prepares a reference map for the stack of a VM thread executing or blocked in native code.
-     *
-     * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
-     * @return the amount of time taken to prepare the reference map
-     */
-    public static long prepareStackReferenceMap(Pointer vmThreadLocals) {
-        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
-        final StackReferenceMapPreparer stackReferenceMapPreparer = vmThread.stackReferenceMapPreparer();
-        stackReferenceMapPreparer.prepareStackReferenceMap(vmThreadLocals);
-        return stackReferenceMapPreparer.preparationTime();
-    }
-
-    /**
-     * Prepares a reference map for the entire stack of a VM thread starting from a trap.
-     *
-     * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
-     * @param trapState a pointer to the trap state
-     */
-    public static void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer trapState) {
-        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
-    }
-
-    /**
-     * Prepares the stack reference map for the current thread. The prepared map ignores the frame of this
-     * particular method as it will not be at a stop from the stack reference map preparer's perspective.
-     * Due to the {@link NEVER_INLINE} annotation, this frame will be dead when the caller (i.e.
-     * the GC thread) calls the scheme-specific collector.
-     *
-     * @return the amount of time taken to prepare the reference map
-     */
-    @NEVER_INLINE
-    public static long prepareCurrentStackReferenceMap() {
-        return VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(),
-                                                                                VMRegister.getInstructionPointer(),
-                                                                                VMRegister.getAbiStackPointer(),
-                                                                                VMRegister.getAbiFramePointer(), true);
-    }
-
-    /**
-     * Scan all references on the stack, including the VM thread locals, including stored register values.
-     *
-     * This assumes that prepareStackReferenceMap() has been run for the same stack and that no mutator execution
-     * affecting this stack has occurred in between.
-     */
-    public static void scanReferences(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
-        Pointer anchor = JavaFrameAnchor.from(vmThreadLocals);
-        final Pointer lastJavaCallerStackPointer = JavaFrameAnchor.SP.get(anchor);
-        final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
-        final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
-        final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
-
-        final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
-        if (!vmThread.isGCThread() && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
-            Log.print("The stack for thread \"");
-            Log.printThread(vmThread, false);
-            Log.print("\" has slots between ");
-            Log.print(lastJavaCallerStackPointer);
-            Log.print(" and ");
-            Log.print(lowestActiveSlot);
-            Log.println(" are not covered by the reference map.");
-            Throw.stackDump("Stack trace for thread:", JavaFrameAnchor.PC.get(anchor), lastJavaCallerStackPointer, JavaFrameAnchor.FP.get(anchor));
-            FatalError.unexpected("Stack reference map does not cover all active slots");
-        }
-
-        boolean lockDisabledSafepoints = false;
-        if (Heap.traceRootScanning()) {
-            lockDisabledSafepoints = Log.lock(); // Note: as a side effect, this lock serializes stack reference map scanning
-            Log.print("Scanning stack reference map for thread ");
-            Log.printThread(vmThread, false);
-            Log.println(":");
-            Log.print("  Highest slot: ");
-            Log.println(highestSlot);
-            Log.print("  Lowest active slot: ");
-            Log.println(lowestActiveSlot);
-            Log.print("  Lowest slot: ");
-            Log.println(lowestSlot);
-        }
-
-        StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestSlot, vmThreadLocalsEnd(vmThreadLocals), wordPointerIndexVisitor);
-        StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestActiveSlot, highestSlot, wordPointerIndexVisitor);
-
-        if (Heap.traceRootScanning()) {
-            Log.unlock(lockDisabledSafepoints);
-        }
-    }
-
-    public static Pointer vmThreadLocalsEnd(Pointer vmThreadLocals) {
-        final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
-        return lowestSlot.plus(threadLocalStorageSize().times(3));
     }
 
     @Override

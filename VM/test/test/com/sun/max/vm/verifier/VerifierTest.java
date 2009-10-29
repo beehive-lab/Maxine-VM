@@ -115,8 +115,21 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
         return lines;
     }
 
+    static class SomeTest {
+        Map[] maps(int n, Object o) {
+            Map[] result = new HashMap[0];
+            for (int i = 0; i < n; i++) {
+                result = (Map[]) o;
+            }
+            return result;
+        }
+    }
+
     public void test() throws Exception {
-        verify("java.lang.Class", true);
+
+        //verify("org.eclipse.core.internal.registry.ExtensionRegistry", true);
+
+        verify(SomeTest.class.getName(), true);
         verify(JdtBadStackMapTable.class.getName(), true);
 
         int numberOfClassesVerified = 0;
@@ -273,7 +286,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
             if (classpathFile == null) {
                 fail("Could not find class " + name + " on class path: " + classpath);
             }
-            classActor = ClassfileReader.defineClassActor(name, VmClassLoader.VM_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry);
+            classActor = ClassfileReader.defineClassActor(name, VmClassLoader.VM_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry, true);
         }
         return classActor;
     }

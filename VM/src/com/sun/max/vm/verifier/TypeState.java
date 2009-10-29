@@ -133,7 +133,8 @@ public class TypeState extends Frame {
                 final VerificationType value = locals[index];
                 if (SUBROUTINE.isAssignableFrom(value)) {
                     if (value != type) {
-                        throw verifyError("Two subroutines cannot merge to a single RET");
+                        throw verifyError(String.format("Two subroutines cannot merge to a single RET:%n" +
+                            "  subroutine 1: %s%n  subroutine 2: %s", value, type));
                     }
                 }
             } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
@@ -166,12 +167,16 @@ public class TypeState extends Frame {
      * For each variable not accessed by a given subroutine, the type of the local variable in this type state is
      * replaced with the type of the local variable in a given type state. The latter type state is from a JSR that
      * entered the subroutine.
+     *
+     * @param retIndex the index of the local variable holding the return address of the subroutine. Even though this
+     *            variable is most likely accessed (i.e. written to) in a subroutine, its value should not be propagated
+     *            outside the routine.
      */
-    public void updateLocalsNotAccessedInSubroutine(TypeState typeStateAtJsr, Subroutine subroutine) {
+    public void updateLocalsNotAccessedInSubroutine(TypeState typeStateAtJsr, Subroutine subroutine, int retIndex) {
         final int length = Math.max(this.activeLocals, typeStateAtJsr.activeLocals);
         int activeLocals = 0;
         for (int index = 0; index != length; ++index) {
-            if (!subroutine.isVariableAccessed(index)) {
+            if (!subroutine.isVariableAccessed(index) || index == retIndex) {
                 locals[index] = typeStateAtJsr.locals[index];
             }
             if (locals[index] != TOP) {
