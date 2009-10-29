@@ -299,7 +299,7 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         if (getJComponent().isShowing() || force) {
             if (teleClassMethodActor != null) {
                 teleClassMethodActor.refreshView();
@@ -309,7 +309,6 @@ public class JavaMethodInspector extends MethodInspector {
             }
             super.refreshView(force);
         }
-        return true;
     }
 
     public void viewConfigurationChanged() {

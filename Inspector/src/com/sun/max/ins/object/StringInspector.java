@@ -83,14 +83,13 @@ public final class StringInspector extends ObjectInspector {
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
-        if (super.refreshView(force)) {
+    protected void refreshView(boolean force) {
+        super.refreshView(force);
+        if (teleObject().isLive()) {
             // Only refresh the visible pane
             final Prober pane = (Prober) tabbedPane.getSelectedComponent();
             pane.refresh(force);
-            return true;
         }
-        return false;
     }
 
 }

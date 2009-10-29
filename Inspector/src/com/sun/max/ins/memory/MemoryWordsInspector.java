@@ -528,10 +528,9 @@ public final class MemoryWordsInspector extends Inspector {
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
-        return true;
     }
 
     /**

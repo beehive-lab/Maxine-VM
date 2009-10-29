@@ -107,7 +107,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         if (getJComponent().isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
@@ -124,7 +124,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
             if (stackPointer == null) {
                 // stack frame is inactive, remove it.
                 dispose();
-                return false;
+                return;
             }
 
             for (int  localVarIndex = 0; localVarIndex < locals.length; localVarIndex++) {
@@ -152,9 +152,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
                 final WordValueLabel label = stack[stackSlotIndex];
                 label.setValue(new WordValue(stackItem));
             }
-            return super.refreshView(force);
+            super.refreshView(force);
         }
-        return true;
     }
 
     public void viewConfigurationChanged() {

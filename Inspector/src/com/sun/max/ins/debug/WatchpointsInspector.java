@@ -133,10 +133,9 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
-        return true;
     }
 
     public void viewConfigurationChanged() {

@@ -119,10 +119,9 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
-        return true;
     }
 
     public void viewConfigurationChanged() {
