@@ -30,6 +30,7 @@ import javax.swing.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -55,7 +56,7 @@ import com.sun.max.vm.stack.*;
  * @author Michael Van De Vanter
  *
  */
-public abstract class Inspector extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
+public abstract class Inspector<Inspector_Type extends Inspector> extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
 
     private static final int TRACE_VALUE = 2;
 
@@ -278,8 +279,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         return frame;
     }
 
-    protected InspectorFrame createTabFrame(TabbedInspector parent) {
-        frame = new InspectorRootPane(this, parent, true);
+    protected InspectorFrame createTabFrame(TabbedInspector<Inspector_Type> parent) {
+        final Class<Inspector_Type> type = null;
+        final Inspector_Type thisInspector = StaticLoophole.cast(type, this);
+        frame = new InspectorRootPane<Inspector_Type>(thisInspector, parent, true);
         setTitle();
         createView();
         frame.pack();
