@@ -28,7 +28,6 @@ import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.program.*;
 
 
-
 /**
  * A frame suitable for use by an {@linkplain Inspector inspector}.
  * This is a minimal frame without window system decoration, suitable
@@ -36,7 +35,7 @@ import com.sun.max.program.*;
  *
  * @author Michael Van De Vanter
  */
-final class InspectorRootPane extends JRootPane implements InspectorFrameInterface {
+final class InspectorRootPane extends JRootPane implements InspectorFrame {
 
     private final Inspector inspector;
     private final TabbedInspector parent;

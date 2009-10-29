@@ -269,9 +269,9 @@ public abstract class MethodInspector extends Inspector {
     }
 
     @Override
-    public InspectorFrameInterface createTabFrame(TabbedInspector parent) {
+    public InspectorFrame createTabFrame(TabbedInspector parent) {
 
-        final InspectorFrameInterface frame = super.createTabFrame(parent);
+        final InspectorFrame frame = super.createTabFrame(parent);
 
         frame.makeMenu(MenuKind.EDIT_MENU);
 

@@ -69,7 +69,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
 
-        final InspectorFrameInterface frame = createFrame(true);
+        final InspectorFrame frame = createFrame(true);
 
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 

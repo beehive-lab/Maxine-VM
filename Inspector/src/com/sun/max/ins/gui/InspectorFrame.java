@@ -28,7 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.program.*;
 
-public interface InspectorFrameInterface extends RootPaneContainer, Prober {
+public interface InspectorFrame extends RootPaneContainer, Prober {
 
     /**
      * Gets the inspector for the view.
