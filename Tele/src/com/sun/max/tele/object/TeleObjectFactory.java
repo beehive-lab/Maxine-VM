@@ -84,8 +84,6 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
         return teleObjectFactory;
     }
 
-    // TODO (mlvdv)  TeleObject weak references
-
     /**
      * Map: Reference to {@link Object}s in the VM --> canonical local {@link TeleObject} that represents the
      * object in the VM. Relies on References being canonical and GC-safe.
