@@ -55,12 +55,21 @@ import com.sun.max.vm.stack.JavaStackFrameLayout.*;
  */
 public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
+    /**
+     * @see #catchRangePositions()
+     */
     @INSPECTED
     private int[] catchRangePositions;
 
+    /**
+     * @see #catchBlockPositions()
+     */
     @INSPECTED
     private int[] catchBlockPositions;
 
+    /**
+     * @see #compressedJavaFrameDescriptors()
+     */
     @INSPECTED
     protected byte[] compressedJavaFrameDescriptors;
 
@@ -70,6 +79,9 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @INSPECTED
     protected byte[] encodedInlineDataDescriptors;
 
+    /**
+     * @see #referenceMaps()
+     */
     protected byte[] referenceMaps;
 
     @INSPECTED
@@ -197,9 +209,23 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         }
     }
 
+    boolean fatalIfNotSorted(int[] catchRangePositions) {
+        if (catchRangePositions != null) {
+            int last = Integer.MIN_VALUE;
+            for (int i = 0; i < catchRangePositions.length; ++i) {
+                if (catchRangePositions[i] < last) {
+                    FatalError.unexpected(classMethodActor().format("%H.%n(%p)") + ": Bad catchRangePositions: element " + i + " is less than element " + (i - 1) + ": " + catchRangePositions[i] + " < " + catchRangePositions[i - 1]);
+                }
+                last = catchRangePositions[i];
+            }
+        }
+        return true;
+    }
+
     public final void setGenerated(int[] catchRangePositions, int[] catchBlockPositions, int[] stopPositions, byte[] compressedJavaFrameDescriptors, Object[] directCallees, int numberOfIndirectCalls,
                     int numberOfSafepoints, byte[] referenceMaps, byte[] scalarLiterals, Object[] referenceLiterals, Object codeOrCodeBuffer, byte[] encodedInlineDataDescriptors, int frameSize,
                     int frameReferenceMapSize, TargetABI abi) {
+        assert fatalIfNotSorted(catchRangePositions);
         this.catchRangePositions = catchRangePositions;
         this.catchBlockPositions = catchBlockPositions;
         this.compressedJavaFrameDescriptors = compressedJavaFrameDescriptors;
