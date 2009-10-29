@@ -26,6 +26,7 @@ import com.sun.max.lang.*;
 
 public class Space extends JLabel {
     // TODO (mlvdv) review use of Space class, ensure right font size gets used.
+    // If the two current uses of this used sensible layout, i.e. tables, this would not be necessary.
     public Space() {
         super(" ");
         setForeground(InspectorStyle.Black);
