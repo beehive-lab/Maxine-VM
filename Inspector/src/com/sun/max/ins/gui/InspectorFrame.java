@@ -31,7 +31,7 @@ import com.sun.max.program.*;
 public interface InspectorFrame extends RootPaneContainer, Prober {
 
     /**
-     * Gets the inspector for the view.
+     * Gets the inspector for the view held in this frame.
      *
      * @return the inspector that owns this frame
      */
@@ -67,7 +67,6 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
      * <strong>Note:</strong> the menus will appear left to right on the
      * frame's menu bar in the order in which they were created.
      *
-
      * @param menuKind the type (and name) of the menu being requested.
      * @return a menu, possibly new, in the menu bar.
      * @throws ProgramError if the frame has no menu bar.
