@@ -112,7 +112,6 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
         g.dispose();
         invalidate();
         repaint();
-        System.out.println("FLASH!!!!!!");
     }
 
     public void dispose() {
