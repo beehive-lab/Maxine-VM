@@ -108,8 +108,8 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    public InspectorFrame createFrame() {
-        final InspectorFrame frame = super.createFrame();
+    public InspectorFrame createFrame(boolean addMenuBar) {
+        final InspectorFrame frame = super.createFrame(addMenuBar);
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
 
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
@@ -150,7 +150,7 @@ public abstract class ObjectInspector extends Inspector {
             // Will add without column headers
             panel.add(objectHeaderTable, BorderLayout.NORTH);
         }
-        frame().setContentPane(panel);
+        setContentPane(panel);
     }
 
     @Override
@@ -209,7 +209,7 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
-        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle());
+        Trace.line(1, tracePrefix() + " closing for " + getTitle());
         if (teleObject == inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(null);
         }
@@ -240,15 +240,15 @@ public abstract class ObjectInspector extends Inspector {
     };
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         if (teleObject.isObsolete() && followingTeleObject) {
             Log.println("FORWARDED: " + teleObject.reference().grip().getForwardedTeleGrip().toOrigin());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
             if (factory.isObjectInspectorObservingObject(forwardedTeleObject.reference().grip().makeOID())) {
                 followingTeleObject = false;
                 setWarning();
-                updateFrameTitle();
-                return false;
+                setTitle();
+                return;
             }
             factory.resetObjectToInspectorMapEntry(teleObject, forwardedTeleObject, this);
             teleObject = forwardedTeleObject;
@@ -269,7 +269,7 @@ public abstract class ObjectInspector extends Inspector {
                 objectHeaderTable.refresh(force);
             }
         }
-        updateFrameTitle();
+        setTitle();
         if (teleObject.isDead()) {
             setStateColor(style().vmTerminatedBackgroundColor());
         } else if (teleObject.isObsolete()) {
@@ -278,7 +278,6 @@ public abstract class ObjectInspector extends Inspector {
             setStateColor(null);
         }
         super.refreshView(force);
-        return true;
     }
 
     public void viewConfigurationChanged() {

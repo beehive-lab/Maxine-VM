@@ -48,7 +48,7 @@ public final class StringInspector extends ObjectInspector {
         // This is the default for a newly created inspector.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        createFrame();
+        createFrame(true);
     }
 
     @Override
@@ -79,18 +79,17 @@ public final class StringInspector extends ObjectInspector {
                 prober.refresh(true);
             }
         });
-        frame().getContentPane().add(tabbedPane);
+        getContentPane().add(tabbedPane);
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
-        if (super.refreshView(force)) {
+    protected void refreshView(boolean force) {
+        super.refreshView(force);
+        if (teleObject().isLive()) {
             // Only refresh the visible pane
             final Prober pane = (Prober) tabbedPane.getSelectedComponent();
             pane.refresh(force);
-            return true;
         }
-        return false;
     }
 
 }

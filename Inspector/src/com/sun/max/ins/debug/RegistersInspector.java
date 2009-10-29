@@ -66,7 +66,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
@@ -90,12 +90,12 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         thread = inspection().focus().thread();
         if (thread == null) {
             table = null;
-            frame().setContentPane(new InspectorPanel(inspection(), new BorderLayout()));
+            setContentPane(new InspectorPanel(inspection(), new BorderLayout()));
         } else {
             table = new RegistersTable(inspection(), thread, viewPreferences);
-            frame().setContentPane(new InspectorScrollPane(inspection(), table));
+            setContentPane(new InspectorScrollPane(inspection(), table));
         }
-        updateFrameTitle();
+        setTitle();
     }
 
     @Override
@@ -133,12 +133,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
         // The title displays thread state, so must be updated.
-        updateFrameTitle();
-        return true;
+        setTitle();
     }
 
     @Override

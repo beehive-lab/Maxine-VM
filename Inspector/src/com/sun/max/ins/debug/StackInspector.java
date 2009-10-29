@@ -256,7 +256,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         viewPreferences = JavaStackFrameViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
 
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
 
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
@@ -352,7 +352,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
             contentPane.add(splitPane, BorderLayout.CENTER);
         }
-        frame().setContentPane(contentPane);
+        setContentPane(contentPane);
         refreshView(true);
         // TODO (mlvdv) try to set frame selection to match global focus; doesn't work.
         updateFocusSelection(inspection().focus().stackFrame());
@@ -426,7 +426,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         if (thread != null && thread.isLive()) {
             final Sequence<StackFrame> frames = thread.frames();
             assert !frames.isEmpty();
@@ -452,8 +452,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         }
         super.refreshView(force);
         // The title displays thread state, so must be updated.
-        updateFrameTitle();
-        return true;
+        setTitle();
     }
 
     @Override

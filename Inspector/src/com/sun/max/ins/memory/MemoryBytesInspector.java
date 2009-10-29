@@ -74,7 +74,7 @@ public final class MemoryBytesInspector extends Inspector {
         this.numberOfBytesPerGroup = numberOfBytesPerGroup;
         this.numberOfGroupsPerLine = numberOfGroupsPerLine;
 
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
@@ -162,7 +162,7 @@ public final class MemoryBytesInspector extends Inspector {
     private TextLabel[] charLabels;
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         final byte[] bytes = new byte[numberOfBytesPerGroup];
         for (int i = 0; i < numberOfGroups; i++) {
             final Address address = this.address.plus(i * numberOfBytesPerGroup);
@@ -186,7 +186,6 @@ public final class MemoryBytesInspector extends Inspector {
             }
         }
         super.refreshView(force);
-        return true;
     }
 
     private JPanel contentPane;
@@ -213,7 +212,7 @@ public final class MemoryBytesInspector extends Inspector {
 
 
         contentPane = new InspectorPanel(inspection());
-        frame().setContentPane(contentPane);
+        setContentPane(contentPane);
         contentPane.removeAll();
         contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
         contentPane.add(createController());
@@ -280,7 +279,7 @@ public final class MemoryBytesInspector extends Inspector {
     @Override
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
-        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle() + " - process terminated");
+        Trace.line(1, tracePrefix() + " closing for " + getTitle() + " - process terminated");
         super.inspectorClosing();
     }
 
