@@ -390,7 +390,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return false;
     }
 
-    public void prepareReferenceMap(TargetMethod caller, Pointer callerInstructionPointer, boolean isTopFrame, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, ReferenceMapCallback result) {
+    public void prepareReferenceMap(boolean isTopFrame, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, TargetMethod lastJavaCallee, ReferenceMapCallback result) {
 
     }
 
