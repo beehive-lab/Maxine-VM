@@ -74,7 +74,7 @@ public final class MemoryBytesInspector extends Inspector {
         this.numberOfBytesPerGroup = numberOfBytesPerGroup;
         this.numberOfGroupsPerLine = numberOfGroupsPerLine;
 
-        final InspectorFrameInterface frame = createFrame(true);
+        final InspectorFrame frame = createFrame(true);
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();

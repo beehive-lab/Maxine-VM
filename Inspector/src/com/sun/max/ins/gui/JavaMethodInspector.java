@@ -105,7 +105,7 @@ public class JavaMethodInspector extends MethodInspector {
 
         final InspectionActions actions = inspection.actions();
 
-        final InspectorFrameInterface frame = createTabFrame(parent);
+        final InspectorFrame frame = createTabFrame(parent);
         final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
 
         final InspectorAction copyAction = actions.copyTargetMethodCodeToClipboard(teleTargetMethod, null);

@@ -36,7 +36,7 @@ import com.sun.max.program.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-final class InspectorInternalFrame extends JInternalFrame implements InspectorFrameInterface {
+final class InspectorInternalFrame extends JInternalFrame implements InspectorFrame {
 
     private final Inspector inspector;
     private final InspectorMenuBar menuBar;

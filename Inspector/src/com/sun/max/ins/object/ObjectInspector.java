@@ -102,8 +102,8 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    public InspectorFrameInterface createFrame(boolean addMenuBar) {
-        final InspectorFrameInterface frame = super.createFrame(addMenuBar);
+    public InspectorFrame createFrame(boolean addMenuBar) {
+        final InspectorFrame frame = super.createFrame(addMenuBar);
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
 
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);

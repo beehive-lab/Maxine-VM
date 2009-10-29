@@ -166,7 +166,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
 
-    private InspectorFrameInterface frame;
+    private InspectorFrame frame;
 
     protected Inspector(Inspection inspection) {
         super(inspection);
@@ -263,7 +263,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @param addMenuBar TODO
      *
      */
-    protected InspectorFrameInterface createFrame(boolean addMenuBar) {
+    protected InspectorFrame createFrame(boolean addMenuBar) {
         frame = new InspectorInternalFrame(this, addMenuBar);
         setTitle();
         createView();
@@ -278,7 +278,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         return frame;
     }
 
-    protected InspectorFrameInterface createTabFrame(TabbedInspector parent) {
+    protected InspectorFrame createTabFrame(TabbedInspector parent) {
         frame = new InspectorRootPane(this, parent, true);
         setTitle();
         createView();

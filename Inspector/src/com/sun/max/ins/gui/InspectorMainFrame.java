@@ -195,7 +195,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             // Delete backwards so that the indices don't change
             final Component component = desktopPane.getComponent(i);
             if (component instanceof InspectorInternalFrame) {
-                final InspectorFrameInterface inspectorFrame = (InspectorFrameInterface) component;
+                final InspectorFrame inspectorFrame = (InspectorFrame) component;
                 final Inspector inspector = inspectorFrame.inspector();
                 if (predicate.evaluate(inspector)) {
                     inspector.dispose();
@@ -209,7 +209,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         for (int i = 0; i < componentCount; i++) {
             final Component component = desktopPane.getComponent(i);
             if (component instanceof InspectorInternalFrame) {
-                final InspectorFrameInterface inspectorFrame = (InspectorFrameInterface) component;
+                final InspectorFrame inspectorFrame = (InspectorFrame) component;
                 final Inspector inspector = inspectorFrame.inspector();
                 if (predicate.evaluate(inspector)) {
                     return inspector;

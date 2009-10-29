@@ -61,7 +61,7 @@ public final class JavaSourceInspector  extends FileInspector {
 
     private JavaSourceInspector(Inspection inspection, File file) {
         super(inspection, file);
-        final InspectorFrameInterface frame = createFrame(true);
+        final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
 
