@@ -40,7 +40,7 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  * @author Doug Simon
  */
-public abstract class MethodInspector extends Inspector {
+public abstract class MethodInspector extends Inspector<MethodInspector> {
 
     private static final int TRACE_VALUE = 2;
 
@@ -173,11 +173,6 @@ public abstract class MethodInspector extends Inspector {
         if (teleTargetMethod != null) {
             return make(inspection, teleTargetMethod, codeKind);
         }
-
-        // TODO (mlvdv)  Clean up
-        //final UniqueInspector.Key<? extends MethodInspector> key = UniqueInspector.Key.create(JavaMethodInspector.class, teleClassMethodActor);
-        //final MethodInspector methodInspector = UniqueInspector.find(inspection, key);
-
         final MethodInspector methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
         if (methodInspector == null) {
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
@@ -198,26 +193,14 @@ public abstract class MethodInspector extends Inspector {
     private static JavaMethodInspector make(Inspection inspection, TeleTargetMethod teleTargetMethod, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
 
-
-        // TODO (mlvdv) Clean up
-        //final UniqueInspector.Key<? extends MethodInspector> targetMethodKey = UniqueInspector.Key.create(JavaMethodInspector.class, teleTargetMethod);
-
-        //MethodInspector methodInspector = UniqueInspector.find(inspection, targetMethodKey);
-
         // Is there already an inspection open that is bound to this compilation?
         MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(teleTargetMethod);
         if (methodInspector == null) {
             // No existing inspector is bound to this compilation; see if there is an inspector for this method that is
             // unbound
-
-            // TODO (mlvdv) Clean up
-            //UniqueInspector.Key<? extends MethodInspector> classMethodActorKey = null;
             TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
             if (teleClassMethodActor != null) {
-                //classMethodActorKey = UniqueInspector.Key.create(JavaMethodInspector.class, teleTargetMethod.getTeleClassMethodActor());
-                //methodInspector = UniqueInspector.find(inspection, classMethodActorKey);
                 methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
-
             }
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             if (methodInspector == null) {
@@ -243,13 +226,7 @@ public abstract class MethodInspector extends Inspector {
      */
     private static NativeMethodInspector make(Inspection inspection, TeleTargetRoutine teleTargetRoutine) {
         NativeMethodInspector nativeMethodInspector = null;
-
-        // TODO (mlvdv) Clean up
-        //final UniqueInspector.Key<? extends MethodInspector> key = UniqueInspector.Key.create(NativeMethodInspector.class, teleTargetRoutine.teleRoutine());
-        //final MethodInspector methodInspector = UniqueInspector.find(inspection, key);
-
         MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(teleTargetRoutine);
-
         if (methodInspector == null) {
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             nativeMethodInspector = new NativeMethodInspector(inspection, parent, teleTargetRoutine);
@@ -269,7 +246,7 @@ public abstract class MethodInspector extends Inspector {
     }
 
     @Override
-    public InspectorFrame createTabFrame(TabbedInspector parent) {
+    public InspectorFrame createTabFrame(TabbedInspector<MethodInspector> parent) {
 
         final InspectorFrame frame = super.createTabFrame(parent);
 
@@ -302,7 +279,7 @@ public abstract class MethodInspector extends Inspector {
 
     @Override
     public void breakpointStateChanged() {
-        // TODO (mlvdv)  Data reading PATCH
+        // TODO (mlvdv)  Data reading PATCH, there should be a more systematic way of handling this.
         if (maxVMState().processState() != ProcessState.TERMINATED) {
             refreshView(true);
         }
@@ -314,32 +291,6 @@ public abstract class MethodInspector extends Inspector {
 
     public void closeOthers() {
         parent.closeOthers(this);
-    }
-
-    @Override
-    public void moveToFront() {
-        if (parent != null) {
-            parent.setSelected(this);
-        } else {
-            super.moveToFront();
-        }
-    }
-
-    @Override
-    public void setSelected() {
-        if (parent != null) {
-            parent.setSelected(this);
-        } else {
-            super.moveToFront();
-        }
-    }
-
-    @Override
-    public boolean isSelected() {
-        if (parent != null) {
-            return parent.isSelected(this);
-        }
-        return false;
     }
 
     /**

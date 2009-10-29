@@ -45,27 +45,19 @@ class ButtonTabComponent<Inspector_Type extends Inspector> extends InspectorPane
     private final TabbedInspector<Inspector_Type> tabbedInspector;
     private final Inspector_Type inspector;
     private final String toolTipText;
-    private final JTabbedPane tabbedPane;
 
-    ButtonTabComponent(Inspection inspection, final TabbedInspector<Inspector_Type> tabbedInspector, Inspector_Type inspector, String toolTipText, JTabbedPane tabPane) {
+    ButtonTabComponent(Inspection inspection, final TabbedInspector<Inspector_Type> tabbedInspector, Inspector_Type inspector, String toolTipText) {
         //unset default FlowLayout' gaps
         super(inspection, new FlowLayout(FlowLayout.LEFT, 0, 0));
         this.tabbedInspector = tabbedInspector;
         this.inspector = inspector;
         this.toolTipText = toolTipText;
-        this.tabbedPane = tabPane;
         setOpaque(false);
 
-        //make JLabel read titles from JTabbedPane
         final JLabel label = new JLabel() {
-
             @Override
             public String getText() {
-                final int i = tabbedPane.indexOfTabComponent(ButtonTabComponent.this);
-                if (i != -1) {
-                    return tabbedPane.getTitleAt(i);
-                }
-                return null;
+                return ButtonTabComponent.this.inspector.getTextForTitle();
             }
         };
         label.setToolTipText(toolTipText);
@@ -91,14 +83,14 @@ class ButtonTabComponent<Inspector_Type extends Inspector> extends InspectorPane
             public void procedure(MouseEvent mouseEvent) {
                 switch(Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1:
-                        // Default left button behavior; have to do it by hand
-                        final int i = tabbedPane.indexOfTabComponent(ButtonTabComponent.this);
+                        // Default left button behavior; for some reason we have to do it by hand
                         tabbedInspector.setSelected(ButtonTabComponent.this.inspector);
                         break;
                     case MouseEvent.BUTTON3:
                         popupMenu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         break;
                 }
+                // Pass along the event to the tab component.
                 ButtonTabComponent.this.dispatchEvent(mouseEvent);
             }
         });
@@ -109,16 +101,6 @@ class ButtonTabComponent<Inspector_Type extends Inspector> extends InspectorPane
         add(button);
         //add more space to the top of the component
         setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
-    }
-
-    @Override
-    public void refresh(boolean force) {
-        // No remote data that needs reading.
-    }
-
-    @Override
-    public void redisplay() {
-        // No view configurations that we're willing to fuss with.
     }
 
     private class TabButton extends JButton implements ActionListener {

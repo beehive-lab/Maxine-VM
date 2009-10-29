@@ -147,7 +147,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector> extends 
      */
     public void addCloseIconToTab(Inspector_Type inspector, String toolTipText) {
 
-        ButtonTabComponent<Inspector_Type> tabRenderer = new ButtonTabComponent<Inspector_Type>(inspection(), this, inspector, toolTipText, tabbedPane);
+        ButtonTabComponent<Inspector_Type> tabRenderer = new ButtonTabComponent<Inspector_Type>(inspection(), this, inspector, toolTipText);
         final int index = tabbedPane.indexOfComponent(inspector.getJComponent());
         tabbedPane.setTabComponentAt(index, tabRenderer);
     }
