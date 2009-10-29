@@ -64,7 +64,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
         Trace.begin(1, tracePrefix() + "initializing");
         viewPreferences = BootImageViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        final InspectorFrameInterface frame = createFrame();
+        final InspectorFrameInterface frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);

@@ -256,7 +256,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         viewPreferences = JavaStackFrameViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
 
-        final InspectorFrameInterface frame = createFrame();
+        final InspectorFrameInterface frame = createFrame(true);
 
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 

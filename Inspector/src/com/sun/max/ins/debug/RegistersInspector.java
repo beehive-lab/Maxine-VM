@@ -66,7 +66,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
-        final InspectorFrameInterface frame = createFrame();
+        final InspectorFrameInterface frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));

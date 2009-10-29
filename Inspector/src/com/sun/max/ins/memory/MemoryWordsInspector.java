@@ -304,7 +304,7 @@ public final class MemoryWordsInspector extends Inspector {
         cloneButton.setToolTipText("Create a cloned copy of this memory inspector");
         cloneButton.setIcon(style().generalCopyIcon());
 
-        final InspectorFrameInterface frame = createFrame();
+        final InspectorFrameInterface frame = createFrame(true);
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();

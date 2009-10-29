@@ -36,7 +36,7 @@ public class TupleInspector extends ObjectInspector {
 
     TupleInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
-        final InspectorFrameInterface frame = createFrame();
+        final InspectorFrameInterface frame = createFrame(true);
 
 
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();

@@ -24,6 +24,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.object.*;
 
 
 /**
@@ -42,7 +43,7 @@ public final class NativeMethodInspector extends MethodInspector {
     private final String longName;
 
     public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetRoutine teleTargetRoutine) {
-        super(inspection, parent, null, teleTargetRoutine.teleRoutine());
+        super(inspection, parent);
         this.teleTargetRoutine = teleTargetRoutine;
         if (teleTargetRoutine instanceof TeleNativeTargetRoutine) {
             final TeleNativeTargetRoutine teleNativeTargetRoutine  = (TeleNativeTargetRoutine) teleTargetRoutine;
@@ -52,12 +53,17 @@ public final class NativeMethodInspector extends MethodInspector {
             shortName = teleTargetRoutine.getName();
             longName = shortName;
         }
-        createFrame();
+        createTabFrame(parent);
     }
 
     @Override
     public TeleTargetRoutine teleTargetRoutine() {
         return teleTargetRoutine;
+    }
+
+    @Override
+    public TeleClassMethodActor teleClassMethodActor() {
+        return null;
     }
 
     @Override

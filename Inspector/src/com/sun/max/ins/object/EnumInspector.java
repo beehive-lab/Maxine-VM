@@ -48,7 +48,7 @@ public class EnumInspector extends ObjectInspector {
         // This is the default for a newly created inspector.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        createFrame();
+        createFrame(true);
     }
 
     @Override
