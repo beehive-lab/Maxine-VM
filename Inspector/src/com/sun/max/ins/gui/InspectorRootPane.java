@@ -89,7 +89,6 @@ final class InspectorRootPane<Inspector_Type extends Inspector> extends JRootPan
     }
 
     public boolean isSelected() {
-        System.out.println("getSelected!!!!");
         return parent.isSelected() && parent.isSelected(inspector);
     }
 
