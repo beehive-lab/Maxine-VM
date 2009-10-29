@@ -109,10 +109,9 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
-        return true;
     }
 
     @Override

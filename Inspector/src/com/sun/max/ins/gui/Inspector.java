@@ -302,11 +302,10 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      *
      * @param force suspend caching behavior; read state unconditionally.
      */
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         frame.refresh(force);
         frame.invalidate();
         frame.repaint();
-        return true;
     }
 
     /**

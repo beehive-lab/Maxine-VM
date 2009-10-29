@@ -230,26 +230,24 @@ public abstract class ObjectInspector extends Inspector {
     };
 
     @Override
-    protected boolean refreshView(boolean force) {
-        final Pointer newOrigin = teleObject.getCurrentOrigin();
-        if (!teleObject.isLive()) {
+    protected void refreshView(boolean force) {
+        if (teleObject.isLive()) {
+            final Pointer newOrigin = teleObject.getCurrentOrigin();
+            if (newOrigin.equals(currentObjectOrigin)) {
+                if (objectHeaderTable != null) {
+                    objectHeaderTable.refresh(force);
+                }
+            } else {
+                // The object has been relocated in memory
+                currentObjectOrigin = newOrigin;
+                reconstructView();
+            }
+            setTitle();
+            super.refreshView(force);
+        } else {
             setWarning();
             setTitle();
-            return false;
         }
-        if (!newOrigin.equals(currentObjectOrigin)) {
-            // The object has been relocated in memory
-            currentObjectOrigin = newOrigin;
-            reconstructView();
-        } else {
-            if (objectHeaderTable != null) {
-                objectHeaderTable.refresh(force);
-            }
-        }
-        setTitle();
-        super.refreshView(force);
-
-        return true;
     }
 
     public void viewConfigurationChanged() {

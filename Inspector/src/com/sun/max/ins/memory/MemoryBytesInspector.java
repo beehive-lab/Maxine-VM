@@ -162,7 +162,7 @@ public final class MemoryBytesInspector extends Inspector {
     private TextLabel[] charLabels;
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         final byte[] bytes = new byte[numberOfBytesPerGroup];
         for (int i = 0; i < numberOfGroups; i++) {
             final Address address = this.address.plus(i * numberOfBytesPerGroup);
@@ -186,7 +186,6 @@ public final class MemoryBytesInspector extends Inspector {
             }
         }
         super.refreshView(force);
-        return true;
     }
 
     private JPanel contentPane;

@@ -133,12 +133,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
         // The title displays thread state, so must be updated.
         setTitle();
-        return true;
     }
 
     @Override

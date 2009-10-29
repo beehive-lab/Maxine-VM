@@ -426,7 +426,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         if (thread != null && thread.isLive()) {
             final Sequence<StackFrame> frames = thread.frames();
             assert !frames.isEmpty();
@@ -453,7 +453,6 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         super.refreshView(force);
         // The title displays thread state, so must be updated.
         setTitle();
-        return true;
     }
 
     @Override
