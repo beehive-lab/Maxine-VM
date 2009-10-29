@@ -48,6 +48,7 @@ import com.sun.max.vm.prototype.*;
  */
 public final class VMOptions {
 
+    private static final int HELP_LINE_MAX_WIDTH = 92;
     private static final int HELP_INDENT = 32;
 
     /**
@@ -155,7 +156,7 @@ public final class VMOptions {
             // Strings.formatParagraphs() can't be used because allocation may not work here
             for (int j = 0; j < help.length(); j++) {
                 final char ch = help.charAt(j);
-                if (column > 72 && (ch == ' ' || ch == '\t')) {
+                if (column > HELP_LINE_MAX_WIDTH && (ch == ' ' || ch == '\t')) {
                     Log.println();
                     for (int k = 0; k < HELP_INDENT; k++) {
                         Log.print(' ');

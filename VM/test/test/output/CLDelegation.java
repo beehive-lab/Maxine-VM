@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,36 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.classfile.create;
+package test.output;
 
-import com.sun.max.lang.*;
-import com.sun.max.vm.classfile.*;
 
 /**
- * ClassLoader that makes a class from an array of bytes.
+ * Ensures that ClassLoader delegation is the same on Maxine as on HotSpot.
  *
- * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public class MillClassLoader extends ClassLoader {
+public class CLDelegation {
+    public static void main(String[] args) {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        System.out.println("System class loader delegation chain:");
+        while (cl != null) {
+            System.out.println("   " + cl.getClass().getName());
+            cl = cl.getParent();
+        }
 
-    private final byte[] classfileBytes;
+        System.out.println("Delegation chain for loader of " + CLDelegation.class);
+        cl = CLDelegation.class.getClassLoader();
+        while (cl != null) {
+            System.out.println("   " + cl.getClass().getName());
+            cl = cl.getParent();
+        }
 
-    MillClassLoader(byte[] classfileBytes) {
-        this.classfileBytes = classfileBytes.clone();
     }
-
-    @Override
-    public Class<?> findClass(String name) {
-        final Class result = defineClass(name, classfileBytes, 0, classfileBytes.length);
-        ClassfileReader.defineClassActor(name, this, classfileBytes, null, null, false);
-        return result;
-    }
-
-    public static Class makeClass(String name, byte[] classfileBytes) {
-        final MillClassLoader classLoader = new MillClassLoader(classfileBytes);
-        final Class result = Classes.load(classLoader, name);
-        classLoader.resolveClass(result);
-        return result;
-    }
-
 }

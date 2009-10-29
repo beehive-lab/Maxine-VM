@@ -174,7 +174,7 @@ public final class PrototypeClassLoader extends ClassLoader {
                     }
                     final String name = typeDescriptor.toJavaString();
                     final ClasspathFile classpathFile = readClassFile(classpath(), name);
-                    return ClassfileReader.defineClassActor(name, PrototypeClassLoader.this, classpathFile.contents, null, classpathFile.classpathEntry);
+                    return ClassfileReader.defineClassActor(name, PrototypeClassLoader.this, classpathFile.contents, null, classpathFile.classpathEntry, false);
                 }
             });
         } catch (Exception exception) {
@@ -205,7 +205,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      */
     public synchronized ClassActor makeClassActor(final String name, byte[] classfileBytes) {
         defineClass(name, classfileBytes, 0, classfileBytes.length);
-        return ClassfileReader.defineClassActor(name, this, classfileBytes, null, null);
+        return ClassfileReader.defineClassActor(name, this, classfileBytes, null, null, false);
     }
 
     /**

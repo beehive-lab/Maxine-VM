@@ -321,6 +321,10 @@ public abstract class ClassActor extends Actor {
         return isGenerated(flags());
     }
 
+    public final boolean isRemote() {
+        return isRemote(flags());
+    }
+
     @INLINE
     public final boolean isArrayClassActor() {
         return this instanceof ArrayClassActor;
@@ -1380,7 +1384,7 @@ public abstract class ClassActor extends Actor {
     }
 
     private void verify() {
-        if (isGenerated()) {
+        if (isGenerated() || !ClassVerifier.shouldBeVerified(classLoader, isRemote())) {
             // generated stubs do not necessarily pass the verifier, even if they work as intended
         } else {
             Verifier.verifierFor(this).verify();

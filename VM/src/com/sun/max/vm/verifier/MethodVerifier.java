@@ -36,9 +36,6 @@ import com.sun.max.vm.verifier.types.*;
  */
 public abstract class MethodVerifier {
 
-    private static final VMStringOption traceVerifierOption = VMOptions.register(new VMStringOption("-XX:TraceVerifier=", false, "",
-        "Trace bytecode verification of methods whose qualified name contains <value>."), MaxineVM.Phase.STARTING);
-
     private final ClassVerifier classVerifier;
     private final ClassLoader classLoader;
     private final ConstantPool constantPool;
@@ -55,7 +52,7 @@ public abstract class MethodVerifier {
         if (classVerifier.verbose) {
             this.verbose = true;
         } else {
-            this.verbose = traceVerifierOption.isPresent() && classMethodActor.format("%H.%n").contains(traceVerifierOption.getValue());
+            this.verbose = Verifier.methodToTrace != null && classMethodActor.format("%H.%n").contains(Verifier.methodToTrace);
         }
     }
 
@@ -122,6 +119,14 @@ public abstract class MethodVerifier {
         final int currentOpcodePosition = currentOpcodePositionOrMinusOne();
         try {
             ErrorContext.enterContext("verifying " + classMethodActor.format("%H.%n(%p)") + (currentOpcodePosition == -1 ? "" : " at bytecode position " + currentOpcodePosition));
+            if (verbose) {
+                try {
+                    throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
+                } catch (VerifyError ve) {
+                    ve.printStackTrace(Log.out);
+                    throw ve;
+                }
+            }
             throw ErrorContext.verifyError(message, classMethodActor, codeAttribute, currentOpcodePosition);
         } finally {
             ErrorContext.exitContext();

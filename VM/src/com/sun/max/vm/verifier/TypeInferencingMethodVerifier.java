@@ -149,6 +149,9 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             Log.println();
             Log.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
             Log.println();
+            Log.println("Input bytecode:");
+            CodeAttributePrinter.print(Log.out, codeAttribute());
+            Log.println();
             Log.println("Interpreting bytecode:");
         }
 
@@ -213,6 +216,17 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     protected void verifyExceptionHandler(ExceptionHandlerEntry info) {
         super.verifyExceptionHandler(info);
         makeTypeState(info.handlerPosition());
+    }
+
+    @Override
+    public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
+        if (!toType.isAssignableFrom(fromType)) {
+
+
+
+            toType.isAssignableFrom(fromType);
+            throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
+        }
     }
 
     /**
@@ -330,7 +344,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             final TypeState jsrTypeState = typeStateMap[jsr.position()];
             assert jsrTypeState != null;
-            typeState.updateLocalsNotAccessedInSubroutine(jsrTypeState, subroutine);
+            typeState.updateLocalsNotAccessedInSubroutine(jsrTypeState, subroutine, index);
 
             // Create the type state at the return position if it does not already exist
             TypeState retTypeState = typeStateMap[retTarget];

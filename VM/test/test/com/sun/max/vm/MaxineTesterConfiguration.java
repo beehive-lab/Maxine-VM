@@ -70,6 +70,7 @@ public class MaxineTesterConfiguration {
     static {
         output(test.output.AWTFont.class,                  FAIL_DARWIN);
         output(test.output.JavacTest.class,                RAND_LINUX);
+        output(test.output.CLDelegation.class);
         output(test.output.CatchOutOfMemory.class);
         output(test.output.PrintDate.class);
         output(test.output.HelloWorld.class);

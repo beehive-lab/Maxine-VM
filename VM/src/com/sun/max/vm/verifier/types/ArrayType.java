@@ -57,6 +57,38 @@ public class ArrayType extends ObjectType {
     }
 
     @Override
+    public boolean isAssignableFromDifferentType(VerificationType from) {
+        // Any object class is assignable from null
+        if (from == NULL) {
+            return true;
+        }
+
+        if (!from.isArray()) {
+            return false;
+        }
+
+        // Now both are arrays.
+        // If either item's element type isn't a reference type, promote it
+        // up to an object or array of object.
+        VerificationType thisElement = elementType();
+        int thisDimension = JavaTypeDescriptor.getArrayDimensions(typeDescriptor());
+        VerificationType fromElement = ((ArrayType) from).elementType();
+        int fromDimension = JavaTypeDescriptor.getArrayDimensions(from.typeDescriptor());
+
+        if (thisDimension != fromDimension) {
+            if (thisElement == OBJECT && thisDimension < fromDimension) {
+                return true;
+            }
+            return false;
+        }
+
+        if (thisElement instanceof ReferenceType) {
+            return thisElement.isAssignableFrom(fromElement);
+        }
+        return thisElement == fromElement;
+    }
+
+    @Override
     protected VerificationType mergeWithDifferentType(VerificationType from) {
         // value is null (uninitialized) or value is not a reference type, return bogus.
         if (!(from instanceof ObjectType)) {
