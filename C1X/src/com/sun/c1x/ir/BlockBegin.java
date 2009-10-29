@@ -574,6 +574,7 @@ public class BlockBegin extends Instruction {
                 hasFlag = true;
             }
         }
+
         builder.append("]");
         if (end != null) {
             builder.append(" -> ");
@@ -711,6 +712,10 @@ public class BlockBegin extends Instruction {
 
     public Iterable<Phi> allLivePhis() {
         return stateBefore.allLivePhis(this);
+    }
+
+    public Iterable<Phi> allPhis() {
+        return stateBefore.allPhis(this);
     }
 
     public void addExceptionStates(List<ValueStack> exceptHandlerStates) {

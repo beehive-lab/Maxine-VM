@@ -58,23 +58,24 @@ public class FrameMap {
         if (method == null) {
             incomingArguments = new CallingConvention(new CiLocation[0]);
         } else {
-            incomingArguments = javaCallingConvention(Util.signatureToBasicTypes(method.signatureType(), !method.isStatic()), false);
+            incomingArguments = javaCallingConvention(Util.signatureToBasicTypes(method.signatureType(), !method.isStatic()), false, false);
         }
     }
 
     public CallingConvention runtimeCallingConvention(CiKind[] signature) {
         CiLocation[] locations = compilation.runtime.runtimeCallingConvention(signature);
-        return createCallingConvention(locations, true);
+        return createCallingConvention(locations, false);
     }
 
-    public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing) {
+    public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing, boolean reserveOutgoingArgumentsArea) {
         CiLocation[] locations = compilation.runtime.javaCallingConvention(signature, outgoing);
-        return createCallingConvention(locations, outgoing);
+        return createCallingConvention(locations, reserveOutgoingArgumentsArea);
     }
 
-    private CallingConvention createCallingConvention(CiLocation[] locations, boolean outgoing) {
+    private CallingConvention createCallingConvention(CiLocation[] locations, boolean reserveOutgoingArgumentsArea) {
         final CallingConvention result = new CallingConvention(locations);
-        if (outgoing) {
+        if (reserveOutgoingArgumentsArea) {
+            assert frameSize == -1 : "frame size must not yet be fixed!";
             reservedOutgoingArgumentsArea = Math.max(reservedOutgoingArgumentsArea, result.overflowArgumentsSize());
         }
         return result;
@@ -135,6 +136,7 @@ public class FrameMap {
     }
 
     public void setFrameSize(int frameSize) {
+        assert this.frameSize == -1 : "should only be calculated once";
         this.frameSize = frameSize;
     }
 

@@ -1232,6 +1232,7 @@ public class GraphBuilder {
         // continuation is in work list, so end iteration of current block
         skipBlock = true;
         popScopeForJsr();
+        C1XMetrics.InlinedJsrs++;
         return true;
     }
 

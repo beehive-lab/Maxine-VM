@@ -65,6 +65,7 @@ public class LIRItem {
     public void loadItemForce(LIROperand reg) {
         LIROperand r = result();
         if (r != reg) {
+            assert r.kind != CiKind.Illegal;
             if (r.kind != reg.kind) {
                 // moves between different types need an intervening spill slot
                 LIROperand tmp = gen.forceToSpill(r, reg.kind);

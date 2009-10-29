@@ -27,7 +27,7 @@ import com.sun.c1x.xir.CiXirAssembler.XirInstruction;
 import com.sun.c1x.xir.CiXirAssembler.XirLabel;
 import com.sun.c1x.xir.CiXirAssembler.XirParameter;
 import com.sun.c1x.xir.CiXirAssembler.XirTemp;
-import com.sun.c1x.xir.CiXirAssembler.XirVariable;
+import com.sun.c1x.xir.CiXirAssembler.XirOperand;
 
 /**
  * This class represents a completed template of XIR code that has been first assembled by
@@ -47,19 +47,20 @@ public class XirTemplate {
     }
 
     public final String name;
-    public final XirVariable resultOperand;
+    public final XirOperand resultOperand;
     public final CiXirAssembler.XirInstruction[] fastPath;
     public final CiXirAssembler.XirInstruction[] slowPath;
     public final XirLabel[] labels;
     public final XirParameter[] parameters;
     public final boolean[] parameterDestroyed;
-    public final CiXirAssembler.XirTemp[] temps;
-    public final CiXirAssembler.XirConstant[] constants;
+    public final XirTemp[] temps;
+    public final XirConstant[] constants;
     public final int variableCount;
+    public final boolean allocateResultOperand;
 
     public final int flags;
 
-    public XirTemplate(String name, int variableCount, XirVariable resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constants, int flags) {
+    public XirTemplate(String name, int variableCount, boolean allocateResultOperand, XirOperand resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constantValues, int flags) {
     	this.name = name;
     	this.variableCount = variableCount;
     	this.resultOperand = resultOperand;
@@ -69,7 +70,8 @@ public class XirTemplate {
         this.parameters = parameters;
         this.flags = flags;
         this.temps = temps;
-        this.constants = constants;
+        this.allocateResultOperand = allocateResultOperand;
+        this.constants = constantValues;
 
         assert fastPath != null;
         assert labels != null;

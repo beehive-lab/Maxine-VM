@@ -2068,6 +2068,7 @@ public class LinearScan {
                 case Byte:
                 case Char:
                 case Short:
+                case Jsr:
                 case Int: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
@@ -2703,6 +2704,8 @@ public class LinearScan {
             C1XTimers.DEBUG_INFO.start();
         }
 
+        C1XMetrics.LSRANumberOfSpills += maxSpills;
+
         // fill in number of spill slots into frameMap
         frameMap.finalizeFrame(maxSpills);
 
@@ -3037,6 +3040,8 @@ public class LinearScan {
             case Short:
                 return 1;
             case Int:
+                return 1;
+            case Jsr:
                 return 1;
             case Long:
                 return 2;

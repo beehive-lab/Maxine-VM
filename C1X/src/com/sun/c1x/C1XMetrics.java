@@ -20,6 +20,8 @@
  */
 package com.sun.c1x;
 
+import java.util.*;
+
 /**
  * This class contains a number of fields that collect metrics about compilation, particularly
  * the number of times certain optimizations are performed.
@@ -36,6 +38,7 @@ public class C1XMetrics {
     public static int MethodsFolded;
     public static int InlineForcedMethods;
     public static int InlineForbiddenMethods;
+    public static int InlinedJsrs;
     public static int NullCheckIterations;
     public static int NullCheckEliminations;
     public static int NullChecksRedundant;
@@ -54,4 +57,21 @@ public class C1XMetrics {
     public static int DataPatches;
     public static int DirectCallSitesEmitted;
     public static int IndirectCallSitesEmitted;
+
+    public static Map<String, Integer> StaticHIRInstructionCount = new HashMap<String, Integer>();
+
+    /**
+     * The number of LIR instructions that were allocated during compilation.
+     */
+    public static int NumberOfLIRInstructions;
+
+    /**
+     * The number of interval objects that were allocated during linear scan register allocation.
+     */
+    public static int LSRAIntervalsCreated;
+
+    /**
+     * The number of spill slots required for linear scan register allocation.
+     */
+    public static int LSRANumberOfSpills;
 }
