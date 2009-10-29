@@ -94,8 +94,25 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
     }
 
     public void flash(Color borderFlashColor) {
-        // TODO Auto-generated method stub
-
+        Component pane = getContentPane();
+        if (pane instanceof JScrollPane) {
+            final JScrollPane scrollPane = (JScrollPane) pane;
+            pane = scrollPane.getViewport();
+        }
+        final Graphics g = pane.getGraphics();
+        g.setPaintMode();
+        g.setColor(borderFlashColor);
+        for (int i = 0; i < 5; i++) {
+            g.drawRect(i, i, pane.getWidth() - (i * 2), pane.getHeight() - (i * 2));
+        }
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+        }
+        g.dispose();
+        invalidate();
+        repaint();
+        System.out.println("FLASH!!!!!!");
     }
 
     public void dispose() {
