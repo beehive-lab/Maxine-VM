@@ -62,7 +62,7 @@ public final class FocusInspector extends Inspector {
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = FocusTable.FocusViewPreferences.globalPreferences(inspection);
-        final InspectorFrameInterface frame = createFrame();
+        final InspectorFrameInterface frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);

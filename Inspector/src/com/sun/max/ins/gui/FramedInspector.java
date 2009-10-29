@@ -18,39 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.object;
+package com.sun.max.ins.gui;
 
 import com.sun.max.ins.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.vm.layout.*;
+
 
 /**
- * An object inspector specialized for displaying a Maxine low-level object in the VM, constructed using {@link ArrayLayout}.
- *
+ * An inspector that displays in an internal window frame.
  * @author Michael Van De Vanter
  */
-public final class ArrayInspector extends ObjectInspector {
+public abstract class FramedInspector extends Inspector {
 
-    private ObjectScrollPane elementsPane;
+    public FramedInspector(Inspection inspection) {
+        super(inspection);
 
-    ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
-        super(inspection, factory, teleObject);
-        createFrame(true);
-    }
-
-    @Override
-    protected void createView() {
-        super.createView();
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
-        elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
-        getContentPane().add(elementsPane);
-    }
-
-    @Override
-    protected boolean refreshView(boolean force) {
-        elementsPane.refresh(force);
-        super.refreshView(force);
-        return true;
     }
 
 }

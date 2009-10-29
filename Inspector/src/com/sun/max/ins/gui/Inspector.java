@@ -59,7 +59,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     private static final int TRACE_VALUE = 2;
 
-    private static final ImageIcon FRAME_ICON = InspectorImageIcon.createDownTriangle(16, 16);
+    private static final ImageIcon DEFAULT_MENU_ICON = InspectorImageIcon.createDownTriangle(16, 16);
 
 
     public enum MenuKind {
@@ -218,9 +218,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * @return the string currently appearing in the title of the Inspector's window frame
+     * @return the string currently appearing in the title or tab of the Inspector's window frame
      */
-    public final String getTitle() {
+    public String getTitle() {
         return frame.getTitle();
     }
 
@@ -231,7 +231,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * If this text is expected to change dynamically, a call to {@link #setTitle()}
      * will cause this to be called again and the result assigned to the frame.
      */
-    protected abstract String getTextForTitle();
+    public abstract String getTextForTitle();
 
     protected final void setTitle(String title) {
         frame.setTitle(title == null ? getTextForTitle() : title);
@@ -260,10 +260,11 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      *
      * If this inspector has a {@linkplain #saveSettingsListener()}, then its size and location
      * is adjusted according to the {@linkplain Inspection#settings() inspection's settings}.
+     * @param addMenuBar TODO
      *
      */
-    protected InspectorFrameInterface createFrame() {
-        frame = new InspectorInternalFrame(this);
+    protected InspectorFrameInterface createFrame(boolean addMenuBar) {
+        frame = new InspectorInternalFrame(this, addMenuBar);
         setTitle();
         createView();
         frame.pack();
@@ -276,6 +277,22 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         }
         return frame;
     }
+
+    protected InspectorFrameInterface createTabFrame(TabbedInspector parent) {
+        frame = new InspectorRootPane(this, parent, true);
+        setTitle();
+        createView();
+        frame.pack();
+        gui().addInspector(this);
+        inspection().addInspectionListener(this);
+        inspection().focus().addListener(this);
+        final SaveSettingsListener saveSettingsListener = saveSettingsListener();
+        if (saveSettingsListener != null) {
+            inspection().settings().addSaveSettingsListener(saveSettingsListener);
+        }
+        return frame;
+    }
+
 
     /**
      * Reads, re-reads, and updates any state caches if needed from the VM.
@@ -375,14 +392,12 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     /**
      * Explicitly closes a particular Inspector, but
      * many are closed implicitly by a window system
-     * event on the frame.
+     * event on the frame.  Start the closure by
+     * notifying the frame, which will then close
+     * the Inspector.
      */
-    public void dispose() {
+    public final void dispose() {
         frame.dispose();
-    }
-
-    public void replaceFrameCloseAction(InspectorAction action) {
-        frame.replaceFrameCloseAction(action);
     }
 
     /**

@@ -66,7 +66,7 @@ public final class HubInspector extends ObjectInspector {
         showMTables = globalHubPreferences.showMTables;
         showRefMaps = globalHubPreferences.showRefMaps;
 
-        final InspectorFrameInterface frame = createFrame();
+        final InspectorFrameInterface frame = createFrame(true);
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         if (teleClassMethodActor != null) {
             // the object is, or is associated with a ClassMethodActor.

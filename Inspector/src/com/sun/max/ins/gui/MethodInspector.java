@@ -22,6 +22,7 @@ package com.sun.max.ins.gui;
 
 import javax.swing.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.lang.*;
@@ -39,7 +40,7 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  * @author Doug Simon
  */
-public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
+public abstract class MethodInspector extends Inspector {
 
     private static final int TRACE_VALUE = 2;
 
@@ -135,6 +136,10 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
         return methodInspector;
     }
 
+    private static final VariableMapping<TeleTargetRoutine, MethodInspector> teleTargetRoutineToMethodInspector = new IdentityHashMapping<TeleTargetRoutine, MethodInspector>();
+    private static final VariableMapping<TeleClassMethodActor, MethodInspector> teleClassMethodActorToMethodInspector = new IdentityHashMapping<TeleClassMethodActor, MethodInspector>();
+
+
     /**
      * Makes an inspector displaying code for specified code location. Should always work for
      * Java methods. For native methods, only works if the code block is already known.
@@ -168,12 +173,18 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
         if (teleTargetMethod != null) {
             return make(inspection, teleTargetMethod, codeKind);
         }
-        final UniqueInspector.Key<? extends MethodInspector> key = UniqueInspector.Key.create(JavaMethodInspector.class, teleClassMethodActor);
-        final MethodInspector methodInspector = UniqueInspector.find(inspection, key);
+
+        // TODO (mlvdv)  Clean up
+        //final UniqueInspector.Key<? extends MethodInspector> key = UniqueInspector.Key.create(JavaMethodInspector.class, teleClassMethodActor);
+        //final MethodInspector methodInspector = UniqueInspector.find(inspection, key);
+
+        final MethodInspector methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
         if (methodInspector == null) {
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             javaMethodInspector = new JavaMethodInspector(inspection, parent, teleClassMethodActor, codeKind);
             parent.add(javaMethodInspector);
+            teleClassMethodActorToMethodInspector.put(teleClassMethodActor, javaMethodInspector);
+
         } else {
             javaMethodInspector = (JavaMethodInspector) methodInspector;
         }
@@ -186,16 +197,27 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
      */
     private static JavaMethodInspector make(Inspection inspection, TeleTargetMethod teleTargetMethod, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
-        final UniqueInspector.Key<? extends MethodInspector> targetMethodKey = UniqueInspector.Key.create(JavaMethodInspector.class, teleTargetMethod);
+
+
+        // TODO (mlvdv) Clean up
+        //final UniqueInspector.Key<? extends MethodInspector> targetMethodKey = UniqueInspector.Key.create(JavaMethodInspector.class, teleTargetMethod);
+
+        //MethodInspector methodInspector = UniqueInspector.find(inspection, targetMethodKey);
+
         // Is there already an inspection open that is bound to this compilation?
-        MethodInspector methodInspector = UniqueInspector.find(inspection, targetMethodKey);
+        MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(teleTargetMethod);
         if (methodInspector == null) {
             // No existing inspector is bound to this compilation; see if there is an inspector for this method that is
             // unbound
-            final UniqueInspector.Key<? extends MethodInspector> classMethodActorKey = null;
-            if (teleTargetMethod.getTeleClassMethodActor() != null) {
-                UniqueInspector.Key.create(JavaMethodInspector.class, teleTargetMethod.getTeleClassMethodActor());
-                methodInspector = UniqueInspector.find(inspection, classMethodActorKey);
+
+            // TODO (mlvdv) Clean up
+            //UniqueInspector.Key<? extends MethodInspector> classMethodActorKey = null;
+            TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+            if (teleClassMethodActor != null) {
+                //classMethodActorKey = UniqueInspector.Key.create(JavaMethodInspector.class, teleTargetMethod.getTeleClassMethodActor());
+                //methodInspector = UniqueInspector.find(inspection, classMethodActorKey);
+                methodInspector = teleClassMethodActorToMethodInspector.get(teleClassMethodActor);
+
             }
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             if (methodInspector == null) {
@@ -207,6 +229,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
                 javaMethodInspector = new JavaMethodInspector(inspection, parent, teleTargetMethod, codeKind);
             }
             parent.add(javaMethodInspector);
+            teleTargetRoutineToMethodInspector.put(teleTargetMethod, javaMethodInspector);
         } else {
             // An existing inspector is bound to this method & compilation; ensure that it has the requested code view
             javaMethodInspector = (JavaMethodInspector) methodInspector;
@@ -220,12 +243,18 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
      */
     private static NativeMethodInspector make(Inspection inspection, TeleTargetRoutine teleTargetRoutine) {
         NativeMethodInspector nativeMethodInspector = null;
-        final UniqueInspector.Key<? extends MethodInspector> key = UniqueInspector.Key.create(NativeMethodInspector.class, teleTargetRoutine.teleRoutine());
-        final MethodInspector methodInspector = UniqueInspector.find(inspection, key);
+
+        // TODO (mlvdv) Clean up
+        //final UniqueInspector.Key<? extends MethodInspector> key = UniqueInspector.Key.create(NativeMethodInspector.class, teleTargetRoutine.teleRoutine());
+        //final MethodInspector methodInspector = UniqueInspector.find(inspection, key);
+
+        MethodInspector methodInspector = teleTargetRoutineToMethodInspector.get(teleTargetRoutine);
+
         if (methodInspector == null) {
             final MethodInspectorContainer parent = MethodInspectorContainer.make(inspection);
             nativeMethodInspector = new NativeMethodInspector(inspection, parent, teleTargetRoutine);
             parent.add(nativeMethodInspector);
+            teleTargetRoutineToMethodInspector.put(teleTargetRoutine, nativeMethodInspector);
         } else {
             nativeMethodInspector = (NativeMethodInspector) methodInspector;
         }
@@ -234,40 +263,15 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     private final MethodInspectorContainer parent;
 
-    protected MethodInspectorContainer parent() {
-        return parent;
-    }
-
-    public MethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleRoutine teleRoutine) {
-        super(inspection, teleTargetMethod, teleRoutine);
+    protected MethodInspector(Inspection inspection, MethodInspectorContainer parent) {
+        super(inspection);
         this.parent = parent;
     }
 
     @Override
-    public InspectorFrameInterface createFrame() {
+    public InspectorFrameInterface createTabFrame(TabbedInspector parent) {
 
-        final InspectorFrameInterface frame = super.createFrame();
-
-        final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
-
-        defaultMenu.add(new InspectorAction(inspection(), "Close tab") {
-            @Override
-            protected void procedure() {
-                close();
-            }
-        });
-        defaultMenu.add(new InspectorAction(inspection(), "Close all other tabs") {
-            @Override
-            public void procedure() {
-                closeOthers();
-            }
-        });
-        replaceFrameCloseAction(new InspectorAction(inspection(), "Close Method Inspector") {
-            @Override
-            public void procedure() {
-                close();
-            }
-        });
+        final InspectorFrameInterface frame = super.createTabFrame(parent);
 
         frame.makeMenu(MenuKind.EDIT_MENU);
 
@@ -314,8 +318,8 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     @Override
     public void moveToFront() {
-        if (parent() != null) {
-            parent().setSelected(this);
+        if (parent != null) {
+            parent.setSelected(this);
         } else {
             super.moveToFront();
         }
@@ -323,8 +327,8 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     @Override
     public void setSelected() {
-        if (parent() != null) {
-            parent().setSelected(this);
+        if (parent != null) {
+            parent.setSelected(this);
         } else {
             super.moveToFront();
         }
@@ -332,8 +336,8 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     @Override
     public boolean isSelected() {
-        if (parent() != null) {
-            return parent().isSelected(this);
+        if (parent != null) {
+            return parent.isSelected(this);
         }
         return false;
     }
@@ -342,6 +346,11 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
      * @return Local {@link TeleTargetRoutine} for the method in the VM; null if not bound to target code yet.
      */
     public abstract TeleTargetRoutine teleTargetRoutine();
+
+    /**
+     * @return Java method information; null if not known to be associated with a Java method.
+     */
+    public abstract TeleClassMethodActor teleClassMethodActor();
 
     /**
      * @return Text suitable for a tool tip.
@@ -362,6 +371,8 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing for " + getTitle());
+        teleTargetRoutineToMethodInspector.remove(teleTargetRoutine());
+        teleClassMethodActorToMethodInspector.remove(teleClassMethodActor());
         super.inspectorClosing();
     }
 

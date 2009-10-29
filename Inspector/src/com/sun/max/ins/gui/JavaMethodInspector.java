@@ -89,7 +89,7 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
-        super(inspection, parent, teleTargetMethod, teleClassMethodActor);
+        super(inspection, parent);
 
         this.methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
@@ -105,7 +105,7 @@ public class JavaMethodInspector extends MethodInspector {
 
         final InspectionActions actions = inspection.actions();
 
-        final InspectorFrameInterface frame = createFrame();
+        final InspectorFrameInterface frame = createTabFrame(parent);
         final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
 
         final InspectorAction copyAction = actions.copyTargetMethodCodeToClipboard(teleTargetMethod, null);
@@ -154,6 +154,11 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
+    public TeleClassMethodActor teleClassMethodActor() {
+        return teleClassMethodActor;
+    }
+
+    @Override
     public String getTextForTitle() {
         if (teleClassMethodActor == null || teleClassMethodActor.classMethodActor() == null) {
             return teleTargetMethod.description();
@@ -183,7 +188,7 @@ public class JavaMethodInspector extends MethodInspector {
     public String getToolTip() {
         String result = "";
         if (teleTargetMethod != null) {
-            result =  inspection().nameDisplay().shortName(teleTargetMethod, ReturnTypeSpecification.AS_PREFIX);
+            result =  inspection().nameDisplay().longName(teleTargetMethod);
         } else if (teleClassMethodActor != null) {
             result = inspection().nameDisplay().shortName(teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
         }

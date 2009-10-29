@@ -21,58 +21,46 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
-import java.beans.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
 
 import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.program.*;
 
+
+
 /**
- * A internal frame controlled by an {@linkplain Inspector inspector}.
+ * A frame suitable for use by an {@linkplain Inspector inspector}.
+ * This is a minimal frame without window system decoration, suitable
+ * for used in a tabbed container of inspectors.
  *
- * @author Bernd Mathiske
- * @author Doug Simon
  * @author Michael Van De Vanter
  */
-final class InspectorInternalFrame extends JInternalFrame implements InspectorFrameInterface {
+final class InspectorRootPane extends JRootPane implements InspectorFrameInterface {
 
     private final Inspector inspector;
+    private final TabbedInspector parent;
     private final InspectorMenuBar menuBar;
 
+    private String title = null;
+
     /**
-     * Creates an internal frame, with content pane, for an Inspector intended to be in
-     * a {@link JDesktopPane}.
+     * Creates a simple frame, with content pane, for an Inspector intended to be in a
+     * tabbed frame.
      * <br>
      * The frame has an optional menu bar.  It is a program error to call {@link #makeMenu(MenuKind)}
      * if no menu bar is present.
      *
-     * @param inspector
-     * @param addMenuBar should the frame have a menu bar installed.
+     * @param inspector the inspector that owns this frame
+     * @param parent the tabbed frame that will own this frame.
+     * @param addMenuBar  should the frame have a menu bar installed.
      * @see #makeMenu(MenuKind)
      */
-    public InspectorInternalFrame(Inspector inspector, boolean addMenuBar) {
+    public InspectorRootPane(Inspector inspector, TabbedInspector parent, boolean addMenuBar) {
         this.inspector = inspector;
+        this.parent = parent;
         menuBar = addMenuBar ? new InspectorMenuBar(inspector.inspection()) : null;
         setJMenuBar(menuBar);
-        setResizable(true);
-        setClosable(true);
-        setIconifiable(true);
-        setVisible(false);
-
-        addInternalFrameListener(new InternalFrameAdapter() {
-
-            @Override
-            public void internalFrameActivated(InternalFrameEvent e) {
-                InspectorInternalFrame.this.inspector.inspectorGetsWindowFocus();
-            }
-
-            @Override
-            public void internalFrameDeactivated(InternalFrameEvent e) {
-                InspectorInternalFrame.this.inspector.inspectorLosesWindowFocus();
-            }
-        });
     }
 
     public JComponent getJComponent() {
@@ -98,37 +86,40 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
     }
 
     public void setSelected() {
-        try {
-            setSelected(true);
-        } catch (PropertyVetoException e) {
-        }
+        // TODO (mlvdv)  ???
+    }
+
+    public boolean isSelected() {
+        // TODO (mlvdv) ???
+        return false;
     }
 
     public void flash(Color borderFlashColor) {
-        Component pane = getContentPane();
-        if (pane instanceof JScrollPane) {
-            final JScrollPane scrollPane = (JScrollPane) pane;
-            pane = scrollPane.getViewport();
-        }
-        final Graphics g = pane.getGraphics();
-        g.setPaintMode();
-        g.setColor(borderFlashColor);
-        for (int i = 0; i < 5; i++) {
-            g.drawRect(i, i, pane.getWidth() - (i * 2), pane.getHeight() - (i * 2));
-        }
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-        }
-        g.dispose();
-        invalidate();
-        repaint();
+        // TODO Auto-generated method stub
+
     }
 
-    @Override
     public void dispose() {
-        super.dispose();
+        parent.remove(this);
         inspector.inspectorClosing();
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void moveToFront() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void pack() {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
 }

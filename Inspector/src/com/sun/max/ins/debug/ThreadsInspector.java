@@ -65,7 +65,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
 
-        final InspectorFrameInterface frame = createFrame();
+        final InspectorFrameInterface frame = createFrame(true);
 
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 

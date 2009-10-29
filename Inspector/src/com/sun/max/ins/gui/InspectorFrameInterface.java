@@ -26,6 +26,7 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.Inspector.*;
+import com.sun.max.program.*;
 
 public interface InspectorFrameInterface extends RootPaneContainer, Prober {
 
@@ -61,17 +62,17 @@ public interface InspectorFrameInterface extends RootPaneContainer, Prober {
     String getTitle();
 
     /**
-     * Gets a specific menu from the menu bar, creating one if
-     * needed.
+     * Finds, and creates if doesn't exist, a named menu on the frame's menu bar.
      * <br>
-     * <strong>Note:</strong>menus appear on the bar in the order
-     * they were created, left to right.
+     * <strong>Note:</strong> the menus will appear left to right on the
+     * frame's menu bar in the order in which they were created.
      *
-     * @param menuKind the particular menu from the menu bar
-     * @return the specified menu from the menu bar, newly created
-     * if it didn't yet exist.
+
+     * @param menuKind the type (and name) of the menu being requested.
+     * @return a menu, possibly new, in the menu bar.
+     * @throws ProgramError if the frame has no menu bar.
      */
-    InspectorMenu makeMenu(MenuKind menuKind);
+    InspectorMenu makeMenu(MenuKind menuKind) throws ProgramError;
 
     /**
      * Makes this frame the one currently selected in the window system.
@@ -134,13 +135,6 @@ public interface InspectorFrameInterface extends RootPaneContainer, Prober {
      * @see Component#repaint()
      */
     void repaint();
-
-    /**
-     * Replaces the window system closing action, if any, that might be invoked on this frame.
-     *
-     * @param action an action to take if the window system closes this frame.
-     */
-    void replaceFrameCloseAction(InspectorAction action);
 
     /**
      * Removes this frame and the view state associated with it.
