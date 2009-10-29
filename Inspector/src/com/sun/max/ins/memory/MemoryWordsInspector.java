@@ -35,10 +35,8 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
-// TODO (mlvdv) extend range when resize window? (when there's extra space)
 // TODO (mlvdv) try to make columns narrow
 // TODO (mlvdv) Parameter for object search extent
-
 
 /**
  * An inspector that displays the contents of a region of memory in the VM, word aligned, one word per row.
