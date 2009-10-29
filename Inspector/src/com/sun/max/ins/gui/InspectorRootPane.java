@@ -114,6 +114,12 @@ final class InspectorRootPane<Inspector_Type extends Inspector> extends JRootPan
         repaint();
     }
 
+    public void setStateColor(Color color) {
+        if (menuBar != null) {
+            menuBar.setBackground(color);
+        }
+    }
+
     public void dispose() {
         parent.remove(this);
         inspector.inspectorClosing();

@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.util.*;
 
 
 /**
@@ -80,26 +79,8 @@ public class LIROperandFactory {
         return IllegalLocation;
     }
 
-    public static LIROperand basicType(Value type) {
-
-        if (type.type().isObject()) {
-            return oopConst(type.asConstant().asObject());
-        } else {
-            Constant c = (Constant) type;
-            CiConstant ct = c.value;
-            if (ct.basicType.isJsr() || ct.basicType.isInt()) {
-                return intConst(ct.asInt());
-            } else if (ct.basicType.isFloat()) {
-                return floatConst(ct.asFloat());
-            } else if (ct.basicType.isLong()) {
-                return longConst(ct.asLong());
-            } else if (ct.basicType.isDouble()) {
-                return doubleConst(ct.asDouble());
-            } else {
-                Util.shouldNotReachHere();
-                return intConst(-1);
-            }
-        }
+    public static LIROperand constant(Value type) {
+        return new LIRConstant(type.asConstant());
     }
 
     public static LIROperand address(LIRLocation register, int disp, CiKind t) {

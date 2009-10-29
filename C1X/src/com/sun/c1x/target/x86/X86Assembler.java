@@ -503,7 +503,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(X86.rdx, adr);
     }
 
-    protected final void emitGlobalStubCall(Object globalStubID, CodeEmitInfo info) {
+    protected final int emitGlobalStubCall(Object globalStubID, LIRDebugInfo info) {
         assert !(globalStubID instanceof GlobalStub);
 
         int position = codeBuffer.position();
@@ -515,6 +515,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
         emitByte(0xE8);
         emitInt(0);
+        return codeBuffer.position();
     }
 
     public final void callRuntime(CiRuntimeCall runtimeCall) {

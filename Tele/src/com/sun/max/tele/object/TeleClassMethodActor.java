@@ -227,15 +227,15 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
             String signature = null;
             if (entries[i].signatureIndex() == 0) {
-                signature = entries[i].descriptor(classMethodActor.codeAttribute().constantPool()).toString();
+                signature = entries[i].descriptor(classMethodActor.codeAttribute().constantPool).toString();
             } else {
-                signature = entries[i].signature(classMethodActor.codeAttribute().constantPool()).toString();
+                signature = entries[i].signature(classMethodActor.codeAttribute().constantPool).toString();
             }
 
             // TODO: Check if generic signature can be retrieved!
             final String genericSignature = signature;
 
-            result[i] = new VariableTableEntry(entries[i].startPosition(), entries[i].length(), entries[i].name(classMethodActor.codeAttribute().constantPool()).string, entries[i].slot(),
+            result[i] = new VariableTableEntry(entries[i].startPosition(), entries[i].length(), entries[i].name(classMethodActor.codeAttribute().constantPool).string, entries[i].slot(),
                             signature, genericSignature);
         }
 

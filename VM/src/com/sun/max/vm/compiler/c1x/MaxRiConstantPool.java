@@ -181,11 +181,11 @@ public class MaxRiConstantPool implements RiConstantPool {
     }
 
     private MaxRiField resolveField(char cpi) {
-        return runtime.canonicalRiField(constantPool.fieldAt(cpi).resolve(constantPool, cpi), this);
+        return runtime.canonicalRiField(constantPool.fieldAt(cpi).resolve(constantPool, cpi), this, cpi);
     }
 
     private MaxRiMethod resolveMethod(char cpi) {
-        return runtime.canonicalRiMethod(constantPool.methodAt(cpi).resolve(constantPool, cpi), this);
+        return runtime.canonicalRiMethod(constantPool.methodAt(cpi).resolve(constantPool, cpi), this, cpi);
     }
 
     /**
@@ -194,7 +194,7 @@ public class MaxRiConstantPool implements RiConstantPool {
      * @return the compiler interface type resolved at that index
      */
     public RiType resolveType(char cpi) {
-        return runtime.canonicalRiType(constantPool.classAt(cpi).resolve(constantPool, cpi), this);
+        return runtime.canonicalRiType(constantPool.classAt(cpi).resolve(constantPool, cpi), this, cpi);
     }
 
     /**
@@ -244,10 +244,10 @@ public class MaxRiConstantPool implements RiConstantPool {
     private MaxRiField fieldFrom(FieldRefConstant constant, int cpi) {
         if (constant instanceof FieldRefConstant.Resolved) {
             // already resolved
-            return runtime.canonicalRiField(((FieldRefConstant.Resolved) constant).fieldActor(), this);
+            return runtime.canonicalRiField(((FieldRefConstant.Resolved) constant).fieldActor(), this, cpi);
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-            return runtime.canonicalRiField(constant.resolve(constantPool, cpi), this);
+            return runtime.canonicalRiField(constant.resolve(constantPool, cpi), this, cpi);
         }
         return new MaxRiField(this, constant, cpi); // unresolved
     }
@@ -255,13 +255,13 @@ public class MaxRiConstantPool implements RiConstantPool {
     private MaxRiMethod methodFrom(MethodRefConstant constant, int cpi) {
         if (constant instanceof ClassMethodRefConstant.Resolved) {
             // already resolved
-            return runtime.canonicalRiMethod(((ClassMethodRefConstant.Resolved) constant).methodActor(), this);
+            return runtime.canonicalRiMethod(((ClassMethodRefConstant.Resolved) constant).methodActor(), this, cpi);
         } else if (constant instanceof InterfaceMethodRefConstant.Resolved) {
             // already resolved
-            return runtime.canonicalRiMethod(((InterfaceMethodRefConstant.Resolved) constant).methodActor(), this);
+            return runtime.canonicalRiMethod(((InterfaceMethodRefConstant.Resolved) constant).methodActor(), this, cpi);
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-            return runtime.canonicalRiMethod(constant.resolve(constantPool, cpi), this);
+            return runtime.canonicalRiMethod(constant.resolve(constantPool, cpi), this, cpi);
         }
         return new MaxRiMethod(this, constant, cpi); // unresolved
     }
@@ -269,10 +269,10 @@ public class MaxRiConstantPool implements RiConstantPool {
     private MaxRiType typeFrom(ClassConstant constant, int cpi) {
         if (constant instanceof ClassConstant.Resolved) {
             // already resolved
-            return runtime.canonicalRiType(((ClassConstant.Resolved) constant).classActor, this);
+            return runtime.canonicalRiType(((ClassConstant.Resolved) constant).classActor, this, cpi);
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-            return runtime.canonicalRiType(constant.resolve(constantPool, cpi), this);
+            return runtime.canonicalRiType(constant.resolve(constantPool, cpi), this, cpi);
         }
         return new MaxRiType(this, constant, cpi); // unresolved
     }

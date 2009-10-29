@@ -18,20 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * @Harness: java
- * @Runs: 0 = 0; 2 = !java.lang.Throwable
- */
 package jtt.except;
 
-public class BC_athrow {
-    static Throwable throwable = new Throwable();
+/*
+ * @Harness: java
+ * @Runs: -3=-1; 0=-1; 1=3; 2=3
+ */
+public class Catch_NPE_00 {
 
-    public static int test(int arg) throws Throwable {
-        if (arg == 2) {
-            throw throwable;
+    public static int test(int a) {
+        int[] array = a > 0 ? new int[3] : null;
+        try {
+            return array.length;
+        } catch (NullPointerException npe) {
+            return -1;
         }
-        return arg;
     }
 }
-

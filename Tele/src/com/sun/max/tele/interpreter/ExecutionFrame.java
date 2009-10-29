@@ -48,7 +48,7 @@ class ExecutionFrame {
 
     public ExecutionFrame(ExecutionFrame callersFrame, ClassMethodActor method) {
         this.method = method;
-        this.locals = new Value[method.codeAttribute().maxLocals()];
+        this.locals = new Value[method.codeAttribute().maxLocals];
         this.operands = new Stack<Value>();
         this.callersFrame = callersFrame;
         this.code = method.codeAttribute().code();
@@ -137,7 +137,7 @@ class ExecutionFrame {
     }
 
     public ConstantPool constantPool() {
-        return method.codeAttribute().constantPool();
+        return method.codeAttribute().constantPool;
     }
 
     public ClassMethodActor method() {

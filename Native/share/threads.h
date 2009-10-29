@@ -31,9 +31,11 @@
  */
 extern void *thread_runJava(void *jniNativeInterface);
 
+JNIEnv *thread_attach(NativeThreadLocals ntl);
+
 /**
  * The signature of the Java method entrypoint for new threads.
- * This must match the signature of 'com.sun.max.vm.thread.VMThread.run()':
+ * This must match the signature of 'com.sun.max.vm.thread.VMThread.run()'.
  */
 typedef void (*VMThreadRunMethod)(jint id, Address nativeThread,
 	            Address stackBase,
@@ -41,9 +43,21 @@ typedef void (*VMThreadRunMethod)(jint id, Address nativeThread,
 	            Address enabledVmThreadLocals,
 	            Address disabledVmThreadLocals,
 	            Address refMapArea,
-	            Address stackRedZone,
 	            Address yellowZone,
 	            Address stackEnd);
+
+/**
+ * The signature of the Java method used to attach native threads.
+ * This must match the signature of 'com.sun.max.vm.thread.VMThread.attach()'.
+ */
+typedef void (*VMThreadAttachMethod)(Address nativeThread,
+                Address stackBase,
+                Address triggeredVmThreadLocals,
+                Address enabledVmThreadLocals,
+                Address disabledVmThreadLocals,
+                Address refMapArea,
+                Address yellowZone,
+                Address stackEnd);
 
 /**
  * Sleeps the current thread for a given number of milliseconds.

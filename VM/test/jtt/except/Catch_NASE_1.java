@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,36 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.gc;
-
-import com.sun.max.annotate.*;
-
-/**
- * Tests that object parameters passed on the stack are not trashed by a GC.
- * That is, they are either protected by a GC refmap or are never live when
- * a GC can occur.
- *
- * @Harness: java
- * @Runs: (1) = true
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
  */
-public class ObjectStackParams01 {
-    // JIT Method
-    public static boolean test(int ignore) {
-        String obj = new String("Hello World");
-        Object result = objStackParams(16, null, null, null, null, null, obj);
-        return result.equals(obj);
-    }
+package jtt.except;
 
-    /**
-     * Method that will be passed some object parameters via the stack.
-     */
-    @UNSAFE
-    private static Object objStackParams(int depth, Object a, Object b, Object c, Object
-                    d, Object e, Object f) {
-        if (depth > 0) {
-            System.gc();
-            return objStackParams(depth - 1, a, b, c, d, e, f);
+/*
+ * @Harness: java
+ * @Runs: -1 = 100; -34=100 1 = 1; 20=20
+ */
+public class Catch_NASE_1 {
+    public static int test(int a) {
+        try {
+            int[] v = new int[a];
+            if (v != null) {
+                return v.length;
+            }
+            return -1;
+        } catch (NegativeArraySizeException e) {
+            return 100;
         }
-        return f;
     }
 }

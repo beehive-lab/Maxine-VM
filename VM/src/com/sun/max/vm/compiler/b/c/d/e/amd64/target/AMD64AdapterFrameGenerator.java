@@ -131,9 +131,9 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
     public static int jitToOptimizingAdapterFrameSize(StackFrameWalker stackFrameWalker, Pointer adapterFirstInstruction) {
         final byte instruction = stackFrameWalker.readByte(adapterFirstInstruction, 0);
         if (instruction == ENTER) {
-            final byte lo = stackFrameWalker.readByte(adapterFirstInstruction, 1);
-            final byte hi = stackFrameWalker.readByte(adapterFirstInstruction, 2);
-            final int frameSize =  hi << 8 | lo;
+            final int lo = stackFrameWalker.readByte(adapterFirstInstruction, 1) & 0xff;
+            final int hi = stackFrameWalker.readByte(adapterFirstInstruction, 2) & 0xff;
+            final int frameSize = hi << 8 | lo;
             return frameSize + Word.size();
         }
         if (instruction == PUSH_RBP) {
@@ -253,10 +253,13 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
             // save the caller's RBP
             final int wordSize =  Word.size();
             // Adapter frame includes space for save the JITed-callee's frame pointer (RBP)
-            final short adapterFrameSize = (short) optimizedABI().overflowArgumentsSize(parameterLocations);
-            // Allocate space on the stack (adapted parameters + caller's frame pointer)
+            int overflowArgumentsSize = optimizedABI().overflowArgumentsSize(parameterLocations);
+            final int adapterFrameSize = (short) optimizedABI().frameSize(0, overflowArgumentsSize + wordSize) - wordSize;
 
-            assembler().enter(adapterFrameSize, (byte) 0);
+            // Allocate space on the stack (adapted parameters + caller's frame pointer)
+            assert adapterFrameSize >= 0 && adapterFrameSize <= Short.MAX_VALUE;
+            assembler().enter((short) adapterFrameSize, (byte) 0);
+
              // Prefix of a frame is RIP + saved RBP.
             final int framePrefixSize = 2 * wordSize;
             // On entry to the adapter, the top of the stack contains the RIP. The last argument on the stack is

@@ -95,8 +95,8 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
     protected JitStackFrameLayout(ClassMethodActor classMethodActor) {
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        numberOfOperandStackSlots = codeAttribute.maxStack();
-        numberOfLocalSlots = codeAttribute.maxLocals();
+        numberOfOperandStackSlots = codeAttribute.maxStack;
+        numberOfLocalSlots = codeAttribute.maxLocals;
         numberOfParameterSlots = classMethodActor.numberOfParameterSlots();
 
         assert numberOfLocalSlots >= numberOfParameterSlots : "incoming arguments cannot be greater than number of locals";

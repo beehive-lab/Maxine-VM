@@ -127,7 +127,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
             String local = "local #" + i;
             final LocalVariableTable.Entry entry = codeAttribute.localVariableTable().findLocalVariable(i, bytecodeLocation.bytecodePosition);
             if (entry != null) {
-                local += ": " + entry.name(codeAttribute.constantPool());
+                local += ": " + entry.name(codeAttribute.constantPool);
             }
             local += " = " + targetLocationToString(descriptor.locals[i]);
             panel.add(new TextLabel(inspection(), local));

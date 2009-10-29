@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ci;
 
+import java.util.Arrays;
+
 /**
  * This class represents a machine register.
  *
@@ -127,10 +129,13 @@ public final class CiRegister {
     }
 
     public static class AllocationSet {
+        public final CiRegister[] allocatableRegisters;
         public final CiRegister[] registerMapping;
         public final boolean[] allocatableRegister;
+        public final int[] referenceMapIndex;
 
         public final int nofRegs;
+        public final int registerRefMapSize;
 
         public final int pdFirstCpuReg;
         public final int pdLastCpuReg;
@@ -139,7 +144,9 @@ public final class CiRegister {
         public final int pdFirstXmmReg;
         public final int pdLastXmmReg;
 
-        public AllocationSet(CiRegister[] registers) {
+        AllocationSet(CiRegister[] allocatableRegisters, CiRegister[] referenceMapTemplate) {
+            this.allocatableRegisters = allocatableRegisters;
+
             int cpuCnt = 0;
             int cpuFirst = Integer.MAX_VALUE;
             int cpuLast = Integer.MIN_VALUE;
@@ -150,7 +157,7 @@ public final class CiRegister {
             int xmmFirst = Integer.MAX_VALUE;
             int xmmLast = Integer.MIN_VALUE;
 
-            for (CiRegister r : registers) {
+            for (CiRegister r : allocatableRegisters) {
                 if (r.isCpu()) {
                     cpuCnt++;
                     cpuFirst = Math.min(cpuFirst, r.number);
@@ -172,12 +179,22 @@ public final class CiRegister {
             assert xmmCnt > 0 && cpuCnt > 0 && byteCnt > 0 : "missing a register kind!";
 
             int maxReg = Math.max(cpuLast, xmmLast);
+            registerRefMapSize = referenceMapTemplate.length;
             registerMapping = new CiRegister[maxReg + 1];
+            referenceMapIndex = new int[maxReg + 1];
             allocatableRegister = new boolean[maxReg + 1];
-            for (CiRegister r : registers) {
+            for (CiRegister r : allocatableRegisters) {
                 assert registerMapping[r.number] == null : "duplicate register!";
                 registerMapping[r.number] = r;
                 allocatableRegister[r.number] = true;
+            }
+
+            Arrays.fill(referenceMapIndex, -1);
+            for (int i = 0; i < referenceMapTemplate.length; i++) {
+                CiRegister r = referenceMapTemplate[i];
+                if (r != null) {
+                    referenceMapIndex[r.number] = i;
+                }
             }
 
             pdFirstByteReg = byteFirst;

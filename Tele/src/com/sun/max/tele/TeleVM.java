@@ -745,6 +745,10 @@ public abstract class TeleVM implements MaxVM {
         return teleHeapManager.dynamicHeapContains(address);
     }
 
+    public final boolean isInLiveMemory(Address address) {
+        return teleHeapManager.isInLiveMemory(address);
+    }
+
     public final TeleRuntimeMemoryRegion teleBootHeapRegion() {
         return teleHeapManager.teleBootHeapRegion();
     }
@@ -856,6 +860,7 @@ public abstract class TeleVM implements MaxVM {
         if (origin.isZero()) {
             return false;
         }
+
         try {
             if (!containsInHeap(origin) && !containsInCode(origin)) {
                 return false;
@@ -955,13 +960,13 @@ public abstract class TeleVM implements MaxVM {
     }
 
     private boolean isValidGrip(Grip grip) {
-        if (isInGC()) {
-            final TeleGrip teleGrip = (TeleGrip) grip;
-            if (teleGrip instanceof MutableTeleGrip) {
-                // Assume invalid during GC.
-                return false;
-            }
-        }
+//        if (isInGC()) {
+//            final TeleGrip teleGrip = (TeleGrip) grip;
+//            if (teleGrip instanceof MutableTeleGrip) {
+//                // Assume invalid during GC.
+//                return false;//TODO: check for forwarding pointer
+//            }
+//        }
         if (grip instanceof LocalTeleGrip) {
             return true;
         }
@@ -1227,8 +1232,7 @@ public abstract class TeleVM implements MaxVM {
             @Override
             protected boolean visitClass(String className) {
                 if (!className.endsWith("package-info")) {
-                    final String typeDescriptorString = "L"
-                            + className.replace('.', '/') + ";";
+                    final String typeDescriptorString = "L" + className.replace('.', '/') + ";";
                     typesOnClasspath.add(JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString));
                 }
                 return true;
@@ -1547,11 +1551,10 @@ public abstract class TeleVM implements MaxVM {
         }
         refreshReferences();
         teleObjectFactory.refresh(processEpoch);
-        if (!isInGC()) {
-            // Only attempt to update state when not in a GC.
-            teleHeapManager.refresh(processEpoch);
-            teleClassRegistry.refresh(processEpoch);
-        }
+        //if (!isInGC()) { ATTETION: Could produce bugs.
+        teleHeapManager.refresh(processEpoch);
+        teleClassRegistry.refresh(processEpoch);
+        //}
         Trace.end(TRACE_VALUE, refreshTracer, startTimeMillis);
     }
 

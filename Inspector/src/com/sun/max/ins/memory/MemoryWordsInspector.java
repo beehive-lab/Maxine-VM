@@ -351,7 +351,7 @@ public final class MemoryWordsInspector extends Inspector {
      * mode set to {@link ViewMode#OBJECT}.
      */
     public MemoryWordsInspector(Inspection inspection, TeleObject teleObject) {
-        this(inspection, teleObject.getCurrentMemoryRegion(), null, teleObject.getCurrentOrigin(), ViewMode.OBJECT, null);
+        this(inspection, teleObject.getCurrentMemoryRegion(), null, teleObject.getCurrentOrigin(), teleObject.isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
     }
 
     /**

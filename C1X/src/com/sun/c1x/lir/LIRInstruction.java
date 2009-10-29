@@ -42,7 +42,7 @@ public abstract class LIRInstruction {
     private OperandSlot result;
 
     // used to emit debug information
-    public final CodeEmitInfo info;
+    public final LIRDebugInfo info;
 
     // value id for register allocation
     private int id;
@@ -60,7 +60,7 @@ public abstract class LIRInstruction {
         TempMode
     }
 
-    private OperandSlot[] operandSlots;
+    protected OperandSlot[] operandSlots;
     private int outputCount;
     private int allocatorInputCount;
     private int allocatorTempCount;
@@ -136,7 +136,7 @@ public abstract class LIRInstruction {
      * @param result the operand that holds the operation result of this instruction
      * @param info the object holding information needed to perform deoptimization
      */
-    public LIRInstruction(LIROpcode opcode, LIROperand result, CodeEmitInfo info, boolean hasCall, CodeStub stub, int tempInput, int temp, LIROperand... inputAndTempOperands) {
+    public LIRInstruction(LIROpcode opcode, LIROperand result, LIRDebugInfo info, boolean hasCall, CodeStub stub, int tempInput, int temp, LIROperand... inputAndTempOperands) {
 
         this.code = opcode;
         this.info = info;
@@ -149,8 +149,8 @@ public abstract class LIRInstruction {
             stub.setResultSlot(addOutput(stub.originalResult()));
         }
 
-        initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
         id = -1;
+        initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
     }
 
     private OperandSlot addOutput(LIROperand output) {
@@ -394,8 +394,8 @@ public abstract class LIRInstruction {
     public void printInstruction(LogStream out) {
 
         out.printf("%s = (", result.get(this), this.code.name());
-        for (int i = 0; i < operandSlots.length; i++) {
-            out.printf("%s ", operandSlots[i].get(this));
+        for (OperandSlot operandSlot : operandSlots) {
+            out.printf("%s ", operandSlot.get(this));
         }
         out.print(")");
     }
@@ -403,7 +403,7 @@ public abstract class LIRInstruction {
     /**
      * Prints information common to all LIR instruction.
      *
-     * @param stream the LogStream to print into.
+     * @param st the LogStream to print into.
      */
     public void printOn(LogStream st) {
         if (id() != -1 || C1XOptions.PrintCFGToFile) {
@@ -415,9 +415,10 @@ public abstract class LIRInstruction {
         st.print(" ");
         printInstruction(st);
         if (info != null) {
-            st.printf(" [bci:%d]", info.bci());
+            st.printf(" [bci:%d]", info.bci);
         }
     }
+
     public boolean verify() {
         return true;
     }
@@ -535,14 +536,14 @@ public abstract class LIRInstruction {
 
         int i;
         for (i = 0; i < infoCount(); i++) {
-            if (infoAt(i).exceptionHandlers() != null) {
-                result = infoAt(i).exceptionHandlers();
+            if (infoAt(i).exceptionHandlers != null) {
+                result = infoAt(i).exceptionHandlers;
                 break;
             }
         }
 
         for (i = 0; i < infoCount(); i++) {
-            assert infoAt(i).exceptionHandlers() == null || infoAt(i).exceptionHandlers() == result : "only one xhandler list allowed per LIR-operation";
+            assert infoAt(i).exceptionHandlers == null || infoAt(i).exceptionHandlers == result : "only one xhandler list allowed per LIR-operation";
         }
 
         if (result != null) {
@@ -552,7 +553,7 @@ public abstract class LIRInstruction {
         }
     }
 
-    public CodeEmitInfo infoAt(int k) {
+    public LIRDebugInfo infoAt(int k) {
         if (k == 1) {
             return stub.info;
         } else {

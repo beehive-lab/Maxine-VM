@@ -24,7 +24,7 @@ import com.sun.max.unsafe.*;
 
 /**
  * Canonicalized constant tele grip, for locations known not to change under GC.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class CanonicalConstantTeleGrip extends ConstantTeleGrip {
@@ -37,5 +37,10 @@ public class CanonicalConstantTeleGrip extends ConstantTeleGrip {
     public void finalize() throws Throwable {
         teleGripScheme().finalizeCanonicalConstantTeleGrip(this);
         super.finalize();
+    }
+
+    @Override
+    public TeleObjectMemory.State getTeleObjectMemoryState() {
+        return TeleObjectMemory.State.LIVE;
     }
 }

@@ -125,6 +125,12 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
         repaint();
     }
 
+    public void setStateColor(Color color) {
+        if (menuBar != null) {
+            menuBar.setBackground(color);
+        }
+    }
+
     @Override
     public void dispose() {
         super.dispose();

@@ -28,6 +28,7 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.grip.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -45,8 +46,9 @@ import com.sun.max.vm.value.*;
  * encapsulating implementation details for working with those objects remotely.
  *
  * @author Michael Van De Vanter
+ * @author Hannes Payer
  */
-public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectProvider {
+public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectProvider, TeleObjectMemory {
 
     /**
      * Identification for the three low-level Maxine heap objects implementations upon which all objects are implemented.
@@ -81,13 +83,12 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     protected static final int COPY_TRACE_VALUE = 2;
 
-    private final TeleReference reference;
+    private TeleReference reference;
     private final LayoutScheme layoutScheme;
     private final SpecificLayout specificLayout;
     private final long oid;
     private TeleHub teleHub = null;
 
-    private boolean live;
     private Pointer lastValidPointer;
 
     /**
@@ -111,24 +112,37 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         this.layoutScheme = teleVM.vmConfiguration().layoutScheme();
         this.specificLayout = specificLayout;
         oid = this.reference.makeOID();
-        live = true;
         lastValidPointer = Pointer.zero();
     }
 
-    /**
-     * The status of the object in the VM.  A new object is by definition "live", but
-     * once it has been freed by the VM's garbage collector, it is no longer a legitimate
-     * object.
-     * <br>
-     * Once an object is dead the memory most recently allocated to it might be
-     * reused by the VM.  For debugging purposes, however, a {@link TeleObject}
-     * continues to refer to the abandoned memory as if it were an object.
-     *
-     * @return whether the object in the VM is still live
-     */
+
+    public TeleObjectMemory.State getTeleObjectMemoryState() {
+        return reference.grip().getTeleObjectMemoryState();
+    }
+
     public boolean isLive() {
-        getCurrentOrigin();
-        return live;
+        return reference.grip().isLive();
+    }
+
+    public boolean isObsolete() {
+        return reference.grip().isObsolete();
+    }
+
+    public boolean isDead() {
+        return reference.grip().isDead();
+    }
+
+    public TeleObject getForwardedTeleObject() {
+        if (isObsolete()) {
+            TeleGrip forwardedTeleGrip = reference.grip().getForwardedTeleGrip();
+            TeleObject teleObject = teleVM.findObjectByOID(forwardedTeleGrip.makeOID());
+            if (teleObject == null) {
+                reference = (TeleReference) forwardedTeleGrip.toReference();
+                return this;
+            }
+            return teleObject;
+        }
+        return this;
     }
 
     protected void refresh(long processEpoch) {
@@ -179,7 +193,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * object, which is an exceptional Maxine object that has no ordinary Java type; it returns in this case
      * the type of the class that the tuple helps implement.
      */
-    public ClassActor classActorForType() {
+    public ClassActor classActorForType() { //TODO: fix class actor lookup
         return getTeleHub().getTeleClassActor().classActor();
     }
 
@@ -196,7 +210,18 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @return current memory region occupied by this object in the VM, subject to relocation by GC.
      */
     public final MemoryRegion getCurrentMemoryRegion() {
+        if (isObsolete() || isDead()) {
+            //Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
+            return new FixedMemoryRegion(specificLayout.originToCell(lastValidPointer), objectSize(), "");
+        }
         return new FixedMemoryRegion(specificLayout.originToCell(reference.toOrigin()), objectSize(), "");
+    }
+
+    public final MemoryRegion getForwardedMemoryRegion() {
+        if (isObsolete()) {
+            return new FixedMemoryRegion(specificLayout.originToCell(reference.grip().getForwardedTeleGrip().toOrigin()), objectSize(), "");
+        }
+        return null;
     }
 
     /**
@@ -218,11 +243,10 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      *
      */
     public Pointer getCurrentOrigin() {
-        Pointer pointer = reference.toOrigin();
-        if (pointer.equals(Pointer.zero())) {
-            live = false;
+        if (isObsolete() || isDead()) {
             return lastValidPointer;
         }
+        Pointer pointer = reference.toOrigin();
         lastValidPointer = pointer;
         return pointer;
     }

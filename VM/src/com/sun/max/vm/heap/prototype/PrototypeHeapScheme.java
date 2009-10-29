@@ -167,5 +167,4 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
     public void enableImmortalMemoryAllocation() {
         FatalError.unexpected("Non implemented");
     }
-
 }

@@ -91,7 +91,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         this.frame = blockState.frame();
         this.stack = blockState.stack();
         this.methodTranslation = methodTranslation;
-        this.constantPool = methodTranslation.classMethodActor().codeAttribute().constantPool();
+        this.constantPool = methodTranslation.classMethodActor().codeAttribute().constantPool;
         final CirCall body = blockState.cirBlock().closure().body();
         this.currentCall = body;
     }

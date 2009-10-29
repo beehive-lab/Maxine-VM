@@ -126,7 +126,7 @@ public @interface UNSAFE {
                 return true;
             }
 
-            final ConstantPool pool = codeAttribute.constantPool();
+            final ConstantPool pool = codeAttribute.constantPool;
             final MutableInnerClassGlobal<Boolean> isUnsafe = new MutableInnerClassGlobal<Boolean>(false);
 
             final BytecodeVisitor bytecodeVisitor = new BytecodeAdapter() {

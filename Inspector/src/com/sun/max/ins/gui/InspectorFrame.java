@@ -95,6 +95,12 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
     void moveToFront();
 
     /**
+     * Causes this frame to display a menu bar background color
+     * that reveals current state information concerning the Inspector.
+     */
+    void setStateColor(Color color);
+
+    /**
      * Draws attention to this frame by changing the color of the surrounding frame
      * for a short time.
      *

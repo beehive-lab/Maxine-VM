@@ -63,7 +63,7 @@ public class VerboseVMOption extends VMOption {
 
     @Override
     public boolean parseValue(Pointer optionValue) {
-        if (CString.equals(optionValue, "")) {
+        if (CString.length(optionValue).isZero()) {
             verboseClass = true;
             verboseGC = true;
             verboseJNI = true;

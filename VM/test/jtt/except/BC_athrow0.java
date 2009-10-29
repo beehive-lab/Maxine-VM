@@ -20,17 +20,18 @@
  */
 /*
  * @Harness: java
- * @Runs: -2 = !java.lang.NullPointerException; -1 = !java.lang.ArrayIndexOutOfBoundsException; 0 = null
+ * @Runs: 0 = 0; 2 = !java.lang.Throwable
  */
 package jtt.except;
 
+public class BC_athrow0 {
+    static Throwable throwable = new Throwable();
 
-public class BC_aaload {
-
-    static Object[] array = {null, null, ""};
-
-    public static Object test(int arg) {
-        final Object[] obj = arg == -2 ? null : array;
-        return obj[arg];
+    public static int test(int arg) throws Throwable {
+        if (arg == 2) {
+            throw throwable;
+        }
+        return arg;
     }
 }
+

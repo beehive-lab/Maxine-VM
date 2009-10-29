@@ -71,10 +71,10 @@ public class SubroutineInliner {
 
         final CodeAttribute oldCodeAttribute = verifier.codeAttribute();
         final CodeAttribute newCodeAttribute = new CodeAttribute(
-            oldCodeAttribute.constantPool(),
+                oldCodeAttribute.constantPool,
             newCode,
-            (char) oldCodeAttribute.maxStack(),
-            (char) oldCodeAttribute.maxLocals(),
+            (char) oldCodeAttribute.maxStack,
+            (char) oldCodeAttribute.maxLocals,
             exceptionHandlerTable,
             lineNumberTable,
             localVariableTable,
@@ -349,7 +349,14 @@ public class SubroutineInliner {
         if (oldHandlers.isEmpty()) {
             return oldHandlers;
         }
-        final AppendableSequence<ExceptionHandlerEntry> newHandlers = new ArrayListSequence<ExceptionHandlerEntry>(oldHandlers.length() * 2);
+
+        SortedSet<ExceptionHandlerEntry> newHandlers = new TreeSet<ExceptionHandlerEntry>(new Comparator<ExceptionHandlerEntry>() {
+            @Override
+            public int compare(ExceptionHandlerEntry o1, ExceptionHandlerEntry o2) {
+                return o1.startPosition() - o2.startPosition();
+            }
+        });
+
         for (ExceptionHandlerEntry oldHandler : oldHandlers) {
             // For each instruction handle that maps to this handler, match it to all instructions that go to the handler.
             for (InstructionHandle handlerHandle = instructionMap[oldHandler.handlerPosition()]; handlerHandle != null; handlerHandle = handlerHandle.next) {
@@ -371,20 +378,22 @@ public class SubroutineInliner {
                             lastMatch = true;
                         } else if (lastMatch && !match) {
                             currentHandler = currentHandler.changeEndPosition(instructionHandle.position);
-                            newHandlers.append(currentHandler);
+                            newHandlers.add(currentHandler);
                             lastMatch = false;
                         }
                     }
                 }
                 if (lastMatch) {
-                    assert !Sequence.Static.containsIdentical(newHandlers, currentHandler);
+                    assert !newHandlers.contains(currentHandler);
                     // code end is still in the catch frame
                     currentHandler = currentHandler.changeEndPosition(newCode.length);
-                    newHandlers.append(currentHandler);
+                    newHandlers.add(currentHandler);
                 }
             }
         }
-        return newHandlers;
+
+        ExceptionHandlerEntry[] newHandlersArray = newHandlers.toArray(new ExceptionHandlerEntry[newHandlers.size()]);
+        return new ArraySequence<ExceptionHandlerEntry>(newHandlersArray);
     }
 
     private LineNumberTable fixupLineNumberTable() {

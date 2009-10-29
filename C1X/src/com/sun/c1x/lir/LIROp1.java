@@ -47,7 +47,7 @@ public class LIROp1 extends LIRInstruction {
      * @param type the basic type of this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, CodeEmitInfo info) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRDebugInfo info) {
         super(opcode, result, info, false, null, 0, 0, opr);
         this.type = type;
         this.moveKind = LIRMoveKind.Normal;
@@ -96,7 +96,7 @@ public class LIROp1 extends LIRInstruction {
      * @param type the basic type of this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIRMoveKind moveKind, LIROperand opr, LIROperand result, CiKind type, CodeEmitInfo info) {
+    public LIROp1(LIRMoveKind moveKind, LIROperand opr, LIROperand result, CiKind type, LIRDebugInfo info) {
         super(LIROpcode.Move, result, info, false, null, 0, 0, opr);
         this.type = type;
         this.moveKind = moveKind;
@@ -109,7 +109,7 @@ public class LIROp1 extends LIRInstruction {
      * @param opr the first input operand
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, CodeEmitInfo info) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIRDebugInfo info) {
         super(opcode, LIROperandFactory.IllegalLocation, info, false, null, 0, 0, opr);
         this.type = CiKind.Illegal;
         this.moveKind = LIRMoveKind.Normal;

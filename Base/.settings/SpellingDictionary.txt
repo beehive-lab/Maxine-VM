@@ -1,4 +1,5 @@
 Acharya
+Appel
 Aritra
 Athul
 Bandyopadhyay
@@ -7,6 +8,7 @@ Bernd
 Caprioli
 Christos
 Cintra
+Darwin
 David
 Daynes
 De
@@ -20,11 +22,13 @@ Liu
 Ltd
 Marcelo
 Mathiske
+Matthew
 Maxine
 Michael
 Mick
 Microsystems
 Paul
+Seidl
 Simon
 Solaris
 Soman
@@ -40,6 +44,7 @@ accessor
 affordance
 affordances
 appendable
+beltway
 bytecode
 bytecodes
 callback
@@ -53,6 +58,7 @@ classloader
 classpath
 clipboard
 com
+compaction
 deactivate
 deactivated
 deactivates
@@ -73,6 +79,8 @@ hexadecimal
 hotspot
 iff
 initialize
+initialized
+initializer
 initializing
 inline
 inlined
@@ -131,7 +139,6 @@ semispace
 semispaces
 settable
 shootout
-solaris
 stderr
 stdout
 struct
@@ -151,5 +158,9 @@ uncompiled
 undock
 undockable
 unix
+unpark
+unparks
+viewport
+vm
 watchpoint
 watchpoints

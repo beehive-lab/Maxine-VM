@@ -46,7 +46,7 @@ public final class BytecodeAssessor {
         if (Cons.containsIdentical(callers, classMethodActor)) {
             return false;
         }
-        final ConstantPool constantPool = classMethodActor.codeAttribute().constantPool();
+        final ConstantPool constantPool = classMethodActor.codeAttribute().constantPool;
         final BytecodeScanner scanner =
             new BytecodeScanner(new BytecodeAdapter() {
                 @Override

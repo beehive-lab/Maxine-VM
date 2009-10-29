@@ -93,6 +93,7 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Ben L. Titzer
+ * @author Paul Caprioli
  */
 public class VmThread {
 
@@ -112,20 +113,30 @@ public class VmThread {
         RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
     }
 
-    private static final VMBooleanXXOption traceThreadsOption = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
+    private static final VMBooleanXXOption TRACE_THREADS_OPTION = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
 
     private static final Size DEFAULT_STACK_SIZE = Size.K.times(256);
 
-    private static final VMSizeOption stackSizeOption = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
+    private static final VMSizeOption STACK_SIZE_OPTION = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
 
-    @INLINE
-    public static boolean traceThreads() {
-        return traceThreadsOption.getValue();
-    }
+    @HOSTED_ONLY
+    private static final ThreadLocal<CompactReferenceMapInterpreter> HOSTED_COMPACT_REFERENCE_MAP_INTERPRETER = new ThreadLocal<CompactReferenceMapInterpreter>() {
+        @Override
+        protected CompactReferenceMapInterpreter initialValue() {
+            return new CompactReferenceMapInterpreter();
+        }
+    };
+
+    public static final VmThread MAIN_VM_THREAD = createMain();
+
+    private static final CriticalNativeMethod NON_JNI_NATIVE_SLEEP = new CriticalNativeMethod(VmThread.class, "nonJniNativeSleep");
+    private static final CriticalNativeMethod NATIVE_SLEEP = new CriticalNativeMethod(VmThread.class, "nativeSleep");
+    private static final CriticalNativeMethod NATIVE_YIELD = new CriticalNativeMethod(VmThread.class, "nativeYield");
 
 
     @CONSTANT_WHEN_NOT_ZERO
     private Thread javaThread;
+
     private volatile Thread.State state = Thread.State.NEW;
     private volatile boolean interrupted = false;
     private Throwable terminationCause;
@@ -145,145 +156,18 @@ public class VmThread {
 
     private final VmStackFrameWalker stackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
-    /**
-     * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack.
-     *
-     * <b>This must only be used when {@linkplain Throw#raise(Throwable, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer)} throwing an exception}
-     * or {@linkplain StackReferenceMapPreparer preparing} a stack reference map.
-     * Allocation must not occur in these contexts.</b>
-     */
-    public VmStackFrameWalker unwindingOrReferenceMapPreparingStackFrameWalker() {
-        FatalError.check(stackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
-        return stackFrameWalker;
-    }
-
     private final VmStackFrameWalker stackDumpStackFrameWalker = new VmStackFrameWalker(Pointer.zero());
-
-    /**
-     * Gets a preallocated, thread local object that can be used to log a stack dump without incurring any allocation.
-     */
-    public VmStackFrameWalker stackDumpStackFrameWalker() {
-        FatalError.check(stackDumpStackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
-        return stackDumpStackFrameWalker;
-    }
 
     private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(this);
 
-    /**
-     * Gets the thread-local object used to prepare the reference map for this stack's thread during garbage collection.
-     */
-    public StackReferenceMapPreparer stackReferenceMapPreparer() {
-        return stackReferenceMapPreparer;
-    }
-
     private final CompactReferenceMapInterpreter compactReferenceMapInterpreter = new CompactReferenceMapInterpreter();
-
-    @HOSTED_ONLY
-    private static final ThreadLocal<CompactReferenceMapInterpreter> hostedCompactReferenceMapInterpreter = new ThreadLocal<CompactReferenceMapInterpreter>() {
-
-        @Override
-        protected CompactReferenceMapInterpreter initialValue() {
-            return new CompactReferenceMapInterpreter();
-        }
-    };
-
-    public CompactReferenceMapInterpreter compactReferenceMapInterpreter() {
-        if (MaxineVM.isHosted()) {
-            return hostedCompactReferenceMapInterpreter.get();
-        }
-        return compactReferenceMapInterpreter;
-    }
-
-    public Thread.State state() {
-        return state;
-    }
-
-    public void setState(Thread.State state) {
-        this.state = state;
-    }
-
-
-    public final Thread javaThread() {
-        return javaThread;
-    }
-
-    public static VmThread fromJava(Thread javaThread) {
-        return (VmThread) TupleAccess.readObject(javaThread, Thread_vmThread.offset());
-    }
-
-    public Word nativeThread() {
-        return nativeThread;
-    }
-
-    /**
-     * Gets the identifier used to identify this thread in the {@linkplain VmThreadMap thread map}.
-     * A thread that has not been added to the thread map, will have an identifier of 0 and
-     * a thread that has been terminated and removed from the map will have an identifier
-     * of -1.
-     *
-     * This value is identical to the {@link VmThreadLocal#ID} value of a running thread.
-     */
-    public int id() {
-        return id;
-    }
-
-    /**
-     * @see #id()
-     */
-    void setID(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     private JavaMonitor protectedMonitor;
 
-    @INLINE
-    public final JavaMonitor protectedMonitor() {
-        return protectedMonitor;
-    }
-
-    @INLINE
-    public final void setProtectedMonitor(JavaMonitor protectedMonitor) {
-        this.protectedMonitor = protectedMonitor;
-    }
-
-
     private ConditionVariable waitingCondition;
 
-    @INLINE
-    public final ConditionVariable waitingCondition() {
-        return waitingCondition;
-    }
+    private Throwable pendingException;
 
-    /**
-     * A link in a list of threads waiting on a monitor. If this field points to this thread, then the thread is not on
-     * a list. If it is {@code null}, then this thread is at the end of a list. A thread can be on at most one list.
-     *
-     * @see StandardJavaMonitor#monitorWait(long)
-     * @see StandardJavaMonitor#monitorNotify(boolean)
-     */
-    private VmThread nextWaitingThread = this;
-
-    @INLINE
-    public final VmThread nextWaitingThread() {
-        return nextWaitingThread;
-    }
-
-    @INLINE
-    public final void setNextWaitingThread(VmThread nextWaitingThread) {
-        this.nextWaitingThread = nextWaitingThread;
-    }
-
-    public void setInterrupted() {
-        this.interrupted = true;
-    }
 
     /**
      * The pool of JNI local references allocated for this thread.
@@ -295,56 +179,14 @@ public class VmThread {
     private boolean isGCThread;
 
     /**
-     * Determines if this thread is owned by the garbage collector.
+     * A link in a list of threads waiting on a monitor. If this field points to this thread, then the thread is not on
+     * a list. If it is {@code null}, then this thread is at the end of a list. A thread can be on at most one list.
+     *
+     * @see StandardJavaMonitor#monitorWait(long)
+     * @see StandardJavaMonitor#monitorNotify(boolean)
      */
-    public final boolean isGCThread() {
-        return isGCThread;
-    }
+    private VmThread nextWaitingThread = this;
 
-    /**
-     * Create an unbound VmThread that will be bound later.
-     */
-    public VmThread() {
-    }
-
-    /**
-     * Create a bound VmThread.
-     * @param javaThread
-     */
-    public VmThread(Thread javaThread) {
-        setJavaThread(javaThread);
-    }
-
-    /**
-     * Bind the given {@code Thread} to this VmThread.
-     * @param javaThread thread to be bound
-     */
-    public VmThread setJavaThread(Thread javaThread) {
-        this.isGCThread = Heap.isGcThread(javaThread);
-        this.waitingCondition = ConditionVariableFactory.create();
-        this.javaThread = javaThread;
-        this.name = javaThread.getName();
-        this.jniHandles = new JniHandles();
-        return this;
-    }
-
-    protected void beTerminated() {
-        synchronized (javaThread) {
-            // Must set TERMINATED before the notify in case a joiner is already waiting
-            // @see Thread.join()
-            state = Thread.State.TERMINATED;
-            javaThread.notifyAll();
-        }
-        terminationComplete();
-        // It is the monitor scheme's responsibility to ensure that this thread isn't reset to RUNNABLE if it blocks
-        // here.
-        VmThreadMap.ACTIVE.removeVmThreadLocals(vmThreadLocals);
-        // Monitor acquisition after point this MUST NOT HAPPEN as it may reset _state to RUNNABLE
-        nativeThread = Address.zero();
-        vmThreadLocals = Pointer.zero();
-        id = -1;
-        waitingCondition = null;
-    }
 
     /**
      * This happens during bootstrapping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
@@ -355,19 +197,17 @@ public class VmThread {
     private static VmThread createMain() {
         final Thread thread = HostObjectAccess.mainThread();
         final VmThread vmThread = VmThreadFactory.create(thread);
-        VmThreadMap.ACTIVE.addMainVmThread(vmThread);
+        VmThreadMap.addVmThread(vmThread);
         return vmThread;
-    }
-
-    private static final VmThread mainVMThread = createMain();
-
-    public static VmThread main() {
-        return mainVMThread;
     }
 
     @HOSTED_ONLY
     public static Size stackSize() {
         return DEFAULT_STACK_SIZE;
+    }
+
+    public static VmThread fromJava(Thread javaThread) {
+        return (VmThread) TupleAccess.readObject(javaThread, Thread_vmThread.offset());
     }
 
     @C_FUNCTION
@@ -377,9 +217,9 @@ public class VmThread {
      * Initializes the VM thread system and starts the main Java thread.
      */
     public static void createAndRunMainThread() {
-        final Size requestedStackSize = stackSizeOption.getValue().aligned(Platform.host().pageSize).asSize();
+        final Size requestedStackSize = STACK_SIZE_OPTION.getValue().aligned(Platform.host().pageSize).asSize();
 
-        final Word nativeThread = nativeThreadCreate(mainVMThread.id, requestedStackSize, Thread.NORM_PRIORITY);
+        final Word nativeThread = nativeThreadCreate(MAIN_VM_THREAD.id, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
             FatalError.unexpected("Could not start main native thread.");
         } else {
@@ -414,14 +254,14 @@ public class VmThread {
     @INLINE
     public static VmThread current() {
         if (MaxineVM.isHosted()) {
-            return mainVMThread;
+            return MAIN_VM_THREAD;
         }
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
     }
 
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
-            if (vmThread == mainVMThread) {
+            if (vmThread == MAIN_VM_THREAD) {
                 VMConfiguration.hostOrTarget().runScheme().run();
             } else {
                 vmThread.javaThread.run();
@@ -438,7 +278,7 @@ public class VmThread {
     /**
      * The entry point for the native thread startup code.
      *
-     * ATTENTION: this signature must match 'VMThreadRunMethod' in "Native/substrate/threads.c".
+     * ATTENTION: this signature must match 'VMThreadRunMethod' in "Native/substrate/threads.h".
      *
      * @param id the unique identifier assigned to this thread when it was {@linkplain #start0() started}. This
      *            identifier is only bound to this thread until it is {@linkplain #beTerminated() terminated}. That is,
@@ -458,7 +298,6 @@ public class VmThread {
                     Pointer enabledVmThreadLocals,
                     Pointer disabledVmThreadLocals,
                     Pointer refMapArea,
-                    Pointer stackRedZone,
                     Pointer stackYellowZone,
                     Pointer stackEnd) {
         // Disable safepoints:
@@ -467,7 +306,7 @@ public class VmThread {
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.jniEnv());
 
         // Add the VM thread locals to the active map
-        final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);
+        final VmThread vmThread = VmThreadMap.addVmThreadLocals(id, enabledVmThreadLocals);
 
         for (VmThreadLocal threadLocal : VmThreadLocal.valuesNeedingInitialization()) {
             threadLocal.initialize();
@@ -494,7 +333,6 @@ public class VmThread {
         try {
             executeRunnable(vmThread);
         } catch (Throwable throwable) {
-
             vmThread.traceThreadForUncaughtException(throwable);
 
             final Thread javaThread = vmThread.javaThread();
@@ -507,7 +345,7 @@ public class VmThread {
             vmThread.terminationCause = throwable;
         } finally {
             // If this is the main thread terminating, initiate shutdown hooks after waiting for other non-daemons to terminate
-            if (vmThread == mainVMThread) {
+            if (vmThread == MAIN_VM_THREAD) {
                 VmThreadMap.ACTIVE.joinAllNonDaemons();
                 invokeShutdownHooks();
             }
@@ -515,6 +353,312 @@ public class VmThread {
 
             vmThread.traceThreadAfterTermination();
         }
+    }
+
+    /**
+     *   ATTENTION: this signature must match 'VMThreadAttachMethod' in "Native/substrate/threads.h".
+     */
+    @C_FUNCTION
+    private static void attach(Address nativeThread,
+                    Pointer stackBase,
+                    Pointer triggeredVmThreadLocals,
+                    Pointer enabledVmThreadLocals,
+                    Pointer disabledVmThreadLocals,
+                    Pointer refMapArea,
+                    Pointer stackYellowZone,
+                    Pointer stackEnd) {
+        FatalError.crash("VmThread.attach not yet implemented.");
+    }
+
+    private static void invokeShutdownHooks() {
+        VMOptions.beforeExit();
+        //Shutdown.shutdown(), but it's not visible
+        if (traceThreads()) {
+            Log.println("invoking Shutdown hooks");
+        }
+        try {
+            final ClassActor classActor = ClassActor.fromJava(Class.forName("java.lang.Shutdown"));
+            final StaticMethodActor shutdownMethod = classActor.findLocalStaticMethodActor("shutdown");
+            shutdownMethod.invoke();
+        } catch (Throwable throwable) {
+            ProgramError.unexpected("error invoking Shutdown.shutdown", throwable);
+        }
+    }
+
+    /*
+     * This function exists for the benefit of the primordial thread, as per nonJniNativeSleep.
+     */
+    @C_FUNCTION
+    private static native boolean nonJniNativeJoin(Word nativeThread);
+
+    /*
+     * This cannot be a C_FUNCTION as it blocks!
+     */
+    private static native boolean nativeJoin(Word nativeThread);
+
+    public static VmThread fromJniEnv(Pointer jniEnv) {
+        final Pointer vmThreadLocals = jniEnv.minus(JNI_ENV.offset);
+        return fromVmThreadLocals(vmThreadLocals);
+    }
+
+    @INLINE
+    public static VmThread fromVmThreadLocals(Pointer vmThreadLocals) {
+        if (MaxineVM.isHosted()) {
+            return MAIN_VM_THREAD;
+        }
+        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
+    }
+
+    @INLINE
+    public static boolean traceThreads() {
+        return TRACE_THREADS_OPTION.getValue();
+    }
+
+    public static void yield() {
+        nativeYield();
+    }
+
+    private static native void nativeYield();
+
+    public static StackTraceElement[][] dumpThreads(Thread[] threads) {
+        FatalError.unimplemented();
+        return null;
+    }
+
+    public static Thread[] getThreads() {
+        FatalError.unimplemented();
+        return null;
+    }
+
+    private static native void nativeSetPriority(Word nativeThread, int newPriority);
+
+    /**
+     * This exists for the benefit of the primordial thread.
+     *
+     * The primordial thread cannot (currently) safely call JNI functions because it is not a "real" Java thread. This
+     * is a workaround - obviously it would be better to find a way to relax this restriction.
+     *
+     * @param numberOfMilliSeconds
+     */
+    static void nonJniSleep(long numberOfMilliSeconds) {
+        nonJniNativeSleep(numberOfMilliSeconds);
+    }
+
+    @C_FUNCTION
+    private static native void nonJniNativeSleep(long numberOfMilliSeconds);
+
+    private static native boolean nativeSleep(long numberOfMilliSeconds);
+
+    public static void sleep(long millis) throws InterruptedException {
+        boolean interrupted = current().sleep0(millis);
+        if (interrupted) {
+            interrupted = false;
+            throw new InterruptedException();
+        }
+    }
+
+    public static native void nativeInterrupt(Word nativeThread);
+
+    public static int guardPageSize() {
+        return VMConfiguration.target().platform().pageSize;
+    }
+
+    private static Address traceStackRegion(String label, Address base, Address start, Address end, Address lastRegionStart, int usedStackSize) {
+        return traceStackRegion(label, base, start, end.minus(start).toInt(), lastRegionStart, usedStackSize);
+    }
+
+    private static Address traceStackRegion(String label, Address base, Address start, int size, Address lastRegionStart, int usedStackSize) {
+        FatalError.check(lastRegionStart.isZero() || start.lessEqual(lastRegionStart), "Overlapping stack regions");
+        if (size > 0) {
+            final Address end = start.plus(size);
+            FatalError.check(lastRegionStart.isZero() || end.lessEqual(lastRegionStart), "Overlapping stack regions");
+            final int startOffset = start.minus(base).toInt();
+            final int endOffset = startOffset + size;
+            if (lastRegionStart.isZero() || !lastRegionStart.equals(end)) {
+                Log.print("  +----- ");
+                Log.print(end);
+                Log.print("  [");
+                Log.print(endOffset >= 0 ? "+" : "");
+                Log.print(endOffset);
+                Log.println("]");
+            }
+            Log.println("  |");
+            Log.print("  | ");
+            Log.print(label);
+            Log.print(" [");
+            Log.print(size);
+            Log.print(" bytes, ");
+            Log.print(((float) size * 100) / usedStackSize);
+            Log.println("%]");
+            Log.println("  |");
+            Log.print("  +----- ");
+            Log.print(start);
+            Log.print(" [");
+            Log.print(startOffset >= 0 ? "+" : "");
+            Log.print(startOffset);
+            Log.println("]");
+        }
+        return start;
+    }
+
+
+    /**
+     * Create an unbound VmThread that will be bound later.
+     */
+    public VmThread() {
+    }
+
+    /**
+     * Create a bound VmThread.
+     * @param javaThread
+     */
+    public VmThread(Thread javaThread) {
+        setJavaThread(javaThread);
+    }
+
+
+    /**
+     * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack.
+     *
+     * <b>This must only be used when {@linkplain Throw#raise(Throwable, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer, com.sun.max.unsafe.Pointer)} throwing an exception}
+     * or {@linkplain StackReferenceMapPreparer preparing} a stack reference map.
+     * Allocation must not occur in these contexts.</b>
+     */
+    public VmStackFrameWalker unwindingOrReferenceMapPreparingStackFrameWalker() {
+        FatalError.check(stackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
+        return stackFrameWalker;
+    }
+
+    /**
+     * Gets a preallocated, thread local object that can be used to log a stack dump without incurring any allocation.
+     */
+    public VmStackFrameWalker stackDumpStackFrameWalker() {
+        FatalError.check(stackDumpStackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
+        return stackDumpStackFrameWalker;
+    }
+
+    /**
+     * Gets the thread-local object used to prepare the reference map for this stack's thread during garbage collection.
+     */
+    public StackReferenceMapPreparer stackReferenceMapPreparer() {
+        return stackReferenceMapPreparer;
+    }
+
+    public CompactReferenceMapInterpreter compactReferenceMapInterpreter() {
+        if (MaxineVM.isHosted()) {
+            return HOSTED_COMPACT_REFERENCE_MAP_INTERPRETER.get();
+        }
+        return compactReferenceMapInterpreter;
+    }
+
+    public Thread.State state() {
+        return state;
+    }
+
+    public void setState(Thread.State state) {
+        this.state = state;
+    }
+
+    public final Thread javaThread() {
+        return javaThread;
+    }
+
+    public Word nativeThread() {
+        return nativeThread;
+    }
+
+    /**
+     * Gets the identifier used to identify this thread in the {@linkplain VmThreadMap thread map}.
+     * A thread that has not been added to the thread map, will have an identifier of 0 and
+     * a thread that has been terminated and removed from the map will have an identifier
+     * of -1.
+     *
+     * This value is identical to the {@link VmThreadLocal#ID} value of a running thread.
+     */
+    public int id() {
+        return id;
+    }
+
+    /**
+     * @see #id()
+     */
+    void setID(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @INLINE
+    public final JavaMonitor protectedMonitor() {
+        return protectedMonitor;
+    }
+
+    @INLINE
+    public final void setProtectedMonitor(JavaMonitor protectedMonitor) {
+        this.protectedMonitor = protectedMonitor;
+    }
+
+    @INLINE
+    public final ConditionVariable waitingCondition() {
+        return waitingCondition;
+    }
+
+    @INLINE
+    public final VmThread nextWaitingThread() {
+        return nextWaitingThread;
+    }
+
+    @INLINE
+    public final void setNextWaitingThread(VmThread nextWaitingThread) {
+        this.nextWaitingThread = nextWaitingThread;
+    }
+
+    public void setInterrupted() {
+        this.interrupted = true;
+    }
+
+    /**
+     * Determines if this thread is owned by the garbage collector.
+     */
+    public final boolean isGCThread() {
+        return isGCThread;
+    }
+
+    /**
+     * Bind the given {@code Thread} to this VmThread.
+     * @param javaThread thread to be bound
+     */
+    public VmThread setJavaThread(Thread javaThread) {
+        this.isGCThread = Heap.isGcThread(javaThread);
+        this.waitingCondition = ConditionVariableFactory.create();
+        this.javaThread = javaThread;
+        this.name = javaThread.getName();
+        this.jniHandles = new JniHandles();
+        return this;
+    }
+
+    protected void beTerminated() {
+        synchronized (javaThread) {
+            // Must set TERMINATED before the notify in case a joiner is already waiting
+            // @see Thread.join()
+            state = Thread.State.TERMINATED;
+            javaThread.notifyAll();
+        }
+        terminationComplete();
+        // It is the monitor scheme's responsibility to ensure that this thread isn't reset to RUNNABLE
+        // if it blocks here.
+        VmThreadMap.ACTIVE.removeVmThreadLocals(vmThreadLocals);
+        // Monitor acquisition after point this MUST NOT HAPPEN as it may reset state to RUNNABLE
+        nativeThread = Address.zero();
+        vmThreadLocals = Pointer.zero();
+        id = -1;
+        waitingCondition = null;
     }
 
     private void traceThreadAfterInitialization(Pointer stackBase, Pointer vmThreadLocals) {
@@ -557,44 +701,6 @@ public class VmThread {
         }
     }
 
-    private static Address traceStackRegion(String label, Address base, Address start, Address end, Address lastRegionStart, int usedStackSize) {
-        return traceStackRegion(label, base, start, end.minus(start).toInt(), lastRegionStart, usedStackSize);
-    }
-
-    private static Address traceStackRegion(String label, Address base, Address start, int size, Address lastRegionStart, int usedStackSize) {
-        FatalError.check(lastRegionStart.isZero() || start.lessEqual(lastRegionStart), "Overlapping stack regions");
-        if (size > 0) {
-            final Address end = start.plus(size);
-            FatalError.check(lastRegionStart.isZero() || end.lessEqual(lastRegionStart), "Overlapping stack regions");
-            final int startOffset = start.minus(base).toInt();
-            final int endOffset = startOffset + size;
-            if (lastRegionStart.isZero() || !lastRegionStart.equals(end)) {
-                Log.print("  +----- ");
-                Log.print(end);
-                Log.print("  [");
-                Log.print(endOffset >= 0 ? "+" : "");
-                Log.print(endOffset);
-                Log.println("]");
-            }
-            Log.println("  |");
-            Log.print("  | ");
-            Log.print(label);
-            Log.print(" [");
-            Log.print(size);
-            Log.print(" bytes, ");
-            Log.print(((float) size * 100) / usedStackSize);
-            Log.println("%]");
-            Log.println("  |");
-            Log.print("  +----- ");
-            Log.print(start);
-            Log.print(" [");
-            Log.print(startOffset >= 0 ? "+" : "");
-            Log.print(startOffset);
-            Log.println("]");
-        }
-        return start;
-    }
-
     private void traceThreadForUncaughtException(Throwable throwable) {
         if (traceThreads()) {
             final boolean lockDisabledSafepoints = Log.lock();
@@ -620,38 +726,9 @@ public class VmThread {
         }
     }
 
-    private static void invokeShutdownHooks() {
-        VMOptions.beforeExit();
-        //Shutdown.shutdown(), but it's not visible
-        if (traceThreads()) {
-            Log.println("invoking Shutdown hooks");
-        }
-        try {
-            final ClassActor classActor = ClassActor.fromJava(Class.forName("java.lang.Shutdown"));
-            final StaticMethodActor shutdownMethod = classActor.findLocalStaticMethodActor("shutdown");
-            shutdownMethod.invoke();
-        } catch (Throwable throwable) {
-            ProgramError.unexpected("error invoking Shutdown.shutdown", throwable);
-        }
-    }
-
-    /*
-     * This function exists for the benefit of the primordial thread, as per nonJniNativeSleep.
-     */
-    @C_FUNCTION
-    private static native boolean nonJniNativeJoin(Word nativeThread);
-
-    /*
-     * This cannot be a C_FUNCTION as it blocks!
-     */
-    private static native boolean nativeJoin(Word nativeThread);
-
     public boolean join() {
         return nativeJoin(nativeThread);
     }
-
-    // Access to thread local variables
-
 
     // Only used by the EIR interpreter(s)
     @HOSTED_ONLY
@@ -664,21 +741,6 @@ public class VmThread {
         return vmThreadLocals;
     }
 
-    // JNI support
-
-    public static VmThread fromJniEnv(Pointer jniEnv) {
-        final Pointer vmThreadLocals = jniEnv.minus(JNI_ENV.offset);
-        return fromVmThreadLocals(vmThreadLocals);
-    }
-
-    @INLINE
-    public static VmThread fromVmThreadLocals(Pointer vmThreadLocals) {
-        if (MaxineVM.isHosted()) {
-            return mainVMThread;
-        }
-        return UnsafeCast.asVmThread(VM_THREAD.getConstantReference(vmThreadLocals).toJava());
-    }
-
     public JniHandle createLocalHandle(Object object) {
         return JniHandles.createLocalHandle(jniHandles, object);
     }
@@ -686,8 +748,6 @@ public class VmThread {
     public final JniHandles jniHandles() {
         return jniHandles;
     }
-
-    private Throwable pendingException;
 
     /**
      * Sets or clears the exception to be thrown once this thread returns from the native function most recently entered
@@ -724,20 +784,13 @@ public class VmThread {
         }
     }
 
-    // Support for JDK_java_lang_Thread:
-
-    public static void yield() {
-        nativeYield();
-    }
-
-    private static native void nativeYield();
-
     /**
      * Causes this thread to begin execution.
      */
     public void start0() {
         state = Thread.State.RUNNABLE;
-        VmThreadMap.ACTIVE.startVmThread(this, stackSizeOption.getValue().aligned(Platform.host().pageSize).asSize(), javaThread.getPriority());
+        VmThreadMap.ACTIVE.startVmThread(this, STACK_SIZE_OPTION.getValue().aligned(Platform.host().pageSize).asSize(),
+                                         javaThread.getPriority());
     }
 
     public boolean isInterrupted(boolean clearInterrupted) {
@@ -752,18 +805,6 @@ public class VmThread {
         FatalError.unimplemented();
         return -1;
     }
-
-    public static StackTraceElement[][] dumpThreads(Thread[] threads) {
-        FatalError.unimplemented();
-        return null;
-    }
-
-    public static Thread[] getThreads() {
-        FatalError.unimplemented();
-        return null;
-    }
-
-    private static native void nativeSetPriority(Word nativeThread, int newPriority);
 
     /**
      * This can be called in two contexts: 1. During the creation of a thread (i.e. during the Thread constructor) 2.
@@ -781,40 +822,11 @@ public class VmThread {
         }
     }
 
-    /**
-     * This exists for the benefit of the primordial thread.
-     *
-     * The primordial thread cannot (currently) safely call JNI functions because it is not a "real" Java thread. This
-     * is a workaround - obviously it would be better to find a way to relax this restriction.
-     *
-     * @param numberOfMilliSeconds
-     */
-    static void nonJniSleep(long numberOfMilliSeconds) {
-        nonJniNativeSleep(numberOfMilliSeconds);
-    }
-
-    private static final CriticalNativeMethod nonJniNativeSleep = new CriticalNativeMethod(VmThread.class, "nonJniNativeSleep");
-    private static final CriticalNativeMethod nativeSleep = new CriticalNativeMethod(VmThread.class, "nativeSleep");
-    private static final CriticalNativeMethod nativeYield = new CriticalNativeMethod(VmThread.class, "nativeYield");
-
-    @C_FUNCTION
-    private static native void nonJniNativeSleep(long numberOfMilliSeconds);
-
-    private static native boolean nativeSleep(long numberOfMilliSeconds);
-
     /*
      * use protected member method so that GuestVM's SchedThread is able to implement its own sleep method
      */
     protected boolean sleep0(long numberOfMilliSeconds) {
         return VmThread.nativeSleep(numberOfMilliSeconds);
-    }
-
-    public static void sleep(long millis) throws InterruptedException {
-        boolean interrupted = current().sleep0(millis);
-        if (interrupted) {
-            interrupted = false;
-            throw new InterruptedException();
-        }
     }
 
     public void stop0(Object throwable) {
@@ -830,8 +842,6 @@ public class VmThread {
     public void resume0() {
         FatalError.unimplemented();
     }
-
-    public static native void nativeInterrupt(Word nativeThread);
 
     public void interrupt0() {
         if (nativeThread.isZero()) {
@@ -850,16 +860,12 @@ public class VmThread {
         return "VM" + javaThread;
     }
 
-    public  Address guardPage() {
+    public Address guardPage() {
         return guardPage;
     }
 
     public Address guardPageEnd() {
         return guardPage.plus(guardPageSize());
-    }
-
-    public static int guardPageSize() {
-        return VMConfiguration.target().platform().pageSize;
     }
 
     /**
@@ -868,7 +874,6 @@ public class VmThread {
      * initialization that depends on that invariant.
      */
     protected void initializationComplete() {
-
     }
 
     /**
@@ -877,7 +882,6 @@ public class VmThread {
      * termination that depends on that invariant.
      */
     protected void terminationComplete() {
-
     }
 
     /**

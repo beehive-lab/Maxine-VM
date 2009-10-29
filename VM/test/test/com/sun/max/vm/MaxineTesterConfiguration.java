@@ -70,6 +70,7 @@ public class MaxineTesterConfiguration {
     static {
         output(test.output.AWTFont.class,                  FAIL_DARWIN);
         output(test.output.JavacTest.class,                RAND_LINUX);
+        output(test.output.CLDelegation.class);
         output(test.output.CatchOutOfMemory.class);
         output(test.output.PrintDate.class);
         output(test.output.HelloWorld.class);
@@ -91,6 +92,7 @@ public class MaxineTesterConfiguration {
         output(test.output.GCTest4.class);
         output(test.output.GCTest5.class);
         output(test.output.GCTest6.class);
+        output(test.output.GCTest7.class, RAND_ALL);
         output(test.output.HelloWorldReflect.class);
         output(test.output.JREJarLoadTest.class);
         output(test.output.FileReader.class);

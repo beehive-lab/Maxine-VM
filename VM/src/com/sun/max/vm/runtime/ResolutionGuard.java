@@ -41,12 +41,30 @@ public final class ResolutionGuard {
 
     public final int constantPoolIndex;
 
+    public final boolean arrayActor;
+
     @CONSTANT_WHEN_NOT_ZERO
     public Actor value;
 
     public ResolutionGuard(ConstantPool constantPool, int constantPoolIndex) {
         this.constantPool = constantPool;
         this.constantPoolIndex = constantPoolIndex;
+        assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
+        arrayActor = false;
+    }
+
+    public ResolutionGuard(ConstantPool constantPool, int constantPoolIndex, boolean arrayActor) {
+        this.constantPool = constantPool;
+        this.constantPoolIndex = constantPoolIndex;
+        assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
+        this.arrayActor = arrayActor;
+    }
+
+    public ResolutionGuard(Actor value) {
+        this.value = value;
+        this.constantPool = null;
+        this.constantPoolIndex = -1;
+        arrayActor = false;
     }
 
     /**
@@ -58,6 +76,11 @@ public final class ResolutionGuard {
 
     @Override
     public String toString() {
+
+        if (value != null) {
+            return getClass().getSimpleName() + "[" + value + "]";
+        }
+
         return getClass().getSimpleName() + "[" + poolConstant().valueString(constantPool) + "]";
     }
 }

@@ -44,9 +44,9 @@ public class SPARCInterpreterStub extends InterpreterStub {
     private static int computeFrameSize(ClassMethodActor classMethodActor) {
         int bciSlot = Word.size();
         int methodSlot = Word.size();
-        int primitiveStack = classMethodActor.codeAttribute().maxStack() * Word.size();
+        int primitiveStack = classMethodActor.codeAttribute().maxStack * Word.size();
         int referenceStack = primitiveStack;
-        int primitiveLocals = classMethodActor.codeAttribute().maxLocals() * Word.size();
+        int primitiveLocals = classMethodActor.codeAttribute().maxLocals * Word.size();
         int referenceLocals = primitiveLocals;
         return bciSlot + methodSlot + primitiveStack + referenceStack + primitiveLocals + referenceLocals;
     }

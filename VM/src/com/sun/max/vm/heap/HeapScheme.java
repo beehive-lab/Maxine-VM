@@ -201,7 +201,7 @@ public interface HeapScheme extends VMScheme {
 
     /**
      * A hint that the heap scheme can increase its memory usage.
-     * @param amount suggetsed amount to increase
+     * @param amount suggested amount to increase
      * @return true if can/will increase memory usage, false otherwise
      */
     boolean increaseMemory(Size amount);
@@ -257,4 +257,5 @@ public interface HeapScheme extends VMScheme {
      * heap.
      */
     void disableImmortalMemoryAllocation();
+
 }

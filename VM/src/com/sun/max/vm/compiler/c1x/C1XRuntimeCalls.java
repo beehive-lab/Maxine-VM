@@ -55,14 +55,16 @@ public class C1XRuntimeCalls {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface RUNTIME_ENTRY {
-        CiRuntimeCall type();
+        CiRuntimeCall runtimeCall();
     }
 
     static {
         for (Method method : C1XRuntimeCalls.class.getMethods()) {
             RUNTIME_ENTRY entry = method.getAnnotation(RUNTIME_ENTRY.class);
-            if (entry != null && entry.type() != null) {
-                registerMethod(method, entry.type());
+            if (entry != null && entry.runtimeCall() != null) {
+                registerMethod(method, entry.runtimeCall());
+            } else {
+                registerMethod(method, null);
             }
         }
 
@@ -73,14 +75,13 @@ public class C1XRuntimeCalls {
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.UnwindException)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnwindException)
     public static void runtimeUnwindException(Throwable throwable) throws Throwable {
         throw throwable;
     }
 
 
     private static boolean checkCompatible(CiRuntimeCall call, ClassMethodActor classMethodActor) {
-
         assert checkCompatible(call.resultType, classMethodActor.resultKind());
         for (int i = 0; i < call.arguments.length; i++) {
             assert checkCompatible(call.arguments[i], classMethodActor.getParameterKinds()[i]);
@@ -124,36 +125,36 @@ public class C1XRuntimeCalls {
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ThrowRangeCheckFailed)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowRangeCheckFailed)
     public static void runtimeThrowRangeCheckFailed(int index) throws ArrayIndexOutOfBoundsException {
         throw new ArrayIndexOutOfBoundsException(index);
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ThrowIndexException)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowIndexException)
     public static void runtimeThrowIndexException(int index) throws ArrayIndexOutOfBoundsException {
         throw new ArrayIndexOutOfBoundsException(index);
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ThrowDiv0Exception)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowDiv0Exception)
     public static void runtimeThrowDiv0Exception() throws ArithmeticException {
         throw new ArithmeticException("division by zero");
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ThrowNullPointerException)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowNullPointerException)
     public static void runtimeThrowNullPointerException() throws NullPointerException {
         throw new NullPointerException();
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.RegisterFinalizer)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.RegisterFinalizer)
     public static void runtimeRegisterFinalizer() {
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.NewInstance)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.NewInstance)
     public static Object runtimeNewInstance(Hub hub) {
         final ClassActor classActor = hub.classActor;
         if (MaxineVM.isHosted()) {
@@ -184,13 +185,13 @@ public class C1XRuntimeCalls {
         return Heap.createArray(hub, length);
     }
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.NewArray)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.NewArray)
     public static Object runtimeNewArray(DynamicHub arrayClassActor, int length) {
         return createArray(arrayClassActor, length);
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(type = CiRuntimeCall.RetrieveInterfaceIndex)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.RetrieveInterfaceIndex)
     public static int retrieveInterfaceIndex(Object receiver, int interfaceId) {
         if (receiver == null) {
             return 0;
@@ -204,7 +205,7 @@ public class C1XRuntimeCalls {
 
 
     @UNSAFE
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveInterfaceIndex)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInterfaceIndex)
     public static int resolveInterfaceIndex(Object receiver, int index, ConstantPool constantPool) {
         if (receiver == null) {
             return 0;
@@ -229,7 +230,7 @@ public class C1XRuntimeCalls {
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.NewMultiArray)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.NewMultiArray)
     public static Object runtimeNewMultiArray(Hub arrayClassHub, int[] lengths) {
         for (int length : lengths) {
             if (length < 0) {
@@ -261,192 +262,192 @@ public class C1XRuntimeCalls {
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.HandleException)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.HandleException)
     public static void runtimeHandleException(Throwable throwable) throws Throwable {
         throw throwable;
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ThrowArrayStoreException)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowArrayStoreException)
     public static void runtimeThrowArrayStoreException() {
         throw new ArrayStoreException();
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ThrowClassCastException)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowClassCastException)
     public static void runtimeThrowClassCastException(Object o) {
         throw new ClassCastException();
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ThrowIncompatibleClassChangeError)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowIncompatibleClassChangeError)
     public static void runtimeThrowIncompatibleClassChangeError() {
         throw new IncompatibleClassChangeError();
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.SlowSubtypeCheck)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.SlowSubtypeCheck)
     public static boolean runtimeSlowSubtypeCheck(Hub a, Hub b) {
         return b.isSubClassHub(a.classActor);
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.Monitorenter)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Monitorenter)
     public static void runtimeMonitorenter(Object obj, int monitorID) {
         VMConfiguration.target().monitorScheme().monitorEnter(obj);
     }
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.Monitorexit)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Monitorexit)
     public static void runtimeMonitorexit(Object obj, int monitorID) {
         VMConfiguration.target().monitorScheme().monitorExit(obj);
     }
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.TraceBlockEntry)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.TraceBlockEntry)
     public static void runtimeTraceBlockEntry() {
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.OSRMigrationEnd)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
     public static void runtimeOSRMigrationEnd() {
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.JavaTimeMillis)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.JavaTimeMillis)
     public static long runtimeJavaTimeMillis() {
         return System.currentTimeMillis();
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.JavaTimeNanos)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.JavaTimeNanos)
     public static long runtimeJavaTimeNanos() {
         // TODO: Implement correctly!
         return 0;
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.OopArrayCopy)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.OopArrayCopy)
     public static void runtimeOopArrayCopy() {
         // TODO: Implement correctly!
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.PrimitiveArrayCopy)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.PrimitiveArrayCopy)
     public static void runtimePrimitiveArrayCopy() {
         // TODO: Implement correctly!
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArrayCopy)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArrayCopy)
     public static void runtimeArrayCopy() {
         // TODO: Implement correctly!
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveOptVirtualCall)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveOptVirtualCall)
     public static long runtimeResolveOptVirtualCall(int index, ConstantPool constantPool) {
         final VirtualMethodActor methodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
         return CompilationScheme.Static.compile(methodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveStaticCall)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveStaticCall)
     public static long runtimeResolveStaticCall(int index, ConstantPool constantPool) {
         final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
         return CompilationScheme.Static.compile(staticMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.Debug)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Debug)
     public static void runtimeDebug() {
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmethicLrem)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmethicLrem)
     public static long runtimeArithmethicLrem(long a, long b) {
         return a % b;
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticLdiv)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLdiv)
     public static long runtimeArithmeticLdiv(long a, long b) {
         return a / b;
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticLmul)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLmul)
     public static long runtimeArithmeticLmul(long a, long b) {
         return a * b;
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticFrem)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticFrem)
     public static float runtimeArithmeticFrem(float v1, float v2) {
         return v1 % v2;
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticDrem)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticDrem)
     public static double runtimeArithmeticDrem(double v1, double v2) {
         return v1 % v2;
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticCos)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticCos)
     public static double runtimeArithmeticCos(double v) {
         return Math.cos(v);
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticTan)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticTan)
     public static double runtimeArithmeticTan(double v) {
         return Math.tan(v);
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticLog)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLog)
     public static double runtimeArithmeticLog(double v) {
         return Math.log(v);
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticLog10)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLog10)
     public static double runtimeArithmeticLog10(double v) {
         return Math.log10(v);
     }
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveClass)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveClass)
     public static Object resolveClass(int index, ConstantPool constantPool) {
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         return classActor.dynamicHub();
     }
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveArrayClass)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveArrayClass)
     public static Object resolveArrayClass(int index, ConstantPool constantPool) {
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         return ArrayClassActor.forComponentClassActor(classActor).dynamicHub();
     }
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveStaticFields)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveStaticFields)
     public static Object resolveStaticFields(int index, ConstantPool constantPool) {
         // Here the reference to the field cp entry is given
         final ClassActor classActor = constantPool.fieldAt(index).resolve(constantPool, index).holder();
         return classActor.staticTuple();
     }
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveJavaClass)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveJavaClass)
     public static Object resolveJavaClass(int index, ConstantPool constantPool) {
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         return classActor.toJava();
     }
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveFieldOffset)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveFieldOffset)
     public static int resolveFieldOffset(int index, ConstantPool constantPool) {
         final FieldActor fieldActor = constantPool.fieldAt(index).resolve(constantPool, index);
         return fieldActor.offset();
     }
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ResolveVTableIndex)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveVTableIndex)
     public static int resolveVTableIndex(int index, ConstantPool constantPool) {
         final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
         return virtualMethodActor.vTableIndex();
@@ -454,17 +455,24 @@ public class C1XRuntimeCalls {
 
 
 
-    @RUNTIME_ENTRY(type = CiRuntimeCall.ArithmeticSin)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticSin)
     public static double runtimeArithmeticSin(double v) {
         return Math.sin(v);
     }
 
     private static void registerMethod(Method selectedMethod, CiRuntimeCall call) {
-        assert runtimeCallMethods[call.ordinal()] == null : "method already defined";
-        if (MaxineVM.isHosted()) {
-            new CriticalMethod(C1XRuntimeCalls.class, selectedMethod.getName(), SignatureDescriptor.create(selectedMethod.getReturnType(), selectedMethod.getParameterTypes()));
+        ClassMethodActor classMethodActor = null;
+        if (call != null) {
+            assert runtimeCallMethods[call.ordinal()] == null : "method already defined";
+            classMethodActor = ClassMethodActor.fromJava(selectedMethod);
+            runtimeCallMethods[call.ordinal()] = classMethodActor;
         }
-
-        runtimeCallMethods[call.ordinal()] = ClassMethodActor.fromJava(selectedMethod);
+        if (classMethodActor != null) {
+            if (MaxineVM.isHosted()) {
+                new CriticalMethod(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+            } else {
+                VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor);
+            }
+        }
     }
 }

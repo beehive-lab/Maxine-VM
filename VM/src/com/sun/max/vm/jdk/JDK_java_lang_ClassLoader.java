@@ -69,7 +69,7 @@ final class JDK_java_lang_ClassLoader {
      */
     @SUBSTITUTE
     private Class defineClass0(String name, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain) {
-        return ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, null).toJava();
+        return ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, null, false).toJava();
     }
 
     /**
@@ -87,7 +87,7 @@ final class JDK_java_lang_ClassLoader {
      */
     @SUBSTITUTE
     private Class defineClass1(String name, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, String source) {
-        final ClassActor classActor = ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, source);
+        final ClassActor classActor = ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, source, false);
         return classActor.toJava();
     }
 
@@ -128,8 +128,6 @@ final class JDK_java_lang_ClassLoader {
      */
     @SUBSTITUTE
     private Class findBootstrapClass(String name) throws ClassNotFoundException {
-        // TODO: this only works for the JavaRunScheme, not the NewJavaRunScheme, which should use a different class loader here.
-        // Solution: route this call through the scheme.
         return VmClassLoader.VM_CLASS_LOADER.findBootstrapClass(name);
     }
 

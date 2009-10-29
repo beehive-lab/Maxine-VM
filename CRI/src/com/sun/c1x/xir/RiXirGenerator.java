@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.xir;
 
+import java.util.List;
+
 import com.sun.c1x.ri.RiField;
 import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.ri.RiType;
@@ -86,7 +88,7 @@ public abstract class RiXirGenerator {
         return null;
     }
 
-    public XirSnippet genNewArray(XirArgument length, CiKind elementKind, RiType arrayType) {
+    public XirSnippet genNewArray(XirArgument length, CiKind elementKind, RiType componentType, RiType arrayType) {
         return null;
     }
 
@@ -114,6 +116,7 @@ public abstract class RiXirGenerator {
         return null;
     }
 
-	public void buildTemplates(CiXirAssembler asm) {
+	public List<XirTemplate> buildTemplates(CiXirAssembler asm) {
+		return null;
 	}
 }

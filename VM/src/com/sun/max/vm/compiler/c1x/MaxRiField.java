@@ -52,12 +52,12 @@ public class MaxRiField implements RiField {
      * @param constantPool the constant pool in which the field is referenced
      * @param fieldActor the field actor
      */
-    public MaxRiField(MaxRiConstantPool constantPool, FieldActor fieldActor) {
+    public MaxRiField(MaxRiConstantPool constantPool, FieldActor fieldActor, int cpi) {
         this.constantPool = constantPool;
         this.fieldActor = fieldActor;
         this.basicType = MaxRiType.kindToBasicType(fieldActor.kind);
         this.fieldRef = null;
-        this.cpi = 0;
+        this.cpi = cpi;
     }
 
     /**
@@ -90,10 +90,10 @@ public class MaxRiField implements RiField {
      */
     public RiType type() {
         if (fieldActor != null) {
-            return constantPool.runtime.canonicalRiType(fieldActor.type(), constantPool);
+            return constantPool.runtime.canonicalRiType(fieldActor.type(), constantPool, -1);
         }
         // TODO: get the correct CPI of the field's type
-        return new MaxRiType(constantPool, fieldRef.type(constantPool.constantPool), 0);
+        return new MaxRiType(constantPool, fieldRef.type(constantPool.constantPool), -1);
     }
 
     /**
@@ -110,10 +110,10 @@ public class MaxRiField implements RiField {
      */
     public RiType holder() {
         if (fieldActor != null) {
-            return constantPool.runtime.canonicalRiType(fieldActor.holder(), constantPool);
+            return constantPool.runtime.canonicalRiType(fieldActor.holder(), constantPool, -1);
         }
         // TODO: get the correct cpi of the field's holder
-        return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool), 0);
+        return new MaxRiType(constantPool, fieldRef.holder(constantPool.constantPool), -1);
     }
 
     /**

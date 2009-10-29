@@ -149,6 +149,9 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             Log.println();
             Log.println("Verifying " + classMethodActor().format("%H.%n(%p)"));
             Log.println();
+            Log.println("Input bytecode:");
+            CodeAttributePrinter.print(Log.out, codeAttribute());
+            Log.println();
             Log.println("Interpreting bytecode:");
         }
 
@@ -215,6 +218,17 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         makeTypeState(info.handlerPosition());
     }
 
+    @Override
+    public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
+        if (!toType.isAssignableFrom(fromType)) {
+
+
+
+            toType.isAssignableFrom(fromType);
+            throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
+        }
+    }
+
     /**
      * Gets the current interpreter frame type state.
      * @return the type state
@@ -259,7 +273,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     @Override
     protected void performJsr(int offset) {
         final int subroutineEntryPosition = currentOpcodePosition() + offset;
-        final Subroutine subroutine = classVerifier().getSubroutine(subroutineEntryPosition, codeAttribute().maxLocals());
+        final Subroutine subroutine = classVerifier().getSubroutine(subroutineEntryPosition, codeAttribute().maxLocals);
 
         final int returnPosition = scanner.currentBytePosition();
         final boolean firstVisit = !subroutine.containsRetTarget(returnPosition);
@@ -330,7 +344,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             final TypeState jsrTypeState = typeStateMap[jsr.position()];
             assert jsrTypeState != null;
-            typeState.updateLocalsNotAccessedInSubroutine(jsrTypeState, subroutine);
+            typeState.updateLocalsNotAccessedInSubroutine(jsrTypeState, subroutine, index);
 
             // Create the type state at the return position if it does not already exist
             TypeState retTypeState = typeStateMap[retTarget];

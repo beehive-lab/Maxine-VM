@@ -26,7 +26,7 @@ import com.sun.max.unsafe.*;
  * Non-GC safe.
  * Constant tele grip without canonicalization.
  * For temporary use only.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class TemporaryTeleGrip extends ConstantTeleGrip {
@@ -35,4 +35,8 @@ public class TemporaryTeleGrip extends ConstantTeleGrip {
         super(teleGripScheme, raw);
     }
 
+    @Override
+    public TeleObjectMemory.State getTeleObjectMemoryState() {
+        return TeleObjectMemory.State.DEAD;
+    }
 }

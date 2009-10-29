@@ -154,12 +154,12 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genCmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, CodeEmitInfo info) {
+    protected void genCmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, LIRDebugInfo info) {
         lir.cmpMemInt(condition, base, disp, c, info);
     }
 
     @Override
-    protected void genCmpRegMem(LIRCondition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, CodeEmitInfo info) {
+    protected void genCmpRegMem(LIRCondition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, LIRDebugInfo info) {
         lir.cmpRegMem(condition, reg, new LIRAddress(base, disp, type), info);
     }
 
@@ -214,8 +214,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         // the CodeEmitInfo must be duplicated for each different
         // LIR-instruction because spilling can occur anywhere between two
         // instructions and so the debug information must be different
-        CodeEmitInfo rangeCheckInfo = stateFor(x);
-        CodeEmitInfo nullCheckInfo = null;
+        LIRDebugInfo rangeCheckInfo = stateFor(x);
+        LIRDebugInfo nullCheckInfo = null;
         if (x.needsNullCheck()) {
             nullCheckInfo = rangeCheckInfo.copy();
         }
@@ -228,7 +228,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     private void emitArrayStore(LIRLocation array, LIROperand index, LIROperand value, LIROperand length, CiKind elementType, boolean needsRangeCheck, boolean needsStoreCheck, boolean needsBarrier,
-                    CodeEmitInfo nullCheckInfo, CodeEmitInfo rangeCheckInfo) {
+                    LIRDebugInfo nullCheckInfo, LIRDebugInfo rangeCheckInfo) {
         // emit array address setup early so it schedules better
         LIRAddress arrayAddr = genArrayAddress(array, index, elementType, needsBarrier);
 
@@ -249,7 +249,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand tmp2 = newRegister(CiKind.Object);
             LIROperand tmp3 = newRegister(CiKind.Object);
 
-            CodeEmitInfo storeCheckInfo = rangeCheckInfo.copy();
+            LIRDebugInfo storeCheckInfo = rangeCheckInfo.copy();
             lir.storeCheck(value, array, tmp1, tmp2, tmp3, storeCheckInfo);
         }
 
@@ -282,14 +282,14 @@ public final class X86LIRGenerator extends LIRGenerator {
             scratch = newRegister(CiKind.Int);
         }
 
-        CodeEmitInfo infoForException = null;
+        LIRDebugInfo infoForException = null;
         if (x.needsNullCheck()) {
             // TODO: lockStackBefore()
             infoForException = stateFor(x, x.stateBefore());
         }
         // this CodeEmitInfo must not have the xhandlers because here the
         // object is already locked (xhandlers expect object to be unlocked)
-        CodeEmitInfo info = stateFor(x, x.stateBefore(), true);
+        LIRDebugInfo info = stateFor(x, x.stateBefore(), true);
         monitorEnter(obj.result(), lock, syncTempOpr(), scratch, x.lockNumber(), infoForException, info);
     }
 
@@ -379,7 +379,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             CallingConvention cc = compilation.frameMap().runtimeCallingConvention(BASIC_TYPES_LONG_LONG);
 
             // check for division by zero (destroys registers of right operand!)
-            CodeEmitInfo info = null;
+            LIRDebugInfo info = null;
             if (!x.checkFlag(Flag.NoZeroCheck)) {
                 info = stateFor(x);
             }
@@ -462,7 +462,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // force the evaluation of other instructions that are needed for
             // correct debug info. Otherwise the live range of the fix
             // register might be too long.
-            CodeEmitInfo info = null;
+            LIRDebugInfo info = null;
             if (!x.checkFlag(Flag.NoZeroCheck)) {
                 info = stateFor(x);
             }
@@ -787,7 +787,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void genNewInstance(NewInstance x) {
 
-        CodeEmitInfo info = stateFor(x, x.stateBefore());
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type());
         LIROperand klassReg = LIROperandFactory.singleLocation(CiKind.Object, X86.rdx);
 
@@ -809,7 +809,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected void genNewTypeArray(NewTypeArray x) {
-        CodeEmitInfo info = stateFor(x, x.stateBefore());
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
         LIRItem length = new LIRItem(x.length(), this);
         length.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rbx));
         LIROperand reg = emitNewTypeArray(x.type(), x.elementKind(), length.result(), info);
@@ -817,7 +817,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         lir.move(reg, result);
     }
 
-    private LIRLocation emitNewTypeArray(CiKind type, CiKind elementType, LIROperand len, CodeEmitInfo info) {
+    private LIRLocation emitNewTypeArray(CiKind type, CiKind elementType, LIROperand len, LIRDebugInfo info) {
         LIRLocation reg = resultRegisterFor(type);
         assert len.asRegister() == X86.rbx;
         LIROperand tmp1 = LIROperandFactory.singleLocation(CiKind.Object, X86.rcx);
@@ -840,12 +840,12 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem length = new LIRItem(x.length(), this);
         // in case of patching (i.e., object class is not yet loaded), we need to reexecute the instruction
         // and therefore provide the state before the parameters have been consumed
-        CodeEmitInfo patchingInfo = null;
+        LIRDebugInfo patchingInfo = null;
         if (!x.elementClass().isLoaded() || C1XOptions.TestPatching) {
             patchingInfo = stateFor(x, x.stateBefore());
         }
 
-        CodeEmitInfo info = stateFor(x, x.stateBefore());
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
 
         LIROperand reg = resultRegisterFor(x.type());
         LIROperand tmp1 = LIROperandFactory.singleLocation(CiKind.Object, X86.rcx);
@@ -884,7 +884,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         // need to get the info before, as the items may become invalid through itemFree
-        CodeEmitInfo patchingInfo = null;
+        LIRDebugInfo patchingInfo = null;
         if (!x.elementKind.isLoaded() || C1XOptions.TestPatching) {
             patchingInfo = stateFor(x, x.stateBefore());
 
@@ -893,7 +893,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             x.setExceptionHandlers(new ArrayList<ExceptionHandler>(x.exceptionHandlers()));
         }
 
-        CodeEmitInfo info = stateFor(x, x.stateBefore());
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
 
         List<LIROperand> arguments = new ArrayList<LIROperand>();
         LIROperand hubRegister = newRegister(CiKind.Object);
@@ -916,7 +916,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
 
         // Create a new code emit info as they must not be shared!
-        CodeEmitInfo info2 = stateFor(x, x.stateBefore());
+        LIRDebugInfo info2 = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type());
         lir.callRuntimeCalleeSaved(CiRuntimeCall.NewMultiArray, reg, arguments, info2);
 
@@ -934,7 +934,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     protected void genCheckCast(CheckCast x) {
         LIRItem obj = new LIRItem(x.object(), this);
 
-        CodeEmitInfo patchingInfo = null;
+        LIRDebugInfo patchingInfo = null;
 //        if (!x.targetClass().isLoaded() || (C1XOptions.TestPatching && !x.isIncompatibleClassChangeCheck())) {
 //            // must do this before locking the destination register as an oop register,
 //            // and before the obj is loaded (the latter is for deoptimization)
@@ -943,7 +943,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         obj.loadItem();
 
         // info for exceptions
-        CodeEmitInfo infoForException = stateFor(x, x.stateBefore().copyLocks());
+        LIRDebugInfo infoForException = stateFor(x, x.stateBefore().copyLocks());
 
         CodeStub stub;
         if (x.isIncompatibleClassChangeCheck()) {
@@ -964,7 +964,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // result and test object may not be in same register
         LIROperand reg = rlockResult(x);
-        CodeEmitInfo patchingInfo = null;
+        LIRDebugInfo patchingInfo = null;
 //        if ((!x.targetClass().isLoaded() || C1XOptions.TestPatching)) {
 //            // must do this before locking the destination register as an oop register
 //            patchingInfo = stateFor(x, x.stateBefore());
@@ -1034,7 +1034,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genVolatileFieldStore(LIROperand value, LIRAddress address, CodeEmitInfo info) {
+    protected void genVolatileFieldStore(LIROperand value, LIRAddress address, LIRDebugInfo info) {
         if (address.kind == CiKind.Long) {
             address = new LIRAddress(address.base(), address.index(), address.scale(), address.displacement(), CiKind.Double);
             // Transfer the value atomically by using FP moves. This means
@@ -1053,7 +1053,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genVolatileFieldLoad(LIRAddress address, LIROperand result, CodeEmitInfo info) {
+    protected void genVolatileFieldLoad(LIRAddress address, LIROperand result, LIRDebugInfo info) {
         if (address.kind == CiKind.Long) {
             address = new LIRAddress(address.base(), address.index(), address.scale(), address.displacement(), CiKind.Double);
             // Transfer the value atomically by using FP moves. This means

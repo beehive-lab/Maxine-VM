@@ -57,7 +57,7 @@ public class XirTemplate {
     public final CiXirAssembler.XirConstant[] constants;
     public final int variableCount;
 
-    public int flags;
+    public final int flags;
 
     public XirTemplate(String name, int variableCount, XirVariable resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constants, int flags) {
     	this.name = name;
@@ -96,6 +96,10 @@ public class XirTemplate {
 
     public boolean isParameterDestroyed(int index) {
     	return parameterDestroyed[index];
+    }
+    
+    public boolean hasJavaCall() {
+    	return (flags & GlobalFlags.HAS_JAVA_CALL.mask) != 0;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,31 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*
- * @Harness: java
- * @Runs: (true, -2) = !java.lang.NullPointerException; (true, -1) = !java.lang.ArrayIndexOutOfBoundsException;
- * @Runs: (true, 0) = 0; (true, 1) = 1; (true, 2) = 2; (true, 3) = !java.lang.ArrayIndexOutOfBoundsException;
- * @Runs: (false, 0) = !java.lang.ArrayStoreException; (false, 1) = 1; (false, 2) = 2; (false, 3) = !java.lang.ArrayIndexOutOfBoundsException
+package test.output;
+
+
+/**
+ * Ensures that ClassLoader delegation is the same on Maxine as on HotSpot.
+ *
+ * @author Doug Simon
  */
-package jtt.except;
-
-public class BC_aastore {
-
-    static Object[] param = {new Object(), null, "h"};
-    static Object[] arr = {null, null, null};
-    static String[] arr2 = {null, null, null};
-
-    public static int test(boolean a, int indx) {
-        Object[] array = a ? arr : arr2;
-        Object val;
-        if (indx == -2) {
-            array = null;
-            val = null;
-        } else {
-            val = param[indx];
+public class CLDelegation {
+    public static void main(String[] args) {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        System.out.println("System class loader delegation chain:");
+        while (cl != null) {
+            System.out.println("   " + cl.getClass().getName());
+            cl = cl.getParent();
         }
-        array[indx] = val;
-        return indx;
-    }
 
+        System.out.println("Delegation chain for loader of " + CLDelegation.class);
+        cl = CLDelegation.class.getClassLoader();
+        while (cl != null) {
+            System.out.println("   " + cl.getClass().getName());
+            cl = cl.getParent();
+        }
+
+    }
 }

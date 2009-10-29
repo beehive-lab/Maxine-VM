@@ -21,6 +21,7 @@
 package com.sun.c1x.target.x86;
 
 import com.sun.c1x.*;
+import com.sun.c1x.xir.XirTemplate;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
@@ -49,56 +50,63 @@ public class X86MacroAssembler extends X86Assembler {
         wordSize = this.target.arch.wordSize;
     }
 
-    public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info, CiRegister result, CiRegister... args) {
+    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, CiRegister... args) {
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
         }
-        callGlobalStub(stub, info, result, rc);
+        return callGlobalStub(stub, info, result, rc);
     }
 
-    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, CodeEmitInfo info, CiRegister result, CiRegister... args) {
+    public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, CiRegister... args) {
         RegisterOrConstant[] rc = new RegisterOrConstant[args.length];
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
         }
-        callRuntimeCalleeSaved(stub, info, result, rc);
+        return callRuntimeCalleeSaved(stub, info, result, rc);
     }
 
-    public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info) {
-        emitGlobalStubCall(compiler.lookupGlobalStub(stub), info);
+    public final int callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
+        assert args.length == stub.parameters.length;
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), compilation, stub.resultOperand.kind, info, result, args);
     }
 
-    public final void callGlobalStub(GlobalStub stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant...args) {
+    public final int callGlobalStubNoArgs(GlobalStub stub, LIRDebugInfo info, CiRegister result) {
+        assert 0 == stub.arguments.length;
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result);
+    }
+
+
+    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result, args);
     }
 
-    public final void callRuntimeCalleeSaved(CiRuntimeCall stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant...args) {
+    public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        callGlobalStubHelper(compiler.lookupGlobalStub(stub), info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result, args);
     }
 
-    private void callGlobalStubHelper(Object stub, CodeEmitInfo info, CiRegister result, RegisterOrConstant... args) {
+    private int callGlobalStubHelper(Object stub, C1XCompilation compilation, CiKind resultKind, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
         }
 
         emitGlobalStubCall(stub, info);
+        int pos = this.codeBuffer.position();
 
         if (result != CiRegister.None) {
-
-            this.loadResult(result, 0);
+            this.loadResult(result, 0, resultKind);
         }
 
         // Clear out parameters
         if (C1XOptions.GenerateAssertionCode) {
-
             for (index = 0; index < args.length; index++) {
                 storeParameter(0, index++);
             }
         }
+        return pos;
     }
 
     private int calcGlobalStubParameterOffset(int index) {
@@ -106,9 +114,15 @@ public class X86MacroAssembler extends X86Assembler {
         return -(index + 2) * target.arch.wordSize;
     }
 
-    void loadResult(CiRegister r, int index) {
+    void loadResult(CiRegister r, int index, CiKind kind) {
         int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
-        movptr(r, new Address(X86.rsp, offsetFromRspInBytes));
+        if (kind == CiKind.Int || kind == CiKind.Boolean) {
+            movl(r, new Address(X86.rsp, offsetFromRspInBytes));
+        } else {
+            assert kind == CiKind.Long || kind == CiKind.Object || kind == CiKind.Word || kind == CiKind.Illegal;
+            assert target.arch.is64bit();
+            movq(r, new Address(X86.rsp, offsetFromRspInBytes));
+        }
     }
 
     void storeParameter(CiRegister r, int index) {
@@ -136,26 +150,6 @@ public class X86MacroAssembler extends X86Assembler {
         assert o.basicType == CiKind.Object;
         int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
         movoop(new Address(X86.rsp, offsetFromRspInBytes), o);
-    }
-
-    void inlineCacheCheck(CiRegister receiver, CiRegister iCache) {
-        // TODO: Implement this method or throw away the IC-cache facilities...
-//        assert verifyOop(receiver);
-//        // explicit null check not needed since load from [klassOffset] causes a trap
-//        // check against inline cache
-//        assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.klassOffsetInBytes()) : "must add explicit null check";
-//        //int startOffset = offset();
-//        cmpptr(iCache, new Address(receiver, compilation.runtime.klassOffsetInBytes()));
-//        // if icache check fails, then jump to runtime routine
-//        // Note: RECEIVER must still contain the receiver!
-//        jumpCc(X86Assembler.Condition.notEqual, new RuntimeAddress(CiRuntimeCall.IcMiss));
-
-        // TODO: Check why the size is 9
-//        int icCmpSize = 10;
-//        if (target.arch.is32bit()) {
-//            icCmpSize = 9;
-//        }
-//        assert offset() - startOffset == icCmpSize : "check alignment in emitMethodEntry";
     }
 
     void increment(CiRegister reg, int value /* = 1 */) {
@@ -1386,7 +1380,7 @@ public class X86MacroAssembler extends X86Assembler {
         stop("should not reach here");
     }
 
-    public void safepoint(CodeEmitInfo info) {
+    public void safepoint(LIRDebugInfo info) {
         CiRegister safepointRegister = compiler.runtime.getSafepointRegister();
         this.recordSafepoint(codeBuffer.position(), info.oopMap.registerMap(), info.oopMap.stackMap());
         movq(safepointRegister, new Address(safepointRegister));

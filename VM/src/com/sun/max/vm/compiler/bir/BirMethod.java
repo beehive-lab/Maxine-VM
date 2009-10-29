@@ -101,7 +101,7 @@ public class BirMethod extends AbstractIrMethod {
             writer.outdent();
             if (blocks != null) {
                 for (BirBlock block : blocks) {
-                    final ConstantPool constantPool = classMethodActor().codeAttribute().constantPool();
+                    final ConstantPool constantPool = classMethodActor().codeAttribute().constantPool;
                     writer.print(BytecodePrinter.toString(constantPool, block.bytecodeBlock()));
                 }
                 for (BirBlock block : blocks) {

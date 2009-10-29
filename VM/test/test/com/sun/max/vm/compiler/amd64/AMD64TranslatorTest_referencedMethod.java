@@ -120,7 +120,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
                 if (location != null) {
                     final BytecodeVisitor bytecodeVisitor = new BytecodeAdapter() {
                         private void addStaticCall(int index) {
-                            final ConstantPool pool = location.classMethodActor.codeAttribute().constantPool();
+                            final ConstantPool pool = location.classMethodActor.codeAttribute().constantPool;
                             final MethodActor methodActor = pool.classMethodAt(index).resolve(pool, index);
                             result.append(methodActor);
                         }

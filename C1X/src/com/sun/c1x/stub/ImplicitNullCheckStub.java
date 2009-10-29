@@ -39,7 +39,7 @@ public class ImplicitNullCheckStub extends CodeStub {
      * @param offset the offset for this code stub
      * @param info the debug information associated to this code stub
      */
-    public ImplicitNullCheckStub(int offset, CodeEmitInfo info) {
+    public ImplicitNullCheckStub(int offset, LIRDebugInfo info) {
         super(info);
         this.offset = offset;
     }

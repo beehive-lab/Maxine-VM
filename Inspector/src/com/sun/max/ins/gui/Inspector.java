@@ -94,7 +94,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         switch(menuKind) {
             case DEFAULT_MENU:
                 return new AbstractInspectorMenuItems(inspection()) {
-                    @Override
                     public void addTo(InspectorMenu menu) {
                         menu.add(getCloseAction());
                         menu.add(getCloseOtherInspectorsAction());
@@ -106,7 +105,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                 break;
             case MEMORY_MENU:
                 return new AbstractInspectorMenuItems(inspection()) {
-                    @Override
                     public void addTo(InspectorMenu menu) {
                         menu.addSeparator();
                         menu.add(actions().genericMemoryMenuItems());
@@ -361,6 +359,10 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
 
     protected void setSelected() {
         frame.setSelected();
+    }
+
+    protected void setStateColor(Color color) {
+        frame.setStateColor(color);
     }
 
     public void pack() {
