@@ -72,7 +72,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
 
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
 
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
@@ -116,8 +116,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
                 }
             });
         }
-        frame().setContentPane(tabbedPane);
-        updateFrameTitle();
+        setContentPane(tabbedPane);
+        setTitle();
     }
 
     @Override
@@ -174,7 +174,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
@@ -203,9 +203,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         }
         super.refreshView(force);
         // The title displays thread state, so must be updated.
-        updateFrameTitle();
-
-        return true;
+        setTitle();
     }
 
     public void viewConfigurationChanged() {

@@ -32,13 +32,14 @@ import com.sun.max.ins.gui.*;
  * @author Mick Jordan
  * @author Michael Van De Vanter
  */
-public final class MethodInspectorContainer extends TabbedInspector<MethodInspector, MethodInspectorContainer> {
+public final class MethodInspectorContainer extends TabbedInspector<MethodInspector> {
+
+    private static MethodInspectorContainer methodInspectorContainer = null;
 
     /**
      * Return the singleton MethodInspectorContainer, creating it if necessary.
      */
     public static MethodInspectorContainer make(Inspection inspection) {
-        MethodInspectorContainer methodInspectorContainer = UniqueInspector.find(inspection, MethodInspectorContainer.class);
         if (methodInspectorContainer == null) {
             methodInspectorContainer = new MethodInspectorContainer(inspection);
         }
@@ -56,7 +57,8 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
 
     @Override
     public String getTextForTitle() {
-        return "Methods";
+        final MethodInspector methodInspector = getSelected();
+        return methodInspector == null ? "Methods" : "Method: " + methodInspector.getToolTip();
     }
 
     @Override
@@ -85,9 +87,15 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     @Override
     public void add(MethodInspector methodInspector) {
         final String longTitle = methodInspector.getToolTip();
-        add(methodInspector, methodInspector.getTextForTitle(), longTitle, longTitle);
-        addCloseIconToTab(methodInspector);
+        add(methodInspector, methodInspector.getTextForTitle(), longTitle);
+        addCloseIconToTab(methodInspector, longTitle);
         methodInspector.highlight();
+    }
+
+    @Override
+    public void inspectorClosing() {
+        methodInspectorContainer = null;
+        super.inspectorClosing();
     }
 
 }

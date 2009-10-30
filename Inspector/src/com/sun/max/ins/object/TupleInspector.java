@@ -36,7 +36,7 @@ public class TupleInspector extends ObjectInspector {
 
     TupleInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
 
 
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
@@ -79,16 +79,15 @@ public class TupleInspector extends ObjectInspector {
         super.createView();
         final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
         fieldsPane = ObjectScrollPane.createFieldsPane(inspection(), teleTupleObject, instanceViewPreferences);
-        frame().getContentPane().add(fieldsPane);
+        getContentPane().add(fieldsPane);
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
-        if (isShowing() || force) {
+    protected void refreshView(boolean force) {
+        if (getJComponent().isShowing() || force) {
             fieldsPane.refresh(force);
             super.refreshView(force);
         }
-        return true;
     }
 
 }

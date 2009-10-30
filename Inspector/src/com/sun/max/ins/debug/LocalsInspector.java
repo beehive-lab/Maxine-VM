@@ -85,7 +85,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         stackPanel.setBackground(InspectorStyle.SunYellow2);
         stackDepth = 0;
         showAll = true;
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
 
@@ -107,8 +107,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
-        if (isShowing() || force) {
+    protected void refreshView(boolean force) {
+        if (getJComponent().isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
             final Sequence<StackFrame> frames = thread.frames();
@@ -124,7 +124,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
             if (stackPointer == null) {
                 // stack frame is inactive, remove it.
                 dispose();
-                return false;
+                return;
             }
 
             for (int  localVarIndex = 0; localVarIndex < locals.length; localVarIndex++) {
@@ -152,9 +152,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
                 final WordValueLabel label = stack[stackSlotIndex];
                 label.setValue(new WordValue(stackItem));
             }
-            return super.refreshView(force);
+            super.refreshView(force);
         }
-        return true;
     }
 
     public void viewConfigurationChanged() {
@@ -293,7 +292,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         mainPanel.add(localsPanel);
         mainPanel.add(stackPanel);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), mainPanel);
-        frame().setContentPane(scrollPane);
+        setContentPane(scrollPane);
     }
 
 }

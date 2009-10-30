@@ -62,7 +62,7 @@ public final class FocusInspector extends Inspector {
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         viewPreferences = FocusTable.FocusViewPreferences.globalPreferences(inspection);
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
@@ -98,15 +98,14 @@ public final class FocusInspector extends Inspector {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(table.getTableHeader(), BorderLayout.NORTH);
         panel.add(table, BorderLayout.CENTER);
-        frame().setContentPane(panel);
+        setContentPane(panel);
         focus().addListener(table);
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
-        return true;
     }
 
     @Override

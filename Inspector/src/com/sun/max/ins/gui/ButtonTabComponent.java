@@ -41,50 +41,66 @@ import com.sun.max.ins.*;
  *
  * @author Michael Van De Vanter
  */
-public class ButtonTabComponent extends InspectorPanel {
-    private final TabbedInspector tabbedInspector;
-    private final Inspector inspector;
-    private final JTabbedPane tabbedPane;
+class ButtonTabComponent<Inspector_Type extends Inspector> extends InspectorPanel {
+    private final TabbedInspector<Inspector_Type> tabbedInspector;
+    private final Inspector_Type inspector;
+    private final String toolTipText;
 
-    public ButtonTabComponent(Inspection inspection, final TabbedInspector tabbedInspector, Inspector inspector, JTabbedPane tabPane) {
+    ButtonTabComponent(Inspection inspection, final TabbedInspector<Inspector_Type> tabbedInspector, Inspector_Type inspector, String toolTipText) {
         //unset default FlowLayout' gaps
         super(inspection, new FlowLayout(FlowLayout.LEFT, 0, 0));
         this.tabbedInspector = tabbedInspector;
         this.inspector = inspector;
-        this.tabbedPane = tabPane;
+        this.toolTipText = toolTipText;
         setOpaque(false);
 
-        //make JLabel read titles from JTabbedPane
         final JLabel label = new JLabel() {
-
             @Override
             public String getText() {
-                final int i = tabbedPane.indexOfTabComponent(ButtonTabComponent.this);
-                if (i != -1) {
-                    return tabbedPane.getTitleAt(i);
-                }
-                return null;
+                return ButtonTabComponent.this.inspector.getTextForTitle();
             }
         };
-
-        add(label);
+        label.setToolTipText(toolTipText);
         //add more space between the label and the button
         label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+        final JPopupMenu popupMenu = new JPopupMenu();
+        popupMenu.add(new AbstractAction("Close tab") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                tabbedInspector.close(ButtonTabComponent.this.inspector);
+            }
+        });
+        popupMenu.add(new AbstractAction("Close other tabs") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                tabbedInspector.closeOthers(ButtonTabComponent.this.inspector);
+            }
+        });
+        label.setComponentPopupMenu(popupMenu);
+        label.addMouseListener(new InspectorMouseClickAdapter(inspector.inspection()) {
+
+            @Override
+            public void procedure(MouseEvent mouseEvent) {
+                switch(Inspection.mouseButtonWithModifiers(mouseEvent)) {
+                    case MouseEvent.BUTTON1:
+                        // Default left button behavior; for some reason we have to do it by hand
+                        tabbedInspector.setSelected(ButtonTabComponent.this.inspector);
+                        break;
+                    case MouseEvent.BUTTON3:
+                        popupMenu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        break;
+                }
+                // Pass along the event to the tab component.
+                ButtonTabComponent.this.dispatchEvent(mouseEvent);
+            }
+        });
+        add(label);
+
         //tab button
         final JButton button = new TabButton();
         add(button);
         //add more space to the top of the component
         setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
-    }
-
-    @Override
-    public void refresh(boolean force) {
-        // No remote data that needs reading.
-    }
-
-    @Override
-    public void redisplay() {
-        // No view configurations that we're willing to fuss with.
     }
 
     private class TabButton extends JButton implements ActionListener {
