@@ -294,8 +294,8 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         }
     }
 
-    private static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type match(InspectorFrame inspectorFrame, Key<UniqueInspector_Type> key) {
-        final Inspector inspector = inspectorFrame.inspector();
+    private static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type match(Inspector inspector, Key<UniqueInspector_Type> key) {
+       // final Inspector inspector = inspectorFrame.inspector();
         if (key != null && key.type().isInstance(inspector)) {
             final UniqueInspector_Type uniqueInspector = key.type().cast(inspector);
             if (uniqueInspector.key().equals(key)) {
@@ -308,7 +308,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
     public static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type find(Inspection inspection, final Key<UniqueInspector_Type> key) {
         final Predicate<Inspector> predicate = new Predicate<Inspector>() {
             public boolean evaluate(Inspector inspector) {
-                return match(inspector.frame(), key) != null;
+                return match(inspector, key) != null;
             }
         };
         final Inspector inspector =  inspection.gui().findInspector(predicate);
@@ -318,37 +318,6 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
             return result;
         }
         return null;
-        // TODO (mlvdv) flush old UniqueInspector code if the alternate works
-//        for (int i = 0; i < inspection.desktopPane().getComponentCount(); i++) {
-//            final Component component = inspection.desktopPane().getComponent(i);
-//            if (component instanceof InspectorFrame) {
-//                UniqueInspector_Type result = match((InspectorFrame) component, key);
-//                if (result != null) {
-//                    return result;
-//                }
-//                // This component may contain other InspectorFrames, e.g. if it is related to a tabbed frame.
-//                // Components placed in tabbed frames get reparented from the desktopPane to the tabbed frame.
-//                final Inspector inspector = ((InspectorFrame) component).inspector();
-//                if (inspector instanceof InspectorContainer) {
-//                    final InspectorContainer<? extends Inspector> inspectorContainer = StaticLoophole.cast(inspector);
-//                    for (Inspector containedInspector : inspectorContainer) {
-//                        result = match(containedInspector.frame(), key);
-//                        if (result != null) {
-//                            return result;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        for (Frame frame : Frame.getFrames()) {
-//            if (frame.isVisible() && frame instanceof InspectorFrame) {
-//                final UniqueInspector_Type result = match((InspectorFrame) frame, key);
-//                if (result != null) {
-//                    return result;
-//                }
-//            }
-//        }
-//        return null;
     }
 
     public static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type find(Inspection inspection, Class<UniqueInspector_Type> type) {

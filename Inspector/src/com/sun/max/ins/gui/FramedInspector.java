@@ -20,29 +20,18 @@
  */
 package com.sun.max.ins.gui;
 
+import com.sun.max.ins.*;
+
 
 /**
- * A marker interface for an inspector that contains other inspectors.
- * The contained inspectors have the container as their parent.
-  *
- * @author Mick Jordan
- * @author Doug Simon
+ * An inspector that displays in an internal window frame.
  * @author Michael Van De Vanter
  */
-public interface InspectorContainer<Inspector_Type extends Inspector> extends Iterable<Inspector_Type> {
+public abstract class FramedInspector extends Inspector {
 
-    int length();
+    public FramedInspector(Inspection inspection) {
+        super(inspection);
 
-    Inspector_Type inspectorAt(int i);
+    }
 
-    /**
-     * Ensures that the inspector is visible and selected.
-     */
-    void setSelected(Inspector_Type inspector);
-
-    boolean isSelected(Inspector_Type inspector);
-
-    Inspector_Type getSelected();
-
-    int getSelectedIndex();
 }

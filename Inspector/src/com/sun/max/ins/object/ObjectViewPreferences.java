@@ -92,6 +92,8 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
      */
     public ObjectViewPreferences(ObjectViewPreferences globalPreferences) {
         super(globalPreferences);
+        showHeader = globalPreferences.showHeader;
+        hideNullArrayElements  =  globalPreferences.hideNullArrayElements;
     }
 
     /**
