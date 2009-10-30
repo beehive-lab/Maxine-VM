@@ -92,10 +92,12 @@ public abstract class ObjectInspector extends Inspector {
         instanceViewPreferences = new ObjectViewPreferences(ObjectViewPreferences.globalPreferences(inspection)) {
             @Override
             protected void setShowHeader(boolean showHeader) {
+                super.setShowHeader(showHeader);
                 reconstructView();
             }
             @Override
             protected void setHideNullArrayElements(boolean hideNullArrayElements) {
+                super.setHideNullArrayElements(hideNullArrayElements);
                 reconstructView();
             }
         };
