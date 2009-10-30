@@ -38,7 +38,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
@@ -297,9 +296,9 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     break;
                 }
 
-                if (targetMethod instanceof C1XTargetMethod) {
-                    targetMethod.prepareReferenceMap(isTopFrame, instructionPointer, stackPointer, Pointer.zero(), lastJavaCallee, preparer);
+                if (!(targetMethod instanceof CPSTargetMethod)) {
                     // TODO: Prepare frame reference map for C1X method
+                    targetMethod.prepareReferenceMap(isTopFrame, instructionPointer, stackPointer, Pointer.zero(), lastJavaCallee, preparer);
                 } else {
                     final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
                     if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, stackPointer, ignoredOperandStackPointer, 0)) {
