@@ -185,10 +185,21 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         if (classActor != null) {
             return classActor;
         }
-        if (!searchParents || classLoader.getParent() == null) {
+
+        if (!searchParents) {
             return null;
         }
-        return get(classLoader.getParent(), typeDescriptor, true);
+
+        ClassLoader parent = classLoader.getParent();
+        if (parent == null) {
+            if (classLoader != VmClassLoader.VM_CLASS_LOADER) {
+                // Every class loader should ultimately delegate to the boot class loader
+                parent = VmClassLoader.VM_CLASS_LOADER;
+            } else {
+                return null;
+            }
+        }
+        return get(parent, typeDescriptor, true);
     }
 
     public static TupleClassActor javaLangObjectActor() {
