@@ -89,6 +89,11 @@ public interface InspectorFrame extends RootPaneContainer, Prober {
     boolean isSelected();
 
     /**
+     * @return whether this frame is currently visible.
+     */
+    boolean isVisible();
+
+    /**
      * Makes this frame completely visible, in front of any others, either in
      * a desktop pane or in a tabbed pane.
      */

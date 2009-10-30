@@ -343,7 +343,7 @@ public class JavaMethodInspector extends MethodInspector {
                 haveSelection = true;
             }
         }
-        if (haveSelection && !isSelected()) {
+        if (haveSelection && !isVisible()) {
             highlight();
         }
     }
