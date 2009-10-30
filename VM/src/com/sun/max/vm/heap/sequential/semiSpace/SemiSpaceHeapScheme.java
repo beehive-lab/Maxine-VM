@@ -335,6 +335,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 scanCode();
                 stopTimer(codeScanTimer);
 
+                if (Heap.traceGCPhases()) {
+                    Log.println("Scanning immortal heap...");
+                }
                 startTimer(immortalSpaceScanTimer);
                 scanImmortalHeap();
                 stopTimer(immortalSpaceScanTimer);
@@ -797,12 +800,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     @Override
     @NEVER_INLINE
     protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {
-        // Immortal heap allocation
-        final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION_ENABLED.index).asPointer();
-        if (!immortalAllocation.isZero()) {
-            return ImmortalHeap.allocate(size, true);
-        }
-
         // Should we refill the TLAB ?
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
         if (refillPolicy == null) {
