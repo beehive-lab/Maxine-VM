@@ -389,20 +389,26 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
         if (end.greaterThan(tlabEnd)) {
-            // Slow path may be taken because of a genuine refill request, because allocation was disable,
-            // or because allocation in immortal heap was requested.
-            // Check for the second here.
-            checkAllocationEnabled(size);
-            // Check for Immortal memory allocation.
-            final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION_ENABLED.index).asPointer();
-            if (!immortalAllocation.isZero()) {
-                return ImmortalHeap.allocate(size, true);
-            }
-            // This path will always be taken if TLAB allocation is not enabled.
-            return handleTLABOverflow(size, enabledVmThreadLocals, oldAllocationMark, tlabEnd);
+            return slowPathAllocate(size, enabledVmThreadLocals, oldAllocationMark, tlabEnd);
         }
         enabledVmThreadLocals.setWord(TLAB_MARK.index, end);
         return cell;
+    }
+
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
+    @NEVER_INLINE
+    private Pointer slowPathAllocate(Size size, final Pointer enabledVmThreadLocals, final Pointer oldAllocationMark, final Pointer tlabEnd) {
+        // Slow path may be taken because of a genuine refill request, because allocation was disabled,
+        // or because allocation in immortal heap was requested.
+        // Check for the second here.
+        checkAllocationEnabled(size);
+        // Check for Immortal memory allocation.
+        final Pointer immortalAllocation = enabledVmThreadLocals.getWord(IMMORTAL_ALLOCATION_ENABLED.index).asPointer();
+        if (!immortalAllocation.isZero()) {
+            return ImmortalHeap.allocate(size, true);
+        }
+        // This path will always be taken if TLAB allocation is not enabled.
+        return handleTLABOverflow(size, enabledVmThreadLocals, oldAllocationMark, tlabEnd);
     }
 
     @NEVER_INLINE
