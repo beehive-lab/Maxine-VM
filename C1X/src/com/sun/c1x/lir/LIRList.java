@@ -165,6 +165,10 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, info));
     }
 
+    public void move(LIROperand src, LIROperand dst, CiKind kind) {
+        append(new LIROp1(LIROpcode.Move, src, dst, kind, null));
+    }
+
     public void move(LIROperand src, LIROperand dst) {
         append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, null));
     }

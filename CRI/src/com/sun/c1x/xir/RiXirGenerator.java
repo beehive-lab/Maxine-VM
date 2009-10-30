@@ -76,11 +76,11 @@ public abstract class RiXirGenerator {
         return null;
     }
 
-    public XirSnippet genGetStatic(RiField field) {
+    public XirSnippet genGetStatic(XirArgument staticTuple, RiField field) {
         return null;
     }
 
-    public XirSnippet genPutStatic(XirArgument value, RiField field) {
+    public XirSnippet genPutStatic(XirArgument staticTuple, RiField field, XirArgument value) {
         return null;
     }
 
@@ -96,11 +96,11 @@ public abstract class RiXirGenerator {
         return null;
     }
 
-    public XirSnippet genCheckCast(XirArgument receiver, RiType type) {
+    public XirSnippet genCheckCast(XirArgument receiver, XirArgument hub, RiType type) {
         return null;
     }
 
-    public XirSnippet genInstanceOf(XirArgument receiver, RiType type) {
+    public XirSnippet genInstanceOf(XirArgument receiver, XirArgument hub, RiType type) {
         return null;
     }
 

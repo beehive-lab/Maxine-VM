@@ -58,7 +58,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
         // Receive calling convention (for the current method, but with outgoing==true, i.e. as if we were calling the current method)
         FrameMap map = compilation.frameMap();
-        CallingConvention cc = map.javaCallingConvention(Util.signatureToBasicTypes(compilation.method.signatureType(), !compilation.method.isStatic()), true);
+        CallingConvention cc = map.javaCallingConvention(Util.signatureToBasicTypes(compilation.method.signatureType(), !compilation.method.isStatic()), true, false);
 
 
         // Adapter frame includes space for save the jited-callee's frame pointer (RBP)

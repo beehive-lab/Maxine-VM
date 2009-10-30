@@ -34,10 +34,12 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -86,6 +88,10 @@ public class C1XTargetMethod extends TargetMethod {
 
     private int neededBytes(int value) {
         return ((value - 1) / Bytes.WIDTH) + 1;
+    }
+
+    private int registerReferenceMapBits() {
+        return referenceRegisterCount;
     }
 
     private int registerReferenceMapBytes() {
@@ -434,6 +440,66 @@ public class C1XTargetMethod extends TargetMethod {
 
     private int getExceptionHandlerCount() {
         return exceptionClassActors == null ? 0 : exceptionClassActors.length;
+    }
+
+    @Override
+    public void prepareReferenceMap(boolean isTopFrame, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, TargetMethod lastJavaCallee, ReferenceMapCallback result) {
+
+        int stopIndex = lookupStopPosition(instructionPointer);
+
+        // TODO (tw): Tentative implementation! Implement this correctly
+
+        for (int i=0; i<frameReferenceMapBits(); i++) {
+            boolean curBit = isFrameReferenceMapBitSet(stopIndex, i);
+            if (curBit) {
+                Pointer referencePointer = stackPointer.plusWords(i);
+                result.setReferenceMapBit(referencePointer);
+            }
+        }
+
+        if (lastJavaCallee instanceof C1XTargetMethod) {
+            final C1XTargetMethod lastJavaCalleeC1X = (C1XTargetMethod) lastJavaCallee;
+            if (lastJavaCalleeC1X.isCalleeSaved()) {
+                for (int i=0; i<registerReferenceMapBits(); i++) {
+                    boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
+                    if (curBit) {
+
+                        // TODO (tw): Check if this is correct?
+                        int numberOfWords = i + 2;
+                        Pointer referencePointer = stackPointer.minusWords(numberOfWords);
+                        result.setReferenceMapBit(referencePointer);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
+
+        // TODO (tw): Tentative implementation! Make correct...
+
+        int stopIndex = lookupStopPosition(instructionPointer);
+        for (int i=0; i<registerReferenceMapBits(); i++) {
+            boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
+            if (curBit) {
+                int numberOfWords = i;
+                Pointer referencePointer = registerState.plusWords(numberOfWords);
+                preparer.setReferenceMapBit(referencePointer);
+            }
+        }
+    }
+
+    private int lookupStopPosition(Pointer instructionPointer) {
+        int offset = instructionPointer.minus(codeStart()).toInt();
+        for (int i=0; i<stopPositions.length; i++) {
+            if (stopPositions[i] == offset) {
+                return i;
+            }
+        }
+
+        ProgramError.unexpected("Could not find stop position for offset " + offset);
+        return -1;
     }
 
     @Override

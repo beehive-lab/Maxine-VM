@@ -137,7 +137,6 @@ public abstract class LIRInstruction {
      * @param info the object holding information needed to perform deoptimization
      */
     public LIRInstruction(LIROpcode opcode, LIROperand result, LIRDebugInfo info, boolean hasCall, CodeStub stub, int tempInput, int temp, LIROperand... inputAndTempOperands) {
-
         this.code = opcode;
         this.info = info;
         this.hasCall = hasCall;
@@ -148,6 +147,8 @@ public abstract class LIRInstruction {
             stub.setInstruction(this);
             stub.setResultSlot(addOutput(stub.originalResult()));
         }
+
+        C1XMetrics.NumberOfLIRInstructions++;
 
         id = -1;
         initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
