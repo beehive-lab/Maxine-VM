@@ -519,6 +519,11 @@ public final class Inspection {
      */
     public void updateAfterVMStopped() {
         gui().showInspectorBusy(true);
+        // Clear any breakpoint selection; if we're at a breakpoint, it will be highlighted.
+        // This also avoids a regrettable event bug, where the breakpoint inspector decides
+        // on update to send the method viewer to the currently selected breakpoint, even
+        // if it has nothing to do with where we are.
+        focus().setBreakpoint(null);
         final IdentityHashSet<InspectionListener> listeners = inspectionListeners.clone();
 
         // Notify of any changes of the thread set

@@ -349,6 +349,10 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         return frame.getGlassPane();
     }
 
+    public boolean isVisible() {
+        return frame.isVisible();
+    }
+
     protected void moveToFront() {
         frame.moveToFront();
     }
