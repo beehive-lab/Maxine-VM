@@ -21,65 +21,45 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
-import java.beans.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.Inspector.*;
+import com.sun.max.program.*;
 
-/**
- * A internal frame controlled by an {@linkplain Inspector inspector}.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Michael Van De Vanter
- */
-public final class InspectorFrame extends JInternalFrame implements Prober {
-
-    private final Inspector inspector;
-
-    private final InspectorMenuBar menuBar;
+public interface InspectorFrame extends RootPaneContainer, Prober {
 
     /**
-     * Creates an internal frame for an Inspector.
-     * @param inspector
+     * Gets the inspector for the view held in this frame.
+     *
+     * @return the inspector that owns this frame
      */
-    public InspectorFrame(Inspector inspector) {
-        this.inspector = inspector;
-        menuBar = new InspectorMenuBar(inspector.inspection());
-        setJMenuBar(menuBar);
-        setResizable(true);
-        setClosable(true);
-        setIconifiable(true);
-        setVisible(false);
+    Inspector inspector();
 
-        addInternalFrameListener(new InternalFrameAdapter() {
+    /**
+     * Returns the Swing component that implements this frame.
+     *
+     * @return a component that implements this frame
+     */
+    JComponent getJComponent();
 
-            @Override
-            public void internalFrameActivated(InternalFrameEvent e) {
-                InspectorFrame.this.inspector.inspectorGetsWindowFocus();
-            }
+    /**
+     * Sets the title being displayed on the frame; does nothing if the
+     * frame is not displaying any titles.
+     *
+     * @param title the text to display as the frame title.
+     * @see JInternalFrame#setTitle(String)
+     */
+    void setTitle(String title);
 
-            @Override
-            public void internalFrameDeactivated(InternalFrameEvent e) {
-                InspectorFrame.this.inspector.inspectorLosesWindowFocus();
-            }
-        });
-    }
-
-
-    public void refresh(boolean force) {
-        menuBar.refresh(force);
-    }
-
-    public void redisplay() {
-    }
-
-    public Inspector inspector() {
-        return inspector;
-    }
+    /**
+     * Returns the title being displayed, if any, on the frame.
+     *
+     * @return the contents of the frame title, null if none being displayed.
+     * @see JInternalFrame#getTitle()
+     */
+    String getTitle();
 
     /**
      * Finds, and creates if doesn't exist, a named menu on the frame's menu bar.
@@ -87,67 +67,88 @@ public final class InspectorFrame extends JInternalFrame implements Prober {
      * <strong>Note:</strong> the menus will appear left to right on the
      * frame's menu bar in the order in which they were created.
      *
-     * @param name the name of the menu
+     * @param menuKind the type (and name) of the menu being requested.
      * @return a menu, possibly new, in the menu bar.
+     * @throws ProgramError if the frame has no menu bar.
      */
-    public InspectorMenu makeMenu(MenuKind menuKind) {
-        return menuBar.makeMenu(menuKind);
-    }
+    InspectorMenu makeMenu(MenuKind menuKind) throws ProgramError;
 
-    public void setSelected() {
-        try {
-            setSelected(true);
-        } catch (PropertyVetoException e) {
-        }
-    }
+    /**
+     * Makes this frame the one currently selected in the window system.
+     */
+    void setSelected();
 
-    public void flash(Color borderFlashColor) {
-        Component pane = getContentPane();
-        if (pane instanceof JScrollPane) {
-            final JScrollPane scrollPane = (JScrollPane) pane;
-            pane = scrollPane.getViewport();
-        }
-        final Graphics g = pane.getGraphics();
-        g.setPaintMode();
-        g.setColor(borderFlashColor);
-        for (int i = 0; i < 5; i++) {
-            g.drawRect(i, i, pane.getWidth() - (i * 2), pane.getHeight() - (i * 2));
-        }
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-        }
-        g.dispose();
-        invalidate();
-        repaint();
-    }
+    /**
+     * Returns whether this frame is the currently "selected" or active
+     * frame, either in the window system or within a tabbed collection
+     * of frames.
+     *
+     * @return if this frame is currently selected
+     * @see JInternalFrame#isSelected()
+     */
+    boolean isSelected();
 
-    public void setStateColor(Color color) {
-        menuBar.setBackground(color);
-    }
+    /**
+     * @return whether this frame is currently visible.
+     */
+    boolean isVisible();
 
-    @Override
-    public void dispose() {
-        super.dispose();
-        inspector.inspectorClosing();
-    }
+    /**
+     * Makes this frame completely visible, in front of any others, either in
+     * a desktop pane or in a tabbed pane.
+     */
+    void moveToFront();
 
-    private InspectorAction frameClosingAction;
-    private InternalFrameListener frameClosingListener;
+    /**
+     * Causes this frame to display a menu bar background color
+     * that reveals current state information concerning the Inspector.
+     */
+    void setStateColor(Color color);
 
-    public void replaceFrameCloseAction(InspectorAction action) {
-        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        if (frameClosingAction != null) {
-            removeInternalFrameListener(frameClosingListener);
-        }
-        frameClosingAction = action;
-        frameClosingListener = new InternalFrameAdapter() {
-            @Override
-            public void internalFrameClosing(InternalFrameEvent we) {
-                frameClosingAction.perform();
-            }
-        };
-        addInternalFrameListener(frameClosingListener);
-    }
+    /**
+     * Draws attention to this frame by changing the color of the surrounding frame
+     * for a short time.
+     *
+     * @param borderFlashColor a color to show briefly around the border of the frame.
+     */
+    void flash(Color borderFlashColor);
+
+    /**
+     * Returns the size of this component.
+     *
+     * @return an object that indicates the size of the component.
+     * @see Component#getSize();
+     */
+    Dimension getSize();
+
+    /**
+     * Sets the preferred size of the frame.
+     *
+     * @param preferredSize
+     */
+    void setPreferredSize(Dimension preferredSize);
+
+    /**
+     * Causes this frame to recompute the layout of its contents.
+     * @see JInternalFrame#pack()
+     */
+    void pack();
+
+    /**
+     * Marks frame as needing to lay out contents again.
+     * @see Container#invalidate()
+     */
+    void invalidate();
+
+    /**
+     * Causes this component to be painted as soon as possible.
+     * @see Component#repaint()
+     */
+    void repaint();
+
+    /**
+     * Removes this frame and the view state associated with it.
+     */
+    void dispose();
 
 }

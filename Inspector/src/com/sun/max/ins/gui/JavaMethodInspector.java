@@ -89,7 +89,7 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
-        super(inspection, parent, teleTargetMethod, teleClassMethodActor);
+        super(inspection, parent);
 
         this.methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
@@ -105,7 +105,7 @@ public class JavaMethodInspector extends MethodInspector {
 
         final InspectionActions actions = inspection.actions();
 
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createTabFrame(parent);
         final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
 
         final InspectorAction copyAction = actions.copyTargetMethodCodeToClipboard(teleTargetMethod, null);
@@ -154,6 +154,11 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
+    public TeleClassMethodActor teleClassMethodActor() {
+        return teleClassMethodActor;
+    }
+
+    @Override
     public String getTextForTitle() {
         if (teleClassMethodActor == null || teleClassMethodActor.classMethodActor() == null) {
             return teleTargetMethod.description();
@@ -183,7 +188,7 @@ public class JavaMethodInspector extends MethodInspector {
     public String getToolTip() {
         String result = "";
         if (teleTargetMethod != null) {
-            result =  inspection().nameDisplay().shortName(teleTargetMethod, ReturnTypeSpecification.AS_PREFIX);
+            result =  inspection().nameDisplay().longName(teleTargetMethod);
         } else if (teleClassMethodActor != null) {
             result = inspection().nameDisplay().shortName(teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
         }
@@ -252,14 +257,12 @@ public class JavaMethodInspector extends MethodInspector {
                 // final InspectorFrame newInspectorFrame = newInspector;
                 // final Component newComponent = (Component) newInspectorFrame;
                 if (codeViewerCount() == 0) {
-                    frame().getContentPane().add(newViewer);
-                    frame().pack();
-                    frame().invalidate();
-                    frame().repaint();
+                    getContentPane().add(newViewer);
+                    pack();
                 } else if (codeViewerCount() == 1) {
                     final CodeViewer oldInspector = firstViewer();
                     // final Component oldComponent = (Component) oldInspector.frame();
-                    frame().getContentPane().remove(oldInspector);
+                    getContentPane().remove(oldInspector);
                     if (oldInspector.codeKind().ordinal() < newViewer.codeKind().ordinal()) {
                         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, oldInspector, newViewer);
                     } else {
@@ -267,10 +270,8 @@ public class JavaMethodInspector extends MethodInspector {
                     }
                     splitPane.setOneTouchExpandable(true);
                     splitPane.setResizeWeight(0.5);
-                    frame().getContentPane().add(splitPane);
-                    frame().pack();
-                    frame().invalidate();
-                    frame().repaint();
+                    getContentPane().add(splitPane);
+                    pack();
                 }
                 codeViewers.put(kind, newViewer);
             }
@@ -289,17 +290,17 @@ public class JavaMethodInspector extends MethodInspector {
             if (keepComponent == deleteComponent) {
                 keepComponent = splitPane.getRightComponent();
             }
-            frame().getContentPane().remove(splitPane);
-            frame().getContentPane().add(keepComponent);
+            Container contentPane = getContentPane();
+            contentPane.remove(splitPane);
+            contentPane.add(keepComponent);
             codeViewers.remove(viewer.codeKind());
-            frame().pack();
-            frame().repaint();
+            pack();
         }
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
-        if (isShowing() || force) {
+    protected void refreshView(boolean force) {
+        if (getJComponent().isShowing() || force) {
             if (teleClassMethodActor != null) {
                 teleClassMethodActor.refreshView();
             }
@@ -308,7 +309,6 @@ public class JavaMethodInspector extends MethodInspector {
             }
             super.refreshView(force);
         }
-        return true;
     }
 
     public void viewConfigurationChanged() {
@@ -343,7 +343,7 @@ public class JavaMethodInspector extends MethodInspector {
                 haveSelection = true;
             }
         }
-        if (haveSelection && !isSelected()) {
+        if (haveSelection && !isVisible()) {
             highlight();
         }
     }
