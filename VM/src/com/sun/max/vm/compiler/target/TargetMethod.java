@@ -391,7 +391,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     public void prepareReferenceMap(boolean isTopFrame, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, TargetMethod lastJavaCallee, ReferenceMapCallback result) {
-
     }
 
     public byte[] encodedInlineDataDescriptors() {
