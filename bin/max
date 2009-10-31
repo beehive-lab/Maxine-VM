@@ -483,6 +483,30 @@ function run_clean() {
 
 
 #=======================================
+# 'jtt' command
+#=======================================
+
+jtt_usage="[JTMaxine args...]"
+jtt_help="run the JTMaxine program in the Maxine VM
+
+    Run the JTMaxine program in the Maxine VM with the given arguments.
+    The MAXVM_OPTIONS environment variable can be used to specify VM options.
+    
+    Use \"max vm -help\" to see what VM options are available.
+    Use \"max jtt -help\" to see what arguments the JTMaxine program accepts."
+
+function run_jtt() {
+    jtt_cp=$(get_project_cp VM)
+    jtt_cp=$jtt_cp:$(get_project_cp Base)
+    jtt_cp=$jtt_cp:$(get_project_cp CRI)
+    jtt_cp=$jtt_cp:$(get_project_cp C0X)
+    jtt_cp=$jtt_cp:$(get_project_cp C1X)
+    jtt_cp=$jtt_cp:$(get_project_cp Assembler)
+    jtt_cp=$jtt_cp:$JUNIT4_CP
+    run ${maxine_vm} -cp $jtt_cp $MAXVM_OPTIONS test.com.sun.max.vm.jtrun.JTMaxine -native-tests $@
+}
+
+#=======================================
 # 'jttgen' command
 #=======================================
 
@@ -891,6 +915,8 @@ vm_usage="[options] [class | -jar jarfile]  [args...]"
 vm_help="launch the Maxine VM
 
     Run the Maxine VM with the given options and arguments.
+    The expansion of the MAXVM_OPTIONS environment variable is inserted
+    before any other VM options specified on the command line.
     
     Use \"max vm -help\" to see what other options this command accepts."
 

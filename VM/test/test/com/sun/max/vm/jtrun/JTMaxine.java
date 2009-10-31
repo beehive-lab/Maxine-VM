@@ -63,12 +63,19 @@ public class JTMaxine {
         "Specifies the number of the last test to run (not inclusive).");
     private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 2,
         "Sets the verbosity level.");
+    private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
+        "Show help message and exit.");
 
 
     private static final String configFieldName = "testClasses";
 
     public static void main(String[] args) {
         options.parseArguments(args);
+
+        if (helpOption.getValue()) {
+            options.printHelp(System.out, 80);
+            return;
+        }
 
         String configClassName = "test.com.sun.max.vm.jtrun." + packageOption.getValue() + ".JTConfig";
         try {
