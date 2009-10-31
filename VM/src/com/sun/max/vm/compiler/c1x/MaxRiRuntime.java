@@ -359,24 +359,14 @@ public class MaxRiRuntime implements RiRuntime {
      * Canonicalizes resolved {@code MaxRiMethod} instances (per runtime), so
      * that the same {@code MaxRiMethod} instance is always returned for the
      * same {@code MethodActor}.
-     * @param methodActor the mehtod actor for which to get the canonical type
+     * @param methodActor the method actor for which to get the canonical type
      * @param maxRiConstantPool
      * @return the canonical compiler interface method for the method actor
      */
     public MaxRiMethod canonicalRiMethod(MethodActor methodActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
         // TODO: is synchronization necessary here or are duplicates harmless?
+
         // all resolved methods are canonicalized per runtime instance
-
-        if (MaxineVM.isHosted()) {
-            final MaxRiMethod previous = (MaxRiMethod) methodActor.ciObjectHostedOnly;
-            if (previous == null) {
-                final MaxRiMethod method = new MaxRiMethod(maxRiConstantPool, methodActor, cpi);
-                methodActor.ciObjectHostedOnly = method;
-                return method;
-            }
-            return previous;
-        }
-
         final MaxRiMethod previous = (MaxRiMethod) methodActor.ciObject;
         if (previous == null) {
             final MaxRiMethod method = new MaxRiMethod(maxRiConstantPool, methodActor, cpi);
@@ -397,18 +387,7 @@ public class MaxRiRuntime implements RiRuntime {
     public MaxRiField canonicalRiField(FieldActor fieldActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
         // TODO: is synchronization necessary here or are duplicates harmless?
 
-        if (MaxineVM.isHosted()) {
-            // all resolved field are canonicalized per runtime instance
-            final MaxRiField previous = (MaxRiField) fieldActor.ciObjectHostedOnly;
-            if (previous == null) {
-                final MaxRiField field = new MaxRiField(maxRiConstantPool, fieldActor, cpi);
-                fieldActor.ciObjectHostedOnly = field;
-                return field;
-            }
-            return previous;
-        }
-
-        // all resolved field are canonicalized per runtime instance
+        // all resolved fields are canonicalized per runtime instance
         final MaxRiField previous = (MaxRiField) fieldActor.ciObject;
         if (previous == null) {
             final MaxRiField field = new MaxRiField(maxRiConstantPool, fieldActor, cpi);
@@ -428,19 +407,8 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public MaxRiType canonicalRiType(ClassActor classActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
         // TODO: is synchronization necessary here or are duplicates harmless?
+
         // all resolved types are canonicalized per runtime instance
-
-        if (MaxineVM.isHosted()) {
-            final MaxRiType previous = (MaxRiType) classActor.ciObjectHostedOnly;
-            if (previous == null) {
-                final MaxRiType type = new MaxRiType(maxRiConstantPool, classActor, cpi);
-                classActor.ciObjectHostedOnly = type;
-                return type;
-            }
-            return previous;
-        }
-
-
         final MaxRiType previous = (MaxRiType) classActor.ciObject;
         if (previous == null) {
             final MaxRiType type = new MaxRiType(maxRiConstantPool, classActor, cpi);
