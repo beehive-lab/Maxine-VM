@@ -110,6 +110,8 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     private XirPair[] putFieldTemplates;
     private XirPair[] getFieldTemplates;
+    private XirPair[] putStaticFieldTemplates;
+    private XirPair[] getStaticFieldTemplates;
 
     private XirPair[] invokeVirtualTemplates;
     private XirPair[] invokeInterfaceTemplates;
@@ -172,6 +174,8 @@ public class MaxXirGenerator extends RiXirGenerator {
 
         putFieldTemplates = new XirPair[kinds.length];
         getFieldTemplates = new XirPair[kinds.length];
+        putStaticFieldTemplates = new XirPair[kinds.length];
+        getStaticFieldTemplates = new XirPair[kinds.length];
 
         invokeVirtualTemplates   = new XirPair[kinds.length];
         invokeInterfaceTemplates = new XirPair[kinds.length];
@@ -200,8 +204,10 @@ public class MaxXirGenerator extends RiXirGenerator {
                 continue;
             }
             if (kind != CiKind.Void) {
-                putFieldTemplates[index] = buildPutFieldTemplate(kind, kind == CiKind.Object);
-                getFieldTemplates[index] = buildGetFieldTemplate(kind);
+                putFieldTemplates[index] = buildPutFieldTemplate(kind, kind == CiKind.Object, false);
+                getFieldTemplates[index] = buildGetFieldTemplate(kind, false);
+                putStaticFieldTemplates[index] = buildPutFieldTemplate(kind, kind == CiKind.Object, true);
+                getStaticFieldTemplates[index] = buildGetFieldTemplate(kind, true);
                 arrayLoadTemplates[index] = buildArrayLoad(kind, asm, true);
                 arrayStoreTemplates[index] = buildArrayStore(kind, asm, true, kind == CiKind.Object, kind == CiKind.Object);
                 newArrayTemplates[index] = buildNewArray(kind);
@@ -312,12 +318,24 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genGetStatic(XirArgument staticTuple, RiField field) {
-        return genGetField(staticTuple, field);
+        XirPair pair = getStaticFieldTemplates[field.kind().ordinal()];
+        if (field.isLoaded()) {
+            XirArgument offset = XirArgument.forInt(field.offset());
+            return new XirSnippet(pair.resolved, staticTuple, offset);
+        }
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(pair.unresolved, staticTuple, guard);
     }
 
     @Override
     public XirSnippet genPutStatic(XirArgument staticTuple, RiField field, XirArgument value) {
-        return genPutField(staticTuple, field, value);
+        XirPair pair = putStaticFieldTemplates[field.kind().ordinal()];
+        if (field.isLoaded()) {
+            XirArgument offset = XirArgument.forInt(field.offset());
+            return new XirSnippet(pair.resolved, staticTuple, value, offset);
+        }
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(pair.unresolved, staticTuple, value, guard);
     }
 
     @Override
@@ -767,7 +785,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
-    private XirPair buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier) {
+    private XirPair buildPutFieldTemplate(CiKind kind, boolean genWriteBarrier, boolean isStatic) {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
@@ -788,7 +806,11 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirParameter value = asm.createInputParameter("value", kind);
             XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
             XirOperand fieldOffset = asm.createTemp("fieldOffset", CiKind.Int);
-            resolve(asm, "resolvePutField", fieldOffset, guard);
+            if (isStatic) {
+                resolve(asm, "resolvePutStatic", fieldOffset, guard);
+            } else {
+                resolve(asm, "resolvePutField", fieldOffset, guard);
+            }
             asm.pstore(kind, object, fieldOffset, value, true);
             if (genWriteBarrier) {
                 addWriteBarrier(asm, object, value);
@@ -798,7 +820,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
-    private XirPair buildGetFieldTemplate(CiKind kind) {
+    private XirPair buildGetFieldTemplate(CiKind kind, boolean isStatic) {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
@@ -815,7 +837,11 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter guard = asm.createInputParameter("guard", CiKind.Object);
             XirOperand fieldOffset = asm.createTemp("fieldOffset", CiKind.Int);
-            resolve(asm, "resolveGetField", fieldOffset, guard);
+            if (isStatic) {
+                resolve(asm, "resolveGetStatic", fieldOffset, guard);
+            } else {
+                resolve(asm, "resolveGetField", fieldOffset, guard);
+            }
             asm.pload(kind, result, object, fieldOffset, true);
             unresolved = finishTemplate(asm, "getfield<" + kind + ">-unresolved");
         }
@@ -930,6 +956,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirOperand temp = asm.createTemp("temp", CiKind.Object);
             XirLabel pass = asm.createInlineLabel("pass");
             XirLabel fail = asm.createInlineLabel("fail");
+            asm.mov(result, asm.b(false));
             if (!nonnull) {
                 // first check for null
                 asm.jeq(fail, object, asm.o(null));
@@ -939,7 +966,6 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.bindInline(pass);
             asm.mov(result, asm.b(true));
             asm.bindInline(fail);
-            asm.mov(result, asm.b(false));
             resolved = finishTemplate(asm, "instanceof-leaf<" + nonnull + ">");
         }
         {
