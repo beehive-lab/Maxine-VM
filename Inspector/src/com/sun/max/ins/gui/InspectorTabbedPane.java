@@ -34,13 +34,14 @@ import com.sun.max.tele.*;
 public abstract class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
 
     private final Inspection inspection;
+    private final String tracePrefix;
 
     /**
      * Creates a new {@JTabbedPane} specialized for use in the Maxine Inspector.
      */
     protected InspectorTabbedPane(Inspection inspection) {
         this.inspection = inspection;
-        //setOpaque(true);
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
     public final Inspection inspection() {
@@ -67,4 +68,10 @@ public abstract class InspectorTabbedPane extends JTabbedPane implements Inspect
         return inspection.actions();
     }
 
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
 }
