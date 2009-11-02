@@ -69,16 +69,16 @@ public abstract class AbstractInspectorMenuItems implements InspectorMenuItems, 
         return inspection.actions();
     }
 
+    public void redisplay() {
+    }
+
+    public void refresh(boolean force) {
+    }
+
     /**
      * @return default prefix text for trace messages; identifies the class being traced.
      */
     protected String tracePrefix() {
         return tracePrefix;
-    }
-
-    public void redisplay() {
-    }
-
-    public void refresh(boolean force) {
     }
 }

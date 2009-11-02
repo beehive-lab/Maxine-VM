@@ -61,6 +61,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     private final Inspection inspection;
+    private final String tracePrefix;
 
     /**
      * Should selection be highlighted by a box around the selected row(s)?
@@ -82,6 +83,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         super(inspectorTableModel, inspectorTableColumnModel);
         this.showSelectionWithBox = true;
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
     }
@@ -91,6 +93,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     protected InspectorTable(Inspection inspection) {
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
     }
@@ -383,4 +386,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         scrollRectToVisible(rectangle);
     }
 
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
 }

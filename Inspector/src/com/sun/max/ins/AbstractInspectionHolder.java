@@ -31,9 +31,7 @@ import com.sun.max.tele.*;
  */
 public abstract class AbstractInspectionHolder implements InspectionHolder {
 
-
     private final Inspection inspection;
-
     private final String tracePrefix;
 
     protected AbstractInspectionHolder(Inspection inspection) {
