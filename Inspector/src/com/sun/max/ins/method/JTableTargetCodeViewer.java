@@ -60,6 +60,8 @@ import com.sun.max.vm.value.*;
  */
 public class JTableTargetCodeViewer extends TargetCodeViewer {
 
+    private static final int TRACE_VALUE = 2;
+
     private final Inspection inspection;
     private final TargetCodeTable table;
     private final TargetCodeTableModel tableModel;
@@ -292,8 +294,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     if (row >= 0) {
                         if (row != oldSelectedRow) {
                             changeSelection(row, row, false, false);
+                            Trace.line(TRACE_VALUE, tracePrefix() + "changeSelection " + row);
                         }
                         scrollToRows(row, row);
+                        Trace.line(TRACE_VALUE, tracePrefix() + " scroll to row " + row);
                         return true;
                     }
                 }
