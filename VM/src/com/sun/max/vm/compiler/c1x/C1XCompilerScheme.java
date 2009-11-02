@@ -29,14 +29,13 @@ import com.sun.c1x.xir.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.program.option.*;
-import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.JavaPrototype;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
@@ -64,28 +63,23 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         };
     }
 
-    public static void addOptions(OptionSet options) {
-        // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "XX");
-        // add a special option "c1x-optlevel" which adjusts the optimization level
-        options.addOption(OptLevel, Syntax.REQUIRES_EQUALS);
-
-    }
-
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            // create the RiRuntime object passed to C1X
-            c1xRuntime = MaxRiRuntime.globalRuntime;
-            CiTarget c1xTarget = createTarget(c1xRuntime, vmConfiguration());
-            xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
-            compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
-            compiler.init();
-        }
-        if (phase == MaxineVM.Phase.COMPILING) {
-            if (MaxineVM.isHosted()) {
-                // can only refer to JavaPrototype while bootstrapping.
-                JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
+        if (MaxineVM.isHosted()) {
+            if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+                VMOptions.addFieldOptions(C1XOptions.class);
+                // create the RiRuntime object passed to C1X
+                c1xRuntime = MaxRiRuntime.globalRuntime;
+                CiTarget c1xTarget = createTarget(c1xRuntime, vmConfiguration());
+                xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
+                compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
+                compiler.init();
+            }
+            if (phase == MaxineVM.Phase.COMPILING) {
+                if (MaxineVM.isHosted()) {
+                    // can only refer to JavaPrototype while bootstrapping.
+                    JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
+                }
             }
         }
     }
