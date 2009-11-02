@@ -34,6 +34,7 @@ import com.sun.max.tele.*;
 public class InspectorToolBar extends JToolBar implements InspectionHolder {
 
     private final Inspection inspection;
+    private final String tracePrefix;
 
     /**
      * Creates a new {@JToolBar}, specialized for use in the Maxine Inspector,
@@ -41,6 +42,7 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder {
      */
     public InspectorToolBar(Inspection inspection) {
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         setFloatable(false);
         setOpaque(true);
     }
@@ -79,4 +81,10 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder {
     public void refresh(boolean force) {
     }
 
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
 }

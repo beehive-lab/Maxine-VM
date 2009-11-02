@@ -33,6 +33,7 @@ import com.sun.max.tele.*;
 public abstract class InspectorLabel extends JLabel implements InspectionHolder, TextSearchable, Prober {
 
     private final Inspection inspection;
+    private final String tracePrefix;
 
     /**
      * A label for use in the inspector, by default not opaque.
@@ -43,6 +44,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     public InspectorLabel(Inspection inspection, String text, String toolTipText) {
         super(text);
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         setToolTipText(toolTipText);
         setOpaque(false);
     }
@@ -93,4 +95,12 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     public String getSearchableText() {
         return getText();
     }
+
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
+
 }
