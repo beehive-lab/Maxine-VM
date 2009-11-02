@@ -46,11 +46,14 @@ public final class Throw {
     private Throw() {
     }
 
+    public static VMStringOption dumpStackOnThrowOfOption = register(new VMStringOption("-XX:DumpStackOnThrowOf=", false, null,
+        "Report a stack trace for every throw of an exception whose class name contains <value>, " +
+        "regardless of whether the exception is caught or uncaught."), MaxineVM.Phase.PRISTINE);
     public static VMBooleanXXOption dumpStackOnThrowOption = register(new VMBooleanXXOption("-XX:-DumpStackOnThrow",
-                    "Report a stack trace for every throw operation, regardless of whether the exception is " +
-                    "caught or uncaught."), MaxineVM.Phase.PRISTINE);
+        "Report a stack trace for every throw operation, regardless of whether the exception is " +
+        "caught or uncaught."), MaxineVM.Phase.PRISTINE);
     public static VMBooleanXXOption scanStackOnFatalError = register(new VMBooleanXXOption("-XX:-ScanStackOnFatalError",
-                    "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
+        "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
 
     private static class StackFrameDumper implements RawStackFrameVisitor {
         private int maximum;
@@ -158,6 +161,10 @@ public final class Throw {
         }
 
         if (dumpStackOnThrowOption.getValue()) {
+            throwable.printStackTrace(Log.out);
+        }
+        String filter = dumpStackOnThrowOfOption.getValue();
+        if (filter != null && ObjectAccess.readHub(throwable).classActor.name.string.contains(filter)) {
             throwable.printStackTrace(Log.out);
         }
         Safepoint.disable();

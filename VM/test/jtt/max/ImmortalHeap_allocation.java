@@ -39,11 +39,13 @@ public final class ImmortalHeap_allocation {
     }
 
     @UNSAFE
+    @INLINE
     public static void resetImmortalHeap(ImmortalMemoryRegion immortalMemoryRegion, Pointer value) {
         immortalMemoryRegion.mark.set(value);
     }
 
     @UNSAFE
+    @NO_SAFEPOINTS("immortal heap allocation and reset must be atomic")
     public static boolean test(int size) {
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
         Pointer oldMark = immortalMemoryRegion.mark();

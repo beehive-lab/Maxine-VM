@@ -160,9 +160,7 @@ public abstract class Actor {
     @INSPECTED
     public final Utf8Constant name;
 
-    @HOSTED_ONLY
-    public Object ciObjectHostedOnly;
-
+    @RESET
     public Object ciObject;
 
     protected Actor(Utf8Constant name, int flags) {

@@ -779,7 +779,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        lir.move(arrayAddr, rlockResult(x, x.elementKind()), (LIRDebugInfo)null);
+        lir.move(arrayAddr, rlockResult(x, x.elementKind()), (LIRDebugInfo) null);
     }
 
     @Override
@@ -1915,7 +1915,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (C1XOptions.PrintMetrics && C1XOptions.GatherStaticHIRInstructionCount) {
             String className = instr.getClass().getSimpleName();
 
-            synchronized(C1XMetrics.StaticHIRInstructionCount) {
+            synchronized (C1XMetrics.StaticHIRInstructionCount) {
                 if (!C1XMetrics.StaticHIRInstructionCount.containsKey(className)) {
                     C1XMetrics.StaticHIRInstructionCount.put(className, 1);
                 } else {

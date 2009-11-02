@@ -449,7 +449,7 @@ public class C1XTargetMethod extends TargetMethod {
 
         // TODO (tw): Tentative implementation! Implement this correctly
 
-        for (int i=0; i<frameReferenceMapBits(); i++) {
+        for (int i = 0; i < frameReferenceMapBits(); i++) {
             boolean curBit = isFrameReferenceMapBitSet(stopIndex, i);
             if (curBit) {
                 Pointer referencePointer = stackPointer.plusWords(i);
@@ -460,7 +460,7 @@ public class C1XTargetMethod extends TargetMethod {
         if (lastJavaCallee instanceof C1XTargetMethod) {
             final C1XTargetMethod lastJavaCalleeC1X = (C1XTargetMethod) lastJavaCallee;
             if (lastJavaCalleeC1X.isCalleeSaved()) {
-                for (int i=0; i<registerReferenceMapBits(); i++) {
+                for (int i = 0; i < registerReferenceMapBits(); i++) {
                     boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
                     if (curBit) {
 
@@ -480,7 +480,7 @@ public class C1XTargetMethod extends TargetMethod {
         // TODO (tw): Tentative implementation! Make correct...
 
         int stopIndex = lookupStopPosition(instructionPointer);
-        for (int i=0; i<registerReferenceMapBits(); i++) {
+        for (int i = 0; i < registerReferenceMapBits(); i++) {
             boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
             if (curBit) {
                 int numberOfWords = i;
@@ -492,7 +492,7 @@ public class C1XTargetMethod extends TargetMethod {
 
     private int lookupStopPosition(Pointer instructionPointer) {
         int offset = instructionPointer.minus(codeStart()).toInt();
-        for (int i=0; i<stopPositions.length; i++) {
+        for (int i = 0; i < stopPositions.length; i++) {
             if (stopPositions[i] == offset) {
                 return i;
             }

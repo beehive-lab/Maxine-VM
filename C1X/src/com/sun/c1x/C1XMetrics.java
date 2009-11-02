@@ -68,10 +68,10 @@ public class C1XMetrics {
     /**
      * The number of interval objects that were allocated during linear scan register allocation.
      */
-    public static int LSRA_IntervalsCreated;
+    public static int LSRAIntervalsCreated;
 
     /**
      * The number of spill slots required for linear scan register allocation.
      */
-    public static int LSRA_NumberOfSpills;
+    public static int LSRANumberOfSpills;
 }

@@ -59,7 +59,7 @@
 verbose=false
 unknown_option=""
 show_help=false
-default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx1g"
+default_jvm_args="-d64 -ea -Xss2m -Xmx1g"
 jvm_args="$default_jvm_args"
 jvm_args_prefix=""
 jvm_args_suffix=""
@@ -483,6 +483,30 @@ function run_clean() {
 
 
 #=======================================
+# 'jtt' command
+#=======================================
+
+jtt_usage="[JTMaxine args...]"
+jtt_help="run the JTMaxine program in the Maxine VM
+
+    Run the JTMaxine program in the Maxine VM with the given arguments.
+    The MAXVM_OPTIONS environment variable can be used to specify VM options.
+    
+    Use \"max vm -help\" to see what VM options are available.
+    Use \"max jtt -help\" to see what arguments the JTMaxine program accepts."
+
+function run_jtt() {
+    jtt_cp=$(get_project_cp VM)
+    jtt_cp=$jtt_cp:$(get_project_cp Base)
+    jtt_cp=$jtt_cp:$(get_project_cp CRI)
+    jtt_cp=$jtt_cp:$(get_project_cp C0X)
+    jtt_cp=$jtt_cp:$(get_project_cp C1X)
+    jtt_cp=$jtt_cp:$(get_project_cp Assembler)
+    jtt_cp=$jtt_cp:$JUNIT4_CP
+    run ${maxine_vm} -cp $jtt_cp $MAXVM_OPTIONS test.com.sun.max.vm.jtrun.JTMaxine -native-tests $@
+}
+
+#=======================================
 # 'jttgen' command
 #=======================================
 
@@ -727,7 +751,9 @@ function run_javadoc() {
 
 image_configs=( \
     java:-run=java \
-    c1x:-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.c1x \
+    c1x-opt0:-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x \
+    c1x-opt0-xir:-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x,-XX:+GenerateLIRXIR,-XX:+GenerateUnresolvedLIRXIR \
+    cpsc1x:-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
     cpscps:-run=test.com.sun.max.vm.jtrun.all,-native-tests \
     cpsjit:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
     jitcps:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
@@ -744,6 +770,7 @@ image_help="build a boot image
 "
     
 image_help=$(printf "%s\n    %-15s %s\n " "$image_help" "Configuration" "Expansion")
+
 for image_config in ${image_configs[@]}; do
     image_config_args="${image_config/*:/}"
     image_help=$(printf "%s\n    @%-15s %s" "$image_help" "${image_config/:*/}" "${image_config_args//,/ }")
@@ -888,6 +915,8 @@ vm_usage="[options] [class | -jar jarfile]  [args...]"
 vm_help="launch the Maxine VM
 
     Run the Maxine VM with the given options and arguments.
+    The expansion of the MAXVM_OPTIONS environment variable is inserted
+    before any other VM options specified on the command line.
     
     Use \"max vm -help\" to see what other options this command accepts."
 

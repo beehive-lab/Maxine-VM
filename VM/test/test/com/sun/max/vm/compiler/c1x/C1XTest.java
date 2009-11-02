@@ -535,7 +535,7 @@ public class C1XTest {
 
         List<String> keys = new ArrayList<String>();
         for (Object key : m.keySet()) {
-            keys.add((String)key);
+            keys.add((String) key);
         }
         Collections.sort(keys);
 
@@ -565,7 +565,7 @@ public class C1XTest {
                     out.print("    " + fieldName + " = " + field.get(null) + "\n");
                 } else if (field.getType() == Map.class) {
 
-                    Map m = (Map)field.get(null);
+                    Map m = (Map) field.get(null);
                     out.print("    " + fieldName + " = " + printMap(m) + "\n");
                 } else {
                     out.print("    " + fieldName + " = " + field.get(null) + "\n");

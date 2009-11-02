@@ -100,6 +100,9 @@ public class JTUtil {
             printRun(run);
             Log.print(" failed with exception !");
             Log.println(t.getClass().getName());
+            if (verbose == 4) {
+                t.printStackTrace(Log.out);
+            }
         }
         testNum++;
     }
