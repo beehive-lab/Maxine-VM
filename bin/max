@@ -750,14 +750,14 @@ function run_javadoc() {
 #=======================================
 
 image_configs=( \
-    java:-run=java \
-    c1x-opt0:-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x \
-    c1x-opt0-xir:-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x,-XX:+GenerateLIRXIR,-XX:+GenerateUnresolvedLIRXIR \
-    cpsc1x:-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
-    cpscps:-run=test.com.sun.max.vm.jtrun.all,-native-tests \
-    cpsjit:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
-    jitcps:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
-    jitjit:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit,-test-callee-jit \
+    java#-run=java \
+    c1x-opt0#-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x \
+    c1x-opt0-xir#-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x,-XX:+GenerateLIRXIR,-XX:+GenerateUnresolvedLIRXIR \
+    cpsc1x#-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
+    cpscps#-run=test.com.sun.max.vm.jtrun.all,-native-tests \
+    cpsjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
+    jitcps#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
+    jitjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit,-test-callee-jit \
 )
 
 image_usage="[options]"
@@ -772,8 +772,8 @@ image_help="build a boot image
 image_help=$(printf "%s\n    %-15s %s\n " "$image_help" "Configuration" "Expansion")
 
 for image_config in ${image_configs[@]}; do
-    image_config_args="${image_config/*:/}"
-    image_help=$(printf "%s\n    @%-15s %s" "$image_help" "${image_config/:*/}" "${image_config_args//,/ }")
+    image_config_args="${image_config/*\#/}"
+    image_help=$(printf "%s\n    @%-15s %s" "$image_help" "${image_config/\#*/}" "${image_config_args//,/ }")
 done
 
 image_help="$image_help
@@ -795,9 +795,9 @@ function run_image() {
                 image_config_arg=${1/@/}
                 image_config_found=false
                 for image_config in ${image_configs[@]}; do
-                    image_config_name=${image_config/:*/}
+                    image_config_name=${image_config/\#*/}
                     if [ "$image_config_name" = "$image_config_arg" ]; then
-                        image_config_args="${image_config/*:/}"
+                        image_config_args="${image_config/*\#/}"
                         image_args="$image_args ${image_config_args//,/ }"
                         image_config_found=true
                         break
