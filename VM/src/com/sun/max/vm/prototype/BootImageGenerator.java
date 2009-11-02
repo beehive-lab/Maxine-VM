@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
+import com.sun.c1x.*;
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -34,6 +35,7 @@ import com.sun.max.profile.*;
 import com.sun.max.profile.ValueMetrics.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -208,11 +210,16 @@ public final class BootImageGenerator {
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
-            C1XCompilerScheme.addOptions(options);
+            // add a special option "c1x-optlevel" which adjusts the optimization level
+            options.addOption(C1XCompilerScheme.OptLevel, Syntax.REQUIRES_EQUALS);
+
             options.parseArguments(programArguments);
 
             if (help.getValue()) {
                 prototypeGenerator.createVMConfiguration(prototypeGenerator.createDefaultVMConfiguration());
+
+                // add all the fields from C1XOptions as options
+                options.addFieldOptions(C1XOptions.class, "-XX");
                 options.printHelp(System.out, 80);
                 return;
             }
