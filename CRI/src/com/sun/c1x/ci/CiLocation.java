@@ -109,7 +109,7 @@ public final class CiLocation extends CiValue {
 
     @Override
     public int hashCode() {
-        return first.hashCode() * 13 + second.hashCode() * 7 + stackOffset;
+        return kind.hashCode() * 29 + (first == null ? 0 : first.hashCode()) * 13 + (second == null ? 0 : second.hashCode()) * 7 + stackOffset;
     }
 
     @Override
@@ -121,7 +121,7 @@ public final class CiLocation extends CiValue {
 
         if (obj instanceof CiLocation) {
             final CiLocation other = (CiLocation) obj;
-            return other.first == first && other.second == second && other.stackOffset == stackOffset;
+            return other.kind == kind && other.first == first && other.second == second && other.stackOffset == stackOffset && other.stackSize == stackSize && other.callerStack == callerStack;
         }
 
         return false;

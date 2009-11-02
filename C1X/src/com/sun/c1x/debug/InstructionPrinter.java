@@ -384,7 +384,9 @@ public class InstructionPrinter extends ValueVisitor {
             out.print(constant.asConstant().valueString());
         } else if (type.basicType.isObject()) {
             Object object = constant.asConstant().asObject();
-            if (object instanceof String) {
+            if (object == null) {
+                out.print("null");
+            } else if (object instanceof String) {
                 out.print('"').print(object.toString()).print('"');
             } else {
                 out.print("<object: ").print(object.getClass().getName()).print('@').print(System.identityHashCode(object)).print('>');

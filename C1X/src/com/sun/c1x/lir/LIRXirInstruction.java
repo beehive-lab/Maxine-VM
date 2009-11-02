@@ -83,6 +83,11 @@ public class LIRXirInstruction extends LIRInstruction {
 
         sb.append(snippet.toString());
 
+        if (method != null) {
+            sb.append(" // ");
+            sb.append(method.toString());
+        }
+
         sb.append(" // ");
 
         int z = 0;
