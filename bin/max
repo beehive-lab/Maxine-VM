@@ -779,9 +779,9 @@ done
 image_help="$image_help
     
     An option starting with '--' is interpreted as a VM option of the same name
-    after the leading '-' is removed. Note that not all VM options have an
-    effect during image building. For example, to use the '-verbose:class' VM option
-    to trace class loading while image building, specify '--verbose:class'.
+    after the leading '-' is removed. For example, to use the '-verbose:class'
+    VM option to trace class loading while image building, specify '--verbose:class'.
+    Note that not all VM options have an effect during image building. 
     
     Use \"max image -help\" to see what other options this command accepts."
     
