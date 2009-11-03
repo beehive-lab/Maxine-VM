@@ -601,6 +601,9 @@ public final class MaxineVM {
     public static native Pointer native_properties();
 
     @C_FUNCTION
+    public static native float native_parseFloat(Pointer pointer, float nan);
+
+    @C_FUNCTION
     public static native void native_exit(int code);
 
     @C_FUNCTION
@@ -612,5 +615,4 @@ public final class MaxineVM {
     public MaxineVM(VMConfiguration vmConfiguration) {
         configuration = vmConfiguration;
     }
-
 }

@@ -35,6 +35,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -92,7 +93,11 @@ public class C1XTest {
         "Show help message and exit.");
 
     static {
-        C1XCompilerScheme.addOptions(options);
+        // add all the fields from C1XOptions as options
+        options.addFieldOptions(C1XOptions.class, "XX");
+
+        // add a special option "c1x-optlevel" which adjusts the optimization level
+        options.addOption(C1XCompilerScheme.OptLevel, Syntax.REQUIRES_EQUALS);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
