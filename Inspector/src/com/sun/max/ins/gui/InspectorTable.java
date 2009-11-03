@@ -141,6 +141,11 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * <br>
      * After this method is called, the left-button click is passed along to the renderer
      * for the cell under the mouse.
+     * <br>
+     * <strong>Note:</strong> When this method is called, the tables selection
+     * listener has already processed the left-button click: the selection model
+     * has been updated and any tables listening to the selection model will have
+     * been notified.
      *
      * @param row row in the table model where the click took place
      * @param col column in the column model where the click took place
