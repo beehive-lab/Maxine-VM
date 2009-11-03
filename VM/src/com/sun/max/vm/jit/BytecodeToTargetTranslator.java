@@ -317,7 +317,8 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     }
 
     Stops packStops() {
-        final int firstTemplateSlotIndexInFrameReferenceMap = jitStackFrameLayout.numberOfNonParameterSlots() + jitStackFrameLayout.numberOfOperandStackSlots();
+        int firstTemplateSlot = jitStackFrameLayout.numberOfNonParameterSlots() + jitStackFrameLayout.numberOfOperandStackSlots();
+        final int firstTemplateSlotIndexInFrameReferenceMap = firstTemplateSlot * JitStackFrameLayout.STACK_SLOTS_PER_JIT_SLOT;
         return stops.pack(frameReferenceMapSize(), registerReferenceMapSize(), firstTemplateSlotIndexInFrameReferenceMap);
     }
 

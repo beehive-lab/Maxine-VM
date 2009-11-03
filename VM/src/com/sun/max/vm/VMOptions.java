@@ -216,7 +216,7 @@ public final class VMOptions {
     }
 
     /**
-     * Creates and registers VM options for each non-{@code final} {@code static} field
+     * Creates and registers "-XX" VM options for each non-{@code final} {@code static} field
      * in a given class.
      *
      * @param javaClass the java class containing the fields for which VM options are to be created
@@ -245,8 +245,17 @@ public final class VMOptions {
         }
     }
 
+    @HOSTED_ONLY
+    static void setFieldValue(FieldActor fieldActor, Object value) {
+        try {
+            fieldActor.toJava().set(null, value);
+        } catch (Exception e) {
+            throw ProgramError.unexpected("Error setting value of " + fieldActor.toJava() + " to " + value, e);
+        }
+    }
+
     /**
-     * Creates and registers a VM option whose value is stored in a given non-{@code final} {@code static} field.
+     * Creates and registers a "-XX" VM option whose value is stored in a given non-{@code final} {@code static} field.
      *
      * @param name the name of the option
      * @param field the field backing the option
@@ -259,7 +268,10 @@ public final class VMOptions {
         assert !Modifier.isFinal(field.getModifiers());
         final Class<?> fieldType = field.getType();
         final ClassActor holder = ClassActor.fromJava(field.getDeclaringClass());
-        final int fieldOffset = FieldActor.fromJava(field).offset();
+        final FieldActor fieldActor = FieldActor.fromJava(field);
+        if (MaxineVM.isHosted()) {
+            field.setAccessible(true);
+        }
         if (fieldType == boolean.class) {
             boolean defaultValue = field.getBoolean(null);
             VMBooleanXXOption option = new VMBooleanXXOption("-XX:" + (defaultValue ? '+' : '-') + name, help) {
@@ -267,7 +279,11 @@ public final class VMOptions {
                 public boolean parseValue(Pointer optionValue) {
                     boolean result = super.parseValue(optionValue);
                     if (result) {
-                        Reference.fromJava(holder.staticTuple()).writeBoolean(fieldOffset, getValue());
+                        if (MaxineVM.isHosted()) {
+                            setFieldValue(fieldActor, getValue());
+                        } else {
+                            Reference.fromJava(holder.staticTuple()).writeBoolean(fieldActor.offset(), getValue());
+                        }
                         return true;
                     }
                     return false;
@@ -281,7 +297,11 @@ public final class VMOptions {
                 public boolean parseValue(Pointer optionValue) {
                     boolean result = super.parseValue(optionValue);
                     if (result) {
-                        Reference.fromJava(holder.staticTuple()).writeInt(fieldOffset, getValue());
+                        if (MaxineVM.isHosted()) {
+                            setFieldValue(fieldActor, getValue());
+                        } else {
+                            Reference.fromJava(holder.staticTuple()).writeInt(fieldActor.offset(), getValue());
+                        }
                         return true;
                     }
                     return result;
@@ -295,7 +315,11 @@ public final class VMOptions {
                 public boolean parseValue(Pointer optionValue) {
                     boolean result = super.parseValue(optionValue);
                     if (result) {
-                        Reference.fromJava(holder.staticTuple()).writeFloat(fieldOffset, getValue());
+                        if (MaxineVM.isHosted()) {
+                            setFieldValue(fieldActor, getValue());
+                        } else {
+                            Reference.fromJava(holder.staticTuple()).writeFloat(fieldActor.offset(), getValue());
+                        }
                         return true;
                     }
                     return result;
@@ -309,7 +333,11 @@ public final class VMOptions {
                 public boolean parseValue(Pointer optionValue) {
                     boolean result = super.parseValue(optionValue);
                     if (result) {
-                        Reference.fromJava(holder.staticTuple()).writeReference(fieldOffset, Reference.fromJava(getValue()));
+                        if (MaxineVM.isHosted()) {
+                            setFieldValue(fieldActor, getValue());
+                        } else {
+                            Reference.fromJava(holder.staticTuple()).writeReference(fieldActor.offset(), Reference.fromJava(getValue()));
+                        }
                         return true;
                     }
                     return result;
