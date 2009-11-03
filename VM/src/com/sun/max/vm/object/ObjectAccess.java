@@ -23,8 +23,6 @@ package com.sun.max.vm.object;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
@@ -49,42 +47,6 @@ public final class ObjectAccess {
     @INLINE
     public static boolean isZero(Object object) {
         return Reference.fromJava(object).isZero();
-    }
-
-
-    public static boolean canBeValid(Object o) {
-        return canBeValid(Reference.fromJava(o).toOrigin());
-    }
-
-    /**
-     * Conservatively checks whether the given parameter points to an object in the heap.
-     * Gives a false-positive in case of the pointer pointing to a field that contains an object.
-     * @param origin the pointer to be checked
-     * @return whether the pointer points to an object
-     */
-    public static boolean canBeValid(Pointer origin) {
-
-        if (origin.isZero()) {
-            return true;
-        }
-
-        // Checks for 4 hops, because of the two cases:
-        // Pointing to an object: object -> dynamic hub -> hub hub -> hub hub -> hub hub
-        // Pointing to a static hub: static tuple -> static hub -> dynamic hub -> hub hub -> hub hub
-
-        Pointer current = origin;
-        Pointer last = Pointer.zero();
-        int i = 0;
-        for (; i < 4 && (Heap.contains(current) || Code.contains(current)); i++) {
-            last = current;
-            current = Layout.generalLayout().readHubReferenceAsWord(current).asPointer();
-        }
-
-        if (i == 4 && current.equals(last)) {
-            return true;
-        }
-
-        return false;
     }
 
     /**

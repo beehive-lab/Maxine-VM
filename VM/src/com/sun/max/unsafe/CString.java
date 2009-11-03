@@ -25,6 +25,7 @@ import java.io.*;
 
 import com.sun.max.memory.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.*;
 
 /**
  * Utilities for converting between Java strings and C strings (encoded as UTF8 bytes).
@@ -309,6 +310,26 @@ public final class CString {
             ptr = ptr.plus(1);
         }
         return result;
+    }
+
+    /**
+     * Parses a given C string as a floating value.
+     *
+     * @param cstring the C string to parse
+     * @return the value of {@code cstring} as a float or {@link Float#NaN} if {@code cstring} does not contain a valid
+     *         float value
+     */
+    public static float parseFloat(Pointer cstring) {
+        if (MaxineVM.isHosted()) {
+            try {
+                return Float.parseFloat(utf8ToJava(cstring));
+            } catch (Exception e) {
+                return Float.NaN;
+            }
+        }
+        // Defer to native code so that all the FloatingDecimal logic does not
+        // have to be in the VM boot image.
+        return MaxineVM.native_parseFloat(cstring, Float.NaN);
     }
 
     public static boolean equals(Pointer cstring, String string) {

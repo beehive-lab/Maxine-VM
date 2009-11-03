@@ -467,3 +467,12 @@ void *native_properties(void) {
 #endif
     return &nativeProperties;
 }
+
+float native_parseFloat(const char* cstring, float nan) {
+    char *endptr;
+    float result = strtof(cstring, (char**) &endptr);
+    if (endptr != cstring + strlen(cstring)) {
+        result = nan;
+    }
+    return result;
+}
