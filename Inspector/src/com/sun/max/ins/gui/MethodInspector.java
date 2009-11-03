@@ -67,15 +67,8 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
                         final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), teleCodeLocation, interactiveForNative);
                         if (methodInspector != null) {
-                            // Ensure that a newly created MethodInspector will have the focus set;
-                            SwingUtilities.invokeLater(new Runnable() {
-
-                                public void run() {
-                                    methodInspector.setCodeLocationFocus();
-                                    // Highlight the inspector if it is not the selected one (this happens when the inspector already existed).
-                                    methodInspector.highlightIfNotVisible();
-                                }
-                            });
+                            methodInspector.setCodeLocationFocus();
+                            methodInspector.highlightIfNotVisible();
                         }
                     }
                 });
