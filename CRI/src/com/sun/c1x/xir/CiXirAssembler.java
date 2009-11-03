@@ -53,7 +53,7 @@ public abstract class CiXirAssembler {
      * Class that represents additional address calculation information.
      */
     public static class AddressAccessInformation {
-    	
+
     	public final XirConstantOperand scaling;
     	public final XirConstantOperand offset;
     	public final boolean canTrap;
@@ -63,13 +63,13 @@ public abstract class CiXirAssembler {
     		this.scaling = null;
     		this.offset = null;
     	}
-    	
+
     	private AddressAccessInformation(boolean canTrap, XirConstantOperand offset) {
     		this.canTrap = canTrap;
     		this.scaling = null;
     		this.offset = offset;
     	}
-    	
+
     	private AddressAccessInformation(boolean canTrap, XirConstantOperand offset, XirConstantOperand scaling) {
     		this.canTrap = canTrap;
     		this.scaling = scaling;
@@ -93,9 +93,7 @@ public abstract class CiXirAssembler {
         	return name;
         }
     }
-    
-    
-    
+
     public interface XirConstantOperand {
     	int getIndex();
     }
@@ -110,7 +108,7 @@ public abstract class CiXirAssembler {
             this.name = name;
             this.index = variableCount++;
         }
-        
+
         public int getIndex() {
         	return index;
         }
@@ -139,19 +137,19 @@ public abstract class CiXirAssembler {
         	return sb.toString();
         }
     }
-    
+
     public class XirConstantParameter extends XirParameter implements XirConstantOperand {
     	XirConstantParameter(String name, CiKind kind, int parameterIndex) {
     		super(name, kind, parameterIndex);
         }
     }
-    
+
     public class XirVariableParameter extends XirParameter {
     	XirVariableParameter(String name, CiKind kind, int parameterIndex) {
     		super(name, kind, parameterIndex);
         }
     }
-    
+
     public class XirConstant extends XirOperand implements XirConstantOperand {
         public final CiConstant value;
 
@@ -403,7 +401,7 @@ public abstract class CiXirAssembler {
     public void pstore(CiKind kind, XirOperand pointer, XirOperand disp, XirOperand value, XirConstantOperand offset, boolean canTrap) {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset), XirOp.PointerStoreDisp, (XirOperand) null, pointer, disp, value));
     }
-    
+
     public void pload(CiKind kind, XirOperand result, XirOperand pointer, XirOperand disp, XirConstantOperand offset, XirConstantOperand scaling,  boolean canTrap) {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerLoadDisp, result, pointer, disp));
     }
@@ -411,7 +409,7 @@ public abstract class CiXirAssembler {
     public void pstore(CiKind kind, XirOperand pointer, XirOperand disp, XirOperand value, XirConstantOperand offset, XirConstantOperand scaling, boolean canTrap) {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerStoreDisp, (XirOperand) null, pointer, disp, value));
     }
-    
+
     public void pcas(CiKind kind, XirOperand result, XirOperand pointer, XirOperand value, XirOperand expectedValue) {
         append(new XirInstruction(kind, XirOp.PointerLoad, result, pointer, value, expectedValue));
     }
@@ -477,7 +475,7 @@ public abstract class CiXirAssembler {
         finished = true;
         assert resultOperand != null;
     }
-    
+
     public XirVariableParameter createInputParameter(String name, CiKind kind) {
     	assert !finished;
     	XirVariableParameter param = new XirVariableParameter(name, kind, parameters.size());

@@ -65,13 +65,11 @@ class ButtonTabComponent<Inspector_Type extends Inspector> extends InspectorPane
         label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
         final JPopupMenu popupMenu = new JPopupMenu();
         popupMenu.add(new AbstractAction("Close tab") {
-            @Override
             public void actionPerformed(ActionEvent e) {
                 tabbedInspector.close(ButtonTabComponent.this.inspector);
             }
         });
         popupMenu.add(new AbstractAction("Close other tabs") {
-            @Override
             public void actionPerformed(ActionEvent e) {
                 tabbedInspector.closeOthers(ButtonTabComponent.this.inspector);
             }
