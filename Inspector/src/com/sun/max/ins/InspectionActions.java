@@ -4617,6 +4617,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 breakAt.add(actions().setTargetCodeBreakpointAtObjectInitializer());
                 menu.add(breakAt);
 
+                final InspectorMenu toggle = new InspectorMenu("Toggle breakpoint");
+                toggle.add(actions().toggleTargetCodeBreakpoint());
+                menu.add(toggle);
+
                 final InspectorMenu removeBreakpoints = new InspectorMenu("Remove breakpoints");
                 removeBreakpoints.add(actions().removeAllTargetCodeBreakpoints());
                 removeBreakpoints.add(actions().removeAllBytecodeBreakpoints());
