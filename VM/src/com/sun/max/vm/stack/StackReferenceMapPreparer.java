@@ -803,7 +803,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         } else {
             final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer, true);
             if (stopIndex < 0) {
-                Log.print("Could not find stop postion for instruction at position ");
+                Log.print("Could not find stop position for instruction at position ");
                 Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
                 Log.print(" in ");
                 Log.printMethod(targetMethod.classMethodActor(), true);
