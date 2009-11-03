@@ -926,6 +926,22 @@ function run_vm() {
 }
 
 #=======================================
+# 'eclipse' command
+#=======================================
+
+eclipse_usage="[options]"
+eclipse_help="launch Eclipse with the Maxine VM
+
+    Run Eclipse under Maxine VM with the given options supplied as
+    the value of the '-vmargs' Eclipse launcher option.
+    The expansion of the MAXVM_OPTIONS environment variable is inserted
+    before any other VM options specified on the command line."
+
+function run_eclipse() {
+    run eclipse -vm ${maxine_vm} -vmargs $MAXVM_OPTIONS $@
+}
+
+#=======================================
 # 'javap' command
 #=======================================
 
