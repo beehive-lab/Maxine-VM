@@ -35,6 +35,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.*;
@@ -215,11 +216,17 @@ public class FieldActor extends MemberActor {
                     // default value for its type.
                     return true;
                 }
-                if (MaxineVM.isHosted() && MaxineVM.isMaxineClass(holder())) {
-                    // The class initializers of all Maxine classes are run while bootstrapping and
-                    // the values they assign to static final fields are frozen in the boot image.
-                    return true;
+                if (MaxineVM.isHosted()) {
+                    if (MaxineVM.isMaxineClass(holder())) {
+                        // The class initializers of all Maxine classes are run while bootstrapping and
+                        // the values they assign to static final fields are frozen in the boot image.
+                        return true;
+                    }
+                    if (JDK.java_lang_ProcessEnvironment.classActor().equals(holder())) {
+                        return false;
+                    }
                 }
+
                 // This is now a field in a class with a class initializer:
                 // before the class initializer is executed, the field's value is not guaranteed to be immutable.
                 return holder().isInitialized();

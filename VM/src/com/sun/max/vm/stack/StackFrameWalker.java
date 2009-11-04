@@ -183,17 +183,15 @@ public abstract class StackFrameWalker {
 
                 final RuntimeCompilerScheme compilerScheme = targetMethod.compilerScheme;
 
-                TargetMethod oldLastJavaCallee = lastJavaCallee;
-
-                // Record the last Java callee to be the current frame *before* the compiler scheme
-                // updates the current frame during the call to walkJavaFrame()
+                // Record the last Java callee frame info based on the current frame *before* the
+                // compiler scheme updates the current frame during the call to walkFrame() below
                 lastJavaCalleeStackPointer = this.stackPointer;
                 lastJavaCalleeFramePointer = this.framePointer;
-                lastJavaCallee = targetMethod;
 
-                if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, oldLastJavaCallee, purpose, context)) {
+                if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, lastJavaCallee, purpose, context)) {
                     break;
                 }
+                lastJavaCallee = targetMethod;
                 if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
                     trapState = Pointer.zero();
                 }

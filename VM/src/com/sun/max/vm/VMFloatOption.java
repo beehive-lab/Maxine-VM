@@ -21,67 +21,61 @@
 package com.sun.max.vm;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.MaxineVM.*;
 
 /**
- * A VM command line option that can accept a size (i.e. a number that has an associated kilobyte,
- * megabyte, or gigabyte specifier).
+ * A VM option that represents a float.
  *
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public class VMSizeOption extends VMOption {
-    protected Size value;
+public class VMFloatOption extends VMOption {
+    protected float value;
 
     /**
-     * Creates a new size option with the specified values and adds this option to the command line
-     * arguments.
+     * Creates a new float option.
      *
      * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option
      * in the global registry or VM options.</b>
      *
      * @param prefix the name of the option, including the leading '-' character
-     * @param defaultValue the default size for this option when it is not present on the command line
-     * @param help the help text to report for this option
+     * @param defaultValue the default value of the option when it is not specified
+     * @param help the help text for the option
      */
     @HOSTED_ONLY
-    public VMSizeOption(String prefix, Size defaultValue, String help) {
-        super(prefix, appendDefaultValue(help, Longs.toUnitsString(defaultValue.toLong(), true)));
+    public VMFloatOption(String prefix,  float defaultValue, String help) {
+        super(prefix, appendDefaultValue(help, String.valueOf(defaultValue)));
         value = defaultValue;
     }
 
     /**
-     * Parse the value from a C-style string. This method accepts positive integers that may be suffixed with zero or
-     * one of the 'K', 'k', 'M', 'm', 'G', or 'g' characters, which denote kilobytes, megabytes, and gigabytes,
-     * respectively.
+     * Parses a C-style string to produce a float value for this option.
      *
-     * @param optionValue a pointer to the beginning of the C-style string representing the value
+     * @param optionValue a pointer to the C-style string which contains the value
      * @return {@code true} if the value was parsed successfully; {@code false} otherwise
      */
     @Override
     public boolean parseValue(Pointer optionValue) {
-        long value = VMOptions.parseScaledValue(optionValue, CString.length(optionValue), 0);
-        if (value < 0) {
+        value = CString.parseFloat(optionValue);
+        if (Float.isNaN(value)) {
             return false;
         }
-        this.value = Size.fromLong(value);
         return true;
     }
 
     /**
-     * Print the help text on the console.
+     * Print the command-line help for this option.
      */
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption(prefix, "<size>", help);
+        VMOptions.printHelpForOption(prefix, "<n>", help);
     }
 
     /**
-     * Gets the size value of this option--either the default, or the value specified on the command line.
-     * @return the size of this option
+     * Gets the value of this option as an {@code float}.
+     * @return the value of this option
      */
-    public Size getValue() {
+    public float getValue() {
         return value;
     }
 }

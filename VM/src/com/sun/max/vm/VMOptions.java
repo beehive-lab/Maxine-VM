@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -28,11 +29,15 @@ import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
 import com.sun.max.profile.*;
 import com.sun.max.program.*;
+import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.VMOption.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Basic VM argument handling.
@@ -52,28 +57,16 @@ public final class VMOptions {
     private static final int HELP_INDENT = 32;
 
     /**
-     * A comparator for sorted a set of {@link VMOption}s in reverse lexicographic order of their
-     * {@linkplain VMOption#prefix prefixes}. This means that suboptions precede their parent option
-     * where a suboption is an option whose prefix starts with but is not equal to the parent's prefix.
+     * Used to collect and sort VM options as they are declared.
      */
     @HOSTED_ONLY
-    private static final Comparator<VMOption> VMOPTION_SORTER = new Comparator<VMOption>() {
-        public int compare(VMOption o1, VMOption o2) {
-            return o2.prefix.compareTo(o1.prefix);
-        }
-    };
+    private static final Set<VMOption> pristinePhaseOptionsSet = new LinkedHashSet<VMOption>();
 
     /**
      * Used to collect and sort VM options as they are declared.
      */
     @HOSTED_ONLY
-    private static final SortedSet<VMOption> pristinePhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
-
-    /**
-     * Used to collect and sort VM options as they are declared.
-     */
-    @HOSTED_ONLY
-    private static final SortedSet<VMOption> startingPhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
+    private static final Set<VMOption> startingPhaseOptionsSet = new LinkedHashSet<VMOption>();
 
     private static VMOption[] pristinePhaseOptions;
     private static VMOption[] startingPhaseOptions;
@@ -87,9 +80,9 @@ public final class VMOptions {
 
     /**
      * An option to {@linkplain GlobalMetrics#report(java.io.PrintStream) report} on all global metrics gathered during execution.
-     * TODO: If this option is not enabled, then the global metrics should not be gathered.
+     * TODO: If this option is not enabled, then global metrics should not be gathered.
      */
-    private static final VMBooleanXXOption printMetrics = register(new VMBooleanXXOption("-XX:-PrintMetrics", "Report random metrics gathered during execution.") {
+    private static final VMBooleanXXOption printRuntimeMetrics = register(new VMBooleanXXOption("-XX:-PrintRuntimeMetrics", "Report random metrics gathered during execution.") {
         @Override
         public boolean parseValue(Pointer optionValue) {
             if (getValue()) {
@@ -127,7 +120,7 @@ public final class VMOptions {
      * This option is parsed in the native code (see maxine.c). It's declared here simply so that it
      * shows up in the {@linkplain #printUsage() usage} message.
      */
-    private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, "",
+    private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, null,
         "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
 
     private static Pointer argv;
@@ -146,12 +139,12 @@ public final class VMOptions {
         Log.print("    ");
         Log.print(prefix);
         Log.print(value);
-        Log.print(" ");
-        int column = 5 + prefix.length() + value.length();
-        for (; column < HELP_INDENT; column++) {
-            Log.print(' ');
-        }
         if (help != null) {
+            Log.print(" ");
+            int column = 5 + prefix.length() + value.length();
+            for (; column < HELP_INDENT; column++) {
+                Log.print(' ');
+            }
             // reformat the help text by wrapping the lines after column 72.
             // Strings.formatParagraphs() can't be used because allocation may not work here
             for (int j = 0; j < help.length(); j++) {
@@ -172,7 +165,7 @@ public final class VMOptions {
     }
 
     @HOSTED_ONLY
-    private static VMOption[] addOption(SortedSet<VMOption> options, VMOption option, Iterable<VMOption> allOptions) {
+    private static VMOption[] addOption(Set<VMOption> options, VMOption option, Iterable<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
             final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
             final String name = option.prefix.substring(prefixLength);
@@ -208,6 +201,140 @@ public final class VMOptions {
         option.findMatchingArgumentAndParse();
         final Class<T> type = null;
         return StaticLoophole.cast(type, option);
+    }
+
+    /**
+     * Creates and registers "-XX" VM options for each non-{@code final} {@code static} field
+     * in a given class.
+     *
+     * @param javaClass the java class containing the fields for which VM options are to be created
+     */
+    @HOSTED_ONLY
+    public static void addFieldOptions(Class<?> javaClass) {
+        for (final Field field : javaClass.getDeclaredFields()) {
+            int modifiers = field.getModifiers();
+            if (Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
+                final OptionSettings settings = field.getAnnotation(OptionSettings.class);
+                String help;
+                String name;
+                if (settings != null) {
+                    help = settings.help();
+                    name = settings.name().isEmpty() ? field.getName().replace('_', '-') : settings.name();
+                } else {
+                    help = null;
+                    name = field.getName().replace('_', '-');
+                }
+                try {
+                    addFieldOption(name, field, help);
+                } catch (Exception e) {
+                    throw ProgramError.unexpected("Error creating VM option for " + field, e);
+                }
+            }
+        }
+    }
+
+    @HOSTED_ONLY
+    static void setFieldValue(FieldActor fieldActor, Object value) {
+        try {
+            fieldActor.toJava().set(null, value);
+        } catch (Exception e) {
+            throw ProgramError.unexpected("Error setting value of " + fieldActor.toJava() + " to " + value, e);
+        }
+    }
+
+    /**
+     * Creates and registers a "-XX" VM option whose value is stored in a given non-{@code final} {@code static} field.
+     *
+     * @param name the name of the option
+     * @param field the field backing the option
+     * @param help the help text for the option
+     */
+    @HOSTED_ONLY
+    public static void addFieldOption(String name, Field field, String help) throws IllegalArgumentException, IllegalAccessException {
+        MaxineVM.Phase phase = MaxineVM.Phase.STARTING;
+        assert Modifier.isStatic(field.getModifiers());
+        assert !Modifier.isFinal(field.getModifiers());
+        final Class<?> fieldType = field.getType();
+        final ClassActor holder = ClassActor.fromJava(field.getDeclaringClass());
+        final FieldActor fieldActor = FieldActor.fromJava(field);
+        if (MaxineVM.isHosted()) {
+            field.setAccessible(true);
+        }
+        if (fieldType == boolean.class) {
+            boolean defaultValue = field.getBoolean(null);
+            VMBooleanXXOption option = new VMBooleanXXOption("-XX:" + (defaultValue ? '+' : '-') + name, help) {
+                @Override
+                public boolean parseValue(Pointer optionValue) {
+                    boolean result = super.parseValue(optionValue);
+                    if (result) {
+                        if (MaxineVM.isHosted()) {
+                            setFieldValue(fieldActor, getValue());
+                        } else {
+                            Reference.fromJava(holder.staticTuple()).writeBoolean(fieldActor.offset(), getValue());
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+            };
+            register(option, phase);
+        } else if (fieldType == int.class) {
+            int defaultValue = field.getInt(null);
+            VMIntOption option = new VMIntOption("-XX:" + name + "=", defaultValue, help) {
+                @Override
+                public boolean parseValue(Pointer optionValue) {
+                    boolean result = super.parseValue(optionValue);
+                    if (result) {
+                        if (MaxineVM.isHosted()) {
+                            setFieldValue(fieldActor, getValue());
+                        } else {
+                            Reference.fromJava(holder.staticTuple()).writeInt(fieldActor.offset(), getValue());
+                        }
+                        return true;
+                    }
+                    return result;
+                }
+            };
+            register(option, phase);
+        } else if (fieldType == float.class) {
+            float defaultValue = field.getFloat(null);
+            VMFloatOption option = new VMFloatOption("-XX:" + name + "=", defaultValue, help) {
+                @Override
+                public boolean parseValue(Pointer optionValue) {
+                    boolean result = super.parseValue(optionValue);
+                    if (result) {
+                        if (MaxineVM.isHosted()) {
+                            setFieldValue(fieldActor, getValue());
+                        } else {
+                            Reference.fromJava(holder.staticTuple()).writeFloat(fieldActor.offset(), getValue());
+                        }
+                        return true;
+                    }
+                    return result;
+                }
+            };
+            register(option, phase);
+        } else if (fieldType == String.class) {
+            String defaultValue = (String) field.get(null);
+            VMStringOption option = new VMStringOption("-XX:" + name + "=", false, defaultValue, help) {
+                @Override
+                public boolean parseValue(Pointer optionValue) {
+                    boolean result = super.parseValue(optionValue);
+                    if (result) {
+                        if (MaxineVM.isHosted()) {
+                            setFieldValue(fieldActor, getValue());
+                        } else {
+                            Reference.fromJava(holder.staticTuple()).writeReference(fieldActor.offset(), Reference.fromJava(getValue()));
+                        }
+                        return true;
+                    }
+                    return result;
+                }
+            };
+            register(option, phase);
+        } else {
+            throw new RuntimeException("Field type unsupported by VM options");
+        }
     }
 
     private static void printOptions(VMOption[] options, String label, Category category) {

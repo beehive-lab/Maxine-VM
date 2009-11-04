@@ -25,7 +25,7 @@
  *
  * @author Bernd Mathiske
  */
-package com.sun.max.vm.heap.sequential.noGC;
+package com.sun.max.vm.heap.noGC;
 
 
 

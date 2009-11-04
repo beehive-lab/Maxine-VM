@@ -134,6 +134,8 @@ final class InspectorRootPane<Inspector_Type extends Inspector> extends JRootPan
     }
 
     public void pack() {
+        setSize(getPreferredSize());
+        validate();
     }
 
     public void setTitle(String title) {

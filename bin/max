@@ -270,7 +270,8 @@ if [[ "$junit_version" != 4.* ]]; then
 fi 
 maxine_cp=${maxine_cp}:${JUNIT4_CP}
 
-maxine_vm=${maxine_dir}/Native/generated/${MAXINE_OS}/maxvm
+test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/Native/generated/${MAXINE_OS}"
+maxine_vm=$MAXVM_DIR/maxvm
 
 #=======================================
 # Utility for verbose execution
@@ -750,14 +751,14 @@ function run_javadoc() {
 #=======================================
 
 image_configs=( \
-    java:-run=java \
-    c1x-opt0:-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x \
-    c1x-opt0-xir:-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x,-XX:+GenerateLIRXIR,-XX:+GenerateUnresolvedLIRXIR \
-    cpsc1x:-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
-    cpscps:-run=test.com.sun.max.vm.jtrun.all,-native-tests \
-    cpsjit:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
-    jitcps:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
-    jitjit:-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit,-test-callee-jit \
+    java#-run=java \
+    c1x-opt0#-prototype-jit,--XX:OptLevel=0,-jit=com.sun.max.vm.compiler.c1x \
+    c1x-opt0-xir#-prototype-jit,--XX:OptLevel=0,-jit=com.sun.max.vm.compiler.c1x,--XX:+GenerateLIRXIR,--XX:+GenerateUnresolvedLIRXIR \
+    cpsc1x#-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
+    cpscps#-run=test.com.sun.max.vm.jtrun.all,-native-tests \
+    cpsjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
+    jitcps#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit \
+    jitjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-caller-jit,-test-callee-jit \
 )
 
 image_usage="[options]"
@@ -772,16 +773,16 @@ image_help="build a boot image
 image_help=$(printf "%s\n    %-15s %s\n " "$image_help" "Configuration" "Expansion")
 
 for image_config in ${image_configs[@]}; do
-    image_config_args="${image_config/*:/}"
-    image_help=$(printf "%s\n    @%-15s %s" "$image_help" "${image_config/:*/}" "${image_config_args//,/ }")
+    image_config_args="${image_config/*\#/}"
+    image_help=$(printf "%s\n    @%-15s %s" "$image_help" "${image_config/\#*/}" "${image_config_args//,/ }")
 done
 
 image_help="$image_help
     
     An option starting with '--' is interpreted as a VM option of the same name
-    after the leading '-' is removed. Note that not all VM options have an
-    effect during image building. For example, to use the '-verbose:class' VM option
-    to trace class loading while image building, specify '--verbose:class'.
+    after the leading '-' is removed. For example, to use the '-verbose:class'
+    VM option to trace class loading while image building, specify '--verbose:class'.
+    Note that not all VM options have an effect during image building. 
     
     Use \"max image -help\" to see what other options this command accepts."
     
@@ -793,21 +794,22 @@ function run_image() {
         case $1 in
             @*)
                 image_config_arg=${1/@/}
-                image_config_found=false
                 for image_config in ${image_configs[@]}; do
-                    image_config_name=${image_config/:*/}
+                    image_config_name=${image_config/\#*/}
                     if [ "$image_config_name" = "$image_config_arg" ]; then
-                        image_config_args="${image_config/*:/}"
-                        image_args="$image_args ${image_config_args//,/ }"
-                        image_config_found=true
-                        break
+                        image_config_args="${image_config/*\#/}"
+
+                        # Prepand the expanded macro to the positional parameters
+                        shift
+                        set -- ${image_config_args//,/ } "$@"
+
+                        # Continue at the outer 'while' loop                         
+                        continue 2
                     fi
                 done
-                if ! $image_config_found ; then
-                    echo "Invalid image configuration: $1"
-                    run_help image
-                    exit 1
-                fi
+                echo "Invalid image configuration: $1"
+                run_help image
+                exit 1
                 ;;
             --* )
                 if [ -z "$vm_args" ]; then
@@ -922,6 +924,48 @@ vm_help="launch the Maxine VM
 
 function run_vm() {
     run ${maxine_vm} $MAXVM_OPTIONS $@
+}
+
+#=======================================
+# 'copyvm' command
+#=======================================
+
+copyvm_usage="dest"
+copyvm_help="copy the VM files to a specified directory
+
+    Copy the VM executable, shared libraries and boot image files to
+    a specified directory, creating it first if necessary. This allows
+    multiple VMs to exist in a single workspace.
+    
+    To use a particular VM, set the MAXVM_DIR environment variable before
+    running a \"max vm ...\" command."
+
+function run_copyvm() {
+    if [ ! -d $1 ]; then
+        mkdir -p $1 || { echo "Failed to created directory $1"; exit 1; }
+    fi
+    run cp -r ${maxine_dir}/Native/generated/${MAXINE_OS}/* $1 && {
+        echo "Copied all VM files to $1. To run this copy of the VM:"
+        echo
+        echo "    env MAXVM_DIR=$1 max vm ..."
+        echo
+    }
+}
+
+#=======================================
+# 'eclipse' command
+#=======================================
+
+eclipse_usage="[options]"
+eclipse_help="launch Eclipse with the Maxine VM
+
+    Run Eclipse under Maxine VM with the given options supplied as
+    the value of the '-vmargs' Eclipse launcher option.
+    The expansion of the MAXVM_OPTIONS environment variable is inserted
+    before any other VM options specified on the command line."
+
+function run_eclipse() {
+    run eclipse -vm ${maxine_vm} -vmargs $MAXVM_OPTIONS $@
 }
 
 #=======================================

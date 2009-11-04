@@ -40,6 +40,7 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
     private static final ImageIcon FRAME_ICON = InspectorImageIcon.createDownTriangle(12, 14);
 
     private final Inspection inspection;
+    private final String tracePrefix;
 
     private final AppendableSequence<InspectorMenu> menus = new ArrayListSequence<InspectorMenu>(10);
 
@@ -48,6 +49,7 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
      */
     protected InspectorMenuBar(Inspection inspection) {
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         setOpaque(true);
     }
 
@@ -119,5 +121,12 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         for (InspectorMenu menu : menus) {
             menu.refresh(force);
         }
+    }
+
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
     }
 }

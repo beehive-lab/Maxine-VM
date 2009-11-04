@@ -101,7 +101,7 @@ public class MaxineTesterConfiguration {
         output(test.output.WeakReferenceTest02.class);
         output(test.output.WeakReferenceTest03.class);
         output(test.output.WeakReferenceTest04.class);
-        output(test.output.MegaThreads.class);
+        output(test.output.MegaThreads.class, RAND_SPARC);
 
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                        RAND_ALL);
@@ -192,7 +192,7 @@ public class MaxineTesterConfiguration {
         jtImageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
         jtImageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
         jtImageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        jtImageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-c1x-optlevel=0");
+        jtImageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-vmargs=-XX:OptLevel=0");
         jtImageConfig("java", "-run=com.sun.max.vm.run.java");
 
         String c1xClass = C1XCompilerScheme.class.getName();

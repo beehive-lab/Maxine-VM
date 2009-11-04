@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.zip.*;
 
+import com.sun.c1x.*;
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -42,7 +43,6 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
@@ -208,11 +208,13 @@ public final class BootImageGenerator {
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
 
-            C1XCompilerScheme.addOptions(options);
             options.parseArguments(programArguments);
 
             if (help.getValue()) {
                 prototypeGenerator.createVMConfiguration(prototypeGenerator.createDefaultVMConfiguration());
+
+                // add all the fields from C1XOptions as options
+                options.addFieldOptions(C1XOptions.class, "-XX");
                 options.printHelp(System.out, 80);
                 return;
             }
@@ -280,7 +282,7 @@ public final class BootImageGenerator {
             try {
                 Trace.begin(1, "writing boot image file: " + file);
                 bootImage.write(outputStream);
-                Trace.end(1, "end boot image file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+                Trace.end(1, "end boot image file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
             } catch (IOException ioException) {
                 ProgramError.unexpected("could not write file: " + file, ioException);
             } finally {
@@ -306,7 +308,7 @@ public final class BootImageGenerator {
     private void writeJar(File file) throws IOException {
         Trace.begin(1, "writing boot image jar file: " + file);
         createBootImageJarFile(file);
-        Trace.end(1, "end boot image jar file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+        Trace.end(1, "end boot image jar file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
     }
 
     /**
@@ -321,7 +323,7 @@ public final class BootImageGenerator {
         final FileOutputStream fileOutputStream = new FileOutputStream(file);
         new GraphStats(graphPrototype).dumpStats(new PrintStream(fileOutputStream));
         fileOutputStream.close();
-        Trace.end(1, "end boot image statistics file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+        Trace.end(1, "end boot image statistics file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
     }
 
     /**
@@ -340,7 +342,7 @@ public final class BootImageGenerator {
         BootImageObjectTree.saveTree(dataOutputStream, graphPrototype.links(), dataPrototype.allocationMap());
         dataOutputStream.flush();
         fileOutputStream.close();
-        Trace.end(1, "writing boot image object tree file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+        Trace.end(1, "writing boot image object tree file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
     }
 
     /**
@@ -358,7 +360,7 @@ public final class BootImageGenerator {
         BootImageMethodTree.saveTree(dataOutputStream, compiledPrototype.links());
         dataOutputStream.flush();
         fileOutputStream.close();
-        Trace.end(1, "writing boot image method tree file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+        Trace.end(1, "writing boot image method tree file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
     }
 
     /**

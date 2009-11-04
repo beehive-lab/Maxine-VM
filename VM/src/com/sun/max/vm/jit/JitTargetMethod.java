@@ -299,7 +299,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             return true;
         }
 
-        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter);
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter, null);
     }
 
     public Pointer getFramePointer(Pointer cpuStackPointer, Pointer cpuFramePointer, Pointer osSignalIntegerRegisters) {
