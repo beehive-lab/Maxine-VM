@@ -751,8 +751,8 @@ function run_javadoc() {
 
 image_configs=( \
     java#-run=java \
-    c1x-opt0#-prototype-jit,--XX:+OptLevel=0,-jit=com.sun.max.vm.compiler.c1x \
-    c1x-opt0-xir#-prototype-jit,--XX:+OptLevel=0,-jit=com.sun.max.vm.compiler.c1x,--XX:+GenerateLIRXIR,--XX:+GenerateUnresolvedLIRXIR \
+    c1x-opt0#-prototype-jit,--XX:OptLevel=0,-jit=com.sun.max.vm.compiler.c1x \
+    c1x-opt0-xir#-prototype-jit,--XX:OptLevel=0,-jit=com.sun.max.vm.compiler.c1x,--XX:+GenerateLIRXIR,--XX:+GenerateUnresolvedLIRXIR \
     cpsc1x#-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
     cpscps#-run=test.com.sun.max.vm.jtrun.all,-native-tests \
     cpsjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
