@@ -270,7 +270,8 @@ if [[ "$junit_version" != 4.* ]]; then
 fi 
 maxine_cp=${maxine_cp}:${JUNIT4_CP}
 
-maxine_vm=${maxine_dir}/Native/generated/${MAXINE_OS}/maxvm
+test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/Native/generated/${MAXINE_OS}"
+maxine_vm=$MAXVM_DIR/maxvm
 
 #=======================================
 # Utility for verbose execution
@@ -923,6 +924,32 @@ vm_help="launch the Maxine VM
 
 function run_vm() {
     run ${maxine_vm} $MAXVM_OPTIONS $@
+}
+
+#=======================================
+# 'copyvm' command
+#=======================================
+
+copyvm_usage="dest"
+copyvm_help="copy the VM files to a specified directory
+
+    Copy the VM executable, shared libraries and boot image files to
+    a specified directory, creating it first if necessary. This allows
+    multiple VMs to exist in a single workspace.
+    
+    To use a particular VM, set the MAXVM_DIR environment variable before
+    running a \"max vm ...\" command."
+
+function run_copyvm() {
+    if [ ! -d $1 ]; then
+        mkdir -p $1 || { echo "Failed to created directory $1"; exit 1; }
+    fi
+    run cp -r ${maxine_dir}/Native/generated/${MAXINE_OS}/* $1 && {
+        echo "Copied all VM files to $1. To run this copy of the VM:"
+        echo
+        echo "    env MAXVM_DIR=$1 max vm ..."
+        echo
+    }
 }
 
 #=======================================
