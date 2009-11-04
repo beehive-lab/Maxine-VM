@@ -469,10 +469,15 @@ void *native_properties(void) {
 }
 
 float native_parseFloat(const char* cstring, float nan) {
+#if os_GUESTVMXEN
+    // TODO
+    return nan;
+#else
     char *endptr;
     float result = strtof(cstring, (char**) &endptr);
     if (endptr != cstring + strlen(cstring)) {
         result = nan;
     }
     return result;
+#endif
 }
