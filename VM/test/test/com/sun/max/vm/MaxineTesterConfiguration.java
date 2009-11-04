@@ -101,7 +101,7 @@ public class MaxineTesterConfiguration {
         output(test.output.WeakReferenceTest02.class);
         output(test.output.WeakReferenceTest03.class);
         output(test.output.WeakReferenceTest04.class);
-        output(test.output.MegaThreads.class);
+        output(test.output.MegaThreads.class, RAND_SPARC);
 
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                        RAND_ALL);
