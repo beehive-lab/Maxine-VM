@@ -663,7 +663,7 @@ public final class JDK_java_lang_System {
         }
 
         // 3. reinitialize java.lang.ProcessEnvironment with this process's environment
-        ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).callInitializer();
+        JDK.java_lang_ProcessEnvironment.classActor().callInitializer();
 
         // 4. perform OS-specific initialization
         switch (Platform.hostOrTarget().operatingSystem) {
