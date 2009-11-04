@@ -49,7 +49,7 @@ public class StringConstantInspector extends ObjectInspector {
         // This is the default for a newly created inspector.
         // TODO (mlvdv) make this a global view option?
         alternateDisplay = true;
-        createFrame();
+        createFrame(true);
     }
 
     @Override
@@ -81,15 +81,14 @@ public class StringConstantInspector extends ObjectInspector {
                 prober.refresh(true);
             }
         });
-        frame().getContentPane().add(tabbedPane);
+        getContentPane().add(tabbedPane);
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         // Only refresh the visible pane.
         final Prober pane = (Prober) tabbedPane.getSelectedComponent();
         pane.refresh(force);
         super.refreshView(force);
-        return true;
     }
 }

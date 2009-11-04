@@ -86,25 +86,6 @@ public abstract class TeleRegisters {
     }
 
     /**
-     * @return a list of the registers in this set that point into the described area of memory in the VM.
-     * Empty if region starts at zero.
-     */
-    // TODO (mlvdv) remove
-    @Deprecated
-    public Sequence<Symbol> find(Address startAddress, Address endAddress) {
-        final AppendableSequence<Symbol> symbols = new ArrayListSequence<Symbol>(4);
-        if (!startAddress.isZero()) {
-            for (int index = 0; index < registerValues.length; index++) {
-                final Address value = registerValues[index];
-                if (startAddress.lessEqual(value)  && value.lessThan(endAddress)) {
-                    symbols.append(symbolizer.fromValue(index));
-                }
-            }
-        }
-        return symbols;
-    }
-
-    /**
      * @return a list of the registers in this set that point into the described area of memory in the VM..
      */
     public Sequence<Symbol> find(MemoryRegion memoryRegion) {
@@ -119,22 +100,6 @@ public abstract class TeleRegisters {
         }
         return symbols;
     }
-
-     /**
-     * @return a comma-separated list of the register names in this set that
-     * point into the described area of memory in the VM.
-     */
-    public String findAsNameList(Address startAddress, Address endAddress) {
-        String nameList = "";
-        for (Symbol registerSymbol : find(startAddress, endAddress)) {
-            if (nameList.length() > 0) {
-                nameList += ",";
-            }
-            nameList += registerSymbol.name();
-        }
-        return nameList;
-    }
-
 
     /**
      * @return a comma-separated list of the register names in this set that

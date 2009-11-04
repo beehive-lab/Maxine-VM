@@ -26,19 +26,20 @@ import java.util.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ci.CiTargetMethod.*;
 import com.sun.c1x.ri.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 
 /**
  * This class implements a {@link com.sun.max.vm.compiler.target.TargetMethod target method} for
@@ -86,6 +87,10 @@ public class C1XTargetMethod extends TargetMethod {
 
     private int neededBytes(int value) {
         return ((value - 1) / Bytes.WIDTH) + 1;
+    }
+
+    private int registerReferenceMapBits() {
+        return referenceRegisterCount;
     }
 
     private int registerReferenceMapBytes() {
@@ -267,36 +272,36 @@ public class C1XTargetMethod extends TargetMethod {
 
         referenceMap = new byte[totalReferenceMapBytes() * totalStopPositions];
 
-        int z = 0;
+        int index = 0;
         int[] stopPositions = new int[totalStopPositions];
         Object[] directCallees = new Object[ciTargetMethod.directCalls.size()];
 
         for (Call site : ciTargetMethod.directCalls) {
-            initStopPosition(ciTargetMethod, z, stopPositions, site.codePos, site.registerMap, site.stackMap);
+            initStopPosition(ciTargetMethod, index, stopPositions, site.codePos, site.registerMap, site.stackMap);
 
             if (site.globalStubID != null) {
                 TargetMethod globalStubMethod = (TargetMethod) site.globalStubID;
                 assert globalStubMethod != null;
-                directCallees[z] = globalStubMethod;
+                directCallees[index] = globalStubMethod;
             } else {
                 final ClassMethodActor cma = getClassMethodActor(site.runtimeCall, site.method);
                 assert cma != null : "unresolved direct call!";
-                directCallees[z] = cma;
+                directCallees[index] = cma;
             }
 
-            assert directCallees[z] != null;
+            assert directCallees[index] != null;
 
-            z++;
+            index++;
         }
 
         for (Call site : ciTargetMethod.indirectCalls) {
-            initStopPosition(ciTargetMethod, z, stopPositions, site.codePos, site.registerMap, site.stackMap);
-            z++;
+            initStopPosition(ciTargetMethod, index, stopPositions, site.codePos, site.registerMap, site.stackMap);
+            index++;
         }
 
         for (CiTargetMethod.Safepoint safepoint : ciTargetMethod.safepoints) {
-            initStopPosition(ciTargetMethod, z, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
-            z++;
+            initStopPosition(ciTargetMethod, index, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
+            index++;
         }
 
         this.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
@@ -398,7 +403,6 @@ public class C1XTargetMethod extends TargetMethod {
     @UNSAFE
     @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
-
         final int throwOffset = throwAddress.minus(codeStart).toInt();
         for (int i = 0; i < getExceptionHandlerCount(); i++) {
             int codePos = getCodePosAt(i);
@@ -434,6 +438,69 @@ public class C1XTargetMethod extends TargetMethod {
 
     private int getExceptionHandlerCount() {
         return exceptionClassActors == null ? 0 : exceptionClassActors.length;
+    }
+
+    @Override
+    public void prepareReferenceMap(boolean isTopFrame, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, TargetMethod lastJavaCallee, ReferenceMapCallback result) {
+
+        int stopIndex = lookupStopPosition(instructionPointer);
+
+        // TODO (tw): Tentative implementation! Implement this correctly
+
+        for (int i = 0; i < frameReferenceMapBits(); i++) {
+            boolean curBit = isFrameReferenceMapBitSet(stopIndex, i);
+            if (curBit) {
+                Pointer referencePointer = stackPointer.plusWords(i);
+                result.setReferenceMapBit(referencePointer);
+            }
+        }
+
+        if (lastJavaCallee instanceof C1XTargetMethod) {
+            final C1XTargetMethod lastJavaCalleeC1X = (C1XTargetMethod) lastJavaCallee;
+            if (lastJavaCalleeC1X.isCalleeSaved()) {
+                for (int i = 0; i < registerReferenceMapBits(); i++) {
+                    boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
+                    if (curBit) {
+
+                        // TODO (tw): Check if this is correct?
+                        int numberOfWords = i + 2;
+                        Pointer referencePointer = stackPointer.minusWords(numberOfWords);
+                        result.setReferenceMapBit(referencePointer);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
+
+        // TODO (tw): Tentative implementation! Make correct...
+
+        int stopIndex = lookupStopPosition(instructionPointer);
+        for (int i = 0; i < registerReferenceMapBits(); i++) {
+            boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
+            if (curBit) {
+                int numberOfWords = i;
+                Pointer referencePointer = registerState.plusWords(numberOfWords);
+                preparer.setReferenceMapBit(referencePointer);
+            }
+        }
+    }
+
+    private int lookupStopPosition(Pointer instructionPointer) {
+        int offset = instructionPointer.minus(codeStart()).toInt();
+        for (int i = 0; i < stopPositions.length; i++) {
+            if (stopPositions[i] == offset) {
+                return i;
+            }
+        }
+
+        Log.print("Could not find stop position for instruction at position ");
+        Log.print(instructionPointer.minus(codeStart()).toInt());
+        Log.print(" in ");
+        Log.printMethod(classMethodActor(), true);
+        throw FatalError.unexpected("Could not find stop position in target method");
     }
 
     @Override

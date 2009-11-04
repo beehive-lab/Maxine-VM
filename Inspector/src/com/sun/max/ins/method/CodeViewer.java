@@ -115,11 +115,6 @@ public abstract class CodeViewer extends InspectorPanel {
             }
         });
         viewCloseButton.setIcon(style().codeViewCloseIcon());
-
-        //getActionMap().put(SEARCH_ACTION, new SearchAction());
-
-        // TODO (mlvdv)  generalize so that this binding comes from a preference
-        //getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke('F', CTRL_DOWN_MASK), SEARCH_ACTION);
     }
 
     protected void createView() {
@@ -169,7 +164,7 @@ public abstract class CodeViewer extends InspectorPanel {
         if (searchToolBar == null) {
             searchToolBar = new RowTextSearchToolBar(inspection(), searchListener, getRowTextSearcher());
             toolBarPanel.add(searchToolBar);
-            parent().frame().pack();
+            parent().pack();
             searchToolBar.getFocus();
         }
     }
@@ -177,7 +172,7 @@ public abstract class CodeViewer extends InspectorPanel {
     private void closeSearch() {
         Trace.line(TRACE_VALUE, "search:  closing");
         toolBarPanel.remove(searchToolBar);
-        parent().frame().pack();
+        parent().pack();
         searchToolBar = null;
         searchMatchingRows = null;
     }
@@ -290,9 +285,8 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     protected void flash() {
-        parent.frame().flash(style().frameBorderFlashColor());
+        parent.flash();
     }
-
 
     /**
      * Summary information for a frame on the stack.
@@ -431,18 +425,4 @@ public abstract class CodeViewer extends InspectorPanel {
         }
         return false;
     }
-
-    // TODO (mlvdv) figure out how to make this a view-specific binding without interference with global menu item accelerators.
-//    private final class SearchAction extends InspectorAction {
-//
-//        SearchAction() {
-//            super(inspection(), SEARCH_ACTION);
-//        }
-//
-//        @Override
-//        public void procedure() {
-//            addSearchToolBar();
-//        }
-//    }
-
 }

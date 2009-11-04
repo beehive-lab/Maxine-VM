@@ -20,17 +20,14 @@
  */
 package com.sun.max.ins.gui;
 
-import java.util.*;
-
-import com.sun.max.collect.*;
 
 /**
  * A marker interface for an inspector that contains other inspectors.
  * The contained inspectors have the container as their parent.
- * The contained inspectors are included in {@linkplain UniqueInspector#find searches} for unique inspectors.
- * 
+  *
  * @author Mick Jordan
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public interface InspectorContainer<Inspector_Type extends Inspector> extends Iterable<Inspector_Type> {
 
@@ -48,27 +45,4 @@ public interface InspectorContainer<Inspector_Type extends Inspector> extends It
     Inspector_Type getSelected();
 
     int getSelectedIndex();
-
-    public static final class Static {
-        private Static() {
-
-        }
-
-        /**
-         * Creates an iterator over the inspectors contained in an inspector container.
-         * Because of some odd behavior by tabbed frames, sometimes there are contained components
-         * that aren't actually Inspectors.
-         */
-        public static <Inspector_Type extends Inspector> Iterator<Inspector_Type> iterator(final InspectorContainer<Inspector_Type> container) {
-            final LinkSequence<Inspector_Type> inspectors = new LinkSequence<Inspector_Type>();
-            for (int index = 0; index < container.length(); index++) {
-                final Inspector_Type inspector = container.inspectorAt(index);
-                if (inspector != null) {
-                    inspectors.append(inspector);
-                }
-            }
-            return inspectors.iterator();
-        }
-    }
-
 }

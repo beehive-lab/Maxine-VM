@@ -37,6 +37,7 @@ import com.sun.max.tele.*;
 public class InspectorScrollPane extends JScrollPane implements Prober, InspectionHolder {
 
     private final Inspection inspection;
+    private final String tracePrefix;
 
     /**
      * Creates a new {@JScrollPane} for use in the {@link Inspection}.
@@ -48,6 +49,7 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
     public InspectorScrollPane(Inspection inspection, Component component) {
         super(component, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         // Ensure that any background that isn't covered with the component has the same background color
         if (getViewport() != null) {
             getViewport().setBackground(component.getBackground());
@@ -88,4 +90,10 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
     public void refresh(boolean force) {
     }
 
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
 }

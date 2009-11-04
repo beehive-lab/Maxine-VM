@@ -64,13 +64,10 @@ public abstract class Actor {
     // VM-internal flags for classes:
     public static final int INNER_CLASS =       0x00100000;
     public static final int TEMPLATE =          0x00200000;
+    public static final int GENERATED =         0x00400000;
     public static final int FINALIZER =         0x00800000;
     public static final int SPECIAL_REFERENCE = 0x01000000;
-
-    /**
-     * The flag value denoting that a class is not from a class file.
-     */
-    public static final int GENERATED = 0x00400000;
+    public static final int REMOTE =            0x02000000;
 
     // Common flags referring to fields in #4.5, Table #4.4:
     public static final int ACC_VOLATILE =   0x00000040;
@@ -163,6 +160,7 @@ public abstract class Actor {
     @INSPECTED
     public final Utf8Constant name;
 
+    @RESET
     public Object ciObject;
 
     protected Actor(Utf8Constant name, int flags) {
@@ -348,6 +346,11 @@ public abstract class Actor {
     @INLINE
     public static boolean isGenerated(int flags) {
         return (flags & GENERATED) != 0;
+    }
+
+    @INLINE
+    public static boolean isRemote(int flags) {
+        return (flags & REMOTE) != 0;
     }
 
     @INLINE

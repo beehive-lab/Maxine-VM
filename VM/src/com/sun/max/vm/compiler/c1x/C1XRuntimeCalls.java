@@ -32,6 +32,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -431,6 +432,7 @@ public class C1XRuntimeCalls {
     public static Object resolveStaticFields(int index, ConstantPool constantPool) {
         // Here the reference to the field cp entry is given
         final ClassActor classActor = constantPool.fieldAt(index).resolve(constantPool, index).holder();
+        MakeClassInitialized.makeClassInitialized(classActor);
         return classActor.staticTuple();
     }
 

@@ -66,7 +66,7 @@ public final class HubInspector extends ObjectInspector {
         showMTables = globalHubPreferences.showMTables;
         showRefMaps = globalHubPreferences.showRefMaps;
 
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         if (teleClassMethodActor != null) {
             // the object is, or is associated with a ClassMethodActor.
@@ -181,11 +181,11 @@ public final class HubInspector extends ObjectInspector {
             panel.add(refMapPane);
         }
 
-        frame().getContentPane().add(panel);
+        getContentPane().add(panel);
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         fieldsPane.refresh(force);
         if (iTablePane != null) {
             iTablePane.refresh(force);
@@ -200,7 +200,6 @@ public final class HubInspector extends ObjectInspector {
             refMapPane.refresh(force);
         }
         super.refreshView(force);
-        return true;
     }
 
 

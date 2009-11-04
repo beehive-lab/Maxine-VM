@@ -281,7 +281,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             traceJniEntry();
             noTracing.bind();
         } else {
-            if (JniNativeInterface.verbose()) {
+            if (ClassMethodActor.traceJNI()) {
                 traceJniEntry();
             }
         }
@@ -305,7 +305,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             traceJniExit();
             notVerbose.bind();
         } else {
-            if (JniNativeInterface.verbose()) {
+            if (ClassMethodActor.traceJNI()) {
                 traceJniExit();
             }
         }

@@ -81,7 +81,12 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
                 ProgramError.check(!targetGenerator().hasStackParameters(bytecodeSourceTemplate), "Template must not have *any* stack parameters: " + bytecodeSourceTemplate);
                 final CPSTargetMethod targetMethod = targetGenerator().makeIrMethod(bytecodeSourceTemplate);
                 if (!(targetMethod.referenceLiterals() == null)) {
-                    ProgramError.unexpected("Template must not have *any* reference literals: " + targetMethod + " " + Arrays.toString(targetMethod.referenceLiterals()), null);
+                    StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + targetMethod);
+                    for (int i = 0; i < targetMethod.referenceLiterals().length; i++) {
+                        Object literal = targetMethod.referenceLiterals()[i];
+                        sb.append("\n  " + i + ": " + literal.getClass().getName() + " // \"" + literal + "\"");
+                    }
+                    ProgramError.unexpected(sb.toString());
                 }
                 ProgramError.check(targetMethod.scalarLiterals() == null, "Template must not have *any* scalar literals: " + targetMethod);
                 if (targetMethod.frameSize() > maxTemplateFrameSize) {

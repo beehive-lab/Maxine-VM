@@ -54,14 +54,14 @@ public final class JavaSourceInspector  extends FileInspector {
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), textArea);
         scrollPane.setPreferredSize(inspection().geometry().javaSourceFramePrefSize());
         //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
-        frame().setContentPane(scrollPane);
+        setContentPane(scrollPane);
         refreshView(true);
         gui().moveToMiddle(this);
     }
 
     private JavaSourceInspector(Inspection inspection, File file) {
         super(inspection, file);
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
     }
 

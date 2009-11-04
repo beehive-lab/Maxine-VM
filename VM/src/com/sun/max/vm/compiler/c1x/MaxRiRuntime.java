@@ -359,12 +359,13 @@ public class MaxRiRuntime implements RiRuntime {
      * Canonicalizes resolved {@code MaxRiMethod} instances (per runtime), so
      * that the same {@code MaxRiMethod} instance is always returned for the
      * same {@code MethodActor}.
-     * @param methodActor the mehtod actor for which to get the canonical type
+     * @param methodActor the method actor for which to get the canonical type
      * @param maxRiConstantPool
      * @return the canonical compiler interface method for the method actor
      */
     public MaxRiMethod canonicalRiMethod(MethodActor methodActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
         // TODO: is synchronization necessary here or are duplicates harmless?
+
         // all resolved methods are canonicalized per runtime instance
         final MaxRiMethod previous = (MaxRiMethod) methodActor.ciObject;
         if (previous == null) {
@@ -385,7 +386,8 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public MaxRiField canonicalRiField(FieldActor fieldActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
         // TODO: is synchronization necessary here or are duplicates harmless?
-        // all resolved field are canonicalized per runtime instance
+
+        // all resolved fields are canonicalized per runtime instance
         final MaxRiField previous = (MaxRiField) fieldActor.ciObject;
         if (previous == null) {
             final MaxRiField field = new MaxRiField(maxRiConstantPool, fieldActor, cpi);
@@ -405,6 +407,7 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public MaxRiType canonicalRiType(ClassActor classActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
         // TODO: is synchronization necessary here or are duplicates harmless?
+
         // all resolved types are canonicalized per runtime instance
         final MaxRiType previous = (MaxRiType) classActor.ciObject;
         if (previous == null) {

@@ -65,7 +65,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
         viewPreferences.addListener(this);
 
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
 
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
@@ -105,14 +105,13 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     public void createView() {
         table = new ThreadsTable(inspection(), viewPreferences);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), table);
-        frame().setContentPane(scrollPane);
+        setContentPane(scrollPane);
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
-        return true;
     }
 
     @Override

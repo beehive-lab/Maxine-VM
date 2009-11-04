@@ -35,6 +35,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
+import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -92,7 +93,11 @@ public class C1XTest {
         "Show help message and exit.");
 
     static {
-        C1XCompilerScheme.addOptions(options);
+        // add all the fields from C1XOptions as options
+        options.addFieldOptions(C1XOptions.class, "XX");
+
+        // add a special option "c1x-optlevel" which adjusts the optimization level
+        options.addOption(C1XCompilerScheme.OptLevel, Syntax.REQUIRES_EQUALS);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -250,8 +255,9 @@ public class C1XTest {
         }
         if (printBailout && result.bailout() != null) {
             out.println("");
+            out.println(method);
             if (printBailoutSizeOption.getValue()) {
-                out.println(method + " = " + result.statistics().byteCount + " bytes");
+                out.println(result.statistics().byteCount + " bytes");
             }
             result.bailout().printStackTrace();
         }
@@ -529,6 +535,25 @@ public class C1XTest {
         }
     }
 
+    private static String printMap(Map m) {
+        StringBuilder sb = new StringBuilder();
+
+        List<String> keys = new ArrayList<String>();
+        for (Object key : m.keySet()) {
+            keys.add((String) key);
+        }
+        Collections.sort(keys);
+
+        for (String key : keys) {
+            sb.append(key);
+            sb.append("\t");
+            sb.append(m.get(key));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
     private static void printClassFields(Class<?> javaClass) {
         final String className = javaClass.getSimpleName();
         out.println(className + " {");
@@ -542,6 +567,12 @@ public class C1XTest {
                 } else if (field.getType() == float.class) {
                     out.print("    " + fieldName + " = " + field.getFloat(null) + "\n");
                 } else if (field.getType() == String.class) {
+                    out.print("    " + fieldName + " = " + field.get(null) + "\n");
+                } else if (field.getType() == Map.class) {
+
+                    Map m = (Map) field.get(null);
+                    out.print("    " + fieldName + " = " + printMap(m) + "\n");
+                } else {
                     out.print("    " + fieldName + " = " + field.get(null) + "\n");
                 }
             } catch (IllegalAccessException e) {

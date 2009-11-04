@@ -34,7 +34,7 @@ public class ClassSearch extends ClasspathTraversal {
 
     /**
      * Handles a class file encountered during the traversal.
-     * 
+     *
      * @param className
      *                the name of the class denoted by the class file
      * @return true if the traversal should continue, false if it should terminate
@@ -46,7 +46,7 @@ public class ClassSearch extends ClasspathTraversal {
     /**
      * Handles a class file encountered during the traversal. This method may be called more than once for the same class as
      * class files are not guaranteed to be unique in a classpath.
-     * 
+     *
      * @param isArchiveEntry true if the class is in a .zip or .jar file, false if it is a file in a directory
      * @param className
      *                the name of the class denoted by the class file
@@ -56,7 +56,7 @@ public class ClassSearch extends ClasspathTraversal {
         return visitClass(className);
     }
 
-    private boolean visit(boolean isArchiveEntry, String dottifiedResource) {
+    protected boolean visit(boolean isArchiveEntry, String dottifiedResource) {
         if (dottifiedResource.endsWith(".class")) {
             final String className = Strings.chopSuffix(dottifiedResource, ".class");
             return visitClass(isArchiveEntry, className);
@@ -65,12 +65,12 @@ public class ClassSearch extends ClasspathTraversal {
     }
 
     @Override
-    protected final boolean visitArchiveEntry(ZipFile archive, ZipEntry resource) {
+    protected boolean visitArchiveEntry(ZipFile archive, ZipEntry resource) {
         return visit(true, resource.getName().replace('/', '.'));
     }
 
     @Override
-    protected final boolean visitFile(File parent, String resource) {
+    protected boolean visitFile(File parent, String resource) {
         return visit(false, resource.replace(File.separatorChar, '.'));
     }
 }

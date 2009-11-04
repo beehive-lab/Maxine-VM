@@ -35,7 +35,7 @@ public final class ArrayInspector extends ObjectInspector {
 
     ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
-        createFrame();
+        createFrame(true);
     }
 
     @Override
@@ -43,14 +43,13 @@ public final class ArrayInspector extends ObjectInspector {
         super.createView();
         final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
         elementsPane = ObjectScrollPane.createArrayElementsPane(inspection(), teleArrayObject, instanceViewPreferences);
-        frame().getContentPane().add(elementsPane);
+        getContentPane().add(elementsPane);
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         elementsPane.refresh(force);
         super.refreshView(force);
-        return true;
     }
 
 }

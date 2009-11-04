@@ -238,7 +238,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
 
-                final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
                 // frame pointer == stack pointer
                 final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
                 Pointer trapState = stackFrameWalker.trapState();
@@ -297,8 +296,14 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     break;
                 }
 
-                if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, stackPointer, ignoredOperandStackPointer, 0)) {
-                    return false;
+                if (!(targetMethod instanceof CPSTargetMethod)) {
+                    // TODO: Prepare frame reference map for C1X method
+                    targetMethod.prepareReferenceMap(isTopFrame, instructionPointer, stackPointer, Pointer.zero(), lastJavaCallee, preparer);
+                } else {
+                    final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
+                    if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, stackPointer, ignoredOperandStackPointer, 0)) {
+                        return false;
+                    }
                 }
                 break;
             }

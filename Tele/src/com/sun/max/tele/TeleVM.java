@@ -1232,8 +1232,7 @@ public abstract class TeleVM implements MaxVM {
             @Override
             protected boolean visitClass(String className) {
                 if (!className.endsWith("package-info")) {
-                    final String typeDescriptorString = "L"
-                            + className.replace('.', '/') + ";";
+                    final String typeDescriptorString = "L" + className.replace('.', '/') + ";";
                     typesOnClasspath.add(JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString));
                 }
                 return true;

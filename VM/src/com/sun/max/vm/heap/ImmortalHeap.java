@@ -78,10 +78,14 @@ public final class ImmortalHeap {
     /**
      * This method is called by the allocator when immortal allocation is turned on.
      *
+     * NOTE: The caller must ensure that this allocation and the subsequent planting
+     * of object header in the allocated cell is atomic.
+     *
      * @param size
      * @param adjustForDebugTag
      * @return pointer to allocated object
      */
+    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
     public static Pointer allocate(Size size, boolean adjustForDebugTag) {
         Pointer oldAllocationMark;
         Pointer cell;

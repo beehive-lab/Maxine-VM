@@ -69,7 +69,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
         viewPreferences = WatchpointsViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
 
-        final InspectorFrame frame = createFrame();
+        final InspectorFrame frame = createFrame(true);
 
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
@@ -99,7 +99,7 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     @Override
     protected void createView() {
         table = new WatchpointsTable(inspection(), viewPreferences);
-        frame().setContentPane(new InspectorScrollPane(inspection(), table));
+        setContentPane(new InspectorScrollPane(inspection(), table));
     }
 
     @Override
@@ -133,10 +133,9 @@ public final class WatchpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    protected boolean refreshView(boolean force) {
+    protected void refreshView(boolean force) {
         table.refresh(force);
         super.refreshView(force);
-        return true;
     }
 
     public void viewConfigurationChanged() {
