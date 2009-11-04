@@ -57,28 +57,16 @@ public final class VMOptions {
     private static final int HELP_INDENT = 32;
 
     /**
-     * A comparator for sorted a set of {@link VMOption}s in reverse lexicographic order of their
-     * {@linkplain VMOption#prefix prefixes}. This means that suboptions precede their parent option
-     * where a suboption is an option whose prefix starts with but is not equal to the parent's prefix.
+     * Used to collect and sort VM options as they are declared.
      */
     @HOSTED_ONLY
-    private static final Comparator<VMOption> VMOPTION_SORTER = new Comparator<VMOption>() {
-        public int compare(VMOption o1, VMOption o2) {
-            return o2.prefix.compareTo(o1.prefix);
-        }
-    };
+    private static final Set<VMOption> pristinePhaseOptionsSet = new LinkedHashSet<VMOption>();
 
     /**
      * Used to collect and sort VM options as they are declared.
      */
     @HOSTED_ONLY
-    private static final SortedSet<VMOption> pristinePhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
-
-    /**
-     * Used to collect and sort VM options as they are declared.
-     */
-    @HOSTED_ONLY
-    private static final SortedSet<VMOption> startingPhaseOptionsSet = new TreeSet<VMOption>(VMOPTION_SORTER);
+    private static final Set<VMOption> startingPhaseOptionsSet = new LinkedHashSet<VMOption>();
 
     private static VMOption[] pristinePhaseOptions;
     private static VMOption[] startingPhaseOptions;
@@ -132,7 +120,7 @@ public final class VMOptions {
      * This option is parsed in the native code (see maxine.c). It's declared here simply so that it
      * shows up in the {@linkplain #printUsage() usage} message.
      */
-    private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, "",
+    private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, null,
         "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
 
     private static Pointer argv;
@@ -151,12 +139,12 @@ public final class VMOptions {
         Log.print("    ");
         Log.print(prefix);
         Log.print(value);
-        Log.print(" ");
-        int column = 5 + prefix.length() + value.length();
-        for (; column < HELP_INDENT; column++) {
-            Log.print(' ');
-        }
         if (help != null) {
+            Log.print(" ");
+            int column = 5 + prefix.length() + value.length();
+            for (; column < HELP_INDENT; column++) {
+                Log.print(' ');
+            }
             // reformat the help text by wrapping the lines after column 72.
             // Strings.formatParagraphs() can't be used because allocation may not work here
             for (int j = 0; j < help.length(); j++) {
@@ -177,7 +165,7 @@ public final class VMOptions {
     }
 
     @HOSTED_ONLY
-    private static VMOption[] addOption(SortedSet<VMOption> options, VMOption option, Iterable<VMOption> allOptions) {
+    private static VMOption[] addOption(Set<VMOption> options, VMOption option, Iterable<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
             final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
             final String name = option.prefix.substring(prefixLength);
@@ -233,7 +221,7 @@ public final class VMOptions {
                     help = settings.help();
                     name = settings.name().isEmpty() ? field.getName().replace('_', '-') : settings.name();
                 } else {
-                    help = "";
+                    help = null;
                     name = field.getName().replace('_', '-');
                 }
                 try {

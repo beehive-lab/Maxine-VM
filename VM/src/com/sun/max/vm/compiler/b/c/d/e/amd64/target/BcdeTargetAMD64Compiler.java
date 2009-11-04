@@ -195,11 +195,11 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
-        return walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, lastJavaCallee, purpose, context);
+    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
+        return walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, callee, purpose, context);
     }
 
-    public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
+    public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer stackPointer = stackFrameWalker.stackPointer();
         final Pointer entryPoint;
@@ -296,14 +296,8 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     break;
                 }
 
-                if (!(targetMethod instanceof CPSTargetMethod)) {
-                    // TODO: Prepare frame reference map for C1X method
-                    targetMethod.prepareReferenceMap(isTopFrame, instructionPointer, stackPointer, Pointer.zero(), lastJavaCallee, preparer);
-                } else {
-                    final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
-                    if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, stackPointer, ignoredOperandStackPointer, 0)) {
-                        return false;
-                    }
+                if (!preparer.prepareFrameReferenceMap(targetMethod, instructionPointer, stackPointer, ignoredOperandStackPointer, 0, callee)) {
+                    return false;
                 }
                 break;
             }
@@ -325,8 +319,8 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                     // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
                     Safepoint.enable();
 
-                    if (lastJavaCallee != null && lastJavaCallee.registerRestoreEpilogueOffset() != -1) {
-                        unwindToCalleeEpilogue(throwable, catchAddress, stackPointer, lastJavaCallee);
+                    if (callee != null && callee.registerRestoreEpilogueOffset() != -1) {
+                        unwindToCalleeEpilogue(throwable, catchAddress, stackPointer, callee);
                     } else {
                         unwind(throwable, catchAddress, stackPointer);
                     }

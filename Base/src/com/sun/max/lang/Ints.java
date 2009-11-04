@@ -253,10 +253,10 @@ public final class Ints {
     }
 
     /**
-     * @see Longs#toUnitsString(long)
+     * @see Longs#toUnitsString(long, boolean)
      */
-    public static String toUnitsString(long number) {
-        return Longs.toUnitsString(number);
+    public static String toUnitsString(long number, boolean onlyPowerOfTwo) {
+        return Longs.toUnitsString(number, onlyPowerOfTwo);
     }
 
     /**

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
@@ -39,8 +38,6 @@ import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
-import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -188,27 +185,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return catchBlockPositions;
     }
 
-    /**
-     * Traces the exception handlers of the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceExceptionHandlers(IndentWriter writer) {
-        if (catchRangePositions != null) {
-            assert catchBlockPositions != null;
-            writer.println("Catches:");
-            writer.indent();
-            for (int i = 0; i < catchRangePositions.length; i++) {
-                if (catchBlockPositions[i] != 0) {
-                    final int catchRangeEnd = (i == catchRangePositions.length - 1) ? code.length : catchRangePositions[i + 1];
-                    final int catchRangeStart = catchRangePositions[i];
-                    writer.println("[" + catchRangeStart + " .. " + catchRangeEnd + ") -> " + catchBlockPositions[i]);
-                }
-            }
-            writer.outdent();
-        }
-    }
-
     boolean fatalIfNotSorted(int[] catchRangePositions) {
         if (catchRangePositions != null) {
             int last = Integer.MIN_VALUE;
@@ -321,23 +297,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     }
 
     /**
-     * Gets the target code position for a machine code instruction address.
-     *
-     * @param instructionPointer
-     *                an instruction pointer that may denote an instruction in this target method
-     * @return the start position of the bytecode instruction that is implemented at the instruction pointer or
-     *         -1 if {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will
-     *         be the case when {@code instructionPointer} is in the adapter frame stub code, prologue or epilogue.
-     */
-    public final int targetCodePositionFor(Pointer instructionPointer) {
-        final int targetCodePosition = instructionPointer.minus(codeStart).toInt();
-        if (targetCodePosition >= 0 && targetCodePosition < code.length) {
-            return targetCodePosition;
-        }
-        return -1;
-    }
-
-    /**
      * Gets the position of the next call (direct or indirect) in this target method after a given position.
      *
      * @param targetCodePosition the position from which to start searching
@@ -366,70 +325,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     }
 
     /**
-     * Gets the index of a stop position within this target method derived from a given instruction pointer. If the
-     * instruction pointer is equal to a safepoint position, then the index in {@link #stopPositions()} of that
-     * safepoint is returned. Otherwise, the index of the highest stop position that is less than or equal to the
-     * (possibly adjusted) target code position
-     * denoted by the instruction pointer is returned.  That is, if {@code instructionPointer} does not exactly match a
-     * stop position 'p' for a direct or indirect call, then the index of the highest stop position less than
-     * 'p' is returned.
-     *
-     * @return -1 if no stop index can be found for {@code instructionPointer}
-     * @see #stopPositions()
-     */
-    public int findClosestStopIndex(Pointer instructionPointer, boolean adjustPcForCall) {
-        final int targetCodePosition = targetCodePositionFor(instructionPointer);
-        if (stopPositions == null || targetCodePosition < 0 || targetCodePosition > code.length) {
-            return -1;
-        }
-
-        // Direct calls come first, followed by indirect calls and safepoints in the stopPositions array.
-
-        // Check for matching safepoints first
-        for (int i = numberOfDirectCalls() + numberOfIndirectCalls(); i < numberOfStopPositions(); i++) {
-            if (stopPosition(i) == targetCodePosition) {
-                return i;
-            }
-        }
-
-        // Since this is not a safepoint, it must be a call.
-
-        final int adjustedTargetCodePosition;
-        if (adjustPcForCall && compilerScheme.vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC == 0) {
-            // targetCodePostion is the instruction after the call (which might be another call).
-            // We need the find the call at which we actually stopped.
-            adjustedTargetCodePosition = targetCodePosition - 1;
-        } else {
-            adjustedTargetCodePosition = targetCodePosition;
-        }
-
-        int stopIndexWithClosestPosition = -1;
-        for (int i = numberOfDirectCalls() - 1; i >= 0; --i) {
-            final int directCallPosition = stopPosition(i);
-            if (directCallPosition <= adjustedTargetCodePosition) {
-                if (directCallPosition == adjustedTargetCodePosition) {
-                    return i; // perfect match; no further searching needed
-                }
-                stopIndexWithClosestPosition = i;
-                break;
-            }
-        }
-
-        // It is not enough that we find the first matching position, since there might be a direct as well as an indirect call before the instruction pointer
-        // so we find the closest one. This can be avoided if we sort the stopPositions array first, but the runtime cost of this is unknown.
-        for (int i = numberOfDirectCalls() + numberOfIndirectCalls() - 1; i >= numberOfDirectCalls(); i--) {
-            final int indirectCallPosition = stopPosition(i);
-            if (indirectCallPosition <= adjustedTargetCodePosition && (stopIndexWithClosestPosition < 0 || indirectCallPosition > stopPosition(stopIndexWithClosestPosition))) {
-                stopIndexWithClosestPosition = i;
-                break;
-            }
-        }
-
-        return stopIndexWithClosestPosition;
-    }
-
-
-    /**
      * Prepares the reference map for a portion of memory that contains saved register state corresponding
      * to a safepoint triggered at a particular instruction. This method fetches the reference map information
      * for the specified method and then copies it over the reference map for this portion of memory.
@@ -439,7 +334,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      */
     @Override
     public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
-        preparer.tracePrepareReferenceMap(this, this.findClosestStopIndex(instructionPointer, true), Pointer.zero(), "registers");
+        preparer.tracePrepareReferenceMap(this, this.findClosestStopIndex(instructionPointer), Pointer.zero(), "registers");
         final int safepointIndex = this.findSafepointIndex(instructionPointer);
         if (safepointIndex < 0) {
             Log.print("Could not find safepoint index for instruction at position ");
@@ -466,19 +361,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @Override
     public final boolean isGenerated() {
         return code != null;
-    }
-
-    @Override
-    public final String traceToString() {
-        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
-        writer.println("target method: " + this);
-        traceBundle(writer);
-        writer.flush();
-        if (MaxineVM.isHosted()) {
-            Disassemble.disassemble(byteArrayOutputStream, this);
-        }
-        return byteArrayOutputStream.toString();
     }
 
     /**
@@ -525,9 +407,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return frameReferenceMapSize * numberOfStopPositions();
     }
 
-    /**
-     * Gets a string representation of the reference map for each {@linkplain #stopPositions() stop} in this target method.
-     */
+    @Override
     public String referenceMapsToString() {
         if (numberOfStopPositions() == 0) {
             return "";
@@ -571,80 +451,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         }
 
         return buf.toString();
-    }
-
-    /**
-     * Traces the metadata of the compiled code represented by this object. In particular, the
-     * {@linkplain #traceExceptionHandlers(IndentWriter) exception handlers}, the
-     * {@linkplain #traceDirectCallees(IndentWriter) direct callees}, the #{@linkplain #traceScalarBytes(IndentWriter, TargetBundle) scalar data},
-     * the {@linkplain #traceReferenceLiterals(IndentWriter, TargetBundle) reference literals} and the address of the
-     * array containing the {@linkplain #code() compiled code}.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceBundle(IndentWriter writer) {
-        final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
-        writer.println("Layout:");
-        writer.println(Strings.indent(targetBundleLayout.toString(), writer.indentation()));
-        traceExceptionHandlers(writer);
-        traceDirectCallees(writer);
-        traceScalarBytes(writer, targetBundleLayout);
-        traceReferenceLiterals(writer, targetBundleLayout);
-        traceFrameDescriptors(writer);
-        traceReferenceMaps(writer);
-        writer.println("Code cell: " + targetBundleLayout.cell(start(), ArrayField.code).toString());
-    }
-
-    /**
-     * Traces the {@linkplain #directCallees() direct callees} of the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceDirectCallees(IndentWriter writer) {
-        if (directCallees != null) {
-            assert stopPositions != null && directCallees.length <= numberOfStopPositions();
-            writer.println("Direct Calls: ");
-            writer.indent();
-            for (int i = 0; i < directCallees.length; i++) {
-                writer.println(stopPosition(i) + " -> " + directCallees[i]);
-            }
-            writer.outdent();
-        }
-    }
-
-
-    /**
-     * Traces the {@linkplain #scalarLiterals() scalar data} addressed by the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceScalarBytes(IndentWriter writer, final TargetBundleLayout targetBundleLayout) {
-        if (scalarLiterals != null) {
-            writer.println("Scalars:");
-            writer.indent();
-            for (int i = 0; i < scalarLiterals.length; i++) {
-                final Pointer pointer = targetBundleLayout.cell(start(), ArrayField.scalarLiterals).plus(ArrayField.scalarLiterals.arrayLayout.getElementOffsetInCell(i));
-                writer.println("[" + pointer.toString() + "] 0x" + Integer.toHexString(scalarLiterals[i] & 0xFF) + "  " + scalarLiterals[i]);
-            }
-            writer.outdent();
-        }
-    }
-
-    /**
-     * Traces the {@linkplain #referenceLiterals() reference literals} addressed by the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceReferenceLiterals(IndentWriter writer, final TargetBundleLayout targetBundleLayout) {
-        if (referenceLiterals != null) {
-            writer.println("References: ");
-            writer.indent();
-            for (int i = 0; i < referenceLiterals.length; i++) {
-                final Pointer pointer = targetBundleLayout.cell(start(), ArrayField.referenceLiterals).plus(ArrayField.referenceLiterals.arrayLayout.getElementOffsetInCell(i));
-                writer.println("[" + pointer.toString() + "] " + referenceLiterals[i]);
-            }
-            writer.outdent();
-        }
     }
 
     /**
@@ -734,39 +540,8 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return compressedJavaFrameDescriptors;
     }
 
-    /**
-     * Traces the {@linkplain #compressedJavaFrameDescriptors() frame descriptors} for the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceFrameDescriptors(IndentWriter writer) {
-        if (compressedJavaFrameDescriptors != null) {
-            writer.println("Frame Descriptors:");
-            writer.indent();
-            final IndexedSequence<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
-            for (int stopIndex = 0; stopIndex < frameDescriptors.length(); ++stopIndex) {
-                final TargetJavaFrameDescriptor frameDescriptor = frameDescriptors.get(stopIndex);
-                final int stopPosition = stopPosition(stopIndex);
-                writer.println(stopPosition + ": " + frameDescriptor);
-            }
-            writer.outdent();
-        }
-    }
-
-    /**
-     * Traces the {@linkplain #referenceMaps() reference maps} for the stops in the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public final void traceReferenceMaps(IndentWriter writer) {
-        final String refmaps = referenceMapsToString();
-        if (!refmaps.isEmpty()) {
-            writer.println("Reference Maps:");
-            writer.println(Strings.indent(refmaps, writer.indentation()));
-        }
-    }
-
-    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer) {
+    @Override
+    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer, TargetMethod callee) {
         preparer.tracePrepareReferenceMap(this, stopIndex, refmapFramePointer, "frame");
         int frameSlotIndex = preparer.referenceMapBitIndex(refmapFramePointer);
         int byteIndex = stopIndex * frameReferenceMapSize();
@@ -806,7 +581,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      *     } directCallFrameMaps[numberOfDirectCalls]
      *     {
      *         u1 map[frameReferenceMapSize];
-     *     } inirectCallFrameMaps[numberOfIndirectCalls]
+     *     } indirectCallFrameMaps[numberOfIndirectCalls]
      *     {
      *         u1 map[frameReferenceMapSize];
      *     } safepointFrameMaps[numberOfSafepoints]
@@ -826,5 +601,47 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      */
     public final int frameReferenceMapSize() {
         return frameReferenceMapSize;
+    }
+
+    /**
+     * Traces the exception handlers of the compiled code represented by this object.
+     *
+     * @param writer where the trace is written
+     */
+    @Override
+    public final void traceExceptionHandlers(IndentWriter writer) {
+        if (catchRangePositions != null) {
+            assert catchBlockPositions != null;
+            writer.println("Exception handlers:");
+            writer.indent();
+            for (int i = 0; i < catchRangePositions.length; i++) {
+                if (catchBlockPositions[i] != 0) {
+                    final int catchRangeEnd = (i == catchRangePositions.length - 1) ? code.length : catchRangePositions[i + 1];
+                    final int catchRangeStart = catchRangePositions[i];
+                    writer.println("[" + catchRangeStart + " .. " + catchRangeEnd + ") -> " + catchBlockPositions[i]);
+                }
+            }
+            writer.outdent();
+        }
+    }
+
+    /**
+     * Traces the {@linkplain #compressedJavaFrameDescriptors() frame descriptors} for the compiled code represented by this object.
+     *
+     * @param writer where the trace is written
+     */
+    @Override
+    public final void traceDebugInfo(IndentWriter writer) {
+        if (compressedJavaFrameDescriptors != null) {
+            writer.println("Frame Descriptors:");
+            writer.indent();
+            final IndexedSequence<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
+            for (int stopIndex = 0; stopIndex < frameDescriptors.length(); ++stopIndex) {
+                final TargetJavaFrameDescriptor frameDescriptor = frameDescriptors.get(stopIndex);
+                final int stopPosition = stopPosition(stopIndex);
+                writer.println(stopPosition + ": " + frameDescriptor);
+            }
+            writer.outdent();
+        }
     }
 }
