@@ -83,6 +83,27 @@ public class VMOption {
     protected Pointer optionStart = Pointer.zero();
 
     /**
+     * Extends a given VM option help message with a suffix describing a given default value.
+     *
+     * @param help the original help message
+     * @param defaultValue the string version of a default value (ignored if {@code null})
+     * @return the help message extended to include {@code defaultValue} if the latter is not {@code null}
+     */
+    @HOSTED_ONLY
+    protected static String appendDefaultValue(String help, String defaultValue) {
+        if (defaultValue == null) {
+            return help;
+        }
+        if (help == null || help.length() == 0) {
+            return "(default: " + defaultValue + ")";
+        }
+        if (help.endsWith(".")) {
+            return help.substring(0, help.length() - 1) + " (default: " + defaultValue + ").";
+        }
+        return help + " (default: " + defaultValue + ")";
+    }
+
+    /**
      * Creates a new VM option with the specified string prefix (which includes the '-') and the specified help text.
      *
      * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option

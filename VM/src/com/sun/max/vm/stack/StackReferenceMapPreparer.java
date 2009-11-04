@@ -785,10 +785,12 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * @param instructionPointer the current execution point in {@code targetMethod}
      * @param refmapFramePointer the frame pointer of the frame. The reference map entries for the frame are relative to this address.
      * @param operandStackPointer the CPU defined stack pointer (e.g. RSP on AMD64)
+     * @param callee the target method whose frame is below this frame being walked (i.e. the frame of {@code
+     *            targetMethod}'s callee). This will be null if {@code targetMethod} called a native function.
      * @return false to communicate to the enclosing stack walker that this is the last frame to be walked; true if the
      *         stack walker should continue to the next frame
      */
-    public boolean prepareFrameReferenceMap(CPSTargetMethod targetMethod, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
+    public boolean prepareFrameReferenceMap(TargetMethod targetMethod, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer, int offsetToFirstParameter, TargetMethod callee) {
 
         if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor().isTrampoline()) {
             // Since trampolines are reused for different callees with different parameter signatures,
@@ -801,9 +803,9 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             trampolineTargetMethod = targetMethod;
             trampolineRefmapPointer = refmapFramePointer;
         } else {
-            final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer, true);
+            final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer);
             if (stopIndex < 0) {
-                Log.print("Could not find stop postion for instruction at position ");
+                Log.print("Could not find stop position for instruction at position ");
                 Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
                 Log.print(" in ");
                 Log.printMethod(targetMethod.classMethodActor(), true);
@@ -828,7 +830,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                 trampolineTargetMethod = null;
                 trampolineRefmapPointer = Pointer.zero();
             }
-            targetMethod.prepareFrameReferenceMap(stopIndex, refmapFramePointer, this);
+            targetMethod.prepareFrameReferenceMap(stopIndex, refmapFramePointer, this, callee);
         }
 
         // If the stack reference map is being completed, then the stack walk stops after the first trap stub

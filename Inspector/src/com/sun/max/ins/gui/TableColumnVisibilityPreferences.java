@@ -62,6 +62,9 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
         void tableColumnViewPreferencesChanged();
     }
 
+    private final Inspection inspection;
+    private final String tracePrefix;
+
     /**
      * A predicate specifying which columns are to be displayed in the table-based viewer.
      */
@@ -75,7 +78,6 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
     private final IdentityHashSet<TableColumnViewPreferenceListener> tableColumnViewPreferenceListeners =
         new IdentityHashSet<TableColumnViewPreferenceListener>();
 
-    private final Inspection inspection;
 
     private final IndexedSequence<ColumnKind_Type> columnTypeValues;
 
@@ -96,6 +98,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
                     String name,
                     IndexedSequence<ColumnKind_Type> columnTypeValues) {
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         this.visibleColumns = new HashMap<ColumnKind_Type, Boolean>();
         this.columnTypeValues = columnTypeValues;
         final InspectionSettings settings = inspection.settings();
@@ -131,6 +134,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
      */
     public TableColumnVisibilityPreferences(TableColumnVisibilityPreferences<ColumnKind_Type> defaultPreferences) {
         inspection = defaultPreferences.inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         saveSettingsListener = null;
         columnTypeValues = defaultPreferences.columnTypeValues;
         visibleColumns = new HashMap<ColumnKind_Type, Boolean>(defaultPreferences.visibleColumns);

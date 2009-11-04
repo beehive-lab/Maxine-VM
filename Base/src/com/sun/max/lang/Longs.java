@@ -83,10 +83,16 @@ public final class Longs {
     /**
      * Converts a positive number to a string using unit suffixes to reduce the
      * number of digits to three or less using base 2 for sizes.
+     *
+     * @param number the number to convert to a string
+     * @param onlyPowerOfTwo if {@code true}, then a unit suffix is only used if {@code number} is an exact power of 2
      */
-    public static String toUnitsString(long number) {
+    public static String toUnitsString(long number, boolean onlyPowerOfTwo) {
         if (number < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(String.valueOf(number));
+        }
+        if (onlyPowerOfTwo && !isPowerOfTwoOrZero(number)) {
+            return String.valueOf(number);
         }
         if (number >= P) {
             return number / P + "P";

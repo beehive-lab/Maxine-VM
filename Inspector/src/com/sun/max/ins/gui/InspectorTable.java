@@ -61,6 +61,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     private final Inspection inspection;
+    private final String tracePrefix;
 
     /**
      * Should selection be highlighted by a box around the selected row(s)?
@@ -82,6 +83,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         super(inspectorTableModel, inspectorTableColumnModel);
         this.showSelectionWithBox = true;
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
     }
@@ -91,6 +93,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     protected InspectorTable(Inspection inspection) {
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
     }
@@ -138,6 +141,11 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * <br>
      * After this method is called, the left-button click is passed along to the renderer
      * for the cell under the mouse.
+     * <br>
+     * <strong>Note:</strong> When this method is called, the tables selection
+     * listener has already processed the left-button click: the selection model
+     * has been updated and any tables listening to the selection model will have
+     * been notified.
      *
      * @param row row in the table model where the click took place
      * @param col column in the column model where the click took place
@@ -383,4 +391,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         scrollRectToVisible(rectangle);
     }
 
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
 }

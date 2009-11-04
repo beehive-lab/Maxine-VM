@@ -36,12 +36,14 @@ import com.sun.max.tele.*;
 public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
 
     private final Inspection inspection;
+    private final String tracePrefix;
 
     /**
      * Creates a new {@JPanel} for use in the {@link Inspection}.
      */
     public InspectorPanel(Inspection inspection) {
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
     /**
@@ -52,6 +54,7 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
     public InspectorPanel(Inspection inspection, LayoutManager layoutManager) {
         super(layoutManager);
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
     public final Inspection inspection() {
@@ -88,4 +91,10 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
     public void refresh(boolean force) {
     }
 
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
 }

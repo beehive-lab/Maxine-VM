@@ -28,15 +28,13 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.program.option.*;
-import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.JavaPrototype;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
@@ -49,44 +47,44 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     private C1XCompiler compiler;
     private RiXirGenerator xirGenerator;
 
-    public static final Option<Integer> OptLevel;
+    public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-XX:OptLevel=", 0,
+        "Set the optimization level of C1X.") {
+        @Override
+        public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
+            boolean result = super.parseValue(optionValue);
+            if (result) {
+                C1XOptions.setOptimizationLevel(getValue());
+                return true;
+            }
+            return false;
+        }
+    }, MaxineVM.Phase.STARTING);
 
     public C1XCompilerScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
 
-    static {
-        OptLevel = new Option<Integer>("c1x-optlevel", 0, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
-            @Override
-            public void setValue(Integer value) {
-                C1XOptions.setOptimizationLevel(value);
-            }
-        };
-    }
-
-    public static void addOptions(OptionSet options) {
-        // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "XX");
-        // add a special option "c1x-optlevel" which adjusts the optimization level
-        options.addOption(OptLevel, Syntax.REQUIRES_EQUALS);
-
-    }
-
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
-            // create the RiRuntime object passed to C1X
-            c1xRuntime = MaxRiRuntime.globalRuntime;
-            CiTarget c1xTarget = createTarget(c1xRuntime, vmConfiguration());
-            xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
-            compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
-            compiler.init();
-        }
-        if (phase == MaxineVM.Phase.COMPILING) {
-            if (MaxineVM.isHosted()) {
-                // can only refer to JavaPrototype while bootstrapping.
-                JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
+        if (MaxineVM.isHosted()) {
+            if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+                VMOptions.addFieldOptions(C1XOptions.class);
+                // create the RiRuntime object passed to C1X
+                c1xRuntime = MaxRiRuntime.globalRuntime;
+                CiTarget c1xTarget = createTarget(c1xRuntime, vmConfiguration());
+                xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
+                compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
+                compiler.init();
             }
+            if (phase == MaxineVM.Phase.COMPILING) {
+                if (MaxineVM.isHosted()) {
+                    // can only refer to JavaPrototype while bootstrapping.
+                    JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
+                }
+            }
+        }
+        if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            C1XOptions.setDefaults();
         }
     }
 
@@ -176,7 +174,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         throw FatalError.unexpected("bailout"); // compilation failed
     }
 
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, StackFrameWalker.Purpose purpose, Object context) {
-        return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, lastJavaCallee, purpose, context);
+    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, StackFrameWalker.Purpose purpose, Object context) {
+        return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, callee, purpose, context);
     }
 }

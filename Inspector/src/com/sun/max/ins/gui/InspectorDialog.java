@@ -34,6 +34,7 @@ import com.sun.max.tele.*;
 public abstract class InspectorDialog extends JDialog implements InspectionHolder {
 
     private final Inspection inspection;
+    private final String tracePrefix;
 
     /**
      * Creates an instance of {@link JDialog}, specialized for use in the Maxine Inspector.
@@ -44,6 +45,7 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
     protected InspectorDialog(Inspection inspection, String frameTitle, boolean modal) {
         super(inspection.gui().frame(), frameTitle, modal);
         this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
     public final Inspection inspection() {
@@ -74,4 +76,10 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
         return inspection.actions();
     }
 
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
 }
