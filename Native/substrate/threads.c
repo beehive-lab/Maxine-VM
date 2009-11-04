@@ -41,7 +41,7 @@
 #include "jni.h"
 #include "word.h"
 #include "messenger.h"
-
+#include "mutex.h"
 #include "threads.h"
 #include "threadLocals.h"
 #include <sys/mman.h>
@@ -71,6 +71,11 @@
  * The global key used to retrieve a ThreadLocals object for a thread.
  */
 static ThreadLocalsKey theThreadLocalsKey;
+
+/**
+ * The native mutex associated with VmThreadMap.ACTIVE.
+ */
+static Mutex vmThreadMapMutex;
 
 /**
  * De-allocates the NativeThreadLocals object associated with a ThreadLocals object.
@@ -497,11 +502,14 @@ JNIEnv *thread_attach(NativeThreadLocals ntl) {
     }
     ntl->stackSize = stackInfo.ss_size;
     ntl->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
+#else
+    c_UNIMPLEMENTED();
 #endif
 
     ThreadLocals tl = thread_initSegments(ntl, triggered_tl);
-    thread_setThreadLocals(theThreadLocalsKey, (void *) tl);
 
+    mutex_enter(vmThreadMapMutex);
+    thread_setThreadLocals(theThreadLocalsKey, (void *) tl);
     VMThreadAttachMethod method = image_offset_as_address(VMThreadAttachMethod, vmThreadAttachMethodOffset);
     (*method)(nativeThread,
               ntl->stackBase,
@@ -511,6 +519,7 @@ JNIEnv *thread_attach(NativeThreadLocals ntl) {
               ntl->refMapArea,
               ntl->stackYellowZone,
               ntl->stackBase + ntl->stackSize);
+    mutex_exit(vmThreadMapMutex);
 
 #if log_THREADS
     log_println("thread_attach: id=%d, t=%p", ntl->id, nativeThread);
@@ -519,6 +528,9 @@ JNIEnv *thread_attach(NativeThreadLocals ntl) {
     return (JNIEnv *) getThreadLocalAddress(tl, JNI_ENV);
 }
 
+void nativeRegisterVmThreadMapMutex(Mutex mutex) {
+    vmThreadMapMutex = mutex;
+}
 
 /*
  * Create a thread.
