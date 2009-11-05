@@ -112,6 +112,7 @@ public class C1XTest {
         // set the default optimization level before parsing options
         options.parseArguments(args);
         C1XOptions.setOptimizationLevel(c1xOptLevel.getValue());
+        options.setValuesAgain();
         reportC1XOptions();
         final String[] arguments = options.getArguments();
 
