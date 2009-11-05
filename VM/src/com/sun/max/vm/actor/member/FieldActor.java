@@ -31,6 +31,7 @@ import sun.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -205,8 +206,6 @@ public class FieldActor extends MemberActor {
      */
     public final boolean isConstant() {
         final ClassActor holder = holder();
-
-
         if (isFinal()) {
             if (isStatic()) {
                 // Static final field:
@@ -222,9 +221,10 @@ public class FieldActor extends MemberActor {
                         // the values they assign to static final fields are frozen in the boot image.
                         return true;
                     }
-                    if (JDK.java_lang_ProcessEnvironment.classActor().equals(holder())) {
-                        return false;
-                    }
+//                    if (JDK.java_lang_ProcessEnvironment.classActor().equals(holder())) {
+//                        Trace.line(1, "***** NOT CONSTANT ******: " + this);
+//                        return false;
+//                    }
                 }
 
                 // This is now a field in a class with a class initializer:
