@@ -492,7 +492,7 @@ public final class ConstantPool {
      *                the {@linkplain PoolConstant#isResolved() resolved} constant to write at {@code index}
      */
     void updateAt(int index, ResolvableConstant constant) {
-        assert constant.isResolved() || constant instanceof ClassConstant.UnresolvedWithError;
+        assert constant.isResolved();
         assert constants[index].tag() == constant.tag();
 
         constants[index] = constant;

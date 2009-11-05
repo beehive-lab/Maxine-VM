@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.run.java;
 
-import static com.sun.max.vm.VMOptions.register;
+import static com.sun.max.vm.VMOptions.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -34,12 +34,12 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;

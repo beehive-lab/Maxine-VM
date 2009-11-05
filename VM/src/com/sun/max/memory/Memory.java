@@ -51,7 +51,7 @@ public final class Memory {
      * @return a pointer to the allocated chunk of memory or {@code Pointer.zero()} if allocation failed
      */
     public static Pointer allocate(Size size) {
-        if (size.toInt() < 0) {
+        if (size.toLong() < 0) {
             throw new IllegalArgumentException();
         }
         return Word.isBoxed() ? BoxedMemory.allocate(size) : memory_allocate(size);

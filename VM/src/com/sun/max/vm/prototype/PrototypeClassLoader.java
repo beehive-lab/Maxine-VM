@@ -94,6 +94,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      */
     public static boolean isOmittedType(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
+
         if (omittedClasses.contains(className)) {
             return true;
         }
@@ -168,6 +169,9 @@ public final class PrototypeClassLoader extends ClassLoader {
                     if (classActor != null) {
                         return classActor;
                     }
+//                    if (isOmittedType(typeDescriptor)) {
+//                        throw new OmittedClassError(typeDescriptor.toJavaString());
+//                    }
                     if (JavaTypeDescriptor.isArray(typeDescriptor)) {
                         final ClassActor componentClassActor = makeClassActor(typeDescriptor.componentTypeDescriptor());
                         return ClassActorFactory.createArrayClassActor(componentClassActor);
