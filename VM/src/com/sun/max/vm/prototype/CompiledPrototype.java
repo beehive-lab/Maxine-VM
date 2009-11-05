@@ -301,6 +301,7 @@ public class CompiledPrototype extends Prototype {
                         if (resolvable.isResolvableWithoutClassLoading(pool)) {
                             try {
                                 guard.value = resolvable.resolve(pool, guard.constantPoolIndex);
+                            } catch (OmittedClassError omittedClassError) {
                             } catch (HostOnlyFieldError prototypeOnlyFieldError) {
                             } catch (HostOnlyMethodError prototypeOnlyMethodError) {
                             }

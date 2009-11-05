@@ -399,7 +399,7 @@ public final class BootImageObjectTree {
 
     private static final Option<Integer> TRACE = options.newIntegerOption("trace", 1,
             "selects the trace level of the tool");
-    private static final Option<File> INPUT_FILE = options.newFileOption("in", BootImageGenerator.getDefaultBootImageObjectTreeFilePath(),
+    private static final Option<File> INPUT_FILE = options.newFileOption("in", BootImageGenerator.getBootImageObjectTreeFile(null),
             "the file from which to load the graph");
     private static final Option<File> OUTPUT_FILE = options.newFileOption("out", getDefaultOutputFile(),
             "the file to which the graph is printed");
@@ -419,7 +419,7 @@ public final class BootImageObjectTree {
      * @return a file representing the default location for outputting the tree
      */
     private static File getDefaultOutputFile() {
-        return new File(BootImageGenerator.getDefaultBootImageObjectTreeFilePath().getAbsolutePath() + ".txt");
+        return new File(BootImageGenerator.getBootImageObjectTreeFile(null).getAbsolutePath() + ".txt");
     }
 
     /**

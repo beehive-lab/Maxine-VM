@@ -252,6 +252,7 @@ public class JavaPrototype extends Prototype {
         loadClass(sun.reflect.Reflection.class);
         loadClass(java.util.concurrent.atomic.AtomicLong.class);
         loadClass(java.security.ProtectionDomain.class);
+        loadClass(java.security.PrivilegedAction.class);
 
         // Necessary for Java Run Scheme to initialize the System class:
         loadClass(sun.misc.Version.class);
