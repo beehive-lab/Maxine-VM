@@ -157,7 +157,7 @@ public final class TeleProcessController {
             public void execute() throws OSExecutionRequestException {
                 Trace.begin(TRACE_VALUE, singleStepPerformTracer);
                 updateWatchpointCaches();
-                teleProcess().performSingleStep(thread);
+                teleProcess().singleStep(thread, false);
                 Trace.end(TRACE_VALUE, singleStepPerformTracer);
             }
         };
@@ -181,7 +181,7 @@ public final class TeleProcessController {
                 updateWatchpointCaches();
                 oldInstructionPointer = thread.instructionPointer();
                 oldReturnAddress = thread.getReturnAddress();
-                teleProcess().performSingleStep(thread);
+                teleProcess().singleStep(thread, false);
                 Trace.end(TRACE_VALUE, stepOverPerformTracer);
             }
 
@@ -215,7 +215,7 @@ public final class TeleProcessController {
      * @param newInstructionPointer the instruction pointer of the thread just after the single step
      * @return if {@code oldInstructionPointer} and {@code newInstructionPointer} indicate two different target methods
      *         or a recursive call to the same target method, then the return address of the call is returned.
-     *         Otherwise, null is returned, indicating that the step over is really a single step.
+     *         Otherwise, null is returned, indicating that the step over is really just a single step.
      */
     private Pointer getStepoutAddress(TeleNativeThread thread, Pointer oldReturnAddress, Pointer oldInstructionPointer, Pointer newInstructionPointer) {
         if (newInstructionPointer.equals(oldReturnAddress)) {

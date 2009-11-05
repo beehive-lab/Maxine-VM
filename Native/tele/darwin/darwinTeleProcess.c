@@ -53,7 +53,7 @@ void teleProcess_initialize(void) {
 
 extern jboolean task_disable_single_stepping(jlong task);
 
-#if 0
+#if log_TELE
 const char *threadRunStateAsString(int state) {
     switch (state) {
         case TH_STATE_RUNNING: return "RUNNING";
@@ -108,7 +108,7 @@ void log_task_info(const char *file, int line, task_t task) {
     struct task_basic_info info;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     task_info(task, TASK_BASIC_INFO, (task_info_t) &info, &info_count);
-    log_println("\n\n%s:%d", file, line);
+    log_println("%s:%d", file, line);
     log_println("Task[%d]: suspend_count=%d, virtual_size=%u, resident_size=%u, user_time=%u, system_time=%u", task,
                     info.suspend_count, info.virtual_size, info.resident_size, info.user_time, info.system_time);
     forall_threads(task, log_thread_info);
@@ -151,9 +151,9 @@ jboolean waitForSignal(jlong task, int signalnum) {
             int signal = WSTOPSIG(status);
 
             tele_log_println("Process %d stopped due to signal %d [%s]", pid, signal, strsignal(signal));
-
-            //log_task_info(__FILE__, __LINE__, task);
-
+#if log_TELE && 0
+            log_task_info(__FILE__, __LINE__, task);
+#endif
             if (signalnum == signal && signalnum == SIGTRAP) {
                 task_disable_single_stepping(task);
             }
