@@ -29,6 +29,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * The dynamic Java object heap.
@@ -224,7 +225,7 @@ public final class Heap {
     /**
      * Returns whether the "-XX:+DisableGC" option was specified.
      *
-     * @return {@code true} if the user specified the "-XX:+DisableGC" on the command line option; {@code false} otherwise
+     * @return {@code true} if the user specified "-XX:+DisableGC" on the command line option; {@code false} otherwise
      */
     public static boolean gcDisabled() {
         return disableGCOption.getValue();
@@ -385,6 +386,10 @@ public final class Heap {
     }
 
     public static boolean collectGarbage(Size requestedFreeSpace) {
+        if (Heap.gcDisabled()) {
+            Throw.stackDump("Out of memory and GC is disabled");
+            MaxineVM.native_exit(1);
+        }
         long beforeFree = 0L;
         long beforeUsed = 0L;
         if (verbose()) {

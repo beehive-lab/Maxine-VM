@@ -181,7 +181,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         super.initialize(phase);
 
         if (phase == MaxineVM.Phase.PRISTINE) {
-            final Size size = Heap.initialSize().dividedBy(2);
 
             try {
                 Heap.enableImmortalMemoryAllocation();
@@ -191,13 +190,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 Heap.disableImmortalMemoryAllocation();
             }
 
-            if (allocateSpace(fromSpace, size).isZero() || allocateSpace(toSpace, size).isZero()) {
-                Log.println("Error occurred during initialization of VM");
-                Log.print("Could not reserve ");
-                Log.print(size.toLong());
-                Log.println(" bytes of memory for object heap");
-                MaxineVM.native_exit(1);
-            }
+            allocateHeap();
 
             safetyZoneSize = Math.max(safetyZoneSizeOption.getValue(), initialTlabSize().toInt());
 
@@ -227,6 +220,33 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             increaseGrowPolicy = new LinearGrowPolicy();
             collectorThread = new StopTheWorldGCDaemon("GC", collect);
             collectorThread.start();
+        }
+    }
+
+    private void allocateHeap() {
+        boolean heapAllocationOk;
+        final Size size = Heap.initialSize().dividedBy(2);
+        Size heapAllocationSize = size;
+        if (!Heap.gcDisabled()) {
+            heapAllocationOk = !allocateSpace(fromSpace, size).isZero() && !allocateSpace(toSpace, size).isZero();
+        } else {
+            // If GC is disabled, then use all of -Xmx for toSpace
+            heapAllocationSize = Heap.maxSize();
+            heapAllocationOk = !allocateSpace(toSpace, heapAllocationSize).isZero();
+        }
+
+        if (!heapAllocationOk) {
+            Log.println("Error occurred during initialization of VM");
+            Log.print("Could not reserve ");
+            Log.print(heapAllocationSize.toLong());
+            Log.println(" bytes of memory for object heap");
+            MaxineVM.native_exit(1);
+        } else {
+            if (Heap.verbose()) {
+                Log.print("Allocated ");
+                Log.print(heapAllocationSize.toLong());
+                Log.println(" bytes of memory for object heap");
+            }
         }
     }
 
@@ -399,7 +419,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
     }
 
-    @INLINE
     /**
      * Attempts to allocate memory of given size for given space.
      * If successful sets region start and size.
@@ -414,7 +433,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         return base;
     }
 
-    @INLINE
     /**
      * Deallocates the memory associated with the given region.
      * Sets the region start to zero but does not change the size.
@@ -429,7 +447,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         space.setStart(Address.zero());
     }
 
-    @INLINE
     /**
      * Copies the state of one space into another.
      * Used when growing the semispaces.
@@ -715,10 +732,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
                 return true;
             }
-        }
-        if (Heap.gcDisabled()) {
-            Log.println("Out of memory and GC is disabled, exiting");
-            MaxineVM.native_exit(1);
         }
         return false;
     }

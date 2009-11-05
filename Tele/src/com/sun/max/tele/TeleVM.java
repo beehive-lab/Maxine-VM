@@ -104,10 +104,8 @@ public abstract class TeleVM implements MaxVM {
          */
         public final boolean readOnly;
 
-        public final Option<File> bootImageFileOption = newFileOption("i", BootImageGenerator.getDefaultBootImageFilePath(),
-            "Path to boot image file.");
-        public final Option<File> bootJarOption = newFileOption("j", BootImageGenerator.getDefaultBootImageJarFilePath(),
-            "Boot jar file path.");
+        public final Option<File> vmDirectoryOption = newFileOption("vmdir", BootImageGenerator.getDefaultVMDirectory(),
+            "Path to directory containing VM executable, shared libraries and boot image.");
         public final Option<List<String>> classpathOption = newStringListOption("cp", null, File.pathSeparatorChar,
             "Additional locations to use when searching for Java class files. These locations are searched after the jar file containing the " +
             "boot image classes but before the locations corresponding to the class path of this JVM process.");
@@ -149,8 +147,6 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-
-
     /**
      * Creates a new VM instance based on a given set of options.
      *
@@ -177,13 +173,14 @@ public abstract class TeleVM implements MaxVM {
             final Classpath extraClasspath = new Classpath(classpathList.toArray(new String[classpathList.size()]));
             classpathPrefix = classpathPrefix.prepend(extraClasspath);
         }
-        classpathPrefix = classpathPrefix.prepend(options.bootJarOption.getValue().getAbsolutePath());
+        File vmdir = options.vmDirectoryOption.getValue();
+        classpathPrefix = classpathPrefix.prepend(BootImageGenerator.getBootImageJarFile(vmdir).getAbsolutePath());
         checkClasspath(classpathPrefix);
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         PrototypeClassLoader.setClasspath(classpath);
 
         Prototype.loadLibrary(TELE_LIBRARY_NAME);
-        final File bootImageFile = options.bootImageFileOption.getValue();
+        final File bootImageFile = BootImageGenerator.getBootImageFile(vmdir);
 
         Classpath sourcepath = JavaProject.getSourcePath(true);
         final List<String> sourcepathList = options.sourcepathOption.getValue();

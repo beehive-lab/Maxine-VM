@@ -354,6 +354,7 @@ public class C1XRuntimeCalls {
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveStaticCall)
     public static long runtimeResolveStaticCall(int index, ConstantPool constantPool) {
         final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
+        MakeHolderInitialized.makeHolderInitialized(staticMethodActor);
         return CompilationScheme.Static.compile(staticMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
     }
 

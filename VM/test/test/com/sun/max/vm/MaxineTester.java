@@ -635,7 +635,7 @@ public class MaxineTester {
         }
         final JavaCommand javaCommand = new JavaCommand(BootImageGenerator.class);
         javaCommand.addArguments(MaxineTesterConfiguration.getImageConfigArgs(imageConfig));
-        javaCommand.addArgument("-output-dir=" + imageDir);
+        javaCommand.addArgument("-vmdir=" + imageDir);
         javaCommand.addArgument("-trace=1");
         javaCommand.addVMOption("-XX:CompileCommand=exclude,com/sun/max/vm/jit/JitReferenceMapEditor,fillInMaps");
         javaCommand.addVMOptions(defaultJVMOptions());
@@ -661,7 +661,7 @@ public class MaxineTester {
             generatedImages.put(imageConfig, imageDir);
             return true;
         } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
-            out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getDefaultBootImageFilePath().getName()));
+            out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getBootImageFile(imageDir).getName()));
         }
         generatedImages.put(imageConfig, null);
         return false;
@@ -792,7 +792,7 @@ public class MaxineTester {
      * @param binary the name of the file in the source directory that is to be copied to {@code imageDir}
      */
     private static void copyBinary(File imageDir, String binary) {
-        final File defaultImageDir = BootImageGenerator.getDefaultBootImageFilePath().getParentFile();
+        final File defaultImageDir = BootImageGenerator.getDefaultVMDirectory();
         final File defaultBinaryFile = new File(defaultImageDir, binary);
         final File binaryFile = new File(imageDir, binary);
         try {
