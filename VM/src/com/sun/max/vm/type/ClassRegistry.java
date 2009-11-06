@@ -39,7 +39,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
 /**
