@@ -267,7 +267,6 @@ public abstract class TypeDescriptor extends Descriptor {
 
     @HOSTED_ONLY
     public ClassActor resolveHosted(final ClassLoader classLoader) {
-        Classes.initialize(PrimitiveClassActor.class);
         return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(this);
     }
 }

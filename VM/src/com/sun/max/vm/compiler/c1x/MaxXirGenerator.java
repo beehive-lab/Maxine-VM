@@ -37,9 +37,7 @@ import com.sun.max.vm.compiler.snippet.ResolutionSnippet;
 import com.sun.max.vm.compiler.CompilationScheme;
 import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.vm.type.KindEnum;
-import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.unsafe.Word;
@@ -187,14 +185,14 @@ public class MaxXirGenerator extends RiXirGenerator {
 
         arrayHubs = new DynamicHub[kinds.length];
 
-        arrayHubs[CiKind.Boolean.ordinal()] = ClassActor.fromJava(boolean[].class).dynamicHub();
-        arrayHubs[CiKind.Byte.ordinal()] = ClassActor.fromJava(byte[].class).dynamicHub();
-        arrayHubs[CiKind.Short.ordinal()] = ClassActor.fromJava(short[].class).dynamicHub();
-        arrayHubs[CiKind.Char.ordinal()] = ClassActor.fromJava(char[].class).dynamicHub();
-        arrayHubs[CiKind.Int.ordinal()] = ClassActor.fromJava(int[].class).dynamicHub();
-        arrayHubs[CiKind.Float.ordinal()] = ClassActor.fromJava(float[].class).dynamicHub();
-        arrayHubs[CiKind.Double.ordinal()] = ClassActor.fromJava(double[].class).dynamicHub();
-        arrayHubs[CiKind.Long.ordinal()] = ClassActor.fromJava(long[].class).dynamicHub();
+        arrayHubs[CiKind.Boolean.ordinal()] = ClassRegistry.BOOLEAN_ARRAY.dynamicHub();
+        arrayHubs[CiKind.Byte.ordinal()] = ClassRegistry.BYTE_ARRAY.dynamicHub();
+        arrayHubs[CiKind.Short.ordinal()] = ClassRegistry.SHORT_ARRAY.dynamicHub();
+        arrayHubs[CiKind.Char.ordinal()] = ClassRegistry.CHAR_ARRAY.dynamicHub();
+        arrayHubs[CiKind.Int.ordinal()] = ClassRegistry.INT_ARRAY.dynamicHub();
+        arrayHubs[CiKind.Float.ordinal()] = ClassRegistry.FLOAT_ARRAY.dynamicHub();
+        arrayHubs[CiKind.Double.ordinal()] = ClassRegistry.DOUBLE_ARRAY.dynamicHub();
+        arrayHubs[CiKind.Long.ordinal()] = ClassRegistry.LONG_ARRAY.dynamicHub();
         arrayHubs[CiKind.Object.ordinal()] = ClassActor.fromJava(Object[].class).dynamicHub();
         arrayHubs[CiKind.Word.ordinal()] = ClassActor.fromJava(WordArray.class).dynamicHub();
 

@@ -25,7 +25,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * The centralized location in which all {@link ClassActor}s are created. This enables invariants
@@ -147,21 +146,5 @@ public final class ClassActorFactory {
     @INLINE
     private static boolean isHybrid(final TypeDescriptor typeDescriptor, ClassActor superClassActor) {
         return MaxineVM.isHosted() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.HYBRID, typeDescriptor, superClassActor);
-    }
-
-    /**
-     * Creates a ClassActor for a primitive type.
-     */
-    @HOSTED_ONLY
-    public static <Value_Type extends Value<Value_Type>> PrimitiveClassActor<Value_Type> createPrimitiveClassActor(Kind<Value_Type> kind) {
-        return ClassRegistry.put(new PrimitiveClassActor<Value_Type>(kind));
-    }
-
-    /**
-     * Creates an ArrayClassActor for a primitive type.
-     */
-    @HOSTED_ONLY
-    public static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createArrayClassActor(PrimitiveClassActor<Value_Type> componentClassActor) {
-        return ClassRegistry.put(new ArrayClassActor<Value_Type>(componentClassActor));
     }
 }
