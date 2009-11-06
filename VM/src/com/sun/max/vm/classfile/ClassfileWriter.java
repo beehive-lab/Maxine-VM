@@ -745,11 +745,12 @@ public class ClassfileWriter {
 
     @HOSTED_ONLY
     private static void testLoadGeneratedClasses(Map<String, byte[]> classNameToClassfileMap, File outputDirectory) {
+
         try {
             final URL[] urls = {outputDirectory.toURI().toURL()};
             final ClassLoader urlClassLoader = URLClassLoader.newInstance(urls);
             final TestClassLoader testClassLoader = new TestClassLoader();
-            ClassRegistry.classLoaderToRegistryMap.put(testClassLoader, null);
+            ClassRegistry.testClassLoader = testClassLoader;
             for (Map.Entry<String, byte[]> entry : classNameToClassfileMap.entrySet()) {
                 final String className = entry.getKey();
                 final byte[] classfileBytes = entry.getValue();
