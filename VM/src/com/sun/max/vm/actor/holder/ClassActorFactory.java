@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
