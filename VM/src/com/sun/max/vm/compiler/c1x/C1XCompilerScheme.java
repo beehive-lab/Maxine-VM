@@ -28,6 +28,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -65,6 +66,22 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         super(vmConfiguration);
     }
 
+    static {
+        VMOptions.register(new VMBooleanXXOption("-XX:-ResetC1XDefaults",
+            "Reset all C1X options to their defaults. This takes effect before any other C1X options on the command line are parsed.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                if (super.parseValue(optionValue)) {
+                    if (getValue()) {
+                        C1XOptions.setDefaults();
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }, MaxineVM.Phase.PRISTINE);
+    }
+
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
@@ -83,9 +100,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                     JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
                 }
             }
-        }
-        if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            C1XOptions.setDefaults();
         }
     }
 
