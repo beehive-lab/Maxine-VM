@@ -199,7 +199,7 @@ public class CompiledPrototype extends Prototype {
     private void gatherNewClasses() {
         Trace.begin(1, "gatherNewClasses");
         final LinkSequence<ClassActor> newClasses = new LinkSequence<ClassActor>();
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (lookupInfo(classActor) == null) {
                 final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
                 if (enclosingMethod != null) {
@@ -660,7 +660,7 @@ public class CompiledPrototype extends Prototype {
 
     private void linkVTableEntries() {
         Trace.begin(1, "linkVTableEntries");
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (classActor.isReferenceClassActor() && !unlinkedClasses.contains(classActor)) {
                 linkVTable(classActor);
             }
@@ -683,14 +683,14 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "linkITableEntries");
 
         final IntHashMap<InterfaceActor> serialToInterfaceActor = new IntHashMap<InterfaceActor>();
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (classActor instanceof InterfaceActor) {
                 final InterfaceActor interfaceActor = (InterfaceActor) classActor;
                 serialToInterfaceActor.put(interfaceActor.id, interfaceActor);
             }
         }
 
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (classActor.isReferenceClassActor() && !unlinkedClasses.contains(classActor)) {
                 linkITable(classActor, serialToInterfaceActor);
             }

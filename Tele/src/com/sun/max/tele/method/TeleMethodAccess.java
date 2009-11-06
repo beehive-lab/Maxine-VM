@@ -41,12 +41,12 @@ import com.sun.max.vm.value.*;
 public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
 
     private static MethodActor findMethodActor(Class holder, String name, SignatureDescriptor signature) {
-        final ClassActor classActor = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
+        final ClassActor classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
         return classActor.findMethodActor(SymbolTable.makeSymbol(name), signature);
     }
 
     private static MethodActor findMethodActor(Class holder, String name) {
-        final ClassActor classActor = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
+        final ClassActor classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
         MethodActor uniqueMethodActor = null;
         for (MethodActor methodActor : classActor.getLocalMethodActors()) {
             if (methodActor.name.string.equals(name)) {

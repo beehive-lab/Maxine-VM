@@ -84,7 +84,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     public IterableWithLength<? extends MethodActor> gatherNativeInitializationMethods() {
         final AppendableSequence<StaticMethodActor> methods = new LinkSequence<StaticMethodActor>();
         final String maxinePackagePrefix = new com.sun.max.Package().name();
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (!classActor.name.toString().startsWith(maxinePackagePrefix)) { // non-Maxine class => JDK class
                 for (StaticMethodActor method : classActor.localStaticMethodActors()) {
                     if (method.name.equals("initIDs") && (method.descriptor().numberOfParameters() == 0) && method.resultKind() == Kind.VOID) {
@@ -181,7 +181,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             final FieldActor parentFieldActor = ClassActor.fromJava(ClassLoader.class).findFieldActor(SymbolTable.makeSymbol("parent"));
             // ClassLoader.getParent() has checks we don't want
             final ClassLoader parent = (ClassLoader) TupleAccess.readObject(systemClassLoader, parentFieldActor.offset());
-            TupleAccess.writeObject(parent, parentFieldActor.offset(), VmClassLoader.VM_CLASS_LOADER);
+            TupleAccess.writeObject(parent, parentFieldActor.offset(), BootClassLoader.BOOT_CLASS_LOADER);
         }
     }
 

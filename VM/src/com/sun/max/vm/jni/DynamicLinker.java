@@ -222,7 +222,7 @@ public final class DynamicLinker {
                 symbolAddress = lookupSymbol(Word.zero(), symbol);
                 if (symbolAddress.isZero()) {
                     final ClassLoader classLoader = classMethodActor.holder().classLoader;
-                    if (classLoader == VmClassLoader.VM_CLASS_LOADER && !javaHandle.isZero()) {
+                    if (classLoader == BootClassLoader.BOOT_CLASS_LOADER && !javaHandle.isZero()) {
                         symbolAddress = lookupSymbol(javaHandle, symbol);
                         if (!symbolAddress.isZero()) {
                             return symbolAddress;

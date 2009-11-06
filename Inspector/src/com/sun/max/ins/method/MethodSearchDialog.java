@@ -84,7 +84,7 @@ public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
         methodKeys = new ArrayListSequence<MethodKey>();
         final String className = holderTypeDescriptor.toJavaString();
         try {
-            final Class javaClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, className);
+            final Class javaClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className);
             for (Constructor constructor : javaClass.getDeclaredConstructors()) {
                 methodKeys.append(createMethodKey(SignatureDescriptor.create(Void.TYPE, constructor.getParameterTypes()), holderTypeDescriptor, SymbolTable.INIT));
             }

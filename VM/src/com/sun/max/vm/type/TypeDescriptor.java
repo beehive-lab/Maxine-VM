@@ -222,7 +222,7 @@ public abstract class TypeDescriptor extends Descriptor {
             while (JavaTypeDescriptor.isArray(typeDescriptor)) {
                 typeDescriptor = typeDescriptor.componentTypeDescriptor();
             }
-            if (ClassRegistry.vmClassRegistry().get(typeDescriptor) != null) {
+            if (ClassRegistry.BOOT_CLASS_REGISTRY.get(typeDescriptor) != null) {
                 return true;
             }
             if (JavaTypeDescriptor.isPrimitive(typeDescriptor)) {
@@ -245,7 +245,7 @@ public abstract class TypeDescriptor extends Descriptor {
                 return false;
             }
 
-            if (PrototypeClassLoader.isOmittedType(typeDescriptor)) {
+            if (HostedBootClassLoader.isOmittedType(typeDescriptor)) {
                 return false;
             }
 
@@ -260,14 +260,14 @@ public abstract class TypeDescriptor extends Descriptor {
 
     public ClassActor resolve(final ClassLoader classLoader) {
         if (MaxineVM.isHosted()) {
-            return resolveInPrototype(classLoader);
+            return resolveHosted(classLoader);
         }
         return ClassActor.fromJava(resolveType(classLoader));
     }
 
     @HOSTED_ONLY
-    private ClassActor resolveInPrototype(final ClassLoader classLoader) {
+    public ClassActor resolveHosted(final ClassLoader classLoader) {
         Classes.initialize(PrimitiveClassActor.class);
-        return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(this);
+        return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(this);
     }
 }
