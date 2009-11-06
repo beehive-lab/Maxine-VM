@@ -26,6 +26,7 @@ import java.lang.annotation.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -40,7 +41,7 @@ public final class PrimitiveClassActor<Value_Type extends Value<Value_Type>> ext
     PrimitiveClassActor(Kind<Value_Type> kind) {
         super(kind,
               NO_SPECIFIC_LAYOUT,
-              null, // primitive classes do not have a class loader
+              HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER,
               kind.name,
               NO_MAJOR_VERSION,
               NO_MINOR_VERSION,

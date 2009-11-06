@@ -364,14 +364,15 @@ public abstract class MethodActor extends MemberActor {
      * Gets the invocation stub for this method actor, creating it first if necessary.
      */
     public GeneratedStub makeInvocationStub() {
-        GeneratedStub invocationStub = holder().classRegistry().get(INVOCATION_STUB, this);
+        ClassRegistry classRegistry = holder().classRegistry();
+        GeneratedStub invocationStub = classRegistry.get(INVOCATION_STUB, this);
         if (invocationStub == null) {
             if (isInstanceInitializer()) {
                 invocationStub = GeneratedStub.newConstructorStub(toJavaConstructor(), null, Boxing.VALUE);
             } else {
                 invocationStub = GeneratedStub.newMethodStub(toJava(), Boxing.VALUE);
             }
-            holder().classRegistry().set(INVOCATION_STUB, this, invocationStub);
+            classRegistry.set(INVOCATION_STUB, this, invocationStub);
         }
         return invocationStub;
     }

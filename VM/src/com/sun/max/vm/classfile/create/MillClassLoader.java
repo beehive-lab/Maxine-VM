@@ -45,9 +45,11 @@ public class MillClassLoader extends ClassLoader {
 
     public static Class makeClass(String name, byte[] classfileBytes) {
         final MillClassLoader classLoader = new MillClassLoader(classfileBytes);
-        final Class result = Classes.load(classLoader, name);
-        classLoader.resolveClass(result);
-        return result;
+        synchronized (classLoader) {
+            final Class result = Classes.load(classLoader, name);
+            classLoader.resolveClass(result);
+            return result;
+        }
     }
 
 }

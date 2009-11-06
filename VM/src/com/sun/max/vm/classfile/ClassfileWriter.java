@@ -57,7 +57,7 @@ public class ClassfileWriter {
     DataOutputStream dataOutputStream;
 
     /**
-     * Saves a generated class actor as a class file accessible to the {@linkplain VmClassLoader VM class loader} or to
+     * Saves a generated class actor as a class file accessible to the {@linkplain BootClassLoader VM class loader} or to
      * the inspector.
      *
      * @param classInfo the class to be written as a class file
@@ -66,7 +66,7 @@ public class ClassfileWriter {
     public static void saveGeneratedClass(ClassInfo classInfo, final ConstantPoolEditor constantPoolEditor) throws IOException {
         final byte[] classfile = toByteArray(classInfo, constantPoolEditor);
         if (MaxineVM.isHosted()) {
-            VmClassLoader.VM_CLASS_LOADER.saveGeneratedClassfile(classInfo.actor.name.string, classfile);
+            BootClassLoader.BOOT_CLASS_LOADER.saveGeneratedClassfile(classInfo.actor.name.string, classfile);
         } else {
             classInfo.actor.classfile = classfile;
         }

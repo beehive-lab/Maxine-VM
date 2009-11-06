@@ -31,6 +31,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A collection of methods used to perform {@link UNSAFE_CAST unchecked type casts}.
@@ -48,6 +49,7 @@ public final class UnsafeCast {
     @UNSAFE_CAST public static Hybrid                   asHybrid(Object object) { return (Hybrid) object; }
     @UNSAFE_CAST public static StackUnwindingContext    asStackUnwindingContext(Object object) { return (StackUnwindingContext) object; }
     @UNSAFE_CAST public static Class                    asClass(Object object) { return (Class) object; }
+    @UNSAFE_CAST public static ClassRegistry            asClassRegistry(Object object) { return (ClassRegistry) object; }
     @UNSAFE_CAST public static GeneratedMethodStub      asGeneratedMethodStub(Object object) { return (GeneratedMethodStub) object; }
     @UNSAFE_CAST public static GeneratedConstructorStub asGeneratedConstructorStub(Object object) { return (GeneratedConstructorStub) object; }
     @UNSAFE_CAST public static Throwable                asThrowable(Object object) { return (Throwable) object; }

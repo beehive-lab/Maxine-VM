@@ -158,7 +158,7 @@ public class Verifier implements VerificationRegistry {
      * @return {@code true} if a class loaded by {@code classLoader} need bytecode verification
      */
     public static boolean shouldBeVerified(ClassLoader classLoader, boolean isRemote) {
-        if (classLoader == VmClassLoader.VM_CLASS_LOADER || classLoader == null || !isRemote) {
+        if (classLoader == BootClassLoader.BOOT_CLASS_LOADER || classLoader == null || !isRemote) {
             return verifyLocal;
         }
         return verifyRemote;

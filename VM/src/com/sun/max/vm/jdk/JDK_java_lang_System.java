@@ -732,7 +732,7 @@ public final class JDK_java_lang_System {
         }
 
         // 9. load the native code for zip and java libraries
-        VmClassLoader.VM_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
+        BootClassLoader.BOOT_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
         // 10. initialize the file system with current runtime values as opposed to bootstrapping values
         ClassActor.fromJava(File.class).callInitializer();

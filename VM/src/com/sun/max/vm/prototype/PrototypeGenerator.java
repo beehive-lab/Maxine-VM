@@ -302,6 +302,6 @@ public final class PrototypeGenerator {
 
 
     private int currentNumberOfClasses() {
-        return ClassRegistry.vmClassRegistry().numberOfClassActors();
+        return ClassRegistry.BOOT_CLASS_REGISTRY.numberOfClassActors();
     }
 }

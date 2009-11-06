@@ -143,7 +143,7 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     void preload(final String className) {
         MaxineVM.usingTarget(new Runnable() {
             public void run() {
-                Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, className);
+                Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className);
             }
         });
     }
