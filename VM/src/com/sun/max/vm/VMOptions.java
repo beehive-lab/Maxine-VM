@@ -32,6 +32,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.VMOption.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -49,30 +50,50 @@ import com.sun.max.vm.reference.*;
  */
 public final class VMOptions {
 
-    private static final int HELP_LINE_MAX_WIDTH = 92;
-    private static final int HELP_INDENT = 22;
+    /**
+     * The set of {@linkplain Phase#PRISTINE pristine-phase} VM options built into the boot image.
+     */
+    private static VMOption[] pristinePhaseOptions = {};
 
     /**
-     * Used to collect and sort VM options as they are declared.
+     * The set of {@linkplain Phase#STARTING starting-phase} VM options built into the boot image.
      */
-    @HOSTED_ONLY
-    private static final Set<VMOption> pristinePhaseOptionsSet = new LinkedHashSet<VMOption>();
+    private static VMOption[] startingPhaseOptions = {};
+
+    private static Pointer argv;
+    private static int argc;
+    private static int argumentStart;
+
+    private static boolean earlyVMExitRequested;
+
+    private static String[] mainClassArguments;
+    private static String mainClassName;
 
     /**
-     * Used to collect and sort VM options as they are declared.
+     * This is a reference to the initial value of {@link System#props} when the VM starts up.
+     * The "magic" in {@link HostObjectAccess#hostToTarget(Object)} will ensure that this map
+     * only has the properties from the host specified by {@link JDKInterceptor#REMEMBERED_PROPERTY_NAMES}.
+     * The system properties parsed on the command line are stored in this map.
+     * This is required so that they are available before the System class is initialized.
      */
-    @HOSTED_ONLY
-    private static final Set<VMOption> startingPhaseOptionsSet = new LinkedHashSet<VMOption>();
+    private static final Properties initialSystemProperties = System.getProperties();
 
-    private static VMOption[] pristinePhaseOptions;
-    private static VMOption[] startingPhaseOptions;
-
+    /**
+     * The {@code -jar} option.
+     */
     private static final VMStringOption jarOption = register(new VMStringOption("-jar", true, null, "Executes main class from jar file.") {
         @Override
         public boolean isLastOption() {
             return true;
         }
     }, MaxineVM.Phase.PRISTINE);
+
+    /**
+     * This option is parsed in the native code (see maxine.c). It's declared here simply so that it
+     * shows up in the {@linkplain #printUsage() usage} message.
+     */
+    private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, null,
+        "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
 
     /**
      * An option to {@linkplain GlobalMetrics#report(java.io.PrintStream) report} on all global metrics gathered during execution.
@@ -100,72 +121,73 @@ public final class VMOptions {
      */
     public static final VerboseVMOption verboseOption = register(new VerboseVMOption(), MaxineVM.Phase.PRISTINE);
 
-    private static final VMIntOption traceLevelOption = register(new VMIntOption("-XX:TraceLevel=", 0, "Enable tracing output at the specified level.") {
-        @Override
-        public boolean parseValue(Pointer optionValue) {
-            super.parseValue(optionValue);
-            Trace.on(getValue());
-            return true;
-        }
-    }, MaxineVM.Phase.PRISTINE);
+    static {
+        register(new VMIntOption("-XX:TraceLevel=", 0, "Enable tracing output at the specified level.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                super.parseValue(optionValue);
+                Trace.on(getValue());
+                return true;
+            }
+        }, MaxineVM.Phase.PRISTINE);
 
-    private static final VMBooleanXXOption printConfiguration = register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exits."), MaxineVM.Phase.STARTING);
-    private static final VMBooleanXXOption showConfiguration = register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continues."), MaxineVM.Phase.STARTING);
+        register(new VMOption("-X ", "print help on non-standard options") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                printUsage(Category.NON_STANDARD);
+                return true;
+            }
+            @Override
+            protected boolean haltsVM() {
+                return true;
+            }
+            @Override
+            public Category category() {
+                return Category.STANDARD;
+            }
+        }, MaxineVM.Phase.PRISTINE);
 
-    /**
-     * This option is parsed in the native code (see maxine.c). It's declared here simply so that it
-     * shows up in the {@linkplain #printUsage() usage} message.
-     */
-    private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, null,
-        "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
+        register(new VMOption("-XX ", "print help on Maxine options") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                printUsage(Category.IMPLEMENTATION_SPECIFIC);
+                return true;
+            }
+            @Override
+            protected boolean haltsVM() {
+                return true;
+            }
+            @Override
+            public Category category() {
+                return Category.NON_STANDARD;
+            }
+        }, MaxineVM.Phase.PRISTINE);
 
-    private static Pointer argv;
-    private static int argc;
-    private static int argumentStart;
-
-    private static boolean earlyVMExitRequested;
-
-    private static String[] mainClassArguments;
-    private static String mainClassName;
+        register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exits.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                VMConfiguration.target().print(Log.out, "  ");
+                return true;
+            }
+            @Override
+            protected boolean haltsVM() {
+                return true;
+            }
+        }, MaxineVM.Phase.STARTING);
+        register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continues.") {
+            @Override
+            public boolean parseValue(Pointer optionValue) {
+                VMConfiguration.target().print(Log.out, "  ");
+                return true;
+            }
+        }, MaxineVM.Phase.STARTING);
+    }
 
     private VMOptions() {
     }
 
-    public static void printHelpForOption(String prefix, String value, String help) {
-        Log.print("    ");
-        Log.print(prefix);
-        Log.print(value);
-        if (help != null) {
-            Log.print(" ");
-            int column = 5 + prefix.length() + value.length();
-            if (column >= HELP_INDENT) {
-                Log.println();
-                column = 0;
-            }
-            for (; column < HELP_INDENT; column++) {
-                Log.print(' ');
-            }
-            // reformat the help text by wrapping the lines after column 72.
-            // Strings.formatParagraphs() can't be used because allocation may not work here
-            for (int j = 0; j < help.length(); j++) {
-                final char ch = help.charAt(j);
-                if (column > HELP_LINE_MAX_WIDTH && (ch == ' ' || ch == '\t')) {
-                    Log.println();
-                    for (int k = 0; k < HELP_INDENT; k++) {
-                        Log.print(' ');
-                    }
-                    column = HELP_INDENT;
-                } else {
-                    Log.print(ch);
-                    column++;
-                }
-            }
-        }
-        Log.println();
-    }
-
     @HOSTED_ONLY
-    private static VMOption[] addOption(Set<VMOption> options, VMOption option, Iterable<VMOption> allOptions) {
+    private static VMOption[] addOption(VMOption[] options, VMOption option, Iterable<VMOption> allOptions) {
         if (option.category() == VMOption.Category.IMPLEMENTATION_SPECIFIC) {
             final int prefixLength = option instanceof VMBooleanXXOption ? "-XX:+".length() : "-XX:".length();
             final String name = option.prefix.substring(prefixLength);
@@ -174,8 +196,7 @@ public final class VMOptions {
         for (VMOption existingOption : allOptions) {
             ProgramError.check(!existingOption.prefix.equals(option.prefix), "VM option prefix is not unique: " + option.prefix);
         }
-        options.add(option);
-        return options.toArray(new VMOption[options.size()]);
+        return Arrays.append(options, option);
     }
 
     /**
@@ -189,12 +210,12 @@ public final class VMOptions {
     @HOSTED_ONLY
     public static <T extends VMOption> T register(VMOption option, MaxineVM.Phase phase) {
         assert phase != null;
-        final Iterable<VMOption> allOptions = Iterables.join(pristinePhaseOptionsSet, startingPhaseOptionsSet);
+        final Iterable<VMOption> allOptions =  Iterables.from(Arrays.append(pristinePhaseOptions, startingPhaseOptions));
         if (phase == MaxineVM.Phase.PRISTINE) {
-            pristinePhaseOptions = addOption(pristinePhaseOptionsSet, option, allOptions);
+            pristinePhaseOptions = addOption(pristinePhaseOptions, option, allOptions);
         } else if (phase == MaxineVM.Phase.STARTING) {
             assert !option.consumesNext();
-            startingPhaseOptions = addOption(startingPhaseOptionsSet, option, allOptions);
+            startingPhaseOptions = addOption(startingPhaseOptions, option, allOptions);
         } else {
             ProgramError.unexpected("VM options for the " + phase + " phase not (yet) supported");
         }
@@ -337,7 +358,40 @@ public final class VMOptions {
         }
     }
 
-    private static void printOptions(VMOption[] options, String label, Category category) {
+    public static void printHelpForOption(Category category, String prefix, String value, String help) {
+        Log.print("    ");
+        Log.print(prefix);
+        Log.print(value);
+        if (help != null) {
+            Log.print(" ");
+            int column = 5 + prefix.length() + value.length();
+            if (column >= category.helpIndent) {
+                Log.println();
+                column = 0;
+            }
+            for (; column < category.helpIndent; column++) {
+                Log.print(' ');
+            }
+            // reformat the help text by wrapping the lines after column 72.
+            // Strings.formatParagraphs() can't be used because allocation may not work here
+            for (int j = 0; j < help.length(); j++) {
+                final char ch = help.charAt(j);
+                if (column > category.helpLineMaxWidth && (ch == ' ' || ch == '\t')) {
+                    Log.println();
+                    for (int k = 0; k < category.helpIndent; k++) {
+                        Log.print(' ');
+                    }
+                    column = category.helpIndent;
+                } else {
+                    Log.print(ch);
+                    column++;
+                }
+            }
+        }
+        Log.println();
+    }
+
+    private static void printOptions(VMOption[] options, Category category) {
         for (VMOption option : options) {
             if (option.category() == category) {
                 option.printHelp();
@@ -345,22 +399,28 @@ public final class VMOptions {
         }
     }
 
-    private static void printOptions(String label, Category category) {
-        if (label != null) {
-            Log.println();
-            Log.println(label);
+    /**
+     * Prints the usage message for a given category or options.
+     *
+     * @param category the category of options to print the usage message for
+     */
+    public static void printUsage(Category category) {
+        if (category == Category.STANDARD) {
+            Log.println("Usage: maxvm [-options] [class | -jar jarfile]  [args...]");
+            Log.println("where options include:");
+            printOptions(pristinePhaseOptions, category);
+            printOptions(startingPhaseOptions, category);
         }
-        printOptions(pristinePhaseOptions, label, category);
-        printOptions(startingPhaseOptions, label, category);
-    }
-
-    public static void printUsage() {
-        Log.println("Usage: maxvm [-options] [class | -jar jarfile]  [args...]");
-        Log.println("where options include:");
-
-        printOptions(null, Category.STANDARD);
-        printOptions("Non-standard options:", Category.NON_STANDARD);
-        printOptions("Maxine options:", Category.IMPLEMENTATION_SPECIFIC);
+        if (category == Category.NON_STANDARD) {
+            Log.println("Non-standard options:");
+            printOptions(pristinePhaseOptions, category);
+            printOptions(startingPhaseOptions, category);
+        }
+        if (category == Category.IMPLEMENTATION_SPECIFIC) {
+            Log.println("Maxine options:");
+            printOptions(pristinePhaseOptions, category);
+            printOptions(startingPhaseOptions, category);
+        }
     }
 
     /**
@@ -376,7 +436,7 @@ public final class VMOptions {
         earlyVMExitRequested = true;
         Log.print("VM program argument parsing error: ");
         Log.println(errorMessage);
-        printUsage();
+        printUsage(Category.STANDARD);
         MaxineVM.setExitCode(1);
     }
 
@@ -387,7 +447,7 @@ public final class VMOptions {
         Log.print(": ");
         option.printErrorMessage();
         Log.println();
-        printUsage();
+        printUsage(Category.STANDARD);
         MaxineVM.setExitCode(1);
     }
 
@@ -436,6 +496,8 @@ public final class VMOptions {
             // parse the next argument as this option's value
             if (!option.parseValue(argv.getWord(index + 1).asPointer())) {
                 error(option.toString());
+            } else if (option.haltsVM()) {
+                earlyVMExitRequested = true;
             }
             argv.setWord(index, Word.zero());
             argv.setWord(index + 1, Word.zero());
@@ -444,6 +506,8 @@ public final class VMOptions {
             // otherwise ask the option to parse itself
             if (!option.parse(argument)) {
                 error(option.toString());
+            } else if (option.haltsVM()) {
+                earlyVMExitRequested = true;
             }
             argv.setWord(index, Word.zero());
             nextIndex = index + 1;
@@ -526,15 +590,6 @@ public final class VMOptions {
         return true;
     }
 
-    /**
-     * This is a reference to the initial value of {@link System#props} when the VM starts up.
-     * The "magic" in {@link HostObjectAccess#hostToTarget(Object)} will ensure that this map
-     * only has the properties from the host specified by {@link JDKInterceptor#REMEMBERED_PROPERTY_NAMES}.
-     * The system properties parsed on the command line are stored in this map.
-     * This is required so that they are available before the System class is initialized.
-     */
-    public static final Properties initialSystemProperties = System.getProperties();
-
     public static boolean parseStarting() {
         try {
             int index = 1;
@@ -553,6 +608,8 @@ public final class VMOptions {
                             error("unknown VM argument \"" + CString.utf8ToJava(nextArg) + "\"");
                         } else if (!option.parse(nextArg)) {
                             error("parsing of " + argument + " failed");
+                        } else if (option.haltsVM()) {
+                            earlyVMExitRequested = true;
                         }
                         argv.setWord(index, Word.zero());
                         index++;
@@ -562,23 +619,7 @@ public final class VMOptions {
         } catch (Utf8Exception utf8Exception) {
             error("UTF8 problem");
         }
-        final boolean noErrorFound = checkOptionsForErrors(startingPhaseOptions);
-        if (noErrorFound) {
-            if (printConfiguration.getValue() || showConfiguration.getValue()) {
-                final VMConfiguration vm = VMConfiguration.target();
-                Log.println("VM Configuration:");
-                Log.println("  Build level: " + vm.buildLevel());
-                Log.println("  Platform: " + vm.platform());
-                for (VMScheme vmScheme : vm.vmSchemes()) {
-                    final String specification = vmScheme.specification().getSimpleName();
-                    Log.println("  " + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
-                }
-                if (printConfiguration.getValue()) {
-                    earlyVMExitRequested = true;
-                }
-            }
-        }
-        return noErrorFound;
+        return checkOptionsForErrors(startingPhaseOptions);
     }
 
     /**
@@ -668,98 +709,6 @@ public final class VMOptions {
             error("UTF8 problem");
         }
         return false;
-    }
-
-    /**
-     * Parse a size specification nX, where X := {K, M, G, T, P, k, m, g, t, p}.
-     *
-     * For backwards compatibility with HotSpot,
-     * lower case letters shall have the same respective meaning as the upper case ones,
-     * even though their non-colloquialized definitions would suggest otherwise.
-     *
-     * @param p a pointer to the C string
-     * @param length the maximum length of the C string
-     * @param startIndex the starting index into the C string pointed to by the first argument
-     * @return the scaled value or -1 if error
-     */
-    protected static long parseScaledValue(Pointer p, Size length, int startIndex) {
-        long result = 0L;
-        boolean done = false;
-        int index = startIndex;
-        while (index < length.toInt()) {
-            if (done) {
-                // having any additional characters is an error
-                return -1L;
-            }
-            final int character = CString.getByte(p, length, Offset.fromInt(index));
-            index++;
-            if ('0' <= character && character <= '9') {
-                result *= 10;
-                result += character - '0';
-            } else {
-                done = true;
-                switch (character) {
-                    case 'K':
-                    case 'k': {
-                        result *= Longs.K;
-                        break;
-                    }
-                    case 'M':
-                    case 'm': {
-                        result *= Longs.M;
-                        break;
-                    }
-                    case 'G':
-                    case 'g': {
-                        result *= Longs.G;
-                        break;
-                    }
-                    case 'T':
-                    case 't': {
-                        result *= Longs.T;
-                        break;
-                    }
-                    case 'P':
-                    case 'p': {
-                        result *= Longs.P;
-                        break;
-                    }
-                    default: {
-                        // illegal character
-                        return -1L;
-                    }
-                }
-            }
-        }
-        return result;
-    }
-
-    protected static int parseUnsignedInt(String string) {
-        int result = 0;
-        for (int i = 0; i < string.length(); i++) {
-            final char ch = string.charAt(i);
-            if (ch >= '0' && ch <= '9') {
-                result *= 10;
-                result += string.charAt(i) - '0';
-            } else {
-                return -1;
-            }
-        }
-        return result;
-    }
-
-    protected static long parseUnsignedLong(String string) {
-        long result = 0L;
-        for (int i = 0; i < string.length(); i++) {
-            final char ch = string.charAt(i);
-            if (ch >= '0' && ch <= '9') {
-                result *= 10L;
-                result += string.charAt(i) - '0';
-            } else {
-                return -1L;
-            }
-        }
-        return result;
     }
 
     /**
