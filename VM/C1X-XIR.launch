@@ -7,7 +7,7 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="test.com.sun.max.vm.compiler.c1x.C1XTest"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR -c1x-optlevel=3 -fail-fast=false -XX:+PrintCFGToFile -XX:+DetailedAsserts -XX:-PrintCompilation -print-bailout -XX:TraceLinearScanLevel=0 -XX:+PrintMetrics -XX:+PrintTimers -XX:-PrintAssembly -XX:+GatherStaticHIRInstructionCount jtt"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR -c1x-optlevel=2 -fail-fast=false -XX:-PrintCompilation -print-bailout -XX:TraceLinearScanLevel=0 -XX:-InlineMethods -XX:+PrintMetrics -XX:+PrintTimers -XX:-PrintAssembly -XX:+PrintCFGToFile  sun.reflect.ReflectionFactory:newMethod"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="VM"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64"/>
 </launchConfiguration>
