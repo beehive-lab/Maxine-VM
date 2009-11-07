@@ -67,7 +67,7 @@ public class VMIntOption extends VMOption {
      */
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption(prefix, "<n>", help);
+        VMOptions.printHelpForOption(category(), prefix, "<n>", help);
     }
 
     /**

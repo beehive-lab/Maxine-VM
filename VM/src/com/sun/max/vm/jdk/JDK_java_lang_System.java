@@ -562,16 +562,17 @@ public final class JDK_java_lang_System {
         return join(pathSeparator, filesystemPaths);
     }
 
-    private static final VMStringOption classpathOption = register(new VMStringOption("-cp", true, null, null) {
+    private static final VMStringOption classpathOption = register(new VMStringOption("-cp", true, null,
+        "A " + File.pathSeparatorChar + " separated list of directories, JAR archives, and ZIP archives to search for class files.") {
         @Override
         public boolean matches(Pointer arg) {
             return CString.equals(arg, prefix) || CString.equals(arg, "-classpath");
         }
         @Override
         public void printHelp() {
-            VMOptions.printHelpForOption("-cp", " <class search path of directories and zip/jar files>", null);
-            VMOptions.printHelpForOption("-classpath", " <class search path of directories and zip/jar files>",
-                "A : separated list of directories, JAR archives, and ZIP archives to search for class files.");
+            VMOptions.printHelpForOption(category(), "-cp", " <class search path of directories and zip/jar files>", null);
+            VMOptions.printHelpForOption(category(), "-classpath",
+                " <class search path of directories and zip/jar files>", help);
         }
     }, MaxineVM.Phase.PRISTINE);
 
@@ -587,6 +588,7 @@ public final class JDK_java_lang_System {
 
     static class BootClasspathVMOption extends VMOption {
         private String path;
+        private static final String USAGE_VALUE = "<directories and zip/jar files separated by " + File.pathSeparatorChar + ">";
 
         @HOSTED_ONLY
         static BootClasspathVMOption create(String suffix, String help) {
@@ -606,6 +608,11 @@ public final class JDK_java_lang_System {
             } catch (Utf8Exception utf8Exception) {
                 return false;
             }
+        }
+
+        @Override
+        public void printHelp() {
+            VMOptions.printHelpForOption(category(), prefix, USAGE_VALUE, help);
         }
 
         String path() {

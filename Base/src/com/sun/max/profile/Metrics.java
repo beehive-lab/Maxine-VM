@@ -35,6 +35,8 @@ import com.sun.max.program.*;
  */
 public final class Metrics {
 
+    public static boolean DISABLED;
+
     private Metrics() {
         // do nothing.
     }

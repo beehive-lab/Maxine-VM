@@ -115,7 +115,7 @@ public class Verifier implements VerificationRegistry {
             }
             @Override
             public void printHelp() {
-                VMOptions.printHelpForOption("-Xverify[:remote|all|none]", "", help);
+                VMOptions.printHelpForOption(category(), "-Xverify[:remote|all|none]", "", help);
             }
 
         }, MaxineVM.Phase.STARTING);
