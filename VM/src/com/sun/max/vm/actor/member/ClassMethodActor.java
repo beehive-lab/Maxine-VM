@@ -158,6 +158,13 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     /**
+     * Allows bytecode verification and {@linkplain #validateInlineAnnotation(ClassMethodActor) validation} of
+     * inlining annotations to be disabled by a hosted process.
+     */
+    @HOSTED_ONLY
+    public static boolean hostedVerificationDisabled;
+
+    /**
      * @return the actor for the method that will be compiled and/or executed in lieu of this method
      */
     public final ClassMethodActor compilee() {
@@ -175,7 +182,7 @@ public abstract class ClassMethodActor extends MethodActor {
                         compilee = substitute;
                         codeAttribute = substitute.originalCodeAttribute;
                     }
-                    if (MaxineVM.isHosted()) {
+                    if (!hostedVerificationDisabled && MaxineVM.isHosted()) {
                         validateInlineAnnotation(compilee);
                     }
                 }
@@ -188,7 +195,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
                 final ClassActor holder = compilee.holder();
                 if (MaxineVM.isHosted()) {
-                    if (holder.kind != Kind.WORD) {
+                    if (!hostedVerificationDisabled && holder.kind != Kind.WORD) {
                         // We simply verify all methods during boot image build time as the overhead should be acceptable.
                         verifier = modified ? new TypeInferencingVerifier(holder) : Verifier.verifierFor(holder);
                     }
