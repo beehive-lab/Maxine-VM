@@ -205,4 +205,9 @@ public class LIRItem {
         assert value instanceof Constant : "must be a constant";
         return value().asConstant().asLong();
     }
+
+    @Override
+    public String toString() {
+        return result() + "";
+    }
 }

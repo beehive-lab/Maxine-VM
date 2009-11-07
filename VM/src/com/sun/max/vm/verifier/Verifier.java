@@ -135,7 +135,7 @@ public class Verifier implements VerificationRegistry {
 
         // -XX:TraceVerifierLevel=<value> option
         VMOptions.register(new VMIntOption("-XX:TraceVerifierLevel=", 0,
-            "Trace bytecode verification level: 0 == none, 1 == class, 2 == methods.") {
+            "Trace bytecode verification level: 0 = none, 1 = class, 2 = methods.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 boolean result = super.parseValue(optionValue);

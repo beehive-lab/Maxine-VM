@@ -44,9 +44,11 @@ public class Canonicalizer extends ValueVisitor {
     final RiRuntime runtime;
     Value canonical;
     List<Instruction> extra;
+    private final RiMethod method;
 
-    public Canonicalizer(RiRuntime runtime) {
+    public Canonicalizer(RiRuntime runtime, RiMethod method) {
         this.runtime = runtime;
+        this.method = method;
     }
 
     public Value canonicalize(Instruction original) {
@@ -381,7 +383,14 @@ public class Canonicalizer extends ValueVisitor {
             // only try to canonicalize static field loads
             RiField field = i.field();
             if (field.isConstant()) {
-                setConstant(field.constantValue());
+
+                if (method.isStatic() && method.isInitializer()) {
+                    return;
+                }
+
+                // (tw) This seems to be wrong;
+                // TODO: Check why!
+                // setConstant(field.constantValue());
             }
         }
     }
