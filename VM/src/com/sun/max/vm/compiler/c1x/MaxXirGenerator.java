@@ -622,18 +622,18 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirParameter interfaceID = asm.createConstantInputParameter("interfaceID", CiKind.Int);
             XirParameter methodIndex = asm.createConstantInputParameter("methodIndex", CiKind.Int);
             XirOperand hub = asm.createTemp("hub", CiKind.Object);
-            XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
-            XirOperand mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
+            XirOperand mtableLengthOrStartIndex = asm.createTemp("mtableLength/StartIndex", CiKind.Int);
             XirOperand a = asm.createTemp("a", CiKind.Int);
             asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset), true);
-            asm.pload(CiKind.Int, mtableLength, hub, asm.i(hub_mTableLength), false);
-            asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
-            asm.mod(a, interfaceID, mtableLength);
-            asm.add(a, a, mtableStartIndex);
+            asm.pload(CiKind.Int, mtableLengthOrStartIndex, hub, asm.i(hub_mTableLength), false);
+            asm.mod(a, interfaceID, mtableLengthOrStartIndex);
+            asm.pload(CiKind.Int, mtableLengthOrStartIndex, hub, asm.i(hub_mTableStartIndex), false);
+            asm.add(a, a, mtableLengthOrStartIndex);
             asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
             asm.add(a, a, methodIndex);
-            asm.pload(CiKind.Word, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
-            resolved = finishTemplate(asm, a, "invokeinterface<" + kind + ">");
+            XirOperand result = asm.createTemp("result", CiKind.Word);
+            asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
+            resolved = finishTemplate(asm, result, "invokeinterface<" + kind + ">");
         }
         {
             // unresolved invokeinterface
@@ -643,21 +643,21 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirOperand interfaceID = asm.createTemp("interfaceID", CiKind.Int);
             XirOperand methodIndex = asm.createTemp("methodIndex", CiKind.Int);
             XirOperand hub = asm.createTemp("hub", CiKind.Object);
-            XirOperand mtableLength = asm.createTemp("mtableLength", CiKind.Int);
-            XirOperand mtableStartIndex = asm.createTemp("mtableStartIndex", CiKind.Int);
-            XirOperand a = asm.createTemp("a", CiKind.Int);
 
             resolve(asm, "resolveInterfaceMethod", methodIndex, guard);
             resolve(asm, "resolveInterfaceID", interfaceID, guard);
+            XirOperand mtableLengthOrStartIndex = asm.createTemp("mtableLength/StartIndex", CiKind.Int);
+            XirOperand a = asm.createTemp("a", CiKind.Int);
             asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset), true);
-            asm.pload(CiKind.Int, mtableLength, hub, asm.i(hub_mTableLength), false);
-            asm.pload(CiKind.Int, mtableStartIndex, hub, asm.i(hub_mTableStartIndex), false);
-            asm.mod(a, interfaceID, mtableLength);
-            asm.add(a, a, mtableStartIndex);
+            asm.pload(CiKind.Int, mtableLengthOrStartIndex, hub, asm.i(hub_mTableLength), false);
+            asm.mod(a, interfaceID, mtableLengthOrStartIndex);
+            asm.pload(CiKind.Int, mtableLengthOrStartIndex, hub, asm.i(hub_mTableStartIndex), false);
+            asm.add(a, a, mtableLengthOrStartIndex);
             asm.pload(CiKind.Int, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(Ints.SIZE)), false);
             asm.add(a, a, methodIndex);
-            asm.pload(CiKind.Word, a, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
-            unresolved = finishTemplate(asm, a, "invokeinterface<" + kind + ">-unresolved");
+            XirOperand result = asm.createTemp("result", CiKind.Word);
+            asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
+            unresolved = finishTemplate(asm, result, "invokeinterface<" + kind + ">-unresolved");
         }
         return new XirPair(resolved, unresolved);
     }

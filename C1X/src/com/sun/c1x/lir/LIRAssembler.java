@@ -406,7 +406,7 @@ public abstract class LIRAssembler {
                 break;
 
             case XirIndirectCall:
-                xirIndirectCall(op.method(), op.info);
+                xirIndirectCall(op.method(), op.info, op.lastArgument());
                 break;
 
             default:
@@ -414,7 +414,7 @@ public abstract class LIRAssembler {
         }
     }
 
-    protected abstract void xirIndirectCall(RiMethod method, LIRDebugInfo info);
+    protected abstract void xirIndirectCall(RiMethod method, LIRDebugInfo info, LIROperand operand);
 
     protected abstract void xirDirectCall(RiMethod method, LIRDebugInfo info);
 
