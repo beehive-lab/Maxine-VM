@@ -40,21 +40,17 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Basic VM argument handling.
- * We have to do some argument processing here, e.g. -Xms, for anything that affects
- * the bootstrap process. Since we have to work at the CString level, we only handle the
- * essential arguments and postpone everything else until the main thread body.
- * We null out the arguments that we process here so that they can easily be ignored
- * in subsequent passes.
+ * VM options handling.
  *
  * @author Mick Jordan
  * @author Bernd Mathiske
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public final class VMOptions {
 
     private static final int HELP_LINE_MAX_WIDTH = 92;
-    private static final int HELP_INDENT = 32;
+    private static final int HELP_INDENT = 22;
 
     /**
      * Used to collect and sort VM options as they are declared.
@@ -142,6 +138,10 @@ public final class VMOptions {
         if (help != null) {
             Log.print(" ");
             int column = 5 + prefix.length() + value.length();
+            if (column >= HELP_INDENT) {
+                Log.println();
+                column = 0;
+            }
             for (; column < HELP_INDENT; column++) {
                 Log.print(' ');
             }
