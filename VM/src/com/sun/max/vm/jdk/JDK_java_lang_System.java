@@ -562,25 +562,16 @@ public final class JDK_java_lang_System {
         return join(pathSeparator, filesystemPaths);
     }
 
-    // TODO: report the correct path separator from the target here
-    private static final String CLASSPATH_HELP_MESSAGE = "A list of paths to search for Java classes, separated by the : character.";
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption classpathOption = register(new VMStringOption("-classpath", true, null, CLASSPATH_HELP_MESSAGE), MaxineVM.Phase.PRISTINE);
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption cpOption = register(new VMStringOption("-cp", true, null, CLASSPATH_HELP_MESSAGE) {
+    private static final VMStringOption classpathOption = register(new VMStringOption("-cp", true, null, null) {
         @Override
-        public boolean parseValue(Pointer optionValue) {
-            return classpathOption.parseValue(optionValue);
+        public boolean matches(Pointer arg) {
+            return CString.equals(arg, prefix) || CString.equals(arg, "-classpath");
         }
         @Override
-        public boolean isPresent() {
-            return classpathOption.isPresent();
-        }
-        @Override
-        public String getValue() {
-            return classpathOption.getValue();
+        public void printHelp() {
+            VMOptions.printHelpForOption("-cp", " <class search path of directories and zip/jar files>", null);
+            VMOptions.printHelpForOption("-classpath", " <class search path of directories and zip/jar files>",
+                "A : separated list of directories, JAR archives, and ZIP archives to search for class files.");
         }
     }, MaxineVM.Phase.PRISTINE);
 
