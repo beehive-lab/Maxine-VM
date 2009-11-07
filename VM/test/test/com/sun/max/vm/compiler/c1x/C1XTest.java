@@ -121,6 +121,8 @@ public class C1XTest {
             return;
         }
 
+        ClassMethodActor.hostedVerificationDisabled = true;
+
         if (outFileOption.getValue() != null) {
             try {
                 out = new PrintStream(new FileOutputStream(outFileOption.getValue()));
