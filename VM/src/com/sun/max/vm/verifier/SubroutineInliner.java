@@ -351,7 +351,6 @@ public class SubroutineInliner {
         }
 
         SortedSet<ExceptionHandlerEntry> newHandlers = new TreeSet<ExceptionHandlerEntry>(new Comparator<ExceptionHandlerEntry>() {
-            @Override
             public int compare(ExceptionHandlerEntry o1, ExceptionHandlerEntry o2) {
                 return o1.startPosition() - o2.startPosition();
             }
