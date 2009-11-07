@@ -67,7 +67,7 @@ public class GraphPrototype extends Prototype {
         super(compiledPrototype.vmConfiguration());
         this.compiledPrototype = compiledPrototype;
         debuggingPaths = true;
-        add(null, ClassRegistry.vmClassRegistry(), "[root]");
+        add(null, ClassRegistry.BOOT_CLASS_REGISTRY, "[root]");
         gatherObjects();
     }
 
@@ -225,7 +225,7 @@ public class GraphPrototype extends Prototype {
             // miss fields that are hidden to reflection (see sun.reflection.Reflection.filterFields(Class, Field[])).
             final ClassActor classActor = ClassActor.fromJava(clazz);
 
-            this.instanceIsMutable =  addClassInfoFields(instanceFields, classActor.localInstanceFieldActors()) ||
+            this.instanceIsMutable = addClassInfoFields(instanceFields, classActor.localInstanceFieldActors()) ||
                                  (superInfo != null && superInfo.instanceIsMutable) ||
                                  isReferenceArray() ||
                                  Reference.class.isAssignableFrom(clazz);
@@ -482,7 +482,7 @@ public class GraphPrototype extends Prototype {
                 objectToParent.put(object, parent == null ? null : new Link(parent, fieldNameOrArrayIndex));
             }
 
-            if (object instanceof Proxy) {
+            if (object instanceof Proxy || object instanceof OmittedClassError) {
                 printPath(object, System.err);
                 ProgramError.unexpected("There should not be any instances of " + Proxy.class + " in the boot image");
             }
@@ -554,7 +554,7 @@ public class GraphPrototype extends Prototype {
             // must ensure that any ClassActor instances reference the java.lang.Class instance
             exploreClassActor((ClassActor) object);
         } else if (object instanceof JDK.ClassRef) {
-            // resolve class ref's at bootstrapping type
+            // resolve class ref's at bootstrapping time
             exploreClassRef((JDK.ClassRef) object);
         }
 

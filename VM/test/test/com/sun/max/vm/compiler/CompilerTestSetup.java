@@ -136,7 +136,7 @@ public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
     }
 
     private static void writeGeneratedClassfilesToJar() throws IOException {
-        final Map<String, byte[]> generatedClassfiles = VmClassLoader.VM_CLASS_LOADER.generatedClassfiles();
+        final Map<String, byte[]> generatedClassfiles = BootClassLoader.BOOT_CLASS_LOADER.generatedClassfiles();
         if (generatedClassfiles.isEmpty()) {
             return;
         }

@@ -150,7 +150,7 @@ public final class JavaTester {
         if (RUN_IMAGE.getValue()) {
             // generate the run scheme if necessary
             Trace.line(0, "Running target image...");
-            final File defaultImagePath = BootImageGenerator.getDefaultBootImageFilePath().getParentFile();
+            final File defaultImagePath = BootImageGenerator.getDefaultVMDirectory();
             final String[] imageArgs = {"./maxvm"};
             exec(defaultImagePath, appendArgs(imageArgs, RUN_IMAGE_ARGS.getValue()), System.out, System.err, System.in);
         }

@@ -45,7 +45,7 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
     protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
         // We map all tele VM classloaders down into one on the local host VM
-        return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER;
+        return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
     }
 
     public static Sequence<TeleClassLoader> teleClassLoaders() {

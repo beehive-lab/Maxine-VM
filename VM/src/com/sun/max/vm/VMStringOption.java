@@ -51,7 +51,7 @@ public class VMStringOption extends VMOption {
      */
     @HOSTED_ONLY
     public VMStringOption(String prefix, boolean space, String defaultValue, String help) {
-        super(prefix, help);
+        super(prefix, appendDefaultValue(help, defaultValue));
         this.value = defaultValue;
         this.space = space;
     }

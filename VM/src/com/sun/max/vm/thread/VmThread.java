@@ -367,7 +367,44 @@ public class VmThread {
                     Pointer refMapArea,
                     Pointer stackYellowZone,
                     Pointer stackEnd) {
-        FatalError.crash("VmThread.attach not yet implemented.");
+
+        // Should we be using VmThreadFactory?
+        // Or, better, the following:
+        //
+        //final Thread thread = new Thread();
+        //final VmThread vmThread = VmThread.fromJava(thread);
+        final VmThread vmThread = new VmThread();
+
+        VmThreadMap.addVmThread(vmThread);
+
+        // Disable safepoints:
+        Safepoint.setLatchRegister(disabledVmThreadLocals);
+
+        JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.jniEnv());
+
+        // Add the VM thread locals to the active map
+        VmThreadMap.addVmThreadLocals(vmThread, enabledVmThreadLocals);
+        for (VmThreadLocal threadLocal : VmThreadLocal.valuesNeedingInitialization()) {
+            threadLocal.initialize();
+        }
+
+        vmThread.nativeThread = nativeThread;
+        vmThread.vmThreadLocals = enabledVmThreadLocals;
+        vmThread.stackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
+        vmThread.stackDumpStackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
+
+        HIGHEST_STACK_SLOT_ADDRESS.setConstantWord(triggeredVmThreadLocals, stackEnd);
+        LOWEST_STACK_SLOT_ADDRESS.setConstantWord(triggeredVmThreadLocals, triggeredVmThreadLocals.plus(Word.size()));
+        STACK_REFERENCE_MAP.setConstantWord(triggeredVmThreadLocals, refMapArea);
+
+        vmThread.guardPage = stackYellowZone;
+
+        vmThread.initializationComplete();
+
+        // Enable safepoints:
+        Safepoint.enable();
+
+        vmThread.traceThreadAfterInitialization(stackBase, enabledVmThreadLocals);
     }
 
     private static void invokeShutdownHooks() {

@@ -234,8 +234,8 @@ public final class HostObjectAccess {
     private static void initializeObjectIdentityMap() {
         objectMap = new IdentityHashMap<Object, Object>();
 
-        objectMap.put(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, VmClassLoader.VM_CLASS_LOADER);
-        objectMap.put(VmClassLoader.VM_CLASS_LOADER.getParent(), NULL);
+        objectMap.put(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, BootClassLoader.BOOT_CLASS_LOADER);
+        objectMap.put(BootClassLoader.BOOT_CLASS_LOADER.getParent(), NULL);
         objectMap.put(systemThreadGroup, NULL);
         objectMap.put(mainThread, mainThread);
         objectMap.put(Trace.stream(), Log.out);

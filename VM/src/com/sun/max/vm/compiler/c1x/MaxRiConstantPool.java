@@ -247,7 +247,11 @@ public class MaxRiConstantPool implements RiConstantPool {
             return runtime.canonicalRiField(((FieldRefConstant.Resolved) constant).fieldActor(), this, cpi);
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-            return runtime.canonicalRiField(constant.resolve(constantPool, cpi), this, cpi);
+            try {
+                return runtime.canonicalRiField(constant.resolve(constantPool, cpi), this, cpi);
+            } catch (HostOnlyFieldError hostOnlyFieldError) {
+                // Treat as unresolved
+            }
         }
         return new MaxRiField(this, constant, cpi); // unresolved
     }
@@ -261,7 +265,11 @@ public class MaxRiConstantPool implements RiConstantPool {
             return runtime.canonicalRiMethod(((InterfaceMethodRefConstant.Resolved) constant).methodActor(), this, cpi);
         } else if (attemptResolution(constant)) {
             // the resolution can occur without side effects
-            return runtime.canonicalRiMethod(constant.resolve(constantPool, cpi), this, cpi);
+            try {
+                return runtime.canonicalRiMethod(constant.resolve(constantPool, cpi), this, cpi);
+            } catch (HostOnlyMethodError hostOnlyMethodError) {
+                // Treat as unresolved
+            }
         }
         return new MaxRiMethod(this, constant, cpi); // unresolved
     }

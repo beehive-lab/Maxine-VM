@@ -99,6 +99,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     public long maxObjectInspectionAge() {
         FatalError.unimplemented();
         return 0;
+    }
 
+    @Override
+    public boolean isInitialized() {
+        return MaxineVM.isRunning();
     }
 }

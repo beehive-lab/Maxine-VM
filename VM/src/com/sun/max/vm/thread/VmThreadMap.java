@@ -25,6 +25,7 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.monitor.modal.sync.*;
+import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.BootImage.*;
 import com.sun.max.vm.reference.*;
@@ -57,6 +58,13 @@ public final class VmThreadMap {
      */
     static final class VMThreadMapJavaMonitor extends StandardJavaMonitor {
         @Override
+        public void allocate() {
+            super.allocate();
+            NativeMutex nativeMutex = (NativeMutex) mutex;
+            nativeRegisterVmThreadMapMutex(nativeMutex.asPointer());
+        }
+
+        @Override
         public void monitorEnter() {
             final VmThread currentThread = VmThread.current();
             if (currentThread.state() == Thread.State.TERMINATED) {
@@ -78,8 +86,8 @@ public final class VmThreadMap {
      * the corresponding {@code VmThread} instance.
      * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockword64}).
      *
-     * Note that we synchronize explicitly on ACTIVE to ensure that we don't disturb the TERMINATED state
-     * during thread tear down.
+     * Note that callers of acquire or release must synchronize explicitly on ACTIVE to ensure that
+     * the TERMINATED state is not disturbed during thread tear down.
      */
     private static final class IDMap {
         private int nextID = 1;
@@ -94,39 +102,45 @@ public final class VmThreadMap {
             }
         }
 
+        /**
+         * Acquires an ID for a VmThread.
+         * This method is not synchronized. It is required by the caller to synchronize on ACTIVE.
+         * @param vmThread the VmThread for which and ID should be assigned
+         * @return
+         */
         int acquire(VmThread vmThread) {
-            synchronized (ACTIVE) {
-                FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
-                final int length = freeList.length;
-                if (nextID >= length) {
-                    // grow the free list and initialize the new part
-                    final int[] newFreeList = Arrays.grow(freeList, length * 2);
-                    for (int i = length; i < newFreeList.length; i++) {
-                        newFreeList[i] = i + 1;
-                    }
-                    freeList = newFreeList;
-
-                    // grow the vmThreads list and copy
-                    final VmThread[] newVmThreads = new VmThread[length * 2];
-                    for (int i = 0; i < length; i++) {
-                        newVmThreads[i] = vmThreads[i];
-                    }
-                    vmThreads = newVmThreads;
+            FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
+            final int length = freeList.length;
+            if (nextID >= length) {
+                // grow the free list and initialize the new part
+                final int[] newFreeList = Arrays.grow(freeList, length * 2);
+                for (int i = length; i < newFreeList.length; i++) {
+                    newFreeList[i] = i + 1;
                 }
-                final int id = nextID;
-                nextID = freeList[nextID];
-                vmThreads[id] = vmThread;
-                vmThread.setID(id);
-                return id;
+                freeList = newFreeList;
+
+                // grow the vmThreads list and copy
+                final VmThread[] newVmThreads = new VmThread[length * 2];
+                for (int i = 0; i < length; i++) {
+                    newVmThreads[i] = vmThreads[i];
+                }
+                vmThreads = newVmThreads;
             }
+            final int id = nextID;
+            nextID = freeList[nextID];
+            vmThreads[id] = vmThread;
+            vmThread.setID(id);
+            return id;
         }
 
+        /**
+         * This method is not synchronized. It is required by the caller to synchronize on ACTIVE.
+         * @param id
+         */
         void release(int id) {
-            synchronized (ACTIVE) {
-                freeList[id] = nextID;
-                vmThreads[id] = null;
-                nextID = id;
-            }
+            freeList[id] = nextID;
+            vmThreads[id] = null;
+            nextID = id;
         }
 
         @INLINE
@@ -144,6 +158,9 @@ public final class VmThreadMap {
     static {
         JavaMonitorManager.bindStickyMonitor(ACTIVE, new VMThreadMapJavaMonitor());
     }
+
+    @C_FUNCTION
+    private static native void nativeRegisterVmThreadMapMutex(Pointer mutex);
 
     private final IDMap idMap = new IDMap(64);
     private volatile int vmThreadStartCount;
@@ -273,8 +290,8 @@ public final class VmThreadMap {
      * @return the native thread created
      */
     public Word startVmThread(VmThread vmThread, Size stackSize, int priority) {
-        final int id = idMap.acquire(vmThread);
         synchronized (this) {
+            final int id = idMap.acquire(vmThread);
             final int count = vmThreadStartCount;
             final Word nativeThread = VmThread.nativeThreadCreate(id, stackSize, priority);
             if (nativeThread.isZero()) {

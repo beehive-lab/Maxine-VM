@@ -35,7 +35,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -91,13 +90,12 @@ public class C1XTest {
         "Set the number of warmup runs to execute before initiating the timed run.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
+    private static final Option<Integer> c1xOptLevel = options.newIntegerOption("c1x-optlevel", 0,
+        "Set the overall optimization level of C1X (-1 to use default settings)");
 
     static {
         // add all the fields from C1XOptions as options
         options.addFieldOptions(C1XOptions.class, "XX");
-
-        // add a special option "c1x-optlevel" which adjusts the optimization level
-        options.addOption(C1XCompilerScheme.OptLevel, Syntax.REQUIRES_EQUALS);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -112,8 +110,8 @@ public class C1XTest {
 
     public static void main(String[] args) {
         // set the default optimization level before parsing options
-        C1XOptions.setOptimizationLevel(C1XCompilerScheme.OptLevel.getDefaultValue());
         options.parseArguments(args);
+        C1XOptions.setOptimizationLevel(c1xOptLevel.getValue());
         reportC1XOptions();
         final String[] arguments = options.getArguments();
 

@@ -24,7 +24,7 @@ import com.sun.max.vm.*;
 
 /**
  * Error thrown when an attempt is made to load a {@linkplain MaxineVM#isHostedOnly(Class) host-only}
- * class via the {@link PrototypeClassLoader}.
+ * class via the {@link HostedBootClassLoader}.
  *
  * @author Doug Simon
  */
