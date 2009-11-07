@@ -87,6 +87,6 @@ public class VerboseVMOption extends VMOption {
 
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption("-verbose[:class|gc|jni|comp]", "", help);
+        VMOptions.printHelpForOption(category(), "-verbose[:class|gc|jni|comp]", "", help);
     }
 }

@@ -51,17 +51,26 @@ public class VMOption {
         /**
          * Constant denoting options that do not start with "-X".
          */
-        STANDARD,
+        STANDARD(18, 72),
 
         /**
          * Constant denoting options that start with "-X" but not "-XX".
          */
-        NON_STANDARD,
+        NON_STANDARD(22, 92),
 
         /**
          * Constant denoting options that start with "-XX".
          */
-        IMPLEMENTATION_SPECIFIC;
+        IMPLEMENTATION_SPECIFIC(42, 122);
+
+        public final int helpIndent;
+        public final int helpLineMaxWidth;
+
+
+        Category(int helpIndent, int helpLineMaxWidth) {
+            this.helpIndent = helpIndent;
+            this.helpLineMaxWidth = helpLineMaxWidth;
+        }
 
         public static Category from(String prefix) {
             if (prefix.startsWith("-XX")) {
@@ -96,9 +105,6 @@ public class VMOption {
         }
         if (help == null || help.length() == 0) {
             return "(default: " + defaultValue + ")";
-        }
-        if (help.endsWith(".")) {
-            return help.substring(0, help.length() - 1) + " (default: " + defaultValue + ").";
         }
         return help + " (default: " + defaultValue + ")";
     }
@@ -162,7 +168,7 @@ public class VMOption {
      * Prints out help onto the console.
      */
     public void printHelp() {
-        VMOptions.printHelpForOption(prefix, "", help);
+        VMOptions.printHelpForOption(category(), prefix, "", help);
     }
 
     /**
@@ -225,6 +231,12 @@ public class VMOption {
         return Category.from(prefix);
     }
 
+    /**
+     * Determines if this option halts the VM when it is parsed on the command line.
+     */
+    protected boolean haltsVM() {
+        return false;
+    }
 
     // Prototype-time support for setting VM options
 
