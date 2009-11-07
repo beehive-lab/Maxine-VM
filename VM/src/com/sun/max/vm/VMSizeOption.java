@@ -61,7 +61,7 @@ public class VMSizeOption extends VMOption {
      */
     @Override
     public boolean parseValue(Pointer optionValue) {
-        long value = VMOptions.parseScaledValue(optionValue, CString.length(optionValue), 0);
+        long value = CString.parseScaledValue(optionValue, CString.length(optionValue), 0);
         if (value < 0) {
             return false;
         }
@@ -74,7 +74,7 @@ public class VMSizeOption extends VMOption {
      */
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption(prefix, "<size>", help);
+        VMOptions.printHelpForOption(category(), prefix, "<size>", help);
     }
 
     /**

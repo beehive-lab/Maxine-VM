@@ -85,7 +85,17 @@ public final class MaxineVM {
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
 
-    private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message."), MaxineVM.Phase.PRISTINE);
+    private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message.") {
+        @Override
+        protected boolean haltsVM() {
+            return true;
+        }
+        @Override
+        public boolean parseValue(Pointer optionValue) {
+            VMOptions.printUsage(Category.STANDARD);
+            return true;
+        }
+    }, MaxineVM.Phase.PRISTINE);
 
 
     @HOSTED_ONLY
@@ -533,9 +543,7 @@ public final class MaxineVM {
         vm.phase = Phase.PRISTINE;
 
         if (VMOptions.parsePristine(argc, argv)) {
-            if (HELP_OPTION.isPresent()) {
-                VMOptions.printUsage();
-            } else {
+            if (!VMOptions.earlyVMExitRequested()) {
                 VmThread.createAndRunMainThread();
             }
         }

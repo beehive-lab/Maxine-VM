@@ -56,11 +56,11 @@ public class AssertionsVMOption extends VMOption {
 
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption("-ea[:<packagename>...|:<classname>]", "", null);
-        VMOptions.printHelpForOption("-enableassertions[:<packagename>...|:<classname>]", "", "enable assertions");
-        VMOptions.printHelpForOption("-da[:<packagename>...|:<classname>]", "", null);
-        VMOptions.printHelpForOption("-disableassertions[:<packagename>...|:<classname>]", "", "disable assertions");
-        VMOptions.printHelpForOption("-esa | -enablesystemassertions", "", "enable system assertions");
-        VMOptions.printHelpForOption("-dsa | -disablesystemassertions", "", "disable system assertions");
+        VMOptions.printHelpForOption(category(), "-ea[:<packagename>...|:<classname>]", "", null);
+        VMOptions.printHelpForOption(category(), "-enableassertions[:<packagename>...|:<classname>]", "", "enable assertions");
+        VMOptions.printHelpForOption(category(), "-da[:<packagename>...|:<classname>]", "", null);
+        VMOptions.printHelpForOption(category(), "-disableassertions[:<packagename>...|:<classname>]", "", "disable assertions");
+        VMOptions.printHelpForOption(category(), "-esa | -enablesystemassertions", "", "enable system assertions");
+        VMOptions.printHelpForOption(category(), "-dsa | -disablesystemassertions", "", "disable system assertions");
     }
 }
