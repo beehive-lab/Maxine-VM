@@ -577,7 +577,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return description();
     }
 
-    @Override
     public final String traceToString() {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
