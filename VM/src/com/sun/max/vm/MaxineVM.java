@@ -86,7 +86,7 @@ public final class MaxineVM {
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
 
     private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message."), MaxineVM.Phase.PRISTINE);
-    private static final VMOption EA_OPTION = register(new VMOption("-ea", "Enables assertions in user code.  Currently unimplemented."), MaxineVM.Phase.PRISTINE);
+
 
     @HOSTED_ONLY
     private static MaxineVM globalHostOrTarget = null;

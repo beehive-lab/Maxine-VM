@@ -167,6 +167,5 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
         public String valueString(ConstantPool pool) {
             return typeDescriptor().toJavaString();
         }
-
     }
 }

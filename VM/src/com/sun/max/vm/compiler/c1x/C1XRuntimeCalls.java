@@ -420,6 +420,7 @@ public class C1XRuntimeCalls {
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveClass)
     public static Object resolveClass(int index, ConstantPool constantPool) {
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
+        MakeClassInitialized.makeClassInitialized(classActor);
         return classActor.dynamicHub();
     }
 

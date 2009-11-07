@@ -1294,11 +1294,12 @@ public abstract class ClassActor extends Actor {
 
     @INLINE
     public final Class mirror() {
-        if (MaxineVM.isHosted()) {
-            return JavaPrototype.javaPrototype().toJava(this);
-        }
         if (mirror == null) {
-            return noninlineCreateMirror();
+            if (MaxineVM.isHosted()) {
+                mirror = JavaPrototype.javaPrototype().toJava(this);
+            } else {
+                return noninlineCreateMirror();
+            }
         }
         return mirror;
     }

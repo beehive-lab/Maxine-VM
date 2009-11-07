@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.actor.holder;
 
-import java.io.*;
 import java.util.*;
 
 import com.sun.max.unsafe.*;
@@ -49,12 +48,12 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
 
     private static InterfaceActor[] getInterfaceActors() {
         if (interfaceActors == null) {
-            interfaceActors = new InterfaceActor[]{(InterfaceActor) ClassActor.fromJava(Cloneable.class), (InterfaceActor) ClassActor.fromJava(Serializable.class)};
+            interfaceActors = new InterfaceActor[]{ClassRegistry.CLONEABLE, ClassRegistry.SERIALIZABLE};
         }
         return interfaceActors;
     }
 
-    ArrayClassActor(ClassActor componentClassActor) {
+    public ArrayClassActor(ClassActor componentClassActor) {
         super(Kind.REFERENCE,
               componentClassActor.kind.arrayLayout(Layout.layoutScheme()),
               componentClassActor.classLoader,
@@ -63,7 +62,7 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
               componentClassActor.minorVersion,
               createFlags(componentClassActor),
               JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor, 1),
-              ClassActor.fromJava(Object.class),
+              ClassRegistry.javaLangObjectActor(),
               componentClassActor,
               getInterfaceActors(),
               FieldActor.NONE,
@@ -78,11 +77,13 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
 
     public static ArrayClassActor forComponentClassActor(ClassActor componentClassActor) {
         final TypeDescriptor arrayTypeDescriptor = JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor, 1);
-        ArrayClassActor arrayClassActor = (ArrayClassActor) ClassRegistry.get(componentClassActor.classLoader, arrayTypeDescriptor, false);
-        if (arrayClassActor == null) {
-            arrayClassActor = ClassActorFactory.createArrayClassActor(componentClassActor);
+        synchronized (componentClassActor.classLoader) {
+            ArrayClassActor arrayClassActor = (ArrayClassActor) ClassRegistry.get(componentClassActor.classLoader, arrayTypeDescriptor, false);
+            if (arrayClassActor == null) {
+                arrayClassActor = ClassActorFactory.createArrayClassActor(componentClassActor);
+            }
+            return arrayClassActor;
         }
-        return arrayClassActor;
     }
 
     public static ArrayClassActor forComponentClassActor(ClassActor elementClassActor, int dimensions) {

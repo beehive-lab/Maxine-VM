@@ -177,7 +177,7 @@ public abstract class TeleVM implements MaxVM {
         classpathPrefix = classpathPrefix.prepend(BootImageGenerator.getBootImageJarFile(vmdir).getAbsolutePath());
         checkClasspath(classpathPrefix);
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
-        PrototypeClassLoader.setClasspath(classpath);
+        HostedBootClassLoader.setClasspath(classpath);
 
         Prototype.loadLibrary(TELE_LIBRARY_NAME);
         final File bootImageFile = BootImageGenerator.getBootImageFile(vmdir);
@@ -1033,7 +1033,7 @@ public abstract class TeleVM implements MaxVM {
 
     /**
      * Gets a canonical local {@link ClassActor} for the named class, creating one if needed by loading the class from
-     * the classpath using the {@link PrototypeClassLoader#PROTOTYPE_CLASS_LOADER}.
+     * the classpath using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
      *
      * @param name the name of a class
      * @return Local {@link ClassActor} corresponding to the class, possibly created by loading it from classpath.
@@ -1042,26 +1042,27 @@ public abstract class TeleVM implements MaxVM {
     private ClassActor makeClassActor(String name) throws ClassNotFoundException {
         // The VM registry includes all ClassActors for classes loaded locally
         // using the prototype class loader
-        ClassActor classActor = ClassRegistry.vmClassRegistry().get(
-                JavaTypeDescriptor.getDescriptorForJavaString(name));
-        if (classActor == null) {
-            // Try to load the class from the local classpath.
-            if (name.endsWith("[]")) {
-                classActor = ClassActorFactory.createArrayClassActor(makeClassActor(name.substring(0,
-                                name.length() - 2)));
-            } else {
-                classActor = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.makeClassActor(
-                                JavaTypeDescriptor.getDescriptorForWellFormedTupleName(name));
+        HostedBootClassLoader classLoader = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
+        synchronized (classLoader) {
+            ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString(name));
+            if (classActor == null) {
+                // Try to load the class from the local classpath.
+                if (name.endsWith("[]")) {
+                    classActor = ClassActorFactory.createArrayClassActor(makeClassActor(name.substring(0, name.length() - 2)));
+                } else {
+                    classActor = classLoader.makeClassActor(
+                                    JavaTypeDescriptor.getDescriptorForWellFormedTupleName(name));
+                }
             }
+            return classActor;
         }
-        return classActor;
     }
 
     /**
      * Gets a canonical local {@link ClassActor} corresponding to a
      * {@link ClassActor} in the VM, creating one if needed by
      * loading the class using the
-     * {@link PrototypeClassLoader#PROTOTYPE_CLASS_LOADER} from either the
+     * {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER} from either the
      * classpath, or if not found on the classpath, by copying the classfile
      * from the VM.
      *
@@ -1087,7 +1088,7 @@ public abstract class TeleVM implements MaxVM {
                 throw new NoClassDefFoundError("Could not retrieve class file from VM for " + name);
             }
             final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
-            return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.makeClassActor(name, classfile);
+            return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.makeClassActor(name, classfile);
         }
     }
 
@@ -1234,7 +1235,7 @@ public abstract class TeleVM implements MaxVM {
                 }
                 return true;
             }
-        }.run(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
+        }.run(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath());
         Trace.end(TRACE_VALUE, tracePrefix() + "searching classpath for class files ["
                 + typesOnClasspath.size() + " types found]");
         this.typesOnClasspath = typesOnClasspath;
@@ -2196,7 +2197,7 @@ public abstract class TeleVM implements MaxVM {
         }
 
         public String[] getClassPath() {
-            return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath().toStringArray();
+            return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath().toStringArray();
         }
 
         /**

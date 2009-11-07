@@ -128,7 +128,7 @@ final class JDK_java_lang_ClassLoader {
      */
     @SUBSTITUTE
     private Class findBootstrapClass(String name) throws ClassNotFoundException {
-        return VmClassLoader.VM_CLASS_LOADER.findBootstrapClass(name);
+        return BootClassLoader.BOOT_CLASS_LOADER.findBootstrapClass(name);
     }
 
     /**
@@ -178,7 +178,7 @@ final class JDK_java_lang_ClassLoader {
         assertionStatusDirectives.deflt = false;
 
         // Replace the result object's class reference with the type the JDK expects:
-        final ClassActor classActor = ClassRegistry.vmClassRegistry().get(JavaTypeDescriptor.getDescriptorForJavaString("java.lang.AssertionStatusDirectives"));
+        final ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(JavaTypeDescriptor.getDescriptorForJavaString("java.lang.AssertionStatusDirectives"));
         assert classActor != null;
         Layout.writeHubReference(Reference.fromJava(assertionStatusDirectives), Reference.fromJava(classActor));
         return assertionStatusDirectives;

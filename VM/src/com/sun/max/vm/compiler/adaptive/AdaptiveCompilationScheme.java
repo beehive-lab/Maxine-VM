@@ -105,12 +105,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     "Selects optimized only mode."), MaxineVM.Phase.STARTING);
     private static final VMIntOption thresholdOption = register(new VMIntOption("-XX:RCT=", DEFAULT_RECOMPILATION_THRESHOLD,
                     "In mixed mode, sets the recompilation threshold for methods."), MaxineVM.Phase.STARTING);
-    static final VMBooleanXXOption gcOnCompileOption = register(new VMBooleanXXOption("-XX:-GCOnCompilation",
-                    "When specified, the compiler will request GC before every compilation operation, " +
-                    "which is useful for testing corner cases in the compiler/GC interactions."), MaxineVM.Phase.STARTING);
     private static final VMBooleanXXOption gcOnRecompileOption = register(new VMBooleanXXOption("-XX:-GCOnRecompilation",
-                    "When specified, the compiler will request GC before every re-compilation operation, " +
-                    "which is useful for testing corner cases in the compiler/GC interactions."), MaxineVM.Phase.STARTING);
+                    "When specified, the compiler will request GC before every re-compilation operation."), MaxineVM.Phase.STARTING);
     private static final VMBooleanXXOption failoverOption = register(new VMBooleanXXOption("-XX:-FailOverCompilation",
                     "When specified, the compiler will attempt to use a different compiler if compilation fails " +
                     "with the first compiler."), MaxineVM.Phase.STARTING);

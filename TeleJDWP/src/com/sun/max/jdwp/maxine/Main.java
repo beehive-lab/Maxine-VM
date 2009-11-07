@@ -56,7 +56,7 @@ import com.sun.max.tele.TeleVM.Options;
 import com.sun.max.vm.prototype.BootImageException;
 import com.sun.max.vm.prototype.BootImageGenerator;
 import com.sun.max.vm.prototype.Prototype;
-import com.sun.max.vm.prototype.PrototypeClassLoader;
+import com.sun.max.vm.prototype.HostedBootClassLoader;
 
 /**
  * Class containing the main function to startup the Maxine JDWP server. The server is listening for incoming
@@ -94,7 +94,7 @@ public class Main {
         checkClasspath(classpathPrefix);
 
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
-        PrototypeClassLoader.setClasspath(classpath);
+        HostedBootClassLoader.setClasspath(classpath);
 
         Prototype.loadLibrary("tele");
 

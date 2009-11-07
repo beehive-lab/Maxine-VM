@@ -21,6 +21,7 @@
 package com.sun.max.vm.prototype;
 
 import static com.sun.max.annotate.LOCAL_SUBSTITUTION.Static.*;
+import static com.sun.max.vm.prototype.HostedBootClassLoader.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -58,7 +59,6 @@ public class JavaPrototype extends Prototype {
     private final Map<MethodActor, AccessibleObject> methodActorMap = new HashMap<MethodActor, AccessibleObject>();
     private final Map<FieldActor, Field> fieldActorMap = new HashMap<FieldActor, Field>();
     private final Map<ClassActor, Class> classActorMap = new ConcurrentHashMap<ClassActor, Class>();
-    private final Map<Class, ClassActor> javaClassMap = new ConcurrentHashMap<Class, ClassActor>();
     private final Map<Method, MethodActor> javaMethodMap = new HashMap<Method, MethodActor>();
     private final Map<Constructor, MethodActor> javaConstructorMap = new HashMap<Constructor, MethodActor>();
     private final Map<Field, FieldActor> javaFieldMap = new HashMap<Field, FieldActor>();
@@ -80,7 +80,7 @@ public class JavaPrototype extends Prototype {
      * @return a sequence of the packages that match the criteria
      */
     private Sequence<MaxPackage> getPackages(final Class<? extends MaxPackage> maxPackageClass, MaxPackage rootPackage) {
-        final Sequence<MaxPackage> packages = Sequence.Static.filter(rootPackage.getTransitiveSubPackages(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath()), new Predicate<MaxPackage>() {
+        final Sequence<MaxPackage> packages = Sequence.Static.filter(rootPackage.getTransitiveSubPackages(HOSTED_BOOT_CLASS_LOADER.classpath()), new Predicate<MaxPackage>() {
             public boolean evaluate(MaxPackage maxPackage) {
                 return maxPackageClass.isInstance(maxPackage) && vmConfiguration().isMaxineVMPackage(maxPackage);
             }
@@ -136,7 +136,7 @@ public class JavaPrototype extends Prototype {
      */
     private void loadClass(Class javaClass) {
         assert !MaxineVM.isHostedOnly(javaClass);
-        Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, javaClass.getName());
+        Classes.load(HOSTED_BOOT_CLASS_LOADER, javaClass.getName());
     }
 
     /**
@@ -146,7 +146,7 @@ public class JavaPrototype extends Prototype {
      * @param name the name of the java class as a string
      */
     public void loadClass(String name) {
-        Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, name);
+        Classes.load(HOSTED_BOOT_CLASS_LOADER, name);
     }
 
     private final PackageLoader packageLoader;
@@ -222,17 +222,17 @@ public class JavaPrototype extends Prototype {
     public void loadCoreJavaPackages() {
         if (System.getProperty("max.allow.all.core.packages") == null) {
             // Don't want the static Map fields initialized
-            PrototypeClassLoader.omitClass(java.lang.reflect.Proxy.class);
+            HostedBootClassLoader.omitClass(java.lang.reflect.Proxy.class);
 
-            PrototypeClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(File.class.getName() + "$LazyInitialization"));
-            PrototypeClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(java.util.Calendar.class.getName() + "$CalendarAccessControlContext"));
+            HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(File.class.getName() + "$LazyInitialization"));
+            HostedBootClassLoader.omitClass(JavaTypeDescriptor.getDescriptorForJavaString(java.util.Calendar.class.getName() + "$CalendarAccessControlContext"));
 
             // LogManager and FileSystemPreferences have many side effects
             // that we do not wish to account for before running the target VM.
             // In particular they install shutdown hooks,
             // which then end up in the boot image and cause bugs at target runtime.
-            PrototypeClassLoader.omitPackage("java.util.logging", true);
-            PrototypeClassLoader.omitPackage("java.util.prefs", true);
+            HostedBootClassLoader.omitPackage("java.util.logging", true);
+            HostedBootClassLoader.omitPackage("java.util.prefs", true);
         }
 
         loadPackage("java.lang", false);
@@ -267,7 +267,7 @@ public class JavaPrototype extends Prototype {
         loadClass(sun.security.action.GetPropertyAction.class);
 
         if (System.getProperty("max.allow.all.core.packages") == null) {
-            PrototypeClassLoader.omitPackage("java.security", false);
+            HostedBootClassLoader.omitPackage("java.security", false);
         }
     }
 
@@ -285,7 +285,7 @@ public class JavaPrototype extends Prototype {
      * applied to them).
      */
     private static void initializeMaxClasses() {
-        final ClassActor[] classActors = Arrays.from(ClassActor.class, ClassRegistry.vmClassRegistry());
+        final ClassActor[] classActors = Arrays.from(ClassActor.class, ClassRegistry.BOOT_CLASS_REGISTRY);
         for (ClassActor classActor : classActors) {
             if (MaxineVM.isMaxineClass(classActor)) {
                 try {
@@ -330,7 +330,7 @@ public class JavaPrototype extends Prototype {
     public JavaPrototype(final VMConfiguration vmConfiguration, final boolean loadPackages) {
         super(vmConfiguration);
 
-        packageLoader = new PrototypePackageLoader(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
+        packageLoader = new PrototypePackageLoader(HOSTED_BOOT_CLASS_LOADER, HOSTED_BOOT_CLASS_LOADER.classpath());
         theJavaPrototype = this;
 
         MaxineVM.setTarget(new MaxineVM(vmConfiguration));
@@ -459,7 +459,7 @@ public class JavaPrototype extends Prototype {
                 javaClass = classActor.typeDescriptor.resolveType(classActor.classLoader);
             } catch (OmittedClassError e) {
                 // Failed with the prototype loader: try again with the VM class loader.
-                javaClass = classActor.typeDescriptor.resolveType(VmClassLoader.VM_CLASS_LOADER);
+                javaClass = classActor.typeDescriptor.resolveType(BootClassLoader.BOOT_CLASS_LOADER);
             }
             classActorMap.put(classActor, javaClass);
         }
@@ -476,14 +476,13 @@ public class JavaPrototype extends Prototype {
         if (MaxineVM.isHostedOnly(javaClass)) {
             return null;
         }
-        synchronized (javaClassMap) {
-            ClassActor classActor = javaClassMap.get(javaClass);
-            if (classActor == null) {
-                classActor = JavaTypeDescriptor.forJavaClass(javaClass).resolve(javaClass.getClassLoader());
-                javaClassMap.put(javaClass, classActor);
-            }
+
+        TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
+        ClassActor classActor = ClassRegistry.BOOT_CLASS_REGISTRY.get(typeDescriptor);
+        if (classActor != null) {
             return classActor;
         }
+        return typeDescriptor.resolveHosted(javaClass.getClassLoader());
     }
 
     /**
@@ -497,7 +496,7 @@ public class JavaPrototype extends Prototype {
             MethodActor methodActor = javaMethodMap.get(javaMethod);
             if (methodActor == null) {
                 final Utf8Constant name = SymbolTable.makeSymbol(javaMethod.getAnnotation(LOCAL_SUBSTITUTION.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName());
-                final ClassActor holder = ClassActor.fromJava(javaMethod.getDeclaringClass());
+                final ClassActor holder = toClassActor(javaMethod.getDeclaringClass());
                 ProgramError.check(holder != null, "Could not find " + javaMethod.getDeclaringClass());
                 final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaMethod);
                 methodActor = holder.findLocalMethodActor(name, signature);
@@ -518,7 +517,7 @@ public class JavaPrototype extends Prototype {
         synchronized (javaConstructorMap) {
             MethodActor methodActor = javaConstructorMap.get(javaConstructor);
             if (methodActor == null) {
-                final ClassActor holder = ClassActor.fromJava(javaConstructor.getDeclaringClass());
+                final ClassActor holder = toClassActor(javaConstructor.getDeclaringClass());
                 final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaConstructor);
                 methodActor = holder.findLocalMethodActor(SymbolTable.INIT, signature);
                 ProgramError.check(methodActor != null, "Could not find <init>" + signature + " in " + holder);
@@ -538,7 +537,7 @@ public class JavaPrototype extends Prototype {
         synchronized (javaFieldMap) {
             FieldActor fieldActor = javaFieldMap.get(javaField);
             if (fieldActor == null) {
-                final ClassActor holder = ClassActor.fromJava(javaField.getDeclaringClass());
+                final ClassActor holder = toClassActor(javaField.getDeclaringClass());
                 final TypeDescriptor signature = JavaTypeDescriptor.forJavaClass(javaField.getType());
                 final Utf8Constant name = SymbolTable.makeSymbol(javaField.getName());
                 fieldActor = holder.findFieldActor(name, signature);
