@@ -74,6 +74,10 @@ public abstract class LIRCall extends LIRInstruction {
         return operand(0);
     }
 
+    public LIROperand lastArgument() {
+        return operand(arguments.size());
+    }
+
     /**
      * Gets the arguments list of this call.
      *

@@ -60,6 +60,17 @@ public class C1XMetrics {
 
     public static Map<String, Integer> StaticHIRInstructionCount = new HashMap<String, Integer>();
 
+
+    /**
+     * The number of LIRXIR instructions that were allocated during compilation.
+     */
+    public static int NumberOfLIRXIRInstructions;
+
+    /**
+     * The number of LIR move instructions that were allocated during compilation.
+     */
+    public static int NumberOfLIRMoveInstructions;
+
     /**
      * The number of LIR instructions that were allocated during compilation.
      */
