@@ -608,7 +608,9 @@ public abstract class LIRGenerator extends ValueVisitor {
                 lir.callXirDirect(target, resultRegister, argList, info);
             } else {
                 // Indirect call
-                lir.move(destinationAddress, LIROperandFactory.singleLocation(destinationAddress.kind, compilation.target.scratchRegister));
+                //LIROperand dst = LIROperandFactory.scratch(destinationAddress.kind, compilation.target);
+                //lir.move(destinationAddress, dst);
+                argList.add(destinationAddress);
                 lir.callXirIndirect(target, resultRegister, argList, info);
             }
 
@@ -984,10 +986,15 @@ public abstract class LIRGenerator extends ValueVisitor {
             x.setOperand(allocatedResultOperand);
         }
 
-        lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
-                operandArray, operandIndicesArray,
-                (operands[resultOperand.index] == LIROperandFactory.IllegalLocation) ? -1 : resultOperand.index,
-                info, method);
+        if (!operands[resultOperand.index].isConstant()) {
+
+            // XIR instruction is only needed when the operand is not a constant!
+            lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
+                    operandArray, operandIndicesArray,
+                    (operands[resultOperand.index] == LIROperandFactory.IllegalLocation) ? -1 : resultOperand.index,
+                    info, method);
+        }
+
         return operands[resultOperand.index];
     }
 

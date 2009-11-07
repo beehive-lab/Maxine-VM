@@ -2277,8 +2277,15 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void xirIndirectCall(RiMethod method, LIRDebugInfo info) {
-        masm().call(compilation.target.scratchRegister, method, info.oopMap.stackMap());
+    protected void xirIndirectCall(RiMethod method, LIRDebugInfo info, LIROperand callAddress) {
+
+        CiRegister reg = compilation.target.scratchRegister;
+        if (callAddress.isRegister()) {
+            reg = callAddress.asRegister();
+        } else {
+            moveOp(callAddress, LIROperandFactory.singleLocation(callAddress.kind, reg), callAddress.kind, null, false);
+        }
+        masm().call(reg, method, info.oopMap.stackMap());
         addCallInfoHere(info);
     }
 

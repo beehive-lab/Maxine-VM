@@ -150,6 +150,10 @@ public abstract class LIRInstruction {
 
         C1XMetrics.NumberOfLIRInstructions++;
 
+        if (opcode == LIROpcode.Move) {
+            C1XMetrics.NumberOfLIRMoveInstructions++;
+        }
+
         id = -1;
         initInputsAndTemps(tempInput, temp, inputAndTempOperands, stub);
     }

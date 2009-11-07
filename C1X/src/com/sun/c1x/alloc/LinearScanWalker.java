@@ -913,7 +913,7 @@ final class LinearScanWalker extends IntervalWalker {
             int pos = cur.from();
             if ((pos & 1) == 1) {
                 // the current instruction is a call that blocks all registers
-                if (pos < allocator.maxLirOpId() && allocator.hasCall(pos + 1)) {
+                if (pos < allocator.maxLirOpId() && allocator.hasCall(pos + 1) && cur.to() > pos + 1) {
                     // Util.traceLinearScan(4, "      free register cannot be available because all registers blocked by following call");
 
                     // safety check that there is really no register available

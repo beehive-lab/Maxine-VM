@@ -2234,7 +2234,7 @@ public class LinearScan {
         // included in the oop map
         iw.walkBefore(op.id());
 
-        OopMap map = new OopMap(compilation.frameMap(), compilation.frameMap().frameSize(), compilation.target);
+        OopMap map = new OopMap(compilation.frameMap().frameSize(), compilation.target);
 
         // Iterate through active intervals
         for (Interval interval = iw.activeFirst(IntervalKind.fixedKind); interval != Interval.EndMarker; interval = interval.next) {
