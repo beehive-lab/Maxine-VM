@@ -302,8 +302,8 @@ public class CompiledPrototype extends Prototype {
                             try {
                                 guard.value = resolvable.resolve(pool, guard.constantPoolIndex);
                             } catch (OmittedClassError omittedClassError) {
-                            } catch (HostOnlyFieldError prototypeOnlyFieldError) {
-                            } catch (HostOnlyMethodError prototypeOnlyMethodError) {
+                            } catch (HostOnlyFieldError hostOnlyFieldError) {
+                            } catch (HostOnlyMethodError hostOnlyMethodError) {
                             }
                         }
                     }
