@@ -378,12 +378,12 @@ public final class BootImageGenerator {
     private static void createBootImageJarFile(File jarFile) throws IOException {
         final JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
         jarOutputStream.setLevel(Deflater.BEST_COMPRESSION);
-        final Classpath classPath = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath();
+        final Classpath classPath = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath();
 
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (classActor.isInterfaceActor() || classActor.isTupleClassActor() || classActor.isHybridClassActor()) {
                 try {
-                    final ClasspathFile classpathFile = PrototypeClassLoader.readClassFile(classPath, classActor.name.toString());
+                    final ClasspathFile classpathFile = HostedBootClassLoader.readClassFile(classPath, classActor.name.toString());
 
                     final String classfilePath = classActor.name.toString().replace('.', '/') + ".class";
                     final JarEntry jarEntry = new JarEntry(classfilePath);
@@ -425,7 +425,7 @@ public final class BootImageGenerator {
             cirGenerator = ((CirGeneratorScheme) compilerScheme).cirGenerator();
         }
         // report total of CIR bytecodes
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             final ConstantPool constantPool = classActor.constantPool();
             if (constantPool != null) {
                 final int numberOfConstants = constantPool.numberOfConstants();

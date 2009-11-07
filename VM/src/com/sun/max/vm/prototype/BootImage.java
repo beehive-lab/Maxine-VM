@@ -336,7 +336,7 @@ public class BootImage {
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(RUN, VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadAttachMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(ATTACH, VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(RUN, vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
-            classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.vmClassRegistry()).toInt();
+            classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.BOOT_CLASS_REGISTRY).toInt();
             this.stringInfoSize = stringInfoSize;
             relocationDataSize = dataPrototype.relocationData().length;
             heapSize = dataPrototype.heapData().length;

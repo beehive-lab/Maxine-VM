@@ -472,25 +472,24 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     /**
      * Single steps a given thread.
+     *
      * @param thread the thread to single step
+     * @param block specifies if the current thread should wait until the single step completes
      * @throws OSExecutionRequestException if there was a problem issuing the single step
      */
-    protected final void singleStep(TeleNativeThread thread) throws OSExecutionRequestException {
+    protected final void singleStep(TeleNativeThread thread, boolean block) throws OSExecutionRequestException {
+        if (!block) {
+            lastSingleStepThread = thread;
+        }
         if (!thread.singleStep()) {
             throw new OSExecutionRequestException("Error while single stepping thread " + thread);
         }
+        if (block) {
+            if (!waitUntilStopped()) {
+                throw new OSExecutionRequestException("Error while waiting for complete single stepping thread " + thread);
+            }
+        }
     }
-
-    /**
-     * Single steps a given thread.
-     * @param teleNativeThread the thread to step
-     * @throws OSExecutionRequestException if there was a problem issuing the single step
-     */
-    protected void performSingleStep(TeleNativeThread teleNativeThread) throws OSExecutionRequestException {
-        this.lastSingleStepThread = teleNativeThread;
-        singleStep(teleNativeThread);
-    }
-
 
     public final void terminate() throws InvalidProcessRequestException, OSExecutionRequestException {
         if (processState == TERMINATED) {

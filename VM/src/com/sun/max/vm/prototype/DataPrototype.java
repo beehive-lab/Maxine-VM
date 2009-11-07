@@ -876,7 +876,7 @@ public final class DataPrototype extends Prototype {
             objectToCell.put(object, objectToCell.get(object).plus(delta));
         }
 
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (classActor instanceof ReferenceClassActor) {
                 final DynamicHub dynamicHub = classActor.dynamicHub();
 
@@ -1048,7 +1048,7 @@ public final class DataPrototype extends Prototype {
     private void assignMethodDispatchTableRelocationFlags() {
         Trace.begin(1, "assignMethodDispatchTableRelocationFlags");
         final WordArrayLayout wordArrayLayout = layoutScheme.wordArrayLayout;
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (classActor instanceof ReferenceClassActor) {
                 final DynamicHub dynamicHub = classActor.dynamicHub();
                 final Address hubCell = objectToCell.get(dynamicHub);

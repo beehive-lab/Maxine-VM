@@ -20,12 +20,11 @@
  */
 package com.sun.max.vm.actor.holder;
 
-import static com.sun.max.vm.actor.holder.ClassActorFactory.*;
-
 import java.lang.annotation.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -37,10 +36,10 @@ import com.sun.max.vm.value.*;
 public final class PrimitiveClassActor<Value_Type extends Value<Value_Type>> extends ClassActor {
 
     @HOSTED_ONLY
-    PrimitiveClassActor(Kind<Value_Type> kind) {
+    public PrimitiveClassActor(Kind<Value_Type> kind) {
         super(kind,
               NO_SPECIFIC_LAYOUT,
-              null, // primitive classes do not have a class loader
+              HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER,
               kind.name,
               NO_MAJOR_VERSION,
               NO_MINOR_VERSION,
@@ -72,35 +71,4 @@ public final class PrimitiveClassActor<Value_Type extends Value<Value_Type>> ext
     public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
         return null;
     }
-
-    public static final PrimitiveClassActor<VoidValue> VOID_CLASS_ACTOR = createPrimitiveClassActor(Kind.VOID);
-
-    public static final PrimitiveClassActor<ByteValue> BYTE_CLASS_ACTOR = createPrimitiveClassActor(Kind.BYTE);
-    public static final PrimitiveClassActor<BooleanValue> BOOLEAN_CLASS_ACTOR = createPrimitiveClassActor(Kind.BOOLEAN);
-    public static final PrimitiveClassActor<ShortValue> SHORT_CLASS_ACTOR = createPrimitiveClassActor(Kind.SHORT);
-    public static final PrimitiveClassActor<CharValue> CHAR_CLASS_ACTOR = createPrimitiveClassActor(Kind.CHAR);
-    public static final PrimitiveClassActor<IntValue> INT_CLASS_ACTOR = createPrimitiveClassActor(Kind.INT);
-    public static final PrimitiveClassActor<FloatValue> FLOAT_CLASS_ACTOR = createPrimitiveClassActor(Kind.FLOAT);
-    public static final PrimitiveClassActor<LongValue> LONG_CLASS_ACTOR = createPrimitiveClassActor(Kind.LONG);
-    public static final PrimitiveClassActor<DoubleValue> DOUBLE_CLASS_ACTOR = createPrimitiveClassActor(Kind.DOUBLE);
-
-    public static final ArrayClassActor<ByteValue> BYTE_ARRAY_CLASS_ACTOR = createArrayClassActor(BYTE_CLASS_ACTOR);
-    public static final ArrayClassActor<BooleanValue> BOOLEAN_ARRAY_CLASS_ACTOR = createArrayClassActor(BOOLEAN_CLASS_ACTOR);
-    public static final ArrayClassActor<ShortValue> SHORT_ARRAY_CLASS_ACTOR = createArrayClassActor(SHORT_CLASS_ACTOR);
-    public static final ArrayClassActor<CharValue> CHAR_ARRAY_CLASS_ACTOR = createArrayClassActor(CHAR_CLASS_ACTOR);
-    public static final ArrayClassActor<IntValue> INT_ARRAY_CLASS_ACTOR = createArrayClassActor(INT_CLASS_ACTOR);
-    public static final ArrayClassActor<FloatValue> FLOAT_ARRAY_CLASS_ACTOR = createArrayClassActor(FLOAT_CLASS_ACTOR);
-    public static final ArrayClassActor<LongValue> LONG_ARRAY_CLASS_ACTOR = createArrayClassActor(LONG_CLASS_ACTOR);
-    public static final ArrayClassActor<DoubleValue> DOUBLE_ARRAY_CLASS_ACTOR = createArrayClassActor(DOUBLE_CLASS_ACTOR);
-
-    public static final PrimitiveClassActor[] PRIMITIVE_CLASS_ACTORS = {
-        BYTE_CLASS_ACTOR,
-        BOOLEAN_CLASS_ACTOR,
-        SHORT_CLASS_ACTOR,
-        CHAR_CLASS_ACTOR,
-        INT_CLASS_ACTOR,
-        FLOAT_CLASS_ACTOR,
-        LONG_CLASS_ACTOR,
-        DOUBLE_CLASS_ACTOR
-    };
 }

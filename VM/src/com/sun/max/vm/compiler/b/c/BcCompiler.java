@@ -139,7 +139,7 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
      */
     @HOSTED_ONLY
     private void cleanupAfterSnippets() {
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             for (ClassMethodActor classMethodActor : classActor.localVirtualMethodActors()) {
                 CompilationScheme.Static.resetMethodState(classMethodActor);
             }

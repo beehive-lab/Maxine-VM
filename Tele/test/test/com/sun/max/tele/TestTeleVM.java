@@ -50,7 +50,7 @@ public class TestTeleVM {
         // May want to add something later
         classpathPrefix = classpathPrefix.prepend(bootJar.getAbsolutePath());
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
-        PrototypeClassLoader.setClasspath(classpath);
+        HostedBootClassLoader.setClasspath(classpath);
         Prototype.loadLibrary(TELE_LIBRARY_NAME);
         final File projectDirectory = JavaProject.findVcsProjectDirectory();
         final String vmArguments =

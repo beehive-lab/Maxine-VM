@@ -143,6 +143,12 @@ public interface HeapScheme extends VMScheme {
     boolean isPinned(Object object);
 
     /**
+     * Determines if this heap scheme is initialized to the point where {@link #collectGarbage(Size)} can
+     * safely be called.
+     */
+    boolean isInitialized();
+
+    /**
      * Returns whether an address is anywhere in the heap.
      */
     boolean contains(Address address);

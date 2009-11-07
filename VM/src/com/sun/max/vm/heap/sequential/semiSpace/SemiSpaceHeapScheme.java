@@ -223,6 +223,11 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
     }
 
+    @Override
+    public boolean isInitialized() {
+        return collectorThread != null;
+    }
+
     private void allocateHeap() {
         boolean heapAllocationOk;
         final Size size = Heap.initialSize().dividedBy(2);

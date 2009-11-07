@@ -465,6 +465,14 @@ public final class Heap {
         return heapScheme().isPinned(object);
     }
 
+    /**
+     * Determines if the  heap scheme is initialized to the point where
+     * {@link #collectGarbage(Size)} can safely be called.
+     */
+    public static boolean isInitialized() {
+        return heapScheme().isInitialized();
+    }
+
     public static void enableImmortalMemoryAllocation() {
         heapScheme().enableImmortalMemoryAllocation();
         if (ImmortalHeap.traceAllocation()) {

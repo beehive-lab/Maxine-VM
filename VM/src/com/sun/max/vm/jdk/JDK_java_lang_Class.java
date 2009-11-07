@@ -64,7 +64,7 @@ final class JDK_java_lang_Class {
         // loader may be null if invoked from VM (@see JDK_sun_reflect_Reflection.getCallerClass)
         ClassLoader classLoader = loader;
         if (classLoader == null) {
-            classLoader = VmClassLoader.VM_CLASS_LOADER;
+            classLoader = BootClassLoader.BOOT_CLASS_LOADER;
         }
         if (name != null && name.charAt(0) == '[') {
             // treat arrays specially.
@@ -166,7 +166,7 @@ final class JDK_java_lang_Class {
     @SUBSTITUTE
     ClassLoader getClassLoader0() {
         final ClassLoader classLoader = thisClassActor().classLoader;
-        if (classLoader == VmClassLoader.VM_CLASS_LOADER) {
+        if (classLoader == BootClassLoader.BOOT_CLASS_LOADER) {
             return null;
         }
         return classLoader;

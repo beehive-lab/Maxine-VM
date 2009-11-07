@@ -173,8 +173,8 @@ public abstract class BytecodeTest_invoke<Method_Type extends IrMethod> extends 
                 return a - b;
             }
         };
-        PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(TestInterface.class));
-        PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(interfaceInstance.getClass()));
+        HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(TestInterface.class));
+        HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(interfaceInstance.getClass()));
         final Method_Type method = compileMethod("perform_invokeinterface_2", SignatureDescriptor.create(double.class, int.class, double.class));
         new BytecodeConfirmation(method.classMethodActor()) {
             @Override

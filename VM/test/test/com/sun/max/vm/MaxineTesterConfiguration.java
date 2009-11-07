@@ -57,7 +57,6 @@ public class MaxineTesterConfiguration {
     static final List<String> zeeDacapoTests = new LinkedList<String>();
     static final List<String> zeeSpecjvm98Tests = new LinkedList<String>();
     static final List<String> zeeShootoutTests = new LinkedList<String>();
-    static final List<String> zeeImageConfigs = new LinkedList<String>();
     static final List<String> zeeMaxvmConfigs = new LinkedList<String>();
 
     static final Map<String, Expectation[]> configResultMap = new HashMap<String, Expectation[]>();
@@ -188,12 +187,11 @@ public class MaxineTesterConfiguration {
         auto("test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
         auto("test_c1xAutoTest(test.com.sun.max.vm.compiler.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
 
-        jtImageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
-        jtImageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
-        jtImageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
-        jtImageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
-        jtImageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-vmargs=-XX:OptLevel=0");
-        jtImageConfig("java", "-run=com.sun.max.vm.run.java");
+        imageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        imageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
+        imageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
+        imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
+        imageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x", "-vmargs=-XX:OptLevel=0");
 
         String c1xClass = C1XCompilerScheme.class.getName();
 
@@ -212,6 +210,12 @@ public class MaxineTesterConfiguration {
         maxvmConfig("mx256m", "-Xmx256m");
         maxvmConfig("mx512m", "-Xmx512m");
 
+
+        // VEE 2010 benchmarking configurations
+        maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
+        maxvmConfig("GC", "-Xmx3g");
+        imageConfig("c1x-opt0",     "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0");
+        imageConfig("c1x-opt0-xir", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
     }
 
     private static void output(Class javaClass, Expectation... results) {
@@ -243,8 +247,7 @@ public class MaxineTesterConfiguration {
         addExpectedResults(name, results);
     }
 
-    private static void jtImageConfig(String name, String... params) {
-        zeeImageConfigs.add(name);
+    private static void imageConfig(String name, String... params) {
         imageParams.put(name, params);
     }
 
@@ -252,8 +255,7 @@ public class MaxineTesterConfiguration {
         jtLoadParams.put(name, params);
     }
 
-    private static void jtImageConfig(String name, Expectation result, String... params) {
-        zeeImageConfigs.add(name);
+    private static void imageConfig(String name, Expectation result, String... params) {
         configResultMap.put(name, new Expectation[]{result});
         imageParams.put(name, params);
     }
