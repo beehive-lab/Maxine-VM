@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.type;
 
+import static com.sun.max.vm.jdk.JDK_java_lang_ClassLoader.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -29,13 +31,12 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -48,6 +49,11 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  */
 public final class BootClassLoader extends ClassLoader {
+
+    /**
+     * The singleton instance of this class.
+     */
+    public static final BootClassLoader BOOT_CLASS_LOADER = new BootClassLoader();
 
     /**
      * This exists (solely) for the purpose of being able to reify generated classes while bootstrapping. These are needed
@@ -157,16 +163,12 @@ public final class BootClassLoader extends ClassLoader {
 
     private Object createNativeLibrary(String path, Word handle) {
         try {
-            final ClassActor classActor = JDK.java_lang_ClassLoader$NativeLibrary.classActor();
-            final VirtualMethodActor constructor = ClassMethodActor.findVirtual(classActor, SymbolTable.INIT.toString());
-            final Object nativeLibrary = constructor.invokeConstructor(ReferenceValue.from(BootClassLoader.class), ReferenceValue.from(path)).asObject();
-            final FieldActor longFieldActor = FieldActor.findInstance(classActor.toJava(), "handle");
-            TupleAccess.writeLong(nativeLibrary, longFieldActor.offset(), handle.asAddress().toLong());
+            final Object nativeLibrary = JDK_java_lang_ClassLoader_NativeLibrary.NativeLibrary_init.invokeConstructor(ReferenceValue.from(BootClassLoader.class), ReferenceValue.from(path)).asObject();
+            TupleAccess.writeLong(nativeLibrary, JDK_java_lang_ClassLoader_NativeLibrary.NativeLibrary_handle.offset(), handle.asAddress().toLong());
             return nativeLibrary;
         } catch (Throwable throwable) {
-            ProgramError.unexpected(throwable);
+            throw FatalError.unexpected("Error calling NativeLibrary constructor", throwable);
         }
-        throw ProgramError.unexpected();
     }
 
     private void loadNativeLibrary(String libraryPath, String libraryName) {
@@ -175,12 +177,10 @@ public final class BootClassLoader extends ClassLoader {
         final Object nativeLibrary = createNativeLibrary(fileName, handle);
 
         final Class<Vector<Object>> type = null;
-        final FieldActor l = FieldActor.findStatic(ClassLoader.class, "loadedLibraryNames");
-        final Vector<Object> loadedLibraryNames = StaticLoophole.cast(type, TupleAccess.readObject(StaticTuple.fromJava(ClassLoader.class), l.offset()));
+        final Vector<Object> loadedLibraryNames = StaticLoophole.cast(type, TupleAccess.readObject(StaticTuple.fromJava(ClassLoader.class), ClassLoader_loadedLibraryNames.offset()));
         loadedLibraryNames.addElement(fileName);
 
-        final FieldActor n = FieldActor.findInstance(ClassLoader.class, "nativeLibraries");
-        final Vector<Object> nativeLibraries = StaticLoophole.cast(type, TupleAccess.readObject(this, n.offset()));
+        final Vector<Object> nativeLibraries = StaticLoophole.cast(type, TupleAccess.readObject(this, ClassLoader_nativeLibraries.offset()));
         nativeLibraries.addElement(nativeLibrary);
     }
 
@@ -199,9 +199,4 @@ public final class BootClassLoader extends ClassLoader {
     @HOSTED_ONLY
     private BootClassLoader() {
     }
-
-    /**
-     * The singleton instance of this class.
-     */
-    public static final BootClassLoader BOOT_CLASS_LOADER = new BootClassLoader();
 }

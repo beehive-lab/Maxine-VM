@@ -21,12 +21,12 @@
 package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.object.TupleAccess;
+import com.sun.max.vm.object.*;
 
 /**
  * Implements method substitutions necessary for native library handling.
@@ -36,36 +36,10 @@ import com.sun.max.vm.object.TupleAccess;
  * native libraries and symbols.
  */
 @METHOD_SUBSTITUTIONS(value = ClassLoader.class, innerClass = "NativeLibrary")
-class JDK_java_lang_ClassLoader_NativeLibrary {
+public final class JDK_java_lang_ClassLoader_NativeLibrary {
 
-    /**
-     * The JDK implementation of this class has a non-public field called "handle" of
-     * type {@code long} that is used to store a pointer (the handle) to the native
-     * library. The {@code FieldActor} for that field is used here to gain access.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    private static FieldActor handleFieldActor;
-
-    /**
-     * Apparently the body of this method is bootstrap-sensitive depending on your write barrier.
-     * Keeping it never inlined breaks the potential circular dependency.
-     */
-    @NEVER_INLINE
-    private static FieldActor getHandleFieldActor(Class javaClass) {
-        if (handleFieldActor == null) {
-            handleFieldActor =  FieldActor.fromJava(Classes.getDeclaredField(javaClass, "handle", long.class));
-        }
-        return handleFieldActor;
-    }
-
-    /**
-     * Gets the field actor for the "handle" field.
-     * @return the field actor for reading the "handle" field from the underlying native library object
-     */
-    @INLINE
-    private FieldActor handleFieldActor() {
-        return getHandleFieldActor(getClass());
-    }
+    public static final FieldActor NativeLibrary_handle = FieldActor.findInstance(JDK.java_lang_ClassLoader$NativeLibrary.classActor().toJava(), "handle");
+    public static final VirtualMethodActor NativeLibrary_init = ClassMethodActor.findVirtual(JDK.java_lang_ClassLoader$NativeLibrary.classActor(), SymbolTable.INIT.toString());
 
     /**
      * Loads a library with the give absolute path.
@@ -98,7 +72,7 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
                 }
             }
         }
-        TupleAccess.writeLong(this, handleFieldActor().offset(), address.toLong());
+        TupleAccess.writeLong(this, NativeLibrary_handle.offset(), address.toLong());
     }
 
     /**
@@ -109,7 +83,7 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     long find(String symbolName) {
-        final Address handle = Address.fromLong(TupleAccess.readLong(this, handleFieldActor().offset()));
+        final Address handle = Address.fromLong(TupleAccess.readLong(this, NativeLibrary_handle.offset()));
         return DynamicLinker.lookupSymbol(handle, symbolName).asAddress().toLong();
     }
 
@@ -119,7 +93,7 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     void unload() {
-        final Address handle = Address.fromLong(TupleAccess.readLong(this, handleFieldActor().offset()));
+        final Address handle = Address.fromLong(TupleAccess.readLong(this, NativeLibrary_handle.offset()));
         DynamicLinker.close(handle);
     }
 
