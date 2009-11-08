@@ -162,7 +162,7 @@ public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
 
 
     public static BootstrapCompilerScheme compilerScheme() {
-        return javaPrototype().vmConfiguration().compilerScheme();
+        return javaPrototype().vmConfiguration().bootCompilerScheme();
     }
 
     public abstract Method_Type translate(ClassMethodActor classMethodActor);

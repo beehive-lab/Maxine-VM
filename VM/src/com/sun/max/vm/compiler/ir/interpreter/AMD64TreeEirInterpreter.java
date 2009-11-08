@@ -113,7 +113,7 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
     }
 
     private static AMD64EirGeneratorScheme eirGeneratorScheme() {
-        return (AMD64EirGeneratorScheme) VMConfiguration.target().compilerScheme();
+        return (AMD64EirGeneratorScheme) VMConfiguration.target().bootCompilerScheme();
     }
 
     /**

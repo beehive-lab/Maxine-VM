@@ -42,7 +42,7 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     }
 
     public static AMD64EirGeneratorScheme eirGeneratorScheme() {
-        return (AMD64EirGeneratorScheme) javaPrototype().vmConfiguration().compilerScheme();
+        return (AMD64EirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
     }
 
     public static AMD64EirGenerator eirGenerator() {

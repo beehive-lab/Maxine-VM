@@ -47,7 +47,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     private final Pointer cpuFramePointer;
 
     public TeleStackFrameWalker(TeleVM teleVM, TeleNativeThread teleNativeThread) {
-        super(teleVM.vmConfiguration().compilerScheme());
+        super(teleVM.vmConfiguration().bootCompilerScheme());
         this.teleVM = teleVM;
         this.teleNativeThread = teleNativeThread;
         this.teleEnabledVmThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);

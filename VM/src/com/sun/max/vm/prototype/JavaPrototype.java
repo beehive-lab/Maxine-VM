@@ -352,9 +352,9 @@ public class JavaPrototype extends Prototype {
 
                 initializeMaxClasses();
 
-                vmConfiguration.compilerScheme().createBuiltins(packageLoader);
-                Builtin.register(vmConfiguration.compilerScheme());
-                vmConfiguration.compilerScheme().createSnippets(packageLoader);
+                vmConfiguration.bootCompilerScheme().createBuiltins(packageLoader);
+                Builtin.register(vmConfiguration.bootCompilerScheme());
+                vmConfiguration.bootCompilerScheme().createSnippets(packageLoader);
                 Snippet.register();
 
                 if (loadPackages) {

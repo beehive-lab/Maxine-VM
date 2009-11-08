@@ -135,7 +135,7 @@ public final class DynamicHub extends Hub {
      */
     @FOLD
     private static boolean compilerCreatesTargetMethods() {
-        return !MaxineVM.isHosted() || TargetMethod.class.isAssignableFrom(VMConfiguration.target().compilerScheme().irGenerator().irMethodType);
+        return !MaxineVM.isHosted() || TargetMethod.class.isAssignableFrom(VMConfiguration.target().bootCompilerScheme().irGenerator().irMethodType);
     }
 
     @Override

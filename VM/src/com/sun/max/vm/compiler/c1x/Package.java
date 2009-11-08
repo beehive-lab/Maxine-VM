@@ -37,6 +37,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return BootImageGenerator.calleeC1X || vmConfiguration.jitPackage.equals(this);
+        return BootImageGenerator.calleeC1X || vmConfiguration.jitCompilerPackage.equals(this);
     }
 }

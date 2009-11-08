@@ -37,6 +37,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(this);
+        return vmConfiguration.bootCompilerScheme() instanceof EirGeneratorScheme && EirAllocatorFactory.isSelected(this);
     }
 }
