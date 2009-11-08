@@ -53,7 +53,7 @@ public class CIRTestExecutor implements JavaExecHarness.Executor {
         final VMConfiguration cfg = VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
                         new com.sun.max.vm.compiler.b.c.Package());
         final Prototype jpt = prototypeGenerator.createJavaPrototype(cfg, loadingPackages);
-        final CirGeneratorScheme compilerScheme = (CirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
+        final CirGeneratorScheme compilerScheme = (CirGeneratorScheme) jpt.vmConfiguration().bootCompilerScheme();
         compilerScheme.compileSnippets();
         generator = compilerScheme.cirGenerator();
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping

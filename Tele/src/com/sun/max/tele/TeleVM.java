@@ -301,7 +301,7 @@ public abstract class TeleVM implements MaxVM {
                 getInspectorGripPackage(b.gripPackage),
                 new com.sun.max.tele.reference.plain.Package(),
                 b.layoutPackage, b.heapPackage, b.monitorPackage,
-                b.compilerPackage, b.jitPackage, b.trampolinePackage, b.targetABIsPackage,
+                b.bootCompilerPackage, b.jitCompilerPackage, null, b.trampolinePackage, b.targetABIsPackage,
                 b.runPackage);
         vmConfiguration.loadAndInstantiateSchemes();
 

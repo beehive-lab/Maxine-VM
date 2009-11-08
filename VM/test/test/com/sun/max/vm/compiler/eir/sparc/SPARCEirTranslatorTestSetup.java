@@ -48,7 +48,7 @@ public class SPARCEirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     }
 
     public static SPARCEirGeneratorScheme eirGeneratorScheme() {
-        return (SPARCEirGeneratorScheme) javaPrototype().vmConfiguration().compilerScheme();
+        return (SPARCEirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
     }
 
     public static SPARCEirGenerator eirGenerator() {

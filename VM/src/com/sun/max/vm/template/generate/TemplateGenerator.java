@@ -43,7 +43,7 @@ public class TemplateGenerator {
     protected TargetGenerator targetGenerator;
 
     public TemplateGenerator() {
-        targetGenerator = ((TargetGeneratorScheme) MaxineVM.target().configuration.compilerScheme()).targetGenerator();
+        targetGenerator = ((TargetGeneratorScheme) MaxineVM.target().configuration.bootCompilerScheme()).targetGenerator();
 
         // Make sure the JavaStackFrame class used for generating the templates are initialized in the target.
         // This will enable all sorts of compiler optimization that we want the templates to benefit from.
