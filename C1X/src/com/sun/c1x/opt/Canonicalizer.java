@@ -1260,6 +1260,8 @@ public class Canonicalizer extends ValueVisitor {
                 // folding failed; too bad
             } catch (InvocationTargetException e) {
                 // folding failed; too bad
+            } catch (ExceptionInInitializerError e) {
+                // folding failed; too bad
             }
         }
         return null;
