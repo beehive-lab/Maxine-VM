@@ -129,7 +129,7 @@ public final class JDKInterceptor {
             "loader",
             "packageInfo",
         JDK.java_lang_Shutdown,
-            new ValueField("hooks", ReferenceValue.from(new ArrayList<Runnable>())),
+            new NewShutdownHookList(JDK.java_lang_Shutdown, "hooks"),
         JDK.java_lang_System,
             "security",
             new ValueField("props", ReferenceValue.from(initialSystemProperties)),
@@ -451,6 +451,46 @@ public final class JDKInterceptor {
             } catch (NoSuchFieldException e) {
                 throw ProgramError.unexpected(e);
             }
+        }
+    }
+
+    /**
+     * At some point the JDK changed java.lang.Shutdown:hooks from type ArrayList to a Runnable[].
+     * Detect which is the case and reallocate as necessary.
+     */
+    private static class NewShutdownHookList extends InterceptedField {
+        private final ClassRef classRef;
+        private Object result;
+        NewShutdownHookList(ClassRef classRef, String fieldName) {
+            super(fieldName);
+            this.classRef = classRef;
+        }
+
+        @Override
+        public Value getValue(Object object, FieldActor fieldActor) {
+            try {
+                if (result == null) {
+                    Field field = classRef.javaClass().getDeclaredField(getName());
+                    if (field.getType() == Runnable[].class) {
+                        // allocate a new array
+                        // the size of the array is controlled by a private static final field
+                        Field sizeField = classRef.javaClass().getDeclaredField("MAX_SYSTEM_HOOKS");
+                        sizeField.setAccessible(true);
+                        int size = sizeField.getInt(null);
+                        result = new Runnable[size];
+                    } else {
+                        // allocate a new array list
+                        result = new ArrayList<Runnable>();
+                    }
+                }
+            } catch (SecurityException e) {
+                throw ProgramError.unexpected(e);
+            } catch (NoSuchFieldException e) {
+                throw ProgramError.unexpected(e);
+            } catch (IllegalAccessException e) {
+                throw ProgramError.unexpected(e);
+            }
+            return ReferenceValue.from(result);
         }
     }
 }
