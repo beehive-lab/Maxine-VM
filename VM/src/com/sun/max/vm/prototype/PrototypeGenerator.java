@@ -85,6 +85,8 @@ public final class PrototypeGenerator {
             "Specifies the monitor scheme for the target.");
     private final Option<MaxPackage> compilerScheme = schemeOption("compiler", new com.sun.max.vm.compiler.Package(), BootstrapCompilerScheme.class,
             "Specifies the compiler scheme for the target.");
+    private final Option<MaxPackage> optScheme = schemeOption("opt", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
+            "Specifies the optimizing compiler scheme for the target.");
     private final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), RuntimeCompilerScheme.class,
             "Specifies the JIT scheme for the target.");
     private final Option<MaxPackage> trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
@@ -133,6 +135,7 @@ public final class PrototypeGenerator {
         heapScheme.setDefaultValue(defaultConfiguration.heapPackage);
         monitorScheme.setDefaultValue(defaultConfiguration.monitorPackage);
         compilerScheme.setDefaultValue(defaultConfiguration.bootCompilerPackage);
+        optScheme.setDefaultValue(defaultConfiguration.optCompilerPackage);
         jitScheme.setDefaultValue(defaultConfiguration.jitCompilerPackage);
         trampolineScheme.setDefaultValue(defaultConfiguration.trampolinePackage);
         targetABIsScheme.setDefaultValue(defaultConfiguration.targetABIsPackage);
@@ -158,7 +161,8 @@ public final class PrototypeGenerator {
                                     vm(monitorScheme),
                                     vm(compilerScheme),
                                     vm(jitScheme),
-                null, vm(trampolineScheme),
+                                    vm(optScheme),
+                                    vm(trampolineScheme),
                                     vm(targetABIsScheme),
                                     vm(runScheme));
     }

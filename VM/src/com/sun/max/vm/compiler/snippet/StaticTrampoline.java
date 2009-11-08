@@ -57,7 +57,7 @@ public final class StaticTrampoline extends NonFoldableSnippet {
         return snippet;
     }
 
-    @CONSTANT_WHEN_NOT_ZERO
+    @RESET
     private static Pointer codeStart = Pointer.zero();
 
     public static Pointer codeStart() {

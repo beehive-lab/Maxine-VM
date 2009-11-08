@@ -184,7 +184,6 @@ public class Compilation implements Future<TargetMethod> {
 
         if (error != null) {
             logCompilationError(error, compiler, targetMethod, methodString);
-
             throw new RuntimeException(error);
         }
 
