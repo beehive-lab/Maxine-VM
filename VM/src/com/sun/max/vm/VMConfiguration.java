@@ -292,17 +292,17 @@ public final class VMConfiguration {
 
     @Override
     public String toString() {
-        final CharArrayWriter charArrayWriter = new CharArrayWriter();
-        print(new PrintWriter(charArrayWriter));
-        return charArrayWriter.toString();
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        print(new PrintStream(baos), "");
+        return baos.toString();
     }
 
-    public void print(PrintWriter writer) {
-        writer.println("build level: " + buildLevel());
-        writer.println("platform: " + platform());
+    public void print(PrintStream out, String indent) {
+        out.println(indent + "Build level: " + buildLevel());
+        out.println(indent + "Platform: " + platform());
         for (VMScheme vmScheme : vmSchemes()) {
             final String specification = vmScheme.specification().getSimpleName();
-            writer.println(specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getPackage().getName());
+            out.println(indent + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
         }
     }
 
