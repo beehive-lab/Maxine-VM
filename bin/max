@@ -868,12 +868,12 @@ function run_compile() {
 # 'c1x' command
 #=======================================
 
-c1x_usage="[options] compilation_specs|filters..."
+c1x_usage="[options] compilation_specs|exclusion_specs..."
 c1x_help="process a list of classes and/or methods with the C1X compiler
 
-    A filter is string starting with '!'. Any class or method matched by
-    a compilation spec whose name contains a filter (the rest of the
-    filter string after the '!') is excuded from further processing.
+    An exclusion spec is a string starting with '!'. Any class or method
+    whose name contains an exclusion string (the exclusion spec minus the
+    leading '!') is excuded from further processing.
 
     A compilation spec is a class name pattern followed by an optional method name
     pattern separated by a ':'. For example:
