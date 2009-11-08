@@ -340,9 +340,21 @@ public class C1XTest {
         final Classpath classpath = Classpath.fromSystem();
 
         final List<MethodActor> methods = new ArrayList<MethodActor>();
+        final Set<String> filters = new HashSet<String>();
 
         for (int i = 0; i != arguments.length; ++i) {
             final String argument = arguments[i];
+            if (argument.startsWith("!")) {
+                filters.add(argument.substring(1));
+                arguments[i] = null;
+            }
+        }
+
+        for (int i = 0; i != arguments.length; ++i) {
+            final String argument = arguments[i];
+            if (argument == null) {
+                continue;
+            }
             final int colonIndex = argument.indexOf(':');
             final PatternMatcher classNamePattern = new PatternMatcher(colonIndex == -1 ? argument : argument.substring(0, colonIndex));
 
@@ -357,6 +369,11 @@ public class C1XTest {
                 protected boolean visitClass(String className) {
                     if (!className.endsWith("package-info")) {
                         if (classNamePattern.matches(className)) {
+                            for (String filter : filters) {
+                                if (className.contains(filter)) {
+                                    return true;
+                                }
+                            }
                             matchingClasses.append(className);
                         }
                     }
@@ -385,11 +402,11 @@ public class C1XTest {
                         // Class only: compile all methods in class
                         for (MethodActor actor : classActor.localStaticMethodActors()) {
                             if (clinitOption.getValue() || actor != classActor.clinit) {
-                                addMethod(methods, actor);
+                                addMethod(methods, actor, filters);
                             }
                         }
                         for (MethodActor methodActor : classActor.localVirtualMethodActors()) {
-                            addMethod(methods, methodActor);
+                            addMethod(methods, methodActor, filters);
                         }
                     } else {
                         // a method pattern was specified, find matching methods
@@ -403,8 +420,8 @@ public class C1XTest {
                             methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1, parenIndex));
                             signature = SignatureDescriptor.create(argument.substring(parenIndex));
                         }
-                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localStaticMethodActors());
-                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localVirtualMethodActors());
+                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localStaticMethodActors(), filters);
+                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localVirtualMethodActors(), filters);
                     }
                 } catch (ClassNotFoundException classNotFoundException) {
                     ProgramWarning.message(classNotFoundException.toString());
@@ -417,7 +434,12 @@ public class C1XTest {
         return methods;
     }
 
-    private static void addMethod(List<MethodActor> methods, MethodActor methodActor) {
+    private static void addMethod(List<MethodActor> methods, MethodActor methodActor, Set<String> filters) {
+        for (String filter : filters) {
+            if (methodActor.name.string.contains(filter)) {
+                return;
+            }
+        }
         if (isCompilable(methodActor)) {
             if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(methodActor.flags())) {
                 final Method method = methodActor.toJava();
@@ -441,12 +463,12 @@ public class C1XTest {
         return classActor;
     }
 
-    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors) {
+    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors, Set<String> filters) {
         for (final MethodActor method : methodActors) {
             if (methodNamePattern.matches(method.name.toString())) {
                 final SignatureDescriptor methodSignature = method.descriptor();
                 if (signature == null || signature.equals(methodSignature)) {
-                    addMethod(methods, method);
+                    addMethod(methods, method, filters);
                 }
             }
         }
