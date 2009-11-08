@@ -207,15 +207,21 @@ public class MaxineTesterConfiguration {
 
         maxvmConfig("std");
         maxvmConfig("jit", "-Xjit");
+        maxvmConfig("opt", "-Xopt");
         maxvmConfig("mx256m", "-Xmx256m");
         maxvmConfig("mx512m", "-Xmx512m");
-
 
         // VEE 2010 benchmarking configurations
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
         maxvmConfig("GC", "-Xmx3g");
-        imageConfig("c1x-opt0",     "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0");
-        imageConfig("c1x-opt0-xir", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("jit-c1x0",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0");
+        imageConfig("jit-c1x0x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("jit-c1x1",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=1");
+        imageConfig("jit-c1x1x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=1 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("opt-c1x0",  "-opt=c1x", "-vmargs=-XX:OptLevel=0");
+        imageConfig("opt-c1x0x", "-opt=c1x", "-vmargs=-XX:OptLevel=0 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("opt-c1x1",  "-opt=c1x", "-vmargs=-XX:OptLevel=1");
+        imageConfig("opt-c1x1x", "-opt=c1x", "-vmargs=-XX:OptLevel=1 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
     }
 
     private static void output(Class javaClass, Expectation... results) {

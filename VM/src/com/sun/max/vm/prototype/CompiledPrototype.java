@@ -446,7 +446,7 @@ public class CompiledPrototype extends Prototype {
         recommendedCompiler.put(methodActor, c1xCompilerScheme());
     }
 
-    private synchronized static RuntimeCompilerScheme c1xCompilerScheme() {
+    private static synchronized RuntimeCompilerScheme c1xCompilerScheme() {
         if (c1xCompiler == null) {
             c1xCompiler = new C1XCompilerScheme(VMConfiguration.target());
             c1xCompiler.initialize(Phase.BOOTSTRAPPING);

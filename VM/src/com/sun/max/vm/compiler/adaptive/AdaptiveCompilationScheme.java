@@ -27,13 +27,10 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.jit.JitInstrumentation;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -67,7 +64,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     /**
      * The compiler that is used as the default while bootstrapping.
      */
-    @HOSTED_ONLY
     protected final BootstrapCompilerScheme bootCompiler;
 
     /**
@@ -221,14 +217,13 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             }
         }
 
-        final RuntimeCompilerScheme compilerScheme = compilation.compilerScheme;
         try {
             return compilation.compile(observers);
         } catch (Throwable t) {
             Trace.line(1, "Exception occurred during compilation of method " + classMethodActor.toString() + ": " + t.toString());
-            Trace.line(1, "Compiler scheme is: " + compilerScheme.toString() + " - trying different compiler scheme...");
+            Trace.line(1, "Compiler scheme is: " + compilation.compilerScheme.toString() + " - trying different compiler scheme...");
             if (failoverOption.getValue()) {
-                return synchronousCompileHelper(classMethodActor, null, compilerScheme);
+                return synchronousCompileHelper(classMethodActor, null, compilation.compilerScheme);
             }
             throw new RuntimeException("Error compiling: " + classMethodActor, t);
         }
@@ -280,7 +275,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             throw new RuntimeException("Compilation failed with boot compiler");
         }
 
-        // only the boot compiler can handle unsafe, synthetic, or natives
+        // only the boot compiler can handle unsafe, or natives
         if (classMethodActor.isUnsafe() || prohibitedCompiler != null || classMethodActor.isNative()) {
             return bootCompiler;
         }
@@ -292,6 +287,10 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
         // at prototyping time, default to the opt compiler
         if (MaxineVM.isHosted()) {
+            if (classMethodActor.holder().name.toString().startsWith("com.sun.max")) {
+                // for now, all Maxine code is compiled with boot compiler
+                return bootCompiler;
+            }
             if (mode == Mode.PROTOTYPE_JIT) {
                 return jitCompiler;
             }
