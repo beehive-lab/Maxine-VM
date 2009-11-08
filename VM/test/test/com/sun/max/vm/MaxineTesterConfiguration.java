@@ -222,6 +222,10 @@ public class MaxineTesterConfiguration {
         imageConfig("opt-c1x0x", "-opt=c1x", "-vmargs=-XX:OptLevel=0 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
         imageConfig("opt-c1x1",  "-opt=c1x", "-vmargs=-XX:OptLevel=1");
         imageConfig("opt-c1x1x", "-opt=c1x", "-vmargs=-XX:OptLevel=1 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("opt-c1x2",  "-opt=c1x", "-vmargs=-XX:OptLevel=2");
+        imageConfig("opt-c1x2x", "-opt=c1x", "-vmargs=-XX:OptLevel=2 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("opt-c1x3",  "-opt=c1x", "-vmargs=-XX:OptLevel=3");
+        imageConfig("opt-c1x3x", "-opt=c1x", "-vmargs=-XX:OptLevel=3 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
     }
 
     private static void output(Class javaClass, Expectation... results) {
