@@ -118,8 +118,8 @@ public class MaxineTester {
                     "Location of the Programming Language Shootout tests. If not provided, then the SHOOTOUT_DIR environment variable is used.");
     private static final Option<Boolean> timingOption = options.newBooleanOption("timing", true,
                     "Report internal and external timing for tests compared to the baseline (external) VM.");
-    private static final Option<Integer> timingRuns = options.newIntegerOption("timing-runs", 1,
-                    "The number of timing runs to collect.");
+    private static final Option<Integer> timingRunsOption = options.newIntegerOption("timing-runs", 1,
+                    "The number of timing runs to perform.");
     private static final Option<Boolean> execTimesOption = options.newBooleanOption("exec-times", true,
                     "Report the time taken for each executed subprocess.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
@@ -681,9 +681,13 @@ public class MaxineTester {
             // reference VM was ok, run the rest of the tests
             for (int i = 1; i < commands.length; i++) {
                 String config = maxvmConfigs.get(i - 1);
-                printStartOfMaxvm(testName, config);
-                ExternalCommand.Result maxResult = commands[i].exec(false, scaleTimeOut(refResult));
-                printMaxvmResult(testName, config, refResult, maxResult, filteredLines);
+                for (int j = 0; j < timingRunsOption.getValue(); j++) {
+                    printStartOfMaxvm(testName, config);
+                    ExternalCommand.Result maxResult = commands[i].exec(false, scaleTimeOut(refResult));
+                    if (!printMaxvmResult(testName, config, refResult, maxResult, filteredLines)) {
+                        break;
+                    }
+                }
             }
         }
         printEndOfTest(testName);
@@ -724,8 +728,9 @@ public class MaxineTester {
         }
     }
 
-    private static void printMaxvmResult(String testName, String config, ExternalCommand.Result baseResult, ExternalCommand.Result maxResult, String[] filteredLines) {
+    private static boolean printMaxvmResult(String testName, String config, ExternalCommand.Result baseResult, ExternalCommand.Result maxResult, String[] filteredLines) {
         String error = maxResult.checkError(baseResult, true, filteredLines, false, null);
+        boolean passed;
         final ExpectedResult expectedResult = MaxineTesterConfiguration.expectedResult(testName, config);
         if (error != null) {
             // the test failed.
@@ -735,6 +740,7 @@ public class MaxineTester {
             } else {
                 out().print(left16(config + ": " + errorStr));
             }
+            passed = false;
         } else {
             // the test passed.
             if (timingOption.getValue()) {
@@ -747,12 +753,14 @@ public class MaxineTester {
             } else {
                 out().print(left16(config + ": (passed)"));
             }
+            passed = true;
         }
         if (timingOption.getValue()) {
             out().println();
         }
         out().flush();
         addTestResult(testName, error, expectedResult);
+        return passed;
     }
 
     private static String getMaxvmErrorString(ExpectedResult expectedResult) {

@@ -187,6 +187,7 @@ public class MaxineTesterConfiguration {
         auto("test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
         auto("test_c1xAutoTest(test.com.sun.max.vm.compiler.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
 
+        imageConfig("java", "-run=java");
         imageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
         imageConfig("cpsjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-jit");
         imageConfig("jitcps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit");
@@ -214,10 +215,16 @@ public class MaxineTesterConfiguration {
         // VEE 2010 benchmarking configurations
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
         maxvmConfig("GC", "-Xmx3g");
+
         imageConfig("jit-c1x0",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0");
         imageConfig("jit-c1x0x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
         imageConfig("jit-c1x1",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=1");
         imageConfig("jit-c1x1x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=1 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("jit-c1x2",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=2");
+        imageConfig("jit-c1x2x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=2 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("jit-c1x3",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=3");
+        imageConfig("jit-c1x3x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=3 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+
         imageConfig("opt-c1x0",  "-opt=c1x", "-vmargs=-XX:OptLevel=0");
         imageConfig("opt-c1x0x", "-opt=c1x", "-vmargs=-XX:OptLevel=0 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
         imageConfig("opt-c1x1",  "-opt=c1x", "-vmargs=-XX:OptLevel=1");
