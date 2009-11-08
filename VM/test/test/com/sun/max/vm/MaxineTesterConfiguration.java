@@ -282,7 +282,7 @@ public class MaxineTesterConfiguration {
     }
 
     public static String defaultMaxvmOutputConfigs() {
-        return "std,jit";
+        return "jit";
     }
 
     public static String defaultJavaTesterConfigs() {
