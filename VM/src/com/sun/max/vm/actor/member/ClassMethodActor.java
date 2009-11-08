@@ -182,7 +182,7 @@ public abstract class ClassMethodActor extends MethodActor {
                         compilee = substitute;
                         codeAttribute = substitute.originalCodeAttribute;
                     }
-                    if (!hostedVerificationDisabled && MaxineVM.isHosted()) {
+                    if (MaxineVM.isHosted() && !hostedVerificationDisabled) {
                         validateInlineAnnotation(compilee);
                     }
                 }
