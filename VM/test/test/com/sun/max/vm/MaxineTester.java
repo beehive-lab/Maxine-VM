@@ -672,7 +672,7 @@ public class MaxineTester {
             return;
         }
         List<String> maxvmConfigs = maxvmConfigListOption.getValue();
-        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, workingDir, null);
+        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, outputDir, workingDir, null);
         printStartOfRefvm(testName);
         ExternalCommand.Result refResult = commands[0].exec(false, javaRunTimeOutOption.getValue());
         printRefvmResult(testName, refResult);
@@ -1119,15 +1119,15 @@ public class MaxineTester {
         }
     }
 
-    private static ExternalCommand[] createVMCommands(String name, List<String> configs, File imageDir, JavaCommand command, File workingDir, File inputFile) {
+    private static ExternalCommand[] createVMCommands(String name, List<String> configs, File imageDir, JavaCommand command, File outputDir, File workingDir, File inputFile) {
         if (workingDir == null) {
             workingDir = imageDir;
         }
         name = name.replace(' ', '_');
         List<ExternalCommand> commands = new ArrayList<ExternalCommand>();
-        commands.add(new ExternalCommand(workingDir, inputFile, new Logs(workingDir, "REFVM_" + name, null), command.getExecArgs("java"), null));
+        commands.add(new ExternalCommand(workingDir, inputFile, new Logs(outputDir, "REFVM_" + name, null), command.getExecArgs("java"), null));
         for (String config : configs) {
-            commands.add(createMaxvmCommand(config, imageDir, command, workingDir, inputFile, new Logs(workingDir, "MAXVM_" + name + "_" + config, null)));
+            commands.add(createMaxvmCommand(config, imageDir, command, workingDir, inputFile, new Logs(outputDir, "MAXVM_" + name + "_" + config, null)));
         }
         return commands.toArray(new ExternalCommand[commands.size()]);
     }
