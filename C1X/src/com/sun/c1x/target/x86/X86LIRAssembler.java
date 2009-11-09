@@ -1157,9 +1157,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitTypeCheck(LIRTypeCheck op) {
-
-        // TODO: Make this work with Maxine while preserving the general semantics
-
         LIROpcode code = op.code;
         if (code == LIROpcode.StoreCheck) {
 
@@ -1181,12 +1178,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
             // get instance klass
             masm().movptr(kRInfo, new Address(kRInfo, compilation.runtime.elementHubOffset()));
-
-            // TODO: enable the fast path!
-            // perform the fast part of the checking logic
-            // masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new
-            // RegisterOrConstant(-1));
-
             masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, op.info, rtmp1, kRInfo, klassRInfo);
 
             // result is a boolean
@@ -1200,7 +1191,6 @@ public class X86LIRAssembler extends LIRAssembler {
             CiRegister expectedHub = op.tmp1().asRegister();
             CiRegister dst = op.result().asRegister();
             RiType k = op.klass();
-            //Register rtmp1 = Register.noreg;
 
             Label done = new Label();
             if (obj == expectedHub) {
