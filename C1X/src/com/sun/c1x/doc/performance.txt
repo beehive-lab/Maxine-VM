@@ -1,0 +1,29 @@
+Issues that can be addressed for improving performance in C1X
+----------------------------------------------------------------
+
+Backend:
+	- better handling of constants, especially immediates
+	- (non XIR) checkcast, instanceof: use nullity
+	- (non XIR) checkcast, instanceof: emit fastpath direct compare
+	- Global stubs: use EAX for return value as normal instead of [rsp - 16]
+	- XIR: expose nullity, range checkness across XIR interface
+	- XIR: make use of CSE'd array length
+	- use LEA instruction on x86
+	- Maxine XIR: move unconditional runtime calls into fast path
+	- Maxine XIR: implement inline allocation
+	- Maxine XIR: implement biased locking fastpath
+
+Frontend:
+	- XIR: implement HIR -> HIR xir translation
+	- Refactor exception edges to allow removal, optimization
+	- Implement typecast elimination
+	- Implement constant propagation
+	- Implement GVN of memory loads / stores
+	- Implement memory reordering
+	- Implement loop invariant code motion
+	- Finish loop peeling
+	- Guarded and multiple inlining
+	- Maxine: speculative leaf class and leaf method assumption
+	- Maxine: adjust static / dynamic inlining heuristics
+		  (e.g. static: trivial methods only in cold spots)
+
