@@ -72,6 +72,7 @@ public class C1XOptions {
     public static boolean PrintIR;
     public static boolean PrintCFGToFile;
     public static boolean PrintMetrics;
+    public static boolean PrintVEEMetrics;
     public static boolean GatherStaticHIRInstructionCount;
     public static boolean PrintTimers;
     public static boolean PrintCFG;

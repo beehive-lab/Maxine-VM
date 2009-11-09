@@ -16,35 +16,42 @@ C1X_CP="$(max_cp VM):${MAXINE_HOME}/VM/classes:$(max_cp Base):$(max_cp CRI):$(ma
 
 C1X_TUNING='-XX:MaxPermSize=250m -Xms2g -Xmx2g'
 C1X_ASSERTS='-XX:+IRChecking'
-C1X_NO_ASSERTS='-XX:-IRChecking -XX:TraceLinearScanLevel=0'
+C1X_NO_ASSERTS='-XX:-IRChecking -XX:TraceLinearScanLevel=0 -XX:+PrintVEEMetrics -XX:+PrintMetrics'
 C1X_XIR='-XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR'
 
 function c1x-opt() {
-    file=/tmp/vee2010-results/$2-c1x${1}
+    optlevel="$1"
+    benchmark="$2"
+    warmup="$3"
+    timing="$4"
+    classes="$5"
+    
+    file=/tmp/vee2010-results/static-${benchmark}-${optlevel}
     echo '-->' $file
-    java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -timing=$3 $4 > ${file}
+    java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -warmup=${warmup} -timing=${timing} -c1x-optlevel=${optlevel} ${classes} > ${file}
 
-    file=/tmp/vee2010-results/$2-c1x${1}x
+    file=/tmp/vee2010-results/static-${benchmark}-${optlevel}x
     echo '-->' $file
-    java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS $C1X_XIR -timing=$3 $4 > ${file}
+    java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS $C1X_XIR -warmup=${warmup} -timing=${timing} -c1x-optlevel=${optlevel} ${classes} > ${file}
 }
 
 function c1x() {
-    c1x-opt 0 "$1" "$2" "$3"
-    c1x-opt 1 "$1" "$2" "$3"
-    c1x-opt 2 "$1" "$2" "$3"
+#    c1x-opt 0 "$1" "$2" "$3" "$4"
+    c1x-opt 1 "$1" "$2" "$3" "$4"
+#    c1x-opt 2 "$1" "$2" "$3" "$4"
+    c1x-opt 3 "$1" "$2" "$3" "$4"
 }
 
 echo JDK16
-c1x jdk16 1 "^java"
+c1x jdk16 5 10 "^java"
 
 echo Maxine
-c1x maxine 1 "^com.sun.max"
+c1x maxine 5 10 "^com.sun.max"
 
 echo C1X
-c1x c1x -timing=25 "^com.sun.c1x"
+c1x c1x 10 25 "^com.sun.c1x"
 
 echo SpecJVM98
-c1x specjvm98 25 "^spec."
+c1x specjvm98 10 25 "^spec."
 
 echo DaCapo
