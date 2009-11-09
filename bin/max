@@ -905,7 +905,8 @@ c1x_help="process a list of classes and/or methods with the C1X compiler
     Use \"max c1x -help\" to see what other options this command accepts."
 
 function run_c1x() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
+    c1x_cp=${maxine_cp}:`echo $@ | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
+    run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
 }
 
 #=======================================
