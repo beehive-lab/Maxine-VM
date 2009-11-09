@@ -953,7 +953,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             stub = new SimpleExceptionStub(obj.result(), GlobalStub.ThrowClassCastException, infoForException);
         }
         LIROperand reg = rlockResult(x);
-        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(CiKind.Object), newRegister(CiKind.Object),
+        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(CiKind.Object), newRegister(CiKind.Boolean),
                         x.directCompare(), infoForException, patchingInfo, stub, x.profiledMethod(),
                         x.profiledBCI());
     }
