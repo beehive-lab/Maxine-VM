@@ -1169,7 +1169,6 @@ public class X86LIRAssembler extends LIRAssembler {
             CiRegister klassRInfo = op.tmp2().asRegister();
             CiRegister rtmp1 = op.tmp3().asRegister();
 
-
             CodeStub stub = op.stub();
             Label done = new Label();
             masm().cmpptr(value, (int) NULLWORD);
@@ -1313,12 +1312,12 @@ public class X86LIRAssembler extends LIRAssembler {
                     // perform the fast part of the checking logic
                     //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new RegisterOrConstant(-1));
                     // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
+                    CiRegister rtmp1 = op.tmp3().asRegister();
 
-
-                    masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, op.info, kRInfo, kRInfo, klassRInfo);
+                    masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, op.info, rtmp1, kRInfo, klassRInfo);
 
                     // result is a boolean
-                    masm().cmpl(kRInfo, 0);
+                    masm().cmpl(rtmp1, 0);
                     masm().jcc(X86Assembler.Condition.equal, stub.entry);
                     masm().bind(done);
                 }
