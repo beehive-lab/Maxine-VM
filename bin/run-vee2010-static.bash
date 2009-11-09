@@ -1,10 +1,12 @@
 #!/bin/bash
 
-export JUNIT4_CP=/proj/maxwell/bin/junit4.jar
-export MAXINE_HOME=~/maxine
-export MAXINE_OUT=${MAXINE_HOME}
-export SPECJVM_CLASSPATH=/proj/maxwell/specjvm98-noinput
-export CHECKSTYLE_JAR=/proj/maxwell/bin/checkstyle-4.jar
+test -n "$JUNIT4_CP"         || export JUNIT4_CP=/proj/maxwell/bin/junit4.jar
+test -n "$MAXINE_HOME"       || export MAXINE_HOME=.
+test -n "$SPECJVM_CLASSPATH" || export SPECJVM_CLASSPATH=/proj/maxwell/specjvm98-noinput
+test -n "$CHECKSTYLE_JAR"    || export CHECKSTYLE_JAR=/proj/maxwell/bin/checkstyle-4.jar
+test -n "$RESULTS_DIR"       || export RESULTS_DIR=$MAXINE_HOME/vee2010-results
+
+mkdir -p $MAXINE_HOME/vee2010-results
 
 TIMING_RUNS=3
 
@@ -20,11 +22,11 @@ C1X_NO_ASSERTS='-XX:-IRChecking -XX:TraceLinearScanLevel=0'
 C1X_XIR='-XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR'
 
 function c1x-opt() {
-    file=/tmp/vee2010-results/$2-c1x${1}
+    file=$RESULTS_DIR/$2-c1x${1}
     echo '-->' $file
     java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -timing=$3 $4 > ${file}
 
-    file=/tmp/vee2010-results/$2-c1x${1}x
+    file=$RESULTS_DIR/$2-c1x${1}x
     echo '-->' $file
     java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS $C1X_XIR -timing=$3 $4 > ${file}
 }
