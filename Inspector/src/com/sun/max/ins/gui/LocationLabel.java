@@ -20,6 +20,7 @@
  */
 package com.sun.max.ins.gui;
 
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
@@ -99,6 +100,7 @@ public abstract class LocationLabel extends InspectorLabel {
                 }
             });
         }
+        enableDragSource();
     }
 
     public final void refresh(boolean force) {
@@ -106,6 +108,15 @@ public abstract class LocationLabel extends InspectorLabel {
             lastRefreshedState = maxVMState();
             updateText();
         }
+    }
+
+    @Override
+    public Transferable getTransferable() {
+        if (origin == null) {
+            return null;
+        }
+        final Address address = origin.plus(value);
+        return new InspectorTransferable.AddressTransferable(inspection(), address);
     }
 
     public final void setValue(int value) {
