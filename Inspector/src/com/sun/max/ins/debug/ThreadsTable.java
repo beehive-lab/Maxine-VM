@@ -21,6 +21,7 @@
 package com.sun.max.ins.debug;
 
 import java.awt.*;
+import java.awt.datatransfer.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -71,6 +72,17 @@ public final class ThreadsTable extends InspectorTable {
         }
     }
 
+    @Override
+    protected Transferable getTransferable(int row, int col) {
+        final MaxThread thread = tableModel.getThreadAt(row);
+        assert thread != null;
+        final MaxVMThread vmThread  =  thread.maxVMThread();
+        if (vmThread != null) {
+            return new InspectorTransferable.TeleObjectTransferable(inspection(), vmThread.teleVmThread());
+        }
+        return null;
+    }
+
     private final class ThreadsColumnModel extends InspectorTableColumnModel<ThreadsColumnKind> {
 
         private ThreadsColumnModel(ThreadsViewPreferences viewPreferences) {
@@ -98,14 +110,7 @@ public final class ThreadsTable extends InspectorTable {
         }
 
         public Object getValueAt(int row, int col) {
-            int count = 0;
-            for (MaxThread thread : maxVMState().threads()) {
-                if (count == row) {
-                    return thread;
-                }
-                count++;
-            }
-            return null;
+            return getThreadAt(row);
         }
 
         @Override
@@ -124,8 +129,17 @@ public final class ThreadsTable extends InspectorTable {
             return -1;
         }
 
+        public MaxThread getThreadAt(int row) {
+            int count = 0;
+            for (MaxThread thread : maxVMState().threads()) {
+                if (count == row) {
+                    return thread;
+                }
+                count++;
+            }
+            return null;
+        }
     }
-
 
     /**
      * @return color the text specially in the row where the thread is at a triggered watchpoint or breakpoint
