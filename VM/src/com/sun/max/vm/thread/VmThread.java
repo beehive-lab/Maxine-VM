@@ -487,9 +487,10 @@ public class VmThread {
     private static native boolean nativeSleep(long numberOfMilliSeconds);
 
     public static void sleep(long millis) throws InterruptedException {
-        boolean interrupted = current().sleep0(millis);
+        final VmThread current = current();
+        boolean interrupted = current.sleep0(millis);
         if (interrupted) {
-            interrupted = false;
+            current.interrupted = false;
             throw new InterruptedException();
         }
     }
