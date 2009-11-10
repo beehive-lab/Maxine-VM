@@ -37,7 +37,7 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<CPSTargetMethod>
     }
 
     public static TargetGeneratorScheme targetGeneratorScheme() {
-        return (TargetGeneratorScheme) javaPrototype().vmConfiguration().compilerScheme();
+        return (TargetGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
     }
 
     public static TargetGenerator targetGenerator() {

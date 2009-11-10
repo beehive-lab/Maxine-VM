@@ -224,7 +224,7 @@ public @interface UNSAFE {
          */
         public static void determineMethods() {
             Trace.begin(1, "determining unsafe methods");
-            for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+            for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
 
                 if (classActor.packageName().startsWith(maxPackageName) && !classActor.packageName().startsWith(asmPackageName)) {
                     for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {

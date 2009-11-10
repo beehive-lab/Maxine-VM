@@ -60,7 +60,7 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
 
         @HOSTED_ONLY
         static void registerInjectedFieldActor(InjectedFieldActor injectedFieldActor) {
-            assert ClassRegistry.vmClassRegistry().get(injectedFieldActor.holderTypeDescriptor()) == null :
+            assert ClassRegistry.BOOT_CLASS_REGISTRY.get(injectedFieldActor.holderTypeDescriptor()) == null :
                 "cannot inject field into pre-existing class " + injectedFieldActor.holderTypeDescriptor().toJavaString();
             final int length = injectedFieldActors.length;
             injectedFieldActors = java.util.Arrays.copyOf(injectedFieldActors, length + 1);

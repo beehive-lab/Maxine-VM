@@ -54,7 +54,7 @@ public final class AMD64EirToTargetTranslator extends EirToTargetTranslator {
             eirMethod.abi.targetABI().callEntryPoint().equals(C_ENTRY_POINT)) {
             // No adapter frames required for these methods
         } else {
-            if (compilerScheme().vmConfiguration().jitScheme() != compilerScheme()) {
+            if (compilerScheme().vmConfiguration().jitCompilerScheme() != compilerScheme()) {
                 adapterFrameGenerator = AMD64AdapterFrameGenerator.jitToOptimizingCompilerAdapterFrameGenerator(eirMethod.classMethodActor(), eirMethod.abi);
             }
         }

@@ -442,6 +442,13 @@ public class OptionSet {
         optionValues.put(name, v);
     }
 
+    public void setValuesAgain() {
+        for (String name : optionValues.keySet()) {
+            final Option opt = optionMap.get(name);
+            opt.setString(optionValues.get(name));
+        }
+    }
+
     public String getStringValue(String name) {
         return optionValues.get(name);
     }

@@ -22,10 +22,12 @@ package com.sun.max.vm.interpreter;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.io.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 
 /**
  *
@@ -56,5 +58,22 @@ public abstract class InterpreterStub extends TargetMethod {
     @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         return Address.zero();
+    }
+
+    @Override
+    public void traceDebugInfo(IndentWriter writer) {
+    }
+
+    @Override
+    public void traceExceptionHandlers(IndentWriter writer) {
+    }
+
+    @Override
+    public String referenceMapsToString() {
+        return "";
+    }
+
+    @Override
+    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer, TargetMethod callee) {
     }
 }

@@ -28,18 +28,22 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
 
 /**
- * The class loader used during bootstrapping to make {@linkplain ClassActor actors} for the classes to be put in the boot image.
+ * The VM class loader used when running in hosted mode.
+ * The singleton {@link #HOSTED_BOOT_CLASS_LOADER} instance is identical to the
+ * singleton {@link BootClassLoader#BOOT_CLASS_LOADER} instance of the {@link BootClassLoader}
+ * at runtime thanks to {@link HostObjectAccess#hostToTarget(Object)}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class PrototypeClassLoader extends ClassLoader {
+public final class HostedBootClassLoader extends ClassLoader {
 
     /**
-     * The default classpath for loading prototype classes.
+     * The default classpath for loading classes.
      */
     private static Classpath classpath;
 
@@ -64,7 +68,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      */
     public static void omitClass(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
-        ProgramError.check(ClassRegistry.vmClassRegistry().get(typeDescriptor) == null, "Cannot omit a class already in VM class registry: " + className);
+        ProgramError.check(ClassRegistry.BOOT_CLASS_REGISTRY.get(typeDescriptor) == null, "Cannot omit a class already in VM class registry: " + className);
         omittedClasses.add(className);
     }
 
@@ -78,7 +82,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      */
     public static void omitPackage(String packageName, boolean retrospective) {
         if (retrospective) {
-            for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+            for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
                 ProgramError.check(!classActor.packageName().equals(packageName), "Cannot omit a package that contains a class already in VM class registry: " + classActor.name);
             }
         }
@@ -94,6 +98,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      */
     public static boolean isOmittedType(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
+
         if (omittedClasses.contains(className)) {
             return true;
         }
@@ -104,20 +109,20 @@ public final class PrototypeClassLoader extends ClassLoader {
     }
 
     /**
-     * Sets the classpath to be used for any subsequent loading of classes through the prototype class loader. This should
+     * Sets the classpath to be used for any subsequent loading of classes through the hosted boot class loader. This should
      * ideally only be called once per execution before any class loading is performed through
-     * {@link #PROTOTYPE_CLASS_LOADER}.
+     * {@link #HOSTED_BOOT_CLASS_LOADER}.
      *
      * @param classpath
      *                the classpath to use
      */
     public static void setClasspath(Classpath classpath) {
-        ProgramWarning.check(PrototypeClassLoader.classpath == null, "overriding prototype class loader's classpath: old value=\"" + PrototypeClassLoader.classpath + "\", new value=\"" + classpath + "\"");
-        PrototypeClassLoader.classpath = classpath;
+        ProgramWarning.check(HostedBootClassLoader.classpath == null, "overriding hosted boot class loader's classpath: old value=\"" + HostedBootClassLoader.classpath + "\", new value=\"" + classpath + "\"");
+        HostedBootClassLoader.classpath = classpath;
     }
 
     /**
-     * Gets the classpath of this prototype classloader.
+     * Gets the classpath of the hosted boot classloader.
      *
      * @return an object representing the classpath of this loader
      */
@@ -139,7 +144,7 @@ public final class PrototypeClassLoader extends ClassLoader {
     public static ClasspathFile readClassFile(Classpath classpath, String name) throws ClassNotFoundException {
         ClasspathFile classpathFile = classpath.readClassFile(name);
         if (classpathFile == null) {
-            classpathFile = VmClassLoader.VM_CLASS_LOADER.findGeneratedClassfile(name);
+            classpathFile = BootClassLoader.BOOT_CLASS_LOADER.findGeneratedClassfile(name);
         }
         if (classpathFile != null) {
             return classpathFile;
@@ -147,10 +152,15 @@ public final class PrototypeClassLoader extends ClassLoader {
         throw new ClassNotFoundException(name);
     }
 
-    private PrototypeClassLoader() {
+    private HostedBootClassLoader() {
     }
 
-    public static final PrototypeClassLoader PROTOTYPE_CLASS_LOADER = new PrototypeClassLoader();
+    /**
+     * This value is identical to {@link BootClassLoader#BOOT_CLASS_LOADER} at runtime.
+     *
+     * @see HostObjectAccess#hostToTarget(Object)
+     */
+    public static final HostedBootClassLoader HOSTED_BOOT_CLASS_LOADER = new HostedBootClassLoader();
 
     /**
      * Make a class actor for the specified type descriptor. This method will attempt to load
@@ -160,21 +170,24 @@ public final class PrototypeClassLoader extends ClassLoader {
      * @return the class actor for the specified type descriptor
      * @throws ClassNotFoundException if the class specified by the type descriptor could not be found
      */
-    public ClassActor makeClassActor(final TypeDescriptor typeDescriptor) throws ClassNotFoundException {
+    public synchronized ClassActor makeClassActor(final TypeDescriptor typeDescriptor) throws ClassNotFoundException {
         try {
             return MaxineVM.usingTargetWithException(new Function<ClassActor>() {
                 public ClassActor call() throws Exception {
-                    final ClassActor classActor = ClassRegistry.get(PrototypeClassLoader.this, typeDescriptor, false);
+                    final ClassActor classActor = ClassRegistry.get(HostedBootClassLoader.this, typeDescriptor, false);
                     if (classActor != null) {
                         return classActor;
                     }
+//                    if (isOmittedType(typeDescriptor)) {
+//                        throw new OmittedClassError(typeDescriptor.toJavaString());
+//                    }
                     if (JavaTypeDescriptor.isArray(typeDescriptor)) {
                         final ClassActor componentClassActor = makeClassActor(typeDescriptor.componentTypeDescriptor());
                         return ClassActorFactory.createArrayClassActor(componentClassActor);
                     }
                     final String name = typeDescriptor.toJavaString();
                     final ClasspathFile classpathFile = readClassFile(classpath(), name);
-                    return ClassfileReader.defineClassActor(name, PrototypeClassLoader.this, classpathFile.contents, null, classpathFile.classpathEntry, false);
+                    return ClassfileReader.defineClassActor(name, HostedBootClassLoader.this, classpathFile.contents, null, classpathFile.classpathEntry, false);
                 }
             });
         } catch (Exception exception) {
@@ -217,7 +230,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      * @throws ClassNotFoundException if the element type could not be found
      */
     private Class<?> findArrayClass(final TypeDescriptor elementTypeDescriptor) throws ClassNotFoundException {
-        ClassActor elementClassActor = ClassRegistry.get(PrototypeClassLoader.this, elementTypeDescriptor, false);
+        ClassActor elementClassActor = ClassRegistry.get(HostedBootClassLoader.this, elementTypeDescriptor, false);
         if (elementClassActor == null) {
             // findClass expects a Java class "Binary name".
             final Class elementType = findClass(elementTypeDescriptor.toJavaString());
@@ -284,7 +297,7 @@ public final class PrototypeClassLoader extends ClassLoader {
         try {
             return MaxineVM.usingTargetWithException(new Function<Class>() {
                 public Class call() throws ClassNotFoundException {
-                    final Class<?> javaType = PrototypeClassLoader.super.loadClass(name, resolve);
+                    final Class<?> javaType = HostedBootClassLoader.super.loadClass(name, resolve);
                     if (MaxineVM.isHostedOnly(javaType)) {
                         throw new HostOnlyClassError(javaType.getName());
                     }

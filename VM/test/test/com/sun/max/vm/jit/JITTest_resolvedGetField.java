@@ -64,7 +64,7 @@ public class JITTest_resolvedGetField extends CompilerTestCase<CPSTargetMethod> 
 
     public void test_visitor() throws ClassNotFoundException {
         // Make sure the class whose field is being accessed is loaded in the target first (we want a resolved symbol at compiled time).
-        PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.loadClass(ResolvedAtCompileTime.class.getName());
+        HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.loadClass(ResolvedAtCompileTime.class.getName());
         // Now compile the method we're interested in
         compileMethod("perform_visitor", SignatureDescriptor.create(int.class, ResolvedAtCompileTime.class));
     }

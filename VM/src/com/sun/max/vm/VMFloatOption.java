@@ -44,7 +44,7 @@ public class VMFloatOption extends VMOption {
      */
     @HOSTED_ONLY
     public VMFloatOption(String prefix,  float defaultValue, String help) {
-        super(prefix, help);
+        super(prefix, appendDefaultValue(help, String.valueOf(defaultValue)));
         value = defaultValue;
     }
 
@@ -68,7 +68,7 @@ public class VMFloatOption extends VMOption {
      */
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption(prefix, "<n>", help);
+        VMOptions.printHelpForOption(category(), prefix, "<n>", help);
     }
 
     /**

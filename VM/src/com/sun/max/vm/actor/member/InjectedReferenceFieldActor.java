@@ -83,7 +83,7 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
         @Override
         public ReferenceValue readInjectedValue(Reference reference) {
             assert reference.toJava() instanceof ClassLoader;
-            return ReferenceValue.from(ClassRegistry.vmClassRegistry());
+            return ReferenceValue.from(ClassRegistry.BOOT_CLASS_REGISTRY);
         }
     };
 

@@ -35,7 +35,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -55,6 +54,9 @@ public class C1XTest {
 
     private static final OptionSet options = new OptionSet(false);
 
+    private static final Option<String> searchCpOption = options.newStringOption("search-cp", null,
+        "The restricted class path to use when matching compilation_specs. This must be a " +
+        "subset of the classpath (i.e. the classpath specified to the underlying JVM running this process).");
     private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
         "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1,
@@ -65,6 +67,8 @@ public class C1XTest {
         "Print the size of bailed out methods, which helps choosing the simplest failure case for debugging..");
     private static final Option<File> outFileOption = options.newFileOption("o", (File) null,
         "A file to which output should be sent. If not specified, then output is sent to stdout.");
+    private static final Option<Boolean> nowarnOption = options.newBooleanOption("nowarn", false,
+        "Do not print ClassNotFoundException warnings.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
@@ -91,13 +95,12 @@ public class C1XTest {
         "Set the number of warmup runs to execute before initiating the timed run.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
+    private static final Option<Integer> c1xOptLevel = options.newIntegerOption("c1x-optlevel", 0,
+        "Set the overall optimization level of C1X (-1 to use default settings)");
 
     static {
         // add all the fields from C1XOptions as options
         options.addFieldOptions(C1XOptions.class, "XX");
-
-        // add a special option "c1x-optlevel" which adjusts the optimization level
-        options.addOption(C1XCompilerScheme.OptLevel, Syntax.REQUIRES_EQUALS);
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();
@@ -112,8 +115,9 @@ public class C1XTest {
 
     public static void main(String[] args) {
         // set the default optimization level before parsing options
-        C1XOptions.setOptimizationLevel(C1XCompilerScheme.OptLevel.getDefaultValue());
         options.parseArguments(args);
+        C1XOptions.setOptimizationLevel(c1xOptLevel.getValue());
+        options.setValuesAgain();
         reportC1XOptions();
         final String[] arguments = options.getArguments();
 
@@ -121,6 +125,8 @@ public class C1XTest {
             options.printHelp(System.out, 80);
             return;
         }
+
+        ClassMethodActor.hostedVerificationDisabled = true;
 
         if (outFileOption.getValue() != null) {
             try {
@@ -315,12 +321,12 @@ public class C1XTest {
         final PatternType type;
 
         public PatternMatcher(String pattern) {
-            if (pattern.startsWith("^") && pattern.endsWith("^")) {
+            if (pattern.startsWith("^") && pattern.endsWith("^") && pattern.length() != 1) {
                 this.type = EXACT;
                 this.pattern = pattern.substring(1, pattern.length() - 1);
             } else if (pattern.startsWith("^")) {
                 this.type = PREFIX;
-                this.pattern = pattern.substring(1);
+                this.pattern = pattern.length() == 1 ? "" : pattern.substring(1);
             } else if (pattern.endsWith("^")) {
                 this.type = SUFFIX;
                 this.pattern = pattern.substring(0, pattern.length() - 1);
@@ -336,12 +342,25 @@ public class C1XTest {
     }
 
     private static List<MethodActor> findMethodsToCompile(String[] arguments) {
-        final Classpath classpath = Classpath.fromSystem();
+        String searchCp = searchCpOption.getValue();
+        final Classpath classpath = searchCp == null || searchCp.length() == 0 ? Classpath.fromSystem() : new Classpath(searchCp);
 
         final List<MethodActor> methods = new ArrayList<MethodActor>();
+        final Set<String> exclusions = new HashSet<String>();
 
         for (int i = 0; i != arguments.length; ++i) {
             final String argument = arguments[i];
+            if (argument.startsWith("!")) {
+                exclusions.add(argument.substring(1));
+                arguments[i] = null;
+            }
+        }
+
+        for (int i = 0; i != arguments.length; ++i) {
+            final String argument = arguments[i];
+            if (argument == null) {
+                continue;
+            }
             final int colonIndex = argument.indexOf(':');
             final PatternMatcher classNamePattern = new PatternMatcher(colonIndex == -1 ? argument : argument.substring(0, colonIndex));
 
@@ -356,6 +375,11 @@ public class C1XTest {
                 protected boolean visitClass(String className) {
                     if (!className.endsWith("package-info")) {
                         if (classNamePattern.matches(className)) {
+                            for (String exclusion : exclusions) {
+                                if (className.contains(exclusion)) {
+                                    return true;
+                                }
+                            }
                             matchingClasses.append(className);
                         }
                     }
@@ -374,7 +398,12 @@ public class C1XTest {
             // for all found classes, search for matching methods
             for (String className : matchingClasses) {
                 try {
-                    final Class<?> javaClass = Class.forName(className, false, C1XTest.class.getClassLoader());
+                    Class<?> javaClass = null;
+                    try {
+                        javaClass = Class.forName(className, false, C1XTest.class.getClassLoader());
+                    } catch (NoClassDefFoundError noClassDefFoundError) {
+                        throw new ClassNotFoundException(className, noClassDefFoundError);
+                    }
                     final ClassActor classActor = getClassActorNonfatal(javaClass);
                     if (classActor == null) {
                         continue;
@@ -384,11 +413,11 @@ public class C1XTest {
                         // Class only: compile all methods in class
                         for (MethodActor actor : classActor.localStaticMethodActors()) {
                             if (clinitOption.getValue() || actor != classActor.clinit) {
-                                addMethod(methods, actor);
+                                addMethod(methods, actor, exclusions);
                             }
                         }
                         for (MethodActor methodActor : classActor.localVirtualMethodActors()) {
-                            addMethod(methods, methodActor);
+                            addMethod(methods, methodActor, exclusions);
                         }
                     } else {
                         // a method pattern was specified, find matching methods
@@ -402,11 +431,13 @@ public class C1XTest {
                             methodNamePattern = new PatternMatcher(argument.substring(colonIndex + 1, parenIndex));
                             signature = SignatureDescriptor.create(argument.substring(parenIndex));
                         }
-                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localStaticMethodActors());
-                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localVirtualMethodActors());
+                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localStaticMethodActors(), exclusions);
+                        addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localVirtualMethodActors(), exclusions);
                     }
                 } catch (ClassNotFoundException classNotFoundException) {
-                    ProgramWarning.message(classNotFoundException.toString());
+                    if (!nowarnOption.getValue()) {
+                        ProgramWarning.message(classNotFoundException.toString() + (classNotFoundException.getCause() == null ? "" : " (cause: " + classNotFoundException.getCause() + ")"));
+                    }
                 }
             }
             if (verboseOption.getValue() > 0) {
@@ -416,7 +447,12 @@ public class C1XTest {
         return methods;
     }
 
-    private static void addMethod(List<MethodActor> methods, MethodActor methodActor) {
+    private static void addMethod(List<MethodActor> methods, MethodActor methodActor, Set<String> exclusions) {
+        for (String exclusion : exclusions) {
+            if (methodActor.name.string.contains(exclusion)) {
+                return;
+            }
+        }
         if (isCompilable(methodActor)) {
             if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(methodActor.flags())) {
                 final Method method = methodActor.toJava();
@@ -440,12 +476,12 @@ public class C1XTest {
         return classActor;
     }
 
-    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors) {
+    private static void addMatchingMethods(final List<MethodActor> methods, final ClassActor classActor, final PatternMatcher methodNamePattern, final SignatureDescriptor signature, MethodActor[] methodActors, Set<String> exclusions) {
         for (final MethodActor method : methodActors) {
             if (methodNamePattern.matches(method.name.toString())) {
                 final SignatureDescriptor methodSignature = method.descriptor();
                 if (signature == null || signature.equals(methodSignature)) {
-                    addMethod(methods, method);
+                    addMethod(methods, method, exclusions);
                 }
             }
         }

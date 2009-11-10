@@ -71,7 +71,7 @@ public class BytecodePrinterTest extends MaxTestCase {
     }
 
     public void test() {
-        final Class testClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, BytecodePrinterTest.class.getName());
+        final Class testClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, BytecodePrinterTest.class.getName());
         final ClassMethodActor methodActor = ClassActor.fromJava(testClass).findClassMethodActor(SymbolTable.makeSymbol("perform"), SignatureDescriptor.create(void.class));
         CodeAttributePrinter.print(System.out, methodActor.codeAttribute());
     }

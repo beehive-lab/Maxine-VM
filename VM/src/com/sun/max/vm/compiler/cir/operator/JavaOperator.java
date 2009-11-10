@@ -352,7 +352,7 @@ public abstract class JavaOperator extends CirOperator {
         private final Builtin builtin;
         private final Snippet snippet;
         private JavaBuiltinOrSnippetOperator(Builtin builtin, Snippet snippet) {
-            super(VMConfiguration.target().compilerScheme().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL);
+            super(VMConfiguration.target().bootCompilerScheme().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL);
             this.builtin = builtin;
             this.snippet = snippet;
         }

@@ -238,6 +238,15 @@ public class MaxRiMethod implements RiMethod {
     }
 
     /**
+     * Checks whether this method is initializer.
+     * @return {@code true} if this method is initializer
+     * @throws MaxRiUnresolved if the method is unresolved
+     */
+    public boolean isInitializer() {
+        return asMethodActor("isInitializer()").isInitializer();
+    }
+
+    /**
      * Checks whether this method has been overridden in the current runtime environment.
      * @return {@code true} if this method has been overridden
      * @throws MaxRiUnresolved if the method is unresolved

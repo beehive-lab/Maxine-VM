@@ -21,6 +21,7 @@
 package com.sun.max.vm;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.MaxineVM.*;
 
@@ -45,7 +46,7 @@ public class VMIntOption extends VMOption {
      */
     @HOSTED_ONLY
     public VMIntOption(String prefix, int defaultValue, String help) {
-        super(prefix, help);
+        super(prefix, appendDefaultValue(help, defaultValue < 0 ? String.valueOf(defaultValue) : Ints.toUnitsString(defaultValue, true)));
         value = defaultValue;
     }
 
@@ -66,7 +67,7 @@ public class VMIntOption extends VMOption {
      */
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption(prefix, "<n>", help);
+        VMOptions.printHelpForOption(category(), prefix, "<n>", help);
     }
 
     /**

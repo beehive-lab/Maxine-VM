@@ -87,6 +87,10 @@ while [ "${1:0:1}" = "-" ]; do
         -h )
             show_help=true
             ;;
+        -vmdir )
+            shift
+            MAXVM_DIR=$1
+            ;;
         -make )
             shift
             make_arg=$1
@@ -270,7 +274,8 @@ if [[ "$junit_version" != 4.* ]]; then
 fi 
 maxine_cp=${maxine_cp}:${JUNIT4_CP}
 
-maxine_vm=${maxine_dir}/Native/generated/${MAXINE_OS}/maxvm
+test -n "$MAXVM_DIR" || MAXVM_DIR="${maxine_dir}/Native/generated/${MAXINE_OS}"
+maxine_vm=$MAXVM_DIR/maxvm
 
 #=======================================
 # Utility for verbose execution
@@ -751,8 +756,9 @@ function run_javadoc() {
 
 image_configs=( \
     java#-run=java \
-    c1x-opt0#-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x \
-    c1x-opt0-xir#-c1x-optlevel=0,-jit=com.sun.max.vm.compiler.c1x,--XX:+GenerateLIRXIR,--XX:+GenerateUnresolvedLIRXIR \
+    c1x-opt0#-prototype-jit,--XX:OptLevel=0,-jit=com.sun.max.vm.compiler.c1x \
+    c1x-opt0-xir#-prototype-jit,--XX:OptLevel=0,-jit=com.sun.max.vm.compiler.c1x,--XX:+GenerateLIRXIR,--XX:+GenerateUnresolvedLIRXIR \
+    c1x-opt2-xir#-prototype-jit,--XX:OptLevel=2,-jit=com.sun.max.vm.compiler.c1x,--XX:+GenerateLIRXIR,--XX:+GenerateUnresolvedLIRXIR \
     cpsc1x#-native-tests,-test-callee-c1x,-run=test.com.sun.max.vm.jtrun.all \
     cpscps#-run=test.com.sun.max.vm.jtrun.all,-native-tests \
     cpsjit#-run=test.com.sun.max.vm.jtrun.all,-native-tests,-test-callee-jit \
@@ -863,8 +869,12 @@ function run_compile() {
 # 'c1x' command
 #=======================================
 
-c1x_usage="[options] compilation_specs..."
+c1x_usage="[options] compilation_specs|exclusion_specs..."
 c1x_help="process a list of classes and/or methods with the C1X compiler
+
+    An exclusion spec is a string starting with '!'. Any class or method
+    whose name contains an exclusion string (the exclusion spec minus the
+    leading '!') is excuded from further processing.
 
     A compilation spec is a class name pattern followed by an optional method name
     pattern separated by a ':'. For example:
@@ -895,7 +905,8 @@ c1x_help="process a list of classes and/or methods with the C1X compiler
     Use \"max c1x -help\" to see what other options this command accepts."
 
 function run_c1x() {
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
+    c1x_cp=${maxine_cp}:`echo $@ | sed 's:.*-search-cp=\([^ ]*\).*:\1:g'`
+    run ${jvm_exe} -cp ${c1x_cp} test.com.sun.max.vm.compiler.c1x.C1XTest $@
 }
 
 #=======================================
@@ -923,6 +934,34 @@ vm_help="launch the Maxine VM
 
 function run_vm() {
     run ${maxine_vm} $MAXVM_OPTIONS $@
+}
+
+#=======================================
+# 'copyvm' command
+#=======================================
+
+copyvm_usage="dest"
+copyvm_help="copy the VM files to a specified directory
+
+    Copy the VM executable, shared libraries and boot image files to
+    a specified directory, creating it first if necessary. This allows
+    multiple VMs to exist in a single workspace.
+    
+    To use a particular VM, set the MAXVM_DIR environment variable before
+    running a \"max vm ...\" command."
+
+function run_copyvm() {
+    if [ ! -d $1 ]; then
+        mkdir -p $1 || { echo "Failed to created directory $1"; exit 1; }
+    fi
+    run cp -r ${maxine_dir}/Native/generated/${MAXINE_OS}/* $1 && {
+        echo "Copied all VM files to $1."
+        echo "Use either of the following commands to run this copy of the VM:"
+        echo
+        echo "    max -vmdir $1 vm ..."
+        echo "    env MAXVM_DIR=$1 max vm ..."
+        echo
+    }
 }
 
 #=======================================
@@ -1003,7 +1042,7 @@ inspect_help="launch a given program under the Inspector
 function run_inspect() {
 
     vm_args=""
-    inspector_args=""
+    inspector_args="-vmdir=$MAXVM_DIR"
     inspector_cp="";
     while [ "$1" != "" ]; do
         case $1 in
@@ -1065,7 +1104,7 @@ view_help="browse the boot image under the Inspector
     Use \"max view -help\" to see what the Inspector options are."
 
 function run_view() {
-    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineViewer -trace=1 $@
+    run ${jvm_exe} -cp ${maxine_cp}:$maxine_dir/Inspector/jlfgr-1_0.jar com.sun.max.ins.MaxineViewer -trace=1 -vmdir=$MAXVM_DIR $@
 }
 
 #=======================================
@@ -1286,6 +1325,8 @@ function usage() {
     echo " -v               enable verbose output "
     echo " -d               enable debug output"
     echo " -h               show launcher help"
+    echo " -vmdir <path>    directory for VM executable, shared libraries boot image and related files"
+    echo "                    (default: $MAXVM_DIR)"
     echo " -java_home <path> JDK installation directory (must be JDK 6 or later)"
     echo "                    (default: value of the JAVA_HOME environment variable)"
     echo " -jvm <path>      Java VM executable (default: bin/java under JAVA_HOME)"

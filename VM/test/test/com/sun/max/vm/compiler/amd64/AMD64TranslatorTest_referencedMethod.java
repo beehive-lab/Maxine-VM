@@ -56,7 +56,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
         return MaxineVM.usingTarget(new Function<Class>() {
             public Class call() {
                 assert !MaxineVM.isHostedOnly(classToInitialize);
-                final Class targetClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, classToInitialize.getName());
+                final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, classToInitialize.getName());
                 final ClassActor classActor = ClassActor.fromJava(targetClass);
                 MakeClassInitialized.makeClassInitialized(classActor);
                 return targetClass;

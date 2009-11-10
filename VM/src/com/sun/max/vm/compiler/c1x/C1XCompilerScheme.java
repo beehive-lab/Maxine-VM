@@ -28,7 +28,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.program.option.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -38,6 +38,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.tele.*;
 
 /**
  * @author Ben L. Titzer
@@ -48,19 +49,37 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     private C1XCompiler compiler;
     private RiXirGenerator xirGenerator;
 
-    public static final Option<Integer> OptLevel;
+    public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-XX:OptLevel=", 0,
+        "Set the optimization level of C1X.") {
+        @Override
+        public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
+            boolean result = super.parseValue(optionValue);
+            if (result) {
+                C1XOptions.setOptimizationLevel(getValue());
+                return true;
+            }
+            return false;
+        }
+    }, MaxineVM.Phase.STARTING);
 
     public C1XCompilerScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
 
     static {
-        OptLevel = new Option<Integer>("c1x-optlevel", 0, OptionTypes.INT_TYPE, "Set the overall optimization level of C1X (-1 to use default settings)") {
+        VMOptions.register(new VMBooleanXXOption("-XX:-ResetC1XDefaults",
+            "Reset all C1X options to their defaults. This takes effect before any other C1X options on the command line are parsed.") {
             @Override
-            public void setValue(Integer value) {
-                C1XOptions.setOptimizationLevel(value);
+            public boolean parseValue(Pointer optionValue) {
+                if (super.parseValue(optionValue)) {
+                    if (getValue()) {
+                        C1XOptions.setDefaults();
+                    }
+                    return true;
+                }
+                return false;
             }
-        };
+        }, MaxineVM.Phase.PRISTINE);
     }
 
     @Override
@@ -144,7 +163,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
         CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
 
-        // TODO (tw): Initialize target differently
         CiTarget target = new CiTarget(arch, stackRegister, scratchRegister, allocRegs, allocRegs, registerReferenceMapTemplate, configuration.platform.pageSize, true);
         target.stackAlignment = targetABI.stackFrameAlignment();
         return target;
@@ -165,12 +183,14 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
         CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
         if (compiledMethod != null) {
-            return new C1XTargetMethod(this, classMethodActor, compiledMethod);
+            C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(this, classMethodActor, compiledMethod);
+            BytecodeBreakpointMessage.makeTargetBreakpoints(c1xTargetMethod);
+            return c1xTargetMethod;
         }
         throw FatalError.unexpected("bailout"); // compilation failed
     }
 
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod lastJavaCallee, StackFrameWalker.Purpose purpose, Object context) {
-        return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, lastJavaCallee, purpose, context);
+    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, StackFrameWalker.Purpose purpose, Object context) {
+        return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, callee, purpose, context);
     }
 }

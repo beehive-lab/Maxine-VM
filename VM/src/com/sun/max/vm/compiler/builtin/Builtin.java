@@ -121,7 +121,7 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
 
     @HOSTED_ONLY
     public static void register(BootstrapCompilerScheme compilerScheme) {
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
                 registerMethod(classMethodActor);
             }

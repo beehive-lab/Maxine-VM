@@ -562,25 +562,17 @@ public final class JDK_java_lang_System {
         return join(pathSeparator, filesystemPaths);
     }
 
-    // TODO: report the correct path separator from the target here
-    private static final String CLASSPATH_HELP_MESSAGE = "A list of paths to search for Java classes, separated by the : character.";
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption classpathOption = register(new VMStringOption("-classpath", true, null, CLASSPATH_HELP_MESSAGE), MaxineVM.Phase.PRISTINE);
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption cpOption = register(new VMStringOption("-cp", true, null, CLASSPATH_HELP_MESSAGE) {
+    private static final VMStringOption classpathOption = register(new VMStringOption("-cp", true, null,
+        "A " + File.pathSeparatorChar + " separated list of directories, JAR archives, and ZIP archives to search for class files.") {
         @Override
-        public boolean parseValue(Pointer optionValue) {
-            return classpathOption.parseValue(optionValue);
+        public boolean matches(Pointer arg) {
+            return CString.equals(arg, prefix) || CString.equals(arg, "-classpath");
         }
         @Override
-        public boolean isPresent() {
-            return classpathOption.isPresent();
-        }
-        @Override
-        public String getValue() {
-            return classpathOption.getValue();
+        public void printHelp() {
+            VMOptions.printHelpForOption(category(), "-cp", " <class search path of directories and zip/jar files>", null);
+            VMOptions.printHelpForOption(category(), "-classpath",
+                " <class search path of directories and zip/jar files>", help);
         }
     }, MaxineVM.Phase.PRISTINE);
 
@@ -596,6 +588,7 @@ public final class JDK_java_lang_System {
 
     static class BootClasspathVMOption extends VMOption {
         private String path;
+        private static final String USAGE_VALUE = "<directories and zip/jar files separated by " + File.pathSeparatorChar + ">";
 
         @HOSTED_ONLY
         static BootClasspathVMOption create(String suffix, String help) {
@@ -615,6 +608,11 @@ public final class JDK_java_lang_System {
             } catch (Utf8Exception utf8Exception) {
                 return false;
             }
+        }
+
+        @Override
+        public void printHelp() {
+            VMOptions.printHelpForOption(category(), prefix, USAGE_VALUE, help);
         }
 
         String path() {
@@ -663,7 +661,7 @@ public final class JDK_java_lang_System {
         }
 
         // 3. reinitialize java.lang.ProcessEnvironment with this process's environment
-        ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).callInitializer();
+        JDK.java_lang_ProcessEnvironment.classActor().callInitializer();
 
         // 4. perform OS-specific initialization
         switch (Platform.hostOrTarget().operatingSystem) {
@@ -732,7 +730,7 @@ public final class JDK_java_lang_System {
         }
 
         // 9. load the native code for zip and java libraries
-        VmClassLoader.VM_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
+        BootClassLoader.BOOT_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
         // 10. initialize the file system with current runtime values as opposed to bootstrapping values
         ClassActor.fromJava(File.class).callInitializer();

@@ -35,7 +35,6 @@ import com.sun.max.profile.*;
 import com.sun.max.profile.ValueMetrics.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.program.option.OptionSet.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -44,7 +43,6 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
@@ -65,12 +63,14 @@ import com.sun.max.vm.type.*;
  */
 public final class BootImageGenerator {
 
-    private static final String DEFAULT_IMAGE_OBJECT_TREE_FILE_NAME = "maxine.object.tree";
-    private static final String DEFAULT_IMAGE_METHOD_TREE_FILE_NAME = "maxine.method.tree";
-    private static final String DEFAULT_IMAGE_JAR_FILE_NAME = "maxine.jar";
-    private static final String DEFAULT_IMAGE_FILE_NAME = "maxine.vm";
-    private static final String OPERATING_SYSTEM_PROPERTY = "max.host.os";
-    private static final String OUTPUT_DIRECTORY = "Native" + File.separator + "generated" + File.separator +
+    public static final String IMAGE_OBJECT_TREE_FILE_NAME = "maxine.object.tree";
+    public static final String IMAGE_METHOD_TREE_FILE_NAME = "maxine.method.tree";
+    public static final String IMAGE_JAR_FILE_NAME = "maxine.jar";
+    public static final String IMAGE_FILE_NAME = "maxine.vm";
+    public static final String STATS_FILE_NAME = "maxine.stats";
+
+    public static final String OPERATING_SYSTEM_PROPERTY = "max.host.os";
+    public static final String DEFAULT_VM_DIRECTORY = "Native" + File.separator + "generated" + File.separator +
         System.getProperty(OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()).toLowerCase();
 
     private final OptionSet options = new OptionSet();
@@ -84,24 +84,8 @@ public final class BootImageGenerator {
     private final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
 
-    private final Option<File> outputDirectoryOption = options.newFileOption("output-dir", getDefaultOutputDirectory(),
+    private final Option<File> vmDirectoryOption = options.newFileOption("vmdir", getDefaultVMDirectory(),
             "The output directory for the binary image generator.");
-
-    private final Option<String> imageFileOption = options.newStringOption("image-file", DEFAULT_IMAGE_FILE_NAME,
-            "The name of the image file to generate.");
-
-    private final Option<String> jarFileOption = options.newStringOption("jar-file", DEFAULT_IMAGE_JAR_FILE_NAME,
-            "The name of the jar file to generate, which contains all of the " +
-            "classes in a generated image.");
-
-    private final Option<String> statsFileOption = options.newStringOption("stats-file", "maxine.stats",
-            "The name of the statistics file generated (if any).");
-
-    private final Option<String> objectTreeFileOption = options.newStringOption("object-tree-file", DEFAULT_IMAGE_OBJECT_TREE_FILE_NAME,
-            "The name of the object tree file generated (if any).");
-
-    private final Option<String> methodTreeFileOption = options.newStringOption("method-tree-file", DEFAULT_IMAGE_METHOD_TREE_FILE_NAME,
-            "The name of the method tree file generated (if any).");
 
     private final Option<Boolean> testCallerJit = options.newBooleanOption("test-caller-jit", false,
             "For the Java tester, this option specifies that each test case's harness should be compiled " +
@@ -155,47 +139,59 @@ public final class BootImageGenerator {
     public static boolean nativeTests = false;
 
     /**
-     * Get the default output directory, derived from the project directory.
-     *
-     * @return a file representing the default output directory for the image and statistics
+     * Gets the default VM directory where the VM executable, shared libraries, boot image
+     * and related files are located.
      */
-    public static File getDefaultOutputDirectory() {
-        return new File(JavaProject.findVcsProjectDirectory().getParentFile().getAbsoluteFile(), OUTPUT_DIRECTORY);
+    public static File getDefaultVMDirectory() {
+        return new File(JavaProject.findVcsProjectDirectory().getParentFile().getAbsoluteFile(), DEFAULT_VM_DIRECTORY);
     }
 
     /**
-     * Get the default file name where to generate the boot image file.
+     * Gets the boot image file given a VM directory.
      *
-     * @return the default file to which to write the boot image
+     * @param vmdir a VM directory. If {@code null}, then {@link #getDefaultVMDirectory()} is used.
      */
-    public static File getDefaultBootImageFilePath() {
-        return new File(getDefaultOutputDirectory(), DEFAULT_IMAGE_FILE_NAME);
+    public static File getBootImageFile(File vmdir) {
+        if (vmdir == null) {
+            vmdir = getDefaultVMDirectory();
+        }
+        return new File(vmdir, IMAGE_FILE_NAME);
     }
 
     /**
-     * Get the default file name where to generate the boot jar.
+     * Gets the boot image jar file given a VM directory.
      *
-     * @return a file representing the default file to which to write the boot jar file
+     * @param vmdir a VM directory. If {@code null}, then {@link #getDefaultVMDirectory()} is used.
      */
-    public static File getDefaultBootImageJarFilePath() {
-        return new File(getDefaultOutputDirectory(), DEFAULT_IMAGE_JAR_FILE_NAME);
+    public static File getBootImageJarFile(File vmdir) {
+        if (vmdir == null) {
+            vmdir = getDefaultVMDirectory();
+        }
+        return new File(vmdir, IMAGE_JAR_FILE_NAME);
     }
 
     /**
-     * Get the default file name where to write the object tree file.
-     * @return the file to which to write the object tree information
+     * Gets the object tree file given a VM directory.
+     *
+     * @param vmdir a VM directory. If {@code null}, then {@link #getDefaultVMDirectory()} is used.
      */
-    public static File getDefaultBootImageObjectTreeFilePath() {
-        return new File(getDefaultOutputDirectory(), DEFAULT_IMAGE_OBJECT_TREE_FILE_NAME);
+    public static File getBootImageObjectTreeFile(File vmdir) {
+        if (vmdir == null) {
+            vmdir = getDefaultVMDirectory();
+        }
+        return new File(vmdir, IMAGE_OBJECT_TREE_FILE_NAME);
     }
 
     /**
-     * Get the default file name where to write the method tree file.
+     * Gets the method tree file given a VM directory.
      *
-     * @return the file to which to write the method tree information
+     * @param vmdir a VM directory. If {@code null}, then {@link #getDefaultVMDirectory()} is used.
      */
-    public static File getDefaultBootImageMethodTreeFilePath() {
-        return new File(getDefaultOutputDirectory(), DEFAULT_IMAGE_METHOD_TREE_FILE_NAME);
+    public static File getBootImageMethodTreeFile(File vmdir) {
+        if (vmdir == null) {
+            vmdir = getDefaultVMDirectory();
+        }
+        return new File(vmdir, IMAGE_METHOD_TREE_FILE_NAME);
     }
 
     /**
@@ -209,9 +205,6 @@ public final class BootImageGenerator {
         try {
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
-
-            // add a special option "c1x-optlevel" which adjusts the optimization level
-            options.addOption(C1XCompilerScheme.OptLevel, Syntax.REQUIRES_EQUALS);
 
             options.parseArguments(programArguments);
 
@@ -234,29 +227,29 @@ public final class BootImageGenerator {
             BootImageGenerator.unlinked = testUnlinked.getValue();
             BootImageGenerator.nativeTests = testNative.getValue();
 
-            final File outputDirectory = outputDirectoryOption.getValue();
-            outputDirectory.mkdirs();
+            final File vmDirectory = vmDirectoryOption.getValue();
+            vmDirectory.mkdirs();
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue(), prototypeJit.getValue());
             VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
-            compilerScheme = dataPrototype.vmConfiguration().compilerScheme();
+            compilerScheme = dataPrototype.vmConfiguration().bootCompilerScheme();
 
 
             VMOptions.beforeExit();
 
             // write the statistics
             if (statsOption.getValue()) {
-                writeStats(graphPrototype, new File(outputDirectory, statsFileOption.getValue()));
+                writeStats(graphPrototype, new File(vmDirectory, STATS_FILE_NAME));
             }
-            writeJar(new File(outputDirectory, jarFileOption.getValue()));
-            writeImage(dataPrototype, new File(outputDirectory, imageFileOption.getValue()));
+            writeJar(new File(vmDirectory, IMAGE_JAR_FILE_NAME));
+            writeImage(dataPrototype, new File(vmDirectory, IMAGE_FILE_NAME));
             if (treeOption.getValue()) {
                 // write the tree file only if specified by the user.
-                writeObjectTree(dataPrototype, graphPrototype, new File(outputDirectory, objectTreeFileOption.getValue()));
+                writeObjectTree(dataPrototype, graphPrototype, new File(vmDirectory, IMAGE_OBJECT_TREE_FILE_NAME));
             }
-            writeMethodTree(graphPrototype.compiledPrototype, new File(outputDirectory, methodTreeFileOption.getValue()));
+            writeMethodTree(graphPrototype.compiledPrototype, new File(vmDirectory, IMAGE_METHOD_TREE_FILE_NAME));
 
         } catch (IOException ioException) {
             ProgramError.unexpected("could not write file ", ioException);
@@ -287,7 +280,7 @@ public final class BootImageGenerator {
             try {
                 Trace.begin(1, "writing boot image file: " + file);
                 bootImage.write(outputStream);
-                Trace.end(1, "end boot image file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+                Trace.end(1, "end boot image file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
             } catch (IOException ioException) {
                 ProgramError.unexpected("could not write file: " + file, ioException);
             } finally {
@@ -313,7 +306,7 @@ public final class BootImageGenerator {
     private void writeJar(File file) throws IOException {
         Trace.begin(1, "writing boot image jar file: " + file);
         createBootImageJarFile(file);
-        Trace.end(1, "end boot image jar file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+        Trace.end(1, "end boot image jar file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
     }
 
     /**
@@ -328,7 +321,7 @@ public final class BootImageGenerator {
         final FileOutputStream fileOutputStream = new FileOutputStream(file);
         new GraphStats(graphPrototype).dumpStats(new PrintStream(fileOutputStream));
         fileOutputStream.close();
-        Trace.end(1, "end boot image statistics file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+        Trace.end(1, "end boot image statistics file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
     }
 
     /**
@@ -347,7 +340,7 @@ public final class BootImageGenerator {
         BootImageObjectTree.saveTree(dataOutputStream, graphPrototype.links(), dataPrototype.allocationMap());
         dataOutputStream.flush();
         fileOutputStream.close();
-        Trace.end(1, "writing boot image object tree file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+        Trace.end(1, "writing boot image object tree file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
     }
 
     /**
@@ -365,7 +358,7 @@ public final class BootImageGenerator {
         BootImageMethodTree.saveTree(dataOutputStream, compiledPrototype.links());
         dataOutputStream.flush();
         fileOutputStream.close();
-        Trace.end(1, "writing boot image method tree file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
+        Trace.end(1, "writing boot image method tree file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
     }
 
     /**
@@ -385,12 +378,12 @@ public final class BootImageGenerator {
     private static void createBootImageJarFile(File jarFile) throws IOException {
         final JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
         jarOutputStream.setLevel(Deflater.BEST_COMPRESSION);
-        final Classpath classPath = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath();
+        final Classpath classPath = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath();
 
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (classActor.isInterfaceActor() || classActor.isTupleClassActor() || classActor.isHybridClassActor()) {
                 try {
-                    final ClasspathFile classpathFile = PrototypeClassLoader.readClassFile(classPath, classActor.name.toString());
+                    final ClasspathFile classpathFile = HostedBootClassLoader.readClassFile(classPath, classActor.name.toString());
 
                     final String classfilePath = classActor.name.toString().replace('.', '/') + ".class";
                     final JarEntry jarEntry = new JarEntry(classfilePath);
@@ -432,7 +425,7 @@ public final class BootImageGenerator {
             cirGenerator = ((CirGeneratorScheme) compilerScheme).cirGenerator();
         }
         // report total of CIR bytecodes
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             final ConstantPool constantPool = classActor.constantPool();
             if (constantPool != null) {
                 final int numberOfConstants = constantPool.numberOfConstants();

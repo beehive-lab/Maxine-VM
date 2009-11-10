@@ -38,6 +38,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerPackage.isSubPackageOf(this);
+        return vmConfiguration.bootCompilerPackage.isSubPackageOf(this);
     }
 }

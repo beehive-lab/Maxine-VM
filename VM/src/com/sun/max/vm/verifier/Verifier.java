@@ -69,7 +69,7 @@ public class Verifier implements VerificationRegistry {
     static {
         // -XX:-BytecodeVerificationLocal option
         VMOptions.register(new VMBooleanXXOption("-XX:-BytecodeVerificationLocal",
-            "Enables the Java bytecode verifier for local classes.") {
+            "Enable verification of local classes.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 if (super.parseValue(optionValue)) {
@@ -82,7 +82,7 @@ public class Verifier implements VerificationRegistry {
 
         // -XX:+BytecodeVerificationRemote option
         VMOptions.register(new VMBooleanXXOption("-XX:+BytecodeVerificationRemote",
-            "Enables the Java bytecode verifier for remote classes.") {
+            "Enable verification of remote classes.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 if (super.parseValue(optionValue)) {
@@ -115,13 +115,13 @@ public class Verifier implements VerificationRegistry {
             }
             @Override
             public void printHelp() {
-                VMOptions.printHelpForOption("-Xverify[:remote|all|none]", "", help);
+                VMOptions.printHelpForOption(category(), "-Xverify[:remote|all|none]", "", help);
             }
 
         }, MaxineVM.Phase.STARTING);
 
         // -XX:TraceVerification=<value> option
-        VMOptions.register(new VMStringOption("-XX:TraceVerification=", false, "",
+        VMOptions.register(new VMStringOption("-XX:TraceVerification=", false, null,
             "Trace bytecode verification in detail of method(s) whose qualified name contains <value>.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
@@ -135,7 +135,7 @@ public class Verifier implements VerificationRegistry {
 
         // -XX:TraceVerifierLevel=<value> option
         VMOptions.register(new VMIntOption("-XX:TraceVerifierLevel=", 0,
-            "Trace bytecode verification level: 0 == none (default), 1 == class, 2 == methods.") {
+            "Trace bytecode verification level: 0 = none, 1 = class, 2 = methods.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 boolean result = super.parseValue(optionValue);
@@ -158,7 +158,7 @@ public class Verifier implements VerificationRegistry {
      * @return {@code true} if a class loaded by {@code classLoader} need bytecode verification
      */
     public static boolean shouldBeVerified(ClassLoader classLoader, boolean isRemote) {
-        if (classLoader == VmClassLoader.VM_CLASS_LOADER || classLoader == null || !isRemote) {
+        if (classLoader == BootClassLoader.BOOT_CLASS_LOADER || classLoader == null || !isRemote) {
             return verifyLocal;
         }
         return verifyRemote;

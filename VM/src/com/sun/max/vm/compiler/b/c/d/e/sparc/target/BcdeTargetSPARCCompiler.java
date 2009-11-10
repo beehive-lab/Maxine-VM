@@ -375,7 +375,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 }
 
                 if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, StackBias.SPARC_V9.unbias(stackPointer),
-                                                           ignoredOperandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE)) {
+                                                           ignoredOperandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE, null)) {
                     return false;
                 }
                 break;

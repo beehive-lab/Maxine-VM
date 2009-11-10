@@ -136,7 +136,7 @@ public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
     }
 
     private static void writeGeneratedClassfilesToJar() throws IOException {
-        final Map<String, byte[]> generatedClassfiles = VmClassLoader.VM_CLASS_LOADER.generatedClassfiles();
+        final Map<String, byte[]> generatedClassfiles = BootClassLoader.BOOT_CLASS_LOADER.generatedClassfiles();
         if (generatedClassfiles.isEmpty()) {
             return;
         }
@@ -162,7 +162,7 @@ public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
 
 
     public static BootstrapCompilerScheme compilerScheme() {
-        return javaPrototype().vmConfiguration().compilerScheme();
+        return javaPrototype().vmConfiguration().bootCompilerScheme();
     }
 
     public abstract Method_Type translate(ClassMethodActor classMethodActor);

@@ -68,7 +68,7 @@ public class GraphBuilder {
         this.stats = compilation.stats;
         this.memoryMap = C1XOptions.EliminateFieldAccess ? new MemoryMap() : null;
         this.localValueMap = C1XOptions.UseLocalValueNumbering ? new ValueMap() : null;
-        this.canonicalizer = C1XOptions.CanonicalizeInstructions ? new Canonicalizer(compilation.runtime) : null;
+        this.canonicalizer = C1XOptions.CanonicalizeInstructions ? new Canonicalizer(compilation.runtime, compilation.method) : null;
         RiMethod rootMethod = compilation.method;
 
         // 1. create the start block

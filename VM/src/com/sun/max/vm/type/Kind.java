@@ -251,7 +251,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                                                                    WordWidth.BITS_8) {
         @Override
         public ArrayClassActor arrayClassActor() {
-            return PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR;
+            return ClassRegistry.BYTE_ARRAY;
         }
 
         @Override
@@ -320,7 +320,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                                                                             WordWidth.BITS_8) {
         @Override
         public ArrayClassActor arrayClassActor() {
-            return PrimitiveClassActor.BOOLEAN_ARRAY_CLASS_ACTOR;
+            return ClassRegistry.BOOLEAN_ARRAY;
         }
 
         @Override
@@ -389,7 +389,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                                                                       WordWidth.BITS_16) {
         @Override
         public ArrayClassActor arrayClassActor() {
-            return PrimitiveClassActor.SHORT_ARRAY_CLASS_ACTOR;
+            return ClassRegistry.SHORT_ARRAY;
         }
 
         @Override
@@ -458,7 +458,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                                                                    WordWidth.BITS_16) {
         @Override
         public ArrayClassActor arrayClassActor() {
-            return PrimitiveClassActor.CHAR_ARRAY_CLASS_ACTOR;
+            return ClassRegistry.CHAR_ARRAY;
         }
 
         @Override
@@ -527,7 +527,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                                                                 WordWidth.BITS_32) {
         @Override
         public ArrayClassActor arrayClassActor() {
-            return PrimitiveClassActor.INT_ARRAY_CLASS_ACTOR;
+            return ClassRegistry.INT_ARRAY;
         }
 
         @Override
@@ -591,7 +591,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                                                                       WordWidth.BITS_32) {
         @Override
         public ArrayClassActor arrayClassActor() {
-            return PrimitiveClassActor.FLOAT_ARRAY_CLASS_ACTOR;
+            return ClassRegistry.FLOAT_ARRAY;
         }
 
         @Override
@@ -665,7 +665,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public ArrayClassActor arrayClassActor() {
-            return PrimitiveClassActor.LONG_ARRAY_CLASS_ACTOR;
+            return ClassRegistry.LONG_ARRAY;
         }
 
         @Override
@@ -744,7 +744,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
 
         @Override
         public ArrayClassActor arrayClassActor() {
-            return PrimitiveClassActor.DOUBLE_ARRAY_CLASS_ACTOR;
+            return ClassRegistry.DOUBLE_ARRAY;
         }
 
         @Override

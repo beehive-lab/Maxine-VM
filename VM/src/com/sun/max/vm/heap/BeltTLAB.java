@@ -25,8 +25,8 @@ import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.beltway.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class implements a thread local allocation buffer.
@@ -183,7 +183,7 @@ public class BeltTLAB extends RuntimeMemoryRegion {
     public final void fillTLAB() {
         final Size fillingSize = endAllocationMark.minus(mark()).asPointer().asSize();
         endAllocationMark = end();
-        Cell.plantArray(mark().plusWords(1), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), fillingSize.toInt());
+        Cell.plantArray(mark().plusWords(1), ClassRegistry.BYTE_ARRAY.dynamicHub(), fillingSize.toInt());
         mark.set(end());
     }
 
