@@ -187,7 +187,7 @@ public final class MemoryWordsInspector extends Inspector {
         super(inspection);
         assert viewMode != null;
 
-        Trace.line(1, tracePrefix() + " creating for region" + memoryRegion.toString());
+        Trace.line(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
         wordSize = inspection.maxVM().wordSize();
         pageSize = inspection.maxVM().pageSize();
         wordsInPage = pageSize.dividedBy(wordSize).toInt();
