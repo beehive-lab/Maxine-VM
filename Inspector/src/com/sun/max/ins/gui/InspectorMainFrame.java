@@ -23,6 +23,7 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
+import java.io.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -30,9 +31,12 @@ import javax.swing.table.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
 
@@ -44,29 +48,28 @@ import com.sun.max.util.*;
  */
 public final class InspectorMainFrame extends JFrame implements InspectorGUI, Prober {
 
+    private static final int TRACE_VALUE = 2;
+
     private static final String FRAME_SETTINGS_NAME = "inspectorMainFrame";
     private static final String FRAME_X_KEY = "frameX";
     private static final String FRAME_Y_KEY = "frameY";
     private static final String FRAME_HEIGHT_KEY = "frameHeight";
     private static final String FRAME_WIDTH_KEY = "frameWidth";
 
-    private final Inspection inspection;
-    private final InspectorNameDisplay nameDisplay;
-    private final SaveSettingsListener saveSettingsListener;
-    private final Cursor busyCursor = new Cursor(Cursor.WAIT_CURSOR);
-    private final JDesktopPane desktopPane;
-    private final JScrollPane scrollPane;
-    private final InspectorMainMenuBar menuBar;
-    private final InspectorPopupMenu desktopMenu = new InspectorPopupMenu("Maxine Inspector");
-    private final JLabel unavailableDataTableCellRenderer;
-
+    /**
+     * A mouse location to cache when no other location is available.
+     */
     private static final Point DEFAULT_LOCATION = new Point(100, 100);
-    private Point mostRecentMouseLocation = DEFAULT_LOCATION;
+
+    private static final DataFlavor[] supportedDropDataFlavors =
+        new DataFlavor[] {InspectorTransferable.ADDRESS_FLAVOR,
+            InspectorTransferable.MEMORY_REGION_FLAVOR,
+            InspectorTransferable.TELE_OBJECT_FLAVOR};
 
     /**
      * Records the last position of the mouse when it was over a component.
      */
-    public final class MouseLocationListener implements AWTEventListener {
+    private final class MouseLocationListener implements AWTEventListener {
 
         public void eventDispatched(AWTEvent awtEvent) {
             final Component source = (Component) awtEvent.getSource();
@@ -77,12 +80,109 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                 try {
                     final Point eventLocationOnScreen = source.getLocationOnScreen();
                     eventLocationOnScreen.translate(mouseEvent.getX(), mouseEvent.getY());
-                    mostRecentMouseLocation = eventLocationOnScreen;
+                    recordMostRecentMouseLocation(eventLocationOnScreen);
                 } catch (IllegalComponentStateException e) {
                 }
             }
         }
     }
+
+    /**
+     * Support for the desktop pane to act as a Drag and Drop <emph>target</emph>.
+     * Only copy operations are supported.
+     *
+     * @author Michael Van De Vanter
+     */
+    private final class MainFrameTransferHandler extends TransferHandler {
+
+        @Override
+        public boolean canImport(TransferHandler.TransferSupport support) {
+            // Only support drops
+            if (!support.isDrop()) {
+                return false;
+            }
+            // Only support copies:
+            if ((COPY & support.getSourceDropActions()) == 0) {
+                return false;
+            }
+            // Only support the enumerated data flavors.
+            if (!Arrays.containsAny(support.getDataFlavors(),  supportedDropDataFlavors)) {
+                return false;
+            }
+
+            // Only support drop over the background
+            // Location arrives in coordinates of the content pane of the desktop
+            TransferHandler.DropLocation dropLocation = support.getDropLocation();
+            Component component = desktopPane.getComponentAt(dropLocation.getDropPoint());
+            if (component != null && (component instanceof InspectorInternalFrame)) {
+                return false;
+            }
+
+            support.setShowDropLocation(true);
+            support.setDropAction(COPY);
+            //System.out.println("Can import" + support);
+            return true;
+        }
+
+        @Override
+        public boolean importData(TransferHandler.TransferSupport support) {
+            if (!canImport(support)) {
+                return false;
+            }
+
+            //Remember where the mouse was when dropped; will guide creation of new window if needed.
+            final Point dropPoint = support.getDropLocation().getDropPoint();
+            final Point eventLocationOnScreen = support.getComponent().getLocationOnScreen();
+            eventLocationOnScreen.translate(dropPoint.x, dropPoint.y);
+            recordMostRecentMouseLocation(eventLocationOnScreen);
+
+            final Transferable transferable = support.getTransferable();
+            try {
+                if (support.isDataFlavorSupported(InspectorTransferable.ADDRESS_FLAVOR)) {
+                    final Address address = (Address) transferable.getTransferData(InspectorTransferable.ADDRESS_FLAVOR);
+                    Trace.line(TRACE_VALUE, tracePrefix + "address dropped on desktop");
+                    InspectorMainFrame.this.inspection.actions().inspectMemoryWords(address).perform();
+                    return true;
+                }
+                if (support.isDataFlavorSupported(InspectorTransferable.MEMORY_REGION_FLAVOR)) {
+                    final MemoryRegion memoryRegion = (MemoryRegion) transferable.getTransferData(InspectorTransferable.MEMORY_REGION_FLAVOR);
+                    Trace.line(TRACE_VALUE, tracePrefix + "memory region dropped on desktop");
+                    InspectorMainFrame.this.inspection.actions().inspectMemoryWords(memoryRegion).perform();
+                    return true;
+                }
+                if (support.isDataFlavorSupported(InspectorTransferable.TELE_OBJECT_FLAVOR)) {
+                    final TeleObject teleObject = (TeleObject) transferable.getTransferData(InspectorTransferable.TELE_OBJECT_FLAVOR);
+                    Trace.line(TRACE_VALUE, tracePrefix + "teleObject dropped on desktop");
+                    InspectorMainFrame.this.inspection.focus().setHeapObject(teleObject);
+                    return true;
+                }
+
+            } catch (UnsupportedFlavorException e) {
+                e.printStackTrace();
+                ProgramError.unexpected("Attempt to drop an unsupported data flavor");
+            } catch (IOException e) {
+                e.printStackTrace();
+                ProgramError.unexpected("Unknown drop failure");
+            }
+            return false;
+        }
+    }
+
+    private final Inspection inspection;
+    private final String tracePrefix;
+    private final InspectorNameDisplay nameDisplay;
+    private final SaveSettingsListener saveSettingsListener;
+    private final Cursor busyCursor = new Cursor(Cursor.WAIT_CURSOR);
+    private final JDesktopPane desktopPane;
+    private final JScrollPane scrollPane;
+    private final InspectorMainMenuBar menuBar;
+    private final InspectorPopupMenu desktopMenu = new InspectorPopupMenu("Maxine Inspector");
+    private final JLabel unavailableDataTableCellRenderer;
+
+    /**
+     * Location in absolute screen coordinates of the most recent mouse location of interest.
+     */
+    private Point mostRecentMouseLocation = DEFAULT_LOCATION;
 
     /**
      * Creates a new main window frame for the Maxine VM inspection session.
@@ -96,6 +196,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      */
     public InspectorMainFrame(Inspection inspection, String inspectorName, InspectorNameDisplay nameDisplay, InspectionSettings settings, InspectionActions actions) {
         super(inspectorName);
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         this.inspection = inspection;
         this.nameDisplay = nameDisplay;
 
@@ -180,6 +281,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         } catch (Option.Error optionError) {
             ProgramWarning.message("Inspector Main Frame settings: " + optionError.getMessage());
         }
+
+        desktopPane.setTransferHandler(new MainFrameTransferHandler());
 
     }
 
@@ -358,6 +461,16 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
             location.y = r.height - frame.getHeight();
         }
         frame.setLocation(location);
+    }
+
+    /**
+     * Records the most recent mouse event of interest.
+     *
+     * @param point mouse location in absolute screen coordinates.
+     */
+    private void recordMostRecentMouseLocation(Point point) {
+        Trace.line(TRACE_VALUE, InspectorMainFrame.this.tracePrefix + "Recording mouse location=" + point);
+        mostRecentMouseLocation = point;
     }
 
     public void redisplay() {
