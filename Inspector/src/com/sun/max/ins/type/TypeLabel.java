@@ -20,6 +20,7 @@
  */
 package com.sun.max.ins.type;
 
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
@@ -142,4 +143,11 @@ public class TypeLabel extends InspectorLabel {
         }
     }
 
+    @Override
+    public Transferable getTransferable() {
+        if (teleClassActor != null) {
+            return new InspectorTransferable.TeleObjectTransferable(inspection(), teleClassActor);
+        }
+        return null;
+    }
 }
