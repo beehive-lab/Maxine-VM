@@ -42,6 +42,7 @@ public abstract class Value {
         NoNullCheck,        // does not require null check
         NoStoreCheck,       // does not require store check
         NoBoundsCheck,      // does not require bounds check
+        NoReadBarrier,      // does not require read barrier
         NoWriteBarrier,     // does not require write barrier
         NoZeroCheck,        // divide or modulus cannot cause exception
         DirectCompare,

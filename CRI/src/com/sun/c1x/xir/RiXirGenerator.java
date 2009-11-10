@@ -36,6 +36,14 @@ import com.sun.c1x.ci.CiKind;
  */
 public abstract class RiXirGenerator {
 
+    public XirSnippet genEntrypoint() {
+        return null;
+    }
+
+    public XirSnippet genSafepoint() {
+        return null;
+    }
+
     public XirSnippet genResolveClassObject(RiType type) {
         return null;
     }

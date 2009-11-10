@@ -33,7 +33,6 @@ import com.sun.c1x.xir.*;
  */
 public class X86XirAssembler extends CiXirAssembler {
 
-
     @Override
     protected XirTemplate buildTemplate(String name, boolean isStub) {
         List<XirInstruction> fastPath = new ArrayList<XirInstruction>(instructions.size());
@@ -53,7 +52,6 @@ public class X86XirAssembler extends CiXirAssembler {
         for (XirInstruction i : instructions) {
             boolean appended = false;
             switch (i.op) {
-
                 case Mov:
                     break;
 
@@ -107,7 +105,6 @@ public class X86XirAssembler extends CiXirAssembler {
                         currentList.add(new XirInstruction(i.result.kind, i.op, i.result, xOp, yOp));
                         appended = true;
                     }
-
                     break;
 
                 case PointerLoad:
@@ -121,10 +118,6 @@ public class X86XirAssembler extends CiXirAssembler {
                     break;
                 case CallRuntime:
                     flags |= XirTemplate.GlobalFlags.HAS_RUNTIME_CALL.mask;
-                    break;
-                case CallJava:
-                    assert false : "Java calls must be tail calls and not expressed in XIR";
-                    // TODO (tw): Assert the properties and conditions around calls
                     break;
                 case Jmp:
                     flags |= XirTemplate.GlobalFlags.HAS_CONTROL_FLOW.mask;

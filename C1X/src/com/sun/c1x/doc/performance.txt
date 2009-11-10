@@ -15,6 +15,7 @@ Backend:
 	- Maxine XIR: move unconditional runtime calls into fast path
 	- Maxine XIR: implement inline allocation
 	- Maxine XIR: implement biased locking fastpath
+	- Maxine XIR: faster subtype checks for classes, leaves
 	- better handling of tableswitch bytecode
 	- better handling of two operand LIR form
 	- XIR: communicate XirSite information (nullity, range checks, code pos)
@@ -38,7 +39,7 @@ Compilation speed:
 	- Remove RiConstantPool, cpi from unresolved HIR instructions (move to RiField, RiMethod)
 	- Use BlockList instead of ArrayList<Block> where appropriate
 	- Use FrameState instead of ValueStack
-	- Remove exceptionHandlers, make DebugInfo hold FrameState, CiCodePos, 
+	- Remove exceptionHandlers, make DebugInfo hold FrameState, CiCodePos,
 		exception flags and exception handlers
 	- Clean up and simplify LIRInstruction constructor
 	- Remove dead LIROpcodes
