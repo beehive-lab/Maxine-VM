@@ -20,21 +20,85 @@
  */
 package com.sun.max.ins.gui;
 
+import java.awt.*;
+import java.awt.datatransfer.*;
+import java.awt.dnd.*;
+
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
 /**
  * A label specialized for use in the {@link Inspector}.
+ * <br>
+ * Labels can act as a source for drag and drop operations.
+ *
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
 public abstract class InspectorLabel extends JLabel implements InspectionHolder, TextSearchable, Prober {
 
-    private final Inspection inspection;
-    private final String tracePrefix;
+    private static final int TRACE_VALUE = 2;
 
+    /**
+     * Support for labels that can act as a source for a drag and drop gesture.
+     *
+     * @author Michael Van De Vanter
+     */
+    private class InspectorLabelDragSource implements DragGestureListener, DragSourceListener {
+
+        /**
+         * The cursor set for the current drag action.
+         */
+        private Cursor dragCursor = null;
+
+        public InspectorLabelDragSource() {
+        }
+
+        public void dragGestureRecognized(DragGestureEvent dge) {
+            Trace.line(TRACE_VALUE, InspectorLabel.this.tracePrefix() + "initiating drag=" + dge.getTriggerEvent());
+            Transferable transferable = getTransferable();
+            if (transferable != null) {
+                if (transferable instanceof InspectorTransferable) {
+                    final InspectorTransferable inspectorTransferable = (InspectorTransferable) transferable;
+                    dragCursor = inspectorTransferable.getDragCursor();
+                } else {
+                    dragCursor = null;
+                }
+                Trace.line(TRACE_VALUE, tracePrefix() + "dragging=" + transferable);
+                dge.startDrag(null, transferable, this);
+            }
+        }
+
+        public void dragEnter(DragSourceDragEvent dsde) {
+            Trace.line(TRACE_VALUE, tracePrefix() + "Drag Source: dragEnter ");
+            dsde.getDragSourceContext().setCursor(dragCursor);
+        }
+
+        public void dragExit(DragSourceEvent dsde) {
+            Trace.line(TRACE_VALUE, tracePrefix() + "Drag Source: dragExit");
+            dsde.getDragSourceContext().setCursor(null);
+        }
+
+        public void dragOver(DragSourceDragEvent dsde) {
+            Trace.line(TRACE_VALUE, tracePrefix() + "Drag Source: dragOver");
+        }
+
+        public void dropActionChanged(DragSourceDragEvent dsde) {
+            Trace.line(TRACE_VALUE, tracePrefix() + "Drag Source: dropActionChanged");
+        }
+
+        public void dragDropEnd(DragSourceDropEvent dsde) {
+            Trace.line(TRACE_VALUE, tracePrefix() + "Drag Source: drop completed, success: "
+                + dsde.getDropSuccess());
+        }
+    }
+
+    private final Inspection inspection;
+    private boolean dragSourceEnabled = false;
+    private final String tracePrefix;
     /**
      * A label for use in the inspector, by default not opaque.
      *
@@ -44,13 +108,17 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     public InspectorLabel(Inspection inspection, String text, String toolTipText) {
         super(text);
         this.inspection = inspection;
-        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
+        String simpleName = getClass().getSimpleName();
+        if (simpleName.equals("")) {
+            simpleName = "anonymous InspectorLabel";
+        }
+        this.tracePrefix = "[" + simpleName + "] ";
         setToolTipText(toolTipText);
         setOpaque(false);
     }
 
     /**
-     * A label for use in the inspector: can be selected and copied.
+     * A label for use in the inspector.
      * @param text label text
      */
     public InspectorLabel(Inspection inspection, String text) {
@@ -58,7 +126,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
     }
 
     /**
-     * A label for use in the inspector: can be selected and copied.
+     * A label for use in the inspector.
      */
     public InspectorLabel(Inspection inspection) {
         this(inspection, null, null);
@@ -94,6 +162,42 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
 
     public String getSearchableText() {
         return getText();
+    }
+
+    /**
+     * Enables support for this label to act as a <strong>source</strong> for drag
+     * and drop operations (copy only, not move).
+     * <br>
+     * Once this has been called, attempts to drag from the label will cause the
+     * method {@link #getTransferable()} to be called.
+     *
+     * @see #getTransferable()
+     */
+    protected void enableDragSource() {
+        Trace.line(TRACE_VALUE, tracePrefix() + "enable drag source");
+        if (!dragSourceEnabled) {
+            DragSource dragSource = DragSource.getDefaultDragSource();
+            dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_COPY, new InspectorLabelDragSource());
+            dragSourceEnabled = true;
+        }
+    }
+
+    /**
+     * Creates something that can be copied, as the source of a drag and drop operation.
+     * <br>
+     * Will not be called by a drag gesture starting in the label
+     * unless {@link #enableDragSource()} has been previously called.
+     * <br>
+     * An exception to the above occurs when the label is used as a cell renderer for an
+     * {@link InspectorTable}. In that situation, the table's drag and drop mechanism may
+     * call this method, whether or not {@link #enableDragSource()} has been called.
+     *
+     * @return something that can be dragged from this label; null if nothing can be dragged.
+     * @see #enableDragSource()
+     * @see InspectorTable
+     */
+    public Transferable getTransferable() {
+        return null;
     }
 
     /**
