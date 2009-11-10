@@ -317,7 +317,6 @@ public class C1XOptions {
         GenerateLIR                        = true;
         GenerateLIRXIR                     = ____;
         PrintXirTemplates                  = ____;
-        GenerateUnresolvedLIRXIR           = ____;
         PrintIRWithLIR                     = ____;
         LIRTraceExecution                  = ____;
         TwoOperandLIRForm                  = true; // This flag is false for SPARC => probably move it to target

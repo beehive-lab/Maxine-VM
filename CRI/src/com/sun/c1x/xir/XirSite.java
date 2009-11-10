@@ -37,7 +37,7 @@ public interface XirSite {
     /**
      * Gets the code position associated with this site. This is useful for inserting
      * instrumentation at the XIR level.
-     * @return the code position
+     * @return the code position if it is availabe; {@code null} otherwise
      */
     CiCodePos getCodePos();
 
@@ -58,7 +58,7 @@ public interface XirSite {
      * Checks whether this site requires a range check.
      * @return {@code true} if a range check is required
      */
-    boolean requiresRangeCheck();
+    boolean requiresBoundsCheck();
 
     /**
      * Checks whether this site requires a read barrier.
