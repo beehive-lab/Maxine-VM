@@ -283,7 +283,9 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
                 }
             }
         } else {
-            throw FatalError.unexpected("invalid object implementation type");
+            //throw FatalError.unexpected("invalid object implementation type");
+            Trace.line(TRACE_VALUE, tracePrefix() + "failed to create object at apparently valid origin=0x" + reference.toOrigin().toHexString());
+            return null;
         }
 
         oidToTeleObject.put(teleObject.getOID(), new WeakReference<TeleObject>(teleObject));

@@ -20,6 +20,7 @@
  */
 package com.sun.max.ins.value;
 
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
@@ -31,10 +32,9 @@ import com.sun.max.vm.value.*;
 
 /**
  * A label that displays the name of the {@link MemoryRegion} to which a {@link Value}
- * might point; blank if no such region.  Updated with ever refresh.
+ * might point; blank if no such region.  Updated with every refresh.
  *
  * @author Michael Van De Vanter
- *
  */
 public class MemoryRegionValueLabel extends ValueLabel {
 
@@ -104,5 +104,14 @@ public class MemoryRegionValueLabel extends ValueLabel {
         setFont(style().javaNameFont());
         updateText();
     }
+
+    @Override
+    public Transferable getTransferable() {
+        if (memoryRegion != null) {
+            return new InspectorTransferable.MemoryRegionTransferable(inspection(), memoryRegion);
+        }
+        return null;
+    }
+
 
 }
