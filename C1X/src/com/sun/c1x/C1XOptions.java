@@ -72,6 +72,7 @@ public class C1XOptions {
     public static boolean PrintIR;
     public static boolean PrintCFGToFile;
     public static boolean PrintMetrics;
+    public static boolean PrintVEEMetrics;
     public static boolean GatherStaticHIRInstructionCount;
     public static boolean PrintTimers;
     public static boolean PrintCFG;
@@ -151,9 +152,7 @@ public class C1XOptions {
 
     // LIR settings
     public static boolean GenerateLIR;
-    public static boolean GenerateLIRXIR;
     public static boolean PrintXirTemplates;
-    public static boolean GenerateUnresolvedLIRXIR;
     public static boolean PrintIRWithLIR;
     public static boolean LIRTraceExecution;
     public static boolean TwoOperandLIRForm; // This flag is false for SPARC => probably move it to target
@@ -170,6 +169,7 @@ public class C1XOptions {
     public static boolean Verbose;
 
     // Runtime settings
+    public static boolean UseXIR;
     public static boolean UseBiasedLocking;
     public static boolean UseImplicitDiv0Checks;
     public static boolean UseTLAB;
@@ -314,9 +314,8 @@ public class C1XOptions {
 
         // LIR settings
         GenerateLIR                        = true;
-        GenerateLIRXIR                     = ____;
+        UseXIR = ____;
         PrintXirTemplates                  = ____;
-        GenerateUnresolvedLIRXIR           = ____;
         PrintIRWithLIR                     = ____;
         LIRTraceExecution                  = ____;
         TwoOperandLIRForm                  = true; // This flag is false for SPARC => probably move it to target

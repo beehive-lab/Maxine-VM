@@ -21,6 +21,7 @@
 package com.sun.c1x.alloc;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.CiBailout;
 import com.sun.c1x.alloc.Interval.*;
 import com.sun.c1x.debug.*;
 
@@ -152,8 +153,7 @@ class IntervalWalker {
             }
         }
 
-        assert false : "interval has not been found in list";
-        return null;
+        throw new CiBailout("interval has not been found in list");
     }
 
     void removeFromList(Interval i) {

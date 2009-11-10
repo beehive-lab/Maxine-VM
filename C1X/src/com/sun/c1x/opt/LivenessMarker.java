@@ -39,6 +39,8 @@ public class LivenessMarker {
     final InstrMarker deoptMarker = new InstrMarker(Value.Flag.LiveDeopt);
     final InstrMarker valueMarker = new InstrMarker(Value.Flag.LiveValue);
 
+    int count;
+
     /**
      * Creates a new liveness marking instance and marks live instructions.
      * @param ir the IR to mark
@@ -63,6 +65,10 @@ public class LivenessMarker {
         // propagate liveness flags to inputs of instructions
         valueMarker.markAll();
         deoptMarker.markAll();
+    }
+
+    public int liveCount() {
+        return count;
     }
 
     public void removeDeadCode() {
@@ -107,7 +113,7 @@ public class LivenessMarker {
         public Value apply(Value i) {
             if (!i.checkFlag(reason) && !i.isDeadPhi()) {
                 // set the flag and add to the queue
-                i.setFlag(reason);
+                setFlag(i, reason);
                 if (head == null) {
                     head = tail = new Link(i);
                 } else {
@@ -155,16 +161,23 @@ public class LivenessMarker {
             // state before != null implies that this instruction may have side effects
             stateBefore.valuesDo(deoptMarker);
             i.inputValuesDo(valueMarker);
-            i.setFlag(Value.Flag.LiveSideEffect);
+            setFlag(i, Value.Flag.LiveSideEffect);
         } else if (i.checkFlag(Value.Flag.LiveStore)) {
             // instruction is a store that cannot be eliminated
             i.inputValuesDo(valueMarker);
-            i.setFlag(Value.Flag.LiveSideEffect);
+            setFlag(i, Value.Flag.LiveSideEffect);
         }
         if (i instanceof BlockEnd) {
             // input values to block ends are control dependencies
             i.inputValuesDo(valueMarker);
-            i.setFlag(Value.Flag.LiveControl);
+            setFlag(i, Value.Flag.LiveControl);
         }
+    }
+
+    void setFlag(Value i, Value.Flag flag) {
+        if (!i.isLive()) {
+            count++;
+        }
+        i.setFlag(flag);
     }
 }
