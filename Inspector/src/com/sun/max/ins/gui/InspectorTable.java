@@ -48,7 +48,7 @@ import com.sun.max.tele.*;
  * only for Copy (not Move).  The request for something that can
  * be dragged is by default delegated to the specific table renderer,
  * if it is an instance of {@link InspectorLabel}. Subclasses can customize
- * how transferables are created by overriding {@link #getTransferable(
+ * how transferables are created by overriding {@link #getTransferable(int, int)}.
  *
  * @author Michael Van De Vanter
  */
