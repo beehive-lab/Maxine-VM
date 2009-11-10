@@ -21,6 +21,7 @@
 package com.sun.max.ins.value;
 
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
@@ -282,9 +283,11 @@ public class WordValueLabel extends ValueLabel {
                     } catch (Throwable throwable) {
                         // If we don't catch this the views will not be updated at all.
                         teleObject = null;
-                        displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
                         throwable.printStackTrace(Trace.stream());
+                    }
+                    if (teleObject == null) {
+                        displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
@@ -783,6 +786,58 @@ public class WordValueLabel extends ValueLabel {
             }
         }
         return action;
+    }
+
+    @Override
+    public Transferable getTransferable() {
+        Transferable transferable = null;
+        if (value() != VoidValue.VOID) {
+            final Address address = value().toWord().asAddress();
+            switch (displayMode) {
+                case INVALID_OBJECT_REFERENCE:
+                case UNCHECKED_REFERENCE:
+                case STACK_LOCATION:
+                case  STACK_LOCATION_TEXT:
+                case CALL_ENTRY_POINT:
+                case CALL_RETURN_POINT:
+                case UNCHECKED_CALL_POINT:
+                case WORD:
+                case NULL:
+                case CLASS_ACTOR_ID:
+                case CLASS_ACTOR:
+                case FLAGS:
+                case DECIMAL:
+                case FLOAT:
+                case DOUBLE:
+                case OBJECT_REFERENCE:
+                case UNCHECKED_WORD:
+                case INVALID: {
+                    if (maxVM().contains(address)) {
+                        transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
+                    }
+                    break;
+                }
+                case OBJECT_REFERENCE_TEXT: {
+                    if (teleObject != null) {
+                        transferable = new InspectorTransferable.TeleObjectTransferable(inspection(), teleObject);
+                    } else {
+                        transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
+                    }
+                    break;
+                }
+                case CALL_ENTRY_POINT_TEXT:
+                case CALL_RETURN_POINT_TEXT: {
+                    if (teleTargetMethod != null) {
+                        transferable = new InspectorTransferable.TeleObjectTransferable(inspection(), teleTargetMethod);
+                    } else {
+                        transferable = new InspectorTransferable.AddressTransferable(inspection(), address);
+                    }
+                    break;
+                }
+
+            }
+        }
+        return transferable;
     }
 
     private final class WordValueMenuItems extends InspectorPopupMenuItems {
