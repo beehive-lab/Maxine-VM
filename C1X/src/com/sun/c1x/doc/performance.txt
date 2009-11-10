@@ -8,10 +8,16 @@ Backend:
 	- Global stubs: use EAX for return value as normal instead of [rsp - 16]
 	- XIR: expose nullity, range checkness across XIR interface
 	- XIR: make use of CSE'd array length
+	- XIR: generate special if-instanceof XIR variant with label parameters
 	- use LEA instruction on x86
+	- recognize pointer arithmetic addressing modes
+	- recognize multiply by 3, 5, 9 and emit lea rk, [rs, rs*2], etc
 	- Maxine XIR: move unconditional runtime calls into fast path
 	- Maxine XIR: implement inline allocation
 	- Maxine XIR: implement biased locking fastpath
+	- better handling of tableswitch bytecode
+	- better handling of two operand LIR form
+	- XIR: communicate XirSite information (nullity, range checks, code pos)
 
 Frontend:
 	- XIR: implement HIR -> HIR xir translation
@@ -21,9 +27,33 @@ Frontend:
 	- Implement GVN of memory loads / stores
 	- Implement memory reordering
 	- Implement loop invariant code motion
+	- Allow value numbering of constant loads
 	- Finish loop peeling
 	- Guarded and multiple inlining
 	- Maxine: speculative leaf class and leaf method assumption
 	- Maxine: adjust static / dynamic inlining heuristics
 		  (e.g. static: trivial methods only in cold spots)
 
+Compilation speed:
+	- Remove RiConstantPool, cpi from unresolved HIR instructions (move to RiField, RiMethod)
+	- Use BlockList instead of ArrayList<Block> where appropriate
+	- Use FrameState instead of ValueStack
+	- Remove exceptionHandlers, make DebugInfo hold FrameState, CiCodePos, 
+		exception flags and exception handlers
+	- Clean up and simplify LIRInstruction constructor
+	- Remove dead LIROpcodes
+	- Create fewer LIRAddresses
+	- Simplify LIRGenerator logic (forcing of loading, etc)
+	- LIROperand: split into virtual register table?
+	- Cleanup assembler and remove dead code, useless assertions
+	- Chain assembler byte buffers and only assemble at the end
+	- Pick optimal initial assembler byte buffer size
+	- Make instruction ids into local id and move global id into hashtable in IR class
+	- Pick good initial sizes for LinearScan data structures
+	- Remove unnecessary uses of ArrayList and replace with arrays or other list
+	- Use iteration over ArrayList instead of explicit loop
+	- Revisit manual editing / removal of items from ArrayList
+	- Remove dead code in LIRGenerator, X86LIRGenerator, LIRAssembler, X86LIRAssembler
+		(remove commented out code)
+	- Remove non-XIR backend
+	- Pre-assemble XIR somehow?
