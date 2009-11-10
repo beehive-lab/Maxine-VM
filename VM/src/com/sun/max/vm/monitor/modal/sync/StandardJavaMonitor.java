@@ -145,6 +145,8 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         traceEndMonitorWait(currentThread, interrupted, timedOut);
 
         if (interrupted || this.ownerThread.isInterrupted(true)) {
+            // turn off interrupted status
+            this.ownerThread.isInterrupted(true);
             throw new InterruptedException();
         }
     }
