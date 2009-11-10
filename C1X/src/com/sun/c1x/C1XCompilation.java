@@ -338,8 +338,6 @@ public class C1XCompilation {
             // generate exception adapters
             lirAssembler.emitExceptionEntries(exceptionInfoList);
 
-            lirAssembler.emitDeoptHandler();
-
             CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
 
             if (C1XOptions.PrintCFGToFile) {
