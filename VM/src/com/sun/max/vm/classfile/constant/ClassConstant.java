@@ -138,9 +138,6 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
                 // and OutOfMemoryError, etc.
                 // Needs clarification to section 5.4.3 of the JVM spec (see 6308271)
                 throw e;
-            } catch (LinkageError e) {
-                pool.updateAt(index, new UnresolvedWithError(this.typeDescriptor, e));
-                throw e;
             }
         }
 
@@ -169,22 +166,6 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
 
         public String valueString(ConstantPool pool) {
             return typeDescriptor().toJavaString();
-        }
-
-    }
-
-    public static final class UnresolvedWithError extends Unresolved {
-
-        private final Error error;
-
-        UnresolvedWithError(TypeDescriptor typeDescriptor, Error error) {
-            super(typeDescriptor);
-            this.error = error;
-        }
-
-        @Override
-        public String valueString(ConstantPool pool) {
-            return super.valueString(pool) + ", error=" + error;
         }
     }
 }

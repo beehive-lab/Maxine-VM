@@ -221,9 +221,6 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
     @Override
     public void verifyIsAssignable(VerificationType fromType, VerificationType toType, String errorMessage) {
         if (!toType.isAssignableFrom(fromType)) {
-
-
-
             toType.isAssignableFrom(fromType);
             throw verifyError(errorMessage + notAssignableMessage(fromType.toString(), toType.toString()));
         }

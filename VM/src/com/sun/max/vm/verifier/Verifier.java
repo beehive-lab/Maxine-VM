@@ -115,7 +115,7 @@ public class Verifier implements VerificationRegistry {
             }
             @Override
             public void printHelp() {
-                VMOptions.printHelpForOption("-Xverify[:remote|all|none]", "", help);
+                VMOptions.printHelpForOption(category(), "-Xverify[:remote|all|none]", "", help);
             }
 
         }, MaxineVM.Phase.STARTING);
@@ -135,7 +135,7 @@ public class Verifier implements VerificationRegistry {
 
         // -XX:TraceVerifierLevel=<value> option
         VMOptions.register(new VMIntOption("-XX:TraceVerifierLevel=", 0,
-            "Trace bytecode verification level: 0 == none, 1 == class, 2 == methods.") {
+            "Trace bytecode verification level: 0 = none, 1 = class, 2 = methods.") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 boolean result = super.parseValue(optionValue);
@@ -158,7 +158,7 @@ public class Verifier implements VerificationRegistry {
      * @return {@code true} if a class loaded by {@code classLoader} need bytecode verification
      */
     public static boolean shouldBeVerified(ClassLoader classLoader, boolean isRemote) {
-        if (classLoader == VmClassLoader.VM_CLASS_LOADER || classLoader == null || !isRemote) {
+        if (classLoader == BootClassLoader.BOOT_CLASS_LOADER || classLoader == null || !isRemote) {
             return verifyLocal;
         }
         return verifyRemote;

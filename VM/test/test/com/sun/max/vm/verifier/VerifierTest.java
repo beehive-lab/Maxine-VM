@@ -162,7 +162,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
 
         int classActorIndex = 0;
         if (numberOfClassesVerified == 0 || VMCLASSES.getValue()) {
-            ClassActor[] classActors = Arrays.from(ClassActor.class, ClassRegistry.vmClassRegistry());
+            ClassActor[] classActors = Arrays.from(ClassActor.class, ClassRegistry.BOOT_CLASS_REGISTRY);
             while (true) {
                 while (classActorIndex != classActors.length) {
                     final ClassActor classActor = classActors[classActorIndex++];
@@ -174,10 +174,10 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
                         }
                     }
                 }
-                if (classActorIndex == ClassRegistry.vmClassRegistry().numberOfClassActors()) {
+                if (classActorIndex == ClassRegistry.BOOT_CLASS_REGISTRY.numberOfClassActors()) {
                     break;
                 }
-                classActors = Arrays.from(ClassActor.class, ClassRegistry.vmClassRegistry());
+                classActors = Arrays.from(ClassActor.class, ClassRegistry.BOOT_CLASS_REGISTRY);
             }
         }
     }
@@ -209,7 +209,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
         verifiedClasses.add(name);
 
         ClassVerifier classVerifier = null;
-        final ClassfileVersion classfileVersion = new ClassfileVersion(name, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
+        final ClassfileVersion classfileVersion = new ClassfileVersion(name, HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath());
         try {
             Trace.line(1, "verifying " + name);
 
@@ -278,7 +278,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
 
     private ClassActor loadClassActor(String name) {
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(name);
-        final PrototypeClassLoader prototypeClassLoader = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER;
+        final HostedBootClassLoader prototypeClassLoader = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
         final Classpath classpath = prototypeClassLoader.classpath();
         ClassActor classActor = ClassRegistry.get(prototypeClassLoader, typeDescriptor, false);
         if (classActor == null) {
@@ -286,7 +286,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
             if (classpathFile == null) {
                 fail("Could not find class " + name + " on class path: " + classpath);
             }
-            classActor = ClassfileReader.defineClassActor(name, VmClassLoader.VM_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry, true);
+            classActor = ClassfileReader.defineClassActor(name, BootClassLoader.BOOT_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry, true);
         }
         return classActor;
     }

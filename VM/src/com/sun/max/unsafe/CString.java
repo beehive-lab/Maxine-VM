@@ -23,6 +23,7 @@ package com.sun.max.unsafe;
 
 import java.io.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
@@ -293,45 +294,6 @@ public final class CString {
         return buffer;
     }
 
-    public static int parseUnsignedInt(Pointer pointer) {
-        int result = 0;
-        Pointer ptr = pointer;
-        while (true) {
-            final char ch = (char) ptr.getByte();
-            if (ch == 0) {
-                break;
-            }
-            if (ch >= '0' && ch <= '9') {
-                result *= 10;
-                result += ch - '0';
-            } else {
-                return -1;
-            }
-            ptr = ptr.plus(1);
-        }
-        return result;
-    }
-
-    /**
-     * Parses a given C string as a floating value.
-     *
-     * @param cstring the C string to parse
-     * @return the value of {@code cstring} as a float or {@link Float#NaN} if {@code cstring} does not contain a valid
-     *         float value
-     */
-    public static float parseFloat(Pointer cstring) {
-        if (MaxineVM.isHosted()) {
-            try {
-                return Float.parseFloat(utf8ToJava(cstring));
-            } catch (Exception e) {
-                return Float.NaN;
-            }
-        }
-        // Defer to native code so that all the FloatingDecimal logic does not
-        // have to be in the VM boot image.
-        return MaxineVM.native_parseFloat(cstring, Float.NaN);
-    }
-
     public static boolean equals(Pointer cstring, String string) {
         if (cstring.isZero()) {
             return false;
@@ -363,5 +325,122 @@ public final class CString {
             }
         }
         return true;
+    }
+
+    /**
+     * Parse a size specification nX, where X := {K, M, G, T, P, k, m, g, t, p}.
+     *
+     * For backwards compatibility with HotSpot,
+     * lower case letters shall have the same respective meaning as the upper case ones,
+     * even though their non-colloquialized definitions would suggest otherwise.
+     *
+     * @param p a pointer to the C string
+     * @param length the maximum length of the C string
+     * @param startIndex the starting index into the C string pointed to by the first argument
+     * @return the scaled value or -1 if error
+     */
+    public static long parseScaledValue(Pointer p, Size length, int startIndex) {
+        long result = 0L;
+        boolean done = false;
+        int index = startIndex;
+        while (index < length.toInt()) {
+            if (done) {
+                // having any additional characters is an error
+                return -1L;
+            }
+            final int character = getByte(p, length, Offset.fromInt(index));
+            index++;
+            if ('0' <= character && character <= '9') {
+                result *= 10;
+                result += character - '0';
+            } else {
+                done = true;
+                switch (character) {
+                    case 'K':
+                    case 'k': {
+                        result *= Longs.K;
+                        break;
+                    }
+                    case 'M':
+                    case 'm': {
+                        result *= Longs.M;
+                        break;
+                    }
+                    case 'G':
+                    case 'g': {
+                        result *= Longs.G;
+                        break;
+                    }
+                    case 'T':
+                    case 't': {
+                        result *= Longs.T;
+                        break;
+                    }
+                    case 'P':
+                    case 'p': {
+                        result *= Longs.P;
+                        break;
+                    }
+                    default: {
+                        // illegal character
+                        return -1L;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    public static int parseUnsignedInt(Pointer pointer) {
+        int result = 0;
+        Pointer ptr = pointer;
+        while (true) {
+            final char ch = (char) ptr.getByte();
+            if (ch == 0) {
+                break;
+            }
+            if (ch >= '0' && ch <= '9') {
+                result *= 10;
+                result += ch - '0';
+            } else {
+                return -1;
+            }
+            ptr = ptr.plus(1);
+        }
+        return result;
+    }
+
+    public static long parseUnsignedLong(String string) {
+        long result = 0L;
+        for (int i = 0; i < string.length(); i++) {
+            final char ch = string.charAt(i);
+            if (ch >= '0' && ch <= '9') {
+                result *= 10L;
+                result += string.charAt(i) - '0';
+            } else {
+                return -1L;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Parses a given C string as a floating value.
+     *
+     * @param cstring the C string to parse
+     * @return the value of {@code cstring} as a float or {@link Float#NaN} if {@code cstring} does not contain a valid
+     *         float value
+     */
+    public static float parseFloat(Pointer cstring) {
+        if (MaxineVM.isHosted()) {
+            try {
+                return Float.parseFloat(utf8ToJava(cstring));
+            } catch (Exception e) {
+                return Float.NaN;
+            }
+        }
+        // Defer to native code so that all the FloatingDecimal logic does not
+        // have to be in the VM boot image.
+        return MaxineVM.native_parseFloat(cstring, Float.NaN);
     }
 }

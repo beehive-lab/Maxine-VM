@@ -41,7 +41,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
 
     public SPARCTemplateBasedTargetGenerator(JitCompiler jitCompiler) {
         super(jitCompiler, InstructionSet.SPARC);
-        needsAdapterFrame = compilerScheme().vmConfiguration().compilerScheme() instanceof BcdeTargetSPARCCompiler;
+        needsAdapterFrame = compilerScheme().vmConfiguration().bootCompilerScheme() instanceof BcdeTargetSPARCCompiler;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
     }
 
     private SPARCEirABI getABI(ClassMethodActor classMethodActor) {
-        final EirGenerator eirGenerator = ((BcdeTargetSPARCCompiler) compilerScheme().vmConfiguration().compilerScheme()).eirGenerator();
+        final EirGenerator eirGenerator = ((BcdeTargetSPARCCompiler) compilerScheme().vmConfiguration().bootCompilerScheme()).eirGenerator();
         return (SPARCEirABI) eirGenerator.eirABIsScheme().getABIFor(classMethodActor);
     }
 

@@ -1773,7 +1773,7 @@ public class LinearScan {
             BlockBegin block = blockAt(i);
 
             // check if block has only one predecessor and only one successor
-            if (block.numberOfPreds() == 1 && block.numberOfSux() == 1 && block.numberOfExceptionHandlers() == 0) {
+            if (block.numberOfPreds() == 1 && block.numberOfSux() == 1 && block.numberOfExceptionHandlers() == 0 && !block.isExceptionEntry()) {
                 List<LIRInstruction> instructions = block.lir().instructionsList();
                 assert instructions.get(0).code == LIROpcode.Label : "block must start with label";
                 assert instructions.get(instructions.size() - 1).code == LIROpcode.Branch : "block with successors must end with branch";
@@ -2234,7 +2234,7 @@ public class LinearScan {
         // included in the oop map
         iw.walkBefore(op.id());
 
-        OopMap map = new OopMap(compilation.frameMap(), compilation.frameMap().frameSize(), compilation.target);
+        OopMap map = new OopMap(compilation.frameMap().frameSize(), compilation.target);
 
         // Iterate through active intervals
         for (Interval interval = iw.activeFirst(IntervalKind.fixedKind); interval != Interval.EndMarker; interval = interval.next) {

@@ -40,7 +40,7 @@ public class C1XTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
 
     @Override
     public TargetMethod translate(ClassMethodActor classMethodActor) {
-        return  javaPrototype().vmConfiguration().jitScheme().compile(classMethodActor);
+        return  javaPrototype().vmConfiguration().jitCompilerScheme().compile(classMethodActor);
     }
 
     private boolean isCompilable(MethodActor method) {

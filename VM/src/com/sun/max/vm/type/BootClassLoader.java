@@ -39,12 +39,15 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.value.*;
 
 /**
- * The initial class loader that after bootstrapping appears to have created the VM.
+ * The VM internal class loader that is commonly referred to as the bootstrap class
+ * loader in JVM specification.
+ *
+ * @see http://java.sun.com/docs/books/jvms/second_edition/html/ConstantPool.doc.html#79383
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public final class VmClassLoader extends ClassLoader {
+public final class BootClassLoader extends ClassLoader {
 
     /**
      * This exists (solely) for the purpose of being able to reify generated classes while bootstrapping. These are needed
@@ -58,42 +61,40 @@ public final class VmClassLoader extends ClassLoader {
     @HOSTED_ONLY
     private Map<String, byte[]> generatedClassfiles = new HashMap<String, byte[]>();
 
+    @HOSTED_ONLY
     private synchronized void storeRuntimeGeneratedClassFile(String name, byte[] classfile) {
-        if (MaxineVM.isHosted()) {
-            if (generatedClassfiles == null) {
-                generatedClassfiles = new HashMap<String, byte[]>();
-            } else if (generatedClassfiles.containsKey(name)) {
-                ProgramWarning.message("class with same name generated twice: " + name);
-            }
-            generatedClassfiles.put(name, classfile);
+        if (generatedClassfiles == null) {
+            generatedClassfiles = new HashMap<String, byte[]>();
+        } else if (generatedClassfiles.containsKey(name)) {
+            ProgramWarning.message("class with same name generated twice: " + name);
         }
+        generatedClassfiles.put(name, classfile);
     }
 
+    @HOSTED_ONLY
     public void saveGeneratedClassfile(String name, byte[] classfile) {
         storeRuntimeGeneratedClassFile(name, classfile);
 
-        if (MaxineVM.isHosted()) {
-            final String path = System.getProperty("maxine.vmclassloader.saveclassdir");
-            if (path != null) {
-                final File classfileFile = new File(path + File.separator + name.replace(".", File.separator) + ".class");
-                BufferedOutputStream bs = null;
-                try {
-                    final File classfileDirectory = classfileFile.getParentFile();
-                    if (!(classfileDirectory.exists() && classfileDirectory.isDirectory())) {
-                        if (classfileDirectory.mkdirs()) {
-                            throw new IOException("Could not make directory " + classfileDirectory);
-                        }
+        final String path = System.getProperty("maxine.vmclassloader.saveclassdir");
+        if (path != null) {
+            final File classfileFile = new File(path + File.separator + name.replace(".", File.separator) + ".class");
+            BufferedOutputStream bs = null;
+            try {
+                final File classfileDirectory = classfileFile.getParentFile();
+                if (!(classfileDirectory.exists() && classfileDirectory.isDirectory())) {
+                    if (classfileDirectory.mkdirs()) {
+                        throw new IOException("Could not make directory " + classfileDirectory);
                     }
-                    bs = new BufferedOutputStream(new FileOutputStream(classfileFile));
-                    bs.write(classfile);
-                } catch (IOException ex) {
-                    ProgramWarning.message("saveGeneratedClassfile: " + classfileFile + ": " + ex.getMessage());
-                } finally {
-                    if (bs != null) {
-                        try {
-                            bs.close();
-                        } catch (IOException ex) {
-                        }
+                }
+                bs = new BufferedOutputStream(new FileOutputStream(classfileFile));
+                bs.write(classfile);
+            } catch (IOException ex) {
+                ProgramWarning.message("saveGeneratedClassfile: " + classfileFile + ": " + ex.getMessage());
+            } finally {
+                if (bs != null) {
+                    try {
+                        bs.close();
+                    } catch (IOException ex) {
                     }
                 }
             }
@@ -109,6 +110,7 @@ public final class VmClassLoader extends ClassLoader {
         return null;
     }
 
+    @HOSTED_ONLY
     public Map<String, byte[]> generatedClassfiles() {
         return Collections.unmodifiableMap(generatedClassfiles);
     }
@@ -157,7 +159,7 @@ public final class VmClassLoader extends ClassLoader {
         try {
             final ClassActor classActor = JDK.java_lang_ClassLoader$NativeLibrary.classActor();
             final VirtualMethodActor constructor = ClassMethodActor.findVirtual(classActor, SymbolTable.INIT.toString());
-            final Object nativeLibrary = constructor.invokeConstructor(ReferenceValue.from(VmClassLoader.class), ReferenceValue.from(path)).asObject();
+            final Object nativeLibrary = constructor.invokeConstructor(ReferenceValue.from(BootClassLoader.class), ReferenceValue.from(path)).asObject();
             final FieldActor longFieldActor = FieldActor.findInstance(classActor.toJava(), "handle");
             TupleAccess.writeLong(nativeLibrary, longFieldActor.offset(), handle.asAddress().toLong());
             return nativeLibrary;
@@ -195,9 +197,11 @@ public final class VmClassLoader extends ClassLoader {
     }
 
     @HOSTED_ONLY
-    private VmClassLoader() {
+    private BootClassLoader() {
     }
 
-    public static final VmClassLoader VM_CLASS_LOADER = new VmClassLoader();
-
+    /**
+     * The singleton instance of this class.
+     */
+    public static final BootClassLoader BOOT_CLASS_LOADER = new BootClassLoader();
 }

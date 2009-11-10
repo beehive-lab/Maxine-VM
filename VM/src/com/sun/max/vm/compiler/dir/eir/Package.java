@@ -36,7 +36,7 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof DirGeneratorScheme &&
-               vmConfiguration.compilerScheme() instanceof EirGeneratorScheme;
+        return vmConfiguration.bootCompilerScheme() instanceof DirGeneratorScheme &&
+               vmConfiguration.bootCompilerScheme() instanceof EirGeneratorScheme;
     }
 }

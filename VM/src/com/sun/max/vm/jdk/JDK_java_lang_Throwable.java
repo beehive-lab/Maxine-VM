@@ -34,6 +34,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Substitutions for {@link java.lang.Throwable} that collect the stack trace.
@@ -48,7 +49,7 @@ public final class JDK_java_lang_Throwable {
      * This field provides access to the private field "stackTrace" in the {@link java.lang.Throwable java.lang.Throwable}
      * class.
      */
-    private static final FieldActor stackTrace = ClassActor.fromJava(Throwable.class).findFieldActor(SymbolTable.makeSymbol("stackTrace"));
+    private static final FieldActor stackTrace = ClassRegistry.THROWABLE.findFieldActor(SymbolTable.makeSymbol("stackTrace"));
 
     private JDK_java_lang_Throwable() {
     }

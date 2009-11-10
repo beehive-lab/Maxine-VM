@@ -34,7 +34,7 @@ public class BirCompilerTestSetup extends CompilerTestSetup<BirMethod> {
     }
 
     public static BirGeneratorScheme birGeneratorScheme() {
-        return (BirGeneratorScheme) javaPrototype().vmConfiguration().compilerScheme();
+        return (BirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
     }
 
     public static BirGenerator birGenerator() {

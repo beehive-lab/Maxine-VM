@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
@@ -45,6 +46,8 @@ public class LIRXirInstruction extends LIRInstruction {
         this.inputTempCount = inputTempCount;
         this.tempCount = tempCount;
         this.inputCount = operands.length - inputTempCount - tempCount;
+
+        C1XMetrics.NumberOfLIRXIRInstructions++;
     }
 
     public LIROperand[] getOperands() {
@@ -82,6 +85,11 @@ public class LIRXirInstruction extends LIRInstruction {
         sb.append("LIRXIR ");
 
         sb.append(snippet.toString());
+
+        if (method != null) {
+            sb.append(" // ");
+            sb.append(method.toString());
+        }
 
         sb.append(" // ");
 

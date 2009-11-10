@@ -260,7 +260,7 @@ public final class BootImageMethodTree {
 
     private static final Option<Integer> TRACE = options.newIntegerOption("trace", 1,
             "selects the trace level of the tool");
-    private static final Option<File> INPUT_FILE = options.newFileOption("in", BootImageGenerator.getDefaultBootImageMethodTreeFilePath(),
+    private static final Option<File> INPUT_FILE = options.newFileOption("in", BootImageGenerator.getBootImageMethodTreeFile(null),
             "the file from which to load the graph");
     private static final Option<File> OUTPUT_FILE = options.newFileOption("out", getDefaultOutputFile(),
             "the file to which the graph is printed");
@@ -272,7 +272,7 @@ public final class BootImageMethodTree {
            "show help message and exits.");
 
     private static File getDefaultOutputFile() {
-        return new File(BootImageGenerator.getDefaultBootImageMethodTreeFilePath().getAbsolutePath() + ".txt");
+        return new File(BootImageGenerator.getBootImageMethodTreeFile(null).getAbsolutePath() + ".txt");
     }
 
     /**

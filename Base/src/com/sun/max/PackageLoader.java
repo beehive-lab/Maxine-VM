@@ -73,7 +73,6 @@ public class PackageLoader {
         final AppendableSequence<Class> classes = new ArrayListSequence<Class>();
         final Set<String> classNames = new HashSet<String>();
         final ClassSearch classSearch = new ClassSearch() {
-
             @Override
             protected boolean visitClass(boolean isArchiveEntry, String className) {
                 if (!className.endsWith("package-info")) {

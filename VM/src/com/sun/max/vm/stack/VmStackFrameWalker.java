@@ -41,7 +41,7 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     private boolean dumpingFatalStackTrace;
 
     public VmStackFrameWalker(Pointer vmThreadLocals) {
-        super(VMConfiguration.hostOrTarget().compilerScheme());
+        super(VMConfiguration.hostOrTarget().bootCompilerScheme());
         this.vmThreadLocals = vmThreadLocals;
     }
 

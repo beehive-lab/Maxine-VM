@@ -292,6 +292,21 @@ public class C1XRuntimeCalls {
         return b.isSubClassHub(a.classActor);
     }
 
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.SlowCheckCast)
+    public static Object runtimeSlowCheckCast(Object object, Hub expected) {
+        if (!ObjectAccess.readHub(object).isSubClassHub(expected.classActor)) {
+            throw new ClassCastException();
+        }
+        return object;
+    }
+
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.SlowStoreCheck)
+    public static void runtimeSlowStoreCheck(Hub a, Hub b) {
+        if (!b.isSubClassHub(a.classActor)) {
+            throw new ArrayStoreException();
+        }
+    }
+
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Monitorenter)
     public static void runtimeMonitorenter(Object obj, int monitorID) {
@@ -354,6 +369,7 @@ public class C1XRuntimeCalls {
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveStaticCall)
     public static long runtimeResolveStaticCall(int index, ConstantPool constantPool) {
         final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
+        MakeHolderInitialized.makeHolderInitialized(staticMethodActor);
         return CompilationScheme.Static.compile(staticMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
     }
 
@@ -419,6 +435,7 @@ public class C1XRuntimeCalls {
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveClass)
     public static Object resolveClass(int index, ConstantPool constantPool) {
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
+        MakeClassInitialized.makeClassInitialized(classActor);
         return classActor.dynamicHub();
     }
 

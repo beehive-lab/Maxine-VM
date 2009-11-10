@@ -336,7 +336,7 @@ public class BootImage {
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(RUN, VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadAttachMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(ATTACH, VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor(RUN, vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
-            classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.vmClassRegistry()).toInt();
+            classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.BOOT_CLASS_REGISTRY).toInt();
             this.stringInfoSize = stringInfoSize;
             relocationDataSize = dataPrototype.relocationData().length;
             heapSize = dataPrototype.heapData().length;
@@ -508,12 +508,12 @@ public class BootImage {
             layoutPackageName = vmConfiguration.layoutPackage.name();
             heapPackageName = vmConfiguration.heapPackage.name();
             monitorPackageName = vmConfiguration.monitorPackage.name();
-            compilerPackageName = vmConfiguration.compilerPackage.name();
+            compilerPackageName = vmConfiguration.bootCompilerPackage.name();
             // Jit Package is optional and may be null. In which case, fall back to the default compiler.
-            if (vmConfiguration.jitPackage == null) {
+            if (vmConfiguration.jitCompilerPackage == null) {
                 jitPackageName = compilerPackageName;
             } else {
-                jitPackageName = vmConfiguration.jitPackage.name();
+                jitPackageName = vmConfiguration.jitCompilerPackage.name();
             }
 
             trampolinePackageName = vmConfiguration.trampolinePackage.name();
@@ -613,7 +613,7 @@ public class BootImage {
      * Gets the class method actor for the first method with the specified name found
      * while traversing all the class method actors declared by a given class and
      * its super classes.
-     * @param name name the method name 
+     * @param name name the method name
      * @param javaClass the class in which to start the search for a method named "run"
      *
      * @return the found method or null
@@ -673,7 +673,7 @@ public class BootImage {
                                 stringInfo.monitorPackage(),
                                 stringInfo.compilerPackage(),
                                 stringInfo.jitPackage(),
-                                stringInfo.trampolinePackage(),
+                        null, stringInfo.trampolinePackage(),
                                 stringInfo.targetABIsPackage(),
                                 stringInfo.runPackage());
                 vmConfiguration.loadAndInstantiateSchemes();

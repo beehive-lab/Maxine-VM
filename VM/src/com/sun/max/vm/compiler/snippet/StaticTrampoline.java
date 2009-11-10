@@ -48,7 +48,7 @@ public final class StaticTrampoline extends NonFoldableSnippet {
     @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.STATIC)
     @NEVER_INLINE
     public static void staticTrampoline() throws Throwable {
-        VMConfiguration.target().compilerScheme().staticTrampoline();
+        VMConfiguration.target().bootCompilerScheme().staticTrampoline();
     }
 
     private static final StaticTrampoline snippet = new StaticTrampoline();
@@ -57,7 +57,7 @@ public final class StaticTrampoline extends NonFoldableSnippet {
         return snippet;
     }
 
-    @CONSTANT_WHEN_NOT_ZERO
+    @RESET
     private static Pointer codeStart = Pointer.zero();
 
     public static Pointer codeStart() {

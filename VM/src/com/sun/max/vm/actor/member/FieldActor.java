@@ -35,7 +35,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.*;
@@ -205,8 +204,6 @@ public class FieldActor extends MemberActor {
      */
     public final boolean isConstant() {
         final ClassActor holder = holder();
-
-
         if (isFinal()) {
             if (isStatic()) {
                 // Static final field:
@@ -221,9 +218,6 @@ public class FieldActor extends MemberActor {
                         // The class initializers of all Maxine classes are run while bootstrapping and
                         // the values they assign to static final fields are frozen in the boot image.
                         return true;
-                    }
-                    if (JDK.java_lang_ProcessEnvironment.classActor().equals(holder())) {
-                        return false;
                     }
                 }
 

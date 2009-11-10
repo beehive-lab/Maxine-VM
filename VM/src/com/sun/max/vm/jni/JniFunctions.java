@@ -249,7 +249,7 @@ public final class JniFunctions {
             final Object[] arguments = {dottify(CString.utf8ToJava(slashifiedName)), bytes, 0, length};
             Object cl = classLoader.unhand();
             if (cl == null) {
-                cl = VmClassLoader.VM_CLASS_LOADER;
+                cl = BootClassLoader.BOOT_CLASS_LOADER;
             }
             return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(cl, "defineClass", defineClassParameterTypes, arguments));
         } catch (Utf8Exception utf8Exception) {

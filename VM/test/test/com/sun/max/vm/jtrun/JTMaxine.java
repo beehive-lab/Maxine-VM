@@ -168,9 +168,9 @@ public class JTMaxine {
         if ("".equals(name)) {
             return null;
         } else if ("cps".equals(name)) {
-            return vmConfiguration.compilerScheme();
+            return vmConfiguration.bootCompilerScheme();
         } else if ("jit".equals(name)) {
-            return vmConfiguration.jitScheme();
+            return vmConfiguration.jitCompilerScheme();
         }
         try {
             Class<?> compilerSchemeClass = Class.forName(name);

@@ -21,13 +21,10 @@
 package com.sun.max.vm.actor.holder;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * The centralized location in which all {@link ClassActor}s are created. This enables invariants
@@ -41,26 +38,11 @@ public final class ClassActorFactory {
     private ClassActorFactory() {
     }
 
-    @HOSTED_ONLY
-    static ClassLoader prototypeClassLoader() {
-        if (MaxineVM.isHosted()) {
-            // Shielded by this conditional, we can access the prototype class loader without it ending up in the boot image:
-            return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER;
-        }
-        // We won't use this method at VM runtime:
-        throw ProgramError.unexpected();
-    }
-
-
-    public static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createArrayClassActor(PrimitiveClassActor<Value_Type> componentClassActor) {
-        return ClassRegistry.put(componentClassActor.classLoader, new ArrayClassActor<Value_Type>(componentClassActor));
-    }
-
     /**
      * Creates the actor for the type representing an n-dimensional array of a given {@linkplain ClassActor#componentClassActor() component type}.
      */
     public static ArrayClassActor createArrayClassActor(ClassActor componentClassActor) {
-        return ClassRegistry.put(componentClassActor.classLoader, new ArrayClassActor(componentClassActor));
+        return ClassRegistry.put(new ArrayClassActor(componentClassActor));
     }
 
     /**
@@ -98,7 +80,7 @@ public final class ClassActorFactory {
                         innerClasses,
                         outerClass,
                         enclosingMethodInfo);
-        ClassRegistry.put(classLoader, interfaceActor);
+        ClassRegistry.put(interfaceActor);
         return interfaceActor;
     }
 
@@ -152,7 +134,7 @@ public final class ClassActorFactory {
                             sourceFileName,
                             innerClasses,
                             outerClass, enclosingMethodInfo);
-        ClassRegistry.put(classLoader, classActor);
+        ClassRegistry.put(classActor);
         return classActor;
     }
 
@@ -164,17 +146,5 @@ public final class ClassActorFactory {
     @INLINE
     private static boolean isHybrid(final TypeDescriptor typeDescriptor, ClassActor superClassActor) {
         return MaxineVM.isHosted() && JavaTypeDescriptor.isAssignableFrom(JavaTypeDescriptor.HYBRID, typeDescriptor, superClassActor);
-    }
-
-    /**
-     * Creates a ClassActor for a primitive type.
-     */
-    @HOSTED_ONLY
-    public static <Value_Type extends Value<Value_Type>> PrimitiveClassActor<Value_Type> createPrimitiveClassActor(Kind<Value_Type> kind) {
-        try {
-            return ClassRegistry.put(prototypeClassLoader(), new PrimitiveClassActor<Value_Type>(kind));
-        } catch (Throwable throwable) {
-            throw ProgramError.unexpected(throwable);
-        }
     }
 }

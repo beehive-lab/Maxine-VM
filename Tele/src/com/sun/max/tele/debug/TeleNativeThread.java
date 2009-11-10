@@ -598,7 +598,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     void evadeBreakpoint() throws OSExecutionRequestException {
         if (breakpoint != null && !breakpoint.isTransient()) {
             assert !breakpoint.isActivated() : "Cannot single step at an activated breakpoint";
-            teleProcess().singleStep(this);
+            teleProcess().singleStep(this, true);
         }
     }
 

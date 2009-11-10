@@ -43,7 +43,7 @@ public class TemplateGenerator {
     protected TargetGenerator targetGenerator;
 
     public TemplateGenerator() {
-        targetGenerator = ((TargetGeneratorScheme) MaxineVM.target().configuration.compilerScheme()).targetGenerator();
+        targetGenerator = ((TargetGeneratorScheme) MaxineVM.target().configuration.bootCompilerScheme()).targetGenerator();
 
         // Make sure the JavaStackFrame class used for generating the templates are initialized in the target.
         // This will enable all sorts of compiler optimization that we want the templates to benefit from.
@@ -72,7 +72,7 @@ public class TemplateGenerator {
         return MaxineVM.usingTarget(new Function<Class>() {
             public Class call() {
                 assert !MaxineVM.isHostedOnly(javaClass);
-                final Class targetClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, javaClass.getName());
+                final Class targetClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, javaClass.getName());
                 final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(targetClass);
                 MakeClassInitialized.makeClassInitialized(tupleClassActor);
                 return targetClass;
@@ -87,11 +87,11 @@ public class TemplateGenerator {
 
     protected void verifyInvariants() throws IllegalStateException {
         // Make sure that the resolved version is loaded in the target
-        if (ClassRegistry.get(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, JavaTypeDescriptor.forJavaClass(ResolvedAtCompileTime.class), false) == null) {
+        if (ClassRegistry.get(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, JavaTypeDescriptor.forJavaClass(ResolvedAtCompileTime.class), false) == null) {
             throw new IllegalStateException("Class " + ResolvedAtCompileTime.class + " must be loaded in target when generating templates");
         }
         // Make sure that the unresolved version is not loaded in the target
-        if (ClassRegistry.get(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, JavaTypeDescriptor.forJavaClass(UnresolvedAtCompileTime.class), false) != null) {
+        if (ClassRegistry.get(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, JavaTypeDescriptor.forJavaClass(UnresolvedAtCompileTime.class), false) != null) {
             throw new IllegalStateException("Class " + UnresolvedAtCompileTime.class + " must not be loaded in target when generating templates");
         }
     }

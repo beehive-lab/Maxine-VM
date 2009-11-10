@@ -116,7 +116,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
          * @param signature the {@linkplain MethodActor#descriptor() signature} of the class method actor
          */
         public TestBytecodeAssembler(boolean isStatic, String className, String methodName, SignatureDescriptor signature) {
-            super(new ConstantPool(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER).edit());
+            super(new ConstantPool(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER).edit());
             this.isStatic = isStatic;
             this.methodName = makeSymbol(methodName);
             this.className = className == null ? null : makeSymbol(className);
@@ -218,7 +218,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                 }
                 final ClassActor classActor = ClassActorFactory.createTupleOrHybridClassActor(
                     constantPool(),
-                    VmClassLoader.VM_CLASS_LOADER,
+                    BootClassLoader.BOOT_CLASS_LOADER,
                     className,
                     ClassfileReader.JAVA_1_5_VERSION,
                     (char) 0,
@@ -297,12 +297,12 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
     }
 
     protected ClassMethodActor getClassMethodActor(String methodName, SignatureDescriptor signature) {
-        final Class testClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, getClass().getName());
+        final Class testClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, getClass().getName());
         return getClassMethodActor(testClass, methodName, signature);
     }
 
     protected ClassMethodActor getClassMethodActor(String methodName) {
-        final Class testClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, getClass().getName());
+        final Class testClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, getClass().getName());
         return getClassMethodActor(testClass, methodName);
     }
 
@@ -398,9 +398,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
 
                 // Save the generated class file to the filesystem so that a generated stub for a method in the
                 // generated class can find the corresponding Class instance
-                if (MaxineVM.isHosted()) {
-                    VmClassLoader.VM_CLASS_LOADER.saveGeneratedClassfile(className, classfileBytes);
-                }
+                BootClassLoader.BOOT_CLASS_LOADER.saveGeneratedClassfile(className, classfileBytes);
 
                 final ClassMethodActor classMethodActor = ClassActor.fromJava(testClass).findLocalStaticMethodActor(makeSymbol(methodName), signature);
                 assertNotNull(classMethodActor);

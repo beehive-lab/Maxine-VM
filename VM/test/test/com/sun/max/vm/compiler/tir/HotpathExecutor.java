@@ -137,9 +137,9 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
         Trace.addTo(optionSet);
         final JavaPrototype javaPrototype = generator.createJavaPrototype(createVMConfiguration(), false);
         javaPrototype.vmConfiguration().initializeSchemes(Phase.RUNNING);
-        javaPrototype.vmConfiguration().compilerScheme().compileSnippets();
+        javaPrototype.vmConfiguration().bootCompilerScheme().compileSnippets();
 
-        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + VMConfiguration.target().compilerScheme().toString());
+        Console.println(Color.LIGHTGREEN, "Compiler Scheme: " + VMConfiguration.target().bootCompilerScheme().toString());
     }
 
     protected static VMConfiguration createVMConfiguration() {

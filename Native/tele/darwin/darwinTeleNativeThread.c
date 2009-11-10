@@ -246,9 +246,6 @@ static jboolean task_resume_thread(jlong task, thread_t thread) {
         return false;
     }
 
-    // the thread will not resume unless the task is also resumed
-    task_resume((task_t) task);
-
     // if the thread is WAITING it will not resume unless we abort it first
     // the thread is WAITING if if stopped because of a trap
     if (info.run_state == TH_STATE_WAITING) {
@@ -260,6 +257,9 @@ static jboolean task_resume_thread(jlong task, thread_t thread) {
         thread_resume(thread);
     }
 
+    // the thread will not resume unless the task is also resumed
+    task_resume((task_t) task);
+
     return true;
 }
 
@@ -269,9 +269,7 @@ static jboolean task_resume_thread(jlong task, thread_t thread) {
  */
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong task, jlong thread) {
-#if log_TELE
-    log_println("Single stepping");
-#endif
+    tele_log_println("Single stepping");
     return thread_set_single_step((thread_act_t) thread, true)
         && task_suspend_other_threads(task, (thread_t) thread)
         && task_resume_thread(task, (thread_t) thread)

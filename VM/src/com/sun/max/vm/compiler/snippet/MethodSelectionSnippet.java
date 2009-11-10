@@ -84,7 +84,7 @@ public abstract class MethodSelectionSnippet extends Snippet {
         public static VirtualMethodActor quasiFold(Object receiver, InterfaceMethodActor interfaceMethod) {
             final Class receiverClass = receiver.getClass();
             final ClassActor classActor = ClassActor.fromJava(receiverClass);
-            if (MaxineVM.isHosted() && !VMConfiguration.target().compilerScheme().areSnippetsCompiled()) {
+            if (MaxineVM.isHosted() && !VMConfiguration.target().bootCompilerScheme().areSnippetsCompiled()) {
                 return classActor.findVirtualMethodActor(interfaceMethod);
             }
             final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());
