@@ -353,7 +353,10 @@ public class WordValueLabel extends ValueLabel {
             }
             return;
         }
-        final String hexString = (valueMode == ValueMode.INTEGER_REGISTER || valueMode == ValueMode.FLAGS_REGISTER || valueMode == ValueMode.FLOATING_POINT) ? value.toWord().toPaddedHexString('0') : value.toWord().toHexString();
+        final String hexString = (valueMode == ValueMode.WORD
+                        || valueMode == ValueMode.INTEGER_REGISTER
+                        || valueMode == ValueMode.FLAGS_REGISTER
+                        || valueMode == ValueMode.FLOATING_POINT) ? value.toWord().toPaddedHexString('0') : value.toWord().toHexString();
         switch (displayMode) {
             case WORD: {
                 setFont(style().wordDataFont());
