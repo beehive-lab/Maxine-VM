@@ -562,9 +562,18 @@ public class C1XTest {
             printField("Bytecodes", totalBytes);
             printField("HIR count", C1XMetrics.NumberOfHIRInstructions);
             printField("LIR count", C1XMetrics.NumberOfLIRInstructions);
-            printField("XIR count", C1XMetrics.NumberOfLIRXIRInstructions);
             printField("Code size", C1XMetrics.CodeBytesEmitted);
             printField("Time", averageTime());
+            printField("XIR count", C1XMetrics.NumberOfLIRXIRInstructions);
+            out.print("Above:");
+            out.print("\t" + C1XMetrics.TargetMethods);
+            out.print("\t" + totalBytes);
+            out.print("\t" + C1XMetrics.NumberOfHIRInstructions);
+            out.print("\t" + C1XMetrics.NumberOfLIRInstructions);
+            out.print("\t" + C1XMetrics.CodeBytesEmitted);
+            out.print("\t" + averageTime());
+            out.print("\t" + C1XMetrics.NumberOfLIRXIRInstructions);
+            out.println();
         }
     }
 
