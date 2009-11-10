@@ -182,7 +182,7 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
     /**
      * Traces the {@linkplain #compressedJavaFrameDescriptors() frame descriptors} for the compiled code represented by this object in the {@link TeleVM}.
      *
-     * @see TargetMethod#traceFrameDescriptors(IndentWriter)
+     * @see TargetMethod#traceDebugInfo(IndentWriter)
      */
     public final void traceFrameDescriptors(IndentWriter writer) {
         final IndexedSequence<TargetJavaFrameDescriptor> javaFrameDescriptors = getJavaFrameDescriptors();

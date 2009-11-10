@@ -34,15 +34,13 @@ public class OopMap {
 
     private final int frameSize;
     private final CiTarget target;
-    private final FrameMap frameMap;
 
     private BitMap stackMap;
     private BitMap registerMap;
 
-    public OopMap(FrameMap frameMap, int frameSize, CiTarget target) {
+    public OopMap(int frameSize, CiTarget target) {
         this.frameSize = frameSize;
         this.target = target;
-        this.frameMap = frameMap;
         initMaps();
     }
 
@@ -72,7 +70,7 @@ public class OopMap {
     }
 
     public OopMap deepCopy() {
-        OopMap result = new OopMap(frameMap, frameSize, target);
+        OopMap result = new OopMap(frameSize, target);
         result.stackMap = stackMap.copy();
         result.registerMap = registerMap.copy();
         return result;

@@ -101,7 +101,7 @@ public class MaxineTester {
     private static final Option<List<String>> maxvmConfigListOption = options.newStringListOption("maxvm-configs",
                     MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
-    private static final Option<String> javaConfigAliasOption = options.newStringOption("maxvm-config-alias", "cpscps",
+    private static final Option<String> javaConfigAliasOption = options.newStringOption("maxvm-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
     private static final Option<Integer> junitTestTimeOutOption = options.newIntegerOption("junit-test-timeout", 300,
                     "The number of seconds to wait for a JUnit test to complete before " +
@@ -118,14 +118,14 @@ public class MaxineTester {
                     "Location of the Programming Language Shootout tests. If not provided, then the SHOOTOUT_DIR environment variable is used.");
     private static final Option<Boolean> timingOption = options.newBooleanOption("timing", true,
                     "Report internal and external timing for tests compared to the baseline (external) VM.");
-    private static final Option<Integer> timingRuns = options.newIntegerOption("timing-runs", 1,
-                    "The number of timing runs to collect.");
+    private static final Option<Integer> timingRunsOption = options.newIntegerOption("timing-runs", 1,
+                    "The number of timing runs to perform.");
     private static final Option<Boolean> execTimesOption = options.newBooleanOption("exec-times", true,
                     "Report the time taken for each executed subprocess.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
                     "Show help message and exit.");
 
-    private static String javaConfigAlias = null;
+    private static String javaConfig = null;
     private static Date startDate;
 
     public static void main(String[] args) {
@@ -138,9 +138,11 @@ public class MaxineTester {
             }
 
             startDate = new Date();
-            javaConfigAlias = javaConfigAliasOption.getValue();
-            if (javaConfigAlias != null) {
-                ProgramError.check(MaxineTesterConfiguration.imageParams.containsKey(javaConfigAlias), "Unknown Java tester config '" + javaConfigAlias + "'");
+            javaConfig = javaConfigAliasOption.getValue();
+            if (javaConfig != null) {
+                ProgramError.check(MaxineTesterConfiguration.imageParams.containsKey(javaConfig), "Unknown Java tester config '" + javaConfig + "'");
+            } else {
+                javaConfig = "java";
             }
             final File outputDir = new File(outputDirOption.getValue()).getAbsoluteFile();
             makeDirectory(outputDir);
@@ -612,7 +614,7 @@ public class MaxineTester {
     private static final Map<String, File> generatedImages = new HashMap<String, File>();
 
     private static File generateJavaRunSchemeImage() {
-        final String config = javaConfigAlias == null ? "java" : javaConfigAlias;
+        final String config = javaConfig;
         final File imageDir = new File(outputDirOption.getValue(), config);
         if (skipImageGenOption.getValue()) {
             return imageDir;
@@ -635,7 +637,7 @@ public class MaxineTester {
         }
         final JavaCommand javaCommand = new JavaCommand(BootImageGenerator.class);
         javaCommand.addArguments(MaxineTesterConfiguration.getImageConfigArgs(imageConfig));
-        javaCommand.addArgument("-output-dir=" + imageDir);
+        javaCommand.addArgument("-vmdir=" + imageDir);
         javaCommand.addArgument("-trace=1");
         javaCommand.addVMOption("-XX:CompileCommand=exclude,com/sun/max/vm/jit/JitReferenceMapEditor,fillInMaps");
         javaCommand.addVMOptions(defaultJVMOptions());
@@ -661,7 +663,7 @@ public class MaxineTester {
             generatedImages.put(imageConfig, imageDir);
             return true;
         } else if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
-            out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getDefaultBootImageFilePath().getName()));
+            out().println("(image build timed out): " + new File(imageDir, BootImageGenerator.getBootImageFile(imageDir).getName()));
         }
         generatedImages.put(imageConfig, null);
         return false;
@@ -672,7 +674,7 @@ public class MaxineTester {
             return;
         }
         List<String> maxvmConfigs = maxvmConfigListOption.getValue();
-        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, workingDir, null);
+        ExternalCommand[] commands = createVMCommands(testName, maxvmConfigs, imageDir, command, outputDir, workingDir, null);
         printStartOfRefvm(testName);
         ExternalCommand.Result refResult = commands[0].exec(false, javaRunTimeOutOption.getValue());
         printRefvmResult(testName, refResult);
@@ -681,9 +683,13 @@ public class MaxineTester {
             // reference VM was ok, run the rest of the tests
             for (int i = 1; i < commands.length; i++) {
                 String config = maxvmConfigs.get(i - 1);
-                printStartOfMaxvm(testName, config);
-                ExternalCommand.Result maxResult = commands[i].exec(false, scaleTimeOut(refResult));
-                printMaxvmResult(testName, config, refResult, maxResult, filteredLines);
+                for (int j = 0; j < timingRunsOption.getValue(); j++) {
+                    printStartOfMaxvm(testName, config);
+                    ExternalCommand.Result maxResult = commands[i].exec(false, scaleTimeOut(refResult));
+                    if (!printMaxvmResult(testName, config, refResult, maxResult, filteredLines)) {
+                        break;
+                    }
+                }
             }
         }
         printEndOfTest(testName);
@@ -724,8 +730,9 @@ public class MaxineTester {
         }
     }
 
-    private static void printMaxvmResult(String testName, String config, ExternalCommand.Result baseResult, ExternalCommand.Result maxResult, String[] filteredLines) {
+    private static boolean printMaxvmResult(String testName, String config, ExternalCommand.Result baseResult, ExternalCommand.Result maxResult, String[] filteredLines) {
         String error = maxResult.checkError(baseResult, true, filteredLines, false, null);
+        boolean passed;
         final ExpectedResult expectedResult = MaxineTesterConfiguration.expectedResult(testName, config);
         if (error != null) {
             // the test failed.
@@ -735,6 +742,7 @@ public class MaxineTester {
             } else {
                 out().print(left16(config + ": " + errorStr));
             }
+            passed = false;
         } else {
             // the test passed.
             if (timingOption.getValue()) {
@@ -747,12 +755,14 @@ public class MaxineTester {
             } else {
                 out().print(left16(config + ": (passed)"));
             }
+            passed = true;
         }
         if (timingOption.getValue()) {
             out().println();
         }
         out().flush();
         addTestResult(testName, error, expectedResult);
+        return passed;
     }
 
     private static String getMaxvmErrorString(ExpectedResult expectedResult) {
@@ -792,7 +802,7 @@ public class MaxineTester {
      * @param binary the name of the file in the source directory that is to be copied to {@code imageDir}
      */
     private static void copyBinary(File imageDir, String binary) {
-        final File defaultImageDir = BootImageGenerator.getDefaultBootImageFilePath().getParentFile();
+        final File defaultImageDir = BootImageGenerator.getDefaultVMDirectory();
         final File defaultBinaryFile = new File(defaultImageDir, binary);
         final File binaryFile = new File(imageDir, binary);
         try {
@@ -1111,15 +1121,15 @@ public class MaxineTester {
         }
     }
 
-    private static ExternalCommand[] createVMCommands(String name, List<String> configs, File imageDir, JavaCommand command, File workingDir, File inputFile) {
+    private static ExternalCommand[] createVMCommands(String name, List<String> configs, File imageDir, JavaCommand command, File outputDir, File workingDir, File inputFile) {
         if (workingDir == null) {
             workingDir = imageDir;
         }
         name = name.replace(' ', '_');
         List<ExternalCommand> commands = new ArrayList<ExternalCommand>();
-        commands.add(new ExternalCommand(workingDir, inputFile, new Logs(workingDir, "REFVM_" + name, null), command.getExecArgs("java"), null));
+        commands.add(new ExternalCommand(workingDir, inputFile, new Logs(outputDir, "REFVM_" + name, null), command.getExecArgs("java"), null));
         for (String config : configs) {
-            commands.add(createMaxvmCommand(config, imageDir, command, workingDir, inputFile, new Logs(workingDir, "MAXVM_" + name + "_" + config, null)));
+            commands.add(createMaxvmCommand(config, imageDir, command, workingDir, inputFile, new Logs(outputDir, "MAXVM_" + name + "_" + config, null)));
         }
         return commands.toArray(new ExternalCommand[commands.size()]);
     }
@@ -1286,7 +1296,7 @@ public class MaxineTester {
      */
     public static class JTLoadHarness implements Harness {
         public boolean run() {
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 final PrintStream out = out();
@@ -1329,7 +1339,7 @@ public class MaxineTester {
         }
 
         public boolean run() {
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 runOutputTests(outputDir, imageDir);
@@ -1420,7 +1430,7 @@ public class MaxineTester {
                 out().println("Need to specify the location of SpecJVM98 ZIP file with -" + specjvm98ZipOption + " or in the SPECJVM98_ZIP environment variable");
                 return false;
             }
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 if (!specjvm98Zip.exists()) {
@@ -1483,7 +1493,7 @@ public class MaxineTester {
                 out().println("Need to specify the location of Dacapo JAR file with -" + dacapoJarOption + " or in the DACAPO_JAR environment variable");
                 return false;
             }
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 if (!dacapoJar.exists()) {
@@ -1537,7 +1547,7 @@ public class MaxineTester {
                 out().println("Need to specify the location of the Programming Language Shootout directory with -" + shootoutDirOption + " or in the SHOOTOUT_DIR environment variable");
                 return false;
             }
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 if (!shootoutDir.exists()) {

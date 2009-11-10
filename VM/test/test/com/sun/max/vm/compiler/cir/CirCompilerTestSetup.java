@@ -33,7 +33,7 @@ public abstract class CirCompilerTestSetup extends CompilerTestSetup<CirMethod> 
     }
 
     public static CirGeneratorScheme cirGeneratorScheme() {
-        return (CirGeneratorScheme) javaPrototype().vmConfiguration().compilerScheme();
+        return (CirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
     }
 
     public static CirGenerator cirGenerator() {

@@ -32,18 +32,15 @@ public class XirArgument {
 
     public final CiConstant constant;
     public final Object object;
-    public final XirArgument[] arguments;
 
     private XirArgument(CiConstant value) {
         this.constant = value;
         this.object = null;
-        this.arguments = null;
     }
 
     private XirArgument(Object o) {
         this.constant = null;
         this.object = o;
-        this.arguments = null;
     }
 
     public static XirArgument forInternalObject(Object o) {
@@ -60,5 +57,14 @@ public class XirArgument {
 
     public static XirArgument forObject(Object o) {
         return new XirArgument(CiConstant.forObject(o));
+    }
+    
+    @Override
+    public String toString() {
+    	if (constant != null) {
+    		return constant.toString();
+    	} else {
+    		return "" + object;
+    	}
     }
 }

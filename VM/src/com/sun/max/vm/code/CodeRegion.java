@@ -27,6 +27,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A code region that encapsulates a contiguous, fixed-sized memory area in the {@link TeleVM}
@@ -80,7 +81,7 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      * The byte array hub, which is necessary for allocating a byte array instance to encapsulate
      * raw memory allocations.
      */
-    private static final DynamicHub byteArrayHub = PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub();
+    private static final DynamicHub byteArrayHub = ClassRegistry.BYTE_ARRAY.dynamicHub();
 
     /**
      * Accessor for the sorted list of target methods.

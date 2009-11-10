@@ -23,8 +23,8 @@ package com.sun.max.vm.prototype;
 import com.sun.max.vm.type.*;
 
 /**
- * Error thrown when an attempt is made to load an {@linkplain PrototypeClassLoader#isOmittedType(TypeDescriptor) omitted}
- * class via the {@link PrototypeClassLoader}.
+ * Error thrown when an attempt is made to load an {@linkplain HostedBootClassLoader#isOmittedType(TypeDescriptor) omitted}
+ * class via the {@link HostedBootClassLoader}.
  *
  * @author Doug Simon
  */

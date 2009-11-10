@@ -146,6 +146,13 @@ public interface RiMethod {
      * @return {@code true} if the method is static
      */
     boolean isStatic();
+    
+    /**
+     * Checks whether this method is an initializer.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     * @return {@code true} if the method is static
+     */
+    boolean isInitializer();
 
     /**
      * Checks whether this method has been overriden. Decisions made based

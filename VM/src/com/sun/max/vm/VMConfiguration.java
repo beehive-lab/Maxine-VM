@@ -57,8 +57,9 @@ public final class VMConfiguration {
     public final VMPackage layoutPackage;
     public final VMPackage heapPackage;
     public final VMPackage monitorPackage;
-    public final VMPackage compilerPackage;
-    public final VMPackage jitPackage;
+    public final VMPackage bootCompilerPackage;
+    public final VMPackage jitCompilerPackage;
+    public final VMPackage optCompilerPackage;
     public final VMPackage trampolinePackage;
     public final VMPackage targetABIsPackage;
     public final VMPackage runPackage;
@@ -82,9 +83,11 @@ public final class VMConfiguration {
     @CONSTANT_WHEN_NOT_ZERO
     private MonitorScheme monitorScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
-    private BootstrapCompilerScheme compilerScheme = null;
+    private BootstrapCompilerScheme bootCompilerScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
-    private RuntimeCompilerScheme jitScheme = null;
+    private RuntimeCompilerScheme jitCompilerScheme = null;
+    @CONSTANT_WHEN_NOT_ZERO
+    private RuntimeCompilerScheme optCompilerScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
     private CompilationScheme compilationScheme = null;
     @CONSTANT_WHEN_NOT_ZERO
@@ -94,8 +97,19 @@ public final class VMConfiguration {
     @CONSTANT_WHEN_NOT_ZERO
     private RunScheme runScheme = null;
 
-    public VMConfiguration(BuildLevel buildLevel, Platform platform, VMPackage gripPackage, VMPackage referencePackage, VMPackage layoutPackage, VMPackage heapPackage,
-        VMPackage monitorPackage, VMPackage compilerPackage, VMPackage jitPackage, VMPackage trampolinePackage, VMPackage targetABIsPackage, VMPackage runPackage) {
+    public VMConfiguration(BuildLevel buildLevel,
+                           Platform platform,
+                           VMPackage gripPackage,
+                           VMPackage referencePackage,
+                           VMPackage layoutPackage,
+                           VMPackage heapPackage,
+                           VMPackage monitorPackage,
+                           VMPackage bootCompilerPackage,
+                           VMPackage jitCompilerPackage,
+                           VMPackage optCompilerPackage,
+                           VMPackage trampolinePackage,
+                           VMPackage targetABIsPackage,
+                           VMPackage runPackage) {
         this.buildLevel = buildLevel;
         this.platform = platform;
         this.gripPackage = gripPackage;
@@ -103,8 +117,9 @@ public final class VMConfiguration {
         this.layoutPackage = layoutPackage;
         this.heapPackage = heapPackage;
         this.monitorPackage = monitorPackage;
-        this.compilerPackage = compilerPackage;
-        this.jitPackage = jitPackage;
+        this.bootCompilerPackage = bootCompilerPackage;
+        this.jitCompilerPackage = jitCompilerPackage;
+        this.optCompilerPackage = optCompilerPackage;
         this.trampolinePackage = trampolinePackage;
         this.targetABIsPackage = targetABIsPackage;
         this.runPackage = runPackage;
@@ -112,7 +127,7 @@ public final class VMConfiguration {
         this.interpreterStubCompiler = InterpreterStubCompiler.create(this);
         this.trapStateAccess = TrapStateAccess.create(this);
         // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
-        if (this.jitPackage == null || this.jitPackage.equals(this.compilerPackage)) {
+        if (this.jitCompilerPackage == null || this.jitCompilerPackage.equals(this.bootCompilerPackage)) {
             // zero-fill array -- all entry points are at code start (for now -- may change with inline caches).
             this.offsetsToCallEntryPoints = new int[CallEntryPoint.VALUES.length()];
             this.offsetsToCalleeEntryPoints = new int[CallEntryPoint.VALUES.length()];
@@ -164,13 +179,18 @@ public final class VMConfiguration {
     }
 
     @INLINE
-    public BootstrapCompilerScheme compilerScheme() {
-        return compilerScheme;
+    public BootstrapCompilerScheme bootCompilerScheme() {
+        return bootCompilerScheme;
     }
 
     @INLINE
-    public RuntimeCompilerScheme jitScheme() {
-        return jitScheme;
+    public RuntimeCompilerScheme jitCompilerScheme() {
+        return jitCompilerScheme;
+    }
+
+    @INLINE
+    public RuntimeCompilerScheme optCompilerScheme() {
+        return optCompilerScheme;
     }
 
     @INLINE
@@ -199,7 +219,7 @@ public final class VMConfiguration {
                         layoutPackage,
                         heapPackage,
                         monitorPackage,
-                        compilerPackage,
+                        bootCompilerPackage,
                         trampolinePackage,
                         targetABIsPackage,
                         gripPackage,
@@ -247,13 +267,22 @@ public final class VMConfiguration {
         monitorScheme = loadAndInstantiateScheme(monitorPackage, MonitorScheme.class, this);
         heapScheme = loadAndInstantiateScheme(heapPackage, HeapScheme.class, this);
         targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage, TargetABIsScheme.class, this);
-        compilerScheme = loadAndInstantiateScheme(compilerPackage, BootstrapCompilerScheme.class, this);
+        bootCompilerScheme = loadAndInstantiateScheme(bootCompilerPackage, BootstrapCompilerScheme.class, this);
         trampolineScheme = loadAndInstantiateScheme(trampolinePackage, DynamicTrampolineScheme.class, this);
-        if (jitPackage != null) {
-            jitScheme = loadAndInstantiateScheme(jitPackage, RuntimeCompilerScheme.class, this);
+        if (jitCompilerPackage != null) {
+            jitCompilerScheme = loadAndInstantiateScheme(jitCompilerPackage, RuntimeCompilerScheme.class, this);
         } else {
             // no JIT, always using the optimizing compiler
-            jitScheme = compilerScheme;
+            jitCompilerScheme = bootCompilerScheme;
+        }
+        if (optCompilerPackage == jitCompilerPackage) {
+            optCompilerScheme = jitCompilerScheme;
+        } else if (optCompilerPackage == bootCompilerPackage) {
+            optCompilerScheme = bootCompilerScheme;
+        } else if (optCompilerPackage == null) {
+            optCompilerScheme = bootCompilerScheme;
+        } else {
+            optCompilerScheme = loadAndInstantiateScheme(optCompilerPackage, RuntimeCompilerScheme.class, this);
         }
 
         compilationScheme = new AdaptiveCompilationScheme(this);
@@ -292,17 +321,17 @@ public final class VMConfiguration {
 
     @Override
     public String toString() {
-        final CharArrayWriter charArrayWriter = new CharArrayWriter();
-        print(new PrintWriter(charArrayWriter));
-        return charArrayWriter.toString();
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        print(new PrintStream(baos), "");
+        return baos.toString();
     }
 
-    public void print(PrintWriter writer) {
-        writer.println("build level: " + buildLevel());
-        writer.println("platform: " + platform());
+    public void print(PrintStream out, String indent) {
+        out.println(indent + "Build level: " + buildLevel());
+        out.println(indent + "Platform: " + platform());
         for (VMScheme vmScheme : vmSchemes()) {
             final String specification = vmScheme.specification().getSimpleName();
-            writer.println(specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getPackage().getName());
+            out.println(indent + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
         }
     }
 

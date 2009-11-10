@@ -364,7 +364,7 @@ public interface MaxVM {
 
     /**
      * Gets a canonical local {@classActor} corresponding to the type of a heap object in the targetVM, creating one if
-     * needed by loading the class using the {@link PrototypeClassLoader#PROTOTYPE_CLASS_LOADER} from either the
+     * needed by loading the class using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER} from either the
      * classpath, or if not found on the classpath, by copying the classfile from the VM.
      *
      * @param objectReference An {@link Object} in  VM heap.

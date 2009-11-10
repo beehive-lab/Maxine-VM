@@ -935,11 +935,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem obj = new LIRItem(x.object(), this);
 
         LIRDebugInfo patchingInfo = null;
-//        if (!x.targetClass().isLoaded() || (C1XOptions.TestPatching && !x.isIncompatibleClassChangeCheck())) {
-//            // must do this before locking the destination register as an oop register,
-//            // and before the obj is loaded (the latter is for deoptimization)
-//            patchingInfo = stateFor(x, x.stateBefore());
-//        }
         obj.loadItem();
 
         // info for exceptions
@@ -953,7 +948,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             stub = new SimpleExceptionStub(obj.result(), GlobalStub.ThrowClassCastException, infoForException);
         }
         LIROperand reg = rlockResult(x);
-        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(CiKind.Object), newRegister(CiKind.Object),
+        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), LIROperandFactory.IllegalLocation, LIROperandFactory.IllegalLocation,
                         x.directCompare(), infoForException, patchingInfo, stub, x.profiledMethod(),
                         x.profiledBCI());
     }

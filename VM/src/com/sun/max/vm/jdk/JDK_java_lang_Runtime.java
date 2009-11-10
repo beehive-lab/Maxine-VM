@@ -72,7 +72,9 @@ public final class JDK_java_lang_Runtime {
      */
     @SUBSTITUTE
     private void gc() {
-        Heap.collectGarbage(Size.zero());
+        if (!Heap.gcDisabled()) {
+            Heap.collectGarbage(Size.zero());
+        }
     }
 
     /**

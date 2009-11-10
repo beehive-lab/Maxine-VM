@@ -29,6 +29,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -37,6 +38,10 @@ import com.sun.max.vm.runtime.*;
  * @author Ben L. Titzer
  */
 public class Compilation implements Future<TargetMethod> {
+
+    private static final VMBooleanXXOption GC_ON_COMPILE_OPTION = register(new VMBooleanXXOption("-XX:-GCOnCompilation",
+        "When specified, the compiler will request GC before every compilation operation."), MaxineVM.Phase.STARTING);
+
     public final CompilationScheme compilationScheme;
     public final RuntimeCompilerScheme compilerScheme;
     public final ClassMethodActor classMethodActor;
@@ -138,6 +143,10 @@ public class Compilation implements Future<TargetMethod> {
         Throwable error = null;
         String methodString = "";
         try {
+            if (GC_ON_COMPILE_OPTION.getValue() && Heap.isInitialized()) {
+                System.gc();
+            }
+
             // attempt the compilation
             methodString = logBeforeCompilation(compiler);
             targetMethod = compiler.compile(classMethodActor);
@@ -175,7 +184,6 @@ public class Compilation implements Future<TargetMethod> {
 
         if (error != null) {
             logCompilationError(error, compiler, targetMethod, methodString);
-
             throw new RuntimeException(error);
         }
 

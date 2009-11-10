@@ -244,8 +244,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isHosted()) {
-            OBJECT_HUB = TupleClassActor.fromJava(Object.class).dynamicHub();
-            BYTE_ARRAY_HUB = PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub();
+            OBJECT_HUB = ClassRegistry.OBJECT.dynamicHub();
+            BYTE_ARRAY_HUB = ClassRegistry.BYTE_ARRAY.dynamicHub();
             MIN_OBJECT_SIZE = OBJECT_HUB.tupleSize;
             BYTE_ARRAY_HEADER_SIZE = Layout.byteArrayLayout().getArraySize(Kind.BYTE, 0);
         } else if (phase == MaxineVM.Phase.PRISTINE) {

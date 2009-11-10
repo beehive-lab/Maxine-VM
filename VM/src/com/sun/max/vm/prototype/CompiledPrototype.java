@@ -38,6 +38,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.c1x.C1XCompilerScheme;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.target.*;
@@ -68,16 +69,12 @@ public class CompiledPrototype extends Prototype {
     private final Map<ClassActor, ClassInfo> classActorInfo = new IdentityHashMap<ClassActor, ClassInfo>();
     private final Map<MethodActor, GrowableDeterministicSet<ClassActor>> anonymousClasses = new IdentityHashMap<MethodActor, GrowableDeterministicSet<ClassActor>>();
 
-    private static final GrowableDeterministicSet<ClassActor> jitCompiledClasses = new LinkedIdentityHashSet<ClassActor>();
-    private static final GrowableDeterministicSet<MethodActor> jitCompiledMethods = new LinkedIdentityHashSet<MethodActor>();
-    private static final GrowableDeterministicSet<MethodActor> unlinkedMethods = new LinkedIdentityHashSet<MethodActor>();
-    private static final GrowableDeterministicSet<ClassActor> unlinkedClasses = new LinkedIdentityHashSet<ClassActor>();
-
-    private static final GrowableDeterministicSet<ClassActor> c1xCompiledClasses = new LinkedIdentityHashSet<ClassActor>();
-    private static final GrowableDeterministicSet<MethodActor> c1xCompiledMethods = new LinkedIdentityHashSet<MethodActor>();
+    private static final HashMap<MethodActor, RuntimeCompilerScheme> recommendedCompiler = new HashMap<MethodActor, RuntimeCompilerScheme>();
 
     private final VariableMapping<MethodActor, Link> methodActors = new ChainedHashMapping<MethodActor, Link>();
     private final LinkedList<MethodActor> worklist = new LinkedList<MethodActor>();
+
+    private static RuntimeCompilerScheme c1xCompiler;
 
     /**
      * Methods that must be statically compiled in the boot image.
@@ -159,7 +156,7 @@ public class CompiledPrototype extends Prototype {
     }
 
     public BootstrapCompilerScheme compilerScheme() {
-        return vmConfiguration().compilerScheme();
+        return vmConfiguration().bootCompilerScheme();
     }
 
     public TargetGeneratorScheme targetGeneratorScheme() {
@@ -167,7 +164,7 @@ public class CompiledPrototype extends Prototype {
     }
 
     public RuntimeCompilerScheme jitScheme() {
-        return vmConfiguration().jitScheme();
+        return vmConfiguration().jitCompilerScheme();
     }
 
     private ClassInfo lookupInfo(ClassActor classActor) {
@@ -199,7 +196,7 @@ public class CompiledPrototype extends Prototype {
     private void gatherNewClasses() {
         Trace.begin(1, "gatherNewClasses");
         final LinkSequence<ClassActor> newClasses = new LinkSequence<ClassActor>();
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (lookupInfo(classActor) == null) {
                 final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
                 if (enclosingMethod != null) {
@@ -301,8 +298,9 @@ public class CompiledPrototype extends Prototype {
                         if (resolvable.isResolvableWithoutClassLoading(pool)) {
                             try {
                                 guard.value = resolvable.resolve(pool, guard.constantPoolIndex);
-                            } catch (HostOnlyFieldError prototypeOnlyFieldError) {
-                            } catch (HostOnlyMethodError prototypeOnlyMethodError) {
+                            } catch (OmittedClassError omittedClassError) {
+                            } catch (HostOnlyFieldError hostOnlyFieldError) {
+                            } catch (HostOnlyMethodError hostOnlyMethodError) {
                             }
                         }
                     }
@@ -415,37 +413,46 @@ public class CompiledPrototype extends Prototype {
     }
 
     public static void registerMethodUnlinked(MethodActor methodActor) {
-        unlinkedMethods.add(methodActor);
     }
 
     public static void registerClassUnlinked(ClassActor classActor) {
-        unlinkedClasses.add(classActor);
-    }
-
-    public static boolean jitCompile(ClassMethodActor classMethodActor) {
-        return jitCompiledMethods.contains(classMethodActor) || jitCompiledClasses.contains(classMethodActor.holder());
     }
 
     public static void registerJitClass(Class javaClass) {
-        jitCompiledClasses.add(ClassActor.fromJava(javaClass));
+        ClassActor classActor = ClassActor.fromJava(javaClass);
+        for (MethodActor methodActor : classActor.getLocalMethodActors()) {
+            recommendedCompiler.put(methodActor, VMConfiguration.target().jitCompilerScheme());
+        }
     }
 
     public static void registerC1XClass(Class javaClass) {
-        c1xCompiledClasses.add(ClassActor.fromJava(javaClass));
+        ClassActor classActor = ClassActor.fromJava(javaClass);
+        RuntimeCompilerScheme compiler = c1xCompilerScheme();
+        for (MethodActor methodActor : classActor.getLocalMethodActors()) {
+            recommendedCompiler.put(methodActor, compiler);
+        }
+    }
+
+    public static boolean donotCPSCompiler(ClassMethodActor classMethodActor) {
+        // check whether the method has been recommended to be compiled with another compiler
+        return recommendedCompiler.get(classMethodActor) != null;
     }
 
     public static void registerJitMethod(MethodActor methodActor) {
-        jitCompiledMethods.add(methodActor);
-    }
-
-    public static boolean c1xCompile(ClassMethodActor classMethodActor) {
-        return c1xCompiledMethods.contains(classMethodActor) || c1xCompiledClasses.contains(classMethodActor.holder());
+        recommendedCompiler.put(methodActor, VMConfiguration.target().jitCompilerScheme());
     }
 
     public static void registerC1XMethod(MethodActor methodActor) {
-        c1xCompiledMethods.add(methodActor);
+        recommendedCompiler.put(methodActor, c1xCompilerScheme());
     }
 
+    private static synchronized RuntimeCompilerScheme c1xCompilerScheme() {
+        if (c1xCompiler == null) {
+            c1xCompiler = new C1XCompilerScheme(VMConfiguration.target());
+            c1xCompiler.initialize(Phase.BOOTSTRAPPING);
+        }
+        return c1xCompiler;
+    }
 
     private static AppendableSequence<MethodActor> imageInvocationStubMethodActors = new LinkSequence<MethodActor>();
     private static AppendableSequence<MethodActor> imageConstructorStubMethodActors = new LinkSequence<MethodActor>();
@@ -532,7 +539,8 @@ public class CompiledPrototype extends Prototype {
                     compilationCompletionService.submit(new Callable<TargetMethod>() {
                         public TargetMethod call() throws Exception {
                             try {
-                                final TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor);
+                                RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
+                                TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
                                 assert result != null;
                                 return result;
                             } catch (Throwable error) {
@@ -643,7 +651,7 @@ public class CompiledPrototype extends Prototype {
     private void linkNonVirtualCalls() {
         Trace.begin(1, "linkNonVirtualCalls");
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
-            if (targetMethod.classMethodActor() == null || (!unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !unlinkedMethods.contains(targetMethod.classMethodActor()))) {
+            if (targetMethod.classMethodActor() != null) {
                 if (!targetMethod.linkDirectCalls()) {
                     ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
                 }
@@ -659,8 +667,8 @@ public class CompiledPrototype extends Prototype {
 
     private void linkVTableEntries() {
         Trace.begin(1, "linkVTableEntries");
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
-            if (classActor.isReferenceClassActor() && !unlinkedClasses.contains(classActor)) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+            if (classActor.isReferenceClassActor()) {
                 linkVTable(classActor);
             }
         }
@@ -672,7 +680,7 @@ public class CompiledPrototype extends Prototype {
         for (int vTableIndex = Hub.vTableStartIndex(); vTableIndex < Hub.vTableStartIndex() + dynamicHub.vTableLength(); vTableIndex++) {
             final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
             final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
-            if (targetMethod != null && !unlinkedMethods.contains(virtualMethodActor)) {
+            if (targetMethod != null) {
                 dynamicHub.setWord(vTableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
             }
         }
@@ -682,15 +690,15 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "linkITableEntries");
 
         final IntHashMap<InterfaceActor> serialToInterfaceActor = new IntHashMap<InterfaceActor>();
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
             if (classActor instanceof InterfaceActor) {
                 final InterfaceActor interfaceActor = (InterfaceActor) classActor;
                 serialToInterfaceActor.put(interfaceActor.id, interfaceActor);
             }
         }
 
-        for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
-            if (classActor.isReferenceClassActor() && !unlinkedClasses.contains(classActor)) {
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+            if (classActor.isReferenceClassActor()) {
                 linkITable(classActor, serialToInterfaceActor);
             }
         }
@@ -710,7 +718,7 @@ public class CompiledPrototype extends Prototype {
                         final int iIndex = methodITableIndex - hub.iTableStartIndex;
                         final VirtualMethodActor virtualMethodActor = classActor.getVirtualMethodActorByIIndex(iIndex);
                         final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(virtualMethodActor);
-                        if (targetMethod != null && !unlinkedMethods.contains(virtualMethodActor)) {
+                        if (targetMethod != null) {
                             hub.setWord(methodITableIndex, VTABLE_ENTRY_POINT.in(targetMethod));
                         }
                     }

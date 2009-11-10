@@ -204,8 +204,6 @@ public class FieldActor extends MemberActor {
      */
     public final boolean isConstant() {
         final ClassActor holder = holder();
-
-
         if (isFinal()) {
             if (isStatic()) {
                 // Static final field:
@@ -215,11 +213,14 @@ public class FieldActor extends MemberActor {
                     // default value for its type.
                     return true;
                 }
-                if (MaxineVM.isHosted() && MaxineVM.isMaxineClass(holder())) {
-                    // The class initializers of all Maxine classes are run while bootstrapping and
-                    // the values they assign to static final fields are frozen in the boot image.
-                    return true;
+                if (MaxineVM.isHosted()) {
+                    if (MaxineVM.isMaxineClass(holder())) {
+                        // The class initializers of all Maxine classes are run while bootstrapping and
+                        // the values they assign to static final fields are frozen in the boot image.
+                        return true;
+                    }
                 }
+
                 // This is now a field in a class with a class initializer:
                 // before the class initializer is executed, the field's value is not guaranteed to be immutable.
                 return holder().isInitialized();

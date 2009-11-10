@@ -224,11 +224,8 @@ public class ValueStack {
         invalidateLocal(i);
         values[i] = x;
         if (isDoubleWord(x)) {
-            // if this was a double word and i + 1 was a double word, then kill i + 2
-            Value h = values[i + 1];
-            if (isDoubleWord(h)) {
-                values[i + 2] = null;
-            }
+            // (tw) if this was a double word then kill i+1
+            values[i + 1] = null;
         }
         if (i > 0) {
             // if there was a double word at i - 1, then kill it

@@ -59,7 +59,7 @@ public class EIRTestExecutor implements JavaExecHarness.Executor {
                         new com.sun.max.vm.compiler.b.c.d.e.amd64.Package());
         final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
         final Prototype jpt = prototypeGenerator.createJavaPrototype(cfg, loadingPackages);
-        final EirGeneratorScheme compilerScheme = (EirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
+        final EirGeneratorScheme compilerScheme = (EirGeneratorScheme) jpt.vmConfiguration().bootCompilerScheme();
         compilerScheme.compileSnippets();
         generator = compilerScheme.eirGenerator();
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping

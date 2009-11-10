@@ -163,18 +163,19 @@ public final class Throw {
 
         if (dumpStackOnThrowOption.getValue()) {
             throwable.printStackTrace(Log.out);
-        }
-        String filter = dumpStackOnThrowOfOption.getValue();
-        if (filter != null) {
-            boolean match = false;
-            if (filter.startsWith("!")) {
-                filter = filter.substring(1);
-                match = !ObjectAccess.readHub(throwable).classActor.name.string.contains(filter);
-            } else {
-                match = ObjectAccess.readHub(throwable).classActor.name.string.contains(filter);
-            }
-            if (match) {
-                throwable.printStackTrace(Log.out);
+        } else {
+            String filter = dumpStackOnThrowOfOption.getValue();
+            if (filter != null) {
+                boolean match = false;
+                if (filter.startsWith("!")) {
+                    filter = filter.substring(1);
+                    match = !ObjectAccess.readHub(throwable).classActor.name.string.contains(filter);
+                } else {
+                    match = ObjectAccess.readHub(throwable).classActor.name.string.contains(filter);
+                }
+                if (match) {
+                    throwable.printStackTrace(Log.out);
+                }
             }
         }
         Safepoint.disable();

@@ -52,6 +52,17 @@ public class LIRConstant extends LIROperand {
         return value.asInt();
     }
 
+
+    public int asChar() {
+        assertType(this, CiKind.Char);
+        return value.asInt();
+    }
+
+    public int asShort() {
+        assertType(this, CiKind.Short);
+        return value.asInt();
+    }
+
     /**
      * Converts this constant to an boolean.
      *
@@ -214,6 +225,10 @@ public class LIRConstant extends LIROperand {
         switch (kind) {
             case Boolean:
                 return String.format("boolean:%b", asBoolean());
+            case Char:
+                return String.format("char:%d", asChar());
+            case Short:
+                return String.format("short:%d", asShort());
             case Int:
                 return String.format("int:%d", asInt());
             case Long:
@@ -223,7 +238,14 @@ public class LIRConstant extends LIROperand {
             case Double:
                 return String.format("dbl:%f", this.asDouble());
             case Object:
-                return String.format("obj:%s", this.asObject());
+            {
+                Object o = this.asObject();
+                if (o == null) {
+                    return "obj:null";
+                } else {
+                    return String.format("obj:%s:%d", o.getClass().getName(), o.hashCode());
+                }
+            }
             case Jsr:
                 return String.format("jsr:%s", this.asJsr());
             case Word:

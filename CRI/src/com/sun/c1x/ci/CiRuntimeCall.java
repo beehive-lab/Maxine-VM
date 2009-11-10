@@ -50,6 +50,8 @@ public enum CiRuntimeCall {
     NewMultiArray(Object, Object, Object),
     HandleException(Void, Object),
     SlowSubtypeCheck(Boolean, Object, Object),
+    SlowCheckCast(Object, Object, Object),
+    SlowStoreCheck(Void, Object, Object),
     Monitorenter(Void, Object, Int),
     Monitorexit(Void, Object, Int),
     TraceBlockEntry(Void),

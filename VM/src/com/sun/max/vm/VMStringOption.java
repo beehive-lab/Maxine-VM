@@ -22,6 +22,7 @@ package com.sun.max.vm;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.MaxineVM.*;
 
 /**
@@ -51,7 +52,7 @@ public class VMStringOption extends VMOption {
      */
     @HOSTED_ONLY
     public VMStringOption(String prefix, boolean space, String defaultValue, String help) {
-        super(prefix, help);
+        super(prefix, appendDefaultValue(help, defaultValue));
         this.value = defaultValue;
         this.space = space;
     }
@@ -79,7 +80,11 @@ public class VMStringOption extends VMOption {
     public String getValue() {
         if (!cstring.isZero() && !allocated) {
             allocated = true;
-            value = new String(CString.toByteArray(cstring, CString.length(cstring).toInt()));
+            try {
+                value = CString.utf8ToJava(cstring);
+            } catch (Utf8Exception e) {
+                Log.println("Error parsing value of " + this + " option");
+            }
         }
         return value;
     }
@@ -90,9 +95,9 @@ public class VMStringOption extends VMOption {
     @Override
     public void printHelp() {
         if (space) {
-            VMOptions.printHelpForOption(prefix, " <value>", help);
+            VMOptions.printHelpForOption(category(), prefix, " <value>", help);
         } else {
-            VMOptions.printHelpForOption(prefix, "<value>", help);
+            VMOptions.printHelpForOption(category(), prefix, "<value>", help);
         }
     }
 

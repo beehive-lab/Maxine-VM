@@ -256,7 +256,6 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
         for (int j = 0; j < src.length; j++) {
             Entry<Key_Type, Value_Type> entry = src[j];
             if (entry != null) {
-                src[j] = null;
                 do {
                     final Entry<Key_Type, Value_Type> next = entry.next();
                     final int hash = hash(hashCode(entry.key()));

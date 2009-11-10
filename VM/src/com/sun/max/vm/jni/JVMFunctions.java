@@ -78,7 +78,7 @@ public class JVMFunctions {
                 return true;
             }
             final ClassLoader cl = targetMethod.classMethodActor().holder().classLoader;
-            if (cl != null && cl != VmClassLoader.VM_CLASS_LOADER) {
+            if (cl != null && cl != BootClassLoader.BOOT_CLASS_LOADER) {
                 result = cl;
                 return false;
             }
@@ -101,7 +101,7 @@ public class JVMFunctions {
     }
 
     public static String GetSystemPackage(String name) {
-        ClasspathFile classpathFile = VmClassLoader.VM_CLASS_LOADER.classpath().classpathFileForPackage(name);
+        ClasspathFile classpathFile = BootClassLoader.BOOT_CLASS_LOADER.classpath().classpathFileForPackage(name);
         if (classpathFile == null) {
             return null;
         }

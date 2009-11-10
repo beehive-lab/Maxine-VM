@@ -118,7 +118,7 @@ public final class VMConfigurations {
             defaultMonitorScheme(),
             defaultCompilerScheme(platform),
             defaultJitCompilerScheme(platform),
-            defaultTrampolineScheme(),
+                null, defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }
@@ -132,7 +132,7 @@ public final class VMConfigurations {
             defaultMonitorScheme(),
             defaultCompilerScheme(platform),
             jitPackage,
-            defaultTrampolineScheme(),
+                null, defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }
@@ -150,7 +150,7 @@ public final class VMConfigurations {
             defaultMonitorScheme(),
             defaultCompilerScheme(platform),
             defaultJitCompilerScheme(platform),
-            defaultTrampolineScheme(),
+                null, defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }
@@ -169,7 +169,7 @@ public final class VMConfigurations {
             defaultMonitorScheme(),
             compilerPackage,
             null,
-            defaultTrampolineScheme(),
+                null, defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }
@@ -183,7 +183,7 @@ public final class VMConfigurations {
             new com.sun.max.vm.monitor.prototype.Package(),
             new com.sun.max.vm.compiler.prototype.Package(),
             null,
-            defaultTrampolineScheme(),
+                null, defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }

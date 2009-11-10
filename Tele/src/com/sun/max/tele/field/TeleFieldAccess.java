@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
 public abstract class TeleFieldAccess {
 
     private static FieldActor findFieldActor(Class holder, String name) {
-        final ClassActor classActor = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
+        final ClassActor classActor = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));
         final FieldActor fieldActor = classActor.findFieldActor(SymbolTable.makeSymbol(name));
         ProgramError.check(fieldActor != null, "could not find field: " + name + " in class: " + holder);
         return fieldActor;

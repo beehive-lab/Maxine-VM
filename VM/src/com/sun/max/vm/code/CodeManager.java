@@ -32,6 +32,7 @@ import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Target machine code cache management.
@@ -119,10 +120,10 @@ public abstract class CodeManager {
             referenceLiterals = referenceLiteralsLength == 0 ? null : new Object[referenceLiteralsLength];
         } else {
             final Pointer codeCell = targetBundleLayout.cell(start, ArrayField.code);
-            code = (byte[]) Cell.plantArray(codeCell, PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), codeLength);
+            code = (byte[]) Cell.plantArray(codeCell, ClassRegistry.BYTE_ARRAY.dynamicHub(), codeLength);
             if (scalarLiteralsLength != 0) {
                 final Pointer scalarLiteralsCell = targetBundleLayout.cell(start, ArrayField.scalarLiterals);
-                scalarLiterals = (byte[]) Cell.plantArray(scalarLiteralsCell, PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), scalarLiteralsLength);
+                scalarLiterals = (byte[]) Cell.plantArray(scalarLiteralsCell, ClassRegistry.BYTE_ARRAY.dynamicHub(), scalarLiteralsLength);
             }
             if (referenceLiteralsLength != 0) {
                 final Pointer referenceLiteralsCell = targetBundleLayout.cell(start, ArrayField.referenceLiterals);

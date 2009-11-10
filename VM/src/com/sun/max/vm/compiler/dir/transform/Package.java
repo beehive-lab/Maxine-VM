@@ -26,7 +26,7 @@ import com.sun.max.vm.compiler.dir.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class Package extends VMPackage {
@@ -36,6 +36,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof DirGeneratorScheme;
+        return vmConfiguration.bootCompilerScheme() instanceof DirGeneratorScheme;
     }
 }

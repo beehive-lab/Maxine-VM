@@ -299,7 +299,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         if (isMain) {
             mainClassName = className;
             try {
-                final ClassActor mainClassActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
+                final ClassActor mainClassActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
                 final StaticMethodActor mainMethodActor = mainClassActor.findLocalStaticMethodActor("main");
                 Trace.line(1, "registering " + className + ".main");
                 CompiledPrototype.registerImageMethod(mainMethodActor);
@@ -314,7 +314,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     protected void omitClass(String className) {
         Trace.line(1, "omitting class " + className + " from image");
         try {
-            PrototypeClassLoader.omitClass(Class.forName(className));
+            HostedBootClassLoader.omitClass(Class.forName(className));
         } catch (ClassNotFoundException classNotFoundException) {
             Trace.line(1, "WARNING: omitclass: " + className + " not found");
         }
@@ -325,7 +325,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         forceClass(className, false);
         Trace.line(1, "initializing class " + className);
         try {
-            Class.forName(className, true, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
+            Class.forName(className, true, HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER);
         } catch (Exception ex) {
             ProgramError.unexpected("failed to find class: " + className);
         }
@@ -346,7 +346,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         final String className = forceMethodName.substring(0, ix);
         final String methodName = forceMethodName.substring(ix + 1);
         try {
-            final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
+            final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
             classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (methodName.equals("*") || methodName.equals(classMethodActor.name.string)) {
@@ -363,7 +363,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     @HOSTED_ONLY
     protected void forceConstructorStubs(final String className) {
         try {
-            final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
+            final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
             for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
                 if (virtualMethodActor.isInitializer()) {
                     Trace.line(1, "forcing generation of constructor stubs for class " + virtualMethodActor.qualifiedName());
@@ -385,7 +385,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         final String className = forceMethodName.substring(0, ix);
         final String methodName = forceMethodName.substring(ix + 1);
         try {
-            final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
+            final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
             classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
                 public void run(ClassMethodActor classMethodActor) {
                     if (methodName.equals("*") || methodName.equals(classMethodActor.name.string)) {
@@ -409,7 +409,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         final String className = argument.substring(0, ix);
         final String methodName = argument.substring(ix + 1);
         try {
-            final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
+            final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
             final StaticMethodActor methodActor = classActor.findLocalStaticMethodActor(methodName);
             Trace.line(1, "arranging to call " +  methodActor.qualifiedName() + " prior to main");
             callMethods.append(methodActor);
@@ -442,7 +442,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     protected ClassActor doForceInitClass(String argument, boolean reinit) {
         final String className = argument;
         try {
-            final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
+            final ClassActor classActor = ClassActor.fromJava(Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className));
             Trace.line(1, "forcing compilation of " +  className + ".<clinit>");
             forceCompileMethod(argument + ".<clinit>");
             if (reinit) {
@@ -473,7 +473,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         final String fieldName = argument.substring(ix + 1);
         try {
             Trace.line(1, "resetting field " +  argument + " to default value");
-            final Class<?> javaClass = Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
+            final Class<?> javaClass = Classes.load(HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER, className);
             JDKInterceptor.resetField(javaClass, fieldName);
             /*
             final ClassActor classActor = ClassActor.fromJava(javaClass);

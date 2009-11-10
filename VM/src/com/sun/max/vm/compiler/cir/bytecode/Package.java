@@ -29,7 +29,7 @@ import com.sun.max.vm.compiler.cir.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Doug Simon
  */
 public class Package extends VMPackage {
@@ -39,7 +39,7 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof CirGeneratorScheme;
+        return vmConfiguration.bootCompilerScheme() instanceof CirGeneratorScheme;
     }
 
     @Override

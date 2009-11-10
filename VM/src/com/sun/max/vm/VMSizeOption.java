@@ -21,6 +21,7 @@
 package com.sun.max.vm;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.MaxineVM.*;
 
@@ -46,7 +47,7 @@ public class VMSizeOption extends VMOption {
      */
     @HOSTED_ONLY
     public VMSizeOption(String prefix, Size defaultValue, String help) {
-        super(prefix, help);
+        super(prefix, appendDefaultValue(help, Longs.toUnitsString(defaultValue.toLong(), true)));
         value = defaultValue;
     }
 
@@ -60,7 +61,7 @@ public class VMSizeOption extends VMOption {
      */
     @Override
     public boolean parseValue(Pointer optionValue) {
-        long value = VMOptions.parseScaledValue(optionValue, CString.length(optionValue), 0);
+        long value = CString.parseScaledValue(optionValue, CString.length(optionValue), 0);
         if (value < 0) {
             return false;
         }
@@ -73,7 +74,7 @@ public class VMSizeOption extends VMOption {
      */
     @Override
     public void printHelp() {
-        VMOptions.printHelpForOption(prefix, "<size>", help);
+        VMOptions.printHelpForOption(category(), prefix, "<size>", help);
     }
 
     /**

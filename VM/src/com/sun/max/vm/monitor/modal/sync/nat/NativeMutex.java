@@ -113,7 +113,7 @@ public final class NativeMutex extends Mutex {
      * The current thread must own the given mutex when calling this method, otherwise the
      * results are undefined.
      *
-     * @return true if an error occured in native code; false otherwise
+     * @return true if an error occurred in native code; false otherwise
      * @see NativeMutex#lock()
      */
     @Override
@@ -126,7 +126,7 @@ public final class NativeMutex extends Mutex {
      * @return
      */
     @INLINE
-    Pointer asPointer() {
+    public Pointer asPointer() {
         return nativeRef.mutex;
     }
 
