@@ -2888,19 +2888,6 @@ public class X86LIRAssembler extends LIRAssembler {
                 case PointerCAS:
                     break;
 
-                case CallJava: {
-                    LIROperand dest = ops[inst.x().index];
-                    assert xir.method != null;
-                    if (dest.isConstant()) {
-                        masm.call(xir.method, xir.info.oopMap.stackMap());
-                    } else if (dest.isAddress()) {
-                        masm.call(asAddress((LIRAddress) dest), xir.method, xir.info.oopMap.stackMap());
-                    } else if (dest.isRegister()) {
-                        masm.call(dest.asRegister(), xir.method, xir.info.oopMap.stackMap());
-                    }
-                    break;
-                }
-
                 case CallStub:
                     XirTemplate stubId = (XirTemplate) inst.extra;
                     CiRegister result = CiRegister.None;
@@ -2925,8 +2912,9 @@ public class X86LIRAssembler extends LIRAssembler {
                     for (int i = 0; i < inst.arguments.length; i++) {
                         LIROperand argumentLocation = cc.arguments().get(i);
                         LIROperand argumentSourceLocation = ops[inst.arguments[i].index];
-                        // TODO: Check for equality of the locations
-                        moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null, false);
+                        if (argumentLocation != argumentSourceLocation) {
+                            moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null, false);
+                        }
                     }
 
                     RiMethod method = (RiMethod) inst.extra;

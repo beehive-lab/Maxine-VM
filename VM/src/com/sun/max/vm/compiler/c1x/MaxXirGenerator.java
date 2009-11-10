@@ -102,19 +102,21 @@ public class MaxXirGenerator extends RiXirGenerator {
         map(KindEnum.REFERENCE, CiKind.Object);
     }
 
-    final HashMap<String, XirTemplate> runtimeCallStubs = new HashMap<String, XirTemplate>();
+    private final HashMap<String, XirTemplate> runtimeCallStubs = new HashMap<String, XirTemplate>();
+    private final HashMap<String, RiMethod> runtimeMethods = new HashMap<String, RiMethod>();
 
     private final CiTarget target;
+    private final MaxRiRuntime runtime;
 
     private XirPair[] putFieldTemplates;
     private XirPair[] getFieldTemplates;
     private XirPair[] putStaticFieldTemplates;
     private XirPair[] getStaticFieldTemplates;
 
-    private XirPair[] invokeVirtualTemplates;
-    private XirPair[] invokeInterfaceTemplates;
-    private XirPair[] invokeSpecialTemplates;
-    private XirPair[] invokeStaticTemplates;
+    private XirPair invokeVirtualTemplates;
+    private XirPair invokeInterfaceTemplates;
+    private XirPair invokeSpecialTemplates;
+    private XirPair invokeStaticTemplates;
     private XirPair[] newArrayTemplates;
     private XirTemplate[] arrayLoadTemplates;
     private XirTemplate[] arrayStoreTemplates;
@@ -136,7 +138,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     private XirPair instanceofForClassTemplate;
     private XirPair instanceofForInterfaceTemplate;
 
-    List<XirTemplate> stubs = new ArrayList<XirTemplate>();
+    private List<XirTemplate> stubs = new ArrayList<XirTemplate>();
 
     final int offsetOfFirstArrayElement;
     final int hubOffset;
@@ -146,7 +148,6 @@ public class MaxXirGenerator extends RiXirGenerator {
     final int wordSize;
     final int arrayLengthOffset;
 
-    private MaxRiRuntime runtime;
 
     @UNSAFE
     public MaxXirGenerator(VMConfiguration vmConfiguration, CiTarget target, MaxRiRuntime runtime) {
@@ -175,10 +176,6 @@ public class MaxXirGenerator extends RiXirGenerator {
         putStaticFieldTemplates = new XirPair[kinds.length];
         getStaticFieldTemplates = new XirPair[kinds.length];
 
-        invokeVirtualTemplates   = new XirPair[kinds.length];
-        invokeInterfaceTemplates = new XirPair[kinds.length];
-        invokeSpecialTemplates   = new XirPair[kinds.length];
-        invokeStaticTemplates    = new XirPair[kinds.length];
         newArrayTemplates = new XirPair[kinds.length];
         arrayLoadTemplates = new XirTemplate[kinds.length];
         arrayStoreTemplates = new XirTemplate[kinds.length];
@@ -210,11 +207,12 @@ public class MaxXirGenerator extends RiXirGenerator {
                 arrayStoreTemplates[index] = buildArrayStore(kind, asm, true, kind == CiKind.Object, kind == CiKind.Object);
                 newArrayTemplates[index] = buildNewArray(kind);
             }
-            invokeVirtualTemplates[index] = buildResolvedInvokeVirtual(kind);
-            invokeInterfaceTemplates[index] = buildInvokeInterface(kind);
-            invokeSpecialTemplates[index] = buildInvokeSpecial(kind);
-            invokeStaticTemplates[index] = buildInvokeStatic(kind);
         }
+
+        invokeVirtualTemplates = buildResolvedInvokeVirtual();
+        invokeInterfaceTemplates = buildInvokeInterface();
+        invokeSpecialTemplates = buildInvokeSpecial();
+        invokeStaticTemplates = buildInvokeStatic();
 
         multiNewArrayTemplate = new XirPair[MAX_MULTIANEWARRAY_RANK + 1];
 
@@ -243,13 +241,23 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     @Override
+    public XirSnippet genEntrypoint() {
+        return null;
+    }
+
+    @Override
+    public XirSnippet genSafepoint() {
+        return new XirSnippet(safepointTemplate);
+    }
+
+    @Override
     public XirSnippet genResolveClassObject(RiType type) {
         return new XirSnippet(resolveClassTemplate, XirArgument.forObject(guardFor(type)));
     }
 
     @Override
     public XirSnippet genInvokeInterface(XirArgument receiver, RiMethod method) {
-        XirPair pair = invokeInterfaceTemplates[method.signatureType().returnBasicType().ordinal()];
+        XirPair pair = invokeInterfaceTemplates;
         if (method.isLoaded()) {
             InterfaceMethodActor methodActor = ((MaxRiMethod) method).asInterfaceMethodActor("invokeinterface");
             XirArgument interfaceID = XirArgument.forInt(methodActor.holder().id);
@@ -262,7 +270,7 @@ public class MaxXirGenerator extends RiXirGenerator {
 
     @Override
     public XirSnippet genInvokeVirtual(XirArgument receiver, RiMethod method) {
-        XirPair pair = invokeVirtualTemplates[method.signatureType().returnBasicType().ordinal()];
+        XirPair pair = invokeVirtualTemplates;
         if (method.isLoaded()) {
             VirtualMethodActor methodActor = ((MaxRiMethod) method).asVirtualMethodActor("invokevirtual");
             XirArgument vtableOffset = XirArgument.forInt(methodActor.vTableIndex() * wordSize + offsetOfFirstArrayElement);
@@ -382,13 +390,16 @@ public class MaxXirGenerator extends RiXirGenerator {
         if (type.isLoaded()) {
             XirTemplate template;
             if (type.isInterface()) {
+                // have to use the interface template
                 template = checkcastForInterfaceTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
                 return new XirSnippet(template, receiver, XirArgument.forInt(interfaceID), hub);
             } else if (type.isFinal() && !type.isArrayKlass()) {
+                // can use the leaf class test
                 template = checkcastForLeafTemplate.resolved;
             } else {
+                // can use the class test
                 template = checkcastForClassTemplate.resolved;
                 MaxRiType maxType = (MaxRiType) type;
                 int interfaceID = maxType.classActor.id;
@@ -442,8 +453,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirSnippet(arraylengthTemplate, array);
     }
 
-    private XirSnippet genInvokeDirect(RiMethod method, XirPair[] templateArray) {
-        XirPair pair = templateArray[method.signatureType().returnBasicType().ordinal()];
+    private XirSnippet genInvokeDirect(RiMethod method, XirPair pair) {
         if (method.isLoaded()) {
             return new XirSnippet(pair.resolved, XirArgument.forWord(0));
         }
@@ -572,7 +582,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         return finishTemplate(asm, "arrayload<" + kind + ">");
     }
 
-    private XirPair buildInvokeStatic(CiKind kind) {
+    private XirPair buildInvokeStatic() {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
@@ -592,14 +602,14 @@ public class MaxXirGenerator extends RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
-    private XirPair buildInvokeSpecial(CiKind kind) {
+    private XirPair buildInvokeSpecial() {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
             // resolved case
             asm.restart();
             XirParameter addr = asm.createConstantInputParameter("addr", CiKind.Word); // address to call
-            resolved = finishTemplate(asm, addr, "invokespecial<" + kind + ">");
+            resolved = finishTemplate(asm, addr, "invokespecial");
         }
         {
             // unresolved invokespecial template
@@ -607,12 +617,12 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirParameter guard = asm.createConstantInputParameter("guard", CiKind.Object);
             XirOperand addr = asm.createTemp("addr", CiKind.Word);
             resolve(asm, "resolveSpecialMethod", addr, guard);
-            unresolved = finishTemplate(asm, addr, "invokespecial-unresolved<" + kind + ">");
+            unresolved = finishTemplate(asm, addr, "invokespecial-unresolved");
         }
         return new XirPair(resolved, unresolved);
     }
 
-    private XirPair buildInvokeInterface(CiKind kind) {
+    private XirPair buildInvokeInterface() {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
@@ -633,7 +643,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.add(a, a, methodIndex);
             XirOperand result = asm.createTemp("result", CiKind.Word);
             asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
-            resolved = finishTemplate(asm, result, "invokeinterface<" + kind + ">");
+            resolved = finishTemplate(asm, result, "invokeinterface");
         }
         {
             // unresolved invokeinterface
@@ -657,12 +667,12 @@ public class MaxXirGenerator extends RiXirGenerator {
             asm.add(a, a, methodIndex);
             XirOperand result = asm.createTemp("result", CiKind.Word);
             asm.pload(CiKind.Word, result, hub, a, asm.i(offsetOfFirstArrayElement), asm.i(Util.log2(wordSize)), false);
-            unresolved = finishTemplate(asm, result, "invokeinterface<" + kind + ">-unresolved");
+            unresolved = finishTemplate(asm, result, "invokeinterface");
         }
         return new XirPair(resolved, unresolved);
     }
 
-    private XirPair buildResolvedInvokeVirtual(CiKind kind) {
+    private XirPair buildResolvedInvokeVirtual() {
         XirTemplate resolved;
         XirTemplate unresolved;
         {
@@ -674,7 +684,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirOperand addr = asm.createTemp("addr", CiKind.Word);
             asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset), true);
             asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
-            resolved = finishTemplate(asm, addr, "invokevirtual<" + kind + ">");
+            resolved = finishTemplate(asm, addr, "invokevirtual");
         }
         {
             // unresolved invokevirtual template
@@ -687,7 +697,7 @@ public class MaxXirGenerator extends RiXirGenerator {
             XirOperand addr = asm.createTemp("addr", CiKind.Word);
             asm.pload(CiKind.Object, hub, receiver, asm.i(hubOffset), true);
             asm.pload(CiKind.Word, addr, hub, vtableOffset, false);
-            unresolved = finishTemplate(asm, addr, "invokevirtual-unresolved<" + kind + ">");
+            unresolved = finishTemplate(asm, addr, "invokevirtual-unresolved");
         }
         return new XirPair(resolved, unresolved);
     }
@@ -1122,6 +1132,26 @@ public class MaxXirGenerator extends RiXirGenerator {
             throw ProgramError.unexpected("could not find runtime call: " + method);
         }
         asm.callStub(stub, result, args);
+    }
+
+    private void callRuntime(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
+        RiMethod rtmethod = runtimeMethods.get(method);
+        if (rtmethod == null) {
+            // search for the runtime call and create the stub
+            for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
+                int flags = m.getModifiers();
+                if (Modifier.isStatic(flags) && Modifier.isPublic(flags) && m.getName().equals(method)) {
+                    // runtime call found. create a global stub that calls the runtime method
+                    MethodActor methodActor = MethodActor.fromJava(m);
+                    rtmethod = runtime.getRiMethod((ClassMethodActor) methodActor);
+                    runtimeMethods.put(method, rtmethod);
+                }
+            }
+        }
+        if (rtmethod == null) {
+            throw ProgramError.unexpected("could not find runtime call: " + method);
+        }
+        asm.callRuntime(rtmethod, result, args);
     }
 
     public static class RuntimeCalls {

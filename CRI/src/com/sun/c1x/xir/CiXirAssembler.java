@@ -305,7 +305,6 @@ public abstract class CiXirAssembler {
         PointerCAS,
         CallStub,
         CallRuntime,
-        CallJava,
         Jmp,
         Jeq,
         Jneq,
