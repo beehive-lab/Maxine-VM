@@ -1027,22 +1027,33 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class InspectMemoryWordsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Inspect memory";
-        private final Address address;;
+        private final Address address;
+        private final MemoryRegion memoryRegion;
 
         InspectMemoryWordsAction() {
             super(inspection(), "Inspect memory at address...");
-            refreshableActions.append(this);
             this.address = null;
+            this.memoryRegion = null;
+        }
+
+        InspectMemoryWordsAction(MemoryRegion memoryRegion, String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+            this.address = null;
+            this.memoryRegion = memoryRegion;
         }
 
         InspectMemoryWordsAction(Address address, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.address = address;
+            this.memoryRegion = null;
         }
 
         @Override
         protected void procedure() {
-            if (address != null) {
+            if (memoryRegion != null) {
+                final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, memoryRegion.description());
+                inspector.highlight();
+            } else  if (address != null) {
                 final Inspector inspector = new MemoryWordsInspector(inspection(), new FixedMemoryRegion(address, maxVM().wordSize().times(10), ""));
                 inspector.highlight();
             } else {
@@ -1065,6 +1076,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction inspectMemoryWords() {
         return inspectMemoryWordsAction;
+    }
+
+    public final InspectorAction inspectMemoryWords(MemoryRegion memoryRegion) {
+        return new InspectMemoryWordsAction(memoryRegion, null);
     }
 
     /**
