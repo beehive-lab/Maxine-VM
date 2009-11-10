@@ -99,8 +99,12 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
 
     public void setSelected() {
         try {
+            if (isIcon()) {
+                setIcon(false);
+            }
             setSelected(true);
         } catch (PropertyVetoException e) {
+            ProgramError.unexpected();
         }
     }
 
