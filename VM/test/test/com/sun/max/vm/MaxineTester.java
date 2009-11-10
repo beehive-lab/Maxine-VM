@@ -101,7 +101,7 @@ public class MaxineTester {
     private static final Option<List<String>> maxvmConfigListOption = options.newStringListOption("maxvm-configs",
                     MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
-    private static final Option<String> javaConfigAliasOption = options.newStringOption("maxvm-config-alias", "cpscps",
+    private static final Option<String> javaConfigAliasOption = options.newStringOption("maxvm-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
     private static final Option<Integer> junitTestTimeOutOption = options.newIntegerOption("junit-test-timeout", 300,
                     "The number of seconds to wait for a JUnit test to complete before " +
@@ -125,7 +125,7 @@ public class MaxineTester {
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
                     "Show help message and exit.");
 
-    private static String javaConfigAlias = null;
+    private static String javaConfig = null;
     private static Date startDate;
 
     public static void main(String[] args) {
@@ -138,9 +138,11 @@ public class MaxineTester {
             }
 
             startDate = new Date();
-            javaConfigAlias = javaConfigAliasOption.getValue();
-            if (javaConfigAlias != null) {
-                ProgramError.check(MaxineTesterConfiguration.imageParams.containsKey(javaConfigAlias), "Unknown Java tester config '" + javaConfigAlias + "'");
+            javaConfig = javaConfigAliasOption.getValue();
+            if (javaConfig != null) {
+                ProgramError.check(MaxineTesterConfiguration.imageParams.containsKey(javaConfig), "Unknown Java tester config '" + javaConfig + "'");
+            } else {
+                javaConfig = "java";
             }
             final File outputDir = new File(outputDirOption.getValue()).getAbsoluteFile();
             makeDirectory(outputDir);
@@ -196,7 +198,6 @@ public class MaxineTester {
             System.exit(-1);
         }
     }
-
 
     private static Iterable<String> filterTestsBySubstrings(Iterable<String> tests, String[] substrings) {
         final List<String> list = new ArrayList<String>();
@@ -612,7 +613,7 @@ public class MaxineTester {
     private static final Map<String, File> generatedImages = new HashMap<String, File>();
 
     private static File generateJavaRunSchemeImage() {
-        final String config = javaConfigAlias == null ? "java" : javaConfigAlias;
+        final String config = javaConfig;
         final File imageDir = new File(outputDirOption.getValue(), config);
         if (skipImageGenOption.getValue()) {
             return imageDir;
@@ -1294,7 +1295,7 @@ public class MaxineTester {
      */
     public static class JTLoadHarness implements Harness {
         public boolean run() {
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 final PrintStream out = out();
@@ -1337,7 +1338,7 @@ public class MaxineTester {
         }
 
         public boolean run() {
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 runOutputTests(outputDir, imageDir);
@@ -1428,7 +1429,7 @@ public class MaxineTester {
                 out().println("Need to specify the location of SpecJVM98 ZIP file with -" + specjvm98ZipOption + " or in the SPECJVM98_ZIP environment variable");
                 return false;
             }
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 if (!specjvm98Zip.exists()) {
@@ -1491,7 +1492,7 @@ public class MaxineTester {
                 out().println("Need to specify the location of Dacapo JAR file with -" + dacapoJarOption + " or in the DACAPO_JAR environment variable");
                 return false;
             }
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 if (!dacapoJar.exists()) {
@@ -1545,7 +1546,7 @@ public class MaxineTester {
                 out().println("Need to specify the location of the Programming Language Shootout directory with -" + shootoutDirOption + " or in the SHOOTOUT_DIR environment variable");
                 return false;
             }
-            final File outputDir = new File(outputDirOption.getValue(), "java");
+            final File outputDir = new File(outputDirOption.getValue(), javaConfig);
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
                 if (!shootoutDir.exists()) {
