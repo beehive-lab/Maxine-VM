@@ -45,4 +45,9 @@ public interface MaxVMThread {
      */
     MaxThread maxThread();
 
+    /**
+     * @return the VM object that implements this thread.f
+     */
+    TeleVmThread teleVmThread();
+
 }
