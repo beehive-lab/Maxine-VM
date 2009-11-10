@@ -219,14 +219,9 @@ public abstract class LIRAssembler {
     void emitLirList(LIRList list) {
         peephole(list);
 
-        int n = list.length();
-        for (int i = 0; i < n; i++) {
-            LIRInstruction op = list.at(i);
-
+        for (LIRInstruction op : list.instructionsList()) {
             if (C1XOptions.CommentedAssembly) {
-                // Don't record out every op since that's too verbose. Print
-                // branches since they include block and stub names. Also print
-                // patching moves since they generate funny looking code.
+                // Only print out branches
                 if (op.code == LIROpcode.Branch) {
                     ByteArrayOutputStream st = new ByteArrayOutputStream();
                     LogStream ls = new LogStream(st);
@@ -237,7 +232,7 @@ public abstract class LIRAssembler {
             }
             if (C1XOptions.PrintLIRWithAssembly) {
                 // print out the LIR operation followed by the resulting assembly
-                list.at(i).printOn(TTY.out);
+                op.printOn(TTY.out);
                 TTY.println();
             }
 
@@ -264,7 +259,6 @@ public abstract class LIRAssembler {
     }
 
     boolean checkNoUnboundLabels() {
-
         for (int i = 0; i < branchTargetBlocks.size() - 1; i++) {
             if (!branchTargetBlocks.get(i).label().isBound()) {
                 TTY.println(String.format("label of block B%d is not bound", branchTargetBlocks.get(i).blockID));
@@ -491,9 +485,6 @@ public abstract class LIRAssembler {
         }
     }
 
-    // TODO:
-    // BarrierSet bs;
-
     protected abstract void leal(LIRAddress inOpr, LIRLocation resultOpr);
 
     protected abstract void negate(LIROperand inOpr, LIROperand resultOpr);
@@ -518,20 +509,13 @@ public abstract class LIRAssembler {
 
             case StdEntry:
                 // init offsets
-
                 emitPrologue();
 
-                // TODO: Set entry offsets
-
-                if (needsIcache(compilation.method())) {
-                    checkIcache();
-                }
                 asm.verifiedEntry();
                 buildFrame();
                 break;
 
             case OsrEntry:
-                // TODO: Set OSR entry offsets
                 osrEntry();
                 break;
 
@@ -555,8 +539,6 @@ public abstract class LIRAssembler {
                 throw Util.shouldNotReachHere();
         }
     }
-
-    protected abstract int checkIcache();
 
     protected abstract void getThread(LIROperand result);
 
@@ -583,7 +565,6 @@ public abstract class LIRAssembler {
             case Ucmpfd2i:
                 compFl2i(op.code, op.opr1(), op.opr2(), op.result(), op);
                 break;
-
 
             case Resolve:
                 resolve(CiRuntimeCall.ResolveClass, op.info, op.result(), op.opr1(), op.opr2());
@@ -718,9 +699,7 @@ public abstract class LIRAssembler {
             }
 
         } else if (src.isAddress()) {
-
             if (dest.isStack()) {
-
                 assert info == null && !unaligned;
                 mem2stack(src, dest, type);
             } else if (dest.isAddress()) {
@@ -755,12 +734,6 @@ public abstract class LIRAssembler {
 
     protected abstract void reg2reg(LIROperand src, LIROperand dest);
 
-    public void verifyOopMap(LIRDebugInfo info) {
-        if (C1XOptions.VerifyOopMaps || C1XOptions.VerifyOops) {
-            // TODO: verify oops
-        }
-    }
-
     protected abstract void emitBranch(LIRBranch lirBranch);
 
     protected abstract void emitConvert(LIRConvert lirConvert);
@@ -783,7 +756,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitXir(LIRXirInstruction lirXirInstruction);
 
-    public void emitDeoptHandler() {
-        Util.nonFatalUnimplemented();
+    public void verifyOopMap(LIRDebugInfo info) {
+        // TODO: verify oops
     }
 }

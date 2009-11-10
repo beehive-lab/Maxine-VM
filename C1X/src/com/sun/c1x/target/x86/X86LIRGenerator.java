@@ -284,7 +284,6 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         LIRDebugInfo infoForException = null;
         if (x.needsNullCheck()) {
-            // TODO: lockStackBefore()
             infoForException = stateFor(x, x.stateBefore());
         }
         // this CodeEmitInfo must not have the xhandlers because here the
@@ -298,10 +297,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         assert x.isLive() : "";
 
         LIRItem obj = new LIRItem(x.object(), this);
-        //obj.dontLoadItem();
 
         LIROperand lock = newRegister(CiKind.Int);
-        //LIROperand objTemp = newRegister(BasicType.Int);
         setNoResult(x);
 
         obj.loadItem();
@@ -443,7 +440,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     public void visitArithmeticOpInt(ArithmeticOp x) {
-
         if (x.opcode() == Bytecodes.IDIV || x.opcode() == Bytecodes.IREM) {
             // The requirements for division and modulo
             // input : rax,: dividend minInt
@@ -596,14 +592,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     private void trySwap(Op2 x) {
-        // when an operand with use count 1 is the left operand, then it is
-        // likely that no move for 2-operand-LIR-form is necessary
-        // TODO: swap operands when it is profitable
-/*
-        if (x.isCommutative() && (!(x.y() instanceof Constant)) && useCount(x.x()) > useCount(x.y())) {
-            x.swapOperands();
-        }
-*/
     }
 
     @Override
@@ -630,6 +618,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     private static final LIROperand long1Opr32 = LIROperandFactory.doubleLocation(CiKind.Long, X86.rbx, X86.rcx);
     private static final LIROperand long1Opr64 = LIROperandFactory.doubleLocation(CiKind.Long, X86.rbx, X86.rbx);
+
     static LIROperand long1Opr(CiArchitecture arch) {
         if (arch.is32bit()) {
             return long1Opr32;
@@ -679,9 +668,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem val = new LIRItem(x.argumentAt(3), this); // replace field with val if matches cmp
 
         assert obj.value().type().isObject() : "invalid type";
-
-        // In 64bit the type can be long, sparc doesn't have this assert // assert(offset.type().tag() == intTag,
-        // "invalid type");
 
         assert cmp.value().type() == type : "invalid type";
         assert val.value().type() == type : "invalid type";
@@ -786,7 +772,6 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected void genNewInstance(NewInstance x) {
-
         LIRDebugInfo info = stateFor(x, x.stateBefore());
         LIROperand reg = resultRegisterFor(x.type());
         LIROperand klassReg = LIROperandFactory.singleLocation(CiKind.Object, X86.rdx);
@@ -956,23 +941,15 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void genInstanceOf(InstanceOf x) {
         LIRItem obj = new LIRItem(x.object(), this);
-
         // result and test object may not be in same register
         LIROperand reg = rlockResult(x);
         LIRDebugInfo patchingInfo = null;
-//        if ((!x.targetClass().isLoaded() || C1XOptions.TestPatching)) {
-//            // must do this before locking the destination register as an oop register
-//            patchingInfo = stateFor(x, x.stateBefore());
-//        }
         obj.loadItem();
-       // LIROperand tmp = newRegister(BasicType.Object);
         lir.genInstanceof(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(CiKind.Object), LIROperandFactory.IllegalLocation, x.directCompare(), patchingInfo);
     }
 
     @Override
     public void visitIf(If x) {
-
-        assert x.successors().size() == 2 : "inconsistency";
         CiKind tag = x.x().type();
 
         Condition cond = x.condition();
@@ -1113,5 +1090,4 @@ public final class X86LIRGenerator extends LIRGenerator {
     protected LIROperand osrBufferPointer() {
         return Util.nonFatalUnimplemented(null);
     }
-
 }
