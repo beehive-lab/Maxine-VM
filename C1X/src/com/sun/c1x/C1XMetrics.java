@@ -57,32 +57,51 @@ public class C1XMetrics {
     public static int DataPatches;
     public static int DirectCallSitesEmitted;
     public static int IndirectCallSitesEmitted;
+    public static int NumberOfLIRXIRInstructions;
+    public static int NumberOfLIRMoveInstructions;
+    public static int NumberOfLIRInstructions;
+    public static int NumberOfHIRInstructions;
+    public static int LSRAIntervalsCreated;
+    public static int LSRANumberOfSpills;
 
     public static Map<String, Integer> StaticHIRInstructionCount = new HashMap<String, Integer>();
 
+    public static void reset() {
+        TargetMethods = 0;
+        LocalValueNumberHits = 0;
+        GlobalValueNumberHits = 0;
+        ValueMapResizes = 0;
+        InlinedFinalizerChecks = 0;
+        FoldableMethodsRegistered = 0;
+        MethodsFolded = 0;
+        InlineForcedMethods = 0;
+        InlineForbiddenMethods = 0;
+        InlinedJsrs = 0;
+        NullCheckIterations = 0;
+        NullCheckEliminations = 0;
+        NullChecksRedundant = 0;
+        ZeroChecksRedundant = 0;
+        EquivalentConstantsMerged = 0;
+        EquivalentConstantsChecked = 0;
+        ConditionalEliminations = 0;
+        BlocksMerged = 0;
+        BlocksSkipped = 0;
+        BlocksDeleted = 0;
+        DeadCodeEliminated = 0;
+        ResolveCPEAttempts = 0;
+        CodeBytesEmitted = 0;
+        SafepointsEmitted = 0;
+        ExceptionHandlersEmitted = 0;
+        DataPatches = 0;
+        DirectCallSitesEmitted = 0;
+        IndirectCallSitesEmitted = 0;
+        NumberOfLIRXIRInstructions = 0;
+        NumberOfLIRMoveInstructions = 0;
+        NumberOfLIRInstructions = 0;
+        NumberOfHIRInstructions = 0;
+        LSRAIntervalsCreated = 0;
+        LSRANumberOfSpills = 0;
 
-    /**
-     * The number of LIRXIR instructions that were allocated during compilation.
-     */
-    public static int NumberOfLIRXIRInstructions;
-
-    /**
-     * The number of LIR move instructions that were allocated during compilation.
-     */
-    public static int NumberOfLIRMoveInstructions;
-
-    /**
-     * The number of LIR instructions that were allocated during compilation.
-     */
-    public static int NumberOfLIRInstructions;
-
-    /**
-     * The number of interval objects that were allocated during linear scan register allocation.
-     */
-    public static int LSRAIntervalsCreated;
-
-    /**
-     * The number of spill slots required for linear scan register allocation.
-     */
-    public static int LSRANumberOfSpills;
+        StaticHIRInstructionCount = new HashMap<String, Integer>();
+    }
 }
