@@ -347,7 +347,7 @@ public class LinearScan {
                 break;
 
             default:
-                assert false : "other states not allowed at this time";
+                throw new CiBailout("other states not allowed at this time");
         }
     }
 
@@ -386,7 +386,7 @@ public class LinearScan {
                 break;
 
             default:
-                assert false : "other states not allowed at this time";
+                throw new CiBailout("other states not allowed at this time");
         }
     }
 
@@ -1462,10 +1462,7 @@ public class LinearScan {
         for (i = 0; i < intervals.length; i++) {
             Interval it = intervals[i];
             if (it != null) {
-                if (from > it.from()) {
-                    assert false : "";
-                    return false;
-                }
+                assert from <= it.from();
                 from = it.from();
             }
         }
@@ -1675,10 +1672,6 @@ public class LinearScan {
             return result;
         }
 
-        assert false : "must find an interval :  but do a clean bailout in product mode";
-        result = new Interval(CiRegister.FirstVirtualRegisterNumber);
-        result.assignReg(0);
-        result.setType(CiKind.Int);
         throw new CiBailout("LinearScan: interval is null");
     }
 
@@ -2105,7 +2098,6 @@ public class LinearScan {
                         return LIROperandFactory.singleLocation(CiKind.Float, toRegister(assignedReg));
                     }
 
-                    assert false : "no fpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
                     return LIROperandFactory.singleLocation(CiKind.Float, toRegister(assignedReg));
                 }
@@ -2119,11 +2111,9 @@ public class LinearScan {
 
                     LIROperand result;
                     if (compilation.target.arch.isSPARC()) {
-                        assert false : "no fpu register";
                         assert assignedReg % 2 == 0 && assignedReg + 1 == interval.assignedRegHi() : "must be sequential and even";
                         result = LIROperandFactory.doubleLocation(CiKind.Double, toRegister(interval.assignedRegHi()), toRegister(assignedReg));
                     } else {
-                        assert false : "no fpu register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double fpu values are stored in one register on Intel)";
                         result = LIROperandFactory.singleLocation(CiKind.Double, toRegister(assignedReg));
                     }
@@ -2176,7 +2166,7 @@ public class LinearScan {
                         LIRBranch branch = (LIRBranch) instr;
                         if (block.liveOut().get(opr.vregNumber())) {
                             assert branch.cond() == LIRCondition.Always : "block does not end with an unconditional jump";
-                            assert false : "can't get split child for the last branch of a block because the information would be incorrect (moves are inserted before the branch in resolveDataFlow)";
+                            throw new CiBailout("can't get split child for the last branch of a block because the information would be incorrect (moves are inserted before the branch in resolveDataFlow)");
                         }
                     }
                 }
@@ -2816,42 +2806,42 @@ public class LinearScan {
                 TTY.println("Interval %d is on position %d in list", i1.registerNumber(), i);
                 i1.print(TTY.out, this);
                 TTY.cr();
-                assert false;
+                throw new CiBailout("");
             }
 
             if (i1.registerNumber() >= CiRegister.FirstVirtualRegisterNumber && i1.type() == CiKind.Illegal) {
                 TTY.println("Interval %d has no type assigned", i1.registerNumber());
                 i1.print(TTY.out, this);
                 TTY.cr();
-                assert false;
+                throw new CiBailout("");
             }
 
             if (i1.assignedReg() == getAnyreg()) {
                 TTY.println("Interval %d has no register assigned", i1.registerNumber());
                 i1.print(TTY.out, this);
                 TTY.cr();
-                assert false;
+                throw new CiBailout("");
             }
 
             if (i1.assignedReg() == i1.assignedRegHi()) {
                 TTY.println("Interval %d: low and high register equal", i1.registerNumber());
                 i1.print(TTY.out, this);
                 TTY.cr();
-                assert false;
+                throw new CiBailout("");
             }
 
             if (!isProcessedRegNum(i1.assignedReg())) {
                 TTY.println("Can not have an Interval for an ignored register " + i1.assignedReg());
                 i1.print(TTY.out, this);
                 TTY.cr();
-                assert false;
+                throw new CiBailout("");
             }
 
             if (i1.first() == Range.EndMarker) {
                 TTY.println("Interval %d has no Range", i1.registerNumber());
                 i1.print(TTY.out, this);
                 TTY.cr();
-                assert false;
+                throw new CiBailout("");
             }
 
             for (Range r = i1.first(); r != Range.EndMarker; r = r.next) {
@@ -2859,7 +2849,7 @@ public class LinearScan {
                     TTY.println("Interval %d has zero length range", i1.registerNumber());
                     i1.print(TTY.out, this);
                     TTY.cr();
-                    assert false;
+                    throw new CiBailout("");
                 }
             }
 
@@ -2890,7 +2880,7 @@ public class LinearScan {
                         i2.print(TTY.out, this);
                         TTY.cr();
                     }
-                    assert false;
+                    throw new CiBailout("");
                 }
             }
         }
@@ -2907,7 +2897,6 @@ public class LinearScan {
         otherIntervals.addRange(Integer.MAX_VALUE - 2, Integer.MAX_VALUE - 1);
         IntervalWalker iw = new IntervalWalker(this, fixedIntervals, otherIntervals);
 
-        //LIRVisitState visitor = new LIRVisitState();
         for (int i = 0; i < blockCount(); i++) {
             BlockBegin block = blockAt(i);
 
@@ -2915,9 +2904,6 @@ public class LinearScan {
 
             for (int j = 0; j < instructions.size(); j++) {
                 LIRInstruction op = instructions.get(j);
-                //int opId = op.id();
-
-                //visitor.visit(op);
 
                 if (op.infoCount() > 0) {
                     iw.walkBefore(op.id());
@@ -2962,45 +2948,6 @@ public class LinearScan {
                             }
                         }
                     }
-
-                    // TODO: (tw) Check whether this should also be asserted when visitor.infoCount() == 0 (to me this seems wrong in C1)
-                    // With register oop-maps this probably need not be true...
-
-
-                    /*
-                    // oop-maps at calls do not contain registers, so check is not needed
-                    if (!visitor.hasCall()) {
-
-                        for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
-                            int n = visitor.oprCount(mode);
-                            for (int k = 0; k < n; k++) {
-                                LIROperand opr = visitor.oprAt(mode, k);
-
-                                if (opr.isFixedCpu() && opr.isOop()) {
-                                    // operand is a non-virtual cpu register and contains an oop
-                                    if (C1XOptions.TraceLinearScanLevel >= 4) {
-                                        op.printOn(TTY.out);
-                                        TTY.print("checking operand ");
-                                        opr.print(TTY.out);
-                                        TTY.println();
-                                    }
-
-                                    Interval interval = intervalAt(regNum(opr));
-                                    assert interval != null : "no interval";
-
-                                    if (mode == LIRInstruction.OperandMode.InputMode) {
-                                        if (interval.to() >= opId + 1) {
-                                            assert interval.to() < opId + 2 || interval.hasHoleBetween(opId, opId + 2) : "oop input operand live after instruction";
-                                        }
-                                    } else if (mode == LIRInstruction.OperandMode.OutputMode) {
-                                        if (interval.from() <= opId - 1) {
-                                            assert interval.hasHoleBetween(opId - 1, opId) : "oop input operand live after instruction";
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }*/
                 }
             }
         }

@@ -24,6 +24,7 @@ package com.sun.c1x.ir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.ci.CiBailout;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.util.*;
 
@@ -493,7 +494,7 @@ public class ComputeLinearScanOrder {
         if (readyForProcessing(stdEntry)) {
             sortIntoWorkList(stdEntry);
         } else {
-            assert false : "the stdEntry must be ready for processing (otherwise, the method has no start block)";
+            throw new CiBailout("the stdEntry must be ready for processing (otherwise, the method has no start block)");
         }
 
         do {

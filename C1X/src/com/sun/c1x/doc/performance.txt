@@ -12,13 +12,12 @@ Backend:
 	- use LEA instruction on x86
 	- recognize pointer arithmetic addressing modes
 	- recognize multiply by 3, 5, 9 and emit lea rk, [rs, rs*2], etc
-	- Maxine XIR: move unconditional runtime calls into fast path
+	- Maxine XIR: make direct runtime calls instead of through global stub
 	- Maxine XIR: implement inline allocation
 	- Maxine XIR: implement biased locking fastpath
 	- Maxine XIR: faster subtype checks for classes, leaves
 	- better handling of tableswitch bytecode
 	- better handling of two operand LIR form
-	- XIR: communicate XirSite information (nullity, range checks, code pos)
 
 Frontend:
 	- XIR: implement HIR -> HIR xir translation
@@ -28,6 +27,8 @@ Frontend:
 	- Implement GVN of memory loads / stores
 	- Implement memory reordering
 	- Implement loop invariant code motion
+	- Finish loop peeling
+	- Implement loop unrolling
 	- Allow value numbering of constant loads
 	- Finish loop peeling
 	- Guarded and multiple inlining

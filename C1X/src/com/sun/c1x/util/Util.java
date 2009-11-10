@@ -48,6 +48,10 @@ public class Util {
         throw new Error("unimplemented");
     }
 
+    public static RuntimeException unimplemented(String msg) {
+        throw new Error("unimplemented:" + msg);
+    }
+
     public static RuntimeException shouldNotReachHere() {
         throw new Error("should not reach here");
     }
