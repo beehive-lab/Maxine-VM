@@ -127,6 +127,7 @@ public final class MemoryWordsTable extends InspectorTable {
      */
     public void setMemoryRegion(MemoryWordRegion memoryWordRegion) {
         tableModel.setMemoryRegion(memoryWordRegion);
+        updateFocusSelection();
     }
 
     /**
@@ -140,6 +141,16 @@ public final class MemoryWordsTable extends InspectorTable {
     public void scrollToOrigin() {
         final int row = tableModel.findRow(tableModel.getOrigin());
         scrollToRows(row, row);
+    }
+
+    public void scrollToAddress(Address address) {
+        if (address == null || address.isZero()) {
+            return;
+        }
+        final int row = tableModel.findRow(address);
+        if (row >= 0) {
+            scrollToRows(row, row);
+        }
     }
 
     public void scrollToRange(Address first, Address last) {

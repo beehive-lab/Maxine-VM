@@ -50,14 +50,13 @@ public class TupleInspector extends ObjectInspector {
         if (teleTargetMethod != null) {
             frame.makeMenu(MenuKind.DEBUG_MENU).add(actions.setTargetCodeBreakpointAtMethodEntry(teleTargetMethod));
         }
+        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
         if (teleClassMethodActor != null) {
-            final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
             objectMenu.add(actions.inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
             objectMenu.add(actions.inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
             objectMenu.add(actions.inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
             objectMenu.add(actions.inspectTargetMethodCompilationsMenu(teleClassMethodActor, "Method compilations"));
-            objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
 
             final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
             codeMenu.add(actions.viewJavaSource(teleClassMethodActor));
@@ -72,6 +71,7 @@ public class TupleInspector extends ObjectInspector {
             debugMenu.add(actions.debugInvokeMethod(teleClassMethodActor));
             debugMenu.add(defaultMenuItems(MenuKind.DEBUG_MENU));
         }
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override

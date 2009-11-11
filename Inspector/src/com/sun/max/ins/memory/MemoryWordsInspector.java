@@ -34,7 +34,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 
 // TODO (mlvdv) try to make columns narrow
 // TODO (mlvdv) Parameter for object search extent
@@ -231,6 +230,7 @@ public final class MemoryWordsInspector extends Inspector {
                     // User model policy:  any adjustment to the region drops into generic word mode
                     clearViewMode();
                     setOrigin(value.aligned(wordSize.toInt()));
+                    setTitle();
                 }
             }
         };
@@ -247,6 +247,7 @@ public final class MemoryWordsInspector extends Inspector {
                     // User model policy:  any adjustment to the region drops into generic word mode
                     clearViewMode();
                     setMemoryRegion(new MemoryWordRegion(memoryRegion.start(), newWordCount, wordSize));
+                    setTitle();
                 }
             }
         };
@@ -324,6 +325,7 @@ public final class MemoryWordsInspector extends Inspector {
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         setOriginAction.refresh(true);
         memoryMenu.add(setOriginAction);
+        memoryMenu.add(scrollToFocusAction);
         memoryMenu.add(inspectBytesAction);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
@@ -439,7 +441,7 @@ public final class MemoryWordsInspector extends Inspector {
             this.inspectorTable = inspectorTable;
             // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
             // this is empirical, based only the fuzziest notion of how these dimensions work
-            final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), inspectorTable.getRowCount()) + 1;
+            final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), inspectorTable.getRowCount()) + 2;
             final int preferredHeight = displayRows * (inspectorTable.getRowHeight() + inspectorTable.getRowMargin()) +
                                                           inspectorTable.getRowMargin()  + inspectorTable.getTableHeader().getHeight();
             final int preferredWidth = inspectorTable.getPreferredScrollableViewportSize().width;
@@ -580,6 +582,7 @@ public final class MemoryWordsInspector extends Inspector {
         this.memoryWordRegion = memoryWordRegion;
         wordCountField.setValue(Address.fromInt(memoryWordRegion.wordCount));
         table.setMemoryRegion(memoryWordRegion);
+
     }
 
     /**
@@ -779,18 +782,6 @@ public final class MemoryWordsInspector extends Inspector {
         return memoryWordRegion;
     }
 
-    private static final Predicate<Inspector> allMemoryWordsInspectorsPredicate = new Predicate<Inspector>() {
-        public boolean evaluate(Inspector inspector) {
-            return inspector instanceof MemoryWordsInspector;
-        }
-    };
-
-    private final Predicate<Inspector> otherMemoryWordsInspectorsPredicate = new Predicate<Inspector>() {
-        public boolean evaluate(Inspector inspector) {
-            return inspector instanceof MemoryWordsInspector && inspector != MemoryWordsInspector.this;
-        }
-    };
-
     private InspectorAction cloneAction = new InspectorAction(inspection(), "Clone") {
         @Override
         protected void procedure() {
@@ -803,6 +794,19 @@ public final class MemoryWordsInspector extends Inspector {
         @Override
         protected void procedure() {
             setOrigin(focus().address());
+            MemoryWordsInspector.this.refreshView(true);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(memoryWordRegion.contains(focus().address()));
+        }
+    };
+
+    private InspectorAction scrollToFocusAction = new InspectorAction(inspection(), "Scroll to selected memorylocation") {
+        @Override
+        protected void procedure() {
+            table.scrollToAddress(focus().address());
             MemoryWordsInspector.this.refreshView(true);
         }
 
