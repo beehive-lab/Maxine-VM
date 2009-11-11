@@ -174,7 +174,7 @@ public final class VMOptions {
                 return true;
             }
         }, MaxineVM.Phase.STARTING);
-        
+
         register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continue") {
             @Override
             public boolean parseValue(Pointer optionValue) {
