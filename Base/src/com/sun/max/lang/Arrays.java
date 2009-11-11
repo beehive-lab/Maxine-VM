@@ -316,6 +316,20 @@ public final class Arrays {
         return false;
     }
 
+    /**
+     * Returns true iff there is at least one element that is contained in both arrays.
+     */
+    public static <Element_Type> boolean containsAny(Element_Type[] array1, Element_Type[] array2) {
+        for (Element_Type element1 : array1) {
+            for (Element_Type element2 : array2) {
+                if (element1 == element2) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static <Element_Type> int find(Element_Type[] array, Element_Type value) {
         for (int i = 0; i < array.length; i++) {
             if (array[i] == value) {

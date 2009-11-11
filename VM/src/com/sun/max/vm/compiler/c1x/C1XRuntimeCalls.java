@@ -292,6 +292,21 @@ public class C1XRuntimeCalls {
         return b.isSubClassHub(a.classActor);
     }
 
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.SlowCheckCast)
+    public static Object runtimeSlowCheckCast(Object object, Hub expected) {
+        if (!ObjectAccess.readHub(object).isSubClassHub(expected.classActor)) {
+            throw new ClassCastException();
+        }
+        return object;
+    }
+
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.SlowStoreCheck)
+    public static void runtimeSlowStoreCheck(Hub a, Hub b) {
+        if (!b.isSubClassHub(a.classActor)) {
+            throw new ArrayStoreException();
+        }
+    }
+
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Monitorenter)
     public static void runtimeMonitorenter(Object obj, int monitorID) {

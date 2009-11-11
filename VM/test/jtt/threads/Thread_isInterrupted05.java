@@ -18,36 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
-
-import com.sun.max.vm.thread.*;
+package jtt.threads;
 
 
-/**
- * Access to a {@link VmThread} in the Maxine VM..
- *
- * @author Michael Van De Vanter
- *
+/*
+ * @Harness: java
+ * @Runs: 0 = true
  */
-public interface MaxVMThread {
 
-    /**
-     * @return the name assigned to the thread in the {@link TeleVM}; may change dynamically.
-     */
-    String name();
+// Interrupted during wait, with interrupter joining
+public class Thread_isInterrupted05 {
 
-    /**
-     * Find the thread, if any, associated with the VM thread.
-     * <br>
-     * Thread-safe.
-     *
-     * @return the thread in the VM with which this VM thread is associated.
-     */
-    MaxThread maxThread();
+    public static boolean test(int i)  throws InterruptedException {
+        final Thread waitInterruptee = new WaitInterruptee();
+        waitInterruptee.start();
+        waitInterruptee.interrupt();
+        waitInterruptee.join();
+        return true;
+    }
 
-    /**
-     * @return the VM object that implements this thread.f
-     */
-    TeleVmThread teleVmThread();
+    static class WaitInterruptee extends Thread {
+        @Override
+        public void run() {
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException ex) {
+                }
+            }
+        }
+    }
+
 
 }

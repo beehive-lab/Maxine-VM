@@ -54,6 +54,9 @@ public class C1XTest {
 
     private static final OptionSet options = new OptionSet(false);
 
+    private static final Option<String> searchCpOption = options.newStringOption("search-cp", null,
+        "The restricted class path to use when matching compilation_specs. This must be a " +
+        "subset of the classpath (i.e. the classpath specified to the underlying JVM running this process).");
     private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
         "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1,
@@ -64,6 +67,8 @@ public class C1XTest {
         "Print the size of bailed out methods, which helps choosing the simplest failure case for debugging..");
     private static final Option<File> outFileOption = options.newFileOption("o", (File) null,
         "A file to which output should be sent. If not specified, then output is sent to stdout.");
+    private static final Option<Boolean> nowarnOption = options.newBooleanOption("nowarn", false,
+        "Do not print ClassNotFoundException warnings.");
     private static final Option<Boolean> clinitOption = options.newBooleanOption("clinit", true,
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
@@ -316,12 +321,12 @@ public class C1XTest {
         final PatternType type;
 
         public PatternMatcher(String pattern) {
-            if (pattern.startsWith("^") && pattern.endsWith("^")) {
+            if (pattern.startsWith("^") && pattern.endsWith("^") && pattern.length() != 1) {
                 this.type = EXACT;
                 this.pattern = pattern.substring(1, pattern.length() - 1);
             } else if (pattern.startsWith("^")) {
                 this.type = PREFIX;
-                this.pattern = pattern.substring(1);
+                this.pattern = pattern.length() == 1 ? "" : pattern.substring(1);
             } else if (pattern.endsWith("^")) {
                 this.type = SUFFIX;
                 this.pattern = pattern.substring(0, pattern.length() - 1);
@@ -337,7 +342,8 @@ public class C1XTest {
     }
 
     private static List<MethodActor> findMethodsToCompile(String[] arguments) {
-        final Classpath classpath = Classpath.fromSystem();
+        String searchCp = searchCpOption.getValue();
+        final Classpath classpath = searchCp == null || searchCp.length() == 0 ? Classpath.fromSystem() : new Classpath(searchCp);
 
         final List<MethodActor> methods = new ArrayList<MethodActor>();
         final Set<String> exclusions = new HashSet<String>();
@@ -392,7 +398,12 @@ public class C1XTest {
             // for all found classes, search for matching methods
             for (String className : matchingClasses) {
                 try {
-                    final Class<?> javaClass = Class.forName(className, false, C1XTest.class.getClassLoader());
+                    Class<?> javaClass = null;
+                    try {
+                        javaClass = Class.forName(className, false, C1XTest.class.getClassLoader());
+                    } catch (NoClassDefFoundError noClassDefFoundError) {
+                        throw new ClassNotFoundException(className, noClassDefFoundError);
+                    }
                     final ClassActor classActor = getClassActorNonfatal(javaClass);
                     if (classActor == null) {
                         continue;
@@ -424,7 +435,9 @@ public class C1XTest {
                         addMatchingMethods(methods, classActor, methodNamePattern, signature, classActor.localVirtualMethodActors(), exclusions);
                     }
                 } catch (ClassNotFoundException classNotFoundException) {
-                    ProgramWarning.message(classNotFoundException.toString());
+                    if (!nowarnOption.getValue()) {
+                        ProgramWarning.message(classNotFoundException.toString() + (classNotFoundException.getCause() == null ? "" : " (cause: " + classNotFoundException.getCause() + ")"));
+                    }
                 }
             }
             if (verboseOption.getValue() > 0) {

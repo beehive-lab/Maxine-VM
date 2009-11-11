@@ -52,11 +52,13 @@ public abstract class ValueLabel extends InspectorLabel {
      */
     protected ValueLabel(Inspection inspection) {
         super(inspection);
+        enableDragSource();
     }
 
     protected ValueLabel(Inspection inspection, Value value) {
         super(inspection);
         this.value = value;
+        enableDragSource();
     }
 
     /**

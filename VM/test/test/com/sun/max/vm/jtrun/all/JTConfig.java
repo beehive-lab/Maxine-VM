@@ -653,6 +653,7 @@ public class JTConfig {
         jtt.threads.Thread_isInterrupted02.class,
         jtt.threads.Thread_isInterrupted03.class,
         jtt.threads.Thread_isInterrupted04.class,
+        jtt.threads.Thread_isInterrupted05.class,
         jtt.threads.Thread_join01.class,
         jtt.threads.Thread_join02.class,
         jtt.threads.Thread_join03.class,
