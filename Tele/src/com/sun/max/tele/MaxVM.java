@@ -207,6 +207,7 @@ public interface MaxVM {
      *   <li>{@link #teleBootHeapRegion()}</li>
      *   <li>{@link #teleHeapRegions()}</li>
      *   <li>{@link #isValidOrigin(Pointer)}</li>
+     *   <li>{@link #teleImmortalHeapRegion()}</li>
      * </ol>
      *
      *
