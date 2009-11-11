@@ -23,10 +23,9 @@ package com.sun.max.vm.jdk;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Implements method substitutions necessary for native library handling.
@@ -37,9 +36,6 @@ import com.sun.max.vm.object.*;
  */
 @METHOD_SUBSTITUTIONS(value = ClassLoader.class, innerClass = "NativeLibrary")
 public final class JDK_java_lang_ClassLoader_NativeLibrary {
-
-    public static final FieldActor NativeLibrary_handle = FieldActor.findInstance(JDK.java_lang_ClassLoader$NativeLibrary.classActor().toJava(), "handle");
-    public static final VirtualMethodActor NativeLibrary_init = ClassMethodActor.findVirtual(JDK.java_lang_ClassLoader$NativeLibrary.classActor(), SymbolTable.INIT.toString());
 
     /**
      * Loads a library with the give absolute path.
@@ -72,7 +68,7 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
                 }
             }
         }
-        TupleAccess.writeLong(this, NativeLibrary_handle.offset(), address.toLong());
+        TupleAccess.writeLong(this, ClassRegistry.NativeLibrary_handle.offset(), address.toLong());
     }
 
     /**
@@ -83,7 +79,7 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     long find(String symbolName) {
-        final Address handle = Address.fromLong(TupleAccess.readLong(this, NativeLibrary_handle.offset()));
+        final Address handle = Address.fromLong(TupleAccess.readLong(this, ClassRegistry.NativeLibrary_handle.offset()));
         return DynamicLinker.lookupSymbol(handle, symbolName).asAddress().toLong();
     }
 
@@ -93,7 +89,7 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
      */
     @SUBSTITUTE
     void unload() {
-        final Address handle = Address.fromLong(TupleAccess.readLong(this, NativeLibrary_handle.offset()));
+        final Address handle = Address.fromLong(TupleAccess.readLong(this, ClassRegistry.NativeLibrary_handle.offset()));
         DynamicLinker.close(handle);
     }
 

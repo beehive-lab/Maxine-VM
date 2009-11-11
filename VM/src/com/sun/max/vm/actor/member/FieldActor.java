@@ -276,9 +276,4 @@ public class FieldActor extends MemberActor {
     public static FieldActor findInstance(Class javaClass, String name) {
         return ClassActor.fromJava(javaClass).findLocalInstanceFieldActor(name);
     }
-
-    @FOLD
-    public static FieldActor findStatic(Class javaClass, String name) {
-        return ClassActor.fromJava(javaClass).findLocalStaticFieldActor(name);
-    }
 }

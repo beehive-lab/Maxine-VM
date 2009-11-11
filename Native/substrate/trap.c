@@ -79,7 +79,7 @@ int getTrapNumber(int signal) {
     return signal;
 }
 
-static Address _javaTrapStub;
+static Address theJavaTrapStub;
 static boolean traceTraps = false;
 
 #if os_GUESTVMXEN
@@ -228,7 +228,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         log_println("trapInfo[1] (instruction pointer) = %p", getInstructionPointer(ucontext));
         log_println("trapInfo[2] (fault address)       = %p", faultAddress);
         log_println("trapInfo[3] (safepoint latch)     = %p", getThreadLocal(Address, disabled_tl, TRAP_LATCH_REGISTER));
-        log_println("Java trap stub 0x%0lx", _javaTrapStub);
+        log_println("Java trap stub 0x%0lx", theJavaTrapStub);
         primordial = 1;
     }
 
@@ -282,13 +282,13 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
             log_println("trapInfo[2] (fault address)       = %p", getThreadLocal(Address, disabled_tl, TRAP_FAULT_ADDRESS));
             log_println("trapInfo[3] (safepoint latch)     = %p", getThreadLocal(Address, disabled_tl, TRAP_LATCH_REGISTER));
         }
-        log_println("SIGNAL: returning to Java trap stub 0x%0lx", _javaTrapStub);
+        log_println("SIGNAL: returning to Java trap stub 0x%0lx", theJavaTrapStub);
     }
-    setInstructionPointer(ucontext, _javaTrapStub);
+    setInstructionPointer(ucontext, theJavaTrapStub);
 }
 
 Address nativeInitialize(Address javaTrapStub) {
-    _javaTrapStub = javaTrapStub;
+    theJavaTrapStub = javaTrapStub;
     setHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
     setHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);

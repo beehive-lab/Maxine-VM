@@ -53,10 +53,6 @@ import com.sun.max.vm.value.*;
 @METHOD_SUBSTITUTIONS(System.class)
 public final class JDK_java_lang_System {
 
-    private static final FieldActor System_in = FieldActor.findStatic(System.class, "in");
-    private static final FieldActor System_out = FieldActor.findStatic(System.class, "out");
-    private static final FieldActor System_err = FieldActor.findStatic(System.class, "err");
-
     /**
      * Register any native methods through JNI.
      */
@@ -71,7 +67,7 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setIn0(InputStream in) {
-        final FieldActor fieldActor = System_in;
+        final FieldActor fieldActor = ClassRegistry.System_in;
         TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), in);
     }
 
@@ -82,7 +78,7 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setOut0(PrintStream out) {
-        final FieldActor fieldActor = System_out;
+        final FieldActor fieldActor = ClassRegistry.System_out;
         TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), out);
     }
 
@@ -93,7 +89,7 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setErr0(PrintStream err) {
-        final FieldActor fieldActor = System_err;
+        final FieldActor fieldActor = ClassRegistry.System_err;
         TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), err);
     }
 
@@ -580,15 +576,9 @@ public final class JDK_java_lang_System {
         }
     }, MaxineVM.Phase.PRISTINE);
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption bootClasspathOption = BootClasspathVMOption.create(":", "set search path for bootstrap classes and resources.");
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption aBootClasspathOption = BootClasspathVMOption.create("/a:", "append to end of bootstrap class path");
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption pBootClasspathOption = BootClasspathVMOption.create("/p:", "prepend in front of bootstrap class path");
-
+    private static final BootClasspathVMOption bootClasspathOption = BootClasspathVMOption.create(":", "set search path for bootstrap classes and resources.");
+    private static final BootClasspathVMOption aBootClasspathOption = BootClasspathVMOption.create("/a:", "append to end of bootstrap class path");
+    private static final BootClasspathVMOption pBootClasspathOption = BootClasspathVMOption.create("/p:", "prepend in front of bootstrap class path");
 
     static class BootClasspathVMOption extends VMOption {
         private String path;
@@ -946,8 +936,6 @@ public final class JDK_java_lang_System {
                 Runtime_loadLibrary0.invoke(ReferenceValue.from(Runtime.getRuntime()), ReferenceValue.from(callerClass), ReferenceValue.from(name));
             } catch (InvocationTargetException invocationTargetException) {
                 throw invocationTargetException.getTargetException();
-            } catch (IllegalAccessException illegalAccessException) {
-                ProgramError.unexpected();
             }
         }
 

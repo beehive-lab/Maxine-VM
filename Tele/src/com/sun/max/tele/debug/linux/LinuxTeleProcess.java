@@ -93,8 +93,8 @@ public final class LinuxTeleProcess extends TeleProcess {
     private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long tid, long stackBase, long stackSize) {
-        return new LinuxTeleNativeThread(this, id, tid, stackBase, stackSize);
+    protected TeleNativeThread createTeleNativeThread(int id, long tid, long stackBase, long stackSize, boolean hasThreadLocals) {
+        return new LinuxTeleNativeThread(this, id, tid, stackBase, stackSize, hasThreadLocals);
     }
 
     @Override

@@ -112,6 +112,7 @@ extern int javaFrameAnchorSize();
 typedef struct {
     jint id; //  0: denotes the primordial thread
              // >0: denotes a VmThread
+             // <0: denotes a native thread
     Address stackBase;
     Size stackSize;
     Address refMapArea;

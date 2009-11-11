@@ -105,8 +105,9 @@ public final class VmThreadMap {
         /**
          * Acquires an ID for a VmThread.
          * This method is not synchronized. It is required by the caller to synchronize on ACTIVE.
-         * @param vmThread the VmThread for which and ID should be assigned
-         * @return
+         *
+         * @param vmThread the VmThread for which an ID should be assigned
+         * @return the ID assigned to {@code vmThread}
          */
         int acquire(VmThread vmThread) {
             FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
@@ -135,6 +136,7 @@ public final class VmThreadMap {
 
         /**
          * This method is not synchronized. It is required by the caller to synchronize on ACTIVE.
+         *
          * @param id
          */
         void release(int id) {
@@ -159,6 +161,11 @@ public final class VmThreadMap {
         JavaMonitorManager.bindStickyMonitor(ACTIVE, new VMThreadMapJavaMonitor());
     }
 
+    /**
+     * Informs the native code of the mutex used to synchronize {@link #ACTIVE}.
+     *
+     * @param mutex the address of a platform specific mutex
+     */
     @C_FUNCTION
     private static native void nativeRegisterVmThreadMapMutex(Pointer mutex);
 
@@ -255,7 +262,7 @@ public final class VmThreadMap {
      * @param vmThreadLocals the thread locals to remove from this map
      */
     public void removeVmThreadLocals(Pointer vmThreadLocals) {
-        synchronized (this) {
+        synchronized (ACTIVE) {
             final int id = VmThreadLocal.ID.getConstantWord(vmThreadLocals).asAddress().toInt();
             if (threadLocalsListHead == vmThreadLocals) {
                 // this vm thread locals is at the head of list
@@ -290,7 +297,7 @@ public final class VmThreadMap {
      * @return the native thread created
      */
     public Word startVmThread(VmThread vmThread, Size stackSize, int priority) {
-        synchronized (this) {
+        synchronized (ACTIVE) {
             final int id = idMap.acquire(vmThread);
             final int count = vmThreadStartCount;
             final Word nativeThread = VmThread.nativeThreadCreate(id, stackSize, priority);
