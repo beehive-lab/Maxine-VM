@@ -193,7 +193,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      */
     public static ClassRegistry makeRegistry(ClassLoader classLoader) {
         if (MaxineVM.isHosted()) {
-            if (classLoader == testClassLoader) {
+            if (classLoader != null && classLoader == testClassLoader) {
                 if (testClassRegistry == null) {
                     testClassRegistry = new ClassRegistry(classLoader);
                 }

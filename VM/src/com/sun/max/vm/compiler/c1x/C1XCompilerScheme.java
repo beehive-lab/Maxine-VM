@@ -163,7 +163,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
         CiRegister[] allocRegs = allocatable.toArray(new CiRegister[allocatable.size()]);
 
-        // TODO (tw): Initialize target differently
         CiTarget target = new CiTarget(arch, stackRegister, scratchRegister, allocRegs, allocRegs, registerReferenceMapTemplate, configuration.platform.pageSize, true);
         target.stackAlignment = targetABI.stackFrameAlignment();
         return target;

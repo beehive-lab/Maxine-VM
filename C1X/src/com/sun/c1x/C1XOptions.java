@@ -33,7 +33,6 @@ public class C1XOptions {
     private static final boolean ____ = false;
     // Checkstyle: resume
 
-
     // inlining settings
     public static boolean InlineMethods;
     public static boolean InlineMethodsWithExceptionHandlers;
@@ -419,8 +418,8 @@ public class C1XOptions {
         UseCHALeafMethods                  = ____;
 
         // turn on backend optimizations
-        OptimizeControlFlow                = ____;
-        OptimizeMoves                      = ____;
+        OptimizeControlFlow                = true;
+        OptimizeMoves                      = true;
 
         // turn off global optimizations, except null check elimination
         DoGlobalValueNumbering             = ____;

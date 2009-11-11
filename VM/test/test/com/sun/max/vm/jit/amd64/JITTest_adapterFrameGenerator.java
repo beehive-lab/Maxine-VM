@@ -96,7 +96,7 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
 
     public void test_jni_function_entryPoints() {
         final CriticalMethod[] jniFunctions = JniNativeInterface.jniFunctions();
-        final BootstrapCompilerScheme compiler = VMConfiguration.target().compilerScheme();
+        final BootstrapCompilerScheme compiler = VMConfiguration.target().bootCompilerScheme();
         for (CriticalMethod m : jniFunctions) {
             if (m != null) {
                 final ClassMethodActor classMethodActor = m.classMethodActor;

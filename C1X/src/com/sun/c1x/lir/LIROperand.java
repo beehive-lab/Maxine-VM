@@ -60,7 +60,7 @@ public class LIROperand {
     }
 
     public boolean isLocation() {
-        return !(this instanceof LIRLocation);
+        return this instanceof LIRLocation;
     }
 
     @Override
@@ -71,9 +71,7 @@ public class LIROperand {
 
         final StringBuffer out = new StringBuffer();
         out.append("[");
-        if (isLocation()) {
-            //out.append(valueToString());
-        } else if (isSingleStack()) {
+        if (isSingleStack()) {
             out.append("stack:").append(singleStackIx());
         } else if (isDoubleStack()) {
             out.append("dblStack:").append(doubleStackIx());

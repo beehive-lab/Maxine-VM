@@ -37,7 +37,7 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
 
     public AMD64TemplateBasedTargetGenerator(JitCompiler jitCompiler) {
         super(jitCompiler, InstructionSet.AMD64);
-        needsAdapterFrame = compilerScheme().vmConfiguration().compilerScheme() instanceof BcdeTargetAMD64Compiler;
+        needsAdapterFrame = compilerScheme().vmConfiguration().bootCompilerScheme() instanceof BcdeTargetAMD64Compiler;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
         final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
         EirABI optimizingCompilerAbi = null;
         if (needsAdapterFrame) {
-            final EirGenerator eirGenerator = ((BcdeTargetAMD64Compiler) compilerScheme().vmConfiguration().compilerScheme()).eirGenerator();
+            final EirGenerator eirGenerator = ((BcdeTargetAMD64Compiler) compilerScheme().vmConfiguration().bootCompilerScheme()).eirGenerator();
             optimizingCompilerAbi = eirGenerator.eirABIsScheme().getABIFor(classMethodActor);
         }
         return new BytecodeToAMD64TargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, false);

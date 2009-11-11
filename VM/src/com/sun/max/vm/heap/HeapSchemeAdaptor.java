@@ -101,7 +101,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         return 0;
     }
 
-    @Override
     public boolean isInitialized() {
         return MaxineVM.isRunning();
     }
