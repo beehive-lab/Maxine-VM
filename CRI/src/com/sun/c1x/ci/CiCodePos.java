@@ -71,6 +71,24 @@ public class CiCodePos {
         return append(new StringBuilder(100)).toString();
     }
 
+    public boolean matches(CiCodePos q) {
+        CiCodePos p = this;
+        while (p != q) {
+            if (p == null || q == null) {
+                return false;
+            }
+            if (p.method != q.method) {
+                return false;
+            }
+            if (p.bci != q.bci) {
+                return false;
+            }
+            p = p.caller;
+            q = q.caller;
+        }
+        return true;
+    }
+
     private StringBuilder append(StringBuilder buf) {
         if (caller != null) {
             caller.append(buf);

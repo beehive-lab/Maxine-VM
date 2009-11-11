@@ -41,7 +41,6 @@ public class ValueStack {
 
     private final IRScope scope;
     private ArrayList<Value> locks;
-    private boolean lockStack;
 
     public ValueStack(IRScope irScope, int maxLocals, int maxStack) {
         this.scope = irScope;
@@ -83,7 +82,6 @@ public class ValueStack {
             size = 0;
         }
         ValueStack s = new ValueStack(scope(), localsSize(), maxStackSize());
-        s.lockStack = true;
         s.replaceLocks(this);
         s.replaceLocals(this);
         s.replaceStack(this);

@@ -27,6 +27,8 @@ Frontend:
 	- Implement GVN of memory loads / stores
 	- Implement memory reordering
 	- Implement loop invariant code motion
+	- Optimize endianness conversions and endian-writes
+	      (e.g. (x >> 24 & 0xff) | (....)) and a[0] = x >> 24 ... 
 	- Finish loop peeling
 	- Implement loop unrolling
 	- Allow value numbering of constant loads
@@ -35,6 +37,7 @@ Frontend:
 	- Maxine: speculative leaf class and leaf method assumption
 	- Maxine: adjust static / dynamic inlining heuristics
 		  (e.g. static: trivial methods only in cold spots)
+    - Aggressive optimization of array copy
 
 Compilation speed:
 	- Remove RiConstantPool, cpi from unresolved HIR instructions (move to RiField, RiMethod)
