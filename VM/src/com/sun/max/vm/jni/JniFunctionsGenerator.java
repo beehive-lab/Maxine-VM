@@ -170,16 +170,32 @@ public class JniFunctionsGenerator {
             }
 
             if (state == BEFORE_PROLOGUE) {
-                out.println(line);
 
                 JniFunctionDeclaration decl = JniFunctionDeclaration.parse(line, inputFile.getName() + ":" + lr.lineNo);
                 lr.check(decl != null, "JNI function declaration does not match pattern \"" + JniFunctionDeclaration.PATTERN + "\"");
 
+                out.println(line);
+                out.println("        // Source: " + decl.sourcePos);
+
                 if (!decl.isNative) {
+                    StringBuilder bodyBuffer = new StringBuilder();
+                    String body = null;
+                    while ((line = lr.readLine()) != null) {
+                        if (line.equals("    }")) {
+                            body = bodyBuffer.toString();
+                            break;
+                        }
+                        bodyBuffer.append("    ").append(line).append("\n");
+                    }
+
+                    if (body == null) {
+                        assert false;
+                    }
+
                     if (decl.returnType.equals("void")) {
-                        generateVoidFunction(out, decl);
+                        generateVoidFunction(out, decl, body);
                     } else {
-                        generateNonVoidFunction(out, decl);
+                        generateNonVoidFunction(out, decl, body);
                     }
                 }
                 state = BEFORE_JNI_FUNCTION;
@@ -196,7 +212,7 @@ public class JniFunctionsGenerator {
         return Files.updateGeneratedContent(outputFile, ReadableSource.Static.fromString(writer.toString()), "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
     }
 
-    private static void generateNonVoidFunction(PrintWriter out, JniFunctionDeclaration decl) {
+    private static void generateNonVoidFunction(PrintWriter out, JniFunctionDeclaration decl, String body) {
         final String errReturnValue;
         if (decl.returnType.equals("boolean")) {
             errReturnValue = "false";
@@ -215,35 +231,27 @@ public class JniFunctionsGenerator {
         }
 
         out.println("        Pointer anchor = prologue(env, \"" + decl.name + "\");");
-        out.println("        " + decl.returnType + " result;");
         out.println("        try {");
-        out.println("            result = " + decl.callHelper() + ";");
+        out.print(body);
         out.println("        } catch (Throwable t) {");
         out.println("            VmThread.fromJniEnv(env).setPendingException(t);");
-        out.println("            result = " + errReturnValue + ";");
+        out.println("            return " + errReturnValue + ";");
+        out.println("        } finally {");
+        out.println("            epilogue(anchor, \"" + decl.name + "\");");
         out.println("        }");
-        out.println("        epilogue(anchor, \"" + decl.name + "\");");
-        out.println("        return result;");
         out.println("    }");
-        out.println();
-        out.println("    @INLINE");
-        out.println("    // Source: " + decl.sourcePos);
-        out.println(decl.declareHelper());
     }
 
-    private static void generateVoidFunction(PrintWriter out, JniFunctionDeclaration decl) {
+    private static void generateVoidFunction(PrintWriter out, JniFunctionDeclaration decl, String body) {
         out.println("        Pointer anchor = prologue(env, \"" + decl.name + "\");");
         out.println("        try {");
-        out.println("            " + decl.callHelper() + ";");
+        out.print(body);
         out.println("        } catch (Throwable t) {");
         out.println("            VmThread.fromJniEnv(env).setPendingException(t);");
+        out.println("        } finally {");
+        out.println("            epilogue(anchor, \"" + decl.name + "\");");
         out.println("        }");
-        out.println("        epilogue(anchor, \"" + decl.name + "\");");
         out.println("    }");
-        out.println();
-        out.println("    @INLINE");
-        out.println("    // Source: " + decl.sourcePos);
-        out.println(decl.declareHelper());
     }
 
     /**
