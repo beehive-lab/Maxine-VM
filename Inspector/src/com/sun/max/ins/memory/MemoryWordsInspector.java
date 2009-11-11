@@ -230,6 +230,7 @@ public final class MemoryWordsInspector extends Inspector {
                     // User model policy:  any adjustment to the region drops into generic word mode
                     clearViewMode();
                     setOrigin(value.aligned(wordSize.toInt()));
+                    setTitle();
                 }
             }
         };
@@ -246,6 +247,7 @@ public final class MemoryWordsInspector extends Inspector {
                     // User model policy:  any adjustment to the region drops into generic word mode
                     clearViewMode();
                     setMemoryRegion(new MemoryWordRegion(memoryRegion.start(), newWordCount, wordSize));
+                    setTitle();
                 }
             }
         };
@@ -580,6 +582,7 @@ public final class MemoryWordsInspector extends Inspector {
         this.memoryWordRegion = memoryWordRegion;
         wordCountField.setValue(Address.fromInt(memoryWordRegion.wordCount));
         table.setMemoryRegion(memoryWordRegion);
+
     }
 
     /**
