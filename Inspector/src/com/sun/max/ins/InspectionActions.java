@@ -4834,6 +4834,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 objectMenu.add(inspectObject());
                 objectMenu.add(inspectObjectByID());
                 menu.add(objectMenu);
+
+                menu.add(objectInspectorsMenu());
             }
         };
     }
