@@ -24,7 +24,6 @@ import java.security.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.layout.*;
@@ -37,9 +36,6 @@ import com.sun.max.vm.type.*;
  */
 @METHOD_SUBSTITUTIONS(ClassLoader.class)
 public final class JDK_java_lang_ClassLoader {
-
-    public static final FieldActor ClassLoader_nativeLibraries = FieldActor.findInstance(ClassLoader.class, "nativeLibraries");
-    public static final FieldActor ClassLoader_loadedLibraryNames = FieldActor.findStatic(ClassLoader.class, "loadedLibraryNames");
 
     private JDK_java_lang_ClassLoader() {
     }

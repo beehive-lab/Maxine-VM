@@ -37,6 +37,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
@@ -50,71 +51,91 @@ import com.sun.max.vm.value.*;
  * The {@linkplain BootClassLoader#BOOT_CLASS_LOADER boot class loader} is associated the
  * {@linkplain #BOOT_CLASS_REGISTRY boot class registry}.
  *
+ * This class also contains a number static variables for the actors of well known classes,
+ * methods and fields.
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public final class ClassRegistry implements IterableWithLength<ClassActor> {
-
-    private static final EnumMap<Property, VariableMapping<Object, Object>> propertyMapsPrototype = new EnumMap<Property, VariableMapping<Object, Object>>(Property.class);
-
-    /**
-     * This is only here to support ClassFileWriter.testLoadGeneratedClasses().
-     */
-    @HOSTED_ONLY
-    public static ClassLoader testClassLoader;
-    private static ClassRegistry testClassRegistry;
-
-    private final Map<Property, VariableMapping<Object, Object>> propertyMaps;
-
-    @INSPECTED
-    private final GrowableMapping<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new ChainedHashMapping<TypeDescriptor, ClassActor>(5000);
-
-    public final ClassLoader classLoader;
-
-    private ClassRegistry(ClassLoader classLoader) {
-        propertyMaps = propertyMapsPrototype.clone();
-        for (Property property : Property.VALUES) {
-            propertyMaps.put(property, property.createMap());
-        }
-        this.classLoader = classLoader;
-    }
 
     /**
      * The class registry associated with the boot class loader.
      */
     public static final ClassRegistry BOOT_CLASS_REGISTRY = new ClassRegistry(HOSTED_BOOT_CLASS_LOADER);
 
-    public static final TupleClassActor OBJECT = createClassActor(Object.class);
-    public static final TupleClassActor CLASS = createClassActor(Class.class);
-    public static final TupleClassActor THROWABLE = createClassActor(Throwable.class);
-    public static final InterfaceActor CLONEABLE = createClassActor(Cloneable.class);
-    public static final InterfaceActor SERIALIZABLE = createClassActor(Serializable.class);
+    public static final TupleClassActor OBJECT = createClass(Object.class);
+    public static final TupleClassActor CLASS = createClass(Class.class);
+    public static final TupleClassActor THROWABLE = createClass(Throwable.class);
+    public static final TupleClassActor THREAD = createClass(Thread.class);
+    public static final InterfaceActor CLONEABLE = createClass(Cloneable.class);
+    public static final InterfaceActor SERIALIZABLE = createClass(Serializable.class);
 
-    public static final PrimitiveClassActor<VoidValue> VOID = ClassRegistry.createPrimitiveClassActor(Kind.VOID);
+    public static final PrimitiveClassActor<VoidValue> VOID = createPrimitiveClass(Kind.VOID);
+    public static final PrimitiveClassActor<ByteValue> BYTE = createPrimitiveClass(Kind.BYTE);
+    public static final PrimitiveClassActor<BooleanValue> BOOLEAN = createPrimitiveClass(Kind.BOOLEAN);
+    public static final PrimitiveClassActor<ShortValue> SHORT = createPrimitiveClass(Kind.SHORT);
+    public static final PrimitiveClassActor<CharValue> CHAR = createPrimitiveClass(Kind.CHAR);
+    public static final PrimitiveClassActor<IntValue> INT = createPrimitiveClass(Kind.INT);
+    public static final PrimitiveClassActor<FloatValue> FLOAT = createPrimitiveClass(Kind.FLOAT);
+    public static final PrimitiveClassActor<LongValue> LONG = createPrimitiveClass(Kind.LONG);
+    public static final PrimitiveClassActor<DoubleValue> DOUBLE = createPrimitiveClass(Kind.DOUBLE);
 
-    public static final PrimitiveClassActor<ByteValue> BYTE = ClassRegistry.createPrimitiveClassActor(Kind.BYTE);
-    public static final PrimitiveClassActor<BooleanValue> BOOLEAN = ClassRegistry.createPrimitiveClassActor(Kind.BOOLEAN);
-    public static final PrimitiveClassActor<ShortValue> SHORT = ClassRegistry.createPrimitiveClassActor(Kind.SHORT);
-    public static final PrimitiveClassActor<CharValue> CHAR = ClassRegistry.createPrimitiveClassActor(Kind.CHAR);
-    public static final PrimitiveClassActor<IntValue> INT = ClassRegistry.createPrimitiveClassActor(Kind.INT);
-    public static final PrimitiveClassActor<FloatValue> FLOAT = ClassRegistry.createPrimitiveClassActor(Kind.FLOAT);
-    public static final PrimitiveClassActor<LongValue> LONG = ClassRegistry.createPrimitiveClassActor(Kind.LONG);
-    public static final PrimitiveClassActor<DoubleValue> DOUBLE = ClassRegistry.createPrimitiveClassActor(Kind.DOUBLE);
+    public static final ArrayClassActor<ByteValue> BYTE_ARRAY = createPrimitiveArrayClass(BYTE);
+    public static final ArrayClassActor<BooleanValue> BOOLEAN_ARRAY = createPrimitiveArrayClass(BOOLEAN);
+    public static final ArrayClassActor<ShortValue> SHORT_ARRAY = createPrimitiveArrayClass(SHORT);
+    public static final ArrayClassActor<CharValue> CHAR_ARRAY = createPrimitiveArrayClass(CHAR);
+    public static final ArrayClassActor<IntValue> INT_ARRAY = createPrimitiveArrayClass(INT);
+    public static final ArrayClassActor<FloatValue> FLOAT_ARRAY = createPrimitiveArrayClass(FLOAT);
+    public static final ArrayClassActor<LongValue> LONG_ARRAY = createPrimitiveArrayClass(LONG);
+    public static final ArrayClassActor<DoubleValue> DOUBLE_ARRAY = createPrimitiveArrayClass(DOUBLE);
 
-    public static final ArrayClassActor<ByteValue> BYTE_ARRAY = ClassRegistry.createPrimitiveArrayClassActor(BYTE);
-    public static final ArrayClassActor<BooleanValue> BOOLEAN_ARRAY = ClassRegistry.createPrimitiveArrayClassActor(BOOLEAN);
-    public static final ArrayClassActor<ShortValue> SHORT_ARRAY = ClassRegistry.createPrimitiveArrayClassActor(SHORT);
-    public static final ArrayClassActor<CharValue> CHAR_ARRAY = ClassRegistry.createPrimitiveArrayClassActor(CHAR);
-    public static final ArrayClassActor<IntValue> INT_ARRAY = ClassRegistry.createPrimitiveArrayClassActor(INT);
-    public static final ArrayClassActor<FloatValue> FLOAT_ARRAY = ClassRegistry.createPrimitiveArrayClassActor(FLOAT);
-    public static final ArrayClassActor<LongValue> LONG_ARRAY = ClassRegistry.createPrimitiveArrayClassActor(LONG);
-    public static final ArrayClassActor<DoubleValue> DOUBLE_ARRAY = ClassRegistry.createPrimitiveArrayClassActor(DOUBLE);
+    public static final FieldActor ClassActor_mirror = findField(ClassActor.class, "mirror");
+    public static final FieldActor System_in = findField(System.class, "in");
+    public static final FieldActor System_out = findField(System.class, "out");
+    public static final FieldActor System_err = findField(System.class, "err");
+    public static final FieldActor Thread_priority = findField(Thread.class, "priority");
+    public static final FieldActor Thread_name = findField(Thread.class, "name");
+    public static final FieldActor NativeLibrary_handle = findField(JDK.java_lang_ClassLoader$NativeLibrary.javaClass(), "handle");
+    public static final FieldActor Thread_inheritedAccessControlContext = findField(Thread.class, "inheritedAccessControlContext");
+    public static final FieldActor ClassLoader_loadedLibraryNames = findField(ClassLoader.class, "loadedLibraryNames");
+    public static final FieldActor ClassLoader_nativeLibraries = findField(ClassLoader.class, "nativeLibraries");
+
+    public static final MethodActor ThreadGroup_add_Thread = findMethod(ThreadGroup.class, "add", ThreadGroup.class);
+    public static final MethodActor Thread_init_ThreadGroup_Runnable = findConstructor(Thread.class, ThreadGroup.class, Runnable.class);
+    public static final MethodActor Thread_init_ThreadGroup_String = findConstructor(Thread.class, ThreadGroup.class, String.class);
+    public static final MethodActor ClassLoader_findNative = findMethod(ClassLoader.class, "findNative", ClassLoader.class, String.class);
+    public static final MethodActor NativeLibrary_init = findConstructor(JDK.java_lang_ClassLoader$NativeLibrary.javaClass(), Class.class, String.class);
+
+    /**
+     * Support for ClassFileWriter.testLoadGeneratedClasses().
+     */
+    @HOSTED_ONLY
+    public static ClassLoader testClassLoader;
+    @HOSTED_ONLY
+    private static ClassRegistry testClassRegistry;
+
+    @INSPECTED
+    private final GrowableMapping<TypeDescriptor, ClassActor> typeDescriptorToClassActor = new ChainedHashMapping<TypeDescriptor, ClassActor>(5000);
+    private final VariableMapping<Object, Object>[] propertyMaps;
+
+    public final ClassLoader classLoader;
+
+    private ClassRegistry(ClassLoader classLoader) {
+        VariableMapping[] map = new VariableMapping[Property.VALUES.length()];
+        Class<VariableMapping<Object, Object>[]> type = null;
+        propertyMaps = StaticLoophole.cast(type, map);
+        for (Property property : Property.VALUES) {
+            propertyMaps[property.ordinal()] = property.createMap();
+        }
+        this.classLoader = classLoader;
+    }
 
     /**
      * Creates a ClassActor for a primitive type.
      */
     @HOSTED_ONLY
-    private static <Value_Type extends Value<Value_Type>> PrimitiveClassActor<Value_Type> createPrimitiveClassActor(Kind<Value_Type> kind) {
+    private static <Value_Type extends Value<Value_Type>> PrimitiveClassActor<Value_Type> createPrimitiveClass(Kind<Value_Type> kind) {
         return put(new PrimitiveClassActor<Value_Type>(kind));
     }
 
@@ -122,7 +143,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      * Creates an ArrayClassActor for a primitive array type.
      */
     @HOSTED_ONLY
-    private static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createPrimitiveArrayClassActor(PrimitiveClassActor<Value_Type> componentClassActor) {
+    private static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createPrimitiveArrayClass(PrimitiveClassActor<Value_Type> componentClassActor) {
         return put(new ArrayClassActor<Value_Type>(componentClassActor));
     }
 
@@ -130,7 +151,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      * Creates a ClassActor for a tuple or interface type.
      */
     @HOSTED_ONLY
-    private static <ClassActor_Type extends ClassActor> ClassActor_Type createClassActor(Class javaClass) {
+    private static <ClassActor_Type extends ClassActor> ClassActor_Type createClass(Class javaClass) {
         TypeDescriptor typeDescriptor = JavaTypeDescriptor.forJavaClass(javaClass);
         ClassActor classActor = BOOT_CLASS_REGISTRY.get(typeDescriptor);
         if (classActor == null) {
@@ -141,6 +162,27 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         }
         Class<ClassActor_Type> type = null;
         return StaticLoophole.cast(type, classActor);
+    }
+
+    @HOSTED_ONLY
+    private static FieldActor findField(Class declaringClass, String name) {
+        ClassActor classActor = ClassActor.fromJava(declaringClass);
+        FieldActor fieldActor = classActor.findLocalInstanceFieldActor(name);
+        if (fieldActor == null) {
+            fieldActor = classActor.findLocalStaticFieldActor(name);
+        }
+        assert fieldActor != null;
+        return fieldActor;
+    }
+
+    @HOSTED_ONLY
+    private static MethodActor findMethod(Class declaringClass, String name, Class... parameterTypes) {
+        return MethodActor.fromJava(Classes.getDeclaredMethod(declaringClass, name, parameterTypes));
+    }
+
+    @HOSTED_ONLY
+    private static MethodActor findConstructor(Class declaringClass, Class... parameterTypes) {
+        return MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(declaringClass, parameterTypes));
     }
 
     /**
@@ -278,26 +320,6 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         return get(parent, typeDescriptor, true);
     }
 
-    public static TupleClassActor javaLangObjectActor() {
-        return OBJECT;
-    }
-
-    public static TupleClassActor javaLangClassActor() {
-        return CLASS;
-    }
-
-    public static TupleClassActor javaLangThrowableActor() {
-        return THROWABLE;
-    }
-
-    public static InterfaceActor javaLangCloneableActor() {
-        return CLONEABLE;
-    }
-
-    public static InterfaceActor javaIoSerializeableActor() {
-        return SERIALIZABLE;
-    }
-
     /**
      * An enumeration of the properties that can be associated with actors. These are properties for which only a small
      * percentage of actors will have a non-default value. As such, using maps to store the property values results in
@@ -394,7 +416,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      * Sets the value of a given property for a given object.
      */
     public synchronized <Key_Type, Value_Type> void set(Property property, Key_Type object, Value_Type value) {
-        property.set(propertyMaps.get(property), object, value);
+        property.set(propertyMaps[property.ordinal()], object, value);
     }
 
     /**
@@ -402,7 +424,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      */
     public synchronized <Key_Type, Value_Type> Value_Type get(Property property, Key_Type object) {
         final Class<Value_Type> type = null;
-        return StaticLoophole.cast(type, property.get(propertyMaps.get(property), object));
+        return StaticLoophole.cast(type, property.get(propertyMaps[property.ordinal()], object));
     }
 
     public void trace(int level) {

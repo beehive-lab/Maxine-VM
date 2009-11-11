@@ -41,6 +41,7 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 import com.sun.max.vm.verifier.*;
@@ -55,6 +56,14 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
 
     public CompilerTest_regressions(String name) {
         super(name);
+    }
+
+    public void test_JniHandles_createStackHandle() {
+        compileMethod(DynamicLinker.class, "lookupSymbol");
+    }
+
+    public void test_VMThread_attach() {
+        compileMethod(VmThread.class, "attach");
     }
 
     @NEVER_INLINE

@@ -58,8 +58,8 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
         return task;
     }
 
-    LinuxTeleNativeThread(LinuxTeleProcess teleProcess, int id, long tid, long stackBase, long stackSize) {
-        super(teleProcess, id, tid, stackBase, stackSize);
+    LinuxTeleNativeThread(LinuxTeleProcess teleProcess, int id, long tid, long stackBase, long stackSize, boolean hasThreadLocals) {
+        super(teleProcess, id, tid, stackBase, stackSize, hasThreadLocals);
         task = new LinuxTask(teleProcess.task(), (int) tid);
     }
 

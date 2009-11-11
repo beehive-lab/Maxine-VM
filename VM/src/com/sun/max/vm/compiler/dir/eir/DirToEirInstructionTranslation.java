@@ -137,17 +137,24 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
 
     public void visitReturn(DirReturn dirReturn) {
         final DirValue dirValue = dirReturn.returnValue();
-
+        Kind kind = dirValue.kind();
         if (methodTranslation.usesSharedEpilogue) {
-            addJump(methodTranslation.makeEpilogue());
-            if (dirValue.kind() != Kind.VOID) {
-                methodTranslation.addResultValue(methodTranslation.dirToEirValue(dirValue));
+            EirBlock eirEpilogueBlock = methodTranslation.makeEpilogueBlock();
+            EirEpilogue eirEpilogue = methodTranslation.makeEpilogue();
+            if (kind != Kind.VOID) {
+                EirVariable eirResultVariable = (EirVariable) eirEpilogue.resultValue();
+                if (eirResultVariable == null) {
+                    eirResultVariable = methodTranslation.createEirVariable(kind);
+                    eirEpilogue.setResultValue(eirResultVariable);
+                }
+                assign(kind, eirResultVariable, methodTranslation.dirToEirValue(dirValue));
             }
+            addJump(eirEpilogueBlock);
         } else {
             final EirEpilogue eirEpilogue = methodTranslation.createEpilogueAndReturn(eirBlock);
-            if (dirValue.kind() != Kind.VOID) {
+            if (kind != Kind.VOID) {
                 final EirValue eirResultValue = methodTranslation.dirToEirValue(dirValue);
-                eirEpilogue.addResultValue(eirResultValue);
+                eirEpilogue.setResultValue(eirResultValue);
             }
         }
     }

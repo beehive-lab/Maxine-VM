@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.type;
 
-import static com.sun.max.vm.jdk.JDK_java_lang_ClassLoader.*;
-
 import java.io.*;
 import java.util.*;
 
@@ -33,7 +31,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -163,8 +160,8 @@ public final class BootClassLoader extends ClassLoader {
 
     private Object createNativeLibrary(String path, Word handle) {
         try {
-            final Object nativeLibrary = JDK_java_lang_ClassLoader_NativeLibrary.NativeLibrary_init.invokeConstructor(ReferenceValue.from(BootClassLoader.class), ReferenceValue.from(path)).asObject();
-            TupleAccess.writeLong(nativeLibrary, JDK_java_lang_ClassLoader_NativeLibrary.NativeLibrary_handle.offset(), handle.asAddress().toLong());
+            final Object nativeLibrary = ClassRegistry.NativeLibrary_init.invokeConstructor(ReferenceValue.from(BootClassLoader.class), ReferenceValue.from(path)).asObject();
+            TupleAccess.writeLong(nativeLibrary, ClassRegistry.NativeLibrary_handle.offset(), handle.asAddress().toLong());
             return nativeLibrary;
         } catch (Throwable throwable) {
             throw FatalError.unexpected("Error calling NativeLibrary constructor", throwable);
@@ -177,10 +174,10 @@ public final class BootClassLoader extends ClassLoader {
         final Object nativeLibrary = createNativeLibrary(fileName, handle);
 
         final Class<Vector<Object>> type = null;
-        final Vector<Object> loadedLibraryNames = StaticLoophole.cast(type, TupleAccess.readObject(StaticTuple.fromJava(ClassLoader.class), ClassLoader_loadedLibraryNames.offset()));
+        final Vector<Object> loadedLibraryNames = StaticLoophole.cast(type, TupleAccess.readObject(StaticTuple.fromJava(ClassLoader.class), ClassRegistry.ClassLoader_loadedLibraryNames.offset()));
         loadedLibraryNames.addElement(fileName);
 
-        final Vector<Object> nativeLibraries = StaticLoophole.cast(type, TupleAccess.readObject(this, ClassLoader_nativeLibraries.offset()));
+        final Vector<Object> nativeLibraries = StaticLoophole.cast(type, TupleAccess.readObject(this, ClassRegistry.ClassLoader_nativeLibraries.offset()));
         nativeLibraries.addElement(nativeLibrary);
     }
 

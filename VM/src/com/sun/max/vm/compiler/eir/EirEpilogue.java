@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.eir;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This instruction is a placeholder for any actions that occur immediately prior to
@@ -42,20 +43,20 @@ public abstract class EirEpilogue<EirInstructionVisitor_Type extends EirInstruct
 
     private final EirOperand[] calleeSavedOperands;
 
-    private final AppendableSequence<EirOperand> resultOperands = new LinkSequence<EirOperand>();
+    private final EirOperand resultOperand;
 
-    private final EirLocation returnResultLocation;
-
-    public void addResultValue(EirValue resultValue) {
-        for (EirOperand operand : resultOperands) {
-            if (operand.eirValue() == resultValue) {
-                return;
-            }
+    public void setResultValue(EirValue resultValue) {
+        assert resultOperand != null : "Cannot set result value for void method";
+        if (resultOperand.eirValue() == resultValue) {
+            return;
         }
-        final EirOperand resultOperand = new EirOperand(this, EirOperand.Effect.USE, returnResultLocation.category().asSet());
-        resultOperand.setRequiredLocation(returnResultLocation);
+        assert resultOperand.eirValue() == null;
         resultOperand.setEirValue(resultValue);
-        resultOperands.append(resultOperand);
+    }
+
+    public EirValue resultValue() {
+        assert resultOperand != null : "Cannot get result value for void method";
+        return resultOperand.eirValue();
     }
 
     private final AppendableSequence<EirOperand> useOperands = new LinkSequence<EirOperand>();
@@ -85,8 +86,12 @@ public abstract class EirEpilogue<EirInstructionVisitor_Type extends EirInstruct
             calleeSavedOperands[i].setRequiredLocation(register);
             calleeSavedOperands[i].setEirValue(calleeSavedValues[i]);
         }
-
-        this.returnResultLocation = returnResultLocation;
+        if (eirMethod.resultKind() != Kind.VOID) {
+            resultOperand = new EirOperand(this, EirOperand.Effect.USE, returnResultLocation.category().asSet());
+            resultOperand.setRequiredLocation(returnResultLocation);
+        } else {
+            resultOperand = null;
+        }
     }
 
     @Override
@@ -96,8 +101,8 @@ public abstract class EirEpilogue<EirInstructionVisitor_Type extends EirInstruct
                 visitor.run(operand);
             }
         }
-        for (EirOperand operand : resultOperands) {
-            visitor.run(operand);
+        if (resultOperand != null) {
+            visitor.run(resultOperand);
         }
         for (EirOperand operand : useOperands) {
             visitor.run(operand);
@@ -106,7 +111,7 @@ public abstract class EirEpilogue<EirInstructionVisitor_Type extends EirInstruct
 
     @Override
     public String toString() {
-        String s = "epilogue (" + resultOperands + ")";
+        String s = "epilogue (" + (resultOperand == null ? "" : resultOperand.toString()) + ")";
         if (calleeSavedOperands.length != 0) {
             s += "[Callee saved: " + Arrays.toString(calleeSavedOperands) + "]";
         }

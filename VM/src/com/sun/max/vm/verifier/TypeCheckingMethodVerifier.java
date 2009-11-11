@@ -1230,7 +1230,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                     if (!methodActor.isProtected()) {
                         break;
                     } else if (!classActor().packageName().equals(methodActor.holder().packageName())) {
-                        if (receiver.isArray() && methodActor.holder() == ClassRegistry.javaLangObjectActor() && methodActor.name.toString().equals("clone")) {
+                        if (receiver.isArray() && methodActor.holder() == ClassRegistry.OBJECT && methodActor.name.toString().equals("clone")) {
                             // Special case: arrays pretend to implement public Object clone().
                             break;
                         }

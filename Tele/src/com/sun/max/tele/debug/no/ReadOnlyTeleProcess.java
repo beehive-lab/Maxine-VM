@@ -116,7 +116,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize) {
+    protected TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize, boolean hasThreadLocals) {
         ProgramError.unexpected(FAIL_MESSAGE);
         return null;
     }

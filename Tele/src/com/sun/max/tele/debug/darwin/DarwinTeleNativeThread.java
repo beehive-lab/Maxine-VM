@@ -34,8 +34,8 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
         return (DarwinTeleProcess) super.teleProcess();
     }
 
-    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, int id, long machThread, long stackBase, long stackSize) {
-        super(teleProcess, id, machThread, stackBase, stackSize);
+    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, int id, long machThread, long stackBase, long stackSize, boolean hasThreadLocals) {
+        super(teleProcess, id, machThread, stackBase, stackSize, hasThreadLocals);
     }
 
     @Override

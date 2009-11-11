@@ -35,6 +35,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Method substitutions for the {@link java.security.AccessController} class.
@@ -191,8 +192,6 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static AccessControlContext getInheritedAccessControlContext() {
-        return UnsafeCast.asAccessControlContext(TupleAccess.readObject(Thread.currentThread(), inheritedAccessControlContextOffset));
+        return UnsafeCast.asAccessControlContext(TupleAccess.readObject(Thread.currentThread(), ClassRegistry.Thread_inheritedAccessControlContext.offset()));
     }
-
-    private static final int inheritedAccessControlContextOffset = FieldActor.findInstance(Thread.class, "inheritedAccessControlContext").offset();
 }
