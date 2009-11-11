@@ -142,6 +142,16 @@ public final class MemoryWordsTable extends InspectorTable {
         scrollToRows(row, row);
     }
 
+    public void scrollToAddress(Address address) {
+        if (address == null || address.isZero()) {
+            return;
+        }
+        final int row = tableModel.findRow(address);
+        if (row >= 0) {
+            scrollToRows(row, row);
+        }
+    }
+
     public void scrollToRange(Address first, Address last) {
         scrollToRows(tableModel.findRow(first), tableModel.findRow(last));
     }

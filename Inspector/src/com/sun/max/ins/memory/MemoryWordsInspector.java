@@ -323,6 +323,7 @@ public final class MemoryWordsInspector extends Inspector {
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         setOriginAction.refresh(true);
         memoryMenu.add(setOriginAction);
+        memoryMenu.add(scrollToFocusAction);
         memoryMenu.add(inspectBytesAction);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
@@ -790,6 +791,19 @@ public final class MemoryWordsInspector extends Inspector {
         @Override
         protected void procedure() {
             setOrigin(focus().address());
+            MemoryWordsInspector.this.refreshView(true);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(memoryWordRegion.contains(focus().address()));
+        }
+    };
+
+    private InspectorAction scrollToFocusAction = new InspectorAction(inspection(), "Scroll to selected memorylocation") {
+        @Override
+        protected void procedure() {
+            table.scrollToAddress(focus().address());
             MemoryWordsInspector.this.refreshView(true);
         }
 
