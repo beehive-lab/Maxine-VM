@@ -34,7 +34,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 
 // TODO (mlvdv) try to make columns narrow
 // TODO (mlvdv) Parameter for object search extent
@@ -778,18 +777,6 @@ public final class MemoryWordsInspector extends Inspector {
     public MemoryRegion getCurrentMemoryRegion() {
         return memoryWordRegion;
     }
-
-    private static final Predicate<Inspector> allMemoryWordsInspectorsPredicate = new Predicate<Inspector>() {
-        public boolean evaluate(Inspector inspector) {
-            return inspector instanceof MemoryWordsInspector;
-        }
-    };
-
-    private final Predicate<Inspector> otherMemoryWordsInspectorsPredicate = new Predicate<Inspector>() {
-        public boolean evaluate(Inspector inspector) {
-            return inspector instanceof MemoryWordsInspector && inspector != MemoryWordsInspector.this;
-        }
-    };
 
     private InspectorAction cloneAction = new InspectorAction(inspection(), "Clone") {
         @Override
