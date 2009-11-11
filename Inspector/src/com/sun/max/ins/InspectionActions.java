@@ -34,6 +34,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.java.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
+import com.sun.max.ins.object.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.io.*;
 import com.sun.max.memory.*;
@@ -253,6 +254,26 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             gui().removeInspectors(predicate);
         }
+    }
+
+    final class ShowViewAction extends InspectorAction {
+
+        private final Inspector inspector;
+
+        ShowViewAction(Inspector inspector) {
+            super(inspection(), inspector.getTextForTitle());
+            this.inspector = inspector;
+        }
+
+        @Override
+        protected void procedure() {
+            inspector.highlight();
+        }
+
+    }
+
+    public final InspectorAction showView(Inspector inspector) {
+        return new ShowViewAction(inspector);
     }
 
     /**
@@ -1464,6 +1485,46 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
+
+    /**
+     * Menu: display a sub-menu of commands to make visible
+     * existing object inspectors.
+     */
+    final class ObjectInspectorsMenu extends JMenu {
+        public ObjectInspectorsMenu() {
+            super("Object inspectors");
+            addMenuListener(new MenuListener() {
+
+                public void menuCanceled(MenuEvent e) {
+                }
+
+                public void menuDeselected(MenuEvent e) {
+                }
+
+                public void menuSelected(MenuEvent e) {
+                    removeAll();
+                    for (ObjectInspector objectInspector : inspection().objectInspectors()) {
+                        add(actions().showView(objectInspector));
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Creates a menu of actions to make visible existing object inspectors.
+     * <br>
+     * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
+     * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
+     *
+     * @return a dynamically populated menu that contains an action to make visible each
+     * existing object inspector, even if hidden or iconic.
+     */
+    public final JMenu objectInspectorsMenu() {
+        return new ObjectInspectorsMenu();
+    }
+
+
     private final InspectorAction inspectObjectAction = new InspectObjectAction(null);
 
     /**
@@ -1764,7 +1825,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
-/**
+    /**
      * Menu: contains actions to inspect each of the compilations of a target method.
      */
     final class InspectTargetMethodCompilationsMenu extends InspectorMenu {
@@ -4693,6 +4754,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(actions().viewBreakpoints());
                 menu.add(actions().viewMemoryRegions());
                 menu.add(actions().viewMethodCode());
+                menu.add(actions().objectInspectorsMenu());
                 menu.add(actions().viewRegisters());
                 menu.add(actions().viewStack());
                 menu.add(actions().viewThreads());

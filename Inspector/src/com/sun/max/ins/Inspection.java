@@ -112,7 +112,11 @@ public final class Inspection {
 
     private final InspectionActions inspectionActions;
 
+    private final ObjectInspectorFactory objectInspectorFactory;
+
     private InspectorMainFrame inspectorMainFrame;
+
+
 
     public Inspection(MaxVM maxVM) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
@@ -135,7 +139,7 @@ public final class Inspection {
         inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
 
         MethodInspector.Manager.make(this);
-        ObjectInspectorFactory.make(this);
+        objectInspectorFactory = ObjectInspectorFactory.make(this);
 
         if (maxVMState().processState() == NO_PROCESS) {
             // Inspector is working with a boot image only, no process exists.
@@ -254,6 +258,13 @@ public final class Inspection {
      */
     public InspectorNameDisplay nameDisplay() {
         return nameDisplay;
+    }
+
+    /**
+     * @return all existing object inspectors, even if hidden or iconic.
+     */
+    public Iterable<ObjectInspector> objectInspectors() {
+        return objectInspectorFactory.inspectors();
     }
 
     /**

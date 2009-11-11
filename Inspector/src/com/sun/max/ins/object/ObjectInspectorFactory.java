@@ -45,19 +45,11 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
      * Creates the singleton factory that listens for events and will find or create instances
      * of {@link ObjectInspector} as needed.
      */
-    public static void make(final Inspection inspection) {
+    public static ObjectInspectorFactory make(final Inspection inspection) {
         if (factory == null) {
             factory = new ObjectInspectorFactory(inspection);
         }
-    }
-
-    public boolean isObjectInspectorObservingObject(long oid) {
-        for (TeleObject teleObject : teleObjectToInspector.keys()) {
-            if (teleObject.reference().grip().makeOID() == oid) {
-                return true;
-            }
-        }
-        return false;
+        return factory;
     }
 
     /**
@@ -185,14 +177,28 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
         return null;
     }
 
+    void objectInspectorClosing(ObjectInspector objectInspector) {
+        teleObjectToInspector.remove(objectInspector.teleObject());
+    }
+
+    public boolean isObjectInspectorObservingObject(long oid) {
+        for (TeleObject teleObject : teleObjectToInspector.keys()) {
+            if (teleObject.reference().grip().makeOID() == oid) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void resetObjectToInspectorMapEntry(TeleObject oldTeleObject, TeleObject newTeleObject, ObjectInspector objectInspector) {
         teleObjectToInspector.remove(oldTeleObject);
         teleObjectToInspector.put(newTeleObject, objectInspector);
     }
 
-    void objectInspectorClosing(ObjectInspector objectInspector) {
-        teleObjectToInspector.remove(objectInspector.teleObject());
+    /**
+     * @return all existing instances of {@link ObjectInspector}, even if hidden or iconic.
+     */
+    public Iterable<ObjectInspector> inspectors() {
+        return teleObjectToInspector.values();
     }
-
-
 }
