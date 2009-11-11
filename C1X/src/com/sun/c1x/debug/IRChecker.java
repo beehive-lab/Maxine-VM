@@ -993,7 +993,7 @@ public class IRChecker extends ValueVisitor {
     private class BasicValueChecker implements ValueClosure {
 
         public Value apply(Value i) {
-            if (i.subst() != i) {
+            if (i.hasSubst()) {
                 fail("instruction has unresolved substitution " + i + " -> " + i.subst());
             }
             if (!i.isDeadPhi()) {

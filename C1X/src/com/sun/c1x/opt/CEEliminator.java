@@ -35,14 +35,13 @@ import com.sun.c1x.value.*;
 public class CEEliminator implements BlockClosure {
 
     final IR ir;
-    private boolean hasSubstitution;
+    final InstructionSubstituter subst;
 
     public CEEliminator(IR ir) {
         this.ir = ir;
+        this.subst = new InstructionSubstituter(ir);
         ir.startBlock.iteratePreOrder(this);
-        if (hasSubstitution) {
-            new SubstitutionResolver(ir.startBlock);
-        }
+        subst.finish();
     }
 
     void adjustExceptionEdges(BlockBegin block, BlockBegin sux) {
@@ -201,8 +200,7 @@ public class CEEliminator implements BlockClosure {
         if (suxAsPhi.operandCount() == 1) {
             // if the successor block now has only one predecessor
             assert suxAsPhi.operandAt(0) == result : "screwed up phi";
-            suxPhi.setSubst(result);
-            hasSubstitution = true;
+            subst.setSubst(suxPhi, result);
 
             // 3) successfully eliminated a conditional expression
             C1XMetrics.ConditionalEliminations++;
