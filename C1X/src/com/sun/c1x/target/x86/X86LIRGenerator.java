@@ -232,7 +232,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         // emit array address setup early so it schedules better
         LIRAddress arrayAddr = genArrayAddress(array, index, elementType, needsBarrier);
 
-        if (C1XOptions.GenerateBoundsChecks && needsRangeCheck) {
+        if (C1XOptions.GenBoundsChecks && needsRangeCheck) {
             if (length != LIROperandFactory.IllegalLocation) {
                 lir.cmp(LIRCondition.BelowEqual, length, index);
                 lir.branch(LIRCondition.BelowEqual, CiKind.Int, new RangeCheckStub(rangeCheckInfo, index));
@@ -243,7 +243,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             }
         }
 
-        if (C1XOptions.GenerateArrayStoreCheck && needsStoreCheck) {
+        if (C1XOptions.GenArrayStoreCheck && needsStoreCheck) {
 
             LIROperand tmp1 = newRegister(CiKind.Object);
             LIROperand tmp2 = newRegister(CiKind.Object);

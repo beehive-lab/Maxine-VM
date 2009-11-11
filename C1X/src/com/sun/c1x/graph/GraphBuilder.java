@@ -66,9 +66,9 @@ public class GraphBuilder {
         this.compilation = compilation;
         this.ir = ir;
         this.stats = compilation.stats;
-        this.memoryMap = C1XOptions.EliminateFieldAccess ? new MemoryMap() : null;
-        this.localValueMap = C1XOptions.UseLocalValueNumbering ? new ValueMap() : null;
-        this.canonicalizer = C1XOptions.CanonicalizeInstructions ? new Canonicalizer(compilation.runtime, compilation.method) : null;
+        this.memoryMap = C1XOptions.OptLocalLoadElimination ? new MemoryMap() : null;
+        this.localValueMap = C1XOptions.OptLocalValueNumbering ? new ValueMap() : null;
+        this.canonicalizer = C1XOptions.OptCanonicalize ? new Canonicalizer(compilation.runtime, compilation.method) : null;
         RiMethod rootMethod = compilation.method;
 
         // 1. create the start block
@@ -117,7 +117,7 @@ public class GraphBuilder {
             // 6A.1 the root method is an intrinsic; load the parameters onto the stack and try to inline it
             curState = initialState.copy();
             lastInstr = curBlock;
-            if (C1XOptions.Intrinsify) {
+            if (C1XOptions.OptIntrinsify) {
                 // try to inline an Intrinsic node
                 boolean isStatic = rootMethod.isStatic();
                 int argsSize = rootMethod.signatureType().argumentSlots(!isStatic);
@@ -614,9 +614,6 @@ public class GraphBuilder {
         int bci = stream().currentBCI();
         boolean isBackwards = tsucc.bci() <= bci || fsucc.bci() <= bci;
         final Value instr = append(new If(x, cond, false, y, tsucc, fsucc, isBackwards ? stateBefore : null, isBackwards));
-        if (instr instanceof If && C1XOptions.ProfileBranches) {
-            ((If) instr).setProfile(method(), bci);
-        }
     }
 
     void genIfZero(Condition cond) {
@@ -655,9 +652,6 @@ public class GraphBuilder {
         apush(append(c));
         if (assumeLeafClass(type) && !type.isArrayKlass()) {
             c.setDirectCompare();
-        }
-        if (C1XOptions.ProfileCheckcasts) {
-            c.setProfile(method(), bci());
         }
     }
 
@@ -951,7 +945,7 @@ public class GraphBuilder {
     }
 
     void genMethodReturn(Value x) {
-        if (C1XOptions.RegisterFinalizersAtInit) {
+        if (C1XOptions.GenFinalizerRegistration) {
             C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(method());
             if (intrinsic == C1XIntrinsic.java_lang_Object$init) {
                 callRegisterFinalizer();
@@ -963,7 +957,7 @@ public class GraphBuilder {
             if (method().isSynchronized()) {
                 // if the inlined method is synchronized, then the monitor
                 // must be released before jumping to the continuation point
-                assert C1XOptions.InlineSynchronizedMethods;
+                assert C1XOptions.OptInlineSynchronized;
                 int i = curState.scope().callerState().locksSize();
                 assert curState.locksSize() == i + 1;
                 Value object = curState.lockAt(i);
@@ -1100,7 +1094,7 @@ public class GraphBuilder {
 
     private boolean cseArrayLength(Value array) {
         // checks whether an array length access should be generated for CSE
-        if (C1XOptions.AlwaysCSEArrayLength) {
+        if (C1XOptions.OptCSEArrayLength) {
             // always access the length for CSE
             return true;
         } else if (array.isConstant()) {
@@ -1122,7 +1116,7 @@ public class GraphBuilder {
     }
 
     private Value append(Instruction x) {
-        return appendWithBCI(x, bci(), C1XOptions.CanonicalizeInstructions);
+        return appendWithBCI(x, bci(), C1XOptions.OptCanonicalize);
     }
 
     private Value appendWithoutOptimization(Instruction x, int bci) {
@@ -1293,7 +1287,7 @@ public class GraphBuilder {
 
     boolean tryOptimizeCall(RiMethod target, Value[] args, boolean isStatic) {
         if (target.isLoaded()) {
-            if (C1XOptions.Intrinsify) {
+            if (C1XOptions.OptIntrinsify) {
                 // try to create an intrinsic node
                 C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(target);
                 if (intrinsic != null && tryInlineIntrinsic(target, args, isStatic, intrinsic)) {
@@ -1347,7 +1341,7 @@ public class GraphBuilder {
     }
 
     boolean checkInliningConditions(RiMethod target) {
-        if (!C1XOptions.InlineMethods) {
+        if (!C1XOptions.OptInline) {
             return false; // all inlining is turned off
         }
         if (!target.hasCode()) {
@@ -1376,10 +1370,10 @@ public class GraphBuilder {
         if (compilation.runtime.mustNotCompile(target)) {
             return cannotInline(target, "compile excluded by runtime");
         }
-        if (target.isSynchronized() && !C1XOptions.InlineSynchronizedMethods) {
+        if (target.isSynchronized() && !C1XOptions.OptInlineSynchronized) {
             return cannotInline(target, "is synchronized");
         }
-        if (target.hasExceptionHandlers() && !C1XOptions.InlineMethodsWithExceptionHandlers) {
+        if (target.hasExceptionHandlers() && !C1XOptions.OptInlineExcept) {
             return cannotInline(target, "has exception handlers");
         }
         if (!target.hasBalancedMonitors()) {
@@ -1993,7 +1987,7 @@ public class GraphBuilder {
             if (type.isFinal()) {
                 return true;
             }
-            if (C1XOptions.UseDeopt && C1XOptions.UseCHA) {
+            if (C1XOptions.UseDeopt && C1XOptions.OptCHA) {
                 if (!type.hasSubclass() && !type.isInterface()) {
                     return compilation.recordLeafTypeAssumption(type);
                 }
@@ -2007,7 +2001,7 @@ public class GraphBuilder {
             if (method.isFinalMethod()) {
                 return true;
             }
-            if (C1XOptions.UseDeopt && C1XOptions.UseCHALeafMethods) {
+            if (C1XOptions.UseDeopt && C1XOptions.OptLeafMethods) {
                 if (!method.isOverridden() && !method.holder().isInterface()) {
                     return compilation.recordLeafMethodAssumption(method);
                 }

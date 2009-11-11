@@ -570,7 +570,8 @@ public class C1XTest {
         if (C1XOptions.PrintMetrics) {
             printClassFields(C1XMetrics.class);
         }
-        if (C1XOptions.PrintVEEMetrics) {
+        if (false) {
+            // TODO: print out individual metrics
             printField("Methods", C1XMetrics.TargetMethods);
             printField("Bytecodes", totalBytes);
             printField("HIR count", C1XMetrics.NumberOfHIRInstructions);

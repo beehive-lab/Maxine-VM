@@ -74,7 +74,6 @@ public abstract class InspectorTransferable<Object_Type> extends AbstractInspect
         this.dragCursor = dragCursor;
     }
 
-    @Override
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
         if (flavor == supportedDataFlavors[0]) {
             return object;
@@ -82,12 +81,10 @@ public abstract class InspectorTransferable<Object_Type> extends AbstractInspect
         throw new UnsupportedFlavorException(flavor);
     }
 
-    @Override
     public DataFlavor[] getTransferDataFlavors() {
         return supportedDataFlavors;
     }
 
-    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         return flavor == supportedDataFlavors[0];
     }

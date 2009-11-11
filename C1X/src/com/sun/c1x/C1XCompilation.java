@@ -207,7 +207,7 @@ public class C1XCompilation {
             map.addEntrypoint(osrBCI, BlockBegin.BlockFlag.OsrEntry);
             isOsrCompilation = true;
         }
-        if (!map.build(!isOsrCompilation && C1XOptions.ComputeStoresInLoops)) {
+        if (!map.build(!isOsrCompilation && C1XOptions.PhiLoopStores)) {
             throw new CiBailout("build of BlockMap failed for " + method);
         } else {
             if (C1XOptions.PrintCFGToFile) {
@@ -239,7 +239,7 @@ public class C1XCompilation {
     }
 
     public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
-        if (C1XOptions.PrintExceptionHandlers && C1XOptions.Verbose) {
+        if (C1XOptions.PrintExceptionHandlers) {
             TTY.println("  added exception scope for pco %d", pcOffset);
         }
         if (exceptionInfoList == null) {
@@ -302,7 +302,7 @@ public class C1XCompilation {
     }
 
     private void emitLIR() {
-        if (C1XOptions.GenerateLIR) {
+        if (C1XOptions.GenLIR) {
             if (C1XOptions.PrintTimers) {
                 C1XTimers.LIR_CREATE.start();
             }
@@ -328,7 +328,7 @@ public class C1XCompilation {
     }
 
     private CiTargetMethod emitCode() {
-        if (C1XOptions.GenerateLIR && C1XOptions.GenerateAssembly) {
+        if (C1XOptions.GenLIR && C1XOptions.GenCode) {
             final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this);
             lirAssembler.emitCode(hir.linearScanOrder());
 
