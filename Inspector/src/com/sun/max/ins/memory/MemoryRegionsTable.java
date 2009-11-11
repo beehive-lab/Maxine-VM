@@ -27,7 +27,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
@@ -38,7 +37,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.value.*;
 
@@ -61,7 +59,7 @@ public final class MemoryRegionsTable extends InspectorTable {
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
         bootHeapRegionDisplay = new HeapRegionDisplay(maxVM().teleBootHeapRegion());
-        bootCodeRegionDisplay = new CodeRegionDisplay(maxVM().teleBootCodeRegion(), true);
+        bootCodeRegionDisplay = new CodeRegionDisplay(maxVM().teleBootCodeRegion());
         heapScheme = inspection.maxVM().vmConfiguration().heapScheme();
         heapSchemeName = heapScheme.getClass().getSimpleName();
         tableModel = new MemoryRegionsTableModel(inspection);
@@ -75,7 +73,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) tableModel.getMemoryRegion(row);
         final String regionName = memoryRegionDisplay.description();
         menu.add(actions().inspectRegionMemoryWords(memoryRegionDisplay, regionName));
-        //menu.add(actions().setRegionWatchpoint(memoryRegionDisplay, "Watch region memory"));
+        // menu.add(actions().setRegionWatchpoint(memoryRegionDisplay, "Watch region memory"));
         menu.add(Watchpoints.createEditMenu(inspection(), tableModel.getWatchpoints(row)));
         menu.add(Watchpoints.createRemoveActionOrMenu(inspection(), tableModel.getWatchpoints(row)));
         return menu;
@@ -110,7 +108,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         private MemoryRegionsColumnModel(MemoryRegionsViewPreferences viewPreferences) {
             super(MemoryRegionsColumnKind.VALUES.length(), viewPreferences);
             addColumn(MemoryRegionsColumnKind.TAG, new TagCellRenderer(inspection()), null);
-            addColumn(MemoryRegionsColumnKind.NAME, new NameCellRenderer(inspection()), null);
+            addColumn(MemoryRegionsColumnKind.NAME, new NameCellRenderer(), null);
             addColumn(MemoryRegionsColumnKind.START, new StartAddressCellRenderer(), null);
             addColumn(MemoryRegionsColumnKind.END, new EndAddressCellRenderer(), null);
             addColumn(MemoryRegionsColumnKind.SIZE, new SizeCellRenderer(), null);
@@ -145,7 +143,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         @Override
-        public Class< ? > getColumnClass(int c) {
+        public Class<?> getColumnClass(int c) {
             return MemoryRegionDisplay.class;
         }
 
@@ -168,7 +166,7 @@ public final class MemoryRegionsTable extends InspectorTable {
             sortedMemoryRegions.add(bootCodeRegionDisplay);
             final TeleCodeRegion teleRuntimeCodeRegion = maxVM().teleRuntimeCodeRegion();
             if (teleRuntimeCodeRegion.isAllocated()) {
-                sortedMemoryRegions.add(new CodeRegionDisplay(teleRuntimeCodeRegion, false));
+                sortedMemoryRegions.add(new CodeRegionDisplay(teleRuntimeCodeRegion));
             }
 
             for (MaxThread thread : maxVMState().threads()) {
@@ -179,7 +177,6 @@ public final class MemoryRegionsTable extends InspectorTable {
             }
             super.refresh();
         }
-
 
         @Override
         public MemoryRegion getMemoryRegion(int row) {
@@ -250,20 +247,14 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     }
 
-    private final class NameCellRenderer extends PlainLabel implements TableCellRenderer {
-
-        NameCellRenderer(Inspection inspection) {
-            super(inspection, null);
-            setOpaque(true);
-        }
+    private final class NameCellRenderer implements TableCellRenderer {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
-            setText(memoryRegionData.description());
-            setToolTipText(memoryRegionData.toolTipText());
-            setForeground(getRowTextColor(row));
-            setBackground(cellBackgroundColor(isSelected));
-            return this;
+            final MemoryRegionValueLabel label = memoryRegionData.memoryRegionValueLabel();
+            label.setForeground(getRowTextColor(row));
+            label.setBackground(cellBackgroundColor(isSelected));
+            return label;
         }
 
     }
@@ -323,21 +314,12 @@ public final class MemoryRegionsTable extends InspectorTable {
             label.setToolTipText("Allocated from region: 0x" + Long.toHexString(allocated) + "(" + allocated + ")");
             label.setForeground(getRowTextColor(row));
             label.setBackground(cellBackgroundColor(isSelected));
-            return  label;
+            return label;
         }
     }
 
-    private enum MemoryRegionKind {
-        HEAP,
-        CODE,
-        STACK,
-        OTHER;
-
-        public static final IndexedSequence<MemoryRegionKind> VALUES = new ArraySequence<MemoryRegionKind>(values());
-    }
-
     /**
-     * Wraps a {@link MemoryRegion} with additional display-related behavior.
+     * Decorates a {@link MemoryRegion} with additional display-related behavior.
      */
     private abstract class MemoryRegionDisplay implements MemoryRegion {
 
@@ -378,19 +360,36 @@ public final class MemoryRegionsTable extends InspectorTable {
             return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
         }
 
-        public String description() {
-            return memoryRegion().description();
+        public final String description() {
+            return inspection().nameDisplay().shortName(memoryRegion());
         }
 
-        abstract String toolTipText();
+        public final String toolTipText() {
+            return inspection().nameDisplay().longName(memoryRegion());
+        }
 
-        abstract MemoryRegionKind kind();
+        private MemoryRegionValueLabel memoryRegionValueLabel;
+
+        public MemoryRegionValueLabel memoryRegionValueLabel() {
+            if (memoryRegionValueLabel == null) {
+                memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
+
+                    @Override
+                    public Value fetchValue() {
+                        return WordValue.from(MemoryRegionDisplay.this.start());
+                    }
+                };
+            }
+            memoryRegionValueLabel.setOpaque(true);
+            return memoryRegionValueLabel;
+        }
 
         private WordValueLabel startLabel;
 
         public WordValueLabel startLabel() {
             if (startLabel == null) {
                 startLabel = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
+
                     @Override
                     public Value fetchValue() {
                         return WordValue.from(MemoryRegionDisplay.this.start());
@@ -406,6 +405,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         public WordValueLabel endLabel() {
             if (endLabel == null) {
                 endLabel = new WordValueLabel(inspection(), ValueMode.WORD, MemoryRegionsTable.this) {
+
                     @Override
                     public Value fetchValue() {
                         return WordValue.from(MemoryRegionDisplay.this.end());
@@ -445,55 +445,24 @@ public final class MemoryRegionsTable extends InspectorTable {
             return teleRuntimeMemoryRegion.allocatedSize();
         }
 
-        @Override
-        MemoryRegionKind kind() {
-            return MemoryRegionKind.HEAP;
-        }
-
-        @Override
-        String toolTipText() {
-            if (this == bootHeapRegionDisplay) {
-                return "Boot heap region";
-            }
-            return "Dynamic region:  " + description() + "{" + heapSchemeName + "}";
-        }
     }
 
     private final class CodeRegionDisplay extends MemoryRegionDisplay {
 
         private final TeleCodeRegion teleCodeRegion;
 
-        /**
-         * Position of this region in the {@link CodeManager}'s allocation array, -1 for the boot region.
-         */
-        private final boolean bootCodeRegion;
-
         @Override
         MemoryRegion memoryRegion() {
             return teleCodeRegion;
         }
 
-        CodeRegionDisplay(TeleCodeRegion teleCodeRegion, boolean bootCodeRegion) {
+        CodeRegionDisplay(TeleCodeRegion teleCodeRegion) {
             this.teleCodeRegion = teleCodeRegion;
-            this.bootCodeRegion = bootCodeRegion;
         }
 
         @Override
         public Size allocated() {
             return teleCodeRegion.allocatedSize();
-        }
-
-        @Override
-        MemoryRegionKind kind() {
-            return MemoryRegionKind.CODE;
-        }
-
-        @Override
-        String toolTipText() {
-            if (bootCodeRegion) {
-                return "Boot code region";
-            }
-            return "Dynamic region:  " + description();
         }
 
     }
@@ -517,16 +486,6 @@ public final class MemoryRegionsTable extends InspectorTable {
             // no account taken here for thread locals.
             return end().minus(teleNativeStack.teleNativeThread().stackPointer()).asSize();
         }
-        @Override
-        MemoryRegionKind kind() {
-            return MemoryRegionKind.STACK;
-        }
-
-        @Override
-        String toolTipText() {
-            final TeleNativeStack teleNativeStack = (TeleNativeStack) memoryRegion();
-            return "Thread region: " + inspection().nameDisplay().longName(teleNativeStack.teleNativeThread());
-        }
 
     }
 
@@ -539,18 +498,8 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         @Override
-        MemoryRegionKind kind() {
-            return MemoryRegionKind.OTHER;
-        }
-
-        @Override
         MemoryRegion memoryRegion() {
             return memoryRegion;
-        }
-
-        @Override
-        String toolTipText() {
-            return "A VM utility region";
         }
     }
 

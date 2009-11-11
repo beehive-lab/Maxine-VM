@@ -369,7 +369,7 @@ public abstract class TeleVM implements MaxVM {
 
     private final TeleProcess teleProcess;
 
-    protected TeleProcess teleProcess() {
+    public TeleProcess teleProcess() {
         return teleProcess;
     }
 
@@ -1288,10 +1288,6 @@ public abstract class TeleVM implements MaxVM {
         teleCodeRegistry().writeSummaryToStream(printStream);
     }
 
-    public final IterableWithLength<TeleNativeThread> threads() {
-        return teleProcess.threads();
-    }
-
     /* (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#getThread(long)
      */
@@ -2188,8 +2184,9 @@ public abstract class TeleVM implements MaxVM {
         }
 
         public ThreadProvider[] getAllThreads() {
-            final ThreadProvider[] threadProviders = new ThreadProvider[threads().length()];
-            return Iterables.toCollection(TeleVM.this.threads()).toArray(threadProviders);
+            final IterableWithLength<TeleNativeThread> threads = teleProcess().threads();
+            final ThreadProvider[] threadProviders = new ThreadProvider[threads.length()];
+            return Iterables.toCollection(threads).toArray(threadProviders);
         }
 
         public String[] getBootClassPath() {

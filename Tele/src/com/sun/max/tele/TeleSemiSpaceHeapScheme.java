@@ -61,7 +61,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
                 if (address.greaterEqual(teleHeapRegion.mark())) { // everything in to-space after the global allocation mark is dead
                     return false;
                 }
-                for (TeleNativeThread teleNativeThread : teleVM().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
+                for (TeleNativeThread teleNativeThread : teleVM().teleProcess().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
                     TeleThreadLocalValues teleThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
                     if (!teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME).equals(Word.zero())) {
                         if (address.greaterEqual(teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME).asAddress())
