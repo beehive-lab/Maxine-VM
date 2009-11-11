@@ -21,6 +21,7 @@
 package com.sun.max.ins.object;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
 
@@ -35,7 +36,8 @@ public final class ArrayInspector extends ObjectInspector {
 
     ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
         super(inspection, factory, teleObject);
-        createFrame(true);
+        final InspectorFrame frame = createFrame(true);
+        frame.makeMenu(MenuKind.OBJECT_MENU).add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override

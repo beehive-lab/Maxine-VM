@@ -129,8 +129,9 @@ public abstract class ObjectInspector extends Inspector {
         viewMemoryRegionsMenuItem.setText("View Memory Regions");
         memoryMenu.add(viewMemoryRegionsMenuItem);
 
+        frame.makeMenu(MenuKind.OBJECT_MENU);
+
         if (teleObject.getTeleClassMethodActorForObject() != null) {
-            frame.makeMenu(MenuKind.OBJECT_MENU);
             frame.makeMenu(MenuKind.CODE_MENU);
         }
 
