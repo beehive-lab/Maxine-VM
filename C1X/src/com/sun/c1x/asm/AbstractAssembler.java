@@ -49,7 +49,7 @@ public abstract class AbstractAssembler {
     public void bind(Label l) {
         if (l.isBound()) {
             // Assembler can bind a label more than once to the same place.
-            Util.guarantee(l.position() == codeBuffer.position(), "attempt to redefine label");
+            assert l.position() == codeBuffer.position() : "attempt to redefine label";
             return;
         }
         l.bind(codeBuffer.position());
@@ -61,19 +61,18 @@ public abstract class AbstractAssembler {
     }
 
     public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList, int registerRestoreEpilogueOffset) {
-
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
-        // Record exception handlers if existant
+        // Record exception handlers if they exist
         if (exceptionInfoList != null) {
             for (ExceptionInfo ei : exceptionInfoList) {
                 int codeOffset = ei.codeOffset;
                 for (ExceptionHandler handler : ei.exceptionHandlers) {
                     int entryOffset = handler.entryCodeOffset();
-                    RiType catchedType = handler.handler.catchKlass();
-                    targetMethod.recordExceptionHandler(codeOffset, entryOffset, catchedType);
+                    RiType caughtType = handler.handler.catchKlass();
+                    targetMethod.recordExceptionHandler(codeOffset, entryOffset, caughtType);
                 }
             }
         }
@@ -89,7 +88,6 @@ public abstract class AbstractAssembler {
         }
 
         if (C1XOptions.PrintAssembly) {
-
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
             TTY.println("Frame size: %d", framesize);
             TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
@@ -124,88 +122,64 @@ public abstract class AbstractAssembler {
             for (CiTargetMethod.ExceptionHandler x : targetMethod.exceptionHandlers) {
                 TTY.println(x.toString());
             }
-
         }
 
         return targetMethod;
     }
 
-    protected void emitByte(int x) {
-        codeBuffer.emitByte(x);
-    }
-
-    protected void emitShort(int x) {
-        codeBuffer.emitShort(x);
-    }
-
-    protected void emitInt(int x) {
-        codeBuffer.emitInt(x);
-    }
-
-    private void verifyReferenceMap() {
-    }
-
     protected void recordGlobalStubCall(int pos, Object globalStubCall, boolean[] registerMap, boolean[] stackMap) {
-        assert pos >= 0 && globalStubCall != null;
+        assert globalStubCall != null;
 
         if (C1XOptions.TraceRelocation) {
             TTY.print("Global stub call: pos = %d, name = %s", pos, globalStubCall);
-
             if (registerMap != null) {
                 TTY.print(", registerMap.length=%d", registerMap.length);
             }
-
             if (stackMap != null) {
                 TTY.print(", stackMap.length=%d", stackMap.length);
             }
         }
 
-        verifyReferenceMap();
         targetMethod.recordGlobalStubCall(pos, globalStubCall, registerMap, stackMap);
     }
 
     protected void recordDirectCall(int pos, RiMethod call, boolean[] stackMap) {
-
-        assert pos >= 0 && call != null && stackMap != null;
+        assert call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
             TTY.println("Direct call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
         }
 
-        verifyReferenceMap();
         targetMethod.recordCall(pos, call, stackMap, true);
     }
 
     protected void recordIndirectCall(int pos, RiMethod call, boolean[] stackMap) {
-        assert pos >= 0 && call != null && stackMap != null;
+        assert call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
             TTY.println("Indirect call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
         }
 
-        verifyReferenceMap();
         targetMethod.recordCall(pos, call, stackMap, false);
     }
 
     protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
-        assert pos >= 0 && call != null && stackMap != null;
+        assert call != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
             TTY.println("Runtime call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
         }
 
-        verifyReferenceMap();
         targetMethod.recordRuntimeCall(pos, call, stackMap);
     }
 
     protected void recordSafepoint(int pos, boolean[] registerMap, boolean[] stackMap) {
-        assert pos >= 0 && registerMap != null && stackMap != null;
+        assert registerMap != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
             TTY.print("Safepoint: pos = %d, registerMap.length = %d, stackMap.length = %d", pos, registerMap.length, stackMap.length);
         }
 
-        verifyReferenceMap();
         targetMethod.recordSafepoint(pos, registerMap, stackMap);
     }
 
@@ -222,15 +196,11 @@ public abstract class AbstractAssembler {
         return Address.InternalRelocation;
     }
 
-    protected void emitLong(long x) {
-        codeBuffer.emitLong(x);
-    }
-
     protected int target(Label l) {
-        int branchPc = codeBuffer.position();
         if (l.isBound()) {
             return l.position();
         } else {
+            int branchPc = codeBuffer.position();
             l.addPatchAt(branchPc);
             // Need to return a pc, doesn't matter what it is since it will be
             // replaced during resolution later.
@@ -243,19 +213,35 @@ public abstract class AbstractAssembler {
 
     public abstract void nop();
 
-    public void blockComment(String st) {
-        Util.nonFatalUnimplemented();
-    }
-
     public abstract void nullCheck(CiRegister r);
-
-    public void verifiedEntry() {
-        Util.nonFatalUnimplemented();
-    }
 
     public abstract void buildFrame(int initialFrameSizeInBytes);
 
     public abstract void align(int codeEntryAlignment);
 
     public abstract void patchJumpTarget(int branch, int target);
+
+    public final void emitByte(int x) {
+        codeBuffer.emitByte(x);
+    }
+
+    public final void emitShort(int x) {
+        codeBuffer.emitShort(x);
+    }
+
+    public final void emitInt(int x) {
+        codeBuffer.emitInt(x);
+    }
+
+    public final void emitLong(long x) {
+        codeBuffer.emitLong(x);
+    }
+
+    public void blockComment(String st) {
+        Util.nonFatalUnimplemented();
+    }
+
+    public void verifiedEntry() {
+        Util.nonFatalUnimplemented();
+    }
 }

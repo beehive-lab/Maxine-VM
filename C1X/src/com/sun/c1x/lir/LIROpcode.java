@@ -25,96 +25,87 @@ package com.sun.c1x.lir;
  * The <code>LirOpcode</code> enum represents the Operation code of each LIR instruction.
  *
  * @author Marcelo Cintra
- *
+ * @author Thomas Wuerthinger
  */
-
-// Checkstyle: stop
 public enum LIROpcode {
-    BeginOp0
-        , Label
-        ,
-    StdEntry
-        , OsrEntry
-        , RtCall
-        , Membar
-        , MembarAcquire
-        , MembarRelease
-        , GetThread
-    , EndOp0
-    , BeginOp1
-        , NullCheck
-        , Return
-        , Leal
-        , Neg
-        , Branch
-        , CondFloatBranch
-        , Move
-        , Prefetchr
-        , Prefetchw
-        , Convert
-        , AllocObject
-        , Monaddr
-        ,
-    Safepoint
-    , EndOp1
-    , BeginOp2
-        , Cmp
-        , Cmpl2i
-        , Ucmpfd2i
-        , Cmpfd2i
-        , Cmove
-        , Add
-        , Sub
-        , Mul
-        , Div
-        , Rem
-        , Sqrt
-        , Abs
-        , Sin
-        , Cos
-        , Tan
-        , Log
-        , Log10
-        , LogicAnd
-        , LogicOr
-        , LogicXor
-        , Shl
-        , Shr
-        , Ushr
-        , AllocArray
-        , Throw
-        , Unwind
-        , CompareTo
-        , Resolve
-        , ResolveStaticFields
-        , ResolveJavaClass
-        , ResolveFieldOffset
-        , ResolveArrayClass
-    , EndOp2
-    , BeginOp3
-        , Idiv
-        , Irem
-    , EndOp3
-        , StaticCall
-        , OptVirtualCall
-        , InterfaceCall
-        , VirtualCall
-        , XirDirectCall
-        , XirIndirectCall
-    ,
-    Lock
-        , Unlock
-    ,
-    InstanceOf
-        , CheckCast
-        , StoreCheck
-    ,
-    CasLong
-        , CasObj
-        , CasInt
-    ,
-    Xir
-
-   // Checkstyle: resume
-,
+    // Checkstyle: stop
+    BeginOp0,
+        Label,
+        StdEntry,
+        OsrEntry,
+        RtCall,
+        Membar,
+        MembarAcquire,
+        MembarRelease,
+        GetThread,
+    EndOp0,
+    BeginOp1,
+        NullCheck,
+        Return,
+        Leal,
+        Neg,
+        Branch,
+        CondFloatBranch,
+        Move,
+        Prefetchr,
+        Prefetchw,
+        Convert,
+        AllocObject,
+        Monaddr,
+        Safepoint,
+    EndOp1,
+    BeginOp2,
+        Cmp,
+        Cmpl2i,
+        Ucmpfd2i,
+        Cmpfd2i,
+        Cmove,
+        Add,
+        Sub,
+        Mul,
+        Div,
+        Rem,
+        Sqrt,
+        Abs,
+        Sin,
+        Cos,
+        Tan,
+        Log,
+        Log10,
+        LogicAnd,
+        LogicOr,
+        LogicXor,
+        Shl,
+        Shr,
+        Ushr,
+        AllocArray,
+        Throw,
+        Unwind,
+        CompareTo,
+        Resolve,
+        ResolveStaticFields,
+        ResolveJavaClass,
+        ResolveFieldOffset,
+        ResolveArrayClass,
+    EndOp2,
+    BeginOp3,
+        Idiv,
+        Irem,
+    EndOp3,
+    StaticCall,
+    OptVirtualCall,
+    InterfaceCall,
+    VirtualCall,
+    XirDirectCall,
+    XirIndirectCall,
+    Monitorenter,
+    Monitorexit,
+    InstanceOf,
+    CheckCast,
+    StoreCheck,
+    CasLong,
+    CasObj,
+    CasInt,
+    Xir,
+    // Checkstyle: resume
 }

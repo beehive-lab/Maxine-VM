@@ -57,7 +57,7 @@ public class BlockMerger implements BlockClosure {
                     mergeBlocks(block, sux, end);
                     C1XMetrics.BlocksMerged++;
                     continue;
-                } else if (C1XOptions.DoBlockSkipping && block.next() == end && !block.isExceptionEntry()) {
+                } else if (C1XOptions.OptBlockSkipping && block.next() == end && !block.isExceptionEntry()) {
                     // the successor has multiple predecessors, but this block is empty
                     skipBlock(block, sux, end);
                     break;

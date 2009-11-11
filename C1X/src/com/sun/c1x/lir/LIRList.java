@@ -417,11 +417,11 @@ public class LIRList {
     }
 
     public void lockObject(LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, CodeStub stub, LIRDebugInfo info) {
-        append(new LIRLock(LIROpcode.Lock, hdr, obj, lock, scratch, stub, info));
+        append(new LIRLock(LIROpcode.Monitorenter, hdr, obj, lock, scratch, stub, info));
     }
 
     public void unlockObject(LIROperand hdr, LIROperand obj, LIROperand lock, CodeStub stub) {
-        append(new LIRLock(LIROpcode.Unlock, hdr, obj, lock, LIROperandFactory.IllegalLocation, stub, null));
+        append(new LIRLock(LIROpcode.Monitorexit, hdr, obj, lock, LIROperandFactory.IllegalLocation, stub, null));
     }
 
     public void checkcast(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForException,

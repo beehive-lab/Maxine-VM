@@ -66,7 +66,7 @@ final class ControlFlowOptimizer {
 
     private void reorderShortLoop(List<BlockBegin> code, BlockBegin headerBlock, int headerIdx) {
         int i = headerIdx + 1;
-        int maxEnd = Math.min(headerIdx + C1XOptions.ShortLoopSize, code.size());
+        int maxEnd = Math.min(headerIdx + C1XOptions.MaximumShortLoopSize, code.size());
         while (i < maxEnd && code.get(i).loopDepth() >= headerBlock.loopDepth()) {
             i++;
         }

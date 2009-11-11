@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>LIROp1</code> class definition. The LIROp1 instruction has only one input operand.
@@ -160,8 +161,7 @@ public class LIROp1 extends LIRInstruction {
                 case Volatile:
                     return "volatile_move";
                 default:
-                    assert false : "The " + moveKind() + " is not a valid move";
-                    return "IllegalOp";
+                    throw Util.shouldNotReachHere();
             }
         } else {
             return super.name();

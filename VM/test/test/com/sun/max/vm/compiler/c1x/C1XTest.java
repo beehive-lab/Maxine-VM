@@ -93,6 +93,8 @@ public class C1XTest {
         "Report only the compilation speeds for methods larger than the specified threshold.");
     private static final Option<Integer> warmupOption = options.newIntegerOption("warmup", 0,
         "Set the number of warmup runs to execute before initiating the timed run.");
+    private static final Option<Boolean> resetMetricsOption = options.newBooleanOption("reset-metrics", true,
+        "Reset the metrics before each timing run.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
     private static final Option<Integer> c1xOptLevel = options.newIntegerOption("c1x-optlevel", 0,
@@ -110,6 +112,7 @@ public class C1XTest {
     private static int totalInlinedBytes;
     private static int totalInstrs;
     private static long totalNs;
+    private static long cumulNs;
     private static long lastRunNs;
     private static final double ONE_BILLION = 1000000000;
 
@@ -193,6 +196,9 @@ public class C1XTest {
             int max = timingOption.getValue();
             out.println("Timing...");
             for (int i = 0; i < max; i++) {
+                if (i > 0 && resetMetricsOption.getValue()) {
+                    C1XMetrics.reset();
+                }
                 doTimingRun(compiler, runtime, xirGenerator, methods);
                 // only aggressively resolve on the first run
                 C1XOptions.AggressivelyResolveCPEs = false;
@@ -225,6 +231,7 @@ public class C1XTest {
         for (MethodActor methodActor : methods) {
             compile(compiler, runtime, xirGenerator, methodActor, false, true);
         }
+        cumulNs += totalNs;
         lastRunNs = System.nanoTime() - start;
         reportAverage();
 
@@ -563,6 +570,29 @@ public class C1XTest {
         if (C1XOptions.PrintMetrics) {
             printClassFields(C1XMetrics.class);
         }
+        if (false) {
+            // TODO: print out individual metrics
+            printField("Methods", C1XMetrics.TargetMethods);
+            printField("Bytecodes", totalBytes);
+            printField("HIR count", C1XMetrics.NumberOfHIRInstructions);
+            printField("LIR count", C1XMetrics.NumberOfLIRInstructions);
+            printField("Code size", C1XMetrics.CodeBytesEmitted);
+            printField("Time", averageTime());
+            printField("XIR count", C1XMetrics.NumberOfLIRXIRInstructions);
+            out.print("Above:");
+            out.print("\t" + C1XMetrics.TargetMethods);
+            out.print("\t" + totalBytes);
+            out.print("\t" + C1XMetrics.NumberOfHIRInstructions);
+            out.print("\t" + C1XMetrics.NumberOfLIRInstructions);
+            out.print("\t" + C1XMetrics.CodeBytesEmitted);
+            out.print("\t" + averageTime());
+            out.print("\t" + C1XMetrics.NumberOfLIRXIRInstructions);
+            out.println();
+        }
+    }
+
+    private static double averageTime() {
+        return (cumulNs / (double) timingOption.getValue()) / ONE_BILLION;
     }
 
     private static void reportC1XOptions() {
@@ -594,28 +624,39 @@ public class C1XTest {
         final String className = javaClass.getSimpleName();
         out.println(className + " {");
         for (final Field field : javaClass.getFields()) {
-            final String fieldName = Strings.padLengthWithSpaces(field.getName(), 35);
-            try {
-                if (field.getType() == int.class) {
-                    out.print("    " + fieldName + " = " + field.getInt(null) + "\n");
-                } else if (field.getType() == boolean.class) {
-                    out.print("    " + fieldName + " = " + field.getBoolean(null) + "\n");
-                } else if (field.getType() == float.class) {
-                    out.print("    " + fieldName + " = " + field.getFloat(null) + "\n");
-                } else if (field.getType() == String.class) {
-                    out.print("    " + fieldName + " = " + field.get(null) + "\n");
-                } else if (field.getType() == Map.class) {
-
-                    Map m = (Map) field.get(null);
-                    out.print("    " + fieldName + " = " + printMap(m) + "\n");
-                } else {
-                    out.print("    " + fieldName + " = " + field.get(null) + "\n");
-                }
-            } catch (IllegalAccessException e) {
-                // do nothing.
-            }
+            printField(field);
         }
         out.println("}");
+    }
+
+    private static void printField(final Field field) {
+        final String fieldName = Strings.padLengthWithSpaces(field.getName(), 35);
+        try {
+            if (field.getType() == int.class) {
+                out.print("    " + fieldName + " = " + field.getInt(null) + "\n");
+            } else if (field.getType() == boolean.class) {
+                out.print("    " + fieldName + " = " + field.getBoolean(null) + "\n");
+            } else if (field.getType() == float.class) {
+                out.print("    " + fieldName + " = " + field.getFloat(null) + "\n");
+            } else if (field.getType() == String.class) {
+                out.print("    " + fieldName + " = " + field.get(null) + "\n");
+            } else if (field.getType() == Map.class) {
+                Map m = (Map) field.get(null);
+                out.print("    " + fieldName + " = " + printMap(m) + "\n");
+            } else {
+                out.print("    " + fieldName + " = " + field.get(null) + "\n");
+            }
+        } catch (IllegalAccessException e) {
+            // do nothing.
+        }
+    }
+
+    private static void printField(String fieldName, long value) {
+        out.print("    " + fieldName + " = " + value + "\n");
+    }
+
+    private static void printField(String fieldName, double value) {
+        out.print("    " + fieldName + " = " + value + "\n");
     }
 
     private static class Timing {

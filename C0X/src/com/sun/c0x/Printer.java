@@ -41,7 +41,7 @@ public class Printer {
     static final String CTRL_LIGHTGRAY = "\u001b[0;37m";
 
     static void printString(String str) {
-        if (C1XOptions.PrintIR) {
+        if (C1XOptions.PrintHIR) {
             out.print(CTRL_GREEN);
             out.print("    " + str);
             out.print(CTRL_DEFAULT);
@@ -50,7 +50,7 @@ public class Printer {
     }
 
     static void printOp(C0XCompilation.Location r, String op, C0XCompilation.Location... locs) {
-        if (C1XOptions.PrintIR) {
+        if (C1XOptions.PrintHIR) {
             StringBuilder b = new StringBuilder();
             if (r != null) {
                 b.append(r);
@@ -83,7 +83,7 @@ public class Printer {
     }
 
     static void printBytecodeStart(int bci, int opcode, int depth) {
-        if (C1XOptions.PrintIR) {
+        if (C1XOptions.PrintHIR) {
             out.print(CTRL_LIGHTGRAY);
             out.print("    " + Bytecodes.name(opcode) + " @ " + bci + " depth = " + depth);
             out.println("");
@@ -92,7 +92,7 @@ public class Printer {
     }
 
     static void printPrologue(RiMethod method) {
-        if (C1XOptions.PrintIR) {
+        if (C1XOptions.PrintHIR) {
             out.print(CTRL_RED);
             String s = "====== " + method + " ";
             out.print(s);
@@ -106,7 +106,7 @@ public class Printer {
     }
 
     static void printBlockPrologue(C0XCompilation compilation, int bci) {
-        if (C1XOptions.PrintIR) {
+        if (C1XOptions.PrintHIR) {
             out.print(CTRL_YELLOW);
             String s = "  === " + bci + " ";
             out.print(s);
