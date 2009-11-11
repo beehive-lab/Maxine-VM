@@ -67,6 +67,7 @@ public final class HubInspector extends ObjectInspector {
         showRefMaps = globalHubPreferences.showRefMaps;
 
         final InspectorFrame frame = createFrame(true);
+        final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         if (teleClassMethodActor != null) {
             // the object is, or is associated with a ClassMethodActor.
@@ -74,20 +75,18 @@ public final class HubInspector extends ObjectInspector {
             debugMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor));
             debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
 
-            final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
             objectMenu.add(actions().inspectObject(teleClassMethodActor, teleClassMethodActor.classActorForType().simpleName()));
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
             objectMenu.add(actions().inspectObject(teleClassActor, teleClassActor.classActorForType().simpleName()));
             objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
             objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor));
-            objectMenu.addSeparator();
-            objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
 
             final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
             codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor));
             codeMenu.addSeparator();
             codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
         }
+        objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
     }
 
     @Override
