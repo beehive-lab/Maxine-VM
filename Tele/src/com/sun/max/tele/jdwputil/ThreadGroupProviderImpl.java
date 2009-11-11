@@ -53,7 +53,7 @@ public class ThreadGroupProviderImpl implements ThreadGroupProvider {
 
     public ThreadProvider[] getThreadChildren() {
         final AppendableSequence<ThreadProvider> result = new LinkSequence<ThreadProvider>();
-        for (TeleNativeThread t : teleVM.threads()) {
+        for (TeleNativeThread t : teleVM.teleProcess().threads()) {
             if (t.isJava() == containsJavaThreads) {
                 result.append(t);
             }
