@@ -22,6 +22,7 @@ package com.sun.max.ins;
 
 import java.io.*;
 import java.math.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -277,11 +278,30 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Closes views matching a specified criterion.
+     *
      * @param predicate a predicate that returns true for all Inspectors to be closed.
      * @param actionTitle a string name for the Action, uses default name if null.
      * @return an Action that will close views.
      */
     public final InspectorAction closeViews(Predicate<Inspector> predicate, String actionTitle) {
+        return new CloseViewsAction(predicate, actionTitle);
+    }
+
+    /**
+     * Closes all views of a specified type, optionally with an exception.
+     *
+     * @param inspectorType the type of Inspectors to be closed
+     * @param exceptInspector an inspector that should not be closed
+     * @param actionTitle a string name for the Action
+     * @return an action that will close views
+     */
+    public final InspectorAction closeViews(final Class<? extends Inspector> inspectorType, final Inspector exceptInspector, String actionTitle) {
+        Predicate<Inspector> predicate = new Predicate<Inspector>() {
+            public boolean evaluate(Inspector inspector) {
+                return inspectorType.isAssignableFrom(inspector.getClass()) && inspector != exceptInspector;
+            }
+        };
         return new CloseViewsAction(predicate, actionTitle);
     }
 
@@ -1043,6 +1063,64 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
+     * Menu: display a sub-menu of commands to make visible
+     * existing memory words inspectors.  It includes a command
+     * that closes all of them.
+     */
+    final class MemoryWordsInspectorsMenu extends JMenu {
+        public MemoryWordsInspectorsMenu() {
+            super("Memory inspectors");
+            addMenuListener(new MenuListener() {
+
+                public void menuCanceled(MenuEvent e) {
+                }
+
+                public void menuDeselected(MenuEvent e) {
+                }
+
+                public void menuSelected(MenuEvent e) {
+                    removeAll();
+                    final Set<MemoryWordsInspector> inspectors = inspection().memoryWordsInspectors();
+                    if (inspectors.size() > 0) {
+                        final Set<MemoryWordsInspector> sortedSet  =  new TreeSet<MemoryWordsInspector>(new Comparator<MemoryWordsInspector>() {
+                            public int compare(MemoryWordsInspector inspector1, MemoryWordsInspector inspector2) {
+                                final Long startLocation1 = inspector1.getCurrentMemoryRegion().start().toLong();
+                                final Long startLocation2 = inspector2.getCurrentMemoryRegion().start().toLong();
+                                return startLocation1.compareTo(startLocation2);
+                            }
+                        });
+                        for (MemoryWordsInspector inspector : inspectors) {
+                            sortedSet.add(inspector);
+                        }
+                        for (MemoryWordsInspector inspector : sortedSet) {
+                            add(actions().showView(inspector));
+                        }
+                        addSeparator();
+                        add(actions().closeViews(MemoryWordsInspector.class, null, "Close all memory inspectors"));
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Creates a menu of actions to make visible existing memory words inspectors.
+     * <br>
+     * <strong>Note:</strong> This menu does not depend on context, so it would be natural to use
+     * a singleton to be shared among all uses.  Unfortunately, that does not seem to work.
+     *
+     * @return a dynamically populated menu that contains an action to make visible each
+     * existing memory words inspector, even if hidden or iconic.
+     */
+    public final JMenu memoryWordsInspectorsMenu() {
+        return new MemoryWordsInspectorsMenu();
+    }
+
+
+
+
+
+    /**
      * Action:   inspect a memory region, interactive if no location specified.
      */
     final class InspectMemoryWordsAction extends InspectorAction {
@@ -1488,7 +1566,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * Menu: display a sub-menu of commands to make visible
-     * existing object inspectors.
+     * existing object inspectors.  It includes a command
+     * that closes all of them.
      */
     final class ObjectInspectorsMenu extends JMenu {
         public ObjectInspectorsMenu() {
@@ -1503,8 +1582,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 public void menuSelected(MenuEvent e) {
                     removeAll();
-                    for (ObjectInspector objectInspector : inspection().objectInspectors()) {
-                        add(actions().showView(objectInspector));
+                    final Set<ObjectInspector> inspectors = inspection().objectInspectors();
+                    if (inspectors.size() > 0) {
+                        for (ObjectInspector objectInspector : inspection().objectInspectors()) {
+                            add(actions().showView(objectInspector));
+                        }
+                        addSeparator();
+                        add(actions().closeViews(ObjectInspector.class, null, "Close all object inspectors"));
                     }
                 }
             });
@@ -4752,6 +4836,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             public void addTo(InspectorMenu menu) {
                 menu.add(actions().viewBootImage());
                 menu.add(actions().viewBreakpoints());
+                menu.add(actions().memoryWordsInspectorsMenu());
                 menu.add(actions().viewMemoryRegions());
                 menu.add(actions().viewMethodCode());
                 menu.add(actions().objectInspectorsMenu());
@@ -4765,4 +4850,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
         };
     }
+
 }
+

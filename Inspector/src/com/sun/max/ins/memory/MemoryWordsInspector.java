@@ -22,6 +22,7 @@ package com.sun.max.ins.memory;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -149,6 +150,15 @@ public final class MemoryWordsInspector extends Inspector {
         }
     }
 
+    private static Set<MemoryWordsInspector> inspectors = new HashSet<MemoryWordsInspector>();
+
+    /**
+     * @return all existing memory words inspectors, even if hidden or iconic.
+     */
+    public static Set<MemoryWordsInspector> inspectors() {
+        return inspectors;
+    }
+
     private final Size wordSize;
     private final Size pageSize;
     private final int wordsInPage;
@@ -188,6 +198,8 @@ public final class MemoryWordsInspector extends Inspector {
         assert viewMode != null;
 
         Trace.line(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
+
+        inspectors.add(this);
         wordSize = inspection.maxVM().wordSize();
         pageSize = inspection.maxVM().pageSize();
         wordsInPage = pageSize.dividedBy(wordSize).toInt();
@@ -306,8 +318,8 @@ public final class MemoryWordsInspector extends Inspector {
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
-        defaultMenu.add(actions().closeViews(otherMemoryWordsInspectorsPredicate, "Close other memory inspectors"));
-        defaultMenu.add(actions().closeViews(allMemoryWordsInspectorsPredicate, "Close all memory inspectors"));
+        defaultMenu.add(actions().closeViews(MemoryWordsInspector.class, this, "Close other memory inspectors"));
+        defaultMenu.add(actions().closeViews(MemoryWordsInspector.class, null, "Close all memory inspectors"));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         setOriginAction.refresh(true);
@@ -742,6 +754,7 @@ public final class MemoryWordsInspector extends Inspector {
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
         Trace.line(1, tracePrefix() + " closing for " + getTitle());
+        inspectors.remove(this);
         super.inspectorClosing();
     }
 
@@ -757,6 +770,13 @@ public final class MemoryWordsInspector extends Inspector {
 
     public void viewConfigurationChanged() {
         reconstructView();
+    }
+
+    /**
+     * @return the region of VM memory current in view in this inspector.
+     */
+    public MemoryRegion getCurrentMemoryRegion() {
+        return memoryWordRegion;
     }
 
     private static final Predicate<Inspector> allMemoryWordsInspectorsPredicate = new Predicate<Inspector>() {
