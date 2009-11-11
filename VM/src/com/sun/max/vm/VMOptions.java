@@ -131,7 +131,7 @@ public final class VMOptions {
             }
         }, MaxineVM.Phase.PRISTINE);
 
-        register(new VMOption("-X ", "print help on non-standard options") {
+        register(new VMOption("-X ", "Print help on non-standard options") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 printUsage(Category.NON_STANDARD);
@@ -147,7 +147,7 @@ public final class VMOptions {
             }
         }, MaxineVM.Phase.PRISTINE);
 
-        register(new VMOption("-XX ", "print help on Maxine options") {
+        register(new VMOption("-XX ", "Print help on Maxine options") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 printUsage(Category.IMPLEMENTATION_SPECIFIC);
@@ -163,7 +163,7 @@ public final class VMOptions {
             }
         }, MaxineVM.Phase.PRISTINE);
 
-        register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exits.") {
+        register(new VMBooleanXXOption("-XX:-PrintConfiguration", "Show VM configuration details and exit") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 VMConfiguration.target().print(Log.out, "  ");
@@ -174,7 +174,8 @@ public final class VMOptions {
                 return true;
             }
         }, MaxineVM.Phase.STARTING);
-        register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continues.") {
+        
+        register(new VMBooleanXXOption("-XX:-ShowConfiguration", "Show VM configuration details and continue") {
             @Override
             public boolean parseValue(Pointer optionValue) {
                 VMConfiguration.target().print(Log.out, "  ");

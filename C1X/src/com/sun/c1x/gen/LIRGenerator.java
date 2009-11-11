@@ -171,7 +171,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         // Emit moves from physical registers / stack slots to virtual registers
 
         // increment invocation counters if needed
-        incrementInvocationCounter(new LIRDebugInfo(compilation.hir().startBlock.stateBefore(), 0, null), false);
 
         // emit phi-instruction move after safepoint since this simplifies
         // describing the state at the safepoint.
@@ -768,7 +767,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         // emit array address setup early so it schedules better
         LIRAddress arrayAddr = genArrayAddress((LIRLocation) array.result(), index.result(), x.elementKind(), false);
 
-        if (C1XOptions.GenerateBoundsChecks && needsRangeCheck) {
+        if (C1XOptions.GenBoundsChecks && needsRangeCheck) {
             if (useLength) {
                 // TODO: use a (modified) version of arrayRangeCheck that does not require a constant length to be loaded to a register
                 lir.cmp(LIRCondition.BelowEqual, length.result(), index.result());
@@ -805,7 +804,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         moveToPhi(x.stateAfter());
 
         LIROperand value = tag.result();
-        if (C1XOptions.UseTableRanges) {
+        if (C1XOptions.GenTableRanges) {
             visitSwitchRanges(createLookupRanges(x), value, x.defaultSuccessor());
         } else {
             int len = x.numberOfCases();
@@ -1115,7 +1114,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         int loKey = x.lowKey();
         int len = x.numberOfCases();
         LIROperand value = tag.result();
-        if (C1XOptions.UseTableRanges) {
+        if (C1XOptions.GenTableRanges) {
             visitSwitchRanges(createLookupRanges(x), value, x.defaultSuccessor());
         } else {
             for (int i = 0; i < len; i++) {
@@ -1365,11 +1364,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (block == ir.startBlock) {
             lir.stdEntry(LIROperandFactory.IllegalLocation);
             setOperandsForLocals(block.end().stateAfter());
-        }
-
-        if (C1XOptions.LIRTraceExecution && !block.isExceptionEntry()) {
-            assert block.lir().instructionsList().size() == 1 : "should come right after brDst";
-            genTraceBlockEntry(block);
         }
     }
 
@@ -1898,13 +1892,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void incrementBackedgeCounter(LIRDebugInfo info) {
-        incrementInvocationCounter(info, true);
-    }
-
-    void incrementInvocationCounter(LIRDebugInfo info, boolean backedge) {
-        if (C1XOptions.ProfileInlinedCalls) {
-            // TODO: For tiered compilation C1X has code here, probably not necessary.
-        }
     }
 
     void init() {
@@ -1974,7 +1961,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void monitorEnter(LIROperand object, LIROperand lock, LIROperand hdr, LIROperand scratch, int monitorNo, LIRDebugInfo infoForException, LIRDebugInfo info) {
-        if (C1XOptions.GenerateSynchronizationCode) {
+        if (C1XOptions.GenSynchronization) {
             // for slow path, use debug info for state after successful locking
             CodeStub slowPath = new MonitorEnterStub(object, lock, info);
             lir.loadStackAddressMonitor(monitorNo, lock);
@@ -1984,7 +1971,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void monitorExit(LIROperand objReg, LIROperand lock, LIROperand newHdr, int monitorNo) {
-        if (C1XOptions.GenerateSynchronizationCode) {
+        if (C1XOptions.GenSynchronization) {
             // setup registers
             LIROperand hdr = lock;
             lock = newHdr;

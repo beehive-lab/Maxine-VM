@@ -106,34 +106,34 @@ public class IR {
 
     private void optimize1() {
         // do basic optimizations
-        if (C1XOptions.SimplifyPhis) {
+        if (C1XOptions.PhiSimplify) {
             new PhiSimplifier(startBlock);
             verifyAndPrint("After phi simplification");
         }
-        if (C1XOptions.DoLoopPeeling) {
+        if (C1XOptions.OptLoopPeeling) {
             LoopPeeler.peelLoops(this);
             verifyAndPrint("After Loop peeling");
         }
-        if (C1XOptions.DoNullCheckElimination) {
+        if (C1XOptions.OptNullCheckElimination) {
             new NullCheckEliminator(this);
             verifyAndPrint("After null check elimination");
         }
-        if (C1XOptions.DoDeadCodeElimination1) {
+        if (C1XOptions.OptDeadCodeElimination1) {
             new LivenessMarker(this).removeDeadCode();
             verifyAndPrint("After dead code elimination 1");
         }
-        if (C1XOptions.DoCEElimination) {
+        if (C1XOptions.OptCEElimination) {
             new CEEliminator(this);
             verifyAndPrint("After CEE elimination");
         }
-        if (C1XOptions.DoBlockMerging) {
+        if (C1XOptions.OptBlockMerging) {
             new BlockMerger(this);
             verifyAndPrint("After block merging");
         }
     }
 
     private void computeLinearScanOrder() {
-        if (C1XOptions.GenerateLIR) {
+        if (C1XOptions.GenLIR) {
             makeLinearScanOrder();
             verifyAndPrint("After linear scan order");
         }
@@ -153,12 +153,12 @@ public class IR {
 
     private void optimize2() {
         // do more advanced, dominator-based optimizations
-        if (C1XOptions.DoGlobalValueNumbering) {
+        if (C1XOptions.OptGlobalValueNumbering) {
             makeLinearScanOrder();
             new GlobalValueNumberer(this);
             verifyAndPrint("After global value numbering");
         }
-        if (C1XOptions.DoDeadCodeElimination2) {
+        if (C1XOptions.OptDeadCodeElimination2) {
             new LivenessMarker(this).removeDeadCode();
             verifyAndPrint("After dead code elimination 2");
         }
@@ -192,7 +192,7 @@ public class IR {
         if (C1XOptions.PrintCFGToFile && cfgPrinter != null) {
             cfgPrinter.printCFG(startBlock, phase, true, false);
         }
-        if (C1XOptions.PrintIR) {
+        if (C1XOptions.PrintHIR) {
             TTY.println(phase);
             print(false);
         }

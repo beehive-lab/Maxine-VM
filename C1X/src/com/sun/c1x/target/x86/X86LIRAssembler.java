@@ -39,7 +39,6 @@ import com.sun.c1x.xir.CiXirAssembler.*;
 public class X86LIRAssembler extends LIRAssembler {
 
     private static final long NULLWORD = 0;
-    private static final CiRegister ICKlass = X86.rax;
     private static final CiRegister SHIFTCount = X86.rcx;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;

@@ -465,7 +465,7 @@ public abstract class LIRAssembler {
                 break;
 
             case NullCheck:
-                if (C1XOptions.GenerateCompilerNullChecks) {
+                if (C1XOptions.GenExplicitNullChecks) {
                     addDebugInfoForNullCheckHere(op.info);
 
                     if (op.operand().isSingleCpu()) {

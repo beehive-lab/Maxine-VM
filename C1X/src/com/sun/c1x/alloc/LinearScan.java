@@ -2717,7 +2717,7 @@ public class LinearScan {
         printLir(1, "LIR after assignment of register numbers:", true);
 
         EdgeMoveOptimizer.optimize(ir.linearScanOrder());
-        if (C1XOptions.OptimizeControlFlow) {
+        if (C1XOptions.OptControlFlow) {
             ControlFlowOptimizer.optimize(ir);
         }
 

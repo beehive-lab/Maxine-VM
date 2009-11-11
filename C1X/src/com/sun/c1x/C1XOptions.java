@@ -22,8 +22,6 @@ package com.sun.c1x;
 
 /**
  * This class encapsulates options that control the behavior of the C1X compiler.
- * The default value for each option field must be set in {@link #setDefaults()} so that
- * the options can be reverted to their defaults.
  *
  * @author Ben L. Titzer
  */
@@ -34,331 +32,156 @@ public class C1XOptions {
     // Checkstyle: resume
 
     // inlining settings
-    public static boolean InlineMethods;
-    public static boolean InlineMethodsWithExceptionHandlers;
-    public static boolean InlineSynchronizedMethods;
-    public static int     MaximumInstructionCount;
-    public static float   MaximumInlineRatio;
-    public static int     MaximumInlineSize;
-    public static int     MaximumTrivialSize;
-    public static int     MaximumInlineLevel;
-    public static int     MaximumRecursiveInlineLevel;
-    public static int     MaximumDesiredSize;
+    public static boolean OptInline                          = ____;
+    public static boolean OptInlineExcept                    = ____;
+    public static boolean OptInlineSynchronized              = ____;
+
+    public static int     MaximumInstructionCount            = 37000;
+    public static float   MaximumInlineRatio                 = 0.90f;
+    public static int     MaximumInlineSize                  = 35;
+    public static int     MaximumTrivialSize                 = 6;
+    public static int     MaximumInlineLevel                 = 9;
+    public static int     MaximumRecursiveInlineLevel        = 1;
+    public static int     MaximumDesiredSize                 = 8000;
+    public static int     MaximumShortLoopSize               = 5;
 
     // intrinsification settings
-    public static boolean Intrinsify;
-    public static boolean IntrinsifyObjectOps;
-    public static boolean IntrinsifyClassOps;
-    public static boolean IntrinsifyIntOps;
-    public static boolean IntrinsifyLongOps;
-    public static boolean IntrinsifyStringOps;
-    public static boolean IntrinsifyArrayOps;
-    public static boolean IntrinsifyReflection;
-    public static boolean IntrinsifyMath;
-    public static boolean IntrinsifyAtomic;
-    public static boolean IntrinsifyUnsafe;
+    public static boolean OptIntrinsify                      = ____;
+    public static boolean IntrinsifyObjectOps                = true;
+    public static boolean IntrinsifyClassOps                 = true;
+    public static boolean IntrinsifyIntOps                   = true;
+    public static boolean IntrinsifyLongOps                  = true;
+    public static boolean IntrinsifyStringOps                = true;
+    public static boolean IntrinsifyArrayOps                 = true;
+    public static boolean IntrinsifyReflection               = true;
+    public static boolean IntrinsifyMath                     = true;
+    public static boolean IntrinsifyAtomic                   = true;
+    public static boolean IntrinsifyUnsafe                   = true;
 
     // floating point settings
-    public static int     SSEVersion;
-    public static boolean RoundFPResults;
+    public static int     SSEVersion                         = 2;
+    public static boolean RoundFPResults                     = ____;
 
     // debugging and printing settings
-    public static boolean IRChecking;
-    public static boolean PinAllInstructions;
-    public static boolean TestPatching;
-    public static boolean TestSlowPath;
-    public static boolean VerifyOopMaps;
-    public static boolean VerifyOops;
-    public static boolean PrintIR;
-    public static boolean PrintCFGToFile;
-    public static boolean PrintMetrics;
-    public static boolean PrintVEEMetrics;
-    public static boolean GatherStaticHIRInstructionCount;
-    public static boolean PrintTimers;
-    public static boolean PrintCFG;
-    public static boolean PrintCompilation;
-    public static boolean PrintExceptionHandlers;
-    public static boolean PrintNotLoaded;
-    public static boolean FatalUnimplemented;
-    public static boolean InterpretInvokedMethods;
-    public static boolean PrintStateInInterpreter;
-    public static boolean PrintAssembly;
-    public static int     PrintAssemblyBytesPerLine;
-    public static int     TraceLinearScanLevel;
-    public static boolean TraceRelocation;
-    public static boolean TraceLIRVisit;
-    public static boolean PrintLoopList;
+    public static boolean IRChecking                         = ____;
+    public static boolean PinAllInstructions                 = ____;
+    public static boolean TestPatching                       = ____;
+    public static boolean TestSlowPath                       = ____;
+    public static boolean VerifyOopMaps                      = ____;
+    public static boolean VerifyOops                         = ____;
+    public static boolean PrintHIR                           = ____;
+    public static boolean PrintLIR                           = ____;
+    public static boolean PrintCFGToFile                     = ____;
+    public static boolean PrintMetrics                       = ____;
+    public static boolean PrintTimers                        = ____;
+    public static boolean PrintCFG                           = ____;
+    public static boolean PrintCompilation                   = ____;
+    public static boolean PrintExceptionHandlers             = ____;
+    public static boolean PrintNotLoaded                     = ____;
+    public static boolean PrintXirTemplates                  = ____;
+    public static boolean PrintIRWithLIR                     = ____;
+    public static boolean FatalUnimplemented                 = ____;
+    public static boolean InterpretInvokedMethods            = ____;
+    public static boolean PrintStateInInterpreter            = ____;
+    public static boolean PrintAssembly                      = ____;
+    public static int     PrintAssemblyBytesPerLine          = 16;
+    public static int     TraceLinearScanLevel               = 0;
+    public static boolean TraceRelocation                    = ____;
+    public static boolean TraceLIRVisit                      = ____;
+    public static boolean PrintLoopList                      = ____;
 
     // canonicalizer settings
-    public static boolean CanonicalizeInstructions;
-    public static boolean CanonicalizeClassIsInstance;
-    public static boolean CanonicalizeIfInstanceOf;
-    public static boolean CanonicalizeIntrinsics;
-    public static boolean CanonicalizeFloatingPoint;
-    public static boolean CanonicalizeNarrowingInStores;
-    public static boolean CanonicalizeConstantFields;
-    public static boolean CanonicalizeUnsafes;
-    public static boolean CanonicalizeMultipliesToShifts;
-    public static boolean CanonicalizeObjectCheckCast;
-    public static boolean CanonicalizeObjectInstanceOf;
-    public static boolean CanonicalizeFoldableMethods;
+    public static boolean CanonicalizeClassIsInstance        = true;
+    public static boolean CanonicalizeIfInstanceOf           = ____;
+    public static boolean CanonicalizeIntrinsics             = true;
+    public static boolean CanonicalizeFloatingPoint          = true;
+    public static boolean CanonicalizeNarrowingInStores      = true;
+    public static boolean CanonicalizeConstantFields         = true;
+    public static boolean CanonicalizeUnsafes                = true;
+    public static boolean CanonicalizeMultipliesToShifts     = true;
+    public static boolean CanonicalizeObjectCheckCast        = true;
+    public static boolean CanonicalizeObjectInstanceOf       = true;
+    public static boolean CanonicalizeFoldableMethods        = true;
 
-    // local value numbering / load elimination settings
-    public static boolean UseLocalValueNumbering;
-    public static boolean EliminateFieldAccess;
-    public static boolean AlwaysCSEArrayLength;
-
-    public static boolean ProfileBranches;
-    public static boolean ProfileCheckcasts;
-    public static boolean ProfileInlinedCalls;
+    // all optimization settings
+    public static boolean OptCanonicalize;
+    public static boolean OptLocalValueNumbering;
+    public static boolean OptLocalLoadElimination;
+    public static boolean OptCSEArrayLength;
+    public static boolean OptCHA;
+    public static boolean OptLeafMethods;
+    public static boolean OptMergeConstants;
+    public static boolean OptGlobalValueNumbering;
+    public static boolean OptCEElimination;
+    public static boolean OptBlockMerging;
+    public static boolean OptBlockSkipping;
+    public static boolean OptNullCheckElimination;
+    public static boolean OptIterativeNCE;
+    public static boolean OptFlowSensitiveNCE;
+    public static boolean OptDeadCodeElimination1;
+    public static boolean OptDeadCodeElimination2;
+    public static boolean OptLoopPeeling;
+    public static boolean OptControlFlow;
+    public static boolean OptMoveElimination;
 
     // optimistic optimization settings
-    public static boolean UseCHA;
-    public static boolean UseDeopt;
-    public static boolean UseCHALeafMethods;
-    public static boolean AggressivelyResolveCPEs;
+    public static boolean UseDeopt                      = ____;
+    public static boolean AggressivelyResolveCPEs       = true;
 
     // state merging settings
-    public static boolean MergeEquivalentConstants;
-    public static boolean ComputeStoresInLoops;
-    public static boolean AssumeVerifiedBytecode;
-    public static boolean ExtraPhiChecking;
-    public static boolean SimplifyPhis;
+    public static boolean AssumeVerifiedBytecode        = ____;
+    public static boolean PhiChecking                   = true;
+    public static boolean PhiSimplify                   = true;
+    public static boolean PhiLoopStores                 = true;
 
     // miscellaneous settings
-    public static boolean SupportObjectConstants;
-    public static boolean SupportWordTypes;
-    public static boolean RegisterFinalizersAtInit;
-
-    // global optimization settings
-    public static boolean DoGlobalValueNumbering;
-    public static boolean DoCEElimination;
-    public static boolean DoBlockMerging;
-    public static boolean DoBlockSkipping;
-    public static boolean DoNullCheckElimination;
-    public static boolean DoIterativeNCE;
-    public static boolean DoFlowSensitiveNCE;
-    public static boolean DoDeadCodeElimination1;
-    public static boolean DoDeadCodeElimination2;
-    public static boolean DoLoopPeeling;
-
-    // backend optimization settings
-    public static boolean OptimizeControlFlow;
-    public static int     ShortLoopSize;
-    public static boolean OptimizeMoves;
+    public static boolean SupportObjectConstants        = true;
+    public static boolean SupportWordTypes              = ____;
 
     // Linear scan settings
-    public static boolean StressLinearScan;
+    public static boolean StressLinearScan              = ____;
 
-    // LIR settings
-    public static boolean GenerateLIR;
-    public static boolean PrintXirTemplates;
-    public static boolean PrintIRWithLIR;
-    public static boolean LIRTraceExecution;
-    public static boolean TwoOperandLIRForm; // This flag is false for SPARC => probably move it to target
-    public static boolean GenerateSynchronizationCode;
-    public static boolean GenerateArrayStoreCheck;
-    public static boolean GenerateBoundsChecks;
-    public static boolean GenerateCompilerNullChecks;
+    // Code generator settings
+    public static boolean GenLIR                        = true;
+    public static boolean GenCode                       = true;
+    public static boolean GenDeopt                      = true;
 
-    public static boolean UseTableRanges;
-    public static boolean DetailedAsserts;
-    public static boolean FastPathTypeCheck;
+    public static boolean GenSynchronization            = true;
+    public static boolean GenArrayStoreCheck            = true;
+    public static boolean GenBoundsChecks               = true;
+    public static boolean GenExplicitNullChecks         = ____;
+    public static boolean GenStackBanging               = true;
+    public static boolean GenAssertionCode              = true;
+    public static boolean GenFinalizerRegistration      = true;
+    public static boolean GenTableRanges                = ____;
 
-    public static boolean PrintLIR;
-    public static boolean Verbose;
+    public static boolean TwoOperandLIRForm             = true;
+    public static boolean DetailedAsserts               = ____;
 
     // Runtime settings
-    public static boolean UseXIR;
-    public static boolean UseBiasedLocking;
-    public static boolean UseImplicitDiv0Checks;
-    public static boolean UseTLAB;
-    public static int     ReadPrefetchInstr;
-    public static boolean UseFastLocking;
-    public static boolean UseSlowPath;
-    public static boolean UseFastNewObjectArray;
-    public static boolean UseFastNewTypeArray;
-    public static boolean UseStackBanging;
-    public static int     StackShadowPages;
+    public static boolean UseXIR                        = ____;
+    public static boolean UseBiasedLocking              = ____;
+    public static boolean UseImplicitDiv0Checks         = ____;
+    public static boolean UseTLAB                       = ____;
+    public static int     ReadPrefetchInstr             = 0;
+    public static boolean UseFastLocking                = ____;
+    public static boolean UseSlowPath                   = ____;
+    public static boolean UseFastNewObjectArray         = ____;
+    public static boolean UseFastNewTypeArray           = ____;
+    public static int     StackShadowPages              = 3;
 
     // Assembler settings
-    public static boolean GenerateAssembly;
-    public static boolean CommentedAssembly;
-    public static boolean PrintLIRWithAssembly;
-    public static int     Atomics;
-    public static boolean UseNormalNop;
-    public static boolean UseAddressNop;
-    public static boolean UseIncDec;
-    public static boolean UseXmmLoadAndClearUpper;
-    public static boolean UseXmmRegToRegMoveAll;
-    public static boolean GenerateAssertionCode;
-
-    /**
-     * Sets the default value for each option field declared in this class.
-     */
-    public static void setDefaults() {
-        InlineMethods                      = ____;
-        InlineMethodsWithExceptionHandlers = ____;
-        InlineSynchronizedMethods          = ____;
-        MaximumInstructionCount            = 37000;
-        MaximumInlineRatio                 = 0.90f;
-        MaximumInlineSize                  = 35;
-        MaximumTrivialSize                 = 6;
-        MaximumInlineLevel                 = 9;
-        MaximumRecursiveInlineLevel        = 1;
-        MaximumDesiredSize                 = 8000;
-
-        // intrinsification settings
-        Intrinsify                         = ____;
-        IntrinsifyObjectOps                = true;
-        IntrinsifyClassOps                 = true;
-        IntrinsifyIntOps                   = true;
-        IntrinsifyLongOps                  = true;
-        IntrinsifyStringOps                = true;
-        IntrinsifyArrayOps                 = true;
-        IntrinsifyReflection               = true;
-        IntrinsifyMath                     = true;
-        IntrinsifyAtomic                   = true;
-        IntrinsifyUnsafe                   = true;
-
-        // floating point settings
-        SSEVersion                         = 2;
-        RoundFPResults                     = ____;
-
-        // debugging and printing settings
-        IRChecking                         = ____;
-        PinAllInstructions                 = ____;
-        TestPatching                       = ____;
-        TestSlowPath                       = ____;
-        VerifyOopMaps                      = ____;
-        VerifyOops                         = ____;
-        PrintIR                            = ____;
-        PrintCFGToFile                     = ____;
-        PrintMetrics                       = ____;
-        GatherStaticHIRInstructionCount    = ____;
-        PrintTimers                        = ____;
-        PrintCFG                           = ____;
-        PrintCompilation                   = ____;
-        PrintExceptionHandlers             = ____;
-        PrintNotLoaded                     = ____;
-        FatalUnimplemented                 = ____;
-        InterpretInvokedMethods            = ____;
-        PrintStateInInterpreter            = ____;
-        PrintAssembly                      = ____;
-        PrintAssemblyBytesPerLine          = 16;
-        TraceLinearScanLevel               = 0;
-        TraceRelocation                    = ____;
-        TraceLIRVisit                      = ____;
-        PrintLoopList                      = ____;
-
-        // canonicalizer settings
-        CanonicalizeInstructions           = true;
-        CanonicalizeClassIsInstance        = true;
-        CanonicalizeIfInstanceOf           = ____;
-        CanonicalizeIntrinsics             = true;
-        CanonicalizeFloatingPoint          = true;
-        CanonicalizeNarrowingInStores      = true;
-        CanonicalizeConstantFields         = true;
-        CanonicalizeUnsafes                = true;
-        CanonicalizeMultipliesToShifts     = true;
-        CanonicalizeObjectCheckCast        = true;
-        CanonicalizeObjectInstanceOf       = true;
-        CanonicalizeFoldableMethods        = true;
-
-        // local value numbering / load elimination settings
-        UseLocalValueNumbering             = ____;
-        EliminateFieldAccess               = ____;
-        AlwaysCSEArrayLength               = ____;
-
-        ProfileBranches                    = ____;
-        ProfileCheckcasts                  = ____;
-        ProfileInlinedCalls                = ____;
-
-        // optimistic optimization settings
-        UseCHA                             = ____;
-        UseDeopt                           = ____;
-        UseCHALeafMethods                  = ____;
-        AggressivelyResolveCPEs            = true;
-
-        // state merging settings
-        MergeEquivalentConstants           = ____;
-        ComputeStoresInLoops               = true;
-        AssumeVerifiedBytecode             = ____;
-        ExtraPhiChecking                   = true;
-        SimplifyPhis                       = true;
-
-        // miscellaneous settings
-        SupportObjectConstants             = true;
-        SupportWordTypes                   = ____;
-        RegisterFinalizersAtInit           = true;
-
-        // global optimization settings
-        DoGlobalValueNumbering             = ____;
-        DoCEElimination                    = ____;
-        DoBlockMerging                     = ____;
-        DoBlockSkipping                    = ____;
-        DoNullCheckElimination             = ____;
-        DoIterativeNCE                     = ____;
-        DoFlowSensitiveNCE                 = ____;
-        DoDeadCodeElimination1             = ____;
-        DoDeadCodeElimination2             = ____;
-        DoLoopPeeling                      = ____;
-
-        // backend optimization settings
-        OptimizeControlFlow                = ____;
-        ShortLoopSize                      = 5;
-        OptimizeMoves                      = ____;
-
-        // Linear scan settings
-        StressLinearScan                   = ____;
-
-        // LIR settings
-        GenerateLIR                        = true;
-        UseXIR = ____;
-        PrintXirTemplates                  = ____;
-        PrintIRWithLIR                     = ____;
-        LIRTraceExecution                  = ____;
-        TwoOperandLIRForm                  = true; // This flag is false for SPARC => probably move it to target
-        GenerateSynchronizationCode        = true;
-        GenerateArrayStoreCheck            = true;
-        GenerateBoundsChecks               = true;
-        GenerateCompilerNullChecks         = true;
-
-        UseTableRanges                     = ____;
-        DetailedAsserts                    = ____;
-        FastPathTypeCheck                  = ____;
-
-        PrintLIR                           = ____;
-        Verbose                            = ____;
-
-        // Runtime settings
-        UseBiasedLocking                   = ____;
-        UseImplicitDiv0Checks              = ____;
-        UseTLAB                            = ____;
-        ReadPrefetchInstr                  = 0;
-        UseFastLocking                     = ____;
-        UseSlowPath                        = ____;
-        UseFastNewObjectArray              = ____;
-        UseFastNewTypeArray                = ____;
-        UseStackBanging                    = true;
-        StackShadowPages                   = 3;
-
-        // Assembler settings
-        GenerateAssembly                   = true;
-        CommentedAssembly                  = ____;
-        PrintLIRWithAssembly               = ____;
-        Atomics                            = 0;
-        UseNormalNop                       = true;
-        UseAddressNop                      = true;
-        UseIncDec                          = ____;
-        UseXmmLoadAndClearUpper            = ____;
-        UseXmmRegToRegMoveAll              = ____;
-        GenerateAssertionCode              = ____;
-
-    }
+    public static boolean CommentedAssembly             = ____;
+    public static boolean PrintLIRWithAssembly          = ____;
+    public static int     Atomics                       = 0;
+    public static boolean UseNormalNop                  = true;
+    public static boolean UseAddressNop                 = true;
+    public static boolean UseIncDec                     = ____;
+    public static boolean UseXmmLoadAndClearUpper       = ____;
+    public static boolean UseXmmRegToRegMoveAll         = ____;
 
     static {
-        setDefaults();
+        setOptimizationLevel(1);
     }
 
     public static void setOptimizationLevel(int level) {
@@ -375,129 +198,125 @@ public class C1XOptions {
 
     private static void setOptimizationLevel0() {
         // turn off all optimizations
-        InlineMethods                      = ____;
-        CanonicalizeInstructions           = ____;
-        UseLocalValueNumbering             = ____;
-        EliminateFieldAccess               = ____;
-        AlwaysCSEArrayLength               = ____;
+        OptInline                       = ____;
+        OptCanonicalize                 = ____;
+        OptLocalValueNumbering          = ____;
+        OptLocalLoadElimination         = ____;
+        OptCSEArrayLength               = ____;
 
-        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
-        ComputeStoresInLoops               = ____;
-        SimplifyPhis                       = true;
+        OptMergeConstants               = ____; // won't work until constants can be outside CFG
+        PhiLoopStores = ____;
 
         // turn off backend optimizations
-        OptimizeControlFlow                = ____;
-        OptimizeMoves                      = ____;
+        OptControlFlow                  = ____;
+        OptMoveElimination              = ____;
 
-        DoGlobalValueNumbering             = ____;
-        DoCEElimination                    = ____;
-        DoBlockMerging                     = ____;
-        DoNullCheckElimination             = ____;
-        DoDeadCodeElimination1             = ____;
-        DoDeadCodeElimination2             = ____;
-        DoLoopPeeling                      = ____;
+        OptGlobalValueNumbering         = ____;
+        OptCEElimination                = ____;
+        OptBlockMerging                 = ____;
+        OptNullCheckElimination         = ____;
+        OptDeadCodeElimination1         = ____;
+        OptDeadCodeElimination2         = ____;
+        OptLoopPeeling                  = ____;
     }
 
     private static void setOptimizationLevel1() {
         // turn on basic inlining and local optimizations
-        InlineMethods                      = ____; // inlining heuristics may need to be adjusted
-        CanonicalizeInstructions           = true;
-        UseLocalValueNumbering             = true;
-        EliminateFieldAccess               = true;
-        AlwaysCSEArrayLength               = ____;
+        OptInline                       = ____;
+        OptCanonicalize                 = true;
+        OptLocalValueNumbering          = true;
+        OptLocalLoadElimination         = true;
+        OptCSEArrayLength               = ____;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
-        ComputeStoresInLoops               = true;
-        SimplifyPhis                       = true;
+        OptMergeConstants               = ____;
+        PhiLoopStores = true;
 
         // turn on speculative optimizations
-        UseCHA                             = ____;
-        UseDeopt                           = ____;
-        UseCHALeafMethods                  = ____;
+        OptCHA                          = ____;
+        UseDeopt                        = ____;
+        OptLeafMethods                  = ____;
 
         // turn on backend optimizations
-        OptimizeControlFlow                = true;
-        OptimizeMoves                      = true;
+        OptControlFlow                  = true;
+        OptMoveElimination              = true;
 
         // turn off global optimizations, except null check elimination
-        DoGlobalValueNumbering             = ____;
-        DoCEElimination                    = ____;
-        DoBlockMerging                     = ____;
-        DoNullCheckElimination             = true;
-        DoIterativeNCE                     = ____; // don't iterate NCE
-        DoFlowSensitiveNCE                 = ____;
-        DoDeadCodeElimination1             = ____;
-        DoDeadCodeElimination2             = ____;
-        DoLoopPeeling                      = ____;
+        OptGlobalValueNumbering         = ____;
+        OptCEElimination                = ____;
+        OptBlockMerging                 = ____;
+        OptNullCheckElimination         = true;
+        OptIterativeNCE                 = ____; // don't iterate NCE
+        OptFlowSensitiveNCE             = ____;
+        OptDeadCodeElimination1         = ____;
+        OptDeadCodeElimination2         = ____;
+        OptLoopPeeling                  = ____;
     }
 
     private static void setOptimizationLevel2() {
         // turn on basic inlining and local optimizations
-        InlineMethods                      = true; // inlining heuristics may need to be adjusted
-        CanonicalizeInstructions           = true;
-        UseLocalValueNumbering             = true;
-        EliminateFieldAccess               = true;
-        AlwaysCSEArrayLength               = ____;
+        OptInline                       = true;
+        OptCanonicalize                 = true;
+        OptLocalValueNumbering          = true;
+        OptLocalLoadElimination         = true;
+        OptCSEArrayLength               = ____;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
-        ComputeStoresInLoops               = true;
-        SimplifyPhis                       = true;
+        OptMergeConstants               = ____;
+        PhiLoopStores = true;
 
         // turn on speculative optimizations
-        UseCHA                             = true;
-        UseDeopt                           = true;
-        UseCHALeafMethods                  = true;
+        OptCHA                          = true;
+        UseDeopt                        = true;
+        OptLeafMethods                  = true;
 
         // turn on backend optimizations
-        OptimizeControlFlow                = true;
-        OptimizeMoves                      = true;
+        OptControlFlow                  = true;
+        OptMoveElimination              = true;
 
         // turn off global optimizations, except null check elimination
-        DoGlobalValueNumbering             = ____;
-        DoCEElimination                    = ____;
-        DoBlockMerging                     = true;
-        DoNullCheckElimination             = true;
-        DoIterativeNCE                     = ____; // don't iterate NCE
-        DoFlowSensitiveNCE                 = ____;
-        DoDeadCodeElimination1             = ____;
-        DoDeadCodeElimination2             = ____;
-        DoLoopPeeling                      = ____; // still need to insert Phi instructions at merge blocks
+        OptGlobalValueNumbering         = ____;
+        OptCEElimination                = ____;
+        OptBlockMerging                 = true;
+        OptNullCheckElimination         = true;
+        OptIterativeNCE                 = ____; // don't iterate NCE
+        OptFlowSensitiveNCE             = ____;
+        OptDeadCodeElimination1         = ____;
+        OptDeadCodeElimination2         = ____;
+        OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
     }
 
     private static void setOptimizationLevel3() {
         // turn on basic inlining and local optimizations
-        InlineMethods                      = true;
-        CanonicalizeInstructions           = true;
-        UseLocalValueNumbering             = true;
-        EliminateFieldAccess               = true;
-        AlwaysCSEArrayLength               = true;
+        OptInline                       = true;
+        OptCanonicalize                 = true;
+        OptLocalValueNumbering          = true;
+        OptLocalLoadElimination         = true;
+        OptCSEArrayLength               = true;
 
         // turn on state merging optimizations
-        MergeEquivalentConstants           = ____; // won't work until constants can be outside CFG
-        ComputeStoresInLoops               = true;
-        SimplifyPhis                       = true;
+        OptMergeConstants               = ____; // won't work until constants can be outside CFG
+        PhiLoopStores = true;
 
         // turn on speculative optimizations
-        UseCHA                             = true;
-        UseDeopt                           = true;
-        UseCHALeafMethods                  = true;
+        OptCHA                          = true;
+        UseDeopt                        = true;
+        OptLeafMethods                  = true;
 
         // turn on backend optimizations
-        OptimizeControlFlow                = true;
-        OptimizeMoves                      = true;
+        OptControlFlow                  = true;
+        OptMoveElimination              = true;
 
         // turn on global optimizations
-        DoGlobalValueNumbering             = true;
-        DoCEElimination                    = true;
-        DoBlockMerging                     = true;
-        DoBlockSkipping                    = true;
-        DoNullCheckElimination             = true;
-        DoIterativeNCE                     = true;
-        DoFlowSensitiveNCE                 = true;
-        DoDeadCodeElimination1             = true;
-        DoDeadCodeElimination2             = true;
-        DoLoopPeeling                      = ____; // still need to insert Phi instructions at merge blocks
+        OptGlobalValueNumbering         = true;
+        OptCEElimination                = true;
+        OptBlockMerging                 = true;
+        OptBlockSkipping                = true;
+        OptNullCheckElimination         = true;
+        OptIterativeNCE                 = true;
+        OptFlowSensitiveNCE             = true;
+        OptDeadCodeElimination1         = true;
+        OptDeadCodeElimination2         = true;
+        OptLoopPeeling                  = ____; // still need to insert Phi instructions at merge blocks
     }
 }
