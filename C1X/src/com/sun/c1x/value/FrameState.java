@@ -22,6 +22,7 @@ package com.sun.c1x.value;
 
 import com.sun.c1x.ir.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.ci.CiCodePos;
 
 /**
  * The <code>FrameState</code> class represents an immutable view of the state of a frame
@@ -33,17 +34,32 @@ import com.sun.c1x.util.*;
  */
 public class FrameState {
 
-    public final FrameState parent;
-    private final IRScope scope;
+    /**
+     * The frame state of the caller method, if any.
+     */
+    public final FrameState caller;
+
+    /**
+     * The code position of this frame state.
+     */
+    public final CiCodePos pos;
+
     private final Value[] state;
     private final char localsSize;
     private final char stackSize;
 
-    public FrameState(ValueStack state) {
-        parent = null;
-        scope = state.scope();
-        localsSize = (char) state.localsSize();
-        stackSize = (char) state.stackSize();
+    /**
+     * Creates a new frame state from the specified caller, at the specified position, by copying
+     * the values from the supplied value stack.
+     * @param caller the caller frame state
+     * @param pos the code position for this frame state
+     * @param state the value stack containing the values
+     */
+    public FrameState(FrameState caller, CiCodePos pos, ValueStack state) {
+        this.pos = pos;
+        this.caller = caller;
+        this.localsSize = (char) state.localsSize();
+        this.stackSize = (char) state.stackSize();
         this.state = new Value[localsSize + stackSize + state.locksSize()];
 
         int i = 0;
@@ -56,10 +72,18 @@ public class FrameState {
         for (int j = 0; j < state.locksSize(); j++) {
             this.state[i++] = state.lockAt(j);
         }
+        assert verify(state);
     }
 
-    public IRScope scope() {
-        return scope;
+    private boolean verify(ValueStack state) {
+        if (caller == null) {
+            assert pos.caller == null : "should not have caller";
+            assert state.scope().isTopScope() : "should be top scope";
+        } else {
+            assert pos.caller.matches(caller.pos) : "caller mismatch";
+            assert state.scope().callerCodeSite().matches(caller.pos) : "caller mismatch";
+        }
+        return true;
     }
 
     public ValueStack asValueStack() {
