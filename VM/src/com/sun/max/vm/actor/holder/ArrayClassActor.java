@@ -62,7 +62,7 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
               componentClassActor.minorVersion,
               createFlags(componentClassActor),
               JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor, 1),
-              ClassRegistry.javaLangObjectActor(),
+              ClassRegistry.OBJECT,
               componentClassActor,
               getInterfaceActors(),
               FieldActor.NONE,
@@ -124,13 +124,13 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
         }
 
         if (!elementClassActor.isPrimitiveClassActor()) {
-            result.set(ClassRegistry.javaLangObjectActor().makeID(numberOfDimensions));
+            result.set(ClassRegistry.OBJECT.makeID(numberOfDimensions));
         }
 
         for (int dimensions = 1; dimensions < numberOfDimensions; ++dimensions) {
-            result.set(ClassRegistry.javaLangObjectActor().makeID(dimensions));
-            result.set(ClassRegistry.javaLangCloneableActor().makeID(dimensions));
-            result.set(ClassRegistry.javaIoSerializeableActor().makeID(dimensions));
+            result.set(ClassRegistry.OBJECT.makeID(dimensions));
+            result.set(ClassRegistry.CLONEABLE.makeID(dimensions));
+            result.set(ClassRegistry.SERIALIZABLE.makeID(dimensions));
         }
 
         return result;

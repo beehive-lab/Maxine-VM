@@ -255,7 +255,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         patchLoops();
         emitBlockIfNotEmpty(prologueBlock);
         emitBlockIfNotEmpty(localBlock);
-        dirTree.setGenerated(parameters, new ArrayListSequence<DirBlock>(blocks));
+        dirTree.setGenerated(parameters, new ArrayListSequence<DirBlock>(blocks), false);
     }
 
     @Override

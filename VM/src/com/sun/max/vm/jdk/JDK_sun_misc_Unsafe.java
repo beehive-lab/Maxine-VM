@@ -1003,7 +1003,9 @@ final class JDK_sun_misc_Unsafe {
     @SUBSTITUTE
     public void unpark(Object javaThread) {
         final VmThread thread = VmThread.fromJava((Thread) javaThread);
-        thread.unpark();
+        if (thread != null) {
+            thread.unpark();
+        }
     }
 
     /**

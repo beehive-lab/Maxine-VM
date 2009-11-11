@@ -243,7 +243,7 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
         }
         for (EirVariable variable : variables) {
             for (EirVariable v : variable.interferingVariables()) {
-                assert v.location() != variable.location();
+                assert v.location() != variable.location() : "Inferfering variables " + v + " and " + variable + " have been assigned the same location";
             }
         }
         return true;

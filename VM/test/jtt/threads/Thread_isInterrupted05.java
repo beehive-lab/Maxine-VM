@@ -18,35 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.collect;
+package jtt.threads;
 
-import java.util.*;
 
-/**
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: 0 = true
  */
-public final class EnumSets {
 
-    private EnumSets() {
+// Interrupted during wait, with interrupter joining
+public class Thread_isInterrupted05 {
+
+    public static boolean test(int i)  throws InterruptedException {
+        final Thread waitInterruptee = new WaitInterruptee();
+        waitInterruptee.start();
+        waitInterruptee.interrupt();
+        waitInterruptee.join();
+        return true;
     }
 
-    public static <Element_Type extends Enum<Element_Type>> EnumSet<Element_Type> of(Class<Element_Type> elementType, Element_Type[] elements) {
-        if (elements.length == 0) {
-            return EnumSet.noneOf(elementType);
+    static class WaitInterruptee extends Thread {
+        @Override
+        public void run() {
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException ex) {
+                }
+            }
         }
-        return EnumSet.of(elements[0], elements);
     }
 
-    public static <Element_Type extends Enum<Element_Type>> EnumSet<Element_Type> union(EnumSet<Element_Type> set1, EnumSet<Element_Type> set2) {
-        final EnumSet<Element_Type> result = EnumSet.copyOf(set1);
-        result.addAll(set2);
-        return result;
-    }
-
-    public static <Element_Type extends Enum<Element_Type>> EnumSet<Element_Type> add(EnumSet<Element_Type> set, Element_Type element) {
-        final EnumSet<Element_Type> result = EnumSet.copyOf(set);
-        result.add(element);
-        return result;
-    }
 
 }

@@ -30,9 +30,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -192,18 +190,6 @@ public final class DynamicLinker {
     }
 
     /**
-     * The method ClassLoader.findNative(ClassLoader, String) has to be called via reflection as it is not publicly accessible.
-     */
-    private static MethodActor findNativeMethod;
-
-    private static MethodActor getFindNativeMethod() {
-        if (findNativeMethod == null) {
-            findNativeMethod = ClassActor.fromJava(ClassLoader.class).findLocalStaticMethodActor(SymbolTable.makeSymbol("findNative"), SignatureDescriptor.create(long.class, ClassLoader.class, String.class));
-        }
-        return findNativeMethod;
-    }
-
-    /**
      * Looks up the symbol for a native method.
      *
      * @param classMethodActor the actor for a native method
@@ -230,10 +216,10 @@ public final class DynamicLinker {
                     }
 
                     // Now look in the native libraries loaded by the class loader of the class in which this native method was declared
-                    symbolAddress = Address.fromLong(getFindNativeMethod().invoke(ReferenceValue.from(classLoader), ReferenceValue.from(symbol)).asLong());
+                    symbolAddress = Address.fromLong(ClassRegistry.ClassLoader_findNative.invoke(ReferenceValue.from(classLoader), ReferenceValue.from(symbol)).asLong());
                     // Now look in the system library path
                     if (symbolAddress.isZero() && classLoader != null) {
-                        symbolAddress = Address.fromLong(getFindNativeMethod().invoke(ReferenceValue.NULL, ReferenceValue.from(symbol)).asLong());
+                        symbolAddress = Address.fromLong(ClassRegistry.ClassLoader_findNative.invoke(ReferenceValue.NULL, ReferenceValue.from(symbol)).asLong());
                     }
                 }
             } catch (InvocationTargetException e) {

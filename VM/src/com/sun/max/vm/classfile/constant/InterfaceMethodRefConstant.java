@@ -122,7 +122,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
                     return result;
                 }
             }
-            result = ClassRegistry.javaLangObjectActor().findLocalVirtualMethodActor(name, descriptor);
+            result = ClassRegistry.OBJECT.findLocalVirtualMethodActor(name, descriptor);
             if (result != null) {
                 return result;
             }

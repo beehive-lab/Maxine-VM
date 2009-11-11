@@ -131,8 +131,8 @@ public final class SolarisTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long lwpId, long stackBase, long stackSize) {
-        return new SolarisTeleNativeThread(this, id, lwpId, stackBase, stackSize);
+    protected TeleNativeThread createTeleNativeThread(int id, long lwpId, long stackBase, long stackSize, boolean hasThreadLocals) {
+        return new SolarisTeleNativeThread(this, id, lwpId, stackBase, stackSize, hasThreadLocals);
     }
 
     /**

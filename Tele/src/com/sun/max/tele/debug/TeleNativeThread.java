@@ -190,7 +190,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     private final long handle;
 
-    protected TeleNativeThread(TeleProcess teleProcess, int id, long handle, long stackBase, long stackSize) {
+    protected TeleNativeThread(TeleProcess teleProcess, int id, long handle, long stackBase, long stackSize, boolean hasThreadLocals) {
         this.teleProcess = teleProcess;
         this.teleVM = teleProcess.teleVM();
         this.id = id;
@@ -200,7 +200,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         this.floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         this.stateRegisters = new TeleStateRegisters(vmConfiguration);
 
-        this.teleVmThreadLocals = id >= 0 ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
+        this.teleVmThreadLocals = hasThreadLocals ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
         this.stack = new TeleNativeStack(this, Address.fromLong(stackBase), Size.fromLong(stackSize));
         this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
     }
@@ -232,10 +232,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     public TeleVM teleVM() {
         return teleVM;
-    }
-
-    private boolean hasThreadLocals() {
-        return teleVmThreadLocals != null;
     }
 
     /* (non-Javadoc)
@@ -288,7 +284,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         this.state = state;
         stateRegisters.setInstructionPointer(instructionPointer);
         if (vmThreadLocals != null) {
-            assert hasThreadLocals();
+            assert teleVmThreadLocals != null;
             for (Safepoint.State safepointState : Safepoint.State.CONSTANTS) {
                 final Pointer vmThreadLocalsPointer = vmThreadLocals.get(safepointState);
                 if (vmThreadLocalsPointer.isZero()) {
