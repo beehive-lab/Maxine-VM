@@ -84,4 +84,8 @@ public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
         }
         return null;
     }
+
+    public TeleVmThread teleVmThread() {
+        return this;
+    }
 }

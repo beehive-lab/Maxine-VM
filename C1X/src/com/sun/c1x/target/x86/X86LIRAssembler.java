@@ -1157,9 +1157,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitTypeCheck(LIRTypeCheck op) {
-
-        // TODO: Make this work with Maxine while preserving the general semantics
-
         LIROpcode code = op.code;
         if (code == LIROpcode.StoreCheck) {
 
@@ -1168,7 +1165,6 @@ public class X86LIRAssembler extends LIRAssembler {
             CiRegister kRInfo = op.tmp1().asRegister();
             CiRegister klassRInfo = op.tmp2().asRegister();
             CiRegister rtmp1 = op.tmp3().asRegister();
-
 
             CodeStub stub = op.stub();
             Label done = new Label();
@@ -1182,12 +1178,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
             // get instance klass
             masm().movptr(kRInfo, new Address(kRInfo, compilation.runtime.elementHubOffset()));
-
-            // TODO: enable the fast path!
-            // perform the fast part of the checking logic
-            // masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new
-            // RegisterOrConstant(-1));
-
             masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, op.info, rtmp1, kRInfo, klassRInfo);
 
             // result is a boolean
@@ -1198,131 +1188,44 @@ public class X86LIRAssembler extends LIRAssembler {
             // we always need a stub for the failure case.
             CodeStub stub = op.stub();
             CiRegister obj = op.object().asRegister();
-            CiRegister kRInfo = op.tmp1().asRegister();
-            CiRegister klassRInfo = op.tmp2().asRegister();
+            CiRegister expectedHub = op.tmp1().asRegister();
             CiRegister dst = op.result().asRegister();
             RiType k = op.klass();
-            //Register rtmp1 = Register.noreg;
 
             Label done = new Label();
-            if (obj == kRInfo) {
-                kRInfo = dst;
-            } else if (obj == klassRInfo) {
-                klassRInfo = dst;
+            if (obj == expectedHub) {
+                expectedHub = dst;
             }
-            /*if (k.isLoaded()) {
-                // TODO: out params?!
-                Register[] tmp1 = {kRInfo};
-                Register[] tmp2 = {klassRInfo};
-                selectDifferentRegisters(obj, dst, tmp1, tmp2);
-                kRInfo = tmp1[0];
-                klassRInfo = tmp2[0];
-            } else {
-                rtmp1 = op.tmp3().asRegister();
-                Register[] tmp1 = {kRInfo};
-                Register[] tmp2 = {klassRInfo};
-                Register[] tmp3 = {rtmp1};
-                selectDifferentRegisters(obj, dst, tmp1, tmp2, tmp3);
-                kRInfo = tmp1[0];
-                klassRInfo = tmp2[0];
-                rtmp1 = tmp3[0];
-            }*/
 
-            //assert Register.assertDifferentRegisters(obj, kRInfo, klassRInfo);
-            //if (!k.isLoaded()) {
-            //    jobject2regWithPatching(kRInfo, op.infoForPatch());
-            //} else {
-            //    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
-            //}
-            assert obj != kRInfo : "must be different";
+            assert obj != expectedHub : "must be different";
             masm().cmpptr(obj, (int) NULLWORD);
             if (op.profiledMethod() != null) {
 
                 Util.unimplemented();
-//
-//                RiMethod method = op.profiledMethod();
-//                int bci = op.profiledBci();
-//
-//                Label profileDone = new Label();
-//                masm().jcc(X86Assembler.Condition.notEqual, profileDone);
-//                // Object is null; update methodDataOop
-//                RiMethodProfile md = method.methodData();
-//                if (md == null) {
-//                    throw new CiBailout("out of memory building methodDataOop");
-//                }
-//                // ciProfileData data = md.bciToData(bci);
-//                // assert data != null : "need data for checkcast";
-//                // assert data.isBitData() : "need BitData for checkcast";
-//                CiRegister mdo = klassRInfo;
-//                masm().movoop(mdo, md.encoding());
-//                Address dataAddr = new Address(mdo, md.headerOffset(bci));
-//                int headerBits = compilation.runtime.methodDataNullSeenByteConstant(); // TODO: Check what this really
-//                // means!
-//                // DataLayout.flagMaskToHeaderMask(BitData.nullSeenByteConstant());
-//                masm().orl(dataAddr, headerBits);
-//                masm().jmp(done);
-//                masm().bind(profileDone);
             } else {
                 masm().jcc(X86Assembler.Condition.equal, done);
             }
             masm().verifyOop(obj);
 
             if (op.isFastCheck()) {
-                // get object classo
+                // get object class
                 // not a safepoint as obj null check happens earlier
                 if (k.isLoaded()) {
-
                     if (compilation.target.arch.is64bit()) {
-                        masm().cmpptr(kRInfo, new Address(obj, compilation.runtime.hubOffset()));
+                        masm().cmpptr(expectedHub, new Address(obj, compilation.runtime.hubOffset()));
                     } else {
                         masm().cmpoop(new Address(obj, compilation.runtime.hubOffset()), k);
                     }
                 } else {
-                    masm().cmpptr(kRInfo, new Address(obj, compilation.runtime.hubOffset()));
+                    masm().cmpptr(expectedHub, new Address(obj, compilation.runtime.hubOffset()));
 
                 }
                 masm().jcc(X86Assembler.Condition.notEqual, stub.entry);
                 masm().bind(done);
             } else {
-                // get object class
-                // not a safepoint as obj null check happens earlier
-                masm().movptr(klassRInfo, new Address(obj, compilation.runtime.hubOffset()));
-                if (k.isLoaded() && C1XOptions.FastPathTypeCheck) {
-
-                    Util.unimplemented();
-
-                    // See if we get an immediate positive hit
-//                    masm().cmpptr(kRInfo, new Address(klassRInfo, k.superCheckOffset()));
-//                    if (Util.sizeofOopDesc() + compilation.runtime.secondarySuperCacheOffsetInBytes() != k.superCheckOffset()) {
-//                        masm().jcc(X86Assembler.Condition.notEqual, stub.entry);
-//                    } else {
-//                        // See if we get an immediate positive hit
-//                        masm().jcc(X86Assembler.Condition.equal, done);
-//
-//                        // check for self
-//                        masm().cmpptr(klassRInfo, kRInfo);
-//                        masm().jcc(X86Assembler.Condition.equal, done);
-//                        masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, op.info, klassRInfo, kRInfo, klassRInfo);
-//
-//                        // result is a boolean
-//                        masm().cmpl(klassRInfo, 0);
-//                        masm().jcc(X86Assembler.Condition.equal, stub.entry);
-//                    }
-//                    masm().bind(done);
-                } else {
-                    // perform the fast part of the checking logic
-                    //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, rtmp1, done, stub.entry, null, new RegisterOrConstant(-1));
-                    // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
-
-
-                    masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, op.info, kRInfo, kRInfo, klassRInfo);
-
-                    // result is a boolean
-                    masm().cmpl(kRInfo, 0);
-                    masm().jcc(X86Assembler.Condition.equal, stub.entry);
-                    masm().bind(done);
-                }
-
+                // perform a runtime call to cast the object
+                masm().callRuntimeCalleeSaved(CiRuntimeCall.SlowCheckCast, op.info, dst, obj, expectedHub);
+                masm().bind(done);
             }
             if (dst != obj) {
                 masm().mov(dst, obj);
@@ -1337,19 +1240,6 @@ public class X86LIRAssembler extends LIRAssembler {
             Label done = new Label();
             Label zero = new Label();
             Label one = new Label();
-//            if (obj == kRInfo) {
-//                kRInfo = klassRInfo;
-//                klassRInfo = obj;
-//            }
-            // patching may screw with our temporaries on sparc :
-            // so let's do it before loading the class
-            //if (!k.isLoaded()) {
-            //    jobject2regWithPatching(kRInfo, op.infoForPatch());
-            //} else {
-//                if (compilation.target.arch.is64bit()) {
-//                    masm().movoop(kRInfo, k.getEncoding(RiType.Representation.ObjectHub).asObject());
-//                }
-//            }
 
             if (klassRInfo == kRInfo || klassRInfo == obj) {
                 klassRInfo = dst;

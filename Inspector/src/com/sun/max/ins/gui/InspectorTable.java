@@ -21,6 +21,7 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -42,6 +43,12 @@ import com.sun.max.tele.*;
  * <br>
  * After all special handling has completed, the event is passed
  * along to the renderer for the cell where the click took place.
+ * <br>
+ * Table cells can act as sources for drag and drop operations, but
+ * only for Copy (not Move).  The request for something that can
+ * be dragged is by default delegated to the specific table renderer,
+ * if it is an instance of {@link InspectorLabel}. Subclasses can customize
+ * how transferables are created by overriding {@link #getTransferable(int, int)}.
  *
  * @author Michael Van De Vanter
  */
@@ -69,7 +76,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      */
     private boolean showSelectionWithBox = false;
 
-
     /**
      * Creates a new {@JTable} for use in the {@link Inspection}.
      * <br>
@@ -86,6 +92,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
+        setDragEnabled(true);
+        setTransferHandler(new InspectorTableTransferHandler());
     }
 
     /**
@@ -96,6 +104,49 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
         getTableHeader().setFont(style().defaultFont());
         addMouseListener(new InspectorTableMouseListener());
+        setDragEnabled(true);
+        setTransferHandler(new InspectorTableTransferHandler());
+    }
+
+    /**
+     * Support for allowing table cells to be sources for Drag and Drop.
+     * <br>
+     * Only supports Copy from a cell (not Move).
+     * <br>
+     * Only supports outbound copy, i.e. Drag but not Drop.
+     */
+    private final class InspectorTableTransferHandler extends TransferHandler {
+        private MouseEvent mouseEvent = null;
+
+        @Override
+        public int getSourceActions(JComponent c) {
+            return COPY;
+        }
+
+        @Override
+        public void exportAsDrag(JComponent comp, InputEvent inputEvent, int action) {
+            // This gets called when a drag sequence starts; cache the location.
+            if (inputEvent instanceof MouseEvent) {
+                mouseEvent = (MouseEvent) inputEvent;
+            } else {
+                mouseEvent = null;
+            }
+            super.exportAsDrag(comp, inputEvent, action);
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent component) {
+            // To get something that might be dragged from the
+            // table cell where the request originated.
+            InspectorTable table = InspectorTable.this;
+            if (mouseEvent != null) {
+                final Point p = mouseEvent.getPoint();
+                final int col = table.columnAtPoint(p);
+                final int row = table.rowAtPoint(p);
+                return table.getTransferable(row, col);
+            }
+            return null;
+        }
     }
 
     private final class InspectorTableMouseListener extends MouseAdapter {
@@ -262,6 +313,26 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
                 return inspectorTableColumnModel.toolTipTextForColumn(modelIndex);
             }
         };
+    }
+
+    /**
+     * Delegates the request for something that can be transferred from a table cell (via drag
+     * and drop - copy only) to the renderer for that cell.
+     *
+     * @param row row in the table where a drag is requested
+     * @param col column in the table where a drag is requested
+     * @return something that can be transferred (via copying) from
+     * the specified cell; null if nothing can be transferred.
+     */
+    protected Transferable getTransferable(int row, int col) {
+        final TableCellRenderer cellRenderer = getColumnModel().getColumn(col).getCellRenderer();
+        Object value = getValueAt(row, col);
+        final Component renderer = cellRenderer.getTableCellRendererComponent(this, value, false, false, row, col);
+        if (renderer instanceof InspectorLabel) {
+            final InspectorLabel inspectorLabel = (InspectorLabel) renderer;
+            return inspectorLabel.getTransferable();
+        }
+        return null;
     }
 
     @Override

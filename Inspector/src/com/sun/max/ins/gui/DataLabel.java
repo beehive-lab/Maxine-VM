@@ -20,6 +20,7 @@
  */
 package com.sun.max.ins.gui;
 
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
@@ -417,6 +418,7 @@ public abstract class DataLabel extends InspectorLabel {
             super(inspection, addr.toHexString());
             this.address = addr;
             this.origin = origin;
+            enableDragSource();
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
@@ -446,8 +448,14 @@ public abstract class DataLabel extends InspectorLabel {
             super(inspection, address.toHexString());
             this.address = address;
             this.origin = origin;
+            enableDragSource();
             addMouseListener(mouseListener);
             redisplay();
+        }
+
+        @Override
+        public Transferable getTransferable() {
+            return new InspectorTransferable.AddressTransferable(inspection(), address);
         }
 
         @Override
