@@ -39,7 +39,7 @@ public class DirTranslatorTestSetup extends CompilerTestSetup<DirMethod> {
     }
 
     public static DirGeneratorScheme dirGeneratorScheme() {
-        return (DirGeneratorScheme) javaPrototype().vmConfiguration().compilerScheme();
+        return (DirGeneratorScheme) javaPrototype().vmConfiguration().bootCompilerScheme();
     }
 
     public static DirGenerator dirGenerator() {

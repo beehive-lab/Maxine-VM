@@ -64,7 +64,7 @@ public class CirInliningPolicy {
                 return false;
             }
             return true;
-        } else if (MaxineVM.isHosted() && CompiledPrototype.jitCompile(cirMethod.classMethodActor())) {
+        } else if (MaxineVM.isHosted() && CompiledPrototype.donotCPSCompiler(cirMethod.classMethodActor())) {
             // for testing purposes, don't inline methods that are marked to be compiled by the JIT
             return false;
         }

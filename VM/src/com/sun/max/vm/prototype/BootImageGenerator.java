@@ -234,7 +234,7 @@ public final class BootImageGenerator {
             VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
-            compilerScheme = dataPrototype.vmConfiguration().compilerScheme();
+            compilerScheme = dataPrototype.vmConfiguration().bootCompilerScheme();
 
 
             VMOptions.beforeExit();

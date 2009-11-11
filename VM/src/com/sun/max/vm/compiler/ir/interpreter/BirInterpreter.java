@@ -62,7 +62,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         }
 
         public static BirMethod generateBirMethod(ClassMethodActor classMethodActor) {
-            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) VMConfiguration.target().compilerScheme();
+            final BirGeneratorScheme birCompilerScheme = (BirGeneratorScheme) VMConfiguration.target().bootCompilerScheme();
             final BirMethod birMethod = birCompilerScheme.birGenerator().makeIrMethod(classMethodActor);
             return birMethod;
         }

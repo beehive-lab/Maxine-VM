@@ -145,7 +145,7 @@ public interface CompilationScheme extends VMScheme {
                 // fast path: method is already compiled just once
                 current = (TargetMethod) targetState;
             } else {
-                if (MaxineVM.isHosted() && !TargetMethod.class.isAssignableFrom(VMConfiguration.target().compilerScheme().irGenerator().irMethodType)) {
+                if (MaxineVM.isHosted() && !TargetMethod.class.isAssignableFrom(VMConfiguration.target().bootCompilerScheme().irGenerator().irMethodType)) {
                     return MethodID.fromMethodActor(classMethodActor).asAddress();
                 }
                 // slower path: method has not been compiled, or been compiled more than once
@@ -201,7 +201,12 @@ public interface CompilationScheme extends VMScheme {
         }
 
         public static void instrumentationCounterOverflow(MethodProfile mpo, int mpoIndex) {
-            // TODO: re-implement re-compilation
+            ClassMethodActor classMethodActor = (ClassMethodActor) mpo.method;
+            TargetMethod oldMethod = TargetState.currentTargetMethod(classMethodActor.targetState);
+            TargetMethod newMethod = VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, VMConfiguration.target().optCompilerScheme());
+            if (newMethod != oldMethod) {
+                oldMethod.forwardTo(newMethod);
+            }
         }
     }
 }

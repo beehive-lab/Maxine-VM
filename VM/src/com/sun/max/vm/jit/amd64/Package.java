@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.eir.amd64.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class Package extends VMPackage {
@@ -38,6 +38,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.compilerScheme() instanceof AMD64EirGeneratorScheme;
+        return vmConfiguration.bootCompilerScheme() instanceof AMD64EirGeneratorScheme;
     }
 }

@@ -56,7 +56,7 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
         final VMConfiguration cfg = VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
                         new com.sun.max.vm.compiler.b.c.d.Package());
         final Prototype jpt = prototypeGenerator.createJavaPrototype(cfg, loadingPackages);
-        final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
+        final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) jpt.vmConfiguration().bootCompilerScheme();
         dirGeneratorScheme.compileSnippets();
         generator = dirGeneratorScheme.dirGenerator();
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
