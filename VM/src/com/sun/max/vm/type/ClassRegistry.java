@@ -21,14 +21,17 @@
 package com.sun.max.vm.type;
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
+import static com.sun.max.vm.jdk.JDK.*;
 import static com.sun.max.vm.prototype.HostedBootClassLoader.*;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -37,10 +40,12 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -96,16 +101,23 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final FieldActor System_err = findField(System.class, "err");
     public static final FieldActor Thread_priority = findField(Thread.class, "priority");
     public static final FieldActor Thread_name = findField(Thread.class, "name");
-    public static final FieldActor NativeLibrary_handle = findField(JDK.java_lang_ClassLoader$NativeLibrary.javaClass(), "handle");
+    public static final FieldActor NativeLibrary_handle = findField(java_lang_ClassLoader$NativeLibrary, "handle");
     public static final FieldActor Thread_inheritedAccessControlContext = findField(Thread.class, "inheritedAccessControlContext");
     public static final FieldActor ClassLoader_loadedLibraryNames = findField(ClassLoader.class, "loadedLibraryNames");
     public static final FieldActor ClassLoader_nativeLibraries = findField(ClassLoader.class, "nativeLibraries");
 
-    public static final MethodActor ThreadGroup_add_Thread = findMethod(ThreadGroup.class, "add", ThreadGroup.class);
-    public static final MethodActor Thread_init_ThreadGroup_Runnable = findConstructor(Thread.class, ThreadGroup.class, Runnable.class);
-    public static final MethodActor Thread_init_ThreadGroup_String = findConstructor(Thread.class, ThreadGroup.class, String.class);
+    public static final MethodActor ThreadGroup_add_Thread = findMethod(ThreadGroup.class, "add", Thread.class);
+    public static final MethodActor Thread_init = findMethod("init", Thread.class);
+    public static final MethodActor Thread_nextThreadNum = findMethod("nextThreadNum", Thread.class);
     public static final MethodActor ClassLoader_findNative = findMethod(ClassLoader.class, "findNative", ClassLoader.class, String.class);
-    public static final MethodActor NativeLibrary_init = findConstructor(JDK.java_lang_ClassLoader$NativeLibrary.javaClass(), Class.class, String.class);
+    public static final MethodActor NativeLibrary_init = findMethod(java_lang_ClassLoader$NativeLibrary, "<init>", Class.class, String.class);
+    public static final MethodActor Finalizer_register_Object = findMethod(java_lang_ref_Finalizer, "register", Object.class);
+    public static final MethodActor ReferenceHandler_init = findMethod(java_lang_ref_Reference$ReferenceHandler, "<init>", ThreadGroup.class, String.class);
+    public static final MethodActor Method_invoke = findMethod(Method.class, "invoke", Object.class, Object[].class);
+    public static final MethodActor MaxineVM_run = findMethod("run", MaxineVM.class);
+    public static final MethodActor VmThread_run = findMethod("run", VmThread.class);
+    public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
+    public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
 
     /**
      * Support for ClassFileWriter.testLoadGeneratedClasses().
@@ -165,7 +177,24 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     }
 
     @HOSTED_ONLY
-    private static FieldActor findField(Class declaringClass, String name) {
+    public static Class asClass(Object classObject) {
+        if (classObject instanceof Class) {
+            return (Class) classObject;
+        }
+        assert classObject instanceof ClassRef;
+        return ((ClassRef) classObject).javaClass();
+    }
+
+    /**
+     * Finds the field actor denoted by a given name and declaring class.
+     *
+     * @param name the name of the field which must be unique in the declaring class
+     * @param declaringClass the class to search for a field named {@code name}
+     * @return the actor for the unique field in {@code declaringClass} named {@code name}
+     */
+    @HOSTED_ONLY
+    public static FieldActor findField(Object declaringClassObject, String name) {
+        Class declaringClass = asClass(declaringClassObject);
         ClassActor classActor = ClassActor.fromJava(declaringClass);
         FieldActor fieldActor = classActor.findLocalInstanceFieldActor(name);
         if (fieldActor == null) {
@@ -175,14 +204,66 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         return fieldActor;
     }
 
+    /**
+     * Finds the method actor denoted by a given name and declaring class.
+     *
+     * @param name the name of the method which must be unique in the declaring class
+     * @param declaringClass the class to search for a method named {@code name}
+     * @return the actor for the unique method in {@code declaringClass} named {@code name}
+     */
     @HOSTED_ONLY
-    private static MethodActor findMethod(Class declaringClass, String name, Class... parameterTypes) {
-        return MethodActor.fromJava(Classes.getDeclaredMethod(declaringClass, name, parameterTypes));
+    public static MethodActor findMethod(String name, Object declaringClassObject) {
+        Class declaringClass = asClass(declaringClassObject);
+        Method theMethod = null;
+        for (Method method : declaringClass.getDeclaredMethods()) {
+            if (method.getName().equals(name)) {
+                ProgramError.check(theMethod == null, "There must only be one method named \"" + name + "\" in " + declaringClass);
+                theMethod = method;
+            }
+        }
+        if (theMethod == null) {
+            if (declaringClass.getSuperclass() != null) {
+                return findMethod(name, declaringClass.getSuperclass());
+            }
+        }
+        ProgramError.check(theMethod != null, "Could not find method named \"" + name + "\" in " + declaringClass);
+        return findMethod(declaringClass, name, theMethod.getParameterTypes());
     }
 
+    /**
+     * Finds the method actor denoted by a given name and declaring class.
+     *
+     * @param declaringClass the class to search for a method named {@code name}
+     * @param name the name of the method to find
+     * @param parameterTypes the types in the signature of the method
+     * @return the actor for the unique method in {@code declaringClass} named {@code name} with the signature composed
+     *         of {@code parameterTypes}
+     */
     @HOSTED_ONLY
-    private static MethodActor findConstructor(Class declaringClass, Class... parameterTypes) {
-        return MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(declaringClass, parameterTypes));
+    public static MethodActor findMethod(Object declaringClassObject, String name, Class... parameterTypes) {
+        Class declaringClass = asClass(declaringClassObject);
+        MethodActor methodActor;
+        if (name.equals("<init>")) {
+            methodActor = MethodActor.fromJavaConstructor(Classes.getDeclaredConstructor(declaringClass, parameterTypes));
+        } else {
+            methodActor = MethodActor.fromJava(Classes.getDeclaredMethod(declaringClass, name, parameterTypes));
+        }
+        ProgramError.check(methodActor != null, "Could not find " + name + ".(" + Arrays.toString(parameterTypes) + ") in " + declaringClass);
+        if (methodActor instanceof ClassMethodActor) {
+            // Some of these methods are called during VM startup
+            // so they are compiled in the image.
+            CallEntryPoint callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+            if (methodActor.isCFunction()) {
+                callEntryPoint = CallEntryPoint.C_ENTRY_POINT;
+            }
+            new CriticalMethod((ClassMethodActor) methodActor, callEntryPoint);
+        }
+        if (!methodActor.isCFunction()) {
+            // Some of these methods are called via reflection during VM startup
+            // so their reflection stubs are prebuilt into the image.
+            MaxineVM.registerImageInvocationStub(methodActor);
+        }
+        return methodActor;
     }
 
     /**

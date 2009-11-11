@@ -22,7 +22,6 @@ package com.sun.max.vm.jdk;
 
 import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import sun.reflect.*;
@@ -47,9 +46,6 @@ final class JDK_sun_reflect_Reflection {
 
     private JDK_sun_reflect_Reflection() {
     }
-
-    private static final CriticalMethod javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke",
-        SignatureDescriptor.create(Object.class, Object.class, Object[].class));
 
     /**
      * This class implements a closure that records the method actor at a particular
@@ -77,7 +73,7 @@ final class JDK_sun_reflect_Reflection {
                 return true;
             }
             // according to sun.reflect.Reflection, getCallerClass() should ignore java.lang.reflect.Method.invoke
-            if (isReflectionMethod(targetMethod)) {
+            if (targetMethod.classMethodActor().equals(ClassRegistry.Method_invoke)) {
                 return true;
             }
 
@@ -103,10 +99,6 @@ final class JDK_sun_reflect_Reflection {
             }
             return true;
         }
-    }
-
-    private static boolean isReflectionMethod(TargetMethod targetMethod) {
-        return targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor;
     }
 
     /**

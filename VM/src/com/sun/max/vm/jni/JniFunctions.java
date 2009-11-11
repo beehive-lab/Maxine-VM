@@ -141,10 +141,14 @@ public final class JniFunctions {
             Log.print(name);
             Pointer jniStubAnchor = JavaFrameAnchor.PREVIOUS.get(anchor);
             final Address jniStubPC = JavaFrameAnchor.PC.get(jniStubAnchor).asAddress();
-            final TargetMethod nativeMethod = Code.codePointerToTargetMethod(jniStubPC);
-            Log.print(", last down call: ");
-            FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
-            Log.print(nativeMethod.classMethodActor().name.string);
+            if (jniStubAnchor.isZero()) {
+                final TargetMethod nativeMethod = Code.codePointerToTargetMethod(jniStubPC);
+                Log.print(", last down call: ");
+                FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
+                Log.print(nativeMethod.classMethodActor().name.string);
+            } else {
+                Log.print(", called from attached native thread");
+            }
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
@@ -295,7 +299,9 @@ public final class JniFunctions {
         } catch (Utf8Exception utf8Exception) {
             throw new ClassNotFoundException();
         }
-        final Class javaClass = findClass(VmStackFrameWalker.getCallerClassMethodActor().holder().classLoader, className);
+        ClassMethodActor caller = VmStackFrameWalker.getCallerClassMethodActor();
+        ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : caller.holder().classLoader;
+        final Class javaClass = findClass(classLoader, className);
         MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
         return JniHandles.createLocalHandle(javaClass);
     }
@@ -315,7 +321,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:148
+    // Source: JniFunctionsSource.java:150
     private static MethodID FromReflectedMethod_(Pointer env, JniHandle reflectedMethod) {
         final MethodActor methodActor = MethodActor.fromJava((Method) reflectedMethod.unhand());
         return MethodID.fromMethodActor(methodActor);
@@ -336,7 +342,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:154
+    // Source: JniFunctionsSource.java:156
     private static FieldID FromReflectedField_(Pointer env, JniHandle field) {
         final FieldActor fieldActor = FieldActor.fromJava((Field) field.unhand());
         return FieldID.fromFieldActor(fieldActor);
@@ -365,7 +371,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:168
+    // Source: JniFunctionsSource.java:170
     private static JniHandle ToReflectedMethod_(Pointer env, JniHandle javaClass, MethodID methodID, boolean isStatic) throws NoSuchMethodException {
         return JniHandles.createLocalHandle(ToReflectedMethod(methodID, isStatic));
     }
@@ -385,7 +391,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:173
+    // Source: JniFunctionsSource.java:175
     private static JniHandle GetSuperclass_(Pointer env, JniHandle subType) {
         return JniHandles.createLocalHandle(((Class) subType.unhand()).getSuperclass());
     }
@@ -405,7 +411,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:178
+    // Source: JniFunctionsSource.java:180
     private static boolean IsAssignableFrom_(Pointer env, JniHandle subType, JniHandle superType) {
         return ClassActor.fromJava((Class) superType.unhand()).isAssignableFrom(ClassActor.fromJava((Class) subType.unhand()));
     }
@@ -425,7 +431,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:183
+    // Source: JniFunctionsSource.java:185
     private static JniHandle ToReflectedField_(Pointer env, JniHandle javaClass, FieldID fieldID, boolean isStatic) {
         final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
         if (fieldActor == null || fieldActor.isStatic() != isStatic) {
@@ -449,7 +455,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:192
+    // Source: JniFunctionsSource.java:194
     private static int Throw_(Pointer env, JniHandle throwable) {
         VmThread.fromJniEnv(env).setPendingException((Throwable) throwable.unhand());
         return JNI_OK;
@@ -470,7 +476,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:198
+    // Source: JniFunctionsSource.java:200
     private static int ThrowNew_(Pointer env, JniHandle throwableClass, Pointer message) throws Throwable {
         final Class<Class<? extends Throwable>> type = null;
         Constructor<? extends Throwable> constructor = null;
@@ -502,7 +508,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:215
+    // Source: JniFunctionsSource.java:217
     private static JniHandle ExceptionOccurred_(Pointer env) {
         return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).pendingException());
     }
@@ -519,7 +525,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:220
+    // Source: JniFunctionsSource.java:222
     private static void ExceptionDescribe_(Pointer env) {
         final Throwable exception = VmThread.fromJniEnv(env).pendingException();
         if (exception != null) {
@@ -539,7 +545,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:228
+    // Source: JniFunctionsSource.java:230
     private static void ExceptionClear_(Pointer env) {
         VmThread.fromJniEnv(env).setPendingException(null);
     }
@@ -556,7 +562,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:233
+    // Source: JniFunctionsSource.java:235
     private static void FatalError_(Pointer env, Pointer message) {
         try {
             FatalError.unexpected(CString.utf8ToJava(message));
@@ -585,7 +591,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:247
+    // Source: JniFunctionsSource.java:249
     private static int PushLocalFrame_(Pointer env, int capacity) {
         JniHandles.pushLocalFrame(capacity);
         return JNI_OK;
@@ -606,7 +612,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:253
+    // Source: JniFunctionsSource.java:255
     private static JniHandle PopLocalFrame_(Pointer env, JniHandle res) {
         return JniHandles.popLocalFrame(res);
     }
@@ -626,7 +632,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:258
+    // Source: JniFunctionsSource.java:260
     private static JniHandle NewGlobalRef_(Pointer env, JniHandle handle) {
         return JniHandles.createGlobalHandle(handle.unhand());
     }
@@ -643,7 +649,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:263
+    // Source: JniFunctionsSource.java:265
     private static void DeleteGlobalRef_(Pointer env, JniHandle handle) {
         JniHandles.destroyGlobalHandle(handle);
     }
@@ -660,7 +666,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:268
+    // Source: JniFunctionsSource.java:270
     private static void DeleteLocalRef_(Pointer env, JniHandle handle) {
         JniHandles.destroyLocalHandle(handle);
     }
@@ -680,7 +686,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:273
+    // Source: JniFunctionsSource.java:275
     private static boolean IsSameObject_(Pointer env, JniHandle object1, JniHandle object2) {
         return object1.unhand() == object2.unhand();
     }
@@ -700,7 +706,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:278
+    // Source: JniFunctionsSource.java:280
     private static JniHandle NewLocalRef_(Pointer env, JniHandle object) {
         return JniHandles.createLocalHandle(object.unhand());
     }
@@ -720,7 +726,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:283
+    // Source: JniFunctionsSource.java:285
     private static int EnsureLocalCapacity_(Pointer env, int capacity) {
         // If this call fails, it will be with an OutOfMemoryError which will be
         // set as the pending exception for the current thread
@@ -751,7 +757,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:299
+    // Source: JniFunctionsSource.java:301
     private static JniHandle AllocObject_(Pointer env, JniHandle javaClass) throws InstantiationException {
         return JniHandles.createLocalHandle(allocObject((Class) javaClass.unhand()));
     }
@@ -777,7 +783,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:310
+    // Source: JniFunctionsSource.java:312
     private static JniHandle NewObjectA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
 
         final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
@@ -817,7 +823,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:335
+    // Source: JniFunctionsSource.java:337
     private static JniHandle GetObjectClass_(Pointer env, JniHandle object) {
         final Class javaClass = object.unhand().getClass();
         return JniHandles.createLocalHandle(javaClass);
@@ -838,7 +844,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:341
+    // Source: JniFunctionsSource.java:343
     private static boolean IsInstanceOf_(Pointer env, JniHandle object, JniHandle javaType) {
         return ((Class) javaType.unhand()).isInstance(object.unhand());
     }
@@ -858,7 +864,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:346
+    // Source: JniFunctionsSource.java:348
     private static MethodID GetMethodID_(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
         MakeClassInitialized.makeClassInitialized(classActor);
@@ -984,7 +990,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:457
+    // Source: JniFunctionsSource.java:459
     private static JniHandle CallObjectMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return JniHandles.createLocalHandle(CallValueMethodA(env, object, methodID, arguments).asObject());
     }
@@ -1010,7 +1016,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:468
+    // Source: JniFunctionsSource.java:470
     private static boolean CallBooleanMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asBoolean();
     }
@@ -1036,7 +1042,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:479
+    // Source: JniFunctionsSource.java:481
     private static byte CallByteMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asByte();
     }
@@ -1062,7 +1068,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:490
+    // Source: JniFunctionsSource.java:492
     private static char CallCharMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asChar();
     }
@@ -1088,7 +1094,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:501
+    // Source: JniFunctionsSource.java:503
     private static short CallShortMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asShort();
     }
@@ -1114,7 +1120,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:512
+    // Source: JniFunctionsSource.java:514
     private static int CallIntMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asInt();
     }
@@ -1140,7 +1146,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:523
+    // Source: JniFunctionsSource.java:525
     private static long CallLongMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asLong();
     }
@@ -1166,7 +1172,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:534
+    // Source: JniFunctionsSource.java:536
     private static float CallFloatMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asFloat();
     }
@@ -1192,7 +1198,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:545
+    // Source: JniFunctionsSource.java:547
     private static double CallDoubleMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         return CallValueMethodA(env, object, methodID, arguments).asDouble();
     }
@@ -1239,7 +1245,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:580
+    // Source: JniFunctionsSource.java:582
     private static void CallVoidMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
         CallValueMethodA(env, object, methodID, arguments);
     }
@@ -1265,7 +1271,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:591
+    // Source: JniFunctionsSource.java:593
     private static JniHandle CallNonvirtualObjectMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return JniHandles.createLocalHandle(CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asObject());
     }
@@ -1291,7 +1297,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:602
+    // Source: JniFunctionsSource.java:604
     private static boolean CallNonvirtualBooleanMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asBoolean();
     }
@@ -1317,7 +1323,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:613
+    // Source: JniFunctionsSource.java:615
     private static byte CallNonvirtualByteMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asByte();
     }
@@ -1343,7 +1349,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:624
+    // Source: JniFunctionsSource.java:626
     private static char CallNonvirtualCharMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asChar();
     }
@@ -1369,7 +1375,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:635
+    // Source: JniFunctionsSource.java:637
     private static short CallNonvirtualShortMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asShort();
     }
@@ -1395,7 +1401,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:646
+    // Source: JniFunctionsSource.java:648
     private static int CallNonvirtualIntMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asInt();
     }
@@ -1421,7 +1427,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:657
+    // Source: JniFunctionsSource.java:659
     private static long CallNonvirtualLongMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asLong();
     }
@@ -1447,7 +1453,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:668
+    // Source: JniFunctionsSource.java:670
     private static float CallNonvirtualFloatMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asFloat();
     }
@@ -1473,7 +1479,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:679
+    // Source: JniFunctionsSource.java:681
     private static double CallNonvirtualDoubleMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asDouble();
     }
@@ -1496,7 +1502,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:690
+    // Source: JniFunctionsSource.java:692
     private static void CallNonvirtualVoidMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments);
     }
@@ -1516,7 +1522,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:695
+    // Source: JniFunctionsSource.java:697
     private static FieldID GetFieldID_(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
         MakeClassInitialized.makeClassInitialized(classActor);
@@ -1555,7 +1561,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:719
+    // Source: JniFunctionsSource.java:721
     private static JniHandle GetObjectField_(Pointer env, JniHandle object, FieldID fieldID) {
         final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
         return JniHandles.createLocalHandle(TupleAccess.readObject(object.unhand(), fieldActor.offset()));
@@ -1576,7 +1582,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:725
+    // Source: JniFunctionsSource.java:727
     private static boolean GetBooleanField_(Pointer env, JniHandle object, FieldID fieldID) {
         final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readBoolean(object.unhand(), booleanFieldActor.offset());
@@ -1597,7 +1603,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:731
+    // Source: JniFunctionsSource.java:733
     private static byte GetByteField_(Pointer env, JniHandle object, FieldID fieldID) {
         final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readByte(object.unhand(), byteFieldActor.offset());
@@ -1618,7 +1624,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:737
+    // Source: JniFunctionsSource.java:739
     private static char GetCharField_(Pointer env, JniHandle object, FieldID fieldID) {
         final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readChar(object.unhand(), charFieldActor.offset());
@@ -1639,7 +1645,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:743
+    // Source: JniFunctionsSource.java:745
     private static short GetShortField_(Pointer env, JniHandle object, FieldID fieldID) {
         final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readShort(object.unhand(), shortFieldActor.offset());
@@ -1660,7 +1666,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:749
+    // Source: JniFunctionsSource.java:751
     private static int GetIntField_(Pointer env, JniHandle object, FieldID fieldID) {
         final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readInt(object.unhand(), intFieldActor.offset());
@@ -1681,7 +1687,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:755
+    // Source: JniFunctionsSource.java:757
     private static long GetLongField_(Pointer env, JniHandle object, FieldID fieldID) {
         final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readLong(object.unhand(), longFieldActor.offset());
@@ -1702,7 +1708,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:761
+    // Source: JniFunctionsSource.java:763
     private static float GetFloatField_(Pointer env, JniHandle object, FieldID fieldID) {
         final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readFloat(object.unhand(), floatFieldActor.offset());
@@ -1723,7 +1729,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:767
+    // Source: JniFunctionsSource.java:769
     private static double GetDoubleField_(Pointer env, JniHandle object, FieldID fieldID) {
         final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readDouble(object.unhand(), doubleFieldActor.offset());
@@ -1741,7 +1747,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:773
+    // Source: JniFunctionsSource.java:775
     private static void SetObjectField_(Pointer env, JniHandle object, FieldID fieldID, JniHandle value) {
         final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeObject(object.unhand(), referenceFieldActor.offset(), value.unhand());
@@ -1759,7 +1765,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:779
+    // Source: JniFunctionsSource.java:781
     private static void SetBooleanField_(Pointer env, JniHandle object, FieldID fieldID, boolean value) {
         final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeBoolean(object.unhand(), booleanFieldActor.offset(), value);
@@ -1777,7 +1783,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:785
+    // Source: JniFunctionsSource.java:787
     private static void SetByteField_(Pointer env, JniHandle object, FieldID fieldID, byte value) {
         final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeByte(object.unhand(), byteFieldActor.offset(), value);
@@ -1795,7 +1801,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:791
+    // Source: JniFunctionsSource.java:793
     private static void SetCharField_(Pointer env, JniHandle object, FieldID fieldID, char value) {
         final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeChar(object.unhand(), charFieldActor.offset(), value);
@@ -1813,7 +1819,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:797
+    // Source: JniFunctionsSource.java:799
     private static void SetShortField_(Pointer env, JniHandle object, FieldID fieldID, short value) {
         final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeShort(object.unhand(), shortFieldActor.offset(), value);
@@ -1831,7 +1837,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:803
+    // Source: JniFunctionsSource.java:805
     private static void SetIntField_(Pointer env, JniHandle object, FieldID fieldID, int value) {
         final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeInt(object.unhand(), intFieldActor.offset(), value);
@@ -1849,7 +1855,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:809
+    // Source: JniFunctionsSource.java:811
     private static void SetLongField_(Pointer env, JniHandle object, FieldID fieldID, long value) {
         final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeLong(object.unhand(), longFieldActor.offset(), value);
@@ -1867,7 +1873,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:815
+    // Source: JniFunctionsSource.java:817
     private static void SetFloatField_(Pointer env, JniHandle object, FieldID fieldID, float value) {
         final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeFloat(object.unhand(), floatFieldActor.offset(), value);
@@ -1885,7 +1891,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:821
+    // Source: JniFunctionsSource.java:823
     private static void SetDoubleField_(Pointer env, JniHandle object, FieldID fieldID, double value) {
         final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeDouble(object.unhand(), doubleFieldActor.offset(), value);
@@ -1906,7 +1912,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:827
+    // Source: JniFunctionsSource.java:829
     private static MethodID GetStaticMethodID_(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
         MakeClassInitialized.makeClassInitialized(classActor);
@@ -1971,7 +1977,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:877
+    // Source: JniFunctionsSource.java:879
     private static JniHandle CallStaticObjectMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return JniHandles.createLocalHandle(CallStaticValueMethodA(env, javaClass, methodID, arguments).asObject());
     }
@@ -1997,7 +2003,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:888
+    // Source: JniFunctionsSource.java:890
     private static boolean CallStaticBooleanMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asBoolean();
     }
@@ -2023,7 +2029,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:899
+    // Source: JniFunctionsSource.java:901
     private static byte CallStaticByteMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asByte();
     }
@@ -2049,7 +2055,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:910
+    // Source: JniFunctionsSource.java:912
     private static char CallStaticCharMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asChar();
     }
@@ -2075,7 +2081,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:921
+    // Source: JniFunctionsSource.java:923
     private static short CallStaticShortMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asShort();
     }
@@ -2101,7 +2107,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:932
+    // Source: JniFunctionsSource.java:934
     private static int CallStaticIntMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asInt();
     }
@@ -2127,7 +2133,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:943
+    // Source: JniFunctionsSource.java:945
     private static long CallStaticLongMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asLong();
     }
@@ -2153,7 +2159,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:954
+    // Source: JniFunctionsSource.java:956
     private static float CallStaticFloatMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asFloat();
     }
@@ -2179,7 +2185,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:965
+    // Source: JniFunctionsSource.java:967
     private static double CallStaticDoubleMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         return CallStaticValueMethodA(env, javaClass, methodID, arguments).asDouble();
     }
@@ -2202,7 +2208,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:976
+    // Source: JniFunctionsSource.java:978
     private static void CallStaticVoidMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
         CallStaticValueMethodA(env, javaClass, methodID, arguments);
     }
@@ -2222,7 +2228,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:981
+    // Source: JniFunctionsSource.java:983
     private static FieldID GetStaticFieldID_(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
         MakeClassInitialized.makeClassInitialized(classActor);
@@ -2265,7 +2271,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1009
+    // Source: JniFunctionsSource.java:1011
     private static JniHandle GetStaticObjectField_(Pointer env, JniHandle javaType, FieldID fieldID) {
         final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
         return JniHandles.createLocalHandle(TupleAccess.readObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset()));
@@ -2286,7 +2292,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1015
+    // Source: JniFunctionsSource.java:1017
     private static boolean GetStaticBooleanField_(Pointer env, JniHandle javaType, FieldID fieldID) {
         final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readBoolean(javaTypeToStaticTuple(javaType), booleanFieldActor.offset());
@@ -2307,7 +2313,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1021
+    // Source: JniFunctionsSource.java:1023
     private static byte GetStaticByteField_(Pointer env, JniHandle javaType, FieldID fieldID) {
         final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readByte(javaTypeToStaticTuple(javaType), byteFieldActor.offset());
@@ -2328,7 +2334,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1027
+    // Source: JniFunctionsSource.java:1029
     private static char GetStaticCharField_(Pointer env, JniHandle javaType, FieldID fieldID) {
         final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readChar(javaTypeToStaticTuple(javaType), charFieldActor.offset());
@@ -2349,7 +2355,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1033
+    // Source: JniFunctionsSource.java:1035
     private static short GetStaticShortField_(Pointer env, JniHandle javaType, FieldID fieldID) {
         final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readShort(javaTypeToStaticTuple(javaType), shortFieldActor.offset());
@@ -2370,7 +2376,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1039
+    // Source: JniFunctionsSource.java:1041
     private static int GetStaticIntField_(Pointer env, JniHandle javaType, FieldID fieldID) {
         final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readInt(javaTypeToStaticTuple(javaType), intFieldActor.offset());
@@ -2391,7 +2397,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1045
+    // Source: JniFunctionsSource.java:1047
     private static long GetStaticLongField_(Pointer env, JniHandle javaType, FieldID fieldID) {
         final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readLong(javaTypeToStaticTuple(javaType), longFieldActor.offset());
@@ -2412,7 +2418,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1051
+    // Source: JniFunctionsSource.java:1053
     private static float GetStaticFloatField_(Pointer env, JniHandle javaType, FieldID fieldID) {
         final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readFloat(javaTypeToStaticTuple(javaType), floatFieldActor.offset());
@@ -2433,7 +2439,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1057
+    // Source: JniFunctionsSource.java:1059
     private static double GetStaticDoubleField_(Pointer env, JniHandle javaType, FieldID fieldID) {
         final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
         return TupleAccess.readDouble(javaTypeToStaticTuple(javaType), doubleFieldActor.offset());
@@ -2451,7 +2457,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1063
+    // Source: JniFunctionsSource.java:1065
     private static void SetStaticObjectField_(Pointer env, JniHandle javaType, FieldID fieldID, JniHandle value) {
         final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset(), value.unhand());
@@ -2469,7 +2475,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1069
+    // Source: JniFunctionsSource.java:1071
     private static void SetStaticBooleanField_(Pointer env, JniHandle javaType, FieldID fieldID, boolean value) {
         final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeBoolean(javaTypeToStaticTuple(javaType), booleanFieldActor.offset(), value);
@@ -2487,7 +2493,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1075
+    // Source: JniFunctionsSource.java:1077
     private static void SetStaticByteField_(Pointer env, JniHandle javaType, FieldID fieldID, byte value) {
         final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeByte(javaTypeToStaticTuple(javaType), byteFieldActor.offset(), value);
@@ -2505,7 +2511,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1081
+    // Source: JniFunctionsSource.java:1083
     private static void SetStaticCharField_(Pointer env, JniHandle javaType, FieldID fieldID, char value) {
         final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeChar(javaTypeToStaticTuple(javaType), charFieldActor.offset(), value);
@@ -2523,7 +2529,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1087
+    // Source: JniFunctionsSource.java:1089
     private static void SetStaticShortField_(Pointer env, JniHandle javaType, FieldID fieldID, short value) {
         final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeShort(javaTypeToStaticTuple(javaType), shortFieldActor.offset(), value);
@@ -2541,7 +2547,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1093
+    // Source: JniFunctionsSource.java:1095
     private static void SetStaticIntField_(Pointer env, JniHandle javaType, FieldID fieldID, int value) {
         final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeInt(javaTypeToStaticTuple(javaType), intFieldActor.offset(), value);
@@ -2559,7 +2565,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1099
+    // Source: JniFunctionsSource.java:1101
     private static void SetStaticLongField_(Pointer env, JniHandle javaType, FieldID fieldID, long value) {
         final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeLong(javaTypeToStaticTuple(javaType), longFieldActor.offset(), value);
@@ -2577,7 +2583,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1105
+    // Source: JniFunctionsSource.java:1107
     private static void SetStaticFloatField_(Pointer env, JniHandle javaType, FieldID fieldID, float value) {
         final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeFloat(javaTypeToStaticTuple(javaType), floatFieldActor.offset(), value);
@@ -2595,7 +2601,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1111
+    // Source: JniFunctionsSource.java:1113
     private static void SetStaticDoubleField_(Pointer env, JniHandle javaType, FieldID fieldID, double value) {
         final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
         TupleAccess.writeDouble(javaTypeToStaticTuple(javaType), doubleFieldActor.offset(), value);
@@ -2616,7 +2622,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1117
+    // Source: JniFunctionsSource.java:1119
     private static JniHandle NewString_(Pointer env, Pointer chars, int length) {
         final char[] charArray = new char[length];
         for (int i = 0; i < length; i++) {
@@ -2640,7 +2646,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1126
+    // Source: JniFunctionsSource.java:1128
     private static int GetStringLength_(Pointer env, JniHandle string) {
         return ((String) string.unhand()).length();
     }
@@ -2660,7 +2666,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1131
+    // Source: JniFunctionsSource.java:1133
     private static JniHandle GetStringChars_(Pointer env, JniHandle string, Pointer isCopy) {
         setCopyPointer(isCopy, true);
         return JniHandles.createLocalHandle(((String) string.unhand()).toCharArray());
@@ -2678,7 +2684,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1137
+    // Source: JniFunctionsSource.java:1139
     private static void ReleaseStringChars_(Pointer env, JniHandle string, Pointer chars) {
         Memory.deallocate(chars);
     }
@@ -2698,7 +2704,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1142
+    // Source: JniFunctionsSource.java:1144
     private static JniHandle NewStringUTF_(Pointer env, Pointer utf) {
         try {
             return JniHandles.createLocalHandle(CString.utf8ToJava(utf));
@@ -2722,7 +2728,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1151
+    // Source: JniFunctionsSource.java:1153
     private static int GetStringUTFLength_(Pointer env, JniHandle string) {
         return Utf8.utf8Length((String) string.unhand());
     }
@@ -2742,7 +2748,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1156
+    // Source: JniFunctionsSource.java:1158
     private static Pointer GetStringUTFChars_(Pointer env, JniHandle string, Pointer isCopy) {
         setCopyPointer(isCopy, true);
         return CString.utf8FromJava((String) string.unhand());
@@ -2760,7 +2766,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1162
+    // Source: JniFunctionsSource.java:1164
     private static void ReleaseStringUTFChars_(Pointer env, JniHandle string, Pointer chars) {
         Memory.deallocate(chars);
     }
@@ -2780,7 +2786,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1167
+    // Source: JniFunctionsSource.java:1169
     private static int GetArrayLength_(Pointer env, JniHandle array) {
         return Array.getLength(array.unhand());
     }
@@ -2800,7 +2806,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1172
+    // Source: JniFunctionsSource.java:1174
     private static JniHandle NewObjectArray_(Pointer env, int length, JniHandle elementType, JniHandle initialElementValue) {
         final Object array = Array.newInstance((Class) elementType.unhand(), length);
         final Object initialValue = initialElementValue.unhand();
@@ -2825,7 +2831,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1182
+    // Source: JniFunctionsSource.java:1184
     private static JniHandle GetObjectArrayElement_(Pointer env, JniHandle array, int index) {
         return JniHandles.createLocalHandle(((Object[]) array.unhand())[index]);
     }
@@ -2842,7 +2848,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1187
+    // Source: JniFunctionsSource.java:1189
     private static void SetObjectArrayElement_(Pointer env, JniHandle array, int index, JniHandle value) {
         ((Object[]) array.unhand())[index] = value.unhand();
     }
@@ -2862,7 +2868,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1192
+    // Source: JniFunctionsSource.java:1194
     private static JniHandle NewBooleanArray_(Pointer env, int length) {
         return JniHandles.createLocalHandle(new boolean[length]);
     }
@@ -2882,7 +2888,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1197
+    // Source: JniFunctionsSource.java:1199
     private static JniHandle NewByteArray_(Pointer env, int length) {
         return JniHandles.createLocalHandle(new byte[length]);
     }
@@ -2902,7 +2908,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1202
+    // Source: JniFunctionsSource.java:1204
     private static JniHandle NewCharArray_(Pointer env, int length) {
         return JniHandles.createLocalHandle(new char[length]);
     }
@@ -2922,7 +2928,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1207
+    // Source: JniFunctionsSource.java:1209
     private static JniHandle NewShortArray_(Pointer env, int length) {
         return JniHandles.createLocalHandle(new short[length]);
     }
@@ -2942,7 +2948,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1212
+    // Source: JniFunctionsSource.java:1214
     private static JniHandle NewIntArray_(Pointer env, int length) {
         return JniHandles.createLocalHandle(new int[length]);
     }
@@ -2962,7 +2968,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1217
+    // Source: JniFunctionsSource.java:1219
     private static JniHandle NewLongArray_(Pointer env, int length) {
         return JniHandles.createLocalHandle(new long[length]);
     }
@@ -2982,7 +2988,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1222
+    // Source: JniFunctionsSource.java:1224
     private static JniHandle NewFloatArray_(Pointer env, int length) {
         return JniHandles.createLocalHandle(new float[length]);
     }
@@ -3002,7 +3008,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1227
+    // Source: JniFunctionsSource.java:1229
     private static JniHandle NewDoubleArray_(Pointer env, int length) {
         return JniHandles.createLocalHandle(new double[length]);
     }
@@ -3022,7 +3028,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1232
+    // Source: JniFunctionsSource.java:1234
     private static Pointer GetBooleanArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
         return getBooleanArrayElements(array, isCopy);
     }
@@ -3052,7 +3058,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1247
+    // Source: JniFunctionsSource.java:1249
     private static Pointer GetByteArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
         return getByteArrayElements(array, isCopy);
     }
@@ -3082,7 +3088,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1262
+    // Source: JniFunctionsSource.java:1264
     private static Pointer GetCharArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
         return getCharArrayElements(array, isCopy);
     }
@@ -3112,7 +3118,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1277
+    // Source: JniFunctionsSource.java:1279
     private static Pointer GetShortArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
         return getShortArrayElements(array, isCopy);
     }
@@ -3142,7 +3148,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1292
+    // Source: JniFunctionsSource.java:1294
     private static Pointer GetIntArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
         return getIntArrayElements(array, isCopy);
     }
@@ -3172,7 +3178,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1307
+    // Source: JniFunctionsSource.java:1309
     private static Pointer GetLongArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
         return getLongArrayElements(array, isCopy);
     }
@@ -3202,7 +3208,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1322
+    // Source: JniFunctionsSource.java:1324
     private static Pointer GetFloatArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
         return getFloatArrayElements(array, isCopy);
     }
@@ -3232,7 +3238,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1337
+    // Source: JniFunctionsSource.java:1339
     private static Pointer GetDoubleArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
         return getDoubleArrayElements(array, isCopy);
     }
@@ -3259,7 +3265,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1352
+    // Source: JniFunctionsSource.java:1354
     private static void ReleaseBooleanArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
         releaseBooleanArrayElements(array, elements, mode);
     }
@@ -3286,7 +3292,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1367
+    // Source: JniFunctionsSource.java:1369
     private static void ReleaseByteArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
         releaseByteArrayElements(array, elements, mode);
     }
@@ -3313,7 +3319,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1382
+    // Source: JniFunctionsSource.java:1384
     private static void ReleaseCharArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
         releaseCharArrayElements(array, elements, mode);
     }
@@ -3340,7 +3346,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1397
+    // Source: JniFunctionsSource.java:1399
     private static void ReleaseShortArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
         releaseShortArrayElements(array, elements, mode);
     }
@@ -3367,7 +3373,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1412
+    // Source: JniFunctionsSource.java:1414
     private static void ReleaseIntArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
         releaseIntArrayElements(array, elements, mode);
     }
@@ -3394,7 +3400,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1427
+    // Source: JniFunctionsSource.java:1429
     private static void ReleaseLongArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
         releaseLongArrayElements(array, elements, mode);
     }
@@ -3421,7 +3427,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1442
+    // Source: JniFunctionsSource.java:1444
     private static void ReleaseFloatArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
         releaseFloatArrayElements(array, elements, mode);
     }
@@ -3448,7 +3454,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1457
+    // Source: JniFunctionsSource.java:1459
     private static void ReleaseDoubleArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
         releaseDoubleArrayElements(array, elements, mode);
     }
@@ -3475,7 +3481,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1472
+    // Source: JniFunctionsSource.java:1474
     private static void GetBooleanArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final boolean[] a = (boolean[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3495,7 +3501,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1480
+    // Source: JniFunctionsSource.java:1482
     private static void GetByteArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final byte[] a = (byte[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3515,7 +3521,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1488
+    // Source: JniFunctionsSource.java:1490
     private static void GetCharArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final char[] a = (char[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3535,7 +3541,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1496
+    // Source: JniFunctionsSource.java:1498
     private static void GetShortArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final short[] a = (short[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3555,7 +3561,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1504
+    // Source: JniFunctionsSource.java:1506
     private static void GetIntArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final int[] a = (int[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3575,7 +3581,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1512
+    // Source: JniFunctionsSource.java:1514
     private static void GetLongArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final long[] a = (long[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3595,7 +3601,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1520
+    // Source: JniFunctionsSource.java:1522
     private static void GetFloatArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final float[] a = (float[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3615,7 +3621,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1528
+    // Source: JniFunctionsSource.java:1530
     private static void GetDoubleArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final double[] a = (double[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3635,7 +3641,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1536
+    // Source: JniFunctionsSource.java:1538
     private static void SetBooleanArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final boolean[] a = (boolean[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3655,7 +3661,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1544
+    // Source: JniFunctionsSource.java:1546
     private static void SetByteArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final byte[] a = (byte[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3675,7 +3681,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1552
+    // Source: JniFunctionsSource.java:1554
     private static void SetCharArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final char[] a = (char[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3695,7 +3701,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1560
+    // Source: JniFunctionsSource.java:1562
     private static void SetShortArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final short[] a = (short[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3715,7 +3721,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1568
+    // Source: JniFunctionsSource.java:1570
     private static void SetIntArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final int[] a = (int[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3735,7 +3741,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1576
+    // Source: JniFunctionsSource.java:1578
     private static void SetLongArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final long[] a = (long[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3755,7 +3761,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1584
+    // Source: JniFunctionsSource.java:1586
     private static void SetFloatArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final float[] a = (float[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3775,7 +3781,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1592
+    // Source: JniFunctionsSource.java:1594
     private static void SetDoubleArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final double[] a = (double[]) array.unhand();
         for (int i = 0; i < length; i++) {
@@ -3806,7 +3812,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1608
+    // Source: JniFunctionsSource.java:1610
     private static int RegisterNatives_(Pointer env, JniHandle javaType, Pointer methods, int numberOfMethods) {
         Pointer a = methods;
 
@@ -3859,7 +3865,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1646
+    // Source: JniFunctionsSource.java:1648
     private static int UnregisterNatives_(Pointer env, JniHandle javaType) {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
         classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
@@ -3885,7 +3891,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1657
+    // Source: JniFunctionsSource.java:1659
     private static int MonitorEnter_(Pointer env, JniHandle object) {
         Monitor.enter(object.unhand());
         return 0;
@@ -3906,7 +3912,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1663
+    // Source: JniFunctionsSource.java:1665
     private static int MonitorExit_(Pointer env, JniHandle object) {
         Monitor.exit(object.unhand());
         return 0;
@@ -3927,7 +3933,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1672
+    // Source: JniFunctionsSource.java:1674
     private static void GetStringRegion_(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
         final String s = (String) string.unhand();
         for (int i = 0; i < length; i++) {
@@ -3947,7 +3953,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1680
+    // Source: JniFunctionsSource.java:1682
     private static void GetStringUTFRegion_(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
         final String s = ((String) string.unhand()).substring(start, start + length);
         final byte[] utf = Utf8.stringToUtf8(s);
@@ -3970,7 +3976,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1688
+    // Source: JniFunctionsSource.java:1690
     private static Pointer GetPrimitiveArrayCritical_(Pointer env, JniHandle array, Pointer isCopy) {
         final Object arrayObject = array.unhand();
         if (Heap.pin(arrayObject)) {
@@ -4016,7 +4022,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1722
+    // Source: JniFunctionsSource.java:1724
     private static void ReleasePrimitiveArrayCritical_(Pointer env, JniHandle array, Pointer elements, int mode) {
         final Object arrayObject = array.unhand();
         if (Heap.isPinned(arrayObject)) {
@@ -4064,7 +4070,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1755
+    // Source: JniFunctionsSource.java:1757
     private static Pointer GetStringCritical_(Pointer env, JniHandle string, Pointer isCopy) {
         setCopyPointer(isCopy, true);
         final char[] a = ((String) string.unhand()).toCharArray();
@@ -4087,7 +4093,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1766
+    // Source: JniFunctionsSource.java:1768
     private static void ReleaseStringCritical_(Pointer env, JniHandle string, final Pointer chars) {
         Memory.deallocate(chars);
     }
@@ -4107,7 +4113,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1771
+    // Source: JniFunctionsSource.java:1773
     private static JniHandle NewWeakGlobalRef_(Pointer env, JniHandle handle) {
         return JniHandles.createWeakGlobalHandle(handle.unhand());
     }
@@ -4124,7 +4130,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1776
+    // Source: JniFunctionsSource.java:1778
     private static void DeleteWeakGlobalRef_(Pointer env, JniHandle handle) {
         JniHandles.destroyWeakGlobalHandle(handle);
     }
@@ -4144,7 +4150,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1781
+    // Source: JniFunctionsSource.java:1783
     private static boolean ExceptionCheck_(Pointer env) {
         return VmThread.fromJniEnv(env).pendingException() != null;
     }
@@ -4179,7 +4185,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1801
+    // Source: JniFunctionsSource.java:1803
     private static JniHandle NewDirectByteBuffer_(Pointer env, Pointer address, long capacity) throws Exception {
         int cap = (int) capacity;
         return JniHandles.createLocalHandle(DirectByteBufferConstructor().invokeConstructor(LongValue.from(address.toLong()), IntValue.from(cap)).asObject());
@@ -4200,7 +4206,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1807
+    // Source: JniFunctionsSource.java:1809
     private static Pointer GetDirectBufferAddress_(Pointer env, JniHandle buffer) throws Exception {
         Object buf = buffer.unhand();
         if (DirectByteBuffer().isInstance(buf)) {
@@ -4225,7 +4231,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1817
+    // Source: JniFunctionsSource.java:1819
     private static long GetDirectBufferCapacity_(Pointer env, JniHandle buffer) {
         Object buf = buffer.unhand();
         if (DirectByteBuffer().isInstance(buf)) {
@@ -4249,7 +4255,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1826
+    // Source: JniFunctionsSource.java:1828
     private static int GetObjectRefType_(Pointer env, JniHandle obj) {
         final int tag = JniHandles.tag(obj);
         if (tag == JniHandles.Tag.STACK) {
@@ -4277,7 +4283,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1839
+    // Source: JniFunctionsSource.java:1841
     private static int GetNumberOfArguments_(Pointer env, MethodID methodID) throws Exception {
         final MethodActor methodActor = MethodID.toMethodActor(methodID);
         if (methodActor == null) {
@@ -4298,7 +4304,7 @@ public final class JniFunctions {
     }
 
     @INLINE
-    // Source: JniFunctionsSource.java:1848
+    // Source: JniFunctionsSource.java:1850
     private static void GetKindsOfArguments_(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
         final MethodActor methodActor = MethodID.toMethodActor(methodID);
         if (methodActor == null) {

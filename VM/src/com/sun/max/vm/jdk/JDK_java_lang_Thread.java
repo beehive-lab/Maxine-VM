@@ -67,26 +67,24 @@ public final class JDK_java_lang_Thread {
     }
 
     public static Thread createThreadForAttach(VmThread vmThread, String name, ThreadGroup group, boolean daemon) throws Throwable {
-        FatalError.check(group != null, "ThreadGroup for thread cannot be null");
+        FatalError.check(group != null, "ThreadGroup for attaching thread cannot be null");
 
         final Thread javaThread = (Thread) Heap.createTuple(ClassRegistry.THREAD.dynamicHub());
         TupleAccess.writeObject(javaThread, Thread_vmThread.offset(), vmThread);
         TupleAccess.writeInt(javaThread, ClassRegistry.Thread_priority.offset(), Thread.NORM_PRIORITY);
-        vmThread.setJavaThread(javaThread);
-        ReferenceValue groupRef = ReferenceValue.from(group);
-        ReferenceValue javaThreadRef = ReferenceValue.from(javaThread);
-        if (name != null) {
-            ReferenceValue nameRef = ReferenceValue.from(name);
-            ClassRegistry.Thread_init_ThreadGroup_String.invoke(javaThreadRef, groupRef, nameRef);
-        } else {
-            ClassRegistry.Thread_init_ThreadGroup_Runnable.invoke(javaThreadRef, groupRef, ReferenceValue.NULL);
-        }
+        vmThread.setJavaThread(javaThread, name);
+        ReferenceValue threadValue = ReferenceValue.from(javaThread);
+        ReferenceValue groupValue = ReferenceValue.from(group);
+        ReferenceValue targetValue = ReferenceValue.NULL;
+        ReferenceValue nameValue = ReferenceValue.from(name == null ? (String) ClassRegistry.Thread_nextThreadNum.invoke().asObject() : name);
+        LongValue stackSizeValue = LongValue.ZERO;
+        ClassRegistry.Thread_init.invoke(threadValue, groupValue, targetValue, nameValue, stackSizeValue);
 
         if (daemon) {
             javaThread.setDaemon(true);
         }
 
-        ClassRegistry.ThreadGroup_add_Thread.invoke(groupRef, javaThreadRef);
+        ClassRegistry.ThreadGroup_add_Thread.invoke(groupValue, threadValue);
         return javaThread;
     }
 

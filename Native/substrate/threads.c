@@ -73,9 +73,10 @@
 static ThreadLocalsKey theThreadLocalsKey;
 
 /**
- * The native mutex associated with VmThreadMap.ACTIVE.
+ * The native mutex associated with VmThreadMap.ACTIVE which serves the role
+ * of being a global lock for thread creation and GC.
  */
-static Mutex vmThreadMapMutex;
+static Mutex globalThreadAndGCLock;
 
 /**
  * De-allocates the NativeThreadLocals object associated with a ThreadLocals object.
@@ -461,7 +462,7 @@ void *thread_runJava(void *arg) {
     ThreadLocals tl = thread_initSegments(ntl, stackBottom - sizeof(Address));
     thread_setThreadLocals(theThreadLocalsKey, (void *) tl);
 
-    VMThreadRunMethod method = image_offset_as_address(VMThreadRunMethod, vmThreadRunMethodOffset);
+    VmThreadRunMethod method = image_offset_as_address(VmThreadRunMethod, vmThreadRunMethodOffset);
 
 #if log_THREADS
     log_print("thread_runJava: id=%d, t=%p, calling method: ", ntl->id, nativeThread);
@@ -488,7 +489,21 @@ void *thread_runJava(void *arg) {
     return NULL;
 }
 
-JNIEnv *thread_attach(NativeThreadLocals ntl, JavaVMAttachArgs* args, boolean daemon) {
+int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
+    if (thread_currentThreadLocals() != 0) {
+        // If the thread has been attached, this operation is a no-op
+        extern JNIEnv *currentJniEnv();
+        *penv = (void *) currentJniEnv();
+        return JNI_OK;
+    }
+
+    /* No need to free 'ntl' - this will be done as a result of clearing
+     * up the native thread specifics of the thread. See 'freeThreadLocals()'. */
+    NativeThreadLocals ntl = calloc(1, sizeof(NativeThreadLocalsStruct));
+    if (ntl == NULL) {
+        return JNI_ENOMEM;
+    }
+
     Address nativeThread = (Address) thread_current();
 #if log_THREADS
     log_println("thread_attach: BEGIN t=%p", nativeThread);
@@ -521,8 +536,13 @@ JNIEnv *thread_attach(NativeThreadLocals ntl, JavaVMAttachArgs* args, boolean da
     ThreadLocals tl = thread_initSegments(ntl, stackBottom - sizeof(Address));
     thread_setThreadLocals(theThreadLocalsKey, (void *) tl);
 
-    /* Grab the global thread map lock so that we can safely add this thread to the map. */
-    mutex_enter(vmThreadMapMutex);
+    /* Grab the global thread and GC lock so that:
+     *   1. We can safely add this thread to the thread list and thread map.
+     *   2. We are blocked if a GC is currently underway. Once we have the lock,
+     *      GC is blocked and cannot occur until we completed the upcall to
+     *      VmThread.attach().
+     */
+    mutex_enter(globalThreadAndGCLock);
 
     ThreadLocals threadLocalsListHead = image_read_value(ThreadLocals, threadLocalsListHeadOffset);
     // insert this thread locals into the list
@@ -536,8 +556,8 @@ JNIEnv *thread_attach(NativeThreadLocals ntl, JavaVMAttachArgs* args, boolean da
     log_println("thread %3d: forwardLink = %p (id=%d)", id, threadLocalsListHead, getThreadLocal(int, threadLocalsListHead, ID));
 #endif
 
-    VMThreadAttachMethod method = image_offset_as_address(VMThreadAttachMethod, vmThreadAttachMethodOffset);
-    (*method)(nativeThread,
+    VmThreadAttachMethod method = image_offset_as_address(VmThreadAttachMethod, vmThreadAttachMethodOffset);
+    result = (*method)(nativeThread,
               (Address) args->name,
               (Address) args->group,
               daemon,
@@ -546,23 +566,49 @@ JNIEnv *thread_attach(NativeThreadLocals ntl, JavaVMAttachArgs* args, boolean da
               ntl->refMapArea,
               ntl->stackYellowZone,
               ntl->stackBase + ntl->stackSize);
-    mutex_exit(vmThreadMapMutex);
+    mutex_exit(globalThreadAndGCLock);
 
 #if log_THREADS
     log_println("thread_attach: id=%d, t=%p", ntl->id, nativeThread);
 #endif
 
-    return (JNIEnv *) getThreadLocalAddress(tl, JNI_ENV);
+    if (result == JNI_OK) {
+        *penv = (JNIEnv *) getThreadLocalAddress(tl, JNI_ENV);
+    } else {
+        *penv = NULL;
+    }
+    return result;
+}
+
+int thread_detachCurrent() {
+#if log_THREADS
+    log_println("thread_detach: BEGIN");
+#endif
+    Address tl = thread_currentThreadLocals();
+    if (thread_currentThreadLocals() == 0) {
+        // If the thread has been detached, this operation is a no-op
+#if log_THREADS
+    log_println("thread_detach: END (already detached)");
+#endif
+        return JNI_OK;
+    }
+
+    VmThreadDetachMethod method = image_offset_as_address(VmThreadDetachMethod, vmThreadDetachMethodOffset);
+    int result = (*method)(tl);
+#if log_THREADS
+    log_println("thread_detach: END (result: %d)", result);
+#endif
+    return result;
 }
 
 /**
  * Declared in VmThreadMap.java.
  */
-void nativeRegisterVmThreadMapMutex(Mutex mutex) {
+void nativeSetGlobalThreadANDGCLock(Mutex mutex) {
 #if log_THREADS
     log_println("Global thread lock mutex: %p", mutex);
 #endif
-    vmThreadMapMutex = mutex;
+    globalThreadAndGCLock = mutex;
 }
 
 /*

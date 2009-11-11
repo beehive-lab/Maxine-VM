@@ -2341,7 +2341,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     /**
      * Implements site-specific information for the XIR interface.
      */
-    private class XirSupport implements XirSite {
+    private static class XirSupport implements XirSite {
         final RiXirGenerator xir;
         Value current;
 

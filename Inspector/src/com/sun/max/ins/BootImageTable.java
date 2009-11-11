@@ -136,9 +136,13 @@ public final class BootImageTable extends InspectorTable {
             addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header.codeCacheSize), null);
 
             final Pointer runMethodPointer = bootImageStart.plus(header.vmRunMethodOffset);
-            addRow("vmStartupMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer));
+            addRow("MaxineVM.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer));
             final Pointer threadRunMethodPointer = bootImageStart.plus(header.vmThreadRunMethodOffset);
-            addRow("vmThreadRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadRunMethodPointer));
+            addRow("VmThread.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadRunMethodPointer));
+            final Pointer threadAttachMethodPointer = bootImageStart.plus(header.vmThreadAttachMethodOffset);
+            addRow("VmThread.attach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadAttachMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadAttachMethodPointer));
+            final Pointer threadDetachMethodPointer = bootImageStart.plus(header.vmThreadDetachMethodOffset);
+            addRow("VmThread.detach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadDetachMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadDetachMethodPointer));
             final Pointer runSchemeRunMethodPointer = bootImageStart.plus(header.runSchemeRunMethodOffset);
             addRow("runSchemeRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, runSchemeRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runSchemeRunMethodPointer));
 
