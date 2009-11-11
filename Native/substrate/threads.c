@@ -490,6 +490,7 @@ void *thread_runJava(void *arg) {
 }
 
 int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
+    int result;
     if (thread_currentThreadLocals() != 0) {
         // If the thread has been attached, this operation is a no-op
         extern JNIEnv *currentJniEnv();
@@ -512,7 +513,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
     Address stackBottom;
 #if os_SOLARIS
     stack_t stackInfo;
-    int result = thr_stksegment(&stackInfo);
+    result = thr_stksegment(&stackInfo);
     if (result != 0) {
         log_exit(result, "thr_stksegment failed");
     }
