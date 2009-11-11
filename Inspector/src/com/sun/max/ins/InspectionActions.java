@@ -237,6 +237,36 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return refreshAll;
     }
 
+
+    /**
+     * Action: causes a specific Inspector to become visible,
+     * even if hidden or iconic.
+     */
+    final class ShowViewAction extends InspectorAction {
+
+        private final Inspector inspector;
+
+        ShowViewAction(Inspector inspector) {
+            super(inspection(), inspector.getTextForTitle());
+            this.inspector = inspector;
+        }
+
+        @Override
+        protected void procedure() {
+            inspector.highlight();
+        }
+
+    }
+
+    /**
+     * @return an action that will make a specified inspector become
+     * visible, even if hidden or iconic.
+     */
+    public final InspectorAction showView(Inspector inspector) {
+        return new ShowViewAction(inspector);
+    }
+
+
     /**
      * Action:  close all open inspectors that match a predicate.
      */
@@ -255,26 +285,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             gui().removeInspectors(predicate);
         }
-    }
-
-    final class ShowViewAction extends InspectorAction {
-
-        private final Inspector inspector;
-
-        ShowViewAction(Inspector inspector) {
-            super(inspection(), inspector.getTextForTitle());
-            this.inspector = inspector;
-        }
-
-        @Override
-        protected void procedure() {
-            inspector.highlight();
-        }
-
-    }
-
-    public final InspectorAction showView(Inspector inspector) {
-        return new ShowViewAction(inspector);
     }
 
     /**
@@ -323,13 +333,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction closeAllAction = new CloseAllViewsAction(null);
+    private final InspectorAction closeAllViewsAction = new CloseAllViewsAction(null);
 
     /**
      * @return Singleton Action that closes all open inspectors.
      */
     public final InspectorAction closeAllViews() {
-        return closeAllAction;
+        return closeAllViewsAction;
     }
 
 
