@@ -33,7 +33,6 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 
 /**
  * Renders memory contents, lets you select the start address, etc.
@@ -78,8 +77,8 @@ public final class MemoryBytesInspector extends Inspector {
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
-        defaultMenu.add(actions().closeViews(otherMemoryInspectorsPredicate, "Close other memory byte inspectors"));
-        defaultMenu.add(actions().closeViews(allMemoryInspectorsPredicate, "Close all memory byte inspectors"));
+        defaultMenu.add(actions().closeViews(MemoryBytesInspector.class, this, "Close other memory byte inspectors"));
+        defaultMenu.add(actions().closeViews(MemoryBytesInspector.class, null, "Close all memory byte inspectors"));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
@@ -189,18 +188,6 @@ public final class MemoryBytesInspector extends Inspector {
     }
 
     private JPanel contentPane;
-
-    private static final Predicate<Inspector> allMemoryInspectorsPredicate = new Predicate<Inspector>() {
-        public boolean evaluate(Inspector inspector) {
-            return inspector instanceof MemoryBytesInspector;
-        }
-    };
-
-    private final Predicate<Inspector> otherMemoryInspectorsPredicate = new Predicate<Inspector>() {
-        public boolean evaluate(Inspector inspector) {
-            return inspector instanceof MemoryBytesInspector && inspector != MemoryBytesInspector.this;
-        }
-    };
 
     @Override
     public String getTextForTitle() {

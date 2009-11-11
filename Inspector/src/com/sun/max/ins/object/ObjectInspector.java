@@ -33,7 +33,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -117,8 +116,8 @@ public abstract class ObjectInspector extends Inspector {
         final InspectorMenu defaultMenu = frame.makeMenu(MenuKind.DEFAULT_MENU);
         defaultMenu.add(defaultMenuItems(MenuKind.DEFAULT_MENU));
         defaultMenu.addSeparator();
-        defaultMenu.add(actions().closeViews(otherObjectInspectorsPredicate, "Close other object inspectors"));
-        defaultMenu.add(actions().closeViews(allObjectInspectorsPredicate, "Close all object inspectors"));
+        defaultMenu.add(actions().closeViews(ObjectInspector.class, this, "Close other object inspectors"));
+        defaultMenu.add(actions().closeViews(ObjectInspector.class, null, "Close all object inspectors"));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().inspectObjectMemoryWords(teleObject, "Inspect this object's memory"));
@@ -228,18 +227,6 @@ public abstract class ObjectInspector extends Inspector {
     public void vmProcessTerminated() {
         dispose();
     }
-
-    private static final Predicate<Inspector> allObjectInspectorsPredicate = new Predicate<Inspector>() {
-        public boolean evaluate(Inspector inspector) {
-            return inspector instanceof ObjectInspector;
-        }
-    };
-
-    private final Predicate<Inspector> otherObjectInspectorsPredicate = new Predicate<Inspector>() {
-        public boolean evaluate(Inspector inspector) {
-            return inspector instanceof ObjectInspector && inspector != ObjectInspector.this;
-        }
-    };
 
     @Override
     protected void refreshView(boolean force) {

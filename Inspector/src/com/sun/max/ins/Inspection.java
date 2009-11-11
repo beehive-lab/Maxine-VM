@@ -33,6 +33,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.InspectionPreferences.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.memory.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -263,8 +264,15 @@ public final class Inspection {
     /**
      * @return all existing object inspectors, even if hidden or iconic.
      */
-    public Iterable<ObjectInspector> objectInspectors() {
+    public Set<ObjectInspector> objectInspectors() {
         return objectInspectorFactory.inspectors();
+    }
+
+    /**
+     * @return all existing memory inspectors, even if hidden or iconic.
+     */
+    public Set<MemoryWordsInspector> memoryWordsInspectors() {
+        return MemoryWordsInspector.inspectors();
     }
 
     /**

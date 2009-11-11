@@ -23,7 +23,6 @@ package com.sun.max.ins.object;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -56,7 +55,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
      * Map:   {@link TeleObject} -- > the {@link ObjectInspector}, if it exists, for the corresponding
      * object in the VM.  Relies on {@link ObjectInspector}s being canonical.
      */
-    private final VariableMapping<TeleObject, ObjectInspector> teleObjectToInspector = HashMapping.createVariableIdentityMapping();
+    private final Map<TeleObject, ObjectInspector> teleObjectToInspector = new HashMap<TeleObject, ObjectInspector>();
 
     /**
      * ObjectInspector constructors for specific tuple-implemented subclasses of {@link TeleObject}s.
@@ -182,7 +181,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
     }
 
     public boolean isObjectInspectorObservingObject(long oid) {
-        for (TeleObject teleObject : teleObjectToInspector.keys()) {
+        for (TeleObject teleObject : teleObjectToInspector.keySet()) {
             if (teleObject.reference().grip().makeOID() == oid) {
                 return true;
             }
@@ -198,7 +197,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
     /**
      * @return all existing instances of {@link ObjectInspector}, even if hidden or iconic.
      */
-    public Iterable<ObjectInspector> inspectors() {
-        return teleObjectToInspector.values();
+    public Set<ObjectInspector> inspectors() {
+        return new HashSet<ObjectInspector>(teleObjectToInspector.values());
     }
 }
