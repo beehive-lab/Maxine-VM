@@ -441,7 +441,7 @@ public final class MemoryWordsInspector extends Inspector {
             this.inspectorTable = inspectorTable;
             // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
             // this is empirical, based only the fuzziest notion of how these dimensions work
-            final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), inspectorTable.getRowCount()) + 1;
+            final int displayRows = Math.min(style().memoryTableMaxDisplayRows(), inspectorTable.getRowCount()) + 2;
             final int preferredHeight = displayRows * (inspectorTable.getRowHeight() + inspectorTable.getRowMargin()) +
                                                           inspectorTable.getRowMargin()  + inspectorTable.getTableHeader().getHeight();
             final int preferredWidth = inspectorTable.getPreferredScrollableViewportSize().width;
