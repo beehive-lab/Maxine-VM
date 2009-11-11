@@ -4740,6 +4740,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(inspectMemoryRegionsMenu());
                 menu.add(inspectMemoryWords());
                 menu.add(inspectMemoryBytes());
+                menu.add(memoryWordsInspectorsMenu());
             }
         };
     }
