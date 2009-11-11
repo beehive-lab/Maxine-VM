@@ -66,22 +66,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         super(vmConfiguration);
     }
 
-    static {
-        VMOptions.register(new VMBooleanXXOption("-XX:-ResetC1XDefaults",
-            "Reset all C1X options to their defaults. This takes effect before any other C1X options on the command line are parsed.") {
-            @Override
-            public boolean parseValue(Pointer optionValue) {
-                if (super.parseValue(optionValue)) {
-                    if (getValue()) {
-                        C1XOptions.setDefaults();
-                    }
-                    return true;
-                }
-                return false;
-            }
-        }, MaxineVM.Phase.PRISTINE);
-    }
-
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {

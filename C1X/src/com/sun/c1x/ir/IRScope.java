@@ -155,7 +155,7 @@ public class IRScope {
      * Computes the size of the lock stack and saves it in a field of this scope.
      */
     public final void computeLockStackSize() {
-        if (!C1XOptions.InlineMethodsWithExceptionHandlers) {
+        if (!C1XOptions.OptInlineExcept) {
             lockStackSize = 0;
             return;
         }

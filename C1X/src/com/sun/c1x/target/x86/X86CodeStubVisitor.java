@@ -110,7 +110,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
 
-        if (C1XOptions.GenerateAssertionCode) {
+        if (C1XOptions.GenAssertionCode) {
             masm.shouldNotReachHere();
         }
     }
@@ -127,7 +127,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
 
-        if (C1XOptions.GenerateAssertionCode) {
+        if (C1XOptions.GenAssertionCode) {
             masm.shouldNotReachHere();
         }
     }
@@ -141,7 +141,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
 
-        if (C1XOptions.GenerateAssertionCode) {
+        if (C1XOptions.GenAssertionCode) {
             masm.shouldNotReachHere();
         }
     }
@@ -221,7 +221,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
 
-        if (C1XOptions.GenerateAssertionCode) {
+        if (C1XOptions.GenAssertionCode) {
             masm.shouldNotReachHere();
         }
     }
@@ -239,7 +239,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // Insert nop such that the IP is within the range of the target at the position after the call
         masm.nop();
 
-        if (C1XOptions.GenerateAssertionCode) {
+        if (C1XOptions.GenAssertionCode) {
             masm.shouldNotReachHere();
         }
     }

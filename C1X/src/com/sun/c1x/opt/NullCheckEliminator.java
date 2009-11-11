@@ -46,7 +46,7 @@ import com.sun.c1x.util.*;
  * a second time.
  *
  * Note that the iterative phase is actually optional, because the first pass is conservative.
- * Iteration can be disabled by setting {@link com.sun.c1x.C1XOptions#DoIterativeNCE} to
+ * Iteration can be disabled by setting {@link com.sun.c1x.C1XOptions#OptIterativeNCE} to
  * {@code false}. Iteration is rarely necessary for acyclic graphs.
  *
  * @author Ben L. Titzer
@@ -102,7 +102,7 @@ public class NullCheckEliminator extends ValueVisitor {
         while (!workList.isEmpty()) {
             processBlock(workList.removeFromWorkList());
         }
-        if (requiresIteration && C1XOptions.DoIterativeNCE) {
+        if (requiresIteration && C1XOptions.OptIterativeNCE) {
             // there was a loop, or blocks were not visited in reverse post-order;
             // iteration is required to compute the in sets for a second pass
             iterate();
@@ -183,7 +183,7 @@ public class NullCheckEliminator extends ValueVisitor {
     }
 
     private HashSet<Value> intersectFlowSensitive(BlockBegin pred, HashSet<Value> n, BlockBegin succ) {
-        if (C1XOptions.DoFlowSensitiveNCE) {
+        if (C1XOptions.OptFlowSensitiveNCE) {
             // check to see if there is an if edge between these two blocks
             IfEdge e = ifEdges.get(pred);
             if (e != null && e.succ == succ) {
@@ -273,7 +273,7 @@ public class NullCheckEliminator extends ValueVisitor {
     }
 
     private void propagateFlowSensitive(BlockBegin pred, BitMap bitMap, BlockBegin succ) {
-        if (C1XOptions.DoFlowSensitiveNCE) {
+        if (C1XOptions.OptFlowSensitiveNCE) {
             IfEdge e = ifEdges.get(pred);
             if (e != null && e.succ == succ) {
                 // there is a special if edge between these blocks, add the checked instruction
@@ -343,7 +343,7 @@ public class NullCheckEliminator extends ValueVisitor {
     }
 
     private boolean isNonNullOnEdge(BlockBegin pred, BlockBegin succ, Value i) {
-        if (C1XOptions.DoFlowSensitiveNCE) {
+        if (C1XOptions.OptFlowSensitiveNCE) {
             IfEdge e = ifEdges.get(pred);
             if (e != null && e.succ == succ && e.checked == i) {
                 return true;
@@ -359,7 +359,7 @@ public class NullCheckEliminator extends ValueVisitor {
             if (processUse(phi, operand, false)) {
                 continue;
             }
-            if (C1XOptions.DoFlowSensitiveNCE) {
+            if (C1XOptions.OptFlowSensitiveNCE) {
                 BlockBegin phiBlock = phi.block();
                 if (!phiBlock.isExceptionEntry() && isNonNullOnEdge(phiBlock.predecessors().get(j), phiBlock, operand)) {
                     continue;
@@ -441,7 +441,7 @@ public class NullCheckEliminator extends ValueVisitor {
 
     @Override
     public void visitIf(If i) {
-        if (C1XOptions.DoFlowSensitiveNCE) {
+        if (C1XOptions.OptFlowSensitiveNCE) {
             if (i.trueSuccessor() != i.falseSuccessor()) {
                 Value x = i.x();
                 // if the two successors are different, then we may learn something on one branch

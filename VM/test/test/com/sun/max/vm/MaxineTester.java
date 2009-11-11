@@ -199,7 +199,6 @@ public class MaxineTester {
         }
     }
 
-
     private static Iterable<String> filterTestsBySubstrings(Iterable<String> tests, String[] substrings) {
         final List<String> list = new ArrayList<String>();
         for (String substring : substrings) {

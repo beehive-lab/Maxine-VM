@@ -101,7 +101,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
 
         // Clear out parameters
-        if (C1XOptions.GenerateAssertionCode) {
+        if (C1XOptions.GenAssertionCode) {
             for (index = 0; index < args.length; index++) {
                 storeParameter(0, index++);
             }
@@ -1080,7 +1080,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void invalidateRegisters(boolean invRax, boolean invRbx, boolean invRcx, boolean invRdx, boolean invRsi, boolean invRdi) {
 
-        if (C1XOptions.GenerateAssertionCode) {
+        if (C1XOptions.GenAssertionCode) {
             if (invRax) {
                 movptr(X86.rax, 0xDEAD);
             }
@@ -1176,7 +1176,7 @@ public class X86MacroAssembler extends X86Assembler {
         // initialize topmost word, divide index by 2, check if odd and test if zero
         // note: for the remaining code to work, index must be a multiple of BytesPerWord
 
-        if (C1XOptions.GenerateAssertionCode) {
+        if (C1XOptions.GenAssertionCode) {
             Label l = new Label();
             testptr(index, wordSize - 1);
             jcc(X86Assembler.Condition.zero, l);

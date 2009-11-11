@@ -684,7 +684,7 @@ public class Canonicalizer extends ValueVisitor {
                 if (obj == null) {
                     // checkcast of null is null
                     setCanonical(o);
-                } else if (C1XOptions.SupportObjectConstants && C1XOptions.CanonicalizeObjectCheckCast) {
+                } else if (C1XOptions.CanonicalizeObjectCheckCast) {
                     if (i.targetClass().isInstance(obj)) {
                         // fold the cast if it will succeed
                         setCanonical(o);
@@ -708,7 +708,7 @@ public class Canonicalizer extends ValueVisitor {
                 if (obj == null) {
                     // instanceof of null is false
                     setIntConstant(0);
-                } else if (C1XOptions.SupportObjectConstants && C1XOptions.CanonicalizeObjectInstanceOf) {
+                } else if (C1XOptions.CanonicalizeObjectInstanceOf) {
                     // fold the instanceof test
                     setIntConstant(i.targetClass().isInstance(obj) ? 1 : 0);
                 }
