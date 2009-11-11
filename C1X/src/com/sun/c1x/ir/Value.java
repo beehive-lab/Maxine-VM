@@ -75,8 +75,9 @@ public abstract class Value {
     public final CiKind kind;
 
     private int flags;
-    private Value subst;
     private LIROperand lirOperand;
+
+    public Value subst; // managed by InstructionSubstituter
 
     /**
      * Creates a new value with the specified kind.
@@ -134,14 +135,6 @@ public abstract class Value {
      */
     public final boolean hasSubst() {
         return subst != null;
-    }
-
-    /**
-     * Sets the instruction that will be substituted for this instruction.
-     * @param subst the instruction to substitute for this instruction
-     */
-    public final void setSubst(Value subst) {
-        this.subst = subst;
     }
 
     /**
