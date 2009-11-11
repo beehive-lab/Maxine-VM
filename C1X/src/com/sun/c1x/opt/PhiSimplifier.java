@@ -21,6 +21,7 @@
 package com.sun.c1x.opt;
 
 import com.sun.c1x.*;
+import com.sun.c1x.graph.IR;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
@@ -31,18 +32,14 @@ import com.sun.c1x.value.*;
  */
 public class PhiSimplifier implements BlockClosure {
 
-    boolean hasSubstitutions;
+    final IR ir;
+    final InstructionSubstituter subst;
 
-    /**
-     * Creates a new PhiSimplifier for the specified start block and performs phi simplification.
-     * @param start the start block from which to start performing phi simplification
-     */
-    public PhiSimplifier(BlockBegin start) {
-        start.iterateAnyOrder(this, false);
-        if (hasSubstitutions) {
-            // perform substitutions
-            new SubstitutionResolver(start);
-        }
+    public PhiSimplifier(IR ir) {
+        this.ir = ir;
+        this.subst = new InstructionSubstituter(ir);
+        ir.startBlock.iterateAnyOrder(this, false);
+        subst.finish();
     }
 
     /**
@@ -66,7 +63,7 @@ public class PhiSimplifier implements BlockClosure {
         Phi phi = (Phi) x;
         if (phi.hasSubst()) {
             // already substituted, but the subst could be a phi itself, so simplify
-            return simplify(phi.subst());
+            return simplify(subst.getSubst(phi));
         } else if (phi.checkFlag(Value.Flag.PhiCannotSimplify)) {
             // already tried, cannot simplify this phi
             return phi;
@@ -117,8 +114,7 @@ public class PhiSimplifier implements BlockClosure {
             // successfully simplified the phi
             assert phiSubst != null : "illegal phi function";
             phi.clearFlag(Value.Flag.PhiVisited);
-            phi.setSubst(phiSubst);
-            hasSubstitutions = true;
+            subst.setSubst(phi, phiSubst);
             return phiSubst;
         }
     }
