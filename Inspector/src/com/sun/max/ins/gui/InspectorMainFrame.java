@@ -88,7 +88,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     }
 
     /**
-     * Support for the desktop pane to act as a Drag and Drop <emph>target</emph>.
+     * Support for the desktop pane to act as a Drag and Drop <em>target</em>.
      * Only copy operations are supported.
      *
      * @author Michael Van De Vanter
@@ -120,7 +120,6 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
             support.setShowDropLocation(true);
             support.setDropAction(COPY);
-            //System.out.println("Can import" + support);
             return true;
         }
 
