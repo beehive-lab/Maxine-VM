@@ -823,11 +823,17 @@ jint JNICALL jni_DestroyJavaVM(JavaVM *vm) {
 
 /* TODO: Currently, the last argument (args) is ignored. */
 jint JNICALL jni_AttachCurrentThread(JavaVM *vm, void **penv, void *args) {
+    if (thread_currentThreadLocals() != 0) {
+        // If the thread has been attached this operation is a no-op
+        *penv = (void *) currentJniEnv();
+        return JNI_OK;
+    }
+
     NativeThreadLocals ntl = calloc(1, sizeof(NativeThreadLocalsStruct));
     if (ntl == NULL) {
         return JNI_ENOMEM;
     }
-    *penv = thread_attach(ntl);
+    *penv = thread_attach(ntl, (JavaVMAttachArgs*) args, false);
     return JNI_OK;
 }
 
@@ -836,7 +842,18 @@ jint JNICALL jni_DetachCurrentThread(JavaVM *vm) {
 }
 
 jint JNICALL jni_AttachCurrentThreadAsDaemon(JavaVM *vm, void **penv, void *args) {
-    return c_UNIMPLEMENTED();
+    if (thread_currentThreadLocals() != 0) {
+        // If the thread has been attached this operation is a no-op
+        *penv = (void *) currentJniEnv();
+        return JNI_OK;
+    }
+
+    NativeThreadLocals ntl = calloc(1, sizeof(NativeThreadLocalsStruct));
+    if (ntl == NULL) {
+        return JNI_ENOMEM;
+    }
+    *penv = thread_attach(ntl, (JavaVMAttachArgs*) args, true);
+    return JNI_OK;
 }
 
 const struct JNIInvokeInterface_ jni_InvokeInterface = {

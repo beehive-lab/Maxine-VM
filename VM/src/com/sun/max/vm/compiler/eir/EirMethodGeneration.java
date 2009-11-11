@@ -45,6 +45,7 @@ public abstract class EirMethodGeneration {
     public final EirABI abi;
     public final MemoryModel memoryModel;
     public final EirLiteralPool literalPool = new EirLiteralPool();
+
     /**
      * Specifies if the generated code uses one shared epilogue for all return points.
      */
@@ -328,23 +329,18 @@ public abstract class EirMethodGeneration {
     // useful for generating templates of a JIT or an interpreter.
     private EirBlock eirEpilogueBlock;
 
-    public EirBlock eirEpilogueBlock() {
+    public EirBlock makeEpilogueBlock() {
         if (eirEpilogueBlock == null) {
             eirEpilogueBlock = createEirBlock(IrBlock.Role.NORMAL);
         }
         return eirEpilogueBlock;
     }
 
-    public boolean hasEirEpilogueBlock() {
-        return eirEpilogueBlock != null;
+    public EirBlock epilogueBlock() {
+        return eirEpilogueBlock;
     }
 
     private EirEpilogue eirEpilogue;
-
-    public void addResultValue(EirValue resultValue) {
-        makeEpilogue();
-        eirEpilogue.addResultValue(resultValue);
-    }
 
     public void addEpilogueUse(EirValue useValue) {
         makeEpilogue();
@@ -370,11 +366,11 @@ public abstract class EirMethodGeneration {
 
     protected abstract EirEpilogue createEpilogueAndReturn(EirBlock eirBlock);
 
-    public EirBlock makeEpilogue() {
+    public EirEpilogue makeEpilogue() {
         if (eirEpilogue == null) {
-            eirEpilogue = createEpilogueAndReturn(eirEpilogueBlock());
+            eirEpilogue = createEpilogueAndReturn(makeEpilogueBlock());
         }
-        return eirEpilogueBlock();
+        return eirEpilogue;
     }
 
     private EirBlock selectSuccessor(EirBlock block, PoolSet<EirBlock> rest) {

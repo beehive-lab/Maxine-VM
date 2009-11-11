@@ -40,6 +40,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
 
     private Address address;
     private String regionName;
+    private String toolTipText;
     private MemoryRegion memoryRegion = null;
 
     private final class MemoryRegionMouseClickAdapter extends InspectorMouseClickAdapter {
@@ -86,18 +87,18 @@ public class MemoryRegionValueLabel extends ValueLabel {
     @Override
     protected void updateText() {
         memoryRegion = null;
+        regionName = null;
+        toolTipText = null;
         if (value() != null && !value().isZero()) {
             address = value().toWord().asAddress();
             memoryRegion = maxVM().memoryRegionContaining(address);
         }
-        if (memoryRegion == null) {
-            regionName = "";
-            setToolTipText("");
-        } else {
-            regionName = memoryRegion.description();
-            setToolTipText("0x" + address.toHexString() + " in \"" + memoryRegion.description() + "\" region");
+        if (memoryRegion != null) {
+            regionName = inspection().nameDisplay().shortName(memoryRegion);
+            toolTipText = inspection().nameDisplay().longName(memoryRegion);
         }
         setText(regionName);
+        setToolTipText(toolTipText);
     }
 
     public void redisplay() {
@@ -112,6 +113,5 @@ public class MemoryRegionValueLabel extends ValueLabel {
         }
         return null;
     }
-
 
 }

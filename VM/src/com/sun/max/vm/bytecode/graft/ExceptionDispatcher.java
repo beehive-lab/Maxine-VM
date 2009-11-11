@@ -105,7 +105,7 @@ public class ExceptionDispatcher {
             catchType = classRef.resolve(assembler.constantPool(), classConstantIndex);
         }
 
-        if (catchType != null && !ClassRegistry.javaLangThrowableActor().isAssignableFrom(catchType)) {
+        if (catchType != null && !ClassRegistry.THROWABLE.isAssignableFrom(catchType)) {
             throw ErrorContext.verifyError("Catch type is not a subclass of Throwable in handler");
         }
         return false;

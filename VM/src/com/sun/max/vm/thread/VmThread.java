@@ -38,10 +38,12 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.stack.*;
@@ -132,7 +134,6 @@ public class VmThread {
     private static final CriticalNativeMethod NON_JNI_NATIVE_SLEEP = new CriticalNativeMethod(VmThread.class, "nonJniNativeSleep");
     private static final CriticalNativeMethod NATIVE_SLEEP = new CriticalNativeMethod(VmThread.class, "nativeSleep");
     private static final CriticalNativeMethod NATIVE_YIELD = new CriticalNativeMethod(VmThread.class, "nativeYield");
-
 
     @CONSTANT_WHEN_NOT_ZERO
     private Thread javaThread;
@@ -294,12 +295,15 @@ public class VmThread {
     @C_FUNCTION
     private static void run(int id, Address nativeThread,
                     Pointer stackBase,
-                    Pointer triggeredVmThreadLocals,
-                    Pointer enabledVmThreadLocals,
-                    Pointer disabledVmThreadLocals,
+                    Pointer vmThreadLocals,
                     Pointer refMapArea,
                     Pointer stackYellowZone,
                     Pointer stackEnd) {
+
+        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+
         // Disable safepoints:
         Safepoint.setLatchRegister(disabledVmThreadLocals);
 
@@ -359,23 +363,19 @@ public class VmThread {
      *   ATTENTION: this signature must match 'VMThreadAttachMethod' in "Native/substrate/threads.h".
      */
     @C_FUNCTION
-    private static void attach(Address nativeThread,
+    private static int attach(Address nativeThread,
+                    Pointer name,
+                    JniHandle group,
+                    boolean daemon,
                     Pointer stackBase,
-                    Pointer triggeredVmThreadLocals,
-                    Pointer enabledVmThreadLocals,
-                    Pointer disabledVmThreadLocals,
+                    Pointer vmThreadLocals,
                     Pointer refMapArea,
                     Pointer stackYellowZone,
                     Pointer stackEnd) {
 
-        // Should we be using VmThreadFactory?
-        // Or, better, the following:
-        //
-        //final Thread thread = new Thread();
-        //final VmThread vmThread = VmThread.fromJava(thread);
-        final VmThread vmThread = new VmThread();
-
-        VmThreadMap.addVmThread(vmThread);
+        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
 
         // Disable safepoints:
         Safepoint.setLatchRegister(disabledVmThreadLocals);
@@ -383,21 +383,32 @@ public class VmThread {
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.jniEnv());
 
         // Add the VM thread locals to the active map
-        VmThreadMap.addVmThreadLocals(vmThread, enabledVmThreadLocals);
         for (VmThreadLocal threadLocal : VmThreadLocal.valuesNeedingInitialization()) {
             threadLocal.initialize();
         }
-
-        vmThread.nativeThread = nativeThread;
-        vmThread.vmThreadLocals = enabledVmThreadLocals;
-        vmThread.stackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
-        vmThread.stackDumpStackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
 
         HIGHEST_STACK_SLOT_ADDRESS.setConstantWord(triggeredVmThreadLocals, stackEnd);
         LOWEST_STACK_SLOT_ADDRESS.setConstantWord(triggeredVmThreadLocals, triggeredVmThreadLocals.plus(Word.size()));
         STACK_REFERENCE_MAP.setConstantWord(triggeredVmThreadLocals, refMapArea);
 
+        final VmThread vmThread = VmThreadFactory.create(null);
+        VM_THREAD.setConstantReference(enabledVmThreadLocals, Reference.fromJava(vmThread));
+
+        vmThread.nativeThread = nativeThread;
+        vmThread.vmThreadLocals = enabledVmThreadLocals;
+        vmThread.stackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
+        vmThread.stackDumpStackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
         vmThread.guardPage = stackYellowZone;
+
+        try {
+            String nameString = name.isZero() ? null : CString.utf8ToJava(name);
+            JDK_java_lang_Thread.createThreadForAttach(vmThread, nameString, (ThreadGroup) group.unhand(), daemon);
+        } catch (Throwable throwable) {
+            return JniFunctions.JNI_ERR;
+        }
+
+        VmThreadMap.addVmThread(vmThread);
+        ID.setConstantWord(enabledVmThreadLocals, Address.fromInt(vmThread.id()));
 
         vmThread.initializationComplete();
 
@@ -405,6 +416,7 @@ public class VmThread {
         Safepoint.enable();
 
         vmThread.traceThreadAfterInitialization(stackBase, enabledVmThreadLocals);
+        return JniFunctions.JNI_OK;
     }
 
     private static void invokeShutdownHooks() {
@@ -541,17 +553,20 @@ public class VmThread {
 
 
     /**
-     * Create an unbound VmThread that will be bound later.
+     * Creates an unbound VmThread that will be bound later.
      */
     public VmThread() {
     }
 
     /**
-     * Create a bound VmThread.
-     * @param javaThread
+     * Create a VmThread.
+     *
+     * @param javaThread if not {@code null}, then the created VmThread is bound to {@code javaThread}
      */
     public VmThread(Thread javaThread) {
-        setJavaThread(javaThread);
+        if (javaThread != null) {
+            setJavaThread(javaThread);
+        }
     }
 
 
@@ -837,11 +852,6 @@ public class VmThread {
             this.interrupted = false;
         }
         return interrupted;
-    }
-
-    public int countStackFrames() {
-        FatalError.unimplemented();
-        return -1;
     }
 
     /**

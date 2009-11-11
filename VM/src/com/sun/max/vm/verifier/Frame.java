@@ -75,7 +75,7 @@ public class Frame implements FrameModel {
             if (!classMethodActor.isInstanceInitializer()) {
                 store(methodVerifier.getObjectType(classActor.typeDescriptor), 0);
             } else {
-                if (classActor.equals(ClassRegistry.javaLangObjectActor())) {
+                if (classActor.equals(ClassRegistry.OBJECT)) {
                     store(VerificationType.OBJECT, 0);
                 } else {
                     store(VerificationType.UNINITIALIZED_THIS, 0);

@@ -23,7 +23,6 @@ package com.sun.max.ins.object;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -45,26 +44,18 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
      * Creates the singleton factory that listens for events and will find or create instances
      * of {@link ObjectInspector} as needed.
      */
-    public static void make(final Inspection inspection) {
+    public static ObjectInspectorFactory make(final Inspection inspection) {
         if (factory == null) {
             factory = new ObjectInspectorFactory(inspection);
         }
-    }
-
-    public boolean isObjectInspectorObservingObject(long oid) {
-        for (TeleObject teleObject : teleObjectToInspector.keys()) {
-            if (teleObject.reference().grip().makeOID() == oid) {
-                return true;
-            }
-        }
-        return false;
+        return factory;
     }
 
     /**
      * Map:   {@link TeleObject} -- > the {@link ObjectInspector}, if it exists, for the corresponding
      * object in the VM.  Relies on {@link ObjectInspector}s being canonical.
      */
-    private final VariableMapping<TeleObject, ObjectInspector> teleObjectToInspector = HashMapping.createVariableIdentityMapping();
+    private final Map<TeleObject, ObjectInspector> teleObjectToInspector = new HashMap<TeleObject, ObjectInspector>();
 
     /**
      * ObjectInspector constructors for specific tuple-implemented subclasses of {@link TeleObject}s.
@@ -185,14 +176,28 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
         return null;
     }
 
+    void objectInspectorClosing(ObjectInspector objectInspector) {
+        teleObjectToInspector.remove(objectInspector.teleObject());
+    }
+
+    public boolean isObjectInspectorObservingObject(long oid) {
+        for (TeleObject teleObject : teleObjectToInspector.keySet()) {
+            if (teleObject.reference().grip().makeOID() == oid) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void resetObjectToInspectorMapEntry(TeleObject oldTeleObject, TeleObject newTeleObject, ObjectInspector objectInspector) {
         teleObjectToInspector.remove(oldTeleObject);
         teleObjectToInspector.put(newTeleObject, objectInspector);
     }
 
-    void objectInspectorClosing(ObjectInspector objectInspector) {
-        teleObjectToInspector.remove(objectInspector.teleObject());
+    /**
+     * @return all existing instances of {@link ObjectInspector}, even if hidden or iconic.
+     */
+    public Set<ObjectInspector> inspectors() {
+        return new HashSet<ObjectInspector>(teleObjectToInspector.values());
     }
-
-
 }

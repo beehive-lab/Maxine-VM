@@ -65,8 +65,9 @@ public class ComputeBlockOrder extends AlgorithmPart {
         detectBackedges(leftOverPredecessors, blockPoolSet, startBlock);
 
         // Special handling if epilogue block is unconnected
-        if (generation().hasEirEpilogueBlock() && generation().eirEpilogueBlock().predecessors().length() == 0) {
-            blockPoolSet.add(generation().eirEpilogueBlock());
+        EirBlock epilogueBlock = generation().epilogueBlock();
+        if (epilogueBlock != null && epilogueBlock.predecessors().length() == 0) {
+            blockPoolSet.add(epilogueBlock);
         }
         assert blockPoolSet.length() == blockPoolSet.pool().length() || traceBlocks() : "every block must be visited";
 
@@ -103,8 +104,9 @@ public class ComputeBlockOrder extends AlgorithmPart {
         }
 
         // Special handling if epilogue block is unconnected
-        if (generation().hasEirEpilogueBlock() && generation().eirEpilogueBlock().predecessors().length() == 0) {
-            result.append(generation().eirEpilogueBlock());
+        epilogueBlock = generation().epilogueBlock();
+        if (epilogueBlock != null && epilogueBlock.predecessors().length() == 0) {
+            result.append(epilogueBlock);
         }
 
         assert result.length() == generation().eirBlocks().length();

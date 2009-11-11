@@ -172,7 +172,7 @@ public class ObjectType extends ReferenceType {
             fromClassActor = fromClassActor.superClassActor;
         }
 
-        if (thisClassActor.equals(ClassRegistry.javaLangObjectActor())) {
+        if (thisClassActor.equals(ClassRegistry.OBJECT)) {
             return OBJECT;
         }
 

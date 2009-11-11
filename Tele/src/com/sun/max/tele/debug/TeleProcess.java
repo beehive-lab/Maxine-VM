@@ -537,7 +537,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     protected abstract void gatherThreads(AppendableSequence<TeleNativeThread> threads);
 
-    protected abstract TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize);
+    protected abstract TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize, boolean hasThreadLocals);
 
     /**
      * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
@@ -562,27 +562,29 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
         assert state >= 0 && state < ThreadState.VALUES.length() : state;
         TeleNativeThread thread = handleToThreadMap.get(handle);
+        boolean hasThreadLocals = triggeredVmThreadLocals != 0;
         if (thread == null) {
-            thread = createTeleNativeThread(id, handle, stackBase, stackSize);
+            thread = createTeleNativeThread(id, handle, stackBase, stackSize, hasThreadLocals);
         } else {
             // Handle the cases where a thread was added/removed from the global thread list since the last epoch
             if (id > 0) {
                 if (thread.id() != id) {
                     assert !thread.isJava();
                     // This is a Java thread that added from the global thread list since the last epoch.
-                    thread = createTeleNativeThread(id, handle, stackBase, stackSize);
+                    thread = createTeleNativeThread(id, handle, stackBase, stackSize, hasThreadLocals);
                 }
             } else {
                 if (thread.id() != id) {
                     assert thread.isJava();
                     // This is a Java thread that removed from the global thread list since the last epoch
-                    thread = createTeleNativeThread(id, handle, stackBase, stackSize);
+                    thread = createTeleNativeThread(id, handle, stackBase, stackSize, hasThreadLocals);
                 }
             }
         }
 
         final Map<Safepoint.State, Pointer> vmThreadLocals;
-        if (id >= 0) {
+        if (hasThreadLocals) {
+            assert enabledVmThreadLocals != 0 && disabledVmThreadLocals != 0;
             vmThreadLocals = new EnumMap<Safepoint.State, Pointer>(Safepoint.State.class);
             vmThreadLocals.put(Safepoint.State.ENABLED, Pointer.fromLong(enabledVmThreadLocals));
             vmThreadLocals.put(Safepoint.State.DISABLED, Pointer.fromLong(disabledVmThreadLocals));

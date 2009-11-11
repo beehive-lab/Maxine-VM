@@ -66,7 +66,7 @@ public final class InterfaceActor extends ClassActor {
               minorVersion,
               flags | ACC_INTERFACE,
               JavaTypeDescriptor.getDescriptorForWellFormedTupleName(name.toString()),
-              ClassRegistry.javaLangObjectActor(),
+              ClassRegistry.OBJECT,
               NO_COMPONENT_CLASS_ACTOR,
               interfaceActors,
               fieldActors,

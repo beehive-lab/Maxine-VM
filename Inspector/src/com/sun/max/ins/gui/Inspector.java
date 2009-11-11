@@ -38,7 +38,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -96,7 +95,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                 return new AbstractInspectorMenuItems(inspection()) {
                     public void addTo(InspectorMenu menu) {
                         menu.add(getCloseAction());
-                        menu.add(getCloseOtherInspectorsAction());
+                        menu.add(actions().closeViews(Inspector.class, Inspector.this, "Close Other Inspectors"));
                         menu.addSeparator();
                         menu.add(getPrintAction());
                     }
@@ -509,15 +508,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                 dispose();
             }
         };
-    }
-
-    public InspectorAction getCloseOtherInspectorsAction() {
-        final Predicate<Inspector> predicate = new Predicate<Inspector>() {
-            public boolean evaluate(Inspector inspector) {
-                return inspector != Inspector.this;
-            }
-        };
-        return actions().closeViews(predicate, "Close Other Inspectors");
     }
 
     /**

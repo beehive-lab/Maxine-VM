@@ -23,19 +23,20 @@ package com.sun.max.vm.jdk;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * Method substitutions for {@link java.lang.Thread java.lang.Thread}.
  *
  */
 @METHOD_SUBSTITUTIONS(Thread.class)
-final class JDK_java_lang_Thread {
+public final class JDK_java_lang_Thread {
 
     private JDK_java_lang_Thread() {
     }
@@ -56,34 +57,37 @@ final class JDK_java_lang_Thread {
 
     /**
      * Get the VM thread for this thread.
-     * @return the corresponding VM thread for this {@code java.lang.Thread}
+     *
+     * @return the corresponding VM thread for this {@code java.lang.Thread}. This value will be {@code null} for a
+     *         thread that hasn't been started.
      */
     @INLINE
     private VmThread thisVMThread() {
         return VmThread.fromJava(thisThread());
     }
 
-    /**
-     * Access checks required by the security manager. Implementation note: this method
-     * assigns the injected field from {@code java.lang.Thread} to {@code com.sun.max.vm.thread.VmThread}.
-     * @see java.lang.Thread#checkAccess()
-     */
-    @SUBSTITUTE
-    public void checkAccess() {
-        final Thread thread = thisThread();
+    public static Thread createThreadForAttach(VmThread vmThread, String name, ThreadGroup group, boolean daemon) throws Throwable {
+        FatalError.check(group != null, "ThreadGroup for thread cannot be null");
 
-        // A copy of the original content of 'checkAccess()':
-        final SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkAccess(thread);
+        final Thread javaThread = (Thread) Heap.createTuple(ClassRegistry.THREAD.dynamicHub());
+        TupleAccess.writeObject(javaThread, Thread_vmThread.offset(), vmThread);
+        TupleAccess.writeInt(javaThread, ClassRegistry.Thread_priority.offset(), Thread.NORM_PRIORITY);
+        vmThread.setJavaThread(javaThread);
+        ReferenceValue groupRef = ReferenceValue.from(group);
+        ReferenceValue javaThreadRef = ReferenceValue.from(javaThread);
+        if (name != null) {
+            ReferenceValue nameRef = ReferenceValue.from(name);
+            ClassRegistry.Thread_init_ThreadGroup_String.invoke(javaThreadRef, groupRef, nameRef);
+        } else {
+            ClassRegistry.Thread_init_ThreadGroup_Runnable.invoke(javaThreadRef, groupRef, ReferenceValue.NULL);
         }
 
-        // Our own additions:
-        if (VmThread.fromJava(thread) == null) {
-            // Aha, we must have gotten here during the constructor, otherwise the injected field would have been set already
-            final VmThread vmThread = VmThreadFactory.create(thread);
-            TupleAccess.writeObject(thread, Thread_vmThread.offset(), vmThread);
+        if (daemon) {
+            javaThread.setDaemon(true);
         }
+
+        ClassRegistry.ThreadGroup_add_Thread.invoke(groupRef, javaThreadRef);
+        return javaThread;
     }
 
     /**
@@ -121,7 +125,10 @@ final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private void start0() {
-        thisVMThread().start0();
+        final VmThread vmThread = VmThreadFactory.create(thisThread());
+        TupleAccess.writeObject(thisThread(), Thread_vmThread.offset(), vmThread);
+        vmThread.setPriority0(thisThread().getPriority());
+        vmThread.start0();
     }
 
     /**
@@ -133,7 +140,8 @@ final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private boolean isInterrupted(boolean clearInterrupted) throws InterruptedException {
-        return thisVMThread().isInterrupted(clearInterrupted);
+        VmThread vmThread = thisVMThread();
+        return vmThread == null ? false : vmThread.isInterrupted(clearInterrupted);
     }
 
     /**
@@ -143,17 +151,22 @@ final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     public boolean isAlive() {
-        return thisVMThread().state() != Thread.State.NEW && thisVMThread().state() != Thread.State.TERMINATED;
+        VmThread vmThread = thisVMThread();
+        return vmThread != null && vmThread.state() != Thread.State.NEW && vmThread.state() != Thread.State.TERMINATED;
     }
 
     /**
      * Counts the number of stack frames on this thread's stack.
+     * @deprecated The definition of this call depends on {@link #suspend},
+     *         which is deprecated.  Further, the results of this call
+     *         were never well-defined.
      * @see java.lang.Thread#countStackFrames()
-     * @return the number of stack frames on this thread's stack
+     * @return 0
      */
     @SUBSTITUTE
+    @Deprecated
     public int countStackFrames() {
-        return thisVMThread().countStackFrames();
+        return 0;
     }
 
     /**
@@ -197,7 +210,10 @@ final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private void setPriority0(int newPriority) {
-        thisVMThread().setPriority0(newPriority);
+        VmThread vmThread = thisVMThread();
+        if (vmThread != null) {
+            vmThread.setPriority0(newPriority);
+        }
     }
 
     /**
@@ -207,7 +223,10 @@ final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private void stop0(Object throwable) {
-        thisVMThread().stop0(throwable);
+        VmThread vmThread = thisVMThread();
+        if (vmThread != null) {
+            vmThread.stop0(throwable);
+        }
     }
 
     /**
@@ -216,16 +235,22 @@ final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private void suspend0() {
-        thisVMThread().suspend0();
+        VmThread vmThread = thisVMThread();
+        if (vmThread != null) {
+            vmThread.suspend0();
+        }
     }
 
     /**
-     * Resumts this thread at the OS level.
+     * Resumes this thread at the OS level.
      * @see java.lang.Thread#resume0()
      */
     @SUBSTITUTE
     private void resume0() {
-        thisVMThread().resume0();
+        VmThread vmThread = thisVMThread();
+        if (vmThread != null) {
+            vmThread.resume0();
+        }
     }
 
     /**
@@ -234,7 +259,10 @@ final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private void interrupt0() {
-        thisVMThread().interrupt0();
+        VmThread vmThread = thisVMThread();
+        if (vmThread != null) {
+            vmThread.interrupt0();
+        }
     }
 
     /**
@@ -244,18 +272,8 @@ final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private Thread.State getState() {
-        return thisVMThread().state();
-    }
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static FieldActor nameFieldActor;
-
-    @INLINE
-    private static FieldActor nameFieldActor() {
-        if (nameFieldActor == null) {
-            nameFieldActor = ClassActor.fromJava(Thread.class).findFieldActor(SymbolTable.makeSymbol("name"));
-        }
-        return nameFieldActor;
+        VmThread vmThread = thisVMThread();
+        return vmThread == null ? Thread.State.NEW : vmThread.state();
     }
 
     /**
@@ -264,9 +282,10 @@ final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private void setName(String name) {
-        checkAccess();
-        thisVMThread().setName(name);
-        TupleAccess.writeObject(this, nameFieldActor().offset(), name.toCharArray());
+        thisThread().checkAccess();
+        if (thisVMThread() != null) {
+            thisVMThread().setName(name);
+        }
+        TupleAccess.writeObject(this, ClassRegistry.Thread_name.offset(), name.toCharArray());
     }
-
 }

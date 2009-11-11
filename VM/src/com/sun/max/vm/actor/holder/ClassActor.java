@@ -83,9 +83,6 @@ public abstract class ClassActor extends Actor {
     public static final InterfaceMethodActor[] NO_INTERFACE_METHODS = new InterfaceMethodActor[0];
     public static final TypeDescriptor[] NO_TYPE_DESCRIPTORS = new TypeDescriptor[0];
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private static FieldActor mirrorFieldActor;
-
     /**
      * Unique class actor identifier. Simplifies the implementation of type checking, interface dispatch, etc.
      */
@@ -1284,14 +1281,6 @@ public abstract class ClassActor extends Actor {
         return subClassActor.dynamicHub().isSubClassHub(this);
     }
 
-
-    private static FieldActor mirrorFieldActor() {
-        if (mirrorFieldActor == null) {
-            mirrorFieldActor = ClassActor.fromJava(ClassActor.class).findFieldActor(SymbolTable.makeSymbol("mirror"));
-        }
-        return mirrorFieldActor;
-    }
-
     @INLINE
     public final Class mirror() {
         if (mirror == null) {
@@ -1307,9 +1296,9 @@ public abstract class ClassActor extends Actor {
     private Class noninlineCreateMirror() {
         // Non-blocking synchronization is used here to swap in the mirror reference.
         // This could lead to some extra Class objects being created that become garbage, but should be harmless.
-        final Class newMirror = (Class) Heap.createTuple(ClassRegistry.javaLangClassActor().dynamicHub());
+        final Class newMirror = (Class) Heap.createTuple(ClassRegistry.CLASS.dynamicHub());
         TupleAccess.writeObject(newMirror, Class_classActor.offset(), this);
-        final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(mirrorFieldActor().offset(), null,  Reference.fromJava(newMirror));
+        final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(ClassRegistry.ClassActor_mirror.offset(), null,  Reference.fromJava(newMirror));
         if (oldValue == null) {
             return newMirror;
         }
@@ -1378,7 +1367,7 @@ public abstract class ClassActor extends Actor {
         }
         if (MaxineVM.isHosted()) {
             if (kind == Kind.WORD) {
-                result.clear(ClassRegistry.javaLangObjectActor().id);
+                result.clear(ClassRegistry.OBJECT.id);
             }
         }
         return result;
