@@ -23,8 +23,11 @@ package com.sun.max.ins;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.collect.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -42,8 +45,12 @@ import com.sun.max.vm.bytecode.*;
  */
 public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
+    private final String heapSchemeSuffix;
+
     public InspectorNameDisplay(Inspection inspection) {
         super(inspection);
+
+        heapSchemeSuffix = "{" + maxVM().vmConfiguration().heapScheme().getClass().getSimpleName() + "}";
 
         referenceRenderers.put(TeleArrayObject.class, new ArrayReferenceRenderer());
         referenceRenderers.put(TeleHub.class, new HubReferenceRenderer());
@@ -418,6 +425,39 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             name.append("Key{").append(longName(teleCodeLocation.key())).append("} ");
         }
         return name.toString();
+    }
+
+    public String shortName(MemoryRegion memoryRegion) {
+        return memoryRegion.description();
+    }
+
+    public String longName(MemoryRegion memoryRegion) {
+        final String description = memoryRegion.description();
+        if (memoryRegion == maxVM().teleBootHeapRegion()) {
+            return "Boot heap region";
+        }
+        if (Sequence.Static.containsIdentical(maxVM().teleHeapRegions(), memoryRegion)) {
+            return "Dynamic heap region:  " + description + heapSchemeSuffix;
+        }
+        if (memoryRegion == maxVM().teleImmortalHeapRegion()) {
+            return "Immortal heap: " + description;
+        }
+
+        if (memoryRegion == maxVM().teleRootsRegion()) {
+            return "Inspector roots region: " + description;
+        }
+
+        if (memoryRegion == maxVM().teleBootCodeRegion()) {
+            return "Boot code region: " + description;
+        }
+        if (memoryRegion == maxVM().teleRuntimeCodeRegion()) {
+            return "Dynamic code region: " + description;
+        }
+        if (memoryRegion instanceof TeleNativeStack) {
+            final TeleNativeStack stack = (TeleNativeStack) memoryRegion;
+            return "Thread region: " + longName(stack.teleNativeThread());
+        }
+        return "Unknown region";
     }
 
     /**
