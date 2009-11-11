@@ -127,6 +127,7 @@ public final class MemoryWordsTable extends InspectorTable {
      */
     public void setMemoryRegion(MemoryWordRegion memoryWordRegion) {
         tableModel.setMemoryRegion(memoryWordRegion);
+        updateFocusSelection();
     }
 
     /**
