@@ -196,9 +196,18 @@ NativeThreadLocals thread_createSegments(int id, Size stackSize) {
 
 static void initStackProtection(NativeThreadLocals ntl) {
 #if os_GUESTVMXEN
-	// all page protection is handled in following call
+	// all page protection is handled in the following call
 	guestvmXen_initStack(ntl);
 #else
+	Address endYellowZone = ntl->stackYellowZone + virtualMemory_getPageSize();
+	Address sp = (Address) &ntl; // approximation of stack pointer
+	if (sp < endYellowZone + virtualMemory_getPageSize()) {
+	    log_exit(11, "Stack is too small to safely place stack guard pages: sp=%p, red=%p .. %p, yellow=%p .. %p",
+	                    sp,
+	                    ntl->stackRedZone, ntl->stackRedZone + virtualMemory_getPageSize(),
+	                    ntl->stackYellowZone, ntl->stackYellowZone + virtualMemory_getPageSize());
+	}
+
 	ntl->stackBlueZone = ntl->stackYellowZone;
     virtualMemory_protectPage(ntl->stackRedZone);
     virtualMemory_protectPage(ntl->stackYellowZone);
@@ -226,11 +235,12 @@ static ThreadLocals thread_initSegments(NativeThreadLocals ntl, ThreadLocals tri
     current += jfaSize;
     ntl->refMapArea = current;
     current = virtualMemory_pageAlign(current + refMapAreaSize);
+
+    /* Protect the guard page addresses. */
     ntl->stackRedZone = current;
     current += virtualMemory_getPageSize();
     ntl->stackYellowZone = current;
     current += virtualMemory_getPageSize();
-
     initStackProtection(ntl);
 
     /* Clear each of the thread local spaces: */
@@ -463,9 +473,7 @@ void *thread_runJava(void *arg) {
     (*method)(ntl->id,
               nativeThread,
               ntl->stackBase,
-              getThreadLocal(Address, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
-              getThreadLocal(Address, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
-              getThreadLocal(Address, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS),
+              tl,
               ntl->refMapArea,
               ntl->stackYellowZone,
               ntl->stackBase + ntl->stackSize);
@@ -480,21 +488,14 @@ void *thread_runJava(void *arg) {
     return NULL;
 }
 
-JNIEnv *thread_attach(NativeThreadLocals ntl) {
+JNIEnv *thread_attach(NativeThreadLocals ntl, JavaVMAttachArgs* args, boolean daemon) {
     Address nativeThread = (Address) thread_current();
 #if log_THREADS
     log_println("thread_attach: BEGIN t=%p", nativeThread);
 #endif
 
-    /* Obtain two pages for the thread locals, the lower of which will be page protected. */
-    ThreadLocals triggered_tl;
-
+    Address stackBottom;
 #if os_SOLARIS
-    int pageSize = virtualMemory_getPageSize();
-    triggered_tl = (ThreadLocals) memalign(pageSize, 2 * pageSize);
-    virtualMemory_protectPage(triggered_tl);
-    triggered_tl += pageSize - sizeof(Address);
-
     stack_t stackInfo;
     int result = thr_stksegment(&stackInfo);
     if (result != 0) {
@@ -502,20 +503,46 @@ JNIEnv *thread_attach(NativeThreadLocals ntl) {
     }
     ntl->stackSize = stackInfo.ss_size;
     ntl->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
+    stackBottom = ntl->stackBase;
 #else
     c_UNIMPLEMENTED();
 #endif
+    /* We cannot make any assumption about there being a protected page just below the stack
+     * so protect a page at the bottom now */
+    stackBottom = virtualMemory_pageAlign(ntl->stackBase);
+    virtualMemory_protectPage(stackBottom);
+    stackBottom += virtualMemory_getPageSize();
 
-    ThreadLocals tl = thread_initSegments(ntl, triggered_tl);
+    /* Give the thread a temporary id based on its native handle. The id must
+     * be negative to indicate that it is not (yet) in the thread map. */
+    jint handle = (jint) nativeThread;
+    ntl->id = handle < 0 ? handle : -handle;
 
-    mutex_enter(vmThreadMapMutex);
+    ThreadLocals tl = thread_initSegments(ntl, stackBottom - sizeof(Address));
     thread_setThreadLocals(theThreadLocalsKey, (void *) tl);
+
+    /* Grab the global thread map lock so that we can safely add this thread to the map. */
+    mutex_enter(vmThreadMapMutex);
+
+    ThreadLocals threadLocalsListHead = image_read_value(ThreadLocals, threadLocalsListHeadOffset);
+    // insert this thread locals into the list
+    setConstantThreadLocal(tl, FORWARD_LINK, threadLocalsListHead);
+    setConstantThreadLocal(threadLocalsListHead, BACKWARD_LINK, tl);
+    // at the head
+    image_write_value(ThreadLocals, threadLocalsListHeadOffset, tl);
+
+#if log_THREADS
+    int id = ntl->id;
+    log_println("thread %3d: forwardLink = %p (id=%d)", id, threadLocalsListHead, getThreadLocal(int, threadLocalsListHead, ID));
+#endif
+
     VMThreadAttachMethod method = image_offset_as_address(VMThreadAttachMethod, vmThreadAttachMethodOffset);
     (*method)(nativeThread,
+              (Address) args->name,
+              (Address) args->group,
+              daemon,
               ntl->stackBase,
-              getThreadLocal(Address, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
-              getThreadLocal(Address, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
-              getThreadLocal(Address, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS),
+              tl,
               ntl->refMapArea,
               ntl->stackYellowZone,
               ntl->stackBase + ntl->stackSize);
@@ -528,7 +555,13 @@ JNIEnv *thread_attach(NativeThreadLocals ntl) {
     return (JNIEnv *) getThreadLocalAddress(tl, JNI_ENV);
 }
 
+/**
+ * Declared in VmThreadMap.java.
+ */
 void nativeRegisterVmThreadMapMutex(Mutex mutex) {
+#if log_THREADS
+    log_println("Global thread lock mutex: %p", mutex);
+#endif
     vmThreadMapMutex = mutex;
 }
 

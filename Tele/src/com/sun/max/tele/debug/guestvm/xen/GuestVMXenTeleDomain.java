@@ -66,14 +66,14 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long threadId, long stackBase, long stackSize) {
+    protected TeleNativeThread createTeleNativeThread(int id, long threadId, long stackBase, long stackSize, boolean hasThreadLocals) {
         /* Need to align and skip over the guard page at the base of the stack.
          * N.B. "base" is low address (i.e., actually the end of the stack!).
          */
         final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize;
         final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
         final long adjStackSize = stackSize - (stackBottom - stackBase);
-        return new GuestVMXenNativeThread(this, id, threadId, stackBottom, adjStackSize);
+        return new GuestVMXenNativeThread(this, id, threadId, stackBottom, adjStackSize, hasThreadLocals);
     }
 
     private static long pageAlign(long address, int pageSize) {

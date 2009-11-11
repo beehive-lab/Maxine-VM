@@ -43,6 +43,7 @@ public class DirMethod extends AbstractIrMethod {
 
     private DirVariable[] parameters = null;
     private IndexedSequence<DirBlock> blocks = null;
+    private boolean usesMakeStackVariable;
 
     public DirVariable[] parameters() {
         return parameters;
@@ -52,9 +53,14 @@ public class DirMethod extends AbstractIrMethod {
         return blocks;
     }
 
-    public void setGenerated(DirVariable[] parameters, IndexedSequence<DirBlock> blocks) {
+    public boolean usesMakeStackVariable() {
+        return usesMakeStackVariable;
+    }
+
+    public void setGenerated(DirVariable[] parameters, IndexedSequence<DirBlock> blocks, boolean usesMakeStackVariable) {
         this.parameters = parameters;
         this.blocks = blocks;
+        this.usesMakeStackVariable = usesMakeStackVariable;
     }
 
     @Override

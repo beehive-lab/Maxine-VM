@@ -35,7 +35,7 @@ import com.sun.max.vm.type.*;
  *
  */
 @METHOD_SUBSTITUTIONS(ClassLoader.class)
-final class JDK_java_lang_ClassLoader {
+public final class JDK_java_lang_ClassLoader {
 
     private JDK_java_lang_ClassLoader() {
     }

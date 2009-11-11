@@ -69,7 +69,7 @@ public class CirToDirTranslator extends DirGenerator {
             dirParameters[i] = translation.cirToDirVariable(closure.parameters()[i]);
         }
 
-        dirMethod.setGenerated(dirParameters, dirBlocks);
+        dirMethod.setGenerated(dirParameters, dirBlocks, translation.usesMakeStackVariable);
 
         timer.stop();
 

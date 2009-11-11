@@ -233,16 +233,6 @@ static void checkImage(void) {
     checkThreadLocalIndex(TRAP_LATCH_REGISTER);
 }
 
-static off_t pageAligned(off_t offset) {
-
-    int pageSize = getpagesize();
-    int rest = offset % pageSize;
-    if (rest == 0) {
-        return offset;
-    }
-    return offset + pageSize - rest;
-}
-
 static void checkTrailer(int fd) {
 #if !MEMORY_IMAGE
     off_t fileSize, expectedFileSize, offset;
@@ -252,7 +242,7 @@ static void checkTrailer(int fd) {
     struct image_Trailer trailerStruct;
     image_Trailer trailerStructPtr = &trailerStruct;
 
-    trailerOffset = pageAligned(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize) + theHeader->codeSize + theHeader->heapSize;
+    trailerOffset = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize) + theHeader->codeSize + theHeader->heapSize;
 
 #if !MEMORY_IMAGE
     fileSize = lseek(fd, 0, SEEK_END);
@@ -300,7 +290,7 @@ static void checkTrailer(int fd) {
 }
 
 static void mapHeapAndCode(int fd) {
-    int heapOffsetInImage = pageAligned(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
+    int heapOffsetInImage = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
 #if log_LOADER
     log_println("image.mapHeapAndCode");
 #endif

@@ -126,7 +126,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
     private InspectorGeometry geometry;
     private boolean investigateWordValues = true;
 
-    private ExternalViewerType externalViewerType = ExternalViewerType.NONE;
+    private ExternalViewerType externalViewerType = ExternalViewerType.SOCKET;
     private final Map<ExternalViewerType, String> externalViewerConfig = new EnumMap<ExternalViewerType, String>(ExternalViewerType.class);
 
     private final AppendableSequence<InspectorAction> actionsWithKeyBindings = new ArrayListSequence<InspectorAction>();
@@ -145,6 +145,9 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
         this.settings = settings;
         this.styleFactory = new InspectorStyleFactory(inspection);
         this.style = styleFactory.defaultStyle();
+
+        // Default socket for EclipseCall is 2341
+        externalViewerConfig.put(ExternalViewerType.SOCKET, String.valueOf(2341));
 
         // TODO (mlvdv) need some way to configure this default in conjunction with style defaults.
         //_geometry = new InspectorGeometry10Pt();
@@ -179,11 +182,14 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
 
             setToolTipDismissDelay(settings.get(this, TOOLTIP_DELAY_POLICY, new OptionTypes.EnumType<ToolTipDismissDelayPolicy>(ToolTipDismissDelayPolicy.class), ToolTipDismissDelayPolicy.DEFAULT));
 
-            externalViewerType = settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
+            externalViewerType = settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.SOCKET);
             for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                 final String config = settings.get(this, "externalViewer." + externalViewerType.name(), OptionTypes.STRING_TYPE, null);
-                externalViewerConfig.put(externalViewerType, config);
+                if (config != null) {
+                    externalViewerConfig.put(externalViewerType, config);
+                }
             }
+
         } catch (Option.Error optionError) {
             ProgramWarning.message(optionError.getMessage());
         }

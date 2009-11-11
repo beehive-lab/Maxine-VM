@@ -67,7 +67,7 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setIn0(InputStream in) {
-        final FieldActor fieldActor = FieldActor.findStatic(System.class, "in");
+        final FieldActor fieldActor = ClassRegistry.System_in;
         TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), in);
     }
 
@@ -78,7 +78,7 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setOut0(PrintStream out) {
-        final FieldActor fieldActor = FieldActor.findStatic(System.class, "out");
+        final FieldActor fieldActor = ClassRegistry.System_out;
         TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), out);
     }
 
@@ -89,7 +89,7 @@ public final class JDK_java_lang_System {
      */
     @SUBSTITUTE
     private static void setErr0(PrintStream err) {
-        final FieldActor fieldActor = FieldActor.findStatic(System.class, "err");
+        final FieldActor fieldActor = ClassRegistry.System_err;
         TupleAccess.writeObject(fieldActor.holder().staticTuple(), fieldActor.offset(), err);
     }
 
@@ -576,15 +576,9 @@ public final class JDK_java_lang_System {
         }
     }, MaxineVM.Phase.PRISTINE);
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption bootClasspathOption = BootClasspathVMOption.create(":", "set search path for bootstrap classes and resources.");
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption aBootClasspathOption = BootClasspathVMOption.create("/a:", "append to end of bootstrap class path");
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static BootClasspathVMOption pBootClasspathOption = BootClasspathVMOption.create("/p:", "prepend in front of bootstrap class path");
-
+    private static final BootClasspathVMOption bootClasspathOption = BootClasspathVMOption.create(":", "set search path for bootstrap classes and resources.");
+    private static final BootClasspathVMOption aBootClasspathOption = BootClasspathVMOption.create("/a:", "append to end of bootstrap class path");
+    private static final BootClasspathVMOption pBootClasspathOption = BootClasspathVMOption.create("/p:", "prepend in front of bootstrap class path");
 
     static class BootClasspathVMOption extends VMOption {
         private String path;
@@ -921,12 +915,15 @@ public final class JDK_java_lang_System {
         }
     }
 
+    private static final VirtualMethodActor Runtime_loadLibrary0 = ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0");
+
     /**
      * Loads a native library, searching the library paths as necessary.
      *
      * @param name the name of the library to load
      */
     @SUBSTITUTE
+    @NEVER_INLINE
     public static void loadLibrary(String name) throws Throwable {
         if (name.equals("zip")) {
             // Do nothing, since we already loaded this library ahead of time
@@ -934,14 +931,11 @@ public final class JDK_java_lang_System {
             // See {@link VMClassLoader.loadJavaAndZipLibraries()}.
         } else {
             // ATTENTION: these statements must have the exact same side effects as the original code of the substitutee:
-            final Class callerClass = Reflection.getCallerClass(3);
-            final VirtualMethodActor method = ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0");
+            final Class callerClass = Reflection.getCallerClass(2);
             try {
-                method.invoke(ReferenceValue.from(Runtime.getRuntime()), ReferenceValue.from(callerClass), ReferenceValue.from(name));
+                Runtime_loadLibrary0.invoke(ReferenceValue.from(Runtime.getRuntime()), ReferenceValue.from(callerClass), ReferenceValue.from(name));
             } catch (InvocationTargetException invocationTargetException) {
                 throw invocationTargetException.getTargetException();
-            } catch (IllegalAccessException illegalAccessException) {
-                ProgramError.unexpected();
             }
         }
 

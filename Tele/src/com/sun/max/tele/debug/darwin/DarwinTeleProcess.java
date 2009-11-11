@@ -106,8 +106,8 @@ public final class DarwinTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long machThread, long stackBase, long stackSize) {
-        return new DarwinTeleNativeThread(this, id, machThread, stackBase, stackSize);
+    protected TeleNativeThread createTeleNativeThread(int id, long machThread, long stackBase, long stackSize, boolean hasThreadLocals) {
+        return new DarwinTeleNativeThread(this, id, machThread, stackBase, stackSize, hasThreadLocals);
     }
 
     /**

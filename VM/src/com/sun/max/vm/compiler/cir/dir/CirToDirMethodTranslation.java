@@ -452,6 +452,13 @@ class CirToDirMethodTranslation {
         }
     };
 
+    /**
+     * Records if the method being translated uses the {@link MakeStackVariable} builtin. This is
+     * required so that the rest of the backend knows that the liveness of any pinned stack variable
+     * extends to the end of the method.
+     */
+    boolean usesMakeStackVariable;
+
     private void translateClosureCall(Translation translation, CirClosure closure, CirValue[] cirArguments) {
         final int temporaryVariableInsertionIndex = translation.dirBlock.instructions().length();
         final CirVariable[] cirParameters = closure.parameters();
@@ -526,6 +533,9 @@ class CirToDirMethodTranslation {
             if (cirBuiltin.builtin() == SafepointBuiltin.BUILTIN) {
                 safepointGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             } else {
+                if (cirBuiltin.builtin() == MakeStackVariable.BUILTIN) {
+                    usesMakeStackVariable = true;
+                }
                 builtinCallGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             }
         } else if (cirProcedure instanceof CirMethod || cirProcedure instanceof CirConstant) {
