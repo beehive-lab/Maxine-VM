@@ -490,11 +490,18 @@ void *thread_runJava(void *arg) {
 }
 
 int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
+    Address nativeThread = (Address) thread_current();
+#if log_THREADS
+    log_println("thread_attach: BEGIN t=%p", nativeThread);
+#endif
     int result;
     if (thread_currentThreadLocals() != 0) {
         // If the thread has been attached, this operation is a no-op
         extern JNIEnv *currentJniEnv();
         *penv = (void *) currentJniEnv();
+#if log_THREADS
+    log_println("thread_attach: END t=%p (already attached)", nativeThread);
+#endif
         return JNI_OK;
     }
 
@@ -505,10 +512,6 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
         return JNI_ENOMEM;
     }
 
-    Address nativeThread = (Address) thread_current();
-#if log_THREADS
-    log_println("thread_attach: BEGIN t=%p", nativeThread);
-#endif
 
 #if os_SOLARIS
     stack_t stackInfo;

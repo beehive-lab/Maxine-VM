@@ -89,6 +89,8 @@ public final class JniFunctions {
      * This method implements part of the prologue for entering a JNI upcall from native code.
      *
      * @param enabledVmThreadLocals
+     * @return an anchor for the JNI function frame. The anchor previous to this anchor is either that of the JNI stub
+     *         frame that called out to native code or the native anchor of a thread that attached to the VM.
      */
     @INLINE
     public static Pointer reenterJavaFromNative(Pointer enabledVmThreadLocals) {
@@ -131,6 +133,8 @@ public final class JniFunctions {
      * Traces the entry to an upcall if the {@linkplain ClassMethodActor#traceJNI() JNI tracing flag} has been set.
      *
      * @param name the name of the JNI function being entered
+     * @param anchor for the JNI function frame. The anchor previous to this anchor is either that of the JNI stub frame
+     *            that called out to native code or the native anchor of a thread that attached to the VM.
      */
     private static void traceEntry(String name, Pointer anchor) {
         if (ClassMethodActor.traceJNI()) {
@@ -141,7 +145,7 @@ public final class JniFunctions {
             Log.print(name);
             Pointer jniStubAnchor = JavaFrameAnchor.PREVIOUS.get(anchor);
             final Address jniStubPC = JavaFrameAnchor.PC.get(jniStubAnchor).asAddress();
-            if (jniStubAnchor.isZero()) {
+            if (!jniStubPC.isZero()) {
                 final TargetMethod nativeMethod = Code.codePointerToTargetMethod(jniStubPC);
                 Log.print(", last down call: ");
                 FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
