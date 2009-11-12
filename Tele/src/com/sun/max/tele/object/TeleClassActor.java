@@ -68,12 +68,12 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     private void initialize() {
         if (!initialized) {
 
-            final Reference classLoaderReference = teleVM().fields().ClassActor_classLoader.readReference(reference());
+            final Reference classLoaderReference = teleVM().teleFields().ClassActor_classLoader.readReference(reference());
             teleClassLoader = (TeleClassLoader) teleVM().makeTeleObject(classLoaderReference);
 
-            id = teleVM().fields().ClassActor_id.readInt(reference());
+            id = teleVM().teleFields().ClassActor_id.readInt(reference());
 
-            final Reference typeDescriptorReference = teleVM().fields().ClassActor_typeDescriptor.readReference(reference());
+            final Reference typeDescriptorReference = teleVM().teleFields().ClassActor_typeDescriptor.readReference(reference());
             teleTypeDescriptor = (TeleTypeDescriptor) teleVM().makeTeleObject(typeDescriptorReference);
 
             initialized = true;
@@ -113,7 +113,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     public TeleClass getTeleClass() {
-        final Reference reference = teleVM().fields().ClassActor_mirror.readReference(reference());
+        final Reference reference = teleVM().teleFields().ClassActor_mirror.readReference(reference());
         if (reference.isZero()) {
             // TODO: assert that this class is the object class!
             return null;
@@ -125,7 +125,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
      * @return surrogate for the static tuple of the {@link ClassActor} in the {@link TeleVM}.
      */
     public TeleStaticTuple getTeleStaticTuple() {
-        final Reference staticTupleReference = teleVM().fields().ClassActor_staticTuple.readReference(reference());
+        final Reference staticTupleReference = teleVM().teleFields().ClassActor_staticTuple.readReference(reference());
         return (TeleStaticTuple) teleVM().makeTeleObject(staticTupleReference);
     }
 
@@ -134,7 +134,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
      * this array type, null if not an array type
      */
     public TeleClassActor getTeleComponentClassActor() {
-        final Reference componentClassActorReference = teleVM().fields().ClassActor_componentClassActor.readReference(reference());
+        final Reference componentClassActorReference = teleVM().teleFields().ClassActor_componentClassActor.readReference(reference());
         return (TeleClassActor) teleVM().makeTeleObject(componentClassActorReference);
     }
 
@@ -143,15 +143,15 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
      */
     public TeleConstantPool getTeleConstantPool() {
         if (classActor().isTupleClassActor()) {
-            return (TeleConstantPool) teleVM().makeTeleObject(teleVM().fields().TupleClassActor_constantPool.readReference(reference()));
+            return (TeleConstantPool) teleVM().makeTeleObject(teleVM().teleFields().TupleClassActor_constantPool.readReference(reference()));
         } else if (classActor().isHybridClassActor()) {
-            return (TeleConstantPool) teleVM().makeTeleObject(teleVM().fields().HybridClassActor_constantPool.readReference(reference()));
+            return (TeleConstantPool) teleVM().makeTeleObject(teleVM().teleFields().HybridClassActor_constantPool.readReference(reference()));
         }
         return null;
     }
 
     private AppendableSequence<TeleFieldActor> readTeleStaticFieldActors() {
-        final Reference teleStaticFieldActorsArrayReference = teleVM().fields().ClassActor_localStaticFieldActors.readReference(reference());
+        final Reference teleStaticFieldActorsArrayReference = teleVM().teleFields().ClassActor_localStaticFieldActors.readReference(reference());
         final TeleArrayObject teleStaticFieldActorsArray = (TeleArrayObject) teleVM().makeTeleObject(teleStaticFieldActorsArrayReference);
         final AppendableSequence<TeleFieldActor> localTeleStaticFieldActors = new LinkSequence<TeleFieldActor>();
         for (int index = 0; index < teleStaticFieldActorsArray.getLength(); index++) {
@@ -170,7 +170,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     private AppendableSequence<TeleFieldActor> readTeleInstanceFieldActors() {
-        final Reference teleInstanceFieldActorsArrayReference = teleVM().fields().ClassActor_localInstanceFieldActors.readReference(reference());
+        final Reference teleInstanceFieldActorsArrayReference = teleVM().teleFields().ClassActor_localInstanceFieldActors.readReference(reference());
         final TeleArrayObject teleInstanceFieldActorsArray = (TeleArrayObject) teleVM().makeTeleObject(teleInstanceFieldActorsArrayReference);
         final AppendableSequence<TeleFieldActor> localTeleInstanceFieldActors = new LinkSequence<TeleFieldActor>();
         for (int index = 0; index < teleInstanceFieldActorsArray.getLength(); index++) {
@@ -199,7 +199,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     private AppendableSequence<TeleInterfaceMethodActor> readTeleInterfaceMethodActors() {
-        final Reference teleInterfaceMethodActorsArrayReference = teleVM().fields().ClassActor_localInterfaceMethodActors.readReference(reference());
+        final Reference teleInterfaceMethodActorsArrayReference = teleVM().teleFields().ClassActor_localInterfaceMethodActors.readReference(reference());
         final TeleArrayObject teleInterfaceMethodActorsArray = (TeleArrayObject) teleVM().makeTeleObject(teleInterfaceMethodActorsArrayReference);
         final AppendableSequence<TeleInterfaceMethodActor> localTeleInterfaceMethodActors = new LinkSequence<TeleInterfaceMethodActor>();
         for (int index = 0; index < teleInterfaceMethodActorsArray.getLength(); index++) {
@@ -218,7 +218,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     private AppendableSequence<TeleStaticMethodActor> readTeleStaticMethodActors() {
-        final Reference teleStaticMethodActorsArrayReference = teleVM().fields().ClassActor_localStaticMethodActors.readReference(reference());
+        final Reference teleStaticMethodActorsArrayReference = teleVM().teleFields().ClassActor_localStaticMethodActors.readReference(reference());
         final TeleArrayObject teleStaticMethodActorsArray = (TeleArrayObject) teleVM().makeTeleObject(teleStaticMethodActorsArrayReference);
         final AppendableSequence<TeleStaticMethodActor> localTeleStaticMethodActors = new LinkSequence<TeleStaticMethodActor>();
         for (int index = 0; index < teleStaticMethodActorsArray.getLength(); index++) {
@@ -237,7 +237,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     private AppendableSequence<TeleVirtualMethodActor> readTeleVirtualMethodActors() {
-        final Reference teleVirtualMethodActorsArrayReference = teleVM().fields().ClassActor_localVirtualMethodActors.readReference(reference());
+        final Reference teleVirtualMethodActorsArrayReference = teleVM().teleFields().ClassActor_localVirtualMethodActors.readReference(reference());
         final TeleArrayObject teleArray = (TeleArrayObject) teleVM().makeTeleObject(teleVirtualMethodActorsArrayReference);
         final AppendableSequence<TeleVirtualMethodActor> localTeleVirtualMethodActors = new LinkSequence<TeleVirtualMethodActor>();
         for (int index = 0; index < teleArray.getLength(); index++) {

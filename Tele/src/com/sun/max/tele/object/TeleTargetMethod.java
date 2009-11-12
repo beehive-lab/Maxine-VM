@@ -72,7 +72,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
             // Not a known java target method, and not some other kind of known target code, but in a code region
             // See if the code manager in the VM knows about it.
             try {
-                final Reference targetMethodReference = teleVM.methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
+                final Reference targetMethodReference = teleVM.teleMethods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
                 // Possible that the address points to an unallocated area of a code region.
                 if (targetMethodReference != null && !targetMethodReference.isZero()) {
                     teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);  // Constructor will add to register.
@@ -140,7 +140,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      */
     public Pointer getCodeStart() {
         if (codeStart.isZero()) {
-            codeStart = teleVM().fields().TargetMethod_codeStart.readWord(reference()).asPointer();
+            codeStart = teleVM().teleFields().TargetMethod_codeStart.readWord(reference()).asPointer();
         }
         return codeStart;
     }
@@ -158,7 +158,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      */
     public TeleClassMethodActor getTeleClassMethodActor() {
         if (teleClassMethodActor == null) {
-            final Reference classMethodActorReference = teleVM().fields().TargetMethod_classMethodActor.readReference(reference());
+            final Reference classMethodActorReference = teleVM().teleFields().TargetMethod_classMethodActor.readReference(reference());
             teleClassMethodActor = (TeleClassMethodActor) teleVM().makeTeleObject(classMethodActorReference);
         }
         return teleClassMethodActor;
@@ -189,7 +189,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         if (codeStart.isZero()) {
             return Address.zero();
         }
-        final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), teleVM().fields().TargetMethod_abi, teleVM().fields().TargetABI_callEntryPoint);
+        final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), teleVM().teleFields().TargetMethod_abi, teleVM().teleFields().TargetABI_callEntryPoint);
         final TeleObject teleCallEntryPoint = teleVM().makeTeleObject(callEntryPointReference);
         if (teleCallEntryPoint == null) {
             return codeStart;
@@ -203,7 +203,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      * @see TargetMethod#code()
      */
     public final byte[] getCode() {
-        final Reference codeReference = teleVM().fields().TargetMethod_code.readReference(reference());
+        final Reference codeReference = teleVM().teleFields().TargetMethod_code.readReference(reference());
         if (codeReference.isZero()) {
             return null;
         }
@@ -216,7 +216,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      * @see TargetMethod#codeLength()
      */
     public final int getCodeLength() {
-        final Reference codeReference = teleVM().fields().TargetMethod_code.readReference(reference());
+        final Reference codeReference = teleVM().teleFields().TargetMethod_code.readReference(reference());
         if (codeReference.isZero()) {
             return 0;
         }
@@ -247,7 +247,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      */
     public StopPositions getStopPositions() {
         if (stopPositions == null) {
-            final Reference intArrayReference = teleVM().fields().TargetMethod_stopPositions.readReference(reference());
+            final Reference intArrayReference = teleVM().teleFields().TargetMethod_stopPositions.readReference(reference());
             final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
             if (teleIntArrayObject == null) {
                 return null;
@@ -313,7 +313,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      * @see TargetMethod#directCallees()
      */
     public Reference[] getDirectCallees() {
-        final Reference refArrayReference = teleVM().fields().TargetMethod_directCallees.readReference(reference());
+        final Reference refArrayReference = teleVM().teleFields().TargetMethod_directCallees.readReference(reference());
         final TeleArrayObject teleRefArrayObject = (TeleArrayObject) teleVM().makeTeleObject(refArrayReference);
         if (teleRefArrayObject == null) {
             return null;
@@ -335,14 +335,14 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      * @see TargetMethod#numberOfIndirectCalls()
      */
     public int getNumberOfIndirectCalls() {
-        return teleVM().fields().TargetMethod_numberOfIndirectCalls.readInt(reference());
+        return teleVM().teleFields().TargetMethod_numberOfIndirectCalls.readInt(reference());
     }
 
     /**
      * @see TargetMethod#numberOfSafepoints()
      */
     public int getNumberOfSafepoints() {
-        return teleVM().fields().TargetMethod_numberOfSafepoints.readInt(reference());
+        return teleVM().teleFields().TargetMethod_numberOfSafepoints.readInt(reference());
     }
 
      /**
@@ -371,7 +371,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
 
     public TargetABI getAbi() {
         if (abi == null) {
-            final Reference abiReference = teleVM().fields().TargetMethod_abi.readReference(reference());
+            final Reference abiReference = teleVM().teleFields().TargetMethod_abi.readReference(reference());
             final TeleObject teleTargetABI = teleVM().makeTeleObject(abiReference);
             if (teleTargetABI != null) {
                 abi = (TargetABI) teleTargetABI.deepCopy();
@@ -467,7 +467,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      */
     class ReducedDeepCopier extends DeepCopier {
         public ReducedDeepCopier() {
-            TeleFields teleFields = teleVM().fields();
+            TeleFields teleFields = teleVM().teleFields();
             omit(teleFields.TargetMethod_scalarLiterals.fieldActor());
             omit(teleFields.TargetMethod_referenceLiterals.fieldActor());
             abi = teleFields.TargetMethod_abi.fieldActor();

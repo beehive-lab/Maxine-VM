@@ -41,7 +41,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
      * Reads from the {@link TeleVM} the start field of the {@link RuntimeMemoryRegion}.
      */
     private Address readStart() {
-        return teleVM().fields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();
+        return teleVM().teleFields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();
     }
 
     public Address start() {
@@ -71,7 +71,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
      * Reads from the {@link TeleVM} the mark field of the {@link RuntimeMemoryRegion}.
      */
     public Address mark() {
-        final Reference mark = teleVM().fields().RuntimeMemoryRegion_mark.readReference(reference());
+        final Reference mark = teleVM().teleFields().RuntimeMemoryRegion_mark.readReference(reference());
         return mark.readWord(AtomicWord.valueOffset()).asPointer();
     }
 
@@ -92,7 +92,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
      * Reads from the {@link TeleVM} the size field of the {@link RuntimeMemoryRegion}.
      */
     public Size size() {
-        return teleVM().fields().RuntimeMemoryRegion_size.readWord(reference()).asSize();
+        return teleVM().teleFields().RuntimeMemoryRegion_size.readWord(reference()).asSize();
     }
 
     public Address end() {
@@ -100,7 +100,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
     }
 
     public String description() {
-        final Reference descriptionStringReference = teleVM().fields().RuntimeMemoryRegion_description.readReference(reference());
+        final Reference descriptionStringReference = teleVM().teleFields().RuntimeMemoryRegion_description.readReference(reference());
         final TeleString teleString = (TeleString) teleVM().makeTeleObject(descriptionStringReference);
         return teleString.getString();
     }

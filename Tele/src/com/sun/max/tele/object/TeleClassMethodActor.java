@@ -62,7 +62,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     @Override
     public TeleCodeAttribute getTeleCodeAttribute() {
         try {
-            final Reference codeAttributeReference = teleVM().fields().ClassMethodActor_codeAttribute.readReference(reference());
+            final Reference codeAttributeReference = teleVM().teleFields().ClassMethodActor_codeAttribute.readReference(reference());
             return (TeleCodeAttribute) teleVM().makeTeleObject(codeAttributeReference);
         } catch (DataIOError dataIOError) {
         }
@@ -94,7 +94,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      * Refreshes cache of information about the compilation state of this method in the {@link TeleVM}.
      */
     private void readTeleMethodState() {
-        final Reference targetStateReference = teleVM().fields().ClassMethodActor_targetState.readReference(reference());
+        final Reference targetStateReference = teleVM().teleFields().ClassMethodActor_targetState.readReference(reference());
         if (!targetStateReference.isZero()) {
             // the method has been compiled; check the type to determine the number of times
             translateTargetState(teleVM().makeTeleObject(targetStateReference));
@@ -121,7 +121,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
         } else if (targetState.classActorForType().mirror() == Compilation.class) {
             // this is a compilation, get the previous target state from it
-            Reference previousTargetStateReference = teleVM().fields().Compilation_previousTargetState.readReference(targetState.reference());
+            Reference previousTargetStateReference = teleVM().teleFields().Compilation_previousTargetState.readReference(targetState.reference());
             if (!previousTargetStateReference.isZero()) {
                 translateTargetState(teleVM().makeTeleObject(previousTargetStateReference));
             }  else {

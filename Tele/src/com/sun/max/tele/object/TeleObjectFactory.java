@@ -228,7 +228,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
             // If the location in fact points to a well-formed object in the VM, we will be able to determine the
             // meta-information necessary to understanding how to access information in the object.
             hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(reference));
-            classActorReference = teleVM().fields().Hub_classActor.readReference(hubReference);
+            classActorReference = teleVM().teleFields().Hub_classActor.readReference(hubReference);
             classActor = teleVM().makeClassActor(classActorReference);
         } catch (InvalidReferenceException invalidReferenceException) {
             Log.println("InvalidReferenceException reference: " + reference + "/" + reference.toOrigin() +
@@ -239,7 +239,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
         // Must check for the static tuple case first; it doesn't follow the usual rules
         final Reference hubhubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout.readHubReferenceAsWord(hubReference));
-        final Reference hubClassActorReference = teleVM().fields().Hub_classActor.readReference(hubhubReference);
+        final Reference hubClassActorReference = teleVM().teleFields().Hub_classActor.readReference(hubhubReference);
         final ClassActor hubClassActor = teleVM().makeClassActor(hubClassActorReference);
         final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
         if (StaticHub.class.isAssignableFrom(hubJavaClass)) {

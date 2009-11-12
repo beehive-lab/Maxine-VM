@@ -55,7 +55,7 @@ public final class TeleEnum extends TeleTupleObject {
                     throw ProgramError.unexpected(classActor + " is not a valid enum class");
                 }
             }
-            enumCopy = (Enum) enumClass.getEnumConstants()[teleVM().fields().Enum_ordinal.readInt(reference())];
+            enumCopy = (Enum) enumClass.getEnumConstants()[teleVM().teleFields().Enum_ordinal.readInt(reference())];
         }
         return enumCopy;
     }
