@@ -28,10 +28,6 @@ import com.sun.max.tele.method.*;
  *
  * @author Michael Van De Vanter
  */
-/**
- * @author Michael Van De Vanter
- *
- */
 public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
 
     private final boolean isTransient;
@@ -44,7 +40,7 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
      * @param isTransient specifies if the created breakpoint is to be deleted when a process execution stops or an
      *            inspection session finishes
      */
-    public TeleBreakpoint(TeleVM teleVM, boolean isTransient) {
+    protected TeleBreakpoint(TeleVM teleVM, boolean isTransient) {
         super(teleVM);
         this.isTransient = isTransient;
     }
@@ -78,6 +74,15 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
      * @return optional conditional specification for breakpoint, null if none
      */
     public abstract BreakpointCondition condition();
+
+    /**
+     * Perform any break-point specific processing of a trigger event and decide
+     * whether to stop VM execution or continue silently.
+     *
+     * @param teleNativeThread the VM thread that triggered on this breakpoint.
+     * @return true if execution should really break; false if should continue silently.
+     */
+    public abstract boolean handleTriggerEvent(TeleNativeThread teleNativeThread);
 
     /**
      * Associates an arbitrary, optional string with the breakpoint for debugging.
