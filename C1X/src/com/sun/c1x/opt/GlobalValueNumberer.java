@@ -35,6 +35,7 @@ public class GlobalValueNumberer {
 
     final IR ir;
     final HashMap<BlockBegin, ValueMap> valueMaps;
+    final InstructionSubstituter subst;
     ValueMap currentMap;
 
     /**
@@ -44,14 +45,15 @@ public class GlobalValueNumberer {
      */
     public GlobalValueNumberer(IR ir) {
         this.ir = ir;
+        this.subst = new InstructionSubstituter(ir);
         List<BlockBegin> blocks = ir.linearScanOrder();
         valueMaps = new HashMap<BlockBegin, ValueMap>(blocks.size());
         optimize(blocks);
+        subst.finish();
     }
 
     void optimize(List<BlockBegin> blocks) {
         int numBlocks = blocks.size();
-        int substCount = 0;
         BlockBegin startBlock = blocks.get(0);
         assert startBlock == ir.startBlock && startBlock.numberOfPreds() == 0 && startBlock.dominator() == null : "start block incorrect";
 
@@ -86,18 +88,13 @@ public class GlobalValueNumberer {
                 Instruction f = currentMap.findInsert(instr);
                 if (f != instr) {
                     C1XMetrics.GlobalValueNumberHits++;
-                    assert !f.hasSubst() : "can't have a substitution";
-                    instr.setSubst(f);
-                    substCount++;
+                    assert !subst.hasSubst(f) : "can't have a substitution";
+                    subst.setSubst(instr, f);
                 }
             }
 
             // remember value map for successors
             valueMaps.put(block, currentMap);
-        }
-
-        if (substCount != 0) {
-            new SubstitutionResolver(startBlock);
         }
     }
 }

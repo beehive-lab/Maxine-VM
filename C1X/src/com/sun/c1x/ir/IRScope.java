@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-import java.util.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.ci.CiCodePos;
 import com.sun.c1x.ri.*;
@@ -42,8 +40,7 @@ public class IRScope {
     public final C1XCompilation compilation; // TODO: remove this field
 
     final int callerBCI;
-    CiCodePos parentCodePos;
-    final List<IRScope> callees;
+    CiCodePos callerCodeSite;
 
     ValueStack callerState;
     int numberOfLocks;
@@ -58,7 +55,6 @@ public class IRScope {
         this.callerBCI = callerBCI;
         this.method = method;
         this.level = caller == null ? 0 : 1 + caller.level;
-        this.callees = new ArrayList<IRScope>();
     }
 
     /**
@@ -113,15 +109,6 @@ public class IRScope {
         return storesInLoops;
     }
 
-
-    /**
-     * Add a called IRScope to this IRScope's list of callees.
-     * @param callee the callee to add
-     */
-    public final void addCallee(IRScope callee) {
-        callees.add(callee);
-    }
-
     /**
      * Sets the caller state for this IRScope.
      * @param callerState the new caller state
@@ -132,14 +119,6 @@ public class IRScope {
 
     public final void setStoresInLoops(BitMap storesInLoops) {
         this.storesInLoops = storesInLoops;
-    }
-
-    /**
-     * Gets the number of callees of this IR scope.
-     * @return the number of callees
-     */
-    public final int numberOfCallees() {
-        return callees.size();
     }
 
     @Override
@@ -176,11 +155,14 @@ public class IRScope {
         return lockStackSize;
     }
 
-    public CiCodePos toCodeSite(int bci) {
-        // create a new code site
-        if (caller != null && parentCodePos == null) {
-            parentCodePos = caller.toCodeSite(callerBCI);
+    public CiCodePos callerCodeSite() {
+        if (caller != null && callerCodeSite == null) {
+            callerCodeSite = caller.toCodeSite(callerBCI);
         }
-        return new CiCodePos(parentCodePos, method, bci);
+        return callerCodeSite;
+    }
+
+    public CiCodePos toCodeSite(int bci) {
+        return new CiCodePos(callerCodeSite(), method, bci);
     }
 }
