@@ -510,7 +510,6 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
     log_println("thread_attach: BEGIN t=%p", nativeThread);
 #endif
 
-    Address stackBottom;
 #if os_SOLARIS
     stack_t stackInfo;
     result = thr_stksegment(&stackInfo);
@@ -519,10 +518,38 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
     }
     ntl->stackSize = stackInfo.ss_size;
     ntl->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
-    stackBottom = ntl->stackBase;
+#elif os_LINUX
+    pthread_attr_t attr;
+
+    result = pthread_getattr_np(pthread_self(), &attr);
+
+    // JVM needs to know exact stack location, abort if it fails
+    if (result != 0) {
+        log_exit(11, "pthread_getattr_np failed with errno = %d", result);
+    }
+
+    result = pthread_attr_getstack(&attr, (void**)&(ntl->stackBase), (size_t *)&(ntl->stackSize));
+    if (result != 0) {
+        log_exit(11, "Cannot locate current stack attributes: error = %d", result);
+    }
+
+    pthread_attr_destroy(&attr);
+#elif os_DARWIN
+    pthread_t self = pthread_self();
+    void *stackTop = pthread_get_stackaddr_np(self);
+    if (stackTop == NULL) {
+        log_exit(11, "Cannot locate current stack address");
+    }
+    ntl->stackSize = pthread_get_stacksize_np(self);
+    if (ntl->stackSize == 0) {
+        log_exit(11, "Cannot locate current stack size");
+    }
+    ntl->stackBase = (Address) stackTop - ntl->stackSize;
 #else
     c_UNIMPLEMENTED();
 #endif
+    Address stackBottom = ntl->stackBase;
+
     /* We cannot make any assumption about there being a protected page just below the stack
      * so protect a page at the bottom now */
     stackBottom = virtualMemory_pageAlign(ntl->stackBase);
