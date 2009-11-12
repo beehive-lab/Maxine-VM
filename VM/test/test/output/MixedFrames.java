@@ -21,7 +21,9 @@
 package test.output;
 
 /**
- * Performs a number of recursive down and up calls.
+ * Performs a number of recursive calls that go in and out of native code
+ * until a fixed recursion level is reached. Then the stack frame trace
+ * is compared with reference VM.
  *
  * @author Doug Simon
  */
