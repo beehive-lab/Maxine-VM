@@ -22,22 +22,22 @@ package com.sun.c1x.opt;
 
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.graph.IR;
 
 /**
- * The <code>SubstitutionResolver</code> iterates over the instructions of a program and replaces
+ * This class allows instructions to be substituted within an IR graph. It allows
+ * registering substitutions and iterates over the instructions of a program and replaces
  * the occurrence of each instruction with its substitution, if it has one.
  *
  * @author Ben L. Titzer
  */
-public class SubstitutionResolver implements BlockClosure, ValueClosure {
+public class InstructionSubstituter implements BlockClosure, ValueClosure {
 
-    /**
-     * Creates a new SubstitutionResolver and applies it to each instruction
-     * in the IR graph, starting from the specified block.
-     * @param block the block from which to start substitution
-     */
-    public SubstitutionResolver(BlockBegin block) {
-        block.iterateAnyOrder(this, false);
+    final IR ir;
+    boolean hasSubstitution;
+
+    public InstructionSubstituter(IR ir) {
+        this.ir = ir;
     }
 
     public void apply(BlockBegin block) {
@@ -49,7 +49,8 @@ public class SubstitutionResolver implements BlockClosure, ValueClosure {
         }
         for (Instruction n = block; n != null; n = last.next()) {
             n.allValuesDo(this);
-            if (n.subst() != n && last != null) {
+            if (n.subst != null && last != null) {
+                // this instruction has a substitution, skip it
                 last.resetNext(n.next());
             } else {
                 last = n;
@@ -57,9 +58,39 @@ public class SubstitutionResolver implements BlockClosure, ValueClosure {
         }
     }
 
+    public void finish() {
+        if (hasSubstitution) {
+            ir.startBlock.iterateAnyOrder(this, false);
+        }
+    }
+
+    public boolean hasSubst(Value i) {
+        return i.subst != null;
+    }
+
+    public void setSubst(Value i, Value n) {
+        if (i == n) {
+            i.subst = null;
+        } else {
+            hasSubstitution = true;
+            i.subst = n;
+        }
+    }
+
+    public Value getSubst(Value i) {
+        Value p = i;
+        while (true) {
+            if (p.subst == null) {
+                break;
+            }
+            p = p.subst;
+        }
+        return p;
+    }
+
     public Value apply(Value i) {
         if (i != null) {
-            return i.subst();
+            return getSubst(i);
         }
         return i;
     }

@@ -1246,7 +1246,6 @@ public class GraphBuilder {
 
     void pushScope(RiMethod target, BlockBegin continuation) {
         IRScope calleeScope = new IRScope(compilation, scope(), bci(), target, -1);
-        scope().addCallee(calleeScope);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
 
         calleeScope.setCallerState(curState);

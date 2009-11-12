@@ -1874,7 +1874,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     void doRoot(Instruction instr) {
         currentInstruction = instr;
         assert instr.isLive() : "use only with roots";
-        assert instr.subst() == instr : "shouldn't have missed substitution";
+        assert !instr.hasSubst() : "shouldn't have missed substitution";
 
         if (C1XOptions.TraceLIRVisit) {
             TTY.println("Visiting    " + instr);
@@ -2171,7 +2171,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private void walkStateInstruction(Value value) {
         if (value != null) {
-            assert value.subst() == value : "missed substitution";
+            assert !value.hasSubst() : "missed substitution";
             assert value.isLive() : "value must be marked live in ValueStack";
             if (value instanceof Phi && !value.isIllegal()) {
                 // goddamnit, phi's are special
