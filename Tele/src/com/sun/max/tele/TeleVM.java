@@ -383,16 +383,16 @@ public abstract class TeleVM implements MaxVM {
         return bootImageStart;
     }
 
-    private final TeleFields fields;
+    private final TeleFields teleFields;
 
-    public final TeleFields fields() {
-        return fields;
+    public final TeleFields teleFields() {
+        return teleFields;
     }
 
-    private final TeleMethods methods;
+    private final TeleMethods teleMethods;
 
-    public final TeleMethods methods() {
-        return methods;
+    public final TeleMethods teleMethods() {
+        return teleMethods;
     }
 
     private final Classpath sourcepath;
@@ -512,8 +512,8 @@ public abstract class TeleVM implements MaxVM {
                 throw e;
             }
         }
-        this.fields = new TeleFields(this);
-        this.methods = new TeleMethods(this);
+        this.teleFields = new TeleFields(this);
+        this.teleMethods = new TeleMethods(this);
         this.teleObjectFactory = TeleObjectFactory.make(this);
         this.teleHeapManager = TeleHeapManager.make(this);
 
@@ -629,19 +629,19 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final int getVMTraceLevel() {
-        return fields().Trace_level.readInt(this);
+        return teleFields().Trace_level.readInt(this);
     }
 
     public final void setVMTraceLevel(int newLevel) {
-        fields().Trace_level.writeInt(this, newLevel);
+        teleFields().Trace_level.writeInt(this, newLevel);
     }
 
     public final long getVMTraceThreshold() {
-        return fields().Trace_threshold.readLong(this);
+        return teleFields().Trace_threshold.readLong(this);
     }
 
     public final void setVMTraceThreshold(long newThreshold) {
-        fields().Trace_threshold.writeLong(this, newThreshold);
+        teleFields().Trace_threshold.writeLong(this, newThreshold);
     }
 
     private TeleGripScheme gripScheme() {
@@ -940,7 +940,7 @@ public abstract class TeleVM implements MaxVM {
             return false;
         }
         // If we really have a {@link StaticHub}, then a known field points at a {@link ClassActor}.
-        final int hubClassActorOffset = fields().Hub_classActor.fieldActor().offset();
+        final int hubClassActorOffset = teleFields().Hub_classActor.fieldActor().offset();
         final Word classActorWord = dataAccess().readWord(staticHubOrigin, hubClassActorOffset);
         final RemoteTeleGrip classActorGrip = createTemporaryRemoteTeleGrip(classActorWord);
         final Pointer classActorOrigin = classActorGrip.toOrigin();
@@ -948,7 +948,7 @@ public abstract class TeleVM implements MaxVM {
             return false;
         }
         // If we really have a {@link ClassActor}, then a known field points at the {@link StaticTuple} for the class.
-        final int classActorStaticTupleOffset = fields().ClassActor_staticTuple.fieldActor().offset();
+        final int classActorStaticTupleOffset = teleFields().ClassActor_staticTuple.fieldActor().offset();
         final Word staticTupleWord = dataAccess().readWord(classActorOrigin, classActorStaticTupleOffset);
         final RemoteTeleGrip staticTupleGrip = createTemporaryRemoteTeleGrip(staticTupleWord);
         final Pointer staticTupleOrigin = staticTupleGrip.toOrigin();
@@ -1018,10 +1018,10 @@ public abstract class TeleVM implements MaxVM {
      */
     public final String getString(Reference stringReference)  throws InvalidReferenceException {
         checkReference(stringReference);
-        final Reference valueReference = fields().String_value.readReference(stringReference);
+        final Reference valueReference = teleFields().String_value.readReference(stringReference);
         checkReference(valueReference);
-        int offset = fields().String_offset.readInt(stringReference);
-        final int count = fields().String_count.readInt(stringReference);
+        int offset = teleFields().String_offset.readInt(stringReference);
+        final int count = teleFields().String_count.readInt(stringReference);
         final char[] chars = new char[count];
         final CharArrayLayout charArrayLayout = layoutScheme().charArrayLayout;
         for (int i = 0; i < count; i++) {
@@ -1074,15 +1074,15 @@ public abstract class TeleVM implements MaxVM {
      */
     public final ClassActor makeClassActor(Reference classActorReference) throws InvalidReferenceException {
         checkReference(classActorReference);
-        final Reference utf8ConstantReference = fields().Actor_name.readReference(classActorReference);
+        final Reference utf8ConstantReference = teleFields().Actor_name.readReference(classActorReference);
         checkReference(utf8ConstantReference);
-        final Reference stringReference = fields().Utf8Constant_string.readReference(utf8ConstantReference);
+        final Reference stringReference = teleFields().Utf8Constant_string.readReference(utf8ConstantReference);
         final String name = getString(stringReference);
         try {
             return makeClassActor(name);
         } catch (ClassNotFoundException classNotFoundException) {
             // Not loaded and not available on local classpath; load by copying classfile from the VM
-            final Reference byteArrayReference = fields().ClassActor_classfile.readReference(classActorReference);
+            final Reference byteArrayReference = teleFields().ClassActor_classfile.readReference(classActorReference);
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) makeTeleObject(byteArrayReference);
             if (teleByteArrayObject == null) {
                 throw new NoClassDefFoundError("Could not retrieve class file from VM for " + name);
@@ -1095,7 +1095,7 @@ public abstract class TeleVM implements MaxVM {
     public final ClassActor makeClassActorForTypeOf(Reference objectReference)  throws InvalidReferenceException {
         checkReference(objectReference);
         final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
-        final Reference classActorReference = fields().Hub_classActor.readReference(hubReference);
+        final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
         return makeClassActor(classActorReference);
     }
 
@@ -1107,7 +1107,7 @@ public abstract class TeleVM implements MaxVM {
     public final Hub makeLocalHubForObject(Reference objectReference) throws InvalidReferenceException {
         checkReference(objectReference);
         final Reference hubReference = wordToReference(layoutScheme().generalLayout.readHubReferenceAsWord(objectReference));
-        final Reference classActorReference = fields().Hub_classActor.readReference(hubReference);
+        final Reference classActorReference = teleFields().Hub_classActor.readReference(hubReference);
         final ClassActor objectClassActor = makeClassActor(classActorReference);
         final ClassActor hubClassActor = makeClassActorForTypeOf(hubReference);
         return (StaticHub.class.isAssignableFrom(hubClassActor.toJava())) ? objectClassActor.staticHub()

@@ -112,7 +112,12 @@ public interface MaxVM {
     /**
      * @return access to specific fields in VM heap objects.
      */
-    TeleFields fields();
+    TeleFields teleFields();
+
+    /**
+     * @return access to specific methods in the VM
+     */
+    TeleMethods teleMethods();
 
     /**
      * Activates two-way messaging with the VM, if not already active.

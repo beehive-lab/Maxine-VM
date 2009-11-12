@@ -66,10 +66,10 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
      * @throws ClassFormatError
      */
     private void addToRegistry(final Reference classActorReference) throws ClassFormatError {
-        final int id = teleVM().fields().ClassActor_id.readInt(classActorReference);
+        final int id = teleVM().teleFields().ClassActor_id.readInt(classActorReference);
         idToClassActorReference.put(id, classActorReference);
-        final Reference typeDescriptorReference = teleVM().fields().ClassActor_typeDescriptor.readReference(classActorReference);
-        final Reference stringReference = teleVM().fields().Descriptor_string.readReference(typeDescriptorReference);
+        final Reference typeDescriptorReference = teleVM().teleFields().ClassActor_typeDescriptor.readReference(classActorReference);
+        final Reference stringReference = teleVM().teleFields().Descriptor_string.readReference(typeDescriptorReference);
         final String typeDescriptorString = teleVM().getString(stringReference);
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
         typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
@@ -124,16 +124,16 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
                     count++;
                 }
             } else {
-                final Reference typeDescriptorToClassActorReference = teleVM().fields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
-                final Reference tableReference = teleVM().fields().ChainedHashMapping_table.readReference(typeDescriptorToClassActorReference);
+                final Reference typeDescriptorToClassActorReference = teleVM().teleFields().ClassRegistry_typeDescriptorToClassActor.readReference(classRegistryReference);
+                final Reference tableReference = teleVM().teleFields().ChainedHashMapping_table.readReference(typeDescriptorToClassActorReference);
                 final int length = teleVM().layoutScheme().arrayHeaderLayout.readLength(tableReference);
                 for (int i = 0; i < length; i++) {
                     Reference entryReference = teleVM().readReference(tableReference, i);
                     while (!entryReference.isZero()) {
-                        final Reference classActorReference = teleVM().fields().ChainedHashMapping$DefaultEntry_value.readReference(entryReference);
+                        final Reference classActorReference = teleVM().teleFields().ChainedHashMapping$DefaultEntry_value.readReference(entryReference);
                         addToRegistry(classActorReference);
                         count++;
-                        entryReference = teleVM().fields().ChainedHashMapping$DefaultEntry_next.readReference(entryReference);
+                        entryReference = teleVM().teleFields().ChainedHashMapping$DefaultEntry_next.readReference(entryReference);
                     }
                 }
             }
@@ -151,10 +151,10 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
     public void refresh(long processEpoch) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
         final long startTimeMillis = System.currentTimeMillis();
-        final Reference teleClassInfoStaticTupleReference = teleVM().fields().InspectableClassInfo_classActorCount.staticTupleReference(teleVM());
-        final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().InspectableClassInfo_classActorCount.fieldActor().offset());
+        final Reference teleClassInfoStaticTupleReference = teleVM().teleFields().InspectableClassInfo_classActorCount.staticTupleReference(teleVM());
+        final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().teleFields().InspectableClassInfo_classActorCount.fieldActor().offset());
         final int remoteLoadedClassCount = teleVM().dataAccess().readInt(loadedClassCountPointer);
-        final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().InspectableClassInfo_classActors.fieldActor().offset());
+        final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().teleFields().InspectableClassInfo_classActors.fieldActor().offset());
         final Reference loadedClassActorsArrayReference = teleVM().wordToReference(teleVM().dataAccess().readWord(loadedClassActorsPointer));
         int index = dynamicallyLoadedClassCount;
         while (index < remoteLoadedClassCount) {
