@@ -151,6 +151,17 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
     }
 
     @Override
+    public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+        assert teleNativeThread.state() == TeleNativeThread.ThreadState.BREAKPOINT;
+        if (condition == null) {
+            // Unconditional break; don't continue;
+            return true;
+        }
+        // If condition true then really break; otherwise continue silently.
+        return condition.evaluate(teleNativeThread.teleProcess(), teleNativeThread);
+    }
+
+    @Override
     public String toString() {
         return "Target breakpoint" + "{0x" + address().toHexString() + "} " + attributesToString();
     }

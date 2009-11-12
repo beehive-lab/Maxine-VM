@@ -162,6 +162,14 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     @Override
+    public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+        assert teleNativeThread.state() == TeleNativeThread.ThreadState.BREAKPOINT;
+        // Conditional bytecode breakpoints not supported yet; just break normally.
+        return true;
+    }
+
+
+    @Override
     public String toString() {
         return "Bytecode breakpoint" + key() + " " + attributesToString();
     }
