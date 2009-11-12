@@ -42,7 +42,7 @@ public abstract class TeleDescriptor extends TeleTupleObject {
 
     public String string() {
         if (string == null) {
-            final Reference stringReference = teleVM().fields().Descriptor_string.readReference(reference());
+            final Reference stringReference = teleVM().teleFields().Descriptor_string.readReference(reference());
             final TeleString teleString = (TeleString) teleVM().makeTeleObject(stringReference);
             string = teleString.getString();
         }

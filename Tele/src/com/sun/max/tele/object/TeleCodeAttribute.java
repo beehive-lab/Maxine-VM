@@ -41,7 +41,7 @@ public class TeleCodeAttribute extends TeleTupleObject {
      * Reads the Java bytecodes from the {@link TeleVM}.
      */
     public final byte[] readBytecodes() {
-        final Reference byteArrayReference = teleVM().fields().CodeAttribute_code.readReference(reference());
+        final Reference byteArrayReference = teleVM().teleFields().CodeAttribute_code.readReference(reference());
         final TeleArrayObject teleByteArrayObject = (TeleArrayObject) teleVM().makeTeleObject(byteArrayReference);
         return (byte[]) teleByteArrayObject.shallowCopy();
     }
@@ -50,7 +50,7 @@ public class TeleCodeAttribute extends TeleTupleObject {
      * Gets the local surrogate for the {@link ConstantPool} associated with this code in the {@link TeleVM}.
      */
     public final TeleConstantPool getTeleConstantPool() {
-        final Reference constantPoolReference = teleVM().fields().CodeAttribute_constantPool.readReference(reference());
+        final Reference constantPoolReference = teleVM().teleFields().CodeAttribute_constantPool.readReference(reference());
         return (TeleConstantPool) teleVM().makeTeleObject(constantPoolReference);
     }
 

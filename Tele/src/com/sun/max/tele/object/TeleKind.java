@@ -38,7 +38,7 @@ public class TeleKind extends TeleTupleObject {
     }
 
     public Kind toJava() {
-        return Kind.fromCharacter(teleVM().fields().Kind_character.readChar(reference()));
+        return Kind.fromCharacter(teleVM().teleFields().Kind_character.readChar(reference()));
     }
 
     @Override
