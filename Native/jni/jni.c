@@ -856,4 +856,3 @@ JNIEXPORT jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vm, jsize vmBufLen, jsize 
     *nVMs = 1;
     return JNI_OK;
 }
-

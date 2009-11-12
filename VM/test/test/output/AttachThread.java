@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,34 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.threads;
+package test.output;
 
-
-/*
- * @Harness: java
- * @Runs: 0 = true
+/**
+ * Tests support for JNI AttachCurrentThread and DetachCurrentThread.
+ *
+ * @author Paul Caprioli
+ * @author Doug Simon
  */
+public class AttachThread {
 
-// Interrupted during wait, with interrupter joining
-public class Thread_isInterrupted05 {
-
-    public static boolean test(int i)  throws InterruptedException {
-        final Thread waitInterruptee = new WaitInterruptee();
-        waitInterruptee.start();
-        waitInterruptee.interrupt();
-        waitInterruptee.join();
-        return true;
+    static {
+        System.loadLibrary("javatest");
     }
 
-    static class WaitInterruptee extends Thread {
-        @Override
-        public void run() {
-            synchronized (this) {
-                try {
-                    wait();
-                } catch (InterruptedException ex) {
-                }
-            }
-        }
+    public static native void callHelloWorldOnAttachedThread();
+
+    public static void main(String[] args) {
+        helloWorld("(from main)");
+        callHelloWorldOnAttachedThread();
+        helloWorld("(from main)");
+    }
+
+    public static void helloWorld(String s) {
+        System.out.println(Thread.currentThread() + ": Hello World! " + s);
+        System.out.flush();
     }
 }
