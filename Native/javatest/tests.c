@@ -24,5 +24,39 @@
 #include "os.h"
 
 #include "jni.h"
-#include "threads.h"
-#include "log.h"
+
+JNIEXPORT void JNICALL
+Java_test_output_MixedFrames_nativeUpdateFields(JNIEnv *env, jobject object, int n, jint i, jobject o) {
+    jclass thisClass = (*env)->GetObjectClass(env, object);
+    if (thisClass == NULL) {
+        printf("Could not get class of object\n");
+        return;
+    }
+    //printf("[native] n = %d\n", n);
+    //fflush(stdout);
+
+    jmethodID mid = (*env)->GetMethodID(env, thisClass, "testNative", "(I)V");
+    if (mid == NULL) {
+        printf("Could not find method testNative(int)\n");
+        return;
+    }
+    if (n == 0) {
+        jfieldID iField;
+        jfieldID oField;
+        iField = (*env)->GetFieldID(env, thisClass, "i", "I");
+        if (iField == NULL) {
+            printf("Could not find field i\n");
+            return;
+        }
+
+        oField = (*env)->GetFieldID(env, thisClass, "o", "Ljava/lang/Object;");
+        if (oField == NULL) {
+            printf("Could not find field o\n");
+            return;
+        }
+
+        (*env)->SetIntField(env, object, iField, i);
+        (*env)->SetObjectField(env, object, oField, o);
+    }
+    (*env)->CallVoidMethod(env, object, mid, n, i, o);
+}
