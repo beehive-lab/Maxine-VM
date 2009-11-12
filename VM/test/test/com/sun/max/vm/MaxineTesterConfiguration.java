@@ -71,7 +71,7 @@ public class MaxineTesterConfiguration {
         output(test.output.JavacTest.class,                RAND_LINUX);
         output(test.output.CLDelegation.class);
         output(test.output.CatchOutOfMemory.class);
-        output(test.output.MixedFrames.class,              FAIL_ALL);
+        output(test.output.MixedFrames.class);
         output(test.output.PrintDate.class);
         output(test.output.HelloWorld.class);
         output(test.output.HelloWorldGC.class);

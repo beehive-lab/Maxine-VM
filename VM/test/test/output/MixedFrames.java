@@ -20,7 +20,6 @@
  */
 package test.output;
 
-
 /**
  * Performs a number of recursive down and up calls.
  *
