@@ -96,6 +96,7 @@ void upcall(jclass cls) {
 
 void *thread_function(void *arguments) {
     upcall((jclass) arguments);
+    return NULL;
 }
 
 JNIEXPORT void JNICALL
