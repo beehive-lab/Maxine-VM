@@ -290,7 +290,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
         private byte[] recoverOriginalCodeForBreakpoint(Address instructionPointer) {
             try {
-                final Value result = teleVM.methods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
+                final Value result = teleVM.teleMethods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
                 final Reference reference = result.asReference();
                 if (reference.isZero()) {
                     return null;

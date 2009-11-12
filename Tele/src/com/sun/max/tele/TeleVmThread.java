@@ -53,7 +53,7 @@ public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
      */
     public String name() {
         if (teleVM().teleProcess().epoch() > lastRefreshedEpoch) {
-            final Reference nameReference = teleVM().fields().VmThread_name.readReference(reference());
+            final Reference nameReference = teleVM().teleFields().VmThread_name.readReference(reference());
             if (this.nameReference == null || !nameReference.equals(this.nameReference)) {
                 if (nameReference.isZero()) {
                     name = "*unset*";

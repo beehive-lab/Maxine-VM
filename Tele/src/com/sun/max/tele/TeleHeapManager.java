@@ -141,20 +141,20 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
     public void initialize(long processEpoch) {
         Trace.begin(1, tracePrefix() + "initializing");
         final long startTimeMillis = System.currentTimeMillis();
-        final Reference bootHeapRegionReference = teleVM().fields().Heap_bootHeapRegion.readReference(teleVM());
+        final Reference bootHeapRegionReference = teleVM().teleFields().Heap_bootHeapRegion.readReference(teleVM());
         teleBootHeapRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
-        final int teleRootsOffset = teleVM().fields().InspectableHeapInfo_rootsPointer.fieldActor().offset();
-        final int teleCardTableOffset = teleVM().fields().InspectableHeapInfo_cardTablePointer.fieldActor().offset();
-        final int teleObjectOldOffset = teleVM().fields().InspectableHeapInfo_oldAddress.fieldActor().offset();
-        final int teleObjectNewOffset = teleVM().fields().InspectableHeapInfo_newAddress.fieldActor().offset();
+        final int teleRootsOffset = teleVM().teleFields().InspectableHeapInfo_rootsPointer.fieldActor().offset();
+        final int teleCardTableOffset = teleVM().teleFields().InspectableHeapInfo_cardTablePointer.fieldActor().offset();
+        final int teleObjectOldOffset = teleVM().teleFields().InspectableHeapInfo_oldAddress.fieldActor().offset();
+        final int teleObjectNewOffset = teleVM().teleFields().InspectableHeapInfo_newAddress.fieldActor().offset();
 
         // The address of the tele roots field must be accessible before any {@link TeleObject}s can be created,
         // which means that it must be accessible before calling {@link #refresh()} here.
-        teleRootsPointer = teleVM().fields().InspectableHeapInfo_rootsPointer.staticTupleReference(teleVM()).toOrigin().plus(teleRootsOffset);
+        teleRootsPointer = teleVM().teleFields().InspectableHeapInfo_rootsPointer.staticTupleReference(teleVM()).toOrigin().plus(teleRootsOffset);
 
-        cardTablePointer = teleVM().fields().InspectableHeapInfo_cardTablePointer.staticTupleReference(teleVM()).toOrigin().plus(teleCardTableOffset);
-        objectOldAddressPointer = teleVM().fields().InspectableHeapInfo_oldAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectOldOffset);
-        objectNewAddressPointer = teleVM().fields().InspectableHeapInfo_newAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectNewOffset);
+        cardTablePointer = teleVM().teleFields().InspectableHeapInfo_cardTablePointer.staticTupleReference(teleVM()).toOrigin().plus(teleCardTableOffset);
+        objectOldAddressPointer = teleVM().teleFields().InspectableHeapInfo_oldAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectOldOffset);
+        objectNewAddressPointer = teleVM().teleFields().InspectableHeapInfo_newAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectNewOffset);
 
         refresh(processEpoch);
         Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
@@ -171,7 +171,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
             Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
             final long startTimeMillis = System.currentTimeMillis();
             updatingHeapMemoryRegions = true;
-            final Reference runtimeHeapRegionsArrayReference = teleVM().fields().InspectableHeapInfo_memoryRegions.readReference(teleVM());
+            final Reference runtimeHeapRegionsArrayReference = teleVM().teleFields().InspectableHeapInfo_memoryRegions.readReference(teleVM());
             if (!runtimeHeapRegionsArrayReference.isZero()) {
                 final TeleArrayObject teleArrayObject = (TeleArrayObject) teleVM().makeTeleObject(runtimeHeapRegionsArrayReference);
                 final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
@@ -194,7 +194,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
             }
             updatingHeapMemoryRegions = false;
             if (teleRootsRegion == null) {
-                final Reference teleRootsRegionReference = teleVM().fields().InspectableHeapInfo_rootsRegion.readReference(teleVM());
+                final Reference teleRootsRegionReference = teleVM().teleFields().InspectableHeapInfo_rootsRegion.readReference(teleVM());
                 if (teleRootsRegionReference != null && !teleRootsRegionReference.isZero()) {
                     final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(teleRootsRegionReference);
                     if (maybeAllocatedRegion != null && maybeAllocatedRegion.isAllocated()) {
@@ -204,7 +204,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
             }
 
             if (teleImmortalHeapRegion == null) {
-                final Reference immortalHeapReference = teleVM().fields().ImmortalHeap_immortalHeap.readReference(teleVM());
+                final Reference immortalHeapReference = teleVM().teleFields().ImmortalHeap_immortalHeap.readReference(teleVM());
                 if (immortalHeapReference != null && !immortalHeapReference.isZero()) {
                     final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(immortalHeapReference);
                     if (maybeAllocatedRegion != null && maybeAllocatedRegion.isAllocated()) {
@@ -213,7 +213,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
                 }
             }
 
-            cardTableSize = teleVM().fields().InspectableHeapInfo_totalCardTableEntries.readInt(teleVM()) * Word.size();
+            cardTableSize = teleVM().teleFields().InspectableHeapInfo_totalCardTableEntries.readInt(teleVM()) * Word.size();
 
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
         }
@@ -339,7 +339,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
      * @return one greater than {@link #readRootEpoch()} during GC, otherwise equal
      */
     public long readCollectionEpoch() {
-        return teleVM().fields().InspectableHeapInfo_collectionEpoch.readLong(teleVM());
+        return teleVM().teleFields().InspectableHeapInfo_collectionEpoch.readLong(teleVM());
     }
 
     /**
@@ -347,7 +347,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
      * @return number of times inspectable root table updated
      */
     public long readRootEpoch() {
-        return teleVM().fields().InspectableHeapInfo_rootEpoch.readLong(teleVM());
+        return teleVM().teleFields().InspectableHeapInfo_rootEpoch.readLong(teleVM());
     }
 
     /**
@@ -383,8 +383,8 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
      * @see #readCollectionEpoch()
      */
     public Address collectionEpochAddress() {
-        final int offset = teleVM().fields().InspectableHeapInfo_collectionEpoch.fieldActor().offset();
-        return teleVM().fields().InspectableHeapInfo_collectionEpoch.staticTupleReference(teleVM()).toOrigin().plus(offset);
+        final int offset = teleVM().teleFields().InspectableHeapInfo_collectionEpoch.fieldActor().offset();
+        return teleVM().teleFields().InspectableHeapInfo_collectionEpoch.staticTupleReference(teleVM()).toOrigin().plus(offset);
     }
 
     /**
@@ -393,8 +393,8 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
      * @see #readRootEpoch()
      */
     public Address rootEpochAddress() {
-        final int offset = teleVM().fields().InspectableHeapInfo_rootEpoch.fieldActor().offset();
-        return teleVM().fields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(offset);
+        final int offset = teleVM().teleFields().InspectableHeapInfo_rootEpoch.fieldActor().offset();
+        return teleVM().teleFields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(offset);
     }
 
     /**
