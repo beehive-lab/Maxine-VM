@@ -2469,7 +2469,7 @@ public class X86LIRAssembler extends LIRAssembler {
         assert resultReg.isRegister() : "check";
         if (compilation.target.arch.is64bit()) {
             // lir(). getThread(resultReg.asRegisterLo());
-            masm().mov(resultReg.asRegister(), compilation.runtime.threadRegister());
+            masm().mov(resultReg.asRegister(), compilation.target.config.getThreadRegister());
         } else {
             masm().getThread(resultReg.asRegister());
         }
@@ -2796,7 +2796,7 @@ public class X86LIRAssembler extends LIRAssembler {
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         // (tw) remove this hack!
                         CiKind kind = CiKind.Long;
-                        CiRegister register = this.compilation.runtime.returnRegister(inst.result.kind);
+                        CiRegister register = this.compilation.target.config.getReturnRegister(inst.result.kind);
                         LIROperand resultLocation = LIROperandFactory.doubleLocation(kind, register, register);
                         moveOp(resultLocation, ops[inst.result.index], kind, null, false);
                     }

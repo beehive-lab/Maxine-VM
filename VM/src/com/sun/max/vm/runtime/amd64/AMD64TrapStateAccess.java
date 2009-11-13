@@ -27,7 +27,6 @@ import com.sun.max.asm.amd64.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -135,11 +134,6 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
     @Override
     public void setSafepointLatch(Pointer trapState, Pointer value) {
         trapState.writeWord(LATCH_REGISTER.value() * Word.size(), value);
-    }
-
-    @Override
-    public void setExceptionObject(Pointer trapState, Throwable throwable) {
-        trapState.writeWord(RETURN_VALUE_REGISTER.value() * Word.size(), Reference.fromJava(throwable).toOrigin());
     }
 
     @Override

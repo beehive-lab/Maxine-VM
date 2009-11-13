@@ -35,6 +35,8 @@ import com.sun.c1x.util.*;
  */
 public abstract class X86Assembler extends AbstractAssembler {
 
+    private static final int MinEncodingNeedsRex = 8;
+
     /**
      * The x86 condition codes used for conditional jumps/moves.
      */
@@ -170,7 +172,6 @@ public abstract class X86Assembler extends AbstractAssembler {
             disp += targetMethod.frameSize() + target.arch.wordSize;
         }
 
-
         // Encode the registers as needed in the fields they are used in
 
         assert reg != CiRegister.None;
@@ -291,8 +292,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         assert !(adr.base.encoding >= MinEncodingNeedsRex) && !(adr.index.encoding >= MinEncodingNeedsRex) : "no extended registers";
         emitOperandHelper(reg, adr);
     }
-
-    // Now the Assembler instruction (identical for 32/64 bits)
 
     public final void adcl(CiRegister dst, int imm32) {
         prefix(dst);
@@ -477,7 +476,6 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void call(CiRegister dst, RiMethod method, boolean[] stackReferenceMap) {
-
         recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
         // this may be true but dbx disassembles it as if it
         // were 32bits...
@@ -493,7 +491,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         recordDirectCall(codeBuffer.position(), method, stackReferenceMap);
         emitByte(0xE8);
         emitInt(0);
-
     }
 
     public final void call(Address adr, RiMethod method, boolean[] stackReferenceMap) {
@@ -598,8 +595,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x3B);
         emitOperand(dst, src);
     }
-
-    private static final int MinEncodingNeedsRex = 8;
 
     public final void cmpw(Address dst, int imm16) {
         assert !(dst.base.encoding >= MinEncodingNeedsRex) && !(dst.index.encoding >= MinEncodingNeedsRex) : "no extended registers";
@@ -830,7 +825,6 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void jcc(Condition cc, Label l) {
-
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
             int dst = target(l);
@@ -1448,7 +1442,6 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     void nop(int i) {
-
         if (C1XOptions.UseNormalNop) {
             assert i > 0 : " ";
             // The fancy nops aren't currently recognized by debuggers making it a
@@ -1485,7 +1478,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             // 15: 0x66 0x66 0x66 0x0F 0x1F 0x84 0x00 0x00 0x00 0x00 0x00 0x66 0x66 0x66 0x90
 
             while (i >= 15) {
-                // For Intel don't generate consecutive addess nops (mix with regular nops)
+                // For Intel don't generate consecutive address nops (mix with regular nops)
                 i -= 15;
                 emitByte(0x66); // size prefix
                 emitByte(0x66); // size prefix
@@ -1743,12 +1736,10 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void orl(Address dst, int imm32) {
-
         prefix(dst);
         emitByte(0x81);
         emitOperand(X86.rcx, dst, 4);
         emitInt(imm32);
-
     }
 
     public final void orl(CiRegister dst, int imm32) {
@@ -1757,11 +1748,9 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void orl(CiRegister dst, Address src) {
-
         prefix(src, dst);
         emitByte(0x0B);
         emitOperand(dst, src);
-
     }
 
     public final void orl(CiRegister dst, CiRegister src) {
@@ -1958,7 +1947,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x38);
         emitByte(0x17);
         emitOperand(dst, src);
-
     }
 
     public final void ptest(CiRegister dst, CiRegister src) {
@@ -2019,7 +2007,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x0F);
         emitByte(0xEF);
         emitOperand(dst, src);
-
     }
 
     public final void pxor(CiRegister dst, CiRegister src) {
@@ -2127,10 +2114,8 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void sbbl(Address dst, int imm32) {
-
         prefix(dst);
         emitArithOperand(0x81, X86.rbx, dst, imm32);
-
     }
 
     public final void sbbl(CiRegister dst, int imm32) {
@@ -2139,11 +2124,9 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void sbbl(CiRegister dst, Address src) {
-
         prefix(src, dst);
         emitByte(0x1B);
         emitOperand(dst, src);
-
     }
 
     public final void sbbl(CiRegister dst, CiRegister src) {
@@ -2211,7 +2194,6 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void subl(Address dst, int imm32) {
-
         prefix(dst);
         if (Util.is8bit(imm32)) {
             emitByte(0x83);
@@ -2222,7 +2204,6 @@ public abstract class X86Assembler extends AbstractAssembler {
             emitOperand(X86.rbp, dst, 4);
             emitInt(imm32);
         }
-
     }
 
     public final void subl(CiRegister dst, int imm32) {
@@ -2231,19 +2212,15 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void subl(Address dst, CiRegister src) {
-
         prefix(dst, src);
         emitByte(0x29);
         emitOperand(src, dst);
-
     }
 
     public final void subl(CiRegister dst, Address src) {
-
         prefix(src, dst);
         emitByte(0x2B);
         emitOperand(dst, src);
-
     }
 
     public final void subl(CiRegister dst, CiRegister src) {
@@ -2271,7 +2248,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x0F);
         emitByte(0x5C);
         emitOperand(dst, src);
-
     }
 
     public final void subss(CiRegister dst, CiRegister src) {
@@ -2294,7 +2270,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x0F);
         emitByte(0x5C);
         emitOperand(dst, src);
-
     }
 
     public final void testb(CiRegister dst, int imm8) {
@@ -2324,11 +2299,9 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void testl(CiRegister dst, Address src) {
-
         prefix(src, dst);
         emitByte(0x85);
         emitOperand(dst, src);
-
     }
 
     public final void ucomisd(CiRegister dst, Address src) {
@@ -2354,7 +2327,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x0F);
         emitByte(0x2E);
         emitOperand(dst, src);
-
     }
 
     public final void ucomiss(CiRegister dst, CiRegister src) {
@@ -2374,15 +2346,12 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x0F);
         emitByte(0xC1);
         emitOperand(src, dst);
-
     }
 
     public final void xchgl(CiRegister dst, Address src) { // xchg
-
         prefix(src, dst);
         emitByte(0x87);
         emitOperand(dst, src);
-
     }
 
     public final void xchgl(CiRegister dst, CiRegister src) {
@@ -2397,11 +2366,9 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void xorl(CiRegister dst, Address src) {
-
         prefix(src, dst);
         emitByte(0x33);
         emitOperand(dst, src);
-
     }
 
     public final void xorl(CiRegister dst, CiRegister src) {
@@ -2426,7 +2393,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x0F);
         emitByte(0x57);
         emitOperand(dst, src);
-
     }
 
     public final void xorps(CiRegister dst, CiRegister src) {
@@ -2447,7 +2413,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x0F);
         emitByte(0x57);
         emitOperand(dst, src);
-
     }
 
     // 32bit only pieces of the assembler
@@ -2462,7 +2427,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x0F);
         emitByte(0xc7);
         emitOperand(X86.rcx, adr);
-
     }
 
     public final void decl(CiRegister dst) {
@@ -2505,7 +2469,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    // TODO: remove?
     public final void popa() {
 
         if (target.arch.is64bit()) {
@@ -2536,7 +2499,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    // TODO: remove?
     public final void pusha() {
 
         if (target.arch.is32bit()) {
@@ -2714,7 +2676,6 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     private void prefix(Address adr, CiRegister reg) {
-
         if (reg.encoding < 8) {
             if (adr.base.encoding >= MinEncodingNeedsRex) {
                 if (adr.index.encoding >= MinEncodingNeedsRex) {

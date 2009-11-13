@@ -686,6 +686,6 @@ public class C1XTest {
     }
 
     private static CiTarget createTarget() {
-        return C1XCompilerScheme.createTarget(MaxRiRuntime.globalRuntime, VMConfiguration.hostOrTarget());
+        return C1XCompilerScheme.createTarget(VMConfiguration.hostOrTarget());
     }
 }

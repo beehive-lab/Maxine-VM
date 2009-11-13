@@ -176,7 +176,7 @@ public class MaxRiRuntime implements RiRuntime {
 
     public boolean needsExplicitNullCheck(int offset) {
         // TODO: Return false if implicit null check is possible for this offset!
-        return offset > 0xbad;
+        return offset >= 4096;
     }
 
     public int threadExceptionOffset() {
@@ -221,66 +221,6 @@ public class MaxRiRuntime implements RiRuntime {
         throw Util.unimplemented();
     }
 
-    public CiLocation[] runtimeCallingConvention(CiKind[] signature) {
-        return javaCallingConvention(signature, true);
-    }
-
-    public CiLocation[] javaCallingConvention(CiKind[] types, boolean outgoing) {
-        CiLocation[] result = new CiLocation[types.length];
-
-        int currentGeneral = 0;
-        int currentXMM = 0;
-        int currentStackSlot = 0;
-        final int wordSize = VMConfiguration.hostOrTarget().platform.wordWidth().numberOfBytes;
-
-        for (int i = 0; i < types.length; i++) {
-
-            final CiKind kind = types[i];
-
-            switch (kind) {
-                case Byte:
-                case Boolean:
-                case Short:
-                case Char:
-                case Int:
-                case Long:
-                case Word:
-                case Object:
-                    if (currentGeneral < generalParameterRegisters.length) {
-                        CiRegister register = generalParameterRegisters[currentGeneral++];
-                        if (kind == CiKind.Long) {
-                            result[i] = new CiLocation(kind, register, register);
-                        } else {
-                            result[i] = new CiLocation(kind, register);
-                        }
-                    }
-                    break;
-
-                case Float:
-                case Double:
-                    if (currentXMM < xmmParameterRegisters.length) {
-                        CiRegister register = xmmParameterRegisters[currentXMM++];
-                        if (kind == CiKind.Float) {
-                            result[i] = new CiLocation(kind, register);
-                        } else {
-                            result[i] = new CiLocation(kind, register, register);
-                        }
-                    }
-                    break;
-
-                default:
-                    throw Util.shouldNotReachHere();
-            }
-
-            if (result[i] == null) {
-                result[i] = new CiLocation(kind, currentStackSlot, wordSize, !outgoing);
-                currentStackSlot += wordSize;
-            }
-        }
-
-        return result;
-    }
-
     public int sizeofBasicObjectLock() {
         // TODO Auto-generated method stub
         return 0;
@@ -323,32 +263,12 @@ public class MaxRiRuntime implements RiRuntime {
         return "";
     }
 
-    public CiRegister returnRegister(CiKind object) {
-
-        if (object == CiKind.Void) {
-            return CiRegister.None;
-        }
-
-        if (object == CiKind.Float || object == CiKind.Double) {
-            return X86.xmm0;
-        }
-        return X86.rax;
-    }
-
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
         return new C1XTargetMethod(new C1XCompilerScheme(VMConfiguration.target()), name, ciTargetMethod);
     }
 
     public RiType primitiveArrayType(CiKind elemType) {
         return canonicalRiType(ClassActor.fromJava(elemType.primitiveArrayClass()), globalConstantPool, -1);
-    }
-
-    public CiRegister threadRegister() {
-        return X86.r14;
-    }
-
-    public CiRegister getSafepointRegister() {
-        return X86.r14;
     }
 
     public int getJITStackSlotSize() {
@@ -360,7 +280,8 @@ public class MaxRiRuntime implements RiRuntime {
      * that the same {@code MaxRiMethod} instance is always returned for the
      * same {@code MethodActor}.
      * @param methodActor the method actor for which to get the canonical type
-     * @param maxRiConstantPool
+     * @param maxRiConstantPool the constant pool
+     * @param cpi the constant pool index
      * @return the canonical compiler interface method for the method actor
      */
     public MaxRiMethod canonicalRiMethod(MethodActor methodActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
@@ -381,7 +302,8 @@ public class MaxRiRuntime implements RiRuntime {
      * that the same {@code MaxRiField} instance is always returned for the
      * same {@code FieldActor}.
      * @param fieldActor the field actor for which to get the canonical type
-     * @param maxRiConstantPool
+     * @param maxRiConstantPool the constant pool
+     * @param cpi the constant pool index
      * @return the canonical compiler interface field for the field actor
      */
     public MaxRiField canonicalRiField(FieldActor fieldActor, MaxRiConstantPool maxRiConstantPool, int cpi) {
