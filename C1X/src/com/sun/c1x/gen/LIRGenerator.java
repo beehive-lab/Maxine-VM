@@ -393,7 +393,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         LIROperand result = newRegister(CiKind.Object);
-        LIRLocation threadReg = LIROperandFactory.singleLocation(CiKind.Object, compilation.runtime.threadRegister());
+        LIRLocation threadReg = LIROperandFactory.singleLocation(CiKind.Object, compilation.target.config.getThreadRegister());
         lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOffset(), CiKind.Object), result);
         setResult(x, result);
     }
@@ -2231,7 +2231,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected LIRLocation resultRegisterFor(CiKind type) {
-        CiRegister returnRegister = compilation.runtime.returnRegister(type);
+        CiRegister returnRegister = compilation.target.config.getReturnRegister(type);
         assert compilation.target.arch.is64bit();
         if (type.size == 2) {
             return LIROperandFactory.doubleLocation(type, returnRegister, returnRegister);

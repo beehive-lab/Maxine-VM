@@ -539,10 +539,6 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    public void makeOffset(int length) {
-        nop(length);
-    }
-
     void andptr(CiRegister dst, int imm32) {
         if (target.arch.is64bit()) {
             andq(dst, imm32);
@@ -1381,7 +1377,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     public void safepoint(LIRDebugInfo info) {
-        CiRegister safepointRegister = compiler.runtime.getSafepointRegister();
+        CiRegister safepointRegister = compiler.target.config.getSafepointRegister();
         this.recordSafepoint(codeBuffer.position(), info.oopMap.registerMap(), info.oopMap.stackMap());
         movq(safepointRegister, new Address(safepointRegister));
     }

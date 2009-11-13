@@ -477,7 +477,7 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @C_FUNCTION
-    private static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, int argc, Pointer argv) {
+    public static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
@@ -489,7 +489,7 @@ public final class MaxineVM {
 
         Heap.initializeAuxiliarySpace(vmThreadLocals, auxiliarySpace);
 
-        // This must be called first as subsequent actions depend on it to resolve the native symbols
+        // The dynamic linker must be initialized before linking critical native methods
         DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);
 
         // Link the critical native methods:
