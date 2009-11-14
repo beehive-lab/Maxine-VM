@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.b.c;
 import java.util.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.bir.*;
 import com.sun.max.vm.type.*;
@@ -108,7 +107,7 @@ final class BlockTranslator {
             if (remainingExceptionDispatchers.length() == exceptionDispatchers.length()) {
                 for (BirBlock exceptionDispatcher : remainingExceptionDispatchers) {
                     assert !translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start()).hasCirBlock();
-                    ProgramWarning.message("unreachable exception dispatcher: " + exceptionDispatcher);
+                    //ProgramWarning.message("unreachable exception dispatcher: " + exceptionDispatcher);
                 }
                 return;
             }

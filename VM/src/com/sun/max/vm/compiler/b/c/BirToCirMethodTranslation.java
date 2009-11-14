@@ -95,7 +95,7 @@ public class BirToCirMethodTranslation {
                     dispatchers.append(birBlock);
                 }
             } else {
-                ProgramWarning.message("unreachable block: " + birBlock + "  " + birMethod);
+                //ProgramWarning.message("unreachable block: " + birBlock + "  " + birMethod);
             }
         }
         this.birExceptionDispatchers = dispatchers;
