@@ -22,6 +22,7 @@ package com.sun.max.vm.tele;
 
 import java.io.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
@@ -134,5 +135,13 @@ public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreak
                 }
             }
         }
+        compilationFinished(targetMethod, "test key");
     }
+
+    @NEVER_INLINE
+    @INSPECTED
+    public static void compilationFinished(TargetMethod targetMethod, String key) {
+
+    }
+
 }
