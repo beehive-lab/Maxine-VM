@@ -22,7 +22,6 @@ package com.sun.c1x.ri;
 
 import com.sun.c1x.ci.*;
 
-
 /**
  * This interface represents a reference to a field, including both
  * resolved and unresolved fields. Fields, like methods and types, are resolved through

@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ci;
 
-
 /**
  * This class represents a boxed value, such as integer, floating point number, or object reference,
  * within the compiler and across the compiler/runtime barrier.
