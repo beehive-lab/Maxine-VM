@@ -144,7 +144,7 @@ public final class HostedBootClassLoader extends ClassLoader {
     public static ClasspathFile readClassFile(Classpath classpath, String name) throws ClassNotFoundException {
         ClasspathFile classpathFile = classpath.readClassFile(name);
         if (classpathFile == null) {
-            classpathFile = BootClassLoader.BOOT_CLASS_LOADER.findGeneratedClassfile(name);
+            classpathFile = ClassfileReader.findGeneratedClassfile(name);
         }
         if (classpathFile != null) {
             return classpathFile;

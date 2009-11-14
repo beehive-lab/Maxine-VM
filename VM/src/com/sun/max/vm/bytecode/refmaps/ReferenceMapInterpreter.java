@@ -338,7 +338,7 @@ public abstract class ReferenceMapInterpreter {
     protected abstract Object frames();
 
     /**
-     * Ensures that the frames for all basic blocks are completely initialized and performs interpretation iteratively
+     * Ensures that the frames for all <i>reachable</i> basic blocks are completely initialized and performs interpretation iteratively
      * if necessary until they are.
      * <p>
      * If {@link #performsAllocation()} returns false for this interpreter, then this method is guaranteed not to perform
@@ -396,8 +396,11 @@ public abstract class ReferenceMapInterpreter {
         bytecodePositionIterator.reset();
         for (int bytecodePosition = bytecodePositionIterator.bytecodePosition(); bytecodePosition != -1; bytecodePosition = bytecodePositionIterator.bytecodePosition()) {
             final int blockIndex = blockIndexFor(bytecodePosition);
-            assert isFrameInitialized(blockIndex);
-            interpretBlock(blockIndex, bytecodePositionIterator, visitor);
+            if (!isFrameInitialized(blockIndex)) {
+                bytecodePositionIterator.next();
+            } else {
+                interpretBlock(blockIndex, bytecodePositionIterator, visitor);
+            }
         }
 
         this.context = null;
@@ -564,7 +567,7 @@ public abstract class ReferenceMapInterpreter {
      *
      * @param blockIndex the index of the block to test
      */
-    abstract boolean isFrameInitialized(int blockIndex);
+    public abstract boolean isFrameInitialized(int blockIndex);
 
     /**
      * Interprets a given basic block.

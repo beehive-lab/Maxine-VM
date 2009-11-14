@@ -398,7 +398,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
 
                 // Save the generated class file to the filesystem so that a generated stub for a method in the
                 // generated class can find the corresponding Class instance
-                BootClassLoader.BOOT_CLASS_LOADER.saveGeneratedClassfile(className, classfileBytes);
+                ClassfileReader.saveClassfile(className, classfileBytes);
 
                 final ClassMethodActor classMethodActor = ClassActor.fromJava(testClass).findLocalStaticMethodActor(makeSymbol(methodName), signature);
                 assertNotNull(classMethodActor);

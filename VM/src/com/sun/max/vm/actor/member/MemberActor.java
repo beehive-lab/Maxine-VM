@@ -23,6 +23,7 @@ package com.sun.max.vm.actor.member;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -76,6 +77,10 @@ public abstract class MemberActor extends Actor {
     public final void assignHolder(ClassActor classActor, int index) {
         this.holder = classActor;
         this.memberIndex = index;
+        if (MaxineVM.isHosted() && isNative(flags())) {
+            // Make sure the C symbol for a native method is cooked into the boot image
+            ((ClassMethodActor) this).nativeFunction.makeSymbol();
+        }
     }
 
     @Override

@@ -124,7 +124,7 @@ public class StandardReferenceMapInterpreter extends ReferenceMapInterpreter {
     }
 
     @Override
-    boolean isFrameInitialized(int blockIndex) {
+    public boolean isFrameInitialized(int blockIndex) {
         return frames[blockIndex] != null;
     }
 

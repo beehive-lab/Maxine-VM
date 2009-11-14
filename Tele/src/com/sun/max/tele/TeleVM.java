@@ -59,6 +59,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
@@ -1085,7 +1086,8 @@ public abstract class TeleVM implements MaxVM {
             final Reference byteArrayReference = teleFields().ClassActor_classfile.readReference(classActorReference);
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) makeTeleObject(byteArrayReference);
             if (teleByteArrayObject == null) {
-                throw new NoClassDefFoundError("Could not retrieve class file from VM for " + name);
+                throw new NoClassDefFoundError(String.format("Could not retrieve class file from VM for %s%nTry using '%s' VM option to access generated class files.",
+                    name, ClassfileReader.saveClassDir));
             }
             final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
             return HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.makeClassActor(name, classfile);

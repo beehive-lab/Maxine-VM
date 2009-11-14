@@ -21,9 +21,6 @@
 package test.com.sun.max.vm.compiler;
 
 import java.io.*;
-import java.util.*;
-import java.util.jar.*;
-import java.util.zip.*;
 
 import junit.extensions.*;
 import junit.framework.Test;
@@ -40,13 +37,13 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
-import com.sun.max.vm.type.*;
 
 
 public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
@@ -113,53 +110,18 @@ public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
             throw e;
         } finally {
             setupGuard = false;
-            try {
-                writeGeneratedClassfilesToJar();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     @After
     @Override
     protected final void tearDown() {
-        try {
-            javaPrototype.vmConfiguration().finalizeSchemes(Phase.RUNNING);
-            writeGeneratedClassfilesToJar();
-            if (Trace.hasLevel(1)) {
-                GlobalMetrics.report(Trace.stream());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        javaPrototype.vmConfiguration().finalizeSchemes(Phase.RUNNING);
+        ClassfileReader.writeClassfilesToJar(new File(JavaProject.findVcsProjectDirectory(), "loaded-classes.jar"));
+        if (Trace.hasLevel(1)) {
+            GlobalMetrics.report(Trace.stream());
         }
     }
-
-    private static void writeGeneratedClassfilesToJar() throws IOException {
-        final Map<String, byte[]> generatedClassfiles = BootClassLoader.BOOT_CLASS_LOADER.generatedClassfiles();
-        if (generatedClassfiles.isEmpty()) {
-            return;
-        }
-        final File jarFile = new File(JavaProject.findVcsProjectDirectory(), "generated-classes.jar");
-        if (!jarFile.getParentFile().exists()) {
-            if (!jarFile.getParentFile().mkdir()) {
-                throw new IOException("could not create missing directory " + jarFile.getParentFile());
-            }
-        }
-        final JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
-        jarOutputStream.setLevel(Deflater.BEST_COMPRESSION);
-        for (Map.Entry<String, byte[]> entry : generatedClassfiles.entrySet()) {
-            final String classfilePath = entry.getKey().replace('.', '/') + ".class";
-            final JarEntry jarEntry = new JarEntry(classfilePath);
-            jarEntry.setTime(System.currentTimeMillis());
-            jarOutputStream.putNextEntry(jarEntry);
-            jarOutputStream.write(entry.getValue());
-            jarOutputStream.closeEntry();
-        }
-        jarOutputStream.close();
-        System.out.println("saved generated classfiles in " + jarFile.getAbsolutePath());
-    }
-
 
     public static BootstrapCompilerScheme compilerScheme() {
         return javaPrototype().vmConfiguration().bootCompilerScheme();

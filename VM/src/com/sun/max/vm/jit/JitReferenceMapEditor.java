@@ -170,30 +170,34 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                     if (bytecodeStopsIterator.isDirectRuntimeCall()) {
                         Log.print('*');
                     }
-                    Log.print(", locals={");
-                    for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
-                        final int fpRelativeIndex = stackFrameLayout.localVariableReferenceMapIndex(localVariableIndex);
-                        if (ByteArrayBitMap.isSet(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
-                            Log.print(' ');
-                            Log.print(localVariableIndex);
-                            Log.print("[fp+");
-                            Log.print(fpRelativeIndex * Word.size());
-                            Log.print("]");
+                    if (interpreter.isFrameInitialized(blockIndexFor(bcp))) {
+                        Log.print(", locals={");
+                        for (int localVariableIndex = 0; localVariableIndex < codeAttribute.maxLocals; ++localVariableIndex) {
+                            final int fpRelativeIndex = stackFrameLayout.localVariableReferenceMapIndex(localVariableIndex);
+                            if (ByteArrayBitMap.isSet(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
+                                Log.print(' ');
+                                Log.print(localVariableIndex);
+                                Log.print("[fp+");
+                                Log.print(fpRelativeIndex * Word.size());
+                                Log.print("]");
+                            }
                         }
-                    }
-                    Log.print(" }");
-                    Log.print(", stack={");
-                    for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack; ++operandStackIndex) {
-                        final int fpRelativeIndex = stackFrameLayout.operandStackReferenceMapIndex(operandStackIndex);
-                        if (ByteArrayBitMap.isSet(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
-                            Log.print(' ');
-                            Log.print(operandStackIndex);
-                            Log.print("[fp+");
-                            Log.print(fpRelativeIndex * Word.size());
-                            Log.print("]");
+                        Log.print(" }");
+                        Log.print(", stack={");
+                        for (int operandStackIndex = 0; operandStackIndex < codeAttribute.maxStack; ++operandStackIndex) {
+                            final int fpRelativeIndex = stackFrameLayout.operandStackReferenceMapIndex(operandStackIndex);
+                            if (ByteArrayBitMap.isSet(targetMethod.referenceMaps(), offset, targetMethod.frameReferenceMapSize(), fpRelativeIndex)) {
+                                Log.print(' ');
+                                Log.print(operandStackIndex);
+                                Log.print("[fp+");
+                                Log.print(fpRelativeIndex * Word.size());
+                                Log.print("]");
+                            }
                         }
+                        Log.println(" }");
+                    } else {
+                        Log.println(", *unreachable*");
                     }
-                    Log.println(" }");
                 }
             }
 
