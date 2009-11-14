@@ -35,8 +35,8 @@ public class CiTarget {
 
     public final CiRegister[] registerReferenceMapOrder;
     public final CiRegister[] callerSavedRegisters;
-    public final CiRegister.AllocationSet registerConfig;
-    public final CiRegister stackRegister;
+    public final CiRegister.AllocationSet allocatableRegs;
+    public final CiRegister stackPointerRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig config;
     public final int pageSize;
@@ -49,23 +49,22 @@ public class CiTarget {
     public int heapAlignment;
 
     public CiTarget(CiArchitecture arch, RiRegisterConfig config, int pageSize, boolean isMP) {
-
         this.arch = arch;
         this.config = config;
-        referenceSize = arch.wordSize;
-        stackAlignment = arch.wordSize;
-        cacheAlignment = arch.wordSize;
-        heapAlignment = arch.wordSize;
-        codeAlignment = 16;
+        this.referenceSize = arch.wordSize;
+        this.stackAlignment = arch.wordSize;
+        this.cacheAlignment = arch.wordSize;
+        this.heapAlignment = arch.wordSize;
+        this.codeAlignment = 16;
 
-        this.stackRegister = config.getStackPointerRegister();
+        this.stackPointerRegister = config.getStackPointerRegister();
         this.scratchRegister = config.getScratchRegister();
 
         this.callerSavedRegisters = config.getCallerSaveRegisters();
         this.registerReferenceMapOrder = config.getRegisterReferenceMapOrder();
         this.pageSize = pageSize;
         this.isMP = isMP;
-        this.registerConfig = new CiRegister.AllocationSet(config.getAllocatableRegisters(), registerReferenceMapOrder);
+        this.allocatableRegs = new CiRegister.AllocationSet(config.getAllocatableRegisters(), registerReferenceMapOrder);
     }
 
     /**

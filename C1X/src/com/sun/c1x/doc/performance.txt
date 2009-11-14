@@ -18,6 +18,11 @@ Backend:
 	- Maxine XIR: faster subtype checks for classes, leaves
 	- better handling of tableswitch bytecode
 	- better handling of two operand LIR form
+    - Make the following bytecode implementations inline:
+        - f2i f2l f2d d2i d2l d2f
+        - lrem ldiv
+    - Make the following bytecode implementations global stubs:
+        - frem drem
 
 Frontend:
 	- XIR: implement HIR -> HIR xir translation
@@ -28,7 +33,7 @@ Frontend:
 	- Implement memory reordering
 	- Implement loop invariant code motion
 	- Optimize endianness conversions and endian-writes
-	      (e.g. (x >> 24 & 0xff) | (....)) and a[0] = x >> 24 ... 
+	      (e.g. (x >> 24 & 0xff) | (....)) and a[0] = x >> 24 ...
 	- Finish loop peeling
 	- Implement loop unrolling
 	- Allow value numbering of constant loads

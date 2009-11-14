@@ -77,7 +77,7 @@ public class X86 extends CiArchitecture {
     public static final CiRegister[] allRegisters =   {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
     public static final CiRegister[] allRegisters64 = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
 
-    public X86(String name, int wordSize, CiRegister[] registers, int framePadding, int nativeMoveConstInstructionSize) {
-        super(name, wordSize, "x86", BitOrdering.LittleEndian, registers, framePadding, 1, nativeMoveConstInstructionSize);
+    public X86(String name, int wordSize, CiRegister[] registers, int framePadding) {
+        super(name, wordSize, "x86", ByteOrder.LittleEndian, registers, 1, wordSize);
     }
 }

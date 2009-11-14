@@ -102,7 +102,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         X86LIRAssembler assembler = new X86LIRAssembler(compilation);
         asm = assembler.masm;
 
-        for (CiRegister reg : compiler.target.registerConfig.allocatableRegisters) {
+        for (CiRegister reg : compiler.target.allocatableRegs.allocatableRegisters) {
             if (reg.isCpu()) {
                 allocatableRegisters.add(reg);
             }

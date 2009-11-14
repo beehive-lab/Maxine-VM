@@ -44,7 +44,6 @@ public class CallingConvention {
         int curOverflowArgumentsSize = 0;
         for (CiLocation l : locations) {
             arguments.add(locationToOperand(l));
-
             if (l.isStackOffset()) {
                 curOverflowArgumentsSize = Math.max(curOverflowArgumentsSize, l.stackOffset + l.stackSize);
             }

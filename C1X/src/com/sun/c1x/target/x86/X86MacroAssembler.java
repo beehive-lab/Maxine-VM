@@ -565,7 +565,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
-        assert opr1.isXMM() && opr2.isXMM();
+        assert opr1.isXmm() && opr2.isXmm();
         ucomisd(opr1, opr2);
 
         Label l = new Label();
@@ -588,8 +588,8 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
-        assert opr1.isXMM();
-        assert opr2.isXMM();
+        assert opr1.isXmm();
+        assert opr2.isXmm();
         ucomiss(opr1, opr2);
 
         Label l = new Label();
@@ -1000,7 +1000,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     // Support optimal SSE move instructions.
     void movflt(CiRegister dst, CiRegister src) {
-        assert dst.isXMM() && src.isXMM();
+        assert dst.isXmm() && src.isXmm();
         if (C1XOptions.UseXmmRegToRegMoveAll) {
             movaps(dst, src);
         } else {
@@ -1009,17 +1009,17 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movflt(CiRegister dst, Address src) {
-        assert dst.isXMM();
+        assert dst.isXmm();
         movss(dst, src);
     }
 
     void movflt(Address dst, CiRegister src) {
-        assert src.isXMM();
+        assert src.isXmm();
         movss(dst, src);
     }
 
     void movdbl(CiRegister dst, CiRegister src) {
-        assert dst.isXMM() && src.isXMM();
+        assert dst.isXmm() && src.isXmm();
         if (C1XOptions.UseXmmRegToRegMoveAll) {
             movapd(dst, src);
         } else {
@@ -1028,7 +1028,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movdbl(CiRegister dst, Address src) {
-        assert dst.isXMM();
+        assert dst.isXmm();
         if (C1XOptions.UseXmmLoadAndClearUpper) {
             movsd(dst, src);
         } else {
@@ -1037,7 +1037,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movdbl(Address dst, CiRegister src) {
-        assert src.isXMM();
+        assert src.isXmm();
         movsd(dst, src);
     }
 
