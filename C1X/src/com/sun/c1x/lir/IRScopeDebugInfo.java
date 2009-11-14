@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 
-
 /**
  * The <code>IRScopeDebugInfo</code> class definition.
  *

@@ -682,7 +682,6 @@ public class ValueStack {
         }
     }
 
-
     private static boolean typeMismatch(Value x, Value y) {
         return y == null || x.type() != y.type();
     }

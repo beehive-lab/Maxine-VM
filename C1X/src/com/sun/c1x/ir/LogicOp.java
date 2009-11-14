@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ir;
 
-
 /**
  * The <code>LogicOp</code> class definition.
  *

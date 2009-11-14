@@ -40,7 +40,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         this.compilation = lirAssembler.compilation;
     }
 
-
     public void visitJITAdapterFrameStub(JITAdapterFrameStub stub) {
         masm.bind(stub.entry);
 
@@ -53,13 +52,11 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // where "oarg" is an overflow argument and "jarg" is an argument from the caller's java stack.
         // save the caller's RBP
 
-
         final int wordSize =  compilation.target.arch.wordSize;
 
         // Receive calling convention (for the current method, but with outgoing==true, i.e. as if we were calling the current method)
         FrameMap map = compilation.frameMap();
         CallingConvention cc = map.javaCallingConvention(Util.signatureToBasicTypes(compilation.method.signatureType(), !compilation.method.isStatic()), true, false);
-
 
         // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
         final int adapterFrameSize = cc.overflowArgumentsSize();
@@ -160,7 +157,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
             // lockReg was destroyed by fast unlocking attempt => recompute it
             ce.monitorAddress(stub.monitorIx, stub.lockReg());
         }
-
 
         masm.callGlobalStub(GlobalStub.MonitorExit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
         // TODO: do we need to add call info? (tw) No, if stub.info not null, then the call automatically adds it to the correct position

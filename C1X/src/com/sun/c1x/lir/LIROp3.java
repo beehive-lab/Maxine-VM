@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-
 /**
  * The <code>LIROp3</code> class definition.
  *
@@ -28,7 +27,6 @@ package com.sun.c1x.lir;
  *
  */
 public class LIROp3 extends LIRInstruction {
-
 
     /**
      * Creates a new LIROp3 instruction. A LIROp3 instruction represents a LIR instruction

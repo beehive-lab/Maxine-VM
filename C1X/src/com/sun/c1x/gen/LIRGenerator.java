@@ -701,7 +701,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
             address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
 
-
             // we need to patch the offset in the instruction so don't allow
             // generateAddress to try to be smart about emitting the -1.
             // Otherwise the patching code won't know how to find the
@@ -1059,8 +1058,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIRAddress address;
         if (info != null && needsPatching) {
-
-
             LIRLocation tempResult = this.newRegister(CiKind.Int);
             lir.resolveFieldIndex(tempResult, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
             address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
@@ -1447,8 +1444,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
     }
-
-
 
     protected LIROperand rlockResult(Instruction x) {
         // does an rlock and sets result

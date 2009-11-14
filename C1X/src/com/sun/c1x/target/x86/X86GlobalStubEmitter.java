@@ -73,7 +73,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         return LIROperandFactory.address(X86.rsp, argumentIndexToStackOffset(parameterIndex), param.kind);
     }
 
-
     private LIROperand allocateResultOperand(XirOperand result) {
         return LIROperandFactory.address(X86.rsp, argumentIndexToStackOffset(0), result.kind);
     }
@@ -163,11 +162,9 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             operands[t.index] = op;
         }
 
-
         for (LIROperand operand : operands) {
             assert operand != null;
         }
-
 
         Label[] labels = new Label[template.labels.length];
         for (int i = 0; i < labels.length; i++) {

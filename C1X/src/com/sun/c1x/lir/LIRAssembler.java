@@ -53,7 +53,6 @@ public abstract class LIRAssembler {
     private Value pendingNonSafepoint;
     private int pendingNonSafepointOffset;
 
-
     protected static class SlowPath {
         public final LIRXirInstruction instruction;
         public final Label[] labels;

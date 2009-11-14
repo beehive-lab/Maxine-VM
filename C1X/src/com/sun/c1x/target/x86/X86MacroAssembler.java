@@ -43,7 +43,6 @@ public class X86MacroAssembler extends X86Assembler {
 
     public X86MacroAssembler(C1XCompiler compiler, CiTarget target, int frameSize) {
         super(target, frameSize);
-        // TODO: make macro assembler compiler independent w.r.t global stubs
         this.compiler = compiler;
 
         rscratch1 = compiler.target.scratchRegister;
@@ -68,26 +67,25 @@ public class X86MacroAssembler extends X86Assembler {
 
     public final int callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.parameters.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), compilation, stub.resultOperand.kind, info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
     }
 
     public final int callGlobalStubNoArgs(GlobalStub stub, LIRDebugInfo info, CiRegister result) {
         assert 0 == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), CiKind.Illegal, info, result);
     }
-
 
     public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), CiKind.Illegal, info, result, args);
     }
 
     public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), CiKind.Illegal, info, result, args);
     }
 
-    private int callGlobalStubHelper(Object stub, C1XCompilation compilation, CiKind resultKind, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
+    private int callGlobalStubHelper(Object stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
@@ -337,7 +335,6 @@ public class X86MacroAssembler extends X86Assembler {
             Util.shouldNotReachHere();
         }
     }
-
 
     void movoop(Address dst, CiConstant obj) {
         assert obj.basicType == CiKind.Object;

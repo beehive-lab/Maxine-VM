@@ -233,8 +233,6 @@ final class RegisterVerifier {
             LIRInstruction op = ops.at(i);
             //visitor.visit(op);
 
-
-
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 op.printOn(TTY.out);
             }

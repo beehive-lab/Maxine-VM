@@ -31,7 +31,6 @@ import com.sun.c1x.util.Util;
  */
 public class LIROp1 extends LIRInstruction {
 
-
     public enum LIRMoveKind {
         Normal, Volatile, Unaligned
     }

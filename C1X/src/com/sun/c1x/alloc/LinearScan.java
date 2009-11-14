@@ -1390,8 +1390,6 @@ public class LinearScan {
 
             } // end of instruction iteration
 
-
-
         } // end of block iteration
 
         // add the range [0, 1[ to all fixed intervals
@@ -2181,9 +2179,6 @@ public class LinearScan {
         return res;
     }
 
-    // some methods used to check correctness of debug information
-
-
     void assertEqual(CiValue m1, CiValue m2) {
         if (m1 == null) {
             assert m2 == null;
@@ -2193,7 +2188,6 @@ public class LinearScan {
     }
 
     void assertEqual(IRScopeDebugInfo d1, IRScopeDebugInfo d2) {
-        // TODO:
     }
 
     IntervalWalker initComputeOopMaps() {
@@ -2357,26 +2351,15 @@ public class LinearScan {
 
         } else {
             // double-size operands
-
             CiValue first = null;
             CiValue second = null;
 
             if (opr.isDoubleStack()) {
-
-                if (compilation.target.arch.is64bit()) {
-                    first = new CiLocation(opr.kind, opr.doubleStackIndex(), FrameMap.SPILL_SLOT_SIZE * 2, false);
-                } else {
-                    Util.shouldNotReachHere();
-                }
-
+                assert compilation.target.arch.is64bit();
+                first = new CiLocation(opr.kind, opr.doubleStackIndex(), FrameMap.SPILL_SLOT_SIZE * 2, false);
             } else if (opr.isDoubleCpu()) {
-
-                if (compilation.target.arch.is64bit()) {
-                    first = new CiLocation(opr.kind, opr.asRegister());
-                } else {
-                    Util.shouldNotReachHere();
-                }
-
+                assert compilation.target.arch.is64bit();
+                first = new CiLocation(opr.kind, opr.asRegister());
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
                 assert opr.asRegisterLow() == opr.asRegisterHigh() : "assumed in calculation";
                 first = new CiLocation(opr.kind, opr.asRegister());
