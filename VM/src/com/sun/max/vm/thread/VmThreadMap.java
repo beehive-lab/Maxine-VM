@@ -61,7 +61,7 @@ public final class VmThreadMap {
         public void allocate() {
             super.allocate();
             NativeMutex nativeMutex = (NativeMutex) mutex;
-            nativeRegisterVmThreadMapMutex(nativeMutex.asPointer());
+            nativeSetGlobalThreadANDGCLock(nativeMutex.asPointer());
         }
 
         @Override
@@ -104,7 +104,8 @@ public final class VmThreadMap {
 
         /**
          * Acquires an ID for a VmThread.
-         * This method is not synchronized. It is required by the caller to synchronize on ACTIVE.
+         *
+         * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
          *
          * @param vmThread the VmThread for which an ID should be assigned
          * @return the ID assigned to {@code vmThread}
@@ -135,7 +136,7 @@ public final class VmThreadMap {
         }
 
         /**
-         * This method is not synchronized. It is required by the caller to synchronize on ACTIVE.
+         * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
          *
          * @param id
          */
@@ -162,12 +163,13 @@ public final class VmThreadMap {
     }
 
     /**
-     * Informs the native code of the mutex used to synchronize {@link #ACTIVE}.
+     * Informs the native code of the mutex used to synchronize on {@link #ACTIVE}
+     * which serves as a global thread creation and GC lock.
      *
      * @param mutex the address of a platform specific mutex
      */
     @C_FUNCTION
-    private static native void nativeRegisterVmThreadMapMutex(Pointer mutex);
+    private static native void nativeSetGlobalThreadANDGCLock(Pointer mutex);
 
     private final IDMap idMap = new IDMap(64);
     private volatile int vmThreadStartCount;

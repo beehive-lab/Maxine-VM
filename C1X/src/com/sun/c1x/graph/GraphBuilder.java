@@ -613,7 +613,7 @@ public class GraphBuilder {
         BlockBegin fsucc = blockAt(stream().nextBCI());
         int bci = stream().currentBCI();
         boolean isBackwards = tsucc.bci() <= bci || fsucc.bci() <= bci;
-        final Value instr = append(new If(x, cond, false, y, tsucc, fsucc, isBackwards ? stateBefore : null, isBackwards));
+        append(new If(x, cond, false, y, tsucc, fsucc, isBackwards ? stateBefore : null, isBackwards));
     }
 
     void genIfZero(Condition cond) {
@@ -1246,7 +1246,6 @@ public class GraphBuilder {
 
     void pushScope(RiMethod target, BlockBegin continuation) {
         IRScope calleeScope = new IRScope(compilation, scope(), bci(), target, -1);
-        scope().addCallee(calleeScope);
         BlockMap blockMap = compilation.getBlockMap(calleeScope.method, -1);
 
         calleeScope.setCallerState(curState);

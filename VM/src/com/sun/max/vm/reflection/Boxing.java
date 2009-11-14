@@ -175,7 +175,8 @@ public enum Boxing {
                 }
             } else if (parameterKind == Kind.WORD) {
                 if (parameterType != Word.class) {
-                    asm.invokevirtual(CAST_WORD.get(parameterType), 1, 1);
+                    Integer methodRefIndex = CAST_WORD.get(parameterType);
+                    asm.invokevirtual(methodRefIndex, 1, 1);
                 }
             }
         }

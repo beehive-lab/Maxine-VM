@@ -24,8 +24,6 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Trap.Number.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.lang.reflect.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -138,9 +136,6 @@ public abstract class Trap {
         new CriticalNativeMethod(MaxineVM.class, "native_trap_exit");
     }
 
-    @HOSTED_ONLY
-    private static final Method trapStubMethod = Classes.getDeclaredMethod(Trap.class, "trapStub", int.class, Pointer.class, Address.class);
-
     /**
      * Determines if a given method actor denotes the method used to handle runtime traps.
      *
@@ -148,9 +143,6 @@ public abstract class Trap {
      * @return true if {@code classMethodActor} is the actor for {@link #trapStub(int, Pointer, Address)}
      */
     public static boolean isTrapStub(MethodActor methodActor) {
-        if (MaxineVM.isHosted()) {
-            return !methodActor.isInitializer() && MaxineVM.isMaxineClass(methodActor.holder()) && methodActor.toJava() != null && methodActor.toJava().equals(trapStubMethod);
-        }
         return methodActor == trapStub.classMethodActor;
     }
 

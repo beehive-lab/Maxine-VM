@@ -107,7 +107,7 @@ public class IR {
     private void optimize1() {
         // do basic optimizations
         if (C1XOptions.PhiSimplify) {
-            new PhiSimplifier(startBlock);
+            new PhiSimplifier(this);
             verifyAndPrint("After phi simplification");
         }
         if (C1XOptions.OptLoopPeeling) {
