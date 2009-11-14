@@ -40,6 +40,7 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * The mechanism for iterating over the frames in a thread's stack.
@@ -116,9 +117,6 @@ public abstract class StackFrameWalker {
     private Pointer calleeInstructionPointer;
     private StackFrame calleeStackFrame;
     private Pointer trapState;
-
-    private static final CriticalMethod MaxineVM_run = new CriticalMethod(MaxineVM.class, "run", MaxineVM.RUN_METHOD_SIGNATURE);
-    private static final CriticalMethod VmThread_run = new CriticalMethod(VmThread.class, "run", VmThread.RUN_METHOD_SIGNATURE);
 
     /**
      * Walks a thread's stack.
@@ -269,7 +267,9 @@ public abstract class StackFrameWalker {
     }
 
     private boolean isRunMethod(final ClassMethodActor lastJavaCalleeMethodActor) {
-        return lastJavaCalleeMethodActor != null && (lastJavaCalleeMethodActor.equals(MaxineVM_run.classMethodActor) || lastJavaCalleeMethodActor.equals(VmThread_run.classMethodActor));
+        return lastJavaCalleeMethodActor != null &&
+            (lastJavaCalleeMethodActor.equals(ClassRegistry.MaxineVM_run) ||
+             lastJavaCalleeMethodActor.equals(ClassRegistry.VmThread_run));
     }
 
     /**
@@ -285,6 +285,9 @@ public abstract class StackFrameWalker {
         final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
         if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isJniFunction()) {
             Pointer anchor = nextAnchor();
+            if (anchor.isZero()) {
+                return false;
+            }
             final Word lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset);
             final Word lastJavaCallerStackPointer = readWord(anchor, JavaFrameAnchor.SP.offset);
             final Word lastJavaCallerFramePointer = readWord(anchor, JavaFrameAnchor.FP.offset);
@@ -305,6 +308,7 @@ public abstract class StackFrameWalker {
      */
     private void advanceFrameInNative(Purpose purpose) {
         Pointer anchor = nextAnchor();
+        FatalError.check(!anchor.isZero(), "No anchor found when executing 'in native'");
         Pointer lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset).asPointer();
         if (lastJavaCallerInstructionPointer.isZero()) {
             FatalError.check(!lastJavaCallerInstructionPointer.isZero(), "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
@@ -316,10 +320,15 @@ public abstract class StackFrameWalker {
 
     private Pointer nextAnchor() {
         FatalError.check(!currentAnchor.isZero(), "No more anchors");
-        if (readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero()) {
+        Pointer pc = readWord(currentAnchor, JavaFrameAnchor.PC.offset).asPointer();
+        if (pc.isZero()) {
             currentAnchor = readWord(currentAnchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();
         }
-        FatalError.check(!readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero(), "Encountered anchor with zero PC");
+        pc = readWord(currentAnchor, JavaFrameAnchor.PC.offset).asPointer();
+        if (pc.isZero()) {
+            // No more anchors
+            return pc;
+        }
         Pointer anchor = this.currentAnchor;
         this.currentAnchor = readWord(anchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();
         return anchor;

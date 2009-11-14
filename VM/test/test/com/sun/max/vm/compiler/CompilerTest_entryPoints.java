@@ -20,11 +20,9 @@
  */
 package test.com.sun.max.vm.compiler;
 
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.prototype.*;
-import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Tests whether we can get hold of the VM entry points needed for producing a boot image.
@@ -42,14 +40,14 @@ public abstract class CompilerTest_entryPoints extends CompilerTestCase {
     }
 
     public void test_startupMethod() {
-        final ClassMethodActor methodActor = BootImage.getMethodActorFor(BootImage.RUN, MaxineVM.class);
+        final ClassMethodActor methodActor = (ClassMethodActor) ClassRegistry.MaxineVM_run;
         assertNotNull(methodActor);
         final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
         assertTrue(entryPointOffset > 0);
     }
 
     public void test_runMethod() {
-        final ClassMethodActor methodActor = BootImage.getMethodActorFor(BootImage.RUN, VmThread.class);
+        final ClassMethodActor methodActor = (ClassMethodActor) ClassRegistry.VmThread_run;
         assertNotNull(methodActor);
         final int entryPointOffset = CompilerTestSetup.compilerScheme().compile(methodActor).getEntryPoint(CallEntryPoint.OPTIMIZED_ENTRY_POINT).asOffset().toInt();
         assertTrue(entryPointOffset > 0);

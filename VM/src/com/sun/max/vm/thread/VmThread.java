@@ -260,6 +260,14 @@ public class VmThread {
         return UnsafeCast.asVmThread(VM_THREAD.getConstantReference().toJava());
     }
 
+    /**
+     * Determines if the current thread is still attaching to the VM. In this state,
+     * synchronization and garbage collection are disabled.
+     */
+    public static boolean isAttaching() {
+        return current() == null;
+    }
+
     private static void executeRunnable(VmThread vmThread) throws Throwable {
         try {
             if (vmThread == MAIN_VM_THREAD) {
@@ -279,7 +287,7 @@ public class VmThread {
     /**
      * The entry point for the native thread startup code.
      *
-     * ATTENTION: this signature must match 'VMThreadRunMethod' in "Native/substrate/threads.h".
+     * ATTENTION: this signature must match 'VmThreadRunMethod' in "Native/substrate/threads.h".
      *
      * @param id the unique identifier assigned to this thread when it was {@linkplain #start0() started}. This
      *            identifier is only bound to this thread until it is {@linkplain #beTerminated() terminated}. That is,
@@ -360,18 +368,20 @@ public class VmThread {
     }
 
     /**
-     *   ATTENTION: this signature must match 'VMThreadAttachMethod' in "Native/substrate/threads.h".
+     *   ATTENTION: this signature must match 'VmThreadAttachMethod' in "Native/substrate/threads.h".
      */
     @C_FUNCTION
     private static int attach(Address nativeThread,
-                    Pointer name,
-                    JniHandle group,
+                    Pointer nameCString,
+                    JniHandle groupHandle,
                     boolean daemon,
                     Pointer stackBase,
                     Pointer vmThreadLocals,
                     Pointer refMapArea,
                     Pointer stackYellowZone,
                     Pointer stackEnd) {
+
+        // TODO: This is a mutator - need to synchronize with GC thread(s)!!
 
         Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
@@ -382,7 +392,6 @@ public class VmThread {
 
         JNI_ENV.setConstantWord(enabledVmThreadLocals, JniNativeInterface.jniEnv());
 
-        // Add the VM thread locals to the active map
         for (VmThreadLocal threadLocal : VmThreadLocal.valuesNeedingInitialization()) {
             threadLocal.initialize();
         }
@@ -392,7 +401,6 @@ public class VmThread {
         STACK_REFERENCE_MAP.setConstantWord(triggeredVmThreadLocals, refMapArea);
 
         final VmThread vmThread = VmThreadFactory.create(null);
-        VM_THREAD.setConstantReference(enabledVmThreadLocals, Reference.fromJava(vmThread));
 
         vmThread.nativeThread = nativeThread;
         vmThread.vmThreadLocals = enabledVmThreadLocals;
@@ -400,22 +408,51 @@ public class VmThread {
         vmThread.stackDumpStackFrameWalker.setVmThreadLocals(enabledVmThreadLocals);
         vmThread.guardPage = stackYellowZone;
 
+        VmThreadMap.addVmThread(vmThread);
+
+        ID.setConstantWord(enabledVmThreadLocals, Address.fromInt(vmThread.id()));
+        VM_THREAD.setConstantReference(enabledVmThreadLocals, Reference.fromJava(vmThread));
+
+        // Synchronization can only be performed on this thread after the above two
+        // statements have been executed.
         try {
-            String nameString = name.isZero() ? null : CString.utf8ToJava(name);
-            JDK_java_lang_Thread.createThreadForAttach(vmThread, nameString, (ThreadGroup) group.unhand(), daemon);
+            String name = nameCString.isZero() ? null : CString.utf8ToJava(nameCString);
+            ThreadGroup group = (ThreadGroup) groupHandle.unhand();
+            if (group == null) {
+                group = VmThread.MAIN_VM_THREAD.javaThread.getThreadGroup();
+            }
+            JDK_java_lang_Thread.createThreadForAttach(vmThread, name, group, daemon);
+
+            vmThread.initializationComplete();
+
+            // Enable safepoints:
+            Safepoint.enable();
+
+            vmThread.traceThreadAfterInitialization(stackBase, enabledVmThreadLocals);
+            return JniFunctions.JNI_OK;
+
+        } catch (OutOfMemoryError oome) {
+            return JniFunctions.JNI_ENOMEM;
         } catch (Throwable throwable) {
+            throwable.printStackTrace(Log.out);
             return JniFunctions.JNI_ERR;
         }
+    }
 
-        VmThreadMap.addVmThread(vmThread);
-        ID.setConstantWord(enabledVmThreadLocals, Address.fromInt(vmThread.id()));
+    /**
+     *   ATTENTION: this signature must match 'VmThreadDetachMethod' in "Native/substrate/threads.h".
+     */
+    @C_FUNCTION
+    private static int detach(Pointer vmThreadLocals) {
+        // TODO: This is a mutator - need to synchronize with GC thread(s)!!
+        Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
 
-        vmThread.initializationComplete();
+        // Disable safepoints:
+        Safepoint.setLatchRegister(disabledVmThreadLocals);
 
-        // Enable safepoints:
-        Safepoint.enable();
-
-        vmThread.traceThreadAfterInitialization(stackBase, enabledVmThreadLocals);
+        VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
+        vmThread.beTerminated();
+        vmThread.traceThreadAfterTermination();
         return JniFunctions.JNI_OK;
     }
 
@@ -565,7 +602,7 @@ public class VmThread {
      */
     public VmThread(Thread javaThread) {
         if (javaThread != null) {
-            setJavaThread(javaThread);
+            setJavaThread(javaThread, javaThread.getName());
         }
     }
 
@@ -686,12 +723,13 @@ public class VmThread {
     /**
      * Bind the given {@code Thread} to this VmThread.
      * @param javaThread thread to be bound
+     * @param name the name of the thread
      */
-    public VmThread setJavaThread(Thread javaThread) {
+    public VmThread setJavaThread(Thread javaThread, String name) {
         this.isGCThread = Heap.isGcThread(javaThread);
         this.waitingCondition = ConditionVariableFactory.create();
         this.javaThread = javaThread;
-        this.name = javaThread.getName();
+        this.name = name;
         this.jniHandles = new JniHandles();
         return this;
     }
@@ -704,8 +742,8 @@ public class VmThread {
             javaThread.notifyAll();
         }
         terminationComplete();
-        // It is the monitor scheme's responsibility to ensure that this thread isn't reset to RUNNABLE
-        // if it blocks here.
+        // It is the monitor scheme's responsibility to ensure that this thread isn't
+        // reset to RUNNABLE if it blocks here.
         VmThreadMap.ACTIVE.removeVmThreadLocals(vmThreadLocals);
         // Monitor acquisition after point this MUST NOT HAPPEN as it may reset state to RUNNABLE
         nativeThread = Address.zero();

@@ -81,14 +81,6 @@ public class SpecialReferenceManager {
         JavaMonitorManager.bindStickyMonitor(LOCK, new StandardJavaMonitor());
     }
 
-    // These methods and their invocation stubs must be compiled in the image
-    private static final CriticalMethod registerMethod = new CriticalMethod(JDK.java_lang_ref_Finalizer.javaClass(), "register", SignatureDescriptor.create(Void.TYPE, Object.class));
-    private static final CriticalMethod referenceHandlerConstructor = new CriticalMethod(JDK.java_lang_ref_Reference$ReferenceHandler.javaClass(), "<init>", SignatureDescriptor.create(Void.TYPE, ThreadGroup.class, String.class));
-    static {
-        MaxineVM.registerImageInvocationStub(registerMethod.classMethodActor);
-        MaxineVM.registerImageInvocationStub(referenceHandlerConstructor.classMethodActor);
-    }
-
     private static Grip discoveredList;
 
     /**
@@ -205,8 +197,7 @@ public class SpecialReferenceManager {
     public static void registerFinalizee(Object object) {
         if (FINALIZERS_SUPPORTED) {
             try {
-                final ClassMethodActor methodActor = registerMethod.classMethodActor;
-                methodActor.invoke(ReferenceValue.from(object));
+                ClassRegistry.Finalizer_register_Object.invoke(ReferenceValue.from(object));
             } catch (Exception e) {
                 FatalError.unexpected("Could not register object for finalization", e);
             }
@@ -250,7 +241,7 @@ public class SpecialReferenceManager {
             // do nothing; get the root thread group
         }
         try {
-            final Thread handler = (Thread) referenceHandlerConstructor.classMethodActor.invokeConstructor(ReferenceValue.from(tg), ReferenceValue.from("Reference Handler")).asObject();
+            final Thread handler = (Thread) ClassRegistry.ReferenceHandler_init.invokeConstructor(ReferenceValue.from(tg), ReferenceValue.from("Reference Handler")).asObject();
             /* If there were a special system-only priority greater than
              * MAX_PRIORITY, it would be used here
              */

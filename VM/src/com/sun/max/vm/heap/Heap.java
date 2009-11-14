@@ -30,6 +30,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * The dynamic Java object heap.
@@ -390,6 +391,11 @@ public final class Heap {
             Throw.stackDump("Out of memory and GC is disabled");
             MaxineVM.native_exit(1);
         }
+        if (VmThread.isAttaching()) {
+            Log.println("Cannot run GC on a thread still attaching to the VM");
+            MaxineVM.native_exit(1);
+        }
+
         long beforeFree = 0L;
         long beforeUsed = 0L;
         if (verbose()) {

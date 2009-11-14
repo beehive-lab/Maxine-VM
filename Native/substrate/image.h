@@ -48,6 +48,7 @@ typedef struct image_Header {
     jint vmRunMethodOffset;
     jint vmThreadRunMethodOffset;
     jint vmThreadAttachMethodOffset;
+    jint vmThreadDetachMethodOffset;
     jint runSchemeRunMethodOffset;
 
     jint classRegistryOffset;

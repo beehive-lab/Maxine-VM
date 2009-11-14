@@ -67,21 +67,6 @@ public final class MaxineVM {
     private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
     private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
 
-    /**
-     * The signature of {@link #run(com.sun.max.unsafe.Pointer,
-     *     com.sun.max.unsafe.Pointer,
-     *     com.sun.max.unsafe.Word,
-     *     com.sun.max.unsafe.Word,
-     *     com.sun.max.unsafe.Word,
-     *     com.sun.max.unsafe.Pointer,
-     *     int,
-     *     com.sun.max.unsafe.Pointer)}.
-     */
-    public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
-
-    @HOSTED_ONLY
-    private static final Class[] RUN_METHOD_PARAMETER_TYPES;
-
     @HOSTED_ONLY
     private static final Map<Class, Boolean> HOSTED_CLASSES = new HashMap<Class, Boolean>();
 
@@ -134,16 +119,6 @@ public final class MaxineVM {
             final String[] parts = p.split(",");
             MAXINE_CODE_BASE_LIST.addAll(Arrays.asList(parts));
         }
-
-        Method runMethod = null;
-        for (Method method : MaxineVM.class.getDeclaredMethods()) {
-            if (method.getName().equals("run")) {
-                ProgramError.check(runMethod == null, "There must only be one method named \"run\" in " + MaxineVM.class);
-                runMethod = method;
-            }
-        }
-        RUN_METHOD_PARAMETER_TYPES = runMethod.getParameterTypes();
-        RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
     }
 
     public enum Phase {
@@ -484,14 +459,6 @@ public final class MaxineVM {
 
     public static Pointer primordialVmThreadLocals() {
         return primordialThreadLocals;
-    }
-
-    /**
-     * Used by the inspector only.
-     */
-    @HOSTED_ONLY
-    public static Class[] runMethodParameterTypes() {
-        return RUN_METHOD_PARAMETER_TYPES.clone();
     }
 
     /**

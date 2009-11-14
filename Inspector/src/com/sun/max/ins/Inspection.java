@@ -130,6 +130,8 @@ public final class Inspection {
         this.preferences = new InspectionPreferences(this, settings);
         this.inspectionActions = new InspectionActions(this);
 
+        ClassMethodActor.hostedVerificationDisabled = true;
+
         BreakpointPersistenceManager.initialize(this);
         inspectionActions.refresh(true);
 
