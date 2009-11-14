@@ -105,7 +105,6 @@ public class MaxineTesterConfiguration {
         output(test.output.MegaThreads.class, RAND_SPARC);
 
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
-        jtt(jtt.threads.Thread_isInterrupted05.class,     FAIL_ALL);
         jtt(jtt.jdk.EnumMap01.class,                        RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                        RAND_ALL);
         jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitcps, @cpscps

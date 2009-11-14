@@ -106,45 +106,43 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         ownerThread.setNextWaitingThread(waitingThreads);
         waitingThreads = ownerThread;
         this.ownerThread = null;
-        final boolean interrupted = !waitingCondition.threadWait(mutex, timeoutMilliSeconds);
+        final boolean interrupted = ownerThread.isInterrupted(true) || !waitingCondition.threadWait(mutex, timeoutMilliSeconds);
         this.ownerThread = ownerThread;
         ownerThread.setState(Thread.State.RUNNABLE);
         this.recursionCount = recursionCount;
 
         boolean timedOut = false;
-        if (!interrupted) {
-            if (ownerThread.nextWaitingThread() != ownerThread) {
-                // The thread is still on the waitingThreads list: remove it
-                timedOut = true;
+        if (ownerThread.nextWaitingThread() != ownerThread) {
+            // The thread is still on the waitingThreads list: remove it
+            timedOut = !interrupted;
 
-                if (ownerThread == waitingThreads) {
-                    // Common case: owner is at the head of the list
-                    waitingThreads = ownerThread.nextWaitingThread();
-                    ownerThread.setNextWaitingThread(ownerThread);
-                } else {
-                    if (waitingThreads == null) {
+            if (ownerThread == waitingThreads) {
+                // Common case: owner is at the head of the list
+                waitingThreads = ownerThread.nextWaitingThread();
+                ownerThread.setNextWaitingThread(ownerThread);
+            } else {
+                if (waitingThreads == null) {
+                    FatalError.unexpected("Thread woken from wait by timeout not in waiting threads list");
+                }
+                // Must now search the list and remove ownerThread
+                VmThread previous = waitingThreads;
+                VmThread waiter = previous.nextWaitingThread();
+                while (waiter != ownerThread) {
+                    if (waiter == null) {
                         FatalError.unexpected("Thread woken from wait by timeout not in waiting threads list");
                     }
-                    // Must now search the list and remove ownerThread
-                    VmThread previous = waitingThreads;
-                    VmThread waiter = previous.nextWaitingThread();
-                    while (waiter != ownerThread) {
-                        if (waiter == null) {
-                            FatalError.unexpected("Thread woken from wait by timeout not in waiting threads list");
-                        }
-                        previous = waiter;
-                        waiter = waiter.nextWaitingThread();
-                    }
-                    // ownerThread
-                    previous.setNextWaitingThread(ownerThread.nextWaitingThread());
-                    ownerThread.setNextWaitingThread(ownerThread);
+                    previous = waiter;
+                    waiter = waiter.nextWaitingThread();
                 }
+                // ownerThread
+                previous.setNextWaitingThread(ownerThread.nextWaitingThread());
+                ownerThread.setNextWaitingThread(ownerThread);
             }
         }
 
         traceEndMonitorWait(currentThread, interrupted, timedOut);
 
-        if (interrupted || this.ownerThread.isInterrupted(true)) {
+        if (interrupted) {
             // turn off interrupted status
             this.ownerThread.isInterrupted(true);
             throw new InterruptedException();
