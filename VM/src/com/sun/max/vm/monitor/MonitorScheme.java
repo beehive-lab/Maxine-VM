@@ -64,7 +64,6 @@ public interface MonitorScheme extends VMScheme {
      */
     void monitorNotifyAll(Object object);
 
-
     int makeHashCode(Object object);
 
     /**

@@ -22,7 +22,6 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 
-
 /**
  * Preferences and policies for layout out inspector windows.
  *

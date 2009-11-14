@@ -27,7 +27,6 @@ import javax.swing.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 
-
 /**
  * A sequence of items suitable for adding to a {@link InspectorPopupMenu}.
  * <br>

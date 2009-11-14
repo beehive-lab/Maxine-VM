@@ -93,7 +93,6 @@ public abstract class TeleVM implements MaxVM {
 
     private static final String TELE_LIBRARY_NAME = "tele";
 
-
     /**
      * The options controlling how a tele VM instance is {@linkplain #newAllocator(String...) created}.
      */
@@ -264,7 +263,6 @@ public abstract class TeleVM implements MaxVM {
 
     private static final Logger LOGGER = Logger.getLogger(TeleVM.class.getName());
 
-
     /**
      * An object that delays evaluation of a trace message for controller actions.
      */
@@ -431,7 +429,6 @@ public abstract class TeleVM implements MaxVM {
     private TeleClassRegistry teleClassRegistry;
     private TeleCodeRegistry teleCodeRegistry;
     private final TeleBytecodeBreakpoint.Factory bytecodeBreakpointFactory;
-
 
     /**
      * The immutable history of all VM states, as of the last state transition; thread safe
@@ -811,7 +808,6 @@ public abstract class TeleVM implements MaxVM {
     public boolean isCardTableAddress(Address address) {
         return teleHeapManager.isCardTableAddress(address);
     }
-
 
     /**
      * @return manager for {@link MemoryRegion}s containing target code in the VM.
@@ -1990,7 +1986,6 @@ public abstract class TeleVM implements MaxVM {
                 LOGGER.warning("Suspend called while VM not running!");
             }
         }
-
 
         public void resume() {
 

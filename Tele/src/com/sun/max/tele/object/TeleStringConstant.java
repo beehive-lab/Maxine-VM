@@ -50,7 +50,6 @@ public final class TeleStringConstant extends TelePoolConstant {
         return value;
     }
 
-
     @Override
     public String maxineRole() {
         return "StringConstant";

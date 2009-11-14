@@ -24,7 +24,6 @@ import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.compiler.tir.TirMessage.*;
 
-
 public class TirBufferedSink extends TirInstructionAdapter implements TirMessageSink  {
     private VariableSequence<TirMessage> prolog = new ArrayListSequence<TirMessage>();
     private VariableSequence<TirMessage> messages = new ArrayListSequence<TirMessage>();

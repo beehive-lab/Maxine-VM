@@ -27,7 +27,6 @@
  */
 package jtt.threads;
 
-
 public class Thread_join03 implements Runnable {
 
     static volatile boolean cont;

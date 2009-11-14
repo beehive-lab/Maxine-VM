@@ -144,7 +144,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return null;
     }
 
-
     public final int numberOfDirectCalls() {
         return (directCallees == null) ? 0 : directCallees.length;
     }
@@ -540,7 +539,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return (classMethodActor == null) ? description() : classMethodActor.format("%H.%n(%p)");
     }
 
-
     public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
 
     }
@@ -548,7 +546,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     protected final void setABI(TargetABI abi) {
         this.abi = abi;
     }
-
 
     public void cleanup() {
     }

@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.x86;
 
-
 /**
  * @author Bernd Mathiske
  */

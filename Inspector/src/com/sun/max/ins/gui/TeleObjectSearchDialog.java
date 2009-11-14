@@ -23,7 +23,6 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 import com.sun.max.tele.object.*;
 
-
 /**
  * An abstract base class for a dialog that enables the user to search for an object in the tele VM.
  * The dialog is composed of a list of names of objects and a text field that can be used to filter the list.

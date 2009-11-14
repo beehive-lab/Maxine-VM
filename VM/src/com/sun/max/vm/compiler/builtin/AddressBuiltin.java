@@ -43,7 +43,6 @@ public abstract class AddressBuiltin extends Builtin {
         public static final LessEqual BUILTIN = new LessEqual();
     }
 
-
     public static class LessThan extends AddressBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -52,7 +51,6 @@ public abstract class AddressBuiltin extends Builtin {
         }
         public static final LessThan BUILTIN = new LessThan();
     }
-
 
     public static class GreaterEqual extends AddressBuiltin {
         @Override
@@ -63,7 +61,6 @@ public abstract class AddressBuiltin extends Builtin {
         public static final GreaterEqual BUILTIN = new GreaterEqual();
     }
 
-
     public static class GreaterThan extends AddressBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -72,7 +69,6 @@ public abstract class AddressBuiltin extends Builtin {
         }
         public static final GreaterThan BUILTIN = new GreaterThan();
     }
-
 
     public static class DividedByAddress extends AddressBuiltin {
         @Override
@@ -88,7 +84,6 @@ public abstract class AddressBuiltin extends Builtin {
         }
     }
 
-
     public static class DividedByInt extends AddressBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -103,7 +98,6 @@ public abstract class AddressBuiltin extends Builtin {
         }
     }
 
-
     public static class RemainderByAddress extends AddressBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -117,7 +111,6 @@ public abstract class AddressBuiltin extends Builtin {
             return Stoppable.DIVIDE_BY_ZERO_CHECK;
         }
     }
-
 
     public static class RemainderByInt extends AddressBuiltin {
         @Override

@@ -23,7 +23,6 @@ package com.sun.max.vm.template.source;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.builtin.*;
 
-
 /**
  * Class holding Java code the templates for conditional branch bytecode instructions will be compiled from.
  * The templates only comprise the prefix of a conditional branch: popping operands of the comparison and the comparison itself.

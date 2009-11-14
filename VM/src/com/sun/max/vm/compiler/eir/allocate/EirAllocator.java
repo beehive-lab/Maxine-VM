@@ -65,8 +65,6 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
         }
     }
 
-
-
     private void gatherDefinitions() {
         for (EirBlock eirBlock : methodGeneration().eirBlocks()) {
             for (EirInstruction instruction : eirBlock.instructions()) {
@@ -91,8 +89,6 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
             }
         }
     }
-
-
 
     /**
      * Determines the live range for each EIR variable in the EIR control flow graph.
@@ -178,8 +174,6 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
         }
         return true;
     }
-
-
 
     protected EirLocationCategory decideVariableLocationCategory(PoolSet<EirLocationCategory> categories) {
         if (categories.length() == 1) {

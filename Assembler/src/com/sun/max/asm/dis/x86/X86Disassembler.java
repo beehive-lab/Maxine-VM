@@ -35,7 +35,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 
-
 /**
  * An x86 instruction disassembler.
  *
@@ -117,7 +116,6 @@ import com.sun.max.util.*;
  * @author David Liu
  */
 public abstract class X86Disassembler extends Disassembler {
-
 
     private X86Assembly<? extends X86Template> assembly;
 
@@ -418,7 +416,6 @@ public abstract class X86Disassembler extends Disassembler {
         throw new AssemblyException("unknown instruction");
     }
 
-
     /**
      * Creates a disassembled instruction based on a given sequence of bytes, a template and a set of arguments. The
      * caller has performed the necessary decoding of the bytes to derive the template and arguments.
@@ -551,7 +548,6 @@ public abstract class X86Disassembler extends Disassembler {
         }
         return Strings.padLengthWithSpaces(mnemonic(di), 8) + s;
     }
-
 
     private String getSibIndexAndScale(Queue<X86Operand> operands, Queue<Argument> arguments) {
         X86Parameter parameter = (X86Parameter) operands.remove();

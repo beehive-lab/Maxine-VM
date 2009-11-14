@@ -234,7 +234,6 @@ public class VmThreadLocal {
 
     private static VmThreadLocal[] valuesNeedingInitialization;
 
-
     /**
      * Specifies if this variable is a reference.
      */
@@ -264,7 +263,6 @@ public class VmThreadLocal {
      * The stack trace element describing where this thread local is declared.
      */
     public final StackTraceElement declaration;
-
 
     static {
         ProgramError.check(SAFEPOINT_LATCH.index == 0);

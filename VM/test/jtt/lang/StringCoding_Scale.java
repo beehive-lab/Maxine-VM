@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public class StringCoding_Scale {
     public static float maxCharPerByte = 1.0f;
 

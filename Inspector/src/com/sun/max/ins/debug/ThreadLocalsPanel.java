@@ -84,7 +84,6 @@ public final class ThreadLocalsPanel extends InspectorPanel {
         return threadLocalsTable;
     }
 
-
     private final class ThreadLocalsHeaderPanel extends InspectorPanel {
 
         private final AppendableSequence<InspectorLabel> labels = new LinkSequence<InspectorLabel>();

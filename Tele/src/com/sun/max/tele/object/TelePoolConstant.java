@@ -42,7 +42,6 @@ public class TelePoolConstant extends TeleTupleObject {
         return true;
     }
 
-
     @Override
     public String maxineRole() {
         return "PoolConstant";

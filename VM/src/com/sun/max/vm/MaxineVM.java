@@ -82,7 +82,6 @@ public final class MaxineVM {
         }
     }, MaxineVM.Phase.PRISTINE);
 
-
     @HOSTED_ONLY
     private static MaxineVM globalHostOrTarget = null;
 

@@ -26,7 +26,6 @@ import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.gen.risc.bitRange.*;
 import com.sun.max.collect.*;
 
-
 /**
  *
  * @author Sumeet Panchal

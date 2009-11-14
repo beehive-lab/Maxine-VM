@@ -22,7 +22,6 @@ package jtt.reflect;
 
 import java.lang.reflect.*;
 
-
 /*
  * @Harness: java
  * @Runs: "test1" = "test1"; "test2" = "test2"

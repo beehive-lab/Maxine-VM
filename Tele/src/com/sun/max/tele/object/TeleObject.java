@@ -115,7 +115,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         lastValidPointer = Pointer.zero();
     }
 
-
     public TeleObjectMemory.State getTeleObjectMemoryState() {
         return reference.grip().getTeleObjectMemoryState();
     }

@@ -29,7 +29,6 @@ import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 
-
 /**
  * A renderer suitable for a table "Tag" cell in an Inspector display where each row corresponds to a memory region.
  * Displays text identifying registers, if any, that point into this region; displays a special border if there is a

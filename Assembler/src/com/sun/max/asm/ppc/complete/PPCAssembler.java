@@ -22,7 +22,6 @@ package com.sun.max.asm.ppc.complete;
 
 import com.sun.max.asm.*;
 
-
 /**
  * The base class for the 32-bit and 64-bit PowerPC assemblers. This class also defines
  * the more complex synthetic PowerPC instructions.

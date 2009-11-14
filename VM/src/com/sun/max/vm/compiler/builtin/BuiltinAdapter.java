@@ -257,8 +257,6 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitJavaBuiltin(builtin, result, arguments);
     }
 
-
-
     public void visitConvertLongToInt(ConvertLongToInt builtin, IR_Type result, IR_Type[] arguments) {
         visitJavaBuiltin(builtin, result, arguments);
     }
@@ -274,7 +272,6 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
     public void visitConvertDoubleToFloat(ConvertDoubleToFloat builtin, IR_Type result, IR_Type[] arguments) {
         visitJavaBuiltin(builtin, result, arguments);
     }
-
 
     // ////////////////////
     // AddressBuiltin
@@ -314,7 +311,6 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
     public void visitRemainderByInt(RemainderByInt builtin, IR_Type result, IR_Type[] arguments) {
         visitAddressBuiltin(builtin, result, arguments);
     }
-
 
     // ////////////////////
     // PointerLoadBuiltin
@@ -554,7 +550,6 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-
     // ////////////////////
     // PointerAtomicBuiltin
 
@@ -689,8 +684,6 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
     public void visitConvertFloatToDouble(ConvertFloatToDouble builtin, IR_Type result, IR_Type[] arguments) {
         visitBuiltin(builtin, result, arguments);
     }
-
-
 
     public void visitMarker(Marker builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);

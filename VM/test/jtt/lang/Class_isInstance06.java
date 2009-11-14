@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_isInstance06 implements Cloneable {
 
     private Class_isInstance06() {

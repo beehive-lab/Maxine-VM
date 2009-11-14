@@ -22,7 +22,6 @@ package com.sun.max.vm.monitor.modal.sync.nat;
 
 import com.sun.max.vm.monitor.modal.sync.*;
 
-
 public class NativeConditionVariableFactory extends ConditionVariableFactory {
     /**
      * Creates a NativeConditionVariable.
@@ -37,6 +36,5 @@ public class NativeConditionVariableFactory extends ConditionVariableFactory {
     protected void initializeImpl() {
         NativeConditionVariable.initialize();
     }
-
 
 }

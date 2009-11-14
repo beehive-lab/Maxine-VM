@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.bytecode.refmaps;
 
-
 /**
  * An interpreter that encodes the details for a frame in an {@code int}. The format of the encoding is:
  * <p>

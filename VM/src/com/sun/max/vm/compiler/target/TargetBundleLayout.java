@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-
 import static com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField.*;
 
 import com.sun.max.collect.*;
@@ -228,8 +227,6 @@ public final class TargetBundleLayout {
     public Pointer firstElementPointer(Address start, ArrayField field) {
         return start.plus(firstElementOffset(field)).asPointer();
     }
-
-
 
     /**
      * Gets the array length based on which size of the cell reserved for a given field was calculated.

@@ -370,7 +370,6 @@ public abstract class ResolutionSnippet extends Snippet {
         public static final ResolveSpecialMethod SNIPPET = new ResolveSpecialMethod();
     }
 
-
     public static final class ResolveVirtualMethod extends ResolutionSnippet {
 
         @NEVER_INLINE

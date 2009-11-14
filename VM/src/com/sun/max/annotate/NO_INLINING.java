@@ -22,7 +22,6 @@ package com.sun.max.annotate;
 
 import java.lang.annotation.*;
 
-
 /**
  * Every thus annotated method or class should not have static inlining heuristics applied.
  * The only inlining that should occur in methods or classes with this annotation should

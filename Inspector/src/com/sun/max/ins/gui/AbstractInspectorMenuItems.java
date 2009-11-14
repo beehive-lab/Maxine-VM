@@ -23,7 +23,6 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
-
 /**
  * A default implementation of menu items that makes unnecessary some of the methods
  * that are seldom needed.

@@ -22,7 +22,6 @@ package com.sun.max.vm.verifier.types;
 
 import java.util.*;
 
-
 /**
  * This class is used when verifying subroutines. This is best explained by the following excerpt from a <a
  * href="http://java.sun.com/sfaq/verifier.html">site<a> discussing the initial Java bytecode verifier. This excerpt

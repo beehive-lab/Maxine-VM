@@ -428,7 +428,6 @@ public abstract class ClassActor extends Actor {
         return arrayClassIDs[numberOfDimensions - 1];
     }
 
-
     @Override
     public Utf8Constant genericSignature() {
         return classRegistry().get(GENERIC_SIGNATURE, this);

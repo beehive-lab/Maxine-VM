@@ -382,8 +382,6 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
         toOrigin(grip).setFloat(displacement, index, value);
     }
 
-
-
     @INLINE
     public void writeDouble(Grip grip, Offset offset, double value) {
         toOrigin(grip).writeDouble(offset, value);
@@ -398,8 +396,6 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
     public void setDouble(Grip grip, int displacement, int index, double value) {
         toOrigin(grip).setDouble(displacement, index, value);
     }
-
-
 
     @INLINE
     public int compareAndSwapInt(Grip grip, Offset offset, int suspectedValue, int newValue) {

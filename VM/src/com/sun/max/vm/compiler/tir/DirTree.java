@@ -28,7 +28,6 @@ import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.Console;
 import com.sun.max.vm.hotpath.compiler.Console.*;
 
-
 public class DirTree extends DirMethod {
     private final TirTree tree;
 
@@ -36,8 +35,6 @@ public class DirTree extends DirMethod {
         super(classMethodActor);
         this.tree = tree;
     }
-
-
 
     public void print() {
         Console.printDivider("DIR TREE: " + NameMap.nameOf(tree));

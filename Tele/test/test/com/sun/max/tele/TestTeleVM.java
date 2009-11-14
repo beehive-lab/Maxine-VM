@@ -31,7 +31,6 @@ import com.sun.max.tele.TeleVM.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 
-
 /**
  * Creates a running {@link TeleVM}, suitable for testing.
  *

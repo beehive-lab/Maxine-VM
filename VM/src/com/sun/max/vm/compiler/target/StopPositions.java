@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.target;
 
-
 /**
  * Utilities for manipulating and decoding the entries of a
  * target method's {@linkplain TargetMethod#stopPositions() stop positions} array.

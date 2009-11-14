@@ -40,7 +40,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A table that displays Maxine VM thread local names and values, to be used within an
  * instance of {@link ThreadLocalsInspector}.

@@ -28,7 +28,6 @@ import java.util.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.constant.*;
 
-
 /**
  * Encapsulates the information specified in one or more
  * <a href="http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#22856">LineNumberTable</a>

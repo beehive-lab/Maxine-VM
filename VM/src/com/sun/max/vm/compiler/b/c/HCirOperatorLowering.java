@@ -651,7 +651,6 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         }
     }
 
-
     @Override
     public void visit(final PutField operator) {
         final Resolvable resolvable = new Resolvable(ResolveInstanceFieldForWriting.SNIPPET) {
@@ -712,8 +711,6 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         final CirSnippet setDimensionInArray = CirSnippet.get(ArraySetSnippet.SetInt.SNIPPET);
         final CirVariable dimensionArray = variableFactory().createTemporary(Kind.REFERENCE);
 
-
-
         final Resolvable resolvable = new Resolvable(ResolveClass.SNIPPET) {
             @Override
             CirCall makeCall(CirValue classActor) {
@@ -765,7 +762,6 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                 cc(),
                 ce())));
     }
-
 
     @Override
     public void visit(MonitorEnter operator) {

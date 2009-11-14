@@ -26,7 +26,6 @@
  */
 package jtt.except;
 
-
 public class BC_saload {
 
     static short[] arr = {0, -1, 4, 10000};

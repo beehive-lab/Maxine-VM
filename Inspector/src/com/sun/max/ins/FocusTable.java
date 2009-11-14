@@ -39,7 +39,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A table specialized for displaying aspects of the current {@link InspectorFocus}.
  * Intended for Inspector testing.
@@ -218,7 +217,6 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             return this;
         }
     }
-
 
     /**
      * Renders the current value of an aspect of the user focus.

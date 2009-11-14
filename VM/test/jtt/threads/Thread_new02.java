@@ -24,8 +24,6 @@
  */
 package jtt.threads;
 
-
-
 public class Thread_new02 implements Runnable {
 
     static final Thread_new02 thisObject = new Thread_new02();

@@ -19,7 +19,6 @@
  * Company, Ltd.
  */
 
-
 package jtt.jvmni;
 
 /*

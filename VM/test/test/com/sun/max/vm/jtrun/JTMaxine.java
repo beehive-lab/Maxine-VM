@@ -66,7 +66,6 @@ public class JTMaxine {
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
 
-
     private static final String configFieldName = "testClasses";
 
     public static void main(String[] args) {

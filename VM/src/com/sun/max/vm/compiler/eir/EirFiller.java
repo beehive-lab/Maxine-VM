@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.eir;
 
-
 /**
  * This instruction is used to effectively delete another instruction by overwriting it,
  * sparing the effort to restructure the block it is placed into.

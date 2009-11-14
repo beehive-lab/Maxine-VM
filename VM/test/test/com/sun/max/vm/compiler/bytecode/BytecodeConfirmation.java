@@ -27,7 +27,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 
-
 /**
  * Confirmation that requested byte codes actually occur or do not occur in a method.
  * 

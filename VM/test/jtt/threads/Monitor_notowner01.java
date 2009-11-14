@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public class Monitor_notowner01 {
 
     static Object monitor = new Object();

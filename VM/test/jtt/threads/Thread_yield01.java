@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Thread_yield01 {
     private Thread_yield01() {
     }

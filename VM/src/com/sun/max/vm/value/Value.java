@@ -401,7 +401,6 @@ public abstract class Value<Value_Type extends Value<Value_Type>> implements Cla
         throw illegalConversion("object");
     }
 
-
     public boolean unboxBoolean() {
         throw illegalConversion("boolean");
     }

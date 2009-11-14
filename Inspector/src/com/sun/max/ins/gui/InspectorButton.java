@@ -24,7 +24,6 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 
-
 /**
  * A button specialized for use in the Maxine Inspector.
  *

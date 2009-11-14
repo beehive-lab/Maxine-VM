@@ -40,7 +40,6 @@ public class VerifyAllocation extends AlgorithmPart {
     private static final int SEED = 2;
     private static final double EXCEPTION_EDGE_PROB = 0.25;
 
-
     public VerifyAllocation(boolean first) {
         super(first ? 6 : 12);
     }

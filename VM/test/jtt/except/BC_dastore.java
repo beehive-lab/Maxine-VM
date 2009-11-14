@@ -26,7 +26,6 @@
  */
 package jtt.except;
 
-
 public class BC_dastore {
 
     static double[] arr = {0, 0, 0, 0};

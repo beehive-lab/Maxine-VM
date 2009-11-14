@@ -997,7 +997,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
     }
 
-
     /**
      * Unboxes a given object to a boolean.
      *

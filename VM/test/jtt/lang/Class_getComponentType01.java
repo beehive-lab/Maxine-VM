@@ -32,7 +32,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_getComponentType01 {
     private Class_getComponentType01() {
     }

@@ -20,7 +20,6 @@
  */
 package jtt.bytecode;
 
-
 /*
  * @Harness: java
  * @Runs: 0 = true

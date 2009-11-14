@@ -23,7 +23,6 @@ package test.output;
 import java.io.*;
 import java.net.*;
 
-
 public class JREJarLoadTest {
     public static void main(String[] args) {
         testLoad("com.sun.tools.javac.api.JavacTool", "tools.jar");

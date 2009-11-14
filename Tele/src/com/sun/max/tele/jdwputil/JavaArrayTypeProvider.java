@@ -25,13 +25,11 @@ import java.lang.reflect.*;
 import com.sun.max.jdwp.vm.core.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
-
 public class JavaArrayTypeProvider extends JavaClassProvider implements ArrayTypeProvider {
 
     private ReferenceTypeProvider elementType;
     private Class clazz;
     private VMAccess vm;
-
 
     JavaArrayTypeProvider(Class c, VMAccess vm, ClassLoaderProvider classLoader) {
         super(c, vm, classLoader);
@@ -50,6 +48,5 @@ public class JavaArrayTypeProvider extends JavaClassProvider implements ArrayTyp
         assert result instanceof ArrayProvider;
         return (ArrayProvider) result;
     }
-
 
 }

@@ -24,7 +24,6 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
-
 /**
  * Inspector's canonical surrogate for an object of type {@link FieldRefConstant} in the {@link TeleVM}.
  *

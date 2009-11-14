@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Thread_getState02 {
     private Thread_getState02() {
     }

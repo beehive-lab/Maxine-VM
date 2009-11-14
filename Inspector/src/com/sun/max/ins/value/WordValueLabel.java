@@ -332,7 +332,6 @@ public class WordValueLabel extends ValueLabel {
         super.setValue(newValue);
     }
 
-
     public void redisplay() {
         setValue(value());
     }
@@ -731,7 +730,6 @@ public class WordValueLabel extends ValueLabel {
         }
         return action;
     }
-
 
     private InspectorAction getInspectMemoryWordsAction(Value value) {
         InspectorAction action = null;

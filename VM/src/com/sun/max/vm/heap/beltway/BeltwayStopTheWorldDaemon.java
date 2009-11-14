@@ -120,7 +120,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-
     private static class TLABScavengerReset implements Procedure<VmThread> {
         public void run(VmThread thread) {
             // thread.getTLAB().unSet();   FIXME
@@ -158,7 +157,6 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, resetSafepoint);
             }
         }
-
 
     };
 

@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.holder.*;
 
-
 /**
  * This class implements a centralized place for naming specific classes in the JDK that are referenced
  * explicitly in other parts of the VM.

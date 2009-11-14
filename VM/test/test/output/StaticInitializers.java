@@ -20,7 +20,6 @@
  */
 package test.output;
 
-
 public class StaticInitializers {
 
     private static String staticString1 = "string 1";

@@ -22,7 +22,6 @@ package com.sun.max.ins.gui;
 
 import com.sun.max.collect.*;
 
-
 /**
  * Constants denoting the kinds of code that can be inspected for a method.
  *

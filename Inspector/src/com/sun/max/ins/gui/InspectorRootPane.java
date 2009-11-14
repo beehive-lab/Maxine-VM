@@ -27,7 +27,6 @@ import javax.swing.*;
 import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.program.*;
 
-
 /**
  * A frame suitable for use by an {@linkplain Inspector inspector}.
  * This is a minimal frame without window system decoration, suitable

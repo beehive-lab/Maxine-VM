@@ -37,4 +37,3 @@
  */
 package com.sun.max.asm.ia32.complete;
 
-

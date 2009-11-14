@@ -31,7 +31,6 @@ import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
 
-
 public class TirPrintSink extends TirBufferedSink {
 
     public static void print(TirTree tree) {

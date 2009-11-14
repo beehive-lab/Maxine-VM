@@ -25,7 +25,6 @@ import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * An abstract data domain whose purpose is distinguishing between
  * null and nonnull (initialized) values.  Illustrated below
@@ -99,7 +98,6 @@ public final class InitializedDomain extends AbstractValueDomain<InitializedDoma
         boolean isNotInitialized() {
             return this == NULL;
         }
-
 
         @Override
         boolean lessOrEqualNontrivial(Set v) {

@@ -86,7 +86,6 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
      */
     private int dynamicallyLoadedClassCount = 0;
 
-
     /**
      * Create a registry that contains summary information about all classes known to have been
      * loaded into the {@link TeleVM}, initialized at registry creation with classes pre-loaded
@@ -243,7 +242,6 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
         }
         return classActor;
     }
-
 
     private static ThreadLocal<Boolean> usingTeleClassIDs = new ThreadLocal<Boolean>() {
         @Override

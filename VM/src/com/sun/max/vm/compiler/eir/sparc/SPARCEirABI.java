@@ -254,7 +254,6 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         return allocatableRegisters;
     }
 
-
     private PoolSet<SPARCEirRegister> createCallerSavedRegisterPoolSet() {
         final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(SPARCEirRegister.pool());
         result.or(allocatableRegisters());

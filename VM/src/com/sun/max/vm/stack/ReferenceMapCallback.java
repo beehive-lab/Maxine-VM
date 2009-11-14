@@ -22,7 +22,6 @@ package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
 
-
 public interface ReferenceMapCallback {
 
     void setReferenceMapBit(Pointer p);

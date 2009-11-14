@@ -88,5 +88,4 @@ class RiscFieldDisassembler<Template_Type extends Template> implements RiscInstr
     public void visitString(String s) {
     }
 
-
 }

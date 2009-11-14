@@ -28,7 +28,6 @@ import javax.swing.border.*;
 
 import com.sun.max.ins.*;
 
-
 /**
  * A simple Inspector dialog that shows a single component and has a single "Close" button.
  * @author Michael Van De Vanter

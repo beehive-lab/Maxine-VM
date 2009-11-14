@@ -22,8 +22,6 @@ package jtt.reflect;
 
 import java.lang.reflect.*;
 
-
-
 /*
  * @Harness: java
  * @Runs: 1 = 55

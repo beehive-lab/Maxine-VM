@@ -507,7 +507,6 @@ public class JDWPSession {
         throw new IllegalArgumentException("Argument " + value + " could not be converted into a VirtualMachineValue object!");
     }
 
-
     /**
      * Retrieves the status of a thread.
      * @param thread the thread whose status should be queried

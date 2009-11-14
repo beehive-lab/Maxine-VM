@@ -20,7 +20,6 @@
  */
 package jtt.micro;
 
-
 /*
  * @Harness: java
  * @Runs: 0=0s; 1=1s; 2=2s; 3=!java.lang.ArrayIndexOutOfBoundsException;

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.verifier.types;
 
-
 /**
  * @author Doug Simon
  */

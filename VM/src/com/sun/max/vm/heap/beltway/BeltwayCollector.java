@@ -108,7 +108,6 @@ public abstract class BeltwayCollector extends Collector {
         InspectableHeapInfo.afterGarbageCollection();
     }
 
-
     /**
      * Evacuate objects from the "from" belt directly referenced by roots into the "to" belt.
      * @param from

@@ -22,7 +22,6 @@ package com.sun.max.ins.gui;
 
 import javax.swing.table.*;
 
-
 /**
  * A table model specialized for Inspector's table-based views.
  *

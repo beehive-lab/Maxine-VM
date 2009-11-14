@@ -23,7 +23,6 @@ package test.com.sun.max.vm.compiler.eir.sparc;
 import junit.framework.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
-
 public class SPARCEirTranslatorTest_binaryArithmetic extends BytecodeTest_binaryArithmetic {
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_binaryArithmetic.class.getSimpleName());

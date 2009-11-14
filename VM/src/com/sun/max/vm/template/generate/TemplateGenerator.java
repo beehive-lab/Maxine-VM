@@ -67,7 +67,6 @@ public class TemplateGenerator {
         return (ClassMethodActor) MethodActor.fromJava(method);
     }
 
-
     protected Class initializeClassInTarget(final Class javaClass) {
         return MaxineVM.usingTarget(new Function<Class>() {
             public Class call() {

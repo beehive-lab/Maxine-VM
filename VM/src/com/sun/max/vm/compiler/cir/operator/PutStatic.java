@@ -27,7 +27,6 @@ import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
-
 public class PutStatic extends JavaResolvableOperator<FieldActor> {
 
     public PutStatic(ConstantPool constantPool, int index) {

@@ -238,7 +238,6 @@ public final class Throw {
         }
     }
 
-
     /**
      * Dumps the stack of the current thread. This method is equivalent to
      * {@link #stackDump(String, Pointer, Pointer, Pointer)} except that it takes an extra parameter ({@code depth})

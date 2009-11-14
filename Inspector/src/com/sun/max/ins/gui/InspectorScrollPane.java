@@ -27,7 +27,6 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
-
 /**
  * A scroll pane specialized for use in the Maxine Inspector.
  * By default uses policies VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER

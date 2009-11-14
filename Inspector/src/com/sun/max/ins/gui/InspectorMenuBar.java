@@ -27,7 +27,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.tele.*;
 
-
 /**
  * A menu bar specialized for use in the Maxine Inspector.
  * <br>

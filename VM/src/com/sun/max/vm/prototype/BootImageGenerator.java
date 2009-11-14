@@ -229,7 +229,6 @@ public final class BootImageGenerator {
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().bootCompilerScheme();
 
-
             VMOptions.beforeExit();
 
             // write the statistics

@@ -224,7 +224,6 @@ public class ComputeLiveSets extends AlgorithmPart {
         final PoolSet<EirVariable> liveGen = PoolSet.noneOf(variablePool);
         final PoolSet<EirVariable> liveKill = PoolSet.noneOf(variablePool);
 
-
         final EirOperand.Procedure useProc = new EirOperand.Procedure() {
             public void run(EirOperand operand) {
 

@@ -131,5 +131,4 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
         return (TeleClassActor) dialog.selectedObject();
     }
 
-
 }

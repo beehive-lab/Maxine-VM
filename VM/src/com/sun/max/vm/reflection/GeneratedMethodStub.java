@@ -26,7 +26,6 @@ import sun.reflect.*;
 
 import com.sun.max.vm.value.*;
 
-
 public abstract class GeneratedMethodStub extends GeneratedStub implements MethodAccessor {
 
     public Object invoke(Object obj, Object[] args) throws IllegalArgumentException, InvocationTargetException {

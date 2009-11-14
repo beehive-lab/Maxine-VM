@@ -26,7 +26,6 @@
  */
 package jtt.except;
 
-
 public class BC_bastore {
 
     static boolean[] arr = {false, false, false, false};

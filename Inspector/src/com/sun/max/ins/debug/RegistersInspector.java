@@ -31,14 +31,12 @@ import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
-
 /**
  * A singleton inspector that displays register contents for the thread the VM that is the current user focus.
  *
  * @author Michael Van De Vanter
  */
 public final class RegistersInspector extends Inspector implements TableColumnViewPreferenceListener {
-
 
     // Set to null when inspector closed.
     private static RegistersInspector registersInspector;
@@ -73,7 +71,6 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         final JMenuItem viewMemoryRegionsMenuItem = new JMenuItem(actions().viewMemoryRegions());
         viewMemoryRegionsMenuItem.setText("View Memory Regions");
         memoryMenu.add(viewMemoryRegionsMenuItem);
-
 
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         refreshView(true);

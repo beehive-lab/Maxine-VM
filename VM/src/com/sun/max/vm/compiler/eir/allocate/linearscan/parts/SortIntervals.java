@@ -31,7 +31,6 @@ import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
  */
 public class SortIntervals extends AlgorithmPart {
 
-
     public SortIntervals() {
         super(8);
     }

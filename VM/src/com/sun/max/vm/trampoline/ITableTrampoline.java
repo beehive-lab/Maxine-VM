@@ -29,7 +29,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
 
-
 public class ITableTrampoline extends DynamicTrampoline {
     public ITableTrampoline(int dispatchTableIndex, TargetMethod trampoline) {
         super(dispatchTableIndex, trampoline);

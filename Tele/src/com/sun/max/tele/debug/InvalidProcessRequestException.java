@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele.debug;
 
-
 /**
  * This exception is thrown when a debugging request is issued at some inappropriate state.
  *

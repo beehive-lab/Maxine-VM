@@ -169,7 +169,6 @@ public class VmThread {
 
     private Throwable pendingException;
 
-
     /**
      * The pool of JNI local references allocated for this thread.
      */
@@ -187,7 +186,6 @@ public class VmThread {
      * @see StandardJavaMonitor#monitorNotify(boolean)
      */
     private VmThread nextWaitingThread = this;
-
 
     /**
      * This happens during bootstrapping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
@@ -588,7 +586,6 @@ public class VmThread {
         return start;
     }
 
-
     /**
      * Creates an unbound VmThread that will be bound later.
      */
@@ -605,7 +602,6 @@ public class VmThread {
             setJavaThread(javaThread, javaThread.getName());
         }
     }
-
 
     /**
      * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack.

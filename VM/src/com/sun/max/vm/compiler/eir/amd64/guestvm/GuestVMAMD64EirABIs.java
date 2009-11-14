@@ -25,7 +25,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.eir.amd64.unix.*;
 
-
 public class GuestVMAMD64EirABIs extends AMD64EirABIsScheme {
 
     @HOSTED_ONLY

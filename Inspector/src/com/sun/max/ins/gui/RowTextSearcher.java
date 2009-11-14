@@ -24,7 +24,6 @@ import java.util.regex.*;
 
 import com.sun.max.collect.*;
 
-
 /**
  * Regular expression pattern matcher; identifies by number the rows that match a pattern.
  *

@@ -22,7 +22,6 @@ package test.output;
 
 import java.lang.reflect.*;
 
-
 /**
  * This is a test case used in the automated testing framework. This program is automatically
  * run on both a standard JVM (e.g. Hotspot), and the Maxine VM, and the resulting output

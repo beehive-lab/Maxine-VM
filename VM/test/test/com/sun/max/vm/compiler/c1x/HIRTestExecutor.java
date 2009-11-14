@@ -39,7 +39,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.prototype.*;
 
-
 public class HIRTestExecutor implements Executor {
     private static HIRGenerator generator;
     public static Utf8Constant testMethod = SymbolTable.makeSymbol("test");

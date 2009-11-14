@@ -20,7 +20,6 @@
  */
 package jtt.except;
 
-
 /*
  * @Harness: java
  * @Runs: -2 = null; -1 = !java.lang.ArrayIndexOutOfBoundsException; 0 = null

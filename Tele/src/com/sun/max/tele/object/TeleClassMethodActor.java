@@ -201,7 +201,6 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         return null;
     }
 
-
     @Override
     public LineTableEntry[] getLineTable() {
 
@@ -216,7 +215,6 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
 
     @Override
     public VariableTableEntry[] getVariableTable() {
-
 
         final ClassMethodActor classMethodActor = this.classMethodActor();
         final LocalVariableTable.Entry[] entries = classMethodActor.codeAttribute().localVariableTable().entries();

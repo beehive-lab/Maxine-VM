@@ -20,9 +20,6 @@
  */
 package com.sun.max.vm.test;
 
-
-
-
 /**
  * A class on which to test the interpreter remotely.
  *
@@ -106,7 +103,6 @@ public class TeleInterpreterRemoteTestClass {
         final TeleInterpreterRemoteTestClass i = subclassObject;
         return i.virtual_overriden(1, 2, 3); //should return 6
     }
-
 
     public static int new1() {
         final TeleInterpreterRemoteTestClass i = new TeleInterpreterRemoteTestClass();

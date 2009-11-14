@@ -27,7 +27,6 @@ import com.sun.max.asm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.jit.*;
 
-
 /**
  * Code buffer abstraction used by template-based code generator. It provides the illusion of an append-only, linear byte buffer
  * to template-based code generators. A code buffer is assumed to be private to a code generator and does not synchronize any

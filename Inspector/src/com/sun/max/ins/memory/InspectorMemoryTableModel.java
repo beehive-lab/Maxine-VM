@@ -27,7 +27,6 @@ import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
-
 /**
  * A model for data tables that represent regions of memory in the VM, one region per row.
  *

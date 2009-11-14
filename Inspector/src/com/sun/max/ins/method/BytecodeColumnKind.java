@@ -23,7 +23,6 @@ package com.sun.max.ins.method;
 import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
 
-
 /**
  * Defines the columns supported by the inspector; the view includes one of each
  * kind.  The visibility of them, however, may be changed by the user.

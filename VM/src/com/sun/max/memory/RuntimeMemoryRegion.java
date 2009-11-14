@@ -97,7 +97,6 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         size = end.minus(start).asSize();
     }
 
-
     public final String description() {
         return description;
     }

@@ -24,8 +24,6 @@
  */
 package jtt.reflect;
 
-
-
 public final class Class_newInstance02 {
     private Class_newInstance02() {
     }

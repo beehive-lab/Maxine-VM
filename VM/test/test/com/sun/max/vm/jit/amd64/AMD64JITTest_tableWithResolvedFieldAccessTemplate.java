@@ -23,7 +23,6 @@ package test.com.sun.max.vm.jit.amd64;
 import junit.framework.*;
 import test.com.sun.max.vm.jit.*;
 
-
 /**
  * Runs unit test JITTest_tableWithResolvedFieldAccessTemplate for AMD64.
  * @see JITTest_tableWithResolvedFieldAccessTemplate

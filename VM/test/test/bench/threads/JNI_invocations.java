@@ -20,8 +20,6 @@
  */
 package test.bench.threads;
 
-
-
 /**
  * Tests scalability of JNI invocations. This test is designed to show the performance of the
  * MFence vs. CAS synchronization implementation.
@@ -57,7 +55,6 @@ public class JNI_invocations {
             }
         }
     }
-
 
     protected static Barrier barrier1;
     protected static Barrier barrier2;

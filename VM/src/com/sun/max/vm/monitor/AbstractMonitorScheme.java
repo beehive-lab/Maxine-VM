@@ -43,5 +43,4 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme  implements
         return Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ counter++;
     }
 
-
 }

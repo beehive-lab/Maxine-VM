@@ -125,7 +125,6 @@ public class JavaCommand {
         }
     }
 
-
     /**
      * Add a classpath entry to this java command.
      * @param classpath the classpath entry that will be added

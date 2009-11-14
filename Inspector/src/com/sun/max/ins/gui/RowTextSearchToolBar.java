@@ -31,7 +31,6 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 
-
 /**
  * A toolbar containing controls for identifying rows that match a regexp pattern
  * and for navigating forward and backward among the matching rows.
@@ -134,8 +133,6 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         nextButton.setToolTipText("Scroll to next matching line");
         nextButton.setEnabled(false);
         add(nextButton);
-
-
 
         final JButton closeButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {

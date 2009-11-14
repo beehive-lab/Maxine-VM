@@ -82,7 +82,6 @@ public class InterpreterObjectMirror implements ObjectMirror {
         return arrayClassActor.componentClassActor().kind.asValue(javaValue);
     }
 
-
     public Value readField(int offset) {
         final FieldActor fieldActor = classActor.findInstanceFieldActor(offset);
         final Field field = fieldActor.toJava();
@@ -94,26 +93,21 @@ public class InterpreterObjectMirror implements ObjectMirror {
         }
     }
 
-
     public Value readMisc() {
         return new WordValue(VMConfiguration.target().monitorScheme().createMisc(object));
     }
-
 
     public int readArrayLength() {
         return HostObjectAccess.getArrayLength(object);
     }
 
-
     public void writeArrayLength(Value value) {
         assert value.asInt() == HostObjectAccess.getArrayLength(object);
     }
 
-
     public void writeHub(Value value) {
         assert value == ReferenceValue.from(classActor);
     }
-
 
     public void writeElement(Kind kind, int index, Value value) {
         if (object instanceof Hybrid) {
@@ -144,7 +138,6 @@ public class InterpreterObjectMirror implements ObjectMirror {
             }
         }
     }
-
 
     public void writeField(int offset, Value value) {
         final TupleClassActor tupleClassActor = (TupleClassActor) classActor;

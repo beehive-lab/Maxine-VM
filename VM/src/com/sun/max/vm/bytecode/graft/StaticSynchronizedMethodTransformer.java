@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
-
 /**
  * @author Doug Simon
  */

@@ -25,7 +25,6 @@ import javax.swing.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.vm.*;
 
-
 /**
  * Persistent preferences for viewing {@link VMConfiguration} information in the VM boot image.
  *

@@ -380,7 +380,6 @@ public class MaxineTesterConfiguration {
         return ExpectedResult.PASS;
     }
 
-
     static final Set<Class> slowAutoTestClasses = new HashSet<Class>(Arrays.asList((Class)
                     CompilerTest_max.class,
                     CompilerTest_coreJava.class,

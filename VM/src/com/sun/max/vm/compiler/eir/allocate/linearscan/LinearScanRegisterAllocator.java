@@ -115,7 +115,6 @@ public abstract class LinearScanRegisterAllocator<EirRegister_Type extends EirRe
         new RemoveRedundantMoves()
     };
 
-
     /**
      * Constructor for the linear scan allocator.
      * @param methodGeneration the object on which the register allocation is performed

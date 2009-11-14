@@ -28,7 +28,6 @@
  */
 package jtt.lang;
 
-
 public final class Object_getClass01 {
 
     private Object_getClass01() {

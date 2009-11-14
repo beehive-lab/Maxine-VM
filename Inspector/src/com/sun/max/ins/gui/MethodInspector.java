@@ -132,7 +132,6 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     private static final VariableMapping<TeleTargetRoutine, MethodInspector> teleTargetRoutineToMethodInspector = new IdentityHashMapping<TeleTargetRoutine, MethodInspector>();
     private static final VariableMapping<TeleClassMethodActor, MethodInspector> teleClassMethodActorToMethodInspector = new IdentityHashMapping<TeleClassMethodActor, MethodInspector>();
 
-
     /**
      * Makes an inspector displaying code for specified code location. Should always work for
      * Java methods. For native methods, only works if the code block is already known.
@@ -261,7 +260,6 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         frame.makeMenu(MenuKind.VIEW_MENU).add(defaultMenuItems(MenuKind.VIEW_MENU));
         return frame;
     }
-
 
     /**
      * Updates the code selection to agree with the current focus.

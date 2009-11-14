@@ -94,7 +94,6 @@ public abstract class CirReducibleComparison extends CirReducibleCombination {
         final CirSwitch oldSwitch = (CirSwitch) body.procedure();
         final CirSwitch newSwitch = new CirSwitch(kind, mapValueComparator(oldSwitch.valueComparator(), oldSwitchMatch), 1);
 
-
         return new CirCall(newSwitch, arguments[0], arguments[1], oldSwitchMatchContinuation, oldSwitchDefaultContinuation);
     }
 
@@ -262,7 +261,6 @@ public abstract class CirReducibleComparison extends CirReducibleCombination {
             }
             return this.valueComparator.complement();
         }
-
 
     }
     public static final class UnsignedIntGreaterEqual extends CirReducibleUnsignedIntComparison {

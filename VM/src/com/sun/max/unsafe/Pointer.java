@@ -124,7 +124,6 @@ public abstract class Pointer extends Address implements Accessor {
         return minus(nWords * Word.size());
     }
 
-
     @Override
     @INLINE
     public final Pointer minus(Offset subtrahend) {
@@ -303,7 +302,6 @@ public abstract class Pointer extends Address implements Accessor {
         return getByte(0);
     }
 
-
     @INLINE
     public final boolean readBoolean(Offset offset) {
         return UnsafeCast.asBoolean(readByte(offset));
@@ -328,7 +326,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final boolean getBoolean() {
         return getBoolean(0);
     }
-
 
     @BUILTIN(builtinClass = PointerLoadBuiltin.ReadShortAtLongOffset.class)
     protected native short readShortAtLongOffset(long offset);
@@ -370,7 +367,6 @@ public abstract class Pointer extends Address implements Accessor {
         return getShort(0);
     }
 
-
     @BUILTIN(builtinClass = PointerLoadBuiltin.ReadCharAtLongOffset.class)
     protected native char readCharAtLongOffset(long offset);
 
@@ -410,7 +406,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final char getChar() {
         return getChar(0);
     }
-
 
     @BUILTIN(builtinClass = PointerLoadBuiltin.ReadIntAtLongOffset.class)
     protected native int readIntAtLongOffset(long offset);
@@ -452,7 +447,6 @@ public abstract class Pointer extends Address implements Accessor {
         return getInt(0);
     }
 
-
     @BUILTIN(builtinClass = PointerLoadBuiltin.ReadFloatAtLongOffset.class)
     protected native float readFloatAtLongOffset(long offset);
 
@@ -492,7 +486,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final float getFloat() {
         return getFloat(0);
     }
-
 
     @BUILTIN(builtinClass = PointerLoadBuiltin.ReadLongAtLongOffset.class)
     protected native long readLongAtLongOffset(long offset);
@@ -534,7 +527,6 @@ public abstract class Pointer extends Address implements Accessor {
         return getLong(0);
     }
 
-
     @BUILTIN(builtinClass = PointerLoadBuiltin.ReadDoubleAtLongOffset.class)
     protected native double readDoubleAtLongOffset(long offset);
 
@@ -574,7 +566,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final double getDouble() {
         return getDouble(0);
     }
-
 
     @BUILTIN(builtinClass = PointerLoadBuiltin.ReadWordAtLongOffset.class)
     protected native Word readWordAtLongOffset(long offset);
@@ -616,7 +607,6 @@ public abstract class Pointer extends Address implements Accessor {
         return getWord(0);
     }
 
-
     @INLINE
     public final Grip readGrip(Offset offset) {
         return readReference(offset).toGrip();
@@ -641,7 +631,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final Grip getGrip() {
         return getGrip(0);
     }
-
 
     @BUILTIN(builtinClass = PointerLoadBuiltin.ReadReferenceAtLongOffset.class)
     protected native Reference readReferenceAtLongOffset(long offset);
@@ -682,7 +671,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final Reference getReference() {
         return getReference(0);
     }
-
 
     @BUILTIN(builtinClass = PointerStoreBuiltin.WriteByteAtLongOffset.class)
     protected native void writeByteAtLongOffset(long offset, byte value);
@@ -726,7 +714,6 @@ public abstract class Pointer extends Address implements Accessor {
         setByte(0, value);
     }
 
-
     @INLINE
     public final void writeBoolean(Offset offset, boolean value) {
         writeByte(offset, UnsafeCast.asByte(value));
@@ -751,7 +738,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final void setBoolean(boolean value) {
         setBoolean(0, value);
     }
-
 
     @BUILTIN(builtinClass = PointerStoreBuiltin.WriteShortAtLongOffset.class)
     protected native void writeShortAtLongOffset(long offset, short value);
@@ -795,7 +781,6 @@ public abstract class Pointer extends Address implements Accessor {
         setShort(0, value);
     }
 
-
     @INLINE
     public final void writeChar(Offset offset, char value) {
         writeShort(offset, UnsafeCast.asShort(value));
@@ -820,7 +805,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final void setChar(char value) {
         setChar(0, value);
     }
-
 
     @BUILTIN(builtinClass = PointerStoreBuiltin.WriteIntAtLongOffset.class)
     protected native void writeIntAtLongOffset(long offset, int value);
@@ -864,7 +848,6 @@ public abstract class Pointer extends Address implements Accessor {
         setInt(0, value);
     }
 
-
     @BUILTIN(builtinClass = PointerStoreBuiltin.WriteFloatAtLongOffset.class)
     protected native void writeFloatAtLongOffset(long offset, float value);
 
@@ -906,7 +889,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final void setFloat(float value) {
         setFloat(0, value);
     }
-
 
     @BUILTIN(builtinClass = PointerStoreBuiltin.WriteLongAtLongOffset.class)
     protected native void writeLongAtLongOffset(long offset, long value);
@@ -950,7 +932,6 @@ public abstract class Pointer extends Address implements Accessor {
         setLong(0, value);
     }
 
-
     @BUILTIN(builtinClass = PointerStoreBuiltin.WriteDoubleAtLongOffset.class)
     protected native void writeDoubleAtLongOffset(long offset, double value);
 
@@ -992,7 +973,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final void setDouble(double value) {
         setDouble(0, value);
     }
-
 
     @BUILTIN(builtinClass = PointerStoreBuiltin.WriteWordAtLongOffset.class)
     protected native void writeWordAtLongOffset(long offset, Word value);
@@ -1036,7 +1016,6 @@ public abstract class Pointer extends Address implements Accessor {
         setWord(0, value);
     }
 
-
     @INLINE
     public final void writeGrip(Offset offset, Grip value) {
         writeReference(offset, value.toReference());
@@ -1061,7 +1040,6 @@ public abstract class Pointer extends Address implements Accessor {
     public final void setGrip(Grip value) {
         setGrip(0, value);
     }
-
 
     @BUILTIN(builtinClass = PointerStoreBuiltin.WriteReferenceAtLongOffset.class)
     protected native void writeReferenceAtLongOffset(long offset, Reference value);

@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 
-
 /**
  * Implements the immutable history of Maxine VM states during a debugging sessions.
  *

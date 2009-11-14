@@ -26,7 +26,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 
-
 /**
  * A factory class that creates scrollable pane components, each of which displays a string representation of some value in the VM.
  *

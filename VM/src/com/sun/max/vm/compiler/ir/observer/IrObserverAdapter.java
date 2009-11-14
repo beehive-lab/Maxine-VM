@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.ir.observer;
 
 import com.sun.max.vm.compiler.ir.*;
 
-
 public abstract class IrObserverAdapter implements IrObserver {
 
     /**

@@ -28,7 +28,6 @@
  */
 package jtt.reflect;
 
-
 public abstract class Class_newInstance03 {
     public static boolean test(int i) throws IllegalAccessException, InstantiationException {
         if (i == 0) {

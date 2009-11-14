@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele;
 
-
 /**
  * A general exception for methods on {@link MaxVM}.
  *

@@ -1180,5 +1180,4 @@ public final class BytecodeScanner {
         currentBytePosition += numBytes;
     }
 
-
 }

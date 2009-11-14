@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_isInterface01 {
     private Class_isInterface01() {
     }

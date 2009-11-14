@@ -128,7 +128,6 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return defaultFont();
     }
 
-
     // Display of primitive Java data
     public Font primitiveDataFont() {
         return defaultFont();
@@ -157,7 +156,6 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color javaUnresolvedNameColor() {
         return null;
     }
-
 
     // Default display of any kind of code
 
@@ -386,11 +384,9 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return debugDisabledTargetBreakpointTagBorder();
     }
 
-
     public Color memoryWatchpointTextColor() {
         return debugIPTextColor();
     }
-
 
     // Search related
     public Icon searchNextMatchButtonIcon() {

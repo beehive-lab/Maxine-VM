@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Monitor_contended01 implements Runnable {
 
     private Monitor_contended01() {

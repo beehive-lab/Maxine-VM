@@ -22,7 +22,6 @@ package com.sun.max.unsafe;
 
 import java.nio.*;
 
-
 /**
  * Buffered reading/writing of bytes from/to a source/destination that can be identified by an {@link Address}.
  *

@@ -94,7 +94,6 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
         }
     }
 
-
     public Descriptor descriptor() {
         if (descriptor instanceof Descriptor) {
             return (Descriptor) descriptor;
