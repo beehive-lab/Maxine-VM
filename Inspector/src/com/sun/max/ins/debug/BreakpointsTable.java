@@ -226,7 +226,7 @@ public final class BreakpointsTable extends InspectorTable {
             }
             // add new and mark previous as not deleted
             for (TeleTargetBreakpoint breakpoint : maxVM().targetBreakpoints()) {
-                final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.address());
+                final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.teleCodeLocation().targetCodeInstructionAddress());
                 if (breakpointData == null) {
                     // new breakpoint in VM since last refresh
                     breakpoints.add(new TargetBreakpointData(breakpoint));
@@ -571,7 +571,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         TargetBreakpointData(TeleTargetBreakpoint teleTargetBreakpoint) {
             this.teleTargetBreakpoint = teleTargetBreakpoint;
-            final Address address = teleTargetBreakpoint.address();
+            final Address address = teleTargetBreakpoint.teleCodeLocation().targetCodeInstructionAddress();
             final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 shortName = inspection().nameDisplay().shortName(teleTargetMethod);
@@ -628,7 +628,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String locationDescription() {
-            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + teleTargetBreakpoint.address().toHexString();
+            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + teleTargetBreakpoint.teleCodeLocation().targetCodeInstructionAddress().toHexString();
         }
 
         @Override
@@ -651,7 +651,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         Address address() {
-            return teleTargetBreakpoint.address();
+            return teleTargetBreakpoint.teleCodeLocation().targetCodeInstructionAddress();
         }
     }
 

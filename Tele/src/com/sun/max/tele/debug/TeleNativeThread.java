@@ -377,7 +377,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             breakpointFactory.registerBreakpointSetByVM(this);
 
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
-            breakpoint = breakpointFactory.getBreakpointAt(breakpointAddress);
+            breakpoint = breakpointFactory.getTargetBreakpointAt(breakpointAddress);
         } catch (DataIOError dataIOError) {
             // This is a catch for problems getting accurate state for threads that are not at breakpoints
         }
@@ -387,11 +387,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
             state = BREAKPOINT;
             this.breakpoint = breakpoint;
-            if (updateInstructionPointer(this.breakpoint.address())) {
-                stateRegisters.setInstructionPointer(this.breakpoint.address());
+            final Address address = this.breakpoint.teleCodeLocation().targetCodeInstructionAddress();
+            if (updateInstructionPointer(address)) {
+                stateRegisters.setInstructionPointer(address);
                 Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
-                ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + this.breakpoint.address() + " was hit: " + this);
+                ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + address + " was hit: " + this);
             }
         } else {
             this.breakpoint = null;

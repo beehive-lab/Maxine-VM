@@ -231,7 +231,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         final AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
         if (haveTargetCodeAddresses) {
             for (TeleTargetBreakpoint teleTargetBreakpoint : maxVM().targetBreakpoints()) {
-                if (rowContainsAddress(row, teleTargetBreakpoint.address())) {
+                if (rowContainsAddress(row, teleTargetBreakpoint.teleCodeLocation().targetCodeInstructionAddress())) {
                     teleTargetBreakpoints.append(teleTargetBreakpoint);
                 }
             }
