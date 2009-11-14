@@ -30,6 +30,7 @@ import test.com.sun.max.vm.compiler.bytecode.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.c1x.C1XCompilerScheme;
+import jtt.fail.Thread_isInterrupted05;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes
@@ -105,7 +106,7 @@ public class MaxineTesterConfiguration {
         output(test.output.MegaThreads.class, RAND_SPARC);
 
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
-        jtt(jtt.threads.Thread_isInterrupted05.class,     FAIL_ALL);
+        jtt(Thread_isInterrupted05.class,     FAIL_ALL);
         jtt(jtt.jdk.EnumMap01.class,                        RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                        RAND_ALL);
         jtt(jtt.hotpath.HP_series.class,                  RAND_SPARC);  // Fails:  @jitcps, @cpscps

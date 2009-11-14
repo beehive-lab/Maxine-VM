@@ -44,7 +44,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     private C1XCompiler compiler;
     private RiXirGenerator xirGenerator;
 
-    public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-XX:OptLevel=", 0,
+    public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 0,
         "Set the optimization level of C1X.") {
         @Override
         public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
@@ -65,7 +65,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
             if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
-                VMOptions.addFieldOptions(C1XOptions.class);
+                VMOptions.addFieldOptions("-C1X:", C1XOptions.class);
                 // create the RiRuntime object passed to C1X
                 c1xRuntime = MaxRiRuntime.globalRuntime;
                 CiTarget c1xTarget = createTarget(vmConfiguration());

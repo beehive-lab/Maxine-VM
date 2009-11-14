@@ -21,6 +21,7 @@
 package test.com.sun.max.vm.jtrun.all;
 
 import test.com.sun.max.vm.jtrun.*;
+import jtt.fail.Thread_isInterrupted05;
 
 /**
  * The <code>JavaTesterConfig</code> class contains generated code which contains the class list
@@ -653,7 +654,6 @@ public class JTConfig {
         jtt.threads.Thread_isInterrupted02.class,
         jtt.threads.Thread_isInterrupted03.class,
         jtt.threads.Thread_isInterrupted04.class,
-        jtt.threads.Thread_isInterrupted05.class,
         jtt.threads.Thread_join01.class,
         jtt.threads.Thread_join02.class,
         jtt.threads.Thread_join03.class,

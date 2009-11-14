@@ -82,7 +82,7 @@ public class LinearScan {
         this.unusedSpillSlot = -1;
         this.newIntervalsFromAllocation = new ArrayList<Interval>();
         this.cachedBlocks = ir.linearScanOrder().toArray(new BlockBegin[ir.linearScanOrder().size()]);
-        this.allocatableRegisters = compilation.target.registerConfig;
+        this.allocatableRegisters = compilation.target.allocatableRegs;
         this.numRegs = allocatableRegisters.nofRegs;
     }
 
@@ -104,7 +104,7 @@ public class LinearScan {
             assert opr.vregNumber() >= numRegs : "found a virtual register with a fixed-register number";
             return opr.vregNumber();
         } else if (opr.isRegister()) {
-            return opr.cpuRegnr();
+            return opr.cpuRegNumber();
         } else {
             Util.shouldNotReachHere();
             return -1;
@@ -119,7 +119,7 @@ public class LinearScan {
         } else if (opr.isSingleCpu()) {
             return -1;
         } else if (opr.isDoubleCpu()) {
-            return opr.cpuRegnrHi();
+            return opr.cpuRegNumberHigh();
         } else if (opr.isSingleXmm()) {
             return -1;
         } else if (opr.isDoubleXmm()) {
@@ -1189,9 +1189,9 @@ public class LinearScan {
                     int argSize = compilation.method().signatureType().argumentSlots(!compilation.method.isStatic());
                     LIROperand o = move.operand();
                     if (o.isSingleStack()) {
-                        assert o.singleStackIx() >= 0 && o.singleStackIx() < argSize : "out of range";
+                        assert o.singleStackIndex() >= 0 && o.singleStackIndex() < argSize : "out of range";
                     } else if (o.isDoubleStack()) {
-                        assert o.doubleStackIx() >= 0 && o.doubleStackIx() < argSize : "out of range";
+                        assert o.doubleStackIndex() >= 0 && o.doubleStackIndex() < argSize : "out of range";
                     } else {
                         Util.shouldNotReachHere();
                     }
@@ -1205,7 +1205,7 @@ public class LinearScan {
 
                 Interval interval = intervalAt(regNum(move.result()));
 
-                int stackSlot = numRegs + (move.operand().isSingleStack() ? move.operand().singleStackIx() : move.operand().doubleStackIx());
+                int stackSlot = numRegs + (move.operand().isSingleStack() ? move.operand().singleStackIndex() : move.operand().doubleStackIndex());
                 interval.setCanonicalSpillSlot(stackSlot);
                 interval.assignReg(stackSlot);
             }
@@ -1429,7 +1429,7 @@ public class LinearScan {
                 int opId = op.id();
 
                 for (CiRegister r : compilation.target.callerSavedRegisters) {
-                    if (r.isXMM()) {
+                    if (r.isXmm()) {
                         addTemp(r.number, opId, IntervalUseKind.noUse, CiKind.Illegal);
                     }
                 }
@@ -2129,7 +2129,7 @@ public class LinearScan {
     }
 
     boolean isXmm(int assignedReg) {
-        return assignedReg >= 0 && assignedReg < allocatableRegisters.registerMapping.length && allocatableRegisters.registerMapping[assignedReg] != null && this.allocatableRegisters.registerMapping[assignedReg].isXMM();
+        return assignedReg >= 0 && assignedReg < allocatableRegisters.registerMapping.length && allocatableRegisters.registerMapping[assignedReg] != null && this.allocatableRegisters.registerMapping[assignedReg].isXmm();
     }
 
     CiRegister toRegister(int assignedReg) {
@@ -2178,9 +2178,6 @@ public class LinearScan {
         }
 
         LIRLocation res = (LIRLocation) operandForInterval(interval);
-
-        assert !frameMap.isCallerSaveRegister(res) : "bad allocation";
-
         return res;
     }
 
@@ -2335,7 +2332,7 @@ public class LinearScan {
 
     int appendScopeValueForOperand(LIROperand opr, List<CiValue> scopeValues) {
         if (opr.isSingleStack()) {
-            int stackIdx = opr.singleStackIx();
+            int stackIdx = opr.singleStackIndex();
             //boolean isOop = opr.isOopRegister();
             CiLocation location = new CiLocation(opr.kind, stackIdx, FrameMap.SPILL_SLOT_SIZE, false);
             scopeValues.add(location);
@@ -2367,7 +2364,7 @@ public class LinearScan {
             if (opr.isDoubleStack()) {
 
                 if (compilation.target.arch.is64bit()) {
-                    first = new CiLocation(opr.kind, opr.doubleStackIx(), FrameMap.SPILL_SLOT_SIZE * 2, false);
+                    first = new CiLocation(opr.kind, opr.doubleStackIndex(), FrameMap.SPILL_SLOT_SIZE * 2, false);
                 } else {
                     Util.shouldNotReachHere();
                 }
@@ -2381,7 +2378,7 @@ public class LinearScan {
                 }
 
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
-                assert opr.asRegisterLo() == opr.asRegisterHi() : "assumed in calculation";
+                assert opr.asRegisterLow() == opr.asRegisterHigh() : "assumed in calculation";
                 first = new CiLocation(opr.kind, opr.asRegister());
 
             } else {

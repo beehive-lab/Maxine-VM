@@ -22,15 +22,14 @@ package com.sun.c1x.target;
 
 import com.sun.c1x.target.x86.*;
 
-
 /**
- *
+ * This class represents the AMD64 architecture.
  * @author Thomas Wuerthinger
  */
 public class AMD64 extends X86 {
 
     public AMD64() {
-        super("AMD64", 8, X86.allRegisters64, 16, 10);
+        super("AMD64", 8, X86.allRegisters64, 0);
     }
 
 }

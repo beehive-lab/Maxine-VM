@@ -297,7 +297,6 @@ public class C1XCompilation {
     }
 
     public void initFrameMap(int numberOfLocks) {
-
         frameMap = this.compiler.backend.newFrameMap(method, numberOfLocks);
     }
 

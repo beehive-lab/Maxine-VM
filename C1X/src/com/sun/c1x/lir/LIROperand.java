@@ -35,8 +35,8 @@ import com.sun.c1x.util.*;
 public class LIROperand {
     public final CiKind kind;
 
-    protected LIROperand(CiKind basicType) {
-        this.kind = basicType;
+    protected LIROperand(CiKind kind) {
+        this.kind = kind;
     }
 
     public final boolean isIllegal() {
@@ -72,22 +72,20 @@ public class LIROperand {
         final StringBuffer out = new StringBuffer();
         out.append("[");
         if (isSingleStack()) {
-            out.append("stack:").append(singleStackIx());
+            out.append("stack:").append(singleStackIndex());
         } else if (isDoubleStack()) {
-            out.append("dblStack:").append(doubleStackIx());
+            out.append("dblStack:").append(doubleStackIndex());
         } else if (isVirtual()) {
-            out.append("R").append(vregNumber());
+            out.append("V").append(vregNumber());
         } else if (isSingleCpu()) {
             out.append(asRegister().name);
         } else if (isDoubleCpu()) {
-            out.append(asRegisterHi().name);
-            out.append(asRegisterLo().name);
+            out.append(asRegisterHigh().name);
+            out.append(asRegisterLow().name);
         } else if (isSingleXmm()) {
             out.append(asRegister().name);
         } else if (isDoubleXmm()) {
             out.append(asRegister().name);
-        } else if (isIllegal()) {
-            out.append("-");
         } else {
             out.append("Unknown Operand");
         }
@@ -138,28 +136,28 @@ public class LIROperand {
         return false;
     }
 
-    public int stackIx() {
-        throw new Error(getClass().getSimpleName() + " does not have a stackIx");
+    public int stackIndex() {
+        throw new Error(getClass().getSimpleName() + " does not have a stackIndex");
     }
 
-    public int singleStackIx() {
-        throw new Error(getClass().getSimpleName() + " does not have a singleStackIx");
+    public int singleStackIndex() {
+        throw new Error(getClass().getSimpleName() + " does not have a singleStackIndex");
     }
 
-    public int doubleStackIx() {
-        throw new Error(getClass().getSimpleName() + " does not have a doubleStackIx");
+    public int doubleStackIndex() {
+        throw new Error(getClass().getSimpleName() + " does not have a doubleStackIndex");
     }
 
-    public int cpuRegnr() {
-        throw new Error(getClass().getSimpleName() + " does not have a cpuRegnr");
+    public int cpuRegNumber() {
+        throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumber");
     }
 
-    public int cpuRegnrLo() {
-        throw new Error(getClass().getSimpleName() + " does not have a cpuRegnrLo");
+    public int cpuRegNumberLow() {
+        throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumberLow");
     }
 
-    public int cpuRegnrHi() {
-        throw new Error(getClass().getSimpleName() + " does not have a cpuRegnrHi");
+    public int cpuRegNumberHigh() {
+        throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumberHigh");
     }
 
     public int vregNumber() {
@@ -167,24 +165,24 @@ public class LIROperand {
     }
 
     public CiRegister asRegister() {
-        if (this == LIROperandFactory.IllegalLocation) {
+        if (isIllegal()) {
             return CiRegister.None;
         }
-        throw Util.shouldNotReachHere();
+        throw new Error(getClass().getSimpleName() + " cannot be a register");
     }
 
-    public CiRegister asRegisterLo() {
-        throw Util.shouldNotReachHere();
+    public CiRegister asRegisterLow() {
+        throw new Error(getClass().getSimpleName() + " cannot be a register");
     }
 
-    public CiRegister asRegisterHi() {
-        throw Util.shouldNotReachHere();
+    public CiRegister asRegisterHigh() {
+        throw new Error(getClass().getSimpleName() + " cannot be a register");
     }
 
     public CiRegister asPointerRegister(CiArchitecture architecture) {
         if (architecture.is64bit() && isDoubleCpu()) {
-            assert asRegisterLo() == asRegisterHi() : "should be a single register";
-            return asRegisterLo();
+            assert asRegisterLow() == asRegisterHigh() : "should be a single register";
+            return asRegisterLow();
         }
         return asRegister();
     }

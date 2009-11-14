@@ -173,7 +173,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
     }
 
     public int getMinimumCalleeSaveFrameSize() {
-        return AMD64TrapStateAccess.TRAP_STATE_SIZE_WITH_RIP;
+        return AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP;
     }
 
     public int getCalleeSaveRegisterOffset(CiRegister register) {

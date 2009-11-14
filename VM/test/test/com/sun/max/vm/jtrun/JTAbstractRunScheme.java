@@ -69,9 +69,6 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
         if (BootImageGenerator.calleeC1X) {
             CompiledPrototype.registerC1XClass(javaClass);
         }
-        if (BootImageGenerator.unlinked) {
-            CompiledPrototype.registerClassUnlinked(actor);
-        }
         if (COMPILE_ALL_TEST_METHODS) {
             // add all virtual and static methods to the image
             addMethods(actor.localStaticMethodActors());
@@ -101,9 +98,6 @@ public abstract class JTAbstractRunScheme extends JavaRunScheme {
     @HOSTED_ONLY
     private void addMethodToImage(ClassMethodActor method) {
         CompiledPrototype.registerImageMethod(method);
-        if (BootImageGenerator.unlinked) {
-            CompiledPrototype.registerMethodUnlinked(method);
-        }
     }
 
     @HOSTED_ONLY
