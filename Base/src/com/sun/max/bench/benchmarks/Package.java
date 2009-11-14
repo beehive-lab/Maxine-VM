@@ -22,7 +22,6 @@ package com.sun.max.bench.benchmarks;
 
 import com.sun.max.*;
 
-
 /**
  * @author Michael Van De Vanter
  */

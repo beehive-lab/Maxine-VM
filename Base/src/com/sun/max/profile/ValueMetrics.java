@@ -679,7 +679,6 @@ public class ValueMetrics {
             distribution.reset();
         }
 
-
     }
 
     private static class ThreadsafeObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {

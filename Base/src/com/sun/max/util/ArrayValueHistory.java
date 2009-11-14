@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.program.*;
 
-
 /**
  * An array-based recording of the history of a value, with
  * time expressed as the number of generations back from the current generation (0).

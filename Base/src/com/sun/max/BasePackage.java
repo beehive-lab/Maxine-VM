@@ -20,7 +20,6 @@
  */
 package com.sun.max;
 
-
 /**
  * @see MaxPackage
  * 

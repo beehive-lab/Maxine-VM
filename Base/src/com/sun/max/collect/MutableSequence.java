@@ -20,7 +20,6 @@
  */
 package com.sun.max.collect;
 
-
 /**
  * A {@link Sequence} whose existing elements can be modified.
  * 

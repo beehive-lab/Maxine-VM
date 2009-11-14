@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 
 import com.sun.max.bench.*;
 
-
 public class Shootout implements Runnable {
 
     Method m;

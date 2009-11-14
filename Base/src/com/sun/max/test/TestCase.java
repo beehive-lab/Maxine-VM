@@ -26,7 +26,6 @@ package com.sun.max.test;
 import java.io.*;
 import java.util.*;
 
-
 /**
  * The {@code TestCase} class represents a basic test case in the testing framework.
  * @author "Ben L. Titzer"
