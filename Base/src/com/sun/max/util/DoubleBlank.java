@@ -68,9 +68,9 @@ public class DoubleBlank {
                         System.out.println("Warning } \\n\\n } @ " + name + ":" + line);
                     }
 
-                } else if (d == '{' && a == '{') {
-                    if (c == '\n' && (b == '\n')) {
-                        System.out.println("Warning { \\n\\n { @ " + name + ":" + line);
+                } else if (d == '\n' && b == '{') {
+                    if (c == '\n') {
+                        System.out.println("Warning { \\n\\n @ " + name + ":" + line);
                     }
 
                 }
