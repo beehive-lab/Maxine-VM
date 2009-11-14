@@ -53,5 +53,4 @@ public class NewTypeArrayStub extends CodeStub {
     public LIROperand length() {
         return operand(1);
     }
-
 }

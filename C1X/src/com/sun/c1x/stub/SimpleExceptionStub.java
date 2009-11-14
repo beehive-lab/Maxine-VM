@@ -57,5 +57,4 @@ public class SimpleExceptionStub extends CodeStub {
     public LIROperand obj() {
         return operand(0);
     }
-
 }

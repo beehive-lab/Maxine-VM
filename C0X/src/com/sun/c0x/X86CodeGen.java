@@ -798,5 +798,4 @@ public class X86CodeGen extends CodeGen {
     void recordGlobalStubCallPoint() {
 
     }
-
 }

@@ -128,5 +128,4 @@ public class Constant extends Instruction {
     public boolean valueEqual(Instruction i) {
         return i instanceof Constant && ((Constant) i).value.equivalent(this.value);
     }
-
 }

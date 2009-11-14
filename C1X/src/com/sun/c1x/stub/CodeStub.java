@@ -121,5 +121,4 @@ public abstract class CodeStub {
         this.instruction = instruction;
 
     }
-
 }

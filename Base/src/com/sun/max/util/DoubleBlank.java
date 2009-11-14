@@ -46,6 +46,7 @@ public class DoubleBlank {
         byte[] buffer = new byte[1024];
         byte a = 0;
         byte b = 0;
+        byte c = 0;
         boolean different = false;
         while (true) {
             int len = f.read(buffer);
@@ -53,20 +54,31 @@ public class DoubleBlank {
                 break;
             }
             for (int i = 0 ; i < len; i++) {
-                byte c = buffer[i];
+                byte d = buffer[i];
                 boolean gen = true;
-                if (buffer[i] == '\n') {
-                    if (b == '\n' && (a == '\n')) {
+                if (d == '\n') {
+                    if (c == '\n' && (b == '\n')) {
                         System.out.println("Removed " + name + ":" + line);
                         gen = false;
                         different = true;
                     }
                     line++;
+                } else if (d == '}' && a == '}') {
+                    if (c == '\n' && (b == '\n')) {
+                        System.out.println("Warning } \\n\\n } @ " + name + ":" + line);
+                    }
+
+                } else if (d == '{' && a == '{') {
+                    if (c == '\n' && (b == '\n')) {
+                        System.out.println("Warning { \\n\\n { @ " + name + ":" + line);
+                    }
+
                 }
                 a = b;
                 b = c;
+                c = d;
                 if (gen) {
-                    out.write(c);
+                    out.write(d);
                 }
             }
         }
