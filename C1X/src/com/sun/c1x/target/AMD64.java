@@ -31,5 +31,4 @@ public class AMD64 extends X86 {
     public AMD64() {
         super("AMD64", 8, X86.allRegisters64, 0);
     }
-
 }

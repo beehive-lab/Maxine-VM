@@ -170,5 +170,4 @@ public class FrameMap {
     public CiLocation locationForMonitor(int monitorIndex) {
         return new CiLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SPILL_SLOT_SIZE, false);
     }
-
 }

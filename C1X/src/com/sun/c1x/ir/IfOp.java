@@ -117,5 +117,4 @@ public class IfOp extends Op2 {
         }
         return false;
     }
-
 }

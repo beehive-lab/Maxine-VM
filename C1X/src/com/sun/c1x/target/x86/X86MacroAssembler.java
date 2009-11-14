@@ -1223,50 +1223,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void initializeObject(RiRuntime runtime, CiRegister obj, CiRegister klass, CiRegister varSizeInBytes, int conSizeInBytes, CiRegister t1, CiRegister t2) {
-        //assert (conSizeInBytes & runtime.getMinObjAlignmentInBytesMask()) == 0 : "conSizeInBytes is not multiple of alignment";
-
-        Util.unimplemented();
-        int hdrSizeInBytes = 0xbadbabe; // runtime.instanceOopDescBaseOffsetInBytes();
-
-        initializeHeader(runtime, obj, klass, CiRegister.None, t1, t2);
-
-        // clear rest of allocated space
-        CiRegister t1Zero = t1;
-        CiRegister index = t2;
-        int threshold = 6 * wordSize; // approximate break even point for code size (see comments below)
-        if (varSizeInBytes != CiRegister.None) {
-            mov(index, varSizeInBytes);
-            initializeBody(obj, index, hdrSizeInBytes, t1Zero);
-        } else if (conSizeInBytes <= threshold) {
-            // use explicit null stores
-            // code size = 2 + 3*n bytes (n = number of fields to clear)
-            xorptr(t1Zero, t1Zero); // use t1Zero reg to clear memory (shorter code)
-            for (int i = hdrSizeInBytes; i < conSizeInBytes; i += wordSize) {
-                movptr(new Address(obj, i), t1Zero);
-            }
-        } else if (conSizeInBytes > hdrSizeInBytes) {
-            // use loop to null out the fields
-            // code size = 16 bytes for even n (n = number of fields to clear)
-            // initialize last object field first if odd number of fields
-            xorptr(t1Zero, t1Zero); // use t1Zero reg to clear memory (shorter code)
-            movptr(index, (conSizeInBytes - hdrSizeInBytes) >> 3);
-            // initialize last object field if constant size is odd
-            if (((conSizeInBytes - hdrSizeInBytes) & 4) != 0) {
-                movptr(new Address(obj, conSizeInBytes - (1 * wordSize)), t1Zero);
-            }
-            // initialize remaining object fields: X86Register.rdx is a multiple of 2
-            Label loop = new Label();
-            bind(loop);
-            movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - (1 * wordSize)), t1Zero);
-            if (!target.arch.is64bit()) {
-                movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - (2 * wordSize)), t1Zero);
-            }
-            decrement(index, 1);
-            jcc(X86Assembler.Condition.notZero, loop);
-
-        }
-
-        verifyOop(obj);
+        throw Util.unimplemented();
     }
 
     void cmov(Condition cc, CiRegister dst, CiRegister src) {
@@ -1378,5 +1335,4 @@ public class X86MacroAssembler extends X86Assembler {
         this.recordSafepoint(codeBuffer.position(), info.oopMap.registerMap(), info.oopMap.stackMap());
         movq(safepointRegister, new Address(safepointRegister));
     }
-
 }

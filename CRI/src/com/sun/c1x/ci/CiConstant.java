@@ -214,7 +214,7 @@ public final class CiConstant extends CiValue {
         }
         throw new Error("Constant is not object: " + this);
     }
-    
+
     /**
      * Converts this constant to the jsr reference it represents.
      * @return the object which this constant represents
@@ -368,5 +368,4 @@ public final class CiConstant extends CiValue {
         }
         return new CiConstant(CiKind.Object, o);
     }
-
 }

@@ -49,5 +49,4 @@ public class IRScopeDebugInfo {
         this.monitors = monitors;
         this.caller = caller;
     }
-
 }

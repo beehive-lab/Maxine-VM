@@ -24,41 +24,26 @@ import com.sun.c1x.ri.*;
 
 /**
  * @author Thomas Wuerthinger
- *
  */
 public class DebugInformationRecorder {
 
     public boolean recordingNonSafepoints() {
-        // TODO Auto-generated method stub
         return false;
     }
 
     public int lastPcOffset() {
-        // TODO Auto-generated method stub
         return 0;
     }
 
     public void addNonSafepoint(int pcOffset) {
-        // TODO Auto-generated method stub
-
     }
 
     public void describeScope(int pcOffset, RiMethod method, int[] sBci) {
-        // TODO Auto-generated method stub
-
     }
 
     public void endNonSafepoint(int pcOffset) {
-        // TODO Auto-generated method stub
-
     }
 
-    /**
-     * @param pcOffset
-     */
     public void endSafepoint(int pcOffset) {
-        // TODO Auto-generated method stub
-
     }
-
 }
