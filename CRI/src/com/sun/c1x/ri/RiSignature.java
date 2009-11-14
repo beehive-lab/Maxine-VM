@@ -22,7 +22,6 @@ package com.sun.c1x.ri;
 
 import com.sun.c1x.ci.*;
 
-
 /**
  * This interface represents a method signature provided by the runtime.
  *

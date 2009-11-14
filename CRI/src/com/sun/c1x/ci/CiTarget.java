@@ -22,7 +22,6 @@ package com.sun.c1x.ci;
 
 import com.sun.c1x.ri.RiRegisterConfig;
 
-
 /**
  * This class represents the target machine for a compiler, including
  * the CPU architecture, the size of pointers and references, alignment

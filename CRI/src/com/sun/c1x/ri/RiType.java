@@ -23,7 +23,6 @@ package com.sun.c1x.ri;
 import com.sun.c1x.ci.CiConstant;
 import com.sun.c1x.ci.CiKind;
 
-
 /**
  * This interface represents a resolved or unresolved type in the compiler
  * interface. Types include primitives, objects, {@code void}, and arrays thereof.

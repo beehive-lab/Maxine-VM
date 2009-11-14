@@ -20,9 +20,8 @@
  */
 package com.sun.c1x.ci;
 
-
 /**
- * Thhis class represents a CPU architecture, including information such as its endianness, CPU
+ * This class represents a CPU architecture, including information such as its endianness, CPU
  * registers, word width, etc.
  *
  * @author Ben L. Titzer

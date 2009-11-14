@@ -116,7 +116,6 @@ public class XirTemplate {
     	p.println();
     	p.println("Template " + name);
 
-
     	p.print("Param:");
     	for (XirParameter param : parameters) {
         	p.print(" " + param.detailedToString());

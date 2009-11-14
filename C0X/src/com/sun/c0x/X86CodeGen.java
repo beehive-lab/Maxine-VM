@@ -38,7 +38,6 @@ import com.sun.c1x.target.x86.X86Assembler;
 import com.sun.c1x.target.x86.X86MacroAssembler;
 import com.sun.c1x.util.Util;
 
-
 /**
  * The <code>X86CodeGen</code> class definition.
  *
