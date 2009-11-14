@@ -21,6 +21,7 @@
 package com.sun.max.ins;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.math.*;
 import java.util.*;
 
@@ -2358,6 +2359,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             this.offset = offset;
         }
 
+        public ViewMethodCodeInBootImageAction(int offset, Method method) {
+            this(offset, method.getDeclaringClass(), method.getName(), method.getParameterTypes());
+        }
+
         @Override
         protected void procedure() {
             focus().setCodeLocation(maxVM().createCodeLocation(maxVM().bootImageStart().plus(offset)), true);
@@ -2365,7 +2370,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction viewRunMethodCodeInBootImageAction =
-        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header.vmRunMethodOffset, MaxineVM.class, "run", MaxineVM.runMethodParameterTypes());
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header.vmRunMethodOffset, ClassRegistry.MaxineVM_run.toJava());
 
     /**
      * @return an Action that displays in the {@link MethodInspector} the code of
@@ -2376,8 +2381,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction viewThreadRunMethodCodeInBootImageAction =
-        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header.vmThreadRunMethodOffset, VmThread.class, "run", int.class, Address.class, Pointer.class,
-                    Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class);
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header.vmThreadRunMethodOffset, ClassRegistry.VmThread_run.toJava());
 
     /**
      * @return an Action that displays in the {@link MethodInspector} the code of

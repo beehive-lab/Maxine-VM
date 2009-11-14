@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -124,7 +125,11 @@ public final class JDK_java_lang_Throwable {
     }
 
     private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame) {
-        final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer);
+        Pointer instructionPointer = stackFrame.instructionPointer;
+        if (Platform.target().instructionSet().offsetToReturnPC == 0 && !stackFrame.isTopFrame()) {
+            instructionPointer = instructionPointer.minus(1);
+        }
+        final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer);
         if (bytecodeLocations == null) {
             addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.instructionPointer.minus(targetMethod.codeStart()).toInt());
         } else {

@@ -31,13 +31,13 @@
  */
 extern void *thread_runJava(void *jniNativeInterface);
 
-JNIEnv *thread_attach(NativeThreadLocals ntl, JavaVMAttachArgs* args, boolean daemon);
-
+int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon);
+int thread_detachCurrent();
 /**
  * The signature of the Java method entrypoint for new threads.
- * This must match the signature of 'com.sun.max.vm.thread.VMThread.run()'.
+ * This must match the signature of 'com.sun.max.vm.thread.VmThread.run()'.
  */
-typedef void (*VMThreadRunMethod)(jint id, Address nativeThread,
+typedef void (*VmThreadRunMethod)(jint id, Address nativeThread,
 	            Address stackBase,
 	            Address vmThreadLocals,
 	            Address refMapArea,
@@ -46,9 +46,9 @@ typedef void (*VMThreadRunMethod)(jint id, Address nativeThread,
 
 /**
  * The signature of the Java method used to attach native threads.
- * This must match the signature of 'com.sun.max.vm.thread.VMThread.attach()'.
+ * This must match the signature of 'com.sun.max.vm.thread.VmThread.attach()'.
  */
-typedef void (*VMThreadAttachMethod)(Address nativeThread,
+typedef int (*VmThreadAttachMethod)(Address nativeThread,
                 Address name,
                 Address group,
                 jboolean daemon,
@@ -57,6 +57,12 @@ typedef void (*VMThreadAttachMethod)(Address nativeThread,
                 Address refMapArea,
                 Address yellowZone,
                 Address stackEnd);
+
+/**
+ * The signature of the Java method used to detach native threads.
+ * This must match the signature of 'com.sun.max.vm.thread.VmThread.detach()'.
+ */
+typedef int (*VmThreadDetachMethod)(Address vmThreadLocals);
 
 /**
  * Sleeps the current thread for a given number of milliseconds.

@@ -23,6 +23,7 @@ package com.sun.max.vm.jdk;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
@@ -67,26 +68,31 @@ public final class JDK_java_lang_Thread {
     }
 
     public static Thread createThreadForAttach(VmThread vmThread, String name, ThreadGroup group, boolean daemon) throws Throwable {
-        FatalError.check(group != null, "ThreadGroup for thread cannot be null");
+        FatalError.check(group != null, "ThreadGroup for attaching thread cannot be null");
 
         final Thread javaThread = (Thread) Heap.createTuple(ClassRegistry.THREAD.dynamicHub());
         TupleAccess.writeObject(javaThread, Thread_vmThread.offset(), vmThread);
         TupleAccess.writeInt(javaThread, ClassRegistry.Thread_priority.offset(), Thread.NORM_PRIORITY);
-        vmThread.setJavaThread(javaThread);
-        ReferenceValue groupRef = ReferenceValue.from(group);
-        ReferenceValue javaThreadRef = ReferenceValue.from(javaThread);
-        if (name != null) {
-            ReferenceValue nameRef = ReferenceValue.from(name);
-            ClassRegistry.Thread_init_ThreadGroup_String.invoke(javaThreadRef, groupRef, nameRef);
+        vmThread.setJavaThread(javaThread, name);
+        ReferenceValue threadValue = ReferenceValue.from(javaThread);
+        ReferenceValue groupValue = ReferenceValue.from(group);
+        ReferenceValue targetValue = ReferenceValue.NULL;
+        ReferenceValue nameValue = ReferenceValue.from(name == null ? (String) ClassRegistry.Thread_nextThreadNum.invoke().asObject() : name);
+        LongValue stackSizeValue = LongValue.ZERO;
+        if (Platform.target().operatingSystem == OperatingSystem.DARWIN) {
+            // The Thread.init() method on Apple takes an extra boolean parameter named 'set_priority'
+            // which indicates if the priority should be explicitly set. For all calls to init() this
+            // argument is true *except* for a call for the purpose of attaching a thread when it is false.
+            ClassRegistry.Thread_init.invoke(threadValue, groupValue, targetValue, nameValue, stackSizeValue, BooleanValue.FALSE);
         } else {
-            ClassRegistry.Thread_init_ThreadGroup_Runnable.invoke(javaThreadRef, groupRef, ReferenceValue.NULL);
+            ClassRegistry.Thread_init.invoke(threadValue, groupValue, targetValue, nameValue, stackSizeValue);
         }
 
         if (daemon) {
             javaThread.setDaemon(true);
         }
 
-        ClassRegistry.ThreadGroup_add_Thread.invoke(groupRef, javaThreadRef);
+        ClassRegistry.ThreadGroup_add_Thread.invoke(groupValue, threadValue);
         return javaThread;
     }
 

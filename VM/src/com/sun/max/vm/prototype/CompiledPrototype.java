@@ -38,8 +38,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.c1x.C1XCompilerScheme;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
@@ -48,7 +48,6 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.prototype.CompiledPrototype.Link.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -476,9 +475,11 @@ public class CompiledPrototype extends Prototype {
         final Relationship vmEntryPoint = null;
 
         final RunScheme runScheme = vmConfiguration().runScheme();
-        add(BootImage.getMethodActorFor(BootImage.RUN, MaxineVM.class), null, vmEntryPoint);
-        add(BootImage.getMethodActorFor(BootImage.RUN, VmThread.class), null, vmEntryPoint);
-        add(BootImage.getMethodActorFor(BootImage.RUN, runScheme.getClass()), null, vmEntryPoint);
+        add(ClassRegistry.MaxineVM_run, null, vmEntryPoint);
+        add(ClassRegistry.VmThread_run, null, vmEntryPoint);
+        add(ClassRegistry.VmThread_attach, null, vmEntryPoint);
+        add(ClassRegistry.VmThread_detach, null, vmEntryPoint);
+        add(ClassRegistry.findMethod("run", runScheme.getClass()), null, vmEntryPoint);
 
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, imageMethodActors, vmEntryPoint);

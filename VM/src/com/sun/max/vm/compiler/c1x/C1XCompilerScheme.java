@@ -28,7 +28,6 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
