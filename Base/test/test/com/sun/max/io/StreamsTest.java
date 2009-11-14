@@ -26,7 +26,6 @@ import junit.framework.*;
 
 import com.sun.max.io.*;
 
-
 public class StreamsTest extends TestCase {
 
     public StreamsTest(String name) {

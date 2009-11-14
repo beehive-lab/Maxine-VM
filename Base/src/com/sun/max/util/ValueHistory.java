@@ -22,7 +22,6 @@ package com.sun.max.util;
 
 import java.util.*;
 
-
 /**
  * A value, along with a history of its previous values.
  * Time is specified as number of generations back

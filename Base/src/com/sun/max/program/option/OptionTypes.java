@@ -30,7 +30,6 @@ import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
 import com.sun.max.program.option.Option.Error;
 
-
 public class OptionTypes {
 
     protected static class LongType extends Option.Type<Long> {
@@ -385,6 +384,5 @@ public class OptionTypes {
     }
 
     public static final StringListType COMMA_SEPARATED_STRING_LIST_TYPE = new StringListType(',');
-
 
 }

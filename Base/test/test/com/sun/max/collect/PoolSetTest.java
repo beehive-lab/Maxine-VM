@@ -232,7 +232,6 @@ public class PoolSetTest extends MaxTestCase {
                     assertTrue(fullPoolSet.containsAll(emptyPoolSet));
                 }
 
-
                 final PoolSet<TestElement> poolSet = PoolSet.noneOf(pool);
                 for (int i = 0; i < nElems; i++) {
                     poolSet.add(elems[i]);

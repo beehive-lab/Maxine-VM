@@ -24,7 +24,6 @@ import java.io.*;
 
 import com.sun.max.program.*;
 
-
 public final class TemporaryFiles {
     private TemporaryFiles() {
     }

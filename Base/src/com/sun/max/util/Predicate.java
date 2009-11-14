@@ -22,7 +22,6 @@ package com.sun.max.util;
 
 import com.sun.max.lang.*;
 
-
 /**
  * @author Bernd Mathiske
  */

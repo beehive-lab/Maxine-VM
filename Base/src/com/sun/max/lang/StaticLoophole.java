@@ -20,7 +20,6 @@
  */
 package com.sun.max.lang;
 
-
 /**
  * Static type loophole that prevents "unchecked" compiler warnings but that does not circumvent dynamic type checks.
  *

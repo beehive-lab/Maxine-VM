@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.program.*;
 
-
 /**
  * The {@code Registry} class implements a type of configuration mechanism
  * that allows a short string name (called an alias) to refer to a class name.
