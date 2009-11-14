@@ -353,11 +353,11 @@ public class LIRList {
     }
 
     public void callRuntime(CiRuntimeCall routine, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRRTCall(routine, result, arguments, info, false));
+        append(new LIRRuntimeCall(routine, result, arguments, info, false));
     }
 
     public void callRuntimeCalleeSaved(CiRuntimeCall routine, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRRTCall(routine, result, arguments, info, true));
+        append(new LIRRuntimeCall(routine, result, arguments, info, true));
     }
 
     public void loadStackAddressMonitor(int monitorIx, LIROperand dst) {

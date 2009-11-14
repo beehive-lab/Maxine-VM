@@ -208,7 +208,7 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genReturn(CiKind basicType, Location value) {
-        allocDst(runtime.returnRegister(basicType), basicType);
+        allocDst(target.config.getReturnRegister(basicType), basicType);
         // TODO: adjust stack pointer
         asm.ret(0);
     }

@@ -59,7 +59,7 @@ public class HIRTestExecutor implements Executor {
     }
 
     private static CiTarget createTarget() {
-        return C1XCompilerScheme.createTarget(MaxRiRuntime.globalRuntime, VMConfiguration.hostOrTarget());
+        return C1XCompilerScheme.createTarget(VMConfiguration.hostOrTarget());
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {

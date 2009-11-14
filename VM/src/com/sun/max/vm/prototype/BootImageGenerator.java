@@ -99,9 +99,6 @@ public final class BootImageGenerator {
             "For the Java tester, this option specifies that each test case's method should be compiled " +
             "with the C1X compiler (helpful for testing C1X->C1X and opt->C1X calls).");
 
-    private final Option<Boolean> testUnlinked = options.newBooleanOption("test-unlinked", false,
-            "For the Java tester, this option specifies that each test case method should be unlinked.");
-
     private final Option<Boolean> testNative = options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
@@ -210,9 +207,6 @@ public final class BootImageGenerator {
 
             if (help.getValue()) {
                 prototypeGenerator.createVMConfiguration(prototypeGenerator.createDefaultVMConfiguration());
-
-                // add all the fields from C1XOptions as options
-                options.addFieldOptions(C1XOptions.class, "-XX");
                 options.printHelp(System.out, 80);
                 return;
             }
@@ -224,7 +218,6 @@ public final class BootImageGenerator {
             BootImageGenerator.calleeC1X = testCalleeC1X.getValue();
             BootImageGenerator.calleeJit = testCalleeJit.getValue();
             BootImageGenerator.callerJit = testCallerJit.getValue();
-            BootImageGenerator.unlinked = testUnlinked.getValue();
             BootImageGenerator.nativeTests = testNative.getValue();
 
             final File vmDirectory = vmDirectoryOption.getValue();

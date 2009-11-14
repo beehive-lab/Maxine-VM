@@ -30,6 +30,7 @@ import com.sun.c1x.util.*;
  * This class is used to build the stack frame layout for a compiled method.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class FrameMap {
 
@@ -38,7 +39,6 @@ public class FrameMap {
     private final C1XCompiler compilation;
     private final CallingConvention incomingArguments;
     private final int monitorCount;
-    private final int returnAddressSize;
 
     // Values set after register allocation is complete
     private int frameSize;
@@ -47,11 +47,10 @@ public class FrameMap {
     // Area occupied by outgoing overflow arguments. This value is adjusted as calling conventions for outgoing calls are retrieved.
     private int reservedOutgoingArgumentsArea;
 
-    public FrameMap(C1XCompiler compiler, RiMethod method, int monitors, int retAddrSize) {
+    public FrameMap(C1XCompiler compiler, RiMethod method, int monitors) {
         this.compilation = compiler;
-        this.returnAddressSize = retAddrSize;
-        frameSize = -1;
-        spillSlotCount = -1;
+        this.frameSize = -1;
+        this.spillSlotCount = -1;
 
         assert monitors >= 0 : "not set";
         monitorCount = monitors;
@@ -63,12 +62,12 @@ public class FrameMap {
     }
 
     public CallingConvention runtimeCallingConvention(CiKind[] signature) {
-        CiLocation[] locations = compilation.runtime.runtimeCallingConvention(signature);
+        CiLocation[] locations = compilation.target.config.getRuntimeParameterLocations(signature);
         return createCallingConvention(locations, false);
     }
 
     public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing, boolean reserveOutgoingArgumentsArea) {
-        CiLocation[] locations = compilation.runtime.javaCallingConvention(signature, outgoing);
+        CiLocation[] locations = compilation.target.config.getJavaParameterLocations(signature, outgoing);
         return createCallingConvention(locations, reserveOutgoingArgumentsArea);
     }
 
@@ -90,7 +89,7 @@ public class FrameMap {
     }
 
     public Address addressForSlot(int stackSlot, int offset) {
-        return new Address(compilation.target.stackRegister, spOffsetForSlot(stackSlot) + offset);
+        return new Address(compilation.target.stackPointerRegister, spOffsetForSlot(stackSlot) + offset);
     }
 
     int spOffsetForSlot(int index) {
@@ -145,26 +144,23 @@ public class FrameMap {
         assert this.spillSlotCount == -1 : "can only be set once";
         this.spillSlotCount = spillSlotCount;
         assert frameSize == -1 : "should only be calculated once";
-        int fs = returnAddressSize + spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock() + compilation.target.arch.framePadding;
-        frameSize = Util.roundTo(fs, compilation.target.stackAlignment) - returnAddressSize;
+        int retSize = compilation.target.arch.returnAddressSize;
+        int fs = retSize + spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock();
+        frameSize = Util.roundTo(fs, compilation.target.stackAlignment) - retSize;
     }
 
     public CiLocation regname(LIROperand opr) {
         if (opr.isStack()) {
-            return new CiLocation(opr.kind, opr.stackIx() * SPILL_SLOT_SIZE, SPILL_SLOT_SIZE * opr.kind.size, false);
+            return new CiLocation(opr.kind, opr.stackIndex() * SPILL_SLOT_SIZE, compilation.target.sizeInBytes(opr.kind), false);
         } else if (opr.isRegister()) {
             if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
-                return new CiLocation(opr.kind, opr.asRegisterLo(), opr.asRegisterHi());
+                return new CiLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
             } else {
                 return new CiLocation(opr.kind, opr.asRegister());
             }
         } else {
             throw Util.shouldNotReachHere();
         }
-    }
-
-    public boolean isCallerSaveRegister(LIROperand res) {
-        return Util.nonFatalUnimplemented(false);
     }
 
     public CiLocation objectSlotRegname(int i) {

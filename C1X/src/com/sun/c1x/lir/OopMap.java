@@ -47,7 +47,7 @@ public class OopMap {
     private void initMaps() {
         assert frameSize % target.arch.wordSize == 0 : "must be aligned";
         stackMap = new BitMap(frameSize / target.arch.wordSize);
-        registerMap = new BitMap(target.registerConfig.registerRefMapSize);
+        registerMap = new BitMap(target.allocatableRegs.registerRefMapSize);
     }
 
     public void setOop(CiLocation location) {
@@ -63,7 +63,7 @@ public class OopMap {
     }
 
     public void setOop(CiRegister register) {
-        int index = target.registerConfig.referenceMapIndex[register.number];
+        int index = target.allocatableRegs.referenceMapIndex[register.number];
         assert index >= 0 : "object cannot be in non-object register " + register;
         assert !registerMap.get(index) : "bit already set";
         registerMap.set(index);

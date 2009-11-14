@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ci;
 
+import com.sun.c1x.ri.RiRegisterConfig;
+
 
 /**
  * This class represents the target machine for a compiler, including
@@ -31,56 +33,38 @@ package com.sun.c1x.ci;
 public class CiTarget {
     public final CiArchitecture arch;
 
+    public final CiRegister[] registerReferenceMapOrder;
+    public final CiRegister[] callerSavedRegisters;
+    public final CiRegister.AllocationSet allocatableRegs;
+    public final CiRegister stackPointerRegister;
+    public final CiRegister scratchRegister;
+    public final RiRegisterConfig config;
+    public final int pageSize;
+    public final boolean isMP;
+
     public int referenceSize;
     public int stackAlignment;
     public int cacheAlignment;
     public int codeAlignment;
     public int heapAlignment;
-    public final CiRegister[] registerReferenceMapTemplate;
-    public final CiRegister[] callerSavedRegisters;
-    public final CiRegister.AllocationSet registerConfig;
-    public int pageSize;
-    public boolean isMP;
-    public final CiRegister stackRegister;
-    public final CiRegister scratchRegister;
 
-    public CiTarget(CiArchitecture arch,
-                    CiRegister stackRegister,
-                    CiRegister scratchRegister,
-                    CiRegister[] allocatableRegisters,
-                    CiRegister[] callerSavedRegisters,
-                    CiRegister[] registerReferenceMapTemplate,
-                    int pageSize,
-                    boolean isMP) {
-
+    public CiTarget(CiArchitecture arch, RiRegisterConfig config, int pageSize, boolean isMP) {
         this.arch = arch;
-        referenceSize = arch.wordSize;
-        stackAlignment = arch.wordSize;
-        cacheAlignment = arch.wordSize;
-        heapAlignment = arch.wordSize;
-        codeAlignment = 16;
+        this.config = config;
+        this.referenceSize = arch.wordSize;
+        this.stackAlignment = arch.wordSize;
+        this.cacheAlignment = arch.wordSize;
+        this.heapAlignment = arch.wordSize;
+        this.codeAlignment = 16;
 
-        assert stackRegister != null && !contains(stackRegister, allocatableRegisters);
-        this.stackRegister = stackRegister;
+        this.stackPointerRegister = config.getStackPointerRegister();
+        this.scratchRegister = config.getScratchRegister();
 
-        assert scratchRegister != null && !contains(scratchRegister, allocatableRegisters) && scratchRegister != stackRegister;
-        this.scratchRegister = scratchRegister;
-
-        this.callerSavedRegisters = callerSavedRegisters;
-        this.registerReferenceMapTemplate = registerReferenceMapTemplate;
+        this.callerSavedRegisters = config.getCallerSaveRegisters();
+        this.registerReferenceMapOrder = config.getRegisterReferenceMapOrder();
         this.pageSize = pageSize;
         this.isMP = isMP;
-        this.registerConfig = new CiRegister.AllocationSet(allocatableRegisters, registerReferenceMapTemplate);
-    }
-
-    private static boolean contains(CiRegister reg, CiRegister[] arr) {
-        for (CiRegister r : arr) {
-            if (r == reg) {
-                return true;
-            }
-        }
-
-        return false;
+        this.allocatableRegs = new CiRegister.AllocationSet(config.getAllocatableRegisters(), registerReferenceMapOrder);
     }
 
     /**

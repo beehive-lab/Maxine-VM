@@ -34,29 +34,31 @@ import com.sun.c1x.xir.CiXirAssembler.*;
 
 public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
+    private static final int ReservedArgumentSlots = 4;
+    private static final long FloatSignFlip = 0x8000000080000000L;
+    private static final long DoubleSignFlip = 0x8000000000000000L;
+    private static final CiRegister convertArgument = X86.xmm0;
+    private static final CiRegister convertResult = X86.rax;
+    private static final CiRegister negateArgument = X86.xmm0;
+    private static final CiRegister negateTemp = X86.xmm1;
+
     private X86MacroAssembler asm;
     private final CiTarget target;
     private int frameSize;
+    private int saveSize;
     private int registerRestoreEpilogueOffset;
     private RiRuntime runtime;
     private C1XCompiler compiler;
     private CiRegister[] registersSaved;
-    private static final int ReservedArgumentSlots = 4;
-
-    private final CiRegister convertArgument = X86.xmm0;
-    private final CiRegister convertResult = X86.rax;
-    private final CiRegister negateArgument = X86.xmm0;
-    private final CiRegister negateTemp = X86.xmm1;
-
-    private static final long FloatSignFlip = 0x8000000080000000L;
-    private static final long DoubleSignFlip = 0x8000000000000000L;
 
     private List<CiRegister> allocatableRegisters = new ArrayList<CiRegister>();
+    private CiRegister[] allRegisters;
 
     public X86GlobalStubEmitter(C1XCompiler compiler) {
         this.compiler = compiler;
         this.target = compiler.target;
         this.runtime = compiler.runtime;
+        allRegisters = target.arch.is64bit() ? X86.allRegisters64 : X86.allRegisters;
     }
 
     public CiTargetMethod emitRuntimeStub(CiRuntimeCall runtimeCall) {
@@ -92,7 +94,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public CiTargetMethod emit(XirTemplate template) {
-        this.frameSize = 0;
+        this.saveSize = 0;
         this.registerRestoreEpilogueOffset = -1;
 
         C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, compiler.runtime, null);
@@ -100,7 +102,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         X86LIRAssembler assembler = new X86LIRAssembler(compilation);
         asm = assembler.masm;
 
-        for (CiRegister reg : compiler.target.registerConfig.allocatableRegisters) {
+        for (CiRegister reg : compiler.target.allocatableRegs.allocatableRegisters) {
             if (reg.isCpu()) {
                 allocatableRegisters.add(reg);
             }
@@ -118,11 +120,9 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             }
         }
 
-        prologue(true);
-        saveRegisters();
+        completeSavePrologue();
 
         LIROperand[] operands = new LIROperand[template.variableCount];
-
 
         XirOperand resultOperand = template.resultOperand;
 
@@ -174,22 +174,22 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             labels[i] = new Label();
         }
 
-        compilation.frameMap().setFrameSize(this.frameSize);
+        compilation.frameMap().setFrameSize(totalSize());
         assembler.emitXirInstructions(null, template.fastPath, labels, operands);
         epilogue();
-        return asm.finishTargetMethod(runtime, frameSize, null, registerRestoreEpilogueOffset);
+        return asm.finishTargetMethod(runtime, totalSize(), null, registerRestoreEpilogueOffset);
     }
 
     public CiTargetMethod emitHelper(GlobalStub stub, CiRuntimeCall runtimeCall) {
         asm = new X86MacroAssembler(compiler, compiler.target, -1);
         this.frameSize = 0;
+        this.saveSize = 0;
         this.registerRestoreEpilogueOffset = -1;
 
         if (stub == null) {
             emitStandardForward(null, runtimeCall);
         } else {
             switch (stub) {
-
                 case NewInstance:
                     emitStandardForward(stub, CiRuntimeCall.NewInstance);
                     break;
@@ -276,12 +276,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             }
         }
 
-        return asm.finishTargetMethod(runtime, frameSize, null, registerRestoreEpilogueOffset);
+        return asm.finishTargetMethod(runtime, totalSize(), null, registerRestoreEpilogueOffset);
     }
 
     private void negatePrologue() {
         partialSavePrologue(negateArgument, negateTemp);
-
     }
 
     private void negateEpilogue() {
@@ -309,7 +308,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void convertEpilogue() {
-
         storeArgument(0, convertResult);
         epilogue();
     }
@@ -355,14 +353,15 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             }
         }
 
-        prologue(true);
+        completeSavePrologue();
         forwardRuntimeCall(call);
         epilogue();
     }
 
     private int argumentIndexToStackOffset(int index) {
         assert index < ReservedArgumentSlots;
-        return frameSize - (index + 1) * target.arch.wordSize;
+        // TODO: recalculate this
+        return totalSize() - (index + 1) * target.arch.wordSize;
     }
 
     private void loadArgument(int index, CiRegister register) {
@@ -373,48 +372,26 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         asm.movptr(new Address(X86.rsp, argumentIndexToStackOffset(index)), register);
     }
 
-    private int savedRegistersSize() {
-
-        CiRegister[] registers = X86.allRegisters;
-        if (target.arch.is64bit()) {
-            registers = X86.allRegisters64;
-        }
-
-        return registers.length * target.arch.wordSize;
-    }
-
     private void saveRegisters() {
-
-        CiRegister[] registers = X86.allRegisters;
-        if (target.arch.is64bit()) {
-            registers = X86.allRegisters64;
-        }
-
         List<CiRegister> savedRegistersList = new ArrayList<CiRegister>();
-        int index = 0;
-        for (CiRegister r : registers) {
-            if (r != X86.rsp) {
+        for (CiRegister r : allRegisters) {
+            int offset = target.config.getCalleeSaveRegisterOffset(r);
+            if (r != X86.rsp && offset >= 0) {
                 savedRegistersList.add(r);
-                asm.movq(new Address(X86.rsp, index * target.arch.wordSize), r);
-                index++;
+                asm.movq(new Address(X86.rsp, offset), r);
             }
         }
         this.registersSaved = savedRegistersList.toArray(new CiRegister[savedRegistersList.size()]);
-
-        int frameSize = (index + ReservedArgumentSlots) * target.arch.wordSize;
-        assert this.frameSize >= frameSize;
     }
 
     private void partialSavePrologue(CiRegister... registersToSave) {
-
         this.registersSaved = registersToSave;
+        this.frameSize = ReservedArgumentSlots * target.arch.wordSize;
+        this.saveSize = registersToSave.length * target.arch.wordSize;
 
-        this.frameSize = target.arch.wordSize * (registersToSave.length + ReservedArgumentSlots);
-
-        asm.makeOffset(runtime.codeOffset());
-
-        // Modify rsp
-        asm.subq(X86.rsp, this.frameSize);
+        // align to code size
+        asm.nop(runtime.codeOffset());
+        asm.subq(X86.rsp, totalSize());
 
         int index = 0;
         for (CiRegister r : registersToSave) {
@@ -422,53 +399,42 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             index++;
         }
 
-        asm.setFrameSize(this.frameSize);
+        asm.setFrameSize(totalSize());
     }
 
-    private void prologue(boolean savesRegisters) {
-        if (savesRegisters) {
-            this.frameSize = savedRegistersSize();
-        } else {
-            this.frameSize = 0;
-        }
-
-        this.frameSize += ReservedArgumentSlots * target.arch.wordSize;
-
-        asm.makeOffset(runtime.codeOffset());
-
-        // Modify rsp
-        asm.subq(X86.rsp, this.frameSize);
-
-        asm.setFrameSize(this.frameSize);
+    private void completeSavePrologue() {
+        this.saveSize = target.config.getMinimumCalleeSaveFrameSize();
+        this.frameSize = ReservedArgumentSlots * target.arch.wordSize;
+        // align to code size
+        asm.nop(runtime.codeOffset());
+        asm.subq(X86.rsp, totalSize());
+        asm.setFrameSize(totalSize());
+        saveRegisters();
     }
 
     private void epilogue() {
-
         assert registerRestoreEpilogueOffset == -1;
         registerRestoreEpilogueOffset = asm.codeBuffer.position();
 
         if (registersSaved != null) {
-            int index = 0;
             for (CiRegister r : registersSaved) {
-                asm.movq(r, new Address(X86.rsp, index * target.arch.wordSize));
-                index++;
+                asm.movq(r, new Address(X86.rsp, target.config.getCalleeSaveRegisterOffset(r)));
             }
             registersSaved = null;
         }
 
         // Restore rsp
-        asm.addq(X86.rsp, this.frameSize);
-
+        asm.addq(X86.rsp, totalSize());
         asm.ret(0);
     }
 
+    private int totalSize() {
+        return frameSize + saveSize;
+    }
+
     private void forwardRuntimeCall(CiRuntimeCall call) {
-
-        // Save registers
-        saveRegisters();
-
         // Load arguments
-        CiLocation[] result = runtime.runtimeCallingConvention(call.arguments);
+        CiLocation[] result = target.config.getRuntimeParameterLocations(call.arguments);
         for (int i = 0; i < call.arguments.length; i++) {
             loadArgument(i, result[i].first);
         }
@@ -477,7 +443,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         asm.callRuntime(call);
 
         if (call.resultType != CiKind.Void) {
-            this.storeArgument(0, runtime.returnRegister(call.resultType));
+            this.storeArgument(0, target.config.getReturnRegister(call.resultType));
         }
     }
 }

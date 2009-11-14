@@ -379,7 +379,6 @@ public class CompiledPrototype extends Prototype {
             final BOOT_IMAGE_DIRECTIVE annotation = methodActor.getAnnotation(BOOT_IMAGE_DIRECTIVE.class);
             if (annotation.keepUnlinked()) {
                 // if there is an annotation to keep this method unlinked, add to the unlinked methods set
-                registerMethodUnlinked(methodActor);
             } else if (annotation.useJitCompiler()) {
                 // if there is an explicit annotation to use the JIT compiler
                 registerJitMethod(methodActor);
@@ -409,12 +408,6 @@ public class CompiledPrototype extends Prototype {
     public static void registerImageMethod(ClassMethodActor imageMethodActor) {
         ProgramError.check(imageMethodActor != null);
         imageMethodActors.add(imageMethodActor);
-    }
-
-    public static void registerMethodUnlinked(MethodActor methodActor) {
-    }
-
-    public static void registerClassUnlinked(ClassActor classActor) {
     }
 
     public static void registerJitClass(Class javaClass) {

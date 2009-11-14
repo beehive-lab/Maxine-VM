@@ -193,15 +193,14 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             // Assign new location to Local instruction for this local
             Value instr = state.localAt(javaIndex);
-            assert instr instanceof Local;
             Local local = ((Local) instr);
-            CiKind t = src.kind.stackType();
-            assert t == local.type().stackType() : "check";
+            CiKind type = src.kind.stackType();
+            assert type == local.type().stackType() : "local type check failed";
             if (local.isLive()) {
                 local.setOperand(dest);
                 instructionForOperand.put(dest.vregNumber(), local);
             }
-            javaIndex += t.size;
+            javaIndex += type.size;
         }
     }
 
@@ -393,7 +392,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         LIROperand result = newRegister(CiKind.Object);
-        LIRLocation threadReg = LIROperandFactory.singleLocation(CiKind.Object, compilation.runtime.threadRegister());
+        LIRLocation threadReg = LIROperandFactory.singleLocation(CiKind.Object, compilation.target.config.getThreadRegister());
         lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOffset(), CiKind.Object), result);
         setResult(x, result);
     }
@@ -587,7 +586,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             resultRegister = resultRegisterFor(x.type());
         }
 
-
         assert args.size() == argList.size();
         loadInvokeArguments(x, args, argList);
 
@@ -597,8 +595,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         if (snippet != null && destinationAddress != null) {
-
-
             if (destinationAddress instanceof LIRConstant) {
                 // Direct call
                 assert ((LIRConstant) destinationAddress).value.asLong() == 0;
@@ -612,8 +608,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
 
         } else {
-
-
             // emit invoke code
             boolean optimized = target.isLoaded() && target.isFinalMethod();
             assert receiver.isIllegal() || receiver.equals(cc.at(0)) : "must match";
@@ -2231,7 +2225,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected LIRLocation resultRegisterFor(CiKind type) {
-        CiRegister returnRegister = compilation.runtime.returnRegister(type);
+        CiRegister returnRegister = compilation.target.config.getReturnRegister(type);
         assert compilation.target.arch.is64bit();
         if (type.size == 2) {
             return LIROperandFactory.doubleLocation(type, returnRegister, returnRegister);

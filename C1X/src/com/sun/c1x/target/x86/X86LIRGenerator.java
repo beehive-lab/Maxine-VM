@@ -364,7 +364,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     public void visitArithmeticOpLong(ArithmeticOp x) {
-
         if (x.opcode() == Bytecodes.LDIV || x.opcode() == Bytecodes.LREM) {
             // long division is implemented as a direct call into the runtime
             LIRItem left = new LIRItem(x.x(), this);

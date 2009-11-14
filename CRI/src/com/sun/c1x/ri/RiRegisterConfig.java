@@ -18,18 +18,43 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.sparc;
+package com.sun.c1x.ri;
 
-import com.sun.c1x.ci.*;
+import com.sun.c1x.ci.CiRegister;
+import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ci.CiLocation;
 
 /**
- * This class represents the SPARC architecture.
+ * This interface represents the register configuration specified by the runtime system
+ * to the compiler, including such information as the return value register, the set
+ * of allocatable registers, the order of registers within a reference map, calling
+ * convention, etc.
  *
- * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public class SPARC extends CiArchitecture {
+public interface RiRegisterConfig {
 
-    protected SPARC(String name, int wordSize, CiRegister[] registers) {
-        super(name, wordSize, "sparc", ByteOrder.BigEndian, registers, 0, 0);
-    }
+    CiRegister getReturnRegister(CiKind kind);
+
+    CiRegister getStackPointerRegister();
+
+    CiRegister getScratchRegister();
+
+    CiRegister getSafepointRegister(); // will be deprecated with XIR
+
+    CiRegister getThreadRegister(); // will be deprecated with XIR
+
+    CiLocation[] getJavaParameterLocations(CiKind[] types, boolean outgoing);
+
+    CiLocation[] getRuntimeParameterLocations(CiKind[] types);
+
+    CiRegister[] getAllocatableRegisters();
+
+    CiRegister[] getCallerSaveRegisters();
+
+    int getMinimumCalleeSaveFrameSize();
+
+    int getCalleeSaveRegisterOffset(CiRegister register);
+
+    CiRegister[] getRegisterReferenceMapOrder();
 }

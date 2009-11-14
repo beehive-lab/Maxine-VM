@@ -30,7 +30,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.sparc.*;
 
@@ -115,11 +114,6 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
     @Override
     public void setInstructionPointer(Pointer trapState, Pointer value) {
         TRAP_INSTRUCTION_POINTER.pointer(Safepoint.getLatchRegister()).writeWord(0, value);
-    }
-
-    @Override
-    public void setExceptionObject(Pointer trapState, Throwable throwable) {
-        trapState.writeWord(TRAP_RETURN_VALUE_OFFSET, Reference.fromJava(throwable).toOrigin());
     }
 
     @Override

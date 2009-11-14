@@ -30,7 +30,7 @@ package com.sun.c1x.ci;
  */
 public abstract class CiArchitecture {
 
-    public static enum BitOrdering {
+    public static enum ByteOrder {
         LittleEndian,
         BigEndian
     }
@@ -63,19 +63,16 @@ public abstract class CiArchitecture {
     /**
      * The bit ordering can be either little or big endian.
      */
-    public final BitOrdering bitOrdering;
-
-    /**
-     * Additional padding that is added to the frame size of each method.
-     */
-    public final int framePadding;
+    public final ByteOrder byteOrder;
 
     /**
      * Offset in bytes from the beginning of a call instruction to the displacement.
      */
     public final int machineCodeCallDisplacementOffset;
 
-    private final String name;
+    public final String name;
+
+    public final int returnAddressSize;
 
     /**
      * Reflectively instantiates an architecture given its name.
@@ -99,25 +96,21 @@ public abstract class CiArchitecture {
         }
     }
 
-    protected CiArchitecture(String name, int wordSize, String backend, BitOrdering bitOrdering, CiRegister[] registers, final int framePadding, final int nativeCallDisplacementOffset, final int nativeMoveConstInstructionSize) {
+    protected CiArchitecture(String name, int wordSize, String backend, ByteOrder byteOrder, CiRegister[] registers, int nativeCallDisplacementOffset, int returnAddressSize) {
         this.name = name;
         this.registers = registers;
         this.wordSize = wordSize;
         this.platform = backend;
-        this.bitOrdering = bitOrdering;
-        this.framePadding = framePadding;
+        this.byteOrder = byteOrder;
         this.machineCodeCallDisplacementOffset = nativeCallDisplacementOffset;
-        switch (bitOrdering) {
-            case LittleEndian:
-                lowWordOffset = 0;
-                highWordOffset = wordSize;
-                break;
-            case BigEndian:
-                lowWordOffset = wordSize;
-                highWordOffset = 0;
-                break;
-            default:
-			throw new Error("Invalid bitordering!");
+        this.returnAddressSize = returnAddressSize;
+
+        if (byteOrder == ByteOrder.LittleEndian) {
+            this.lowWordOffset = 0;
+            this.highWordOffset = wordSize;
+        } else {
+            this.lowWordOffset = wordSize;
+            this.highWordOffset = 0;
         }
     }
 
@@ -147,7 +140,6 @@ public abstract class CiArchitecture {
     }
 
     /**
-     * TODO: Get rid of this method. Platform specific code should be in subclasses.
      * Checks whether the backend is x86.
      * @return <code>true</code> if the backend of this architecture is x86
      */
@@ -156,7 +148,6 @@ public abstract class CiArchitecture {
     }
 
     /**
-     * TODO: Get rid of this method. Platform specific code should be in subclasses.
      * Checks whether the backend is SPARC.
      * @return <code>true</code> if the backend of this architecture is SPARC
      */
