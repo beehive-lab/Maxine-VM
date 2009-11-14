@@ -106,7 +106,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         int index = 0;
         for (TeleTargetBreakpoint breakpoint : inspection.maxVM().targetBreakpoints()) {
             final String prefix = TARGET_BREAKPOINT_KEY + index++;
-            final Address bootImageOffset = breakpoint.address().minus(inspection.maxVM().bootImageStart());
+            final Address bootImageOffset = breakpoint.teleCodeLocation().targetCodeInstructionAddress().minus(inspection.maxVM().bootImageStart());
             settings.save(prefix + "." + ADDRESS_KEY, bootImageOffset.toLong());
             settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             final BreakpointCondition condition = breakpoint.condition();

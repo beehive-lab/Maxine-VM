@@ -23,6 +23,7 @@ package com.sun.max.tele.debug;
 import java.util.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -41,22 +42,17 @@ import com.sun.max.vm.type.*;
  */
 public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
-    private TeleCodeLocation teleCodeLocation;
+    // TODO (mlvdv) Implementation scheduled for redesign.
+
     private final Factory factory;
 
-    @Override
-    public TeleCodeLocation teleCodeLocation() {
-        return teleCodeLocation;
-    }
-
     /**
-     * target breakpoints that were created in compilations of the method in the {@link TeleVM}.
+     * target breakpoints that were created in compilations of the method in the VM.
      */
     private AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints;
 
-    private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, Key key, boolean isTransient) {
-        super(teleVM, isTransient);
-        this.teleCodeLocation = new TeleCodeLocation(teleVM, key);
+    private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, Key key) {
+        super(teleVM, new TeleCodeLocation(teleVM, key), Kind.CLIENT);
         this.factory = factory;
     }
 
@@ -64,7 +60,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * @return description of the bytecode location of this breakpoint.
      */
     public Key key() {
-        return teleCodeLocation.key();
+        return teleCodeLocation().key();
     }
 
     private void request() {
@@ -76,7 +72,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     /**
-     * Makes this breakpoint active in the {@link TeleVM} by locating all compilations and setting
+     * Makes this breakpoint active in the VM by locating all compilations and setting
      * target code breakpoints at the corresponding location, if that can be determined.
      */
     public void activate() {
@@ -101,7 +97,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     /**
-     * Removes any state, including in the {@link TeleVM}, associated with this breakpoint.
+     * Removes any state, including in the VM, associated with this breakpoint.
      */
     private void dispose() {
         final Sequence<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(teleVM(), key());
@@ -116,7 +112,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     if (targetBreakpoint != null) {
                         targetBreakpoint.remove();
                     }
-                    // Assume for now the whole VM is stopped; there will be races to be fixed otherwise, likely with an agent thread in the {@link TeleVM}.
+                    // Assume for now the whole VM is stopped; there will be races to be fixed otherwise, likely with an agent thread in the VM.
                 }
             }
             teleTargetBreakpoints = null;
@@ -142,7 +138,6 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     @Override
     public boolean setEnabled(boolean enabled) {
-        assert !isTransient() : "cannot disable transient breakpoint: " + this;
         if (enabled != this.enabled) {
             this.enabled = enabled;
             if (enabled) {
@@ -162,12 +157,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     @Override
-    public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-        assert teleNativeThread.state() == TeleNativeThread.ThreadState.BREAKPOINT;
-        // Conditional bytecode breakpoints not supported yet; just break normally.
-        return true;
+    public void setCondition(String condition) {
+        // TODO (mlvdv) add support; just replicate the condition in each derivative target code breakpoint.
+        ProgramError.unexpected("Conditional bytecode breakpoints net yet implemented");
     }
-
 
     @Override
     public String toString() {
@@ -175,7 +168,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     /**
-     * Describes a bytecode position in the {@link TeleVM},
+     * Describes a bytecode position in the VM,
      * i.e. indicates the exact method and byte code position.
      *
      * The method does not have to be compiled, nor even loaded yet.
@@ -236,7 +229,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     /**
-     * Creates, tracks, and removes bytecode breakpoints from the {@link TeleVM}.
+     * Creates, tracks, and removes bytecode breakpoints from the VM.
      */
     public static class Factory extends Observable {
 
@@ -257,7 +250,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * @return all bytecode breakpoints that currently exist in the {@link TeleVM}.
+         * @return all bytecode breakpoints that currently exist in the VM.
          * Modification safe against breakpoint removal.
          */
         public synchronized Iterable<TeleBytecodeBreakpoint> breakpoints() {
@@ -269,7 +262,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * @return the number of bytecode breakpoints that currently exist in the {@link TeleVM}.
+         * @return the number of bytecode breakpoints that currently exist in the VM.
          */
         public synchronized int size() {
             return breakpoints.length();
@@ -283,8 +276,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             return breakpoints.get(key);
         }
 
-        private TeleBytecodeBreakpoint createBreakpoint(Key key, boolean persistent) {
-            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(teleVM, this, key, false);
+        private TeleBytecodeBreakpoint createBreakpoint(Key key) {
+            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(teleVM, this, key);
             breakpoints.put(key, breakpoint);
             announceStateChange();
             return breakpoint;
@@ -292,13 +285,12 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
         /**
          * @param key description of a bytecode position in a method
-         * @param isTransient
          * @return a possibly new, enabled bytecode breakpoint
          */
-        public synchronized TeleBytecodeBreakpoint makeBreakpoint(Key key, boolean isTransient) {
+        public synchronized TeleBytecodeBreakpoint makeBreakpoint(Key key) {
             TeleBytecodeBreakpoint breakpoint = getBreakpoint(key);
             if (breakpoint == null) {
-                breakpoint = createBreakpoint(key, isTransient);
+                breakpoint = createBreakpoint(key);
             }
             breakpoint.setEnabled(true);
             return breakpoint;
@@ -313,15 +305,5 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             announceStateChange();
         }
 
-        /**
-         * Removes all bytecode breakpoints.
-         */
-        public synchronized void removeAllBreakpoints() {
-            for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : breakpoints.values()) {
-                teleBytecodeBreakpoint.dispose();
-            }
-            breakpoints.clear();
-            announceStateChange();
-        }
     }
 }

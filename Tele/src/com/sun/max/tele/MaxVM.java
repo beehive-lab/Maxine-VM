@@ -631,7 +631,7 @@ public interface MaxVM {
     /**
      * All existing target code breakpoints.
      *
-     * @return all existing target code breakpoints in the VM, ignoring transients.
+     * @return all existing target code breakpoints in the VM, ignoring those set by the system..
      * Modification safe against breakpoint removal.
      */
     Iterable<TeleTargetBreakpoint> targetBreakpoints();

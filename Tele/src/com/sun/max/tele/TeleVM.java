@@ -1359,11 +1359,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Iterable<TeleTargetBreakpoint> targetBreakpoints() {
-        return teleProcess.targetBreakpointFactory().breakpoints(true);
+        return teleProcess.targetBreakpointFactory().clientBreakpoints();
     }
 
     public final int targetBreakpointCount() {
-        return teleProcess.targetBreakpointFactory().size(true);
+        return teleProcess.targetBreakpointFactory().clientBreakpointCount();
     }
 
     public final TeleTargetBreakpoint makeMaxTargetBreakpoint(Address address) throws MaxVMException {
@@ -1376,11 +1376,11 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final TeleTargetBreakpoint makeTargetBreakpoint(Address address) {
-        return teleProcess.targetBreakpointFactory().makeBreakpoint(address, false);
+        return teleProcess.targetBreakpointFactory().makeClientBreakpoint(address);
     }
 
     public final TeleTargetBreakpoint getTargetBreakpoint(Address address) {
-        return teleProcess.targetBreakpointFactory().getNonTransientBreakpointAt(address);
+        return teleProcess.targetBreakpointFactory().getClientTargetBreakpointAt(address);
     }
 
     public final Iterable<TeleBytecodeBreakpoint> bytecodeBreakpoints() {
@@ -1392,7 +1392,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final TeleBytecodeBreakpoint makeBytecodeBreakpoint(Key key) {
-        return bytecodeBreakpointFactory.makeBreakpoint(key, false);
+        return bytecodeBreakpointFactory.makeBreakpoint(key);
     }
 
     public final TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key) {
