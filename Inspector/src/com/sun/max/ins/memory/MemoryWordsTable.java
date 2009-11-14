@@ -50,17 +50,25 @@ public final class MemoryWordsTable extends InspectorTable {
 
     private final MemoryWordsTableModel tableModel;
     private final MemoryWordsColumnModel columnModel;
+    private final InspectorAction setOriginToSelectionAction;
 
-    public MemoryWordsTable(Inspection inspection, MemoryWordRegion memoryWordRegion, Address origin, TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences) {
+    MemoryWordsTable(Inspection inspection,
+        MemoryWordRegion memoryWordRegion,
+        Address origin,
+        TableColumnVisibilityPreferences<MemoryWordsColumnKind> instanceViewPreferences,
+        InspectorAction setOriginToSelectionAction) {
         super(inspection);
         tableModel = new MemoryWordsTableModel(inspection, memoryWordRegion, origin);
         columnModel = new MemoryWordsColumnModel(instanceViewPreferences);
+        this.setOriginToSelectionAction = setOriginToSelectionAction;
         configureMemoryTable(tableModel, columnModel);
     }
 
     @Override
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
+        if (mouseEvent.getClickCount() == 1 && col == MemoryWordsColumnKind.OFFSET.ordinal()) {
+            setOriginToSelectionAction.perform();
+        } else if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -125,7 +133,7 @@ public final class MemoryWordsTable extends InspectorTable {
     /**
      * Changes the area of memory being displayed.
      */
-    public void setMemoryRegion(MemoryWordRegion memoryWordRegion) {
+    void setMemoryRegion(MemoryWordRegion memoryWordRegion) {
         tableModel.setMemoryRegion(memoryWordRegion);
         updateFocusSelection();
     }
@@ -134,16 +142,16 @@ public final class MemoryWordsTable extends InspectorTable {
      * Changes the origin used to computing offsets in the memory being displayed.
      * @param origin
      */
-    public void setOrigin(Address origin) {
+    void setOrigin(Address origin) {
         tableModel.setOrigin(origin);
     }
 
-    public void scrollToOrigin() {
+    void scrollToOrigin() {
         final int row = tableModel.findRow(tableModel.getOrigin());
         scrollToRows(row, row);
     }
 
-    public void scrollToAddress(Address address) {
+    void scrollToAddress(Address address) {
         if (address == null || address.isZero()) {
             return;
         }
@@ -153,7 +161,7 @@ public final class MemoryWordsTable extends InspectorTable {
         }
     }
 
-    public void scrollToRange(Address first, Address last) {
+    void scrollToRange(Address first, Address last) {
         scrollToRows(tableModel.findRow(first), tableModel.findRow(last));
     }
 

@@ -323,8 +323,8 @@ public final class MemoryWordsInspector extends Inspector {
         defaultMenu.add(actions().closeViews(MemoryWordsInspector.class, null, "Close all memory inspectors"));
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
-        setOriginAction.refresh(true);
-        memoryMenu.add(setOriginAction);
+        setOriginToSelectionAction.refresh(true);
+        memoryMenu.add(setOriginToSelectionAction);
         memoryMenu.add(scrollToFocusAction);
         memoryMenu.add(inspectBytesAction);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
@@ -378,7 +378,7 @@ public final class MemoryWordsInspector extends Inspector {
     @Override
     protected void createView() {
 
-        table = new MemoryWordsTable(inspection(), memoryWordRegion, origin, instanceViewPreferences);
+        table = new MemoryWordsTable(inspection(), memoryWordRegion, origin, instanceViewPreferences, setOriginToSelectionAction);
 
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
 
@@ -790,7 +790,7 @@ public final class MemoryWordsInspector extends Inspector {
         }
     };
 
-    private InspectorAction setOriginAction = new InspectorAction(inspection(), "Set Origin to selected location") {
+    private InspectorAction setOriginToSelectionAction = new InspectorAction(inspection(), "Set Origin to selected location") {
         @Override
         protected void procedure() {
             setOrigin(focus().address());
