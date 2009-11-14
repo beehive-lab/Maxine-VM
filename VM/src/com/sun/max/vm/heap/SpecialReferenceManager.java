@@ -78,7 +78,7 @@ public class SpecialReferenceManager {
      */
     public static final Object LOCK = WithoutAccessCheck.getStaticField(JDK.java_lang_ref_Reference.javaClass(), "lock");
     static {
-        JavaMonitorManager.bindStickyMonitor(LOCK, new StandardJavaMonitor());
+        JavaMonitorManager.bindStickyMonitor(LOCK);
     }
 
     private static Grip discoveredList;
