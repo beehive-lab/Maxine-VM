@@ -119,6 +119,29 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
 
+    static {
+        new CriticalNativeMethod(Log.class, "log_lock");
+        new CriticalNativeMethod(Log.class, "log_unlock");
+        new CriticalNativeMethod(Log.class, "log_flush");
+
+        new CriticalNativeMethod(Log.class, "log_print_buffer");
+        new CriticalNativeMethod(Log.class, "log_print_boolean");
+        new CriticalNativeMethod(Log.class, "log_print_char");
+        new CriticalNativeMethod(Log.class, "log_print_int");
+        new CriticalNativeMethod(Log.class, "log_print_long");
+        new CriticalNativeMethod(Log.class, "log_print_float");
+        new CriticalNativeMethod(Log.class, "log_print_double");
+        new CriticalNativeMethod(Log.class, "log_print_word");
+        new CriticalNativeMethod(Log.class, "log_print_newline");
+
+        new CriticalNativeMethod(MaxineVM.class, "native_exit");
+        new CriticalNativeMethod(MaxineVM.class, "native_trap_exit");
+
+        new CriticalNativeMethod(VmThread.class, "nonJniNativeSleep");
+        new CriticalNativeMethod(VmThread.class, "nativeSleep");
+        new CriticalNativeMethod(VmThread.class, "nativeYield");
+    }
+
     /**
      * Support for ClassFileWriter.testLoadGeneratedClasses().
      */

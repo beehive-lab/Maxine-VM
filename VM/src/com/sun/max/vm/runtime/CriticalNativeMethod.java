@@ -57,7 +57,6 @@ public class CriticalNativeMethod extends CriticalMethod {
     public CriticalNativeMethod(Class javaClass, String methodName) {
         super(javaClass, methodName, null, CallEntryPoint.C_ENTRY_POINT);
         registerCriticalNativeMethod(this);
-        classMethodActor.nativeFunction.makeSymbol();
     }
 
     /**
@@ -68,7 +67,6 @@ public class CriticalNativeMethod extends CriticalMethod {
     public CriticalNativeMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor, CallEntryPoint.C_ENTRY_POINT);
         registerCriticalNativeMethod(this);
-        classMethodActor.nativeFunction.makeSymbol();
     }
 
     /**

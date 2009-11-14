@@ -115,7 +115,7 @@ public class VmThread {
         RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
     }
 
-    private static final VMBooleanXXOption TRACE_THREADS_OPTION = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
+    static final VMBooleanXXOption TRACE_THREADS_OPTION = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
 
     private static final Size DEFAULT_STACK_SIZE = Size.K.times(256);
 
@@ -130,10 +130,6 @@ public class VmThread {
     };
 
     public static final VmThread MAIN_VM_THREAD = createMain();
-
-    private static final CriticalNativeMethod NON_JNI_NATIVE_SLEEP = new CriticalNativeMethod(VmThread.class, "nonJniNativeSleep");
-    private static final CriticalNativeMethod NATIVE_SLEEP = new CriticalNativeMethod(VmThread.class, "nativeSleep");
-    private static final CriticalNativeMethod NATIVE_YIELD = new CriticalNativeMethod(VmThread.class, "nativeYield");
 
     @CONSTANT_WHEN_NOT_ZERO
     private Thread javaThread;
@@ -880,8 +876,7 @@ public class VmThread {
      */
     public void start0() {
         state = Thread.State.RUNNABLE;
-        VmThreadMap.ACTIVE.startVmThread(this, STACK_SIZE_OPTION.getValue().aligned(Platform.host().pageSize).asSize(),
-                                         javaThread.getPriority());
+        VmThreadMap.ACTIVE.startVmThread(this, STACK_SIZE_OPTION.getValue().aligned(Platform.host().pageSize).asSize(), javaThread.getPriority());
     }
 
     public boolean isInterrupted(boolean clearInterrupted) {

@@ -23,8 +23,6 @@ package com.sun.max.vm.prototype;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.jar.*;
-import java.util.zip.*;
 
 import com.sun.c1x.*;
 import com.sun.max.collect.*;
@@ -236,7 +234,6 @@ public final class BootImageGenerator {
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().bootCompilerScheme();
 
-
             VMOptions.beforeExit();
 
             // write the statistics
@@ -305,7 +302,7 @@ public final class BootImageGenerator {
      */
     private void writeJar(File file) throws IOException {
         Trace.begin(1, "writing boot image jar file: " + file);
-        createBootImageJarFile(file);
+        ClassfileReader.writeClassfilesToJar(file);
         Trace.end(1, "end boot image jar file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
     }
 
@@ -368,36 +365,6 @@ public final class BootImageGenerator {
      */
     public static void main(String[] programArguments) {
         new BootImageGenerator(programArguments);
-    }
-
-    /**
-     * Creates a jar file of all the class files from the types in the VM type registry were created.
-     *
-     * @param jarFile   the path of the jar file to create
-     */
-    private static void createBootImageJarFile(File jarFile) throws IOException {
-        final JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
-        jarOutputStream.setLevel(Deflater.BEST_COMPRESSION);
-        final Classpath classPath = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER.classpath();
-
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
-            if (classActor.isInterfaceActor() || classActor.isTupleClassActor() || classActor.isHybridClassActor()) {
-                try {
-                    final ClasspathFile classpathFile = HostedBootClassLoader.readClassFile(classPath, classActor.name.toString());
-
-                    final String classfilePath = classActor.name.toString().replace('.', '/') + ".class";
-                    final JarEntry jarEntry = new JarEntry(classfilePath);
-                    jarEntry.setTime(System.currentTimeMillis());
-                    jarOutputStream.putNextEntry(jarEntry);
-                    jarOutputStream.write(classpathFile.contents);
-                    jarOutputStream.closeEntry();
-                } catch (ClassNotFoundException classNotFoundException) {
-                    ProgramError.unexpected("could not find class file for " + classActor, classNotFoundException);
-                }
-            }
-        }
-
-        jarOutputStream.close();
     }
 
     /**

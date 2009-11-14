@@ -120,7 +120,7 @@ public class CompactReferenceMapInterpreter extends ReferenceMapInterpreter {
     }
 
     @Override
-    boolean isFrameInitialized(int blockIndex) {
+    public boolean isFrameInitialized(int blockIndex) {
         return (frames[blockIndex] & INITIALIZED_FRAME_BIT) != 0;
     }
 

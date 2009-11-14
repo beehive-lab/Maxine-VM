@@ -52,72 +52,6 @@ public final class BootClassLoader extends ClassLoader {
      */
     public static final BootClassLoader BOOT_CLASS_LOADER = new BootClassLoader();
 
-    /**
-     * This exists (solely) for the purpose of being able to reify generated classes while bootstrapping. These are needed
-     * so that the actors for generated stubs can be created. This field is omitted when generating the boot image.
-     *
-     * Optionally the class is written to the file system to allow the Inspector to access it when debugging the generated VM.
-     *
-     * As a temporary measure it is also used at target run time to allow the inspector to grab the class file from the target
-     * without depending on all the I/O machinery working.
-     */
-    @HOSTED_ONLY
-    private Map<String, byte[]> generatedClassfiles = new HashMap<String, byte[]>();
-
-    @HOSTED_ONLY
-    private synchronized void storeRuntimeGeneratedClassFile(String name, byte[] classfile) {
-        if (generatedClassfiles == null) {
-            generatedClassfiles = new HashMap<String, byte[]>();
-        } else if (generatedClassfiles.containsKey(name)) {
-            ProgramWarning.message("class with same name generated twice: " + name);
-        }
-        generatedClassfiles.put(name, classfile);
-    }
-
-    @HOSTED_ONLY
-    public void saveGeneratedClassfile(String name, byte[] classfile) {
-        storeRuntimeGeneratedClassFile(name, classfile);
-
-        final String path = System.getProperty("maxine.vmclassloader.saveclassdir");
-        if (path != null) {
-            final File classfileFile = new File(path + File.separator + name.replace(".", File.separator) + ".class");
-            BufferedOutputStream bs = null;
-            try {
-                final File classfileDirectory = classfileFile.getParentFile();
-                if (!(classfileDirectory.exists() && classfileDirectory.isDirectory())) {
-                    if (classfileDirectory.mkdirs()) {
-                        throw new IOException("Could not make directory " + classfileDirectory);
-                    }
-                }
-                bs = new BufferedOutputStream(new FileOutputStream(classfileFile));
-                bs.write(classfile);
-            } catch (IOException ex) {
-                ProgramWarning.message("saveGeneratedClassfile: " + classfileFile + ": " + ex.getMessage());
-            } finally {
-                if (bs != null) {
-                    try {
-                        bs.close();
-                    } catch (IOException ex) {
-                    }
-                }
-            }
-        }
-    }
-
-    @HOSTED_ONLY
-    public ClasspathFile findGeneratedClassfile(String name) {
-        final byte[] classfileBytes = generatedClassfiles.get(name);
-        if (classfileBytes != null) {
-            return new ClasspathFile(classfileBytes, null);
-        }
-        return null;
-    }
-
-    @HOSTED_ONLY
-    public Map<String, byte[]> generatedClassfiles() {
-        return Collections.unmodifiableMap(generatedClassfiles);
-    }
-
     private Classpath classpath;
 
     public Classpath classpath() {
@@ -149,8 +83,9 @@ public final class BootClassLoader extends ClassLoader {
             try {
                 return super.findClass(name);
             } catch (ClassNotFoundException e) {
-                final byte[] classfileBytes = generatedClassfiles.get(name);
-                if (classfileBytes != null) {
+                ClasspathFile classfile = ClassfileReader.findGeneratedClassfile(name);
+                if (classfile != null) {
+                    final byte[] classfileBytes = classfile.contents;
                     return defineClass(name, classfileBytes, 0, classfileBytes.length);
                 }
             }
