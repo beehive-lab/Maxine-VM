@@ -53,7 +53,6 @@ public class CompareOp extends Op2 {
         return stateBefore;
     }
 
-
     /**
      * Implements this instruction's half of the visitor pattern.
      * @param v the visitor to accept

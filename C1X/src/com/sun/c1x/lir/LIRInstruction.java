@@ -128,7 +128,6 @@ public abstract class LIRInstruction {
         }
     }
 
-
     /**
      * Constructs a new Instruction.
      *

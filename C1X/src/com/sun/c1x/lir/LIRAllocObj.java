@@ -23,12 +23,10 @@ package com.sun.c1x.lir;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.stub.*;
 
-
 /**
  * The <code>LIRAllocObj</code> class definition.
  *
  * @author Marcelo Cintra
- *
  */
 public class LIRAllocObj extends LIRInstruction {
 
@@ -36,21 +34,6 @@ public class LIRAllocObj extends LIRInstruction {
     private int     objSize;
     private boolean initCheck;
 
-
-    /**
-     * Constructs a new LIRAllocObj instruction.
-     *
-     * @param klass
-     * @param result
-     * @param tmp1
-     * @param tmp2
-     * @param tmp3
-     * @param tmp4
-     * @param headerSize
-     * @param objSize
-     * @param stub
-     * @param initCheck
-     */
     public LIRAllocObj(LIROperand klass, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4,
                     int hdrSize, int objSize, boolean initCheck, CodeStub stub) {
         super(LIROpcode.AllocObject, result, null, false, stub, 0, 4, klass, tmp1, tmp2, tmp3, tmp4);
@@ -59,9 +42,6 @@ public class LIRAllocObj extends LIRInstruction {
         this.initCheck = initCheck;
     }
 
-    /**
-     * @return the operand
-     */
     public LIROperand klass() {
         return operand(0);
     }
@@ -69,58 +49,37 @@ public class LIRAllocObj extends LIRInstruction {
     public LIROperand obj() {
         return result();
     }
-    /**
-     * @return the tmp1
-     */
+
     public LIROperand tmp1() {
         return operand(1);
     }
 
-    /**
-     * @return the tmp2
-     */
     public LIROperand tmp2() {
         return operand(2);
     }
 
-    /**
-     * @return the tmp3
-     */
     public LIROperand tmp3() {
         return operand(3);
     }
 
-    /**
-     * @return the tmp4
-     */
     public LIROperand tmp4() {
         return operand(4);
     }
 
-    /**
-     * @return the hdrSize
-     */
     public int headerSize() {
         return hdrSize;
     }
 
-    /**
-     * @return the objSize
-     */
     public int obectSize() {
         return objSize;
     }
 
-     /**
-     * @return the initCheck
-     */
     public boolean isInitCheck() {
         return initCheck;
     }
 
     /**
      * Emits code for this instruction.
-     *
      */
     @Override
     public void emitCode(LIRAssembler masm) {
@@ -130,7 +89,6 @@ public class LIRAllocObj extends LIRInstruction {
 
      /**
      * Prints this instruction.
-     *
      * @param out the outputstream
      */
     @Override

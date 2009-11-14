@@ -60,7 +60,6 @@ public class C1XCompiler extends CiCompiler {
      */
     public final Backend backend;
 
-
     public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen) {
         this.runtime = runtime;
         this.target = target;
@@ -83,7 +82,6 @@ public class C1XCompiler extends CiCompiler {
     }
 
     public void init() {
-
         List<XirTemplate> globalStubs = xir.buildTemplates(backend.newXirAssembler());
 
         final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
@@ -108,18 +106,14 @@ public class C1XCompiler extends CiCompiler {
     }
 
     public Object lookupGlobalStub(CiRuntimeCall dest) {
-
         if (!runtimeCallStubs.containsKey(dest)) {
-
             final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
             final CiTargetMethod targetMethod = emitter.emitRuntimeStub(dest);
             Object result = runtime.registerTargetMethod(targetMethod, dest.toString());
             runtimeCallStubs.put(dest, result);
         }
 
-
         assert runtimeCallStubs.containsKey(dest);
         return runtimeCallStubs.get(dest);
-
     }
 }

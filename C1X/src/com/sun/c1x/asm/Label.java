@@ -22,13 +22,12 @@ package com.sun.c1x.asm;
 
 import java.util.*;
 
-
 /**
  * This class represents a label within assembly code.
  *
  * @author Marcelo Cintra
  */
-public class Label {
+public final class Label {
 
     private int position = -1;
 
@@ -41,7 +40,7 @@ public class Label {
      * Returns the position of this label in the code buffer.
      * @return the position
      */
-    public final int position() {
+    public int position() {
         assert position >= 0 : "Unbound label is being referenced";
         return position;
     }
@@ -50,24 +49,24 @@ public class Label {
      * Binds the label to the specified position.
      * @param pos the position
      */
-    public final void bind(int pos) {
+    public void bind(int pos) {
         this.position = pos;
     }
 
-    public final boolean isBound() {
+    public boolean isBound() {
         return position >= 0;
     }
 
-    public final boolean isUnbound() {
+    public boolean isUnbound() {
         return position == -1 && patchPositions.size() > 0;
     }
 
-    public final void addPatchAt(int branchLocation) {
+    public void addPatchAt(int branchLocation) {
         assert position == -1 : "Label is unbound";
         patchPositions.add(branchLocation);
     }
 
-    public final void patchInstructions(AbstractAssembler masm) {
+    public void patchInstructions(AbstractAssembler masm) {
         assert isBound() : "Label should be bound";
         int target = position;
         for (int pos : patchPositions) {
@@ -79,5 +78,4 @@ public class Label {
     public String toString() {
         return "label";
     }
-
 }

@@ -39,11 +39,9 @@ public class CriticalEdgeFinder implements BlockClosure {
     private final IR ir;
     private Map<BlockBegin, Set<BlockBegin>> edges = new HashMap<BlockBegin, Set<BlockBegin>>();
 
-
     public CriticalEdgeFinder(IR ir) {
         this.ir = ir;
     }
-
 
     public void apply(BlockBegin block) {
         if (block.numberOfSux() >= 2) {
@@ -74,5 +72,4 @@ public class CriticalEdgeFinder implements BlockClosure {
             }
         }
     }
-
 }

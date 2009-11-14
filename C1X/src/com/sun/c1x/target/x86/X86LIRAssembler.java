@@ -963,7 +963,6 @@ public class X86LIRAssembler extends LIRAssembler {
         }
     }
 
-
     @Override
     protected void emitAllocObj(LIRAllocObj op) {
         if (op.isInitCheck()) {
@@ -1023,7 +1022,6 @@ public class X86LIRAssembler extends LIRAssembler {
         CiRegister.assertDifferentRegisters(preserve, tmp1[0], tmp2[0], tmp3[0]);
     }
 
-
     @Override
     protected void emitTypeCheck(LIRTypeCheck op) {
         LIROpcode code = op.code;
@@ -1040,7 +1038,6 @@ public class X86LIRAssembler extends LIRAssembler {
             masm().cmpptr(value, (int) NULLWORD);
             masm().jcc(X86Assembler.Condition.equal, done);
             addDebugInfoForNullCheckHere(op.info);
-
 
             masm().movptr(kRInfo, new Address(array, compilation.runtime.hubOffset()));
             masm().movptr(klassRInfo, new Address(value, compilation.runtime.hubOffset()));
@@ -1139,7 +1136,6 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm().jcc(X86Assembler.Condition.equal, zero);
                 masm().movptr(klassRInfo, new Address(obj, compilation.runtime.hubOffset()));
                 // next block is unconditional if LP64:
-
 
                 // TODO: Check if this is really necessary
                 //assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
@@ -2342,7 +2338,6 @@ public class X86LIRAssembler extends LIRAssembler {
     @Override
     protected void rtCall(LIROperand result, CiRuntimeCall dest, List<LIROperand> args, LIRDebugInfo info, boolean calleeSaved) {
 
-
         if (calleeSaved) {
             // Call through global stub
             assert result.isRegister();
@@ -2543,7 +2538,6 @@ public class X86LIRAssembler extends LIRAssembler {
         s.accept(new X86CodeStubVisitor(this));
     }
 
-
     private static RegisterOrConstant asRegisterOrConstant(LIROperand operand) {
         if (operand.isRegister()) {
             return new RegisterOrConstant(operand.asRegister());
@@ -2565,7 +2559,6 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void resolve(CiRuntimeCall stub, LIRDebugInfo info, LIROperand dest, LIROperand index, LIROperand cp) {
         masm.callRuntimeCalleeSaved(stub, info, dest.asRegister(), asRegisterOrConstant(index), asRegisterOrConstant(cp));
     }
-
 
     @Override
     protected void emitXir(LIRXirInstruction instruction) {

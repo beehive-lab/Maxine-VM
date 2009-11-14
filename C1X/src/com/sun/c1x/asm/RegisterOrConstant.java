@@ -33,7 +33,6 @@ public class RegisterOrConstant {
     public final int constant;
     public final Object object;
 
-
     public RegisterOrConstant(int i) {
         this.constant = i;
         this.register = CiRegister.None;

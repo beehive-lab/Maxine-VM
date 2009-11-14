@@ -47,7 +47,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         super(compilation);
     }
 
-
     @Override
     protected LIROperand exceptionPcOpr() {
         return LIROperandFactory.IllegalLocation; //X86FrameMap.rdxOpr;
@@ -897,7 +896,6 @@ public final class X86LIRGenerator extends LIRGenerator {
             emitSafeArrayStore(dimensionArray, LIROperandFactory.intConst(i), size.result(), CiKind.Int, false);
         }
         arguments.add(dimensionArray);
-
 
         // Create a new code emit info as they must not be shared!
         LIRDebugInfo info2 = stateFor(x, x.stateBefore());

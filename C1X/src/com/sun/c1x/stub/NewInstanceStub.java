@@ -24,7 +24,6 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 
-
 /**
  * The <code>NewInstanceStub</code> class definition.
  *

@@ -99,7 +99,6 @@ public class IRScope {
         return caller == null;
     }
 
-
     /**
      * Gets the phi bitmap for this IR scope. The phi bitmap stores
      * whether a phi instruction is required for each local variable.

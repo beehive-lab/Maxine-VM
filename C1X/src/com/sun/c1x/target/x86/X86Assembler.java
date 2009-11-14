@@ -160,7 +160,6 @@ public abstract class X86Assembler extends AbstractAssembler {
 
         CiRegister base = addr.base;
 
-
         CiRegister index = addr.index;
         Address.ScaleFactor scale = addr.scale;
         int disp = addr.disp;

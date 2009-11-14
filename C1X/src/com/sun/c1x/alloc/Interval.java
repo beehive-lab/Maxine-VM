@@ -88,7 +88,6 @@ public final class Interval {
         // the interval has more then one definition (e.g. resulting from phi moves), so stores to memory are not
         // optimized
 
-
         private String name;
 
         private IntervalSpillState(String name) {
@@ -698,7 +697,6 @@ public final class Interval {
 
         return result;
     }
-
 
     boolean isVirtualInterval() {
         return registerNumber() >= CiRegister.FirstVirtualRegisterNumber;
