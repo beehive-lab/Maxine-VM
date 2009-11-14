@@ -33,7 +33,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.trampoline.*;
 
-
 /**
  * Dynamic Trampoline Exit for SPARC64.
  * No manipulation of the stack frame are needed. The trampoline epilogue produced by the optimizing compiler is enough.

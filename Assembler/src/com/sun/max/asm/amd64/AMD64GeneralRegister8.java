@@ -55,7 +55,6 @@ public enum AMD64GeneralRegister8 implements GeneralRegister<AMD64GeneralRegiste
     private final int value;
     private final boolean isHighByte;
 
-
     private AMD64GeneralRegister8(int value, boolean isHighByte) {
         this.value = value;
         this.isHighByte = isHighByte;

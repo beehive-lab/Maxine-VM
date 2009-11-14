@@ -148,7 +148,6 @@ public class MaxXirGenerator extends RiXirGenerator {
     final int wordSize;
     final int arrayLengthOffset;
 
-
     @UNSAFE
     public MaxXirGenerator(VMConfiguration vmConfiguration, CiTarget target, MaxRiRuntime runtime) {
         this.target = target;
@@ -460,7 +459,6 @@ public class MaxXirGenerator extends RiXirGenerator {
         XirArgument guard = XirArgument.forObject(guardFor(method));
         return new XirSnippet(pair.unresolved, guard);
     }
-
 
     private ResolutionGuard guardFor(RiField field) {
         // XXX: cache resolution guards
@@ -1048,7 +1046,6 @@ public class MaxXirGenerator extends RiXirGenerator {
         unresolved = finishTemplate(asm, "instanceof-unresolved<" + nonnull + ">");
         return unresolved;
     }
-
 
     private XirTemplate finishTemplate(CiXirAssembler asm, XirOperand result, String name) {
         final XirTemplate template = asm.finishTemplate(result, name);

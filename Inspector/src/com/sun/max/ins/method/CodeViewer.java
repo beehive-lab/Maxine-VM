@@ -225,7 +225,6 @@ public abstract class CodeViewer extends InspectorPanel {
         }
     }
 
-
     /**
      * @return a searcher for locating rows with a textual regexp.
      */

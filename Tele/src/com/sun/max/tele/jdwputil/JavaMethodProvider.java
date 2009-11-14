@@ -27,7 +27,6 @@ import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.vm.type.*;
 
-
 class JavaMethodProvider implements MethodProvider {
 
     private static final Logger LOGGER = Logger.getLogger(JavaMethodProvider.class.getName());
@@ -113,7 +112,6 @@ class JavaMethodProvider implements MethodProvider {
         if (method.getReturnType() == Void.TYPE) {
             return vm.getVoidValue();
         }
-
 
         return vm.createJavaObjectValue(result, method.getReturnType());
     }

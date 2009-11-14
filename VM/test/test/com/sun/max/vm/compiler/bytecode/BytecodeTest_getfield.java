@@ -124,7 +124,6 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         assertTrue(result.asBoolean());
     }
 
-
     private short shortField = 333;
 
     private short perform_getfield_short() {
@@ -422,5 +421,4 @@ public abstract class BytecodeTest_getfield<Method_Type extends IrMethod> extend
         }
     }
 }
-
 

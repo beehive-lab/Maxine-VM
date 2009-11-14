@@ -24,7 +24,6 @@ package com.sun.max.vm.compiler.tir;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.tir.pipeline.*;
 
-
 public class TirBuiltinCall extends TirCall {
     private final Builtin builtin;
 

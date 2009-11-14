@@ -22,7 +22,6 @@ package com.sun.max.jdwp.vm.proxy;
 
 import com.sun.max.jdwp.vm.core.*;
 
-
 /**
  * This class specifies the interface to the VM that is used for JDWP.
  *
@@ -30,7 +29,6 @@ import com.sun.max.jdwp.vm.core.*;
  *
  */
 public interface VMAccess {
-
 
     /**
      * @return the display name of the VM

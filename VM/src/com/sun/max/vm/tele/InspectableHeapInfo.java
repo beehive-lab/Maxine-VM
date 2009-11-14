@@ -56,7 +56,6 @@ public final class InspectableHeapInfo {
      */
     public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
 
-
     /**
      * Inspectable description the memory allocated for the Inspector's root table.
      */

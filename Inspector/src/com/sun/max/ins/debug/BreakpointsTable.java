@@ -38,7 +38,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
-
 /**
  * A table specialized for displaying code breakpoints in the VM.
  *
@@ -321,7 +320,6 @@ public final class BreakpointsTable extends InspectorTable {
     private Color getRowTextColor(int row) {
         return (tableModel.get(row).triggerThread() == null) ? null : inspection().style().debugIPTagColor();
     }
-
 
     private final class TagCellRenderer extends PlainLabel implements TableCellRenderer {
 

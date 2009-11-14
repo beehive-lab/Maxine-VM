@@ -65,7 +65,6 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * Provider of {@link InspectorAction}s that are of general use.
  * <p>
@@ -184,7 +183,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return about;
     }
 
-
     /**
      * Action:  displays the {@link PreferenceDialog}.
      */
@@ -211,7 +209,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return preferences;
     }
 
-
     /**
      * Action:  refreshes all data from the VM.
      */
@@ -237,7 +234,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction refreshAll() {
         return refreshAll;
     }
-
 
     /**
      * Action: causes a specific Inspector to become visible,
@@ -266,7 +262,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction showView(Inspector inspector) {
         return new ShowViewAction(inspector);
     }
-
 
     /**
      * Action:  close all open inspectors that match a predicate.
@@ -316,7 +311,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new CloseViewsAction(predicate, actionTitle);
     }
 
-
     /**
      * Action:  closes all open inspectors.
      */
@@ -343,7 +337,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return closeAllViewsAction;
     }
 
-
     /**
      * Action:  quits inspector.
      */
@@ -369,7 +362,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction quit() {
         return quitAction;
     }
-
 
     /**
      * Action:  relocates the boot image, assuming that the inspector was invoked
@@ -403,7 +395,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction relocateBootImage() {
         return relocateBootImageAction;
     }
-
 
     /**
      * Action:  sets level of trace output in inspector code.
@@ -440,7 +431,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction setInspectorTraceLevel() {
         return setInspectorTraceLevelAction;
     }
-
 
     /**
      * Action:  changes the threshold determining when the Inspectors uses its
@@ -486,7 +476,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return changeInterpreterUseLevelAction;
     }
 
-
     /**
      * Action:  sets debugging level for transport.
      * Appears unused October '08 (mlvdv)
@@ -530,7 +519,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return setTransportDebugLevelAction;
     }
 
-
     /**
      * Action: runs Inspector commands from a specified file.
      */
@@ -557,7 +545,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction runFileCommands() {
         return runFileCommandsAction;
     }
-
 
     /**
      * Action:  updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
@@ -586,7 +573,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction updateClasspathTypes() {
         return updateClasspathTypesAction;
     }
-
 
     /**
      * Action: sets the level of tracing in the VM interactively.
@@ -630,7 +616,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return setVMTraceLevel;
     }
 
-
     /**
      * Action: sets the threshold of tracing in the VM interactively.
      */
@@ -673,7 +658,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return setVMTraceThreshold;
     }
 
-
     /**
      * Action:  makes visible and highlights the {@link BootImageInspector}.
      */
@@ -699,7 +683,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewBootImage() {
         return viewBootImage;
     }
-
 
     /**
      * Action:  makes visible and highlights the {@link BreakpointsInspector}.
@@ -733,7 +716,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewBreakpoints;
     }
 
-
     /**
      * Action:  makes visible and highlights the {@link MemoryRegionsInspector}.
      */
@@ -766,7 +748,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewMemoryRegions;
     }
 
-
     /**
      * Action:  makes visible the {@link MethodInspector}.
      */
@@ -794,7 +775,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewMethodCode() {
         return viewMethodCode;
     }
-
 
     /**
      * Action:  makes visible and highlights the {@link RegistersInspector}.
@@ -828,7 +808,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewRegisters;
     }
 
-
     /**
      * Action:  makes visible and highlights the {@link StackInspector}.
      */
@@ -860,7 +839,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewStack() {
         return viewStack;
     }
-
 
     /**
      * Action:  makes visible and highlights the {@link ThreadsInspector}.
@@ -894,7 +872,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewThreads;
     }
 
-
     /**
      * Action:  makes visible and highlights the {@link ThreadLocalsInspector}.
      */
@@ -927,7 +904,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewVmThreadLocals;
     }
 
-
     /**
      * Action:  makes visible and highlights the {@link WatchpointsInspector}.
      */
@@ -959,7 +935,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewWatchpoints() {
         return viewWatchpoints;
     }
-
 
     /**
      * Action:  copies a hex string version of a {@link Word} to the system clipboard.
@@ -1007,7 +982,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
         return action;
     }
-
 
     /**
      * Action:  inspect a memory region, interactive if no location is specified.
@@ -1072,7 +1046,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new InspectMemoryBytesAction(address, actionTitle);
     }
 
-
     /**
      * Menu: display a sub-menu of commands to make visible
      * existing memory words inspectors.  It includes a command
@@ -1126,10 +1099,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final JMenu memoryWordsInspectorsMenu() {
         return new MemoryWordsInspectorsMenu();
     }
-
-
-
-
 
     /**
      * Action:   inspect a memory region, interactive if no location specified.
@@ -1209,7 +1178,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new InspectMemoryWordsAction(address, null);
     }
 
-
     /**
      * Menu: display a sub-menu of commands to inspect the basic allocation
      * regions of the VM.
@@ -1287,7 +1255,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new InspectObjectMemoryWordsAction(teleObject, null);
     }
 
-
     /**
      * Action:  inspect the memory holding a block of target code.
      */
@@ -1335,7 +1302,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new InspectTargetRegionMemoryWordsAction(teleTargetRoutine, null);
     }
 
-
     /**
      *Action:  inspect the memory allocated to the currently selected thread.
      */
@@ -1370,7 +1336,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction inspectSelectedThreadMemoryWords(String actionTitle) {
         return new InspectSelectedThreadMemoryWordsAction(actionTitle);
     }
-
 
     /**
      *Action:  inspect the memory allocated to the currently selected memory watchpoint.
@@ -1407,7 +1372,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction inspectSelectedMemoryWatchpointWordsAction() {
         return inspectSelectedMemoryWatchpointWordsAction;
     }
-
 
     /**
      * Action: inspect a named region as memory words.
@@ -1476,7 +1440,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new InspectRegionMemoryWordsAction(memoryRegion, regionName, null);
     }
 
-
     /**
      * Action:  creates a memory inspector for the currently selected memory region, if any.
      */
@@ -1515,7 +1478,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return inspectSelectedMemoryRegionWordsAction;
     }
 
-
     /**
      * Action: sets inspection focus to specified {@link MemoryRegion}.
      */
@@ -1542,7 +1504,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         final String actionTitle = "Select memory region \"" + memoryRegion.description() + "\"";
         return new SelectMemoryRegionAction(memoryRegion, actionTitle);
     }
-
 
     /**
      * Action: create an Object Inspector, interactively specified by address..
@@ -1573,7 +1534,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             };
         }
     }
-
 
     /**
      * Menu: display a sub-menu of commands to make visible
@@ -1619,7 +1579,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new ObjectInspectorsMenu();
     }
 
-
     private final InspectorAction inspectObjectAction = new InspectObjectAction(null);
 
     /**
@@ -1628,7 +1587,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction inspectObject() {
         return inspectObjectAction;
     }
-
 
     /**
      * Action:  creates an inspector for a specific heap object in the VM.
@@ -1657,7 +1615,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction inspectObject(TeleObject teleObject, String actionTitle) {
         return new InspectSpecifiedObjectAction(teleObject, actionTitle);
     }
-
 
     /**
      * Action: create an Object Inspector, interactively specified by the inspector's OID.
@@ -1696,7 +1653,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return inspectObjectByIDAction;
     }
 
-
     /**
      * Action: create an Object Inspector for the boot {@link ClassRegistry} in the VM.
      */
@@ -1723,7 +1679,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction inspectBootClassRegistry() {
         return inspectBootClassRegistryAction;
     }
-
 
     /**
      * Action:  inspect a {@link ClassActor} object for an interactively named class loaded in the VM,
@@ -1755,7 +1710,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction inspectClassActorByName() {
         return inspectClassActorByNameAction;
     }
-
 
     /**
      * Action:  inspect a {@link ClassActor} for an interactively named class loaded in the VM,
@@ -1798,7 +1752,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return inspectClassActorByHexIdAction;
     }
 
-
     /**
      * Action:  inspect a {@link ClassActor} for an interactively named class loaded in the VM,
      * specified by the class ID in decimal.
@@ -1839,7 +1792,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return inspectClassActorByDecimalIdAction;
     }
 
-
     /**
      * Action: visits a {@link MethodActor} object in the VM, specified by name.
      */
@@ -1872,8 +1824,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction inspectMethodActorByName() {
         return inspectMethodActorByName;
     }
-
-
 
     /**
      * Action:  inspects the class actor from which a method was substituted.
@@ -1918,7 +1868,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction inspectSubstitutionSourceClassActorAction(TeleClassMethodActor teleClassMethodActor) {
         return new InspectSubstitutionSourceClassActorAction(teleClassMethodActor, null);
     }
-
 
     /**
      * Menu: contains actions to inspect each of the compilations of a target method.
@@ -2000,7 +1949,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new ViewJavaSourceAction(teleClassMethodActor);
     }
 
-
     /**
      * Action:  displays in the {@MethodInspector} the method whose target code contains
      * an interactively specified address.
@@ -2052,7 +2000,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new ViewMethodCodeByAddressAction(actionTitle);
     }
 
-
     /**
      * Action:  displays in the {@MethodInspector} the method code containing an address.
      */
@@ -2078,7 +2025,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-
     /**
      * @return an Action that displays in the {@link MethodInspector} the method
      * containing the current instruction pointer.
@@ -2086,7 +2032,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewMethodCodeAtAddress(Address address, String actionTitle) {
         return new ViewMethodCodeAtAddressAction(address, actionTitle);
     }
-
 
     /**
      * Action:  displays in the {@MethodInspector} the method code containing the current code selection.
@@ -2121,7 +2066,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewMethodCodeAtSelection;
     }
 
-
     /**
      * Action:  displays in the {@MethodInspector} the method code containing the current instruction pointer.
      */
@@ -2155,7 +2099,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewMethodCodeAtIP;
     }
 
-
     /**
      * Action:  displays in the {@MethodInspector} the bytecode for a specified method.
      */
@@ -2185,7 +2128,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new ViewMethodBytecodeAction(teleClassMethodActor, null);
     }
 
-
     /**
      * Creates an action to view the bytecodes (if they exist) for a Java method.
      *
@@ -2197,7 +2139,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewMethodBytecode(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
         return new ViewMethodBytecodeAction(teleClassMethodActor, actionTitle);
     }
-
 
     /**
      * Action:  displays in the {@MethodInspector} the bytecode for an interactively specified method.
@@ -2239,7 +2180,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewMethodBytecodeByNameAction;
     }
 
-
     /**
      * @param actionTitle name of the action to appear in menu or button
      * @return an interactive Action that displays bytecode in the {@link MethodInspector}
@@ -2248,7 +2188,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewMethodBytecodeByName(String actionTitle) {
         return new ViewMethodBytecodeByNameAction(actionTitle);
     }
-
 
     /**
      * Action:  displays in the {@MethodInspector} the target code for an interactively specified method.
@@ -2291,7 +2230,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewMethodTargetCodeByName(String actionTitle) {
         return new ViewMethodTargetCodeByNameAction(actionTitle);
     }
-
 
     /**
      * Menu: contains actions to view code for each of the compilations of a target method.
@@ -2344,7 +2282,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public InspectorMenu viewTargetMethodCodeMenu(TeleClassMethodActor teleClassMethodActor) {
         return new ViewTargetMethodCodeMenu(teleClassMethodActor, null);
     }
-
 
     /**
      * Action:  displays in the {@link MethodInspector} the code of a specified
@@ -2402,7 +2339,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewSchemeRunMethodCodeInBootImageAction;
     }
 
-
     /**
      * Action:  displays in the {@MethodInspector} a body of native code whose location contains
      * an interactively specified address.
@@ -2449,7 +2385,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewNativeCodeByAddress(String actionTitle) {
         return new ViewNativeCodeByAddressAction(actionTitle);
     }
-
 
     /**
      * Action:  copies to the system clipboard a textual representation of the
@@ -2553,7 +2488,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return removeBreakpoint;
     }
 
-
     /**
      * Action: removes a specific  breakpoint in the VM.
      */
@@ -2585,7 +2519,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction removeBreakpoint(TeleBreakpoint teleBreakpoint, String actionTitle) {
         return new RemoveBreakpointAction(teleBreakpoint, actionTitle);
     }
-
 
     /**
      * Action: removes all existing breakpoints in the VM.
@@ -2631,7 +2564,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return removeAllBreakpoints;
     }
 
-
     /**
      * Action: enables a specific  breakpoint in the VM.
      */
@@ -2654,13 +2586,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             inspection().refreshAll(false);
         }
 
-
         @Override
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess() && maxVM().bytecodeBreakpointCount() > 0);
         }
     }
-
 
     /**
      * @param surrogate for a breakpoint in the VM.
@@ -2670,7 +2600,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction enableBreakpoint(TeleBreakpoint teleBreakpoint, String actionTitle) {
         return new EnableBreakpointAction(teleBreakpoint, actionTitle);
     }
-
 
     /**
      * Action: disables a specific  breakpoint in the VM.
@@ -2704,7 +2633,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction disableBreakpoint(TeleBreakpoint teleBreakpoint, String actionTitle) {
         return new DisableBreakpointAction(teleBreakpoint, actionTitle);
     }
-
 
     /**
      * Action:  set a target code breakpoint at a particular address.
@@ -2742,7 +2670,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new SetTargetCodeBreakpointAction(address, actionTitle);
     }
 
-
     /**
      * Action:  remove a target code breakpoint at a particular address.
      */
@@ -2776,7 +2703,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction removeTargetCodeBreakpoint(Address address, String actionTitle) {
         return new RemoveTargetCodeBreakpointAction(address, actionTitle);
     }
-
 
      /**
      * Action:  toggle on/off a breakpoint at the target code location specified, or
@@ -2857,7 +2783,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new ToggleTargetCodeBreakpointAction(address, actionTitle);
     }
 
-
     /**
      * Action:  sets a  breakpoint at the target code location specified interactively..
      */
@@ -2907,7 +2832,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return setTargetCodeBreakpointAtAddressAction;
     }
 
-
     /**
      * Action:  sets a breakpoint at every label in a target method.
      */
@@ -2940,7 +2864,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new SetTargetCodeLabelBreakpointsAction(teleTargetRoutine, actionTitle);
     }
 
-
     /**
      * Action:  removes any breakpoints at labels in a target method.
      */
@@ -2972,7 +2895,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction removeTargetCodeLabelBreakpoints(TeleTargetRoutine teleTargetRoutine, String actionTitle) {
         return new RemoveTargetCodeLabelBreakpointsAction(teleTargetRoutine, actionTitle);
     }
-
 
     /**
      * Action: removes all existing target code breakpoints in the VM.
@@ -3015,7 +2937,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return removeAllTargetCodeBreakpoints;
     }
 
-
     /**
      * Action:  sets target code breakpoints at  a specified method entry.
      */
@@ -3054,7 +2975,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction setTargetCodeBreakpointAtMethodEntry(TeleTargetMethod teleTargetMethod) {
         return new  SetTargetCodeBreakpointAtMethodEntryAction(teleTargetMethod, null);
     }
-
 
     /**
      * Action:  sets target code breakpoints at  method entries to be selected interactively by name.
@@ -3099,7 +3019,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction setTargetCodeBreakpointAtMethodEntriesByName() {
         return setTargetCodeBreakpointAtMethodEntriesByNameAction;
     }
-
 
     /**
      * Action: sets target code breakpoint at object initializers of a class specified interactively by name.
@@ -3154,7 +3073,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return setTargetCodeBreakpointAtObjectInitializer;
     }
 
-
     /**
      * Action:  toggle on/off a breakpoint at the  bytecode location of the current focus.
      */
@@ -3202,7 +3120,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return toggleBytecodeBreakpoint;
     }
 
-
     /**
      * Action: sets a bytecode breakpoint at a specified method entry.
      */
@@ -3244,7 +3161,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new SetBytecodeBreakpointAtMethodEntryAction(teleClassMethodActor, null);
     }
 
-
      /**
      * Action: sets a bytecode breakpoint at a method entry specified interactively by name.
      */
@@ -3284,7 +3200,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return setBytecodeBreakpointAtMethodEntryByNameAction;
     }
 
-
     /**
      * Action: sets a bytecode breakpoint at a method entry specified interactively by name.
      */
@@ -3320,7 +3235,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction setBytecodeBreakpointAtMethodEntryByKey() {
         return setBytecodeBreakpointAtMethodEntryByKeyAction;
     }
-
 
     /**
      * Action: removes all existing bytecode breakpoints in the VM.
@@ -3362,7 +3276,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction removeAllBytecodeBreakpoints() {
         return removeAllBytecodeBreakpoints;
     }
-
 
    /**
      * Action: create a memory word watchpoint, interactive if no location specified.
@@ -3439,7 +3352,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction setWordWatchpoint(Address address, String string) {
         return new SetWordWatchpointAction(address, string);
     }
-
 
     /**
      * Action: create a memory watchpoint, interactive if no location specified.
@@ -3524,7 +3436,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new SetRegionWatchpointAction(memoryRegion, actionTitle, regionDescription);
     }
 
-
      /**
      * Action: create an object memory watchpoint.
      */
@@ -3578,7 +3489,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction setObjectWatchpoint(TeleObject teleObject, String actionTitle) {
         return new SetObjectWatchpointAction(teleObject, actionTitle);
     }
-
 
     /**
      * Action: create an object field watchpoint.
@@ -3636,7 +3546,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction setFieldWatchpoint(TeleObject teleObject, FieldActor fieldActor, String actionTitle) {
         return new SetFieldWatchpointAction(teleObject, fieldActor, actionTitle);
     }
-
 
     /**
      * Action: create an object field watchpoint.
@@ -3705,7 +3614,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new SetArrayElementWatchpointAction(teleObject, elementKind, arrayOffsetFromOrigin, index, indexPrefix, actionTitle);
     }
 
-
      /**
      * Action: create an object header field watchpoint.
      */
@@ -3761,7 +3669,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction setHeaderWatchpoint(TeleObject teleObject, HeaderField headerField, String actionTitle) {
         return new SetHeaderWatchpointAction(teleObject, headerField, actionTitle);
     }
-
 
     /**
      * Action: create an object field watchpoint.
@@ -3823,7 +3730,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new SetThreadLocalWatchpointAction(teleThreadLocalValues, index, actionTitle);
     }
 
-
     /**
      * Action: remove a specified memory watchpoint.
      */
@@ -3858,7 +3764,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction removeWatchpoint(MaxWatchpoint watchpoint, String actionTitle) {
         return new RemoveWatchpointAction(watchpoint, actionTitle);
     }
-
 
     /**
      * Action:  removes the watchpoint from the VM that is currently selected.
@@ -3907,7 +3812,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return removeSelectedWatchpoint;
     }
 
-
     /**
      * Action: removes a set of existing watchpoints in the VM.
      */
@@ -3946,7 +3850,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction removeWatchpoints(Sequence<MaxWatchpoint> watchpoints, String actionTitle) {
         return new RemoveWatchpointsAction(watchpoints, actionTitle);
     }
-
 
      /**
      * Action: removes all existing watchpoints in the VM.
@@ -3991,7 +3894,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return removeAllWatchpoints;
     }
 
-
      /**
      * Action:  pause the running VM.
      */
@@ -4028,7 +3930,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return debugPauseAction;
     }
 
-
     /**
      * Action: resumes the running VM.
      */
@@ -4050,7 +3951,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
         }
 
-
         @Override
         public void refresh(boolean force) {
             setEnabled(focus().hasThread() && inspection().isVMReady());
@@ -4065,7 +3965,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction debugResume() {
         return debugResumeAction;
     }
-
 
     /**
      * Action:  advance the currently selected thread until it returns from its current frame in the VM,
@@ -4108,7 +4007,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return debugReturnFromFrameAction;
     }
 
-
     /**
      * Action:  advance the currently selected thread until it returns from its current frame
      * or hits a breakpoint in the VM.
@@ -4149,7 +4047,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction debugReturnFromFrameWithBreakpoints() {
         return debugReturnFromFrameWithBreakpointsAction;
     }
-
 
     /**
      * Action:  advance the currently selected thread in the VM until it reaches the specified instruction, or
@@ -4208,7 +4105,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new DebugRunToInstructionAction(address, actionTitle);
     }
 
-
     /**
      * Action:  advance the currently selected thread in the VM until it reaches the specified code location
      * (or the currently selected instruction if none specified) or a breakpoint, whichever comes first.
@@ -4265,7 +4161,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new DebugRunToInstructionWithBreakpointsAction(address, actionTitle);
     }
 
-
     /**
      * Action:  advance the currently selected thread in the VM until it reaches the next call instruction,
      * ignoring breakpoints; fails if there is no known call in the method containing the IP.
@@ -4310,7 +4205,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction debugRunToNextCall() {
         return debugRunToNextCallAction;
     }
-
 
     /**
      * Action:  advance the currently selected thread in the VM until it reaches the selected instruction
@@ -4357,7 +4251,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return debugNextRunToCallWithBreakpointsAction;
     }
 
-
     /**
      * Action:  advances the currently selected thread one step in the VM.
      */
@@ -4394,7 +4287,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction debugSingleStep() {
         return debugSingleStepAction;
     }
-
 
     /**
      * Action:   resumes execution of the VM, stopping at the one immediately after the current
@@ -4435,7 +4327,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return debugStepOverAction;
     }
 
-
     /**
      * Action:   resumes execution of the VM, stopping at the one immediately after the current
      *         instruction of the currently selected thread or at a breakpoint.
@@ -4475,7 +4366,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return debugStepOverWithBreakpointsAction;
     }
 
-
     /**
      * Action:  interactively invoke a method.
      */
@@ -4484,12 +4374,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Invoke method";
         private final TeleClassMethodActor teleClassMethodActor;
 
-
         public DebugInvokeMethodAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleClassMethodActor =  teleClassMethodActor;
         }
-
 
         @Override
         public void procedure() {
@@ -4540,7 +4428,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public InspectorAction debugInvokeMethod(TeleClassMethodActor teleClassMethodActor) {
         return new DebugInvokeMethodAction(teleClassMethodActor, null);
     }
-
 
     /**
      * Action:  displays and highlights an inspection of the current Java frame descriptor.
@@ -4607,10 +4494,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return inspectJavaFrameDescriptor;
     }
 
-
-
-
-
     /**
      * Action:  makes visible and highlight the {@link FocusInspector}.
      */
@@ -4636,7 +4519,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction viewFocus() {
         return viewFocus;
     }
-
 
     /**
      * Action:  lists to the console this history of the VM state.
@@ -4664,7 +4546,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return listVMStateHistory;
     }
 
-
     /**
      * Action:  lists to the console all entries in the {@link TeleCodeRegistry}.
      */
@@ -4690,7 +4571,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction listCodeRegistry() {
         return listCodeRegistry;
     }
-
 
     /**
      * Action:  lists to the console all entries in the {@link TeleCodeRegistry} to an interactively specified file.

@@ -22,7 +22,6 @@ package test.com.sun.max.asm;
 
 import com.sun.max.annotate.processor.*;
 
-
 /**
  * @author Bernd Mathiske
  */

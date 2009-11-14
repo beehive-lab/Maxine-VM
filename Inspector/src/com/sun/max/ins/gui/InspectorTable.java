@@ -32,7 +32,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.tele.*;
 
-
 /**
  * A table specialized for use in the Maxine Inspector.
  * <br>
@@ -442,7 +441,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         final int lastRow = getRowCount() - 1;
         scrollToRows(lastRow, lastRow);
     }
-
 
     /**
      * Scrolls the table to display the specified range (with a few rows before or after if possible).

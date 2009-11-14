@@ -279,7 +279,6 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
         }
     }
 
-
     protected void impossibleLocation() {
         ProgramError.unexpected("impossible location");
     }

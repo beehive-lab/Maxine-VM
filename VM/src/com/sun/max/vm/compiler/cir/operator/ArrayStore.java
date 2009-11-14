@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.type.*;
 
-
 public class ArrayStore extends JavaOperator {
     private Kind elementKind;
     public ArrayStore(Kind elementKind) {

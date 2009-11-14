@@ -22,7 +22,6 @@ package com.sun.max.tele.jdwputil;
 
 import com.sun.max.jdwp.vm.proxy.*;
 
-
 class JavaInterfaceProvider extends JavaReferenceTypeProvider implements InterfaceProvider {
 
     JavaInterfaceProvider(Class c, VMAccess vm, ClassLoaderProvider classLoader) {

@@ -22,7 +22,6 @@ package com.sun.max.tele.jdwputil;
 
 import com.sun.max.jdwp.vm.proxy.*;
 
-
 class JavaClassProvider extends JavaReferenceTypeProvider implements ClassProvider{
 
     JavaClassProvider(Class c, VMAccess vm, ClassLoaderProvider classLoader) {

@@ -30,7 +30,6 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.option.*;
 
-
 /**
  * Persistent preferences for table-based viewing of Java stack frames in the VM.
  *
@@ -87,11 +86,9 @@ public final class JavaStackFrameViewPreferences extends TableColumnVisibilityPr
         biasSlotOffsets = settings.get(saveSettingsListener, BIAS_SLOT_OFFSETS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, DEFAULT_BIAS_SLOT_OFFSETS_PREFERENCE);
     }
 
-
     public boolean biasSlotOffsets() {
         return biasSlotOffsets;
     }
-
 
     @Override
     public JPanel getPanel() {
@@ -110,7 +107,6 @@ public final class JavaStackFrameViewPreferences extends TableColumnVisibilityPr
         stackPanel.add(new TextLabel(inspection(), "Stack display options:  "));
         stackPanel.add(biasCheckBox);
         panel2.add(stackPanel, BorderLayout.WEST);
-
 
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         panel.add(super.getPanel(), BorderLayout.NORTH);

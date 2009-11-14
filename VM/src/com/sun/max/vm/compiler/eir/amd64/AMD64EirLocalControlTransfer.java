@@ -61,7 +61,6 @@ public abstract class AMD64EirLocalControlTransfer extends AMD64EirOperation imp
         return null;
     }
 
-
     @Override
     public String toString() {
         String s = getClass().getSimpleName();

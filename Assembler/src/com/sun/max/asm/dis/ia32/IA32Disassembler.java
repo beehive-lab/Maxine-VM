@@ -32,7 +32,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.util.*;
 
-
 /**
  * Instantiate this class to disassemble IA32 instruction streams.
  *

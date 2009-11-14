@@ -272,7 +272,6 @@ public abstract class Snippet extends IrRoutine {
         public static final ConvertDoubleToLong SNIPPET = new ConvertDoubleToLong();
     }
 
-
     /*
      * Snippets that are used in lieu of a builtin when it is not yet implemented by the compiler scheme:
      */
@@ -397,6 +396,5 @@ public abstract class Snippet extends IrRoutine {
         }
         public static final CheckArrayDimension SNIPPET = new CheckArrayDimension();
     }
-
 
 }

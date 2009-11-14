@@ -290,8 +290,6 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
                                         addComponent(okButton).
                                         addComponent(cancelButton)));
 
-
-
         final JPanel contenPane = new JPanel(new BorderLayout());
         contenPane.add(inputPanel, BorderLayout.CENTER);
         contenPane.add(statusPanel, BorderLayout.SOUTH);

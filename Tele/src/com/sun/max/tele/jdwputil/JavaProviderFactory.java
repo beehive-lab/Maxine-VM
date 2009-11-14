@@ -25,7 +25,6 @@ import java.util.logging.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 
-
 public class JavaProviderFactory {
 
     private static final Logger LOGGER = Logger.getLogger(JavaProviderFactory.class.getName());

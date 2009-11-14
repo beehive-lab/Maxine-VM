@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Thread_sleep01 {
     private Thread_sleep01() {
     }

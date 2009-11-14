@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public class Object_clone01 {
 
     static final Object_clone01 field = new Object_clone01();

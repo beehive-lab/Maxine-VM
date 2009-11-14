@@ -30,7 +30,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 
-
 public class TeleCPSTargetMethod extends TeleTargetMethod {
 
     public TeleCPSTargetMethod(TeleVM teleVM, Reference targetMethodReference) {

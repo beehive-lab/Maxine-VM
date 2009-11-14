@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public final class Object_wait01 {
 
     private Object_wait01() {

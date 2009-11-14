@@ -22,7 +22,6 @@ package com.sun.max.ins;
 
 import com.sun.max.tele.*;
 
-
 /**
  * Notification service for changes to state in the VM.
  *

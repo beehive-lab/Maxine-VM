@@ -30,7 +30,6 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.option.*;
 
-
 public final class HubInspectorPreferences {
 
     private static final String SHOW_FIELDS_PREFERENCE = "showFields";

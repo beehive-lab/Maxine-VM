@@ -23,7 +23,6 @@ package test.com.sun.max.vm.compiler.eir.amd64;
 import junit.framework.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
-
 public class AMD64EirTranslatorTest_cmp extends BytecodeTest_cmp {
 
     public static Test suite() {

@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.vm.type.*;
 
-
 abstract class JavaReferenceTypeProvider implements ReferenceTypeProvider {
 
     private Class clazz;

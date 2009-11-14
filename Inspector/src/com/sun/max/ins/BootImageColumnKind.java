@@ -24,7 +24,6 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.vm.*;
 
-
 /**
 * Defines the columns that can be displayed describing {@link VMConfiguration}  information in the VM boot image.
 *

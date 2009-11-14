@@ -50,7 +50,6 @@ public final class Reflection_getCallerClass01 {
         }
     }
 
-
     public static String test(int depth) {
         return Caller2.caller2(depth);
     }

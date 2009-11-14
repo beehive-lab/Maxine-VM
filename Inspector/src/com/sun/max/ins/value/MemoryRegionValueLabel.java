@@ -29,7 +29,6 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A label that displays the name of the {@link MemoryRegion} to which a {@link Value}
  * might point; blank if no such region.  Updated with every refresh.

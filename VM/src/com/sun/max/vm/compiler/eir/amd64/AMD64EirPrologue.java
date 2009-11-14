@@ -86,7 +86,6 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         // now allocate the frame for this method
         asm.subq(framePointer, endOfFrame - (2 * Word.size()));
 
-
         // save all the general purpose registers
         int offset = originalFrameSize;
         int latchOffset = 0;

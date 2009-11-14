@@ -49,7 +49,6 @@ public final class AboutDialog extends SimpleDialog {
         "     http://kenai.com/projects/maxine\n" +
         "     http://research.sun.com/projects/maxine/\n";
 
-
     private static final JTextArea textArea = new JTextArea(aboutString);
 
     public static AboutDialog create(Inspection inspection) {

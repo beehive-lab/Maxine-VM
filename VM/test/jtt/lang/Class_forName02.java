@@ -26,7 +26,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_forName02 {
     private Class_forName02() {
     }

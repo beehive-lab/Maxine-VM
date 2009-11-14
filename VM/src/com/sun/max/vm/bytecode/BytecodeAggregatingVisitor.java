@@ -29,7 +29,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
 
     public enum Operation {
@@ -1085,8 +1084,6 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
     protected final void lneg() {
         execute(Operation.NEG, Kind.LONG);
     }
-
-
 
     @Override
     protected final void lor() {

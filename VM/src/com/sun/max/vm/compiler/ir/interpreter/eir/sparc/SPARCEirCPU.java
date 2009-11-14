@@ -259,7 +259,6 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         return this.fcc[fccOperand.value()];
     }
 
-
     public void set(FCCOperand fccOperand, FCCValue value) {
         this.fcc[fccOperand.value()] = value;
     }
@@ -268,7 +267,6 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
     public SPARCEirCPU save() {
         return new SPARCEirCPU(this);
     }
-
 
     /**
      * Gets the offset of a stack slot relative to the current value of the frame pointer.

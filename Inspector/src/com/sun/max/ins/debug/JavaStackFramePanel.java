@@ -35,7 +35,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * Display panels for VM Java stack frames.
  * <br>
@@ -84,7 +83,6 @@ abstract class JavaStackFramePanel<StackFrame_Type extends JavaStackFrame> exten
     public void redisplay() {
         headerPanel.redisplay();
     }
-
 
     /**
      * A generic panel displaying summary information about a Java stack frame.
@@ -136,7 +134,6 @@ abstract class JavaStackFramePanel<StackFrame_Type extends JavaStackFrame> exten
 
             SpringUtilities.makeCompactGrid(this, 2);
         }
-
 
         private void addInspectorLabel(InspectorLabel label) {
             add(label);

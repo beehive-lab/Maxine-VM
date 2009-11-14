@@ -54,7 +54,6 @@ public class SPARCEirTemplateABI extends SPARCEirJavaABI {
         makeUnallocatable(SPARCEirRegister.GeneralPurpose.from(framePointer));
     }
 
-
     @Override
     public int frameSize(int numLocalStackSlots, int extraBytes) {
         return targetABI().alignFrameSize(numLocalStackSlots * stackSlotSize() + extraBytes);

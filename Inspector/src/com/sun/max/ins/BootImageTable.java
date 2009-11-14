@@ -35,7 +35,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
 
-
 /**
  * A table specialized for displaying {@link VMConfiguration}  information in the VM boot image.
  *
@@ -53,7 +52,6 @@ public final class BootImageTable extends InspectorTable {
         configureMemoryTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
     }
-
 
     /**
      * A table for displaying configuration parameters for the VM instance.

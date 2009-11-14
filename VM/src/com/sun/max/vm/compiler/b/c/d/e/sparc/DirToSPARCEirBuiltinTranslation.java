@@ -434,7 +434,6 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new MOVFG(eirBlock(),  FCCOperand.FCC0, result, createEirConstant(IntValue.ONE)));
     }
 
-
     @Override
     public void visitFloatCompareG(FloatCompareG builtin, DirValue dirResult, DirValue[] dirArguments) {
         final EirValue result = dirToEirValue(dirResult);
@@ -483,7 +482,6 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue b = dirToEirValue(dirArguments[1]);
         addInstruction(new CMP_I64(eirBlock(), a, b));
     }
-
 
     private MembarOperand toMembarOperand(PoolSet<MemoryBarrier> memoryBarriers) {
         final PoolSet<MemoryBarrier> memoryModelBarriers = methodTranslation().memoryModel.barriers;
@@ -926,7 +924,6 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(loadInstruction);
     }
 
-
     private void get(Kind kind, DirValue dirResult, DirValue[] dirArguments) {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue pointer = dirToEirValue(dirArguments[0]);
@@ -1164,7 +1161,6 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         }
         addInstruction(new SPARCEirStore(eirBlock(), kind, value, pointer, kind, dirToEirValue(dirDisplacement), dirToEirValue(dirIndex)));
     }
-
 
     @Override
     public void visitWriteByteAtLongOffset(WriteByteAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {

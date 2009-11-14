@@ -34,7 +34,6 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.bytecode.*;
 
-
 /**
  * Manages persistent general preferences for inspection sessions.
  *
@@ -77,7 +76,6 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
 
         public static final IndexedSequence<ExternalViewerType> VALUES = new ArraySequence<ExternalViewerType>(values());
     }
-
 
     /**
      * Policies for how long tool tip text remains visible.
@@ -131,7 +129,6 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
 
     private final AppendableSequence<InspectorAction> actionsWithKeyBindings = new ArrayListSequence<InspectorAction>();
     private KeyBindingMap keyBindingMap = InspectorKeyBindings.DEFAULT_KEY_BINDINGS;
-
 
     /**
      * Creates a new, global instance for managing Maxine VM inspection preferences.
@@ -287,7 +284,6 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
             }
         }
     }
-
 
     public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
         saveSettingsEvent.save(KEY_BINDINGS_PREFERENCE, keyBindingMap.name());

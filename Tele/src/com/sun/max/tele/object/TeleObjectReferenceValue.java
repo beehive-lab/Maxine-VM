@@ -25,7 +25,6 @@ import com.sun.max.tele.value.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * Canonical surrogate for an object of type {@link ObjectReferenceValue} in the {@link TeleVM}.
  *

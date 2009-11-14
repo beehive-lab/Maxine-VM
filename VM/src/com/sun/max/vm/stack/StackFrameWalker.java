@@ -479,7 +479,6 @@ public abstract class StackFrameWalker {
 
     public abstract TargetMethod targetMethodFor(Pointer instructionPointer);
 
-
     /**
      * Determines if this stack walker is currently in use. This is useful for detecting if an exception is being thrown as part of exception handling.
      */

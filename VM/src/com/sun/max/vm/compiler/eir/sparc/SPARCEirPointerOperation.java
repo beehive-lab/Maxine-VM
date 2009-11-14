@@ -29,7 +29,6 @@ import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirOperand.*;
 import com.sun.max.vm.type.*;
 
-
 public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     public final Kind kind;
 
@@ -117,12 +116,10 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
         this.indexOperand.setEirValue(index);
     }
 
-
     /**
      * Emit memory operation of the form {@code   ld [Rp + simm13], R}, {@code  st R, [Rp + + simm13]} .
      */
     protected abstract void emit(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int simm13);
-
 
     /**
      * Emit memory operation of the form {@code  ld [Rp + Ro], R}, {@code  st R, [Rp + Ro]}.

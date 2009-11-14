@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_isInstance01 {
 
     private Class_isInstance01() {

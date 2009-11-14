@@ -31,5 +31,4 @@ public class JNI_IdentityObject {
 
     private static native Object id_object(Object o);
 
-
 }

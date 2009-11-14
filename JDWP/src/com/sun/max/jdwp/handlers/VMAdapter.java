@@ -22,7 +22,6 @@ package com.sun.max.jdwp.handlers;
 
 import com.sun.max.jdwp.vm.proxy.*;
 
-
 public class VMAdapter implements VMListener {
 
     public void breakpointHit(ThreadProvider thread, CodeLocation location) {

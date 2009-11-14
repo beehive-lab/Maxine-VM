@@ -50,7 +50,6 @@ public final class Machine extends AbstractTeleVMHolder{
 
     private ExecutionThread currentThread;
 
-
     Machine(TeleVM teleVM) {
         super(teleVM);
         final ExecutionThread mainThread = newThread(java.lang.Thread.NORM_PRIORITY, ExecutionThread.ThreadType.NORMAL_THREAD);

@@ -215,13 +215,11 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "processNewClasses");
     }
 
-
     private void traceNewClass(ClassActor classActor) {
         if (Trace.hasLevel(2)) {
             Trace.line(2, "new class: " + classActor);
         }
     }
-
 
     private void gatherNewAnonymousClass(final LinkSequence<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
         if (!MaxineVM.isHostedOnly(enclosingMethod)) {
@@ -574,7 +572,6 @@ public class CompiledPrototype extends Prototype {
         }
         return newCompilations > 0;
     }
-
 
     private ProgramError reportCompilationError(final MethodActor classMethodActor, Throwable error) throws ProgramError {
         System.err.println("Error occurred while compiling " + classMethodActor + ": " + error);

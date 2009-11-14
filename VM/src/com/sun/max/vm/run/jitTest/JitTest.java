@@ -49,7 +49,6 @@ public class JitTest implements Runnable {
 
     String stringField;
 
-
     public JitTest() {
         intField = 33;
     }
@@ -121,7 +120,6 @@ public class JitTest implements Runnable {
         final boolean a2 = o instanceof Exception;
         final boolean a3 = o instanceof NullPointerException;
     }
-
 
     /**
      * Testing static variable access.
@@ -278,7 +276,6 @@ public class JitTest implements Runnable {
                 intField = 44;
         }
     }
-
 
     private void tableSwitchTest3(int i) {
         switch (i) {
@@ -452,7 +449,6 @@ public class JitTest implements Runnable {
         final Class thisClass2 = testObject.getClass();
         testResult = thisClass2 == thisClass;
     }
-
 
     /**
      * Testing exception throwing and catch within the same method.

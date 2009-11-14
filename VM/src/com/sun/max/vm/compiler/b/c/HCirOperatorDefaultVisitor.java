@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.b.c;
 
 import com.sun.max.vm.compiler.cir.operator.*;
 
-
 public class HCirOperatorDefaultVisitor extends HCirOperatorVisitor {
     protected void visitDefault(JavaOperator op) {
     }

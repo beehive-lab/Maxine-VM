@@ -267,7 +267,6 @@ public abstract class Address extends Word {
         return asOffset().plus(addend).asAddress();
     }
 
-
     @INLINE(override = true)
     public Address minus(Address subtrahend) {
         return asOffset().minus(subtrahend.asOffset()).asAddress();

@@ -88,7 +88,6 @@ public class InternalTest extends MaxTestCase {
         System.out.println(bytes);
         disassemble(0L, bytes);
 
-
     }
 
     private byte[] assemble1(long startAddress) throws IOException, AssemblyException {

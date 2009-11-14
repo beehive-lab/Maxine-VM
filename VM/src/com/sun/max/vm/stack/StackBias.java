@@ -23,7 +23,6 @@ package com.sun.max.vm.stack;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.sparc.*;
 
-
 /**
  * The ABI of some platforms requires the use of a stack bias. The bias is a constant offset that needs to be added to the registers holding the
  * stack pointer to access elements of the stack frame.

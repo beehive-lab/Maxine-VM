@@ -22,7 +22,6 @@ package com.sun.max.vm;
 
 import com.sun.max.*;
 
-
 /**
  * Denotes a package of classes that are (potentially) in the VM.
  * 

@@ -50,9 +50,7 @@ public final class TargetCodeInstruction {
      */
     public final String label;
 
-
     public final byte[] bytes;
-
 
     public final String operands;
 

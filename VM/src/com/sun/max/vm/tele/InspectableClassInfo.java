@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.holder.*;
 
-
 /**
  * Makes critical state information about dynamically loaded classes
  * remotely inspectable.

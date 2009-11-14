@@ -161,7 +161,6 @@ public class JITTest_compileStaticMethodInvocation extends JitCompilerTestCase {
         };
     }
 
-
     public void test_compileResolvedInit() {
         compileMethod("performResolvedInit", Bytecode.INVOKESPECIAL, Object.class);
     }

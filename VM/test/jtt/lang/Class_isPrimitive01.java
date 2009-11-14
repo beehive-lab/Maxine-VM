@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_isPrimitive01 {
     private Class_isPrimitive01() {
     }

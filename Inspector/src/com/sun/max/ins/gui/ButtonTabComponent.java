@@ -174,4 +174,3 @@ class ButtonTabComponent<Inspector_Type extends Inspector> extends InspectorPane
     };
 }
 
-

@@ -25,7 +25,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
-
 /**
  * Snippets that need to be optimized to mere builtin calls to enable bootstrapping.
  *

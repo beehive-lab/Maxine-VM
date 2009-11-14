@@ -69,7 +69,6 @@ public abstract class WordTestCase extends MaxTestCase {
     protected Pointer pointerMax;
     protected Pointer pointerMax32;
 
-
     protected Offset offsetMinus1;
     protected Offset offset0;
     protected Offset offset1;

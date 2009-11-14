@@ -22,7 +22,6 @@ package test.com.sun.max.tele.interpreter;
 
 import com.sun.max.MaxPackage;
 
-
 /**
  * @author Athul Acharya
  */

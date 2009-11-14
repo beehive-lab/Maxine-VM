@@ -26,7 +26,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_asSubclass01 {
 
     private Class_asSubclass01() {

@@ -33,7 +33,6 @@ import com.sun.max.vm.compiler.ir.IrBlock.*;
 public class RemoveRedundantMoves extends AlgorithmPart {
     private final Metrics.Counter movedAssignmentsCounter = createCounter("Moved assignments");
 
-
     public RemoveRedundantMoves() {
         super(13);
     }
@@ -92,7 +91,6 @@ public class RemoveRedundantMoves extends AlgorithmPart {
             EirAssignment lastAssignment = null;
 
             boolean ok = true;
-
 
             boolean allFiller = true;
             for (EirBlock pred : block.predecessors()) {

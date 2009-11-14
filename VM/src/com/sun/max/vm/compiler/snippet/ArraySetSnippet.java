@@ -54,7 +54,6 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         public static final SetByte SNIPPET = new SetByte();
     }
 
-
     public static final class SetShort extends ArraySetSnippet {
         @SNIPPET
         @INLINE
@@ -67,7 +66,6 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         }
         public static final SetShort SNIPPET = new SetShort();
     }
-
 
     public static final class SetChar extends ArraySetSnippet {
         @SNIPPET
@@ -82,7 +80,6 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         public static final SetChar SNIPPET = new SetChar();
     }
 
-
     public static final class SetInt extends ArraySetSnippet {
         @SNIPPET
         @INLINE
@@ -95,7 +92,6 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         }
         public static final SetInt SNIPPET = new SetInt();
     }
-
 
     public static final class SetFloat extends ArraySetSnippet {
         @SNIPPET
@@ -110,7 +106,6 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         public static final SetFloat SNIPPET = new SetFloat();
     }
 
-
     public static final class SetLong extends ArraySetSnippet {
         @SNIPPET
         @INLINE
@@ -124,7 +119,6 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         public static final SetLong SNIPPET = new SetLong();
     }
 
-
     public static final class SetDouble extends ArraySetSnippet {
         @SNIPPET
         @INLINE
@@ -137,7 +131,6 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
         }
         public static final SetDouble SNIPPET = new SetDouble();
     }
-
 
     public static final class SetReference extends ArraySetSnippet {
         @SNIPPET

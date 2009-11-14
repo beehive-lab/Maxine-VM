@@ -321,7 +321,6 @@ final class PPCFields {
         return xo_30_31.constant(value);
     }
 
-
     public static final ReservedField res_6 = ReservedField.createAscending(6,  6);
     public static final ReservedField res_6_10 = ReservedField.createAscending(6, 10);
     public static final ReservedField res_9 = ReservedField.createAscending(9,  9);
@@ -441,7 +440,6 @@ final class PPCFields {
     public static final OptionField bo_CR = OptionField.createAscending(6, 8).
         withOption("t", CRTrue.valueWithoutPredictionBits()).
         withOption("f", CRFalse.valueWithoutPredictionBits());
-
 
     /**
      * An OptionField for the prediction bits in the BO values that are only in terms of a bit in the Condition Register (CR).

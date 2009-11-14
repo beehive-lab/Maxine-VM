@@ -74,7 +74,6 @@ class ControlTransfer extends SPARCInstructionDescriptionCreator {
         }
     }
 
-
     private void create_A6() {
         if (assembly().generatingDeprecatedInstructions()) {
             createBicc("b", op(0x0), a, bits_24_22(0x2), disp22);

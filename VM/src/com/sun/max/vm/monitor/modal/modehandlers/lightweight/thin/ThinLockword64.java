@@ -50,7 +50,6 @@ public abstract class ThinLockword64 extends LightweightLockword64 {
     private static final Address UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
     private static final Address UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
 
-
     protected ThinLockword64() {
     }
 
@@ -128,7 +127,6 @@ public abstract class ThinLockword64 extends LightweightLockword64 {
     public final int getLockOwnerID() {
         return getThreadID();
     }
-
 
     /**
      * (Image build support) Returns a new, unlocked {@code ThinLockword64} with the given

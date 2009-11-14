@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public class Object_toString01 {
 
     static final String string = "Object_toString01";

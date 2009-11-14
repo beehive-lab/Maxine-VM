@@ -48,7 +48,6 @@ public final class VTableTrampolineSnippet extends NonFoldableSnippet {
         VTableTrampolineSnippet.vTableTrampoline = vTableTrampoline;
     }
 
-
     private static final VTableTrampolineSnippet snippet = new VTableTrampolineSnippet();
 
     private static final TrampolineGenerator trampolineGenerator = new RecompileTrampolineGenerator.VtableTrampolineGenerator(snippet.classMethodActor());
@@ -58,7 +57,6 @@ public final class VTableTrampolineSnippet extends NonFoldableSnippet {
     private static Address vTableTrampolineSnippet(Object receiver) throws Throwable {
         return vTableTrampoline.trampolineReturnAddress(receiver, VMRegister.getCpuStackPointer());
     }
-
 
     public static synchronized Address makeCallEntryPoint(int vTableIndex) {
         return trampolineGenerator.makeCallEntryPoint(vTableIndex);

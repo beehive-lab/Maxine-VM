@@ -22,7 +22,6 @@ package com.sun.max.asm.gen;
 
 import com.sun.max.asm.*;
 
-
 /**
  * An operand that does not correspond to a parameter.
  *

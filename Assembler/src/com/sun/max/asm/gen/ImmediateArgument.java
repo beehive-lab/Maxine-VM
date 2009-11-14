@@ -24,7 +24,6 @@ import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
-
 /**
  * @author Bernd Mathiske
  */

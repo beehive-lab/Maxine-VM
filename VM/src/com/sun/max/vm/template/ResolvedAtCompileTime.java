@@ -97,7 +97,6 @@ public class ResolvedAtCompileTime implements ResolvedAtCompileTimeInterface {
         return new Object();
     }
 
-
     public void parameterlessResolvedInterfaceMethod() {
         // Do enough stuff here to avoid being inlined.
         for (int i = 0; i < 1000; i++) {

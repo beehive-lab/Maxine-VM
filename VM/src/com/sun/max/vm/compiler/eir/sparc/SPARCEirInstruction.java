@@ -41,7 +41,6 @@ import com.sun.max.vm.compiler.eir.sparc.SPARCEirTargetEmitter.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * A marker interface for SPARC Eir Instruction. The interface doesn't define any method. It is used to
  * hold the definition of most SPARC EIR instruction definitions in alphabetical order.
@@ -475,7 +474,6 @@ public interface SPARCEirInstruction {
 
     public static class FLAT_CALL extends EirCall<EirInstructionVisitor, SPARCEirTargetEmitter> implements SPARCEirInstruction {
 
-
         public FLAT_CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                         EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                         EirMethodGeneration methodGeneration) {
@@ -600,7 +598,6 @@ public interface SPARCEirInstruction {
             }
         }
     }
-
 
     public static class RET extends SPARCEirOperation implements EirControlTransfer {
         public enum FROM {
@@ -1036,7 +1033,6 @@ public interface SPARCEirInstruction {
         }
     }
 
-
     public static class SLL_I32 extends SPARCEirBinaryOperation.Arithmetic.General {
         public SLL_I32(EirBlock block, EirValue destination, EirValue rightSource) {
             super(block, destination, EirOperand.Effect.UPDATE, rightSource, EirOperand.Effect.USE);
@@ -1180,7 +1176,6 @@ public interface SPARCEirInstruction {
             visitor.visit(this);
         }
     }
-
 
     public static class CMP_I32 extends SPARCEirBinaryOperation.Compare.General {
         public CMP_I32(EirBlock block, EirValue leftValue, EirValue rightValue) {
@@ -1937,7 +1932,6 @@ public interface SPARCEirInstruction {
         }
     }
 
-
     /**
      * Conditional move on equality. Takes integer operands
      * and the ICCOperand condition code register. Because this is always preceded
@@ -1987,7 +1981,6 @@ public interface SPARCEirInstruction {
             visitor.visit(this);
         }
     }
-
 
     /**
      * Conditional move on signed greater than. Takes integer operands
@@ -2147,9 +2140,6 @@ public interface SPARCEirInstruction {
             visitor.visit(this);
         }
     }
-
-
-
 
     /**
      * Conditional move on carry set, used to test unsigned less than. Takes only integer operands

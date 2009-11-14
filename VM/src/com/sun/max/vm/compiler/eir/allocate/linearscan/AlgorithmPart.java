@@ -37,7 +37,6 @@ public abstract class AlgorithmPart {
     private String name;
     private AlgorithmData data;
 
-
     public AlgorithmPart(int phase) {
 
         if (LinearScanRegisterAllocator.PHASE_TIMING ||

@@ -20,7 +20,6 @@
  */
 package test.output;
 
-
 /**
  * Executes the equivalent of HelloWorld with two GCs between two calls.
  *

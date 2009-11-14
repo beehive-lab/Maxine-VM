@@ -24,7 +24,6 @@
  */
 package jtt.except;
 
-
 public class Throw_InCatch02 {
     public static boolean test(int i) throws Exception {
         if (i == 0) {

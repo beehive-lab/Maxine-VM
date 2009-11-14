@@ -43,7 +43,6 @@ public class SimpleTLABRefillPolicy extends TLABRefillPolicy {
      */
     static final int TLAB_REFILL_RATIO = 10;
 
-
     /**
      * Size the TLAB should have on next refill.
      */

@@ -111,7 +111,6 @@ public class ExceptionDispatcher {
         return false;
     }
 
-
     private void assemble(BytecodeAssembler assembler, ExceptionHandler handler) {
         assembler.pop();
         assembler.invokestatic(safepointAndLoadExceptionObject, 0, 1);

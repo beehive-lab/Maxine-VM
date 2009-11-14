@@ -123,7 +123,6 @@ class TwoByteOpcodeMap extends X86InstructionDescriptionCreator {
         define(_0F, _61, "PUNPCKLWD", Pq, Qd);
         define(_0F, _62, "PUNPCKLDQ", Pq, Qd);
 
-
         define(_0F, _60, "PUNPCKLBW", Pq, Qd);
         define(_0F, _61, "PUNPCKLWD", Pq, Qd);
         define(_0F, _62, "PUNPCKLDQ", Pq, Qd);

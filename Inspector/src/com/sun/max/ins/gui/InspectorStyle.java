@@ -50,7 +50,6 @@ public interface InspectorStyle {
     /** Default bottom-only border for display elements that are parts of a larger frame. */
     Border defaultPaneBottomBorder();
 
-
     // General visual attributes, for all inspections
 
     // Default text
@@ -108,7 +107,6 @@ public interface InspectorStyle {
 
     /** font for displaying word data as flags. */
     Font wordFlagsFont();
-
 
     // Display of primitive Java data values
     Font primitiveDataFont();
@@ -212,7 +210,6 @@ public interface InspectorStyle {
 
     /** Color for text displaying memory contents at a location where the process has hit a watchpoint. */
     Color memoryWatchpointTextColor();
-
 
     // Search related
     /** Icon for the search button that selects the next match moving forward.  */

@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.dis.ia32;
 
-
 import com.sun.max.*;
 import com.sun.max.asm.*;
 

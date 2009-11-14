@@ -41,7 +41,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A table that displays Maxine array elements; for use in an instance of {@link ObjectInspector}.
  * <br>
@@ -506,6 +505,5 @@ public final class ArrayElementsTable extends InspectorTable {
             return label;
         }
     }
-
 
 }

@@ -33,7 +33,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 
-
 public final class ImmortalHeap_allocation {
     private ImmortalHeap_allocation() {
     }

@@ -61,7 +61,6 @@ public abstract class NumberInputField extends JTextField {
         updateView();
     }
 
-
     protected void updateView() {
         setText(String.valueOf(value));
         update(value);

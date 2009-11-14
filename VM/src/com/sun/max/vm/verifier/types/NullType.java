@@ -27,7 +27,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 
-
 /**
  * @author David Liu
  * @author Doug Simon

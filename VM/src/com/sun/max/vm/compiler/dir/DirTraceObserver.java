@@ -48,7 +48,6 @@ public class DirTraceObserver extends IrTraceObserver {
     public enum Transformation {
         BLOCK_UNIFICATION("Unifying DIR blocks", 3);
 
-
         Transformation(String description, int traceLevel) {
             this.description = description;
             this.traceLevel = traceLevel;

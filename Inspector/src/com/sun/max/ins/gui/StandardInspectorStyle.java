@@ -51,7 +51,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     private final Color backgroundGray = new Color(238, 238, 238);
     private final Color defaultTextColor = InspectorStyle.Black;
 
-
     public StandardInspectorStyle(Inspection inspection, int defaultFontSize, int defaultRowHeight) {
         super(inspection);
         this.defaultFontSize = defaultFontSize;
@@ -123,7 +122,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return defaultMonospacedFont();
     }
 
-
     // Special styles for interpreted data values
     private Color nullDataColor = InspectorStyle.SaddleBrown;
     private Color wordValidReferenceDataColor = InspectorStyle.ForestGreen;
@@ -193,7 +191,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return flagsFont;
     }
 
-
     // Display of primitive Java data values
     @Override
     public Font primitiveDataFont() {
@@ -248,9 +245,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return wordCallEntryPointColor();
     }
 
-
     // Display of source code
-
 
     // Debugger interaction
 

@@ -37,7 +37,6 @@ import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
-
 public class NoninlineTemplateRuntime {
     //--------------------------------------------------------------------
     // Out of line code:
@@ -198,7 +197,6 @@ public class NoninlineTemplateRuntime {
         final FieldActor fieldActor = resolvePutstaticFieldActor(guard);
         FieldWriteSnippet.WriteLong.writeLong(fieldActor.holder().staticTuple(), fieldActor, value);
     }
-
 
     @NEVER_INLINE
     public static void resolveAndPutStaticFloat(ResolutionGuard guard, final float value) {
@@ -382,6 +380,5 @@ public class NoninlineTemplateRuntime {
     public static Object noninlineNew(ClassActor classActor) {
         return NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor);
     }
-
 
 }

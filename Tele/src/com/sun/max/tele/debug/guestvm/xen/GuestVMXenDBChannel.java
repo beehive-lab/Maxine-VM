@@ -104,7 +104,6 @@ public final class GuestVMXenDBChannel {
         return length;
     }
 
-
     public static synchronized void gatherThreads(AppendableSequence<TeleNativeThread> threads, int domainId, long threadLocalsList, long primordialThreadLocals) {
         nativeGatherThreads(teleDomain, threads, domainId, threadLocalsList, primordialThreadLocals);
     }

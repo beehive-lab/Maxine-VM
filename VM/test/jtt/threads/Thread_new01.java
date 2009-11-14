@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Thread_new01 {
     private Thread_new01() {
     }

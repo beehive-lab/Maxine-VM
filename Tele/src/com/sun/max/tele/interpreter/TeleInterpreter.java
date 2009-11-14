@@ -64,7 +64,6 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
         return run(method.classMethodActor(), arguments);
     }
 
-
     /**
      * Creates an interpreter instance and uses it to execute a given method with the given arguments.
      * Note that arguments must be dynamic types seen by the JavaPrototyper as legitimate VM classes.
@@ -1804,7 +1803,6 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                     final ClassActor dynamicClass = receiver.getClassActor();
                     assert dynamicClass != null;
 
-
                     if (!dynamicClass.getAllInterfaceActors().contains((InterfaceActor) methodActor.holder())) {
                         machine.raiseException(new IncompatibleClassChangeError(dynamicClass + " does not implement " + methodActor.holder()));
                     }
@@ -1895,7 +1893,6 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 machine.push(ReferenceValue.from(Array.newInstance(classActor.toJava(), arraySize)));
                 break;
             }
-
 
             case ARRAYLENGTH: {             // 0xBE;
                 final Reference array = machine.pop().asReference();

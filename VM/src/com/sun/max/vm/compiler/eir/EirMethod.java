@@ -187,7 +187,6 @@ public class EirMethod extends AbstractIrMethod {
         return charArrayWriter.toString();
     }
 
-
     @Override
     public Class<? extends IrTraceObserver> irTraceObserverType() {
         return EirTraceObserver.class;

@@ -25,7 +25,6 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
-
 /**
  * A dialog specialized for use in the Maxine Inspector.
  *

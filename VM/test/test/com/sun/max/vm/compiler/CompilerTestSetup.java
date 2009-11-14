@@ -48,7 +48,6 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
-
 public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
 
     private static CompilerTestSetup compilerTestSetup = null;
@@ -159,7 +158,6 @@ public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
         jarOutputStream.close();
         System.out.println("saved generated classfiles in " + jarFile.getAbsolutePath());
     }
-
 
     public static BootstrapCompilerScheme compilerScheme() {
         return javaPrototype().vmConfiguration().bootCompilerScheme();

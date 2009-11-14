@@ -777,7 +777,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
     }
 
-
     /**
      * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
      * @param enabledVmThreadLocals the thread whose TLAB will be refilled

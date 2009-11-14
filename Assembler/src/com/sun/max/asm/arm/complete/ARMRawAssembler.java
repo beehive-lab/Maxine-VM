@@ -23,7 +23,6 @@ package com.sun.max.asm.arm.complete;
 
 import com.sun.max.asm.arm.*;
 
-
 public abstract class ARMRawAssembler extends AbstractARMAssembler {
 
     protected ARMRawAssembler(int startAddress) {

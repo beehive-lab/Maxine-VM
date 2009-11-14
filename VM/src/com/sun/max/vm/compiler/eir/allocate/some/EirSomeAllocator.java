@@ -52,7 +52,6 @@ import com.sun.max.vm.type.*;
  */
 public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> extends EirAllocator<EirRegister_Type> {
 
-
     protected EirSomeAllocator(EirMethodGeneration methodGeneration) {
         super(methodGeneration);
     }
@@ -422,7 +421,6 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         }
     }
 
-
     private static final Timer constantAllocationTimer = GlobalMetrics.newTimer("RegisterAllocation-ConstantAllocation", Clock.SYSTEM_MILLISECONDS);
     private static final Timer variableSplittingTimer = GlobalMetrics.newTimer("RegisterAllocation-VariableSplitting", Clock.SYSTEM_MILLISECONDS);
     private static final Timer resettingTimer = GlobalMetrics.newTimer("RegisterAllocation-Resetting", Clock.SYSTEM_MILLISECONDS);
@@ -482,7 +480,6 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         interferencesTimer.start();
         determineInterferences(variables);
         interferencesTimer.stop();
-
 
         methodGeneration().notifyAfterTransformation(methodGeneration().variables(), Transformation.LIVE_RANGES);
         methodGeneration().notifyAfterTransformation(methodGeneration().variables(), Transformation.INTERFERENCE_GRAPH);

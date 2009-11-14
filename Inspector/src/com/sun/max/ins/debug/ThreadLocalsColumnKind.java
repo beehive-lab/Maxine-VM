@@ -22,7 +22,6 @@ package com.sun.max.ins.debug;
 
 import com.sun.max.collect.*;
 
-
 /**
  * Defines the columns that can be displayed describing thread local values in the VM.
  *

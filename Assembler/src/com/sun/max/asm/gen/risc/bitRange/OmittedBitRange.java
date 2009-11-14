@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.gen.risc.bitRange;
 
-
 /**
  * A range of bits that contributes to a field's value but does not occupy any bit
  * positions in an instruction. The implicit bits are 0. This type of bit range

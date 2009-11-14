@@ -66,7 +66,6 @@ public class VMOption {
         public final int helpIndent;
         public final int helpLineMaxWidth;
 
-
         Category(int helpIndent, int helpLineMaxWidth) {
             this.helpIndent = helpIndent;
             this.helpLineMaxWidth = helpLineMaxWidth;
