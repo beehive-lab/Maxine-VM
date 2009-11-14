@@ -75,7 +75,7 @@ public abstract class TeleClassConstant extends TelePoolConstant {
          */
         public TeleClassActor getTeleClassActor() {
             if (teleClassActor == null) {
-                final Reference classActorReference = teleVM().fields().ClassConstant$Resolved_classActor.readReference(reference());
+                final Reference classActorReference = teleVM().teleFields().ClassConstant$Resolved_classActor.readReference(reference());
                 teleClassActor = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
             }
             return teleClassActor;

@@ -23,6 +23,7 @@ package com.sun.max.tele.method;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -37,6 +38,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
 
@@ -61,10 +63,6 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
 
     private final MethodActor methodActor;
 
-    protected final MethodActor methodActor() {
-        return methodActor;
-    }
-
     protected TeleMethodAccess(TeleVM teleVM, Class holder, String name, SignatureDescriptor signature) {
         super(teleVM);
         if (signature != null) {
@@ -74,6 +72,20 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
             methodActor = findMethodActor(holder, name);
             ProgramError.check(methodActor != null, "could not find method named '" + name + "' in " + holder);
         }
+    }
+
+    /**
+     * @return the local descriptor for this method in the VM.
+     */
+    protected final MethodActor methodActor() {
+        return methodActor;
+    }
+
+    /**
+     * @return surrogate for the descriptor for this method in the VM.
+     */
+    public TeleClassMethodActor teleClassMethodActor() {
+        return teleVM.findTeleMethodActor(TeleClassMethodActor.class, methodActor);
     }
 
     /**

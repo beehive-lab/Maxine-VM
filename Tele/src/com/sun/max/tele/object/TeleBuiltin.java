@@ -37,7 +37,7 @@ public class TeleBuiltin extends TeleTupleObject {
     }
 
     public int getSerial() {
-        return teleVM().fields().Builtin_serial.readInt(reference());
+        return teleVM().teleFields().Builtin_serial.readInt(reference());
     }
 
     @Override

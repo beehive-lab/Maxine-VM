@@ -139,26 +139,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
 
         /**
-         * Special handling of a breakpoint, if needed.
-         * @return true if it is a conditional breakpoint whose condition is unsatisfied, and execution should be resumed.
-         * @throws ProcessTerminatedException
-         */
-        private boolean handleBreakpoint(TeleNativeThread thread, TeleTargetBreakpoint breakpoint) throws ProcessTerminatedException {
-            assert thread.state() == ThreadState.BREAKPOINT;
-            if (breakpoint.condition() != null && !breakpoint.condition().evaluate(TeleProcess.this, thread)) {
-                // At a conditional breakpoint, but condition tests false; prepare to resume VM execution
-                try {
-                    thread.evadeBreakpoint();
-                } catch (OSExecutionRequestException executionRequestException) {
-                    throw new ProcessTerminatedException("attempting to step over unsatisfied conditional breakpoint");
-                }
-                Trace.line(TRACE_VALUE, tracePrefix() + "continuing after hitting unsatisfied conditional breakpoint");
-                return true;
-            }
-            return false;
-        }
-
-        /**
          * Waits until the tele process has stopped after it has been issued an execution request.
          * Carry out any special processing needed in case of triggered watchpoint or breakpoint.
          * The request's post-execution action is then performed.
@@ -192,11 +172,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                         switch(thread.state()) {
                             case BREAKPOINT:
                                 final TeleTargetBreakpoint breakpoint = thread.breakpoint();
-                                if (handleBreakpoint(thread, breakpoint)) {
-                                    resumeExecution = true;
-                                } else {
+                                if (breakpoint.handleTriggerEvent(thread)) {
                                     // At a breakpoint where we should really stop; create a record
                                     breakpointThreads.append(thread);
+                                } else {
+                                    // The breakpoint handler says not a real break, perhaps a failed conditional; prepare to resume.
+                                    resumeExecution = true;
+                                    try {
+                                        thread.evadeBreakpoint();
+                                    } catch (OSExecutionRequestException executionRequestException) {
+                                        throw new ProcessTerminatedException("attempting to step over breakpoint in order to resume");
+                                    }
+                                    Trace.line(TRACE_VALUE, tracePrefix() + "silently continuing after triggering breakpoint");
                                 }
                                 break;
                             case WATCHPOINT:

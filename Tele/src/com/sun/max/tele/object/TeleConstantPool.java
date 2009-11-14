@@ -47,7 +47,7 @@ public final class TeleConstantPool extends TeleTupleObject{
 
     private Reference constantsArrayReference() {
         if (constantsArrayReference == null) {
-            constantsArrayReference = teleVM().fields().ConstantPool_constants.readReference(reference());
+            constantsArrayReference = teleVM().teleFields().ConstantPool_constants.readReference(reference());
         }
         return constantsArrayReference;
     }
@@ -68,7 +68,7 @@ public final class TeleConstantPool extends TeleTupleObject{
      * @return surrogate for the {@link ClassActor} object in the {@link TeleVM}  that includes this pool
      */
     public TeleClassActor getTeleHolder() {
-        final Reference classActorReference = teleVM().fields().ConstantPool_holder.readReference(reference());
+        final Reference classActorReference = teleVM().teleFields().ConstantPool_holder.readReference(reference());
         return (TeleClassActor) teleVM().makeTeleObject(classActorReference);
     }
 

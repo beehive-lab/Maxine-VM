@@ -56,7 +56,7 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
      * @see TargetMethod#catchRangePositions()
      */
     public int[] getCatchRangePositions() {
-        final Reference intArrayReference = teleVM().fields().CPSTargetMethod_catchRangePositions.readReference(reference());
+        final Reference intArrayReference = teleVM().teleFields().CPSTargetMethod_catchRangePositions.readReference(reference());
         final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
         if (teleIntArrayObject == null) {
             return null;
@@ -68,7 +68,7 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
      * @see TargetMethod#catchBlockPositions()
      */
     public int[] getCatchBlockPositions() {
-        final Reference intArrayReference = teleVM().fields().CPSTargetMethod_catchBlockPositions.readReference(reference());
+        final Reference intArrayReference = teleVM().teleFields().CPSTargetMethod_catchBlockPositions.readReference(reference());
         final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
         if (teleIntArrayObject == null) {
             return null;
@@ -85,7 +85,7 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
      */
     @Override
     public final byte[] getEncodedInlineDataDescriptors() {
-        final Reference encodedInlineDataDescriptorsReference = teleVM().fields().CPSTargetMethod_encodedInlineDataDescriptors.readReference(reference());
+        final Reference encodedInlineDataDescriptorsReference = teleVM().teleFields().CPSTargetMethod_encodedInlineDataDescriptors.readReference(reference());
         final TeleArrayObject teleEncodedInlineDataDescriptors = (TeleArrayObject) teleVM().makeTeleObject(encodedInlineDataDescriptorsReference);
         return teleEncodedInlineDataDescriptors == null ? null : (byte[]) teleEncodedInlineDataDescriptors.shallowCopy();
     }
@@ -94,7 +94,7 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
 
     public IndexedSequence<TargetJavaFrameDescriptor> getJavaFrameDescriptors() {
         if (javaFrameDescriptors == null) {
-            final Reference byteArrayReference = teleVM().fields().CPSTargetMethod_compressedJavaFrameDescriptors.readReference(reference());
+            final Reference byteArrayReference = teleVM().teleFields().CPSTargetMethod_compressedJavaFrameDescriptors.readReference(reference());
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) teleVM().makeTeleObject(byteArrayReference);
             if (teleByteArrayObject == null) {
                 return null;

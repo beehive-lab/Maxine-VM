@@ -112,7 +112,12 @@ public interface MaxVM {
     /**
      * @return access to specific fields in VM heap objects.
      */
-    TeleFields fields();
+    TeleFields teleFields();
+
+    /**
+     * @return access to specific methods in the VM
+     */
+    TeleMethods teleMethods();
 
     /**
      * Activates two-way messaging with the VM, if not already active.
@@ -626,7 +631,7 @@ public interface MaxVM {
     /**
      * All existing target code breakpoints.
      *
-     * @return all existing target code breakpoints in the VM, ignoring transients.
+     * @return all existing target code breakpoints in the VM, ignoring those set by the system..
      * Modification safe against breakpoint removal.
      */
     Iterable<TeleTargetBreakpoint> targetBreakpoints();
