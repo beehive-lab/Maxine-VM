@@ -122,7 +122,7 @@ public class ExternalCommand {
             return thrown == null && !timedOut;
         }
 
-        public String checkError(Result other, boolean compareStdout, String[] stdoutIgnore, boolean compareStderr, String[] stderrIgnore) {
+        public String checkError(Result other, OutputComparison comparison) {
             if (thrown != null) {
                 return thrown.toString();
             }
@@ -132,10 +132,10 @@ public class ExternalCommand {
             if (exitValue != other.exitValue) {
                 return "exit value = " + exitValue + ", expected " + other.exitValue;
             }
-            if (compareStdout && !Files.compareFiles(logs.get(STDOUT), other.command().logs.get(STDOUT), stdoutIgnore)) {
+            if (comparison.stdout && !Files.compareFiles(logs.get(STDOUT), other.command().logs.get(STDOUT), comparison.stdoutIgnore)) {
                 return "Standard out " + logs.get(STDOUT) + " and " + other.command().logs.get(STDOUT) + " do not match";
             }
-            if (compareStderr && !Files.compareFiles(logs.get(STDERR), other.command().logs.get(STDERR), stderrIgnore)) {
+            if (comparison.stderr && !Files.compareFiles(logs.get(STDERR), other.command().logs.get(STDERR), comparison.stderrIgnore)) {
                 return "Standard error " + logs.get(STDERR) + " and " + other.command().logs.get(STDERR) + " do not match";
             }
             return null;
@@ -144,6 +144,13 @@ public class ExternalCommand {
         ExternalCommand command() {
             return ExternalCommand.this;
         }
+    }
+
+    public static class OutputComparison {
+        public boolean stdout = true;
+        public boolean stderr = false;
+        public String[] stdoutIgnore;
+        public String[] stderrIgnore;
     }
 
     /**
