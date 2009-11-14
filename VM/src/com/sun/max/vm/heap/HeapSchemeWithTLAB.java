@@ -48,9 +48,9 @@ import com.sun.max.vm.type.*;
  */
 public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
-    public static final String TLAB_TOP_THREAD_LOCAL_NAME = "_TLAB_TOP";
-    public static final String TLAB_MARK_THREAD_LOCAL_NAME = "_TLAB_MARK";
-    public static final String TLAB_DISABLED_THREAD_LOCAL_NAME = "_TLAB_DISABLED";
+    public static final String TLAB_TOP_THREAD_LOCAL_NAME = "TLAB_TOP";
+    public static final String TLAB_MARK_THREAD_LOCAL_NAME = "TLAB_MARK";
+    public static final String TLAB_DISABLED_THREAD_LOCAL_NAME = "TLAB_DISABLED";
 
     /**
      * A VM option for disabling use of TLABs.
@@ -83,14 +83,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * {@linkplain #useTLABOption enabled}. Used when thread is allocating on the global immortal heap.
      */
     private static final VmThreadLocal TLAB_TOP_TMP
-        = new VmThreadLocal("_TLAB_TOP_TMP", false, "HeapSchemeWithTLAB: temporary top of current TLAB, zero if not used");
+        = new VmThreadLocal("TLAB_TOP_TMP", false, "HeapSchemeWithTLAB: temporary top of current TLAB, zero if not used");
 
     /**
      * The temporary allocation mark of the current thread-local allocation buffer. This will remain zero if TLABs
      * are not {@linkplain #useTLABOption enabled}. Used when thread is allocating on the global immortal heap.
      */
     private static final VmThreadLocal TLAB_MARK_TMP
-        = new VmThreadLocal("_TLAB_MARK_TMP", false, "HeapSchemeWithTLAB: temporary allocation mark of current TLAB, zero if not used");
+        = new VmThreadLocal("TLAB_MARK_TMP", false, "HeapSchemeWithTLAB: temporary allocation mark of current TLAB, zero if not used");
 
     /**
      * Thread-local used to disable allocation per thread.

@@ -26,42 +26,6 @@
 #include "log.h"
 #include "jni.h"
 
-JNIEXPORT void JNICALL
-Java_com_sun_max_vm_run_compilerTest_CompilerTestRunScheme_nativeUpdateFields(JNIEnv *env, jobject object, int n, jint i, jobject o) {
-	jclass _class = (*env)->GetObjectClass(env, object);
-    if (_class == NULL) {
-    	printf("Could not get class of object\n");
-    	return;
-    }
-
-    if (n > 0) {
-    	jmethodID mid = (*env)->GetMethodID(env, _class, "testNative", "(I)V");
-    	if (mid == NULL) {
-        	printf("Could not find method testNative(int)\n");
-        	return;
-    	}
-    	(*env)->CallVoidMethod(env, object, mid, n, i, o);
-    } else {
-        jfieldID _i;
-        jfieldID _o;
-    	_i = (*env)->GetFieldID(env, _class, "_i", "I");
-    	if (_i == NULL) {
-    		printf("Could not find field _i\n");
-    		return;
-    	}
-
-    	_o = (*env)->GetFieldID(env, _class, "_o", "Ljava/lang/Object;");
-    	if (_o == NULL) {
-    		printf("Could not find field _o\n");
-    		return;
-    	}
-
-    	(*env)->SetIntField(env, object, _i, i);
-    	(*env)->SetObjectField(env, object, _o, o);
-    }
-}
-
-
 #define BUFSIZE 8192
 JNIEXPORT jint JNICALL
 Java_jtt_jni_JNI_1OverflowArguments_read1(JNIEnv *env, jclass cls, jlong zfile,

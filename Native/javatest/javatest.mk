@@ -24,7 +24,6 @@ PROJECT = ../../..
 LIB = javatest
 
 include $(PROJECT)/platform/platform.mk
-include $(PROJECT)/tele/$(OS)/$(OS).mk
 
 SOURCES = jvmni.c tests.c threads.c jnitests.c
 

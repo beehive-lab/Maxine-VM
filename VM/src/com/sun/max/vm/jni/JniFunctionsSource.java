@@ -139,7 +139,9 @@ public final class JniFunctionsSource {
         } catch (Utf8Exception utf8Exception) {
             throw new ClassNotFoundException();
         }
-        final Class javaClass = findClass(VmStackFrameWalker.getCallerClassMethodActor().holder().classLoader, className);
+        ClassMethodActor caller = VmStackFrameWalker.getCallerClassMethodActor();
+        ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : caller.holder().classLoader;
+        final Class javaClass = findClass(classLoader, className);
         MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
         return JniHandles.createLocalHandle(javaClass);
     }

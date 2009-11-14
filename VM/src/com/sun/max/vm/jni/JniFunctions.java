@@ -89,6 +89,8 @@ public final class JniFunctions {
      * This method implements part of the prologue for entering a JNI upcall from native code.
      *
      * @param enabledVmThreadLocals
+     * @return an anchor for the JNI function frame. The anchor previous to this anchor is either that of the JNI stub
+     *         frame that called out to native code or the native anchor of a thread that attached to the VM.
      */
     @INLINE
     public static Pointer reenterJavaFromNative(Pointer enabledVmThreadLocals) {
@@ -131,6 +133,8 @@ public final class JniFunctions {
      * Traces the entry to an upcall if the {@linkplain ClassMethodActor#traceJNI() JNI tracing flag} has been set.
      *
      * @param name the name of the JNI function being entered
+     * @param anchor for the JNI function frame. The anchor previous to this anchor is either that of the JNI stub frame
+     *            that called out to native code or the native anchor of a thread that attached to the VM.
      */
     private static void traceEntry(String name, Pointer anchor) {
         if (ClassMethodActor.traceJNI()) {
@@ -141,10 +145,14 @@ public final class JniFunctions {
             Log.print(name);
             Pointer jniStubAnchor = JavaFrameAnchor.PREVIOUS.get(anchor);
             final Address jniStubPC = JavaFrameAnchor.PC.get(jniStubAnchor).asAddress();
-            final TargetMethod nativeMethod = Code.codePointerToTargetMethod(jniStubPC);
-            Log.print(", last down call: ");
-            FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
-            Log.print(nativeMethod.classMethodActor().name.string);
+            if (!jniStubPC.isZero()) {
+                final TargetMethod nativeMethod = Code.codePointerToTargetMethod(jniStubPC);
+                Log.print(", last down call: ");
+                FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
+                Log.print(nativeMethod.classMethodActor().name.string);
+            } else {
+                Log.print(", called from attached native thread");
+            }
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
@@ -195,20 +203,25 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static native void reserved0();
+        // Source: JniFunctionsSource.java:71
 
     @JNI_FUNCTION
     private static native void reserved1();
+        // Source: JniFunctionsSource.java:74
 
     @JNI_FUNCTION
     private static native void reserved2();
+        // Source: JniFunctionsSource.java:77
 
     @JNI_FUNCTION
     private static native void reserved3();
+        // Source: JniFunctionsSource.java:80
 
     // Checkstyle: stop method name check
 
     @JNI_FUNCTION
     private static native int GetVersion(Pointer env);
+        // Source: JniFunctionsSource.java:85
 
     private static String dottify(String slashifiedName) {
         return slashifiedName.replace('/', '.');
@@ -227,40 +240,34 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle DefineClass(Pointer env, Pointer slashifiedName, JniHandle classLoader, Pointer buffer, int length) throws ClassFormatError {
+        // Source: JniFunctionsSource.java:103
         Pointer anchor = prologue(env, "DefineClass");
-        JniHandle result;
         try {
-            result = DefineClass_(env, slashifiedName, classLoader, buffer, length);
+            final byte[] bytes = new byte[length];
+            Memory.readBytes(buffer, length, bytes);
+            try {
+                // TODO: find out whether already dottified class names should be rejected by this function
+                final Object[] arguments = {dottify(CString.utf8ToJava(slashifiedName)), bytes, 0, length};
+                Object cl = classLoader.unhand();
+                if (cl == null) {
+                    cl = BootClassLoader.BOOT_CLASS_LOADER;
+                }
+                return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(cl, "defineClass", defineClassParameterTypes, arguments));
+            } catch (Utf8Exception utf8Exception) {
+                throw classFormatError("Invalid class name");
+            } catch (NoSuchMethodException noSuchMethodException) {
+                throw ProgramError.unexpected(noSuchMethodException);
+            } catch (IllegalAccessException illegalAccessException) {
+                throw ProgramError.unexpected(illegalAccessException);
+            } catch (InvocationTargetException invocationTargetException) {
+                VmThread.fromJniEnv(env).setPendingException(invocationTargetException.getTargetException());
+                return JniHandle.zero();
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
-        }
-        epilogue(anchor, "DefineClass");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:103
-    private static JniHandle DefineClass_(Pointer env, Pointer slashifiedName, JniHandle classLoader, Pointer buffer, int length) throws ClassFormatError {
-        final byte[] bytes = new byte[length];
-        Memory.readBytes(buffer, length, bytes);
-        try {
-            // TODO: find out whether already dottified class names should be rejected by this function
-            final Object[] arguments = {dottify(CString.utf8ToJava(slashifiedName)), bytes, 0, length};
-            Object cl = classLoader.unhand();
-            if (cl == null) {
-                cl = BootClassLoader.BOOT_CLASS_LOADER;
-            }
-            return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(cl, "defineClass", defineClassParameterTypes, arguments));
-        } catch (Utf8Exception utf8Exception) {
-            throw classFormatError("Invalid class name");
-        } catch (NoSuchMethodException noSuchMethodException) {
-            throw ProgramError.unexpected(noSuchMethodException);
-        } catch (IllegalAccessException illegalAccessException) {
-            throw ProgramError.unexpected(illegalAccessException);
-        } catch (InvocationTargetException invocationTargetException) {
-            VmThread.fromJniEnv(env).setPendingException(invocationTargetException.getTargetException());
-            return JniHandle.zero();
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "DefineClass");
         }
     }
 
@@ -274,72 +281,56 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle FindClass(Pointer env, Pointer name) throws ClassNotFoundException {
+        // Source: JniFunctionsSource.java:135
         Pointer anchor = prologue(env, "FindClass");
-        JniHandle result;
         try {
-            result = FindClass_(env, name);
+            String className;
+            try {
+                className = CString.utf8ToJava(name);
+            } catch (Utf8Exception utf8Exception) {
+                throw new ClassNotFoundException();
+            }
+            ClassMethodActor caller = VmStackFrameWalker.getCallerClassMethodActor();
+            ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : caller.holder().classLoader;
+            final Class javaClass = findClass(classLoader, className);
+            MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
+            return JniHandles.createLocalHandle(javaClass);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "FindClass");
         }
-        epilogue(anchor, "FindClass");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:135
-    private static JniHandle FindClass_(Pointer env, Pointer name) throws ClassNotFoundException {
-        String className;
-        try {
-            className = CString.utf8ToJava(name);
-        } catch (Utf8Exception utf8Exception) {
-            throw new ClassNotFoundException();
-        }
-        final Class javaClass = findClass(VmStackFrameWalker.getCallerClassMethodActor().holder().classLoader, className);
-        MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
-        return JniHandles.createLocalHandle(javaClass);
     }
 
     @JNI_FUNCTION
     private static MethodID FromReflectedMethod(Pointer env, JniHandle reflectedMethod) {
+        // Source: JniFunctionsSource.java:150
         Pointer anchor = prologue(env, "FromReflectedMethod");
-        MethodID result;
         try {
-            result = FromReflectedMethod_(env, reflectedMethod);
+            final MethodActor methodActor = MethodActor.fromJava((Method) reflectedMethod.unhand());
+            return MethodID.fromMethodActor(methodActor);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asMethodID(0);
+            return asMethodID(0);
+        } finally {
+            epilogue(anchor, "FromReflectedMethod");
         }
-        epilogue(anchor, "FromReflectedMethod");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:148
-    private static MethodID FromReflectedMethod_(Pointer env, JniHandle reflectedMethod) {
-        final MethodActor methodActor = MethodActor.fromJava((Method) reflectedMethod.unhand());
-        return MethodID.fromMethodActor(methodActor);
     }
 
     @JNI_FUNCTION
     private static FieldID FromReflectedField(Pointer env, JniHandle field) {
+        // Source: JniFunctionsSource.java:156
         Pointer anchor = prologue(env, "FromReflectedField");
-        FieldID result;
         try {
-            result = FromReflectedField_(env, field);
+            final FieldActor fieldActor = FieldActor.fromJava((Field) field.unhand());
+            return FieldID.fromFieldActor(fieldActor);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asFieldID(0);
+            return asFieldID(0);
+        } finally {
+            epilogue(anchor, "FromReflectedField");
         }
-        epilogue(anchor, "FromReflectedField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:154
-    private static FieldID FromReflectedField_(Pointer env, JniHandle field) {
-        final FieldActor fieldActor = FieldActor.fromJava((Field) field.unhand());
-        return FieldID.fromFieldActor(fieldActor);
     }
 
     private static Method ToReflectedMethod(MethodID methodID, boolean isStatic) throws NoSuchMethodException {
@@ -352,216 +343,162 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle ToReflectedMethod(Pointer env, JniHandle javaClass, MethodID methodID, boolean isStatic) throws NoSuchMethodException {
+        // Source: JniFunctionsSource.java:170
         Pointer anchor = prologue(env, "ToReflectedMethod");
-        JniHandle result;
         try {
-            result = ToReflectedMethod_(env, javaClass, methodID, isStatic);
+            return JniHandles.createLocalHandle(ToReflectedMethod(methodID, isStatic));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "ToReflectedMethod");
         }
-        epilogue(anchor, "ToReflectedMethod");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:168
-    private static JniHandle ToReflectedMethod_(Pointer env, JniHandle javaClass, MethodID methodID, boolean isStatic) throws NoSuchMethodException {
-        return JniHandles.createLocalHandle(ToReflectedMethod(methodID, isStatic));
     }
 
     @JNI_FUNCTION
     private static JniHandle GetSuperclass(Pointer env, JniHandle subType) {
+        // Source: JniFunctionsSource.java:175
         Pointer anchor = prologue(env, "GetSuperclass");
-        JniHandle result;
         try {
-            result = GetSuperclass_(env, subType);
+            return JniHandles.createLocalHandle(((Class) subType.unhand()).getSuperclass());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "GetSuperclass");
         }
-        epilogue(anchor, "GetSuperclass");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:173
-    private static JniHandle GetSuperclass_(Pointer env, JniHandle subType) {
-        return JniHandles.createLocalHandle(((Class) subType.unhand()).getSuperclass());
     }
 
     @JNI_FUNCTION
     private static boolean IsAssignableFrom(Pointer env, JniHandle subType, JniHandle superType) {
+        // Source: JniFunctionsSource.java:180
         Pointer anchor = prologue(env, "IsAssignableFrom");
-        boolean result;
         try {
-            result = IsAssignableFrom_(env, subType, superType);
+            return ClassActor.fromJava((Class) superType.unhand()).isAssignableFrom(ClassActor.fromJava((Class) subType.unhand()));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = false;
+            return false;
+        } finally {
+            epilogue(anchor, "IsAssignableFrom");
         }
-        epilogue(anchor, "IsAssignableFrom");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:178
-    private static boolean IsAssignableFrom_(Pointer env, JniHandle subType, JniHandle superType) {
-        return ClassActor.fromJava((Class) superType.unhand()).isAssignableFrom(ClassActor.fromJava((Class) subType.unhand()));
     }
 
     @JNI_FUNCTION
     private static JniHandle ToReflectedField(Pointer env, JniHandle javaClass, FieldID fieldID, boolean isStatic) {
+        // Source: JniFunctionsSource.java:185
         Pointer anchor = prologue(env, "ToReflectedField");
-        JniHandle result;
         try {
-            result = ToReflectedField_(env, javaClass, fieldID, isStatic);
+            final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
+            if (fieldActor == null || fieldActor.isStatic() != isStatic) {
+                throw new NoSuchFieldError();
+            }
+            return JniHandles.createLocalHandle(fieldActor.toJava());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "ToReflectedField");
         }
-        epilogue(anchor, "ToReflectedField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:183
-    private static JniHandle ToReflectedField_(Pointer env, JniHandle javaClass, FieldID fieldID, boolean isStatic) {
-        final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
-        if (fieldActor == null || fieldActor.isStatic() != isStatic) {
-            throw new NoSuchFieldError();
-        }
-        return JniHandles.createLocalHandle(fieldActor.toJava());
     }
 
     @JNI_FUNCTION
     private static int Throw(Pointer env, JniHandle throwable) {
+        // Source: JniFunctionsSource.java:194
         Pointer anchor = prologue(env, "Throw");
-        int result;
         try {
-            result = Throw_(env, throwable);
+            VmThread.fromJniEnv(env).setPendingException((Throwable) throwable.unhand());
+            return JNI_OK;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "Throw");
         }
-        epilogue(anchor, "Throw");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:192
-    private static int Throw_(Pointer env, JniHandle throwable) {
-        VmThread.fromJniEnv(env).setPendingException((Throwable) throwable.unhand());
-        return JNI_OK;
     }
 
     @JNI_FUNCTION
     private static int ThrowNew(Pointer env, JniHandle throwableClass, Pointer message) throws Throwable {
+        // Source: JniFunctionsSource.java:200
         Pointer anchor = prologue(env, "ThrowNew");
-        int result;
         try {
-            result = ThrowNew_(env, throwableClass, message);
+            final Class<Class<? extends Throwable>> type = null;
+            Constructor<? extends Throwable> constructor = null;
+            Class[] parameterTypes = null;
+            if (message.isZero()) {
+                parameterTypes = new Class[0];
+            } else {
+                parameterTypes = new Class[1];
+                parameterTypes[0] = String.class;
+            }
+            constructor = StaticLoophole.cast(type, throwableClass.unhand()).getConstructor(parameterTypes);
+            Throwable throwable = message.isZero() ? constructor.newInstance() : constructor.newInstance(CString.utf8ToJava(message));
+            VmThread.fromJniEnv(env).setPendingException(throwable);
+            return JNI_OK;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "ThrowNew");
         }
-        epilogue(anchor, "ThrowNew");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:198
-    private static int ThrowNew_(Pointer env, JniHandle throwableClass, Pointer message) throws Throwable {
-        final Class<Class<? extends Throwable>> type = null;
-        Constructor<? extends Throwable> constructor = null;
-        Class[] parameterTypes = null;
-        if (message.isZero()) {
-            parameterTypes = new Class[0];
-        } else {
-            parameterTypes = new Class[1];
-            parameterTypes[0] = String.class;
-        }
-        constructor = StaticLoophole.cast(type, throwableClass.unhand()).getConstructor(parameterTypes);
-        Throwable throwable = message.isZero() ? constructor.newInstance() : constructor.newInstance(CString.utf8ToJava(message));
-        VmThread.fromJniEnv(env).setPendingException(throwable);
-        return JNI_OK;
     }
 
     @JNI_FUNCTION
     private static JniHandle ExceptionOccurred(Pointer env) {
+        // Source: JniFunctionsSource.java:217
         Pointer anchor = prologue(env, "ExceptionOccurred");
-        JniHandle result;
         try {
-            result = ExceptionOccurred_(env);
+            return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).pendingException());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "ExceptionOccurred");
         }
-        epilogue(anchor, "ExceptionOccurred");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:215
-    private static JniHandle ExceptionOccurred_(Pointer env) {
-        return JniHandles.createLocalHandle(VmThread.fromJniEnv(env).pendingException());
     }
 
     @JNI_FUNCTION
     private static void ExceptionDescribe(Pointer env) {
+        // Source: JniFunctionsSource.java:222
         Pointer anchor = prologue(env, "ExceptionDescribe");
         try {
-            ExceptionDescribe_(env);
+            final Throwable exception = VmThread.fromJniEnv(env).pendingException();
+            if (exception != null) {
+                exception.printStackTrace();
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "ExceptionDescribe");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:220
-    private static void ExceptionDescribe_(Pointer env) {
-        final Throwable exception = VmThread.fromJniEnv(env).pendingException();
-        if (exception != null) {
-            exception.printStackTrace();
+        } finally {
+            epilogue(anchor, "ExceptionDescribe");
         }
     }
 
     @JNI_FUNCTION
     private static void ExceptionClear(Pointer env) {
+        // Source: JniFunctionsSource.java:230
         Pointer anchor = prologue(env, "ExceptionClear");
         try {
-            ExceptionClear_(env);
+            VmThread.fromJniEnv(env).setPendingException(null);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ExceptionClear");
         }
-        epilogue(anchor, "ExceptionClear");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:228
-    private static void ExceptionClear_(Pointer env) {
-        VmThread.fromJniEnv(env).setPendingException(null);
     }
 
     @JNI_FUNCTION
     private static void FatalError(Pointer env, Pointer message) {
+        // Source: JniFunctionsSource.java:235
         Pointer anchor = prologue(env, "FatalError");
         try {
-            FatalError_(env, message);
+            try {
+                FatalError.unexpected(CString.utf8ToJava(message));
+            } catch (Utf8Exception utf8Exception) {
+                FatalError.unexpected("fatal error with UTF8 error in message");
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "FatalError");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:233
-    private static void FatalError_(Pointer env, Pointer message) {
-        try {
-            FatalError.unexpected(CString.utf8ToJava(message));
-        } catch (Utf8Exception utf8Exception) {
-            FatalError.unexpected("fatal error with UTF8 error in message");
+        } finally {
+            epilogue(anchor, "FatalError");
         }
     }
 
@@ -572,160 +509,116 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static int PushLocalFrame(Pointer env, int capacity) {
+        // Source: JniFunctionsSource.java:249
         Pointer anchor = prologue(env, "PushLocalFrame");
-        int result;
         try {
-            result = PushLocalFrame_(env, capacity);
+            JniHandles.pushLocalFrame(capacity);
+            return JNI_OK;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "PushLocalFrame");
         }
-        epilogue(anchor, "PushLocalFrame");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:247
-    private static int PushLocalFrame_(Pointer env, int capacity) {
-        JniHandles.pushLocalFrame(capacity);
-        return JNI_OK;
     }
 
     @JNI_FUNCTION
     private static JniHandle PopLocalFrame(Pointer env, JniHandle res) {
+        // Source: JniFunctionsSource.java:255
         Pointer anchor = prologue(env, "PopLocalFrame");
-        JniHandle result;
         try {
-            result = PopLocalFrame_(env, res);
+            return JniHandles.popLocalFrame(res);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "PopLocalFrame");
         }
-        epilogue(anchor, "PopLocalFrame");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:253
-    private static JniHandle PopLocalFrame_(Pointer env, JniHandle res) {
-        return JniHandles.popLocalFrame(res);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewGlobalRef(Pointer env, JniHandle handle) {
+        // Source: JniFunctionsSource.java:260
         Pointer anchor = prologue(env, "NewGlobalRef");
-        JniHandle result;
         try {
-            result = NewGlobalRef_(env, handle);
+            return JniHandles.createGlobalHandle(handle.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewGlobalRef");
         }
-        epilogue(anchor, "NewGlobalRef");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:258
-    private static JniHandle NewGlobalRef_(Pointer env, JniHandle handle) {
-        return JniHandles.createGlobalHandle(handle.unhand());
     }
 
     @JNI_FUNCTION
     private static void DeleteGlobalRef(Pointer env, JniHandle handle) {
+        // Source: JniFunctionsSource.java:265
         Pointer anchor = prologue(env, "DeleteGlobalRef");
         try {
-            DeleteGlobalRef_(env, handle);
+            JniHandles.destroyGlobalHandle(handle);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "DeleteGlobalRef");
         }
-        epilogue(anchor, "DeleteGlobalRef");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:263
-    private static void DeleteGlobalRef_(Pointer env, JniHandle handle) {
-        JniHandles.destroyGlobalHandle(handle);
     }
 
     @JNI_FUNCTION
     private static void DeleteLocalRef(Pointer env, JniHandle handle) {
+        // Source: JniFunctionsSource.java:270
         Pointer anchor = prologue(env, "DeleteLocalRef");
         try {
-            DeleteLocalRef_(env, handle);
+            JniHandles.destroyLocalHandle(handle);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "DeleteLocalRef");
         }
-        epilogue(anchor, "DeleteLocalRef");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:268
-    private static void DeleteLocalRef_(Pointer env, JniHandle handle) {
-        JniHandles.destroyLocalHandle(handle);
     }
 
     @JNI_FUNCTION
     private static boolean IsSameObject(Pointer env, JniHandle object1, JniHandle object2) {
+        // Source: JniFunctionsSource.java:275
         Pointer anchor = prologue(env, "IsSameObject");
-        boolean result;
         try {
-            result = IsSameObject_(env, object1, object2);
+            return object1.unhand() == object2.unhand();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = false;
+            return false;
+        } finally {
+            epilogue(anchor, "IsSameObject");
         }
-        epilogue(anchor, "IsSameObject");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:273
-    private static boolean IsSameObject_(Pointer env, JniHandle object1, JniHandle object2) {
-        return object1.unhand() == object2.unhand();
     }
 
     @JNI_FUNCTION
     private static JniHandle NewLocalRef(Pointer env, JniHandle object) {
+        // Source: JniFunctionsSource.java:280
         Pointer anchor = prologue(env, "NewLocalRef");
-        JniHandle result;
         try {
-            result = NewLocalRef_(env, object);
+            return JniHandles.createLocalHandle(object.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewLocalRef");
         }
-        epilogue(anchor, "NewLocalRef");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:278
-    private static JniHandle NewLocalRef_(Pointer env, JniHandle object) {
-        return JniHandles.createLocalHandle(object.unhand());
     }
 
     @JNI_FUNCTION
     private static int EnsureLocalCapacity(Pointer env, int capacity) {
+        // Source: JniFunctionsSource.java:285
         Pointer anchor = prologue(env, "EnsureLocalCapacity");
-        int result;
         try {
-            result = EnsureLocalCapacity_(env, capacity);
+            // If this call fails, it will be with an OutOfMemoryError which will be
+            // set as the pending exception for the current thread
+            JniHandles.ensureLocalHandleCapacity(capacity);
+            return JNI_OK;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "EnsureLocalCapacity");
         }
-        epilogue(anchor, "EnsureLocalCapacity");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:283
-    private static int EnsureLocalCapacity_(Pointer env, int capacity) {
-        // If this call fails, it will be with an OutOfMemoryError which will be
-        // set as the pending exception for the current thread
-        JniHandles.ensureLocalHandleCapacity(capacity);
-        return JNI_OK;
     }
 
     private static Object allocObject(Class javaClass) throws InstantiationException {
@@ -738,154 +631,128 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle AllocObject(Pointer env, JniHandle javaClass) throws InstantiationException {
+        // Source: JniFunctionsSource.java:301
         Pointer anchor = prologue(env, "AllocObject");
-        JniHandle result;
         try {
-            result = AllocObject_(env, javaClass);
+            return JniHandles.createLocalHandle(allocObject((Class) javaClass.unhand()));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "AllocObject");
         }
-        epilogue(anchor, "AllocObject");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:299
-    private static JniHandle AllocObject_(Pointer env, JniHandle javaClass) throws InstantiationException {
-        return JniHandles.createLocalHandle(allocObject((Class) javaClass.unhand()));
     }
 
     @JNI_FUNCTION
     private static native JniHandle NewObject(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:306
 
     @JNI_FUNCTION
     private static native JniHandle NewObjectV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:309
 
     @JNI_FUNCTION
     private static JniHandle NewObjectA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:312
         Pointer anchor = prologue(env, "NewObjectA");
-        JniHandle result;
         try {
-            result = NewObjectA_(env, javaClass, methodID, arguments);
+    
+            final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
+            if (!(classActor instanceof TupleClassActor)) {
+                throw new NoSuchMethodException();
+            }
+            final TupleClassActor tupleClassActor = (TupleClassActor) classActor;
+    
+            final MethodActor methodActor = MethodID.toMethodActor(methodID);
+            if (methodActor == null || !methodActor.isInitializer()) {
+                throw new NoSuchMethodException();
+            }
+            final VirtualMethodActor virtualMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor);
+            if (virtualMethodActor == null) {
+                throw new NoSuchMethodException();
+            }
+    
+            final SignatureDescriptor signature = virtualMethodActor.descriptor();
+            final Value[] argumentValues = new Value[signature.numberOfParameters()];
+            copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
+            traceReflectiveInvocation(virtualMethodActor);
+            return JniHandles.createLocalHandle(virtualMethodActor.invokeConstructor(argumentValues).asObject());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewObjectA");
         }
-        epilogue(anchor, "NewObjectA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:310
-    private static JniHandle NewObjectA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-
-        final ClassActor classActor = ClassActor.fromJava((Class) javaClass.unhand());
-        if (!(classActor instanceof TupleClassActor)) {
-            throw new NoSuchMethodException();
-        }
-        final TupleClassActor tupleClassActor = (TupleClassActor) classActor;
-
-        final MethodActor methodActor = MethodID.toMethodActor(methodID);
-        if (methodActor == null || !methodActor.isInitializer()) {
-            throw new NoSuchMethodException();
-        }
-        final VirtualMethodActor virtualMethodActor = tupleClassActor.findLocalVirtualMethodActor(methodActor);
-        if (virtualMethodActor == null) {
-            throw new NoSuchMethodException();
-        }
-
-        final SignatureDescriptor signature = virtualMethodActor.descriptor();
-        final Value[] argumentValues = new Value[signature.numberOfParameters()];
-        copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
-        traceReflectiveInvocation(virtualMethodActor);
-        return JniHandles.createLocalHandle(virtualMethodActor.invokeConstructor(argumentValues).asObject());
     }
 
     @JNI_FUNCTION
     private static JniHandle GetObjectClass(Pointer env, JniHandle object) {
+        // Source: JniFunctionsSource.java:337
         Pointer anchor = prologue(env, "GetObjectClass");
-        JniHandle result;
         try {
-            result = GetObjectClass_(env, object);
+            final Class javaClass = object.unhand().getClass();
+            return JniHandles.createLocalHandle(javaClass);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "GetObjectClass");
         }
-        epilogue(anchor, "GetObjectClass");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:335
-    private static JniHandle GetObjectClass_(Pointer env, JniHandle object) {
-        final Class javaClass = object.unhand().getClass();
-        return JniHandles.createLocalHandle(javaClass);
     }
 
     @JNI_FUNCTION
     private static boolean IsInstanceOf(Pointer env, JniHandle object, JniHandle javaType) {
+        // Source: JniFunctionsSource.java:343
         Pointer anchor = prologue(env, "IsInstanceOf");
-        boolean result;
         try {
-            result = IsInstanceOf_(env, object, javaType);
+            return ((Class) javaType.unhand()).isInstance(object.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = false;
+            return false;
+        } finally {
+            epilogue(anchor, "IsInstanceOf");
         }
-        epilogue(anchor, "IsInstanceOf");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:341
-    private static boolean IsInstanceOf_(Pointer env, JniHandle object, JniHandle javaType) {
-        return ((Class) javaType.unhand()).isInstance(object.unhand());
     }
 
     @JNI_FUNCTION
     private static MethodID GetMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
+        // Source: JniFunctionsSource.java:348
         Pointer anchor = prologue(env, "GetMethodID");
-        MethodID result;
         try {
-            result = GetMethodID_(env, javaType, nameCString, descriptorCString);
+            final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
+            MakeClassInitialized.makeClassInitialized(classActor);
+            try {
+                final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
+                final SignatureDescriptor descriptor = SignatureDescriptor.lookup(CString.utf8ToJava(descriptorCString));
+                if (name == null || descriptor == null) {
+                    // The class should have been loaded (we have an instance of the class
+                    // passed in) so the name and signature should already be in their respective canonicalization
+                    // tables. If they're not there, the method doesn't exist.
+                    throw new NoSuchMethodError();
+                }
+                final MethodActor methodActor = classActor.findMethodActor(name, descriptor);
+                if (methodActor == null || methodActor.isStatic()) {
+                    throw new NoSuchMethodError();
+                }
+                return MethodID.fromMethodActor(methodActor);
+            } catch (Utf8Exception utf8Exception) {
+                throw new NoSuchMethodError();
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asMethodID(0);
-        }
-        epilogue(anchor, "GetMethodID");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:346
-    private static MethodID GetMethodID_(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
-        final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
-        try {
-            final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
-            final SignatureDescriptor descriptor = SignatureDescriptor.lookup(CString.utf8ToJava(descriptorCString));
-            if (name == null || descriptor == null) {
-                // The class should have been loaded (we have an instance of the class
-                // passed in) so the name and signature should already be in their respective canonicalization
-                // tables. If they're not there, the method doesn't exist.
-                throw new NoSuchMethodError();
-            }
-            final MethodActor methodActor = classActor.findMethodActor(name, descriptor);
-            if (methodActor == null || methodActor.isStatic()) {
-                throw new NoSuchMethodError();
-            }
-            return MethodID.fromMethodActor(methodActor);
-        } catch (Utf8Exception utf8Exception) {
-            throw new NoSuchMethodError();
+            return asMethodID(0);
+        } finally {
+            epilogue(anchor, "GetMethodID");
         }
     }
 
     @JNI_FUNCTION
     private static native JniHandle CallObjectMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:371
 
     @JNI_FUNCTION
     private static native JniHandle CallObjectMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList);
+        // Source: JniFunctionsSource.java:374
 
     /**
      * Copies arguments from the native jvalue array at {@code arguments} into {@code argumentValues}. The number of
@@ -971,230 +838,192 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle CallObjectMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:459
         Pointer anchor = prologue(env, "CallObjectMethodA");
-        JniHandle result;
         try {
-            result = CallObjectMethodA_(env, object, methodID, arguments);
+            return JniHandles.createLocalHandle(CallValueMethodA(env, object, methodID, arguments).asObject());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "CallObjectMethodA");
         }
-        epilogue(anchor, "CallObjectMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:457
-    private static JniHandle CallObjectMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return JniHandles.createLocalHandle(CallValueMethodA(env, object, methodID, arguments).asObject());
     }
 
     @JNI_FUNCTION
     private static native boolean CallBooleanMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:464
 
     @JNI_FUNCTION
     private static native boolean CallBooleanMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer vaList);
+        // Source: JniFunctionsSource.java:467
 
     @JNI_FUNCTION
     private static boolean CallBooleanMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:470
         Pointer anchor = prologue(env, "CallBooleanMethodA");
-        boolean result;
         try {
-            result = CallBooleanMethodA_(env, object, methodID, arguments);
+            return CallValueMethodA(env, object, methodID, arguments).asBoolean();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = false;
+            return false;
+        } finally {
+            epilogue(anchor, "CallBooleanMethodA");
         }
-        epilogue(anchor, "CallBooleanMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:468
-    private static boolean CallBooleanMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asBoolean();
     }
 
     @JNI_FUNCTION
     private static native byte CallByteMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:475
 
     @JNI_FUNCTION
     private static native byte CallByteMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:478
 
     @JNI_FUNCTION
     private static byte CallByteMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:481
         Pointer anchor = prologue(env, "CallByteMethodA");
-        byte result;
         try {
-            result = CallByteMethodA_(env, object, methodID, arguments);
+            return CallValueMethodA(env, object, methodID, arguments).asByte();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallByteMethodA");
         }
-        epilogue(anchor, "CallByteMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:479
-    private static byte CallByteMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asByte();
     }
 
     @JNI_FUNCTION
     private static native char CallCharMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:486
 
     @JNI_FUNCTION
     private static native char CallCharMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:489
 
     @JNI_FUNCTION
     private static char CallCharMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:492
         Pointer anchor = prologue(env, "CallCharMethodA");
-        char result;
         try {
-            result = CallCharMethodA_(env, object, methodID, arguments);
+            return CallValueMethodA(env, object, methodID, arguments).asChar();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result =  (char) JNI_ERR;
+            return  (char) JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallCharMethodA");
         }
-        epilogue(anchor, "CallCharMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:490
-    private static char CallCharMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asChar();
     }
 
     @JNI_FUNCTION
     private static native short CallShortMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:497
 
     @JNI_FUNCTION
     private static native short CallShortMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:500
 
     @JNI_FUNCTION
     private static short CallShortMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:503
         Pointer anchor = prologue(env, "CallShortMethodA");
-        short result;
         try {
-            result = CallShortMethodA_(env, object, methodID, arguments);
+            return CallValueMethodA(env, object, methodID, arguments).asShort();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallShortMethodA");
         }
-        epilogue(anchor, "CallShortMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:501
-    private static short CallShortMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asShort();
     }
 
     @JNI_FUNCTION
     private static native int CallIntMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:508
 
     @JNI_FUNCTION
     private static native int CallIntMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:511
 
     @JNI_FUNCTION
     private static int CallIntMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:514
         Pointer anchor = prologue(env, "CallIntMethodA");
-        int result;
         try {
-            result = CallIntMethodA_(env, object, methodID, arguments);
+            return CallValueMethodA(env, object, methodID, arguments).asInt();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallIntMethodA");
         }
-        epilogue(anchor, "CallIntMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:512
-    private static int CallIntMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asInt();
     }
 
     @JNI_FUNCTION
     private static native long CallLongMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:519
 
     @JNI_FUNCTION
     private static native long CallLongMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:522
 
     @JNI_FUNCTION
     private static long CallLongMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:525
         Pointer anchor = prologue(env, "CallLongMethodA");
-        long result;
         try {
-            result = CallLongMethodA_(env, object, methodID, arguments);
+            return CallValueMethodA(env, object, methodID, arguments).asLong();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallLongMethodA");
         }
-        epilogue(anchor, "CallLongMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:523
-    private static long CallLongMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asLong();
     }
 
     @JNI_FUNCTION
     private static native float CallFloatMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:530
 
     @JNI_FUNCTION
     private static native float CallFloatMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:533
 
     @JNI_FUNCTION
     private static float CallFloatMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:536
         Pointer anchor = prologue(env, "CallFloatMethodA");
-        float result;
         try {
-            result = CallFloatMethodA_(env, object, methodID, arguments);
+            return CallValueMethodA(env, object, methodID, arguments).asFloat();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallFloatMethodA");
         }
-        epilogue(anchor, "CallFloatMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:534
-    private static float CallFloatMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asFloat();
     }
 
     @JNI_FUNCTION
     private static native double CallDoubleMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:541
 
     @JNI_FUNCTION
     private static native double CallDoubleMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:544
 
     @JNI_FUNCTION
     private static double CallDoubleMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:547
         Pointer anchor = prologue(env, "CallDoubleMethodA");
-        double result;
         try {
-            result = CallDoubleMethodA_(env, object, methodID, arguments);
+            return CallValueMethodA(env, object, methodID, arguments).asDouble();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallDoubleMethodA");
         }
-        epilogue(anchor, "CallDoubleMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:545
-    private static double CallDoubleMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        return CallValueMethodA(env, object, methodID, arguments).asDouble();
     }
 
     private static Value CallNonvirtualValueMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
@@ -1223,709 +1052,567 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static native void CallVoidMethod(Pointer env, JniHandle object, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:576
 
     @JNI_FUNCTION
     private static native void CallVoidMethodV(Pointer env, JniHandle object, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:579
 
     @JNI_FUNCTION
     private static void CallVoidMethodA(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:582
         Pointer anchor = prologue(env, "CallVoidMethodA");
         try {
-            CallVoidMethodA_(env, object, methodID, arguments);
+            CallValueMethodA(env, object, methodID, arguments);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "CallVoidMethodA");
         }
-        epilogue(anchor, "CallVoidMethodA");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:580
-    private static void CallVoidMethodA_(Pointer env, JniHandle object, MethodID methodID, Pointer arguments) throws Exception {
-        CallValueMethodA(env, object, methodID, arguments);
     }
 
     @JNI_FUNCTION
     private static native JniHandle CallNonvirtualObjectMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:587
 
     @JNI_FUNCTION
     private static native JniHandle CallNonvirtualObjectMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:590
 
     @JNI_FUNCTION
     private static JniHandle CallNonvirtualObjectMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:593
         Pointer anchor = prologue(env, "CallNonvirtualObjectMethodA");
-        JniHandle result;
         try {
-            result = CallNonvirtualObjectMethodA_(env, object, javaClass, methodID, arguments);
+            return JniHandles.createLocalHandle(CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asObject());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "CallNonvirtualObjectMethodA");
         }
-        epilogue(anchor, "CallNonvirtualObjectMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:591
-    private static JniHandle CallNonvirtualObjectMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return JniHandles.createLocalHandle(CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asObject());
     }
 
     @JNI_FUNCTION
     private static native boolean CallNonvirtualBooleanMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:598
 
     @JNI_FUNCTION
     private static native boolean CallNonvirtualBooleanMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:601
 
     @JNI_FUNCTION
     private static boolean CallNonvirtualBooleanMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:604
         Pointer anchor = prologue(env, "CallNonvirtualBooleanMethodA");
-        boolean result;
         try {
-            result = CallNonvirtualBooleanMethodA_(env, object, javaClass, methodID, arguments);
+            return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asBoolean();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = false;
+            return false;
+        } finally {
+            epilogue(anchor, "CallNonvirtualBooleanMethodA");
         }
-        epilogue(anchor, "CallNonvirtualBooleanMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:602
-    private static boolean CallNonvirtualBooleanMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asBoolean();
     }
 
     @JNI_FUNCTION
     private static native byte CallNonvirtualByteMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:609
 
     @JNI_FUNCTION
     private static native byte CallNonvirtualByteMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:612
 
     @JNI_FUNCTION
     private static byte CallNonvirtualByteMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:615
         Pointer anchor = prologue(env, "CallNonvirtualByteMethodA");
-        byte result;
         try {
-            result = CallNonvirtualByteMethodA_(env, object, javaClass, methodID, arguments);
+            return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asByte();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallNonvirtualByteMethodA");
         }
-        epilogue(anchor, "CallNonvirtualByteMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:613
-    private static byte CallNonvirtualByteMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asByte();
     }
 
     @JNI_FUNCTION
     private static native char CallNonvirtualCharMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:620
 
     @JNI_FUNCTION
     private static native char CallNonvirtualCharMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:623
 
     @JNI_FUNCTION
     private static char CallNonvirtualCharMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:626
         Pointer anchor = prologue(env, "CallNonvirtualCharMethodA");
-        char result;
         try {
-            result = CallNonvirtualCharMethodA_(env, object, javaClass, methodID, arguments);
+            return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asChar();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result =  (char) JNI_ERR;
+            return  (char) JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallNonvirtualCharMethodA");
         }
-        epilogue(anchor, "CallNonvirtualCharMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:624
-    private static char CallNonvirtualCharMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asChar();
     }
 
     @JNI_FUNCTION
     private static native short CallNonvirtualShortMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:631
 
     @JNI_FUNCTION
     private static native short CallNonvirtualShortMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:634
 
     @JNI_FUNCTION
     private static short CallNonvirtualShortMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:637
         Pointer anchor = prologue(env, "CallNonvirtualShortMethodA");
-        short result;
         try {
-            result = CallNonvirtualShortMethodA_(env, object, javaClass, methodID, arguments);
+            return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asShort();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallNonvirtualShortMethodA");
         }
-        epilogue(anchor, "CallNonvirtualShortMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:635
-    private static short CallNonvirtualShortMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asShort();
     }
 
     @JNI_FUNCTION
     private static native int CallNonvirtualIntMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:642
 
     @JNI_FUNCTION
     private static native int CallNonvirtualIntMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:645
 
     @JNI_FUNCTION
     private static int CallNonvirtualIntMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:648
         Pointer anchor = prologue(env, "CallNonvirtualIntMethodA");
-        int result;
         try {
-            result = CallNonvirtualIntMethodA_(env, object, javaClass, methodID, arguments);
+            return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asInt();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallNonvirtualIntMethodA");
         }
-        epilogue(anchor, "CallNonvirtualIntMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:646
-    private static int CallNonvirtualIntMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asInt();
     }
 
     @JNI_FUNCTION
     private static native long CallNonvirtualLongMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:653
 
     @JNI_FUNCTION
     private static native long CallNonvirtualLongMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:656
 
     @JNI_FUNCTION
     private static long CallNonvirtualLongMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:659
         Pointer anchor = prologue(env, "CallNonvirtualLongMethodA");
-        long result;
         try {
-            result = CallNonvirtualLongMethodA_(env, object, javaClass, methodID, arguments);
+            return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asLong();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallNonvirtualLongMethodA");
         }
-        epilogue(anchor, "CallNonvirtualLongMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:657
-    private static long CallNonvirtualLongMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asLong();
     }
 
     @JNI_FUNCTION
     private static native float CallNonvirtualFloatMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:664
 
     @JNI_FUNCTION
     private static native float CallNonvirtualFloatMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:667
 
     @JNI_FUNCTION
     private static float CallNonvirtualFloatMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:670
         Pointer anchor = prologue(env, "CallNonvirtualFloatMethodA");
-        float result;
         try {
-            result = CallNonvirtualFloatMethodA_(env, object, javaClass, methodID, arguments);
+            return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asFloat();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallNonvirtualFloatMethodA");
         }
-        epilogue(anchor, "CallNonvirtualFloatMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:668
-    private static float CallNonvirtualFloatMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asFloat();
     }
 
     @JNI_FUNCTION
     private static native double CallNonvirtualDoubleMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:675
 
     @JNI_FUNCTION
     private static native double CallNonvirtualDoubleMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:678
 
     @JNI_FUNCTION
     private static double CallNonvirtualDoubleMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:681
         Pointer anchor = prologue(env, "CallNonvirtualDoubleMethodA");
-        double result;
         try {
-            result = CallNonvirtualDoubleMethodA_(env, object, javaClass, methodID, arguments);
+            return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asDouble();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallNonvirtualDoubleMethodA");
         }
-        epilogue(anchor, "CallNonvirtualDoubleMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:679
-    private static double CallNonvirtualDoubleMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments).asDouble();
     }
 
     @JNI_FUNCTION
     private static native void CallNonvirtualVoidMethod(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID /*,...*/);
+        // Source: JniFunctionsSource.java:686
 
     @JNI_FUNCTION
     private static native void CallNonvirtualVoidMethodV(Pointer env, JniHandle object, JniHandle javaClass, Pointer arguments);
+        // Source: JniFunctionsSource.java:689
 
     @JNI_FUNCTION
     private static void CallNonvirtualVoidMethodA(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:692
         Pointer anchor = prologue(env, "CallNonvirtualVoidMethodA");
         try {
-            CallNonvirtualVoidMethodA_(env, object, javaClass, methodID, arguments);
+            CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "CallNonvirtualVoidMethodA");
         }
-        epilogue(anchor, "CallNonvirtualVoidMethodA");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:690
-    private static void CallNonvirtualVoidMethodA_(Pointer env, JniHandle object, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        CallNonvirtualValueMethodA(env, object, javaClass, methodID, arguments);
     }
 
     @JNI_FUNCTION
     private static FieldID GetFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
+        // Source: JniFunctionsSource.java:697
         Pointer anchor = prologue(env, "GetFieldID");
-        FieldID result;
         try {
-            result = GetFieldID_(env, javaType, nameCString, descriptorCString);
+            final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
+            MakeClassInitialized.makeClassInitialized(classActor);
+            try {
+    
+                final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
+                final TypeDescriptor descriptor = JavaTypeDescriptor.parseTypeDescriptor(CString.utf8ToJava(descriptorCString));
+                if (name == null || descriptor == null) {
+                    // The class should have been loaded (we have an instance of the class
+                    // passed in) so the name and signature should already be in their respective canonicalization
+                    // tables. If they're not there, the field doesn't exist.
+                    throw new NoSuchFieldError();
+                }
+                final FieldActor fieldActor = classActor.findInstanceFieldActor(name, descriptor);
+                if (fieldActor == null) {
+                    throw new NoSuchFieldError();
+                }
+                return FieldID.fromFieldActor(fieldActor);
+            } catch (Utf8Exception utf8Exception) {
+                throw new NoSuchFieldError();
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asFieldID(0);
-        }
-        epilogue(anchor, "GetFieldID");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:695
-    private static FieldID GetFieldID_(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
-        final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
-        try {
-
-            final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
-            final TypeDescriptor descriptor = JavaTypeDescriptor.parseTypeDescriptor(CString.utf8ToJava(descriptorCString));
-            if (name == null || descriptor == null) {
-                // The class should have been loaded (we have an instance of the class
-                // passed in) so the name and signature should already be in their respective canonicalization
-                // tables. If they're not there, the field doesn't exist.
-                throw new NoSuchFieldError();
-            }
-            final FieldActor fieldActor = classActor.findInstanceFieldActor(name, descriptor);
-            if (fieldActor == null) {
-                throw new NoSuchFieldError();
-            }
-            return FieldID.fromFieldActor(fieldActor);
-        } catch (Utf8Exception utf8Exception) {
-            throw new NoSuchFieldError();
+            return asFieldID(0);
+        } finally {
+            epilogue(anchor, "GetFieldID");
         }
     }
 
     @JNI_FUNCTION
     private static JniHandle GetObjectField(Pointer env, JniHandle object, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:721
         Pointer anchor = prologue(env, "GetObjectField");
-        JniHandle result;
         try {
-            result = GetObjectField_(env, object, fieldID);
+            final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
+            return JniHandles.createLocalHandle(TupleAccess.readObject(object.unhand(), fieldActor.offset()));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "GetObjectField");
         }
-        epilogue(anchor, "GetObjectField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:719
-    private static JniHandle GetObjectField_(Pointer env, JniHandle object, FieldID fieldID) {
-        final FieldActor fieldActor = FieldID.toFieldActor(fieldID);
-        return JniHandles.createLocalHandle(TupleAccess.readObject(object.unhand(), fieldActor.offset()));
     }
 
     @JNI_FUNCTION
     private static boolean GetBooleanField(Pointer env, JniHandle object, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:727
         Pointer anchor = prologue(env, "GetBooleanField");
-        boolean result;
         try {
-            result = GetBooleanField_(env, object, fieldID);
+            final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readBoolean(object.unhand(), booleanFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = false;
+            return false;
+        } finally {
+            epilogue(anchor, "GetBooleanField");
         }
-        epilogue(anchor, "GetBooleanField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:725
-    private static boolean GetBooleanField_(Pointer env, JniHandle object, FieldID fieldID) {
-        final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readBoolean(object.unhand(), booleanFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static byte GetByteField(Pointer env, JniHandle object, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:733
         Pointer anchor = prologue(env, "GetByteField");
-        byte result;
         try {
-            result = GetByteField_(env, object, fieldID);
+            final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readByte(object.unhand(), byteFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetByteField");
         }
-        epilogue(anchor, "GetByteField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:731
-    private static byte GetByteField_(Pointer env, JniHandle object, FieldID fieldID) {
-        final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readByte(object.unhand(), byteFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static char GetCharField(Pointer env, JniHandle object, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:739
         Pointer anchor = prologue(env, "GetCharField");
-        char result;
         try {
-            result = GetCharField_(env, object, fieldID);
+            final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readChar(object.unhand(), charFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result =  (char) JNI_ERR;
+            return  (char) JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetCharField");
         }
-        epilogue(anchor, "GetCharField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:737
-    private static char GetCharField_(Pointer env, JniHandle object, FieldID fieldID) {
-        final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readChar(object.unhand(), charFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static short GetShortField(Pointer env, JniHandle object, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:745
         Pointer anchor = prologue(env, "GetShortField");
-        short result;
         try {
-            result = GetShortField_(env, object, fieldID);
+            final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readShort(object.unhand(), shortFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetShortField");
         }
-        epilogue(anchor, "GetShortField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:743
-    private static short GetShortField_(Pointer env, JniHandle object, FieldID fieldID) {
-        final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readShort(object.unhand(), shortFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static int GetIntField(Pointer env, JniHandle object, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:751
         Pointer anchor = prologue(env, "GetIntField");
-        int result;
         try {
-            result = GetIntField_(env, object, fieldID);
+            final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readInt(object.unhand(), intFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetIntField");
         }
-        epilogue(anchor, "GetIntField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:749
-    private static int GetIntField_(Pointer env, JniHandle object, FieldID fieldID) {
-        final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readInt(object.unhand(), intFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static long GetLongField(Pointer env, JniHandle object, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:757
         Pointer anchor = prologue(env, "GetLongField");
-        long result;
         try {
-            result = GetLongField_(env, object, fieldID);
+            final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readLong(object.unhand(), longFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetLongField");
         }
-        epilogue(anchor, "GetLongField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:755
-    private static long GetLongField_(Pointer env, JniHandle object, FieldID fieldID) {
-        final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readLong(object.unhand(), longFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static float GetFloatField(Pointer env, JniHandle object, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:763
         Pointer anchor = prologue(env, "GetFloatField");
-        float result;
         try {
-            result = GetFloatField_(env, object, fieldID);
+            final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readFloat(object.unhand(), floatFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetFloatField");
         }
-        epilogue(anchor, "GetFloatField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:761
-    private static float GetFloatField_(Pointer env, JniHandle object, FieldID fieldID) {
-        final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readFloat(object.unhand(), floatFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static double GetDoubleField(Pointer env, JniHandle object, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:769
         Pointer anchor = prologue(env, "GetDoubleField");
-        double result;
         try {
-            result = GetDoubleField_(env, object, fieldID);
+            final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readDouble(object.unhand(), doubleFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetDoubleField");
         }
-        epilogue(anchor, "GetDoubleField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:767
-    private static double GetDoubleField_(Pointer env, JniHandle object, FieldID fieldID) {
-        final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readDouble(object.unhand(), doubleFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static void SetObjectField(Pointer env, JniHandle object, FieldID fieldID, JniHandle value) {
+        // Source: JniFunctionsSource.java:775
         Pointer anchor = prologue(env, "SetObjectField");
         try {
-            SetObjectField_(env, object, fieldID, value);
+            final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeObject(object.unhand(), referenceFieldActor.offset(), value.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetObjectField");
         }
-        epilogue(anchor, "SetObjectField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:773
-    private static void SetObjectField_(Pointer env, JniHandle object, FieldID fieldID, JniHandle value) {
-        final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeObject(object.unhand(), referenceFieldActor.offset(), value.unhand());
     }
 
     @JNI_FUNCTION
     private static void SetBooleanField(Pointer env, JniHandle object, FieldID fieldID, boolean value) {
+        // Source: JniFunctionsSource.java:781
         Pointer anchor = prologue(env, "SetBooleanField");
         try {
-            SetBooleanField_(env, object, fieldID, value);
+            final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeBoolean(object.unhand(), booleanFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetBooleanField");
         }
-        epilogue(anchor, "SetBooleanField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:779
-    private static void SetBooleanField_(Pointer env, JniHandle object, FieldID fieldID, boolean value) {
-        final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeBoolean(object.unhand(), booleanFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetByteField(Pointer env, JniHandle object, FieldID fieldID, byte value) {
+        // Source: JniFunctionsSource.java:787
         Pointer anchor = prologue(env, "SetByteField");
         try {
-            SetByteField_(env, object, fieldID, value);
+            final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeByte(object.unhand(), byteFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetByteField");
         }
-        epilogue(anchor, "SetByteField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:785
-    private static void SetByteField_(Pointer env, JniHandle object, FieldID fieldID, byte value) {
-        final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeByte(object.unhand(), byteFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetCharField(Pointer env, JniHandle object, FieldID fieldID, char value) {
+        // Source: JniFunctionsSource.java:793
         Pointer anchor = prologue(env, "SetCharField");
         try {
-            SetCharField_(env, object, fieldID, value);
+            final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeChar(object.unhand(), charFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetCharField");
         }
-        epilogue(anchor, "SetCharField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:791
-    private static void SetCharField_(Pointer env, JniHandle object, FieldID fieldID, char value) {
-        final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeChar(object.unhand(), charFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetShortField(Pointer env, JniHandle object, FieldID fieldID, short value) {
+        // Source: JniFunctionsSource.java:799
         Pointer anchor = prologue(env, "SetShortField");
         try {
-            SetShortField_(env, object, fieldID, value);
+            final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeShort(object.unhand(), shortFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetShortField");
         }
-        epilogue(anchor, "SetShortField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:797
-    private static void SetShortField_(Pointer env, JniHandle object, FieldID fieldID, short value) {
-        final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeShort(object.unhand(), shortFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetIntField(Pointer env, JniHandle object, FieldID fieldID, int value) {
+        // Source: JniFunctionsSource.java:805
         Pointer anchor = prologue(env, "SetIntField");
         try {
-            SetIntField_(env, object, fieldID, value);
+            final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeInt(object.unhand(), intFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetIntField");
         }
-        epilogue(anchor, "SetIntField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:803
-    private static void SetIntField_(Pointer env, JniHandle object, FieldID fieldID, int value) {
-        final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeInt(object.unhand(), intFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetLongField(Pointer env, JniHandle object, FieldID fieldID, long value) {
+        // Source: JniFunctionsSource.java:811
         Pointer anchor = prologue(env, "SetLongField");
         try {
-            SetLongField_(env, object, fieldID, value);
+            final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeLong(object.unhand(), longFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetLongField");
         }
-        epilogue(anchor, "SetLongField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:809
-    private static void SetLongField_(Pointer env, JniHandle object, FieldID fieldID, long value) {
-        final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeLong(object.unhand(), longFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetFloatField(Pointer env, JniHandle object, FieldID fieldID, float value) {
+        // Source: JniFunctionsSource.java:817
         Pointer anchor = prologue(env, "SetFloatField");
         try {
-            SetFloatField_(env, object, fieldID, value);
+            final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeFloat(object.unhand(), floatFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetFloatField");
         }
-        epilogue(anchor, "SetFloatField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:815
-    private static void SetFloatField_(Pointer env, JniHandle object, FieldID fieldID, float value) {
-        final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeFloat(object.unhand(), floatFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetDoubleField(Pointer env, JniHandle object, FieldID fieldID, double value) {
+        // Source: JniFunctionsSource.java:823
         Pointer anchor = prologue(env, "SetDoubleField");
         try {
-            SetDoubleField_(env, object, fieldID, value);
+            final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeDouble(object.unhand(), doubleFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetDoubleField");
         }
-        epilogue(anchor, "SetDoubleField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:821
-    private static void SetDoubleField_(Pointer env, JniHandle object, FieldID fieldID, double value) {
-        final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeDouble(object.unhand(), doubleFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static MethodID GetStaticMethodID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
+        // Source: JniFunctionsSource.java:829
         Pointer anchor = prologue(env, "GetStaticMethodID");
-        MethodID result;
         try {
-            result = GetStaticMethodID_(env, javaType, nameCString, descriptorCString);
+            final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
+            MakeClassInitialized.makeClassInitialized(classActor);
+            try {
+                final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
+                final SignatureDescriptor descriptor = SignatureDescriptor.create(CString.utf8ToJava(descriptorCString));
+                if (name == null || descriptor == null) {
+                    // The class should have been loaded (we have an instance of the class
+                    // passed in) so the name and signature should already be in their respective canonicalization
+                    // tables. If they're not there, the method doesn't exist.
+                    throw new NoSuchMethodError();
+                }
+                final MethodActor methodActor = classActor.findStaticMethodActor(name, descriptor);
+                if (methodActor == null) {
+                    throw new NoSuchMethodError();
+                }
+                return MethodID.fromMethodActor(methodActor);
+            } catch (Utf8Exception utf8Exception) {
+                throw new NoSuchMethodError();
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asMethodID(0);
-        }
-        epilogue(anchor, "GetStaticMethodID");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:827
-    private static MethodID GetStaticMethodID_(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
-        final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
-        try {
-            final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
-            final SignatureDescriptor descriptor = SignatureDescriptor.create(CString.utf8ToJava(descriptorCString));
-            if (name == null || descriptor == null) {
-                // The class should have been loaded (we have an instance of the class
-                // passed in) so the name and signature should already be in their respective canonicalization
-                // tables. If they're not there, the method doesn't exist.
-                throw new NoSuchMethodError();
-            }
-            final MethodActor methodActor = classActor.findStaticMethodActor(name, descriptor);
-            if (methodActor == null) {
-                throw new NoSuchMethodError();
-            }
-            return MethodID.fromMethodActor(methodActor);
-        } catch (Utf8Exception utf8Exception) {
-            throw new NoSuchMethodError();
+            return asMethodID(0);
+        } finally {
+            epilogue(anchor, "GetStaticMethodID");
         }
     }
 
@@ -1952,296 +1639,252 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static native JniHandle CallStaticObjectMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:873
 
     @JNI_FUNCTION
     private static native JniHandle CallStaticObjectMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:876
 
     @JNI_FUNCTION
     private static JniHandle CallStaticObjectMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:879
         Pointer anchor = prologue(env, "CallStaticObjectMethodA");
-        JniHandle result;
         try {
-            result = CallStaticObjectMethodA_(env, javaClass, methodID, arguments);
+            return JniHandles.createLocalHandle(CallStaticValueMethodA(env, javaClass, methodID, arguments).asObject());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "CallStaticObjectMethodA");
         }
-        epilogue(anchor, "CallStaticObjectMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:877
-    private static JniHandle CallStaticObjectMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return JniHandles.createLocalHandle(CallStaticValueMethodA(env, javaClass, methodID, arguments).asObject());
     }
 
     @JNI_FUNCTION
     private static native boolean CallStaticBooleanMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:884
 
     @JNI_FUNCTION
     private static native boolean CallStaticBooleanMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:887
 
     @JNI_FUNCTION
     private static boolean CallStaticBooleanMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:890
         Pointer anchor = prologue(env, "CallStaticBooleanMethodA");
-        boolean result;
         try {
-            result = CallStaticBooleanMethodA_(env, javaClass, methodID, arguments);
+            return CallStaticValueMethodA(env, javaClass, methodID, arguments).asBoolean();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = false;
+            return false;
+        } finally {
+            epilogue(anchor, "CallStaticBooleanMethodA");
         }
-        epilogue(anchor, "CallStaticBooleanMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:888
-    private static boolean CallStaticBooleanMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asBoolean();
     }
 
     @JNI_FUNCTION
     private static native byte CallStaticByteMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:895
 
     @JNI_FUNCTION
     private static native byte CallStaticByteMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:898
 
     @JNI_FUNCTION
     private static byte CallStaticByteMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:901
         Pointer anchor = prologue(env, "CallStaticByteMethodA");
-        byte result;
         try {
-            result = CallStaticByteMethodA_(env, javaClass, methodID, arguments);
+            return CallStaticValueMethodA(env, javaClass, methodID, arguments).asByte();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallStaticByteMethodA");
         }
-        epilogue(anchor, "CallStaticByteMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:899
-    private static byte CallStaticByteMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asByte();
     }
 
     @JNI_FUNCTION
     private static native char CallStaticCharMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:906
 
     @JNI_FUNCTION
     private static native char CallStaticCharMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:909
 
     @JNI_FUNCTION
     private static char CallStaticCharMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:912
         Pointer anchor = prologue(env, "CallStaticCharMethodA");
-        char result;
         try {
-            result = CallStaticCharMethodA_(env, javaClass, methodID, arguments);
+            return CallStaticValueMethodA(env, javaClass, methodID, arguments).asChar();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result =  (char) JNI_ERR;
+            return  (char) JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallStaticCharMethodA");
         }
-        epilogue(anchor, "CallStaticCharMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:910
-    private static char CallStaticCharMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asChar();
     }
 
     @JNI_FUNCTION
     private static native short CallStaticShortMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:917
 
     @JNI_FUNCTION
     private static native short CallStaticShortMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:920
 
     @JNI_FUNCTION
     private static short CallStaticShortMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:923
         Pointer anchor = prologue(env, "CallStaticShortMethodA");
-        short result;
         try {
-            result = CallStaticShortMethodA_(env, javaClass, methodID, arguments);
+            return CallStaticValueMethodA(env, javaClass, methodID, arguments).asShort();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallStaticShortMethodA");
         }
-        epilogue(anchor, "CallStaticShortMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:921
-    private static short CallStaticShortMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asShort();
     }
 
     @JNI_FUNCTION
     private static native int CallStaticIntMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:928
 
     @JNI_FUNCTION
     private static native int CallStaticIntMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:931
 
     @JNI_FUNCTION
     private static int CallStaticIntMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:934
         Pointer anchor = prologue(env, "CallStaticIntMethodA");
-        int result;
         try {
-            result = CallStaticIntMethodA_(env, javaClass, methodID, arguments);
+            return CallStaticValueMethodA(env, javaClass, methodID, arguments).asInt();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallStaticIntMethodA");
         }
-        epilogue(anchor, "CallStaticIntMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:932
-    private static int CallStaticIntMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asInt();
     }
 
     @JNI_FUNCTION
     private static native long CallStaticLongMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:939
 
     @JNI_FUNCTION
     private static native long CallStaticLongMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:942
 
     @JNI_FUNCTION
     private static long CallStaticLongMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:945
         Pointer anchor = prologue(env, "CallStaticLongMethodA");
-        long result;
         try {
-            result = CallStaticLongMethodA_(env, javaClass, methodID, arguments);
+            return CallStaticValueMethodA(env, javaClass, methodID, arguments).asLong();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallStaticLongMethodA");
         }
-        epilogue(anchor, "CallStaticLongMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:943
-    private static long CallStaticLongMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asLong();
     }
 
     @JNI_FUNCTION
     private static native float CallStaticFloatMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:950
 
     @JNI_FUNCTION
     private static native float CallStaticFloatMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:953
 
     @JNI_FUNCTION
     private static float CallStaticFloatMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:956
         Pointer anchor = prologue(env, "CallStaticFloatMethodA");
-        float result;
         try {
-            result = CallStaticFloatMethodA_(env, javaClass, methodID, arguments);
+            return CallStaticValueMethodA(env, javaClass, methodID, arguments).asFloat();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallStaticFloatMethodA");
         }
-        epilogue(anchor, "CallStaticFloatMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:954
-    private static float CallStaticFloatMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asFloat();
     }
 
     @JNI_FUNCTION
     private static native double CallStaticDoubleMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:961
 
     @JNI_FUNCTION
     private static native double CallStaticDoubleMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:964
 
     @JNI_FUNCTION
     private static double CallStaticDoubleMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:967
         Pointer anchor = prologue(env, "CallStaticDoubleMethodA");
-        double result;
         try {
-            result = CallStaticDoubleMethodA_(env, javaClass, methodID, arguments);
+            return CallStaticValueMethodA(env, javaClass, methodID, arguments).asDouble();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "CallStaticDoubleMethodA");
         }
-        epilogue(anchor, "CallStaticDoubleMethodA");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:965
-    private static double CallStaticDoubleMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        return CallStaticValueMethodA(env, javaClass, methodID, arguments).asDouble();
     }
 
     @JNI_FUNCTION
     private static native void CallStaticVoidMethod(Pointer env, JniHandle javaClass, MethodID methodID /*, ...*/);
+        // Source: JniFunctionsSource.java:972
 
     @JNI_FUNCTION
     private static native void CallStaticVoidMethodV(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments);
+        // Source: JniFunctionsSource.java:975
 
     @JNI_FUNCTION
     private static void CallStaticVoidMethodA(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
+        // Source: JniFunctionsSource.java:978
         Pointer anchor = prologue(env, "CallStaticVoidMethodA");
         try {
-            CallStaticVoidMethodA_(env, javaClass, methodID, arguments);
+            CallStaticValueMethodA(env, javaClass, methodID, arguments);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "CallStaticVoidMethodA");
         }
-        epilogue(anchor, "CallStaticVoidMethodA");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:976
-    private static void CallStaticVoidMethodA_(Pointer env, JniHandle javaClass, MethodID methodID, Pointer arguments) throws Exception {
-        CallStaticValueMethodA(env, javaClass, methodID, arguments);
     }
 
     @JNI_FUNCTION
     private static FieldID GetStaticFieldID(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
+        // Source: JniFunctionsSource.java:983
         Pointer anchor = prologue(env, "GetStaticFieldID");
-        FieldID result;
         try {
-            result = GetStaticFieldID_(env, javaType, nameCString, descriptorCString);
+            final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
+            MakeClassInitialized.makeClassInitialized(classActor);
+            try {
+                final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
+                final TypeDescriptor descriptor = TypeDescriptor.lookup(CString.utf8ToJava(descriptorCString));
+                if (name == null || descriptor == null) {
+                    // The class should have been loaded (we have an instance of the class
+                    // passed in) so the name and signature should already be in their respective canonicalization
+                    // tables. If they're not there, the field doesn't exist.
+                    throw new NoSuchFieldError();
+                }
+                final FieldActor fieldActor = classActor.findStaticFieldActor(name, descriptor);
+                if (fieldActor == null) {
+                    throw new NoSuchFieldError();
+                }
+                return FieldID.fromFieldActor(fieldActor);
+            } catch (Utf8Exception utf8Exception) {
+                throw new NoSuchFieldError();
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asFieldID(0);
-        }
-        epilogue(anchor, "GetStaticFieldID");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:981
-    private static FieldID GetStaticFieldID_(Pointer env, JniHandle javaType, Pointer nameCString, Pointer descriptorCString) {
-        final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        MakeClassInitialized.makeClassInitialized(classActor);
-        try {
-            final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(nameCString));
-            final TypeDescriptor descriptor = TypeDescriptor.lookup(CString.utf8ToJava(descriptorCString));
-            if (name == null || descriptor == null) {
-                // The class should have been loaded (we have an instance of the class
-                // passed in) so the name and signature should already be in their respective canonicalization
-                // tables. If they're not there, the field doesn't exist.
-                throw new NoSuchFieldError();
-            }
-            final FieldActor fieldActor = classActor.findStaticFieldActor(name, descriptor);
-            if (fieldActor == null) {
-                throw new NoSuchFieldError();
-            }
-            return FieldID.fromFieldActor(fieldActor);
-        } catch (Utf8Exception utf8Exception) {
-            throw new NoSuchFieldError();
+            return asFieldID(0);
+        } finally {
+            epilogue(anchor, "GetStaticFieldID");
         }
     }
 
@@ -2252,779 +1895,569 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle GetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:1011
         Pointer anchor = prologue(env, "GetStaticObjectField");
-        JniHandle result;
         try {
-            result = GetStaticObjectField_(env, javaType, fieldID);
+            final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
+            return JniHandles.createLocalHandle(TupleAccess.readObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset()));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "GetStaticObjectField");
         }
-        epilogue(anchor, "GetStaticObjectField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1009
-    private static JniHandle GetStaticObjectField_(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
-        return JniHandles.createLocalHandle(TupleAccess.readObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset()));
     }
 
     @JNI_FUNCTION
     private static boolean GetStaticBooleanField(Pointer env, JniHandle javaType, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:1017
         Pointer anchor = prologue(env, "GetStaticBooleanField");
-        boolean result;
         try {
-            result = GetStaticBooleanField_(env, javaType, fieldID);
+            final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readBoolean(javaTypeToStaticTuple(javaType), booleanFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = false;
+            return false;
+        } finally {
+            epilogue(anchor, "GetStaticBooleanField");
         }
-        epilogue(anchor, "GetStaticBooleanField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1015
-    private static boolean GetStaticBooleanField_(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readBoolean(javaTypeToStaticTuple(javaType), booleanFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static byte GetStaticByteField(Pointer env, JniHandle javaType, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:1023
         Pointer anchor = prologue(env, "GetStaticByteField");
-        byte result;
         try {
-            result = GetStaticByteField_(env, javaType, fieldID);
+            final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readByte(javaTypeToStaticTuple(javaType), byteFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetStaticByteField");
         }
-        epilogue(anchor, "GetStaticByteField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1021
-    private static byte GetStaticByteField_(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readByte(javaTypeToStaticTuple(javaType), byteFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static char GetStaticCharField(Pointer env, JniHandle javaType, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:1029
         Pointer anchor = prologue(env, "GetStaticCharField");
-        char result;
         try {
-            result = GetStaticCharField_(env, javaType, fieldID);
+            final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readChar(javaTypeToStaticTuple(javaType), charFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result =  (char) JNI_ERR;
+            return  (char) JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetStaticCharField");
         }
-        epilogue(anchor, "GetStaticCharField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1027
-    private static char GetStaticCharField_(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readChar(javaTypeToStaticTuple(javaType), charFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static short GetStaticShortField(Pointer env, JniHandle javaType, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:1035
         Pointer anchor = prologue(env, "GetStaticShortField");
-        short result;
         try {
-            result = GetStaticShortField_(env, javaType, fieldID);
+            final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readShort(javaTypeToStaticTuple(javaType), shortFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetStaticShortField");
         }
-        epilogue(anchor, "GetStaticShortField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1033
-    private static short GetStaticShortField_(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readShort(javaTypeToStaticTuple(javaType), shortFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static int GetStaticIntField(Pointer env, JniHandle javaType, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:1041
         Pointer anchor = prologue(env, "GetStaticIntField");
-        int result;
         try {
-            result = GetStaticIntField_(env, javaType, fieldID);
+            final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readInt(javaTypeToStaticTuple(javaType), intFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetStaticIntField");
         }
-        epilogue(anchor, "GetStaticIntField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1039
-    private static int GetStaticIntField_(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readInt(javaTypeToStaticTuple(javaType), intFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static long GetStaticLongField(Pointer env, JniHandle javaType, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:1047
         Pointer anchor = prologue(env, "GetStaticLongField");
-        long result;
         try {
-            result = GetStaticLongField_(env, javaType, fieldID);
+            final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readLong(javaTypeToStaticTuple(javaType), longFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetStaticLongField");
         }
-        epilogue(anchor, "GetStaticLongField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1045
-    private static long GetStaticLongField_(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readLong(javaTypeToStaticTuple(javaType), longFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static float GetStaticFloatField(Pointer env, JniHandle javaType, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:1053
         Pointer anchor = prologue(env, "GetStaticFloatField");
-        float result;
         try {
-            result = GetStaticFloatField_(env, javaType, fieldID);
+            final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readFloat(javaTypeToStaticTuple(javaType), floatFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetStaticFloatField");
         }
-        epilogue(anchor, "GetStaticFloatField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1051
-    private static float GetStaticFloatField_(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readFloat(javaTypeToStaticTuple(javaType), floatFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static double GetStaticDoubleField(Pointer env, JniHandle javaType, FieldID fieldID) {
+        // Source: JniFunctionsSource.java:1059
         Pointer anchor = prologue(env, "GetStaticDoubleField");
-        double result;
         try {
-            result = GetStaticDoubleField_(env, javaType, fieldID);
+            final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
+            return TupleAccess.readDouble(javaTypeToStaticTuple(javaType), doubleFieldActor.offset());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetStaticDoubleField");
         }
-        epilogue(anchor, "GetStaticDoubleField");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1057
-    private static double GetStaticDoubleField_(Pointer env, JniHandle javaType, FieldID fieldID) {
-        final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
-        return TupleAccess.readDouble(javaTypeToStaticTuple(javaType), doubleFieldActor.offset());
     }
 
     @JNI_FUNCTION
     private static void SetStaticObjectField(Pointer env, JniHandle javaType, FieldID fieldID, JniHandle value) {
+        // Source: JniFunctionsSource.java:1065
         Pointer anchor = prologue(env, "SetStaticObjectField");
         try {
-            SetStaticObjectField_(env, javaType, fieldID, value);
+            final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset(), value.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetStaticObjectField");
         }
-        epilogue(anchor, "SetStaticObjectField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1063
-    private static void SetStaticObjectField_(Pointer env, JniHandle javaType, FieldID fieldID, JniHandle value) {
-        final FieldActor referenceFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeObject(javaTypeToStaticTuple(javaType), referenceFieldActor.offset(), value.unhand());
     }
 
     @JNI_FUNCTION
     private static void SetStaticBooleanField(Pointer env, JniHandle javaType, FieldID fieldID, boolean value) {
+        // Source: JniFunctionsSource.java:1071
         Pointer anchor = prologue(env, "SetStaticBooleanField");
         try {
-            SetStaticBooleanField_(env, javaType, fieldID, value);
+            final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeBoolean(javaTypeToStaticTuple(javaType), booleanFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetStaticBooleanField");
         }
-        epilogue(anchor, "SetStaticBooleanField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1069
-    private static void SetStaticBooleanField_(Pointer env, JniHandle javaType, FieldID fieldID, boolean value) {
-        final FieldActor booleanFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeBoolean(javaTypeToStaticTuple(javaType), booleanFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticByteField(Pointer env, JniHandle javaType, FieldID fieldID, byte value) {
+        // Source: JniFunctionsSource.java:1077
         Pointer anchor = prologue(env, "SetStaticByteField");
         try {
-            SetStaticByteField_(env, javaType, fieldID, value);
+            final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeByte(javaTypeToStaticTuple(javaType), byteFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetStaticByteField");
         }
-        epilogue(anchor, "SetStaticByteField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1075
-    private static void SetStaticByteField_(Pointer env, JniHandle javaType, FieldID fieldID, byte value) {
-        final FieldActor byteFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeByte(javaTypeToStaticTuple(javaType), byteFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticCharField(Pointer env, JniHandle javaType, FieldID fieldID, char value) {
+        // Source: JniFunctionsSource.java:1083
         Pointer anchor = prologue(env, "SetStaticCharField");
         try {
-            SetStaticCharField_(env, javaType, fieldID, value);
+            final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeChar(javaTypeToStaticTuple(javaType), charFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetStaticCharField");
         }
-        epilogue(anchor, "SetStaticCharField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1081
-    private static void SetStaticCharField_(Pointer env, JniHandle javaType, FieldID fieldID, char value) {
-        final FieldActor charFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeChar(javaTypeToStaticTuple(javaType), charFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticShortField(Pointer env, JniHandle javaType, FieldID fieldID, short value) {
+        // Source: JniFunctionsSource.java:1089
         Pointer anchor = prologue(env, "SetStaticShortField");
         try {
-            SetStaticShortField_(env, javaType, fieldID, value);
+            final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeShort(javaTypeToStaticTuple(javaType), shortFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetStaticShortField");
         }
-        epilogue(anchor, "SetStaticShortField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1087
-    private static void SetStaticShortField_(Pointer env, JniHandle javaType, FieldID fieldID, short value) {
-        final FieldActor shortFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeShort(javaTypeToStaticTuple(javaType), shortFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticIntField(Pointer env, JniHandle javaType, FieldID fieldID, int value) {
+        // Source: JniFunctionsSource.java:1095
         Pointer anchor = prologue(env, "SetStaticIntField");
         try {
-            SetStaticIntField_(env, javaType, fieldID, value);
+            final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeInt(javaTypeToStaticTuple(javaType), intFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetStaticIntField");
         }
-        epilogue(anchor, "SetStaticIntField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1093
-    private static void SetStaticIntField_(Pointer env, JniHandle javaType, FieldID fieldID, int value) {
-        final FieldActor intFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeInt(javaTypeToStaticTuple(javaType), intFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticLongField(Pointer env, JniHandle javaType, FieldID fieldID, long value) {
+        // Source: JniFunctionsSource.java:1101
         Pointer anchor = prologue(env, "SetStaticLongField");
         try {
-            SetStaticLongField_(env, javaType, fieldID, value);
+            final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeLong(javaTypeToStaticTuple(javaType), longFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetStaticLongField");
         }
-        epilogue(anchor, "SetStaticLongField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1099
-    private static void SetStaticLongField_(Pointer env, JniHandle javaType, FieldID fieldID, long value) {
-        final FieldActor longFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeLong(javaTypeToStaticTuple(javaType), longFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticFloatField(Pointer env, JniHandle javaType, FieldID fieldID, float value) {
+        // Source: JniFunctionsSource.java:1107
         Pointer anchor = prologue(env, "SetStaticFloatField");
         try {
-            SetStaticFloatField_(env, javaType, fieldID, value);
+            final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeFloat(javaTypeToStaticTuple(javaType), floatFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetStaticFloatField");
         }
-        epilogue(anchor, "SetStaticFloatField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1105
-    private static void SetStaticFloatField_(Pointer env, JniHandle javaType, FieldID fieldID, float value) {
-        final FieldActor floatFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeFloat(javaTypeToStaticTuple(javaType), floatFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static void SetStaticDoubleField(Pointer env, JniHandle javaType, FieldID fieldID, double value) {
+        // Source: JniFunctionsSource.java:1113
         Pointer anchor = prologue(env, "SetStaticDoubleField");
         try {
-            SetStaticDoubleField_(env, javaType, fieldID, value);
+            final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
+            TupleAccess.writeDouble(javaTypeToStaticTuple(javaType), doubleFieldActor.offset(), value);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetStaticDoubleField");
         }
-        epilogue(anchor, "SetStaticDoubleField");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1111
-    private static void SetStaticDoubleField_(Pointer env, JniHandle javaType, FieldID fieldID, double value) {
-        final FieldActor doubleFieldActor = FieldID.toFieldActor(fieldID);
-        TupleAccess.writeDouble(javaTypeToStaticTuple(javaType), doubleFieldActor.offset(), value);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewString(Pointer env, Pointer chars, int length) {
+        // Source: JniFunctionsSource.java:1119
         Pointer anchor = prologue(env, "NewString");
-        JniHandle result;
         try {
-            result = NewString_(env, chars, length);
+            final char[] charArray = new char[length];
+            for (int i = 0; i < length; i++) {
+                charArray[i] = chars.getChar(i);
+            }
+            return JniHandles.createLocalHandle(new String(charArray));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewString");
         }
-        epilogue(anchor, "NewString");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1117
-    private static JniHandle NewString_(Pointer env, Pointer chars, int length) {
-        final char[] charArray = new char[length];
-        for (int i = 0; i < length; i++) {
-            charArray[i] = chars.getChar(i);
-        }
-        return JniHandles.createLocalHandle(new String(charArray));
     }
 
     @JNI_FUNCTION
     private static int GetStringLength(Pointer env, JniHandle string) {
+        // Source: JniFunctionsSource.java:1128
         Pointer anchor = prologue(env, "GetStringLength");
-        int result;
         try {
-            result = GetStringLength_(env, string);
+            return ((String) string.unhand()).length();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetStringLength");
         }
-        epilogue(anchor, "GetStringLength");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1126
-    private static int GetStringLength_(Pointer env, JniHandle string) {
-        return ((String) string.unhand()).length();
     }
 
     @JNI_FUNCTION
     private static JniHandle GetStringChars(Pointer env, JniHandle string, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1133
         Pointer anchor = prologue(env, "GetStringChars");
-        JniHandle result;
         try {
-            result = GetStringChars_(env, string, isCopy);
+            setCopyPointer(isCopy, true);
+            return JniHandles.createLocalHandle(((String) string.unhand()).toCharArray());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "GetStringChars");
         }
-        epilogue(anchor, "GetStringChars");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1131
-    private static JniHandle GetStringChars_(Pointer env, JniHandle string, Pointer isCopy) {
-        setCopyPointer(isCopy, true);
-        return JniHandles.createLocalHandle(((String) string.unhand()).toCharArray());
     }
 
     @JNI_FUNCTION
     private static void ReleaseStringChars(Pointer env, JniHandle string, Pointer chars) {
+        // Source: JniFunctionsSource.java:1139
         Pointer anchor = prologue(env, "ReleaseStringChars");
         try {
-            ReleaseStringChars_(env, string, chars);
+            Memory.deallocate(chars);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseStringChars");
         }
-        epilogue(anchor, "ReleaseStringChars");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1137
-    private static void ReleaseStringChars_(Pointer env, JniHandle string, Pointer chars) {
-        Memory.deallocate(chars);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewStringUTF(Pointer env, Pointer utf) {
+        // Source: JniFunctionsSource.java:1144
         Pointer anchor = prologue(env, "NewStringUTF");
-        JniHandle result;
         try {
-            result = NewStringUTF_(env, utf);
+            try {
+                return JniHandles.createLocalHandle(CString.utf8ToJava(utf));
+            } catch (Utf8Exception utf8Exception) {
+                return null;
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
-        }
-        epilogue(anchor, "NewStringUTF");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1142
-    private static JniHandle NewStringUTF_(Pointer env, Pointer utf) {
-        try {
-            return JniHandles.createLocalHandle(CString.utf8ToJava(utf));
-        } catch (Utf8Exception utf8Exception) {
-            return null;
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewStringUTF");
         }
     }
 
     @JNI_FUNCTION
     private static int GetStringUTFLength(Pointer env, JniHandle string) {
+        // Source: JniFunctionsSource.java:1153
         Pointer anchor = prologue(env, "GetStringUTFLength");
-        int result;
         try {
-            result = GetStringUTFLength_(env, string);
+            return Utf8.utf8Length((String) string.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetStringUTFLength");
         }
-        epilogue(anchor, "GetStringUTFLength");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1151
-    private static int GetStringUTFLength_(Pointer env, JniHandle string) {
-        return Utf8.utf8Length((String) string.unhand());
     }
 
     @JNI_FUNCTION
     private static Pointer GetStringUTFChars(Pointer env, JniHandle string, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1158
         Pointer anchor = prologue(env, "GetStringUTFChars");
-        Pointer result;
         try {
-            result = GetStringUTFChars_(env, string, isCopy);
+            setCopyPointer(isCopy, true);
+            return CString.utf8FromJava((String) string.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetStringUTFChars");
         }
-        epilogue(anchor, "GetStringUTFChars");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1156
-    private static Pointer GetStringUTFChars_(Pointer env, JniHandle string, Pointer isCopy) {
-        setCopyPointer(isCopy, true);
-        return CString.utf8FromJava((String) string.unhand());
     }
 
     @JNI_FUNCTION
     private static void ReleaseStringUTFChars(Pointer env, JniHandle string, Pointer chars) {
+        // Source: JniFunctionsSource.java:1164
         Pointer anchor = prologue(env, "ReleaseStringUTFChars");
         try {
-            ReleaseStringUTFChars_(env, string, chars);
+            Memory.deallocate(chars);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseStringUTFChars");
         }
-        epilogue(anchor, "ReleaseStringUTFChars");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1162
-    private static void ReleaseStringUTFChars_(Pointer env, JniHandle string, Pointer chars) {
-        Memory.deallocate(chars);
     }
 
     @JNI_FUNCTION
     private static int GetArrayLength(Pointer env, JniHandle array) {
+        // Source: JniFunctionsSource.java:1169
         Pointer anchor = prologue(env, "GetArrayLength");
-        int result;
         try {
-            result = GetArrayLength_(env, array);
+            return Array.getLength(array.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetArrayLength");
         }
-        epilogue(anchor, "GetArrayLength");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1167
-    private static int GetArrayLength_(Pointer env, JniHandle array) {
-        return Array.getLength(array.unhand());
     }
 
     @JNI_FUNCTION
     private static JniHandle NewObjectArray(Pointer env, int length, JniHandle elementType, JniHandle initialElementValue) {
+        // Source: JniFunctionsSource.java:1174
         Pointer anchor = prologue(env, "NewObjectArray");
-        JniHandle result;
         try {
-            result = NewObjectArray_(env, length, elementType, initialElementValue);
+            final Object array = Array.newInstance((Class) elementType.unhand(), length);
+            final Object initialValue = initialElementValue.unhand();
+            for (int i = 0; i < length; i++) {
+                Array.set(array, i, initialValue);
+            }
+            return JniHandles.createLocalHandle(array);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewObjectArray");
         }
-        epilogue(anchor, "NewObjectArray");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1172
-    private static JniHandle NewObjectArray_(Pointer env, int length, JniHandle elementType, JniHandle initialElementValue) {
-        final Object array = Array.newInstance((Class) elementType.unhand(), length);
-        final Object initialValue = initialElementValue.unhand();
-        for (int i = 0; i < length; i++) {
-            Array.set(array, i, initialValue);
-        }
-        return JniHandles.createLocalHandle(array);
     }
 
     @JNI_FUNCTION
     private static JniHandle GetObjectArrayElement(Pointer env, JniHandle array, int index) {
+        // Source: JniFunctionsSource.java:1184
         Pointer anchor = prologue(env, "GetObjectArrayElement");
-        JniHandle result;
         try {
-            result = GetObjectArrayElement_(env, array, index);
+            return JniHandles.createLocalHandle(((Object[]) array.unhand())[index]);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "GetObjectArrayElement");
         }
-        epilogue(anchor, "GetObjectArrayElement");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1182
-    private static JniHandle GetObjectArrayElement_(Pointer env, JniHandle array, int index) {
-        return JniHandles.createLocalHandle(((Object[]) array.unhand())[index]);
     }
 
     @JNI_FUNCTION
     private static void SetObjectArrayElement(Pointer env, JniHandle array, int index, JniHandle value) {
+        // Source: JniFunctionsSource.java:1189
         Pointer anchor = prologue(env, "SetObjectArrayElement");
         try {
-            SetObjectArrayElement_(env, array, index, value);
+            ((Object[]) array.unhand())[index] = value.unhand();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "SetObjectArrayElement");
         }
-        epilogue(anchor, "SetObjectArrayElement");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1187
-    private static void SetObjectArrayElement_(Pointer env, JniHandle array, int index, JniHandle value) {
-        ((Object[]) array.unhand())[index] = value.unhand();
     }
 
     @JNI_FUNCTION
     private static JniHandle NewBooleanArray(Pointer env, int length) {
+        // Source: JniFunctionsSource.java:1194
         Pointer anchor = prologue(env, "NewBooleanArray");
-        JniHandle result;
         try {
-            result = NewBooleanArray_(env, length);
+            return JniHandles.createLocalHandle(new boolean[length]);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewBooleanArray");
         }
-        epilogue(anchor, "NewBooleanArray");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1192
-    private static JniHandle NewBooleanArray_(Pointer env, int length) {
-        return JniHandles.createLocalHandle(new boolean[length]);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewByteArray(Pointer env, int length) {
+        // Source: JniFunctionsSource.java:1199
         Pointer anchor = prologue(env, "NewByteArray");
-        JniHandle result;
         try {
-            result = NewByteArray_(env, length);
+            return JniHandles.createLocalHandle(new byte[length]);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewByteArray");
         }
-        epilogue(anchor, "NewByteArray");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1197
-    private static JniHandle NewByteArray_(Pointer env, int length) {
-        return JniHandles.createLocalHandle(new byte[length]);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewCharArray(Pointer env, int length) {
+        // Source: JniFunctionsSource.java:1204
         Pointer anchor = prologue(env, "NewCharArray");
-        JniHandle result;
         try {
-            result = NewCharArray_(env, length);
+            return JniHandles.createLocalHandle(new char[length]);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewCharArray");
         }
-        epilogue(anchor, "NewCharArray");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1202
-    private static JniHandle NewCharArray_(Pointer env, int length) {
-        return JniHandles.createLocalHandle(new char[length]);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewShortArray(Pointer env, int length) {
+        // Source: JniFunctionsSource.java:1209
         Pointer anchor = prologue(env, "NewShortArray");
-        JniHandle result;
         try {
-            result = NewShortArray_(env, length);
+            return JniHandles.createLocalHandle(new short[length]);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewShortArray");
         }
-        epilogue(anchor, "NewShortArray");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1207
-    private static JniHandle NewShortArray_(Pointer env, int length) {
-        return JniHandles.createLocalHandle(new short[length]);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewIntArray(Pointer env, int length) {
+        // Source: JniFunctionsSource.java:1214
         Pointer anchor = prologue(env, "NewIntArray");
-        JniHandle result;
         try {
-            result = NewIntArray_(env, length);
+            return JniHandles.createLocalHandle(new int[length]);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewIntArray");
         }
-        epilogue(anchor, "NewIntArray");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1212
-    private static JniHandle NewIntArray_(Pointer env, int length) {
-        return JniHandles.createLocalHandle(new int[length]);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewLongArray(Pointer env, int length) {
+        // Source: JniFunctionsSource.java:1219
         Pointer anchor = prologue(env, "NewLongArray");
-        JniHandle result;
         try {
-            result = NewLongArray_(env, length);
+            return JniHandles.createLocalHandle(new long[length]);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewLongArray");
         }
-        epilogue(anchor, "NewLongArray");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1217
-    private static JniHandle NewLongArray_(Pointer env, int length) {
-        return JniHandles.createLocalHandle(new long[length]);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewFloatArray(Pointer env, int length) {
+        // Source: JniFunctionsSource.java:1224
         Pointer anchor = prologue(env, "NewFloatArray");
-        JniHandle result;
         try {
-            result = NewFloatArray_(env, length);
+            return JniHandles.createLocalHandle(new float[length]);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewFloatArray");
         }
-        epilogue(anchor, "NewFloatArray");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1222
-    private static JniHandle NewFloatArray_(Pointer env, int length) {
-        return JniHandles.createLocalHandle(new float[length]);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewDoubleArray(Pointer env, int length) {
+        // Source: JniFunctionsSource.java:1229
         Pointer anchor = prologue(env, "NewDoubleArray");
-        JniHandle result;
         try {
-            result = NewDoubleArray_(env, length);
+            return JniHandles.createLocalHandle(new double[length]);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewDoubleArray");
         }
-        epilogue(anchor, "NewDoubleArray");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1227
-    private static JniHandle NewDoubleArray_(Pointer env, int length) {
-        return JniHandles.createLocalHandle(new double[length]);
     }
 
     @JNI_FUNCTION
     private static Pointer GetBooleanArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1234
         Pointer anchor = prologue(env, "GetBooleanArrayElements");
-        Pointer result;
         try {
-            result = GetBooleanArrayElements_(env, array, isCopy);
+            return getBooleanArrayElements(array, isCopy);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetBooleanArrayElements");
         }
-        epilogue(anchor, "GetBooleanArrayElements");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1232
-    private static Pointer GetBooleanArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
-        return getBooleanArrayElements(array, isCopy);
     }
 
     private static Pointer getBooleanArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
@@ -3039,22 +2472,16 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetByteArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1249
         Pointer anchor = prologue(env, "GetByteArrayElements");
-        Pointer result;
         try {
-            result = GetByteArrayElements_(env, array, isCopy);
+            return getByteArrayElements(array, isCopy);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetByteArrayElements");
         }
-        epilogue(anchor, "GetByteArrayElements");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1247
-    private static Pointer GetByteArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
-        return getByteArrayElements(array, isCopy);
     }
 
     private static Pointer getByteArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
@@ -3069,22 +2496,16 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetCharArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1264
         Pointer anchor = prologue(env, "GetCharArrayElements");
-        Pointer result;
         try {
-            result = GetCharArrayElements_(env, array, isCopy);
+            return getCharArrayElements(array, isCopy);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetCharArrayElements");
         }
-        epilogue(anchor, "GetCharArrayElements");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1262
-    private static Pointer GetCharArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
-        return getCharArrayElements(array, isCopy);
     }
 
     private static Pointer getCharArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
@@ -3099,22 +2520,16 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetShortArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1279
         Pointer anchor = prologue(env, "GetShortArrayElements");
-        Pointer result;
         try {
-            result = GetShortArrayElements_(env, array, isCopy);
+            return getShortArrayElements(array, isCopy);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetShortArrayElements");
         }
-        epilogue(anchor, "GetShortArrayElements");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1277
-    private static Pointer GetShortArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
-        return getShortArrayElements(array, isCopy);
     }
 
     private static Pointer getShortArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
@@ -3129,22 +2544,16 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetIntArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1294
         Pointer anchor = prologue(env, "GetIntArrayElements");
-        Pointer result;
         try {
-            result = GetIntArrayElements_(env, array, isCopy);
+            return getIntArrayElements(array, isCopy);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetIntArrayElements");
         }
-        epilogue(anchor, "GetIntArrayElements");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1292
-    private static Pointer GetIntArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
-        return getIntArrayElements(array, isCopy);
     }
 
     private static Pointer getIntArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
@@ -3159,22 +2568,16 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetLongArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1309
         Pointer anchor = prologue(env, "GetLongArrayElements");
-        Pointer result;
         try {
-            result = GetLongArrayElements_(env, array, isCopy);
+            return getLongArrayElements(array, isCopy);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetLongArrayElements");
         }
-        epilogue(anchor, "GetLongArrayElements");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1307
-    private static Pointer GetLongArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
-        return getLongArrayElements(array, isCopy);
     }
 
     private static Pointer getLongArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
@@ -3189,22 +2592,16 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetFloatArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1324
         Pointer anchor = prologue(env, "GetFloatArrayElements");
-        Pointer result;
         try {
-            result = GetFloatArrayElements_(env, array, isCopy);
+            return getFloatArrayElements(array, isCopy);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetFloatArrayElements");
         }
-        epilogue(anchor, "GetFloatArrayElements");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1322
-    private static Pointer GetFloatArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
-        return getFloatArrayElements(array, isCopy);
     }
 
     private static Pointer getFloatArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
@@ -3219,22 +2616,16 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetDoubleArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1339
         Pointer anchor = prologue(env, "GetDoubleArrayElements");
-        Pointer result;
         try {
-            result = GetDoubleArrayElements_(env, array, isCopy);
+            return getDoubleArrayElements(array, isCopy);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetDoubleArrayElements");
         }
-        epilogue(anchor, "GetDoubleArrayElements");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1337
-    private static Pointer GetDoubleArrayElements_(Pointer env, JniHandle array, Pointer isCopy) {
-        return getDoubleArrayElements(array, isCopy);
     }
 
     private static Pointer getDoubleArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
@@ -3249,19 +2640,15 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void ReleaseBooleanArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        // Source: JniFunctionsSource.java:1354
         Pointer anchor = prologue(env, "ReleaseBooleanArrayElements");
         try {
-            ReleaseBooleanArrayElements_(env, array, elements, mode);
+            releaseBooleanArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseBooleanArrayElements");
         }
-        epilogue(anchor, "ReleaseBooleanArrayElements");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1352
-    private static void ReleaseBooleanArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
-        releaseBooleanArrayElements(array, elements, mode);
     }
 
     private static void releaseBooleanArrayElements(JniHandle array, Pointer elements, int mode) {
@@ -3276,19 +2663,15 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void ReleaseByteArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        // Source: JniFunctionsSource.java:1369
         Pointer anchor = prologue(env, "ReleaseByteArrayElements");
         try {
-            ReleaseByteArrayElements_(env, array, elements, mode);
+            releaseByteArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseByteArrayElements");
         }
-        epilogue(anchor, "ReleaseByteArrayElements");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1367
-    private static void ReleaseByteArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
-        releaseByteArrayElements(array, elements, mode);
     }
 
     private static void releaseByteArrayElements(JniHandle array, Pointer elements, int mode) {
@@ -3303,19 +2686,15 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void ReleaseCharArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        // Source: JniFunctionsSource.java:1384
         Pointer anchor = prologue(env, "ReleaseCharArrayElements");
         try {
-            ReleaseCharArrayElements_(env, array, elements, mode);
+            releaseCharArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseCharArrayElements");
         }
-        epilogue(anchor, "ReleaseCharArrayElements");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1382
-    private static void ReleaseCharArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
-        releaseCharArrayElements(array, elements, mode);
     }
 
     private static void releaseCharArrayElements(JniHandle array, Pointer elements, int mode) {
@@ -3330,19 +2709,15 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void ReleaseShortArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        // Source: JniFunctionsSource.java:1399
         Pointer anchor = prologue(env, "ReleaseShortArrayElements");
         try {
-            ReleaseShortArrayElements_(env, array, elements, mode);
+            releaseShortArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseShortArrayElements");
         }
-        epilogue(anchor, "ReleaseShortArrayElements");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1397
-    private static void ReleaseShortArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
-        releaseShortArrayElements(array, elements, mode);
     }
 
     private static void releaseShortArrayElements(JniHandle array, Pointer elements, int mode) {
@@ -3357,19 +2732,15 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void ReleaseIntArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        // Source: JniFunctionsSource.java:1414
         Pointer anchor = prologue(env, "ReleaseIntArrayElements");
         try {
-            ReleaseIntArrayElements_(env, array, elements, mode);
+            releaseIntArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseIntArrayElements");
         }
-        epilogue(anchor, "ReleaseIntArrayElements");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1412
-    private static void ReleaseIntArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
-        releaseIntArrayElements(array, elements, mode);
     }
 
     private static void releaseIntArrayElements(JniHandle array, Pointer elements, int mode) {
@@ -3384,19 +2755,15 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void ReleaseLongArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        // Source: JniFunctionsSource.java:1429
         Pointer anchor = prologue(env, "ReleaseLongArrayElements");
         try {
-            ReleaseLongArrayElements_(env, array, elements, mode);
+            releaseLongArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseLongArrayElements");
         }
-        epilogue(anchor, "ReleaseLongArrayElements");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1427
-    private static void ReleaseLongArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
-        releaseLongArrayElements(array, elements, mode);
     }
 
     private static void releaseLongArrayElements(JniHandle array, Pointer elements, int mode) {
@@ -3411,19 +2778,15 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void ReleaseFloatArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        // Source: JniFunctionsSource.java:1444
         Pointer anchor = prologue(env, "ReleaseFloatArrayElements");
         try {
-            ReleaseFloatArrayElements_(env, array, elements, mode);
+            releaseFloatArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseFloatArrayElements");
         }
-        epilogue(anchor, "ReleaseFloatArrayElements");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1442
-    private static void ReleaseFloatArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
-        releaseFloatArrayElements(array, elements, mode);
     }
 
     private static void releaseFloatArrayElements(JniHandle array, Pointer elements, int mode) {
@@ -3438,19 +2801,15 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void ReleaseDoubleArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        // Source: JniFunctionsSource.java:1459
         Pointer anchor = prologue(env, "ReleaseDoubleArrayElements");
         try {
-            ReleaseDoubleArrayElements_(env, array, elements, mode);
+            releaseDoubleArrayElements(array, elements, mode);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseDoubleArrayElements");
         }
-        epilogue(anchor, "ReleaseDoubleArrayElements");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1457
-    private static void ReleaseDoubleArrayElements_(Pointer env, JniHandle array, Pointer elements, int mode) {
-        releaseDoubleArrayElements(array, elements, mode);
     }
 
     private static void releaseDoubleArrayElements(JniHandle array, Pointer elements, int mode) {
@@ -3465,321 +2824,257 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void GetBooleanArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1474
         Pointer anchor = prologue(env, "GetBooleanArrayRegion");
         try {
-            GetBooleanArrayRegion_(env, array, start, length, buffer);
+            final boolean[] a = (boolean[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                buffer.setBoolean(i, a[start + i]);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetBooleanArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1472
-    private static void GetBooleanArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final boolean[] a = (boolean[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            buffer.setBoolean(i, a[start + i]);
+        } finally {
+            epilogue(anchor, "GetBooleanArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void GetByteArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1482
         Pointer anchor = prologue(env, "GetByteArrayRegion");
         try {
-            GetByteArrayRegion_(env, array, start, length, buffer);
+            final byte[] a = (byte[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                buffer.setByte(i, a[start + i]);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetByteArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1480
-    private static void GetByteArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final byte[] a = (byte[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            buffer.setByte(i, a[start + i]);
+        } finally {
+            epilogue(anchor, "GetByteArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void GetCharArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1490
         Pointer anchor = prologue(env, "GetCharArrayRegion");
         try {
-            GetCharArrayRegion_(env, array, start, length, buffer);
+            final char[] a = (char[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                buffer.setChar(i, a[start + i]);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetCharArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1488
-    private static void GetCharArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final char[] a = (char[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            buffer.setChar(i, a[start + i]);
+        } finally {
+            epilogue(anchor, "GetCharArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void GetShortArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1498
         Pointer anchor = prologue(env, "GetShortArrayRegion");
         try {
-            GetShortArrayRegion_(env, array, start, length, buffer);
+            final short[] a = (short[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                buffer.setShort(i, a[start + i]);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetShortArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1496
-    private static void GetShortArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final short[] a = (short[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            buffer.setShort(i, a[start + i]);
+        } finally {
+            epilogue(anchor, "GetShortArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void GetIntArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1506
         Pointer anchor = prologue(env, "GetIntArrayRegion");
         try {
-            GetIntArrayRegion_(env, array, start, length, buffer);
+            final int[] a = (int[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                buffer.setInt(i, a[start + i]);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetIntArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1504
-    private static void GetIntArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final int[] a = (int[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            buffer.setInt(i, a[start + i]);
+        } finally {
+            epilogue(anchor, "GetIntArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void GetLongArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1514
         Pointer anchor = prologue(env, "GetLongArrayRegion");
         try {
-            GetLongArrayRegion_(env, array, start, length, buffer);
+            final long[] a = (long[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                buffer.setLong(i, a[start + i]);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetLongArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1512
-    private static void GetLongArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final long[] a = (long[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            buffer.setLong(i, a[start + i]);
+        } finally {
+            epilogue(anchor, "GetLongArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void GetFloatArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1522
         Pointer anchor = prologue(env, "GetFloatArrayRegion");
         try {
-            GetFloatArrayRegion_(env, array, start, length, buffer);
+            final float[] a = (float[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                buffer.setFloat(i, a[start + i]);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetFloatArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1520
-    private static void GetFloatArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final float[] a = (float[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            buffer.setFloat(i, a[start + i]);
+        } finally {
+            epilogue(anchor, "GetFloatArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void GetDoubleArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1530
         Pointer anchor = prologue(env, "GetDoubleArrayRegion");
         try {
-            GetDoubleArrayRegion_(env, array, start, length, buffer);
+            final double[] a = (double[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                buffer.setDouble(i, a[start + i]);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetDoubleArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1528
-    private static void GetDoubleArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final double[] a = (double[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            buffer.setDouble(i, a[start + i]);
+        } finally {
+            epilogue(anchor, "GetDoubleArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void SetBooleanArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1538
         Pointer anchor = prologue(env, "SetBooleanArrayRegion");
         try {
-            SetBooleanArrayRegion_(env, array, start, length, buffer);
+            final boolean[] a = (boolean[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                a[start + i] = buffer.getBoolean(i);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "SetBooleanArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1536
-    private static void SetBooleanArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final boolean[] a = (boolean[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            a[start + i] = buffer.getBoolean(i);
+        } finally {
+            epilogue(anchor, "SetBooleanArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void SetByteArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1546
         Pointer anchor = prologue(env, "SetByteArrayRegion");
         try {
-            SetByteArrayRegion_(env, array, start, length, buffer);
+            final byte[] a = (byte[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                a[start + i] = buffer.getByte(i);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "SetByteArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1544
-    private static void SetByteArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final byte[] a = (byte[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            a[start + i] = buffer.getByte(i);
+        } finally {
+            epilogue(anchor, "SetByteArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void SetCharArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1554
         Pointer anchor = prologue(env, "SetCharArrayRegion");
         try {
-            SetCharArrayRegion_(env, array, start, length, buffer);
+            final char[] a = (char[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                a[start + i] = buffer.getChar(i);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "SetCharArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1552
-    private static void SetCharArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final char[] a = (char[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            a[start + i] = buffer.getChar(i);
+        } finally {
+            epilogue(anchor, "SetCharArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void SetShortArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1562
         Pointer anchor = prologue(env, "SetShortArrayRegion");
         try {
-            SetShortArrayRegion_(env, array, start, length, buffer);
+            final short[] a = (short[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                a[start + i] = buffer.getShort(i);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "SetShortArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1560
-    private static void SetShortArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final short[] a = (short[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            a[start + i] = buffer.getShort(i);
+        } finally {
+            epilogue(anchor, "SetShortArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void SetIntArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1570
         Pointer anchor = prologue(env, "SetIntArrayRegion");
         try {
-            SetIntArrayRegion_(env, array, start, length, buffer);
+            final int[] a = (int[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                a[start + i] = buffer.getInt(i);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "SetIntArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1568
-    private static void SetIntArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final int[] a = (int[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            a[start + i] = buffer.getInt(i);
+        } finally {
+            epilogue(anchor, "SetIntArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void SetLongArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1578
         Pointer anchor = prologue(env, "SetLongArrayRegion");
         try {
-            SetLongArrayRegion_(env, array, start, length, buffer);
+            final long[] a = (long[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                a[start + i] = buffer.getLong(i);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "SetLongArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1576
-    private static void SetLongArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final long[] a = (long[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            a[start + i] = buffer.getLong(i);
+        } finally {
+            epilogue(anchor, "SetLongArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void SetFloatArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1586
         Pointer anchor = prologue(env, "SetFloatArrayRegion");
         try {
-            SetFloatArrayRegion_(env, array, start, length, buffer);
+            final float[] a = (float[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                a[start + i] = buffer.getFloat(i);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "SetFloatArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1584
-    private static void SetFloatArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final float[] a = (float[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            a[start + i] = buffer.getFloat(i);
+        } finally {
+            epilogue(anchor, "SetFloatArrayRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void SetDoubleArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1594
         Pointer anchor = prologue(env, "SetDoubleArrayRegion");
         try {
-            SetDoubleArrayRegion_(env, array, start, length, buffer);
+            final double[] a = (double[]) array.unhand();
+            for (int i = 0; i < length; i++) {
+                a[start + i] = buffer.getDouble(i);
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "SetDoubleArrayRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1592
-    private static void SetDoubleArrayRegion_(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
-        final double[] a = (double[]) array.unhand();
-        for (int i = 0; i < length; i++) {
-            a[start + i] = buffer.getDouble(i);
+        } finally {
+            epilogue(anchor, "SetDoubleArrayRegion");
         }
     }
 
@@ -3793,360 +3088,293 @@ public final class JniFunctions {
      */
     @JNI_FUNCTION
     private static int RegisterNatives(Pointer env, JniHandle javaType, Pointer methods, int numberOfMethods) {
+        // Source: JniFunctionsSource.java:1610
         Pointer anchor = prologue(env, "RegisterNatives");
-        int result;
         try {
-            result = RegisterNatives_(env, javaType, methods, numberOfMethods);
+            Pointer a = methods;
+    
+            final int pointerSize = Word.size();
+            final int NAME = 0 * pointerSize;
+            final int SIGNATURE = 1 * pointerSize;
+            final int FNPTR = 2 * pointerSize;
+    
+            for (int i = 0; i < numberOfMethods; i++) {
+                try {
+                    final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(a.readWord(NAME).asPointer()));
+                    final SignatureDescriptor descriptor = SignatureDescriptor.lookup(CString.utf8ToJava(a.readWord(SIGNATURE).asPointer()));
+                    if (name == null || descriptor == null) {
+                        // The class should have been loaded (we have an instance of the class
+                        // passed in) so the name and signature should already be in their respective canonicalization
+                        // tables. If they're not there, the method doesn't exist.
+                        throw new NoSuchMethodError();
+                    }
+                    final Word fnPtr = a.readWord(FNPTR);
+    
+                    final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
+                    final ClassMethodActor classMethodActor = classActor.findClassMethodActor(name, descriptor);
+                    if (classMethodActor == null || !classMethodActor.isNative()) {
+                        throw new NoSuchMethodError();
+                    }
+                    classMethodActor.nativeFunction.setAddress(fnPtr);
+    
+                } catch (Utf8Exception e) {
+                    throw new NoSuchMethodError();
+                }
+    
+                // advance to next JNINativeMethod struct
+                a = a.plus(pointerSize * 3);
+            }
+            return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "RegisterNatives");
         }
-        epilogue(anchor, "RegisterNatives");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1608
-    private static int RegisterNatives_(Pointer env, JniHandle javaType, Pointer methods, int numberOfMethods) {
-        Pointer a = methods;
-
-        final int pointerSize = Word.size();
-        final int NAME = 0 * pointerSize;
-        final int SIGNATURE = 1 * pointerSize;
-        final int FNPTR = 2 * pointerSize;
-
-        for (int i = 0; i < numberOfMethods; i++) {
-            try {
-                final Utf8Constant name = SymbolTable.lookupSymbol(CString.utf8ToJava(a.readWord(NAME).asPointer()));
-                final SignatureDescriptor descriptor = SignatureDescriptor.lookup(CString.utf8ToJava(a.readWord(SIGNATURE).asPointer()));
-                if (name == null || descriptor == null) {
-                    // The class should have been loaded (we have an instance of the class
-                    // passed in) so the name and signature should already be in their respective canonicalization
-                    // tables. If they're not there, the method doesn't exist.
-                    throw new NoSuchMethodError();
-                }
-                final Word fnPtr = a.readWord(FNPTR);
-
-                final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-                final ClassMethodActor classMethodActor = classActor.findClassMethodActor(name, descriptor);
-                if (classMethodActor == null || !classMethodActor.isNative()) {
-                    throw new NoSuchMethodError();
-                }
-                classMethodActor.nativeFunction.setAddress(fnPtr);
-
-            } catch (Utf8Exception e) {
-                throw new NoSuchMethodError();
-            }
-
-            // advance to next JNINativeMethod struct
-            a = a.plus(pointerSize * 3);
-        }
-        return 0;
     }
 
     @JNI_FUNCTION
     private static int UnregisterNatives(Pointer env, JniHandle javaType) {
+        // Source: JniFunctionsSource.java:1648
         Pointer anchor = prologue(env, "UnregisterNatives");
-        int result;
         try {
-            result = UnregisterNatives_(env, javaType);
+            final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
+            classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
+                public void run(ClassMethodActor classMethodActor) {
+                    classMethodActor.nativeFunction.setAddress(Word.zero());
+                }
+            });
+            return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "UnregisterNatives");
         }
-        epilogue(anchor, "UnregisterNatives");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1646
-    private static int UnregisterNatives_(Pointer env, JniHandle javaType) {
-        final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
-        classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
-            public void run(ClassMethodActor classMethodActor) {
-                classMethodActor.nativeFunction.setAddress(Word.zero());
-            }
-        });
-        return 0;
     }
 
     @JNI_FUNCTION
     private static int MonitorEnter(Pointer env, JniHandle object) {
+        // Source: JniFunctionsSource.java:1659
         Pointer anchor = prologue(env, "MonitorEnter");
-        int result;
         try {
-            result = MonitorEnter_(env, object);
+            Monitor.enter(object.unhand());
+            return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "MonitorEnter");
         }
-        epilogue(anchor, "MonitorEnter");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1657
-    private static int MonitorEnter_(Pointer env, JniHandle object) {
-        Monitor.enter(object.unhand());
-        return 0;
     }
 
     @JNI_FUNCTION
     private static int MonitorExit(Pointer env, JniHandle object) {
+        // Source: JniFunctionsSource.java:1665
         Pointer anchor = prologue(env, "MonitorExit");
-        int result;
         try {
-            result = MonitorExit_(env, object);
+            Monitor.exit(object.unhand());
+            return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "MonitorExit");
         }
-        epilogue(anchor, "MonitorExit");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1663
-    private static int MonitorExit_(Pointer env, JniHandle object) {
-        Monitor.exit(object.unhand());
-        return 0;
     }
 
     @JNI_FUNCTION
     private static native int GetJavaVM(Pointer env, Pointer vmPointerPointer);
+        // Source: JniFunctionsSource.java:1671
 
     @JNI_FUNCTION
     private static void GetStringRegion(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1674
         Pointer anchor = prologue(env, "GetStringRegion");
         try {
-            GetStringRegion_(env, string, start, length, buffer);
+            final String s = (String) string.unhand();
+            for (int i = 0; i < length; i++) {
+                buffer.setChar(i, s.charAt(i + start));
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetStringRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1672
-    private static void GetStringRegion_(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
-        final String s = (String) string.unhand();
-        for (int i = 0; i < length; i++) {
-            buffer.setChar(i, s.charAt(i + start));
+        } finally {
+            epilogue(anchor, "GetStringRegion");
         }
     }
 
     @JNI_FUNCTION
     private static void GetStringUTFRegion(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
+        // Source: JniFunctionsSource.java:1682
         Pointer anchor = prologue(env, "GetStringUTFRegion");
         try {
-            GetStringUTFRegion_(env, string, start, length, buffer);
+            final String s = ((String) string.unhand()).substring(start, start + length);
+            final byte[] utf = Utf8.stringToUtf8(s);
+            Memory.writeBytes(utf, utf.length, buffer);
+            buffer.setByte(utf.length, (byte) 0); // zero termination
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "GetStringUTFRegion");
         }
-        epilogue(anchor, "GetStringUTFRegion");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1680
-    private static void GetStringUTFRegion_(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
-        final String s = ((String) string.unhand()).substring(start, start + length);
-        final byte[] utf = Utf8.stringToUtf8(s);
-        Memory.writeBytes(utf, utf.length, buffer);
-        buffer.setByte(utf.length, (byte) 0); // zero termination
     }
 
     @JNI_FUNCTION
     private static Pointer GetPrimitiveArrayCritical(Pointer env, JniHandle array, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1690
         Pointer anchor = prologue(env, "GetPrimitiveArrayCritical");
-        Pointer result;
         try {
-            result = GetPrimitiveArrayCritical_(env, array, isCopy);
+            final Object arrayObject = array.unhand();
+            if (Heap.pin(arrayObject)) {
+                setCopyPointer(isCopy, false);
+                return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
+            }
+            if (arrayObject instanceof boolean[]) {
+                return getBooleanArrayElements(array, isCopy);
+            }
+            if (arrayObject instanceof byte[]) {
+                return getByteArrayElements(array, isCopy);
+            }
+            if (arrayObject instanceof char[]) {
+                return getCharArrayElements(array, isCopy);
+            }
+            if (arrayObject instanceof short[]) {
+                return getShortArrayElements(array, isCopy);
+            }
+            if (arrayObject instanceof int[]) {
+                return getIntArrayElements(array, isCopy);
+            }
+            if (arrayObject instanceof long[]) {
+                return getLongArrayElements(array, isCopy);
+            }
+            if (arrayObject instanceof float[]) {
+                return getFloatArrayElements(array, isCopy);
+            }
+            if (arrayObject instanceof double[]) {
+                return getDoubleArrayElements(array, isCopy);
+            }
+            return null;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetPrimitiveArrayCritical");
         }
-        epilogue(anchor, "GetPrimitiveArrayCritical");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1688
-    private static Pointer GetPrimitiveArrayCritical_(Pointer env, JniHandle array, Pointer isCopy) {
-        final Object arrayObject = array.unhand();
-        if (Heap.pin(arrayObject)) {
-            setCopyPointer(isCopy, false);
-            return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
-        }
-        if (arrayObject instanceof boolean[]) {
-            return getBooleanArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof byte[]) {
-            return getByteArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof char[]) {
-            return getCharArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof short[]) {
-            return getShortArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof int[]) {
-            return getIntArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof long[]) {
-            return getLongArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof float[]) {
-            return getFloatArrayElements(array, isCopy);
-        }
-        if (arrayObject instanceof double[]) {
-            return getDoubleArrayElements(array, isCopy);
-        }
-        return null;
     }
 
     @JNI_FUNCTION
     private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer elements, int mode) {
+        // Source: JniFunctionsSource.java:1724
         Pointer anchor = prologue(env, "ReleasePrimitiveArrayCritical");
         try {
-            ReleasePrimitiveArrayCritical_(env, array, elements, mode);
+            final Object arrayObject = array.unhand();
+            if (Heap.isPinned(arrayObject)) {
+                Heap.unpin(arrayObject);
+            } else {
+                if (arrayObject instanceof boolean[]) {
+                    releaseBooleanArrayElements(array, elements, mode);
+                }
+                if (arrayObject instanceof byte[]) {
+                    releaseByteArrayElements(array, elements, mode);
+                }
+                if (arrayObject instanceof char[]) {
+                    releaseCharArrayElements(array, elements, mode);
+                }
+                if (arrayObject instanceof short[]) {
+                    releaseShortArrayElements(array, elements, mode);
+                }
+                if (arrayObject instanceof int[]) {
+                    releaseIntArrayElements(array, elements, mode);
+                }
+                if (arrayObject instanceof long[]) {
+                    releaseLongArrayElements(array, elements, mode);
+                }
+                if (arrayObject instanceof float[]) {
+                    releaseFloatArrayElements(array, elements, mode);
+                }
+                if (arrayObject instanceof double[]) {
+                    releaseDoubleArrayElements(array, elements, mode);
+                }
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "ReleasePrimitiveArrayCritical");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1722
-    private static void ReleasePrimitiveArrayCritical_(Pointer env, JniHandle array, Pointer elements, int mode) {
-        final Object arrayObject = array.unhand();
-        if (Heap.isPinned(arrayObject)) {
-            Heap.unpin(arrayObject);
-        } else {
-            if (arrayObject instanceof boolean[]) {
-                releaseBooleanArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof byte[]) {
-                releaseByteArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof char[]) {
-                releaseCharArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof short[]) {
-                releaseShortArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof int[]) {
-                releaseIntArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof long[]) {
-                releaseLongArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof float[]) {
-                releaseFloatArrayElements(array, elements, mode);
-            }
-            if (arrayObject instanceof double[]) {
-                releaseDoubleArrayElements(array, elements, mode);
-            }
+        } finally {
+            epilogue(anchor, "ReleasePrimitiveArrayCritical");
         }
     }
 
     @JNI_FUNCTION
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
+        // Source: JniFunctionsSource.java:1757
         Pointer anchor = prologue(env, "GetStringCritical");
-        Pointer result;
         try {
-            result = GetStringCritical_(env, string, isCopy);
+            setCopyPointer(isCopy, true);
+            final char[] a = ((String) string.unhand()).toCharArray();
+            final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.width.numberOfBytes);
+            for (int i = 0; i < a.length; i++) {
+                pointer.setChar(i, a[i]);
+            }
+            return pointer;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetStringCritical");
         }
-        epilogue(anchor, "GetStringCritical");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1755
-    private static Pointer GetStringCritical_(Pointer env, JniHandle string, Pointer isCopy) {
-        setCopyPointer(isCopy, true);
-        final char[] a = ((String) string.unhand()).toCharArray();
-        final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.width.numberOfBytes);
-        for (int i = 0; i < a.length; i++) {
-            pointer.setChar(i, a[i]);
-        }
-        return pointer;
     }
 
     @JNI_FUNCTION
     private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer chars) {
+        // Source: JniFunctionsSource.java:1768
         Pointer anchor = prologue(env, "ReleaseStringCritical");
         try {
-            ReleaseStringCritical_(env, string, chars);
+            Memory.deallocate(chars);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "ReleaseStringCritical");
         }
-        epilogue(anchor, "ReleaseStringCritical");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1766
-    private static void ReleaseStringCritical_(Pointer env, JniHandle string, final Pointer chars) {
-        Memory.deallocate(chars);
     }
 
     @JNI_FUNCTION
     private static JniHandle NewWeakGlobalRef(Pointer env, JniHandle handle) {
+        // Source: JniFunctionsSource.java:1773
         Pointer anchor = prologue(env, "NewWeakGlobalRef");
-        JniHandle result;
         try {
-            result = NewWeakGlobalRef_(env, handle);
+            return JniHandles.createWeakGlobalHandle(handle.unhand());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewWeakGlobalRef");
         }
-        epilogue(anchor, "NewWeakGlobalRef");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1771
-    private static JniHandle NewWeakGlobalRef_(Pointer env, JniHandle handle) {
-        return JniHandles.createWeakGlobalHandle(handle.unhand());
     }
 
     @JNI_FUNCTION
     private static void DeleteWeakGlobalRef(Pointer env, JniHandle handle) {
+        // Source: JniFunctionsSource.java:1778
         Pointer anchor = prologue(env, "DeleteWeakGlobalRef");
         try {
-            DeleteWeakGlobalRef_(env, handle);
+            JniHandles.destroyWeakGlobalHandle(handle);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
+        } finally {
+            epilogue(anchor, "DeleteWeakGlobalRef");
         }
-        epilogue(anchor, "DeleteWeakGlobalRef");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1776
-    private static void DeleteWeakGlobalRef_(Pointer env, JniHandle handle) {
-        JniHandles.destroyWeakGlobalHandle(handle);
     }
 
     @JNI_FUNCTION
     private static boolean ExceptionCheck(Pointer env) {
+        // Source: JniFunctionsSource.java:1783
         Pointer anchor = prologue(env, "ExceptionCheck");
-        boolean result;
         try {
-            result = ExceptionCheck_(env);
+            return VmThread.fromJniEnv(env).pendingException() != null;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = false;
+            return false;
+        } finally {
+            epilogue(anchor, "ExceptionCheck");
         }
-        epilogue(anchor, "ExceptionCheck");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1781
-    private static boolean ExceptionCheck_(Pointer env) {
-        return VmThread.fromJniEnv(env).pendingException() != null;
     }
 
     @FOLD
@@ -4166,96 +3394,72 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
+        // Source: JniFunctionsSource.java:1803
         Pointer anchor = prologue(env, "NewDirectByteBuffer");
-        JniHandle result;
         try {
-            result = NewDirectByteBuffer_(env, address, capacity);
+            int cap = (int) capacity;
+            return JniHandles.createLocalHandle(DirectByteBufferConstructor().invokeConstructor(LongValue.from(address.toLong()), IntValue.from(cap)).asObject());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asJniHandle(0);
+            return asJniHandle(0);
+        } finally {
+            epilogue(anchor, "NewDirectByteBuffer");
         }
-        epilogue(anchor, "NewDirectByteBuffer");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1801
-    private static JniHandle NewDirectByteBuffer_(Pointer env, Pointer address, long capacity) throws Exception {
-        int cap = (int) capacity;
-        return JniHandles.createLocalHandle(DirectByteBufferConstructor().invokeConstructor(LongValue.from(address.toLong()), IntValue.from(cap)).asObject());
     }
 
     @JNI_FUNCTION
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
+        // Source: JniFunctionsSource.java:1809
         Pointer anchor = prologue(env, "GetDirectBufferAddress");
-        Pointer result;
         try {
-            result = GetDirectBufferAddress_(env, buffer);
+            Object buf = buffer.unhand();
+            if (DirectByteBuffer().isInstance(buf)) {
+                long address = TupleAccess.readLong(buf, directByteBufferAddressFieldOffset());
+                return Pointer.fromLong(address);
+            }
+            return Pointer.zero();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = asPointer(0);
+            return asPointer(0);
+        } finally {
+            epilogue(anchor, "GetDirectBufferAddress");
         }
-        epilogue(anchor, "GetDirectBufferAddress");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1807
-    private static Pointer GetDirectBufferAddress_(Pointer env, JniHandle buffer) throws Exception {
-        Object buf = buffer.unhand();
-        if (DirectByteBuffer().isInstance(buf)) {
-            long address = TupleAccess.readLong(buf, directByteBufferAddressFieldOffset());
-            return Pointer.fromLong(address);
-        }
-        return Pointer.zero();
     }
 
     @JNI_FUNCTION
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
+        // Source: JniFunctionsSource.java:1819
         Pointer anchor = prologue(env, "GetDirectBufferCapacity");
-        long result;
         try {
-            result = GetDirectBufferCapacity_(env, buffer);
+            Object buf = buffer.unhand();
+            if (DirectByteBuffer().isInstance(buf)) {
+                return ((Buffer) buf).capacity();
+            }
+            return -1;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetDirectBufferCapacity");
         }
-        epilogue(anchor, "GetDirectBufferCapacity");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1817
-    private static long GetDirectBufferCapacity_(Pointer env, JniHandle buffer) {
-        Object buf = buffer.unhand();
-        if (DirectByteBuffer().isInstance(buf)) {
-            return ((Buffer) buf).capacity();
-        }
-        return -1;
     }
 
     @JNI_FUNCTION
     private static int GetObjectRefType(Pointer env, JniHandle obj) {
+        // Source: JniFunctionsSource.java:1828
         Pointer anchor = prologue(env, "GetObjectRefType");
-        int result;
         try {
-            result = GetObjectRefType_(env, obj);
+            final int tag = JniHandles.tag(obj);
+            if (tag == JniHandles.Tag.STACK) {
+                return JniHandles.Tag.LOCAL;
+            }
+            return tag;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetObjectRefType");
         }
-        epilogue(anchor, "GetObjectRefType");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1826
-    private static int GetObjectRefType_(Pointer env, JniHandle obj) {
-        final int tag = JniHandles.tag(obj);
-        if (tag == JniHandles.Tag.STACK) {
-            return JniHandles.Tag.LOCAL;
-        }
-        return tag;
     }
 
     /*
@@ -4264,50 +3468,40 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static int GetNumberOfArguments(Pointer env, MethodID methodID) throws Exception {
+        // Source: JniFunctionsSource.java:1841
         Pointer anchor = prologue(env, "GetNumberOfArguments");
-        int result;
         try {
-            result = GetNumberOfArguments_(env, methodID);
+            final MethodActor methodActor = MethodID.toMethodActor(methodID);
+            if (methodActor == null) {
+                throw new NoSuchMethodException();
+            }
+            return methodActor.descriptor().numberOfParameters();
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-            result = JNI_ERR;
+            return JNI_ERR;
+        } finally {
+            epilogue(anchor, "GetNumberOfArguments");
         }
-        epilogue(anchor, "GetNumberOfArguments");
-        return result;
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1839
-    private static int GetNumberOfArguments_(Pointer env, MethodID methodID) throws Exception {
-        final MethodActor methodActor = MethodID.toMethodActor(methodID);
-        if (methodActor == null) {
-            throw new NoSuchMethodException();
-        }
-        return methodActor.descriptor().numberOfParameters();
     }
 
     @JNI_FUNCTION
     private static void GetKindsOfArguments(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
+        // Source: JniFunctionsSource.java:1850
         Pointer anchor = prologue(env, "GetKindsOfArguments");
         try {
-            GetKindsOfArguments_(env, methodID, kinds);
+            final MethodActor methodActor = MethodID.toMethodActor(methodID);
+            if (methodActor == null) {
+                throw new NoSuchMethodException();
+            }
+            final SignatureDescriptor signature = methodActor.descriptor();
+            for (int i = 0; i < signature.numberOfParameters(); ++i) {
+                final Kind kind = signature.parameterDescriptorAt(i).toKind();
+                kinds.setByte(i, (byte) kind.asEnum.ordinal());
+            }
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
-        }
-        epilogue(anchor, "GetKindsOfArguments");
-    }
-
-    @INLINE
-    // Source: JniFunctionsSource.java:1848
-    private static void GetKindsOfArguments_(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
-        final MethodActor methodActor = MethodID.toMethodActor(methodID);
-        if (methodActor == null) {
-            throw new NoSuchMethodException();
-        }
-        final SignatureDescriptor signature = methodActor.descriptor();
-        for (int i = 0; i < signature.numberOfParameters(); ++i) {
-            final Kind kind = signature.parameterDescriptorAt(i).toKind();
-            kinds.setByte(i, (byte) kind.asEnum.ordinal());
+        } finally {
+            epilogue(anchor, "GetKindsOfArguments");
         }
     }
 
