@@ -48,6 +48,11 @@ public class JavaMethodInspector extends MethodInspector {
 
     private final MethodInspectorPreferences methodInspectorPreferences;
 
+    /**
+     * Shared check boxes to be used in all UI code view selection.
+     */
+    private final JCheckBox[] codeViewCheckBoxes = new JCheckBox[MethodCodeKind.VALUES.length()];
+
     private final TeleClassMethodActor teleClassMethodActor;
     private final MethodCodeKind requestedCodeKind;
 
@@ -103,6 +108,31 @@ public class JavaMethodInspector extends MethodInspector {
         // not implemented yet
         codeKindEnabled.put(MethodCodeKind.JAVA_SOURCE, false);
 
+        // Create shared check boxes that will track and help control what views are visible.
+        // Invariant: checkbox selected iff the code kind is in {@link #codeViewers}.
+        for (final MethodCodeKind codeKind : MethodCodeKind.VALUES) {
+            // The check box settings can either be changed by user action on the check box
+            // itself, or by other actions that add/remove code viewers.  There are no code
+            // viewers present at this point in the construction of the inspector.
+            final boolean currentValue = false;
+            final String toolTipText = "Display this kind of source for the Java method?";
+            final JCheckBox checkBox = new InspectorCheckBox(inspection(), codeKind.toString(), toolTipText, currentValue);
+            checkBox.setEnabled(codeKindEnabled.get(codeKind));
+            checkBox.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent itemEvent) {
+                    // Catch check box events where the user wants to open/close a code viewer
+                    if (checkBox.isSelected()) {
+                        if (!codeViewers.containsKey(codeKind)) {
+                            addCodeViewer(codeKind);
+                        }
+                    } else if (codeViewers.containsKey(codeKind)) {
+                        closeCodeViewer(codeViewers.get(codeKind));
+                    }
+                }
+            });
+            codeViewCheckBoxes[codeKind.ordinal()] = checkBox;
+        }
+
         final InspectionActions actions = inspection.actions();
 
         final InspectorFrame frame = createTabFrame(parent);
@@ -123,6 +153,9 @@ public class JavaMethodInspector extends MethodInspector {
             objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
         }
         final InspectorMenu codeMenu = frame.makeMenu(MenuKind.CODE_MENU);
+        for (final MethodCodeKind codeKind : MethodCodeKind.VALUES) {
+            codeMenu.add(codeViewCheckBoxes[codeKind.ordinal()]);
+        }
         if (teleClassMethodActor != null) {
             codeMenu.add(actions.viewTargetMethodCodeMenu(teleClassMethodActor, "View method's compilations"));
         }
@@ -209,7 +242,23 @@ public class JavaMethodInspector extends MethodInspector {
     private final Map<MethodCodeKind, Boolean> codeKindEnabled = new EnumMap<MethodCodeKind, Boolean>(MethodCodeKind.class);
 
     /** Code viewers being displayed in the inspector. */
-    private final Map<MethodCodeKind, CodeViewer> codeViewers = new EnumMap<MethodCodeKind, CodeViewer>(MethodCodeKind.class);
+    private final Map<MethodCodeKind, CodeViewer> codeViewers = new EnumMap<MethodCodeKind, CodeViewer>(MethodCodeKind.class) {
+        @Override
+        public CodeViewer put(MethodCodeKind kind, CodeViewer value) {
+            final CodeViewer old = super.put(kind, value);
+            codeViewCheckBoxes[kind.ordinal()].setSelected(true);
+            return old;
+        }
+
+        @Override
+        public CodeViewer remove(Object key) {
+            final MethodCodeKind kind = (MethodCodeKind) key;
+            final CodeViewer old = super.remove(kind);
+            codeViewCheckBoxes[kind.ordinal()].setSelected(false);
+            return old;
+        }
+
+    };
 
     private JSplitPane splitPane;
 
