@@ -18,14 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
 package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 0.0d = 0L; 1.0d = 1L; -1.06d = -1L; -156.82743d = -156L
+ * @Runs: 0 = -2147483648, 1 = -2147483648, 2 = 0, 3 = 2147483647; 4 = -2147483647
  */
-public class BC_d2l {
-    public static long test(double d) {
-        return (long) d;
+public class BC_d2i02 {
+
+    private static double[] inputs = { -1.3e44d, Double.NEGATIVE_INFINITY, Double.NaN, Double.POSITIVE_INFINITY, 1.3e44d };
+
+    public static int test(int i) {
+        return (int) inputs[i];
     }
 }

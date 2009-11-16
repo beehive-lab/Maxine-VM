@@ -22,14 +22,10 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 0 = true
+ * @Runs: 0.0f = 0L; 1.0f = 1L; -1.06f = -1L; -156.82743f = -156L
  */
-public class BC_f2i_2 {
-    public static boolean test(int value) {
-        return Integer.MAX_VALUE == floatMaxAsInt();
-    }
-
-    private static int floatMaxAsInt() {
-        return (int) Float.MAX_VALUE;
+public class BC_f2l01 {
+    public static long test(float d) {
+        return (long) d;
     }
 }
