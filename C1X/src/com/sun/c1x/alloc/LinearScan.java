@@ -248,7 +248,7 @@ public class LinearScan {
 
     // size of liveIn and liveOut sets of BasicBlocks (BitMap needs rounded size for iteration)
     int liveSetSize() {
-        return Util.roundTo(numVirtualRegs, compilation.target.arch.wordSize * Byte.SIZE);
+        return Util.roundUp(numVirtualRegs, compilation.target.arch.wordSize * Byte.SIZE);
     }
 
     int numLoops() {

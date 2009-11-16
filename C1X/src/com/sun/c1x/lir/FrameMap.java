@@ -32,7 +32,7 @@ import com.sun.c1x.util.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public class FrameMap {
+public final class FrameMap {
 
     public static final int SPILL_SLOT_SIZE = 4;
 
@@ -45,7 +45,7 @@ public class FrameMap {
     private int spillSlotCount;
 
     // Area occupied by outgoing overflow arguments. This value is adjusted as calling conventions for outgoing calls are retrieved.
-    private int reservedOutgoingArgumentsArea;
+    private int outgoingSize;
 
     public FrameMap(C1XCompiler compiler, RiMethod method, int monitors) {
         this.compilation = compiler;
@@ -75,13 +75,13 @@ public class FrameMap {
         final CallingConvention result = new CallingConvention(locations);
         if (reserveOutgoingArgumentsArea) {
             assert frameSize == -1 : "frame size must not yet be fixed!";
-            reservedOutgoingArgumentsArea = Math.max(reservedOutgoingArgumentsArea, result.overflowArgumentsSize());
+            outgoingSize = Math.max(outgoingSize, result.overflowArgumentSize);
         }
         return result;
     }
 
     public CallingConvention incomingArguments() {
-        return this.incomingArguments;
+        return incomingArguments;
     }
 
     public Address addressForSlot(int stackSlot) {
@@ -100,17 +100,12 @@ public class FrameMap {
 
     int spOffsetForSpill(int index) {
         assert index >= 0 && index < spillSlotCount : "out of range";
-        return Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + index * SPILL_SLOT_SIZE;
+        return Util.roundUp(outgoingSize + incomingArguments.overflowArgumentSize, Double.SIZE / Byte.SIZE) + index * SPILL_SLOT_SIZE;
     }
 
     int spOffsetForMonitorBase(int index) {
-        int endOfSpills = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + spillSlotCount * SPILL_SLOT_SIZE;
-        return Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
-    }
-
-    int spOffsetForMonitorLock(int index)  {
-      checkMonitorIndex(index);
-      return spOffsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
+        int endOfSpills = Util.roundUp(outgoingSize + incomingArguments.overflowArgumentSize, Double.SIZE / Byte.SIZE) + spillSlotCount * SPILL_SLOT_SIZE;
+        return Util.roundUp(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
     }
 
     int spOffsetForMonitorObject(int index)  {
@@ -140,13 +135,13 @@ public class FrameMap {
     }
 
     public void finalizeFrame(int spillSlotCount) {
-        assert spillSlotCount >= 0 : "must be positive";
         assert this.spillSlotCount == -1 : "can only be set once";
+        assert this.frameSize == -1 : "should only be calculated once";
+        assert spillSlotCount >= 0 : "must be positive";
+
         this.spillSlotCount = spillSlotCount;
-        assert frameSize == -1 : "should only be calculated once";
-        int retSize = compilation.target.arch.returnAddressSize;
-        int fs = retSize + spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock();
-        frameSize = Util.roundTo(fs, compilation.target.stackAlignment) - retSize;
+        int fs = spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock();
+        this.frameSize = compilation.target.alignFrameSize(fs);
     }
 
     public CiLocation regname(LIROperand opr) {

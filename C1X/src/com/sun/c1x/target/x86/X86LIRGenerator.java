@@ -380,10 +380,10 @@ public final class X86LIRGenerator extends LIRGenerator {
             }
 
             LIROperand resultReg = resultRegisterFor(x.type());
-            left.loadItemForce(cc.at(0));
+            left.loadItemForce(cc.operands[0]);
             right.loadItem();
 
-            lir.move(right.result(), cc.at(1));
+            lir.move(right.result(), cc.operands[1]);
 
             if (!x.checkFlag(Flag.NoZeroCheck)) {
                 lir.cmp(LIRCondition.Equal, right.result(), LIROperandFactory.longConst(0));
@@ -406,7 +406,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             }
 
             LIROperand result = rlockResult(x);
-            lir.callRuntime(entry, resultReg, cc.arguments(), null);
+            lir.callRuntime(entry, resultReg, Arrays.asList(cc.operands), null);
             lir.move(resultReg, result);
         } else if (x.opcode() == Bytecodes.LMUL) {
             // missing test if instr is commutative and if we should swap

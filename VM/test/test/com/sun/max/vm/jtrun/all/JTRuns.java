@@ -1293,15 +1293,9 @@ public class JTRuns {
             begin("jtt.bytecode.BC_d2i_nan");
             String runString = null;
             try {
-            // (1.0) == 1
-                runString = "(1.0)";
-                if (1 != jtt.bytecode.BC_d2i_nan.test(1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (0.0) == 0
-                runString = "(0.0)";
-                if (0 != jtt.bytecode.BC_d2i_nan.test(0.0)) {
+            // (0) == -2147483648
+                runString = "(0)";
+                if (-2147483648 != jtt.bytecode.BC_d2i_nan.test(0)) {
                     fail(runString);
                     return;
                 }
@@ -1349,15 +1343,9 @@ public class JTRuns {
             begin("jtt.bytecode.BC_d2l_nan");
             String runString = null;
             try {
-            // (1.0) == 1
-                runString = "(1.0)";
-                if (1L != jtt.bytecode.BC_d2l_nan.test(1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (0.0) == 0
-                runString = "(0.0)";
-                if (0L != jtt.bytecode.BC_d2l_nan.test(0.0)) {
+            // (0) == -9223372036854775808
+                runString = "(0)";
+                if (-9223372036854775808L != jtt.bytecode.BC_d2l_nan.test(0)) {
                     fail(runString);
                     return;
                 }

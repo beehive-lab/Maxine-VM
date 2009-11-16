@@ -23,11 +23,15 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 1.0d = 1L; 0.0d = 0L;
+ * @Runs: 0 = -9223372036854775808L, 1 = -9223372036854775808L, 2 = 0L, 3 = 9223372036854775807L; 4 = 9223372036854775807L
  */
 public class BC_d2l_nan {
-    // (long)0D/0D should be 0
-    public static long test(double d) {
-        return (long) (d / d);
+
+    private static double Z = 0d;
+    private static double[] inputs = { -1.3e44d, -1d / Z, Z / Z, 1d / Z, 1.3e44d };
+
+    // (int)0D/0D should be 0
+    public static long test(int i) {
+        return (long) inputs[i];
     }
 }

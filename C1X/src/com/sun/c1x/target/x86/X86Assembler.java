@@ -155,7 +155,6 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(op2 | encode(dst) << 3 | encode(src));
     }
 
-    @SuppressWarnings({"PointlessBitwiseExpression"})
     void emitOperandHelper(CiRegister reg, Address addr) {
 
         CiRegister base = addr.base;

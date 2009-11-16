@@ -184,8 +184,8 @@ public abstract class LIRGenerator extends ValueVisitor {
     private void setOperandsForLocals(ValueStack state) {
         CallingConvention args = compilation.frameMap().incomingArguments();
         int javaIndex = 0;
-        for (int i = 0; i < args.length(); i++) {
-            LIROperand src = args.at(i);
+        for (int i = 0; i < args.operands.length; i++) {
+            LIROperand src = args.operands[i];
             assert !src.isIllegal() : "check";
 
             LIROperand dest = rlock(src.kind.stackType());
@@ -576,7 +576,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true, true);
 
-        List<LIROperand> argList = cc.arguments();
+        List<LIROperand> argList = Arrays.asList(cc.operands);
         List<LIRItem> args = visitInvokeArguments(x);
         LIROperand receiver = LIROperandFactory.IllegalLocation;
 
@@ -590,7 +590,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         loadInvokeArguments(x, args, argList);
 
         if (x.hasReceiver()) {
-            args.get(0).loadItemForce(cc.at(0));
+            args.get(0).loadItemForce(cc.operands[0]);
             receiver = args.get(0).result();
         }
 
@@ -610,7 +610,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
             // emit invoke code
             boolean optimized = target.isLoaded() && target.isFinalMethod();
-            assert receiver.isIllegal() || receiver.equals(cc.at(0)) : "must match";
+            assert receiver.isIllegal() || receiver.equals(cc.operands[0]) : "must match";
 
             switch (x.opcode()) {
                 case Bytecodes.INVOKESTATIC:
@@ -1151,7 +1151,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert !currentBlock.checkBlockFlag(BlockBegin.BlockFlag.DefaultExceptionHandler) || unwind : "should be no more handlers to dispatch to";
 
         // move exception oop into fixed register
-        LIROperand argumentOperand = compilation.frameMap().runtimeCallingConvention(new CiKind[]{CiKind.Object}).at(0);
+        CallingConvention callingConvention = compilation.frameMap().runtimeCallingConvention(new CiKind[]{CiKind.Object});
+        LIROperand argumentOperand = callingConvention.operands[0];
         lir.move(exceptionOpr, argumentOperand);
 
         if (unwind) {
@@ -1769,10 +1770,10 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (signature != null) {
             // move the arguments into the correct location
             CallingConvention cc = compilation.frameMap().runtimeCallingConvention(signature);
-            assert cc.length() == args.size() : "argument mismatch";
+            assert cc.operands.length == args.size() : "argument mismatch";
             for (int i = 0; i < args.size(); i++) {
                 LIROperand arg = args.get(i);
-                LIROperand loc = cc.at(i);
+                LIROperand loc = cc.operands[i];
                 if (loc.isRegister()) {
                     lir.move(arg, loc);
                 } else {
@@ -1785,7 +1786,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                     }
                 }
             }
-            argumentList.addAll(cc.arguments());
+            argumentList.addAll(Arrays.asList(cc.operands));
         } else {
             assert args == null;
         }

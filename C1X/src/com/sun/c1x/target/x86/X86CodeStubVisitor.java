@@ -59,7 +59,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         CallingConvention cc = map.javaCallingConvention(Util.signatureToBasicTypes(compilation.method.signatureType(), !compilation.method.isStatic()), true, false);
 
         // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
-        final int adapterFrameSize = cc.overflowArgumentsSize();
+        final int adapterFrameSize = cc.overflowArgumentSize;
 
         // Allocate space on the stack (adapted parameters + caller's frame pointer)
         masm.push(X86.rbp);
@@ -79,11 +79,11 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         int jitCallerStackOffset = adapterFrameSize + framePrefixSize;
 
         final int jitSlotSize = compilation.runtime.getJITStackSlotSize();
-        for (int i = cc.locations().length - 1; i >= 0;  i--) {
-            CiLocation location = cc.locations()[i];
+        for (int i = cc.locations.length - 1; i >= 0;  i--) {
+            CiLocation location = cc.locations[i];
             CiKind t = location.kind;
             LIROperand src = LIROperandFactory.address(CiRegister.Stack, jitCallerStackOffset, t);
-            ce.moveOp(src, cc.at(i), t, null, false);
+            ce.moveOp(src, cc.operands[i], t, null, false);
             jitCallerStackOffset += t.size * jitSlotSize;
         }
 
