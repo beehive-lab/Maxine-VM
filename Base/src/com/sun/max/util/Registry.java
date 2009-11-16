@@ -32,7 +32,7 @@ import com.sun.max.program.*;
  * no parameters). If the alias is not registered, the registry will try to use
  * the alias as a fully-qualified Java class and load it using reflection.
  *
- * @author "Ben L. Titzer"
+ * @author Ben L. Titzer
  */
 public class Registry<Class_Type> {
 

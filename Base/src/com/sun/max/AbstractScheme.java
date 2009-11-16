@@ -25,19 +25,14 @@ package com.sun.max;
  */
 public abstract class AbstractScheme {
 
-    protected final String name;
+    public final String name;
 
     protected AbstractScheme() {
         name = getClass().getSimpleName();
     }
 
-    public String name() {
-        return name;
-    }
-
     @Override
     public String toString() {
-        return name();
+        return name;
     }
-
 }

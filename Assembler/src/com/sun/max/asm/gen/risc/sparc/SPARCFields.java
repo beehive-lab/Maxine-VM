@@ -329,7 +329,6 @@ public final class SPARCFields {
 
     static {
         StaticFieldName.Static.initialize(SPARCFields.class, new StaticFieldName.StringFunction() {
-
             public String function(String name) {
                 if (name.startsWith("_")) {
                     return name.substring(1);

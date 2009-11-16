@@ -22,11 +22,10 @@ package com.sun.max;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class BasePackage extends MaxPackage {
     protected BasePackage() {
-        super();
     }
 }

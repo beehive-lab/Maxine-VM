@@ -21,7 +21,6 @@
 package com.sun.max.vm.hotpath;
 
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.compiler.tir.pipeline.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
