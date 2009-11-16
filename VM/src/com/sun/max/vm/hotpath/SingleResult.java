@@ -18,16 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.lang;
+package com.sun.max.vm.hotpath;
+
+import com.sun.max.program.*;
+import com.sun.max.lang.MutableInnerClassGlobal;
 
 /**
  * @author Bernd Mathiske
  */
-public final class Floats {
+public class SingleResult<Object_Type> extends MutableInnerClassGlobal<Object_Type> {
 
-    private Floats() {
+    public SingleResult() {
+        super();
     }
 
-    public static final int SIZE = 4;
+    @Override
+    public Object_Type value() {
+        ProgramError.check(super.value() != null, "no result");
+        return super.value();
+    }
 
+    @Override
+    public void setValue(Object_Type result) {
+        ProgramError.check(super.value() == null, "multiple results when only one was expected: " + result + " and " + super.value());
+        super.setValue(result);
+    }
 }

@@ -36,6 +36,9 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class Pointer extends Address implements Accessor {
 
+    private static final int FLOAT_SIZE = 4;
+    private static final int DOUBLE_SIZE = 8;
+
     protected Pointer() {
     }
 
@@ -472,7 +475,7 @@ public abstract class Pointer extends Address implements Accessor {
     @INLINE
     public final float getFloat(int displacement, int index) {
         if (risc() || Word.isBoxed()) {
-            return readFloat(Offset.fromInt(index).times(Floats.SIZE).plus(displacement));
+            return readFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement));
         }
         return builtinGetFloat(displacement, index);
     }
@@ -552,7 +555,7 @@ public abstract class Pointer extends Address implements Accessor {
     @INLINE
     public final double getDouble(int displacement, int index) {
         if (risc() || Word.isBoxed()) {
-            return readDouble(Offset.fromInt(index).times(Doubles.SIZE).plus(displacement));
+            return readDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement));
         }
         return builtinGetDouble(displacement, index);
     }
@@ -874,7 +877,7 @@ public abstract class Pointer extends Address implements Accessor {
     @INLINE
     public final void setFloat(int displacement, int index, float value) {
         if (risc() || Word.isBoxed()) {
-            writeFloat(Offset.fromInt(index).times(Floats.SIZE).plus(displacement), value);
+            writeFloat(Offset.fromInt(index).times(FLOAT_SIZE).plus(displacement), value);
         } else {
             builtinSetFloat(displacement, index, value);
         }
@@ -958,7 +961,7 @@ public abstract class Pointer extends Address implements Accessor {
     @INLINE
     public final void setDouble(int displacement, int index, double value) {
         if (risc() || Word.isBoxed()) {
-            writeDouble(Offset.fromInt(index).times(Doubles.SIZE).plus(displacement), value);
+            writeDouble(Offset.fromInt(index).times(DOUBLE_SIZE).plus(displacement), value);
         } else {
             builtinSetDouble(displacement, index, value);
         }

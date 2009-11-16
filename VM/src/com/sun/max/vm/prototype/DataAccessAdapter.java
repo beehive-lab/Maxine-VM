@@ -37,6 +37,10 @@ import com.sun.max.vm.compiler.builtin.*;
  */
 public abstract class DataAccessAdapter implements DataAccess {
 
+    private static final int BOOLEAN_SIZE = 1;
+    private static final int FLOAT_SIZE = 4;
+    private static final int DOUBLE_SIZE = 8;
+
     private final WordWidth wordWidth;
 
     protected DataAccessAdapter(WordWidth wordWidth) {
@@ -80,7 +84,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public boolean getBoolean(Address address, int displacement, int index) {
-        return readBoolean(address.plus(displacement).plus(index * Booleans.SIZE));
+        return readBoolean(address.plus(displacement).plus(index * BOOLEAN_SIZE));
     }
 
     public short readShort(Address address, Offset offset) {
@@ -136,7 +140,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public float getFloat(Address address, int displacement, int index) {
-        return readFloat(address.plus(displacement).plus(index * Floats.SIZE));
+        return readFloat(address.plus(displacement).plus(index * FLOAT_SIZE));
     }
 
     public long readLong(Address address, Offset offset) {
@@ -164,7 +168,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public double getDouble(Address address, int displacement, int index) {
-        return readDouble(address.plus(displacement).plus(index * Doubles.SIZE));
+        return readDouble(address.plus(displacement).plus(index * DOUBLE_SIZE));
     }
 
     public Word readWord(Address address) {
@@ -230,7 +234,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void setBoolean(Address address, int displacement, int index, boolean value) {
-        writeBoolean(address.plus(displacement).plus(index * Booleans.SIZE), value);
+        writeBoolean(address.plus(displacement).plus(index * BOOLEAN_SIZE), value);
     }
 
     public void writeShort(Address address, Offset offset, short value) {
@@ -286,7 +290,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void setFloat(Address address, int displacement, int index, float value) {
-        writeFloat(address.plus(displacement).plus(index * Floats.SIZE), value);
+        writeFloat(address.plus(displacement).plus(index * FLOAT_SIZE), value);
     }
 
     public void writeLong(Address address, Offset offset, long value) {
@@ -314,7 +318,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void setDouble(Address address, int displacement, int index, double value) {
-        writeDouble(address.plus(displacement).plus(index * Doubles.SIZE), value);
+        writeDouble(address.plus(displacement).plus(index * DOUBLE_SIZE), value);
     }
 
     public void writeWord(Address address, Word value) {
