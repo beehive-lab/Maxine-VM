@@ -292,34 +292,43 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void emitD2L() {
-        convertPrologue();
-        asm.mov64(convertResult, Long.MIN_VALUE);
-        asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forDouble(Double.NaN)));
-        asm.cmovq(Condition.equal, convertResult, asm.recordDataReferenceInCode(CiConstant.forLong(0L)));
-        convertEpilogue();
+        emitCOMISSD(true, false);
     }
 
     private void emitD2I() {
-        convertPrologue();
-        asm.mov64(convertResult, Long.MIN_VALUE);
-        asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forDouble(Double.NaN)));
-        asm.cmovl(Condition.equal, convertResult, asm.recordDataReferenceInCode(CiConstant.forInt(0)));
-        convertEpilogue();
+        emitCOMISSD(true, true);
     }
 
     private void emitF2L() {
-        convertPrologue();
-        asm.movl(convertResult, Integer.MIN_VALUE);
-        asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forFloat(Float.NaN)));
-        asm.cmovq(Condition.equal, convertResult, asm.recordDataReferenceInCode(CiConstant.forLong(0L)));
-        convertEpilogue();
+        emitCOMISSD(false, false);
     }
 
     private void emitF2I() {
+        emitCOMISSD(false, true);
+    }
+
+    private void emitCOMISSD(boolean isDouble, boolean isInt) {
         convertPrologue();
-        asm.movl(convertResult, Integer.MIN_VALUE);
-        asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forFloat(Float.NaN)));
-        asm.cmovl(Condition.equal, convertResult, asm.recordDataReferenceInCode(CiConstant.forInt(0)));
+        if (isDouble) {
+            asm.ucomisd(convertArgument, asm.recordDataReferenceInCode(CiConstant.forDouble(0.0d)));
+        } else {
+            asm.ucomiss(convertArgument, asm.recordDataReferenceInCode(CiConstant.forFloat(0.0f)));
+        }
+        Label nan = new Label();
+        Label ret = new Label();
+        asm.jccb(Condition.parity, nan);
+        asm.jccb(Condition.below, ret);
+
+        // input is > 0 -> return maxInt
+        // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff
+        asm.decrement(convertResult, 1);
+        asm.jmpb(ret);
+
+        // input is NaN -> return 0
+        asm.bind(nan);
+        asm.xorptr(convertResult, convertResult);
+
+        asm.bind(ret);
         convertEpilogue();
     }
 

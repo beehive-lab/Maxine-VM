@@ -101,10 +101,10 @@ public class JTRuns {
             case 15: jtt_bytecode_BC_checkcast01(); break;
             case 16: jtt_bytecode_BC_checkcast02(); break;
             case 17: jtt_bytecode_BC_d2f(); break;
-            case 18: jtt_bytecode_BC_d2i(); break;
-            case 19: jtt_bytecode_BC_d2i_nan(); break;
-            case 20: jtt_bytecode_BC_d2l(); break;
-            case 21: jtt_bytecode_BC_d2l_nan(); break;
+            case 18: jtt_bytecode_BC_d2i01(); break;
+            case 19: jtt_bytecode_BC_d2i02(); break;
+            case 20: jtt_bytecode_BC_d2l01(); break;
+            case 21: jtt_bytecode_BC_d2l02(); break;
             case 22: jtt_bytecode_BC_dadd(); break;
             case 23: jtt_bytecode_BC_daload(); break;
             case 24: jtt_bytecode_BC_dastore(); break;
@@ -125,10 +125,10 @@ public class JTRuns {
             case 39: jtt_bytecode_BC_dreturn(); break;
             case 40: jtt_bytecode_BC_dsub(); break;
             case 41: jtt_bytecode_BC_f2d(); break;
-            case 42: jtt_bytecode_BC_f2i(); break;
-            case 43: jtt_bytecode_BC_f2i_nan(); break;
-            case 44: jtt_bytecode_BC_f2l(); break;
-            case 45: jtt_bytecode_BC_f2l_nan(); break;
+            case 42: jtt_bytecode_BC_f2i01(); break;
+            case 43: jtt_bytecode_BC_f2i02(); break;
+            case 44: jtt_bytecode_BC_f2l01(); break;
+            case 45: jtt_bytecode_BC_f2l02(); break;
             case 46: jtt_bytecode_BC_fadd(); break;
             case 47: jtt_bytecode_BC_faload(); break;
             case 48: jtt_bytecode_BC_fastore(); break;
@@ -1255,31 +1255,31 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_bytecode_BC_d2i() {
+        static void jtt_bytecode_BC_d2i01() {
             begin("jtt.bytecode.BC_d2i01");
             String runString = null;
             try {
             // (0.0) == 0
                 runString = "(0.0)";
-                if (0 != BC_d2i01.test(0.0)) {
+                if (0 != jtt.bytecode.BC_d2i01.test(0.0)) {
                     fail(runString);
                     return;
                 }
             // (1.0) == 1
                 runString = "(1.0)";
-                if (1 != BC_d2i01.test(1.0)) {
+                if (1 != jtt.bytecode.BC_d2i01.test(1.0)) {
                     fail(runString);
                     return;
                 }
             // (-1.06) == -1
                 runString = "(-1.06)";
-                if (-1 != BC_d2i01.test(-1.06)) {
+                if (-1 != jtt.bytecode.BC_d2i01.test(-1.06)) {
                     fail(runString);
                     return;
                 }
             // (-156.82743) == -156
                 runString = "(-156.82743)";
-                if (-156 != BC_d2i01.test(-156.82743)) {
+                if (-156 != jtt.bytecode.BC_d2i01.test(-156.82743)) {
                     fail(runString);
                     return;
                 }
@@ -1289,13 +1289,13 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_bytecode_BC_d2i_nan() {
+        static void jtt_bytecode_BC_d2i02() {
             begin("jtt.bytecode.BC_d2i02");
             String runString = null;
             try {
             // (0) == -2147483648
                 runString = "(0)";
-                if (-2147483648 != BC_d2i02.test(0)) {
+                if (-2147483648 != jtt.bytecode.BC_d2i02.test(0)) {
                     fail(runString);
                     return;
                 }
@@ -1305,31 +1305,31 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_bytecode_BC_d2l() {
+        static void jtt_bytecode_BC_d2l01() {
             begin("jtt.bytecode.BC_d2l01");
             String runString = null;
             try {
             // (0.0) == 0
                 runString = "(0.0)";
-                if (0L != BC_d2l01.test(0.0)) {
+                if (0L != jtt.bytecode.BC_d2l01.test(0.0)) {
                     fail(runString);
                     return;
                 }
             // (1.0) == 1
                 runString = "(1.0)";
-                if (1L != BC_d2l01.test(1.0)) {
+                if (1L != jtt.bytecode.BC_d2l01.test(1.0)) {
                     fail(runString);
                     return;
                 }
             // (-1.06) == -1
                 runString = "(-1.06)";
-                if (-1L != BC_d2l01.test(-1.06)) {
+                if (-1L != jtt.bytecode.BC_d2l01.test(-1.06)) {
                     fail(runString);
                     return;
                 }
             // (-156.82743) == -156
                 runString = "(-156.82743)";
-                if (-156L != BC_d2l01.test(-156.82743)) {
+                if (-156L != jtt.bytecode.BC_d2l01.test(-156.82743)) {
                     fail(runString);
                     return;
                 }
@@ -1339,13 +1339,13 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_bytecode_BC_d2l_nan() {
+        static void jtt_bytecode_BC_d2l02() {
             begin("jtt.bytecode.BC_d2l02");
             String runString = null;
             try {
             // (0) == -9223372036854775808
                 runString = "(0)";
-                if (-9223372036854775808L != BC_d2l02.test(0)) {
+                if (-9223372036854775808L != jtt.bytecode.BC_d2l02.test(0)) {
                     fail(runString);
                     return;
                 }
@@ -1951,31 +1951,31 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_bytecode_BC_f2i() {
+        static void jtt_bytecode_BC_f2i01() {
             begin("jtt.bytecode.BC_f2i01");
             String runString = null;
             try {
             // (0.0) == 0
                 runString = "(0.0)";
-                if (0 != BC_f2i01.test(0.0f)) {
+                if (0 != jtt.bytecode.BC_f2i01.test(0.0f)) {
                     fail(runString);
                     return;
                 }
             // (1.0) == 1
                 runString = "(1.0)";
-                if (1 != BC_f2i01.test(1.0f)) {
+                if (1 != jtt.bytecode.BC_f2i01.test(1.0f)) {
                     fail(runString);
                     return;
                 }
             // (-1.06) == -1
                 runString = "(-1.06)";
-                if (-1 != BC_f2i01.test(-1.06f)) {
+                if (-1 != jtt.bytecode.BC_f2i01.test(-1.06f)) {
                     fail(runString);
                     return;
                 }
             // (-156.82742) == -156
                 runString = "(-156.82742)";
-                if (-156 != BC_f2i01.test(-156.82742f)) {
+                if (-156 != jtt.bytecode.BC_f2i01.test(-156.82742f)) {
                     fail(runString);
                     return;
                 }
@@ -1985,13 +1985,13 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_bytecode_BC_f2i_nan() {
+        static void jtt_bytecode_BC_f2i02() {
             begin("jtt.bytecode.BC_f2i02");
             String runString = null;
             try {
             // (0) == -2147483648
                 runString = "(0)";
-                if (-2147483648 != BC_f2i02.test(0)) {
+                if (-2147483648 != jtt.bytecode.BC_f2i02.test(0)) {
                     fail(runString);
                     return;
                 }
@@ -2001,31 +2001,31 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_bytecode_BC_f2l() {
+        static void jtt_bytecode_BC_f2l01() {
             begin("jtt.bytecode.BC_f2l01");
             String runString = null;
             try {
             // (0.0) == 0
                 runString = "(0.0)";
-                if (0L != BC_f2l01.test(0.0f)) {
+                if (0L != jtt.bytecode.BC_f2l01.test(0.0f)) {
                     fail(runString);
                     return;
                 }
             // (1.0) == 1
                 runString = "(1.0)";
-                if (1L != BC_f2l01.test(1.0f)) {
+                if (1L != jtt.bytecode.BC_f2l01.test(1.0f)) {
                     fail(runString);
                     return;
                 }
             // (-1.06) == -1
                 runString = "(-1.06)";
-                if (-1L != BC_f2l01.test(-1.06f)) {
+                if (-1L != jtt.bytecode.BC_f2l01.test(-1.06f)) {
                     fail(runString);
                     return;
                 }
             // (-156.82742) == -156
                 runString = "(-156.82742)";
-                if (-156L != BC_f2l01.test(-156.82742f)) {
+                if (-156L != jtt.bytecode.BC_f2l01.test(-156.82742f)) {
                     fail(runString);
                     return;
                 }
@@ -2035,13 +2035,13 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_bytecode_BC_f2l_nan() {
+        static void jtt_bytecode_BC_f2l02() {
             begin("jtt.bytecode.BC_f2l02");
             String runString = null;
             try {
             // (0) == -9223372036854775808
                 runString = "(0)";
-                if (-9223372036854775808L != BC_f2l02.test(0)) {
+                if (-9223372036854775808L != jtt.bytecode.BC_f2l02.test(0)) {
                     fail(runString);
                     return;
                 }

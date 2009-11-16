@@ -2587,7 +2587,6 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     int prefixAndEncode(int dstEnc, int srcEnc, boolean byteinst) {
-//        assert target.arch.is32bit();
         if (dstEnc < 8) {
             if (srcEnc >= 8) {
                 emitByte(Prefix.REXB);

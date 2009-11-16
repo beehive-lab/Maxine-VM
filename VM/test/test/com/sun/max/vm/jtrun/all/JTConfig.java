@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.jtrun.all;
 
 import test.com.sun.max.vm.jtrun.*;
-import jtt.bytecode.*;
 
 /**
  * The <code>JavaTesterConfig</code> class contains generated code which contains the class list
@@ -51,10 +50,10 @@ public class JTConfig {
         jtt.bytecode.BC_checkcast01.class,
         jtt.bytecode.BC_checkcast02.class,
         jtt.bytecode.BC_d2f.class,
-        BC_d2i01.class,
-        BC_d2i02.class,
-        BC_d2l01.class,
-        BC_d2l02.class,
+        jtt.bytecode.BC_d2i01.class,
+        jtt.bytecode.BC_d2i02.class,
+        jtt.bytecode.BC_d2l01.class,
+        jtt.bytecode.BC_d2l02.class,
         jtt.bytecode.BC_dadd.class,
         jtt.bytecode.BC_daload.class,
         jtt.bytecode.BC_dastore.class,
@@ -75,10 +74,10 @@ public class JTConfig {
         jtt.bytecode.BC_dreturn.class,
         jtt.bytecode.BC_dsub.class,
         jtt.bytecode.BC_f2d.class,
-        BC_f2i01.class,
-        BC_f2i02.class,
-        BC_f2l01.class,
-        BC_f2l02.class,
+        jtt.bytecode.BC_f2i01.class,
+        jtt.bytecode.BC_f2i02.class,
+        jtt.bytecode.BC_f2l01.class,
+        jtt.bytecode.BC_f2l02.class,
         jtt.bytecode.BC_fadd.class,
         jtt.bytecode.BC_faload.class,
         jtt.bytecode.BC_fastore.class,
