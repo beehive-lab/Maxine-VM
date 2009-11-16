@@ -29,7 +29,6 @@ import com.sun.c1x.xir.*;
  * @author Thomas Wuerthinger
  */
 public interface GlobalStubEmitter {
-
     CiTargetMethod emit(GlobalStub stub);
     CiTargetMethod emitRuntimeStub(CiRuntimeCall runtimeCall);
     CiTargetMethod emit(XirTemplate t);

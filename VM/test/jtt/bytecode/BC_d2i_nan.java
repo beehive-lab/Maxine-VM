@@ -23,12 +23,14 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 1.0d = 1; 0.0d = 0
+ * @Runs: 0 = -2147483648, 1 = -2147483648, 2 = 0, 3 = 2147483647; 4 = -2147483647
  */
 public class BC_d2i_nan {
 
-    // (int)0D/0D should be 0
-    public static int test(double d) {
-        return (int) (d / d);
+    private static double Z = 0d;
+    private static double[] inputs = { -1.3e44d, -1d / Z, Z / Z, 1d / Z, 1.3e44d };
+
+    public static int test(int i) {
+        return (int) inputs[i];
     }
 }

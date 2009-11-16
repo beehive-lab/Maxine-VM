@@ -2745,7 +2745,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
                     CallingConvention cc = this.frameMap().runtimeCallingConvention(signature);
                     for (int i = 0; i < inst.arguments.length; i++) {
-                        LIROperand argumentLocation = cc.arguments().get(i);
+                        LIROperand argumentLocation = cc.operands[i];
                         LIROperand argumentSourceLocation = ops[inst.arguments[i].index];
                         if (argumentLocation != argumentSourceLocation) {
                             moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null, false);

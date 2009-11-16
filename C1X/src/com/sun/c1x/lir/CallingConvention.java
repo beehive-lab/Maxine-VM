@@ -20,9 +20,11 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
-
 import com.sun.c1x.ci.*;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * This class represents a calling convention instance for a particular method invocation and describes the ABI for
@@ -30,26 +32,26 @@ import com.sun.c1x.ci.*;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public class CallingConvention {
 
-    private final int overflowArgumentsSize;
-    private List<LIROperand> arguments;
-    private CiLocation[] locations;
+    public final int overflowArgumentSize;
+    public final CiLocation[] locations;
+    public final LIROperand[] operands;
 
     CallingConvention(CiLocation[] locations) {
         this.locations = locations;
-        arguments = new ArrayList<LIROperand>(locations.length);
-        int curOverflowArgumentsSize = 0;
-        for (CiLocation l : locations) {
-            arguments.add(locationToOperand(l));
+        this.operands = new LIROperand[locations.length];
+        int outgoing = 0;
+        for (int i = 0; i < locations.length; i++) {
+            CiLocation l = locations[i];
+            operands[i] = locationToOperand(l);
             if (l.isStackOffset()) {
-                curOverflowArgumentsSize = Math.max(curOverflowArgumentsSize, l.stackOffset + l.stackSize);
+                outgoing = Math.max(outgoing, l.stackOffset + l.stackSize);
             }
         }
 
-        overflowArgumentsSize = curOverflowArgumentsSize;
+        overflowArgumentSize = outgoing;
     }
 
     public static LIROperand locationToOperand(CiLocation location) {
@@ -69,51 +71,15 @@ public class CallingConvention {
         }
     }
 
-    public CiLocation[] locations() {
-        return locations;
-    }
-
-    /**
-     * Returns the number of arguments.
-     *
-     * @return the number of arguments
-     */
-    public int length() {
-        return arguments.size();
-    }
-
-    /**
-     * Get the LIROperand representing the argument at the specified index.
-     *
-     * @param i
-     *            the index into the arguments
-     * @return the LIROperand representing the argument
-     */
-    public LIROperand at(int i) {
-        return arguments.get(i);
-    }
-
-    /**
-     * Gets a list of the LIROperands for all the arguments.
-     *
-     * @return the list of arguments
-     */
-    public List<LIROperand> arguments() {
-        return arguments;
-    }
-
-    public int overflowArgumentsSize() {
-        return overflowArgumentsSize;
-    }
-
     @Override
     public String toString() {
         StringBuffer result = new StringBuffer();
         result.append("CallingConvention[");
-        for (LIROperand op : arguments) {
-            result.append(op.toString() + " ");
+        for (LIROperand op : operands) {
+            result.append(op.toString()).append(" ");
         }
         result.append("]");
         return result.toString();
     }
+
 }

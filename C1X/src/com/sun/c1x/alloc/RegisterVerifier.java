@@ -86,8 +86,8 @@ final class RegisterVerifier {
             inputState.add(null);
         }
         CallingConvention args = compilation().frameMap().incomingArguments();
-        for (int n = 0; n < args.length(); n++) {
-            LIROperand opr = args.at(n);
+        for (int n = 0; n < args.operands.length; n++) {
+            LIROperand opr = args.operands[n];
             if (opr.isRegister()) {
                 Interval interval = intervalAt(regNum(opr));
 

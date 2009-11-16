@@ -173,6 +173,6 @@ public final class Buffer {
     }
 
     public void align(int align) {
-        position = Util.roundTo(position + 1, align) - 1;
+        position = Util.roundUp(position + 1, align) - 1;
     }
 }

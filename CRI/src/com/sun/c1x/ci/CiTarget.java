@@ -130,4 +130,15 @@ public class CiTarget {
     public boolean supportsCx8() {
         return true;
     }
+
+    /**
+     * Align the given frame size (without return instruction pointer) to the stack
+     * alignment size and return the aligned size (without return instruction pointer).
+     * @param frameSize the initial frame size to be aligned
+     * @return the aligned frame size
+     */
+    public int alignFrameSize(int frameSize) {
+        int x = frameSize + arch.returnAddressSize + (stackAlignment - 1);
+        return (x / stackAlignment) * stackAlignment - arch.returnAddressSize;
+    }
 }

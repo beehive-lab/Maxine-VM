@@ -32,10 +32,8 @@ import static com.sun.c1x.ci.CiKind.Word;
 /**
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public enum CiRuntimeCall {
-
     UnwindException(Void, Object),
     ThrowRangeCheckFailed(Void, Int),
     ThrowIndexException(Void, Int),
