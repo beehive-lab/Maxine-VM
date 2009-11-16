@@ -492,13 +492,14 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void stop(String msg) {
-
-        if (target.arch.is64bit()) {
-            // TODO: Add debug infos / message as paramters to Debug
-            callRuntime(CiRuntimeCall.Debug);
-            hlt();
-        } else {
-            throw Util.unimplemented();
+        if (C1XOptions.GenAssertionCode) {
+            if (target.arch.is64bit()) {
+                // TODO: pass a pointer to the message
+                callRuntime(CiRuntimeCall.Debug);
+                hlt();
+            } else {
+                throw Util.unimplemented();
+            }
         }
     }
 
