@@ -40,8 +40,7 @@ public class BlockingServerDaemon extends Thread {
     /**
      * The lock object used to synchronize client/server interaction.
      */
-    static class Lock {}
-    protected final Object token = new Lock();
+    protected final Object token = new Object();
 
     public BlockingServerDaemon(String name) {
         super(name);
