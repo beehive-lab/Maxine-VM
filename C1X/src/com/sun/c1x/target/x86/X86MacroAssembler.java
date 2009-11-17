@@ -71,13 +71,13 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     public final int callGlobalStubNoArgs(GlobalStub stub, LIRDebugInfo info, CiRegister result) {
-        assert 0 == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), CiKind.Illegal, info, result);
+        assert 0 == stub.argOffsets.length;
+        return callGlobalStubHelper(stub, CiKind.Illegal, info, result);
     }
 
     public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
-        assert args.length == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), CiKind.Illegal, info, result, args);
+        assert args.length == stub.argOffsets.length;
+        return callGlobalStubHelper(stub, CiKind.Illegal, info, result, args);
     }
 
     public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
@@ -85,13 +85,13 @@ public class X86MacroAssembler extends X86Assembler {
         return callGlobalStubHelper(compiler.lookupGlobalStub(stub), CiKind.Illegal, info, result, args);
     }
 
-    private int callGlobalStubHelper(Object stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
-        int index = 0;
-        for (RegisterOrConstant op : args) {
-            storeParameter(op, index++);
+    private int callGlobalStubHelper(GlobalStub stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
+        for (int i = 0; i < args.length; i++) {
+            RegisterOrConstant op = args[i];
+            storeParameter(op, stub.argOffsets[i]);
         }
 
-        emitGlobalStubCall(stub, info);
+        emitGlobalStubCall(stub.stubObject, info);
         int pos = this.codeBuffer.position();
 
         if (result != CiRegister.None) {
@@ -100,8 +100,8 @@ public class X86MacroAssembler extends X86Assembler {
 
         // Clear out parameters
         if (C1XOptions.GenAssertionCode) {
-            for (index = 0; index < args.length; index++) {
-                storeParameter(0, index++);
+            for (int i = 0; i < args.length; i++) {
+                storeParameter(0, stub.argOffsets[i]);
             }
         }
         return pos;
@@ -123,34 +123,31 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void storeParameter(CiRegister r, int index) {
-        int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
-        movptr(new Address(X86.rsp, offsetFromRspInBytes), r);
+    void storeParameter(CiRegister r, int offset) {
+        movptr(new Address(X86.rsp, offset), r);
     }
 
-    void storeParameter(int c, int index) {
-        int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
-        movptr(new Address(X86.rsp, offsetFromRspInBytes), c);
+    void storeParameter(int c, int offset) {
+        movptr(new Address(X86.rsp, offset), c);
     }
 
-    void storeParameter(RegisterOrConstant rc, int offsetFromRspInWords) {
+    void storeParameter(CiConstant o, int offset) {
+        assert o.kind == CiKind.Object;
+        movoop(new Address(X86.rsp, offset), o);
+    }
+
+    void storeParameter(RegisterOrConstant rc, int offset) {
         if (rc.isConstant()) {
-            storeParameter(rc.asConstant(), offsetFromRspInWords);
+            storeParameter(rc.asConstant(), offset);
         } else if (rc.isOopConstant()) {
-            storeParameter(CiConstant.forObject(rc.asOop()), offsetFromRspInWords);
+            storeParameter(CiConstant.forObject(rc.asOop()), offset);
         } else {
             assert rc.isRegister();
-            storeParameter(rc.asRegister(), offsetFromRspInWords);
+            storeParameter(rc.asRegister(), offset);
         }
     }
 
-    void storeParameter(CiConstant o, int index) {
-        assert o.basicType == CiKind.Object;
-        int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
-        movoop(new Address(X86.rsp, offsetFromRspInBytes), o);
-    }
-
-    void increment(CiRegister reg, int value /* = 1 */) {
+    void increment(CiRegister reg, int value) {
         if (target.arch.is64bit()) {
             incrementq(reg, value);
         } else {
@@ -158,7 +155,7 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    void decrement(CiRegister reg, int value /* = 1 */) {
+    void decrement(CiRegister reg, int value) {
         if (target.arch.is64bit()) {
             decrementq(reg, value);
         } else {
@@ -321,7 +318,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movoop(CiRegister dst, CiConstant obj) {
-        assert obj.basicType == CiKind.Object;
+        assert obj.kind == CiKind.Object;
         if (target.arch.is32bit()) {
             // (tw) Cannot embed oop as immediate!
             throw Util.unimplemented();
@@ -337,7 +334,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movoop(Address dst, CiConstant obj) {
-        assert obj.basicType == CiKind.Object;
+        assert obj.kind == CiKind.Object;
 
         if (target.arch.is32bit()) {
             // (tw) Cannot embed oop as immediate!

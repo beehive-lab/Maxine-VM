@@ -64,7 +64,7 @@ public class BirBlock implements IrBlock {
 
     @Override
     public int hashCode() {
-        return bytecodeBlock.start() * bytecodeBlock.end();
+        return bytecodeBlock.start * bytecodeBlock.end;
     }
 
     public void addPredecessor(BirBlock predecessor) {
@@ -84,7 +84,7 @@ public class BirBlock implements IrBlock {
     }
 
     public int serial() {
-        return bytecodeBlock.start();
+        return bytecodeBlock.start;
     }
 
     @Override
@@ -93,6 +93,6 @@ public class BirBlock implements IrBlock {
     }
 
     public boolean isReachable() {
-        return !predecessors().isEmpty() || bytecodeBlock.start() == 0 || role == IrBlock.Role.EXCEPTION_DISPATCHER;
+        return !predecessors().isEmpty() || bytecodeBlock.start == 0 || role == IrBlock.Role.EXCEPTION_DISPATCHER;
     }
 }

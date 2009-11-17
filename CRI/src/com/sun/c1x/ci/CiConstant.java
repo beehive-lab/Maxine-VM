@@ -45,7 +45,7 @@ public final class CiConstant extends CiValue {
     public static final CiConstant DOUBLE_1 = forDouble(1);
 
     private final Object value;
-    public final CiKind basicType;
+    public final CiKind kind;
 
     /**
      * Create a new constant represented by the specified object reference or boxed
@@ -54,7 +54,7 @@ public final class CiConstant extends CiValue {
      * @param value the value of this constant
      */
     public CiConstant(CiKind type, Object value) {
-        this.basicType = type;
+        this.kind = type;
         this.value = value;
     }
 
@@ -71,8 +71,8 @@ public final class CiConstant extends CiValue {
      */
     @Override
     public String toString() {
-        final String val = basicType.isObject() ? "object@" + System.identityHashCode(value) : value.toString();
-        return basicType.javaName + "(" + val + ")";
+        final String val = kind.isObject() ? "object@" + System.identityHashCode(value) : value.toString();
+        return kind.javaName + "(" + val + ")";
     }
 
     /**
@@ -98,13 +98,13 @@ public final class CiConstant extends CiValue {
 
     private boolean valueEqual(CiConstant cother) {
         // must have equivalent tags to be equal
-        if (basicType != cother.basicType) {
+        if (kind != cother.kind) {
             return false;
         }
         // use == for object references and .equals() for boxed types
         if (value == cother.value) {
             return true;
-        } else if (!basicType.isObject() && value != null && value.equals(cother.value)) {
+        } else if (!kind.isObject() && value != null && value.equals(cother.value)) {
             return true;
         }
         return false;
@@ -115,7 +115,7 @@ public final class CiConstant extends CiValue {
      * @return the int value of this constant
      */
     public int asInt() {
-        if (basicType != CiKind.Object) {
+        if (kind != CiKind.Object) {
             if (value instanceof Integer) {
                 return (Integer) value;
             }
@@ -140,7 +140,7 @@ public final class CiConstant extends CiValue {
      * @return the boolean value of this constant
      */
     public boolean asBoolean() {
-    	if (basicType == CiKind.Boolean) {
+    	if (kind == CiKind.Boolean) {
     		return (Boolean) value;
     	}
 
@@ -152,7 +152,7 @@ public final class CiConstant extends CiValue {
      * @return the long value of this constant
      */
     public long asLong() {
-        if (basicType != CiKind.Object) {
+        if (kind != CiKind.Object) {
             if (value instanceof Long) {
                 return (Long) value;
             }
@@ -180,7 +180,7 @@ public final class CiConstant extends CiValue {
      * @return the float value of this constant
      */
     public float asFloat() {
-        if (basicType != CiKind.Object) {
+        if (kind != CiKind.Object) {
             if (value instanceof Float) {
                 return (Float) value;
             }
@@ -193,7 +193,7 @@ public final class CiConstant extends CiValue {
      * @return the double value of this constant
      */
     public double asDouble() {
-        if (basicType != CiKind.Object) {
+        if (kind != CiKind.Object) {
             if (value instanceof Double) {
                 return (Double) value;
             }
@@ -209,7 +209,7 @@ public final class CiConstant extends CiValue {
      * @return the object which this constant represents
      */
     public Object asObject() {
-        if (basicType == CiKind.Object) {
+        if (kind == CiKind.Object) {
             return value;
         }
         throw new Error("Constant is not object: " + this);
@@ -220,7 +220,7 @@ public final class CiConstant extends CiValue {
      * @return the object which this constant represents
      */
     public Object asJsr() {
-        if (basicType == CiKind.Jsr) {
+        if (kind == CiKind.Jsr) {
             return value;
         }
         throw new Error("Constant is not jsr: " + this);
@@ -232,7 +232,7 @@ public final class CiConstant extends CiValue {
      */
     @Override
     public int hashCode() {
-        if (basicType == CiKind.Object) {
+        if (kind == CiKind.Object) {
             return System.identityHashCode(value);
         }
         return value.hashCode();
@@ -254,7 +254,7 @@ public final class CiConstant extends CiValue {
      * @return <code>true</code> if the value is the default value for its type; <code>false</code> otherwise
      */
     public boolean isDefaultValue() {
-        switch (basicType) {
+        switch (kind) {
             case Int: return asInt() == 0;
             case Long: return asLong() == 0;
             case Float: return asFloat() == 0.0f; // TODO: be careful about -0.0

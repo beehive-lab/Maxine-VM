@@ -23,7 +23,6 @@ package com.sun.c1x.target.x86;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
@@ -33,6 +32,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
     private final X86LIRAssembler ce;
     private final X86MacroAssembler masm;
     private final C1XCompilation compilation;
+    private static final CiRegister[] NO_PARAMS = new CiRegister[0];
 
     public X86CodeStubVisitor(X86LIRAssembler lirAssembler) {
         this.ce = lirAssembler;
@@ -100,7 +100,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
 
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
         masm.bind(stub.entry);
-        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowArrayStoreException, stub.info, CiRegister.None);
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowArrayStoreException, stub.info, CiRegister.None, NO_PARAMS);
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -117,7 +117,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         }
 
         masm.bind(stub.entry);
-        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowArithmeticException, stub.info, CiRegister.None);
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowArithmeticException, stub.info, CiRegister.None, NO_PARAMS);
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -131,7 +131,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
         ce.compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
         masm.bind(stub.entry);
-        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowNullPointerException, stub.info, CiRegister.None);
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowNullPointerException, stub.info, CiRegister.None, NO_PARAMS);
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -144,7 +144,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
 
     public void visitMonitorEnterStub(MonitorEnterStub stub) {
         masm.bind(stub.entry);
-        int infoPos = masm.callGlobalStub(GlobalStub.MonitorEnter, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.Monitorenter, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
         compilation.addCallInfo(infoPos, stub.info);
         ce.verifyOopMap(stub.info);
         masm.jmp(stub.continuation);
@@ -157,14 +157,15 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
             ce.monitorAddress(stub.monitorIx, stub.lockReg());
         }
 
-        masm.callGlobalStub(GlobalStub.MonitorExit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.Monitorexit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
+        compilation.addCallInfo(infoPos, stub.info);
         masm.jmp(stub.continuation);
     }
 
     public void visitNewInstanceStub(NewInstanceStub stub) {
         masm.bind(stub.entry);
         ce.verifyOopMap(stub.info);
-        int infoPos = masm.callGlobalStub(stub.stubId, stub.info, stub.result().asRegister(), stub.klassReg().asRegister());
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.NewInstance, stub.info, stub.result().asRegister(), stub.klassReg().asRegister());
         compilation.addCallInfo(infoPos, stub.info);
         masm.jmp(stub.continuation);
     }
@@ -195,15 +196,15 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.bind(stub.entry);
 
         LIROperand index = stub.index();
-        int infoPos;
+        RegisterOrConstant rindex;
         if (index.isRegister()) {
-            infoPos = masm.callGlobalStub(GlobalStub.ThrowArrayIndexOutOfBoundsException, stub.info, CiRegister.None, index.asRegister());
+            rindex = new RegisterOrConstant(index.asRegister());
         } else {
             assert index.isConstant();
             LIRConstant constantIndex = (LIRConstant) index;
-            infoPos = masm.callGlobalStub(GlobalStub.ThrowArrayIndexOutOfBoundsException, stub.info, CiRegister.None, new RegisterOrConstant(constantIndex.asInt()));
+            rindex = new RegisterOrConstant(constantIndex.asInt());
         }
-
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowArrayIndexOutOfBoundsException, stub.info, CiRegister.None, rindex);
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -214,14 +215,9 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         }
     }
 
-    public void visitSimpleExceptionStub(SimpleExceptionStub stub) {
+    public void visitCheckCastStub(CheckCastStub stub) {
         masm.bind(stub.entry);
-        int infoPos;
-        if (stub.obj().isIllegal()) {
-            infoPos = masm.callGlobalStubNoArgs(stub.globalStub, stub.info, CiRegister.None);
-        } else {
-            infoPos = masm.callGlobalStub(stub.globalStub, stub.info, CiRegister.None, stub.obj().asRegister());
-        }
+        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowClassCastException, stub.info, CiRegister.None, stub.obj().asRegister());
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call

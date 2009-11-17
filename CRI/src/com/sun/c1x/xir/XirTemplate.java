@@ -32,6 +32,8 @@ import com.sun.c1x.xir.CiXirAssembler.XirOperand;
 /**
  * This class represents a completed template of XIR code that has been first assembled by
  * the runtime, and then verified and preprocessed by the compiler.
+ *
+ * @author Ben L. Titzer
  */
 public class XirTemplate {
 

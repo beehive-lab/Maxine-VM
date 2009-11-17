@@ -837,7 +837,7 @@ public class C0XCompilation {
             return;
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
-            switch (constant.basicType.stackType()) {
+            switch (constant.kind.stackType()) {
                 case Int:    push1(codeGen.genIntConstant(constant.asInt())); return;
                 case Long:   push2(codeGen.genLongConstant(constant.asLong())); return;
                 case Float:  push1(codeGen.genFloatConstant(constant.asFloat())); return;

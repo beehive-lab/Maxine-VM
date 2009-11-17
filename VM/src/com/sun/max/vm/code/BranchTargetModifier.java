@@ -37,7 +37,7 @@ public class BranchTargetModifier extends InstructionModifier {
     }
 
     public void fix(byte[] codeRegion, int offsetToCode, int dispToBranchTarget) throws AssemblyException {
-        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size());
+        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size);
         editor.fixBranchRelativeDisplacement(displacementWidth, dispToBranchTarget);
     }
 }

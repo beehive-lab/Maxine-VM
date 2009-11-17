@@ -189,9 +189,9 @@ public class IRInterpreter {
                 // These conversions are necessary since the input values are
                 // parsed as integers
                 Value local = valueStack.localAt(index);
-                if (local.type() == CiKind.Float && value.basicType == CiKind.Int) {
+                if (local.type() == CiKind.Float && value.kind == CiKind.Int) {
                     obj = (float) value.asInt();
-                } else if ((local.type() == CiKind.Double && value.basicType == CiKind.Int)) {
+                } else if ((local.type() == CiKind.Double && value.kind == CiKind.Int)) {
                     obj = (double) value.asInt();
                 } else {
                     obj = value.boxedValue();
@@ -379,13 +379,13 @@ public class IRInterpreter {
                 assert value.type() == CiKind.Int : "Types are not compatible";
                 return lookupValue.asInt() == 1;
             } else if (type == double.class) {
-                if (lookupValue.basicType == CiKind.Int) {
+                if (lookupValue.kind == CiKind.Int) {
                     return (double) lookupValue.asInt();
                 } else {
                     return lookupValue.boxedValue();
                 }
             } else if (type == float.class) {
-                if (lookupValue.basicType == CiKind.Int) {
+                if (lookupValue.kind == CiKind.Int) {
                     return (float) lookupValue.asInt();
                 } else {
                     return lookupValue.boxedValue();
@@ -423,7 +423,7 @@ public class IRInterpreter {
         @Override
         public void visitNegateOp(NegateOp i) {
             CiConstant xval = environment.lookup(i.x());
-            assertBasicType(i.type(), xval.basicType);
+            assertBasicType(i.type(), xval.kind);
 
             switch (i.type()) {
                 case Int:
@@ -450,7 +450,7 @@ public class IRInterpreter {
             CiConstant xval = environment.lookup(i.x());
             CiConstant yval = environment.lookup(i.y());
 
-            assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), i.type().stackType());
+            assertBasicType(xval.kind.stackType(), yval.kind.stackType(), i.type().stackType());
 
             switch (i.opcode()) {
                 case Bytecodes.IADD:
@@ -547,19 +547,19 @@ public class IRInterpreter {
 
             switch (i.opcode()) {
                 case Bytecodes.ISHL:
-                    assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), CiKind.Int);
+                    assertBasicType(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forInt((xval.asInt() << (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.ISHR:
-                    assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), CiKind.Int);
+                    assertBasicType(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forInt((xval.asInt() >> (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.IUSHR:
-                    assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), CiKind.Int);
+                    assertBasicType(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     s = yval.asInt() & 0x1f;
                     int iresult = xval.asInt() >> s;
@@ -570,22 +570,22 @@ public class IRInterpreter {
                     break;
 
                 case Bytecodes.LSHL:
-                    assertBasicType(xval.basicType.stackType(), CiKind.Long);
-                    assertBasicType(yval.basicType.stackType(), CiKind.Int);
+                    assertBasicType(xval.kind.stackType(), CiKind.Long);
+                    assertBasicType(yval.kind.stackType(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forLong((xval.asLong() << (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LSHR:
-                    assertBasicType(xval.basicType.stackType(), CiKind.Long);
-                    assertBasicType(yval.basicType.stackType(), CiKind.Int);
+                    assertBasicType(xval.kind.stackType(), CiKind.Long);
+                    assertBasicType(yval.kind.stackType(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forLong((xval.asLong() >> (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LUSHR:
-                    assertBasicType(xval.basicType.stackType(), CiKind.Long);
-                    assertBasicType(yval.basicType.stackType(), CiKind.Int);
+                    assertBasicType(xval.kind.stackType(), CiKind.Long);
+                    assertBasicType(yval.kind.stackType(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     s = yval.asInt() & 0x3f;
                     long lresult = xval.asLong() >> s;
@@ -607,27 +607,27 @@ public class IRInterpreter {
 
             switch (i.opcode()) {
                 case Bytecodes.IAND:
-                    assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), CiKind.Int);
+                    assertBasicType(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() & yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IOR:
-                    assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), CiKind.Int);
+                    assertBasicType(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() | yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IXOR:
-                    assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), CiKind.Int);
+                    assertBasicType(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() ^ yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.LAND:
-                    assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), CiKind.Long);
+                    assertBasicType(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() & yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LOR:
-                    assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), CiKind.Long);
+                    assertBasicType(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() | yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LXOR:
-                    assertBasicType(xval.basicType.stackType(), yval.basicType.stackType(), CiKind.Long);
+                    assertBasicType(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() ^ yval.asLong())), instructionCounter);
                     break;
                 default:
@@ -710,67 +710,67 @@ public class IRInterpreter {
             final CiConstant value = environment.lookup(i.value());
             switch (i.opcode()) {
                 case Bytecodes.I2L:
-                    assertBasicType(value.basicType, CiKind.Int);
+                    assertBasicType(value.kind, CiKind.Int);
                     environment.bind(i, CiConstant.forLong(value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2F:
-                    assertBasicType(value.basicType, CiKind.Int);
+                    assertBasicType(value.kind, CiKind.Int);
                     environment.bind(i, CiConstant.forFloat(value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2D:
-                    assertBasicType(value.basicType, CiKind.Int);
+                    assertBasicType(value.kind, CiKind.Int);
                     environment.bind(i, CiConstant.forDouble(value.asInt()), instructionCounter);
                     break;
 
                 case Bytecodes.I2B:
-                    assertBasicType(value.basicType, CiKind.Int);
+                    assertBasicType(value.kind, CiKind.Int);
                     environment.bind(i, CiConstant.forByte((byte) value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2C:
-                    assertBasicType(value.basicType, CiKind.Int);
+                    assertBasicType(value.kind, CiKind.Int);
                     environment.bind(i, CiConstant.forChar((char) value.asInt()), instructionCounter);
                     break;
                 case Bytecodes.I2S:
-                    assertBasicType(value.basicType, CiKind.Int);
+                    assertBasicType(value.kind, CiKind.Int);
                     environment.bind(i, CiConstant.forShort((short) value.asInt()), instructionCounter);
                     break;
 
                 case Bytecodes.L2I:
-                    assertBasicType(value.basicType, CiKind.Long);
+                    assertBasicType(value.kind, CiKind.Long);
                     environment.bind(i, CiConstant.forInt((int) value.asLong()), instructionCounter);
                     break;
                 case Bytecodes.L2F:
-                    assertBasicType(value.basicType, CiKind.Long);
+                    assertBasicType(value.kind, CiKind.Long);
                     environment.bind(i, CiConstant.forFloat(value.asLong()), instructionCounter);
                     break;
                 case Bytecodes.L2D:
-                    assertBasicType(value.basicType, CiKind.Long);
+                    assertBasicType(value.kind, CiKind.Long);
                     environment.bind(i, CiConstant.forDouble(value.asLong()), instructionCounter);
                     break;
 
                 case Bytecodes.F2I:
-                    assertBasicType(value.basicType, CiKind.Float);
+                    assertBasicType(value.kind, CiKind.Float);
                     environment.bind(i, CiConstant.forInt((int) value.asFloat()), instructionCounter);
                     break;
                 case Bytecodes.F2L:
-                    assertBasicType(value.basicType, CiKind.Float);
+                    assertBasicType(value.kind, CiKind.Float);
                     environment.bind(i, CiConstant.forLong((long) value.asFloat()), instructionCounter);
                     break;
                 case Bytecodes.F2D:
-                    assertBasicType(value.basicType, CiKind.Float);
+                    assertBasicType(value.kind, CiKind.Float);
                     environment.bind(i, CiConstant.forDouble(value.asFloat()), instructionCounter);
                     break;
 
                 case Bytecodes.D2I:
-                    assertBasicType(value.basicType, CiKind.Double);
+                    assertBasicType(value.kind, CiKind.Double);
                     environment.bind(i, CiConstant.forInt((int) value.asDouble()), instructionCounter);
                     break;
                 case Bytecodes.D2L:
-                    assertBasicType(value.basicType, CiKind.Double);
+                    assertBasicType(value.kind, CiKind.Double);
                     environment.bind(i, CiConstant.forLong((long) value.asDouble()), instructionCounter);
                     break;
                 case Bytecodes.D2F:
-                    assertBasicType(value.basicType, CiKind.Double);
+                    assertBasicType(value.kind, CiKind.Double);
                     environment.bind(i, CiConstant.forFloat((float) value.asDouble()), instructionCounter);
                     break;
 
@@ -783,7 +783,7 @@ public class IRInterpreter {
         @Override
         public void visitNullCheck(NullCheck i) {
             final CiConstant object = environment.lookup(i.object());
-            assertBasicType(object.basicType, CiKind.Object);
+            assertBasicType(object.kind, CiKind.Object);
             if (object.isNonNull()) {
                 environment.bind(i, new CiConstant(CiKind.Object, object.boxedValue()), instructionCounter);
             } else {
@@ -925,14 +925,14 @@ public class IRInterpreter {
                 return CiConstant.forBoolean(environment.lookup(value).asInt() != 0);
             } else if (arrayType == double.class) {
                 CiConstant rvalue = environment.lookup(value);
-                if (rvalue.basicType == CiKind.Int) {
+                if (rvalue.kind == CiKind.Int) {
                     return CiConstant.forDouble(rvalue.asInt());
                 } else {
                     return rvalue;
                 }
             } else if (arrayType == float.class) {
                 CiConstant rvalue = environment.lookup(value);
-                if (rvalue.basicType == CiKind.Int) {
+                if (rvalue.kind == CiKind.Int) {
                     return CiConstant.forFloat(rvalue.asInt());
                 } else {
                     return rvalue;
@@ -1303,9 +1303,9 @@ public class IRInterpreter {
                     break;
 
                 case neq:
-                    if (x.basicType.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
+                    if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
-                    } else if (x.basicType.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
+                    } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
                         jump(i.unorderedSuccessor());
                     } else if (!(cmp == 0)) {
                         jump(i.successor(true));
@@ -1323,9 +1323,9 @@ public class IRInterpreter {
                     break;
 
                 case geq:
-                    if (x.basicType.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
+                    if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
-                    } else if (x.basicType.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
+                    } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
                         jump(i.unorderedSuccessor());
                     } else if (cmp >= 0) {
                         jump(i.successor(true));
@@ -1344,9 +1344,9 @@ public class IRInterpreter {
                     break;
 
                 case leq:
-                    if (x.basicType.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
+                    if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
-                    } else if (x.basicType.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
+                    } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
                         jump(i.unorderedSuccessor());
                     } else if (cmp <= 0) {
                         jump(i.successor(true));
@@ -1359,11 +1359,11 @@ public class IRInterpreter {
         }
 
         private int compareValues(CiConstant x, CiConstant y) {
-            if (x.basicType.isFloat() && y.basicType.isFloat()) {
+            if (x.kind.isFloat() && y.kind.isFloat()) {
                 return Float.compare(x.asFloat(), y.asFloat());
-            } else if (x.basicType.isDouble() || y.basicType.isDouble()) {
+            } else if (x.kind.isDouble() || y.kind.isDouble()) {
                 return Double.compare(x.asDouble(), y.asDouble());
-            } else if (x.basicType.isLong() || y.basicType.isLong()) {
+            } else if (x.kind.isLong() || y.kind.isLong()) {
                 final long xLong = x.asLong();
                 final long yLong = y.asLong();
                 if (xLong == yLong) {
@@ -1373,11 +1373,11 @@ public class IRInterpreter {
                 } else {
                     return -1;
                 }
-            } else if (x.basicType.isObject()) {
+            } else if (x.kind.isObject()) {
                 return x.asObject() == y.asObject() ? 0 : 1;
             } else {
                 final int xInt = x.asInt();
-                final int yInt = y.basicType.isObject() ? (Integer) y.boxedValue() : y.asInt();
+                final int yInt = y.kind.isObject() ? (Integer) y.boxedValue() : y.asInt();
                 if (xInt == yInt) {
                     return 0;
                 } else if (xInt > yInt) {
@@ -1736,7 +1736,7 @@ public class IRInterpreter {
                         String output = null;
                         if (lookupValue != null && lookupValue.boxedValue() != null) {
                             Object object = lookupValue.boxedValue();
-                            if (lookupValue.basicType == CiKind.Object) {
+                            if (lookupValue.kind == CiKind.Object) {
                                 output = object.getClass().toString();
                             } else {
                                 output = object.toString();

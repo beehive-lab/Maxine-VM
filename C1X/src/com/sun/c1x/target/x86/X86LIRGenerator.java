@@ -778,7 +778,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         // If klass is not loaded we do not know if the klass has finalizers:
-        CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, GlobalStub.NewInstance);
+        CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, null);
         lir.branch(LIRCondition.Always, CiKind.Illegal, slowPath);
         lir.branchDestination(slowPath.continuation);
 
@@ -918,13 +918,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         // info for exceptions
         LIRDebugInfo infoForException = stateFor(x, x.stateBefore().copyLocks());
 
-        CodeStub stub;
-        if (x.isIncompatibleClassChangeCheck()) {
-            //assert patchingInfo == null : "can't patch this";
-            stub = new SimpleExceptionStub(LIROperandFactory.IllegalLocation, GlobalStub.ThrowIncompatibleClassChangeError, infoForException);
-        } else {
-            stub = new SimpleExceptionStub(obj.result(), GlobalStub.ThrowClassCastException, infoForException);
-        }
+        CodeStub stub = new CheckCastStub(obj.result(), infoForException);
         LIROperand reg = rlockResult(x);
         lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), LIROperandFactory.IllegalLocation, LIROperandFactory.IllegalLocation,
                         x.directCompare(), infoForException, patchingInfo, stub, x.profiledMethod(),

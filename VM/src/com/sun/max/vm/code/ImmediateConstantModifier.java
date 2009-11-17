@@ -57,7 +57,7 @@ public class ImmediateConstantModifier extends ConstantModifier {
      * @param byteValue new constant value to replace the original one
      */
     public void fix(byte[] codeRegion, int offsetToCode, byte byteValue) throws AssemblyException {
-        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size());
+        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size);
         editor.fixImmediateOperand(constantWidth(), byteValue);
     }
 
@@ -78,7 +78,7 @@ public class ImmediateConstantModifier extends ConstantModifier {
         if (WordWidth.signedEffective(intValue).greaterThan(constantWidth())) {
             throw new AssemblyException("Can't fix immediate operand of effective width " + constantWidth() + " with value " + intValue);
         }
-        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size());
+        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size);
         editor.fixImmediateOperand(constantWidth(), intValue);
     }
 
@@ -98,7 +98,7 @@ public class ImmediateConstantModifier extends ConstantModifier {
         if (WordWidth.signedEffective(longValue).greaterThan(constantWidth())) {
             throw new AssemblyException("Can't fix immediate operand of effective width " + constantWidth() + " with value " + longValue);
         }
-        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size());
+        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size);
         editor.fixImmediateOperand(longValue);
     }
 
@@ -107,7 +107,7 @@ public class ImmediateConstantModifier extends ConstantModifier {
     }
 
     public int getImmediateConstant(byte[] codeRegion, int offsetToCode) throws AssemblyException {
-        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size());
+        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size);
         return editor.getIntImmediate(kind().width);
     }
 }

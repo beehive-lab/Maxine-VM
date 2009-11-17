@@ -37,7 +37,7 @@ public class LIRConstant extends LIROperand {
      * @param value the value
      */
     public LIRConstant(CiConstant value) {
-        super(value.basicType);
+        super(value.kind);
         this.value = value;
     }
 
@@ -183,7 +183,7 @@ public class LIRConstant extends LIROperand {
      */
     public int asIntLoBits() {
         // TODO: floats, longs
-        if (value.basicType.isDouble()) {
+        if (value.kind.isDouble()) {
             return (int) Double.doubleToLongBits(value.asDouble());
         } else {
             return value.asInt();
@@ -197,7 +197,7 @@ public class LIRConstant extends LIROperand {
      */
     public int asIntHiBits() {
         // TODO: floats, longs
-        if (value.basicType.isDouble()) {
+        if (value.kind.isDouble()) {
             return (int) (Double.doubleToLongBits(value.asDouble()) >> 32);
         } else {
             return asIntHi();
@@ -211,7 +211,7 @@ public class LIRConstant extends LIROperand {
      */
     public long asLongBits() {
         // TODO: floats, longs
-      if (value.basicType.isDouble()) {
+      if (value.kind.isDouble()) {
         return Double.doubleToLongBits(value.asDouble());
       } else {
         return asLong();

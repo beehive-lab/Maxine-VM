@@ -22,14 +22,16 @@ package com.sun.c1x.globalstub;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.xir.*;
+import com.sun.c1x.ri.RiRuntime;
 
 /**
  * An interface to represent the entity that generates stubs.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public interface GlobalStubEmitter {
-    CiTargetMethod emit(GlobalStub stub);
-    CiTargetMethod emitRuntimeStub(CiRuntimeCall runtimeCall);
-    CiTargetMethod emit(XirTemplate t);
+    GlobalStub emit(GlobalStub.Id stub, RiRuntime runtime);
+    GlobalStub emit(CiRuntimeCall runtimeCall, RiRuntime runtime);
+    GlobalStub emit(XirTemplate t, RiRuntime runtime);
 }

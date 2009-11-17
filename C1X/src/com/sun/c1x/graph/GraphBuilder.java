@@ -439,7 +439,7 @@ public class GraphBuilder {
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
-            push(constant.basicType.stackType(), appendConstant(constant));
+            push(constant.kind.stackType(), appendConstant(constant));
         } else {
             throw new Error("lookupConstant returned an object of incorrect type");
         }

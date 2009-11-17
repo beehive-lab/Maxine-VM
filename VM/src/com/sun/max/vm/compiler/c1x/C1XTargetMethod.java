@@ -220,7 +220,7 @@ public class C1XTargetMethod extends TargetMethod {
 
             try {
 
-                switch (data.basicType) {
+                switch (data.kind) {
 
                     case Double:
                         endianness.writeLong(output, Double.doubleToLongBits(data.asDouble()));
@@ -288,7 +288,7 @@ public class C1XTargetMethod extends TargetMethod {
         int z = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
 
-            switch (site.data.basicType) {
+            switch (site.data.kind) {
 
                 case Double: // fall through
                 case Float: // fall through

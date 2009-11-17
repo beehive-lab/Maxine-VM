@@ -906,26 +906,28 @@ public class X86LIRAssembler extends LIRAssembler {
                 }
                 break;
 
-            case Bytecodes.F2I:
+            case Bytecodes.F2I: {
                 assert src.isSingleXmm() && dest.isRegister() : "must both be XMM register (no fpu stack)";
                 masm.cvttss2sil(dest.asRegister(), srcRegister);
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(Condition.notEqual, endLabel);
-                masm.callGlobalStub(GlobalStub.f2i, null, dest.asRegister(), srcRegister);
+                GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.f2i);
+                masm.callGlobalStub(globalStub, null, dest.asRegister(), srcRegister);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
-
-            case Bytecodes.D2I:
+            }
+            case Bytecodes.D2I: {
                 assert src.isDoubleXmm() && dest.isRegister() : "must both be XMM register (no fpu stack)";
                 masm.cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(Condition.notEqual, endLabel);
-                masm.callGlobalStub(GlobalStub.d2i, null, dest.asRegister(), srcRegister);
+                GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.d2i);
+                masm.callGlobalStub(globalStub, null, dest.asRegister(), srcRegister);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
-
+            }
             case Bytecodes.L2F:
                 masm.cvtsi2ssq(asXmmFloatReg(dest), src.asRegister());
                 break;
@@ -934,25 +936,29 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm.cvtsi2sdq(asXmmDoubleReg(dest), src.asRegister());
                 break;
 
-            case Bytecodes.F2L:
+            case Bytecodes.F2L: {
                 assert src.isSingleXmm() && dest.isDoubleCpu() : "must both be XMM register (no fpu stack)";
                 masm.cvttss2siq(dest.asRegister(), asXmmFloatReg(src));
                 masm.mov64(rscratch1, Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(Condition.notEqual, endLabel);
-                masm.callGlobalStub(GlobalStub.f2i, null, dest.asRegister(), srcRegister);
+                GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.f2l);
+                masm.callGlobalStub(globalStub, null, dest.asRegister(), srcRegister);
                 masm.bind(endLabel);
                 break;
+            }
 
-            case Bytecodes.D2L:
+            case Bytecodes.D2L: {
                 assert src.isDoubleXmm() && dest.isDoubleCpu() : "must both be XMM register (no fpu stack)";
                 masm.cvttsd2siq(dest.asRegister(), asXmmDoubleReg(src));
                 masm.mov64(rscratch1, Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(Condition.notEqual, endLabel);
-                masm.callGlobalStub(GlobalStub.d2i, null, dest.asRegister(), srcRegister);
+                GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.d2l);
+                masm.callGlobalStub(globalStub, null, dest.asRegister(), srcRegister);
                 masm.bind(endLabel);
                 break;
+            }
 
             default:
                 throw Util.shouldNotReachHere();
@@ -2311,15 +2317,16 @@ public class X86LIRAssembler extends LIRAssembler {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
-            masm.callGlobalStub(GlobalStub.fneg, null, asXmmFloatReg(dest), asXmmFloatReg(dest));
+            GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.fneg);
+            masm.callGlobalStub(globalStub, null, asXmmFloatReg(dest), asXmmFloatReg(dest));
 
         } else if (dest.isDoubleXmm()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
 
-            masm.callGlobalStub(GlobalStub.dneg, null, asXmmDoubleReg(dest), asXmmDoubleReg(dest));
-
+            GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.dneg);
+            masm.callGlobalStub(globalStub, null, asXmmDoubleReg(dest), asXmmDoubleReg(dest));
         } else {
             throw Util.shouldNotReachHere();
         }
@@ -2539,9 +2546,9 @@ public class X86LIRAssembler extends LIRAssembler {
             return new RegisterOrConstant(operand.asRegister());
         } else if (operand.isConstant()) {
             final LIRConstant c = (LIRConstant) operand;
-            if (c.value.basicType == CiKind.Int) {
+            if (c.value.kind == CiKind.Int) {
                 return new RegisterOrConstant(c.value.asInt());
-            } else if (c.value.basicType == CiKind.Object) {
+            } else if (c.value.kind == CiKind.Object) {
                 return new RegisterOrConstant(c.value.asObject());
             } else {
                 throw Util.shouldNotReachHere();

@@ -33,35 +33,38 @@ import com.sun.c1x.ci.*;
  * passed on the stack in order to conserve registers for the rest of the code.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public enum GlobalStub {
-    ThrowArrayIndexOutOfBoundsException(Void, Int),
-    ThrowArithmeticException(Void),
-    ThrowNullPointerException(Void),
-    ThrowArrayStoreException(Void),
-    ThrowClassCastException(Void, Object),
-    ThrowIncompatibleClassChangeError,
-    NewInstance(Object, Object),
-    MonitorEnter(Void, Object, Int),
-    MonitorExit(Void, Object, Int),
+public class GlobalStub {
 
-    fneg(Float, Float),
-    dneg(Double, Double),
-    f2i(Int, Float),
-    f2l(Long, Float),
-    d2i(Int, Double),
-    d2l(Long, Double);
+    public enum Id {
 
-    public final CiKind resultType;
-    public final CiKind[] arguments;
+        fneg(Float, Float),
+        dneg(Double, Double),
+        f2i(Int, Float),
+        f2l(Long, Float),
+        d2i(Int, Double),
+        d2l(Long, Double);
 
-    private GlobalStub() {
-        resultType = Void;
-        arguments = new CiKind[0];
+        public final CiKind resultType;
+        public final CiKind[] arguments;
+
+        private Id(CiKind resultType, CiKind... args) {
+            this.resultType = resultType;
+            this.arguments = args;
+        }
     }
 
-    private GlobalStub(CiKind resultType, CiKind... args) {
-        this.resultType = resultType;
-        this.arguments = args;
+    public final Id id;
+    public final Object stubObject;
+    public final int argsSize;
+    public final int[] argOffsets;
+
+    public GlobalStub(Id id, Object stubObject, int argsSize, int[] argOffsets) {
+        this.id = id;
+        this.stubObject = stubObject;
+        this.argsSize = argsSize;
+        this.argOffsets = argOffsets;
     }
+
 }

@@ -644,7 +644,7 @@ public class Canonicalizer extends ValueVisitor {
         } else if (o.isConstant()) {
             // if the object is a constant, check if it is nonnull
             CiConstant c = o.asConstant();
-            if (c.basicType.isObject() && c.asObject() != null) {
+            if (c.kind.isObject() && c.asObject() != null) {
                 setCanonical(o);
             }
         }
