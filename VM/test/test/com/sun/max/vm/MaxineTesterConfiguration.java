@@ -219,22 +219,22 @@ public class MaxineTesterConfiguration {
         maxvmConfig("GC", "-Xmx3g");
 
         imageConfig("jit-c1x0",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0");
-        imageConfig("jit-c1x0x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("jit-c1x0x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=0 -C1X:+UseXIR");
         imageConfig("jit-c1x1",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=1");
-        imageConfig("jit-c1x1x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=1 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("jit-c1x1x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=1 -C1X:+UseXIR");
         imageConfig("jit-c1x2",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=2");
-        imageConfig("jit-c1x2x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=2 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("jit-c1x2x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=2 -C1X:+UseXIR");
         imageConfig("jit-c1x3",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=3");
-        imageConfig("jit-c1x3x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=3 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("jit-c1x3x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-XX:OptLevel=3 -C1X:+UseXIR");
 
         imageConfig("opt-c1x0",  "-opt=c1x", "-vmargs=-XX:OptLevel=0");
-        imageConfig("opt-c1x0x", "-opt=c1x", "-vmargs=-XX:OptLevel=0 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("opt-c1x0x", "-opt=c1x", "-vmargs=-XX:OptLevel=0 -C1X:+UseXIR");
         imageConfig("opt-c1x1",  "-opt=c1x", "-vmargs=-XX:OptLevel=1");
-        imageConfig("opt-c1x1x", "-opt=c1x", "-vmargs=-XX:OptLevel=1 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("opt-c1x1x", "-opt=c1x", "-vmargs=-XX:OptLevel=1 -C1X:+UseXIR");
         imageConfig("opt-c1x2",  "-opt=c1x", "-vmargs=-XX:OptLevel=2");
-        imageConfig("opt-c1x2x", "-opt=c1x", "-vmargs=-XX:OptLevel=2 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("opt-c1x2x", "-opt=c1x", "-vmargs=-XX:OptLevel=2 -C1X:+UseXIR");
         imageConfig("opt-c1x3",  "-opt=c1x", "-vmargs=-XX:OptLevel=3");
-        imageConfig("opt-c1x3x", "-opt=c1x", "-vmargs=-XX:OptLevel=3 -XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR");
+        imageConfig("opt-c1x3x", "-opt=c1x", "-vmargs=-XX:OptLevel=3 -C1X:+UseXIR");
     }
 
     private static void output(Class javaClass, Expectation... results) {
