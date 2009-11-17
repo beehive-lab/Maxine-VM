@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,11 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=723dbc50-01cb-41ec-93b7-a8469795df79*/
-package com.sun.max.bench.benchmarks;
+package jtt.bytecode;
 
-public class Empty implements Runnable {
-    public void run() {
-        // do nothing.
+/*
+ * @Harness: java
+ * @Runs: 0.0f = 0L; 1.0f = 1L; -1.06f = -1L; -156.82743f = -156L
+ */
+public class BC_f2l01 {
+    public static long test(float d) {
+        return (long) d;
     }
 }

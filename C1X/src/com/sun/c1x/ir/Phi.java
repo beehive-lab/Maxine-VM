@@ -146,5 +146,4 @@ public class Phi extends Value {
         setFlag(Flag.PhiCannotSimplify);
         setFlag(Flag.PhiDead);
     }
-
 }

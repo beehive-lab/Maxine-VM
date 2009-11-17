@@ -20,8 +20,6 @@
  */
 package com.sun.max.asm.gen;
 
-
-
 /**
  * Parameters with enumerable arguments.
  *

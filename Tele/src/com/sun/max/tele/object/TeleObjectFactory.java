@@ -45,7 +45,6 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A singleton factory that manages the creation and maintenance of
  * instances of {@link TeleObject}, each of which is a

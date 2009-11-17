@@ -38,7 +38,6 @@ import com.sun.c1x.target.x86.X86Assembler;
 import com.sun.c1x.target.x86.X86MacroAssembler;
 import com.sun.c1x.util.Util;
 
-
 /**
  * The <code>X86CodeGen</code> class definition.
  *
@@ -208,7 +207,7 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genReturn(CiKind basicType, Location value) {
-        allocDst(runtime.returnRegister(basicType), basicType);
+        allocDst(target.config.getReturnRegister(basicType), basicType);
         // TODO: adjust stack pointer
         asm.ret(0);
     }
@@ -799,5 +798,4 @@ public class X86CodeGen extends CodeGen {
     void recordGlobalStubCallPoint() {
 
     }
-
 }

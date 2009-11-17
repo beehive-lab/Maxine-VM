@@ -35,7 +35,6 @@ public interface DataAccess extends DataIO {
     void readFully(Address address, byte[] bytes);
     byte[] readFully(Address address, int length);
 
-
     byte readByte(Address address);
     byte readByte(Address address, Offset offset);
     byte readByte(Address address, int offset);

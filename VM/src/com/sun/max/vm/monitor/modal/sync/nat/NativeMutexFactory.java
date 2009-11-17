@@ -22,7 +22,6 @@ package com.sun.max.vm.monitor.modal.sync.nat;
 
 import com.sun.max.vm.monitor.modal.sync.*;
 
-
 public class NativeMutexFactory extends MutexFactory {
     /**
      * Create a NativeMutex object.

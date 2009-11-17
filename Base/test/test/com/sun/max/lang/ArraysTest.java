@@ -250,7 +250,6 @@ public class ArraysTest extends MaxTestCase {
         assertTrue(Arrays.equals(original, Arrays.prepend(newArray, original[0])));
     }
 
-
     public void test_append() {
         final String[] original = makeStringArray(2);
         // Append to an empty array

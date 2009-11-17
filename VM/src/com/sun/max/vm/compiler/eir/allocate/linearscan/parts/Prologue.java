@@ -89,7 +89,6 @@ public class Prologue extends AlgorithmPart {
             }
         }*/
 
-
         final boolean[] valueKilled = new boolean[1];
 
         // Make a copy of the existing variables so that they iterated over while new variables are being created:

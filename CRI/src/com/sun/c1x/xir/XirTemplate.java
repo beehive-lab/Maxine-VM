@@ -99,7 +99,7 @@ public class XirTemplate {
     public boolean isParameterDestroyed(int index) {
     	return parameterDestroyed[index];
     }
-    
+
     public boolean hasJavaCall() {
     	return (flags & GlobalFlags.HAS_JAVA_CALL.mask) != 0;
     }
@@ -115,7 +115,6 @@ public class XirTemplate {
 
     	p.println();
     	p.println("Template " + name);
-
 
     	p.print("Param:");
     	for (XirParameter param : parameters) {
@@ -161,5 +160,4 @@ public class XirTemplate {
     		}
     	}
     }
-
 }

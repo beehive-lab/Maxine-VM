@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.dir;
 
 import com.sun.max.vm.compiler.dir.transform.*;
 
-
 /**
  * @author Bernd Mathiske
  */

@@ -250,7 +250,6 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
         }
     }
 
-
     private void enqueueCall(CirCall call, Environment<CirVariable, AV_Type> env) {
         callQueue = new EnqueuedCall<AV_Type>(call, env, callQueue);
     }

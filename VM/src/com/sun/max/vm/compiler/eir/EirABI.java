@@ -78,7 +78,6 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
         return getResultLocation(kind, VMRegister.Role.ABI_RETURN);
     }
 
-
     private EirLocation getResultLocation(Kind kind, VMRegister.Role role) {
         if (kind != null) {
             switch (kind.asEnum) {
@@ -150,7 +149,6 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
                 return null;
         }
     }
-
 
     public abstract EirRegister_Type integerRegisterActingAs(VMRegister.Role role);
 

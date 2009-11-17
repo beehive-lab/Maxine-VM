@@ -36,7 +36,6 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
 
-
 public final class JavaTester {
 
     private JavaTester() {
@@ -167,7 +166,6 @@ public final class JavaTester {
         }
         return result;
     }
-
 
     private static void runExecutor(String alias, String[] args, Registry<JavaExecHarness.Executor> executors) {
         Trace.line(0, "Beginning tests with " + alias + " executor...");

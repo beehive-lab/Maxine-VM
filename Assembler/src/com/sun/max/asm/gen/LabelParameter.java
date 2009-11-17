@@ -51,7 +51,6 @@ public final class LabelParameter implements Parameter {
         return null;
     }
 
-
     public Iterable<Label> getLegalTestArguments() {
         return Iterables.empty();
     }

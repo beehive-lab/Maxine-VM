@@ -33,7 +33,6 @@ public class Package extends VMPackage {
         super();
     }
 
-
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return false;

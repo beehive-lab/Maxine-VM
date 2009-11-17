@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm;
 
-
 /**
  * An argument whose {@link Argument#externalValue() value} is manifest as a suffix of the mnemonic
  * in external assembler syntax.

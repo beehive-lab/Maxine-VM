@@ -229,10 +229,11 @@ public final class VMOptions {
      * Creates and registers "-XX" VM options for each non-{@code final} {@code static} field
      * in a given class.
      *
+     * @param prefix
      * @param javaClass the java class containing the fields for which VM options are to be created
      */
     @HOSTED_ONLY
-    public static void addFieldOptions(Class<?> javaClass) {
+    public static void addFieldOptions(String prefix, Class<?> javaClass) {
         for (final Field field : javaClass.getDeclaredFields()) {
             int modifiers = field.getModifiers();
             if (Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
@@ -247,7 +248,7 @@ public final class VMOptions {
                     name = field.getName().replace('_', '-');
                 }
                 try {
-                    addFieldOption(name, field, help);
+                    addFieldOption(prefix, name, field, help);
                 } catch (Exception e) {
                     throw ProgramError.unexpected("Error creating VM option for " + field, e);
                 }
@@ -267,12 +268,13 @@ public final class VMOptions {
     /**
      * Creates and registers a "-XX" VM option whose value is stored in a given non-{@code final} {@code static} field.
      *
+     * @param prefix
      * @param name the name of the option
      * @param field the field backing the option
      * @param help the help text for the option
      */
     @HOSTED_ONLY
-    public static void addFieldOption(String name, Field field, String help) throws IllegalArgumentException, IllegalAccessException {
+    public static void addFieldOption(String prefix, String name, Field field, String help) throws IllegalArgumentException, IllegalAccessException {
         MaxineVM.Phase phase = MaxineVM.Phase.STARTING;
         assert Modifier.isStatic(field.getModifiers());
         assert !Modifier.isFinal(field.getModifiers());
@@ -284,7 +286,7 @@ public final class VMOptions {
         }
         if (fieldType == boolean.class) {
             boolean defaultValue = field.getBoolean(null);
-            VMBooleanXXOption option = new VMBooleanXXOption("-XX:" + (defaultValue ? '+' : '-') + name, help) {
+            VMBooleanXXOption option = new VMBooleanXXOption(prefix + (defaultValue ? '+' : '-'), name, help) {
                 @Override
                 public boolean parseValue(Pointer optionValue) {
                     boolean result = super.parseValue(optionValue);
@@ -302,7 +304,7 @@ public final class VMOptions {
             register(option, phase);
         } else if (fieldType == int.class) {
             int defaultValue = field.getInt(null);
-            VMIntOption option = new VMIntOption("-XX:" + name + "=", defaultValue, help) {
+            VMIntOption option = new VMIntOption(prefix + name + "=", defaultValue, help) {
                 @Override
                 public boolean parseValue(Pointer optionValue) {
                     boolean result = super.parseValue(optionValue);
@@ -320,7 +322,7 @@ public final class VMOptions {
             register(option, phase);
         } else if (fieldType == float.class) {
             float defaultValue = field.getFloat(null);
-            VMFloatOption option = new VMFloatOption("-XX:" + name + "=", defaultValue, help) {
+            VMFloatOption option = new VMFloatOption(prefix + name + "=", defaultValue, help) {
                 @Override
                 public boolean parseValue(Pointer optionValue) {
                     boolean result = super.parseValue(optionValue);
@@ -338,7 +340,7 @@ public final class VMOptions {
             register(option, phase);
         } else if (fieldType == String.class) {
             String defaultValue = (String) field.get(null);
-            VMStringOption option = new VMStringOption("-XX:" + name + "=", false, defaultValue, help) {
+            VMStringOption option = new VMStringOption(prefix + name + "=", false, defaultValue, help) {
                 @Override
                 public boolean parseValue(Pointer optionValue) {
                     boolean result = super.parseValue(optionValue);

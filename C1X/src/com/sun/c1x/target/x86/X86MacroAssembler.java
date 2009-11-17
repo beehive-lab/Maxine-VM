@@ -43,7 +43,6 @@ public class X86MacroAssembler extends X86Assembler {
 
     public X86MacroAssembler(C1XCompiler compiler, CiTarget target, int frameSize) {
         super(target, frameSize);
-        // TODO: make macro assembler compiler independent w.r.t global stubs
         this.compiler = compiler;
 
         rscratch1 = compiler.target.scratchRegister;
@@ -68,26 +67,25 @@ public class X86MacroAssembler extends X86Assembler {
 
     public final int callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.parameters.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), compilation, stub.resultOperand.kind, info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
     }
 
     public final int callGlobalStubNoArgs(GlobalStub stub, LIRDebugInfo info, CiRegister result) {
         assert 0 == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), CiKind.Illegal, info, result);
     }
-
 
     public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), CiKind.Illegal, info, result, args);
     }
 
     public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
         assert args.length == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), null, CiKind.Illegal, info, result, args);
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), CiKind.Illegal, info, result, args);
     }
 
-    private int callGlobalStubHelper(Object stub, C1XCompilation compilation, CiKind resultKind, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
+    private int callGlobalStubHelper(Object stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, RegisterOrConstant... args) {
         int index = 0;
         for (RegisterOrConstant op : args) {
             storeParameter(op, index++);
@@ -338,7 +336,6 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-
     void movoop(Address dst, CiConstant obj) {
         assert obj.basicType == CiKind.Object;
 
@@ -495,13 +492,14 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void stop(String msg) {
-
-        if (target.arch.is64bit()) {
-            // TODO: Add debug infos / message as paramters to Debug
-            callRuntime(CiRuntimeCall.Debug);
-            hlt();
-        } else {
-            throw Util.unimplemented();
+        if (C1XOptions.GenAssertionCode) {
+            if (target.arch.is64bit()) {
+                // TODO: pass a pointer to the message
+                callRuntime(CiRuntimeCall.Debug);
+                hlt();
+            } else {
+                throw Util.unimplemented();
+            }
         }
     }
 
@@ -539,10 +537,6 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    public void makeOffset(int length) {
-        nop(length);
-    }
-
     void andptr(CiRegister dst, int imm32) {
         if (target.arch.is64bit()) {
             andq(dst, imm32);
@@ -569,7 +563,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
-        assert opr1.isXMM() && opr2.isXMM();
+        assert opr1.isXmm() && opr2.isXmm();
         ucomisd(opr1, opr2);
 
         Label l = new Label();
@@ -592,8 +586,8 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
-        assert opr1.isXMM();
-        assert opr2.isXMM();
+        assert opr1.isXmm();
+        assert opr2.isXmm();
         ucomiss(opr1, opr2);
 
         Label l = new Label();
@@ -1004,7 +998,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     // Support optimal SSE move instructions.
     void movflt(CiRegister dst, CiRegister src) {
-        assert dst.isXMM() && src.isXMM();
+        assert dst.isXmm() && src.isXmm();
         if (C1XOptions.UseXmmRegToRegMoveAll) {
             movaps(dst, src);
         } else {
@@ -1013,17 +1007,17 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movflt(CiRegister dst, Address src) {
-        assert dst.isXMM();
+        assert dst.isXmm();
         movss(dst, src);
     }
 
     void movflt(Address dst, CiRegister src) {
-        assert src.isXMM();
+        assert src.isXmm();
         movss(dst, src);
     }
 
     void movdbl(CiRegister dst, CiRegister src) {
-        assert dst.isXMM() && src.isXMM();
+        assert dst.isXmm() && src.isXmm();
         if (C1XOptions.UseXmmRegToRegMoveAll) {
             movapd(dst, src);
         } else {
@@ -1032,7 +1026,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movdbl(CiRegister dst, Address src) {
-        assert dst.isXMM();
+        assert dst.isXmm();
         if (C1XOptions.UseXmmLoadAndClearUpper) {
             movsd(dst, src);
         } else {
@@ -1041,7 +1035,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movdbl(Address dst, CiRegister src) {
-        assert src.isXMM();
+        assert src.isXmm();
         movsd(dst, src);
     }
 
@@ -1230,50 +1224,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void initializeObject(RiRuntime runtime, CiRegister obj, CiRegister klass, CiRegister varSizeInBytes, int conSizeInBytes, CiRegister t1, CiRegister t2) {
-        //assert (conSizeInBytes & runtime.getMinObjAlignmentInBytesMask()) == 0 : "conSizeInBytes is not multiple of alignment";
-
-        Util.unimplemented();
-        int hdrSizeInBytes = 0xbadbabe; // runtime.instanceOopDescBaseOffsetInBytes();
-
-        initializeHeader(runtime, obj, klass, CiRegister.None, t1, t2);
-
-        // clear rest of allocated space
-        CiRegister t1Zero = t1;
-        CiRegister index = t2;
-        int threshold = 6 * wordSize; // approximate break even point for code size (see comments below)
-        if (varSizeInBytes != CiRegister.None) {
-            mov(index, varSizeInBytes);
-            initializeBody(obj, index, hdrSizeInBytes, t1Zero);
-        } else if (conSizeInBytes <= threshold) {
-            // use explicit null stores
-            // code size = 2 + 3*n bytes (n = number of fields to clear)
-            xorptr(t1Zero, t1Zero); // use t1Zero reg to clear memory (shorter code)
-            for (int i = hdrSizeInBytes; i < conSizeInBytes; i += wordSize) {
-                movptr(new Address(obj, i), t1Zero);
-            }
-        } else if (conSizeInBytes > hdrSizeInBytes) {
-            // use loop to null out the fields
-            // code size = 16 bytes for even n (n = number of fields to clear)
-            // initialize last object field first if odd number of fields
-            xorptr(t1Zero, t1Zero); // use t1Zero reg to clear memory (shorter code)
-            movptr(index, (conSizeInBytes - hdrSizeInBytes) >> 3);
-            // initialize last object field if constant size is odd
-            if (((conSizeInBytes - hdrSizeInBytes) & 4) != 0) {
-                movptr(new Address(obj, conSizeInBytes - (1 * wordSize)), t1Zero);
-            }
-            // initialize remaining object fields: X86Register.rdx is a multiple of 2
-            Label loop = new Label();
-            bind(loop);
-            movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - (1 * wordSize)), t1Zero);
-            if (!target.arch.is64bit()) {
-                movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - (2 * wordSize)), t1Zero);
-            }
-            decrement(index, 1);
-            jcc(X86Assembler.Condition.notZero, loop);
-
-        }
-
-        verifyOop(obj);
+        throw Util.unimplemented();
     }
 
     void cmov(Condition cc, CiRegister dst, CiRegister src) {
@@ -1381,9 +1332,8 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     public void safepoint(LIRDebugInfo info) {
-        CiRegister safepointRegister = compiler.runtime.getSafepointRegister();
+        CiRegister safepointRegister = compiler.target.config.getSafepointRegister();
         this.recordSafepoint(codeBuffer.position(), info.oopMap.registerMap(), info.oopMap.stackMap());
         movq(safepointRegister, new Address(safepointRegister));
     }
-
 }

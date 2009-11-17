@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.c1x.ir.*;
 
-
 /**
  * This class represents a loop, including a header block, an end block, blocks making up the body,
  * and any blocks that are exitted to from the loop body.

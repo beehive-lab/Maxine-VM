@@ -62,7 +62,6 @@ public class WalkIntervals extends AlgorithmPart {
     private final Metrics.Counter handledIntervalsCounter = createCounter("Handled intervals");
     private final Metrics.Counter unhandledIntervalsCounter = createCounter("Unhandled intervals");
 
-
     public WalkIntervals() {
         super(9);
     }

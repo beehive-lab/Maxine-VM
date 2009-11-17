@@ -24,7 +24,6 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.reference.*;
 
-
 /**
  * Canonical surrogate for an object of type {@link Builtin} in the tele VM.
  *

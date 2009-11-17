@@ -529,7 +529,6 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         }
     }
 
-
     private EirMethod jniHandleUnhand;
 
     /**
@@ -561,7 +560,6 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         valuesToHandles.put(value, handle);
         return value;
     }
-
 
     /**
      * Calls a method via reflection.
@@ -602,7 +600,6 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         }
     }
 
-
     /**
      * Calls a method via reflection, reading the arguments from the parameter locations specified by the ABI.
      */
@@ -612,7 +609,6 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         final EirLocation[] argumentLocations = abi.getParameterLocations(EirStackSlot.Purpose.LOCAL, parameterKinds);
         callViaReflection(false, classMethodActor, parameterKinds, argumentLocations);
     }
-
 
     /**
      * Calls a native method within the JNI stub generated for the native method. The arguments to the

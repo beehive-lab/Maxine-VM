@@ -68,5 +68,4 @@ public class InstanceOf extends TypeCheck {
         }
         return false;
     }
-
 }

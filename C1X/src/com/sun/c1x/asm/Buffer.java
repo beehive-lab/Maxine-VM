@@ -36,10 +36,10 @@ public final class Buffer {
     private byte[] data;
     private int position;
 
-    private final BitOrdering bitOrdering;
+    private final ByteOrder byteOrder;
 
-    public Buffer(BitOrdering bitOrdering) {
-        this.bitOrdering = bitOrdering;
+    public Buffer(ByteOrder byteOrder) {
+        this.byteOrder = byteOrder;
         this.data = new byte[INITIAL_SIZE];
     }
 
@@ -103,12 +103,12 @@ public final class Buffer {
         assert data != null : "must not use buffer after calling finished!";
         assert isShort(b);
         ensureSize(pos + 2);
-        if (bitOrdering == BitOrdering.BigEndian) {
+        if (byteOrder == ByteOrder.BigEndian) {
             data[pos++] = (byte) ((b >> 8) & 0xFF);
             data[pos++] = (byte) (b & 0xFF);
 
         } else {
-            assert bitOrdering == BitOrdering.LittleEndian;
+            assert byteOrder == ByteOrder.LittleEndian;
             data[pos++] = (byte) (b & 0xFF);
             data[pos++] = (byte) ((b >> 8) & 0xFF);
         }
@@ -118,13 +118,13 @@ public final class Buffer {
     public int emitInt(int b, int pos) {
         assert data != null : "must not use buffer after calling finished!";
         ensureSize(pos + 4);
-        if (bitOrdering == BitOrdering.BigEndian) {
+        if (byteOrder == ByteOrder.BigEndian) {
             data[pos++] = (byte) ((b >> 24) & 0xFF);
             data[pos++] = (byte) ((b >> 16) & 0xFF);
             data[pos++] = (byte) ((b >> 8) & 0xFF);
             data[pos++] = (byte) (b & 0xFF);
         } else {
-            assert bitOrdering == BitOrdering.LittleEndian;
+            assert byteOrder == ByteOrder.LittleEndian;
             data[pos++] = (byte) (b & 0xFF);
             data[pos++] = (byte) ((b >> 8) & 0xFF);
             data[pos++] = (byte) ((b >> 16) & 0xFF);
@@ -137,7 +137,7 @@ public final class Buffer {
         assert data != null : "must not use buffer after calling finished!";
         ensureSize(pos + 8);
 
-        if (bitOrdering == BitOrdering.BigEndian) {
+        if (byteOrder == ByteOrder.BigEndian) {
             data[pos++] = (byte) ((b >> 56) & 0xFF);
             data[pos++] = (byte) ((b >> 48) & 0xFF);
             data[pos++] = (byte) ((b >> 40) & 0xFF);
@@ -147,7 +147,7 @@ public final class Buffer {
             data[pos++] = (byte) ((b >> 8) & 0xFF);
             data[pos++] = (byte) (b & 0xFF);
         } else {
-            assert bitOrdering == BitOrdering.LittleEndian;
+            assert byteOrder == ByteOrder.LittleEndian;
             data[pos++] = (byte) (b & 0xFF);
             data[pos++] = (byte) ((b >> 8) & 0xFF);
             data[pos++] = (byte) ((b >> 16) & 0xFF);
@@ -173,6 +173,6 @@ public final class Buffer {
     }
 
     public void align(int align) {
-        position = Util.roundTo(position + 1, align) - 1;
+        position = Util.roundUp(position + 1, align) - 1;
     }
 }

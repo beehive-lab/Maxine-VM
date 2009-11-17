@@ -28,7 +28,6 @@ import com.sun.max.ins.object.StringPane.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
 
-
 /**
  * An object inspector specialized for displaying a Maxine low-level heap object in the VMk that implements a {@link Utf8Constant}.
  *

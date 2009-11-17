@@ -21,7 +21,6 @@
 
 package com.sun.max.ins.debug;
 
-
 /**
  * ColumnKind general interface; must be implemented by Enums.
  *

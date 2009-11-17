@@ -26,7 +26,6 @@ import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
-
 public class CallNative extends JavaOperator {
     private final SignatureDescriptor signatureDescriptor;
     private final MethodActor classMethodActor;

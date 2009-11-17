@@ -25,7 +25,6 @@ import com.sun.max.vm.compiler.tir.pipeline.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 public class TirConstant extends TirInstruction {
     private final Value value;
 

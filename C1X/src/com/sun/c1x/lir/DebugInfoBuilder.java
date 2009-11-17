@@ -132,9 +132,9 @@ public class DebugInfoBuilder {
             }
             currentStackRefMap[stackMapIndex] = true;
         } else {
-            int index = target.registerConfig.referenceMapIndex[location.first.number];
+            int index = target.allocatableRegs.referenceMapIndex[location.first.number];
             if (currentRegisterRefMap == null) {
-                currentRegisterRefMap = new boolean[target.registerConfig.registerRefMapSize];
+                currentRegisterRefMap = new boolean[target.allocatableRegs.registerRefMapSize];
             }
             assert index >= 0 : "object cannot be in non-object register " + location.first;
             assert location.isSingleRegister() : "objects can only be in a single register";

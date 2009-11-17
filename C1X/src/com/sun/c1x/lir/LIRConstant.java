@@ -23,7 +23,6 @@ package com.sun.c1x.lir;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
-
 /**
  * The <code>LIRConstant</code> class definition.
  *
@@ -51,7 +50,6 @@ public class LIRConstant extends LIROperand {
         assertType(this, CiKind.Int);
         return value.asInt();
     }
-
 
     public int asChar() {
         assertType(this, CiKind.Char);

@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 
-
 /**
  * Tests for {@link SequenceBag}.
  *
@@ -161,7 +160,5 @@ public class SequenceMultiMapTest extends MaxTestCase {
         }
         assertEquals(collectionsFound, nKeys - 1);
     }
-
-
 
 }

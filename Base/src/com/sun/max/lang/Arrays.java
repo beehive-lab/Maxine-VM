@@ -34,7 +34,6 @@ import com.sun.max.util.*;
 public final class Arrays {
 
     private Arrays() {
-
     }
 
     public static <Element_Type> Element_Type[] newInstance(Class<Element_Type> elementType, int length) {

@@ -26,7 +26,6 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
-
 public abstract class TrampolineGenerator {
 
     protected TrampolineGenerator() {

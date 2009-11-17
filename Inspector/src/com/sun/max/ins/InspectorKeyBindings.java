@@ -29,7 +29,6 @@ import javax.swing.*;
 
 import com.sun.max.ins.InspectionActions.*;
 
-
 /**
  * Support for binding {@link KeyStroke}s to {@link InspectorActions}s.
  *
@@ -188,6 +187,5 @@ public class InspectorKeyBindings {
         add(DebugRunToInstructionAction.class, 'R', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugRunToNextCallWithBreakpointsAction.class, 'C', CTRL_DOWN_MASK).
         add(DebugRunToNextCallAction.class, 'C', CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
-
 
 }

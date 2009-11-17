@@ -26,7 +26,6 @@ import com.sun.max.platform.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.trampoline.template.Package;
 
-
 /**
  * A class to capture standard arguments to the {@link VMConfiguration} constructor
  * to avoid repetition.

@@ -33,7 +33,6 @@ import com.sun.max.vm.compiler.eir.allocate.linearscan.Interval.*;
  */
 public class BuildIntervals extends AlgorithmPart {
 
-
     public BuildIntervals() {
         super(7);
     }

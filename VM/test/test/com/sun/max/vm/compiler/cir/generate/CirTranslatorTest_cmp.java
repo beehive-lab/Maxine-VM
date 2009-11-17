@@ -23,7 +23,6 @@ package test.com.sun.max.vm.compiler.cir.generate;
 import junit.framework.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
-
 public class CirTranslatorTest_cmp extends BytecodeTest_cmp {
 
     public static Test suite() {

@@ -54,7 +54,6 @@ public class TeleInterpreterTestSetup extends CompilerTestSetup<ActorIrMethod> {
         return VMConfigurations.createPrototype(BuildLevel.DEBUG, Platform.host());
     }
 
-
     @Override
     public ActorIrMethod translate(ClassMethodActor classMethodActor) {
         return new ActorIrMethod(classMethodActor);

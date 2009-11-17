@@ -157,7 +157,6 @@ public class MangleTest extends MaxTestCase {
             }
         }
 
-
         final Object anonymousClass = new Object() {
             native void simple(int arg1, String arg2, Exception arg3);
             native void underscore_(int arg1, String arg2, Exception arg3);

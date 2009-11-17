@@ -601,7 +601,6 @@ public final class Interval {
         assert this.variable().assertLocationCategory() : "cannot assign stack slot to this variable";
     }
 
-
     public boolean intersectsIncremental(Interval current) {
         return this.firstIntersectionIncremental(0, current) != -1;
     }

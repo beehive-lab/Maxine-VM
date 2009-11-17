@@ -20,7 +20,6 @@
  */
 package jtt.lang;
 
-
 /*
  * @Harness: java
  * @Runs: 0 = !java.lang.ClassNotFoundException;

@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
 
-
 public final class Iterators {
 
     private Iterators() {

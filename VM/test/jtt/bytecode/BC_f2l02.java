@@ -19,17 +19,17 @@
  * Company, Ltd.
  */
 
-
 package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 1.0d = 1; 0.0d = 0
+ * @Runs: 0 = -9223372036854775808L, 1 = -9223372036854775808L, 2 = 0L, 3 = 9223372036854775807L; 4 = 9223372036854775807L
  */
-public class BC_d2i_nan {
+public class BC_f2l02 {
 
-    // (int)0D/0D should be 0
-    public static int test(double d) {
-        return (int) (d / d);
+    private static float[] inputs = {-1.3e22f, Float.NEGATIVE_INFINITY, Float.NaN, Float.POSITIVE_INFINITY, 1.3e22f};
+
+    public static long test(int i) {
+        return (long) inputs[i];
     }
 }

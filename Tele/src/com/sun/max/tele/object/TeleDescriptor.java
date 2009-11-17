@@ -24,7 +24,6 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Canonical surrogate for a  {@link Descriptor} in the {@link TeleVM}.
  *

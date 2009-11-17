@@ -24,7 +24,6 @@
  */
 package jtt.except;
 
-
 public class Throw_Synchronized04 {
 
     static final Throw_Synchronized04 object = new Throw_Synchronized04();

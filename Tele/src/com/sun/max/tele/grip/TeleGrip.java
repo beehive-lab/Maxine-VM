@@ -60,7 +60,6 @@ public abstract class TeleGrip extends Grip implements TeleObjectMemory {
         return gripOID;
     }
 
-
     private static long nextOID = 1;
 
     private static synchronized long getNextOID() {

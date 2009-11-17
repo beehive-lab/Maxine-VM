@@ -23,7 +23,6 @@ package test.com.sun.max.vm.compiler.cir.generate;
 import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 
-
 public class CirTranslatorTest_snippets extends CompilerTestCase {
 
     public static Test suite() {

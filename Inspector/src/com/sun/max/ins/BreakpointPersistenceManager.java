@@ -33,7 +33,6 @@ import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Singleton manager for the Inspector's relationship with breakpoints in the VM.
  * Saves breakpoints to persistent storage and reloads at initialization.
@@ -179,6 +178,5 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             }
         }
     }
-
 
 }

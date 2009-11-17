@@ -268,8 +268,6 @@ public abstract class SPARCEirRegister extends EirRegister {
 
         private static final FloatingPoint[] singlePrecisionValues = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31};
 
-
-
         public static final DoublePrecision F32 = new DoublePrecision(32);
         public static final DoublePrecision F34 = new DoublePrecision(34);
         public static final DoublePrecision F36 = new DoublePrecision(36);

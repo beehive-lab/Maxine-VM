@@ -32,7 +32,6 @@ import com.sun.max.tele.object.*;
  */
 public interface MaxWatchpoint extends MemoryRegion {
 
-
     /**
      * Checks if watchpoint is set for reading.
      * @return true while the watchpoint is activated for read access,

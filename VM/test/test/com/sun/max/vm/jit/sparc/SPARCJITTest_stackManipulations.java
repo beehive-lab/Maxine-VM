@@ -24,7 +24,6 @@ import junit.framework.*;
 import test.com.sun.max.vm.compiler.sparc.*;
 import test.com.sun.max.vm.jit.*;
 
-
 /**
  * Runs unit test JITTest_stackManipulations for SPARC.
  * @see JITTest_stackManipulations

@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 
-
 /**
  * This class serves two purposes. Firstly, it is a marker for classes whose bytecodes should not be verified (a la
  * {@link sun.reflect.MagicAccessorImpl}). Secondly, it provides static methods for generating stubs that are used to

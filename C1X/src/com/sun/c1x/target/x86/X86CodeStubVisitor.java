@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 
-public class X86CodeStubVisitor implements CodeStubVisitor {
+public final class X86CodeStubVisitor extends CodeStubVisitor {
 
     private final X86LIRAssembler ce;
     private final X86MacroAssembler masm;
@@ -39,7 +39,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         this.masm = lirAssembler.masm;
         this.compilation = lirAssembler.compilation;
     }
-
 
     public void visitJITAdapterFrameStub(JITAdapterFrameStub stub) {
         masm.bind(stub.entry);
@@ -53,16 +52,14 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         // where "oarg" is an overflow argument and "jarg" is an argument from the caller's java stack.
         // save the caller's RBP
 
-
         final int wordSize =  compilation.target.arch.wordSize;
 
         // Receive calling convention (for the current method, but with outgoing==true, i.e. as if we were calling the current method)
         FrameMap map = compilation.frameMap();
         CallingConvention cc = map.javaCallingConvention(Util.signatureToBasicTypes(compilation.method.signatureType(), !compilation.method.isStatic()), true, false);
 
-
         // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
-        final int adapterFrameSize = cc.overflowArgumentsSize();
+        final int adapterFrameSize = cc.overflowArgumentSize;
 
         // Allocate space on the stack (adapted parameters + caller's frame pointer)
         masm.push(X86.rbp);
@@ -82,12 +79,11 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         int jitCallerStackOffset = adapterFrameSize + framePrefixSize;
 
         final int jitSlotSize = compilation.runtime.getJITStackSlotSize();
-        for (int i = cc.locations().length - 1; i >= 0;  i--) {
-            CiLocation location = cc.locations()[i];
-            CiKind t = location.kind;
-            LIROperand src = LIROperandFactory.address(CiRegister.Stack, jitCallerStackOffset, t);
-            ce.moveOp(src, cc.at(i), t, null, false);
-            jitCallerStackOffset += t.size * jitSlotSize;
+        for (int i = cc.locations.length - 1; i >= 0;  i--) {
+            CiLocation location = cc.locations[i];
+            LIROperand src = LIROperandFactory.address(CiRegister.Stack, jitCallerStackOffset, location.kind);
+            ce.moveOp(src, cc.operands[i], location.kind, null, false);
+            jitCallerStackOffset += location.kind.size * jitSlotSize;
         }
 
         // jitCallerOffset is now set to the first location before the first parameter, i.e., the point where
@@ -121,7 +117,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
         masm.bind(stub.entry);
-        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowDiv0Exception, stub.info, CiRegister.None);
+        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowArithmeticException, stub.info, CiRegister.None);
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -161,9 +157,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
             ce.monitorAddress(stub.monitorIx, stub.lockReg());
         }
 
-
         masm.callGlobalStub(GlobalStub.MonitorExit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
-        // TODO: do we need to add call info? (tw) No, if stub.info not null, then the call automatically adds it to the correct position
         masm.jmp(stub.continuation);
     }
 
@@ -199,21 +193,15 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitRangeCheckStub(RangeCheckStub stub) {
         masm.bind(stub.entry);
-        GlobalStub stubId;
-        if (stub.throwIndexOutOfBoundsException) {
-            stubId = GlobalStub.ThrowIndexException;
-        } else {
-            stubId = GlobalStub.ThrowRangeCheckFailed;
-        }
 
         LIROperand index = stub.index();
         int infoPos;
         if (index.isRegister()) {
-            infoPos = masm.callGlobalStub(stubId, stub.info, CiRegister.None, index.asRegister());
+            infoPos = masm.callGlobalStub(GlobalStub.ThrowArrayIndexOutOfBoundsException, stub.info, CiRegister.None, index.asRegister());
         } else {
             assert index.isConstant();
             LIRConstant constantIndex = (LIRConstant) index;
-            infoPos = masm.callGlobalStub(stubId, stub.info, CiRegister.None, new RegisterOrConstant(constantIndex.asInt()));
+            infoPos = masm.callGlobalStub(GlobalStub.ThrowArrayIndexOutOfBoundsException, stub.info, CiRegister.None, new RegisterOrConstant(constantIndex.asInt()));
         }
 
         compilation.addCallInfo(infoPos, stub.info);
@@ -230,9 +218,9 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         int infoPos;
         if (stub.obj().isIllegal()) {
-            infoPos = masm.callGlobalStubNoArgs(stub.stub, stub.info, CiRegister.None);
+            infoPos = masm.callGlobalStubNoArgs(stub.globalStub, stub.info, CiRegister.None);
         } else {
-            infoPos = masm.callGlobalStub(stub.stub, stub.info, CiRegister.None, stub.obj().asRegister());
+            infoPos = masm.callGlobalStub(stub.globalStub, stub.info, CiRegister.None, stub.obj().asRegister());
         }
         compilation.addCallInfo(infoPos, stub.info);
 

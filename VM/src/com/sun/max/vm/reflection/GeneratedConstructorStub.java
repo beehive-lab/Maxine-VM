@@ -26,7 +26,6 @@ import sun.reflect.*;
 
 import com.sun.max.vm.value.*;
 
-
 public abstract class GeneratedConstructorStub extends GeneratedStub implements ConstructorAccessor {
 
     public Object newInstance(Object[] args) throws InstantiationException, IllegalArgumentException, InvocationTargetException {

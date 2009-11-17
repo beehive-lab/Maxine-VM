@@ -24,7 +24,6 @@ import java.lang.reflect.*;
 
 import com.sun.max.program.*;
 
-
 public interface StaticFieldLiteral {
 
     String literal();

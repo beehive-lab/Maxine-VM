@@ -47,7 +47,6 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.JavaStackFrameLayout.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A table that displays the contents of a Java method stack frame in the VM.
  *
@@ -123,7 +122,6 @@ public class JavaStackFrameTable extends InspectorTable {
         }
         return null;
     }
-
 
     @Override
     public void updateFocusSelection() {
@@ -425,7 +423,6 @@ public class JavaStackFrameTable extends InspectorTable {
             }
         }
     }
-
 
     private final class RegionRenderer extends MemoryRegionValueLabel implements TableCellRenderer {
         // Designed so that we only read memory lazily, for words that are visible

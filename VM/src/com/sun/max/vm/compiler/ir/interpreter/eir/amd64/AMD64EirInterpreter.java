@@ -40,7 +40,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * AMD64 EIR instruction visitors for interpretation.
  *
@@ -365,7 +364,6 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
         cpu.set(OF, ((a < 0) && (b >= 0) && (a - b >= 0)) || ((a >= 0) && (b < 0) && (a - b < 0)));
         cpu.set(SF, a >= b ? cpu.test(OF) : !cpu.test(OF));
     }
-
 
     private boolean doubleCompare(AMD64XMMComparison comparison, double a, double b) {
         if (Double.isNaN(a) || Double.isNaN(b)) {

@@ -25,11 +25,9 @@ import com.sun.max.platform.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.stack.*;
 
-
 public class C1XStackFrameLayout extends JavaStackFrameLayout {
 
     public final int frameSize;
-
 
     public C1XStackFrameLayout(int frameSize) {
         this.frameSize = frameSize;

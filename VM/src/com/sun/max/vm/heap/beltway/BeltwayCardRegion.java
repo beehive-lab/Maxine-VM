@@ -222,7 +222,6 @@ public class BeltwayCardRegion {
                         Heap.bootHeapRegion.start().unsignedShiftedRight(BeltwayCardRegion.CARD_SHIFT));
         final int primordialCardTableSize = Heap.bootHeapRegion.size().plus(Code.bootCodeRegion.size()).unsignedShiftedRight(CARD_SHIFT).toInt();
 
-
         adjustedCardTable = BeltwayCardRegion.adjustedCardTableBase(regularCardTable);
 
         if (Heap.verbose()) {

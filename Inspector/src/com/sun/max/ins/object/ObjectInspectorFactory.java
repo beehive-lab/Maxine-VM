@@ -29,7 +29,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 
-
 /**
  * Creates and manages canonical instances of {@link ObjectInspector} for
  * objects in the heap of the VM.

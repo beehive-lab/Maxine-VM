@@ -24,28 +24,27 @@ package com.sun.c1x.stub;
  *
  * @author Thomas Wuerthinger
  */
-public interface CodeStubVisitor {
+public abstract class CodeStubVisitor {
 
-    void visitArrayStoreExceptionStub(ArrayStoreExceptionStub arrayStoreExceptionStub);
+    public abstract void visitArrayStoreExceptionStub(ArrayStoreExceptionStub arrayStoreExceptionStub);
 
-    void visitDivByZeroStub(DivByZeroStub divByZeroStub);
+    public abstract void visitDivByZeroStub(DivByZeroStub divByZeroStub);
 
-    void visitImplicitNullCheckStub(ImplicitNullCheckStub implicitNullCheckStub);
+    public abstract void visitImplicitNullCheckStub(ImplicitNullCheckStub implicitNullCheckStub);
 
-    void visitMonitorEnterStub(MonitorEnterStub monitorEnterStub);
+    public abstract void visitMonitorEnterStub(MonitorEnterStub monitorEnterStub);
 
-    void visitMonitorExitStub(MonitorExitStub monitorExitStub);
+    public abstract void visitMonitorExitStub(MonitorExitStub monitorExitStub);
 
-    void visitNewInstanceStub(NewInstanceStub visitor);
+    public abstract void visitNewInstanceStub(NewInstanceStub visitor);
 
-    void visitNewObjectArrayStub(NewObjectArrayStub newObjectArrayStub);
+    public abstract void visitNewObjectArrayStub(NewObjectArrayStub newObjectArrayStub);
 
-    void visitNewTypeArrayStub(NewTypeArrayStub newTypeArrayStub);
+    public abstract void visitNewTypeArrayStub(NewTypeArrayStub newTypeArrayStub);
 
-    void visitRangeCheckStub(RangeCheckStub visitor);
+    public abstract void visitRangeCheckStub(RangeCheckStub visitor);
 
-    void visitSimpleExceptionStub(SimpleExceptionStub simpleExceptionStub);
+    public abstract void visitSimpleExceptionStub(SimpleExceptionStub simpleExceptionStub);
 
-    void visitJITAdapterFrameStub(JITAdapterFrameStub jitAdapterFrameStub);
-
+    public abstract void visitJITAdapterFrameStub(JITAdapterFrameStub jitAdapterFrameStub);
 }

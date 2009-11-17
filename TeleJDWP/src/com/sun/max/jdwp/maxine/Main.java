@@ -171,7 +171,6 @@ public class Main {
         LOGGER.info("Creating JDWP server");
         final JDWPServer server = new JDWPServer();
 
-
         final JDWPSession session = new JDWPSession(vmAccess);
 
         new ArrayReferenceHandlers(session).registerWith(server.commandHandlerRegistry());

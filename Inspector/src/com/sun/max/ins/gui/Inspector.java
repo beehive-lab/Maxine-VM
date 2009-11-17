@@ -61,7 +61,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
 
     private static final ImageIcon DEFAULT_MENU_ICON = InspectorImageIcon.createDownTriangle(16, 16);
 
-
     public enum MenuKind {
         // Standard menu, of which every menu bar will have a subset.
         // They should be created in this order for consistency, as that
@@ -163,13 +162,11 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         };
     }
 
-
     private InspectorFrame frame;
 
     protected Inspector(Inspection inspection) {
         super(inspection);
     }
-
 
     /**
      * @return the component in which the Inspector displays its view.
@@ -292,7 +289,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         }
         return frame;
     }
-
 
     /**
      * Reads, re-reads, and updates any state caches if needed from the VM.
@@ -543,7 +539,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         dummyPrintAction.setEnabled(false);
         return dummyPrintAction;
     }
-
 
     @Override
     public String toString() {

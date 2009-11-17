@@ -25,7 +25,6 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 
-
 /**
  * A specialization of popup menus for use in the Inspector.
  *

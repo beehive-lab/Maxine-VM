@@ -22,7 +22,6 @@ package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
 
-
 /**
  * The <code>NewObjectArrayStub</code> class definition.
  *
@@ -30,7 +29,6 @@ import com.sun.c1x.lir.*;
  * @author Thomas Wuerthinger
  */
 public class NewObjectArrayStub extends CodeStub {
-
 
     /**
      * Creates a new instance of <code>NewObjectArrayStub</code>.

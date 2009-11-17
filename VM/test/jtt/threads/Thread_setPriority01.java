@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Thread_setPriority01 {
     private Thread_setPriority01() {
     }

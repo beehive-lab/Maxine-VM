@@ -43,7 +43,6 @@ public abstract class IEEE754Builtin extends Builtin {
         super(null);
     }
 
-
     public static class ConvertFloatToInt extends IEEE754Builtin {
         private static final float MAX_FLOAT_VALUE =  -1 >>> 1;
 
@@ -78,7 +77,6 @@ public abstract class IEEE754Builtin extends Builtin {
 
         public static final ConvertFloatToLong BUILTIN = new ConvertFloatToLong();
     }
-
 
     public static class ConvertDoubleToInt extends IEEE754Builtin {
         private static final double MAX_DOUBLE_VALUE = -1 >>> 1;

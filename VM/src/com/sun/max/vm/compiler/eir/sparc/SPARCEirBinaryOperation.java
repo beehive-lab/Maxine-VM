@@ -167,7 +167,6 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         registerOrImmediateOperand.setEirValue(rightOperandValue);
     }
 
-
     public SPARCEirBinaryOperation(EirBlock block, EirValue destinationOperand, Effect destinationEffect,  PoolSet<EirLocationCategory> destinationCategory,
                     EirValue leftOperandValue, EirOperand.Effect leftOperandEffect, PoolSet<EirLocationCategory> leftOperandLocationCategories,
                     EirValue rightOperandValue, EirOperand.Effect rightOperandEffect, PoolSet<EirLocationCategory> rightLocationCategories) {
@@ -198,8 +197,6 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         registerOrImmediateOperand =  new EirOperand(this, rightOperandEffect, rightLocationCategories);
         registerOrImmediateOperand.setEirValue(rightOperandValue);
     }
-
-
 
     /**
      * Helper interface implemented  by sub-classes of SPARCEirBinaryOperation with general register or immediate operands.
@@ -395,7 +392,6 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
             }
         }
     }
-
 
     public abstract static class Compare extends SPARCEirBinaryOperation {
         private static final EirOperand nullOperand = null;

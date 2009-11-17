@@ -119,7 +119,6 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         return Ints.roundUp(currentOffset, nAlignmentBytes);
     }
 
-
     Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors, int headerSize) {
         setInvalidOffsets(fieldActors);
         final int nAlignmentBytes = Word.size();

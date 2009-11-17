@@ -74,7 +74,6 @@ public class TeleFields extends AbstractTeleVMHolder {
         // updateSource(true);
     }
 
-
     // Checkstyle: stop field name check
 
     public final <IrMethod_Type extends IrMethod> TeleInstanceReferenceFieldAccess IrMethod_classMethodActor(Class<IrMethod_Type> holderType) {

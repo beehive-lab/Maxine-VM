@@ -47,7 +47,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         super(compilation);
     }
 
-
     @Override
     protected LIROperand exceptionPcOpr() {
         return LIROperandFactory.IllegalLocation; //X86FrameMap.rdxOpr;
@@ -244,7 +243,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         if (C1XOptions.GenArrayStoreCheck && needsStoreCheck) {
-
             LIROperand tmp1 = newRegister(CiKind.Object);
             LIROperand tmp2 = newRegister(CiKind.Object);
             LIROperand tmp3 = newRegister(CiKind.Object);
@@ -364,7 +362,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     public void visitArithmeticOpLong(ArithmeticOp x) {
-
         if (x.opcode() == Bytecodes.LDIV || x.opcode() == Bytecodes.LREM) {
             // long division is implemented as a direct call into the runtime
             LIRItem left = new LIRItem(x.x(), this);
@@ -382,10 +379,10 @@ public final class X86LIRGenerator extends LIRGenerator {
             }
 
             LIROperand resultReg = resultRegisterFor(x.type());
-            left.loadItemForce(cc.at(0));
+            left.loadItemForce(cc.operands[0]);
             right.loadItem();
 
-            lir.move(right.result(), cc.at(1));
+            lir.move(right.result(), cc.operands[1]);
 
             if (!x.checkFlag(Flag.NoZeroCheck)) {
                 lir.cmp(LIRCondition.Equal, right.result(), LIROperandFactory.longConst(0));
@@ -400,15 +397,12 @@ public final class X86LIRGenerator extends LIRGenerator {
                 case Bytecodes.LDIV:
                     entry = CiRuntimeCall.ArithmeticLdiv;
                     break; // check if dividend is 0 is done elsewhere
-                case Bytecodes.LMUL:
-                    entry = CiRuntimeCall.ArithmeticLmul;
-                    break;
                 default:
                     throw Util.shouldNotReachHere();
             }
 
             LIROperand result = rlockResult(x);
-            lir.callRuntime(entry, resultReg, cc.arguments(), null);
+            lir.callRuntime(entry, resultReg, Arrays.asList(cc.operands), null);
             lir.move(resultReg, result);
         } else if (x.opcode() == Bytecodes.LMUL) {
             // missing test if instr is commutative and if we should swap
@@ -898,7 +892,6 @@ public final class X86LIRGenerator extends LIRGenerator {
             emitSafeArrayStore(dimensionArray, LIROperandFactory.intConst(i), size.result(), CiKind.Int, false);
         }
         arguments.add(dimensionArray);
-
 
         // Create a new code emit info as they must not be shared!
         LIRDebugInfo info2 = stateFor(x, x.stateBefore());

@@ -23,7 +23,6 @@ package com.sun.c1x.lir;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.stub.*;
 
-
 /**
  * The <code>LIRLock</code> class definition.
  *
@@ -53,7 +52,6 @@ public class LIRLock extends LIRInstruction {
     public LIROperand lockOpr() {
         return operand(1);
     }
-
 
     /**
      * Gets the header of this class.

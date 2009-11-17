@@ -23,7 +23,6 @@ package com.sun.max.vm.template.source;
 import com.sun.max.*;
 import com.sun.max.vm.*;
 
-
 /**
 * @see MaxPackage
 * 

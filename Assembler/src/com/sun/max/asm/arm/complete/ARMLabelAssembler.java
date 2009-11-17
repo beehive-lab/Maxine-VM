@@ -21,7 +21,6 @@
 
 package com.sun.max.asm.arm.complete;
 
-
 public abstract class ARMLabelAssembler extends ARMRawAssembler {
 
     protected ARMLabelAssembler(int startAddress) {

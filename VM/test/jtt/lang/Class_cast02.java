@@ -25,7 +25,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_cast02 {
     private Class_cast02() {
     }

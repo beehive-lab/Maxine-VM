@@ -1905,5 +1905,4 @@ public class IRInterpreter {
         }
         return CiConstant.forObject(boxedJavaValue);
     }
-
 }

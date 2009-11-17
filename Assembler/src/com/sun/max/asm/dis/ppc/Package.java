@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.dis.ppc;
 
-
 import com.sun.max.*;
 import com.sun.max.asm.*;
 

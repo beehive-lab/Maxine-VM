@@ -41,7 +41,6 @@ public class BirBlock implements IrBlock {
         return bytecodeBlock;
     }
 
-
     public IrBlock.Role role() {
         return role;
     }
@@ -68,7 +67,6 @@ public class BirBlock implements IrBlock {
         return bytecodeBlock.start() * bytecodeBlock.end();
     }
 
-
     public void addPredecessor(BirBlock predecessor) {
         predecessors.add(predecessor);
     }
@@ -76,7 +74,6 @@ public class BirBlock implements IrBlock {
     public DeterministicSet<BirBlock> predecessors() {
         return predecessors;
     }
-
 
     public void addSuccessor(BirBlock successor) {
         successors.add(successor);

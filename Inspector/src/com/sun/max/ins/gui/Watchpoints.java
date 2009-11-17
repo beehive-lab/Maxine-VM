@@ -29,7 +29,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.tele.*;
 
-
 /**
  * Utilities for managing {@linkplain MaxWatchpoint memory watchpoint}s in the VM.
  *

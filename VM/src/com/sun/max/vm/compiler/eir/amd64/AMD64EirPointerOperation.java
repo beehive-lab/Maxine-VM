@@ -189,7 +189,6 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
     protected abstract void translateWithImmediateOffset32WithoutIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, int offset32);
     protected abstract void translateWithImmediateOffset32WithIndex(AMD64EirTargetEmitter emitter, AMD64GeneralRegister64 pointerRegister, int offset32, AMD64GeneralRegister64 indexRegister);
 
-
     @Override
     public void emit(AMD64EirTargetEmitter emitter) {
         final AMD64GeneralRegister64 pointerRegister = pointerGeneralRegister().as64();

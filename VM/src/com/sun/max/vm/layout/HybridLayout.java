@@ -25,7 +25,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.layout.Layout.*;
 
-
 /**
  * A hub is like a tuple and a word array at the same time.
  * Fields and word array elements overlap.

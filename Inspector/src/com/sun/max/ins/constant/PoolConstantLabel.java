@@ -34,7 +34,6 @@ import com.sun.max.vm.classfile.constant.FieldRefConstant.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * A label for displaying a {@link PoolConstant} in the VM that is a reference.
  * For literal constants, the labels rely on the local counterpart to the remote one.
@@ -511,6 +510,5 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         }
 
     }
-
 
 }

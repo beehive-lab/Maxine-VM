@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele.debug;
 
-
 /**
  * Thrown when the VM process has terminated.
  *

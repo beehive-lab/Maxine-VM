@@ -220,7 +220,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         repaint();
     }
 
-
     /**
      * A table specialized for displaying a block of disassembled target code, one instruction per line.
      */
@@ -277,7 +276,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 }
             }
         }
-
 
         /**
          * Global code selection has been set; return true iff the view contains selection.
@@ -415,7 +413,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return -1;
         }
     }
-
 
     /**
      * Return the appropriate color for displaying the row's text depending on whether the instruction pointer is at
@@ -566,7 +563,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-
     private final class LabelRenderer extends LocationLabel.AsTextLabel implements TableCellRenderer {
 
         public LabelRenderer(Address entryAddress) {
@@ -593,7 +589,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-
     private final class InstructionRenderer extends TargetCodeLabel implements TableCellRenderer {
         InstructionRenderer(Inspection inspection) {
             super(inspection, "");
@@ -609,7 +604,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return this;
         }
     }
-
 
     private interface LiteralRenderer {
         WordValueLabel render(Inspection inspection, String literalLoadText, Address literalAddress);
@@ -800,7 +794,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return this;
         }
     }
-
 
     @Override
     public void print(String name) {

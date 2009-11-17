@@ -28,7 +28,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 
-
 /**
  * An adapter for listening to changes of focus (view state) in the Inspector.
  *

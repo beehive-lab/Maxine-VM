@@ -26,32 +26,31 @@ import com.sun.c1x.ci.*;
 
 /**
  * A global stub is a shared routine that performs an operation on behalf of compiled code.
- * Typically the routine is too large to inline or requires runtime support.
+ * Typically the routine is too large to inline, is infrequent, or requires runtime support.
+ * Global stubs are called with a callee-save convention; the global stub must save any
+ * registers it may destroy and then restore them upon return. This allows the register
+ * allocator to ignore calls to global stubs. Parameters to global stubs are typically
+ * passed on the stack in order to conserve registers for the rest of the code.
  *
  * @author Thomas Wuerthinger
  */
 public enum GlobalStub {
-    ThrowRangeCheckFailed(Void, Int),
-    ThrowIndexException(Void, Int),
-    ThrowDiv0Exception(Void),
+    ThrowArrayIndexOutOfBoundsException(Void, Int),
+    ThrowArithmeticException(Void),
     ThrowNullPointerException(Void),
     ThrowArrayStoreException(Void),
     ThrowClassCastException(Void, Object),
     ThrowIncompatibleClassChangeError,
     NewInstance(Object, Object),
-    f2i(Int, Float),
-    fneg(Float, Float),
-    dneg(Double, Double),
-    f2l(Long, Float),
-    d2i(Int, Double),
-    d2l(Long, Double),
     MonitorEnter(Void, Object, Int),
     MonitorExit(Void, Object, Int),
-    ArithmethicLrem(Long, Long, Long),
-    ArithmeticLdiv(Long, Long, Long),
-    ArithmeticLmul(Long, Long, Long),
-    ArithmeticFrem(Float, Float),
-    ArithmeticDrem(Double, Double);
+
+    fneg(Float, Float),
+    dneg(Double, Double),
+    f2i(Int, Float),
+    f2l(Long, Float),
+    d2i(Int, Double),
+    d2l(Long, Double);
 
     public final CiKind resultType;
     public final CiKind[] arguments;

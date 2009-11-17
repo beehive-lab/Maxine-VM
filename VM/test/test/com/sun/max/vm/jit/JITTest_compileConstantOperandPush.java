@@ -25,7 +25,6 @@ import test.com.sun.max.vm.compiler.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Testing the JIT-compiler with methods using bytecode instructions with explicit bytecode operand (e.g., bipush, sipush).
  *

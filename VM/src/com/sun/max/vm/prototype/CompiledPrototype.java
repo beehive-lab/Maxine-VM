@@ -215,13 +215,11 @@ public class CompiledPrototype extends Prototype {
         Trace.end(1, "processNewClasses");
     }
 
-
     private void traceNewClass(ClassActor classActor) {
         if (Trace.hasLevel(2)) {
             Trace.line(2, "new class: " + classActor);
         }
     }
-
 
     private void gatherNewAnonymousClass(final LinkSequence<ClassActor> newClasses, ClassActor classActor, final Method enclosingMethod) {
         if (!MaxineVM.isHostedOnly(enclosingMethod)) {
@@ -379,7 +377,6 @@ public class CompiledPrototype extends Prototype {
             final BOOT_IMAGE_DIRECTIVE annotation = methodActor.getAnnotation(BOOT_IMAGE_DIRECTIVE.class);
             if (annotation.keepUnlinked()) {
                 // if there is an annotation to keep this method unlinked, add to the unlinked methods set
-                registerMethodUnlinked(methodActor);
             } else if (annotation.useJitCompiler()) {
                 // if there is an explicit annotation to use the JIT compiler
                 registerJitMethod(methodActor);
@@ -409,12 +406,6 @@ public class CompiledPrototype extends Prototype {
     public static void registerImageMethod(ClassMethodActor imageMethodActor) {
         ProgramError.check(imageMethodActor != null);
         imageMethodActors.add(imageMethodActor);
-    }
-
-    public static void registerMethodUnlinked(MethodActor methodActor) {
-    }
-
-    public static void registerClassUnlinked(ClassActor classActor) {
     }
 
     public static void registerJitClass(Class javaClass) {
@@ -581,7 +572,6 @@ public class CompiledPrototype extends Prototype {
         }
         return newCompilations > 0;
     }
-
 
     private ProgramError reportCompilationError(final MethodActor classMethodActor, Throwable error) throws ProgramError {
         System.err.println("Error occurred while compiling " + classMethodActor + ": " + error);

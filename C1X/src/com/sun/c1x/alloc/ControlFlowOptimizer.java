@@ -271,5 +271,4 @@ final class ControlFlowOptimizer {
 
         return true;
     }
-
 }

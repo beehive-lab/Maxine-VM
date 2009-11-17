@@ -38,7 +38,6 @@ public class TupleInspector extends ObjectInspector {
         super(inspection, factory, teleObject);
         final InspectorFrame frame = createFrame(true);
 
-
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         TeleTargetMethod teleTargetMethod = null;
         if (TeleTargetMethod.class.isAssignableFrom(teleObject.getClass())) {

@@ -31,7 +31,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Denotes a class (the "substitutor") that provides an alternative implementation
  * (a method annotated by {@link SUBSTITUTE}) for at least one method in another
@@ -63,7 +62,6 @@ public @interface METHOD_SUBSTITUTIONS {
          * The converse mapping.
          */
         private static final GrowableMapping<ClassMethodActor, ClassMethodActor> substituteToOriginal = HashMapping.createIdentityMapping();
-
 
         /**
          * @param substitutee a class that has one or more methods to be substituted

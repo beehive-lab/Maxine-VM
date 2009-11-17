@@ -30,7 +30,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.prototype.BootImage.*;
 
-
 /**
  * A utility for printing the contents of a {@link BootImage}.
  *

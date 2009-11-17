@@ -36,7 +36,6 @@ public class PPC32Disassembler extends PPCDisassembler {
         super(new Immediate32Argument(startAddress), PPCAssembly.ASSEMBLY, inlineDataDecoder);
     }
 
-
     @Override
     protected Assembler createAssembler(int position) {
         return new PPC32Assembler((int) startAddress().asLong() + position);

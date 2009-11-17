@@ -25,7 +25,6 @@ import com.sun.max.vm.compiler.tir.pipeline.*;
 import com.sun.max.vm.hotpath.state.*;
 import com.sun.max.vm.type.*;
 
-
 public abstract class TirInstruction extends TirMessage implements Classifiable {
     public static class Placeholder extends TirInstruction {
         public static final Placeholder FILLER = new Placeholder("%");

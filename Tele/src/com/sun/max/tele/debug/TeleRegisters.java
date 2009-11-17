@@ -116,7 +116,6 @@ public abstract class TeleRegisters {
         return nameList;
     }
 
-
     public Address get(int index) {
         return registerValues[index];
     }

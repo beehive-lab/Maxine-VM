@@ -75,5 +75,4 @@ public abstract class BytecodeSwitch {
         }
         return stream.readInt(bci);
     }
-
 }

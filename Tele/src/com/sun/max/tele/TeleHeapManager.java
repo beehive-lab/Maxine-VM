@@ -34,7 +34,6 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
-
 /**
  * Singleton cache of information about the heap in the VM.
  *<br>

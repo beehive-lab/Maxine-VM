@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm;
 
-
 /**
  * Byte stream padding for memory alignment in the assembler. This pseudo-instruction pads the byte stream to ensure that the next
  * memory location is aligned on the specified boundary.

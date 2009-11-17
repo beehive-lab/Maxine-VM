@@ -18,17 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=5bd0922a-53d8-422a-b588-38553439b21f*/
-package com.sun.max.bench.benchmarks;
+package jtt.bytecode;
 
-public class AllocArray implements Runnable {
-
-    public void run() {
-        for (int i = 0; i < 10000; i++) {
-            final int[] array = new int[100];
-            for (int j = 0; j < array.length; j++) {
-                array[j] = 200 + j + i;
-            }
-        }
+/*
+ * @Harness: java
+ * @Runs: 0.0d = 0; 1.0d = 1; -1.06d = -1; -156.82743d = -156
+ */
+public class BC_d2i01 {
+    public static int test(double d) {
+        return (int) d;
     }
 }

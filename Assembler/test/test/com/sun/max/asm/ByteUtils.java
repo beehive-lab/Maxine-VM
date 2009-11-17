@@ -20,7 +20,6 @@
  */
 package test.com.sun.max.asm;
 
-
 /**
  * Helper functions for manipulating byte data.
  *

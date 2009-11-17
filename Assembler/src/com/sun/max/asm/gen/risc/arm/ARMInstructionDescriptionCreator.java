@@ -26,7 +26,6 @@ package com.sun.max.asm.gen.risc.arm;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 
-
 /**
  *
  * @author Sumeet Panchal

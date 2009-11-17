@@ -76,7 +76,6 @@ public abstract class MethodSelectionSnippet extends Snippet {
         public static final SelectVirtualMethod SNIPPET = new SelectVirtualMethod();
     }
 
-
     public static final class SelectInterfaceMethod extends MethodSelectionSnippet {
         /**
          * Meta-evaluates only up to the virtual method actor, not all the way to the target method's entry point.

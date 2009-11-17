@@ -32,7 +32,6 @@ import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.object.*;
 
-
 /**
  * A rudimentary Preferences dialog; leveraging {@link JPanel}s provided by various {@link Inspector}s.
  *

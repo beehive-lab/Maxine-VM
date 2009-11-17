@@ -19,7 +19,6 @@
  * Company, Ltd.
  */
 
-
 package com.sun.max.vm.template.source;
 
 import com.sun.max.annotate.*;
@@ -34,7 +33,6 @@ import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.profile.MethodProfile;
 import com.sun.max.vm.jit.JitInstrumentation;
-
 
 /**
  * Templates for invokevirutal and invokeinterface that contains instrumentation.

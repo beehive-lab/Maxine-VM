@@ -49,7 +49,6 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * Represents a thread executing in a {@linkplain TeleProcess tele process}.
  *
@@ -731,7 +730,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             this.vmValues = vmValues;
             rawValues = values;
         }
-
 
         private Value getValueImpl(int slot) {
             TargetLocation l = null;

@@ -22,7 +22,6 @@ package com.sun.max.asm.sparc;
 
 import com.sun.max.asm.*;
 
-
 /**
  * The class defining the symbolic identifiers for the floating-point registers.
  *

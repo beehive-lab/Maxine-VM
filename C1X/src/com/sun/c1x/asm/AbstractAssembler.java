@@ -41,8 +41,8 @@ public abstract class AbstractAssembler {
 
     public AbstractAssembler(CiTarget target, int frameSize) {
         this.target = target;
-        this.targetMethod = new CiTargetMethod(target.registerConfig.registerRefMapSize);
-        this.codeBuffer = new Buffer(target.arch.bitOrdering);
+        this.targetMethod = new CiTargetMethod(target.allocatableRegs.registerRefMapSize);
+        this.codeBuffer = new Buffer(target.arch.byteOrder);
         targetMethod.setFrameSize(frameSize);
     }
 

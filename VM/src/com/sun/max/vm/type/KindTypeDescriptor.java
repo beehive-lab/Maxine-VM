@@ -26,7 +26,6 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
-
 /**
  * The {@code KindTypeDescriptor} class encapsulates utilities and operations related to
  * the type descriptors and {@linkplain Kind kinds}.

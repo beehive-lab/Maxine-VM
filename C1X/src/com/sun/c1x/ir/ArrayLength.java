@@ -75,5 +75,4 @@ public class ArrayLength extends AccessArray {
         }
         return false;
     }
-
 }

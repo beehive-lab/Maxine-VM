@@ -36,7 +36,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 
-
 /**
  * Standardized ways to display textual names of common entities during Inspection sessions.
  *
@@ -135,7 +134,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public String unavailableDataShortText() {
         return "<?>";
     }
-
 
     /**
      * @return a long string, suitable for tool tip text, to use in place of data that should be read from the VM,
@@ -246,7 +244,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         return (teleMethodActor != null && teleMethodActor.isSubstituted()) ? " substituted from " + teleMethodActor.teleClassActorSubstitutedFrom().getName() : "";
     }
 
-
     /**
      * E.g. "Element.foo()[0]"
      */
@@ -332,7 +329,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public String shortName(TeleClassMethodActor teleClassMethodActor, ReturnTypeSpecification returnTypeSpecification) {
 
         final ClassMethodActor classMethodActor = teleClassMethodActor.classMethodActor();
-
 
         switch (returnTypeSpecification) {
             case ABSENT: {

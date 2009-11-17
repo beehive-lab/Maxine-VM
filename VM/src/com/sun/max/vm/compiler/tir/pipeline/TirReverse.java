@@ -24,7 +24,6 @@ import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.compiler.tir.TirMessage.*;
 
-
 public class TirReverse extends TirInstructionFilter {
     public TirReverse(TirMessageSink receiver) {
         super(receiver);

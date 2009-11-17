@@ -84,7 +84,7 @@ public final class CiRegister {
         return number >= 0;
     }
 
-    public boolean isXMM() {
+    public boolean isXmm() {
         return checkFlag(RegisterFlag.XMM);
     }
 
@@ -170,7 +170,7 @@ public final class CiRegister {
                     byteLast = Math.max(byteLast, r.number);
                 }
 
-                if (r.isXMM()) {
+                if (r.isXmm()) {
                     xmmCnt++;
                     xmmFirst = Math.min(xmmFirst, r.number);
                     xmmLast = Math.max(xmmLast, r.number);

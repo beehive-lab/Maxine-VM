@@ -100,7 +100,6 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
         assertEquals(result.asInt(), 99);
     }
 
-
     private static int intPlus0(int a) {
         return a + intZero;
     }

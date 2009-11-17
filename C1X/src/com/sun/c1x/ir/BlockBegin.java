@@ -723,5 +723,4 @@ public class BlockBegin extends Instruction {
             addExceptionState(state.copy());
         }
     }
-
 }

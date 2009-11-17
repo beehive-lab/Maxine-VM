@@ -73,5 +73,4 @@ public abstract class NewArray extends StateSplit {
     public void inputValuesDo(ValueClosure closure) {
         length = closure.apply(length);
     }
-
 }

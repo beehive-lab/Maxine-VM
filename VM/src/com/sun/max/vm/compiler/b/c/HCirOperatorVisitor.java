@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.b.c;
 
 import com.sun.max.vm.compiler.cir.operator.*;
 
-
 /**
  * {@link HCirOperatorVisitor} defines general purpose visitor for visiting
  * {@link JavaOperator}s.  See {@link HCirOperatorLowering} for a

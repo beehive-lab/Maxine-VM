@@ -30,7 +30,6 @@ import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 
-
 /**
  * A singleton inspector that displays {@link VMConfiguration}  information in the VM boot image.
  *

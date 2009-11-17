@@ -22,7 +22,6 @@ package com.sun.max.vm.template.source;
 
 import com.sun.max.lang.*;
 
-
 public class TemplateTableConfiguration {
     /**
      * Basic set of sources for a template table where templates make no assumptions.

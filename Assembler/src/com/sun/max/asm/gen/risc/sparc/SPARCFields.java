@@ -213,7 +213,6 @@ public final class SPARCFields {
         return cc.constant(icc);
     }
 
-
     public static final SymbolicOperandField<FCCOperand> fcc_26_25 = createFCCOperandField(26, 25);
     public static final SymbolicOperandField<FCCOperand> fcc_21_20 = createFCCOperandField(21, 20);
     public static final SymbolicOperandField<ICCOperand> fmovicc = createICCOperandField(12, 11);
@@ -330,7 +329,6 @@ public final class SPARCFields {
 
     static {
         StaticFieldName.Static.initialize(SPARCFields.class, new StaticFieldName.StringFunction() {
-
             public String function(String name) {
                 if (name.startsWith("_")) {
                     return name.substring(1);

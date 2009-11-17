@@ -370,7 +370,6 @@ public final class Strings {
         return buf.toString();
     }
 
-
     public static String space(int len) {
         if (len <= 0) {
             return "";

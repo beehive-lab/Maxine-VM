@@ -22,7 +22,6 @@ package com.sun.max.ins;
 
 import com.sun.max.ins.gui.*;
 
-
 /**
  * A display element of an {@link Inspector} that presents visually some aspect of the state of the VM.
  *

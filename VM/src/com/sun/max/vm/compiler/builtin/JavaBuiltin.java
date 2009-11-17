@@ -80,7 +80,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final FloatNegated BUILTIN = new FloatNegated();
     }
 
-
     public static class LongNegated extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -95,7 +94,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final LongNegated BUILTIN = new LongNegated();
     }
-
 
     public static class DoubleNegated extends JavaBuiltin {
         @Override
@@ -112,7 +110,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final DoubleNegated BUILTIN = new DoubleNegated();
     }
 
-
     public static class IntPlus extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -127,7 +124,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final IntPlus BUILTIN = new IntPlus();
     }
-
 
     public static class FloatPlus extends JavaBuiltin {
         @Override
@@ -144,7 +140,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final FloatPlus BUILTIN = new FloatPlus();
     }
 
-
     public static class LongPlus extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -159,7 +154,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final LongPlus BUILTIN = new LongPlus();
     }
-
 
     public static class DoublePlus extends JavaBuiltin {
         @Override
@@ -176,7 +170,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final DoublePlus BUILTIN = new DoublePlus();
     }
 
-
     public static class IntMinus extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -191,7 +184,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final IntMinus BUILTIN = new IntMinus();
     }
-
 
     public static class FloatMinus extends JavaBuiltin {
         @Override
@@ -208,7 +200,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final FloatMinus BUILTIN = new FloatMinus();
     }
 
-
     public static class LongMinus extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -223,7 +214,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final LongMinus BUILTIN = new LongMinus();
     }
-
 
     public static class DoubleMinus extends JavaBuiltin {
         @Override
@@ -240,7 +230,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final DoubleMinus BUILTIN = new DoubleMinus();
     }
 
-
     public static class IntTimes extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -255,7 +244,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final IntTimes BUILTIN = new IntTimes();
     }
-
 
     public static class FloatTimes extends JavaBuiltin {
         @Override
@@ -272,7 +260,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final FloatTimes BUILTIN = new FloatTimes();
     }
 
-
     public static class LongTimes extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -288,7 +275,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final LongTimes BUILTIN = new LongTimes();
     }
 
-
     public static class DoubleTimes extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -303,7 +289,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final DoubleTimes BUILTIN = new DoubleTimes();
     }
-
 
     public static class IntDivided extends JavaBuiltin {
         @Override
@@ -325,7 +310,6 @@ public abstract class JavaBuiltin extends Builtin {
         }
     }
 
-
     public static class FloatDivided extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -345,7 +329,6 @@ public abstract class JavaBuiltin extends Builtin {
             return Stoppable.DIVIDE_BY_ZERO_CHECK;
         }
     }
-
 
     public static class LongDivided extends JavaBuiltin {
         @Override
@@ -367,7 +350,6 @@ public abstract class JavaBuiltin extends Builtin {
         }
     }
 
-
     public static class DoubleDivided extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -388,7 +370,6 @@ public abstract class JavaBuiltin extends Builtin {
         }
     }
 
-
     public static class IntRemainder extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -408,7 +389,6 @@ public abstract class JavaBuiltin extends Builtin {
             return Stoppable.DIVIDE_BY_ZERO_CHECK;
         }
     }
-
 
     public static class FloatRemainder extends JavaBuiltin {
         @Override
@@ -431,7 +411,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final Snippet SNIPPET = Snippet.FloatRemainder.SNIPPET;
     }
 
-
     public static class LongRemainder extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -451,7 +430,6 @@ public abstract class JavaBuiltin extends Builtin {
             return Stoppable.DIVIDE_BY_ZERO_CHECK;
         }
     }
-
 
     public static class DoubleRemainder extends JavaBuiltin {
         @Override
@@ -474,7 +452,6 @@ public abstract class JavaBuiltin extends Builtin {
         }
     }
 
-
     public static class IntShiftedLeft extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -489,7 +466,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final IntShiftedLeft BUILTIN = new IntShiftedLeft();
     }
-
 
     public static class LongShiftedLeft extends JavaBuiltin {
         @Override
@@ -506,7 +482,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final LongShiftedLeft BUILTIN = new LongShiftedLeft();
     }
 
-
     public static class IntSignedShiftedRight extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -521,7 +496,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final IntSignedShiftedRight BUILTIN = new IntSignedShiftedRight();
     }
-
 
     public static class LongSignedShiftedRight extends JavaBuiltin {
         @Override
@@ -538,7 +512,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final LongSignedShiftedRight BUILTIN = new LongSignedShiftedRight();
     }
 
-
     public static class IntUnsignedShiftedRight extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -553,7 +526,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final IntUnsignedShiftedRight BUILTIN = new IntUnsignedShiftedRight();
     }
-
 
     public static class LongUnsignedShiftedRight extends JavaBuiltin {
         @Override
@@ -615,7 +587,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final IntAnd BUILTIN = new IntAnd();
     }
 
-
     public static class LongAnd extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -630,7 +601,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final LongAnd BUILTIN = new LongAnd();
     }
-
 
     public static class IntOr extends JavaBuiltin {
         @Override
@@ -647,7 +617,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final IntOr BUILTIN = new IntOr();
     }
 
-
     public static class LongOr extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -662,7 +631,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final LongOr BUILTIN = new LongOr();
     }
-
 
     public static class IntXor extends JavaBuiltin {
         @Override
@@ -679,7 +647,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final IntXor BUILTIN = new IntXor();
     }
 
-
     public static class LongXor extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -694,7 +661,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final LongXor BUILTIN = new LongXor();
     }
-
 
     public static class LongCompare extends JavaBuiltin {
         @Override
@@ -711,7 +677,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final LongCompare BUILTIN = new LongCompare();
     }
-
 
     public static class FloatCompareL extends JavaBuiltin {
         @Override
@@ -730,7 +695,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final FloatCompareL BUILTIN = new FloatCompareL();
     }
 
-
     public static class FloatCompareG extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -747,7 +711,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final FloatCompareG BUILTIN = new FloatCompareG();
     }
-
 
     public static class DoubleCompareL extends JavaBuiltin {
         @Override
@@ -766,7 +729,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final DoubleCompareL BUILTIN = new DoubleCompareL();
     }
 
-
     public static class DoubleCompareG extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -784,7 +746,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final DoubleCompareG BUILTIN = new DoubleCompareG();
     }
 
-
     public static class ConvertByteToInt extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -799,7 +760,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final ConvertByteToInt BUILTIN = new ConvertByteToInt();
     }
-
 
     public static class ConvertCharToInt extends JavaBuiltin {
         @Override
@@ -816,7 +776,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final ConvertCharToInt BUILTIN = new ConvertCharToInt();
     }
 
-
     public static class ConvertShortToInt extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -831,7 +790,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final ConvertShortToInt BUILTIN = new ConvertShortToInt();
     }
-
 
     public static class ConvertIntToByte extends JavaBuiltin {
         @Override
@@ -848,7 +806,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final ConvertIntToByte BUILTIN = new ConvertIntToByte();
     }
 
-
     public static class ConvertIntToChar extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -863,7 +820,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final ConvertIntToChar BUILTIN = new ConvertIntToChar();
     }
-
 
     public static class ConvertIntToShort extends JavaBuiltin {
         @Override
@@ -880,7 +836,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final ConvertIntToShort BUILTIN = new ConvertIntToShort();
     }
 
-
     public static class ConvertIntToFloat extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -896,7 +851,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final ConvertIntToFloat BUILTIN = new ConvertIntToFloat();
     }
 
-
     public static class ConvertIntToLong extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -911,7 +865,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final ConvertIntToLong BUILTIN = new ConvertIntToLong();
     }
-
 
     public static class ConvertIntToDouble extends JavaBuiltin {
         @Override
@@ -958,7 +911,6 @@ public abstract class JavaBuiltin extends Builtin {
         public static final ConvertLongToInt BUILTIN = new ConvertLongToInt();
     }
 
-
     public static class ConvertLongToFloat extends JavaBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
@@ -973,7 +925,6 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final ConvertLongToFloat BUILTIN = new ConvertLongToFloat();
     }
-
 
     public static class ConvertLongToDouble extends JavaBuiltin {
         @Override

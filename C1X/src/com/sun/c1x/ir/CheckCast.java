@@ -117,5 +117,4 @@ public class CheckCast extends TypeCheck {
     public boolean isIncompatibleClassChangeCheck() {
         return Util.nonFatalUnimplemented(false);
     }
-
 }

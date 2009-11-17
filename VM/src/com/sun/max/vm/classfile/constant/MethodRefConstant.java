@@ -23,7 +23,6 @@ package com.sun.max.vm.classfile.constant;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
-
 public interface MethodRefConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends MemberRefConstant<PoolConstant_Type> {
 
     SignatureDescriptor signature(ConstantPool pool);

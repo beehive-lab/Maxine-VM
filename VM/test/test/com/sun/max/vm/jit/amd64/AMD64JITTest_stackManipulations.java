@@ -24,7 +24,6 @@ import junit.framework.*;
 import test.com.sun.max.vm.compiler.amd64.*;
 import test.com.sun.max.vm.jit.*;
 
-
 /**
  * Runs unit test JITTest_stackManipulations for AMD64.
  * @see JITTest_stackManipulations

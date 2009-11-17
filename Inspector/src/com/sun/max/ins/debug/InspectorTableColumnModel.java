@@ -27,7 +27,6 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 
-
 /**
  * An abstract table column model specialized for Inspector table-based views.
  *

@@ -123,7 +123,6 @@ public class ValueMap {
         count = 0;
     }
 
-
     private void resize() {
         C1XMetrics.ValueMapResizes++;
         Link[] ntable = new Link[table.length * 3 + 4];

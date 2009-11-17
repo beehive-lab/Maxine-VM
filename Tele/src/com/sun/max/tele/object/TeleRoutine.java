@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele.object;
 
-
 /**
  * Abstracts over instances of {@link TeleMethodActor} and native code
  * routine for which there is nothing to reference in the tele VM.

@@ -38,7 +38,6 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
     private TeleVM teleVM;
     private TeleRoots teleRoots;
 
-
     protected TeleGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
@@ -130,7 +129,6 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
             }
             rawGripToRemoteTeleGrip.put(rawGrip.toLong(), new WeakReference<RemoteTeleGrip>(remoteTeleGrip));
         }
-
 
         return remoteTeleGrip;
     }

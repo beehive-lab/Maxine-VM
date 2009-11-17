@@ -357,7 +357,6 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
         }
     }
 
-
     public static final class AddressDividedByAddress extends CirStrengthReducible {
         public AddressDividedByAddress() {
             super(AddressBuiltin.DividedByAddress.BUILTIN);

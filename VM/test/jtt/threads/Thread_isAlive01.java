@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Thread_isAlive01 {
     private Thread_isAlive01() {
     }

@@ -23,7 +23,6 @@ package com.sun.max.ins.object;
 import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
 
-
 /**
  * Defines the columns supported by the object inspector.
  *

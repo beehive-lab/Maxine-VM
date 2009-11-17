@@ -177,7 +177,6 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
                 return cell != null;
             }
 
-
             public Element_Type next() {
                 if (cell == null) {
                     throw new NoSuchElementException();

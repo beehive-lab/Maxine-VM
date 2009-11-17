@@ -18,28 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.lang;
 
-import com.sun.max.program.*;
+package jtt.bytecode;
 
-/**
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: 0 = -9223372036854775808L, 1 = -9223372036854775808L, 2 = 0L, 3 = 9223372036854775807L; 4 = 9223372036854775807L
  */
-public class SingleResult<Object_Type> extends MutableInnerClassGlobal<Object_Type> {
+public class BC_d2l02 {
 
-    public SingleResult() {
-        super();
-    }
+    private static double[] inputs = {-1.3e44d, Double.NEGATIVE_INFINITY, Double.NaN, Double.POSITIVE_INFINITY, 1.3e44d};
 
-    @Override
-    public Object_Type value() {
-        ProgramError.check(super.value() != null, "no result");
-        return super.value();
-    }
-
-    @Override
-    public void setValue(Object_Type result) {
-        ProgramError.check(super.value() == null, "multiple results when only one was expected: " + result + " and " + super.value());
-        super.setValue(result);
+    public static long test(int i) {
+        return (long) inputs[i];
     }
 }

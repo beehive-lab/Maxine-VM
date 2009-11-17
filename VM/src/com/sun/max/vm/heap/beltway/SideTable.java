@@ -46,7 +46,6 @@ public class SideTable {
 
     private static final boolean debug = false;
 
-
     // Memory region occupied by the SideTable
     private RuntimeMemoryRegion region = new RuntimeMemoryRegion(Size.zero(), Size.zero());
     public static Address sideTableStart; // SideTable Table start
@@ -163,7 +162,6 @@ public class SideTable {
             Log.print(sideTableStart);
             MaxineVM.native_exit(MaxineVM.HARD_EXIT_CODE);
         }
-
 
         if (Heap.verbose()) {
             Log.print("--boot address shift");

@@ -20,7 +20,6 @@
  */
 package com.sun.max.collect;
 
-
 /**
  * A {@link Sequence} to which one can append elements.
  *

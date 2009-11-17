@@ -35,7 +35,6 @@ import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.collect.*;
 
-
 /**
  * See A-7 in the book.
  *

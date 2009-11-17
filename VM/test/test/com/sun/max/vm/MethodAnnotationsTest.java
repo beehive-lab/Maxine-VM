@@ -24,7 +24,6 @@ import javax.annotation.processing.*;
 
 import com.sun.max.annotate.processor.*;
 
-
 /**
  * @author Bernd Mathiske
  */

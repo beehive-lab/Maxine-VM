@@ -20,8 +20,6 @@
  */
 package jtt.reflect;
 
-
-
 /*
  * @Harness: java
  * @Runs: "test" = !java.lang.NoSuchFieldException; "field" = "field"; "field2" = "field2"; "field3" = !java.lang.NoSuchFieldException; "field4" = "field4";

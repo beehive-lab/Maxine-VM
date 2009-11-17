@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ci;
 
-
 /**
  * This class represents a boxed value, such as integer, floating point number, or object reference,
  * within the compiler and across the compiler/runtime barrier.
@@ -215,7 +214,7 @@ public final class CiConstant extends CiValue {
         }
         throw new Error("Constant is not object: " + this);
     }
-    
+
     /**
      * Converts this constant to the jsr reference it represents.
      * @return the object which this constant represents
@@ -369,5 +368,4 @@ public final class CiConstant extends CiValue {
         }
         return new CiConstant(CiKind.Object, o);
     }
-
 }

@@ -18,16 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.lang;
+package jtt.fail;
 
-/**
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: 0 = true
  */
-public final class Booleans {
 
-    private Booleans() {
+// Interrupted during wait, with interrupter joining
+public class Thread_isInterrupted05 {
+
+    public static boolean test(int i)  throws InterruptedException {
+        final Thread waitInterruptee = new WaitInterruptee();
+        waitInterruptee.start();
+        waitInterruptee.interrupt();
+        waitInterruptee.join();
+        return true;
     }
 
-    public static final int SIZE = 1;
-
+    static class WaitInterruptee extends Thread {
+        public WaitInterruptee() {
+            super("WaitInterruptee");
+        }
+        @Override
+        public void run() {
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException ex) {
+                }
+            }
+        }
+    }
 }

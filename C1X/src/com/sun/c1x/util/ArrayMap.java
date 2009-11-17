@@ -112,5 +112,4 @@ public class ArrayMap<T> {
         map = nmap;
         map[i - low] = value;
     }
-
 }

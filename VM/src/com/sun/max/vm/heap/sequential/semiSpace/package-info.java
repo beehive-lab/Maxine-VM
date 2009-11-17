@@ -25,5 +25,3 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
-
-

@@ -23,7 +23,6 @@ package test.com.sun.max;
 import com.sun.max.ide.*;
 import com.sun.max.program.*;
 
-
 /**
  * Helps finding out whether the VM executing this test can populate object heaps with sizes beyond 4GB.
  * Run HotSpot with -verbose:gc to see heap numbers.
@@ -42,7 +41,6 @@ public class MaxHeapTest extends MaxTestCase {
 
     private final int numberOfArrays = 128;
     private final int leafLength = 1024 * 1024;
-
 
     public void test_max() {
         final int[][] objects = new int[numberOfArrays][];

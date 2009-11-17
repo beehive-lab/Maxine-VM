@@ -22,10 +22,10 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 0.0d = 0L; 1.0d = 1L; -1.06d = -1L; -156.82743d = -156L
+ * @Runs: 0.0f = 0; 1.0f = 1; -1.06f = -1; -156.82743f = -156
  */
-public class BC_d2l {
-    public static long test(double d) {
-        return (long) d;
+public class BC_f2i01 {
+    public static int test(float d) {
+        return (int) d;
     }
 }

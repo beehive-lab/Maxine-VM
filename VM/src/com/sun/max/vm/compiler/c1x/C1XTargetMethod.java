@@ -282,7 +282,6 @@ public class C1XTargetMethod extends TargetMethod {
             referenceDiff = referenceStart.minus(codeStart).asOffset();
         }
 
-
         int objectReferenceIndex = 0;
         int refSize = Platform.hostOrTarget().wordWidth().numberOfBytes;
 

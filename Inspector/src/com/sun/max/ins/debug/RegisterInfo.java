@@ -26,7 +26,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * Wrapper for the description of a machine register in the VM that
  * provides functionality needed for inspection and useful display.

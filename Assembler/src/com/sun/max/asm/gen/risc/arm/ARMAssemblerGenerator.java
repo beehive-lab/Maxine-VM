@@ -27,7 +27,6 @@ import com.sun.max.asm.dis.arm.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
 
-
 /**
  * The program entry point for the ARM assembler generator.
  *

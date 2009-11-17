@@ -18,37 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.threads;
 
+package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 0 = true
+ * @Runs: 0 = -2147483648, 1 = -2147483648, 2 = 0, 3 = 2147483647; 4 = -2147483647
  */
+public class BC_d2i02 {
 
-// Interrupted during wait, with interrupter joining
-public class Thread_isInterrupted05 {
+    private static double[] inputs = {-1.3e44d, Double.NEGATIVE_INFINITY, Double.NaN, Double.POSITIVE_INFINITY, 1.3e44d};
 
-    public static boolean test(int i)  throws InterruptedException {
-        final Thread waitInterruptee = new WaitInterruptee();
-        waitInterruptee.start();
-        waitInterruptee.interrupt();
-        waitInterruptee.join();
-        return true;
-    }
-
-    static class WaitInterruptee extends Thread {
-        public WaitInterruptee() {
-            super("WaitInterruptee");
-        }
-        @Override
-        public void run() {
-            synchronized (this) {
-                try {
-                    wait();
-                } catch (InterruptedException ex) {
-                }
-            }
-        }
+    public static int test(int i) {
+        return (int) inputs[i];
     }
 }

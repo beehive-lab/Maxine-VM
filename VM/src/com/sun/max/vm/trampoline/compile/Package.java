@@ -24,7 +24,6 @@ import com.sun.max.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.trampoline.*;
 
-
 /**
  * @see MaxPackage
  *

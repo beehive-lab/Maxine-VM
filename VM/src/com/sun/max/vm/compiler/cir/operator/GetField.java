@@ -27,7 +27,6 @@ import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
-
 public class GetField extends JavaResolvableOperator<FieldActor> {
 
     public GetField(ConstantPool constantPool, int index) {

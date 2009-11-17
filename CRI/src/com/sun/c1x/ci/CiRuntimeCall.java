@@ -32,14 +32,11 @@ import static com.sun.c1x.ci.CiKind.Word;
 /**
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public enum CiRuntimeCall {
-
     UnwindException(Void, Object),
-    ThrowRangeCheckFailed(Void, Int),
-    ThrowIndexException(Void, Int),
-    ThrowDiv0Exception(Void),
+    ThrowArrayIndexOutOfBoundsException(Void, Int),
+    ThrowArithmeticException(Void),
     ThrowNullPointerException(Void),
     ThrowArrayStoreException(Void),
     ThrowClassCastException(Void, Object),
@@ -68,7 +65,6 @@ public enum CiRuntimeCall {
     RetrieveInterfaceIndex(Int, Object, Int),
     ArithmethicLrem(Long, Long, Long),
     ArithmeticLdiv(Long, Long, Long),
-    ArithmeticLmul(Long, Long, Long),
     ArithmeticFrem(Float, Float),
     ArithmeticDrem(Double, Double),
     ArithmeticCos(Double, Double),

@@ -46,7 +46,6 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * Access to an instance of the Maxine VM.
  * <br>
@@ -189,7 +188,6 @@ public interface MaxVM {
      * Low-level read of bytes from memory of the VM.
      */
     void readFully(Address address, byte[] bytes);
-
 
     /**
      * Memory regions currently allocated remotely in the VM.
@@ -458,7 +456,6 @@ public interface MaxVM {
      * @return  {@link TypeDescriptor}s for all classes loaded in the VM.
      */
     Set<TypeDescriptor> typeDescriptors();
-
 
     /**
      * @return an ordered set of {@link TypeDescriptor}s for classes loaded in
@@ -938,5 +935,4 @@ public interface MaxVM {
     void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException;
 
 }
-
 

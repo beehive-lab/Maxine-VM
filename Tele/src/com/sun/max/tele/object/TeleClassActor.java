@@ -33,7 +33,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Canonical surrogate for a  {@link ClassActor} in the {@link TeleVM}.
  *

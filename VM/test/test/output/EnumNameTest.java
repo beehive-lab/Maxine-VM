@@ -20,7 +20,6 @@
  */
 package test.output;
 
-
 public class EnumNameTest {
     public static void main(String[] args) {
         System.out.println(MyEnum.A.name());

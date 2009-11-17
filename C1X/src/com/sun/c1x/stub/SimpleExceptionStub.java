@@ -23,7 +23,6 @@ package com.sun.c1x.stub;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 
-
 /**
  * The <code>SimpleExceptionStub</code> class definition.
  *
@@ -32,17 +31,12 @@ import com.sun.c1x.lir.*;
  */
 public class SimpleExceptionStub extends CodeStub {
 
-    public final GlobalStub stub;
+    public final GlobalStub globalStub;
 
-        /**
-     * @param obj
-     * @param stub
-     * @param info
-     */
-    public SimpleExceptionStub(LIROperand obj, GlobalStub stub, LIRDebugInfo info) {
+    public SimpleExceptionStub(LIROperand obj, GlobalStub globalStub, LIRDebugInfo info) {
         super(info);
         this.setOperands(0, 0, obj);
-        this.stub = stub;
+        this.globalStub = globalStub;
     }
 
     @Override
@@ -58,5 +52,4 @@ public class SimpleExceptionStub extends CodeStub {
     public LIROperand obj() {
         return operand(0);
     }
-
 }

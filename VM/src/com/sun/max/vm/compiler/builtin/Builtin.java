@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
-
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -48,7 +47,6 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
     public static Builtin get(ClassMethodActor classMethodActor) {
         return classMethodActorToBuiltin.get(classMethodActor);
     }
-
 
     /**
      * @return whether this builtin can be meta-evaluated by the compiler under any circumstances

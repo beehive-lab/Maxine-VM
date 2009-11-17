@@ -23,8 +23,6 @@
  */
 package com.sun.max.test;
 
-
-
 /**
  * The {@code TestResult} class represents the result of running a test.
  * The result is computed by the harness associated with the test.

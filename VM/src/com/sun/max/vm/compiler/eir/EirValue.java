@@ -40,7 +40,6 @@ public abstract class EirValue implements IrValue {
         return operands;
     }
 
-
     public boolean isMutable() {
         return numberOfUpdates() + numberOfDefinitions() > 1;
     }

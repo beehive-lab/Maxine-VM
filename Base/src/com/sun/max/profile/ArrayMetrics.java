@@ -20,7 +20,6 @@
  */
 package com.sun.max.profile;
 
-
 public class ArrayMetrics {
 
     public static void accumulateArrayLength(String metric, int[] array) {

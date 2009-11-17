@@ -29,7 +29,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.trampoline.*;
 
-
 /**
  * Implements Just-in-time compilation of interface implementation on first use.
  * All entries of interface tables (<em>itables</em>) are initialized with a itable trampoline.

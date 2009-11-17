@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.tir.pipeline;
 
 import com.sun.max.vm.compiler.tir.*;
 
-
 public class TirInstructionAdapter implements TirInstructionVisitor {
     public void visit(TirLocal local) {
         visit((TirInstruction) local);

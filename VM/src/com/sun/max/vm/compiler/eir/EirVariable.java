@@ -49,7 +49,6 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
 
     private final Kind kind;
 
-
     @Override
     public EirVariable asVariable() {
         return this;

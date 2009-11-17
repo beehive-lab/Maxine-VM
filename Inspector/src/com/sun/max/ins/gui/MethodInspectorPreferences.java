@@ -31,7 +31,6 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.option.*;
 
-
 public class MethodInspectorPreferences extends AbstractInspectionHolder {
 
     private static MethodInspectorPreferences globalPreferences;

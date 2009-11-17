@@ -681,5 +681,4 @@ public class InstructionPrinter extends ValueVisitor {
         }
         out.print(", value ").print(unsafe.value()).print(')');
     }
-
 }

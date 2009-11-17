@@ -20,8 +20,6 @@
  */
 package com.sun.max.asm;
 
-
-
 /**
  * An object representing some inline data or an instruction emitted by an assembler.
  * 

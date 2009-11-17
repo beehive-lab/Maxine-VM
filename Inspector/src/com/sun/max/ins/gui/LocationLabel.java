@@ -27,7 +27,6 @@ import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
-
 /**
  * A selectable, lightweight label for displaying memory
  * locations in the VM with different interpretations.
@@ -382,6 +381,5 @@ public abstract class LocationLabel extends InspectorLabel {
             setToolTipText(labelText + " Position: " + unsignedLocationText() + ", " + addressText());
         }
     }
-
 
 }

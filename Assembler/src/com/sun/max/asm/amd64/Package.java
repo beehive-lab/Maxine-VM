@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.amd64;
 
-
 import com.sun.max.*;
 import com.sun.max.asm.*;
 

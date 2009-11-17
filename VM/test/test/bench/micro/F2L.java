@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,14 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.bytecode;
+package test.bench.micro;
 
-/*
- * @Harness: java
- * @Runs: 0.0d = 0; 1.0d = 1; -1.06d = -1; -156.82743d = -156
+/**
+ * A microbenchmark for floating point to integer conversions.
+ * @author Ben L. Titzer
  */
-public class BC_d2i {
-    public static int test(double d) {
-        return (int) d;
+public class F2L {
+
+    private static int CHUNK_SIZE = 5000;
+    private static final int ITERATIONS = 500000000;
+
+    public static void main(String[] args) {
+        int count = ITERATIONS;
+        if (args.length > 0) {
+            count = Integer.parseInt(args[0]);
+        }
+        benchmark(count);
+    }
+
+    public static void benchmark(int count) {
+        int chunks = (count + CHUNK_SIZE - 1) / CHUNK_SIZE;
+        float fsum = 0;
+        long isum = 0;
+        for (int i = 0; i <= chunks; i++) {
+            fsum += 0.4;
+            isum = chunk(fsum, isum, CHUNK_SIZE);
+        }
+        System.out.println(fsum);
+        System.out.println(isum);
+    }
+
+    private static long chunk(float fsum, long isum, int count) {
+        for (int i = 0; i < count; i++) {
+            fsum += 0.1;
+            isum = (long) fsum;
+        }
+        return isum;
     }
 }

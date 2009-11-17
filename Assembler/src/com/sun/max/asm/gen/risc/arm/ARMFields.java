@@ -33,7 +33,6 @@ import com.sun.max.asm.gen.risc.bitRange.*;
 import com.sun.max.asm.gen.risc.field.*;
 import com.sun.max.lang.*;
 
-
 /**
  * The fields used in defining ARM instruction templates.
  *

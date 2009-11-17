@@ -24,7 +24,6 @@ import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.value.*;
 
-
 public class ImmediateConstantModifier extends ConstantModifier {
 
     public ImmediateConstantModifier(int position, int size, Value value) {

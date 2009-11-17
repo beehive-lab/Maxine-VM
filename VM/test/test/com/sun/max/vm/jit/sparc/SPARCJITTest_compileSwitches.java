@@ -23,7 +23,6 @@ package test.com.sun.max.vm.jit.sparc;
 import junit.framework.*;
 import test.com.sun.max.vm.jit.*;
 
-
 /**
  * Runs unit test JITTest_compileTableSwitch for SPARC.
  * @see JITTest_compileSwitches

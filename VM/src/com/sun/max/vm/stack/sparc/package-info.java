@@ -25,4 +25,3 @@
  */
 package com.sun.max.vm.stack.sparc;
 
-

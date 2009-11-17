@@ -184,7 +184,6 @@ public final class VmThreadMap {
      */
     private Pointer threadLocalsListHead = Pointer.zero();
 
-
     @INLINE
     private static Pointer getPrev(Pointer vmThreadLocals) {
         return VmThreadLocal.BACKWARD_LINK.getConstantWord(vmThreadLocals).asPointer();
@@ -208,7 +207,6 @@ public final class VmThreadMap {
             VmThreadLocal.FORWARD_LINK.setConstantWord(vmThreadLocals, next);
         }
     }
-
 
     /**
      * Add the main thread (or an attached thread) to the thread map ACTIVE.
@@ -284,10 +282,8 @@ public final class VmThreadMap {
         }
     }
 
-
     private VmThreadMap() {
     }
-
 
     /**
      * Creates the native thread for a VM thread and start it running. This method acquires an ID

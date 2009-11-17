@@ -38,7 +38,6 @@ import com.sun.max.program.option.*;
   */
 public class BytecodeViewPreferences  extends TableColumnVisibilityPreferences<BytecodeColumnKind> {
 
-
     private static BytecodeViewPreferences globalPreferences;
 
     public static BytecodeViewPreferences globalPreferences(Inspection inspection) {
