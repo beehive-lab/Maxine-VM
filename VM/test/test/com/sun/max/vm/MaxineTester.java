@@ -35,6 +35,7 @@ import org.junit.runner.*;
 import org.junit.runner.notification.*;
 import org.junit.runners.AllTests;
 
+import test.com.sun.max.vm.ExternalCommand.*;
 import test.com.sun.max.vm.ExternalCommand.Result;
 import test.com.sun.max.vm.MaxineTesterConfiguration.*;
 
@@ -668,7 +669,7 @@ public class MaxineTester {
         return false;
     }
 
-    public static void testJavaProgram(String testName, JavaCommand command, File inputFile, File outputDir, File workingDir, File imageDir, String[] filteredLines) {
+    public static void testJavaProgram(String testName, JavaCommand command, File inputFile, File outputDir, File workingDir, File imageDir, OutputComparison comparison) {
         if (stopTesting()) {
             return;
         }
@@ -685,7 +686,7 @@ public class MaxineTester {
                 for (int j = 0; j < timingRunsOption.getValue(); j++) {
                     printStartOfMaxvm(testName, config);
                     ExternalCommand.Result maxResult = commands[i].exec(false, scaleTimeOut(refResult));
-                    if (!printMaxvmResult(testName, config, refResult, maxResult, filteredLines)) {
+                    if (!printMaxvmResult(testName, config, refResult, maxResult, comparison)) {
                         break;
                     }
                 }
@@ -729,8 +730,8 @@ public class MaxineTester {
         }
     }
 
-    private static boolean printMaxvmResult(String testName, String config, ExternalCommand.Result baseResult, ExternalCommand.Result maxResult, String[] filteredLines) {
-        String error = maxResult.checkError(baseResult, true, filteredLines, false, null);
+    private static boolean printMaxvmResult(String testName, String config, ExternalCommand.Result baseResult, ExternalCommand.Result maxResult, OutputComparison comparison) {
+        String error = maxResult.checkError(baseResult, comparison);
         boolean passed;
         final ExpectedResult expectedResult = MaxineTesterConfiguration.expectedResult(testName, config);
         if (error != null) {
@@ -1367,7 +1368,7 @@ public class MaxineTester {
             command.addClasspath(System.getProperty("java.class.path"));
             // Some tests have native code in libraries that have been copied to the image directory
             command.addSystemProperty("java.library.path", imageDir.getAbsolutePath());
-            testJavaProgram(mainClass.getName(), command, null, outputDir, null, imageDir, null);
+            testJavaProgram(mainClass.getName(), command, null, outputDir, null, imageDir, new OutputComparison());
         }
     }
 
@@ -1453,13 +1454,15 @@ public class MaxineTester {
             final JavaCommand command = new JavaCommand("SpecApplication");
             command.addClasspath(".");
             command.addArgument(test);
+            OutputComparison comparison = new OutputComparison();
             String[] ignored = {
                 "Total memory",
                 "## IO time",
                 "Finished in",
                 "Decoding time:"
             };
-            testJavaProgram(testName, command, null, outputDir, workingDir, imageDir, ignored);
+            comparison.stdoutIgnore = ignored;
+            testJavaProgram(testName, command, null, outputDir, workingDir, imageDir, comparison);
             // reportTiming(testName, outputDir);
         }
 
@@ -1513,7 +1516,13 @@ public class MaxineTester {
             final String testName = "DaCapo " + test;
             final JavaCommand command = new JavaCommand(dacapoJar);
             command.addArgument(test);
-            testJavaProgram(testName, command, null, outputDir, null, imageDir, null);
+            OutputComparison comparison = new OutputComparison();
+            if (test.equals("jython")) {
+                comparison.stdout = false;
+                comparison.stderr = true;
+                comparison.stderrIgnore = new String[] {"PASSED"};
+            }
+            testJavaProgram(testName, command, null, outputDir, null, imageDir, comparison);
             // reportTiming(testName, outputDir);
         }
 
@@ -1572,9 +1581,9 @@ public class MaxineTester {
                 final JavaCommand c = command.copy();
                 if (input instanceof String) {
                     c.addArgument((String) input);
-                    testJavaProgram(testName + "-" + input, c, null, outputDir, null, imageDir, null);
+                    testJavaProgram(testName + "-" + input, c, null, outputDir, null, imageDir, new OutputComparison());
                 } else if (input instanceof File) {
-                    testJavaProgram(testName + "-" + input, c, new File(shootoutDir, ((File) input).getName()), outputDir, null, imageDir, null);
+                    testJavaProgram(testName + "-" + input, c, new File(shootoutDir, ((File) input).getName()), outputDir, null, imageDir, new OutputComparison());
                 }
             }
         }

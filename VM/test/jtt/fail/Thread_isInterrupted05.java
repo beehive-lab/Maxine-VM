@@ -37,6 +37,9 @@ public class Thread_isInterrupted05 {
     }
 
     static class WaitInterruptee extends Thread {
+        public WaitInterruptee() {
+            super("WaitInterruptee");
+        }
         @Override
         public void run() {
             synchronized (this) {

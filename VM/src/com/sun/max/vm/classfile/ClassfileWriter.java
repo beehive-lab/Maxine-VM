@@ -66,7 +66,7 @@ public class ClassfileWriter {
     public static void saveGeneratedClass(ClassInfo classInfo, final ConstantPoolEditor constantPoolEditor) throws IOException {
         final byte[] classfile = toByteArray(classInfo, constantPoolEditor);
         if (MaxineVM.isHosted()) {
-            BootClassLoader.BOOT_CLASS_LOADER.saveGeneratedClassfile(classInfo.actor.name.string, classfile);
+            ClassfileReader.saveClassfile(classInfo.actor.name.string, classfile);
         } else {
             classInfo.actor.classfile = classfile;
         }

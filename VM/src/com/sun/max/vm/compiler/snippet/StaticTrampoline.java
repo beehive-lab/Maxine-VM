@@ -34,9 +34,8 @@ import com.sun.max.vm.runtime.*;
  */
 public final class StaticTrampoline extends NonFoldableSnippet {
 
-    private final CriticalMethod classMethodActor = new CriticalMethod(classMethodActor(), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-
     private StaticTrampoline() {
+        new CriticalMethod(classMethodActor(), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     /**

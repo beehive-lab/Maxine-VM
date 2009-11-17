@@ -36,6 +36,7 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -173,12 +174,16 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+
+        if (MaxineVM.isHosted()) {
+            // The monitor for the collector must be allocate in the image
+            JavaMonitorManager.bindStickyMonitor(this);
+        }
 
         if (phase == MaxineVM.Phase.PRISTINE) {
 

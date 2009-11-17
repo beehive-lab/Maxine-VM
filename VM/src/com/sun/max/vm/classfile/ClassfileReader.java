@@ -29,11 +29,16 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
 import static com.sun.max.vm.type.JavaTypeDescriptor.*;
 
+import java.io.*;
 import java.security.*;
 import java.util.*;
+import java.util.Arrays;
+import java.util.jar.*;
+import java.util.zip.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -1293,6 +1298,9 @@ public final class ClassfileReader {
         return classActor;
     }
 
+    public static VMStringOption saveClassDir = VMOptions.register(new VMStringOption("-XX:SaveClassDir=", false, null,
+        "Directory to which the classfiles of loaded classes should be written."), MaxineVM.Phase.STARTING);
+
     /**
      * Loads a class from the configured {@linkplain #classfileStream class file stream}.
      *
@@ -1305,7 +1313,8 @@ public final class ClassfileReader {
     private ClassActor loadClass(final Utf8Constant name, Object source, boolean isRemote) {
         try {
             String optSource = null;
-            if (verboseOption.verboseClass) {
+            boolean verbose = verboseOption.verboseClass || Trace.hasLevel(2);
+            if (verbose) {
                 if (source != null) {
                     Log.println("[Loading " + name + " from " + source + "]");
                 } else {
@@ -1321,7 +1330,7 @@ public final class ClassfileReader {
             });
             final ClassActor classActor = loadClass0(name, isRemote);
 
-            if (verboseOption.verboseClass) {
+            if (verboseOption.verboseClass || Trace.hasLevel(2)) {
                 if (source != null) {
                     Log.println("[Loaded " + name + " from " + source + "]");
                 } else {
@@ -1334,18 +1343,6 @@ public final class ClassfileReader {
             return classActor;
         } finally {
             exitContext();
-        }
-    }
-
-    private static void traceBeforeDefineClass(String name) {
-        if (Trace.hasLevel(2)) {
-            Trace.begin(2, "defineClass: " + name);
-        }
-    }
-
-    private static void traceAfterDefineClass(String name) {
-        if (Trace.hasLevel(2)) {
-            Trace.end(2, "defineClass: " + name);
         }
     }
 
@@ -1393,15 +1390,119 @@ public final class ClassfileReader {
      *             class specified by {@code bytes}
      */
     public static ClassActor defineClassActor(String name, ClassLoader classLoader, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, Object source, boolean isRemote) {
-        traceBeforeDefineClass(name);
+        saveClassfile(name, bytes);
+        final ClassfileStream classfileStream = new ClassfileStream(bytes, offset, length);
+        final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
+        final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
+        classActor.setProtectionDomain(protectionDomain);
+        return classActor;
+    }
+
+    /**
+     * This exists (solely) for the purpose of being able to reify generated classes while hosted. These are needed so
+     * that the actors for generated stubs can be created.
+     */
+    @HOSTED_ONLY
+    private static final Map<String, byte[]> savedClassfiles = new TreeMap<String, byte[]>();
+
+    @HOSTED_ONLY
+    public static ClasspathFile findGeneratedClassfile(String name) {
+        final byte[] classfileBytes = savedClassfiles.get(name);
+        if (classfileBytes != null) {
+            return new ClasspathFile(classfileBytes, null);
+        }
+        return null;
+    }
+
+    /**
+     * Writes all the class files that have been {@linkplain #saveClassfile(String, byte[]) saved} (either explicitly
+     * or as a side effect of being {@linkplain #defineClassActor(String, ClassLoader, byte[], int, int, ProtectionDomain, Object, boolean) loaded)
+     * to a given jar file.
+     *
+     * @param jarFile where the class files are to be written
+     */
+    @HOSTED_ONLY
+    public static void writeClassfilesToJar(File jarFile) {
         try {
-            final ClassfileStream classfileStream = new ClassfileStream(bytes, offset, length);
-            final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
-            final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
-            classActor.setProtectionDomain(protectionDomain);
-            return classActor;
-        } finally {
-            traceAfterDefineClass(name);
+            final JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
+            jarOutputStream.setLevel(Deflater.BEST_COMPRESSION);
+            long timestamp = System.currentTimeMillis();
+            for (Map.Entry<String, byte[]> entry : savedClassfiles.entrySet()) {
+                String name = entry.getKey();
+                String classfilePath = name.replace('.', '/') + ".class";
+                final JarEntry jarEntry = new JarEntry(classfilePath);
+                jarEntry.setTime(timestamp);
+                try {
+                    jarOutputStream.putNextEntry(jarEntry);
+                    jarOutputStream.write(entry.getValue());
+                    jarOutputStream.closeEntry();
+                } catch (IOException e) {
+                    throw ProgramError.unexpected("IO error saving class file for " + name, e);
+                }
+            }
+            jarOutputStream.close();
+        } catch (IOException e) {
+            throw ProgramError.unexpected("IO error writing saved classes to " + jarFile, e);
+        }
+    }
+
+    /**
+     * Writes all the class files that have been {@linkplain #saveClassfile(String, byte[]) saved} (either explicitly
+     * or as a side effect of being {@linkplain #defineClassActor(String, ClassLoader, byte[], int, int, ProtectionDomain, Object, boolean) loaded)
+     * to a given directory.
+     *
+     * @param directory where the class files are to be written
+     */
+    @HOSTED_ONLY
+    public static void writeClassfilesToDir(File directory) {
+        for (Map.Entry<String, byte[]> entry : savedClassfiles.entrySet()) {
+            String name = entry.getKey();
+            String classfilePath = name.replace('.', File.separatorChar) + ".class";
+            File classfile = new File(directory, classfilePath);
+            try {
+                FileOutputStream out = new FileOutputStream(classfile);
+                out.write(entry.getValue());
+                out.close();
+            } catch (IOException e) {
+                throw ProgramError.unexpected("IO error saving class file to " + classfile, e);
+            }
+        }
+    }
+
+    /**
+     * Saves a copy of a class file in the directory specified by the value of the {@link #saveClassDir} option.
+     * This method does nothing if the value of the {@code saveClassDir} option is {@code null}.
+     *
+     * @param name the (purported) name of the class represented in {@code classfileBytes}
+     * @param classfileBytes the class file bytes to save
+     */
+    public static void saveClassfile(String name, byte[] classfileBytes) {
+        if (name == null) {
+            return;
+        }
+        String classfilePath = Classes.getPackageName(name).replace('.', File.separatorChar) + File.separatorChar + Classes.getSimpleName(name) + ".class";
+        if (MaxineVM.isHosted()) {
+            synchronized (savedClassfiles) {
+                byte[] existingClassfile = savedClassfiles.put(name, classfileBytes);
+                if (existingClassfile != null) {
+                    ProgramWarning.message("class with same name generated twice: " + name);
+                }
+            }
+        } else {
+            if (saveClassDir.getValue() != null) {
+                File classfile = new File(saveClassDir.getValue(), classfilePath);
+                try {
+                    classfile.getParentFile().mkdirs();
+                    FileOutputStream out = new FileOutputStream(classfile);
+                    out.write(classfileBytes);
+                    out.close();
+                    if (verboseOption.verboseClass) {
+                        Log.println("[Wrote class file to " + classfile + "]");
+                    }
+                } catch (IOException e) {
+                    Log.println("[Error writing class file bytes to " + classfile + ": " + e + "]");
+                }
+            }
         }
     }
 }

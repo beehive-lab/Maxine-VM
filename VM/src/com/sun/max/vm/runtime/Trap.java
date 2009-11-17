@@ -131,11 +131,6 @@ public abstract class Trap {
      */
     private static final CriticalMethod trapStub = new CriticalMethod(Trap.class, "trapStub", null, CallEntryPoint.C_ENTRY_POINT);
 
-    static {
-        new CriticalNativeMethod(MaxineVM.class, "native_exit");
-        new CriticalNativeMethod(MaxineVM.class, "native_trap_exit");
-    }
-
     /**
      * Determines if a given method actor denotes the method used to handle runtime traps.
      *
