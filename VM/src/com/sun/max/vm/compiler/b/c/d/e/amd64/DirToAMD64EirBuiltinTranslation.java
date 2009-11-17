@@ -497,6 +497,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new SETNLE(eirBlock(), result));
         addInstruction(new SETL(eirBlock(), flag));
         addInstruction(new SUB_I64(eirBlock(), result, flag));
+        addInstruction(new MOVSX_I8(eirBlock(), result, result));
     }
 
     @Override
