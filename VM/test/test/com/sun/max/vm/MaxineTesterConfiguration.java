@@ -30,7 +30,6 @@ import test.com.sun.max.vm.compiler.bytecode.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.c1x.C1XCompilerScheme;
-import jtt.fail.Thread_isInterrupted05;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes

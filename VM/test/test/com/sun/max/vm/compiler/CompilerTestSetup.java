@@ -21,6 +21,10 @@
 package test.com.sun.max.vm.compiler;
 
 import java.io.*;
+import java.util.Map;
+import java.util.zip.Deflater;
+import java.util.jar.JarOutputStream;
+import java.util.jar.JarEntry;
 
 import junit.extensions.*;
 import junit.framework.Test;
@@ -120,31 +124,6 @@ public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
         if (Trace.hasLevel(1)) {
             GlobalMetrics.report(Trace.stream());
         }
-    }
-
-    private static void writeGeneratedClassfilesToJar() throws IOException {
-        final Map<String, byte[]> generatedClassfiles = BootClassLoader.BOOT_CLASS_LOADER.generatedClassfiles();
-        if (generatedClassfiles.isEmpty()) {
-            return;
-        }
-        final File jarFile = new File(JavaProject.findVcsProjectDirectory(), "generated-classes.jar");
-        if (!jarFile.getParentFile().exists()) {
-            if (!jarFile.getParentFile().mkdir()) {
-                throw new IOException("could not create missing directory " + jarFile.getParentFile());
-            }
-        }
-        final JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
-        jarOutputStream.setLevel(Deflater.BEST_COMPRESSION);
-        for (Map.Entry<String, byte[]> entry : generatedClassfiles.entrySet()) {
-            final String classfilePath = entry.getKey().replace('.', '/') + ".class";
-            final JarEntry jarEntry = new JarEntry(classfilePath);
-            jarEntry.setTime(System.currentTimeMillis());
-            jarOutputStream.putNextEntry(jarEntry);
-            jarOutputStream.write(entry.getValue());
-            jarOutputStream.closeEntry();
-        }
-        jarOutputStream.close();
-        System.out.println("saved generated classfiles in " + jarFile.getAbsolutePath());
     }
 
     public static BootstrapCompilerScheme compilerScheme() {
