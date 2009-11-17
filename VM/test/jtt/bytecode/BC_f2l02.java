@@ -27,7 +27,7 @@ package jtt.bytecode;
  */
 public class BC_f2l02 {
 
-    private static float[] inputs = { -1.3e22f, Float.NEGATIVE_INFINITY, Float.NaN, Float.POSITIVE_INFINITY, 1.3e22f };
+    private static float[] inputs = {-1.3e22f, Float.NEGATIVE_INFINITY, Float.NaN, Float.POSITIVE_INFINITY, 1.3e22f};
 
     public static long test(int i) {
         return (long) inputs[i];

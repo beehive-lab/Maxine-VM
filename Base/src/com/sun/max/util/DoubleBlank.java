@@ -53,7 +53,7 @@ public class DoubleBlank {
             if (len == -1) {
                 break;
             }
-            for (int i = 0 ; i < len; i++) {
+            for (int i = 0; i < len; i++) {
                 byte d = buffer[i];
                 boolean gen = true;
                 if (d == '\n') {

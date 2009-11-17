@@ -5,10 +5,6 @@ Backend:
 	- better handling of constants, especially immediates
 	- (non XIR) checkcast, instanceof: use nullity
 	- (non XIR) checkcast, instanceof: emit fastpath direct compare
-	- Global stubs: use EAX for return value as normal instead of [rsp - 16]
-	- XIR: expose nullity, range checkness across XIR interface
-	- XIR: make use of CSE'd array length
-	- XIR: generate special if-instanceof XIR variant with label parameters
 	- use LEA instruction on x86
 	- recognize pointer arithmetic addressing modes
 	- recognize multiply by 3, 5, 9 and emit lea rk, [rs, rs*2], etc
@@ -16,14 +12,22 @@ Backend:
 	- Maxine XIR: implement inline allocation
 	- Maxine XIR: implement biased locking fastpath
 	- Maxine XIR: faster subtype checks for classes, leaves
+	- Maxine XIR: make use of XirSite nullity, range check information
 	- better handling of tableswitch bytecode
 	- better handling of two operand LIR form
 	- Make the following bytecode implementations inline):
 		- f2i f2l f2d d2i d2l d2f (SSE2)
 		- lrem ldiv (64 bit)
+		- fneg dneg
 	- Make the following bytecode implementations global stubs:
 		- frem drem
-	- Don't copy runtime return value to stack in global stubs
+	- Global stubs: use EAX for return value as normal instead of [rsp - 16]
+    - Emit direct call to runtime for new instance, monitorenter, monitorexit
+
+	* XIR: expose nullity, range checkness across XIR interface
+	- XIR: make use of CSE'd array length
+	- XIR: generate special if-instanceof XIR variant with label parameters
+
 
 Frontend:
 	- XIR: implement HIR -> HIR xir translation

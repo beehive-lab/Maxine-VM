@@ -27,7 +27,7 @@ package jtt.bytecode;
  */
 public class BC_d2i02 {
 
-    private static double[] inputs = { -1.3e44d, Double.NEGATIVE_INFINITY, Double.NaN, Double.POSITIVE_INFINITY, 1.3e44d };
+    private static double[] inputs = {-1.3e44d, Double.NEGATIVE_INFINITY, Double.NaN, Double.POSITIVE_INFINITY, 1.3e44d};
 
     public static int test(int i) {
         return (int) inputs[i];

@@ -26,7 +26,7 @@ package jtt.bytecode;
  * @Runs: 0 = -2147483648, 1 = -2147483648, 2 = 0, 3 = 2147483647; 4 = -2147483647
  */
 public class BC_f2i02 {
-    private static float[] inputs = { -1.3e22f, Float.NEGATIVE_INFINITY, Float.NaN, Float.POSITIVE_INFINITY, 1.3e22f };
+    private static float[] inputs = {-1.3e22f, Float.NEGATIVE_INFINITY, Float.NaN, Float.POSITIVE_INFINITY, 1.3e22f};
 
     public static int test(int i) {
         return (int) inputs[i];

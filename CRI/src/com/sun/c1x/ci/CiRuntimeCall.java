@@ -65,7 +65,6 @@ public enum CiRuntimeCall {
     RetrieveInterfaceIndex(Int, Object, Int),
     ArithmethicLrem(Long, Long, Long),
     ArithmeticLdiv(Long, Long, Long),
-    ArithmeticLmul(Long, Long, Long),
     ArithmeticFrem(Float, Float),
     ArithmeticDrem(Double, Double),
     ArithmeticCos(Double, Double),

@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 
-public class X86CodeStubVisitor implements CodeStubVisitor {
+public final class X86CodeStubVisitor extends CodeStubVisitor {
 
     private final X86LIRAssembler ce;
     private final X86MacroAssembler masm;
@@ -81,10 +81,9 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         final int jitSlotSize = compilation.runtime.getJITStackSlotSize();
         for (int i = cc.locations.length - 1; i >= 0;  i--) {
             CiLocation location = cc.locations[i];
-            CiKind t = location.kind;
-            LIROperand src = LIROperandFactory.address(CiRegister.Stack, jitCallerStackOffset, t);
-            ce.moveOp(src, cc.operands[i], t, null, false);
-            jitCallerStackOffset += t.size * jitSlotSize;
+            LIROperand src = LIROperandFactory.address(CiRegister.Stack, jitCallerStackOffset, location.kind);
+            ce.moveOp(src, cc.operands[i], location.kind, null, false);
+            jitCallerStackOffset += location.kind.size * jitSlotSize;
         }
 
         // jitCallerOffset is now set to the first location before the first parameter, i.e., the point where
@@ -219,9 +218,9 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         masm.bind(stub.entry);
         int infoPos;
         if (stub.obj().isIllegal()) {
-            infoPos = masm.callGlobalStubNoArgs(stub.stub, stub.info, CiRegister.None);
+            infoPos = masm.callGlobalStubNoArgs(stub.globalStub, stub.info, CiRegister.None);
         } else {
-            infoPos = masm.callGlobalStub(stub.stub, stub.info, CiRegister.None, stub.obj().asRegister());
+            infoPos = masm.callGlobalStub(stub.globalStub, stub.info, CiRegister.None, stub.obj().asRegister());
         }
         compilation.addCallInfo(infoPos, stub.info);
 

@@ -359,11 +359,6 @@ public class C1XRuntimeCalls {
         return a / b;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLmul)
-    public static long runtimeArithmeticLmul(long a, long b) {
-        return a * b;
-    }
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticFrem)
     public static float runtimeArithmeticFrem(float v1, float v2) {
         return v1 % v2;

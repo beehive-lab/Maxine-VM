@@ -103,21 +103,6 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             case ThrowIncompatibleClassChangeError:
                 emitStandardForward(stub, CiRuntimeCall.ThrowIncompatibleClassChangeError);
                 break;
-            case ArithmethicLrem:
-                emitStandardForward(stub, CiRuntimeCall.ArithmethicLrem);
-                break;
-            case ArithmeticDrem:
-                emitStandardForward(stub, CiRuntimeCall.ArithmeticDrem);
-                break;
-            case ArithmeticFrem:
-                emitStandardForward(stub, CiRuntimeCall.ArithmeticFrem);
-                break;
-            case ArithmeticLdiv:
-                emitStandardForward(stub, CiRuntimeCall.ArithmeticLdiv);
-                break;
-            case ArithmeticLmul:
-                emitStandardForward(stub, CiRuntimeCall.ArithmeticLmul);
-                break;
             case MonitorEnter:
                 emitStandardForward(stub, CiRuntimeCall.Monitorenter);
                 break;
