@@ -21,8 +21,8 @@
 package com.sun.max.vm.bytecode;
 
 /**
- * Denotes a range of bytecode positions that is inclusive in both its {@linkplain #start() start} <b>and</b>
- * {@linkplain #end() end} positions.
+ * Denotes a range of bytecode positions that is inclusive in both its start <b>and</b>
+ * end positions.
  *
  * @author Bernd Mathiske
  */
@@ -31,12 +31,12 @@ public class BytecodePositionRange {
     /**
      * The lowest position regarded as within this range.
      */
-    private final int start;
+    public final int start;
 
     /**
      * The highest position regarded as within this range.
      */
-    private final int end;
+    public final int end;
 
     /**
      * Creates an object denoting a range of bytecode positions.
@@ -51,21 +51,8 @@ public class BytecodePositionRange {
         this.end = end;
     }
 
-    /**
-     * Gets the lowest position regarded as within this range.
-     */
-    public int start() {
-        return start;
-    }
-
-    /**
-     * Gets the highest position regarded as within this range.
-     */
-    public int end() {
-        return end;
-    }
-
-    @Override  public String toString() {
+    @Override
+    public String toString() {
         return start + "-" + end;
     }
 }

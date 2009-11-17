@@ -180,7 +180,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         public int blockIndexFor(int bytecodePosition) {
             for (int blockIndex = 0; blockIndex < blocks.length; ++blockIndex) {
                 final BirBlock block = blocks[blockIndex];
-                if (block.bytecodeBlock().start() > bytecodePosition) {
+                if (block.bytecodeBlock().start > bytecodePosition) {
                     assert blockIndex > 0;
                     return blockIndex - 1;
                 }
@@ -192,7 +192,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             if (blockIndex == blocks.length) {
                 return classMethodActor().codeAttribute().code().length;
             }
-            return blocks[blockIndex].bytecodeBlock().start();
+            return blocks[blockIndex].bytecodeBlock().start;
         }
 
         public ClassMethodActor classMethodActor() {
@@ -289,7 +289,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         final InterpreterMapMaker interpreterMapMaker = new InterpreterMapMaker(method);
         final boolean[] blockStarts = new boolean[codeLength];
         for (BirBlock birBlock : method.blocks()) {
-            blockStarts[birBlock.bytecodeBlock().start()] = true;
+            blockStarts[birBlock.bytecodeBlock().start] = true;
         }
 
         final ReferenceMap[] verifiedMaps = createReferenceMapsWithVerifier(classMethodActor, codeAttribute, maxLocals, maxStack, codeLength, blockStarts);

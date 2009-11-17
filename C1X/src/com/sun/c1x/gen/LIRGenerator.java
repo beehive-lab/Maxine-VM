@@ -41,8 +41,9 @@ import com.sun.c1x.xir.CiXirAssembler.*;
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
  *
- * @author Marcelo Cintra
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
+ * @author Marcelo Cintra
  */
 public abstract class LIRGenerator extends ValueVisitor {
     private static final CiKind[] BASIC_TYPES_OBJECT = {CiKind.Object};

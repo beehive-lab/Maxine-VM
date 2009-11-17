@@ -87,7 +87,7 @@ public class BirToCirMethodTranslation {
         for (BirBlock birBlock : birMethod.blocks()) {
             if (birBlock.isReachable()) {
                 final BlockState blockState = new BlockState(birBlock);
-                for (int i = birBlock.bytecodeBlock().start(); i <= birBlock.bytecodeBlock().end(); i++) {
+                for (int i = birBlock.bytecodeBlock().start; i <= birBlock.bytecodeBlock().end; i++) {
                     blockStateMap[i] = blockState;
                 }
 

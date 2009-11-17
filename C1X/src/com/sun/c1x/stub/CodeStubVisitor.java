@@ -44,7 +44,7 @@ public abstract class CodeStubVisitor {
 
     public abstract void visitRangeCheckStub(RangeCheckStub visitor);
 
-    public abstract void visitSimpleExceptionStub(SimpleExceptionStub simpleExceptionStub);
+    public abstract void visitCheckCastStub(CheckCastStub checkCastStub);
 
     public abstract void visitJITAdapterFrameStub(JITAdapterFrameStub jitAdapterFrameStub);
 }

@@ -44,55 +44,11 @@ public abstract class CodeBuffer {
 
     /**
      * Returns the offset to the current end of the buffer.
-     * @return
+     * @return the current position
      */
     @INLINE
     public final int currentPosition() {
         return currentPosition;
-    }
-
-    /**
-     * Emits a template at the current position in the buffer and increases the {@linkplain #currentPosition() current position} with
-     * the size of the emitted template. Modifies the emitted template so that a constant displacement is replaced
-     * with a new constant displacement value.
-     */
-    public void emit(CompiledBytecodeTemplate template, DisplacementModifier modifier, int disp32) throws AssemblyException {
-        final int startOfTemplate = currentPosition();
-        emit(template.targetMethod.code());
-        fix(startOfTemplate, modifier, disp32);
-    }
-
-    /**
-     * Emits a template at the current position in the buffer and increases the {@linkplain #currentPosition() current position} with
-     * the size of the emitted template. Modifies the emitted template so that a constant operand is replaced
-     * with a new constant operand value.
-     */
-    public void emit(CompiledBytecodeTemplate template, ImmediateConstantModifier modifier, byte imm8) throws AssemblyException {
-        final int startOfTemplate = currentPosition();
-        emit(template.targetMethod.code());
-        fix(startOfTemplate, modifier, imm8);
-    }
-
-    /**
-     * Emits a template at the current position in the buffer and increases the {@linkplain #currentPosition() current position} with
-     * the size of the emitted template. Modifies the emitted template so that a constant operand is replaced
-     * with a new constant operand value.
-     */
-    public void emit(CompiledBytecodeTemplate template, ImmediateConstantModifier modifier, int imm32) throws AssemblyException {
-        final int startOfTemplate = currentPosition();
-        emit(template.targetMethod.code());
-        fix(startOfTemplate, modifier, imm32);
-    }
-
-    /**
-     * Emits a template at the current position in the buffer and increases the {@linkplain #currentPosition() current position} with
-     * the size of the emitted template. Modifies the emitted template so that a constant operand is replaced
-     * with a new constant operand value.
-     */
-    public void emit(CompiledBytecodeTemplate template, ImmediateConstantModifier modifier, long imm64) throws AssemblyException {
-        final int startOfTemplate = currentPosition();
-        emit(template.targetMethod.code());
-        fix(startOfTemplate, modifier, imm64);
     }
 
     /**
@@ -108,7 +64,7 @@ public abstract class CodeBuffer {
     /**
      * Copy the bytes emitted in the code buffer to the byte array provided.
      *
-     * @param toArray
+     * @param toArray the array into which to copy the bytes
      */
     public abstract void copyTo(byte[] toArray);
 
@@ -144,12 +100,6 @@ public abstract class CodeBuffer {
     public abstract void emit(byte b);
     public abstract void emit(byte[] bytes);
     public abstract void reserve(int numBytes);
-
-    public abstract void fix(int startPosition, DisplacementModifier modifier, int disp32) throws AssemblyException;
-    public abstract void fix(int startPosition, ImmediateConstantModifier modifier, byte imm8) throws AssemblyException;
-    public abstract void fix(int startPosition, ImmediateConstantModifier modifier, int imm32) throws AssemblyException;
-    public abstract void fix(int startPosition, ImmediateConstantModifier modifier, long imm64) throws AssemblyException;
-    public abstract void fix(int startPosition, LiteralModifier modifier, int disp32) throws AssemblyException;
 
     public abstract void fix(int startPosition, BranchTargetModifier modifier, int disp32) throws AssemblyException;
 

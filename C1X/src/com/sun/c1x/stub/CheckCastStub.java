@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,15 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.collect;
+package com.sun.c1x.stub;
 
-import com.sun.max.unsafe.*;
+import com.sun.c1x.globalstub.*;
+import com.sun.c1x.lir.*;
 
 /**
- * @author Bernd Mathiske
+ * The <code>SimpleExceptionStub</code> class definition.
+ *
+ * @author Marcelo Cintra
+ * @author Thomas Wuerthinger
  */
-public interface SizeFunction<Object_Type> {
+public class CheckCastStub extends CodeStub {
 
-    Size size(Object_Type object);
+    public CheckCastStub(LIROperand obj, LIRDebugInfo info) {
+        super(info);
+        this.setOperands(0, 0, obj);
+    }
 
+    @Override
+    public void accept(CodeStubVisitor visitor) {
+        visitor.visitCheckCastStub(this);
+    }
+
+    @Override
+    public boolean isExceptionThrowStub() {
+        return true;
+    }
+
+    public LIROperand obj() {
+        return operand(0);
+    }
 }

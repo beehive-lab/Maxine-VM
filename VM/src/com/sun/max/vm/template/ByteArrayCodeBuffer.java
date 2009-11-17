@@ -101,31 +101,6 @@ public class ByteArrayCodeBuffer extends CodeBuffer {
     }
 
     @Override
-    public void fix(int startPosition, DisplacementModifier modifier, int disp32) throws AssemblyException {
-        modifier.fix(buffer, startPosition, disp32);
-    }
-
-    @Override
-    public void fix(int startPosition, ImmediateConstantModifier modifier, byte imm8) throws AssemblyException {
-        modifier.fix(buffer, startPosition, imm8);
-    }
-
-    @Override
-    public void fix(int startPosition, ImmediateConstantModifier modifier, int imm32) throws AssemblyException {
-        modifier.fix(buffer, startPosition, imm32);
-    }
-
-    @Override
-    public void fix(int startPosition, ImmediateConstantModifier modifier, long imm64) throws AssemblyException {
-        modifier.fix(buffer, startPosition, imm64);
-    }
-
-    @Override
-    public void fix(int startPosition, LiteralModifier modifier, int disp32) throws AssemblyException {
-        modifier.fix(buffer, startPosition, disp32);
-    }
-
-    @Override
     public void fix(int startPosition, BranchTargetModifier modifier, int disp32)  throws AssemblyException {
         modifier.fix(buffer, startPosition, disp32);
     }

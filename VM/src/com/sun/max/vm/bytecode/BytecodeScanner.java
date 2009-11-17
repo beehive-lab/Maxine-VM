@@ -1138,12 +1138,12 @@ public final class BytecodeScanner {
     public int scanInstruction(BytecodeBlock block) {
         this.bytecodeBlock = block;
         try {
-            currentBytePosition = block.start();
+            currentBytePosition = block.start;
             currentOpcodePosition = currentBytePosition;
             scanInstruction();
             return currentBytePosition;
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            if (currentBytePosition > block.end()) {
+            if (currentBytePosition > block.end) {
                 throw verifyError("Ran off end of code");
             }
             throw arrayIndexOutOfBoundsException;
@@ -1157,15 +1157,15 @@ public final class BytecodeScanner {
     public void scan(BytecodeBlock block) {
         this.bytecodeBlock = block;
         try {
-            currentBytePosition = block.start();
+            currentBytePosition = block.start;
             currentOpcodePosition = currentBytePosition;
             bytecodeVisitor.prologue();
-            while (!stopped && currentBytePosition <= block.end()) {
+            while (!stopped && currentBytePosition <= block.end) {
                 currentOpcodePosition = currentBytePosition;
                 scanInstruction();
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
-            if (currentBytePosition > block.end()) {
+            if (currentBytePosition > block.end) {
                 throw verifyError("Ran off end of code");
             }
             throw arrayIndexOutOfBoundsException;

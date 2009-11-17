@@ -23,6 +23,7 @@ package com.sun.c1x.target.x86;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.globalstub.*;
@@ -46,9 +47,12 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private X86MacroAssembler asm;
     private final CiTarget target;
+    private int argsSize;
+    private int[] argOffsets;
     private int localSize;
     private int saveSize;
     private int registerRestoreEpilogueOffset;
+
     private RiRuntime runtime;
     private C1XCompiler compiler;
     private CiRegister[] registersSaved;
@@ -64,51 +68,37 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         allRegisters = target.arch.is64bit() ? X86.allRegisters64 : X86.allRegisters;
     }
 
-    private void reset() {
+    private void reset(CiKind[] args) {
         asm = new X86MacroAssembler(compiler, compiler.target, -1);
         localSize = 0;
         saveSize = 0;
+        argsSize = 0;
+        argOffsets = new int[args.length];
         registerRestoreEpilogueOffset = -1;
         registersSaved = null;
+
+        for (int i = 0; i < args.length; i++) {
+            if (callerFrameContainsArguments) {
+                argOffsets[i] = argsSize;
+                argsSize += 8; // TODO: always allocate 8 bytes regardless of target word width?
+            } else {
+                argOffsets[i] = -16 - (i * 8);
+            }
+        }
     }
 
-    public CiTargetMethod emitRuntimeStub(CiRuntimeCall runtimeCall) {
-        reset();
+    public GlobalStub emit(CiRuntimeCall runtimeCall, RiRuntime runtime) {
+        reset(runtimeCall.arguments);
         emitStandardForward(null, runtimeCall);
-        return asm.finishTargetMethod(runtime, frameSize(), null, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
+        Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + runtimeCall);
+        return new GlobalStub(null, stubObject, argsSize, argOffsets);
     }
 
-    public CiTargetMethod emit(GlobalStub stub) {
-        reset();
+    public GlobalStub emit(GlobalStub.Id stub, RiRuntime runtime) {
+        reset(stub.arguments);
 
         switch (stub) {
-            case NewInstance:
-                emitStandardForward(stub, CiRuntimeCall.NewInstance);
-                break;
-            case ThrowArrayIndexOutOfBoundsException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowArrayIndexOutOfBoundsException);
-                break;
-            case ThrowArithmeticException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowArithmeticException);
-                break;
-            case ThrowNullPointerException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowNullPointerException);
-                break;
-            case ThrowArrayStoreException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowArrayStoreException);
-                break;
-            case ThrowClassCastException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowClassCastException);
-                break;
-            case ThrowIncompatibleClassChangeError:
-                emitStandardForward(stub, CiRuntimeCall.ThrowIncompatibleClassChangeError);
-                break;
-            case MonitorEnter:
-                emitStandardForward(stub, CiRuntimeCall.Monitorenter);
-                break;
-            case MonitorExit:
-                emitStandardForward(stub, CiRuntimeCall.Monitorexit);
-                break;
             case f2i:
                 emitF2I();
                 break;
@@ -129,7 +119,9 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 break;
         }
 
-        return asm.finishTargetMethod(runtime, frameSize(), null, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
+        Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + stub);
+        return new GlobalStub(stub, stubObject, argsSize, argOffsets);
     }
 
     private LIROperand allocateOperand(XirParameter param, int parameterIndex) {
@@ -155,9 +147,8 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         return LIROperandFactory.singleLocation(kind, allocatableRegisters.remove(allocatableRegisters.size() - 1));
     }
 
-    public CiTargetMethod emit(XirTemplate template) {
-        this.saveSize = 0;
-        this.registerRestoreEpilogueOffset = -1;
+    public GlobalStub emit(XirTemplate template, RiRuntime runtime) {
+        reset(getArgumentKinds(template));
 
         C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, compiler.runtime, null);
         compilation.initFrameMap(0);
@@ -237,7 +228,18 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         compilation.frameMap().setFrameSize(frameSize());
         assembler.emitXirInstructions(null, template.fastPath, labels, operands);
         epilogue();
-        return asm.finishTargetMethod(runtime, frameSize(), null, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
+        Object stubObject = runtime.registerTargetMethod(targetMethod, template.name);
+        return new GlobalStub(null, stubObject, 0, null);
+    }
+
+    private CiKind[] getArgumentKinds(XirTemplate template) {
+        CiXirAssembler.XirParameter[] params = template.parameters;
+        CiKind[] result = new CiKind[params.length];
+        for (int i = 0; i < params.length; i++) {
+            result[i] = params[i].kind;
+        }
+        return result;
     }
 
     private void negatePrologue() {
@@ -314,7 +316,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         convertEpilogue();
     }
 
-    private void emitStandardForward(GlobalStub stub, CiRuntimeCall call) {
+    private void emitStandardForward(GlobalStub.Id stub, CiRuntimeCall call) {
         if (stub != null) {
             assert stub.resultType == call.resultType;
             assert stub.arguments.length == call.arguments.length;
