@@ -22,10 +22,6 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-
 /**
  * This class represents a calling convention instance for a particular method invocation and describes the ABI for
  * outgoing arguments and the return value, both runtime calls and Java calls.

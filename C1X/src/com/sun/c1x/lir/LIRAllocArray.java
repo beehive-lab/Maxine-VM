@@ -34,18 +34,6 @@ public class LIRAllocArray extends LIRInstruction {
 
     CiKind type;
 
-    /**
-     * Creates a new LIRAllocArray instruction.
-     *
-     * @param klass
-     * @param len
-     * @param tmp1
-     * @param tmp2
-     * @param tmp3
-     * @param tmp4
-     * @param type
-     * @param stub
-     */
     public LIRAllocArray(LIROperand klass, LIROperand len, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4, CiKind type, CodeStub stub) {
         super(LIROpcode.AllocArray, result, null, false, stub, 0, 4, klass, len, tmp1, tmp2, tmp3, tmp4);
         this.type = type;

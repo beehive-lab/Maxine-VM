@@ -243,7 +243,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         if (C1XOptions.GenArrayStoreCheck && needsStoreCheck) {
-
             LIROperand tmp1 = newRegister(CiKind.Object);
             LIROperand tmp2 = newRegister(CiKind.Object);
             LIROperand tmp3 = newRegister(CiKind.Object);
@@ -398,9 +397,6 @@ public final class X86LIRGenerator extends LIRGenerator {
                 case Bytecodes.LDIV:
                     entry = CiRuntimeCall.ArithmeticLdiv;
                     break; // check if dividend is 0 is done elsewhere
-                case Bytecodes.LMUL:
-                    entry = CiRuntimeCall.ArithmeticLmul;
-                    break;
                 default:
                     throw Util.shouldNotReachHere();
             }
