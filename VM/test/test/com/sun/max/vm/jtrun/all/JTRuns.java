@@ -703,15 +703,16 @@ public class JTRuns {
             case 617: jtt_threads_Thread_isInterrupted02(); break;
             case 618: jtt_threads_Thread_isInterrupted03(); break;
             case 619: jtt_threads_Thread_isInterrupted04(); break;
-            case 620: jtt_threads_Thread_join01(); break;
-            case 621: jtt_threads_Thread_join02(); break;
-            case 622: jtt_threads_Thread_join03(); break;
-            case 623: jtt_threads_Thread_new01(); break;
-            case 624: jtt_threads_Thread_new02(); break;
-            case 625: jtt_threads_Thread_setPriority01(); break;
-            case 626: jtt_threads_Thread_sleep01(); break;
-            case 627: jtt_threads_Thread_start01(); break;
-            case 628: jtt_threads_Thread_yield01(); break;
+            case 620: jtt_threads_Thread_isInterrupted05(); break;
+            case 621: jtt_threads_Thread_join01(); break;
+            case 622: jtt_threads_Thread_join02(); break;
+            case 623: jtt_threads_Thread_join03(); break;
+            case 624: jtt_threads_Thread_new01(); break;
+            case 625: jtt_threads_Thread_new02(); break;
+            case 626: jtt_threads_Thread_setPriority01(); break;
+            case 627: jtt_threads_Thread_sleep01(); break;
+            case 628: jtt_threads_Thread_start01(); break;
+            case 629: jtt_threads_Thread_yield01(); break;
         }
         return true;
     }
@@ -22530,6 +22531,22 @@ public class JTRuns {
             // (0) == true
                 runString = "(0)";
                 if (true != jtt.threads.Thread_isInterrupted04.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_threads_Thread_isInterrupted05() {
+            begin("jtt.threads.Thread_isInterrupted05");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.threads.Thread_isInterrupted05.test(0)) {
                     fail(runString);
                     return;
                 }
