@@ -56,7 +56,7 @@ public class BlockingServerDaemon extends Thread {
                 // Block clients until the server is waiting for requests:
                 token.wait();
             } catch (InterruptedException interruptedException) {
-                ProgramError.unexpected();
+                ProgramError.unexpected(interruptedException);
             }
         }
     }
