@@ -71,11 +71,12 @@ void condition_destroy(Condition condition) {
 /**
  * Atomically blocks the current thread waiting on a given condition variable and unblocks a given mutex.
  * The waiting thread unblocks only after another thread calls 'condition_notify' or 'condition_notifyAll'
- * with the same condition variable.
+ * with the same condition variable or the thread was interrupted by Thread.interrupt(). In the case of the
+ * latter, the 'interrupted' field in the relevant VmThread object will have been set to true.
  *
  * @param condition a condition variable on which the current thread will wait
  * @param mutex a mutex locked by the current thread
- * @return false if the thread was interrupted or an error occurred, true otherwise (i.e. the thread was notified).
+ * @return false if an error occurred, true otherwise (i.e. the thread was notified or interrupted).
  *        In either case, the current thread has reacquired the lock on 'mutex'.
  */
 boolean condition_wait(Condition condition, Mutex mutex) {
@@ -85,24 +86,13 @@ boolean condition_wait(Condition condition, Mutex mutex) {
     int error;
 #if (os_DARWIN || os_LINUX)
     error = pthread_cond_wait(condition, mutex);
-    if (error == EINTR) {
-#if log_MONITORS
-        log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ") interrupted", thread_self(), condition, mutex);
-#endif
-        return false;
-    }
 #elif os_SOLARIS
     error = cond_wait(condition, mutex);
-    if (error == EINTR) {
-#if log_MONITORS
-        log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ") interrupted", thread_self(), condition, mutex);
-#endif
-        return false;
-    }
 #elif os_GUESTVMXEN
     error = guestvmXen_condition_wait(*condition, *mutex, 0);
     if (error == 1) {
-        return false;
+        /* (Doug) I assume 1 means EINTR */
+        return true;
     }
 #endif
     if (error != 0) {
@@ -151,7 +141,7 @@ static struct timespec* compute_abstime(struct timespec* abstime, jlong millis) 
  * @param mutex a mutex locked by the current thread
  * @param timeoutMilliSeconds the maximum amount of time (in milliseconds) that the wait should last for.
  *        A value of 0 means an infinite timeout.
- * @return false if the thread was interrupted or an error occurred, true otherwise (i.e. the thread was notified or the timeout expired).
+ * @return false if an error occurred, true otherwise (i.e. the thread was notified, the timeout expired or the thread was interrupted).
  *        In either case, the current thread has reacquired the lock on 'mutex'.
  */
 boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutMilliSeconds) {
@@ -175,12 +165,6 @@ boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 #endif
 	    return true;
 	}
-	if (error == EINTR) {
-#if log_MONITORS
-	    log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
-#endif
-	    return false;
-	}
 #elif os_SOLARIS
 	timestruc_t reltime;
 	reltime.tv_sec = timeoutMilliSeconds / 1000;
@@ -196,7 +180,7 @@ boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 #if log_MONITORS
 	    log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
-	    return false;
+	    return true;
 	}
 #elif os_GUESTVMXEN
 	struct guestvmXen_TimeSpec reltime;
@@ -204,7 +188,8 @@ boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 	reltime.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
 	error = guestvmXen_condition_wait(*condition, *mutex, &reltime);
 	if (error == 1) {
-	    return false;
+	    /* (Doug) I assume 1 means EINTR */
+	    return true;
 	}
 #else
 #    error

@@ -106,7 +106,14 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         ownerThread.setNextWaitingThread(waitingThreads);
         waitingThreads = ownerThread;
         this.ownerThread = null;
-        final boolean interrupted = ownerThread.isInterrupted(true) || !waitingCondition.threadWait(mutex, timeoutMilliSeconds);
+        final boolean interrupted;
+        if (ownerThread.isInterrupted(true)) {
+            // The wait is prematurely interrupted and never calls native code
+            interrupted = true;
+        } else {
+            waitingCondition.threadWait(mutex, timeoutMilliSeconds);
+            interrupted = ownerThread.isInterrupted(true);
+        }
         this.ownerThread = ownerThread;
         ownerThread.setState(Thread.State.RUNNABLE);
         this.recursionCount = recursionCount;

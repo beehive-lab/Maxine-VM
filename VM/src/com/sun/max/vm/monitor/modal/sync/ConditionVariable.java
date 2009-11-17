@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
+import com.sun.max.vm.thread.*;
+
 
 /**
  * Abstract class defining the interface to a condiion variable as used by JavaMonitors.
@@ -42,12 +44,14 @@ public abstract class ConditionVariable {
      * blocking, the current thread will release the mutex. On return, the current thread is guaranteed to own the
      * mutex.
      *
-     * The thread may return early if it is {@linkplain java.lang.Thread#interrupt() interrupt() interrupted} whilst
-     * blocking. In this case, this method returns returns true. In all other cases it returns false.
+     * The thread may return early if it is {@linkplain java.lang.Thread#interrupt() interrupted} whilst
+     * blocking. In this case, the {@linkplain VmThread#isInterrupted(boolean) interrupted} flag of the thread
+     * will have been {@linkplain VmThread#setInterrupted() set} to true by the trap handler on the
+     * interrupted thread.
      *
      * @param mutex the mutex on which to block
      * @param timeoutMilliSeconds the maximum time to block. No timeout is used if timeoutMilliSeconds == 0.
-     * @return true if the current thread was interrupted whilst blocking; false otherwise
+     * @return true if no error occurred whilst blocking; false otherwise
      */
     public abstract boolean threadWait(Mutex mutex, long timeoutMilliSeconds);
 
@@ -56,7 +60,7 @@ public abstract class ConditionVariable {
      * {@code ConditionVariable} to wake-up.
      *
      * @param all notify all threads
-     * @return true if an error occurred in native code; false otherwise
+     * @return true if no error occurred in native code; false otherwise
      */
     public abstract boolean threadNotify(boolean all);
 
