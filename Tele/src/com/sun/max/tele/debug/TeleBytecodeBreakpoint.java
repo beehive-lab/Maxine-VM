@@ -36,11 +36,18 @@ import com.sun.max.vm.type.*;
 
 /**
  * Breakpoints at the beginning of bytecode instructions.
+ * <br>
+ * This version contains the beginning of a new implementation for bytecode
+ * breakpoints that is not operational; the old design is still in effect.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
 public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
+
+    // TODO (mlvdv) bytecode breakpoints only supported at present for method entry.
+
+    private static final int TRACE_VALUE = 1;
 
     // TODO (mlvdv) Implementation scheduled for redesign.
 
@@ -54,6 +61,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, Key key) {
         super(teleVM, new TeleCodeLocation(teleVM, key), Kind.CLIENT);
         this.factory = factory;
+        Trace.line(TRACE_VALUE, tracePrefix() + "new=" + this);
     }
 
     /**
@@ -63,6 +71,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         return teleCodeLocation().key();
     }
 
+    // TODO (mlvdv) to deprecate with the redesign
     private void request() {
         teleVM().messenger().requestBytecodeBreakpoint(key(), key().bytecodePosition);
     }
@@ -125,6 +134,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     @Override
     public void remove() {
+        Trace.line(TRACE_VALUE, tracePrefix() + "removing=" + this);
         dispose();
         factory.removeBreakpoint(key());
     }
@@ -157,8 +167,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     @Override
-    public void setCondition(String condition) {
-        // TODO (mlvdv) add support; just replicate the condition in each derivative target code breakpoint.
+    public void setCondition(String conditionDescriptor) {
+        // TODO (mlvdv) add support for conditional bytecode breakpoints
+        // Replicate the condition in each derivative target code breakpoint.
         ProgramError.unexpected("Conditional bytecode breakpoints net yet implemented");
     }
 
@@ -225,18 +236,30 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         public String toString() {
             return "{" + super.toString() + ", position=" + bytecodePosition + "}";
         }
-
     }
 
     /**
-     * Creates, tracks, and removes bytecode breakpoints from the VM.
+     * A factory that creates, tracks, and removes bytecode breakpoints from the VM.
+     *
+     * @author Michael Van De Vanter
      */
     public static class Factory extends Observable {
 
         private final TeleVM teleVM;
+        private final TeleTargetBreakpoint.Factory teleTargetBreakpointFactory;
+        private final String tracePrefix;
+
+        /**
+         * A breakpoint that interrupts the compiler just as it finishes compiling a method.  Non-null and active
+         * iff there are one or more bytecode breakpoints in existence.
+         */
+        private TeleTargetBreakpoint compilerTargetCodeBreakpoint = null;
 
         public Factory(TeleVM teleVM) {
+            this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
+            Trace.line(TRACE_VALUE, tracePrefix + "creating");
             this.teleVM = teleVM;
+            this.teleTargetBreakpointFactory = teleVM.teleProcess().targetBreakpointFactory();
         }
 
         private final VariableMapping<Key, TeleBytecodeBreakpoint> breakpoints = HashMapping.createVariableEqualityMapping();
@@ -277,8 +300,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         }
 
         private TeleBytecodeBreakpoint createBreakpoint(Key key) {
+            if (breakpoints.length() == 0) {
+                // TODO (mlvdv) new bytecode breakpoint implementation
+                //createCompilerBreakpoint();
+            }
             final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(teleVM, this, key);
             breakpoints.put(key, breakpoint);
+            Trace.line(TRACE_VALUE, tracePrefix + "new=" + breakpoint);
             announceStateChange();
             return breakpoint;
         }
@@ -302,7 +330,37 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private synchronized void removeBreakpoint(Key key) {
             breakpoints.remove(key);
+            if (breakpoints.length() == 0) {
+                // TODO (mlvdv) new bytecode breakpoint implementation
+                //removeCompilerBreakpoint();
+            }
             announceStateChange();
+        }
+
+        private void createCompilerBreakpoint() {
+            assert compilerTargetCodeBreakpoint == null;
+            final TeleClassMethodActor teleClassMethodActor = teleVM.teleMethods().BytecodeBreakpointMessage_compilationFinished.teleClassMethodActor();
+            final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getJavaTargetMethod(0);
+            final Address callEntryPoint = javaTargetMethod.callEntryPoint();
+            ProgramError.check(!callEntryPoint.isZero());
+            compilerTargetCodeBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(callEntryPoint);
+            compilerTargetCodeBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
+
+                @Override
+                public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+                    System.out.println("compilerTargetCodeBreakpoint hit, resuming");
+                    return false;
+                }
+
+            });
+            Trace.line(TRACE_VALUE, tracePrefix + "new compiler breakpoint=" + compilerTargetCodeBreakpoint);
+        }
+
+        private void removeCompilerBreakpoint() {
+            assert compilerTargetCodeBreakpoint != null;
+            Trace.line(TRACE_VALUE, tracePrefix + "removing compiler breakpoint=" + compilerTargetCodeBreakpoint);
+            compilerTargetCodeBreakpoint.remove();
+            compilerTargetCodeBreakpoint = null;
         }
 
     }
