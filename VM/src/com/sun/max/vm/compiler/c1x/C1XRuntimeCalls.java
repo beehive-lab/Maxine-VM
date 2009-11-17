@@ -122,17 +122,12 @@ public class C1XRuntimeCalls {
         return false;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowRangeCheckFailed)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowArrayIndexOutOfBoundsException)
     public static void runtimeThrowRangeCheckFailed(int index) throws ArrayIndexOutOfBoundsException {
         throw new ArrayIndexOutOfBoundsException(index);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowIndexException)
-    public static void runtimeThrowIndexException(int index) throws ArrayIndexOutOfBoundsException {
-        throw new ArrayIndexOutOfBoundsException(index);
-    }
-
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowDiv0Exception)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowArithmeticException)
     public static void runtimeThrowDiv0Exception() throws ArithmeticException {
         throw new ArithmeticException("division by zero");
     }

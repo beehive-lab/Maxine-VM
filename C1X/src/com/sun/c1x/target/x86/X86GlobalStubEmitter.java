@@ -85,14 +85,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             case NewInstance:
                 emitStandardForward(stub, CiRuntimeCall.NewInstance);
                 break;
-            case ThrowRangeCheckFailed:
-                emitStandardForward(stub, CiRuntimeCall.ThrowRangeCheckFailed);
+            case ThrowArrayIndexOutOfBoundsException:
+                emitStandardForward(stub, CiRuntimeCall.ThrowArrayIndexOutOfBoundsException);
                 break;
-            case ThrowIndexException:
-                emitStandardForward(stub, CiRuntimeCall.ThrowIndexException);
-                break;
-            case ThrowDiv0Exception:
-                emitStandardForward(stub, CiRuntimeCall.ThrowDiv0Exception);
+            case ThrowArithmeticException:
+                emitStandardForward(stub, CiRuntimeCall.ThrowArithmeticException);
                 break;
             case ThrowNullPointerException:
                 emitStandardForward(stub, CiRuntimeCall.ThrowNullPointerException);

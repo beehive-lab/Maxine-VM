@@ -52,7 +52,5 @@ public class Monitor_enter01 extends RunBench {
                 count++;
             }
         }
-
     }
-
 }

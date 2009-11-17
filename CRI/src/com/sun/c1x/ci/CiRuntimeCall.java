@@ -35,9 +35,8 @@ import static com.sun.c1x.ci.CiKind.Word;
  */
 public enum CiRuntimeCall {
     UnwindException(Void, Object),
-    ThrowRangeCheckFailed(Void, Int),
-    ThrowIndexException(Void, Int),
-    ThrowDiv0Exception(Void),
+    ThrowArrayIndexOutOfBoundsException(Void, Int),
+    ThrowArithmeticException(Void),
     ThrowNullPointerException(Void),
     ThrowArrayStoreException(Void),
     ThrowClassCastException(Void, Object),
