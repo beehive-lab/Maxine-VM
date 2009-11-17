@@ -56,5 +56,4 @@ public class Object_notifyAll01 extends RunBench {
             }
         }
     }
-
 }

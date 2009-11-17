@@ -118,7 +118,7 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
         masm.bind(stub.entry);
-        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowDiv0Exception, stub.info, CiRegister.None);
+        int infoPos = masm.callGlobalStubNoArgs(GlobalStub.ThrowArithmeticException, stub.info, CiRegister.None);
         compilation.addCallInfo(infoPos, stub.info);
 
         // Insert nop such that the IP is within the range of the target at the position after the call
@@ -159,7 +159,6 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
         }
 
         masm.callGlobalStub(GlobalStub.MonitorExit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
-        // TODO: do we need to add call info? (tw) No, if stub.info not null, then the call automatically adds it to the correct position
         masm.jmp(stub.continuation);
     }
 
@@ -195,21 +194,15 @@ public class X86CodeStubVisitor implements CodeStubVisitor {
 
     public void visitRangeCheckStub(RangeCheckStub stub) {
         masm.bind(stub.entry);
-        GlobalStub stubId;
-        if (stub.throwIndexOutOfBoundsException) {
-            stubId = GlobalStub.ThrowIndexException;
-        } else {
-            stubId = GlobalStub.ThrowRangeCheckFailed;
-        }
 
         LIROperand index = stub.index();
         int infoPos;
         if (index.isRegister()) {
-            infoPos = masm.callGlobalStub(stubId, stub.info, CiRegister.None, index.asRegister());
+            infoPos = masm.callGlobalStub(GlobalStub.ThrowArrayIndexOutOfBoundsException, stub.info, CiRegister.None, index.asRegister());
         } else {
             assert index.isConstant();
             LIRConstant constantIndex = (LIRConstant) index;
-            infoPos = masm.callGlobalStub(stubId, stub.info, CiRegister.None, new RegisterOrConstant(constantIndex.asInt()));
+            infoPos = masm.callGlobalStub(GlobalStub.ThrowArrayIndexOutOfBoundsException, stub.info, CiRegister.None, new RegisterOrConstant(constantIndex.asInt()));
         }
 
         compilation.addCallInfo(infoPos, stub.info);

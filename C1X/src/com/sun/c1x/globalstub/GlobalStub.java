@@ -31,27 +31,27 @@ import com.sun.c1x.ci.*;
  * @author Thomas Wuerthinger
  */
 public enum GlobalStub {
-    ThrowRangeCheckFailed(Void, Int),
-    ThrowIndexException(Void, Int),
-    ThrowDiv0Exception(Void),
+    ThrowArrayIndexOutOfBoundsException(Void, Int),
+    ThrowArithmeticException(Void),
     ThrowNullPointerException(Void),
     ThrowArrayStoreException(Void),
     ThrowClassCastException(Void, Object),
     ThrowIncompatibleClassChangeError,
     NewInstance(Object, Object),
-    f2i(Int, Float),
-    fneg(Float, Float),
-    dneg(Double, Double),
-    f2l(Long, Float),
-    d2i(Int, Double),
-    d2l(Long, Double),
     MonitorEnter(Void, Object, Int),
     MonitorExit(Void, Object, Int),
     ArithmethicLrem(Long, Long, Long),
     ArithmeticLdiv(Long, Long, Long),
     ArithmeticLmul(Long, Long, Long),
     ArithmeticFrem(Float, Float),
-    ArithmeticDrem(Double, Double);
+    ArithmeticDrem(Double, Double),
+
+    f2i(Int, Float),
+    fneg(Float, Float),
+    dneg(Double, Double),
+    f2l(Long, Float),
+    d2i(Int, Double),
+    d2l(Long, Double);
 
     public final CiKind resultType;
     public final CiKind[] arguments;
