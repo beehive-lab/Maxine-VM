@@ -44,18 +44,26 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     private C1XCompiler compiler;
     private RiXirGenerator xirGenerator;
 
-    public static final VMIntOption c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 0,
-        "Set the optimization level of C1X.") {
-        @Override
-        public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
-            boolean result = super.parseValue(optionValue);
-            if (result) {
-                C1XOptions.setOptimizationLevel(getValue());
-                return true;
-            }
-            return false;
+    public static final VMIntOption c1xOptLevel;
+
+    static {
+        if (MaxineVM.isHosted()) {
+            c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 0,
+                            "Set the optimization level of C1X.") {
+                        @Override
+                        public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
+                            boolean result = super.parseValue(optionValue);
+                            if (result) {
+                                C1XOptions.setOptimizationLevel(getValue());
+                                return true;
+                            }
+                            return false;
+                        }
+                    }, MaxineVM.Phase.STARTING);
+        } else {
+            c1xOptLevel = null;
         }
-    }, MaxineVM.Phase.STARTING);
+    }
 
     public C1XCompilerScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -63,21 +71,21 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isHosted()) {
-            if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+        if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
+            if (MaxineVM.isHosted()) {
                 VMOptions.addFieldOptions("-C1X:", C1XOptions.class);
-                // create the RiRuntime object passed to C1X
-                c1xRuntime = MaxRiRuntime.globalRuntime;
-                CiTarget c1xTarget = createTarget(vmConfiguration());
-                xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
-                compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
-                compiler.init();
             }
-            if (phase == MaxineVM.Phase.COMPILING) {
-                if (MaxineVM.isHosted()) {
-                    // can only refer to JavaPrototype while bootstrapping.
-                    JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
-                }
+            // create the RiRuntime object passed to C1X
+            c1xRuntime = MaxRiRuntime.globalRuntime;
+            CiTarget c1xTarget = createTarget(vmConfiguration());
+            xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
+            compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
+            compiler.init();
+        }
+        if (phase == MaxineVM.Phase.COMPILING) {
+            if (MaxineVM.isHosted()) {
+                // can only refer to JavaPrototype while bootstrapping.
+                JavaPrototype.javaPrototype().loadPackage("com.sun.c1x", true);
             }
         }
     }

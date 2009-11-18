@@ -52,6 +52,8 @@ import com.sun.max.vm.stack.JavaStackFrameLayout.*;
  */
 public class C1XTargetMethod extends TargetMethod {
 
+    private static final int RJMP = 0xe9;
+
     /**
      * An array of pairs denoting the code positions protected by an exception handler.
      * A pair {@code {p,h}} at index {@code i} in this array specifies that code position
@@ -148,6 +150,7 @@ public class C1XTargetMethod extends TargetMethod {
     /**
      * Gets size of an activation frame for this target method in words.
      */
+    @UNSAFE
     private int frameWords() {
         return frameSize() / Word.size();
     }
@@ -219,7 +222,6 @@ public class C1XTargetMethod extends TargetMethod {
             relativeDataPos[z] = currentPos;
 
             try {
-
                 switch (data.kind) {
 
                     case Double:
@@ -418,9 +420,6 @@ public class C1XTargetMethod extends TargetMethod {
     public void forwardTo(TargetMethod newTargetMethod) {
         forwardTo(this, newTargetMethod);
     }
-
-    // TODO: (tw) Get rid of these!!!!!!!
-    private static final int RJMP = 0xe9;
 
     @UNSAFE
     public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
@@ -644,7 +643,6 @@ public class C1XTargetMethod extends TargetMethod {
         final StringBuilder buf = new StringBuilder();
         final JavaStackFrameLayout layout = new C1XStackFrameLayout(frameSize());
         final Slots slots = layout.slots();
-        int safepointIndex = 0;
         final int firstSafepointStopIndex = numberOfDirectCalls() + numberOfIndirectCalls();
         for (int stopIndex = 0; stopIndex < numberOfStopPositions(); ++stopIndex) {
             final int stopPosition = stopPosition(stopIndex);
@@ -671,10 +669,9 @@ public class C1XTargetMethod extends TargetMethod {
                     byteIndex++;
                 }
                 if (!referenceRegisters.isEmpty()) {
-                    buf.append(" { " + referenceRegisters + "}");
+                    buf.append(" { ").append(referenceRegisters).append("}");
                 }
                 buf.append(String.format("%n"));
-                ++safepointIndex;
             }
         }
 

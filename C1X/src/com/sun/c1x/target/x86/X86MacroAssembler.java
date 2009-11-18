@@ -33,6 +33,7 @@ import com.sun.c1x.util.*;
  * This class implements the X86-specific portion of the macro assembler.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class X86MacroAssembler extends X86Assembler {
 
@@ -54,7 +55,13 @@ public class X86MacroAssembler extends X86Assembler {
         for (int i = 0; i < args.length; i++) {
             rc[i] = new RegisterOrConstant(args[i]);
         }
-        return callGlobalStub(stub, info, result, rc);
+        assert rc.length == stub.argOffsets.length;
+        return callGlobalStubHelper(stub, CiKind.Illegal, info, result, rc);
+    }
+
+    public final int callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
+        assert args.length == stub.parameters.length;
+        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
     }
 
     public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, CiRegister... args) {
@@ -63,21 +70,6 @@ public class X86MacroAssembler extends X86Assembler {
             rc[i] = new RegisterOrConstant(args[i]);
         }
         return callRuntimeCalleeSaved(stub, info, result, rc);
-    }
-
-    public final int callGlobalStub(XirTemplate stub, C1XCompilation compilation, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
-        assert args.length == stub.parameters.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), stub.resultOperand.kind, info, result, args);
-    }
-
-    public final int callGlobalStubNoArgs(GlobalStub stub, LIRDebugInfo info, CiRegister result) {
-        assert 0 == stub.argOffsets.length;
-        return callGlobalStubHelper(stub, CiKind.Illegal, info, result);
-    }
-
-    public final int callGlobalStub(GlobalStub stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {
-        assert args.length == stub.argOffsets.length;
-        return callGlobalStubHelper(stub, CiKind.Illegal, info, result, args);
     }
 
     public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, RegisterOrConstant...args) {

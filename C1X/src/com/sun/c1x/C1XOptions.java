@@ -97,6 +97,7 @@ public class C1XOptions {
     public static boolean CanonicalizeFloatingPoint          = true;
     public static boolean CanonicalizeNarrowingInStores      = true;
     public static boolean CanonicalizeConstantFields         = true;
+    public static boolean CanonicalizeFinalFields            = true;
     public static boolean CanonicalizeUnsafes                = true;
     public static boolean CanonicalizeMultipliesToShifts     = true;
     public static boolean CanonicalizeObjectCheckCast        = true;
