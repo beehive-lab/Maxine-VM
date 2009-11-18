@@ -26,7 +26,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 
-
 /**
  * Visual inspector and debugger for code discovered in the VM that is not compiled Java.
  * That is, it's runtime assembled code such as a {@linkplain RuntimeStub stub} or

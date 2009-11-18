@@ -30,7 +30,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Template sources for the invoke bytecode instructions where the methods to be invoked are resolved.
  * <p>

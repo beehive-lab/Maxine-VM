@@ -102,7 +102,6 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         final EirVariable[] sharedEirVariables = new EirVariable[abi.registerPool().length()];
         sharedEirVariables[safepointLatchRegister.serial()] = safepointLatchVariable;
 
-
         final Kind[] parameterKinds = IrValue.Static.toKinds(dirMethod.parameters());
         parameterEirLocations = abi.getParameterLocations(dirMethod.classMethodActor(), EirStackSlot.Purpose.PARAMETER, parameterKinds);
 

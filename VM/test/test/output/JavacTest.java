@@ -27,7 +27,6 @@ import java.net.*;
 import javax.tools.*;
 import javax.tools.JavaCompiler.*;
 
-
 public class JavacTest {
     public static void main(String[] args) throws Exception {
         final JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();

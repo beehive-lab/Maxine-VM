@@ -124,5 +124,4 @@ public class BlockWorkList {
         System.arraycopy(workListNumbers, 0, nworkListNumbers, 0, prevLength);
         workListNumbers = nworkListNumbers;
     }
-
 }

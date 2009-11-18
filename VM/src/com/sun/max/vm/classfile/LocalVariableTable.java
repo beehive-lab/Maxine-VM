@@ -151,7 +151,6 @@ public final class LocalVariableTable {
         }
     }
 
-
     public static final LocalVariableTable EMPTY = new LocalVariableTable(new char[] {0});
 
     /**

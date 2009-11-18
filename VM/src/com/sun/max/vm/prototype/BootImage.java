@@ -587,7 +587,6 @@ public class BootImage {
         public final int version;
         public final int identification;
 
-
         private Trailer(Header header, InputStream inputStream, int offset) throws IOException {
             super(header.endianness(), offset);
             randomID = endianness().readInt(inputStream);

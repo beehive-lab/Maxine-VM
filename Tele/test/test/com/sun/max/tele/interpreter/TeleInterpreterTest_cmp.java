@@ -23,7 +23,6 @@ package test.com.sun.max.tele.interpreter;
 import junit.framework.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
-
 public class TeleInterpreterTest_cmp extends BytecodeTest_cmp {
 
     public static Test suite() {

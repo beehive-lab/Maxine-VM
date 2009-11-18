@@ -25,7 +25,6 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 
-
 /**
  * Represents a thread group used for logical grouping in the JDWP
  * protocol. Currently we only distinguish between Java and native threads.

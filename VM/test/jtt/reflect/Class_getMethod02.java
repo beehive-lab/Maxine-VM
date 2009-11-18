@@ -20,8 +20,6 @@
  */
 package jtt.reflect;
 
-
-
 /*
  * @Harness: java
  * @Runs: 0=!java.lang.NoSuchMethodException; 1="test"; 2=!java.lang.NoSuchMethodException; 3="main";

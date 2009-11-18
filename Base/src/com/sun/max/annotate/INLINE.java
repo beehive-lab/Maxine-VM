@@ -21,7 +21,6 @@
 package com.sun.max.annotate;
 import java.lang.annotation.*;
 
-
 /**
  * Every thus annotated method is to be inlined unconditionally by the VM's optimizing compiler.
  *

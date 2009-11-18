@@ -56,7 +56,7 @@ public class XirSnippet {
         } else {
             assert arg != null;
             if (arg.constant != null) {
-                assert arg.constant.basicType == param.kind;
+                assert arg.constant.kind == param.kind;
             }
         }
 

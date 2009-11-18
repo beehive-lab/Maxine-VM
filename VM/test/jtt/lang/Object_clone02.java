@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public class Object_clone02 implements Cloneable {
 
     static final Object_clone02 field = new Object_clone02();

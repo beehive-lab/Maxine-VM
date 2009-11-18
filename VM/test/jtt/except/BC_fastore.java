@@ -26,7 +26,6 @@
  */
 package jtt.except;
 
-
 public class BC_fastore {
 
     static float[] arr = {0, 0, 0, 0};

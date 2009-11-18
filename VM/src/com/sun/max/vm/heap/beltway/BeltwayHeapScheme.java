@@ -181,7 +181,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     public static boolean inScavenging = false;
     public static BeltTLAB[] scavengerTLABs = new BeltTLAB[numberOfGCThreads + 1];
 
-
     public BeltCellVisitor cellVisitor() {
         return cellVisitor;
     }

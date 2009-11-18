@@ -229,5 +229,4 @@ public abstract class Instruction extends Value {
     public ValueStack stateAfter() {
         return null;
     }
-
 }

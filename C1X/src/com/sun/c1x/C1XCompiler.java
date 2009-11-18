@@ -37,8 +37,7 @@ import com.sun.c1x.xir.*;
  */
 public class C1XCompiler extends CiCompiler {
 
-    private final Map<Object, Object> map = new HashMap<Object, Object>();
-    private final Map<CiRuntimeCall, Object> runtimeCallStubs = new HashMap<CiRuntimeCall, Object>();
+    private final Map<Object, GlobalStub> map = new HashMap<Object, GlobalStub>();
 
     /**
      * The target that this compiler has been configured for.
@@ -59,7 +58,6 @@ public class C1XCompiler extends CiCompiler {
      * The backend that this compiler has been configured for.
      */
     public final Backend backend;
-
 
     public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen) {
         this.runtime = runtime;
@@ -83,43 +81,39 @@ public class C1XCompiler extends CiCompiler {
     }
 
     public void init() {
-
         List<XirTemplate> globalStubs = xir.buildTemplates(backend.newXirAssembler());
 
         final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
 
         for (XirTemplate t : globalStubs) {
-            final CiTargetMethod targetMethod = emitter.emit(t);
-            Object result = runtime.registerTargetMethod(targetMethod, t.name);
-            map.put(t, result);
-
+            map.put(t, emitter.emit(t, runtime));
         }
 
-        for (GlobalStub globalStub : GlobalStub.values()) {
-            final CiTargetMethod targetMethod = emitter.emit(globalStub);
-            Object result = runtime.registerTargetMethod(targetMethod, globalStub.toString());
-            map.put(globalStub, result);
+        for (GlobalStub.Id id : GlobalStub.Id.values()) {
+            map.put(id, emitter.emit(id, runtime));
         }
     }
 
-    public Object lookupGlobalStub(Object stub) {
-        assert map.containsKey(stub);
-        return map.get(stub);
+    public GlobalStub lookupGlobalStub(GlobalStub.Id id) {
+        GlobalStub globalStub = map.get(id);
+        assert globalStub != null : "no stub for global stub id: " + id;
+        return globalStub;
     }
 
-    public Object lookupGlobalStub(CiRuntimeCall dest) {
+    public GlobalStub lookupGlobalStub(XirTemplate t) {
+        GlobalStub globalStub = map.get(t);
+        assert globalStub != null : "no stub for XirTemplate: " + t;
+        return globalStub;
+    }
 
-        if (!runtimeCallStubs.containsKey(dest)) {
-
-            final GlobalStubEmitter emitter = backend.newGlobalStubEmitter();
-            final CiTargetMethod targetMethod = emitter.emitRuntimeStub(dest);
-            Object result = runtime.registerTargetMethod(targetMethod, dest.toString());
-            runtimeCallStubs.put(dest, result);
+    public GlobalStub lookupGlobalStub(CiRuntimeCall rtcall) {
+        GlobalStub globalStub = map.get(rtcall);
+        if (globalStub == null) {
+            globalStub = backend.newGlobalStubEmitter().emit(rtcall, runtime);
+            map.put(rtcall, globalStub);
         }
 
-
-        assert runtimeCallStubs.containsKey(dest);
-        return runtimeCallStubs.get(dest);
-
+        assert globalStub != null : "could not find global stub for runtime call: " + rtcall;
+        return globalStub;
     }
 }

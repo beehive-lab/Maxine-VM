@@ -30,28 +30,27 @@ import com.sun.c1x.util.*;
  * This class is used to build the stack frame layout for a compiled method.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public class FrameMap {
+public final class FrameMap {
 
     public static final int SPILL_SLOT_SIZE = 4;
 
     private final C1XCompiler compilation;
     private final CallingConvention incomingArguments;
     private final int monitorCount;
-    private final int returnAddressSize;
 
     // Values set after register allocation is complete
     private int frameSize;
     private int spillSlotCount;
 
     // Area occupied by outgoing overflow arguments. This value is adjusted as calling conventions for outgoing calls are retrieved.
-    private int reservedOutgoingArgumentsArea;
+    private int outgoingSize;
 
-    public FrameMap(C1XCompiler compiler, RiMethod method, int monitors, int retAddrSize) {
+    public FrameMap(C1XCompiler compiler, RiMethod method, int monitors) {
         this.compilation = compiler;
-        this.returnAddressSize = retAddrSize;
-        frameSize = -1;
-        spillSlotCount = -1;
+        this.frameSize = -1;
+        this.spillSlotCount = -1;
 
         assert monitors >= 0 : "not set";
         monitorCount = monitors;
@@ -63,12 +62,12 @@ public class FrameMap {
     }
 
     public CallingConvention runtimeCallingConvention(CiKind[] signature) {
-        CiLocation[] locations = compilation.runtime.runtimeCallingConvention(signature);
+        CiLocation[] locations = compilation.target.config.getRuntimeParameterLocations(signature);
         return createCallingConvention(locations, false);
     }
 
     public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing, boolean reserveOutgoingArgumentsArea) {
-        CiLocation[] locations = compilation.runtime.javaCallingConvention(signature, outgoing);
+        CiLocation[] locations = compilation.target.config.getJavaParameterLocations(signature, outgoing);
         return createCallingConvention(locations, reserveOutgoingArgumentsArea);
     }
 
@@ -76,13 +75,13 @@ public class FrameMap {
         final CallingConvention result = new CallingConvention(locations);
         if (reserveOutgoingArgumentsArea) {
             assert frameSize == -1 : "frame size must not yet be fixed!";
-            reservedOutgoingArgumentsArea = Math.max(reservedOutgoingArgumentsArea, result.overflowArgumentsSize());
+            outgoingSize = Math.max(outgoingSize, result.overflowArgumentSize);
         }
         return result;
     }
 
     public CallingConvention incomingArguments() {
-        return this.incomingArguments;
+        return incomingArguments;
     }
 
     public Address addressForSlot(int stackSlot) {
@@ -90,7 +89,7 @@ public class FrameMap {
     }
 
     public Address addressForSlot(int stackSlot, int offset) {
-        return new Address(compilation.target.stackRegister, spOffsetForSlot(stackSlot) + offset);
+        return new Address(compilation.target.stackPointerRegister, spOffsetForSlot(stackSlot) + offset);
     }
 
     int spOffsetForSlot(int index) {
@@ -101,17 +100,12 @@ public class FrameMap {
 
     int spOffsetForSpill(int index) {
         assert index >= 0 && index < spillSlotCount : "out of range";
-        return Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + index * SPILL_SLOT_SIZE;
+        return Util.roundUp(outgoingSize + incomingArguments.overflowArgumentSize, Double.SIZE / Byte.SIZE) + index * SPILL_SLOT_SIZE;
     }
 
     int spOffsetForMonitorBase(int index) {
-        int endOfSpills = Util.roundTo(reservedOutgoingArgumentsArea + incomingArguments.overflowArgumentsSize(), Double.SIZE / Byte.SIZE) + spillSlotCount * SPILL_SLOT_SIZE;
-        return Util.roundTo(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
-    }
-
-    int spOffsetForMonitorLock(int index)  {
-      checkMonitorIndex(index);
-      return spOffsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
+        int endOfSpills = Util.roundUp(outgoingSize + incomingArguments.overflowArgumentSize, Double.SIZE / Byte.SIZE) + spillSlotCount * SPILL_SLOT_SIZE;
+        return Util.roundUp(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
     }
 
     int spOffsetForMonitorObject(int index)  {
@@ -141,30 +135,27 @@ public class FrameMap {
     }
 
     public void finalizeFrame(int spillSlotCount) {
-        assert spillSlotCount >= 0 : "must be positive";
         assert this.spillSlotCount == -1 : "can only be set once";
+        assert this.frameSize == -1 : "should only be calculated once";
+        assert spillSlotCount >= 0 : "must be positive";
+
         this.spillSlotCount = spillSlotCount;
-        assert frameSize == -1 : "should only be calculated once";
-        int fs = returnAddressSize + spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock() + compilation.target.arch.framePadding;
-        frameSize = Util.roundTo(fs, compilation.target.stackAlignment) - returnAddressSize;
+        int fs = spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock();
+        this.frameSize = compilation.target.alignFrameSize(fs);
     }
 
     public CiLocation regname(LIROperand opr) {
         if (opr.isStack()) {
-            return new CiLocation(opr.kind, opr.stackIx() * SPILL_SLOT_SIZE, SPILL_SLOT_SIZE * opr.kind.size, false);
+            return new CiLocation(opr.kind, opr.stackIndex() * SPILL_SLOT_SIZE, compilation.target.sizeInBytes(opr.kind), false);
         } else if (opr.isRegister()) {
             if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
-                return new CiLocation(opr.kind, opr.asRegisterLo(), opr.asRegisterHi());
+                return new CiLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
             } else {
                 return new CiLocation(opr.kind, opr.asRegister());
             }
         } else {
             throw Util.shouldNotReachHere();
         }
-    }
-
-    public boolean isCallerSaveRegister(LIROperand res) {
-        return Util.nonFatalUnimplemented(false);
     }
 
     public CiLocation objectSlotRegname(int i) {
@@ -174,5 +165,4 @@ public class FrameMap {
     public CiLocation locationForMonitor(int monitorIndex) {
         return new CiLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SPILL_SLOT_SIZE, false);
     }
-
 }

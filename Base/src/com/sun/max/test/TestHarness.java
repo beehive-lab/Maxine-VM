@@ -26,7 +26,6 @@ package com.sun.max.test;
 import java.io.*;
 import java.util.*;
 
-
 /**
  *
  * @author Ben L. Titzer

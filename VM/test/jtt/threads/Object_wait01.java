@@ -24,8 +24,6 @@
  */
 package jtt.threads;
 
-
-
 public class Object_wait01 implements Runnable {
 
     static volatile int count = 0;

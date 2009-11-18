@@ -22,7 +22,6 @@ package com.sun.max.vm.run.jitTest;
 
 import com.sun.max.annotate.*;
 
-
 public class OptTest  implements InterfaceTest {
     private int intField;
 

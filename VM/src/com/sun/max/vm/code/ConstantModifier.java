@@ -24,7 +24,6 @@ import com.sun.max.lang.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A constant modifier is a helper for modifying target code.
  * The modifier is specific to an annotated target code and can be used to

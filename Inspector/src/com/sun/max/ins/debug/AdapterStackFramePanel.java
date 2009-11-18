@@ -26,7 +26,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.vm.stack.*;
 
-
 final class AdapterStackFramePanel extends JavaStackFramePanel<AdapterStackFrame> {
 
     public AdapterStackFramePanel(Inspection inspection, AdapterStackFrame adapterStackFrame) {

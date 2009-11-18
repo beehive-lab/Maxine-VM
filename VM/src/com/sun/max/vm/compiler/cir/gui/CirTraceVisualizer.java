@@ -44,7 +44,6 @@ import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A GUI for capturing and viewing CIR graph traces.
  *
@@ -951,7 +950,6 @@ final class CirTraceVisualizer extends JPanel {
         return visualizer;
     }
 
-
     public void saveSettings() {
         final Properties settings = new Properties();
         final Rectangle bounds = frame.getBounds();
@@ -974,7 +972,6 @@ final class CirTraceVisualizer extends JPanel {
             ProgramWarning.message("could not save CIR visualizer settings to " + settingsFile + ": " + ioException);
         }
     }
-
 
     public boolean loadSettings() {
         final Properties settings = new Properties();
@@ -1008,7 +1005,6 @@ final class CirTraceVisualizer extends JPanel {
         }
         return false;
     }
-
 
     synchronized void refreshView() {
         final List<CirAnnotatedTrace> currentTraceList = currentTraceList();
@@ -1155,7 +1151,6 @@ final class CirTraceVisualizer extends JPanel {
         }
     }
 
-
     private void refreshNavigation() {
         traceNavigationPanel.update();
         traceListNavigationPanel.update();
@@ -1192,7 +1187,6 @@ final class CirTraceVisualizer extends JPanel {
         }
     }
 
-
     private List<SimpleElement> getSimpleElements(CirStyledDocument document) {
 
         int len = 0;
@@ -1208,7 +1202,6 @@ final class CirTraceVisualizer extends JPanel {
         }
         return seq;
     }
-
 
     private void findDiffs(CirStyledDocument leftDocument, CirStyledDocument rightDocument) {
 
@@ -1235,7 +1228,6 @@ final class CirTraceVisualizer extends JPanel {
         showDiffs(rightDocument, rElements, diff.insertions(), DIFF_INSERTION);
     }
 
-
     private void showDiffs(CirStyledDocument document, List<SimpleElement> elements, Sequence<Range> changes, Style changeStyle) {
         int shift = 0;
         if (document.collapsedOffset != -1) {
@@ -1256,7 +1248,6 @@ final class CirTraceVisualizer extends JPanel {
             }
         }
     }
-
 
     enum SearchDirection {
         BACKWARD {
@@ -1444,7 +1435,6 @@ final class CirTraceVisualizer extends JPanel {
         isCurrentHighlighted = true;
         return newText.toString();
     }
-
 
     /**
      * Clears search highlights when search panel is closed.

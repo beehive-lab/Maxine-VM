@@ -256,7 +256,6 @@ public final class DebugHeap {
             }
             cell = checkDebugCellTag(start, cell);
 
-
             final Pointer origin = Layout.cellToOrigin(cell);
             final Hub hub = checkHub(origin, space);
 

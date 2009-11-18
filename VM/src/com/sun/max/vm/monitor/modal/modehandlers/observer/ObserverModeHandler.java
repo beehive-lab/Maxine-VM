@@ -161,7 +161,5 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         return result == DelegatedThreadHoldsMonitorResult.TRUE;
     }
 
-
 }
-
 

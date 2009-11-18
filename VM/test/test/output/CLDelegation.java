@@ -20,7 +20,6 @@
  */
 package test.output;
 
-
 /**
  * Ensures that ClassLoader delegation is the same on Maxine as on HotSpot.
  *

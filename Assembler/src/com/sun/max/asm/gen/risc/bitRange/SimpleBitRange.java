@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.gen.risc.bitRange;
 
-
 /**
  * @author Bernd Mathiske
  * @author Doug Simon

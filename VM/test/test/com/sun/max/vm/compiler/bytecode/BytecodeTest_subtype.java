@@ -216,7 +216,6 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
         }
     }
 
-
     private void arraystoreTest(Object array, Iterable<Object> values) {
         final String arrayTypeName = array.getClass().getSimpleName();
         final String methodName = methodName("perform_aastore_" + arrayTypeName);

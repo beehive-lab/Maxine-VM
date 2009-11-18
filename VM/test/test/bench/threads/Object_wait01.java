@@ -26,7 +26,6 @@ package test.bench.threads;
 
 import test.bench.util.*;
 
-
 public class Object_wait01  extends RunBench {
     static volatile int count = 0;
     static volatile boolean done;

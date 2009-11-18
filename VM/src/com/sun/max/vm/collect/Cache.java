@@ -26,7 +26,6 @@ import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 
 /**
- * TODO: eviction, budget.
  *
  * @author Bernd Mathiske
  * @author Doug Simon

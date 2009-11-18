@@ -380,9 +380,9 @@ public class InstructionPrinter extends ValueVisitor {
         CiConstant type = constant.value;
         if (type == CiConstant.NULL_OBJECT) {
             out.print("null");
-        } else if (type.basicType.isPrimitive()) {
+        } else if (type.kind.isPrimitive()) {
             out.print(constant.asConstant().valueString());
-        } else if (type.basicType.isObject()) {
+        } else if (type.kind.isObject()) {
             Object object = constant.asConstant().asObject();
             if (object == null) {
                 out.print("null");
@@ -391,7 +391,7 @@ public class InstructionPrinter extends ValueVisitor {
             } else {
                 out.print("<object: ").print(object.getClass().getName()).print('@').print(System.identityHashCode(object)).print('>');
             }
-        } else if (type.basicType.isJsr()) {
+        } else if (type.kind.isJsr()) {
             out.print("bci:").print(constant.asConstant().valueString());
         } else {
             out.print("???");
@@ -681,5 +681,4 @@ public class InstructionPrinter extends ValueVisitor {
         }
         out.print(", value ").print(unsafe.value()).print(')');
     }
-
 }

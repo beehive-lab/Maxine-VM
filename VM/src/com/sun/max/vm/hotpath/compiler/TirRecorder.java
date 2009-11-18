@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.hotpath.compiler;
 
-
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.holder.*;
@@ -183,7 +182,6 @@ public class TirRecorder {
         checkNull(instruction);
         call(snippet);
     }
-
 
     public class BytecodeRecorder extends BytecodeAggregatingVisitor {
         private ClassMethodActor method;

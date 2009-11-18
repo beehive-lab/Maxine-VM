@@ -25,7 +25,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.compiler.tir.TirMessage.*;
 
-
 public class TirPipelineFilter extends TirInstructionFilter {
     private TirTree tree;
     private TirTrace trace;

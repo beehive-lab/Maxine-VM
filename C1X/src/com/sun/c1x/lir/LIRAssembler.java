@@ -53,7 +53,6 @@ public abstract class LIRAssembler {
     private Value pendingNonSafepoint;
     private int pendingNonSafepointOffset;
 
-
     protected static class SlowPath {
         public final LIRXirInstruction instruction;
         public final Label[] labels;
@@ -369,7 +368,7 @@ public abstract class LIRAssembler {
         compilation.addCallInfo(pcOffset, cinfo);
     }
 
-    void emitRtcall(LIRRTCall op) {
+    void emitRtcall(LIRRuntimeCall op) {
         rtCall(op.result(), op.runtimeEntry, op.arguments(), op.info, op.calleeSaved);
     }
 
@@ -746,7 +745,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitAllocArray(LIRAllocArray lirAllocArray);
 
-    protected abstract void emitRTCall(LIRRTCall lirrtCall);
+    protected abstract void emitRuntimeCall(LIRRuntimeCall lirrtCall);
 
     protected abstract void emitLock(LIRLock lirLock);
 

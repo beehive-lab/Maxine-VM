@@ -22,7 +22,6 @@ package com.sun.max.ins;
 
 import com.sun.max.gui.*;
 
-
 /**
  * We use this when adding InspectorException into play would violate pre-existing interfaces.
  *

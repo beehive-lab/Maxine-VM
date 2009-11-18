@@ -24,12 +24,12 @@ import com.sun.c1x.ci.*;
 
 /**
  * This class represents the SPARC architecture.
- * 
+ *
  * @author Thomas Wuerthinger
  */
 public class SPARC extends CiArchitecture {
 
     protected SPARC(String name, int wordSize, CiRegister[] registers) {
-        super(name, wordSize, "sparc", BitOrdering.BigEndian, registers, 0, 0, 8);
+        super(name, wordSize, "sparc", ByteOrder.BigEndian, registers, 0, 0);
     }
 }

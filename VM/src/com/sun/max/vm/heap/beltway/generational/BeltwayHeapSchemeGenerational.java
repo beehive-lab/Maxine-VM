@@ -228,7 +228,6 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         return belt.end().minus(belt.getAllocationMark()).asSize();
     }
 
-
     @Override
     public boolean contains(Address address) {
         return address.greaterEqual(Heap.bootHeapRegion.start()) & address.lessEqual(getMatureSpace().end());

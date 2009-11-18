@@ -31,7 +31,6 @@ import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 
-
 /**
  * Singleton inspector that displays information about memory watchpoints set in the VM.
  * Wrappers with extra information about each breakpoint are kept in a model.

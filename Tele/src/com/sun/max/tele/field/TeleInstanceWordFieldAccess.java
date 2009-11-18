@@ -24,7 +24,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
-
 public class TeleInstanceWordFieldAccess extends TeleInstanceFieldAccess {
 
     public TeleInstanceWordFieldAccess(Class holder, String name) {

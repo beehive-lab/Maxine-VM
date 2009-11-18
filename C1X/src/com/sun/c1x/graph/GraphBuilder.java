@@ -439,7 +439,7 @@ public class GraphBuilder {
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
-            push(constant.basicType.stackType(), appendConstant(constant));
+            push(constant.kind.stackType(), appendConstant(constant));
         } else {
             throw new Error("lookupConstant returned an object of incorrect type");
         }
@@ -1127,7 +1127,7 @@ public class GraphBuilder {
         if (canonicalize) {
             // attempt simple constant folding and strength reduction
             // Canonicalizer canon = new Canonicalizer(x, bci);
-            canonicalizer.canonicalize(x);
+            Value r = canonicalizer.canonicalize(x);
             List<Instruction> extra = canonicalizer.extra();
             if (extra != null) {
                 // the canonicalization introduced instructions that should be added before this
@@ -1135,7 +1135,6 @@ public class GraphBuilder {
                     appendWithBCI(i, bci, false); // don't try to canonicalize the new instructions
                 }
             }
-            Value r = canonicalizer.canonical();
             if (r instanceof Instruction) {
                 // the result is an instruction that may need to be appended
                 x = (Instruction) r;
@@ -1356,6 +1355,9 @@ public class GraphBuilder {
             C1XMetrics.InlineForcedMethods++;
             return true;
         }
+        if (target.codeSize() > scopeData.maxInlineSize()) {
+            return cannotInline(target, "inlinee too large for this level");
+        }
         if (scopeData.scope.level > C1XOptions.MaximumInlineLevel) {
             return cannotInline(target, "inlining too deep");
         }
@@ -1378,9 +1380,6 @@ public class GraphBuilder {
         if (!target.hasBalancedMonitors()) {
             return cannotInline(target, "has unbalanced monitors");
         }
-        if (target.codeSize() > scopeData.maxInlineSize()) {
-            return cannotInline(target, "inlinee too large for this level");
-        }
         if ("<init>".equals(target.name()) && target.holder().isSubtypeOf(compilation.throwableType())) {
             // don't inline constructors of throwable classes unless the inlining tree is
             // rooted in a throwable class
@@ -1398,13 +1397,11 @@ public class GraphBuilder {
 
     boolean tryInlineFull(RiMethod target, Value[] args, RiType knownHolder, ValueStack stateBefore) {
         BlockBegin orig = curBlock;
-        Value receiver = null;
         if (!target.isStatic()) {
             // the receiver object must be nullchecked for instance methods
-            receiver = args[0];
+            Value receiver = args[0];
             if (!receiver.isNonNull()) {
                 NullCheck check = new NullCheck(receiver, stateBefore);
-                receiver = check;
                 args[0] = check;
                 append(check);
             }

@@ -52,7 +52,6 @@ public class Object_new {
         }
     }
 
-
     protected static Barrier barrier1;
     protected static Barrier barrier2;
     protected static int nrThreads;

@@ -203,7 +203,6 @@ public abstract class BytecodeAssembler {
         setStack(stack + delta);
     }
 
-
     /**
      * Models the stack effect of an invoke.
      */

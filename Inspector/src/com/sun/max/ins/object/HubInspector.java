@@ -201,5 +201,4 @@ public final class HubInspector extends ObjectInspector {
         super.refreshView(force);
     }
 
-
 }

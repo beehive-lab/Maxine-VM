@@ -23,7 +23,6 @@ package com.sun.c1x.lir;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
-
 /**
  * The <code>LIRAddress</code> class represents an operand that is in
  * memory. It includes a base address, and index, a scale and a displacement.

@@ -28,7 +28,6 @@ import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
-
 public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
 
     public InvokeStatic(ConstantPool constantPool, int index) {

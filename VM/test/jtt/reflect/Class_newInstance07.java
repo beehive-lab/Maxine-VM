@@ -25,7 +25,6 @@
  */
 package jtt.reflect;
 
-
 public final class Class_newInstance07 {
 
     private Class_newInstance07() throws Exception {

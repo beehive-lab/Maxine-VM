@@ -457,8 +457,8 @@ public class Util {
         return true;
     }
 
-    public static int roundTo(int numVirtualRegs, int v) {
-        return ((numVirtualRegs + v - 1) / v) * v;
+    public static int roundUp(int number, int mod) {
+        return ((number + mod - 1) / mod) * mod;
     }
 
     public static void truncate(List<?> instructions, int length) {

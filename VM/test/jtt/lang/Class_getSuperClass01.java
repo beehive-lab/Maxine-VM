@@ -31,7 +31,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_getSuperClass01 {
     private Class_getSuperClass01() {
     }

@@ -66,7 +66,6 @@ public abstract class AdapterFrameGenerator<Assembler_Type extends Assembler> {
         this.optimizedABI = optimizedABI;
     }
 
-
     protected abstract void emit(Kind[] parametersKinds, EirLocation[] parameterLocations, Label adapterReturnPt, Label methodEntryPoint);
 
     /**

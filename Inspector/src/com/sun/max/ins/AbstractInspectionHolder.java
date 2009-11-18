@@ -51,7 +51,6 @@ public abstract class AbstractInspectionHolder implements InspectionHolder {
         return inspection.maxVM().maxVMState();
     }
 
-
     public InspectorGUI gui() {
         return inspection.gui();
     }

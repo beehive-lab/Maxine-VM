@@ -53,7 +53,6 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
     private final OhmTupleLayout tupleLayout;
     private final IntArrayLayout intArrayLayout;
 
-
     OhmHybridLayout(GripScheme gripScheme) {
         super(gripScheme);
         tupleLayout = new OhmTupleLayout(gripScheme);

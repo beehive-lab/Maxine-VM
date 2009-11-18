@@ -33,7 +33,6 @@ import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 
-
 public class GuestVMXenTeleDomain extends TeleProcess {
 
     private int domainId;

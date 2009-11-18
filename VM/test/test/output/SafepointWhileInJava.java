@@ -20,7 +20,6 @@
  */
 package test.output;
 
-
 public class SafepointWhileInJava {
     private static final class Spinner implements Runnable {
         boolean done;

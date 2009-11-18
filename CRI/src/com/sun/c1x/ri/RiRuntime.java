@@ -185,33 +185,6 @@ public interface RiRuntime {
     int maximumArrayLength();
 
     /**
-     * Calling convention for Java calls.
-     *
-     * @param signature the basic types of the parameters
-     * @param outgoing if the convention is for incoming or outgoing parameters
-     * @return an array of exactly the same size as the signature parameter that specifies at which location the
-     *         parameters must be stored
-     */
-    CiLocation[] javaCallingConvention(CiKind[] types, boolean outgoing);
-
-    /**
-     * Calling convention for outgoing runtime calls.
-     *
-     * @param signature the basic types of the parameters
-     * @return an array of exactly the same size as the signature parameter that specifies at which location the
-     *         parameters must be stored
-     */
-    CiLocation[] runtimeCallingConvention(CiKind[] signature);
-
-    /**
-     * The return register that is used for the given return type.
-     *
-     * @param kind the basic type of the return parameter
-     * @return the register
-     */
-    CiRegister returnRegister(CiKind kind);
-
-    /**
      * The size of a JIT stack slot. Used for implementing the adapter frames.
      *
      * @return the JIT stack slot size in bytes
@@ -252,24 +225,11 @@ public interface RiRuntime {
     RiType primitiveArrayType(CiKind elementType);
 
     /**
-     * Returns the register that stores the thread object.
-     *
-     * @return the thread register
-     */
-    CiRegister threadRegister();
-
-    /**
      * Returns the runtime interface representation of the given Java class object.
      *
      * @param javaClass the Java class object
      * @return the runtime interface representation
      */
-    public RiType getRiType(Class<?> javaClass);
+    RiType getRiType(Class<?> javaClass);
 
-    /**
-     * Returns the register used for safepoint polling.
-     *
-     * @return the safepoint register
-     */
-    CiRegister getSafepointRegister();
 }

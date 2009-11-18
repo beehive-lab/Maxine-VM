@@ -20,9 +20,6 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
-import com.sun.max.vm.thread.*;
-
-
 /**
  * Abstract class defining the interface to a condiion variable as used by JavaMonitors.
  *

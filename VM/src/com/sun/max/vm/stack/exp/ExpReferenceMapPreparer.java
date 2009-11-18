@@ -27,5 +27,4 @@ package com.sun.max.vm.stack.exp;
  */
 public interface ExpReferenceMapPreparer {
 
-
 }

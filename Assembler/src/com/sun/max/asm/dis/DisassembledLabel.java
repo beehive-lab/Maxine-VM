@@ -22,7 +22,6 @@ package com.sun.max.asm.dis;
 
 import com.sun.max.asm.gen.*;
 
-
 /**
  * A label for an absolute address.
  *

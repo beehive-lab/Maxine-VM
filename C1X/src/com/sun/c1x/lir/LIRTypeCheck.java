@@ -24,7 +24,6 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 
-
 /**
  * The <code>LIRTypeCheck</code> class definition.
  *
@@ -35,7 +34,6 @@ public class LIRTypeCheck extends LIRInstruction {
 
     private RiType klass;
     private boolean fastCheck;
-
 
     // Helpers for Tier1UpdateMethodData
     RiMethod profiledMethod;

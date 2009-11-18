@@ -29,7 +29,6 @@ import test.com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.ia32.*;
 
-
 /**
  * JUnit harness for testing the generated IA32 assembler against a disassembler.
  * 

@@ -108,7 +108,6 @@ public final class SPARCStackFrameLayout {
      */
     public static final int OFFSET_FROM_SP_TO_FIRST_SLOT = STACK_BIAS + MIN_STACK_FRAME_SIZE;
 
-
     public static Pointer unbias(Pointer biasedPointer) {
         return biasedPointer.plus(STACK_BIAS);
     }

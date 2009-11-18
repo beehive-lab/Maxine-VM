@@ -240,7 +240,6 @@ public abstract class BytecodeTest_convert<Method_Type extends IrMethod> extends
         assertTrue(result.asByte() == 23);
     }
 
-
     private char perform_i2c(int a) {
         return (char) a;
     }
@@ -256,7 +255,6 @@ public abstract class BytecodeTest_convert<Method_Type extends IrMethod> extends
         final Value result = executeWithReceiver(method, IntValue.from(23));
         assertTrue(result.asChar() == 23);
     }
-
 
     private short perform_i2s(int a) {
         return (short) a;

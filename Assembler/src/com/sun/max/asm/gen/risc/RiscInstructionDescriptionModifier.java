@@ -53,7 +53,6 @@ public class RiscInstructionDescriptionModifier {
         return this;
     }
 
-
     public RiscInstructionDescriptionModifier swap(Object a, Object b) {
         for (RiscInstructionDescription instructionDescription : instructionDescriptions) {
             final MutableSequence<Object> specifications = instructionDescription.specifications();

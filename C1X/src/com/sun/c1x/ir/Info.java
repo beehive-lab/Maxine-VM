@@ -36,14 +36,42 @@ import java.util.List;
 public class Info {
 
     /**
-     * An enumeration of the possible exceptions that an instruction may generate.
+     * An enumeration of the possible exceptions or stops that an instruction may generate.
      */
-    public enum ExceptionType {
+    public enum StopType {
+        /**
+         * This instruction may throw {@link ArrayIndexOutOfBoundsException}.
+         */
         java_lang_ArrayOutOfBoundsException,
+
+        /**
+         * This instruction may throw {@link NullPointerException}.
+         */
         java_lang_NullPointerException,
+
+        /**
+         * This instruction may throw {@link ClassCastException}.
+         */
         java_lang_ClassCastException,
+
+        /**
+         * This instruction may throw {@link ArrayStoreException}.
+         */
         java_lang_ArrayStoreException,
+
+        /**
+         * This instruction may throw {@link ArithmeticException}.
+         */
         java_lang_ArithmeticException,
+
+        /**
+         * This instruction may cause a safepoint.
+         */
+        Safepoint,
+
+        /**
+         * This instruction may throw any exception or cause a safepoint.
+         */
         Unknown;
 
         public final int mask = 1 << ordinal();
@@ -66,7 +94,11 @@ public class Info {
         return frameState;
     }
 
-    public boolean mayTrap() {
+    public boolean mayStop() {
         return exceptionFlags != 0;
+    }
+
+    public boolean mayCauseException() {
+        return (exceptionFlags & ~StopType.Safepoint.mask) != 0;
     }
 }

@@ -304,7 +304,6 @@ public final class PrototypeGenerator {
         return dataPrototype;
     }
 
-
     private int currentNumberOfClasses() {
         return ClassRegistry.BOOT_CLASS_REGISTRY.numberOfClassActors();
     }

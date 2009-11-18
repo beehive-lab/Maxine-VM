@@ -23,7 +23,6 @@ package com.sun.c1x.lir;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 
-
 /**
  * The <code>LIRLabel</code> class definition.
  *

@@ -92,23 +92,9 @@ public abstract class TrapStateAccess {
     public abstract Pointer getSafepointLatch(Pointer trapState);
 
     /**
-     * Sets the value of the slot in a given trap state area corresponding to the
-     * location in which a local exception handler expects to find the exception object.
-     * A local exception handler is a handler that is in the same frame as the code
-     * that trapped as a result of an implicit exception. On most platform, the location
-     * used to communicate the exception object is the same register or memory location
-     * used to return a reference value from a call (e.g. RAX on AMD64).
-     *
-     * @param trapState the block of memory holding the trap state
-     * @param throwable the exception object that is being communicated to a local exception handler
-     */
-    public abstract void setExceptionObject(Pointer trapState, Throwable throwable);
-
-    /**
      * Sets the value that will be restored to the safepoint latch when the trap returns.
      *
      * @param trapState the block of memory holding the trap state
-     * @return the value of the safepoint latch at the time the trap denoted by {@code trapState} occurred
      */
     public abstract void setSafepointLatch(Pointer trapState, Pointer value);
 
@@ -123,7 +109,7 @@ public abstract class TrapStateAccess {
     /**
      * Gets the address of a contiguous memory area holding the register state saved at a trap.
      * If the trap was at a safepoint, then this is the area to which the
-     * {@linkplain TargetMethod#registerReferenceMapFor(int) register reference map}
+     * {@linkplain CPSTargetMethod#registerReferenceMapFor(int) register reference map}
      * for the safepoint applies.
      *
      * @param trapState the block of memory holding the trap state

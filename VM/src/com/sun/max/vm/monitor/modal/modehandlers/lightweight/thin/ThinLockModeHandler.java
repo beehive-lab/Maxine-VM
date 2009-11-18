@@ -426,4 +426,3 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
     }
 }
 
-

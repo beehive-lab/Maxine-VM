@@ -24,7 +24,6 @@
  */
 package jtt.except;
 
-
 public class Throw_Synchronized03 {
     public static synchronized boolean test(int i) throws Exception {
         if (i == 0) {

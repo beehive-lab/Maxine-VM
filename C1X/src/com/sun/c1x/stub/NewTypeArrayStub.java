@@ -22,7 +22,6 @@ package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
 
-
 /**
  * The <code>NewTypeArrayStub</code> class definition.
  *
@@ -31,12 +30,6 @@ import com.sun.c1x.lir.*;
  */
 public class NewTypeArrayStub extends CodeStub {
 
-    /**
-     * @param klassReg
-     * @param length
-     * @param result
-     * @param info
-     */
     public NewTypeArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, LIRDebugInfo info) {
         super(info, result);
         this.setOperands(0, 0, klassReg, length);
@@ -54,5 +47,4 @@ public class NewTypeArrayStub extends CodeStub {
     public LIROperand length() {
         return operand(1);
     }
-
 }

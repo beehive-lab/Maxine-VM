@@ -56,4 +56,3 @@ public class JITTest_unresolvedGetField extends CompilerTestCase<CPSTargetMethod
     }
 }
 
-

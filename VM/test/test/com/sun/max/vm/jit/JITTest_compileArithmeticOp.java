@@ -68,7 +68,6 @@ public class JITTest_compileArithmeticOp extends JitCompilerTestCase {
         f = 0.275F * f + 1f;    // will exercise ldc and fconst1, fload1
     }
 
-
     /**
      * Makes uses of arithmetic bytecode instructions and instructions with constant pool literal
      * (cause the jit to modify code with literal constant dependency).
@@ -97,7 +96,6 @@ public class JITTest_compileArithmeticOp extends JitCompilerTestCase {
     public void test_double_op() {
         compileMethod("perform_double_op", SignatureDescriptor.VOID);
     }
-
 
     @Override
     protected Class[] templateSources() {

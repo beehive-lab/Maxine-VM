@@ -103,7 +103,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     private TargetMethod trampolineTargetMethod;
     private Pointer trampolineRefmapPointer;
 
-
     @HOSTED_ONLY
     public static void setVmThreadLocalGCRoots(VmThreadLocal[] vmThreadLocals) {
         assert vmThreadLocalGCRoots == null : "Cannot overwrite vmThreadLocalGCRoots";
@@ -511,7 +510,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer, false);
     }
 
-
     /**
      * Gets the reference-map index of a given stack slot (i.e. which bit in the reference map is correlated with the slot).
      *
@@ -531,7 +529,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     private Pointer slotAddress(int slotIndex) {
         return lowestStackSlot.plusWords(slotIndex);
     }
-
 
     public void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex, Pointer refmapFramePointer, String label) {
         if (Heap.traceRootScanning()) {

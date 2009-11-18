@@ -43,7 +43,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A table that displays Maxine object fields; for use in an instance of {@link ObjectInspector}.
  *
@@ -258,7 +257,6 @@ public final class ObjectFieldsTable extends InspectorTable {
         String rowToName(int row) {
             return fieldActors[row].name.string;
         }
-
 
         @Override
         public void refresh() {

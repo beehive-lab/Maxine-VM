@@ -22,7 +22,6 @@ package jtt.jdk;
 
 import java.util.*;
 
-
 /*
  * @Harness: java
  * @Runs: 0 = "A", 1 = "B", 2 = "C"

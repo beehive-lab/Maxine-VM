@@ -28,7 +28,6 @@ import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
-
 public class InvokeSpecial extends JavaResolvableOperator<MethodActor> {
 
     public InvokeSpecial(ConstantPool constantPool, int index) {

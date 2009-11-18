@@ -24,7 +24,6 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
-
 /**
  * Inspector's canonical surrogate for an object of type {@link ClassMethodRefConstant} in the {@link TeleVM}.
  *
@@ -69,7 +68,6 @@ public abstract class TeleClassMethodRefConstant extends TelePoolConstant {
             }
             return teleClassMethodActor;
         }
-
 
         @Override
         public TeleClassMethodActor getTeleClassMethodActorForObject() {

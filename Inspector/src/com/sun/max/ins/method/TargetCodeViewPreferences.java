@@ -23,7 +23,6 @@ package com.sun.max.ins.method;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 
-
 /**
  * Persistent preferences for viewing disassembled target code in the VM.
  *

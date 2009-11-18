@@ -20,7 +20,6 @@
  */
 package jtt.reflect;
 
-
 /*
  * @Harness: java
  * @Runs: 0="int"; 1="java.lang.String"; 2="void"; 3=null

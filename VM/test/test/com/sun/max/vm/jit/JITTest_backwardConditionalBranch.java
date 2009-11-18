@@ -26,7 +26,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Testing the JIT-compiler with methods performing conditional backward loop. This tests the JIT support for the if<cond>, ifnull, ifnonnull,
  * ifacmp<cond> ificmp<cond> bytecodes, and simple loop control flows.

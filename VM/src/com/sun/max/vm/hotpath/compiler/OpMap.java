@@ -108,7 +108,6 @@ public class OpMap {
         operationSnippets.put(from(Operation.PUTFIELD, Kind.DOUBLE), FieldWriteSnippet.WriteDouble.SNIPPET);
         operationSnippets.put(from(Operation.PUTFIELD, Kind.REFERENCE), FieldWriteSnippet.WriteReference.SNIPPET);
 
-
         // Operation Builtins
         operationBuiltins = new OpenAddressingHashMapping<Pair<Operation, Kind>, Builtin>();
         operationBuiltins.put(from(Operation.ADD, Kind.INT), JavaBuiltin.IntPlus.BUILTIN);

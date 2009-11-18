@@ -26,7 +26,6 @@ import javax.swing.*;
 
 import com.sun.max.util.*;
 
-
 /**
  * Basic GUI services for a Maxine VM Inspection session.
  *

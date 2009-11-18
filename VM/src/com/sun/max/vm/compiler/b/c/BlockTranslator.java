@@ -59,7 +59,7 @@ final class BlockTranslator {
         while (true) {
             scanBlock(state);
             for (BirBlock successorBirBlock : state.birBlock().successors()) {
-                final BlockState successor = translation.getBlockStateAt(successorBirBlock.bytecodeBlock().start());
+                final BlockState successor = translation.getBlockStateAt(successorBirBlock.bytecodeBlock().start);
                 assert (successor.frame() == null) == (successor.stack() == null);
                 if (successor.frame() == null) {
                     successor.setFrame(state.frame().copy());
@@ -84,7 +84,7 @@ final class BlockTranslator {
     private Sequence<BirBlock> scanExceptionDispatchersWithKnownFrame(Sequence<BirBlock> exceptionDispatchers) {
         final AppendableSequence<BirBlock> remainingExceptionDispatchers = new LinkSequence<BirBlock>();
         for (BirBlock exceptionDispatcher : exceptionDispatchers) {
-            final BlockState blockState = translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start());
+            final BlockState blockState = translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start);
             if (blockState.frame() == null) {
                 remainingExceptionDispatchers.append(exceptionDispatcher);
             } else {
@@ -106,7 +106,7 @@ final class BlockTranslator {
             final Sequence<BirBlock> remainingExceptionDispatchers = scanExceptionDispatchersWithKnownFrame(exceptionDispatchers);
             if (remainingExceptionDispatchers.length() == exceptionDispatchers.length()) {
                 for (BirBlock exceptionDispatcher : remainingExceptionDispatchers) {
-                    assert !translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start()).hasCirBlock();
+                    assert !translation.getBlockStateAt(exceptionDispatcher.bytecodeBlock().start).hasCirBlock();
                     //ProgramWarning.message("unreachable exception dispatcher: " + exceptionDispatcher);
                 }
                 return;

@@ -88,7 +88,6 @@ public abstract class RiscDisassembler extends Disassembler {
         return true;
     }
 
-
     /**
      * Creates a disassembled instruction based on a given sequence of bytes, a template and a set of arguments. The
      * caller has performed the necessary decoding of the bytes to derive the template and arguments.
@@ -100,7 +99,6 @@ public abstract class RiscDisassembler extends Disassembler {
      * @return a disassembled instruction representing the result of decoding {@code bytes} into an instruction
      */
     protected abstract DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, RiscTemplate template, IndexedSequence<Argument> arguments);
-
 
     @Override
     public Sequence<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException {

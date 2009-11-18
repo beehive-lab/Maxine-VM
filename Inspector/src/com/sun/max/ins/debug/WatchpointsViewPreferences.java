@@ -30,7 +30,6 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.option.*;
 
-
 /**
  * Persistent preferences for managing and viewing watchpoints in the VM.
  *
@@ -174,7 +173,6 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
         watchpointPanel.add(execCheckBox);
         watchpointPanel.add(gcCheckBox);
         panel2.add(watchpointPanel, BorderLayout.WEST);
-
 
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         panel.add(super.getPanel(), BorderLayout.NORTH);

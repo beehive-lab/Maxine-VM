@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.compiler.eir;
 
-
-
 public abstract class EirIntSwitch<EirInstructionVisitor_Type extends EirInstructionVisitor,
     EirTargetEmitter_Type extends EirTargetEmitter>  extends EirSwitch<EirInstructionVisitor_Type, EirTargetEmitter_Type> {
 

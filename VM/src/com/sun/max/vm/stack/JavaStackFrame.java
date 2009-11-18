@@ -61,7 +61,6 @@ public abstract class JavaStackFrame extends StackFrame {
     @Override
     public abstract boolean isSameFrame(StackFrame stackFrame);
 
-
     @Override
     public String toString() {
         ClassMethodActor classMethodActor = targetMethod.classMethodActor();

@@ -31,7 +31,6 @@ import com.sun.max.vm.profile.TreeAnchor;
 
 public class JitTracer extends Tracer {
 
-
     private static ObjectThreadLocal<JitTracer> tracers = new ObjectThreadLocal<JitTracer>("JIT_TRACER", "Tracer used for HotPath compiler.") {
         @Override
         protected JitTracer initialValue() {
@@ -43,7 +42,6 @@ public class JitTracer extends Tracer {
      * @return the {@link JitTracer} object associated with the current thread.
      */
     private static JitTracer current() {
-
 
         return tracers.get();
     }

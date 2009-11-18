@@ -154,7 +154,7 @@ public abstract class CiXirAssembler {
         public final CiConstant value;
 
         XirConstant(String name, CiConstant value) {
-        	super(name, value.basicType);
+        	super(name, value.kind);
         	this.value = value;
         }
 

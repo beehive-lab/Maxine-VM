@@ -20,8 +20,6 @@
  */
 package com.sun.max.asm;
 
-
-
 /**
  * An argument that corresponds to an optional mnemonic suffix in the external assembler syntax.
  *

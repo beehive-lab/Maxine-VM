@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.eir;
 import com.sun.max.lang.*;
 import com.sun.max.vm.collect.*;
 
-
 /**
  * @author Bernd Mathiske
  * @author Paul Caprioli

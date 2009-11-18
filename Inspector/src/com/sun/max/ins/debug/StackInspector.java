@@ -530,7 +530,6 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         }
     }
 
-
     /**
      * Watch for shift key being released to display the selected activation's stack frame.
      */

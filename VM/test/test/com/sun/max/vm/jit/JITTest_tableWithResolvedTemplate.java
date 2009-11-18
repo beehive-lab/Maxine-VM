@@ -22,7 +22,6 @@ package test.com.sun.max.vm.jit;
 
 import com.sun.max.vm.template.source.*;
 
-
 public class JITTest_tableWithResolvedTemplate extends TemplateTableTestCase {
     public void test_generate() {
         generateOptimizedTable(ResolvedBytecodeTemplateSource.class);

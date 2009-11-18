@@ -42,9 +42,9 @@ public class Canonicalizer extends ValueVisitor {
     private static final Object[] NO_ARGUMENTS = {};
 
     final RiRuntime runtime;
+    final RiMethod method;
     Value canonical;
     List<Instruction> extra;
-    private final RiMethod method;
 
     public Canonicalizer(RiRuntime runtime, RiMethod method) {
         this.runtime = runtime;
@@ -56,14 +56,6 @@ public class Canonicalizer extends ValueVisitor {
         this.extra = null;
         original.accept(this);
         return this.canonical;
-    }
-
-    /**
-     * Gets the canonicalized version of the instruction.
-     * @return the canonicalized version of the instruction
-     */
-    public Value canonical() {
-        return canonical;
     }
 
     public List<Instruction> extra() {
@@ -383,14 +375,14 @@ public class Canonicalizer extends ValueVisitor {
             // only try to canonicalize static field loads
             RiField field = i.field();
             if (field.isConstant()) {
-
                 if (method.isStatic() && method.isInitializer()) {
                     return;
                 }
 
-                // (tw) This seems to be wrong;
-                // TODO: Check why!
-                // setConstant(field.constantValue());
+                CiConstant value = field.constantValue();
+                if (value != null) {
+                    setConstant(value);
+                }
             }
         }
     }
@@ -433,9 +425,12 @@ public class Canonicalizer extends ValueVisitor {
             // the array is a load of a field; check if it is a constant
             RiField field = ((LoadField) array).field();
             if (field.isConstant() && field.isStatic()) {
-                Object obj = field.constantValue().asObject();
-                if (obj != null) {
-                    setIntConstant(java.lang.reflect.Array.getLength(obj));
+                CiConstant cons = field.constantValue();
+                if (cons != null) {
+                    Object obj = cons.asObject();
+                    if (obj != null) {
+                        setIntConstant(Array.getLength(obj));
+                    }
                 }
             }
         } else if (array.isConstant()) {
@@ -644,7 +639,7 @@ public class Canonicalizer extends ValueVisitor {
         } else if (o.isConstant()) {
             // if the object is a constant, check if it is nonnull
             CiConstant c = o.asConstant();
-            if (c.basicType.isObject() && c.asObject() != null) {
+            if (c.kind.isObject() && c.asObject() != null) {
                 setCanonical(o);
             }
         }

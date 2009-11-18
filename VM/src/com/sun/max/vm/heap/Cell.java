@@ -82,7 +82,6 @@ public class Cell {
         return Reference.fromOrigin(origin).toJava();
     }
 
-
     /**
      * Write an initial hybrid object image into an existing cell.
      */

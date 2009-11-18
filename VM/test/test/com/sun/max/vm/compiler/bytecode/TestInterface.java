@@ -20,7 +20,6 @@
  */
 package test.com.sun.max.vm.compiler.bytecode;
 
-
 public interface TestInterface {
 
     double interface_2(int a, double b);

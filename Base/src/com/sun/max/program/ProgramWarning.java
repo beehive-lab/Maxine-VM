@@ -20,7 +20,6 @@
  */
 package com.sun.max.program;
 
-
 /**
  * A collection of static methods for reporting a warning when an unexpected, non-fatal condition is encountered.
  *

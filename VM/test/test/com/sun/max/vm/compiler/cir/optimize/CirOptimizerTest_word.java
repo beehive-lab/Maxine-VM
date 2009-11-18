@@ -70,7 +70,6 @@ public class CirOptimizerTest_word extends CompilerTestCase<CirMethod> {
         }));
     }
 
-
     private long gratuitousCheckCast(Pointer[] pointers) {
         return WordArray.get(pointers, 0).toLong();
     }

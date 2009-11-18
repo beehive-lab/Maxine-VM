@@ -121,7 +121,6 @@ public final class WordArray {
         ArrayAccess.setWord(array, index, value);
     }
 
-
     public static <Word_Type extends Word> void copyAll(Word_Type[] fromArray, Word_Type[] toArray) {
         if (fromArray.length > toArray.length) {
             throw new ArrayIndexOutOfBoundsException();

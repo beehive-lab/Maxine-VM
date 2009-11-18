@@ -38,7 +38,6 @@ public final class BoxedMemory {
         return BoxedPointer.from(nativeAllocate(box.nativeWord()));
     }
 
-
     private static native long nativeReallocate(long block, long size);
 
     public static Pointer reallocate(Pointer block, Size size) {
@@ -46,7 +45,6 @@ public final class BoxedMemory {
         final UnsafeBox sizeBox = (UnsafeBox) size;
         return BoxedPointer.from(nativeReallocate(blockBox.nativeWord(), sizeBox.nativeWord()));
     }
-
 
     private static native int nativeDeallocate(long pointer);
 

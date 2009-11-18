@@ -21,7 +21,6 @@
 
 package test.output;
 
-
 public class Recursion {
 
     private int recursionLevel;

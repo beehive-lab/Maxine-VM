@@ -180,7 +180,6 @@ public abstract class SPARCAssembler extends SPARCLabelAssembler {
         };
     }
 
-
     public void add(final GPR rs1, final Label label, final GPR rd) {
         final int startPosition = currentPosition();
         emitInt(0);

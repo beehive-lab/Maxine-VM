@@ -118,7 +118,6 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
             return name + "(" + paramTypes.substring(1, paramTypes.length() - 1) + ")";
         }
 
-
     }
 
     private Sequence<Template_Type> filterTemplates(Sequence<Template_Type> templates) {

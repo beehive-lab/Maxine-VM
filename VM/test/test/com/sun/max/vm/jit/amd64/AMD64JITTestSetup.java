@@ -31,7 +31,6 @@ import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.amd64.*;
 import com.sun.max.vm.template.*;
 
-
 /**
  * Test setup for JIT tests on AMD64.
  *

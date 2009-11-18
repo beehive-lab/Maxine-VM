@@ -25,7 +25,6 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
-
 /**
  * Sets the preferred width of columns in a {@link JTable}, based on both the
  * data present in the model and column header labels.

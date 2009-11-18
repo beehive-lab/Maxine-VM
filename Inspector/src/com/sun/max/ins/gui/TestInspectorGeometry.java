@@ -106,5 +106,4 @@ public class TestInspectorGeometry implements InspectorGeometry {
         return objectInspectorNewFrameDiagonalOffset;
     }
 
-
 }

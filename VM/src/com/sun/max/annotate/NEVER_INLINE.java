@@ -22,7 +22,6 @@ package com.sun.max.annotate;
 
 import java.lang.annotation.*;
 
-
 /**
  * Every thus annotated method is never to be inlined by the compiler.
  *

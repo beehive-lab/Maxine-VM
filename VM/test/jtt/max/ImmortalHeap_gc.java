@@ -32,7 +32,6 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
-
 public final class ImmortalHeap_gc {
     private ImmortalHeap_gc() {
     }

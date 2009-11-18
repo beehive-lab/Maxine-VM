@@ -28,15 +28,8 @@ import com.sun.c1x.lir.*;
  */
 public class RangeCheckStub extends CodeStub {
 
-    public final boolean throwIndexOutOfBoundsException;
-
-    public RangeCheckStub(LIRDebugInfo rangeCheckInfo, LIROperand index) {
-        this(rangeCheckInfo, index, false);
-    }
-
-    public RangeCheckStub(LIRDebugInfo info, LIROperand index, boolean throwIndexOutOfBoundsException) {
+    public RangeCheckStub(LIRDebugInfo info, LIROperand index) {
         super(info);
-        this.throwIndexOutOfBoundsException = throwIndexOutOfBoundsException;
         this.setOperands(0, 0, index);
     }
 

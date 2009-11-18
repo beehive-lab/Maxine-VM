@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Thread_currentThread01 {
     private Thread_currentThread01() {
     }

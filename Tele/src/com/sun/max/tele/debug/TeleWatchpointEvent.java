@@ -23,7 +23,6 @@ package com.sun.max.tele.debug;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
-
 /**
  * Immutable (thread-safe) record of a thread triggering a memory watchpoint in the VM.
  *

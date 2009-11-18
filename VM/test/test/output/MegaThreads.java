@@ -20,7 +20,6 @@
  */
 package test.output;
 
-
 public class MegaThreads {
     static final int NUMBER_OF_THREADS = 500;
 

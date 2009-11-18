@@ -26,7 +26,6 @@ import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.core.*;
 import com.sun.max.jdwp.vm.proxy.*;
 
-
 /**
  * An implementation of a value as seen by the JDWP server.
  *
@@ -220,7 +219,6 @@ final class VMValueImpl implements VMValue {
 
         private ArrayTypeProvider arrayType;
         private VMAccess vm;
-
 
         public FakeArrayProvider(Object innerObject, ArrayTypeProvider arrayType, VMAccess vm) {
             super(innerObject, arrayType);

@@ -25,7 +25,6 @@ import test.com.sun.max.vm.compiler.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Testing the JIT-compiler with methods performing static field access to initialized and uninitialized class.
  * This suite of tests exercises the part of the template-based JIT that (a) selects an appropriate template

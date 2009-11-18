@@ -131,7 +131,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         Layout.writeHubReference(origin, Reference.fromJava(OBJECT_HUB));
     }
 
-
     /**
      * Plants a dead byte array at the specified cell.
      */
@@ -225,7 +224,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         }
     };
 
-
     /**
      * Flags if TLABs are being used for allocation.
      */
@@ -307,7 +305,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public Size initialTlabSize() {
         return initialTlabSize;
     }
-
 
     public void refillTLAB(Pointer tlab, Size size) {
         final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();

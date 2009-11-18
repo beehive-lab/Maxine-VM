@@ -22,7 +22,6 @@ package com.sun.max.vm.template.generate;
 
 import com.sun.max.annotate.*;
 
-
 /**
  * The UnresolvedInterfaceAtCompileTime interface is used for generating template that makes no assumption about the initialization/loading state of a classes.
  * The interface is placed in a package that escapes the package loader when building a VM prototype, so that when templates are

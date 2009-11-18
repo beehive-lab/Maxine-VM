@@ -22,7 +22,6 @@ package com.sun.max.ins.gui;
 
 import com.sun.max.ins.*;
 
-
 /**
  * An inspector that displays in an internal window frame.
  * @author Michael Van De Vanter

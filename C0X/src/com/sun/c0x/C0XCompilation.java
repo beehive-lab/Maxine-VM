@@ -27,18 +27,8 @@ import com.sun.c1x.bytecode.BytecodeLookupSwitch;
 import com.sun.c1x.bytecode.BytecodeStream;
 import com.sun.c1x.bytecode.BytecodeTableSwitch;
 import com.sun.c1x.bytecode.Bytecodes;
-import com.sun.c1x.ci.CiBailout;
-import com.sun.c1x.ci.CiConstant;
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiTarget;
-import com.sun.c1x.ri.RiBytecodeExtension;
-import com.sun.c1x.ri.RiConstantPool;
-import com.sun.c1x.ri.RiExceptionHandler;
-import com.sun.c1x.ri.RiField;
-import com.sun.c1x.ri.RiMethod;
-import com.sun.c1x.ri.RiRuntime;
-import com.sun.c1x.ri.RiSignature;
-import com.sun.c1x.ri.RiType;
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.Util;
 
 /**
@@ -161,7 +151,7 @@ public class C0XCompilation {
     final RiMethod method;
     final CiTarget target;
     final RiBytecodeExtension extension;
-    CodeGen codeGen;
+    final CodeGen codeGen;
     RiConstantPool constantPool;
     final BlockState[] blockState;
     final int maxLocals;
@@ -847,7 +837,7 @@ public class C0XCompilation {
             return;
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
-            switch (constant.basicType.stackType()) {
+            switch (constant.kind.stackType()) {
                 case Int:    push1(codeGen.genIntConstant(constant.asInt())); return;
                 case Long:   push2(codeGen.genLongConstant(constant.asLong())); return;
                 case Float:  push1(codeGen.genFloatConstant(constant.asFloat())); return;

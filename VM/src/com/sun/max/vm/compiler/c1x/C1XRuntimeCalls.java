@@ -75,12 +75,10 @@ public class C1XRuntimeCalls {
         }
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnwindException)
     public static void runtimeUnwindException(Throwable throwable) throws Throwable {
         throw throwable;
     }
-
 
     private static boolean checkCompatible(CiRuntimeCall call, ClassMethodActor classMethodActor) {
         assert checkCompatible(call.resultType, classMethodActor.resultKind());
@@ -90,7 +88,6 @@ public class C1XRuntimeCalls {
 
         return true;
     }
-
 
     private static boolean checkCompatible(CiKind resultType, Kind resultKind) {
         switch(resultType) {
@@ -125,35 +122,24 @@ public class C1XRuntimeCalls {
         return false;
     }
 
-
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowRangeCheckFailed)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowArrayIndexOutOfBoundsException)
     public static void runtimeThrowRangeCheckFailed(int index) throws ArrayIndexOutOfBoundsException {
         throw new ArrayIndexOutOfBoundsException(index);
     }
 
-
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowIndexException)
-    public static void runtimeThrowIndexException(int index) throws ArrayIndexOutOfBoundsException {
-        throw new ArrayIndexOutOfBoundsException(index);
-    }
-
-
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowDiv0Exception)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowArithmeticException)
     public static void runtimeThrowDiv0Exception() throws ArithmeticException {
         throw new ArithmeticException("division by zero");
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowNullPointerException)
     public static void runtimeThrowNullPointerException() throws NullPointerException {
         throw new NullPointerException();
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.RegisterFinalizer)
     public static void runtimeRegisterFinalizer() {
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.NewInstance)
     public static Object runtimeNewInstance(Hub hub) {
@@ -204,7 +190,6 @@ public class C1XRuntimeCalls {
         return interfaceIIndex * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize(); // TODO (tw): return word size here!
     }
 
-
     @UNSAFE
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInterfaceIndex)
     public static int resolveInterfaceIndex(Object receiver, int index, ConstantPool constantPool) {
@@ -229,7 +214,6 @@ public class C1XRuntimeCalls {
         }
         return Heap.createArray(arrayClassActor.dynamicHub(), length);
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.NewMultiArray)
     public static Object runtimeNewMultiArray(Hub arrayClassHub, int[] lengths) {
@@ -262,30 +246,25 @@ public class C1XRuntimeCalls {
         return result;
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.HandleException)
     public static void runtimeHandleException(Throwable throwable) throws Throwable {
         throw throwable;
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowArrayStoreException)
     public static void runtimeThrowArrayStoreException() {
         throw new ArrayStoreException();
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowClassCastException)
     public static void runtimeThrowClassCastException(Object o) {
         throw new ClassCastException();
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowIncompatibleClassChangeError)
     public static void runtimeThrowIncompatibleClassChangeError() {
         throw new IncompatibleClassChangeError();
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.SlowSubtypeCheck)
     public static boolean runtimeSlowSubtypeCheck(Hub a, Hub b) {
@@ -307,7 +286,6 @@ public class C1XRuntimeCalls {
         }
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Monitorenter)
     public static void runtimeMonitorenter(Object obj, int monitorID) {
         VMConfiguration.target().monitorScheme().monitorEnter(obj);
@@ -322,17 +300,14 @@ public class C1XRuntimeCalls {
     public static void runtimeTraceBlockEntry() {
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
     public static void runtimeOSRMigrationEnd() {
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.JavaTimeMillis)
     public static long runtimeJavaTimeMillis() {
         return System.currentTimeMillis();
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.JavaTimeNanos)
     public static long runtimeJavaTimeNanos() {
@@ -340,18 +315,15 @@ public class C1XRuntimeCalls {
         return 0;
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.OopArrayCopy)
     public static void runtimeOopArrayCopy() {
         // TODO: Implement correctly!
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.PrimitiveArrayCopy)
     public static void runtimePrimitiveArrayCopy() {
         // TODO: Implement correctly!
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArrayCopy)
     public static void runtimeArrayCopy() {
@@ -373,59 +345,44 @@ public class C1XRuntimeCalls {
         return CompilationScheme.Static.compile(staticMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Debug)
     public static void runtimeDebug() {
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmethicLrem)
     public static long runtimeArithmethicLrem(long a, long b) {
         return a % b;
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLdiv)
     public static long runtimeArithmeticLdiv(long a, long b) {
         return a / b;
     }
-
-
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLmul)
-    public static long runtimeArithmeticLmul(long a, long b) {
-        return a * b;
-    }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticFrem)
     public static float runtimeArithmeticFrem(float v1, float v2) {
         return v1 % v2;
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticDrem)
     public static double runtimeArithmeticDrem(double v1, double v2) {
         return v1 % v2;
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticCos)
     public static double runtimeArithmeticCos(double v) {
         return Math.cos(v);
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticTan)
     public static double runtimeArithmeticTan(double v) {
         return Math.tan(v);
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLog)
     public static double runtimeArithmeticLog(double v) {
         return Math.log(v);
     }
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLog10)
     public static double runtimeArithmeticLog10(double v) {
@@ -465,14 +422,11 @@ public class C1XRuntimeCalls {
         return fieldActor.offset();
     }
 
-
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveVTableIndex)
     public static int resolveVTableIndex(int index, ConstantPool constantPool) {
         final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
         return virtualMethodActor.vTableIndex();
     }
-
-
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticSin)
     public static double runtimeArithmeticSin(double v) {

@@ -37,7 +37,6 @@ import com.sun.max.vm.monitor.modal.schemes.ModalMonitorScheme.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A label specialized for displaying the contents of the "misc." word value in
  * the header of a Maxine object in the VM.

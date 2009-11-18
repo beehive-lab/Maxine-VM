@@ -24,7 +24,6 @@ import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 
-
 /**
  * The <code>NewInstanceStub</code> class definition.
  *
@@ -34,19 +33,12 @@ import com.sun.c1x.ri.*;
 public class NewInstanceStub extends CodeStub {
 
     public final RiType klass;
-    public final GlobalStub stubId;
+    public final GlobalStub globalStub;
 
-    /**
-     * @param klass
-     * @param klassReg
-     * @param result
-     * @param info
-     * @param stubId
-     */
-    public NewInstanceStub(LIROperand klassReg, LIROperand result, RiType klass, LIRDebugInfo info, GlobalStub stubId) {
+    public NewInstanceStub(LIROperand klassReg, LIROperand result, RiType klass, LIRDebugInfo info, GlobalStub globalStub) {
         super(info, result);
         this.klass = klass;
-        this.stubId = stubId;
+        this.globalStub = globalStub;
         this.setOperands(0, 0, klassReg);
     }
 

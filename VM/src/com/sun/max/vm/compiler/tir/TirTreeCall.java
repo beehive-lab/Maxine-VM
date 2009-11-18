@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.tir;
 
 import com.sun.max.vm.compiler.tir.pipeline.*;
 
-
 public class TirTreeCall extends TirInstruction {
     final TirTree tree;
     final TirState state;

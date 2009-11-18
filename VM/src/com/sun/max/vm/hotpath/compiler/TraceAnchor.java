@@ -32,7 +32,6 @@ public class TraceAnchor extends Anchor {
         this.guard = guard;
     }
 
-
     public void setTrace(TirTrace trace) {
         this.trace = trace;
     }
@@ -46,7 +45,6 @@ public class TraceAnchor extends Anchor {
         final int line = location.classMethodActor.codeAttribute().lineNumberTable().findLineNumber(location.bytecodePosition);
         return "loc: " + location.toString() + ", line: " + line + ", count: " + 0;
     }
-
 
     public TirGuard guard() {
         return guard;

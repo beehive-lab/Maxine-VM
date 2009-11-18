@@ -125,7 +125,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     private static final byte RET = (byte) 0xC3;
     private static final byte RET2 = (byte) 0xC2;
 
-
     private static boolean walkAdapterFrame(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer stackPointer = stackFrameWalker.stackPointer();
@@ -167,7 +166,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         stackFrameWalker.advance(callerInstructionPointer, ripPointer.plus(Word.size() /* skip RIP */), callerFramePointer);
         return true;
     }
-
 
     /**
      * Determines if an execution point is in some adapter frame related code.
@@ -393,7 +391,6 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
         unwind(throwable, epilogueAddress, calleeStackPointer);
     }
-
 
     /**
      * Unwinds a thread's stack to an exception handler.

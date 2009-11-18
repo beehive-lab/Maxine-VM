@@ -28,7 +28,6 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 
-
 /**
  * A singleton inspector that displays the different aspects of current user focus.
  * Intended for Inspector testing.

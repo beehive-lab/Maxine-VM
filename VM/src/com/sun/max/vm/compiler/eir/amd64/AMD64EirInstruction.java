@@ -1098,7 +1098,6 @@ public interface AMD64EirInstruction {
             emitter.assembler().cvttsd2si(destinationRegister.as32(), sourceOffset, sourceBasePointer);
         }
 
-
         @Override
         protected void emit_G_S32(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64IndirectRegister64 sourceBasePointer, int sourceOffset) {
             emitter.assembler().cvttsd2si(destinationRegister.as32(), sourceOffset, sourceBasePointer);

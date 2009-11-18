@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele.debug;
 
-
 /**
  * A tele event request encapsulates some action that {@linkplain #execute() modifies} the execution
  * {@linkplain TeleProcess#processState() state} of the tele process as well as some

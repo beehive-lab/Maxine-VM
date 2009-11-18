@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-
 /**
  * The <code>LIRCompareAndSwap</code> class definition.
  *

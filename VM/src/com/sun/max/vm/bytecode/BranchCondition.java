@@ -40,11 +40,6 @@ public enum BranchCondition {
         public BranchCondition opposite() {
             return NONE;
         }
-
-        @Override
-        public BranchCondition transpose() {
-            return NONE;
-        }
     },
 
     /**
@@ -55,11 +50,6 @@ public enum BranchCondition {
         public BranchCondition opposite() {
             return NE;
         }
-
-        @Override
-        public BranchCondition transpose() {
-            return EQ;
-        }
     },
 
     /**
@@ -69,11 +59,6 @@ public enum BranchCondition {
         @Override
         public BranchCondition opposite() {
             return EQ;
-        }
-
-        @Override
-        public BranchCondition transpose() {
-            return NE;
         }
     },
 
@@ -86,11 +71,6 @@ public enum BranchCondition {
         public BranchCondition opposite() {
             return GE;
         }
-
-        @Override
-        public BranchCondition transpose() {
-            return GT;
-        }
     },
 
     /**
@@ -101,11 +81,6 @@ public enum BranchCondition {
         @Override
         public BranchCondition opposite() {
             return LT;
-        }
-
-        @Override
-        public BranchCondition transpose() {
-            return LE;
         }
     },
 
@@ -118,11 +93,6 @@ public enum BranchCondition {
         public BranchCondition opposite() {
             return LE;
         }
-
-        @Override
-        public BranchCondition transpose() {
-            return LT;
-        }
     },
 
     /**
@@ -134,30 +104,12 @@ public enum BranchCondition {
         public BranchCondition opposite() {
             return GT;
         }
-
-        @Override
-        public BranchCondition transpose() {
-            return GE;
-        }
     };
 
     /**
      * The logical opposite of this {@link BranchCondition}, (e.g. the opposite of "<=" is ">".)
      */
     public abstract BranchCondition opposite();
-
-    /**
-     * The transpose of this {@link BranchCondition}, the condition to be used if the branch operands are swapped.
-     * (e.g. the transpose of "<=" is ">=".)
-     */
-    public abstract BranchCondition transpose();
-
-    /**
-     * This {@link BranchCondition} is symmetric iff it's equal to its transpose.
-     */
-    public boolean isSymmetric() {
-        return this == transpose();
-    }
 
     /**
      * Evaluates this {@link BranchCondition} on the specified values.
@@ -176,7 +128,7 @@ public enum BranchCondition {
             case LT:
                 return a.compareTo(b) < 0;
             case NE:
-                return a.equals(b) == false;
+                return !a.equals(b);
             default:
                 assert false;
         }

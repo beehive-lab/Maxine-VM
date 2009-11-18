@@ -24,7 +24,6 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 
-
 /**
  * Persistent preferences for viewing memory regions in the VM.
  *

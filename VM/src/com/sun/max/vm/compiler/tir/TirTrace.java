@@ -26,7 +26,6 @@ import com.sun.max.vm.compiler.tir.pipeline.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.hotpath.state.*;
 
-
 public class TirTrace {
     private TirTree tree;
     private TraceAnchor anchor;

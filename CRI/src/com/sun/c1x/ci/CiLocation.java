@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.ci;
 
-
 /**
  * This class represents either a register or a stack slot and is used when communicating the
  * locations of parameters for calling conventions across the compiler/runtime interface.

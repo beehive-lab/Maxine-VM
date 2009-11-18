@@ -34,7 +34,6 @@ import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * The {@code CIRTestHarness} class implements a test harness that is capable
  * of running a Java program through the CIR compiler and interpreter and checking that the

@@ -20,7 +20,6 @@
  */
 package test.com.sun.max.vm.jit.amd64;
 
-
 import junit.framework.*;
 import test.com.sun.max.vm.jit.*;
 
@@ -79,7 +78,6 @@ public class JITTest_TemplateStatistics extends TemplateTableTestCase {
         }
         printHistogram("Histogram of stop positions", "stop positions",  "templates", stopPositionsHistogram);
     }
-
 
     private void printHistogram(String title, String indexTitle, String valueTitle, int [] histogram) {
         Trace.stream().println(title);

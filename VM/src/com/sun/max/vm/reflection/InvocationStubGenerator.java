@@ -597,7 +597,6 @@ public class InvocationStubGenerator<T> {
         writer.outdent();
         writer.println("}");
 
-
         if (isConstructor) {
             writer.println("Object returnValue = new " + classToInstantiate.getName() + "(");
             writer.indent();

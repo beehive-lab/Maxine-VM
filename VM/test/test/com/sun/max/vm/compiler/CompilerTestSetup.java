@@ -21,6 +21,10 @@
 package test.com.sun.max.vm.compiler;
 
 import java.io.*;
+import java.util.Map;
+import java.util.zip.Deflater;
+import java.util.jar.JarOutputStream;
+import java.util.jar.JarEntry;
 
 import junit.extensions.*;
 import junit.framework.Test;
@@ -44,7 +48,6 @@ import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
-
 
 public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
 

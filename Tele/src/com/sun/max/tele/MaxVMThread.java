@@ -22,7 +22,6 @@ package com.sun.max.tele;
 
 import com.sun.max.vm.thread.*;
 
-
 /**
  * Access to a {@link VmThread} in the Maxine VM..
  *

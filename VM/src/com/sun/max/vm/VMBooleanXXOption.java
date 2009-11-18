@@ -30,10 +30,12 @@ import com.sun.max.vm.MaxineVM.*;
  * Boolean options are turned on with -XX:+<option> and turned off with -XX:-<option>.
  *
  * @author Doug Simon
+ * @author Ben L. Titzer
  */
 public class VMBooleanXXOption extends VMOption {
 
     protected final String inversePrefix;
+    protected final int plusOrMinusIndex;
 
     /**
      * Creates a new boolean option whose prefix starts with "-XX:+" or "-XX:-".
@@ -41,21 +43,25 @@ public class VMBooleanXXOption extends VMOption {
      * <b>The caller is responsible for {@linkplain VMOptions#register(VMOption, Phase) registering} this option in the
      * global registry or VM options.</b>
      *
-     * @param prefix the name of the option, including the leading '-' character. The default {@linkplain #getValue()
+     * @param name the name of the option, including the leading '-' character. The default {@linkplain #getValue()
      *            value} of the option is true or false depending on whether the prefix starts with "-XX:+" or "-XX:-"
      *            respectively.
-     * @param defaultValue the default value of the option when it is not specified
      * @param help the help text for the option
      */
     @HOSTED_ONLY
-    public VMBooleanXXOption(String prefix, String help) {
-        super(prefix + " ", help);
-        if (prefix.startsWith("-XX:+")) {
-            inversePrefix = "-XX:-" + prefix.substring(5);
-        } else if (prefix.startsWith("-XX:-")) {
-            inversePrefix = "-XX:+" + prefix.substring(5);
+    public VMBooleanXXOption(String name, String help) {
+        this(getXXPrefix(name), name.substring(5), help);
+    }
+
+    public VMBooleanXXOption(String prefix, String name, String help) {
+        super(prefix + name + " ", help);
+        plusOrMinusIndex = prefix.length() - 1;
+        if (prefix.charAt(plusOrMinusIndex) == '+') {
+            inversePrefix = prefix.substring(0, plusOrMinusIndex) + "-" + name;
+        } else if (prefix.charAt(plusOrMinusIndex) == '-') {
+            inversePrefix = prefix.substring(0, plusOrMinusIndex) + "+" + name;
         } else {
-            throw ProgramError.unexpected("Instances of " + getClass() + " must have a prefix starting with '-XX:+' or '-XX:-'");
+            throw ProgramError.unexpected("Malformed VMBooleanXXOption syntax: " + prefix);
         }
     }
 
@@ -69,13 +75,18 @@ public class VMBooleanXXOption extends VMOption {
      */
     public boolean getValue() {
         if (!optionStart.isZero()) {
-            return ((char) optionStart.readByte(4)) == '+';
+            return ((char) optionStart.readByte(plusOrMinusIndex)) == '+';
         }
-        return prefix.charAt(4) == '+';
+        return prefix.charAt(plusOrMinusIndex) == '+';
     }
 
     @Override
     public boolean matches(Pointer arg) {
         return CString.equals(arg, prefix) || CString.equals(arg, inversePrefix);
+    }
+
+    private static String getXXPrefix(String prefix) {
+        assert prefix.startsWith("-XX:+") || prefix.startsWith("-XX:-");
+        return prefix.substring(0, 5);
     }
 }

@@ -67,7 +67,6 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
 
     private static int failedTestThreshold;
 
-
     public static void main(String[] args) {
         setProgramArguments(args);
         junit.textui.TestRunner.run(VerifierTest.suite());
@@ -362,7 +361,6 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
             // success
         }
     }
-
 
     public static class Super {
         void callsPrivateMethodOnSubclassInstance() {

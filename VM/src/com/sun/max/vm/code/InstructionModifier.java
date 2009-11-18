@@ -38,12 +38,12 @@ public class InstructionModifier {
     /**
      * Position of the instruction.
      */
-    private final int startPosition;
+    public final int startPosition;
 
     /**
      * Size of the instruction.
      */
-    private final int size;
+    public final int size;
 
     public InstructionModifier(int position, int size) {
         startPosition = position;
@@ -59,13 +59,6 @@ public class InstructionModifier {
 
     public final int endPosition() {
         return startPosition + size;
-    }
-
-    /**
-     * Return length of the instruction of target code that depends on the resolved link.
-     */
-    public final int size() {
-        return size;
     }
 
     // FIXME: there a platform-dependence here. This need to go via a VM configuration for a factory of instruction editor!

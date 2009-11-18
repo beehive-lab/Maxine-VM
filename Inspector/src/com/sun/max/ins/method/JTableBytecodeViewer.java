@@ -280,7 +280,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-
     private final class BytecodeTableColumnModel extends InspectorTableColumnModel<BytecodeColumnKind> {
 
         BytecodeTableColumnModel(BytecodeViewPreferences instanceViewPreferences) {
@@ -394,7 +393,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
     }
-
 
     /**
      * @return the default color to be used for all text labels on the row

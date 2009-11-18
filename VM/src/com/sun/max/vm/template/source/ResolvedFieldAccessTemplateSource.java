@@ -36,13 +36,11 @@ import com.sun.max.vm.type.*;
 @TEMPLATE(resolved = TemplateChooser.Resolved.YES)
 public class ResolvedFieldAccessTemplateSource {
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.REFERENCE)
     public static void rgetfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeReference(0, TupleAccess.readObject(object, offset));
     }
-
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.WORD)
     public static void wgetfield(int offset) {
@@ -50,20 +48,17 @@ public class ResolvedFieldAccessTemplateSource {
         JitStackFrameOperation.pokeWord(0, TupleAccess.readWord(object, offset));
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.BYTE)
     public static void bgetfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, TupleAccess.readByte(object, offset));
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.CHAR)
     public static void cgetfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, TupleAccess.readChar(object, offset));
     }
-
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.DOUBLE)
     public static void dgetfield(int offset) {
@@ -72,20 +67,17 @@ public class ResolvedFieldAccessTemplateSource {
         JitStackFrameOperation.pokeDouble(0, TupleAccess.readDouble(object, offset));
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.FLOAT)
     public static void fgetfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeFloat(0, TupleAccess.readFloat(object, offset));
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.INT)
     public static void igetfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, TupleAccess.readInt(object, offset));
     }
-
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.LONG)
     public static void jgetfield(int offset) {
@@ -94,20 +86,17 @@ public class ResolvedFieldAccessTemplateSource {
         JitStackFrameOperation.pokeLong(0, TupleAccess.readLong(object, offset));
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.SHORT)
     public static void sgetfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, TupleAccess.readShort(object, offset));
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.BOOLEAN)
     public static void zgetfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, UnsafeCast.asByte(TupleAccess.readBoolean(object, offset)));
     }
-
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.REFERENCE)
     public static void rputfield(int offset) {
@@ -117,7 +106,6 @@ public class ResolvedFieldAccessTemplateSource {
         TupleAccess.noninlineWriteObject(object, offset, value);
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.WORD)
     public static void wputfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(1);
@@ -125,7 +113,6 @@ public class ResolvedFieldAccessTemplateSource {
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeWord(object, offset, value);
     }
-
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.BYTE)
     public static void bputfield(int offset) {
@@ -135,7 +122,6 @@ public class ResolvedFieldAccessTemplateSource {
         TupleAccess.writeByte(object, offset, value);
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.CHAR)
     public static void cputfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(1);
@@ -143,7 +129,6 @@ public class ResolvedFieldAccessTemplateSource {
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeChar(object, offset, value);
     }
-
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.DOUBLE)
     public static void dputfield(int offset) {
@@ -153,7 +138,6 @@ public class ResolvedFieldAccessTemplateSource {
         TupleAccess.writeDouble(object, offset, value);
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.FLOAT)
     public static void fputfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(1);
@@ -161,7 +145,6 @@ public class ResolvedFieldAccessTemplateSource {
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeFloat(object, offset, value);
     }
-
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.INT)
     public static void iputfield(int offset) {
@@ -171,7 +154,6 @@ public class ResolvedFieldAccessTemplateSource {
         TupleAccess.writeInt(object, offset, value);
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.LONG)
     public static void jputfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(2);
@@ -180,7 +162,6 @@ public class ResolvedFieldAccessTemplateSource {
         TupleAccess.writeLong(object, offset, value);
     }
 
-
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.SHORT)
     public static void sputfield(int offset) {
         final Object object = JitStackFrameOperation.peekReference(1);
@@ -188,7 +169,6 @@ public class ResolvedFieldAccessTemplateSource {
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeShort(object, offset, value);
     }
-
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.BOOLEAN)
     public static void zputfield(int offset) {

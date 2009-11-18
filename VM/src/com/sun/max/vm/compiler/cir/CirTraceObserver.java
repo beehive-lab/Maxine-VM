@@ -68,7 +68,6 @@ public class CirTraceObserver extends IrTraceObserver {
         LCIR_FREE_VARIABLE_CAPTURING("LCIR Free Variable Capturing", 2),
         WRAPPER_APPLICATION("Applying wrapper", 3);
 
-
         TransformationType(String description, int traceLevel) {
             this.description = description;
             this.traceLevel = traceLevel;

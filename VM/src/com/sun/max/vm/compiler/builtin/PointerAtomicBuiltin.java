@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.vm.compiler.*;
 
-
 /**
  * @author Bernd Mathiske
  */

@@ -31,7 +31,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 
-
 /**
  * Holds the focus of user attention, expressed by user actions
  * that select something.
@@ -116,8 +115,6 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
         }
     }
-
-
 
     private MaxThread thread;
 
@@ -289,7 +286,6 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
     }
 
-
     private MemoryRegion memoryRegion;
 
     private final Object memoryRegionFocusTracer = new Object() {
@@ -338,7 +334,6 @@ public class InspectionFocus extends AbstractInspectionHolder {
 //            }
         }
     }
-
 
     private TeleBreakpoint breakpoint;
 
@@ -396,7 +391,6 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
     }
 
-
     private MaxWatchpoint watchpoint;
 
     private final Object watchpointFocusTracer = new Object() {
@@ -436,7 +430,6 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
     }
 
-
     private TeleObject heapObject;
 
     private final Object objectFocusTracer = new Object() {
@@ -474,6 +467,5 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
         }
     }
-
 
 }

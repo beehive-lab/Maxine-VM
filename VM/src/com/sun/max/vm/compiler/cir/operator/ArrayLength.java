@@ -24,7 +24,6 @@ import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
-
 public class ArrayLength extends JavaOperator {
 
     public ArrayLength() {

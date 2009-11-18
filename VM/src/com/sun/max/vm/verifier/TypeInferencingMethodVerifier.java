@@ -534,7 +534,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         }
 
         public int position() {
-            return block.start();
+            return block.start;
         }
 
         public int size() {
@@ -563,7 +563,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         public void writeTo(DataOutputStream outputStream) throws IOException {
             final byte[] code = block.code();
-            for (int i = block.start(); i <= block.end(); ++i) {
+            for (int i = block.start; i <= block.end; ++i) {
                 outputStream.write(code[i]);
             }
         }

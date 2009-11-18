@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.gen.risc.ppc;
 
-
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.ppc.*;
