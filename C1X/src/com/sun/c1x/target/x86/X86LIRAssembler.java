@@ -999,36 +999,10 @@ public class X86LIRAssembler extends LIRAssembler {
         masm.bind(op.stub().continuation);
     }
 
-    static void selectDifferentRegisters(CiRegister preserve, CiRegister extra, CiRegister[] tmp1, CiRegister[] tmp2) {
-        if (tmp1[0] == preserve) {
-            assert CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], extra);
-            tmp1[0] = extra;
-        } else if (tmp2[0] == preserve) {
-            CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], extra);
-            tmp2[0] = extra;
-        }
-        CiRegister.assertDifferentRegisters(preserve, tmp1[0], tmp2[0]);
-    }
-
-    static void selectDifferentRegisters(CiRegister preserve, CiRegister extra, CiRegister[] tmp1, CiRegister[] tmp2, CiRegister[] tmp3) {
-        if (tmp1[0] == preserve) {
-            CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], tmp3[0], extra);
-            tmp1[0] = extra;
-        } else if (tmp2[0] == preserve) {
-            CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], tmp3[0], extra);
-            tmp2[0] = extra;
-        } else if (tmp3[0] == preserve) {
-            CiRegister.assertDifferentRegisters(tmp1[0], tmp2[0], tmp3[0], extra);
-            tmp3[0] = extra;
-        }
-        CiRegister.assertDifferentRegisters(preserve, tmp1[0], tmp2[0], tmp3[0]);
-    }
-
     @Override
     protected void emitTypeCheck(LIRTypeCheck op) {
         LIROpcode code = op.code;
         if (code == LIROpcode.StoreCheck) {
-
             CiRegister value = op.object().asRegister();
             CiRegister array = op.array().asRegister();
             CiRegister kRInfo = op.tmp1().asRegister();
@@ -1067,12 +1041,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
             assert obj != expectedHub : "must be different";
             masm.cmpptr(obj, (int) NULLWORD);
-            if (op.profiledMethod() != null) {
-
-                Util.unimplemented();
-            } else {
-                masm.jcc(X86Assembler.Condition.equal, done);
-            }
+            masm.jcc(Condition.equal, done);
             masm.verifyOop(obj);
 
             if (op.isFastCheck()) {
@@ -1137,14 +1106,6 @@ public class X86LIRAssembler extends LIRAssembler {
                 masm.cmpptr(obj, (int) NULLWORD);
                 masm.jcc(X86Assembler.Condition.equal, zero);
                 masm.movptr(klassRInfo, new Address(obj, compilation.runtime.hubOffset()));
-                // next block is unconditional if LP64:
-
-                // TODO: Check if this is really necessary
-                //assert dst != klassRInfo && dst != kRInfo : "need 3 registers";
-
-                // perform the fast part of the checking logic
-                //masm().checkKlassSubtypeFastPath(klassRInfo, kRInfo, dst, one, zero, null, new RegisterOrConstant(-1));
-                // call out-of-line instance of lir(). checkKlassSubtypeSlowPath(...):
                 masm.callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, op.info, dst, kRInfo, klassRInfo);
                 masm.jmp(done);
             }
@@ -2069,7 +2030,7 @@ public class X86LIRAssembler extends LIRAssembler {
             masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset()));
         } else {
             assert method.vtableIndex() == -1 && !method.isLoaded();
-            this.masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveVTableIndex, info, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveVTableIndex, info, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
             addCallInfoHere(info);
             int vtableEntrySize = compilation.runtime.vtableEntrySize();
             assert Util.isPowerOf2(vtableEntrySize);
@@ -2084,9 +2045,6 @@ public class X86LIRAssembler extends LIRAssembler {
         addCallInfoHere(info);
     }
 
-    /**
-     * (tw) Tentative implementation of an interface call.
-     */
     @Override
     protected void interfaceCall(RiMethod method, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
         assert receiver != null : "Invalid receiver!";
@@ -2094,7 +2052,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (method.vtableIndex() == -1) {
             // Unresolved method
-            this.masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveInterfaceIndex, info, rscratch1, new RegisterOrConstant(receiver.asRegister()), new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveInterfaceIndex, info, rscratch1, new RegisterOrConstant(receiver.asRegister()), new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
         } else {
             // TODO: emit interface ID calculation inline
             masm.movl(rscratch1, method.interfaceID());

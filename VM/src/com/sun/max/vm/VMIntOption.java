@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm;
 
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.MaxineVM.*;
@@ -44,7 +43,6 @@ public class VMIntOption extends VMOption {
      * @param defaultValue the default value of the option when it is not specified
      * @param help the help text for the option
      */
-    @HOSTED_ONLY
     public VMIntOption(String prefix, int defaultValue, String help) {
         super(prefix, appendDefaultValue(help, defaultValue < 0 ? String.valueOf(defaultValue) : Ints.toUnitsString(defaultValue, true)));
         value = defaultValue;
