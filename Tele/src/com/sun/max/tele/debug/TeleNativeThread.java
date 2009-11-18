@@ -64,7 +64,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return "[TeleNativeThread: " + Thread.currentThread().getName() + "] ";
     }
 
-    private static final int REFRESH_TRACE_LEVEL = 2;
+    private static final int TRACE_LEVEL = 2;
 
     /**
      * The states a thread can be in.
@@ -307,7 +307,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @param epoch the new epoch of this thread
      */
     void refresh(long epoch) {
-        Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refresh(epoch=" + epoch + ") for " + this);
+        Trace.line(TRACE_LEVEL, tracePrefix() + "refresh(epoch=" + epoch + ") for " + this);
         if (state.allowsDataAccess()) {
             refreshBreakpoint();
         }
@@ -320,7 +320,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         final long processEpoch = teleProcess().epoch();
         if (registersEpoch < processEpoch && isLive()) {
             registersEpoch = processEpoch;
-            Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshRegisters (epoch=" + processEpoch + ") for " + this);
+            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshRegisters (epoch=" + processEpoch + ") for " + this);
 
             if (!readRegisters(integerRegisters.registerData(), floatingPointRegisters.registerData(), stateRegisters.registerData())) {
                 ProgramError.unexpected("Error while updating registers for thread: " + this);
@@ -343,7 +343,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         if (teleVmThreadLocalsEpoch < processEpoch) {
             teleVmThreadLocalsEpoch = processEpoch;
 
-            Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshThreadLocals (epoch=" + processEpoch + ") for " + this);
+            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshThreadLocals (epoch=" + processEpoch + ") for " + this);
 
             final DataAccess dataAccess = teleProcess().dataAccess();
             for (TeleThreadLocalValues teleVmThreadLocalValues : teleVmThreadLocals.values()) {
@@ -383,14 +383,14 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
         if (breakpoint != null) {
 
-            Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") for " + this);
+            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") for " + this);
 
             state = BREAKPOINT;
             this.breakpoint = breakpoint;
             final Address address = this.breakpoint.teleCodeLocation().targetCodeInstructionAddress();
             if (updateInstructionPointer(address)) {
                 stateRegisters.setInstructionPointer(address);
-                Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
+                Trace.line(TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
                 ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + address + " was hit: " + this);
             }
@@ -418,7 +418,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         if (framesEpoch < processEpoch) {
             framesEpoch = processEpoch;
 
-            Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
+            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
 
             // The stack walk requires the VM thread locals to be up to date
             //refreshThreadLocals();
@@ -595,6 +595,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     void evadeBreakpoint() throws OSExecutionRequestException {
         if (breakpoint != null && !breakpoint.isTransient()) {
             assert !breakpoint.isActivated() : "Cannot single step at an activated breakpoint";
+            Trace.line(TRACE_LEVEL, tracePrefix() + "single step to evade breakpoint=" + breakpoint);
             teleProcess().singleStep(this, true);
         }
     }
