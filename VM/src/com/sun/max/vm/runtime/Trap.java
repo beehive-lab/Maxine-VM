@@ -194,7 +194,7 @@ public abstract class Trap {
     @C_FUNCTION
     private static void trapStub(int trapNumber, Pointer trapState, Address faultAddress) {
         if (trapNumber == ASYNC_INTERRUPT) {
-            // do nothing for an asynchronous interrupt.
+            VmThread.current().setInterrupted();
             return;
         }
         final TrapStateAccess trapStateAccess = TrapStateAccess.instance();

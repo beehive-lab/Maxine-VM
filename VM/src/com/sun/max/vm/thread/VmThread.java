@@ -701,6 +701,9 @@ public class VmThread {
         this.nextWaitingThread = nextWaitingThread;
     }
 
+    /**
+     * Sets the interrupted status of this thread to true.
+     */
     public void setInterrupted() {
         this.interrupted = true;
     }
