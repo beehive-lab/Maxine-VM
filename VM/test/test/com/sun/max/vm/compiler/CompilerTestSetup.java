@@ -21,10 +21,6 @@
 package test.com.sun.max.vm.compiler;
 
 import java.io.*;
-import java.util.Map;
-import java.util.zip.Deflater;
-import java.util.jar.JarOutputStream;
-import java.util.jar.JarEntry;
 
 import junit.extensions.*;
 import junit.framework.Test;
