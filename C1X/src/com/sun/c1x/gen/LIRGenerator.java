@@ -1165,14 +1165,14 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitUnsafeGetObject(UnsafeGetObject x) {
-        CiKind type = x.basicType();
+        CiKind type = x.unsafeOpKind;
         LIRItem src = new LIRItem(x.object(), this);
         LIRItem off = new LIRItem(x.offset(), this);
 
         off.loadItem();
         src.loadItem();
 
-        LIRLocation reg = rlockResult(x, x.basicType());
+        LIRLocation reg = rlockResult(x, x.unsafeOpKind);
 
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarAcquire();
@@ -1194,7 +1194,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             idx.loadNonconstant();
         }
 
-        LIROperand reg = rlockResult(x, x.basicType());
+        LIROperand reg = rlockResult(x, x.unsafeOpKind);
 
         int log2scale = 0;
         if (x.hasIndex()) {
@@ -1216,7 +1216,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        CiKind dstType = x.basicType();
+        CiKind dstType = x.unsafeOpKind;
         LIROperand indexOp = idx.result();
 
         LIRAddress addr = null;
@@ -1262,7 +1262,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitUnsafePutObject(UnsafePutObject x) {
-        CiKind type = x.basicType();
+        CiKind type = x.unsafeOpKind;
         LIRItem src = new LIRItem(x.object(), this);
         LIRItem off = new LIRItem(x.offset(), this);
         LIRItem data = new LIRItem(x.value(), this);
@@ -1286,7 +1286,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitUnsafePutRaw(UnsafePutRaw x) {
         int log2scale = 0;
-        CiKind type = x.basicType();
+        CiKind type = x.unsafeOpKind;
 
         if (x.hasIndex()) {
             assert x.index().kind.isInt() : "should not find non-int index";
@@ -1330,7 +1330,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             lir.shiftLeft(indexOp, log2scale, indexOp);
         }
 
-        LIROperand addr = new LIRAddress(baseOp, indexOp, x.basicType());
+        LIROperand addr = new LIRAddress(baseOp, indexOp, x.unsafeOpKind);
         lir.move(value.result(), addr);
     }
 
@@ -1925,7 +1925,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected final LIRLocation newPointerRegister() {
         // returns a register suitable for doing pointer math
-        // XXX: revisit this when there is a basic type for Pointers
+        // XXX: revisit this when there is a CiKind for Pointers
         if (compilation.target.arch.is64bit()) {
             return newRegister(CiKind.Long);
         } else {

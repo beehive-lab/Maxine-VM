@@ -35,6 +35,8 @@ import com.sun.c1x.stub.*;
  */
 public abstract class LIRInstruction {
 
+    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(LIROperandFactory.IllegalLocation);
+
     // the opcode of this instruction
     public final LIROpcode code;
 
@@ -66,8 +68,6 @@ public abstract class LIRInstruction {
     private int allocatorTempCount;
     private int allocatorTempInputCount;
     private List<LIRLocation> operands = new ArrayList<LIRLocation>(6);
-
-    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(LIROperandFactory.IllegalLocation);
 
     public static final class OperandSlot {
         private int base;

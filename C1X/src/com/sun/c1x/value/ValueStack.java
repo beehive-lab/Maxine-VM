@@ -319,7 +319,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void push(CiKind type, Value x) {
-        xpush(assertType(type, x));
+        xpush(assertKind(type, x));
         if (type.sizeInSlots() == 2) {
             xpush(null);
         }
@@ -394,14 +394,14 @@ public class ValueStack {
     /**
      * Pops an instruction off the stack with the expected type.
      *
-     * @param basicType the tag of the expected type
+     * @param kind the tag of the expected type
      * @return the instruction on the top of the stack
      */
-    public Value pop(CiKind basicType) {
-        if (basicType.sizeInSlots() == 2) {
+    public Value pop(CiKind kind) {
+        if (kind.sizeInSlots() == 2) {
             xpop();
         }
-        return assertType(basicType, xpop());
+        return assertKind(kind, xpop());
     }
 
     /**
@@ -686,8 +686,8 @@ public class ValueStack {
         return y == null || x.kind != y.kind;
     }
 
-    private static Value assertType(CiKind basicType, Value x) {
-        assert x != null && x.kind == basicType;
+    private static Value assertKind(CiKind kind, Value x) {
+        assert x != null && x.kind == kind;
         return x;
     }
 

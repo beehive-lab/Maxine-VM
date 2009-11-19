@@ -47,7 +47,7 @@ public interface RiSignature {
      * @param index the index into the parameters, with {@code 0} indicating the first parameter
      * @return the basic type of the argument at the specified position
      */
-    CiKind argumentBasicTypeAt(int index);
+    CiKind argumentKindAt(int index);
 
     /**
      * Gets the return type of this signature.
@@ -56,10 +56,10 @@ public interface RiSignature {
     RiType returnType();
 
     /**
-     * Gets the return basic type of this signature.
-     * @return the basic type representing the return type
+     * Gets the return kind of this signature.
+     * @return the return kind
      */
-    CiKind returnBasicType();
+    CiKind returnKind();
 
     /**
      * Converts this signature to a string.

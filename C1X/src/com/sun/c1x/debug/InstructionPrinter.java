@@ -496,7 +496,7 @@ public class InstructionPrinter extends ValueVisitor {
              print("._").
              print(i.offset()).
              print(" (").
-             print(i.field().type().basicType().typeChar).
+             print(i.field().type().kind().typeChar).
              print(")");
     }
 
@@ -614,7 +614,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitStoreField(StoreField store) {
-        out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().basicType().typeChar).print(')');
+        out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().kind().typeChar).print(')');
     }
 
     @Override

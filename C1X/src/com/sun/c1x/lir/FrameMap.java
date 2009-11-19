@@ -57,7 +57,7 @@ public final class FrameMap {
         if (method == null) {
             incomingArguments = new CallingConvention(new CiLocation[0]);
         } else {
-            incomingArguments = javaCallingConvention(Util.signatureToBasicTypes(method.signatureType(), !method.isStatic()), false, false);
+            incomingArguments = javaCallingConvention(Util.signatureToKinds(method.signatureType(), !method.isStatic()), false, false);
         }
     }
 

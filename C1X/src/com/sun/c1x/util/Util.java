@@ -194,9 +194,9 @@ public class Util {
      * @return the Java name corresponding to {@code riType}
      */
     public static String toJavaName(RiType riType, boolean qualified) {
-        CiKind basicType = riType.basicType();
-        if (basicType.isPrimitive() || basicType == CiKind.Void) {
-            return basicType.javaName;
+        CiKind kind = riType.kind();
+        if (kind.isPrimitive() || kind == CiKind.Void) {
+            return kind.javaName;
         }
         String string = internalNameToJava(riType.name());
         if (qualified) {
@@ -248,12 +248,12 @@ public class Util {
      *
      * @param format a format specification
      * @param method the method to be formatted
-     * @param basicTypes if {@code true} then the types in {@code method}'s signature are printed in the
-     *            {@linkplain CiKind#jniName JNI} form of their {@linkplain CiKind basic type}
+     * @param kinds if {@code true} then the types in {@code method}'s signature are printed in the
+     *            {@linkplain CiKind#jniName JNI} form of their {@linkplain CiKind kind}
      * @return the result of formatting this method according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
-    public static String format(String format, RiMethod method, boolean basicTypes) throws IllegalFormatException {
+    public static String format(String format, RiMethod method, boolean kinds) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;
         RiSignature sig = method.signatureType();
@@ -270,7 +270,7 @@ public class Util {
                         qualified = true;
                         // fall through
                     case 'r': {
-                        sb.append(basicTypes ? sig.returnBasicType().jniName : toJavaName(sig.returnType(), qualified));
+                        sb.append(kinds ? sig.returnKind().jniName : toJavaName(sig.returnType(), qualified));
                         break;
                     }
                     case 'H':
@@ -292,7 +292,7 @@ public class Util {
                             if (i != 0) {
                                 sb.append(", ");
                             }
-                            sb.append(basicTypes ? sig.argumentBasicTypeAt(i).jniName : toJavaName(sig.argumentTypeAt(i), qualified));
+                            sb.append(kinds ? sig.argumentKindAt(i).jniName : toJavaName(sig.argumentTypeAt(i), qualified));
                         }
                         break;
                     }
@@ -505,7 +505,7 @@ public class Util {
         }
     }
 
-    public static CiKind[] signatureToBasicTypes(RiSignature signature, boolean withReceiver) {
+    public static CiKind[] signatureToKinds(RiSignature signature, boolean withReceiver) {
         int args = signature.argumentCount(false);
         CiKind[] result;
         int i = 0;
@@ -517,7 +517,7 @@ public class Util {
             result = new CiKind[args];
         }
         for (int j = 0; j < args; j++) {
-            result[i + j] = signature.argumentBasicTypeAt(j);
+            result[i + j] = signature.argumentKindAt(j);
         }
         return result;
     }
@@ -574,7 +574,7 @@ public class Util {
      * Utility method to check that two instructions have the same kind.
      * @param i the first instruction
      * @param other the second instruction
-     * @return {@code true} if the instructions have the same basic type
+     * @return {@code true} if the instructions have the same kind
      */
     public static boolean equalKinds(Value i, Value other) {
         return i.kind == other.kind;

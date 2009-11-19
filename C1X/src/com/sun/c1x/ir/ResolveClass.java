@@ -38,7 +38,7 @@ public class ResolveClass extends StateSplit {
     public final char cpi;
 
     public ResolveClass(RiType type, RiType.Representation r, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
-        super(type.getBasicType(r), stateBefore);
+        super(type.getRepresentationKind(r), stateBefore);
         this.portion = r;
         this.type = type;
         this.cpi = cpi;
