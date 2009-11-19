@@ -182,8 +182,9 @@ public final class X86LIRGenerator extends LIRGenerator {
     protected void genStoreIndexed(StoreIndexed x) {
         assert x.isLive() : "";
         boolean needsRangeCheck = true;
-        boolean objStore = x.elementKind() == CiKind.Jsr || x.elementKind() == CiKind.Object;
-        boolean needsStoreCheck = objStore && ((!(x.value() instanceof Constant)) || x.value().asConstant().asObject() != null);
+        boolean objStore = x.elementKind() == CiKind.Object;
+        boolean needsWriteBarrier = objStore && x.needsWriteBarrier();
+        boolean needsStoreCheck = objStore && x.needsStoreCheck();
 
         LIRItem array = new LIRItem(x.array(), this);
         LIRItem index = new LIRItem(x.index(), this);
@@ -217,7 +218,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             nullCheckInfo = rangeCheckInfo.copy();
         }
 
-        emitArrayStore((LIRLocation) array.result(), index.result(), value.result(), length.result(), x.elementKind(), needsRangeCheck, needsStoreCheck, objStore, nullCheckInfo, rangeCheckInfo);
+        emitArrayStore((LIRLocation) array.result(), index.result(), value.result(), length.result(), x.elementKind(), needsRangeCheck, needsStoreCheck, needsWriteBarrier, nullCheckInfo, rangeCheckInfo);
     }
 
     private void emitSafeArrayStore(LIRLocation array, LIROperand index, LIROperand value, CiKind elementType, boolean needsBarrier) {
@@ -979,7 +980,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void genVolatileFieldStore(LIROperand value, LIRAddress address, LIRDebugInfo info) {
         if (address.kind == CiKind.Long) {
-            address = new LIRAddress(address.base(), address.index(), address.scale(), address.displacement(), CiKind.Double);
+            address = new LIRAddress(address.base, address.index, address.scale, address.displacement, CiKind.Double);
             // Transfer the value atomically by using FP moves. This means
             // the value has to be moved between CPU and FPU registers. It
             // always has to be moved through spill slot since there's no
@@ -998,7 +999,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void genVolatileFieldLoad(LIRAddress address, LIROperand result, LIRDebugInfo info) {
         if (address.kind == CiKind.Long) {
-            address = new LIRAddress(address.base(), address.index(), address.scale(), address.displacement(), CiKind.Double);
+            address = new LIRAddress(address.base, address.index, address.scale, address.displacement, CiKind.Double);
             // Transfer the value atomically by using FP moves. This means
             // the value has to be moved between CPU and FPU registers. In
             // SSE0 and SSE1 mode it has to be moved through spill slot but in

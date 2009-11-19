@@ -444,17 +444,43 @@ public class Canonicalizer extends ValueVisitor {
 
     @Override
     public void visitStoreIndexed(StoreIndexed i) {
+        Value array = i.array();
+        Value value = i.value();
         if (C1XOptions.CanonicalizeNarrowingInStores) {
             // Eliminate narrowing conversions emitted by javac which are unnecessary when
             // writing the value to an array (which is packed)
-            Value v = i.value();
+            Value v = value;
             if (v instanceof Convert) {
                 Value nv = eliminateNarrowing(i.elementKind(), (Convert) v);
                 if (nv != null && inCurrentBlock(v)) {
-                    setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementKind(), nv, i.stateBefore()));
+                    setCanonical(new StoreIndexed(array, i.index(), i.length(), i.elementKind(), nv, i.stateBefore()));
                 }
             }
         }
+        if (C1XOptions.CanonicalizeArrayStoreChecks) {
+            if (value.isConstant() && value.asConstant().isNull()) {
+                clearStoreCheck(i);
+            } else {
+                RiType exactType = Value.exactType(array, runtime);
+                if (exactType != null) {
+                    if (runtime.isObjectArrayType(exactType)) {
+                        // the exact type of the array is Object[] => no check is necessary
+                        clearStoreCheck(i);
+                    } else {
+                        RiType declaredType = value.declaredType();
+                        if (declaredType != null && declaredType.isSubtypeOf(exactType)) {
+                            // the value being stored has a known type
+                            clearStoreCheck(i);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void clearStoreCheck(StoreIndexed i) {
+        i.setFlag(Value.Flag.NoStoreCheck);
+        C1XMetrics.StoreChecksRedundant++;
     }
 
     @Override

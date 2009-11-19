@@ -90,7 +90,6 @@ public abstract class LIRInstruction {
         }
 
         public LIROperand get(LIRInstruction inst) {
-
             if (!resolved) {
                 LIROperand result = null;
                 if (direct != null && direct.isAddress()) {

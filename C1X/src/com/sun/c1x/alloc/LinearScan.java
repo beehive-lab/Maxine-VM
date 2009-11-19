@@ -1224,11 +1224,11 @@ public class LinearScan {
             if (move.result().isDoubleCpu() && inOpr.isLocation()) {
                 if (inOpr instanceof LIRAddress) {
                     final LIRAddress pointer = (LIRAddress) inOpr;
-                    LIRLocation base = pointer.base();
+                    LIRLocation base = pointer.base;
                     if (!base.isIllegal()) {
                         addTemp(base, op.id(), IntervalUseKind.noUse, registerKind(base));
                     }
-                    LIRLocation index = pointer.index();
+                    LIRLocation index = pointer.index;
                     if (!index.isIllegal()) {
                         addTemp(index, op.id(), IntervalUseKind.noUse, registerKind(index));
                     }
