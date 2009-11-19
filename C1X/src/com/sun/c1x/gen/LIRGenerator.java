@@ -46,7 +46,6 @@ import com.sun.c1x.xir.CiXirAssembler.*;
  * @author Marcelo Cintra
  */
 public abstract class LIRGenerator extends ValueVisitor {
-    private static final CiKind[] BASIC_TYPES_OBJECT = {CiKind.Object};
 
     // the range of values in a lookupswitch or tableswitch statement
     private static final class SwitchRange {

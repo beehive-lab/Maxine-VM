@@ -372,16 +372,16 @@ public class LIRList {
         append(new LIROp3(LIROpcode.Idiv, left, right, tmp, res, info));
     }
 
-    public void idiv(LIROperand left, int right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
-        append(new LIROp3(LIROpcode.Idiv, left, LIROperandFactory.intConst(right), tmp, res, info));
-    }
-
     public void irem(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Irem, left, right, tmp, res, info));
     }
 
-    public void irem(LIROperand left, int right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
-        append(new LIROp3(LIROpcode.Irem, left, LIROperandFactory.intConst(right), tmp, res, info));
+    public void ldiv(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Ldiv, left, right, tmp, res, info));
+    }
+
+    public void lrem(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Lrem, left, right, tmp, res, info));
     }
 
     public void cmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, LIRDebugInfo info) {

@@ -762,6 +762,10 @@ public class X86LIRAssembler extends LIRAssembler {
             case Irem:
                 arithmeticIdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info);
                 break;
+            case Ldiv:
+            case Lrem:
+                arithmeticLdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info);
+                break;
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -1721,17 +1725,14 @@ public class X86LIRAssembler extends LIRAssembler {
         assert right.isSingleCpu() || right.isConstant() : "right must be register or constant";
         assert result.isSingleCpu() : "result must be register";
 
-        // assert left.destroysRegister() : "check";
-        // assert right.destroysRegister() : "check";
-
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
 
         if (right.isConstant()) {
             int divisor = ((LIRConstant) right).asInt();
-            assert divisor > 0 && Util.isPowerOf2(divisor) : "must be";
+            assert divisor > 0 && Util.isPowerOf2(divisor) : "divisor must be power of two";
             if (code == LIROpcode.Idiv) {
-                assert lreg == X86.rax : "must be rax : ";
+                assert lreg == X86.rax : "dividend must be rax";
                 masm.cdql(); // sign extend into rdx:rax
                 if (divisor == 2) {
                     masm.subl(lreg, X86.rdx);
@@ -1755,16 +1756,94 @@ public class X86LIRAssembler extends LIRAssembler {
             }
         } else {
             CiRegister rreg = right.asRegister();
-            assert lreg == X86.rax : "left register must be rax : ";
+            assert lreg == X86.rax : "left register must be rax";
             assert rreg != X86.rdx : "right register must not be rdx";
 
             moveRegs(lreg, X86.rax);
 
-            int idivlOffset = masm.correctedIdivl(rreg);
-            addDebugInfoForDiv0(idivlOffset, info);
+            // Full implementation of Java idiv and irem; checks for
+            // special case as described in JVM spec. : p.243 & p.271.
+            Label normalCase = new Label();
+            Label specialCase = new Label();
+
+            // check for special case
+            masm.cmpl(X86.rax, Integer.MIN_VALUE);
+            masm.jcc(Condition.notEqual, normalCase);
+            if (code == LIROpcode.Irem) {
+                // prepare X86Register.rdx for possible special case where remainder = 0
+                masm.xorl(X86.rdx, X86.rdx);
+            }
+            masm.cmpl(rreg, -1);
+            masm.jcc(Condition.equal, specialCase);
+
+            // handle normal case
+            masm.bind(normalCase);
+            masm.cdql();
+            int offset = masm.codeBuffer.position();
+            masm.idivl(rreg);
+
+            // normal and special case exit
+            masm.bind(specialCase);
+
+            addDebugInfoForDiv0(offset, info);
             if (code == LIROpcode.Irem) {
                 moveRegs(X86.rdx, dreg); // result is in rdx
             } else if (code == LIROpcode.Idiv) {
+                moveRegs(X86.rax, dreg);
+            } else {
+                throw Util.shouldNotReachHere();
+            }
+        }
+    }
+
+    // we assume that rax, and rdx can be overwritten
+    void arithmeticLdiv(LIROpcode code, LIROperand left, LIROperand right, LIROperand result, LIRDebugInfo info) {
+        assert left.isDoubleCpu() : "left must be register";
+        assert right.isDoubleCpu() || right.isConstant() : "right must be register or constant";
+        assert result.isDoubleCpu() : "result must be register";
+
+        CiRegister lreg = left.asRegister();
+        CiRegister dreg = result.asRegister();
+
+        if (right.isConstant()) {
+            throw Util.shouldNotReachHere();
+        } else {
+            CiRegister rreg = right.asRegister();
+            assert lreg == X86.rax : "left register must be rax";
+            assert rreg != X86.rdx : "right register must not be rdx";
+
+            moveRegs(lreg, X86.rax);
+
+            // Full implementation of Java ldiv and lrem; checks for
+            // special case of Long.MIN_VALUE / -1 as described in
+            // JVM spec. : p.243 & p.271.
+            Label normalCase = new Label();
+            Label specialCase = new Label();
+
+            // check for special case
+            masm.mov64(X86.rdx, Long.MIN_VALUE);
+            masm.cmpq(X86.rax, X86.rdx);
+            masm.jcc(Condition.notEqual, normalCase);
+            if (code == LIROpcode.Lrem) {
+                // prepare X86Register.rdx for possible special case (where remainder = 0)
+                masm.xorq(X86.rdx, X86.rdx);
+            }
+            masm.cmpl(rreg, -1);
+            masm.jcc(Condition.equal, specialCase);
+
+            // handle normal case
+            masm.bind(normalCase);
+            masm.cdqq();
+            int offset = masm.codeBuffer.position();
+            masm.idivq(rreg);
+
+            // normal and special case exit
+            masm.bind(specialCase);
+
+            addDebugInfoForDiv0(offset, info);
+            if (code == LIROpcode.Lrem) {
+                moveRegs(X86.rdx, dreg); // result is in rdx
+            } else if (code == LIROpcode.Ldiv) {
                 moveRegs(X86.rax, dreg);
             } else {
                 throw Util.shouldNotReachHere();

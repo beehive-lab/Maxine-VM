@@ -40,9 +40,17 @@ import com.sun.c1x.util.*;
  */
 public final class X86LIRGenerator extends LIRGenerator {
     private static final CiKind[] BASIC_TYPES_LONG_LONG = {CiKind.Long, CiKind.Long};
+
     private static final LIRLocation IDIV_IN = LIROperandFactory.singleLocation(CiKind.Int, X86.rax);
     private static final LIRLocation IDIV_OUT = LIROperandFactory.singleLocation(CiKind.Int, X86.rax);
     private static final LIRLocation IREM_OUT = LIROperandFactory.singleLocation(CiKind.Int, X86.rdx);
+    private static final LIRLocation IDIV_TMP = LIROperandFactory.singleLocation(CiKind.Int, X86.rdx);
+
+    private static final LIRLocation LDIV_IN = LIROperandFactory.doubleLocation(CiKind.Long, X86.rax, X86.rax);
+    private static final LIRLocation LDIV_OUT = LIROperandFactory.doubleLocation(CiKind.Long, X86.rax, X86.rax);
+    private static final LIRLocation LREM_OUT = LIROperandFactory.doubleLocation(CiKind.Long, X86.rdx, X86.rdx);
+    private static final LIRLocation LDIV_TMP = LIROperandFactory.doubleLocation(CiKind.Long, X86.rdx, X86.rdx);
+
     private static final LIRLocation SHIFT_COUNT_IN = LIROperandFactory.singleLocation(CiKind.Int, X86.rcx);
 
     public X86LIRGenerator(C1XCompilation compilation) {
@@ -351,34 +359,58 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitArithmeticOpLong(ArithmeticOp x) {
         int opcode = x.opcode();
         if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM) {
-            // long division is implemented as a direct call into the runtime
-            LIRItem left = new LIRItem(x.x(), this);
-            LIRItem right = new LIRItem(x.y(), this);
+            // emit code for long division or modulus
+            if (compilation.target.arch.is64bit()) {
+                // emit inline 64-bit code
+                LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
+                LIROperand dividend = force(x.x(), LDIV_IN); // dividend must be in RAX
+                LIROperand divisor = load(x.y());            // divisor can be in any (other) register
 
-            // the check for division by zero destroys the right operand
-            right.setDestroysRegister();
+                if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
+                    lir.cmp(LIRCondition.Equal, divisor, LIROperandFactory.longConst(0));
+                    lir.branch(LIRCondition.Equal, CiKind.Long, new DivByZeroStub(info));
+                    info = null;
+                }
+                LIROperand result = rlockResult(x);
+                LIROperand resultReg;
+                if (opcode == Bytecodes.LREM) {
+                    resultReg = LREM_OUT; // remainder result is produced in rdx
+                    lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
+                } else {
+                    resultReg = LDIV_OUT; // division result is produced in rax
+                    lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
+                }
 
-            CallingConvention cc = compilation.frameMap().runtimeCallingConvention(BASIC_TYPES_LONG_LONG);
+                lir.move(resultReg, result);
+            } else {
+                // long division is implemented as a direct call into the runtime
+                LIRItem left = new LIRItem(x.x(), this);
+                LIRItem right = new LIRItem(x.y(), this);
 
-            LIROperand resultReg = resultRegisterFor(x.kind);
-            left.loadItemForce(cc.operands[0]);
-            right.loadItem();
+                // the check for division by zero destroys the right operand
+                right.setDestroysRegister();
 
-            lir.move(right.result(), cc.operands[1]);
+                CallingConvention cc = compilation.frameMap().runtimeCallingConvention(BASIC_TYPES_LONG_LONG);
 
-            if (x.needsZeroCheck()) {
-                // check for division by zero (destroys registers of right operand!)
-                LIRDebugInfo info = stateFor(x);
-                lir.cmp(LIRCondition.Equal, right.result(), LIROperandFactory.longConst(0));
-                lir.branch(LIRCondition.Equal, CiKind.Long, new DivByZeroStub(info));
+                LIROperand resultReg = resultRegisterFor(x.kind);
+                left.loadItemForce(cc.operands[0]);
+                right.loadItem();
+
+                lir.move(right.result(), cc.operands[1]);
+
+                if (x.needsZeroCheck()) {
+                    // check for division by zero (destroys registers of right operand!)
+                    LIRDebugInfo info = stateFor(x);
+                    lir.cmp(LIRCondition.Equal, right.result(), LIROperandFactory.longConst(0));
+                    lir.branch(LIRCondition.Equal, CiKind.Long, new DivByZeroStub(info));
+                }
+
+                CiRuntimeCall runtimeCall = opcode == Bytecodes.LREM ? CiRuntimeCall.ArithmethicLrem : CiRuntimeCall.ArithmeticLdiv;
+                LIROperand result = rlockResult(x);
+                lir.callRuntime(runtimeCall, resultReg, Arrays.asList(cc.operands), null);
+                lir.move(resultReg, result);
             }
-
-            CiRuntimeCall runtimeCall = opcode == Bytecodes.LREM ? CiRuntimeCall.ArithmethicLrem : CiRuntimeCall.ArithmeticLdiv;
-            LIROperand result = rlockResult(x);
-            lir.callRuntime(runtimeCall, resultReg, Arrays.asList(cc.operands), null);
-            lir.move(resultReg, result);
         } else if (opcode == Bytecodes.LMUL) {
-            // missing test if instr is commutative and if we should swap
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
 
@@ -394,7 +426,6 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand result = rlockResult(x);
             lir.move(reg, result);
         } else {
-            // missing test if instr is commutative and if we should swap
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
 
@@ -407,59 +438,33 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     public void visitArithmeticOpInt(ArithmeticOp x) {
-        if (x.opcode() == Bytecodes.IDIV || x.opcode() == Bytecodes.IREM) {
-            // The requirements for division and modulo
-            // input : rax,: dividend minInt
-            // reg: divisor (may not be rax,/rdx) -1
-            //
-            // output: rax,: quotient (= rax, idiv reg) minInt
-            // rdx: remainder (= rax, irem reg) 0
+        int opcode = x.opcode();
+        if (opcode == Bytecodes.IDIV || opcode == Bytecodes.IREM) {
+            // emit code for integer division or modulus
 
-            // rax, and rdx will be destroyed
+            LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
+            LIROperand dividend = force(x.x(), IDIV_IN); // dividend must be in RAX
+            LIROperand divisor = load(x.y());            // divisor can be in any (other) register
 
-            // Note: does this invalidate the spec ???
-            LIRItem right = new LIRItem(x.y(), this);
-            LIRItem left = new LIRItem(x.x(), this); // visit left second, so that the isRegister test is valid
-
-            // call stateFor before loadItemForce because stateFor may
-            // force the evaluation of other instructions that are needed for
-            // correct debug info. Otherwise the live range of the fix
-            // register might be too long.
-            LIRDebugInfo info = null;
-            if (x.needsZeroCheck()) {
-                info = stateFor(x);
-            }
-
-            left.loadItemForce(IDIV_IN);
-
-            right.loadItem();
-
-            LIROperand result = rlockResult(x);
-            LIROperand resultReg;
-            if (x.opcode() == Bytecodes.IDIV) {
-                resultReg = IDIV_OUT;
-            } else {
-                resultReg = IREM_OUT;
-            }
-
-            if (!C1XOptions.UseImplicitDiv0Checks && x.needsZeroCheck()) {
-                lir.cmp(LIRCondition.Equal, right.result(), LIROperandFactory.intConst(0));
+            if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
+                lir.cmp(LIRCondition.Equal, divisor, LIROperandFactory.intConst(0));
                 lir.branch(LIRCondition.Equal, CiKind.Int, new DivByZeroStub(info));
-                 // don't need code emit info when using explicit checks
                 info = null;
             }
-            LIROperand tmp = LIROperandFactory.singleLocation(CiKind.Int, X86.rdx); // idiv and irem use rdx in their implementation
-            if (x.opcode() == Bytecodes.IREM) {
-                lir.irem(left.result(), right.result(), resultReg, tmp, info);
-            } else if (x.opcode() == Bytecodes.IDIV) {
-                lir.idiv(left.result(), right.result(), resultReg, tmp, info);
+            LIROperand result = rlockResult(x);
+            LIROperand resultReg;
+            if (opcode == Bytecodes.IREM) {
+                resultReg = IREM_OUT; // remainder result is produced in rdx
+                lir.irem(dividend, divisor, resultReg, IDIV_TMP, info);
             } else {
-                Util.shouldNotReachHere();
+                resultReg = IDIV_OUT; // division result is produced in rax
+                lir.idiv(dividend, divisor, resultReg, IDIV_TMP, info);
             }
 
             lir.move(resultReg, result);
         } else {
-            // missing test if instr is commutative and if we should swap
+            // emit code for other integer operations
+
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
             LIRItem leftArg = left;
@@ -473,7 +478,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             leftArg.loadItem();
 
             // do not need to load right, as we can handle stack and constants
-            if (x.opcode() == Bytecodes.IMUL) {
+            if (opcode == Bytecodes.IMUL) {
                 // check if we can use shift instead
                 boolean useConstant = false;
                 boolean useTmp = false;
@@ -497,11 +502,11 @@ public final class X86LIRGenerator extends LIRGenerator {
                 }
                 rlockResult(x);
 
-                arithmeticOpInt(x.opcode(), x.operand(), leftArg.result(), rightArg.result(), tmp);
+                arithmeticOpInt(opcode, x.operand(), leftArg.result(), rightArg.result(), tmp);
             } else {
                 rlockResult(x);
                 LIROperand tmp = LIROperandFactory.IllegalLocation;
-                arithmeticOpInt(x.opcode(), x.operand(), leftArg.result(), rightArg.result(), tmp);
+                arithmeticOpInt(opcode, x.operand(), leftArg.result(), rightArg.result(), tmp);
             }
         }
     }
@@ -1022,6 +1027,12 @@ public final class X86LIRGenerator extends LIRGenerator {
     private LIROperand force(Value v, CiRegister reg) {
         LIRItem item = new LIRItem(v, this);
         item.loadItemForce(LIROperandFactory.singleLocation(v.kind, reg));
+        return item.result();
+    }
+
+    private LIROperand force(Value v, LIROperand o) {
+        LIRItem item = new LIRItem(v, this);
+        item.loadItemForce(o);
         return item.result();
     }
 
