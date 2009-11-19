@@ -102,9 +102,13 @@ void *thread_function(void *arguments) {
 JNIEXPORT void JNICALL
 Java_test_output_AttachThread_callHelloWorldOnAttachedThread(JNIEnv *env, jclass clazz) {
     pthread_t thread_id;
-    const pthread_attr_t *attributes = NULL;
+    pthread_attr_t attributes;
     void *arguments = clazz;
 
-    pthread_create(&thread_id, attributes, thread_function, arguments);
+    pthread_attr_init(&attributes);
+    pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_JOINABLE);
+    pthread_create(&thread_id, &attributes, thread_function, arguments);
+    pthread_attr_destroy(&attributes);
+
     pthread_join(thread_id, NULL);
 }

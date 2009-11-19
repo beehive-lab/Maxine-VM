@@ -32,7 +32,7 @@ import com.sun.max.unsafe.*;
  * Provides methods to allocate quantities of memory that are expected to be
  * multiples of page size (or may be rounded up). To enable possible optimizations
  * in virtual memory management, memory is classified into different different uses
- * by the @see Type enum.
+ * by the {@link Type} enum.
  *
  * Also provides the ability to map files into virtual memory and to change page protection.
  *
@@ -42,10 +42,10 @@ import com.sun.max.unsafe.*;
 public final class VirtualMemory {
 
     public enum Type {
-        HEAP,               // for the garbage collected heap
-        STACK,             // for thread stacks
-        CODE,               // for compiled code
-        DATA                // for miscellaneous data
+        HEAP,   // for the garbage collected heap
+        STACK,  // for thread stacks
+        CODE,   // for compiled code
+        DATA    // for miscellaneous data
     }
 
     private VirtualMemory() {
@@ -63,7 +63,8 @@ public final class VirtualMemory {
     }
 
     /**
-     * Deallocate virtual memory of a given type.
+     * Deallocates virtual memory of a given type.
+     *
      * @param pointer base address of previously allocated memory
      * @param size size of previously allocated memory
      * @param type type of memory
@@ -74,7 +75,7 @@ public final class VirtualMemory {
     }
 
     /**
-     * Allocate virtual memory at a fixed address.
+     * Allocates virtual memory at a fixed address.
      * Evidently the caller of this method must know that the virtual memory
      * at the given address is available for allocation.
      *
@@ -87,7 +88,7 @@ public final class VirtualMemory {
     }
 
     /**
-     * Allocate virtual memory at a fixed address, which must be page aligned.
+     * Allocates virtual memory at a fixed address, which must be page aligned.
      * Evidently the caller of this method must know that the virtual memory
      * at the given address is available for allocation.
      *
@@ -104,8 +105,9 @@ public final class VirtualMemory {
     }
 
     /**
-     * Allocate virtual memory in the address range available using 31 bits of addressing.
+     * Allocates virtual memory in the address range available using 31 bits of addressing.
      * I.e., in the first 2GB of memory. This method may not be implemented on all platforms.
+     *
      * @param size the size requested
      * @type type of memory
      * @return the address of the allocated memory or {@link Pointer#zero()} if unsuccessful
@@ -115,7 +117,8 @@ public final class VirtualMemory {
     }
 
     /**
-     * Allocate virtual memory that is not backed by swap space.
+     * Allocates virtual memory that is not backed by swap space.
+     *
      * @param size the size requested
      * @type type of memory
      * @return the address of the allocated memory or zero if unsuccessful
@@ -142,43 +145,19 @@ public final class VirtualMemory {
     /* Page protection methods */
 
     /**
-     * Sets access protection for a given memory page such that any access (read or write) to it causes a trap.
+     * Sets access protection for a number of memory pages such that any access (read or write) to them causes a trap.
      *
-     * @param pageAddress an address denoting the start of a mapped memory page. This value must be aligned to the
-     *            underlying platform's {@linkplain com.sun.max.platform.Platform#pageSize() page size}.
+     * @param address an address denoting the first page. This value must be aligned to the
+     *            underlying platform's {@linkplain Platform#pageSize() page size}.
+     * @param count the number of pages to protect
      */
     @INLINE
-    public static void protectPage(Address pageAddress) {
-        virtualMemory_protectPage(pageAddress);
-    }
-
-     /**
-     * Sets access protection for a given memory page such that any read or write access to it is legal.
-     *
-     * @param pageAddress an address denoting the start of a mapped memory page. This value must be aligned to the
-     *            underlying platform's {@linkplain com.sun.max.platform.Platform#pageSize() page size}.
-     */
-
-    @INLINE
-    public static void unprotectPage(Address pageAddress) {
-        virtualMemory_unprotectPage(pageAddress);
-    }
-
-    /**
-     * Ensure that the given address is page aligned by rounding up if necessary.
-     * @param address
-     * @return
-     */
-    @INLINE
-    public static Address pageAlign(Address address) {
-        return virtualMemory_pageAlign(address);
+    public static void protectPages(Address address, int count) {
+        virtualMemory_protectPages(address, count);
     }
 
     @C_FUNCTION
-    private static native void virtualMemory_protectPage(Address pageAddress);
-
-    @C_FUNCTION
-    public static native void virtualMemory_unprotectPage(Address pageAddress);
+    private static native void virtualMemory_protectPages(Address address, int count);
 
     @C_FUNCTION
     public static native Address virtualMemory_pageAlign(Address address);
@@ -186,22 +165,23 @@ public final class VirtualMemory {
     /* File mapping methods */
 
     /**
-     * Map an open file into virtual memory.
+     * Maps an open file into virtual memory.
+     *
      * @param size
      * @param fileDescriptor
      * @param fileOffset
      * @return
      * @throws IOException
      */
-
     public static Pointer mapFile(Size size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
         final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
         return Pointer.fromLong(virtualMemory_mapFile(size.toLong(), fd, fileOffset.toLong()));
     }
 
     /**
-     * Map an open file into virtual memory restricted to the address range available in 31 bits, i.e. up to 2GB.
+     * Maps an open file into virtual memory restricted to the address range available in 31 bits, i.e. up to 2GB.
      * This is only available on Linux.
+     *
      * @param size
      * @param fileDescriptor
      * @param fileOffset

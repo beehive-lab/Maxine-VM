@@ -60,7 +60,7 @@ public class SequentialHeapRootsScanner {
     private final VmThreadLocalsScanner vmThreadLocalsScanner = new VmThreadLocalsScanner();
 
     public void run() {
-        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, vmThreadLocalsScanner);
         VMConfiguration.hostOrTarget().monitorScheme().scanReferences(pointerIndexVisitor);
     }
 

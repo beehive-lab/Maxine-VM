@@ -76,11 +76,6 @@ import com.sun.max.vm.type.*;
  */
 public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
-    /**
-     * An array of the VM thread locals that are GC roots.
-     */
-    private static VmThreadLocal[] vmThreadLocalGCRoots;
-
     private final VmThread owner;
     private final Timer timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer triggeredVmThreadLocals;
@@ -102,15 +97,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
     private TargetMethod trampolineTargetMethod;
     private Pointer trampolineRefmapPointer;
-
-    @HOSTED_ONLY
-    public static void setVmThreadLocalGCRoots(VmThreadLocal[] vmThreadLocals) {
-        assert vmThreadLocalGCRoots == null : "Cannot overwrite vmThreadLocalGCRoots";
-        for (VmThreadLocal tl : vmThreadLocals) {
-            assert tl.isReference;
-        }
-        vmThreadLocalGCRoots = vmThreadLocals;
-    }
 
     private static Pointer slotAddress(int slotIndex, Pointer vmThreadLocals) {
         return LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer().plusWords(slotIndex);
@@ -347,9 +333,8 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             FatalError.unexpected("Cannot use stack reference map preparer of another thread");
         }
 
-        // clear the reference map covering the stack contents and the VM thread locals
+        // clear the reference map covering the stack contents
         clearReferenceMapRange(vmThreadLocals, stackPointer, highestStackSlot);
-        clearReferenceMapRange(vmThreadLocals, lowestStackSlot, vmThreadLocalsEnd(vmThreadLocals));
 
         boolean lockDisabledSafepoints = false;
         if (Heap.traceRootScanning()) {
@@ -375,11 +360,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             Log.print("  Current thread is ");
             Log.printCurrentThread(true);
         }
-
-        // prepare references for each of the vm thread locals copies
-        prepareVmThreadLocalsReferenceMap(enabledVmThreadLocals);
-        prepareVmThreadLocalsReferenceMap(disabledVmThreadLocals);
-        prepareVmThreadLocalsReferenceMap(triggeredVmThreadLocals);
 
         // walk the stack and prepare references for each stack frame
         final StackFrameWalker stackFrameWalker = vmThread.unwindingOrReferenceMapPreparingStackFrameWalker();
@@ -463,12 +443,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         preparationTime += timer.getLastElapsedTime();
     }
 
-    private void prepareVmThreadLocalsReferenceMap(Pointer vmThreadLocals) {
-        for (VmThreadLocal local : vmThreadLocalGCRoots) {
-            setReferenceMapBit(local.pointer(vmThreadLocals));
-        }
-    }
-
     public void setReferenceMapBit(Pointer slotAddress) {
         referenceMap.setBit(referenceMapBitIndex(lowestStackSlot, slotAddress));
     }
@@ -510,6 +484,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer, false);
     }
 
+
     /**
      * Gets the reference-map index of a given stack slot (i.e. which bit in the reference map is correlated with the slot).
      *
@@ -529,6 +504,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     private Pointer slotAddress(int slotIndex) {
         return lowestStackSlot.plusWords(slotIndex);
     }
+
 
     public void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex, Pointer refmapFramePointer, String label) {
         if (Heap.traceRootScanning()) {

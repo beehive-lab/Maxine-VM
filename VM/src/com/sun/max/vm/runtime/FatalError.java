@@ -153,7 +153,7 @@ public final class FatalError extends Error {
             Log.print("------ Cause Exception ------");
             throwable.printStackTrace(Log.out);
         }
-        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, dumpStackOfNonCurrentThread);
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, dumpStackOfNonCurrentThread);
 
         if (trappedInNative || Throw.scanStackOnFatalError.getValue()) {
             final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord();

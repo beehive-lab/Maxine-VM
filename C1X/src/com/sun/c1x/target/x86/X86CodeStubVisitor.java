@@ -40,6 +40,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         this.compilation = lirAssembler.compilation;
     }
 
+    @Override
     public void visitJITAdapterFrameStub(JITAdapterFrameStub stub) {
         masm.bind(stub.entry);
 
@@ -98,6 +99,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.ret(Util.safeToShort(jitCallArgumentSize));
     }
 
+    @Override
     public void visitArrayStoreExceptionStub(ArrayStoreExceptionStub stub) {
         masm.bind(stub.entry);
         int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowArrayStoreException, stub.info, CiRegister.None, NO_PARAMS);
@@ -111,6 +113,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         }
     }
 
+    @Override
     public void visitDivByZeroStub(DivByZeroStub stub) {
         if (stub.offset != -1) {
             compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
@@ -128,6 +131,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         }
     }
 
+    @Override
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
         ce.compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
         masm.bind(stub.entry);
@@ -142,6 +146,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         }
     }
 
+    @Override
     public void visitMonitorEnterStub(MonitorEnterStub stub) {
         masm.bind(stub.entry);
         int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.Monitorenter, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
@@ -150,6 +155,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.jmp(stub.continuation);
     }
 
+    @Override
     public void visitMonitorExitStub(MonitorExitStub stub) {
         masm.bind(stub.entry);
         if (stub.computeLock) {
@@ -162,6 +168,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.jmp(stub.continuation);
     }
 
+    @Override
     public void visitNewInstanceStub(NewInstanceStub stub) {
         masm.bind(stub.entry);
         ce.verifyOopMap(stub.info);
@@ -170,6 +177,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.jmp(stub.continuation);
     }
 
+    @Override
     public void visitNewObjectArrayStub(NewObjectArrayStub stub) {
         masm.bind(stub.entry);
         assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
@@ -181,6 +189,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.jmp(stub.continuation);
     }
 
+    @Override
     public void visitNewTypeArrayStub(NewTypeArrayStub stub) {
         masm.bind(stub.entry);
         assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
@@ -192,6 +201,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.jmp(stub.continuation);
     }
 
+    @Override
     public void visitRangeCheckStub(RangeCheckStub stub) {
         masm.bind(stub.entry);
 
@@ -215,6 +225,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         }
     }
 
+    @Override
     public void visitCheckCastStub(CheckCastStub stub) {
         masm.bind(stub.entry);
         int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowClassCastException, stub.info, CiRegister.None, stub.obj().asRegister());

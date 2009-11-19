@@ -25,6 +25,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
@@ -329,7 +330,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         @Override
         public void collect(int invocationCount) {
             try {
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
+                VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
 
                 // Pre-verification of the heap.
                 verifyObjectSpaces("before GC");
@@ -1034,7 +1035,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     private synchronized boolean shrink(Size amount) {
-        final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize().dividedBy(2);
+        final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
         logSpaces();
         executeCollectorThread();
         if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
@@ -1067,7 +1068,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
          * This could be smaller than the existing spaces so we need to check.
          * It's unfortunate but that's the nature of the semispace scheme.
          */
-        final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize().dividedBy(2);
+        final Size pageAlignedAmount = amount.asAddress().aligned(Platform.target().pageSize).asSize().dividedBy(2);
         if (pageAlignedAmount.greaterThan(fromSpace.size())) {
             // grow adds the current space size to the amount in the grow policy
             increaseGrowPolicy.setAmount(pageAlignedAmount.minus(fromSpace.size()));

@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.Log.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -37,23 +38,54 @@ import com.sun.max.vm.stack.*;
 /**
  * The predefined VM thread local variables and mechanisms for accessing them.
  *
- * The memory for these variables is allocated on the stack by the native code that starts a thread (see the function
- * 'thread_runJava' in Native/substrate/threads.c). All thread local variables occupy one word and
+ * All thread local variables occupy one word and
  * the {@linkplain #SAFEPOINT_LATCH safepoint latch} must be first.
- * {@linkplain Safepoint safepoint} states for a thread:
+ * <p>
+ * All thread locals are in a contiguous block of memory called a thread locals area (TLA) and there
+ * are TLAs per thread, one for each of the {@linkplain Safepoint safepoint} states:
  * <dl>
  * <dt>Enabled</dt>
- * <dd>Safepoints for the thread are {@linkplain Safepoint#enable() enabled}. The base address of this TLS area is
- * obtained by reading the {@link #SAFEPOINTS_ENABLED_THREAD_LOCALS} variable from any TLS area.</dd>
+ * <dd>Safepoints for the thread are {@linkplain Safepoint#enable() enabled}. The base address of this TLA is
+ * obtained by reading the {@link #SAFEPOINTS_ENABLED_THREAD_LOCALS} variable from any TLA.</dd>
  * <dt>Disabled</dt>
- * <dd>Safepoints for the thread are {@linkplain Safepoint#disable() disabled}. The base address of this TLS area is
- * obtained by reading the {@link #SAFEPOINTS_DISABLED_THREAD_LOCALS} variable from any TLS area.</dd>
+ * <dd>Safepoints for the thread are {@linkplain Safepoint#disable() disabled}. The base address of this TLA is
+ * obtained by reading the {@link #SAFEPOINTS_DISABLED_THREAD_LOCALS} variable from any TLA.</dd>
  * <dt>Triggered</dt>
  * <dd>Safepoints for the thread are {@linkplain Safepoint#trigger(Pointer) triggered}. The base address of
- * this TLS area is obtained by reading the {@link #SAFEPOINTS_TRIGGERED_THREAD_LOCALS} variable from any TLS area.</dd>
+ * this TLA is obtained by reading the {@link #SAFEPOINTS_TRIGGERED_THREAD_LOCALS} variable from any TLA.</dd>
  * </dl>
  *
- * The memory for the three TLS areas is located on the stack as described in the thread stack layout
+ * The memory for each TLA is within a thread locals block allocated by the native code that starts a thread
+ * (see the function 'thread_run' in Native/substrate/threads.c). A thread locals block contains not only
+ * the three TLAs but other thread local data such as the entry Java frame anchor and the stack
+ * reference map. The format of the thread locals block is:
+ *
+ * <pre>
+ * (low addresses)
+ *
+ *   page aligned --> +---------------------------------------------+
+ *                    | X X X          unmapped page          X X X |
+ *                    | X X X                                 X X X |
+ *   page aligned --> +---------------------------------------------+
+ *                    |        thread locals area (triggered)       |
+ *                    +---------------------------------------------+
+ *                    |        thread locals area (enabled)         |
+ *                    +---------------------------------------------+
+ *                    |        thread locals area (disabled)        |
+ *                    +---------------------------------------------+
+ *                    |           NativeThreadLocalsStruct          |
+ *                    +---------------------------------------------+
+ *                    |               Java frame anchor             |
+ *                    +---------------------------------------------+
+ *                    |                                             |
+ *                    |               reference map                 |
+ *                    |                                             |
+ *                    +---------------------------------------------+
+ *
+ * (high addresses)
+ * </pre>
+ *
+ * The memory for the three TLAs is located on the stack as described in the thread stack layout
  * diagram {@linkplain VmThread here}.
  *
  * @author Bernd Mathiske
@@ -117,6 +149,10 @@ public class VmThreadLocal {
 
     /**
      * The identifier used to identify the thread in the {@linkplain VmThreadMap thread map}.
+     *
+     *   0: denotes the primordial thread
+     *  >0: denotes a VmThread
+     *  <0: denotes a native thread
      *
      * @see VmThread#id()
      */
@@ -287,13 +323,21 @@ public class VmThreadLocal {
     }
 
     /**
+     * A bit map denoting the thread locals that are GC roots. Bit {@code n} is set in
+     * this map if the thread local with {@link #index} {@code n} is a reference.
+     *
+     * If there is ever a reference-type thread local with an index > 63, then an
+     * encoding larger than a long will be required.
+     */
+    private static long REFERENCE_MAP;
+
+    /**
      * Performs various initialization that can only be done once all the VM thread locals have
      * been created and registered with this class.
      */
     @HOSTED_ONLY
     public static void completeInitialization() {
         assert valuesNeedingInitialization == null : "Cannot call completeInitialization() more than once";
-        final AppendableSequence<VmThreadLocal> referenceVmThreadLocals = new ArrayListSequence<VmThreadLocal>();
         try {
             final AppendableSequence<VmThreadLocal> valuesNeedingInitialization = new ArrayListSequence<VmThreadLocal>();
             final Method emptyInitializeMethod = VmThreadLocal.class.getMethod("initialize");
@@ -302,14 +346,14 @@ public class VmThreadLocal {
                     valuesNeedingInitialization.append(value);
                 }
                 if (value.isReference) {
-                    referenceVmThreadLocals.append(value);
+                    assert value.index <= 63 : "Need larger reference map for thread locals";
+                    REFERENCE_MAP |= 1L << value.index;
                 }
             }
             VmThreadLocal.valuesNeedingInitialization = Sequence.Static.toArray(valuesNeedingInitialization, VmThreadLocal.class);
         } catch (NoSuchMethodException e) {
             throw ProgramError.unexpected(e);
         }
-        StackReferenceMapPreparer.setVmThreadLocalGCRoots(Sequence.Static.toArray(referenceVmThreadLocals, VmThreadLocal.class));
     }
 
     @HOSTED_ONLY
@@ -381,6 +425,45 @@ public class VmThreadLocal {
                                                                                 VMRegister.getAbiFramePointer(), true);
     }
 
+    private static void scanThreadLocals(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
+        Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+
+        if (Heap.traceRootScanning()) {
+            Log.println("  Thread locals:");
+        }
+        int index = 0;
+        long map = REFERENCE_MAP;
+        while (map != 0) {
+            if ((map & 1) != 0) {
+                wordPointerIndexVisitor.visit(enabledVmThreadLocals, index);
+                wordPointerIndexVisitor.visit(disabledVmThreadLocals, index);
+                wordPointerIndexVisitor.visit(triggeredVmThreadLocals, index);
+                if (Heap.traceRootScanning()) {
+                    traceReferenceThreadLocal(enabledVmThreadLocals, index, " (enabled)");
+                    traceReferenceThreadLocal(disabledVmThreadLocals, index, " (disabled)");
+                    traceReferenceThreadLocal(triggeredVmThreadLocals, index, " (triggered)");
+                }
+            }
+            index++;
+            map = map >>> 1;
+        }
+    }
+
+    private static void traceReferenceThreadLocal(Pointer vmThreadLocals, int index, String categorySuffix) {
+        Log.print("    index=");
+        Log.print(index);
+        Log.print(", address=");
+        Pointer address = vmThreadLocals.plus(index * Word.size());
+        Log.print(address);
+        Log.print(", value=");
+        Log.print(address.readWord(0));
+        Log.print(", name=");
+        Log.print(values().get(index).name);
+        Log.println(categorySuffix);
+    }
+
     /**
      * Scan all references on the stack, including the VM thread locals, including stored register values.
      *
@@ -410,7 +493,7 @@ public class VmThreadLocal {
         boolean lockDisabledSafepoints = false;
         if (Heap.traceRootScanning()) {
             lockDisabledSafepoints = Log.lock(); // Note: as a side effect, this lock serializes stack reference map scanning
-            Log.print("Scanning stack reference map for thread ");
+            Log.print("Scanning roots for thread ");
             Log.printThread(vmThread, false);
             Log.println(":");
             Log.print("  Highest slot: ");
@@ -421,7 +504,7 @@ public class VmThreadLocal {
             Log.println(lowestSlot);
         }
 
-        StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestSlot, vmThreadLocalsEnd(vmThreadLocals), wordPointerIndexVisitor);
+        scanThreadLocals(vmThreadLocals, wordPointerIndexVisitor);
         StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestActiveSlot, highestSlot, wordPointerIndexVisitor);
 
         if (Heap.traceRootScanning()) {
@@ -466,7 +549,7 @@ public class VmThreadLocal {
      * Prints the value of this thread local to a given log stream.
      *
      * @param out the log stream to which the value will be printed
-     * @param vmThreadLocals the TLS area from which to read the value of this thread local
+     * @param vmThreadLocals the TLA from which to read the value of this thread local
      * @param prefixName if true, then the name of this thread local plus ": " will be printed before the value
      */
     public void log(LogPrintStream out, Pointer vmThreadLocals, boolean prefixName) {

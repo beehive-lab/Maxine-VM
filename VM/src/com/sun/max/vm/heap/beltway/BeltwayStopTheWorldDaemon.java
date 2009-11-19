@@ -139,8 +139,8 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
         public void run() {
             synchronized (VmThreadMap.ACTIVE) {
                 BeltwayHeapScheme.inGC = true;
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, triggerSafepoint);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, waitUntilNonMutating);
+                VmThreadMap.ACTIVE.forAllThreadLocals(isNotGCThreadLocalsOrCurrent, triggerSafepoint);
+                VmThreadMap.ACTIVE.forAllThreadLocals(isNotGCThreadLocalsOrCurrent, waitUntilNonMutating);
                 /*
                  * FIXME:
                 if (BeltwayConfiguration.useTLABS) {
@@ -150,11 +150,11 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
                 if (BeltwayConfiguration.useGCTlabs) {
                     VmThreadMap.ACTIVE.forAllVmThreads(isGCOrStopTheWorldDaemonThread, tlabScavengerReset);
                 }*/
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(isGCThread, prepareGCThreadStackMap);
+                VmThreadMap.ACTIVE.forAllThreadLocals(isGCThread, prepareGCThreadStackMap);
                 VmThreadLocal.prepareCurrentStackReferenceMap();
                 procedure.run();
                 BeltwayHeapScheme.inGC = false;
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(isNotGCThreadLocalsOrCurrent, resetSafepoint);
+                VmThreadMap.ACTIVE.forAllThreadLocals(isNotGCThreadLocalsOrCurrent, resetSafepoint);
             }
         }
 

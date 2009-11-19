@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
 
 /**

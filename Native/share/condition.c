@@ -88,6 +88,12 @@ boolean condition_wait(Condition condition, Mutex mutex) {
     error = pthread_cond_wait(condition, mutex);
 #elif os_SOLARIS
     error = cond_wait(condition, mutex);
+    if (error == EINTR) {
+#if log_MONITORS
+        log_println("condition_wait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
+#endif
+        return true;
+    }
 #elif os_GUESTVMXEN
     error = guestvmXen_condition_wait(*condition, *mutex, 0);
     if (error == 1) {

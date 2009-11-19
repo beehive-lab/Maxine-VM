@@ -422,7 +422,7 @@ public class JavaMonitorManager {
      */
     private static void unbindUnownedMonitors() {
         // Mark all protected monitors
-        VmThreadMap.ACTIVE.forAllVmThreads(null, protectedMonitorGatherer);
+        VmThreadMap.ACTIVE.forAllThreads(null, protectedMonitorGatherer);
         // Deflate all non-protected and non-sticky monitors with no owner
         for (int i = 0; i < numberOfBindableMonitors; i++) {
             final ManagedMonitor monitor = bindableMonitors[i];

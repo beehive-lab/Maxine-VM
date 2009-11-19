@@ -208,8 +208,8 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         }
         log_println("SIGNAL: %0d [%s]", signal, sigName);
     }
-    ThreadLocals tl = thread_currentThreadLocals();
-    NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
+    ThreadLocals tl = threadLocals_current();
+    NativeThreadLocals ntl = nativeThreadLocals_current();
     if (ntl == 0) {
         log_exit(-22, "could not find native thread locals in trap handler");
     }
@@ -239,11 +239,11 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize && !primordial) {
         if (faultAddress < ntl->stackYellowZone) {
             /* The faultAddress is in the red zone; we shouldn't be alive */
-            virtualMemory_unprotectPage(ntl->stackRedZone);
+            virtualMemory_unprotectPages(ntl->stackRedZone, STACK_RED_ZONE_PAGES);
             trapNumber = STACK_FATAL;
         } else if (faultAddress < ntl->stackYellowZone + virtualMemory_getPageSize()) {
             /* the faultAddress is in the yellow zone; assume this is a stack fault. */
-            virtualMemory_unprotectPage(ntl->stackYellowZone);
+            virtualMemory_unprotectPages(ntl->stackYellowZone, STACK_YELLOW_ZONE_PAGES);
             trapNumber = STACK_FAULT;
         } else {
             blueZoneTrap(ntl);

@@ -49,6 +49,6 @@ extern unsigned int virtualMemory_getPageSize(void);
 
 extern Address virtualMemory_pageAlign(Address address);
 
-extern void virtualMemory_protectPage(Address address);
-extern void virtualMemory_unprotectPage(Address address);
+extern void virtualMemory_protectPages(Address address, int count);
+extern void virtualMemory_unprotectPages(Address address, int count);
 #endif /*__virtualMemory_h__*/

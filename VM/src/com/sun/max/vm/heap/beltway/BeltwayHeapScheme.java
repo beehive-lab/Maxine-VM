@@ -490,7 +490,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     }
 
     protected void resetTLABs() {
-        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, resetTLAB);
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
     }
 
     /**

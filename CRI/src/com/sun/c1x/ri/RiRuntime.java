@@ -21,8 +21,6 @@
 package com.sun.c1x.ri;
 
 import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiLocation;
-import com.sun.c1x.ci.CiRegister;
 import com.sun.c1x.ci.CiTargetMethod;
 
 /**

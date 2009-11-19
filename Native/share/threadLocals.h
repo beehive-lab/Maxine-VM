@@ -29,34 +29,96 @@
 #include "os.h"
 #include "word.h"
 
+/*
+ * A thread locals block is a block of memory allocated on a page boundary (e.g. by valloc(3c)).
+ * It contains all the Vm and native thread local data for a thread.
+ * This block of memory is laid out as follows:
+ *
+ * (low addresses)
+ *
+ *           page aligned --> +---------------------------------------------+ <-- threadLocalsBlock_current()
+ *                            | X X X          unmapped page          X X X |
+ *                            | X X X                                 X X X |
+ *           page aligned --> +---------------------------------------------+
+ *                            |           thread locals (triggered)         |
+ *                            +---------------------------------------------+ <-- threadLocals_current()
+ *                            |           thread locals (enabled)           |
+ *                            +---------------------------------------------+
+ *                            |           thread locals (disabled)          |
+ *                            +---------------------------------------------+  <-- nativeThreadLocals_current()
+ *                            |           NativeThreadLocalsStruct          |
+ *                            +---------------------------------------------+
+ *                            |               Java frame anchor             |
+ *                            +---------------------------------------------+
+ *                            |                                             |
+ *                            |               reference map                 |
+ *                            |                                             |
+ *                            +---------------------------------------------+
+ *
+ * (high addresses)
+ *
+ */
+
+#define THREAD_LOCALS_FROM_TLBLOCK(tlBlock)        ((ThreadLocals)       (tlBlock + virtualMemory_getPageSize() - sizeof(Address) +  threadLocalsSize()))
+#define NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock) ((NativeThreadLocals) (tlBlock + virtualMemory_getPageSize() - sizeof(Address) + (threadLocalsSize() * 3)))
+
 extern void threadLocals_initialize(int threadLocalsSize, int javaFrameAnchorSize);
 
+extern Address threadLocalsBlock_create(jint id, Address *refMap);
+extern void threadLocalsBlock_destroy(Address tlBlock);
+
 /**
- * The indexes of the VM thread locals accessed by native code.
+ * The names and indexes of the VM thread locals accessed by native code.
  *
  * These values must be kept in sync with those declared in VmThreadLocals.java.
- * The boot image includes a copy of these values so that they can be checked at image load time.
+ * The boot image includes a copy of these values that are checked at image load time.
  *
  * All reads/write to these thread locals should use the 'getThreadLocal()' and 'setThreadLocal()' macros below.
  */
+#define FOR_ALL_THREAD_LOCALS(macro) \
+    macro(SAFEPOINT_LATCH, 0) \
+    macro(SAFEPOINTS_ENABLED_THREAD_LOCALS, 1) \
+    macro(SAFEPOINTS_DISABLED_THREAD_LOCALS, 2) \
+    macro(SAFEPOINTS_TRIGGERED_THREAD_LOCALS, 3) \
+    macro(NATIVE_THREAD_LOCALS, 4) \
+    macro(FORWARD_LINK, 5) \
+    macro(BACKWARD_LINK, 6) \
+    macro(ID, 9) \
+    macro(JNI_ENV, 11) \
+    macro(LAST_JAVA_FRAME_ANCHOR, 12) \
+    macro(TRAP_NUMBER, 15) \
+    macro(TRAP_INSTRUCTION_POINTER, 16) \
+    macro(TRAP_FAULT_ADDRESS, 17) \
+    macro(TRAP_LATCH_REGISTER, 18)
+
+#define DECLARE_THREAD_LOCAL(name, index) name = index,
 typedef enum ThreadLocal {
-    SAFEPOINT_LATCH = 0,
-    SAFEPOINTS_ENABLED_THREAD_LOCALS = 1,
-    SAFEPOINTS_DISABLED_THREAD_LOCALS = 2,
-    SAFEPOINTS_TRIGGERED_THREAD_LOCALS = 3,
-    NATIVE_THREAD_LOCALS = 4,
-    FORWARD_LINK = 5,
-    BACKWARD_LINK = 6,
-    ID = 9,
-    JNI_ENV = 11,
-    LAST_JAVA_FRAME_ANCHOR = 12,
-    TRAP_NUMBER = 15,
-    TRAP_INSTRUCTION_POINTER = 16,
-    TRAP_FAULT_ADDRESS = 17,
-    TRAP_LATCH_REGISTER = 18
+    FOR_ALL_THREAD_LOCALS(DECLARE_THREAD_LOCAL)
 } ThreadLocal_t;
 
+/**
+ * This typedef is only to clarify intent when using thread locals.
+ */
 typedef Address ThreadLocals;
+
+/**
+ * Gets the block of memory allocated for the native and VM thread locals associated with the current thread.
+ *
+ * This value is accessed via the native thread library's thread locals mechanism (e.g. pthread_getspecific(3c)).
+ */
+extern Address threadLocalsBlock_current(void);
+
+/**
+ * Sets the block of memory allocated for the native and VM thread locals associated with the current thread.
+ *
+ * This value is accessed via the native thread library's thread locals mechanism (e.g. pthread_setspecific(3c)).
+ */
+extern void threadLocalsBlock_setCurrent(Address tlBlock);
+
+/**
+ * Gets a pointer to the safepoints-enabled copy of thread locals associated with the current thread.
+ */
+extern ThreadLocals threadLocals_current(void);
 
 /**
  * Gets the size of the storage required for a set of thread locals.
@@ -110,12 +172,8 @@ extern int javaFrameAnchorSize();
 } while (0)
 
 typedef struct {
-    jint id; //  0: denotes the primordial thread
-             // >0: denotes a VmThread
-             // <0: denotes a native thread
     Address stackBase;
     Size stackSize;
-    Address refMapArea;
     Address stackYellowZone; // unmapped to cause a trap on access
     Address stackRedZone;    // unmapped always - fatal exit if accessed
 
@@ -131,6 +189,11 @@ typedef struct {
      */
     void *osData;  //
 } NativeThreadLocalsStruct, *NativeThreadLocals;
+
+/**
+ * Gets a pointer to NativeThreadLocalsStruct associated with the current thread.
+ */
+extern NativeThreadLocals nativeThreadLocals_current(void);
 
 /**
  * Prints a selection of the fields in a given ThreadLocals object.

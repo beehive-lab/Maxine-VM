@@ -27,7 +27,6 @@ import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.lir.*;
