@@ -35,26 +35,26 @@ public abstract class UnsafeRawOp extends UnsafeOp {
 
     /**
      * Creates a new UnsafeRawOp instruction.
-     * @param basicType the basic type of the operation
+     * @param opKind the kind of the operation
      * @param addr the instruction generating the base address (a long)
      * @param isStore <code>true</code> if this operation is a store
      */
-    public UnsafeRawOp(CiKind basicType, Value addr, boolean isStore) {
-        super(basicType, isStore);
+    public UnsafeRawOp(CiKind opKind, Value addr, boolean isStore) {
+        super(opKind, isStore);
         assert addr == null || addr.kind == CiKind.Long;
         base = addr;
     }
 
     /**
      * Creates a new UnsafeRawOp instruction.
-     * @param basicType the basic type of the operation
+     * @param opKind the kind of the operation
      * @param addr the instruction generating the base address (a long)
      * @param index the instruction generating the index
      * @param log2scale the log base 2 of the scaling factor
      * @param isStore <code>true</code> if this operation is a store
      */
-    public UnsafeRawOp(CiKind basicType, Value addr, Value index, int log2scale, boolean isStore) {
-        this(basicType, addr, isStore);
+    public UnsafeRawOp(CiKind opKind, Value addr, Value index, int log2scale, boolean isStore) {
+        this(opKind, addr, isStore);
         this.base = addr;
         this.index = index;
         this.log2Scale = log2scale;

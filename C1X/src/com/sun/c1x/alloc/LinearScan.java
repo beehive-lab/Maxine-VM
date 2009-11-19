@@ -1123,7 +1123,7 @@ public class LinearScan {
             CiKind oprType = registerKind(opr);
             if (oprType == CiKind.Float || oprType == CiKind.Double) {
                 if ((C1XOptions.SSEVersion == 1 && oprType == CiKind.Float) || C1XOptions.SSEVersion >= 2) {
-                    // SSE float instruction (BasicType.Double only supported with SSE2)
+                    // SSE float instruction (CiKind.Double only supported with SSE2)
                     switch (op.code) {
                         case Cmp:
                         case Add:
@@ -2981,7 +2981,7 @@ public class LinearScan {
             case Word:
                 return (compilation.target.arch.is64bit()) ? 2 : 1;
         }
-        throw new IllegalArgumentException("invalid BasicType " + this + " for .sizeInBytes()");
+        throw new IllegalArgumentException("invalid kind " + this + " for .sizeInBytes()");
     }
 
     // TODO: Platform specific!!

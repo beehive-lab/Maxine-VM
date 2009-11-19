@@ -54,38 +54,38 @@ public class LIRAddress extends LIROperand {
     private final int displacement;
 
     /**
-     * Creates a new LIRAddress with the specified base address, index, and basic type.
+     * Creates a new LIRAddress with the specified base address, index, and kind.
      *
      * @param base the LIROperand representing the base address
      * @param index the LIROperand representing the index
-     * @param basicType the basic type of the resulting operand
+     * @param kind the kind of the resulting operand
      */
-    public LIRAddress(LIRLocation base, LIRLocation index, CiKind basicType) {
-        this(base, index, Scale.Times1, 0, basicType);
+    public LIRAddress(LIRLocation base, LIRLocation index, CiKind kind) {
+        this(base, index, Scale.Times1, 0, kind);
     }
 
     /**
-     * Creates a new LIRAddress with the specified base address, displacement, and basic type.
+     * Creates a new LIRAddress with the specified base address, displacement, and kind.
      *
      * @param base the LIROperand representing the base address
      * @param displacement the constant displacement from the base address
-     * @param basicType the basic type of the resulting operand
+     * @param kind the kind of the resulting operand
      */
-    public LIRAddress(LIRLocation base, int displacement, CiKind basicType) {
-        this(base, LIROperandFactory.IllegalLocation, Scale.Times1, displacement, basicType);
+    public LIRAddress(LIRLocation base, int displacement, CiKind kind) {
+        this(base, LIROperandFactory.IllegalLocation, Scale.Times1, displacement, kind);
     }
 
     /**
-     * Creates a new LIRAddress with the specified base address, index, and basic type.
+     * Creates a new LIRAddress with the specified base address, index, and kind.
      *
      * @param base the LIROperand representing the base address
      * @param index the LIROperand representing the index
      * @param scale the scaling factor for the index
      * @param displacement the constant displacement from the base address
-     * @param basicType the basic type of the resulting operand
+     * @param kind the kind of the resulting operand
      */
-    public LIRAddress(LIRLocation base, LIRLocation index, Scale scale, int displacement, CiKind basicType) {
-        super(basicType);
+    public LIRAddress(LIRLocation base, LIRLocation index, Scale scale, int displacement, CiKind kind) {
+        super(kind);
         this.base = base;
         this.index = index;
         this.scale = scale;

@@ -654,8 +654,8 @@ public class Canonicalizer extends ValueVisitor {
                 CiConstant result = foldInvocation(i.target(), i.arguments());
                 if (result != null) {
                     // folding was successful
-                    CiKind basicType = method.signatureType().returnBasicType();
-                    setCanonical(new Constant(new CiConstant(basicType, result)));
+                    CiKind kind = method.signatureType().returnKind();
+                    setCanonical(new Constant(new CiConstant(kind, result)));
                 }
             }
         }
@@ -738,10 +738,10 @@ public class Canonicalizer extends ValueVisitor {
             // try to convert a call to Array.newInstance() into a NewObjectArray or NewTypeArray
             RiType type = asRiType(args[0]);
             if (type != null) {
-                if (type.basicType() == CiKind.Object) {
+                if (type.kind() == CiKind.Object) {
                     setCanonical(new NewObjectArray(type, args[1], i.stateBefore(), '\0', null));
                 } else {
-                    setCanonical(new NewTypeArray(args[1], type.basicType(), i.stateBefore()));
+                    setCanonical(new NewTypeArray(args[1], type.kind(), i.stateBefore()));
                 }
                 return;
             }
@@ -1246,10 +1246,10 @@ public class Canonicalizer extends ValueVisitor {
             try {
                 // attempt to invoke the method
                 Object result = reflectMethod.invoke(recvr, argArray);
-                CiKind basicType = method.signatureType().returnBasicType();
+                CiKind kind = method.signatureType().returnKind();
                 // set the result of this instruction to be the result of invocation
                 C1XMetrics.MethodsFolded++;
-                return new CiConstant(basicType, result);
+                return new CiConstant(kind, result);
                 // note that for void, we will have a void constant with value null
             } catch (IllegalAccessException e) {
                 // folding failed; too bad

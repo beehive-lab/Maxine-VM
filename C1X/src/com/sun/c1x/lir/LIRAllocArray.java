@@ -95,7 +95,7 @@ public class LIRAllocArray extends LIRInstruction {
     }
 
     /**
-     * Gets the basic type of this instruction.
+     * Gets the type of this instruction.
      *
      * @return the type
      */
