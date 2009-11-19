@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.ri.RiType;
+import com.sun.c1x.ri.RiRuntime;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiConstant;
@@ -348,5 +349,15 @@ public abstract class Value {
      * @param v the visitor to accept
      */
     public abstract void accept(ValueVisitor v);
+
+    public static RiType exactType(Value value, RiRuntime runtime) {
+        if (value.isConstant()) {
+            Object obj = value.asConstant().asObject();
+            if (obj != null) {
+                return runtime.getRiType(obj.getClass());
+            }
+        }
+        return value.exactType();
+    }
 
 }

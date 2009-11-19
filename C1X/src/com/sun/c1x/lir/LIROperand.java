@@ -21,7 +21,6 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.util.*;
 
 /**
  * The <code>LIROperand</code> class represents an operand, either
@@ -51,15 +50,15 @@ public class LIROperand {
         return isVirtualCpu();
     }
 
-    public boolean isConstant() {
+    public final boolean isConstant() {
         return this instanceof LIRConstant;
     }
 
-    public boolean isAddress() {
+    public final boolean isAddress() {
         return this instanceof LIRAddress;
     }
 
-    public boolean isLocation() {
+    public final boolean isLocation() {
         return this instanceof LIRLocation;
     }
 

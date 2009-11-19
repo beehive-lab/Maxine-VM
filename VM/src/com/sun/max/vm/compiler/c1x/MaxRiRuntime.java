@@ -344,4 +344,12 @@ public class MaxRiRuntime implements RiRuntime {
         // TODO: using target is probably necessary here
         return canonicalRiType(ClassActor.fromJava(javaClass), globalConstantPool, -1);
     }
+
+    public boolean isObjectArrayType(RiType type) {
+        if (type.isLoaded()) {
+            ClassActor c = ((MaxRiType) type).asClassActor("equals Object[]");
+            return c.isArrayClassActor() && c == ClassActor.fromJava(Object[].class);
+        }
+        return false;
+    }
 }

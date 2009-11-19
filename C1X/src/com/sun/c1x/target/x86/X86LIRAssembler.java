@@ -58,20 +58,22 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     private boolean isLiteralAddress(LIRAddress addr) {
-        return addr.base().isIllegal() && addr.index().isIllegal();
+        return addr.base.isIllegal() && addr.index.isIllegal();
     }
 
     private Address asAddress(LIRAddress addr) {
         assert !addr.base.isIllegal();
-        CiRegister base = addr.base().asPointerRegister(compilation.target.arch);
+        CiRegister base = addr.base.asPointerRegister(compilation.target.arch);
 
-        if (addr.index().isIllegal()) {
-            return new Address(base, addr.displacement());
-        } else if (addr.index().isRegister()) {
-            CiRegister index = addr.index().asPointerRegister(compilation.target.arch);
-            return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale().ordinal()), addr.displacement());
+        if (addr.index.isIllegal()) {
+            return new Address(base, addr.displacement);
         } else {
-            throw Util.shouldNotReachHere();
+            if (addr.index.isRegister()) {
+                CiRegister index = addr.index.asPointerRegister(compilation.target.arch);
+                return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale.ordinal()), addr.displacement);
+            } else {
+                throw Util.shouldNotReachHere();
+            }
         }
     }
 
@@ -429,10 +431,10 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (compilation.target.arch.is64bit()) {
                     masm.movptr(asAddressLo(toAddr), fromLo);
                 } else {
-                    CiRegister base = toAddr.base().asRegister();
+                    CiRegister base = toAddr.base.asRegister();
                     CiRegister index = CiRegister.None;
-                    if (toAddr.index().isRegister()) {
-                        index = toAddr.index().asRegister();
+                    if (toAddr.index.isRegister()) {
+                        index = toAddr.index.asRegister();
                     }
                     if (base == fromLo || index == fromLo) {
                         assert base != fromHi : "can't be";
@@ -651,10 +653,10 @@ public class X86LIRAssembler extends LIRAssembler {
                 if (compilation.target.arch.is64bit()) {
                     masm.movptr(toLo, asAddressLo(addr));
                 } else {
-                    CiRegister base = addr.base().asRegister();
+                    CiRegister base = addr.base.asRegister();
                     CiRegister index = CiRegister.None;
-                    if (addr.index().isRegister()) {
-                        index = addr.index().asRegister();
+                    if (addr.index.isRegister()) {
+                        index = addr.index.asRegister();
                     }
                     if ((base == toLo && index == toHi) || (base == toHi && index == toLo)) {
                         // addresses with 2 registers are only formed as a result of

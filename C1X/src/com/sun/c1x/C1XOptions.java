@@ -103,6 +103,7 @@ public class C1XOptions {
     public static boolean CanonicalizeObjectCheckCast        = true;
     public static boolean CanonicalizeObjectInstanceOf       = true;
     public static boolean CanonicalizeFoldableMethods        = true;
+    public static boolean CanonicalizeArrayStoreChecks       = true;
 
     // all optimization settings
     public static boolean OptCanonicalize;
