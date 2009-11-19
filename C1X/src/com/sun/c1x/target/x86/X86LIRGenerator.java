@@ -27,9 +27,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.Value.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
@@ -91,10 +89,10 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected boolean canInlineAsConstant(Value v) {
-        if (v.type() == CiKind.Long) {
+        if (v.kind == CiKind.Long) {
             return false;
         }
-        return v.type() != CiKind.Object || (v.isConstant() && v.asConstant().asObject() == null);
+        return v.kind != CiKind.Object || (v.isConstant() && v.asConstant().asObject() == null);
     }
 
     @Override
@@ -310,7 +308,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.x(), this);
         value.setDestroysRegister();
         value.loadItem();
-        LIROperand reg = newRegister(x.type());
+        LIROperand reg = newRegister(x.kind);
         lir.negate(value.result(), reg);
         setResult(x, reg);
     }
@@ -337,11 +335,11 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg;
 
         if (x.opcode() == Bytecodes.FREM) {
-            reg = callRuntime(new CiKind[]{CiKind.Float, CiKind.Float}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticFrem, CiKind.Float, null);
+            reg = callRuntime(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
         } else if (x.opcode() == Bytecodes.DREM) {
-            reg = callRuntime(new CiKind[]{CiKind.Double, CiKind.Double}, Arrays.asList(left.result(), right.result()), CiRuntimeCall.ArithmeticDrem, CiKind.Double, null);
+            reg = callRuntime(CiRuntimeCall.ArithmeticDrem, null, left.result(), right.result());
         } else {
-            reg = newRegister(x.type());
+            reg = newRegister(x.kind);
             arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), LIROperandFactory.IllegalLocation);
         }
 
@@ -362,7 +360,8 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     public void visitArithmeticOpLong(ArithmeticOp x) {
-        if (x.opcode() == Bytecodes.LDIV || x.opcode() == Bytecodes.LREM) {
+        int opcode = x.opcode();
+        if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM) {
             // long division is implemented as a direct call into the runtime
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
@@ -372,39 +371,24 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             CallingConvention cc = compilation.frameMap().runtimeCallingConvention(BASIC_TYPES_LONG_LONG);
 
-            // check for division by zero (destroys registers of right operand!)
-            LIRDebugInfo info = null;
-            if (!x.checkFlag(Flag.NoZeroCheck)) {
-                info = stateFor(x);
-            }
-
-            LIROperand resultReg = resultRegisterFor(x.type());
+            LIROperand resultReg = resultRegisterFor(x.kind);
             left.loadItemForce(cc.operands[0]);
             right.loadItem();
 
             lir.move(right.result(), cc.operands[1]);
 
-            if (!x.checkFlag(Flag.NoZeroCheck)) {
+            if (x.needsZeroCheck()) {
+                // check for division by zero (destroys registers of right operand!)
+                LIRDebugInfo info = stateFor(x);
                 lir.cmp(LIRCondition.Equal, right.result(), LIROperandFactory.longConst(0));
                 lir.branch(LIRCondition.Equal, CiKind.Long, new DivByZeroStub(info));
             }
 
-            CiRuntimeCall entry;
-            switch (x.opcode()) {
-                case Bytecodes.LREM:
-                    entry = CiRuntimeCall.ArithmethicLrem;
-                    break; // check if dividend is 0 is done elsewhere
-                case Bytecodes.LDIV:
-                    entry = CiRuntimeCall.ArithmeticLdiv;
-                    break; // check if dividend is 0 is done elsewhere
-                default:
-                    throw Util.shouldNotReachHere();
-            }
-
+            CiRuntimeCall runtimeCall = opcode == Bytecodes.LREM ? CiRuntimeCall.ArithmethicLrem : CiRuntimeCall.ArithmeticLdiv;
             LIROperand result = rlockResult(x);
-            lir.callRuntime(entry, resultReg, Arrays.asList(cc.operands), null);
+            lir.callRuntime(runtimeCall, resultReg, Arrays.asList(cc.operands), null);
             lir.move(resultReg, result);
-        } else if (x.opcode() == Bytecodes.LMUL) {
+        } else if (opcode == Bytecodes.LMUL) {
             // missing test if instr is commutative and if we should swap
             LIRItem left = new LIRItem(x.x(), this);
             LIRItem right = new LIRItem(x.y(), this);
@@ -417,7 +401,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             right.loadItem();
 
             LIROperand reg = long0Opr(compilation.target.arch);
-            arithmeticOpLong(x.opcode(), reg, left.result(), right.result(), null);
+            arithmeticOpLong(opcode, reg, left.result(), right.result(), null);
             LIROperand result = rlockResult(x);
             lir.move(reg, result);
         } else {
@@ -429,7 +413,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // don't load constants to save register
             right.loadNonconstant();
             rlockResult(x);
-            arithmeticOpLong(x.opcode(), x.operand(), left.result(), right.result(), null);
+            arithmeticOpLong(opcode, x.operand(), left.result(), right.result(), null);
         }
     }
 
@@ -453,7 +437,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // correct debug info. Otherwise the live range of the fix
             // register might be too long.
             LIRDebugInfo info = null;
-            if (!x.checkFlag(Flag.NoZeroCheck)) {
+            if (x.needsZeroCheck()) {
                 info = stateFor(x);
             }
 
@@ -469,7 +453,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 resultReg = remOutOpr();
             }
 
-            if (!C1XOptions.UseImplicitDiv0Checks && !x.checkFlag(Flag.NoZeroCheck)) {
+            if (!C1XOptions.UseImplicitDiv0Checks && x.needsZeroCheck()) {
                 lir.cmp(LIRCondition.Equal, right.result(), LIROperandFactory.intConst(0));
                 lir.branch(LIRCondition.Equal, CiKind.Int, new DivByZeroStub(info));
                  // don't need code emit info when using explicit checks
@@ -537,8 +521,8 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitArithmeticOp(ArithmeticOp x) {
         trySwap(x);
 
-        assert x.x().type() == x.type() && x.y().type() == x.type() : "wrong parameters";
-        switch (x.type()) {
+        assert x.x().kind == x.kind && x.y().kind == x.kind : "wrong parameter types";
+        switch (x.kind) {
             case Float:
             case Double:
                 visitArithmeticOpFPU(x);
@@ -559,7 +543,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.x(), this);
         LIRItem count = new LIRItem(x.y(), this);
 
-        boolean mustLoadCount = !count.isConstant() || x.type() == CiKind.Long;
+        boolean mustLoadCount = !count.isConstant() || x.kind == CiKind.Long;
         if (mustLoadCount) {
             // count for long must be in register
             count.loadItemForce(shiftCountOpr());
@@ -592,17 +576,17 @@ public final class X86LIRGenerator extends LIRGenerator {
     public void visitCompareOp(CompareOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
-        if (x.x().type().isLong()) {
+        if (x.x().kind.isLong()) {
             left.setDestroysRegister();
         }
         left.loadItem();
         right.loadItem();
         LIROperand reg = rlockResult(x);
 
-        if (x.x().type().isFloat() || x.x().type().isDouble()) {
+        if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
             int code = x.opcode();
             lir.fcmp2int(left.result(), right.result(), reg, (code == Bytecodes.FCMPL || code == Bytecodes.DCMPL));
-        } else if (x.x().type().isLong()) {
+        } else if (x.x().kind.isLong()) {
             lir.lcmp2int(left.result(), right.result(), reg);
         } else {
             // Is Unimplemented in C1
@@ -661,10 +645,10 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem cmp = new LIRItem(x.argumentAt(2), this); // value to compare with field
         LIRItem val = new LIRItem(x.argumentAt(3), this); // replace field with val if matches cmp
 
-        assert obj.value().type().isObject() : "invalid type";
+        assert obj.value().kind.isObject() : "invalid type";
 
-        assert cmp.value().type() == type : "invalid type";
-        assert val.value().type() == type : "invalid type";
+        assert cmp.value().kind == type : "invalid type";
+        assert val.value().kind == type : "invalid type";
 
         // get address of field
         obj.loadItem();
@@ -731,19 +715,19 @@ public final class X86LIRGenerator extends LIRGenerator {
                 lir.sqrt(calcInput, calcResult, LIROperandFactory.IllegalLocation);
                 break;
             case java_lang_Math$sin:
-                callRuntime(new CiKind[]{CiKind.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticSin, CiKind.Float, null);
+                callRuntime(CiRuntimeCall.ArithmeticSin, null, calcInput);
                 break;
             case java_lang_Math$cos:
-                callRuntime(new CiKind[]{CiKind.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticCos, CiKind.Float, null);
+                callRuntime(CiRuntimeCall.ArithmeticCos, null, calcInput);
                 break;
             case java_lang_Math$tan:
-                callRuntime(new CiKind[]{CiKind.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticTan, CiKind.Float, null);
+                callRuntime(CiRuntimeCall.ArithmeticTan, null, calcInput);
                 break;
             case java_lang_Math$log:
-                callRuntime(new CiKind[]{CiKind.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticLog, CiKind.Float, null);
+                callRuntime(CiRuntimeCall.ArithmeticLog, null, calcInput);
                 break;
             case java_lang_Math$log10:
-                callRuntime(new CiKind[]{CiKind.Float}, Arrays.asList(calcInput), CiRuntimeCall.ArithmeticLog10, CiKind.Float, null);
+                callRuntime(CiRuntimeCall.ArithmeticLog10, null, calcInput);
                 break;
             default:
                 Util.shouldNotReachHere();
@@ -756,7 +740,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem value = new LIRItem(x.value(), this);
         value.loadItem();
         LIROperand input = value.result();
-        LIROperand result = newRegister(x.type());
+        LIROperand result = newRegister(x.kind);
 
         // arguments of lirConvert
         lir.convert(x.opcode(), input, result);
@@ -767,7 +751,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void genNewInstance(NewInstance x) {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
-        LIROperand reg = resultRegisterFor(x.type());
+        LIROperand reg = resultRegisterFor(x.kind);
         LIROperand klassReg = LIROperandFactory.singleLocation(CiKind.Object, X86.rdx);
 
         RiType klass = x.instanceClass();
@@ -778,7 +762,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         // If klass is not loaded we do not know if the klass has finalizers:
-        CodeStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, null);
+        LocalStub slowPath = new NewInstanceStub(klassReg, reg, klass, info, null);
         lir.branch(LIRCondition.Always, CiKind.Illegal, slowPath);
         lir.branchDestination(slowPath.continuation);
 
@@ -791,7 +775,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
         LIRItem length = new LIRItem(x.length(), this);
         length.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rbx));
-        LIROperand reg = emitNewTypeArray(x.type(), x.elementKind(), length.result(), info);
+        LIROperand reg = emitNewTypeArray(x.kind, x.elementKind(), length.result(), info);
         LIROperand result = rlockResult(x);
         lir.move(reg, result);
     }
@@ -808,7 +792,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         lir.oop2reg(compilation.runtime.primitiveArrayType(elemType).getEncoding(RiType.Representation.ObjectHub).asObject(), klassReg);
 
-        CodeStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
+        LocalStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
         lir.allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
         return reg;
     }
@@ -826,7 +810,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         LIRDebugInfo info = stateFor(x, x.stateBefore());
 
-        LIROperand reg = resultRegisterFor(x.type());
+        LIROperand reg = resultRegisterFor(x.kind);
         LIROperand tmp1 = LIROperandFactory.singleLocation(CiKind.Object, X86.rcx);
         LIROperand tmp2 = LIROperandFactory.singleLocation(CiKind.Object, X86.rsi);
         LIROperand tmp3 = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
@@ -836,7 +820,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         length.loadItemForce(LIROperandFactory.singleLocation(CiKind.Int, X86.rbx));
         LIROperand len = length.result();
 
-        CodeStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
+        LocalStub slowPath = new NewObjectArrayStub(klassReg, len, reg, info);
         RiType elementType = x.elementClass().arrayOf();
         if (elementType.isLoaded()) {
             Object obj = elementType.getEncoding(RiType.Representation.ObjectHub).asObject();
@@ -895,7 +879,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // Create a new code emit info as they must not be shared!
         LIRDebugInfo info2 = stateFor(x, x.stateBefore());
-        LIROperand reg = resultRegisterFor(x.type());
+        LIROperand reg = resultRegisterFor(x.kind);
         lir.callRuntimeCalleeSaved(CiRuntimeCall.NewMultiArray, reg, arguments, info2);
 
         // Save result
@@ -918,7 +902,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         // info for exceptions
         LIRDebugInfo infoForException = stateFor(x, x.stateBefore().copyLocks());
 
-        CodeStub stub = new CheckCastStub(obj.result(), infoForException);
+        LocalStub stub = new CheckCastStub(obj.result(), infoForException);
         LIROperand reg = rlockResult(x);
         lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), LIROperandFactory.IllegalLocation, LIROperandFactory.IllegalLocation,
                         x.directCompare(), infoForException, patchingInfo, stub, x.profiledMethod(),
@@ -937,7 +921,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitIf(If x) {
-        CiKind tag = x.x().type();
+        CiKind tag = x.x().kind;
 
         Condition cond = x.condition();
 
@@ -978,7 +962,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         lir.cmp(lirCond(cond), left, right);
         profileBranch(x, cond);
         moveToPhi(x.stateAfter());
-        if (x.x().type().isFloat() || x.x().type().isDouble()) {
+        if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
             lir.branch(lirCond(cond), right.kind, x.trueSuccessor(), x.unorderedSuccessor());
         } else {
             lir.branch(lirCond(cond), right.kind, x.trueSuccessor());
@@ -989,7 +973,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected void genTraceBlockEntry(BlockBegin block) {
-        callRuntime(new CiKind[]{CiKind.Int}, Arrays.asList(LIROperandFactory.intConst(block.blockID)), CiRuntimeCall.TraceBlockEntry, CiKind.Void, null);
+        callRuntime(CiRuntimeCall.TraceBlockEntry, null, LIROperandFactory.intConst(block.blockID));
     }
 
     @Override

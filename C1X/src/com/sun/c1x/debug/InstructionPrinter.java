@@ -289,7 +289,7 @@ public class InstructionPrinter extends ValueVisitor {
             while (!hasPhisOnStack && i < state.stackSize()) {
                 Value value = state.stackAt(i);
                 hasPhisOnStack = isPhiAtBlock(value, block);
-                i += value.type().sizeInSlots();
+                i += value.kind.sizeInSlots();
             }
 
             do {
@@ -298,7 +298,7 @@ public class InstructionPrinter extends ValueVisitor {
                     hasPhisInLocals = isPhiAtBlock(value, block);
                     // also ignore illegal HiWords
                     if (value != null && !value.isIllegal()) {
-                        i += value.type().sizeInSlots();
+                        i += value.kind.sizeInSlots();
                     } else {
                         i++;
                     }
@@ -320,7 +320,7 @@ public class InstructionPrinter extends ValueVisitor {
                     if (value != null) {
                         out.println(stateString(i, value, block));
                         // also ignore illegal HiWords
-                        i += value.isIllegal() ? 1 : value.type().sizeInSlots();
+                        i += value.isIllegal() ? 1 : value.kind.sizeInSlots();
                     } else {
                         i++;
                     }
@@ -339,7 +339,7 @@ public class InstructionPrinter extends ValueVisitor {
                 Value value = block.stateBefore().stackAt(i);
                 if (value != null) {
                     out.println(stateString(i, value, block));
-                    i += value.type().sizeInSlots();
+                    i += value.kind.sizeInSlots();
                 } else {
                     i++;
                 }
@@ -502,7 +502,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitLoadIndexed(LoadIndexed load) {
-        out.print(load.array()).print('[').print(load.index()).print("] (").print(load.type().typeChar).print(')');
+        out.print(load.array()).print('[').print(load.index()).print("] (").print(load.kind.typeChar).print(')');
     }
 
     @Override
@@ -598,7 +598,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (ret.result() == null) {
             out.print("return");
         } else {
-            out.print(ret.type().typeChar).print("return ").print(ret.result());
+            out.print(ret.kind.typeChar).print("return ").print(ret.result());
         }
     }
 
@@ -619,7 +619,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitStoreIndexed(StoreIndexed store) {
-        out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().typeChar).print(')');
+        out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.kind.typeChar).print(')');
     }
 
     @Override

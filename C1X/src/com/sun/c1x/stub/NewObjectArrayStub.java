@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class NewObjectArrayStub extends CodeStub {
+public class NewObjectArrayStub extends LocalStub {
 
     /**
      * Creates a new instance of <code>NewObjectArrayStub</code>.

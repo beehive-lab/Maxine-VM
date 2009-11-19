@@ -577,7 +577,7 @@ public class Util {
      * @return {@code true} if the instructions have the same basic type
      */
     public static boolean equalKinds(Value i, Value other) {
-        return i.type() == other.type();
+        return i.kind == other.kind;
     }
 
     /**
@@ -609,6 +609,6 @@ public class Util {
      * @return the instruction representation as a string
      */
     public static String valueString(Value value) {
-        return value == null ? "null" : "" + value.type().typeChar + value.id;
+        return value == null ? "null" : "" + value.kind.typeChar + value.id;
     }
 }

@@ -287,12 +287,12 @@ public class GraphBuilder {
             if (basicType == CiKind.Object) {
                 // might be storing the JSR return address
                 Value x = curState.xpop();
-                if (x.type().isJsr()) {
+                if (x.kind.isJsr()) {
                     setJsrReturnAddressLocal(index);
                     curState.storeLocal(index, x);
                 } else {
                     // nope, not storing the JSR return address
-                    assert x.type().isObject();
+                    assert x.kind.isObject();
                     curState.storeLocal(index, x);
                     overwriteJsrReturnAddressLocal(index);
                 }
@@ -327,7 +327,7 @@ public class GraphBuilder {
 
     Value roundFp(Value x) {
         if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 2) {
-            if (x.type().isDouble() && !(x instanceof Constant) && !(x instanceof Local) && !(x instanceof RoundFP)) {
+            if (x.kind.isDouble() && !(x instanceof Constant) && !(x instanceof Local) && !(x instanceof RoundFP)) {
                 return append(new RoundFP(x));
             }
         }
@@ -912,7 +912,7 @@ public class GraphBuilder {
         }
         if (exactType == null && receiver instanceof Local && ((Local) receiver).javaIndex() == 0) {
             // the exact type isn't known, but the receiver is parameter 0 => use holder
-            receiverType = compilation.method().holder();
+            receiverType = compilation.method.holder();
             exactType = receiverType.exactType();
         }
         boolean needsCheck = true;
@@ -973,7 +973,7 @@ public class GraphBuilder {
             // trim back stack to the caller's stack size
             curState.truncateStack(scopeData.callerStackSize());
             if (x != null) {
-                curState.push(x.type(), x);
+                curState.push(x.kind, x);
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
@@ -987,7 +987,7 @@ public class GraphBuilder {
             // return value, if any, of the inlined method on operand stack.
             curState = scopeData.continuationState().copy();
             if (x != null) {
-                curState.push(x.type(), x);
+                curState.push(x.kind, x);
             }
 
             // The current bci() is in the wrong scope, so use the bci() of
@@ -1654,13 +1654,13 @@ public class GraphBuilder {
             int offset = frame.getLocalOffset(i);
             if (local != null) {
                 // this is a live local according to compiler
-                if (local.type().isObject() && !frame.isLiveObject(i)) {
+                if (local.kind.isObject() && !frame.isLiveObject(i)) {
                     // the compiler thinks this is live, but not the interpreter
                     // pretend that it passed null
                     get = appendConstant(CiConstant.NULL_OBJECT);
                 } else {
                     Value oc = appendConstant(CiConstant.forInt(offset));
-                    get = append(new UnsafeGetRaw(local.type(), e, oc, 0, true));
+                    get = append(new UnsafeGetRaw(local.kind, e, oc, 0, true));
                 }
                 state.storeLocal(i, get);
             }

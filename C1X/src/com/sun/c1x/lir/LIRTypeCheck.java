@@ -56,7 +56,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @param profiledBci
      */
     public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForException,
-                        LIRDebugInfo infoForPatch, CodeStub stub, RiMethod profiledMethod, int profiledBci) {
+                        LIRDebugInfo infoForPatch, LocalStub stub, RiMethod profiledMethod, int profiledBci) {
         super(opcode, result, infoForException, false, stub, 1, 2, object, LIROperandFactory.IllegalLocation, tmp1, tmp2, tmp3);
 
         assert opcode == LIROpcode.CheckCast || opcode == LIROpcode.InstanceOf;

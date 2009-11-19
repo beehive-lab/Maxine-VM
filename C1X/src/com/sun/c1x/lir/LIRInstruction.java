@@ -52,7 +52,7 @@ public abstract class LIRInstruction {
 
     public final boolean hasCall;
 
-    public CodeStub stub;
+    public LocalStub stub;
 
     public enum OperandMode {
         OutputMode,
@@ -135,7 +135,7 @@ public abstract class LIRInstruction {
      * @param result the operand that holds the operation result of this instruction
      * @param info the object holding information needed to perform deoptimization
      */
-    public LIRInstruction(LIROpcode opcode, LIROperand result, LIRDebugInfo info, boolean hasCall, CodeStub stub, int tempInput, int temp, LIROperand... inputAndTempOperands) {
+    public LIRInstruction(LIROpcode opcode, LIROperand result, LIRDebugInfo info, boolean hasCall, LocalStub stub, int tempInput, int temp, LIROperand... inputAndTempOperands) {
         this.code = opcode;
         this.info = info;
         this.hasCall = hasCall;
@@ -242,12 +242,12 @@ public abstract class LIRInstruction {
     }
 
     public final LIROperand stubOperand(int index) {
-        return operandSlots[index + (operandSlots.length - stub.operands().length)].get(this);
+        return operandSlots[index + (operandSlots.length - stub.operands.length)].get(this);
     }
 
-    private void initInputsAndTemps(int tempInputCount, int tempCount, LIROperand[] operands, CodeStub stub) {
+    private void initInputsAndTemps(int tempInputCount, int tempCount, LIROperand[] operands, LocalStub stub) {
 
-        this.operandSlots = new OperandSlot[operands.length + (stub == null || stub.operands() == null ? 0 : stub.operands().length)];
+        this.operandSlots = new OperandSlot[operands.length + (stub == null || stub.operands == null ? 0 : stub.operands.length)];
 
         // Addresses in instruction
         for (int i = 0; i < operands.length; i++) {
@@ -258,9 +258,9 @@ public abstract class LIRInstruction {
         }
 
         // Addresses in stub
-        if (stub != null && stub.operands() != null) {
-            for (int i = 0; i < stub.operands().length; i++) {
-                LIROperand op = stub.operands()[i];
+        if (stub != null && stub.operands != null) {
+            for (int i = 0; i < stub.operands.length; i++) {
+                LIROperand op = stub.operands[i];
                 if (op.isAddress()) {
                     operandSlots[i + operands.length] = addAddress((LIRAddress) op);
                 }
@@ -275,10 +275,10 @@ public abstract class LIRInstruction {
         }
 
         // Input operands in stub
-        if (stub != null && stub.operands() != null) {
-            for (int i = 0; i < stub.operands().length - stub.tempCount() - stub.tempInputCount(); i++) {
+        if (stub != null && stub.operands != null) {
+            for (int i = 0; i < stub.operands.length - stub.tempCount - stub.tempInputCount; i++) {
                 if (operandSlots[i + operands.length] == null) {
-                    operandSlots[i + operands.length] = addOperand(stub.operands()[i], true, false);
+                    operandSlots[i + operands.length] = addOperand(stub.operands[i], true, false);
                 }
             }
         }
@@ -291,10 +291,10 @@ public abstract class LIRInstruction {
         }
 
         // Input Temp operands in stub
-        if (stub != null && stub.operands() != null) {
-            for (int i = stub.operands().length - stub.tempCount() - stub.tempInputCount(); i < stub.operands().length - stub.tempCount(); i++) {
+        if (stub != null && stub.operands != null) {
+            for (int i = stub.operands.length - stub.tempCount - stub.tempInputCount; i < stub.operands.length - stub.tempCount; i++) {
                 if (operandSlots[i + operands.length] == null) {
-                    operandSlots[i + operands.length] = addOperand(stub.operands()[i], true, true);
+                    operandSlots[i + operands.length] = addOperand(stub.operands[i], true, true);
                 }
             }
         }
@@ -307,10 +307,10 @@ public abstract class LIRInstruction {
         }
 
         // Temp operands in stub
-        if (stub != null && stub.operands() != null) {
-            for (int i = stub.operands().length - stub.tempCount(); i < stub.operands().length; i++) {
+        if (stub != null && stub.operands != null) {
+            for (int i = stub.operands.length - stub.tempCount; i < stub.operands.length; i++) {
                 if (operandSlots[i + operands.length] == null) {
-                    operandSlots[i + operands.length] = addOperand(stub.operands()[i], false, true);
+                    operandSlots[i + operands.length] = addOperand(stub.operands[i], false, true);
                 }
             }
         }
@@ -333,7 +333,7 @@ public abstract class LIRInstruction {
         return result.get(this);
     }
 
-    public CodeStub stub() {
+    public LocalStub stub() {
         return stub;
     }
 

@@ -69,7 +69,7 @@ public class CEEliminator implements BlockClosure {
         If curIf = (If) block.end();
 
         // check that the if's operands are of int or object type
-        CiKind ifType = curIf.x().type();
+        CiKind ifType = curIf.x().kind;
         if (!ifType.isInt() && !ifType.isObject()) {
             return;
         }
@@ -116,7 +116,7 @@ public class CEEliminator implements BlockClosure {
         if (suxPhi == null || !(suxPhi instanceof Phi) || ((Phi) suxPhi).block() != sux) {
             return;
         }
-        if (suxPhi.type().sizeInSlots() != suxState.stackSize() - curIf.stateAfter().stackSize()) {
+        if (suxPhi.kind.sizeInSlots() != suxState.stackSize() - curIf.stateAfter().stackSize()) {
             return;
         }
 
@@ -124,9 +124,9 @@ public class CEEliminator implements BlockClosure {
         Value tValue = tGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
         Value fValue = fGoto.stateAfter().stackAt(curIf.stateAfter().stackSize());
 
-        assert tValue.type() == fValue.type() : "incompatible types";
+        assert tValue.kind == fValue.kind : "incompatible types";
 
-        if (tValue.type().isFloat() || tValue.type().isDouble()) {
+        if (tValue.kind.isFloat() || tValue.kind.isDouble()) {
             // backend does not support conditional moves on floats
             return;
         }
@@ -181,7 +181,7 @@ public class CEEliminator implements BlockClosure {
             assert gotoState != null : "states do not match up";
         }
         gotoState = gotoState.copy();
-        gotoState.push(result.type(), result);
+        gotoState.push(result.kind, result);
         assert gotoState.isSameAcrossScopes(suxState) : "states must match now";
         newGoto.setStateAfter(gotoState);
 

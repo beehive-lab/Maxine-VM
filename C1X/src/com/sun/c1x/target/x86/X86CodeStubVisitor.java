@@ -154,7 +154,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.bind(stub.entry);
         if (stub.computeLock) {
             // lockReg was destroyed by fast unlocking attempt => recompute it
-            ce.monitorAddress(stub.monitorIx, stub.lockReg());
+            ce.emitMonitorAddress(stub.monitorIx, stub.lockReg());
         }
 
         int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.Monitorexit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());

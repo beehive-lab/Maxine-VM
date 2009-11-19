@@ -41,7 +41,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      */
     public UnsafeRawOp(CiKind basicType, Value addr, boolean isStore) {
         super(basicType, isStore);
-        assert addr == null || addr.type() == CiKind.Long;
+        assert addr == null || addr.kind == CiKind.Long;
         base = addr;
     }
 

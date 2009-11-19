@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class ImplicitNullCheckStub extends CodeStub {
+public class ImplicitNullCheckStub extends LocalStub {
 
     public final int offset;
 
