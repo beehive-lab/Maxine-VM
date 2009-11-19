@@ -162,25 +162,6 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.jmp(stub.continuation);
     }
 
-    public void visitNewInstanceStub(NewInstanceStub stub) {
-        masm.bind(stub.entry);
-        ce.verifyOopMap(stub.info);
-        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.NewInstance, stub.info, stub.result().asRegister(), stub.klassReg().asRegister());
-        compilation.addCallInfo(infoPos, stub.info);
-        masm.jmp(stub.continuation);
-    }
-
-    public void visitNewObjectArrayStub(NewObjectArrayStub stub) {
-        masm.bind(stub.entry);
-        assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
-        assert stub.klassReg().asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
-        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, stub.info, X86.rax, X86.rdx, X86.rbx);
-        compilation.addCallInfo(infoPos, stub.info);
-        ce.verifyOopMap(stub.info);
-        assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
-        masm.jmp(stub.continuation);
-    }
-
     public void visitNewTypeArrayStub(NewTypeArrayStub stub) {
         masm.bind(stub.entry);
         assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";

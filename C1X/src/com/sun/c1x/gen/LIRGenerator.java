@@ -442,7 +442,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         left.loadItem();
-        if (!canInlineAsConstant(right.value())) {
+        if (!canInlineAsConstant(right.value)) {
             right.loadItem();
         }
 
@@ -838,7 +838,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitReturn(Return x) {
-
         if (x.kind.isVoid()) {
             lir.returnOp(LIROperandFactory.IllegalLocation);
         } else {
@@ -1202,7 +1201,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             log2scale = x.log2Scale();
         }
 
-        assert !x.hasIndex() || idx.value() == x.index() : "should match";
+        assert !x.hasIndex() || idx.value == x.index() : "should match";
 
         LIRLocation baseOp = (LIRLocation) base.result();
 
@@ -1424,14 +1423,13 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void profileBranch(If ifInstr, Condition cond) {
-        if (ifInstr.shouldProfile()) {
-            RiMethod method = ifInstr.profiledMethod();
-            assert method != null : "method should be set if branch is profiled";
-            RiMethodProfile md = method.methodData();
+        if (false) {
+            // generate counting of taken / not taken
+            RiMethodProfile md = null;
+            int bci = 0;
             if (md != null) {
-                int takenCountOffset = md.branchTakenCountOffset(ifInstr.profiledBCI());
-
-                int notTakenCountOffset = md.branchNotTakenCountOffset(ifInstr.profiledBCI());
+                int takenCountOffset = md.branchTakenCountOffset(bci);
+                int notTakenCountOffset = md.branchNotTakenCountOffset(bci);
                 LIRLocation mdReg = newRegister(CiKind.Object);
                 lir.move(LIROperandFactory.oopConst(md.encoding().asObject()), mdReg);
                 LIRLocation dataOffsetReg = newRegister(CiKind.Int);
@@ -1981,7 +1979,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert x.operand().isIllegal() : "operand should never change";
         assert !opr.isRegister() || opr.isVirtual() : "should never set result to a physical register";
         x.setOperand(opr);
-        assert opr == x.operand() : "must be";
         if (opr.isVirtual()) {
             instructionForOperand.put(opr.vregNumber(), x);
         }
@@ -2244,7 +2241,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         public boolean isNonNull(XirArgument argument) {
             if (argument.constant == null && argument.object instanceof LIRItem) {
                 // check the flag on the original value
-                return ((LIRItem) argument.object).value().isNonNull();
+                return ((LIRItem) argument.object).value.isNonNull();
             }
             return false;
         }

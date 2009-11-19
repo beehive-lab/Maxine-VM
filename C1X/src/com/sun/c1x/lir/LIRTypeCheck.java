@@ -35,29 +35,33 @@ public class LIRTypeCheck extends LIRInstruction {
     private RiType klass;
     private boolean fastCheck;
 
-    // Helpers for Tier1UpdateMethodData
-    RiMethod profiledMethod;
-    int profiledBci;
-
-    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForException,
-                        LIRDebugInfo infoForPatch, LocalStub stub, RiMethod profiledMethod, int profiledBci) {
+    public LIRTypeCheck(LIROpcode opcode,
+                        LIROperand result,
+                        LIROperand object,
+                        RiType klass,
+                        LIROperand tmp1,
+                        LIROperand tmp2,
+                        LIROperand tmp3,
+                        boolean fastCheck,
+                        LIRDebugInfo infoForException,
+                        LocalStub stub) {
         super(opcode, result, infoForException, false, stub, 1, 2, object, LIROperandFactory.IllegalLocation, tmp1, tmp2, tmp3);
 
         assert opcode == LIROpcode.CheckCast || opcode == LIROpcode.InstanceOf;
         this.klass = klass;
         this.fastCheck = fastCheck;
-        this.profiledMethod = profiledMethod;
-        this.profiledBci = profiledBci;
     }
 
-    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array,
-                        LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
-                        LIRDebugInfo infoForException, RiMethod profiledMethod, int profiledBci) {
+    public LIRTypeCheck(LIROpcode opcode,
+                        LIROperand object,
+                        LIROperand array,
+                        LIROperand tmp1,
+                        LIROperand tmp2,
+                        LIROperand tmp3,
+                        LIRDebugInfo infoForException) {
         super(opcode, LIROperandFactory.IllegalLocation, infoForException, false, new ArrayStoreExceptionStub(infoForException), 0, 3, object, array, tmp1, tmp2, tmp3);
         this.klass = null;
         this.fastCheck = false;
-        this.profiledMethod = profiledMethod;
-        this.profiledBci = profiledBci;
         assert opcode == LIROpcode.StoreCheck;
         assert infoForException != null : "infoForException must not be null. StoreCheck instrution throws exceptions.";
     }
@@ -108,7 +112,6 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the fastCheck
      */
     public boolean isFastCheck() {
-        assert code == LIROpcode.InstanceOf || code == LIROpcode.CheckCast : "opcode is not valid.";
         return fastCheck;
     }
 
@@ -117,7 +120,7 @@ public class LIRTypeCheck extends LIRInstruction {
      * @return the profiledMethod
      */
     public RiMethod profiledMethod() {
-        return profiledMethod;
+        return null;
     }
 
     /**

@@ -33,9 +33,6 @@ import com.sun.c1x.value.*;
  */
 public class CheckCast extends TypeCheck {
 
-    RiMethod profiledMethod;
-    int profiledBCI;
-
     /**
      * Creates a new CheckCast instruction.
      * @param targetClass the class being casted to
@@ -45,32 +42,6 @@ public class CheckCast extends TypeCheck {
     public CheckCast(RiType targetClass, Value targetClassInstruction, Value object, ValueStack stateBefore) {
         super(targetClass, targetClassInstruction, object, CiKind.Object, stateBefore);
         initFlag(Flag.NonNull, object.isNonNull());
-    }
-
-    /**
-     * Gets the profiled method for this instruction.
-     * @return the profiled method
-     */
-    public RiMethod profiledMethod() {
-        return profiledMethod;
-    }
-
-    /**
-     * Gets the profiled bytecode index for this instruction.
-     * @return the profiled bytecode index
-     */
-    public int profiledBCI() {
-        return profiledBCI;
-    }
-
-    /**
-     * Sets the profiled method and bytecode index for this instruction.
-     * @param method the profiled method
-     * @param bci the bytecode index
-     */
-    public void setProfile(RiMethod method, int bci) {
-        profiledMethod = method;
-        profiledBCI = bci;
     }
 
     /**
