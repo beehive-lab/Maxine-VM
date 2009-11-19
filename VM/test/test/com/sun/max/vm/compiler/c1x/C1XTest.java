@@ -97,7 +97,7 @@ public class C1XTest {
         "Reset the metrics before each timing run.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
-    private static final Option<Integer> c1xOptLevel = options.newIntegerOption("c1x-optlevel", 0,
+    private static final Option<Integer> c1xOptLevel = options.newIntegerOption("c1x-optlevel", -1,
         "Set the overall optimization level of C1X (-1 to use default settings)");
 
     static {
@@ -111,6 +111,7 @@ public class C1XTest {
     private static int totalBytes;
     private static int totalInlinedBytes;
     private static int totalInstrs;
+    private static int totalFailures;
     private static long totalNs;
     private static long cumulNs;
     private static long lastRunNs;
@@ -119,7 +120,11 @@ public class C1XTest {
     public static void main(String[] args) {
         // set the default optimization level before parsing options
         options.parseArguments(args);
-        C1XOptions.setOptimizationLevel(c1xOptLevel.getValue());
+        Integer optLevel = c1xOptLevel.getValue();
+        if (optLevel >= 0) {
+            C1XOptions.setOptimizationLevel(optLevel);
+        }
+
         options.setValuesAgain();
         reportC1XOptions();
         final String[] arguments = options.getArguments();
@@ -228,8 +233,11 @@ public class C1XTest {
         totalInlinedBytes = 0;
         totalNs = 0;
         totalInstrs = 0;
+        totalFailures = 0;
         for (MethodActor methodActor : methods) {
-            compile(compiler, runtime, xirGenerator, methodActor, false, true);
+            if (!compile(compiler, runtime, xirGenerator, methodActor, false, true)) {
+                totalFailures++;
+            }
         }
         cumulNs += totalNs;
         lastRunNs = System.nanoTime() - start;
@@ -552,12 +560,18 @@ public class C1XTest {
             out.print(bcps + " bytes/s   ");
             out.print(ibcps + " bytes/s   ");
             out.print(ips + " insts/s");
+            if (totalFailures > 0) {
+                out.print("  (" + totalFailures + " failures)");
+            }
             out.println();
         } else {
             out.print(seconds + "\t");
             out.print(totalBcps + "\t");
             out.print(totalIBcps + "\t");
             out.print(totalIps + "\t");
+            if (totalFailures > 0) {
+                out.print("\t" + totalFailures + " failures)");
+            }
             out.println();
         }
     }

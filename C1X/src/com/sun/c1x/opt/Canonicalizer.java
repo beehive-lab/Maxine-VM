@@ -457,7 +457,7 @@ public class Canonicalizer extends ValueVisitor {
                 }
             }
         }
-        if (C1XOptions.CanonicalizeArrayStoreChecks) {
+        if (C1XOptions.CanonicalizeArrayStoreChecks && i.elementKind() == CiKind.Object) {
             if (value.isConstant() && value.asConstant().isNull()) {
                 clearStoreCheck(i);
             } else {
