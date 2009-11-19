@@ -27,6 +27,10 @@ Backend:
 	* XIR: expose nullity, range checkness across XIR interface
 	- XIR: make use of CSE'd array length
 	- XIR: generate special if-instanceof XIR variant with label parameters
+    - Optimize special cases of bytecodes:
+        - (MIN_INT / -1) in IDIV,IREM
+        - (MIN_LONG / -1) in LDIV,LREM
+        - (-infinity, Nan, +infinity) in F2I, F2L, D2I, D2L 
 
 
 Frontend:

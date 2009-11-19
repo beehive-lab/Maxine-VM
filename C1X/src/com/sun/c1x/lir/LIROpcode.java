@@ -90,6 +90,8 @@ public enum LIROpcode {
     BeginOp3,
         Idiv,
         Irem,
+        Ldiv,
+        Lrem,
     EndOp3,
     StaticCall,
     OptVirtualCall,

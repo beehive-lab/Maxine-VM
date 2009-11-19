@@ -639,44 +639,6 @@ public class X86MacroAssembler extends X86Assembler {
 
     }
 
-    int correctedIdivl(CiRegister reg) {
-        // Full implementation of Java idiv and irem; checks for
-        // special case as described in JVM spec. : p.243 & p.271.
-        // The function returns the (pc) offset of the idivl
-        // instruction - may be needed for implicit exceptions.
-        //
-        // normal case special case
-        //
-        // input : X86Register.rax : : dividend minInt
-        // reg: divisor (may not be X86Register.rax,/X86Register.rdx) -1
-        //
-        // output: X86Register.rax : : quotient (= X86Register.rax, idiv reg) minInt
-        // X86Register.rdx: remainder (= X86Register.rax, irem reg) 0
-        assert reg != X86.rax && reg != X86.rdx : "reg cannot be X86Register.rax, or X86Register.rdx register";
-        int minInt = 0x80000000;
-        Label normalCase = new Label();
-        Label specialCase = new Label();
-
-        // check for special case
-        cmpl(X86.rax, minInt);
-        jcc(Condition.notEqual, normalCase);
-        xorl(X86.rdx, X86.rdx); // prepare X86Register.rdx for possible special case (where remainder =
-        // 0)
-        cmpl(reg, -1);
-        jcc(Condition.equal, specialCase);
-
-        // handle normal case
-        bind(normalCase);
-        cdql();
-        int idivlOffset = codeBuffer.position();
-        idivl(reg);
-
-        // normal and special case exit
-        bind(specialCase);
-
-        return idivlOffset;
-    }
-
     void decrementl(CiRegister reg, int value) {
         if (value == Integer.MIN_VALUE) {
             subl(reg, value);
