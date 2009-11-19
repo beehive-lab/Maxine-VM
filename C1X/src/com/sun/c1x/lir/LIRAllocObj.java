@@ -35,7 +35,7 @@ public class LIRAllocObj extends LIRInstruction {
     private boolean initCheck;
 
     public LIRAllocObj(LIROperand klass, LIROperand result, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIROperand tmp4,
-                    int hdrSize, int objSize, boolean initCheck, CodeStub stub) {
+                    int hdrSize, int objSize, boolean initCheck, LocalStub stub) {
         super(LIROpcode.AllocObject, result, null, false, stub, 0, 4, klass, tmp1, tmp2, tmp3, tmp4);
         this.hdrSize = hdrSize;
         this.objSize = objSize;

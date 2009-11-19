@@ -445,7 +445,7 @@ public class NullCheckEliminator extends ValueVisitor {
             if (i.trueSuccessor() != i.falseSuccessor()) {
                 Value x = i.x();
                 // if the two successors are different, then we may learn something on one branch
-                if (x.type() == CiKind.Object) {
+                if (x.kind == CiKind.Object) {
                     // this is a comparison of object references
                     Value y = i.y();
                     if (processUse(i, x, false)) {

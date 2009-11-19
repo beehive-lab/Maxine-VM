@@ -102,7 +102,7 @@ public class LIRItem {
         assert !destroysRegister || (!result.isRegister() || result.isVirtual()) : "shouldn't use setDestroysRegister with physical regsiters";
         if (destroysRegister && result.isRegister()) {
             if (newResult.isIllegal()) {
-                newResult = gen.newRegister(value().type());
+                newResult = gen.newRegister(value().kind);
                 gen.lir.move(result, newResult);
             }
             return newResult;
@@ -134,7 +134,7 @@ public class LIRItem {
 
             if (!res.isVirtual() || !gen.isVregFlagSet(res, LIRGenerator.VregFlag.ByteReg)) {
                 // make sure that it is a byte register
-                assert !value().type().isFloat() && !value().type().isDouble() : "can't load floats in byte register";
+                assert !value().kind.isFloat() && !value().kind.isDouble() : "can't load floats in byte register";
                 LIROperand reg = gen.rlockByte(CiKind.Byte);
                 gen.lir.move(res, reg);
                 result = reg;
@@ -186,7 +186,7 @@ public class LIRItem {
             result = value().operand();
         }
         if (!result().isRegister()) {
-            LIROperand reg = gen.newRegister(value().type());
+            LIROperand reg = gen.newRegister(value().kind);
             gen.lir.move(result(), reg);
             if (result().isConstant()) {
                 result = reg;

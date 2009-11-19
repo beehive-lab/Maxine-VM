@@ -36,14 +36,6 @@ public class LIRRuntimeCall extends LIRCall {
     public final CiRuntimeCall runtimeEntry;
     public final boolean calleeSaved;
 
-    /**
-     * Creates a new LIRRTCall instruction.
-     *
-     * @param entry
-     * @param result
-     * @param arguments
-     * @param info
-     */
     public LIRRuntimeCall(CiRuntimeCall entry, LIROperand result, List <LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
         super(LIROpcode.RtCall, null, result, LIROperandFactory.IllegalLocation, arguments, info, calleeSaved);
         this.calleeSaved = calleeSaved;
@@ -66,7 +58,7 @@ public class LIRRuntimeCall extends LIRCall {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        masm.emitRtcall(this);
+        masm.emitRuntimeCall(this);
     }
 
     /**

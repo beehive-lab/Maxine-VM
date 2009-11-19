@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class NewTypeArrayStub extends CodeStub {
+public class NewTypeArrayStub extends LocalStub {
 
     public NewTypeArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, LIRDebugInfo info) {
         super(info, result);

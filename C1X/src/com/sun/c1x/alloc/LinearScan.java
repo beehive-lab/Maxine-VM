@@ -1186,7 +1186,7 @@ public class LinearScan {
 
             if (move.operand().isStack()) {
                 if (C1XOptions.DetailedAsserts) {
-                    int argSize = compilation.method().signatureType().argumentSlots(!compilation.method.isStatic());
+                    int argSize = compilation.method.signatureType().argumentSlots(!compilation.method.isStatic());
                     LIROperand o = move.operand();
                     if (o.isSingleStack()) {
                         assert o.singleStackIndex() >= 0 && o.singleStackIndex() < argSize : "out of range";

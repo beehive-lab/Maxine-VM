@@ -382,7 +382,7 @@ public abstract class CiXirAssembler {
     }
 
     public void pstore(CiKind kind, XirOperand pointer, XirOperand value, boolean canTrap) {
-        append(new XirInstruction(kind, canTrap, XirOp.PointerStore, (XirOperand) null, pointer, value));
+        append(new XirInstruction(kind, canTrap, XirOp.PointerStore, null, pointer, value));
     }
 
     public void pload(CiKind kind, XirOperand result, XirOperand pointer, XirOperand disp, boolean canTrap) {
@@ -471,8 +471,8 @@ public abstract class CiXirAssembler {
 
     private void end() {
     	assert !finished : "template may only be finished once!";
+        assert resultOperand != null : "result operand should be set";
         finished = true;
-        assert resultOperand != null;
     }
 
     public XirVariableParameter createInputParameter(String name, CiKind kind) {

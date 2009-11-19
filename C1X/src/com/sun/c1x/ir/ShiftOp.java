@@ -34,7 +34,7 @@ public class ShiftOp extends Op2 {
      * @param y the second input value
      */
     public ShiftOp(int opcode, Value x, Value y) {
-        super(x.type(), opcode, x, y);
+        super(x.kind, opcode, x, y);
     }
 
     /**

@@ -108,14 +108,6 @@ public abstract class Value {
     }
 
     /**
-     * Gets the type of the value pushed to the stack by this instruction.
-     * @return the value type of this instruction
-     */
-    public final CiKind type() {
-        return kind;
-    }
-
-    /**
      * Gets the instruction that should be substituted for this one. Note that this
      * method is recursive; if the substituted instruction has a substitution, then
      * the final substituted instruction will be returned. If there is no substitution

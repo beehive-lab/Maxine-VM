@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class MonitorExitStub extends CodeStub {
+public class MonitorExitStub extends LocalStub {
 
     public final boolean computeLock;
     public final int monitorIx;

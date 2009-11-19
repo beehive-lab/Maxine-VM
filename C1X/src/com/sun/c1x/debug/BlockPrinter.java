@@ -84,7 +84,7 @@ public class BlockPrinter implements BlockClosure {
             }
             Value value = stack.stackAt(i);
             out.print(i + ":" + Util.valueString(value));
-            i += value.type().sizeInSlots();
+              i += value.kind.sizeInSlots();
             if (value instanceof Phi) {
                 Phi phi = (Phi) value;
                 if (phi.operand() != null) {
