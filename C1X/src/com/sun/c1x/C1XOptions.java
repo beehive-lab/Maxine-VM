@@ -152,9 +152,10 @@ public class C1XOptions {
     public static boolean GenArrayStoreCheck            = true;
     public static boolean GenBoundsChecks               = true;
     public static boolean GenExplicitNullChecks         = ____;
-    public static boolean GenExplicitDiv0Checks         = true;
+    public static boolean GenExplicitDiv0Checks         = ____;
+    public static boolean GenSpecialDivChecks           = true;
     public static boolean GenStackBanging               = true;
-    public static boolean GenAssertionCode              = true;
+    public static boolean GenAssertionCode              = ____;
     public static boolean GenFinalizerRegistration      = true;
     public static boolean GenTableRanges                = ____;
 

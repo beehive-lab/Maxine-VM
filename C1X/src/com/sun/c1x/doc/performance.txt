@@ -1,6 +1,9 @@
 Issues that can be addressed for improving performance in C1X
 ----------------------------------------------------------------
 
+- indicates not done
+* indicates done
+
 Backend:
 	- better handling of constants, especially immediates
 	- (non XIR) checkcast, instanceof: use nullity
@@ -17,7 +20,7 @@ Backend:
 	- better handling of two operand LIR form
 	- Make the following bytecode implementations inline):
 		- f2i f2l f2d d2i d2l d2f (SSE2)
-		- lrem ldiv (64 bit)
+		* lrem ldiv (64 bit)
 		- fneg dneg
 	- Make the following bytecode implementations global stubs:
 		- frem drem
@@ -30,7 +33,7 @@ Backend:
     - Optimize special cases of bytecodes:
         - (MIN_INT / -1) in IDIV,IREM
         - (MIN_LONG / -1) in LDIV,LREM
-        - (-infinity, Nan, +infinity) in F2I, F2L, D2I, D2L 
+        - (-infinity, Nan, +infinity) in F2I, F2L, D2I, D2L
 
 
 Frontend:
@@ -60,7 +63,7 @@ Compilation speed:
 	- Remove exceptionHandlers, make DebugInfo hold FrameState, CiCodePos,
 		exception flags and exception handlers
 	- Clean up and simplify LIRInstruction constructor
-	- Remove dead LIROpcodes
+	* Remove dead LIROpcodes
 	- Create fewer LIRAddresses
 	- Simplify LIRGenerator logic (forcing of loading, etc)
 	- LIROperand: split into virtual register table?
@@ -72,7 +75,7 @@ Compilation speed:
 	- Remove unnecessary uses of ArrayList and replace with arrays or other list
 	- Use iteration over ArrayList instead of explicit loop
 	- Revisit manual editing / removal of items from ArrayList
-	- Remove dead code in LIRGenerator, X86LIRGenerator, LIRAssembler, X86LIRAssembler
+	* Remove dead code in LIRGenerator, X86LIRGenerator, LIRAssembler, X86LIRAssembler
 		(remove commented out code)
 	- Remove non-XIR backend
-	- Pre-assemble XIR somehow?
+	- Pre-assemble XIR for backend
