@@ -70,6 +70,8 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected final C1XCompilation compilation;
     protected final IR ir;
     protected final XirSupport xir;
+    protected final boolean is32;
+    protected final boolean is64;
 
     private BlockBegin currentBlock;
     private int virtualRegisterNumber;
@@ -90,6 +92,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
         this.ir = compilation.hir();
         this.xir = C1XOptions.UseXIR ? new XirSupport(compilation.compiler.xir) : null;
+        this.is32 = compilation.target.arch.is32bit();
+        this.is64 = compilation.target.arch.is64bit();
 
         instructionForOperand = new ArrayMap<Value>();
         constants = new ArrayList<LIRConstant>();
@@ -1204,7 +1208,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIRLocation baseOp = (LIRLocation) base.result();
 
-        if (compilation.target.arch.is32bit()) {
+        if (is32) {
             // XXX: what about floats and doubles and objects? (used in OSR)
             if (x.base().kind.isLong()) {
                 baseOp = newRegister(CiKind.Int);
@@ -1311,7 +1315,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIRLocation baseOp = (LIRLocation) base.result();
 
-        if (compilation.target.arch.is32bit()) {
+        if (is32) {
             // XXX: what about floats and doubles and objects? (used in OSR)
             if (x.base().kind.isLong()) {
                 baseOp = newRegister(CiKind.Int);
@@ -1923,7 +1927,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected final LIRLocation newPointerRegister() {
         // returns a register suitable for doing pointer math
         // XXX: revisit this when there is a CiKind for Pointers
-        if (compilation.target.arch.is64bit()) {
+        if (is64) {
             return newRegister(CiKind.Long);
         } else {
             return newRegister(CiKind.Int);
@@ -2115,7 +2119,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected LIRLocation resultRegisterFor(CiKind type) {
         CiRegister returnRegister = compilation.target.config.getReturnRegister(type);
-        assert compilation.target.arch.is64bit();
+        assert is64 : "64 bit only for now";
         if (type.size == 2) {
             return LIROperandFactory.doubleLocation(type, returnRegister, returnRegister);
         }
@@ -2278,4 +2282,5 @@ public abstract class LIRGenerator extends ValueVisitor {
             return this;
         }
     }
+
 }
