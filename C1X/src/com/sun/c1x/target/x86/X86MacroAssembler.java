@@ -110,7 +110,7 @@ public class X86MacroAssembler extends X86Assembler {
             movl(r, new Address(X86.rsp, offsetFromRspInBytes));
         } else {
             assert kind == CiKind.Long || kind == CiKind.Object || kind == CiKind.Word || kind == CiKind.Illegal;
-            assert target.arch.is64bit();
+            assert is64 : "64 bit only for now";
             movq(r, new Address(X86.rsp, offsetFromRspInBytes));
         }
     }
@@ -140,7 +140,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void increment(CiRegister reg, int value) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             incrementq(reg, value);
         } else {
             incrementl(reg, value);
@@ -148,7 +148,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void decrement(CiRegister reg, int value) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             decrementq(reg, value);
         } else {
             decrementl(reg, value);
@@ -179,7 +179,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     // Note: yLo will be destroyed
     void lcmp2int(CiRegister xHi, CiRegister xLo, CiRegister yHi, CiRegister yLo) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             // 64 Bit does not use this!
             Util.shouldNotReachHere();
         }
@@ -254,9 +254,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void lneg(CiRegister hi, CiRegister lo) {
 
-        if (target.arch.is64bit()) {
-            Util.shouldNotReachHere(); // 64bit doesn't use two regs
-        }
+        assert !is64 : "should not be used in 64 bit mode";
         negl(lo);
         adcl(hi, 0);
         negl(hi);
@@ -311,44 +309,30 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movoop(CiRegister dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
-        if (target.arch.is32bit()) {
-            // (tw) Cannot embed oop as immediate!
-            throw Util.unimplemented();
-        } else if (target.arch.is64bit()) {
-            if (obj.asObject() == null) {
-                this.xorq(dst, dst);
-            } else {
-                this.movq(dst, recordDataReferenceInCode(obj));
-            }
+        assert is64 : "64 bit only for now";
+        if (obj.isNull()) {
+            this.xorq(dst, dst);
         } else {
-            Util.shouldNotReachHere();
+            this.movq(dst, recordDataReferenceInCode(obj));
         }
     }
 
     void movoop(Address dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
-
-        if (target.arch.is32bit()) {
-            // (tw) Cannot embed oop as immediate!
-            throw Util.unimplemented();
-            //movLiteral32(dst, compilation.runtime.convertToPointer32(obj), Relocation.specForImmediate());
-        } else if (target.arch.is64bit()) {
-            if (obj.asObject() == null) {
-                xorq(rscratch1, rscratch1);
-            } else {
-                this.movq(rscratch1, recordDataReferenceInCode(obj));
-            }
-            movq(dst, rscratch1);
+        assert is64 : "64 bit only for now";
+        if (obj.isNull()) {
+            xorq(rscratch1, rscratch1);
         } else {
-            Util.shouldNotReachHere();
+            this.movq(rscratch1, recordDataReferenceInCode(obj));
         }
+        movq(dst, rscratch1);
     }
 
     // src should NEVER be a real pointer. Use AddressLiteral for true pointers
     void movptr(Address dst, long src) {
-        if (target.arch.is32bit()) {
+        if (is32) {
             movl(dst, Util.safeToInt(src));
-        } else if (target.arch.is64bit()) {
+        } else if (is64) {
             mov64(rscratch1, src);
             movq(dst, rscratch1);
         } else {
@@ -357,7 +341,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void pushptr(Address src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             pushq(src);
         } else {
             pushl(src);
@@ -365,7 +349,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void popptr(Address src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             popq(src);
         } else {
             popl(src);
@@ -373,7 +357,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void xorptr(CiRegister dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             xorq(dst, src);
         } else {
             xorl(dst, src);
@@ -381,7 +365,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void xorptr(CiRegister dst, Address src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             xorq(dst, src);
         } else {
             xorl(dst, src);
@@ -391,7 +375,7 @@ public class X86MacroAssembler extends X86Assembler {
     // 64 bit versions
 
     int correctedIdivq(CiRegister reg) {
-        assert target.arch.is64bit();
+        assert is64;
         // Full implementation of Java ldiv and lrem; checks for special
         // case as described in JVM spec. : p.243 & p.271. The function
         // returns the (pc) offset of the idivl instruction - may be needed
@@ -430,7 +414,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void decrementq(CiRegister reg, int value) {
-        assert target.arch.is64bit();
+        assert is64;
         if (value == Integer.MIN_VALUE) {
             subq(reg, value);
             return;
@@ -450,7 +434,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void incrementq(CiRegister reg, int value) {
-        assert target.arch.is64bit();
+        assert is64;
         if (value == Integer.MIN_VALUE) {
             addq(reg, value);
             return;
@@ -471,18 +455,18 @@ public class X86MacroAssembler extends X86Assembler {
 
     // These are mostly for initializing null
     void movptr(Address dst, int src) {
-        assert target.arch.is64bit();
+        assert is64;
         movslq(dst, src);
     }
 
     void movptr(CiRegister dst, long src) {
-        assert target.arch.is64bit();
+        assert is64;
         mov64(dst, src);
     }
 
     void stop(String msg) {
         if (C1XOptions.GenAssertionCode) {
-            if (target.arch.is64bit()) {
+            if (is64) {
                 // TODO: pass a pointer to the message
                 callRuntime(CiRuntimeCall.Debug);
                 hlt();
@@ -496,7 +480,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void addptr(CiRegister dst, int imm32) {
 
-        if (target.arch.is64bit()) {
+        if (is64) {
             addq(dst, imm32);
         } else {
             addl(dst, imm32);
@@ -504,7 +488,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void addptr(CiRegister dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             addq(dst, src);
         } else {
             addl(dst, src);
@@ -512,7 +496,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void addptr(Address dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             addq(dst, src);
         } else {
             addl(dst, src);
@@ -527,7 +511,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void andptr(CiRegister dst, int imm32) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             andq(dst, imm32);
         } else {
             andl(dst, imm32);
@@ -599,7 +583,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpptr(CiRegister src1, CiRegister src2) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             cmpq(src1, src2);
         } else {
             cmpl(src1, src2);
@@ -607,7 +591,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpptr(CiRegister src1, Address src2) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             cmpq(src1, src2);
         } else {
             cmpl(src1, src2);
@@ -615,7 +599,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpptr(CiRegister src1, int src2) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             cmpq(src1, src2);
         } else {
             cmpl(src1, src2);
@@ -623,7 +607,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpptr(Address src1, int src2) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             cmpq(src1, src2);
         } else {
             cmpl(src1, src2);
@@ -631,7 +615,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmpxchgptr(CiRegister reg, Address adr) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             cmpxchgq(reg, adr);
         } else {
             cmpxchgl(reg, adr);
@@ -722,7 +706,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     int loadSignedByte(CiRegister dst, Address src) {
         int off;
-        if (target.arch.is64bit() || target.isP6()) {
+        if (is64 || target.isP6()) {
             off = codeBuffer.position();
             movsbl(dst, src); // movsxb
         } else {
@@ -739,7 +723,7 @@ public class X86MacroAssembler extends X86Assembler {
     // The term "word" in HotSpot means a 32- or 64-bit machine word.
     int loadSignedShort(CiRegister dst, Address src) {
         int off;
-        if (target.arch.is64bit() || target.isP6()) {
+        if (is64 || target.isP6()) {
             // This is dubious to me since it seems safe to do a signed 16 => 64 bit
             // version but this is what 64bit has always done. This seems to imply
             // that users are only using 32bits worth.
@@ -757,7 +741,7 @@ public class X86MacroAssembler extends X86Assembler {
         // According to Intel Doc. AP-526 : "Zero-Extension of Short" : p.16 :
         // and "3.9 Partial Register Penalties" : p. 22.
         int off;
-        if (target.arch.is64bit() || target.isP6() || src.uses(dst)) {
+        if (is64 || target.isP6() || src.uses(dst)) {
             off = codeBuffer.position();
             movzbl(dst, src); // movzxb
         } else {
@@ -773,7 +757,7 @@ public class X86MacroAssembler extends X86Assembler {
         // According to Intel Doc. AP-526, "Zero-Extension of Short", p.16,
         // and "3.9 Partial Register Penalties", p. 22).
         int off;
-        if (target.arch.is64bit() || target.isP6() || src.uses(dst)) {
+        if (is64 || target.isP6() || src.uses(dst)) {
             off = codeBuffer.position();
             movzwl(dst, src); // movzxw
         } else {
@@ -786,7 +770,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movptr(CiRegister dst, CiRegister src) {
 
-        if (target.arch.is64bit()) {
+        if (is64) {
 
             movq(dst, src);
         } else {
@@ -796,7 +780,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movptr(CiRegister dst, Address src) {
 
-        if (target.arch.is64bit()) {
+        if (is64) {
             movq(dst, src);
         } else {
             movl(dst, src);
@@ -804,7 +788,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movptr(Address dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             movq(dst, src);
         } else {
             movl(dst, src);
@@ -813,7 +797,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     // sign extend as need a l to ptr sized element
     void movl2ptr(CiRegister dst, Address src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             movslq(dst, src);
         } else {
             movl(dst, src);
@@ -821,7 +805,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void movl2ptr(CiRegister dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             movslq(dst, src);
         } else if (dst != src) {
             movl(dst, src);
@@ -845,7 +829,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void shlptr(CiRegister dst, int imm8) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             shlq(dst, imm8);
         } else {
             shll(dst, imm8);
@@ -853,7 +837,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void shrptr(CiRegister dst, int imm8) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             shrq(dst, imm8);
         } else {
             shrl(dst, imm8);
@@ -861,7 +845,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void signExtendByte(CiRegister reg) {
-        if (target.arch.is64bit() || target.isP6() && reg.isByte()) {
+        if (is64 || target.isP6() && reg.isByte()) {
             movsbl(reg, reg); // movsxb
         } else {
             shll(reg, 24);
@@ -870,7 +854,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void signExtendShort(CiRegister reg) {
-        if (target.arch.is64bit() || target.isP6()) {
+        if (is64 || target.isP6()) {
             movswl(reg, reg); // movsxw
         } else {
             shll(reg, 16);
@@ -879,7 +863,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void subptr(CiRegister dst, int imm32) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             subq(dst, imm32);
         } else {
             subl(dst, imm32);
@@ -887,7 +871,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void subptr(CiRegister dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             subq(dst, src);
         } else {
             subl(dst, src);
@@ -895,7 +879,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void testptr(CiRegister dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             testq(dst, src);
         } else {
             testl(dst, src);
@@ -909,13 +893,13 @@ public class X86MacroAssembler extends X86Assembler {
         Util.unimplemented();
 //        CiRegister end = t2;
 //        CiRegister thread = t1;
-//        if (target.arch.is64bit()) {
+//        if (is64) {
 //            thread = runtime.threadRegister();
 //        }
 //
 //        verifyTlab(runtime);
 //
-//        if (!target.arch.is64bit()) {
+//        if (!is64) {
 //            getThread(thread);
 //        }
 //
@@ -991,7 +975,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void addptr(Address dst, int src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             addq(dst, src);
         } else {
             addl(dst, src);
@@ -999,7 +983,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void addptr(CiRegister dst, Address src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             addq(dst, src);
         } else {
             addl(dst, src);
@@ -1007,7 +991,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void andptr(CiRegister src1, CiRegister src2) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             andq(src1, src2);
         } else {
             andl(src1, src2);
@@ -1060,7 +1044,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void xchgptr(CiRegister src1, CiRegister src2) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             xchgq(src1, src2);
         } else {
             xchgl(src1, src2);
@@ -1136,7 +1120,7 @@ public class X86MacroAssembler extends X86Assembler {
             shrptr(index, 1);
         }
 
-        if (target.arch.is32bit()) {
+        if (is32) {
             // index could have been not a multiple of 8 (i.e., bit 2 was set)
             Label even = new Label();
             // note: if index was a multiple of 8, than it cannot
@@ -1154,7 +1138,7 @@ public class X86MacroAssembler extends X86Assembler {
         Label loop = new Label();
         bind(loop);
         movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - 1 * wordSize), t1);
-        if (target.arch.is32bit()) {
+        if (is32) {
             movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - 2 * wordSize), t1);
         }
         decrement(index, 1);
@@ -1179,7 +1163,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmov(Condition cc, CiRegister dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             cmovq(cc, dst, src);
         } else {
             cmovl(cc, dst, src);
@@ -1187,7 +1171,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmovptr(Condition cc, CiRegister dst, Address src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             cmovq(cc, dst, src);
         } else {
             cmovl(cc, dst, src);
@@ -1195,7 +1179,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void cmovptr(Condition cc, CiRegister dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             cmovq(cc, dst, src);
         } else {
             cmovl(cc, dst, src);
@@ -1203,7 +1187,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void orptr(CiRegister dst, CiRegister src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             orq(dst, src);
         } else {
             orl(dst, src);
@@ -1211,7 +1195,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void orptr(CiRegister dst, int src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             orq(dst, src);
         } else {
             orl(dst, src);
@@ -1219,7 +1203,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void shlptr(CiRegister dst) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             shlq(dst);
         } else {
             shll(dst);
@@ -1227,7 +1211,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void shrptr(CiRegister dst) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             shrq(dst);
         } else {
             shrl(dst);
@@ -1235,7 +1219,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void sarptr(CiRegister dst) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             sarq(dst);
         } else {
             sarl(dst);
@@ -1243,7 +1227,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void sarptr(CiRegister dst, int src) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             sarq(dst, src);
         } else {
             sarl(dst, src);
@@ -1251,7 +1235,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void negptr(CiRegister dst) {
-        if (target.arch.is64bit()) {
+        if (is64) {
             negq(dst);
         } else {
             negl(dst);
@@ -1261,7 +1245,7 @@ public class X86MacroAssembler extends X86Assembler {
     private void bangStackWithOffset(int offset) {
         // stack grows down, caller passes positive offset
         assert offset > 0 :  "must bang with negative offset";
-        if (target.arch.is64bit()) {
+        if (is64) {
             movq(new Address(X86.rsp, (-offset)), X86.rax);
         } else {
             movl(new Address(X86.rsp, (-offset)), X86.rax);

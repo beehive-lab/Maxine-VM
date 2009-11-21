@@ -45,6 +45,8 @@ public abstract class LIRAssembler {
     public final C1XCompilation compilation;
     public final AbstractAssembler asm;
     public final FrameMap frameMap;
+    protected final boolean is32;
+    protected final boolean is64;
 
     protected LocalStub adapterFrameStub;
     protected List<LocalStub> slowCaseStubs;
@@ -68,8 +70,9 @@ public abstract class LIRAssembler {
     public LIRAssembler(C1XCompilation compilation) {
         this.compilation = compilation;
         this.asm = compilation.masm();
-
         this.frameMap = compilation.frameMap();
+        this.is32 = compilation.target.arch.is32bit();
+        this.is64 = compilation.target.arch.is64bit();
         slowCaseStubs = new ArrayList<LocalStub>();
         branchTargetBlocks = new ArrayList<BlockBegin>();
     }
