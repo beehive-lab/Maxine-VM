@@ -458,7 +458,7 @@ public class Canonicalizer extends ValueVisitor {
             }
         }
         if (C1XOptions.CanonicalizeArrayStoreChecks && i.elementKind() == CiKind.Object) {
-            if (value.isConstant() && value.asConstant().isNull()) {
+            if (value.isNullConstant()) {
                 clearStoreCheck(i);
             } else {
                 RiType exactType = Value.exactType(array, runtime);

@@ -454,10 +454,10 @@ public class NullCheckEliminator extends ValueVisitor {
                     } else if (processUse(i, y, false)) {
                         // y is known to be non-null
                         compareAgainstNonNull(i, x);
-                    } else if (x.isConstant() && x.asConstant().asObject() == null) {
+                    } else if (x.isNullConstant()) {
                         // x is the null constant
                         compareAgainstNull(i, y);
-                    } else if (y.isConstant() && y.asConstant().asObject() == null) {
+                    } else if (y.isNullConstant()) {
                         // y is the null constaint
                         compareAgainstNull(i, x);
                     }

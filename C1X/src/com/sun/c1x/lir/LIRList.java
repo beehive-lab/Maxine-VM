@@ -356,10 +356,6 @@ public class LIRList {
         append(new LIRRuntimeCall(routine, result, arguments, info, false));
     }
 
-    public void callRuntimeCalleeSaved(CiRuntimeCall routine, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRRuntimeCall(routine, result, arguments, info, true));
-    }
-
     public void loadStackAddressMonitor(int monitorIx, LIROperand dst) {
         append(new LIROp1(LIROpcode.Monaddr, LIROperandFactory.intConst(monitorIx), dst));
     }
