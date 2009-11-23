@@ -2072,7 +2072,7 @@ public class X86LIRAssembler extends LIRAssembler {
             masm.call(method, info.oopMap.stackMap());
         } else {
             assert entry != null;
-            masm.callRuntimeCalleeSaved(entry, info, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm.callRuntimeCalleeSaved(entry, info, rscratch1, CiConstant.forInt(cpi), constantPool.encoding());
             masm.call(rscratch1, method, info.oopMap.stackMap());
         }
         addCallInfoHere(info);
@@ -2091,7 +2091,7 @@ public class X86LIRAssembler extends LIRAssembler {
             masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset()));
         } else {
             assert method.vtableIndex() == -1 && !method.isLoaded();
-            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveVTableIndex, info, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveVTableIndex, info, rscratch1, CiConstant.forInt(cpi), constantPool.encoding());
             addCallInfoHere(info);
             int vtableEntrySize = compilation.runtime.vtableEntrySize();
             assert Util.isPowerOf2(vtableEntrySize);
@@ -2113,7 +2113,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (method.vtableIndex() == -1) {
             // Unresolved method
-            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveInterfaceIndex, info, rscratch1, new RegisterOrConstant(receiver.asRegister()), new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveInterfaceIndex, info, rscratch1, receiver.asRegister(), CiConstant.forInt(cpi), constantPool.encoding());
         } else {
             // TODO: emit interface ID calculation inline
             masm.movl(rscratch1, method.interfaceID());
@@ -2358,22 +2358,12 @@ public class X86LIRAssembler extends LIRAssembler {
             // Call through global stub
             assert result.isRegister();
 
-            final List<RegisterOrConstant> arguments = new ArrayList<RegisterOrConstant>();
+            Object[] argArray = new Object[args.size()];
+            int i = 0;
             for (LIROperand op : args) {
-                if (op.isConstant()) {
-                    LIRConstant constantOp = (LIRConstant) op;
-                    assert op.kind == CiKind.Int || op.kind == CiKind.Object;
-                    if (op.kind == CiKind.Int) {
-                        arguments.add(new RegisterOrConstant(constantOp.asInt()));
-                    } else if (op.kind == CiKind.Object) {
-                        arguments.add(new RegisterOrConstant(((LIRConstant) op).asObject()));
-                    }
-                } else {
-                    assert op.isRegister();
-                    arguments.add(new RegisterOrConstant(op.asRegister()));
-                }
+                argArray[i++] = asRegisterOrConstant(op);
             }
-            masm.callRuntimeCalleeSaved(dest, info, result.asRegister(), arguments.toArray(new RegisterOrConstant[arguments.size()]));
+            masm.callRuntimeCalleeSaved(dest, info, result.asRegister(), argArray);
         } else {
             // Call direct
             masm.callRuntime(dest);
@@ -2553,18 +2543,11 @@ public class X86LIRAssembler extends LIRAssembler {
         s.accept(new X86CodeStubVisitor(this));
     }
 
-    private static RegisterOrConstant asRegisterOrConstant(LIROperand operand) {
+    private static Object asRegisterOrConstant(LIROperand operand) {
         if (operand.isRegister()) {
-            return new RegisterOrConstant(operand.asRegister());
+            return operand.asRegister();
         } else if (operand.isConstant()) {
-            final LIRConstant c = (LIRConstant) operand;
-            if (c.value.kind == CiKind.Int) {
-                return new RegisterOrConstant(c.value.asInt());
-            } else if (c.value.kind == CiKind.Object) {
-                return new RegisterOrConstant(c.value.asObject());
-            } else {
-                throw Util.shouldNotReachHere();
-            }
+            return ((LIRConstant) operand).value;
         } else {
             throw Util.shouldNotReachHere();
         }
@@ -2744,11 +2727,11 @@ public class X86LIRAssembler extends LIRAssembler {
                     if (inst.result != null) {
                         result = ops[inst.result.index].asRegister();
                     }
-                    RegisterOrConstant[] args = new RegisterOrConstant[inst.arguments.length];
+                    Object[] args = new Object[inst.arguments.length];
                     for (int i = 0; i < args.length; i++) {
                         args[i] = asRegisterOrConstant(ops[inst.arguments[i].index]);
                     }
-                    int infoPos = masm.callGlobalStub(stubId, this.compilation, xir.info, result, args);
+                    int infoPos = masm.callGlobalStub(stubId, xir.info, result, args);
                     compilation.addCallInfo(infoPos, xir.info);
                     break;
 

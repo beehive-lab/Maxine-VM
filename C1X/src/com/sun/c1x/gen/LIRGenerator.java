@@ -1652,7 +1652,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected final LIROperand callRuntime(CiRuntimeCall runtimeCall, LIRDebugInfo info, LIROperand... args) {
         // get a result register
-        CiKind rtype = runtimeCall.resultType;
+        CiKind rtype = runtimeCall.resultKind;
         CiKind[] ptypes = runtimeCall.arguments;
 
         LIROperand physReg = LIROperandFactory.IllegalLocation;

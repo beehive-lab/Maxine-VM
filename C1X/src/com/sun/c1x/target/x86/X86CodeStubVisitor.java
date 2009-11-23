@@ -177,13 +177,12 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.bind(stub.entry);
 
         LIROperand index = stub.index();
-        RegisterOrConstant rindex;
+        Object rindex;
         if (index.isRegister()) {
-            rindex = new RegisterOrConstant(index.asRegister());
+            rindex = index.asRegister();
         } else {
             assert index.isConstant();
-            LIRConstant constantIndex = (LIRConstant) index;
-            rindex = new RegisterOrConstant(constantIndex.asInt());
+            rindex = ((LIRConstant) index).value;
         }
         int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowArrayIndexOutOfBoundsException, stub.info, CiRegister.None, rindex);
         compilation.addCallInfo(infoPos, stub.info);

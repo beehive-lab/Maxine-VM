@@ -81,7 +81,7 @@ public class C1XRuntimeCalls {
     }
 
     private static boolean checkCompatible(CiRuntimeCall call, ClassMethodActor classMethodActor) {
-        assert checkCompatible(call.resultType, classMethodActor.resultKind());
+        assert checkCompatible(call.resultKind, classMethodActor.resultKind());
         for (int i = 0; i < call.arguments.length; i++) {
             assert checkCompatible(call.arguments[i], classMethodActor.getParameterKinds()[i]);
         }

@@ -79,16 +79,16 @@ public enum CiRuntimeCall {
     ResolveFieldOffset(Int, Int, Object),
     ResolveVTableIndex(Int, Int, Object);
 
-    public final CiKind resultType;
+    public final CiKind resultKind;
     public final CiKind[] arguments;
 
     private CiRuntimeCall() {
-        resultType = Void;
+        resultKind = Void;
         arguments = new CiKind[0];
     }
 
-    private CiRuntimeCall(CiKind resultType, CiKind... args) {
-        this.resultType = resultType;
+    private CiRuntimeCall(CiKind resultKind, CiKind... args) {
+        this.resultKind = resultKind;
         this.arguments = args;
     }
 }

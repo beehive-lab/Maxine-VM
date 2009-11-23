@@ -91,7 +91,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         emitStandardForward(null, runtimeCall);
         CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + runtimeCall);
-        return new GlobalStub(null, stubObject, argsSize, argOffsets);
+        return new GlobalStub(null, runtimeCall.resultKind, stubObject, argsSize, argOffsets);
     }
 
     public GlobalStub emit(GlobalStub.Id stub, RiRuntime runtime) {
@@ -120,7 +120,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + stub);
-        return new GlobalStub(stub, stubObject, argsSize, argOffsets);
+        return new GlobalStub(stub, stub.resultKind, stubObject, argsSize, argOffsets);
     }
 
     private LIROperand allocateOperand(XirParameter param, int parameterIndex) {
@@ -229,7 +229,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         epilogue();
         CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, template.name);
-        return new GlobalStub(null, stubObject, 0, null);
+        return new GlobalStub(null, template.resultOperand.kind, stubObject, 0, null);
     }
 
     private CiKind[] getArgumentKinds(XirTemplate template) {
@@ -317,7 +317,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private void emitStandardForward(GlobalStub.Id stub, CiRuntimeCall call) {
         if (stub != null) {
-            assert stub.resultType == call.resultType;
+            assert stub.resultKind == call.resultKind;
             assert stub.arguments.length == call.arguments.length;
             for (int i = 0; i < stub.arguments.length; i++) {
                 assert stub.arguments[i] == call.arguments[i];
@@ -436,8 +436,8 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         // Call to the runtime
         asm.callRuntime(call);
 
-        if (call.resultType != CiKind.Void) {
-            this.storeArgument(0, target.config.getReturnRegister(call.resultType));
+        if (call.resultKind != CiKind.Void) {
+            this.storeArgument(0, target.config.getReturnRegister(call.resultKind));
         }
     }
 }
