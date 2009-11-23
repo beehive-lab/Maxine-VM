@@ -158,7 +158,6 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     void emitOperandHelper(CiRegister reg, Address addr) {
-
         CiRegister base = addr.base;
 
         CiRegister index = addr.index;
@@ -493,11 +492,11 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitInt(0);
     }
 
-    public final void call(Address adr, RiMethod method, boolean[] stackReferenceMap) {
+    public final void call(Address addr, RiMethod method, boolean[] stackReferenceMap) {
         recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
-        prefix(adr);
+        prefix(addr);
         emitByte(0xFF);
-        emitOperand(X86.rdx, adr);
+        emitOperand(X86.rdx, addr);
     }
 
     protected final int emitGlobalStubCall(Object globalStubID, LIRDebugInfo info) {
@@ -515,33 +514,15 @@ public abstract class X86Assembler extends AbstractAssembler {
         return codeBuffer.position();
     }
 
-    public final void callRuntime(CiRuntimeCall runtimeCall) {
-        callRuntime(runtimeCall, null);
-    }
-
     /**
      * Emits a call to the runtime. It generates the bytes for the call, fills in 0 for the destination address and
      * records the position as a relocation to the runtime.
      *
-     * @param runtimeCall
-     *            the destination of the call
+     * @param runtimeCall the destination of the call
      */
-    public void callRuntime(CiRuntimeCall runtimeCall, RiMethod method) {
+    public void callRuntime(CiRuntimeCall runtimeCall) {
         // TODO: Fill in reference map correctly!
         recordRuntimeCall(codeBuffer.position(), runtimeCall, new boolean[targetMethod.frameSize() / target.arch.wordSize]);
-        emitByte(0xE8);
-        emitInt(0);
-    }
-
-    /**
-     * Emits a direct call to a method. It generates the bytes for the call, fills in 0 for the destination address and
-     * records the position as a relocation to the runtime.
-     *
-     * @param method the method to call
-     * @param stackRefMap the reference map at the call
-     */
-    public void callMethodDirect(RiMethod method, boolean[] stackRefMap) {
-        recordDirectCall(codeBuffer.position(), method, stackRefMap);
         emitByte(0xE8);
         emitInt(0);
     }

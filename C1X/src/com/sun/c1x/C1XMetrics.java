@@ -64,6 +64,7 @@ public class C1XMetrics {
     public static int NumberOfHIRInstructions;
     public static int LSRAIntervalsCreated;
     public static int LSRANumberOfSpills;
+    public static int LoadConstantIterations;
 
     public static Map<String, Integer> StaticHIRInstructionCount = new HashMap<String, Integer>();
 
@@ -103,6 +104,7 @@ public class C1XMetrics {
         NumberOfHIRInstructions = 0;
         LSRAIntervalsCreated = 0;
         LSRANumberOfSpills = 0;
+        LoadConstantIterations = 0;
 
         StaticHIRInstructionCount = new HashMap<String, Integer>();
     }

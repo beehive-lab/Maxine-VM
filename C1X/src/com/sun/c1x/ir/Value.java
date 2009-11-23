@@ -244,6 +244,14 @@ public abstract class Value {
     }
 
     /**
+     * Checks whether this value represents the null constant.
+     * @return {@code true} if this value represents the null constant
+     */
+    public final boolean isNullConstant() {
+        return this instanceof Constant && ((Constant) this).value.isNull();
+    }
+
+    /**
      * Checks whether this instruction "is illegal"--i.e. it represents a dead
      * phi or an instruction which does not produce a value.
      * @return {@code true} if this instruction is illegal as an input value to another instruction
