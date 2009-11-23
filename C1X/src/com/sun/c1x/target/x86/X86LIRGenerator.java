@@ -722,20 +722,13 @@ public final class X86LIRGenerator extends LIRGenerator {
         setResult(x, callRuntime(CiRuntimeCall.NewArray, info, hub, length));
     }
 
-    private LIRLocation emitNewTypeArray(CiKind type, CiKind elementType, LIROperand len, LIRDebugInfo info) {
+    private LIRLocation emitNewTypeArray(CiKind type, CiKind elementType, LIROperand length, LIRDebugInfo info) {
         LIRLocation reg = resultRegisterFor(type);
-        assert len.asRegister() == X86.rbx;
-        LIROperand tmp1 = LIROperandFactory.singleLocation(CiKind.Object, X86.rcx);
-        LIROperand tmp2 = LIROperandFactory.singleLocation(CiKind.Object, X86.rsi);
-        LIROperand tmp3 = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
-        LIROperand tmp4 = reg;
-        LIROperand klassReg = LIROperandFactory.singleLocation(CiKind.Object, X86.rdx);
-        CiKind elemType = elementType;
+        LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
+        lir.oop2reg(compilation.runtime.primitiveArrayType(elementType).getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
 
-        lir.oop2reg(compilation.runtime.primitiveArrayType(elemType).getEncoding(RiType.Representation.ObjectHub).asObject(), klassReg);
-
-        LocalStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
-        lir.allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
+        // all allocation is done with a runtime call for now
+        callRuntime(CiRuntimeCall.NewArray, info, hub, length);
         return reg;
     }
 

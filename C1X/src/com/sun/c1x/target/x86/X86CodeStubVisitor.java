@@ -21,7 +21,6 @@
 package com.sun.c1x.target.x86;
 
 import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
@@ -112,10 +111,6 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
     }
 
     public void visitDivByZeroStub(DivByZeroStub stub) {
-        if (stub.offset != -1) {
-            compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
-        }
-
         masm.bind(stub.entry);
         int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowArithmeticException, stub.info, CiRegister.None, NO_PARAMS);
         compilation.addCallInfo(infoPos, stub.info);
@@ -129,7 +124,6 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
     }
 
     public void visitImplicitNullCheckStub(ImplicitNullCheckStub stub) {
-        ce.compilation.recordImplicitException(stub.offset, masm.codeBuffer.position());
         masm.bind(stub.entry);
         int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.ThrowNullPointerException, stub.info, CiRegister.None, NO_PARAMS);
         compilation.addCallInfo(infoPos, stub.info);
@@ -159,17 +153,6 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
 
         int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.Monitorexit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
         compilation.addCallInfo(infoPos, stub.info);
-        masm.jmp(stub.continuation);
-    }
-
-    public void visitNewTypeArrayStub(NewTypeArrayStub stub) {
-        masm.bind(stub.entry);
-        assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
-        assert stub.klassReg().asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
-        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, stub.info, X86.rax, X86.rdx, X86.rbx);
-        compilation.addCallInfo(infoPos, stub.info);
-        ce.verifyOopMap(stub.info);
-        assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
         masm.jmp(stub.continuation);
     }
 
