@@ -140,8 +140,7 @@ public final class FrameMap {
         assert spillSlotCount >= 0 : "must be positive";
 
         this.spillSlotCount = spillSlotCount;
-        int fs = spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock();
-        this.frameSize = compilation.target.alignFrameSize(fs);
+        this.frameSize = compilation.target.alignFrameSize(spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock());
     }
 
     public CiLocation regname(LIROperand opr) {

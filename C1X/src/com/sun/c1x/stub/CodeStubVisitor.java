@@ -36,8 +36,6 @@ public abstract class CodeStubVisitor {
 
     public abstract void visitMonitorExitStub(MonitorExitStub monitorExitStub);
 
-    public abstract void visitNewTypeArrayStub(NewTypeArrayStub newTypeArrayStub);
-
     public abstract void visitRangeCheckStub(RangeCheckStub visitor);
 
     public abstract void visitCheckCastStub(CheckCastStub checkCastStub);
