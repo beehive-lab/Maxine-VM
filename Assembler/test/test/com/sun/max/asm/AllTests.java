@@ -39,7 +39,6 @@ public final class AllTests {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AllTests.class.getPackage().getName());
-        suite.addTestSuite(MethodAnnotationsTest.class);
         suite.addTestSuite(test.com.sun.max.asm.sparc.InternalTest.class);
         suite.addTestSuite(test.com.sun.max.asm.ia32.InternalTest.class);
         suite.addTestSuite(test.com.sun.max.asm.amd64.InternalTest.class);
