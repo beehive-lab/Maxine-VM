@@ -18,38 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.vm.tele;
 
-import com.sun.max.tele.*;
-import com.sun.max.vm.actor.member.*;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 
-public interface TeleMessenger {
 
-    /**
-     * Writes information into the {@link TeleVM} causing it to set up for two way messaging;
-     * must be done early in the startup sequence.
-     */
-    void enable();
+/**
+ * Holder for magic word that communicates whether this VM is being inspected.
+ *
+ * @author Michael Van De Vanter
+ */
+public final class Inspectable {
 
-    /**
-     * Completes the set-up of two way messaging with the {@link TeleVM}, if not
-     * yet done.
-     * Requires that {@link #enable()} has been called early in the startup sequence.
-     *
-     * @return whether two-way messaging is active.
-     */
-    boolean activate();
+    private Inspectable() {
+    }
 
     /**
-     * @param methodKey
-     * @param bytecodePosition < 0 selects homogeneous call entry point
+     * If a non-zero value is put here remotely, then the
+     * additional steps to facilitate inspection should be activated.
      */
-    void requestBytecodeBreakpoint(MethodKey methodKey, int bytecodePosition);
+    @INSPECTED
+    private static Pointer info = Pointer.zero();
 
-    /**
-     * @param methodKey
-     * @param bytecodePosition < 0 selects homogeneous call entry point
-     */
-    void cancelBytecodeBreakpoint(MethodKey methodKey, int bytecodePosition);
-
+    public static boolean isVmInspected() {
+        return !info.isZero();
+    }
 }

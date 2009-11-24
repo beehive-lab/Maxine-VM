@@ -21,47 +21,48 @@
 package com.sun.max.vm.tele;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
+
+
 
 /**
- * Makes critical state information about dynamically loaded classes
+ * Makes critical state information about code
  * remotely inspectable.
+ * <br>
  * Active only when VM is being inspected.
- *
- * CAUTION:  When active, this implementation hold references to
- * all dynamically loaded {@link ClassActor}s, and thus prevents class unloading.
  *
  * @author Michael Van De Vanter
  */
-public final class InspectableClassInfo {
-
-    private InspectableClassInfo() {
-    }
-
-    @INSPECTED
-    private static ClassActor[] classActors;
-
-    @INSPECTED
-    private static int classActorCount = 0;
+public class InspectableCodeInfo {
 
     /**
-     * Adds to the inspectable record of dynamically loaded classes.
+     * Make information inspectable about a just completed method compilation.
+     *
+     * @param targetMethod compilation just completed
      */
-    public static void registerClassLoaded(ClassActor classActor) {
-        if (Inspectable.isVmInspected()) {
-            if (classActors == null) {
-                classActors = new ClassActor[100];
-            }
-            if (classActorCount == classActors.length) {
-                classActors = Arrays.extend(classActors, classActorCount * 2);
-            }
-            // The classActor needs to be set up before we increment classActorCount
-            // otherwise we have a race condition where the Inspector might see
-            // a null classActor.
-            classActors[classActorCount] = classActor;
-            classActorCount++;
-        }
+    public static void notifyCompilationComplete(TargetMethod targetMethod) {
+        final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
+        compilationFinished(classMethodActor.holder().typeDescriptor.string,
+            classMethodActor.name.string,
+            classMethodActor.descriptor.string,
+            targetMethod);
+    }
+
+    /**
+     * An empty method whose purpose is to be interrupted by the Inspector when
+     * it needs to monitor method compilations in the VM.  The arguments
+     * are deliberately made simple so that they can be read with low-level
+     * mechanisms in the Inspector.
+     *
+     * @param holderType type description for class holding the method
+     * @param methodName name of the the method
+     * @param signature argument type descriptors for the method
+     * @param targetMethod the result of the method compilation
+     */
+    @NEVER_INLINE
+    @INSPECTED
+    public static void compilationFinished(String holderType, String methodName, String signature, TargetMethod targetMethod) {
     }
 
 }

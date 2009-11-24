@@ -3143,7 +3143,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().activateMessenger() && teleClassMethodActor.hasCodeAttribute());
+            setEnabled(inspection().hasProcess() && teleClassMethodActor.hasCodeAttribute());
         }
     }
 
@@ -3186,7 +3186,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
+            setEnabled(inspection().hasProcess());
         }
     }
 
@@ -3222,7 +3222,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
+            setEnabled(inspection().hasProcess());
         }
     }
 

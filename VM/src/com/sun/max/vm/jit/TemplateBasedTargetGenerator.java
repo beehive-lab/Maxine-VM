@@ -29,7 +29,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
 
@@ -133,7 +132,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
             targetMethod.linkDirectCalls();
         }
 
-        BytecodeBreakpointMessage.makeTargetBreakpoints(targetMethod);
+        CompilationScheme.Static.notifyCompilationComplete(targetMethod);
     }
 }
 
