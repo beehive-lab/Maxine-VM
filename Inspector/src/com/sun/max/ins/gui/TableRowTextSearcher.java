@@ -29,7 +29,6 @@ import javax.swing.table.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 
-
 /**
  * A row-based textual search engine for locating rows in a {@link JTable} that match a regexp.
  * Requires that cell renderers in the table implement {@link TextSearchable}.

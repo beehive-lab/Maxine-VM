@@ -29,7 +29,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.type.*;
 
-
 public final class SPARCEirStore extends SPARCEirPointerOperation {
 
     private static PoolSet<EirLocationCategory> valueLocationCategories(Kind kind) {
@@ -74,7 +73,6 @@ public final class SPARCEirStore extends SPARCEirPointerOperation {
     public SPARCEirRegister.FloatingPoint valueFloatingPointRegister() {
         return destinationFloatingPointRegister();
     }
-
 
     static void emit(SPARCEirTargetEmitter emitter, Kind kind, EirRegister value,  SPARCEirRegister.GeneralPurpose pointerRegister,  SPARCEirRegister.GeneralPurpose offsetRegister) {
         switch (kind.asEnum) {

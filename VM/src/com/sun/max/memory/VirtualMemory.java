@@ -73,7 +73,6 @@ public final class VirtualMemory {
         return virtualMemory_deallocate(pointer, size, type.ordinal());
     }
 
-
     /**
      * Allocate virtual memory at a fixed address.
      * Evidently the caller of this method must know that the virtual memory
@@ -222,7 +221,5 @@ public final class VirtualMemory {
     private static native long virtualMemory_mapFile(long size, int fd, long fileOffset);
 
     private static native long virtualMemory_mapFileIn31BitSpace(int size, int fd, long fileOffset);
-
-
 
 }

@@ -29,7 +29,6 @@ import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
-
 public class MultiANewArray extends JavaResolvableOperator<ArrayClassActor> {
     private final int ndimension;
 

@@ -54,7 +54,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
     private static int[] DEFAULT_BELT_HEAP_PERCENTAGE = new int[] {70, 30};
     private static final String [] BELT_DESCRIPTIONS = new String[] {"Nursery Belt", "Mature Belt" };
 
-
     /**
      * Single threaded version of the collectors.
      */

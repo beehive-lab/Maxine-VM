@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.gen.cisc.ia32;
 
-
 import com.sun.max.*;
 import com.sun.max.asm.*;
 

@@ -78,7 +78,6 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
     private final IdentityHashSet<TableColumnViewPreferenceListener> tableColumnViewPreferenceListeners =
         new IdentityHashSet<TableColumnViewPreferenceListener>();
 
-
     private final IndexedSequence<ColumnKind_Type> columnTypeValues;
 
     /**

@@ -22,7 +22,6 @@ package com.sun.max.tele.reference;
 
 import com.sun.max.vm.reference.*;
 
-
 /**
  * Access to a heap object in the VM was attempted with a {@link Reference}
  * that did not point to a valid object.

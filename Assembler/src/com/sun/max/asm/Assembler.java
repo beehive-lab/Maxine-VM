@@ -468,7 +468,6 @@ public abstract class Assembler {
         return currentPosition() + potentialExpansionSize;
     }
 
-
     private boolean padOutput;
 
     /**

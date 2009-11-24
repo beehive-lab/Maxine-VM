@@ -25,7 +25,6 @@ import com.sun.max.tele.debug.TeleTargetBreakpoint.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
-
 /**
  * Manages debugging operations on the {@link TeleProcess}.
  *
@@ -105,7 +104,6 @@ public final class TeleProcessController {
         Trace.end(TRACE_VALUE, runToInstructionScheduleTracer);
     }
 
-
     private final Object terminatePerformTracer = new Tracer(TERMINATE, "perform");
 
     public void terminate() throws Exception {
@@ -114,7 +112,6 @@ public final class TeleProcessController {
         Trace.end(TRACE_VALUE, terminatePerformTracer);
     }
 
-
     private final Object pausePerformTracer = new Tracer(PAUSE, "perform");
 
     public void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
@@ -122,7 +119,6 @@ public final class TeleProcessController {
         teleProcess().pause();
         Trace.end(TRACE_VALUE, pausePerformTracer);
     }
-
 
     private final Object resumeScheduleTracer = new Tracer(RESUME, "schedule");
     private final Object resumePerformTracer = new Tracer(RESUME, "perform");

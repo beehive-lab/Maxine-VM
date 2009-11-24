@@ -88,7 +88,6 @@ public final class Interval {
         // the interval has more then one definition (e.g. resulting from phi moves), so stores to memory are not
         // optimized
 
-
         private String name;
 
         private IntervalSpillState(String name) {
@@ -144,7 +143,7 @@ public final class Interval {
 
     void setType(CiKind type) {
         assert registerNumber < CiRegister.FirstVirtualRegisterNumber || this.type == CiKind.Illegal || this.type == type : "overwriting existing type";
-        assert type != CiKind.Boolean && type != CiKind.Byte && type != CiKind.Char : "these basic types should have int type registers";
+        assert type != CiKind.Boolean && type != CiKind.Byte && type != CiKind.Char : "these kinds should have int type registers";
         this.type = type;
     }
 
@@ -698,7 +697,6 @@ public final class Interval {
 
         return result;
     }
-
 
     boolean isVirtualInterval() {
         return registerNumber() >= CiRegister.FirstVirtualRegisterNumber;

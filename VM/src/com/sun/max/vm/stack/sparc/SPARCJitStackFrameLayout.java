@@ -166,7 +166,6 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
         return ByteArrayBitMap.computeBitMapSize(Unsigned.idiv(maximumSlotOffset() - lowestSlotOffset(), STACK_SLOT_SIZE));
     }
 
-
     /**
      * Size of the local area below the frame pointer. It includes the non parameter locals + the saving area
      * for the literal base pointer (a single JIT_SLOT_SIZE).
@@ -246,7 +245,6 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
     public int operandStackReferenceMapIndex(int operandStackIndex) {
         return framePointerOffsetToRefMapIndex(operandStackOffset(operandStackIndex));
     }
-
 
     @Override
     public boolean isReturnAddressPushedByCall() {

@@ -20,7 +20,6 @@
  */
 package jtt.threads;
 
-
 /*
  * @Harness: java
  * @Runs: 0 = true

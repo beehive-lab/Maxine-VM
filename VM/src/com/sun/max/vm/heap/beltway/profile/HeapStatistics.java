@@ -72,8 +72,6 @@ public class HeapStatistics {
     private static volatile long maxObjectSize = 0;
     private static AppendableSequence<Long> maxObjectSizePerMutation = new ArrayListSequence<Long>();
 
-
-
     public static  void flushMutatorStatsToBuffers() {
         totalHeapAllocations.append(heapAllocations);
         heapAllocations = 0;
@@ -223,7 +221,6 @@ public class HeapStatistics {
         Log.print("Mature Survivors: ");
         Log.println(matureSpaceSurvivors);
 
-
         Log.print("Percentage of eden survivors: ");
         final double edenSurvivorPercentage = edenSurvivors / sumSurvivors;
         Log.println(edenSurvivorPercentage);
@@ -235,7 +232,6 @@ public class HeapStatistics {
         Log.print("Percentage of mature survivors: ");
         final double matureSurvivorPercentage = matureSpaceSurvivors / sumSurvivors;
         Log.println(matureSurvivorPercentage);
-
 
     }
 

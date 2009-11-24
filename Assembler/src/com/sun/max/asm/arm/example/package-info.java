@@ -48,4 +48,3 @@
  */
 package com.sun.max.asm.arm.example;
 
-

@@ -96,7 +96,6 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
         return exitGuard;
     }
 
-
     private Value evaluate(TirInstruction instruction) {
         if (instruction instanceof TirConstant) {
             final TirConstant constant = (TirConstant) instruction;

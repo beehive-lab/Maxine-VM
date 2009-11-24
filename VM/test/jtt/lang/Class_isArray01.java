@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public final class Class_isArray01 {
     private Class_isArray01() {
     }

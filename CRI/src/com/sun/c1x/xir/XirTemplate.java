@@ -32,6 +32,8 @@ import com.sun.c1x.xir.CiXirAssembler.XirOperand;
 /**
  * This class represents a completed template of XIR code that has been first assembled by
  * the runtime, and then verified and preprocessed by the compiler.
+ *
+ * @author Ben L. Titzer
  */
 public class XirTemplate {
 
@@ -99,7 +101,7 @@ public class XirTemplate {
     public boolean isParameterDestroyed(int index) {
     	return parameterDestroyed[index];
     }
-    
+
     public boolean hasJavaCall() {
     	return (flags & GlobalFlags.HAS_JAVA_CALL.mask) != 0;
     }
@@ -115,7 +117,6 @@ public class XirTemplate {
 
     	p.println();
     	p.println("Template " + name);
-
 
     	p.print("Param:");
     	for (XirParameter param : parameters) {
@@ -161,5 +162,4 @@ public class XirTemplate {
     		}
     	}
     }
-
 }

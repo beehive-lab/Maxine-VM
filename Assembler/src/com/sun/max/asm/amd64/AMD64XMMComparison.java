@@ -23,7 +23,6 @@ package com.sun.max.asm.amd64;
 import com.sun.max.asm.*;
 import com.sun.max.util.*;
 
-
 public enum AMD64XMMComparison implements EnumerableArgument<AMD64XMMComparison> {
 
     EQUAL,

@@ -41,7 +41,6 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Specific adapter for calls from / to template-based JITed code (with explicit stack management) to code produced by the
  * optimizing CPS-based compiler.
@@ -95,7 +94,6 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         //                                 (ii) retract the stack of the JIT caller.
         return !((classMethodActor.isStatic() && (classMethodActor.descriptor().numberOfParameters() == 0)) || isDynamicTrampoline(classMethodActor));
     }
-
 
     /**
      * Indicates whether the specified instruction is a subtract immediate instruction.
@@ -159,7 +157,6 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         }
     }
 
-
     protected SPARCAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizedAbi) {
         super(classMethodActor, optimizedAbi);
         intScratchRegister = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.INT)).as();
@@ -174,7 +171,6 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
     public void setJitedCodeFrameSize(int size) {
         jitedCodeFrameSize = size;
     }
-
 
     /**
      * Frame Adapter Generator for calls from JIT-ed code to optimized code.

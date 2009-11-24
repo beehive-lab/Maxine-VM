@@ -123,5 +123,4 @@ public class Thread_counter01  extends RunBench {
             done = true;
         }
     }
-
 }

@@ -41,7 +41,6 @@ public class BirBlock implements IrBlock {
         return bytecodeBlock;
     }
 
-
     public IrBlock.Role role() {
         return role;
     }
@@ -65,9 +64,8 @@ public class BirBlock implements IrBlock {
 
     @Override
     public int hashCode() {
-        return bytecodeBlock.start() * bytecodeBlock.end();
+        return bytecodeBlock.start * bytecodeBlock.end;
     }
-
 
     public void addPredecessor(BirBlock predecessor) {
         predecessors.add(predecessor);
@@ -76,7 +74,6 @@ public class BirBlock implements IrBlock {
     public DeterministicSet<BirBlock> predecessors() {
         return predecessors;
     }
-
 
     public void addSuccessor(BirBlock successor) {
         successors.add(successor);
@@ -87,7 +84,7 @@ public class BirBlock implements IrBlock {
     }
 
     public int serial() {
-        return bytecodeBlock.start();
+        return bytecodeBlock.start;
     }
 
     @Override
@@ -96,6 +93,6 @@ public class BirBlock implements IrBlock {
     }
 
     public boolean isReachable() {
-        return !predecessors().isEmpty() || bytecodeBlock.start() == 0 || role == IrBlock.Role.EXCEPTION_DISPATCHER;
+        return !predecessors().isEmpty() || bytecodeBlock.start == 0 || role == IrBlock.Role.EXCEPTION_DISPATCHER;
     }
 }

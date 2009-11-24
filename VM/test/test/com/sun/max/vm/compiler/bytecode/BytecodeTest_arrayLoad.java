@@ -89,7 +89,6 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(-1));
     }
 
-
     private double perform_daload(double[] array, int index) {
         return array[index];
     }
@@ -130,7 +129,6 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5));
     }
 
-
     private byte perform_baload_byte(byte[] array, int index) {
         return array[index];
     }
@@ -151,7 +149,6 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(7));
     }
 
-
     private boolean perform_baload_boolean(boolean[] array, int index) {
         return array[index];
     }
@@ -170,7 +167,6 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         assertTrue(result.asBoolean());
         executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(7));
     }
-
 
     private char perform_caload(char[] array, int index) {
         return array[index];
@@ -191,7 +187,6 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         assertTrue(result.asChar() == x);
         executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5));
     }
-
 
     private short perform_saload(short[] array, int index) {
         return array[index];

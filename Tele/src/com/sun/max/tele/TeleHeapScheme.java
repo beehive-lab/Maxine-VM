@@ -22,7 +22,6 @@ package com.sun.max.tele;
 
 import com.sun.max.unsafe.*;
 
-
 /**
  * Implementation details about a specific implementation of {@link HeapScheme} in the VM.
  *

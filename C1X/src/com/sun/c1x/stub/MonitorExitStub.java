@@ -22,14 +22,13 @@ package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
 
-
 /**
  * The <code>MonitorExitStub</code> class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class MonitorExitStub extends CodeStub {
+public class MonitorExitStub extends LocalStub {
 
     public final boolean computeLock;
     public final int monitorIx;

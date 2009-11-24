@@ -22,14 +22,13 @@ package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
 
-
 /**
  * The <code>DivByZeroStub</code> class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class DivByZeroStub extends CodeStub {
+public class DivByZeroStub extends LocalStub {
 
     public final int offset;
 

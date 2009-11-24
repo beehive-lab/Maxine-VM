@@ -24,7 +24,6 @@
  */
 package jtt.except;
 
-
 public class BC_aaload0 {
 
     static Object[] array = {null, null, ""};

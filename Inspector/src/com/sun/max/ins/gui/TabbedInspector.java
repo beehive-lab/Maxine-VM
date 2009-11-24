@@ -31,7 +31,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.lang.*;
 
-
 /**
  * An Inspector that contains within it a collection of inspectors in a tabbed frame.
  * Tabbed inspectors manage change explicitly: removes the contained inspectors

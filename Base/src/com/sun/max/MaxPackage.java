@@ -146,7 +146,6 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
             }
         }.run(classpath, name().replace('.', '/'));
 
-
         final AppendableSequence<MaxPackage> packages = new ArrayListSequence<MaxPackage>(packageNames.size());
         for (String pkgName : packageNames) {
             final MaxPackage maxPackage = MaxPackage.fromName(pkgName);

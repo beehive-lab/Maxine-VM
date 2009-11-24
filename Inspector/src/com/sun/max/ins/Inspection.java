@@ -117,8 +117,6 @@ public final class Inspection {
 
     private InspectorMainFrame inspectorMainFrame;
 
-
-
     public Inspection(MaxVM maxVM) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();

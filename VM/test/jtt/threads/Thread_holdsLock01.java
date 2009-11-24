@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Thread_holdsLock01 {
 
     private Thread_holdsLock01() {

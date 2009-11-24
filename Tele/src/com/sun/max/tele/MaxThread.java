@@ -29,7 +29,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
-
 /**
  * Access to a thread in the Maxine VM.
  * This could in the future be merged with the JDWP interface.

@@ -23,7 +23,6 @@ package com.sun.c1x.ri;
 import com.sun.c1x.ci.CiConstant;
 import com.sun.c1x.ci.CiKind;
 
-
 /**
  * This interface represents a resolved or unresolved type in the compiler
  * interface. Types include primitives, objects, {@code void}, and arrays thereof.
@@ -198,7 +197,7 @@ public interface RiType {
      * Gets the basic type of this compiler interface type.
      * @return the basic type
      */
-    CiKind basicType();
+    CiKind kind();
 
     /**
      * Gets the encoding of (i.e. a constant representing the value of) the specified part of this type.
@@ -212,5 +211,5 @@ public interface RiType {
      * @param r the part of the this type
      * @return the basic type of constants for the specified part of the type
      */
-    CiKind getBasicType(Representation r);
+    CiKind getRepresentationKind(Representation r);
 }

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.bytecode;
 
-
 /**
  * Byte code visitor that focuses on control flow changing opcodes.
  *

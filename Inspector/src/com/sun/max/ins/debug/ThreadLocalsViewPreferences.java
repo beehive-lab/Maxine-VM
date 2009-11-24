@@ -25,7 +25,6 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 
-
 /**
  * Persistent preferences for viewing thread local values in the VM.
  *

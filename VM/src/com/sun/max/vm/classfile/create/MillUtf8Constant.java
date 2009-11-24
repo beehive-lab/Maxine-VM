@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.classfile.create;
 
-
 /**
  * This class represents Utf8 string entries in constant pools.
  * 

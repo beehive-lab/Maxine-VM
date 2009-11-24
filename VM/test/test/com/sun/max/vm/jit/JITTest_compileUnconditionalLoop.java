@@ -27,7 +27,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Testing the JIT-compiler with methods performing loop. This tests the JIT support for the goto bytecode.
  *

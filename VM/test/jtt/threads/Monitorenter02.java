@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Monitorenter02 {
     private Monitorenter02() {
     }

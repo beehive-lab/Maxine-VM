@@ -173,7 +173,6 @@ public final class AMD64EirCompareAndSwap extends AMD64EirPointerOperation {
         FatalError.unimplemented();
     }
 
-
     @Override
     public void acceptVisitor(AMD64EirInstructionVisitor visitor) {
         visitor.visit(this);

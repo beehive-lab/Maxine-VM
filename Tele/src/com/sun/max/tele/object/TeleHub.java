@@ -26,7 +26,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Inspector's canonical surrogate for an object of type {@link Hub} in the VM.
  * Note that this kind of object cannot be expressed as an ordinary type;
@@ -206,8 +205,6 @@ public abstract class TeleHub extends TeleHybridObject {
     public int referenceMapLength() {
         return teleVM().teleFields().Hub_referenceMapLength.readInt(reference());
     }
-
-
 
     @Override
     protected Object createDeepCopy(DeepCopier context) {

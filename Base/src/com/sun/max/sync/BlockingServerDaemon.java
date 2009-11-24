@@ -40,8 +40,7 @@ public class BlockingServerDaemon extends Thread {
     /**
      * The lock object used to synchronize client/server interaction.
      */
-    static class Lock {}
-    protected final Object token = new Lock();
+    protected final Object token = new Object();
 
     public BlockingServerDaemon(String name) {
         super(name);
@@ -56,7 +55,7 @@ public class BlockingServerDaemon extends Thread {
                 // Block clients until the server is waiting for requests:
                 token.wait();
             } catch (InterruptedException interruptedException) {
-                ProgramError.unexpected();
+                ProgramError.unexpected(interruptedException);
             }
         }
     }

@@ -152,7 +152,6 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
             final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
             final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
 
-
             final Value value = wordOrBoxedJavaValue instanceof Word ? WordValue.from((Word) wordOrBoxedJavaValue) : Value.fromBoxedJavaValue(wordOrBoxedJavaValue);
             specificLayout.writeValue(value.kind(), mirror, offset, value);
             return;

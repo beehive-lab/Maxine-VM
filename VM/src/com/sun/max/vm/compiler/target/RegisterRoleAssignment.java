@@ -109,7 +109,6 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
         floatingPointRegisters[ABI_SCRATCH.ordinal()] = floatingPointScratch;
     }
 
-
     @HOSTED_ONLY
     public RegisterRoleAssignment(Class<IntegerRegister_Type> integerRegisterType,
                                   IntegerRegister_Type cpuStackPointer,

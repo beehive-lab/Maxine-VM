@@ -29,7 +29,6 @@ import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 
-
 /**
  * A singleton inspector that displays a list of {@link MemoryRegion}s that have been allocated in the VM.
  *

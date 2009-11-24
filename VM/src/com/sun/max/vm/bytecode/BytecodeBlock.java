@@ -46,9 +46,9 @@ public class BytecodeBlock extends BytecodePositionRange {
     private boolean check() {
         assert code != null;
         assert code.length > 0;
-        assert start() >= 0;
-        assert end() >= start();
-        assert end() <= code.length;
+        assert start >= 0;
+        assert end >= start;
+        assert end <= code.length;
         return true;
     }
 
@@ -63,6 +63,6 @@ public class BytecodeBlock extends BytecodePositionRange {
      * Gets the number of bytecode positions covered by this block.
      */
     public int size() {
-        return end() - start() + 1;
+        return end - start + 1;
     }
 }

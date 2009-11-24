@@ -24,7 +24,6 @@
  */
 package jtt.threads;
 
-
 public final class Thread_isInterrupted01 {
     private Thread_isInterrupted01() {
     }

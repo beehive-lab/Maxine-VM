@@ -26,7 +26,6 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.bytecode.graft.*;
 
-
 /**
  * Exception table entries in code attributes as described in #4.7.3.
  *

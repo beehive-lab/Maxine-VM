@@ -93,7 +93,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     protected final MethodProfile.Builder methodProfileBuilder;
 
-
     /**
      * The actor of the method being compiled.
      */
@@ -124,7 +123,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     private int[] catchBlockPositions;
 
-
     /**
      * List of forward branches that need to be fixed up.
      */
@@ -134,7 +132,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      * List of tableswitch and lookupswitch instructions that need to be fixed up.
      */
     private AppendableSequence<Switch> switches = new LinkSequence<Switch>();
-
 
     public BytecodeToTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, JitStackFrameLayout jitStackFrameLayout, boolean trace) {
         if (classMethodActor.holder().kind == Kind.WORD || SignatureDescriptor.containsWord(classMethodActor.descriptor())) {
@@ -623,7 +620,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         emitTemplateFor(returnInstruction);
         emitReturn();
     }
-
 
     /**
      * Emits a template for a bytecode operating on a local variable (operand is an index to a local variable). The
@@ -1691,7 +1687,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveStaticMethod.SNIPPET));
         emitAndRecordStops(template);
     }
-
 
     @Override
     protected void ior() {

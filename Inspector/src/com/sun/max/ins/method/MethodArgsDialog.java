@@ -28,7 +28,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * Interactive support for remote method interpretation in the VM.
  *

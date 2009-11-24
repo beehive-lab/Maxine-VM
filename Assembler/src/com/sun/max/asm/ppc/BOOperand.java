@@ -159,7 +159,6 @@ public final class BOOperand extends AbstractSymbolicArgument {
      */
     public static final BOOperand CTRZero_CRTrue = new BOOperand("01010");
 
-
     /**
      * Branch if the bit in the Condition Register selected by the BI field is set
      * and indicate that the branch is very likely to be taken.

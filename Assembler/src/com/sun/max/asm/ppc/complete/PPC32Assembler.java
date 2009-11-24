@@ -23,7 +23,6 @@ package com.sun.max.asm.ppc.complete;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 
-
 /**
  * The concrete class for a 32-bit PowerPC assembler.
 

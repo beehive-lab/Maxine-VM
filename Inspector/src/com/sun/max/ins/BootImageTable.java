@@ -35,7 +35,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
 
-
 /**
  * A table specialized for displaying {@link VMConfiguration}  information in the VM boot image.
  *
@@ -53,7 +52,6 @@ public final class BootImageTable extends InspectorTable {
         configureMemoryTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
     }
-
 
     /**
      * A table for displaying configuration parameters for the VM instance.
@@ -104,14 +102,14 @@ public final class BootImageTable extends InspectorTable {
 
             addRow("grip scheme:", new JavaNameLabel(inspection(), vmConfiguration.gripScheme().name(), vmConfiguration.gripScheme().getClass().getName()), null);
             addRow("reference scheme:", new JavaNameLabel(inspection(), vmConfiguration.referenceScheme().name(), vmConfiguration.referenceScheme().getClass().getName()), null);
-            addRow("layout scheme:",  new JavaNameLabel(inspection(), vmConfiguration.layoutScheme().name(), vmConfiguration.layoutScheme().getClass().getName()), null);
+            addRow("layout scheme:",  new JavaNameLabel(inspection(), vmConfiguration.layoutScheme().name, vmConfiguration.layoutScheme().getClass().getName()), null);
             addRow("heap scheme:", new JavaNameLabel(inspection(), vmConfiguration.heapScheme().name(), vmConfiguration.heapScheme().getClass().getName()), null);
             addRow("monitor scheme:", new JavaNameLabel(inspection(), vmConfiguration.monitorScheme().name(), vmConfiguration.monitorScheme().getClass().getName()), null);
             addRow("compilation scheme:", new JavaNameLabel(inspection(), vmConfiguration.compilationScheme().name(), vmConfiguration.compilationScheme().getClass().getName()), null);
             addRow("optimizing compiler scheme:", new JavaNameLabel(inspection(), vmConfiguration.bootCompilerScheme().name(), vmConfiguration.bootCompilerScheme().getClass().getName()), null);
             addRow("JIT compiler scheme:", new JavaNameLabel(inspection(), vmConfiguration.jitCompilerScheme().name(), vmConfiguration.jitCompilerScheme().getClass().getName()), null);
             addRow("trampoline scheme:", new JavaNameLabel(inspection(), vmConfiguration.trampolineScheme().name(), vmConfiguration.trampolineScheme().getClass().getName()), null);
-            addRow("target ABIs scheme:", new JavaNameLabel(inspection(), vmConfiguration.targetABIsScheme().name(), vmConfiguration.targetABIsScheme().getClass().getName()), null);
+            addRow("target ABIs scheme:", new JavaNameLabel(inspection(), vmConfiguration.targetABIsScheme().name, vmConfiguration.targetABIsScheme().getClass().getName()), null);
             addRow("run scheme:", new JavaNameLabel(inspection(), vmConfiguration.runScheme().name(), vmConfiguration.runScheme().getClass().getName()), null);
 
             addRow("relocation data size:", new DataLabel.IntAsHex(inspection(), header.relocationDataSize), null);

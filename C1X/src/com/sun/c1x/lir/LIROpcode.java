@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.lir;
 
-
 /**
  * The <code>LirOpcode</code> enum represents the Operation code of each LIR instruction.
  *
@@ -91,6 +90,8 @@ public enum LIROpcode {
     BeginOp3,
         Idiv,
         Irem,
+        Ldiv,
+        Lrem,
     EndOp3,
     StaticCall,
     OptVirtualCall,

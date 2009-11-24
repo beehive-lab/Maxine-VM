@@ -85,7 +85,6 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
         }
     }
 
-
     public int method1(int x, int y) {
         return x * y;
     }
@@ -107,7 +106,6 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
             }
         }
     }
-
 
     public static void main(String[] args) {
         junit.textui.TestRunner.run(JITTest_adapterFrameGenerator.suite());

@@ -49,12 +49,10 @@ public final class TeleInterfaceMethodActor extends TeleMethodActor {
         return null;
     }
 
-
     @Override
     public String maxineRole() {
         return "InterfaceMethodActor";
     }
-
 
     public TargetMethodAccess[] getTargetMethods() {
         return new TargetMethodAccess[0];

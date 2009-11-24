@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.gen.risc.bitRange;
 
-
 /**
  * A bit range that has its most significant bit on the left and its least significant bit on the right.
  *

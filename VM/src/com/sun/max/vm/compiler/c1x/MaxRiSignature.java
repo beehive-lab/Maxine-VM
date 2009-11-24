@@ -87,7 +87,7 @@ public class MaxRiSignature implements RiSignature {
      * @param index the index of the argument
      * @return the basic type of the argument
      */
-    public CiKind argumentBasicTypeAt(int index) {
+    public CiKind argumentKindAt(int index) {
         return basicTypes[index];
     }
 
@@ -107,7 +107,7 @@ public class MaxRiSignature implements RiSignature {
      * This is typically implemented more efficiently than getting the actual type.
      * @return the basic return type
      */
-    public CiKind returnBasicType() {
+    public CiKind returnKind() {
         if (basicReturnType == null) {
             basicReturnType = descriptorToBasicType(descriptor.resultDescriptor());
         }

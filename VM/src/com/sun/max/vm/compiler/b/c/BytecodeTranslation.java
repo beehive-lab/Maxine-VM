@@ -286,7 +286,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     protected boolean isEndOfBlock() {
-        return currentBytePosition() == methodTranslation.getBlockStateAt(currentOpcodePosition()).birBlock().bytecodeBlock().end() + 1;
+        return currentBytePosition() == methodTranslation.getBlockStateAt(currentOpcodePosition()).birBlock().bytecodeBlock().end + 1;
     }
 
     private void conditionalBranch(CirValue value1, CirSwitch cirSwitch, CirValue value2, int offset) {

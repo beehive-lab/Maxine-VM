@@ -62,7 +62,6 @@ public abstract class BlockEnd extends Instruction {
         return stateAfter;
     }
 
-
     public void setStateAfter(ValueStack valueStack) {
         stateAfter = valueStack;
     }

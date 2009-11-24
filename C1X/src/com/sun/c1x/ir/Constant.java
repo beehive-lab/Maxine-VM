@@ -28,7 +28,7 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class Constant extends Instruction {
+public final class Constant extends Instruction {
 
     public final CiConstant value;
 
@@ -37,7 +37,7 @@ public class Constant extends Instruction {
      * @param value the constant
      */
     public Constant(CiConstant value) {
-        super(value.basicType.stackType());
+        super(value.kind.stackType());
         this.value = value;
         initFlag(Value.Flag.NonNull, value.isNonNull());
     }
@@ -128,5 +128,4 @@ public class Constant extends Instruction {
     public boolean valueEqual(Instruction i) {
         return i instanceof Constant && ((Constant) i).value.equivalent(this.value);
     }
-
 }

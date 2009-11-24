@@ -20,8 +20,6 @@
  */
 package com.sun.max.lang;
 
-
-
 /**
  * Additional methods that one might want in java.lang.Long.
  *

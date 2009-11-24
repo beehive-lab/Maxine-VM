@@ -45,7 +45,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
 
-
 public abstract class CompilerTestSetup<Method_Type> extends TestSetup {
 
     private static CompilerTestSetup compilerTestSetup = null;

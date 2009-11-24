@@ -289,7 +289,7 @@ public class InstructionPrinter extends ValueVisitor {
             while (!hasPhisOnStack && i < state.stackSize()) {
                 Value value = state.stackAt(i);
                 hasPhisOnStack = isPhiAtBlock(value, block);
-                i += value.type().sizeInSlots();
+                i += value.kind.sizeInSlots();
             }
 
             do {
@@ -298,7 +298,7 @@ public class InstructionPrinter extends ValueVisitor {
                     hasPhisInLocals = isPhiAtBlock(value, block);
                     // also ignore illegal HiWords
                     if (value != null && !value.isIllegal()) {
-                        i += value.type().sizeInSlots();
+                        i += value.kind.sizeInSlots();
                     } else {
                         i++;
                     }
@@ -320,7 +320,7 @@ public class InstructionPrinter extends ValueVisitor {
                     if (value != null) {
                         out.println(stateString(i, value, block));
                         // also ignore illegal HiWords
-                        i += value.isIllegal() ? 1 : value.type().sizeInSlots();
+                        i += value.isIllegal() ? 1 : value.kind.sizeInSlots();
                     } else {
                         i++;
                     }
@@ -339,7 +339,7 @@ public class InstructionPrinter extends ValueVisitor {
                 Value value = block.stateBefore().stackAt(i);
                 if (value != null) {
                     out.println(stateString(i, value, block));
-                    i += value.type().sizeInSlots();
+                    i += value.kind.sizeInSlots();
                 } else {
                     i++;
                 }
@@ -380,9 +380,9 @@ public class InstructionPrinter extends ValueVisitor {
         CiConstant type = constant.value;
         if (type == CiConstant.NULL_OBJECT) {
             out.print("null");
-        } else if (type.basicType.isPrimitive()) {
+        } else if (type.kind.isPrimitive()) {
             out.print(constant.asConstant().valueString());
-        } else if (type.basicType.isObject()) {
+        } else if (type.kind.isObject()) {
             Object object = constant.asConstant().asObject();
             if (object == null) {
                 out.print("null");
@@ -391,7 +391,7 @@ public class InstructionPrinter extends ValueVisitor {
             } else {
                 out.print("<object: ").print(object.getClass().getName()).print('@').print(System.identityHashCode(object)).print('>');
             }
-        } else if (type.basicType.isJsr()) {
+        } else if (type.kind.isJsr()) {
             out.print("bci:").print(constant.asConstant().valueString());
         } else {
             out.print("???");
@@ -496,13 +496,13 @@ public class InstructionPrinter extends ValueVisitor {
              print("._").
              print(i.offset()).
              print(" (").
-             print(i.field().type().basicType().typeChar).
+             print(i.field().type().kind().typeChar).
              print(")");
     }
 
     @Override
     public void visitLoadIndexed(LoadIndexed load) {
-        out.print(load.array()).print('[').print(load.index()).print("] (").print(load.type().typeChar).print(')');
+        out.print(load.array()).print('[').print(load.index()).print("] (").print(load.kind.typeChar).print(')');
     }
 
     @Override
@@ -598,7 +598,7 @@ public class InstructionPrinter extends ValueVisitor {
         if (ret.result() == null) {
             out.print("return");
         } else {
-            out.print(ret.type().typeChar).print("return ").print(ret.result());
+            out.print(ret.kind.typeChar).print("return ").print(ret.result());
         }
     }
 
@@ -614,12 +614,12 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitStoreField(StoreField store) {
-        out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().basicType().typeChar).print(')');
+        out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().kind().typeChar).print(')');
     }
 
     @Override
     public void visitStoreIndexed(StoreIndexed store) {
-        out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.type().typeChar).print(')');
+        out.print(store.array()).print('[').print(store.index()).print("] := ").print(store.value()).print(" (").print(store.kind.typeChar).print(')');
     }
 
     @Override
@@ -681,5 +681,4 @@ public class InstructionPrinter extends ValueVisitor {
         }
         out.print(", value ").print(unsafe.value()).print(')');
     }
-
 }

@@ -111,7 +111,6 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
         return result;
     }
 
-
     private PoolSet<AMD64EirRegister> createUnallocatableRegisterPoolSet() {
         final PoolSet<AMD64EirRegister> result = PoolSet.noneOf(AMD64EirRegister.pool());
         result.add(stackPointer());

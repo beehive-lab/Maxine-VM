@@ -60,5 +60,4 @@ public class TeleMethod extends TeleTupleObject {
         return "Method";
     }
 
-
 }

@@ -31,7 +31,7 @@ import com.sun.c1x.util.*;
  */
 public class LIRItem {
 
-    private Value value;
+    public Value value;
     private final LIRGenerator gen;
     private LIROperand result;
     private boolean destroysRegister;
@@ -58,10 +58,6 @@ public class LIRItem {
         setInstruction(null);
     }
 
-    public Value value() {
-        return value;
-    }
-
     public void loadItemForce(LIROperand reg) {
         LIROperand r = result();
         if (r != reg) {
@@ -86,10 +82,10 @@ public class LIRItem {
     }
 
     public void loadForStore(CiKind type) {
-        if (gen.canStoreAsConstant(value(), type)) {
-            result = value().operand();
+        if (gen.canStoreAsConstant(value, type)) {
+            result = value.operand();
             if (!result.isConstant()) {
-                result = LIROperandFactory.constant(value());
+                result = LIROperandFactory.constant(value);
             }
         } else if (type == CiKind.Byte || type == CiKind.Boolean) {
             loadByteItem();
@@ -102,7 +98,7 @@ public class LIRItem {
         assert !destroysRegister || (!result.isRegister() || result.isVirtual()) : "shouldn't use setDestroysRegister with physical regsiters";
         if (destroysRegister && result.isRegister()) {
             if (newResult.isIllegal()) {
-                newResult = gen.newRegister(value().type());
+                newResult = gen.newRegister(value.kind);
                 gen.lir.move(result, newResult);
             }
             return newResult;
@@ -134,7 +130,7 @@ public class LIRItem {
 
             if (!res.isVirtual() || !gen.isVregFlagSet(res, LIRGenerator.VregFlag.ByteReg)) {
                 // make sure that it is a byte register
-                assert !value().type().isFloat() && !value().type().isDouble() : "can't load floats in byte register";
+                assert !value.kind.isFloat() && !value.kind.isDouble() : "can't load floats in byte register";
                 LIROperand reg = gen.rlockByte(CiKind.Byte);
                 gen.lir.move(res, reg);
                 result = reg;
@@ -148,17 +144,17 @@ public class LIRItem {
 
     public void loadNonconstant() {
         if (gen.compilation.target.arch.isX86()) {
-            LIROperand r = value().operand();
+            LIROperand r = value.operand();
             if (r.isConstant()) {
                 result = r;
             } else {
                 loadItem();
             }
         } else if (gen.compilation.target.arch.isSPARC()) {
-            LIROperand r = value().operand();
-            if (gen.canInlineAsConstant(value())) {
+            LIROperand r = value.operand();
+            if (gen.canInlineAsConstant(value)) {
                 if (!r.isConstant()) {
-                    r = LIROperandFactory.constant(value());
+                    r = LIROperandFactory.constant(value);
                 }
                 result = r;
             } else {
@@ -170,11 +166,11 @@ public class LIRItem {
     }
 
     void setResult(LIROperand opr) {
-        assert value().operand().isIllegal() || value().operand().isConstant() : "operand should never change";
-        value().setOperand(opr);
+        assert value.operand().isIllegal() || value.operand().isConstant() : "operand should never change";
+        value.setOperand(opr);
 
         if (opr.isVirtual()) {
-            gen.instructionForOperand.put(opr.vregNumber(), value());
+            gen.instructionForOperand.put(opr.vregNumber(), value);
         }
 
         result = opr;
@@ -183,10 +179,10 @@ public class LIRItem {
     public void loadItem() {
         if (result().isIllegal()) {
             // update the items result
-            result = value().operand();
+            result = value.operand();
         }
         if (!result().isRegister()) {
-            LIROperand reg = gen.newRegister(value().type());
+            LIROperand reg = gen.newRegister(value.kind);
             gen.lir.move(result(), reg);
             if (result().isConstant()) {
                 result = reg;
@@ -198,12 +194,12 @@ public class LIRItem {
 
     public int asInt() {
         assert value instanceof Constant : "must be a constant";
-        return value().asConstant().asInt();
+        return value.asConstant().asInt();
     }
 
     public long asLong() {
         assert value instanceof Constant : "must be a constant";
-        return value().asConstant().asLong();
+        return value.asConstant().asLong();
     }
 
     @Override

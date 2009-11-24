@@ -131,7 +131,6 @@ public class PageDataAccess extends DataAccessAdapter {
         return getPage(address).readByte(getOffset(address));
     }
 
-
     public synchronized short readShort(Address address) {
         checkNullPointer(address);
         return getPage(address).readShort(getOffset(address));

@@ -20,7 +20,6 @@
  */
 package jtt.jni;
 
-
 /*
  * @Harness: java
  * @Runs: 0 = true, 1 = true

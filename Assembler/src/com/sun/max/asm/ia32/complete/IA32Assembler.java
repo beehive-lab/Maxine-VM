@@ -20,7 +20,6 @@
  */
 package com.sun.max.asm.ia32.complete;
 
-
 /**
  * Instantiate this class to assemble IA32 instructions.
  *

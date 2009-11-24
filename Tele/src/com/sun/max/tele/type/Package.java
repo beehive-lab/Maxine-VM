@@ -22,7 +22,6 @@ package com.sun.max.tele.type;
 
 import com.sun.max.*;
 
-
 /**
  * @author Michael Van De Vanter
  *

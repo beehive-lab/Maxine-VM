@@ -23,7 +23,6 @@ package com.sun.c1x.lir;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 
-
 /**
  * The <code>LIROperandFactory</code> class is a factory for constructing LIROperand
  * instances and provides numerous utility methods.

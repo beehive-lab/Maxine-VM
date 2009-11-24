@@ -42,9 +42,9 @@ public class Canonicalizer extends ValueVisitor {
     private static final Object[] NO_ARGUMENTS = {};
 
     final RiRuntime runtime;
+    final RiMethod method;
     Value canonical;
     List<Instruction> extra;
-    private final RiMethod method;
 
     public Canonicalizer(RiRuntime runtime, RiMethod method) {
         this.runtime = runtime;
@@ -56,14 +56,6 @@ public class Canonicalizer extends ValueVisitor {
         this.extra = null;
         original.accept(this);
         return this.canonical;
-    }
-
-    /**
-     * Gets the canonicalized version of the instruction.
-     * @return the canonicalized version of the instruction
-     */
-    public Value canonical() {
-        return canonical;
     }
 
     public List<Instruction> extra() {
@@ -145,7 +137,7 @@ public class Canonicalizer extends ValueVisitor {
             }
         }
 
-        CiKind xt = x.type();
+        CiKind xt = x.kind;
         if (x.isConstant() && y.isConstant()) {
             // both operands are constants, try constant folding
             switch (xt) {
@@ -383,14 +375,14 @@ public class Canonicalizer extends ValueVisitor {
             // only try to canonicalize static field loads
             RiField field = i.field();
             if (field.isConstant()) {
-
                 if (method.isStatic() && method.isInitializer()) {
                     return;
                 }
 
-                // (tw) This seems to be wrong;
-                // TODO: Check why!
-                // setConstant(field.constantValue());
+                CiConstant value = field.constantValue();
+                if (value != null) {
+                    setConstant(value);
+                }
             }
         }
     }
@@ -433,9 +425,12 @@ public class Canonicalizer extends ValueVisitor {
             // the array is a load of a field; check if it is a constant
             RiField field = ((LoadField) array).field();
             if (field.isConstant() && field.isStatic()) {
-                Object obj = field.constantValue().asObject();
-                if (obj != null) {
-                    setIntConstant(java.lang.reflect.Array.getLength(obj));
+                CiConstant cons = field.constantValue();
+                if (cons != null) {
+                    Object obj = cons.asObject();
+                    if (obj != null) {
+                        setIntConstant(Array.getLength(obj));
+                    }
                 }
             }
         } else if (array.isConstant()) {
@@ -449,22 +444,48 @@ public class Canonicalizer extends ValueVisitor {
 
     @Override
     public void visitStoreIndexed(StoreIndexed i) {
+        Value array = i.array();
+        Value value = i.value();
         if (C1XOptions.CanonicalizeNarrowingInStores) {
             // Eliminate narrowing conversions emitted by javac which are unnecessary when
             // writing the value to an array (which is packed)
-            Value v = i.value();
+            Value v = value;
             if (v instanceof Convert) {
                 Value nv = eliminateNarrowing(i.elementKind(), (Convert) v);
                 if (nv != null && inCurrentBlock(v)) {
-                    setCanonical(new StoreIndexed(i.array(), i.index(), i.length(), i.elementKind(), nv, i.stateBefore()));
+                    setCanonical(new StoreIndexed(array, i.index(), i.length(), i.elementKind(), nv, i.stateBefore()));
+                }
+            }
+        }
+        if (C1XOptions.CanonicalizeArrayStoreChecks && i.elementKind() == CiKind.Object) {
+            if (value.isNullConstant()) {
+                clearStoreCheck(i);
+            } else {
+                RiType exactType = Value.exactType(array, runtime);
+                if (exactType != null) {
+                    if (runtime.isObjectArrayType(exactType)) {
+                        // the exact type of the array is Object[] => no check is necessary
+                        clearStoreCheck(i);
+                    } else {
+                        RiType declaredType = value.declaredType();
+                        if (declaredType != null && declaredType.isSubtypeOf(exactType)) {
+                            // the value being stored has a known type
+                            clearStoreCheck(i);
+                        }
+                    }
                 }
             }
         }
     }
 
+    private void clearStoreCheck(StoreIndexed i) {
+        i.setFlag(Value.Flag.NoStoreCheck);
+        C1XMetrics.StoreChecksRedundant++;
+    }
+
     @Override
     public void visitNegateOp(NegateOp i) {
-        CiKind vt = i.x().type();
+        CiKind vt = i.x().kind;
         Value v = i.x();
         if (i.x().isConstant()) {
             switch (vt) {
@@ -474,7 +495,7 @@ public class Canonicalizer extends ValueVisitor {
                 case Double: setDoubleConstant(-v.asConstant().asDouble()); break;
             }
         }
-        assert vt == canonical.type();
+        assert vt == canonical.kind;
     }
 
     @Override
@@ -498,7 +519,7 @@ public class Canonicalizer extends ValueVisitor {
         // or if both are constants
         Value x = i.x();
         Value y = i.y();
-        CiKind xt = x.type();
+        CiKind xt = x.kind;
         if (x == y) {
             // x and y are generated by the same instruction
             switch (xt) {
@@ -644,7 +665,7 @@ public class Canonicalizer extends ValueVisitor {
         } else if (o.isConstant()) {
             // if the object is a constant, check if it is nonnull
             CiConstant c = o.asConstant();
-            if (c.basicType.isObject() && c.asObject() != null) {
+            if (c.kind.isObject() && c.asObject() != null) {
                 setCanonical(o);
             }
         }
@@ -659,8 +680,8 @@ public class Canonicalizer extends ValueVisitor {
                 CiConstant result = foldInvocation(i.target(), i.arguments());
                 if (result != null) {
                     // folding was successful
-                    CiKind basicType = method.signatureType().returnBasicType();
-                    setCanonical(new Constant(new CiConstant(basicType, result)));
+                    CiKind kind = method.signatureType().returnKind();
+                    setCanonical(new Constant(new CiConstant(kind, result)));
                 }
             }
         }
@@ -743,10 +764,10 @@ public class Canonicalizer extends ValueVisitor {
             // try to convert a call to Array.newInstance() into a NewObjectArray or NewTypeArray
             RiType type = asRiType(args[0]);
             if (type != null) {
-                if (type.basicType() == CiKind.Object) {
+                if (type.kind() == CiKind.Object) {
                     setCanonical(new NewObjectArray(type, args[1], i.stateBefore(), '\0', null));
                 } else {
-                    setCanonical(new NewTypeArray(args[1], type.basicType(), i.stateBefore()));
+                    setCanonical(new NewTypeArray(args[1], type.kind(), i.stateBefore()));
                 }
                 return;
             }
@@ -933,7 +954,7 @@ public class Canonicalizer extends ValueVisitor {
             return;
         }
 
-        CiKind rt = r.type();
+        CiKind rt = r.kind;
 
         Condition ifcond = i.condition();
         if (l.isConstant() && r.isConstant()) {
@@ -966,7 +987,7 @@ public class Canonicalizer extends ValueVisitor {
     }
 
     private boolean isNullConstant(Value r) {
-        return r.isConstant() && r.type().isObject() && r.asConstant().asObject() == null;
+        return r.isConstant() && r.kind.isObject() && r.asConstant().asObject() == null;
     }
 
     private void reduceIfCompareOpConstant(If i, CiConstant rtc) {
@@ -1114,7 +1135,7 @@ public class Canonicalizer extends ValueVisitor {
                 if (y instanceof Convert) {
                     // match unsafe(x + (long) y)
                     Convert convert = (Convert) y;
-                    if (convert.opcode() == Bytecodes.I2L && convert.value().type().isInt()) {
+                    if (convert.opcode() == Bytecodes.I2L && convert.value().kind.isInt()) {
                         // the conversion is redundant
                         setUnsafeRawOp(i, x, convert.value(), 0);
                     }
@@ -1131,7 +1152,7 @@ public class Canonicalizer extends ValueVisitor {
         if (index instanceof ShiftOp) {
             // try to match the index as a shift by a constant
             ShiftOp shift = (ShiftOp) index;
-            CiKind st = shift.y().type();
+            CiKind st = shift.y().kind;
             if (shift.y().isConstant() && st.isInt()) {
                 int val = shift.y().asConstant().asInt();
                 switch (val) {
@@ -1146,7 +1167,7 @@ public class Canonicalizer extends ValueVisitor {
             // try to match the index as a multiply by a constant
             // note that this case will not happen if C1XOptions.CanonicalizeMultipliesToShifts is true
             ArithmeticOp arith = (ArithmeticOp) index;
-            CiKind st = arith.y().type();
+            CiKind st = arith.y().kind;
             if (arith.opcode() == Bytecodes.IMUL && arith.y().isConstant() && st.isInt()) {
                 int val = arith.y().asConstant().asInt();
                 switch (val) {
@@ -1251,10 +1272,10 @@ public class Canonicalizer extends ValueVisitor {
             try {
                 // attempt to invoke the method
                 Object result = reflectMethod.invoke(recvr, argArray);
-                CiKind basicType = method.signatureType().returnBasicType();
+                CiKind kind = method.signatureType().returnKind();
                 // set the result of this instruction to be the result of invocation
                 C1XMetrics.MethodsFolded++;
-                return new CiConstant(basicType, result);
+                return new CiConstant(kind, result);
                 // note that for void, we will have a void constant with value null
             } catch (IllegalAccessException e) {
                 // folding failed; too bad

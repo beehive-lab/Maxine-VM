@@ -22,7 +22,6 @@ package com.sun.max.vm.hotpath.compiler;
 
 import com.sun.max.vm.bytecode.*;
 
-
 public class Anchor {
     protected final BytecodeLocation location;
 

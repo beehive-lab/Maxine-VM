@@ -77,7 +77,7 @@ public final class NativeConditionVariable extends ConditionVariable {
     /**
      * This must be a fully informative JNI call, not a C_FUNCTION, because it can block and the stack walker needs to know the last Java frame.
      *
-     * @return whether waiting succeeded, i.e. no error and no interrupt occurred
+     * @return true if no error occurred whilst waiting; false otherwise
      */
     private static native boolean nativeConditionWait(Pointer mutex, Pointer condition, long timeoutMilliSeconds);
 

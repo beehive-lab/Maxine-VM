@@ -42,7 +42,7 @@ public class ArithmeticOp extends Op2 {
      * @param stateBefore the value stack for instructions that may trap
      */
     public ArithmeticOp(int opcode, Value x, Value y, boolean isStrictFP, ValueStack stateBefore) {
-        super(x.type().meet(y.type()), opcode, x, y);
+        super(x.kind.meet(y.kind), opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
         if (stateBefore != null) {
             // state before is only used in the case of a division or remainder,
@@ -94,5 +94,9 @@ public class ArithmeticOp extends Op2 {
 
     public boolean isCommutative() {
         return Bytecodes.isCommutative(opcode);
+    }
+
+    public boolean needsZeroCheck() {
+        return !checkFlag(Flag.NoZeroCheck);
     }
 }

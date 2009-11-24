@@ -497,6 +497,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new SETNLE(eirBlock(), result));
         addInstruction(new SETL(eirBlock(), flag));
         addInstruction(new SUB_I64(eirBlock(), result, flag));
+        addInstruction(new MOVSX_I8(eirBlock(), result, result));
     }
 
     @Override
@@ -1309,7 +1310,6 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new JMP_indirect(eirBlock(), address));
     }
 
-
     @Override
     public void visitPause(Pause builtin, DirValue result, DirValue[] arguments) {
         addInstruction(new PAUSE(eirBlock()));
@@ -1331,8 +1331,6 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new ZERO(eirBlock(), Kind.WORD, result));
         addInstruction(new CMP_I32(eirBlock(), a, b));
         addInstruction(new CMOVAE_I32(eirBlock(), result, createEirConstant(IntValue.ONE)));
-
-
 
     }
 

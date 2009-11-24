@@ -22,7 +22,6 @@ package com.sun.max.jdwp.vm.proxy;
 
 import com.sun.max.jdwp.vm.core.*;
 
-
 /**
  * Represents a single value in the VM.
  *

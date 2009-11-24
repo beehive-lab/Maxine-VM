@@ -40,7 +40,6 @@ import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A table specialized for displaying a range of memory words in the VM.
  *
@@ -440,7 +439,6 @@ public final class MemoryWordsTable extends InspectorTable {
         }
     }
 
-
     private final class CharRenderer extends DataLabel.ByteArrayAsChar implements TableCellRenderer {
         CharRenderer(Inspection inspection) {
             super(inspection, null);
@@ -458,7 +456,6 @@ public final class MemoryWordsTable extends InspectorTable {
         }
     }
 
-
     private final class UnicodeRenderer extends DataLabel.ByteArrayAsUnicode implements TableCellRenderer {
         UnicodeRenderer(Inspection inspection) {
             super(inspection, null);
@@ -475,7 +472,6 @@ public final class MemoryWordsTable extends InspectorTable {
             return this;
         }
     }
-
 
     private final class FloatRenderer extends DataLabel.FloatAsText implements TableCellRenderer {
         FloatRenderer(Inspection inspection) {
@@ -495,7 +491,6 @@ public final class MemoryWordsTable extends InspectorTable {
         }
     }
 
-
     private final class DoubleRenderer extends DataLabel.DoubleAsText implements TableCellRenderer {
         DoubleRenderer(Inspection inspection) {
             super(inspection, 0.0d);
@@ -513,7 +508,6 @@ public final class MemoryWordsTable extends InspectorTable {
             return this;
         }
     }
-
 
     private final class RegionRenderer extends MemoryRegionValueLabel implements TableCellRenderer {
         // Designed so that we only read memory lazily, for words that are visible

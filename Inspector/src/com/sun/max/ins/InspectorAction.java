@@ -35,7 +35,6 @@ import com.sun.max.program.*;
  */
 public abstract class InspectorAction extends AbstractAction implements Prober {
 
-
     private static final int TRACE_VALUE = 1;
 
     /**

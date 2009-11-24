@@ -177,7 +177,6 @@ public class JITTest_stackManipulations extends CompilerTestCase<CPSTargetMethod
         pokeInt1(0, value1 * value2);
     }
 
-
     public void imul2() {
         final int value2 = peekInt2(0);
         final int value1 = peekInt2(1);
@@ -245,5 +244,4 @@ public class JITTest_stackManipulations extends CompilerTestCase<CPSTargetMethod
         disassemble(method4);
     }*/
 }
-
 

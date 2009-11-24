@@ -26,7 +26,6 @@ import test.com.sun.max.vm.jtrun.all.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.template.source.*;
 
-
 /**
  * @author Bernd Mathiske
  */

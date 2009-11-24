@@ -31,6 +31,4 @@ public class X86DisassembledInstruction extends DisassembledInstruction {
         super(disassembler, position, bytes, template, arguments);
     }
 
-
-
 }

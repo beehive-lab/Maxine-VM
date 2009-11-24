@@ -22,7 +22,7 @@ package com.sun.max.collect;
 
 /**
  * A deterministic set with element removal operations.
- * 
+ *
  * @author Bernd Mathiske
  */
 public interface ShrinkableDeterministicSet<Element_Type> extends DeterministicSet<Element_Type> {
@@ -30,16 +30,4 @@ public interface ShrinkableDeterministicSet<Element_Type> extends DeterministicS
     void remove(Element_Type element);
 
     void clear();
-
-    public static final class Static {
-        private Static() {
-        }
-
-        public static <Element_Type> void removeAll(ShrinkableDeterministicSet<Element_Type> set, Element_Type[] elements) {
-            for (Element_Type element : elements) {
-                set.remove(element);
-            }
-        }
-    }
-
 }

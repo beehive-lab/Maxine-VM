@@ -32,7 +32,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 
-
 /**
  * A table specialized for displaying the threads in the VM.
  *

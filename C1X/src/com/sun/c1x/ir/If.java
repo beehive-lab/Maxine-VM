@@ -36,8 +36,6 @@ public class If extends BlockEnd {
     Value x;
     Value y;
     Condition condition;
-    RiMethod profiledMethod;
-    int profiledBCI;
 
     /**
      * Constructs a new If instruction.
@@ -152,40 +150,6 @@ public class If extends BlockEnd {
     }
 
     /**
-     * Gets the profiled method for this instruction.
-     * @return the profiled method
-     */
-    public RiMethod profiledMethod() {
-        return profiledMethod;
-    }
-
-    /**
-     * Gets the profiled bytecode index for this instruction.
-     * @return the profiled bytecode index
-     */
-    public int profiledBCI() {
-        return profiledBCI;
-    }
-
-    /**
-     * Checks whether profiling should be added to this instruction.
-     * @return <code>true</code> if profiling should be added to this instruction
-     */
-    public boolean shouldProfile() {
-        return profiledMethod != null;
-    }
-
-    /**
-     * Sets the profiled method and bytecode index for this instruction.
-     * @param method the profiled method
-     * @param bci the bytecode index
-     */
-    public void setProfile(RiMethod method, int bci) {
-        profiledMethod = method;
-        profiledBCI = bci;
-    }
-
-    /**
      * Iterates over the input values to this instruction.
      * @param closure the closure to apply
      */
@@ -203,5 +167,4 @@ public class If extends BlockEnd {
     public void accept(ValueVisitor v) {
         v.visitIf(this);
     }
-
 }

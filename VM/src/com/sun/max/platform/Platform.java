@@ -52,7 +52,6 @@ public final class Platform {
      */
     public final int pageSize;
 
-
     /**
      * Stack bias added to the stack pointer to obtain the actual top of the stack frame.
      * <br>

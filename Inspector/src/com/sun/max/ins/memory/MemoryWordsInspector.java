@@ -108,7 +108,6 @@ public final class MemoryWordsInspector extends Inspector {
     // Prefix for all persistent column preferences in view
     private static final String MEMORY_WORDS_COLUMN_PREFERENCE = "memoryWordsViewColumn";
 
-
     public static JPanel globalPreferencesPanel(Inspection inspection) {
         return globalPreferences(inspection).getPanel();
     }
@@ -336,11 +335,9 @@ public final class MemoryWordsInspector extends Inspector {
 
         gui().setLocationRelativeToMouse(this, inspection().geometry().objectInspectorNewFrameDiagonalOffset());
 
-
         table.scrollToOrigin();
        // table.setPreferredScrollableViewportSize(new Dimension(-1, preferredTableHeight()));
     }
-
 
     /**
      * Create a memory inspector for a designated region of memory, with the view
@@ -373,7 +370,6 @@ public final class MemoryWordsInspector extends Inspector {
     public MemoryWordsInspector(Inspection inspection, Address address) {
         this(inspection, new FixedMemoryRegion(address, inspection.maxVM().pageSize(), ""), null, address, ViewMode.PAGE, null);
     }
-
 
     @Override
     protected void createView() {

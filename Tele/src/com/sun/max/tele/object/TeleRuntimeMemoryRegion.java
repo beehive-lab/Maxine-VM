@@ -105,7 +105,6 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
         return teleString.getString();
     }
 
-
     public boolean contains(Address address) {
         return address.greaterEqual(start()) && address.lessThan(end());
     }

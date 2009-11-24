@@ -24,7 +24,6 @@
  */
 package jtt.lang;
 
-
 public final class Object_notify02 {
 
     private Object_notify02() {

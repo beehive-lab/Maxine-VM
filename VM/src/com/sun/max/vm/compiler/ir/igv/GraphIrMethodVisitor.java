@@ -52,10 +52,10 @@ class GraphIrMethodVisitor implements IrMethodVisitor {
 
         for (BirBlock block : method.blocks()) {
             final GraphWriter.Node node = graph.createNode(block.serial());
-            node.getProperties().setProperty("name", "Block (" + block.serial() + "-" + block.bytecodeBlock().end() + ")");
-            node.getProperties().setProperty("start", Integer.toString(block.bytecodeBlock().start()));
-            node.getProperties().setProperty("bci", Integer.toString(block.bytecodeBlock().start()));
-            node.getProperties().setProperty("end", Integer.toString(block.bytecodeBlock().end()));
+            node.getProperties().setProperty("name", "Block (" + block.serial() + "-" + block.bytecodeBlock().end + ")");
+            node.getProperties().setProperty("start", Integer.toString(block.bytecodeBlock().start));
+            node.getProperties().setProperty("bci", Integer.toString(block.bytecodeBlock().start));
+            node.getProperties().setProperty("end", Integer.toString(block.bytecodeBlock().end));
             node.getProperties().setProperty("hasSafePoint", Boolean.toString(block.hasSafepoint()));
             node.getProperties().setProperty("role", block.role().toString());
             node.getProperties().setProperty("size", Integer.toString(block.bytecodeBlock().size()));

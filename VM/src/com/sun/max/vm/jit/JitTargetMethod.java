@@ -79,7 +79,6 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     @INSPECTED
     private int[] bytecodeToTargetCodePositionMap;
 
-
     protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
         super(classMethodActor, compilerScheme);
     }

@@ -37,7 +37,7 @@ public class RoundFP extends Instruction {
       * @param value the instruction generating the input value
      */
     public RoundFP(Value value) {
-        super(value.type());
+        super(value.kind);
         this.value = value;
     }
 
@@ -80,5 +80,4 @@ public class RoundFP extends Instruction {
         }
         return false;
     }
-
 }

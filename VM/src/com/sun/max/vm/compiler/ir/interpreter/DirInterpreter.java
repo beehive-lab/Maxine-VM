@@ -71,7 +71,6 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
         return dirArguments;
     }
 
-
     private class Environment {
         private final Map<DirVariable, DirValue> bindings = new HashMap<DirVariable, DirValue>();
 

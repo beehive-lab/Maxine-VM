@@ -22,7 +22,6 @@ package com.sun.max.tele.debug.guestvm.xen;
 
 import com.sun.max.*;
 
-
 /**
  * @author Michael Van De Vanter
  */

@@ -22,14 +22,13 @@ package com.sun.c1x.stub;
 
 import com.sun.c1x.lir.*;
 
-
 /**
  * The <code>MonitorEnterStub</code> class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class MonitorEnterStub extends CodeStub {
+public class MonitorEnterStub extends LocalStub {
 
     /**
      * Creates a new instance of <code>MonitorEnterStub</code>.

@@ -31,7 +31,6 @@ import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.type.*;
 
-
 public class FieldWriteSnippet extends BuiltinsSnippet {
 
     protected FieldWriteSnippet() {

@@ -35,14 +35,14 @@ public abstract class UnsafeObjectOp extends UnsafeOp {
 
     /**
      * Creates a new UnsafeObjectOp instruction.
-     * @param basicType the basic type of the operation
+     * @param opKind the kind of the operation
      * @param object the instruction generating the object
      * @param offset the instruction generating the index
      * @param isStore <code>true</code> if this is a store operation
      * @param isVolatile <code>true</code> if the operation is volatile
      */
-    public UnsafeObjectOp(CiKind basicType, Value object, Value offset, boolean isStore, boolean isVolatile) {
-        super(basicType, isStore);
+    public UnsafeObjectOp(CiKind opKind, Value object, Value offset, boolean isStore, boolean isVolatile) {
+        super(opKind, isStore);
         this.object = object;
         this.offset = offset;
         this.isVolatile = isVolatile;

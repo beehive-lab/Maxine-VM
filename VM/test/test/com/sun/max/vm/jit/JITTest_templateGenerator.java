@@ -44,7 +44,6 @@ public class JITTest_templateGenerator extends TemplateTableTestCase {
         return TestBytecodeSource.class;
     }
 
-
     public void test_generate() {
         generateAndDisassemble(source());
     }

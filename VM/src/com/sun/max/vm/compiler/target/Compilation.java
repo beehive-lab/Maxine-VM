@@ -166,10 +166,6 @@ public class Compilation implements Future<TargetMethod> {
                 if (targetMethod != null) {
                     // compilation succeeded and produced a target method
                     classMethodActor.targetState = TargetState.addTargetMethod(targetMethod, previousTargetState);
-                } else {
-                    FatalError.check(error != null, "Target method cannot be null if no compilation error occurred");
-                    // compilation caused an exception: save it as the target state
-                    classMethodActor.targetState = error;
                 }
                 // compilation finished: this must come after the assignment to classMethodActor.targetState
                 done = true;
@@ -183,17 +179,25 @@ public class Compilation implements Future<TargetMethod> {
         }
 
         if (error != null) {
-            logCompilationError(error, compiler, targetMethod, methodString);
+            // an error occurred
+            logCompilationError(error, compiler, methodString);
             throw new RuntimeException(error);
+        } else if (targetMethod == null) {
+            // the compilation didn't produce a target method
+            FatalError.unexpected("target method should not be null");
         }
 
         return targetMethod;
     }
 
-    private void logCompilationError(Throwable error, RuntimeCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
+    private void logCompilationError(Throwable error, RuntimeCompilerScheme compiler, String methodString) {
         if (verboseOption.verboseCompilation) {
             Log.printCurrentThread(false);
-            Log.print(": " + compiler.name() + ": Compilation failed  " + methodString + " @ ");
+            Log.print(": ");
+            Log.print(compiler.name());
+            Log.print(": Compilation failed  ");
+            Log.print(methodString);
+            Log.print(" @ ");
             Log.print(error.toString());
             error.printStackTrace(Log.out);
             Log.println();
@@ -205,7 +209,10 @@ public class Compilation implements Future<TargetMethod> {
         if (verboseOption.verboseCompilation) {
             methodString = classMethodActor.format("%H.%n(%p)");
             Log.printCurrentThread(false);
-            Log.println(": " + compiler.name() + ": Compiling " + methodString);
+            Log.println(": ");
+            Log.print(compiler.name());
+            Log.print(": Compiling ");
+            Log.print(methodString);
         }
         return methodString;
     }
@@ -213,9 +220,14 @@ public class Compilation implements Future<TargetMethod> {
     private void logAfterCompilation(RuntimeCompilerScheme compiler, TargetMethod targetMethod, String methodString) {
         if (verboseOption.verboseCompilation) {
             Log.printCurrentThread(false);
-            Log.print(": " + compiler.name() + ": Compiled  " + methodString + " @ ");
+            Log.print(": ");
+            Log.print(compiler.name());
+            Log.print(": Compiled  ");
+            Log.print(methodString);
+            Log.print(" @ ");
             Log.print(targetMethod.codeStart());
-            Log.print(" {code length=" + targetMethod.codeLength() + "}");
+            Log.print(", size = ");
+            Log.print(targetMethod.codeLength());
             Log.println();
         }
     }

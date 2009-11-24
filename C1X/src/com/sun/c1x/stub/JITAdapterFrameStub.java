@@ -20,12 +20,11 @@
  */
 package com.sun.c1x.stub;
 
-
 /**
  *
  * @author Thomas Wuerthinger
  */
-public class JITAdapterFrameStub extends CodeStub {
+public class JITAdapterFrameStub extends LocalStub {
 
     public JITAdapterFrameStub() {
         super(null);

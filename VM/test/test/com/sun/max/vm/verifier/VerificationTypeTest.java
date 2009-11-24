@@ -181,7 +181,6 @@ public class VerificationTypeTest extends CompilerTestCase<CPSTargetMethod> {
         assertTrue(JavaTypeDescriptor.LONG.equals(LONG.typeDescriptor()));
         assertTrue(JavaTypeDescriptor.DOUBLE.equals(DOUBLE.typeDescriptor()));
 
-
         // For assignments, interfaces are treated like Object.
         assertIsAssignableFrom(interfaceAType, classAType);
         assertNotIsAssignableFrom(classAType, interfaceAType);

@@ -147,7 +147,6 @@ public abstract class NonFoldableSnippet extends Snippet {
         public static final CreateMultiReferenceArray SNIPPET = new CreateMultiReferenceArray();
     }
 
-
     public static final class CreateArithmeticException extends NonFoldableSnippet {
         @SNIPPET
         public static ArithmeticException createArithmeticException() {

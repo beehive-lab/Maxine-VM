@@ -22,7 +22,6 @@ package test.output;
 
 import java.util.*;
 
-
 public class PrintDate {
     public static void main(String[] args) {
         final Date date = new Date(1000000000000L);

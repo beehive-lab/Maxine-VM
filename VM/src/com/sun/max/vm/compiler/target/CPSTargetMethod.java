@@ -238,7 +238,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return duplicate;
     }
 
-
     /**
      * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
      */
@@ -381,7 +380,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return frameReferenceMapFor(stopType.stopPositionIndex(this, n));
     }
 
-
     /**
      * Gets the {@linkplain #referenceMaps() register reference map} for a given safepoint.
      *
@@ -397,7 +395,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         final int start = frameReferenceMapsSize() + (registerReferenceMapSize * safepointIndex);
         return new ByteArrayBitMap(referenceMaps, start, registerReferenceMapSize);
     }
-
 
     /**
      * Gets the number of leading bytes in {@link #referenceMaps()} encoding the frame reference maps for each {@linkplain #stopPositions() stop position}.
@@ -463,7 +460,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     public byte[] encodedInlineDataDescriptors() {
         return encodedInlineDataDescriptors;
     }
-
 
     /**
      * Gets the {@linkplain #referenceMaps() frame reference map} for a stop position denoted by a given index into
@@ -564,7 +560,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         }
     }
 
-
     /**
      * Gets the frame and register reference maps for this target method.
      *
@@ -594,7 +589,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     public final byte[] referenceMaps() {
         return referenceMaps;
     }
-
 
     /**
      * Gets the size of a single frame reference map encoded in this method's {@linkplain #referenceMaps() reference maps}.

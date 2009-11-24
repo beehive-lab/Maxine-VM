@@ -23,7 +23,6 @@ package test.com.sun.max.vm.compiler.dir;
 import junit.framework.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
-
 public class DirTranslatorTest_cmp extends BytecodeTest_cmp {
 
     public static Test suite() {

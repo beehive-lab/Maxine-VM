@@ -25,7 +25,6 @@ import test.com.sun.max.vm.compiler.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * Compiles all tests from test.jdk.
  *

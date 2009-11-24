@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins.gui;
 
-
 /**
  * A marker interface for an inspector that contains other inspectors.
  * The contained inspectors have the container as their parent.

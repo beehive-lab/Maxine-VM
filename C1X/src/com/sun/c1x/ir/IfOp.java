@@ -46,7 +46,7 @@ public class IfOp extends Op2 {
      */
     public IfOp(Value x, Condition cond, Value y, Value tval, Value fval) {
         // TODO: return the appropriate bytecode IF_ICMPEQ, etc
-        super(tval.type().meet(fval.type()), Bytecodes.ILLEGAL, x, y);
+        super(tval.kind.meet(fval.kind), Bytecodes.ILLEGAL, x, y);
         this.cond = cond;
         this.trueVal = tval;
         falseVal = fval;
@@ -117,5 +117,4 @@ public class IfOp extends Op2 {
         }
         return false;
     }
-
 }

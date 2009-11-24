@@ -23,8 +23,6 @@ package com.sun.max.vm.verifier.types;
 
 import com.sun.max.vm.type.*;
 
-
-
 /**
  * @author David Liu
  * @author Doug Simon

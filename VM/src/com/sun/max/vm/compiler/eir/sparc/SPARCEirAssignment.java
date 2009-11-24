@@ -258,7 +258,6 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         emit_GF_S(emitter, temp); // store temp in stack
     }
 
-
     private void emit_G(SPARCEirTargetEmitter emitter) {
         switch (destinationLocation().category()) {
             case INTEGER_REGISTER: {

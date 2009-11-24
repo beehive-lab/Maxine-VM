@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele;
 
-
 /**
  * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
  *

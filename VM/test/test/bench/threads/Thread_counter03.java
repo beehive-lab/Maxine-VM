@@ -96,5 +96,4 @@ public class Thread_counter03  extends RunBench {
         public void runBareLoop(long loopCount) {
         }
     }
-
 }

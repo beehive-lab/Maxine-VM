@@ -84,5 +84,4 @@ public final class TeleClass extends TeleTupleObject implements ClassObjectProvi
         return getTeleClassActor();
     }
 
-
 }

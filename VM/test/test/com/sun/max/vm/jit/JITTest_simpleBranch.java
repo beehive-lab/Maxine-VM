@@ -129,8 +129,6 @@ public class JITTest_simpleBranch extends CompilerTestCase<CPSTargetMethod> {
         }.compile(getClass());
     }
 
-
-
     private void do_unresolved_invoke(final String testName) {
         do_invoke("unresolved_" + testName, UnresolvedAtCompileTime.class);
     }

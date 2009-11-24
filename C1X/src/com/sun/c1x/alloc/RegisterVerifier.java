@@ -86,8 +86,8 @@ final class RegisterVerifier {
             inputState.add(null);
         }
         CallingConvention args = compilation().frameMap().incomingArguments();
-        for (int n = 0; n < args.length(); n++) {
-            LIROperand opr = args.at(n);
+        for (int n = 0; n < args.operands.length; n++) {
+            LIROperand opr = args.operands[n];
             if (opr.isRegister()) {
                 Interval interval = intervalAt(regNum(opr));
 
@@ -232,8 +232,6 @@ final class RegisterVerifier {
         for (int i = 0; i < ops.length(); i++) {
             LIRInstruction op = ops.at(i);
             //visitor.visit(op);
-
-
 
             if (C1XOptions.TraceLinearScanLevel >= 4) {
                 op.printOn(TTY.out);

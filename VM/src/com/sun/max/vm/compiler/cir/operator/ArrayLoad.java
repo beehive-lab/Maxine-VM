@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.type.*;
 
-
 public class ArrayLoad extends JavaOperator {
 
     private final Kind kind;

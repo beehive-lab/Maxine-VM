@@ -50,8 +50,6 @@ public interface SPARCEirInstructionVisitor extends EirInstructionVisitor {
     void visit(MOVFE instruction);
     void visit(MOVFNE instruction);
 
-
-
     void visit(CMP_I32 instruction);
     void visit(CMP_I64 instruction);
     void visit(DIV_I32 instruction);

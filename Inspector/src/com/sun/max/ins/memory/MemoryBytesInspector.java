@@ -197,7 +197,6 @@ public final class MemoryBytesInspector extends Inspector {
     @Override
     protected void createView() {
 
-
         contentPane = new InspectorPanel(inspection());
         setContentPane(contentPane);
         contentPane.removeAll();

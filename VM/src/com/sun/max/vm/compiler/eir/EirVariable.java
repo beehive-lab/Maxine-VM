@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -48,7 +47,6 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
     }
 
     private final Kind kind;
-
 
     @Override
     public EirVariable asVariable() {
@@ -281,6 +279,4 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
     public String toString() {
         return toString(true);
     }
-
-    public Interval interval;
 }

@@ -24,7 +24,6 @@ import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.tir.*;
 import com.sun.max.vm.hotpath.state.*;
 
-
 /**
  * Implements a dead code elimination pipeline filter. It maintains liveness information as it visits instructions
  * in reverse tree order.

@@ -39,7 +39,6 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
-
 /**
  * High Level CIR Operator.  This class, its subclasses, and {@link JavaBuiltin}s comprise
  * the operators that can appear in the procedure position of a {@link CirCall}.

@@ -31,7 +31,6 @@ import com.sun.max.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
-
 /**
  * A collection of classes for transferring Inspector objects during drag and drop.
  * <br>

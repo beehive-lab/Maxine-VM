@@ -24,9 +24,6 @@ import java.lang.reflect.*;
 
 import com.sun.max.collect.*;
 
-
-
-
 /**
  * @author Bernd Mathiske
  */

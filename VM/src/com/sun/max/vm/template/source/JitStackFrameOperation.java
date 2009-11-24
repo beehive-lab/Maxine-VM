@@ -158,7 +158,6 @@ public final class JitStackFrameOperation {
         pokeWord(0, value);
     }
 
-
     @INLINE
     static void pushFloat(final float value) {
         addSlots(1);

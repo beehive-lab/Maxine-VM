@@ -39,7 +39,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
-
 /**
  * The main GUI window for an inspection of a Maxine VM, with related GUI services.
  * Contains multiple instances of {@link Inspector} in a {@link JDesktopPane}.

@@ -64,7 +64,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
     private boolean exec;
     private boolean isEnabledDuringGC;
 
-
     /**
      * Stores old data of fields covered by watchpoint.
      */
@@ -432,7 +431,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             super(factory, description,  teleThreadLocalValues.getMemoryRegion(index), after, read, write, exec, gc);
             this.teleThreadLocalValues = teleThreadLocalValues;
         }
-
 
         @Override
         public String toString() {
@@ -1126,6 +1124,5 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
             super(message);
         }
     }
-
 
 }

@@ -28,19 +28,16 @@ import com.sun.c1x.ci.*;
  * @author Ben L. Titzer
  */
 public abstract class UnsafeOp extends Instruction {
-    final CiKind basicType;
+    public final CiKind unsafeOpKind;
 
     /**
      * Creates a new UnsafeOp instruction.
-     * @param basicType the basic type of the operation
+     * @param unsafeOpKind the kind of the operation
      * @param isStore <code>true</code> if this is a store operation
      */
-    public UnsafeOp(CiKind basicType, boolean isStore) {
-        super(isStore ? CiKind.Void : basicType.stackType());
-        this.basicType = basicType;
+    public UnsafeOp(CiKind unsafeOpKind, boolean isStore) {
+        super(isStore ? CiKind.Void : unsafeOpKind.stackType());
+        this.unsafeOpKind = unsafeOpKind;
     }
 
-    public CiKind basicType() {
-        return basicType;
-    }
 }

@@ -147,7 +147,6 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
             this.depth = step.depth();
         }
 
-
         private final VMListener listener = new VMAdapter() {
 
             @Override

@@ -40,7 +40,6 @@ import com.sun.max.vm.jit.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
-
 public class LocalsInspector extends UniqueInspector<LocalsInspector> implements ItemListener {
 
     /**

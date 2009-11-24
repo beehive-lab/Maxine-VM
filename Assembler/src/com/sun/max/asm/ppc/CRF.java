@@ -138,7 +138,6 @@ public enum CRF implements EnumerableArgument<CRF> {
      */
     public static final int UN = 3;
 
-
     public static final Enumerator<CRF> ENUMERATOR = new Enumerator<CRF>(CRF.class);
 
 }

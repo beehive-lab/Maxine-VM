@@ -90,7 +90,7 @@ public class DisplacementModifier extends InstructionModifier {
      * @param newDisplacement new displacement to replace the original one
      */
     public void fix(byte[] code, int position, byte disp8) throws AssemblyException {
-        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(code, position + startPosition(), size());
+        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(code, position + startPosition(), size);
         editor.fixDisplacement(displacementWidth, useIndexRegister, disp8);
     }
 
@@ -100,7 +100,7 @@ public class DisplacementModifier extends InstructionModifier {
      * @param newDisplacement new displacement to replace the original one
      */
     public void fix(byte[] codeRegion, int offsetToCode, int disp32) throws AssemblyException {
-        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size());
+        final AssemblyInstructionEditor editor =  createAssemblyInstructionEditor(codeRegion, offsetToCode + startPosition(), size);
         if (displacementWidth == WordWidth.BITS_8) {
             if (disp32 <= Byte.MAX_VALUE && disp32 >= Byte.MIN_VALUE) {
                 editor.fixDisplacement(displacementWidth, useIndexRegister,  (byte) disp32);

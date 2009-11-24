@@ -23,7 +23,6 @@ package com.sun.max.tele;
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 
-
 /**
  * <p>
  * An immutable summary of the Maxine VM state at some point in time, thread-safe and suitable for safe sharing between GUI and execution threads.</p>

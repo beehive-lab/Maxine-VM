@@ -39,7 +39,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
-
 /**
  * A table specialized for displaying memory watchpoints in the VM.
  *
@@ -262,7 +261,6 @@ public final class WatchpointsTable extends InspectorTable {
         return null;
     }
 
-
     private final class TagCellRenderer extends JLabel implements TableCellRenderer {
 
         TagCellRenderer(Inspection inspection) {
@@ -309,7 +307,6 @@ public final class WatchpointsTable extends InspectorTable {
             return label;
         }
     }
-
 
     private final class StartAddressCellRenderer extends DefaultTableCellRenderer implements Prober{
 

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.test;
 
-
 public class TeleInterpreterRemoteTestChildClass extends TeleInterpreterRemoteTestClass {
     @Override
     public int virtual_overriden(int a, int b, int c) {
