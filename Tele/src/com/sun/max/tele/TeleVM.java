@@ -414,15 +414,6 @@ public abstract class TeleVM implements MaxVM {
         return typesOnClasspath;
     }
 
-    private final TeleMessenger messenger = new VMTeleMessenger(this);
-
-    /**
-     * @return access to two-way asynchronous message passing with the VM.
-     */
-    public TeleMessenger messenger() {
-        return messenger;
-    }
-
     private int interpreterUseLevel = 0;
 
     private final TeleHeapManager teleHeapManager;
@@ -536,6 +527,14 @@ public abstract class TeleVM implements MaxVM {
     private static native void nativeInitialize(int threadLocalsSize, int javaFrameAnchorSize);
 
     /**
+     * Enables inspectable facilities in the VM.
+     */
+    private void setVMInspectable() {
+        final Pointer infoPointer = bootImageStart().plus(bootImage().header.inspectableSwitchOffset);
+        dataAccess().writeWord(infoPointer, Address.fromInt(1)); // setting to non-zero indicates enabling
+    }
+
+    /**
      * Starts a new VM process and returns a handle to it.
      *
      * @param commandLineArguments the command line arguments to use when starting the VM process
@@ -612,10 +611,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final void describeVMStateHistory(PrintStream printStream) {
         teleVMState.writeSummaryToStream(printStream);
-    }
-
-    public final boolean activateMessenger() {
-        return messenger.activate();
     }
 
     public final int getInterpreterUseLevel() {
@@ -1561,7 +1556,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public void advanceToJavaEntryPoint() throws IOException {
-        messenger.enable();
+        setVMInspectable();
         final Address startEntryPoint = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
         try {
             runToInstruction(startEntryPoint, true, false);

@@ -149,8 +149,9 @@ public final class BootImageTable extends InspectorTable {
             final Pointer bootHeapPointer = bootHeapStart.plus(header.heapRegionsPointerOffset);
             addRow("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapPointer));
 
-            final Pointer messengerInfoPointer = bootImageStart.plus(header.messengerInfoOffset);
-            addRow("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, messengerInfoPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), messengerInfoPointer));
+            final Pointer inspectableSwitchPointer = bootImageStart.plus(header.inspectableSwitchOffset);
+            addRow("inspectable switch pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, inspectableSwitchPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), inspectableSwitchPointer));
+
             final Pointer vmThreadLocalsListHead = bootImageStart.plus(header.threadLocalsListHeadOffset);
             addRow("VM thread locals list head:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, vmThreadLocalsListHead, BootImageTable.this), new MemoryRegionValueLabel(inspection(), vmThreadLocalsListHead));
         }

@@ -119,12 +119,6 @@ public interface MaxVM {
     TeleMethods teleMethods();
 
     /**
-     * Activates two-way messaging with the VM, if not already active.
-     * @return whether two-way messaging is operating.
-     */
-    boolean activateMessenger();
-
-    /**
      * @return how much reliance is placed on the {@link TeleInterpreter} when
      * communicating with the VM (0=none, 1=some, etc)
      */

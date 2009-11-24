@@ -42,7 +42,6 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -134,7 +133,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     public void initialize(MaxineVM.Phase phase) {
         switch (phase) {
             case STARTING: {
-                MaxineMessenger.initialize();
 
                 // This hack enables (platform-dependent) tracing before the eventual System properties are set:
                 System.setProperty("line.separator", "\n");
