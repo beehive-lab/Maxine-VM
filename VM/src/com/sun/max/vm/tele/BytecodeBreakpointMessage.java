@@ -27,15 +27,15 @@ import com.sun.max.collect.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
  */
 public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreakpointMessage> {
+
+    // TODO (mlvdv) Obsolete
 
     public enum Action {
         MAKE, DELETE;
@@ -115,33 +115,50 @@ public final class BytecodeBreakpointMessage extends MaxineMessage<BytecodeBreak
      * After compiling a method, find out whether byte code breakpoints have been requested and set them if so.
      */
     public static void makeTargetBreakpoints(TargetMethod targetMethod) {
-        MaxineMessenger.messenger().flush();
-        final MethodKey methodKey = new MethodActorKey(targetMethod.classMethodActor());
-        final Sequence<Integer> bytecodePositions = signatureToBytecodePositions.get(methodKey);
-        if (!bytecodePositions.isEmpty()) {
-            if (targetMethod instanceof JitTargetMethod) {
-                final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
-                for (Integer bytecodePosition : bytecodePositions) {
-                    TargetBreakpoint.make(jitTargetMethod.codeStart().plus(jitTargetMethod.targetCodePositionFor(bytecodePosition)));
-                }
-            } else {
-                for (Integer bytecodePosition : bytecodePositions) {
-                    if (bytecodePosition == 0) {
-                        CallEntryPoint callEntryPoint = targetMethod.abi().callEntryPoint();
-                        TargetBreakpoint.make(targetMethod.getEntryPoint(callEntryPoint).asAddress());
-                    } else {
-                        // TODO: trigger deoptimization
-                    }
-                }
-            }
-        }
-        compilationFinished(targetMethod, "test key");
+        //MaxineMessenger.messenger().flush();
+        final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
+        // TODO (mlvdv) Obsolete
+//        final MethodKey methodKey = new MethodActorKey(classMethodActor);
+//        final Sequence<Integer> bytecodePositions = signatureToBytecodePositions.get(methodKey);
+//        if (!bytecodePositions.isEmpty()) {
+//            if (targetMethod instanceof JitTargetMethod) {
+//                final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
+//                for (Integer bytecodePosition : bytecodePositions) {
+//                    TargetBreakpoint.make(jitTargetMethod.codeStart().plus(jitTargetMethod.targetCodePositionFor(bytecodePosition)));
+//                }
+//            } else {
+//                for (Integer bytecodePosition : bytecodePositions) {
+//                    if (bytecodePosition == 0) {
+//                        CallEntryPoint callEntryPoint = targetMethod.abi().callEntryPoint();
+//                        TargetBreakpoint.make(targetMethod.getEntryPoint(callEntryPoint).asAddress());
+//                    } else {
+//                        // TODO: trigger deoptimization
+//                    }
+//                }
+//            }
+//        }
+        compilationFinished(classMethodActor.holder().typeDescriptor.string,
+            classMethodActor.name.string,
+            classMethodActor.descriptor.string,
+            targetMethod);
+
+
     }
 
+    /**
+     * An empty method whose role is to be interrupted by the Inspector when
+     * it needs to monitor methods being compiled in the VM.  The arguments
+     * are deliberately made simple so that they can be read with low-level
+     * mechanisms in the Inspector.
+     *
+     * @param holderType type description for class holding the method
+     * @param methodName name of the the method
+     * @param signature argument type descriptors for the method
+     * @param targetMethod the result of the method compilation
+     */
     @NEVER_INLINE
     @INSPECTED
-    public static void compilationFinished(TargetMethod targetMethod, String key) {
-
+    public static void compilationFinished(String holderType, String methodName, String signature, TargetMethod targetMethod) {
     }
 
 }
