@@ -356,10 +356,6 @@ public class LIRList {
         append(new LIRRuntimeCall(routine, result, arguments, info, false));
     }
 
-    public void loadStackAddressMonitor(int monitorIx, LIROperand dst) {
-        append(new LIROp1(LIROpcode.Monaddr, LIROperandFactory.intConst(monitorIx), dst));
-    }
-
     public void prefetch(LIRAddress addr, boolean isStore) {
         append(new LIROp1(isStore ? LIROpcode.Prefetchw : LIROpcode.Prefetchr, addr));
     }
@@ -388,14 +384,6 @@ public class LIRList {
         append(new LIROp2(LIROpcode.Cmp, condition, reg, addr, info));
     }
 
-    public void allocateObject(LIROperand dst, LIROperand t1, LIROperand t2, LIROperand t3, LIROperand t4, int headerSize, int objectSize, LIROperand klass, boolean initCheck, LocalStub stub) {
-        append(new LIRAllocObj(klass, dst, t1, t2, t3, t4, headerSize, objectSize, initCheck, stub));
-    }
-
-    public void allocateArray(LIROperand dst, LIROperand len, LIROperand t1, LIROperand t2, LIROperand t3, LIROperand t4, CiKind type, LIROperand klass, LocalStub stub) {
-        append(new LIRAllocArray(klass, len, dst, t1, t2, t3, t4, type, stub));
-    }
-
     public void shiftLeft(LIROperand value, LIROperand count, LIROperand dst, LIROperand tmp) {
         append(new LIROp2(LIROpcode.Shl, value, count, dst, tmp));
     }
@@ -412,14 +400,6 @@ public class LIRList {
         append(new LIROp2(isUnorderedLess ? LIROpcode.Ucmpfd2i : LIROpcode.Cmpfd2i, left, right, dst));
     }
 
-    public void lockObject(LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, LocalStub stub, LIRDebugInfo info) {
-        append(new LIRLock(LIROpcode.Monitorenter, hdr, obj, lock, scratch, stub, info));
-    }
-
-    public void unlockObject(LIROperand hdr, LIROperand obj, LIROperand lock, LocalStub stub) {
-        append(new LIRLock(LIROpcode.Monitorexit, hdr, obj, lock, LIROperandFactory.IllegalLocation, stub, null));
-    }
-
     public void checkcast(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForException, LocalStub stub) {
         append(new LIRTypeCheck(LIROpcode.CheckCast, result, object, klass, tmp1, tmp2, tmp3, fastCheck, infoForException, stub));
     }
@@ -428,8 +408,8 @@ public class LIRList {
         append(new LIRTypeCheck(LIROpcode.InstanceOf, result, object, klass, tmp1, tmp2, tmp3, fastCheck, null, null));
     }
 
-    public void storeCheck(LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIRDebugInfo infoForException) {
-        append(new LIRTypeCheck(LIROpcode.StoreCheck, object, array, tmp1, tmp2, tmp3, infoForException));
+    public void storeCheck(LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIRDebugInfo infoForException, LocalStub arrayStoreStub) {
+        append(new LIRTypeCheck(LIROpcode.StoreCheck, object, array, tmp1, tmp2, tmp3, infoForException, arrayStoreStub));
     }
 
     public void casLong(LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand t1, LIROperand t2) {

@@ -58,8 +58,8 @@ public class LIRTypeCheck extends LIRInstruction {
                         LIROperand tmp1,
                         LIROperand tmp2,
                         LIROperand tmp3,
-                        LIRDebugInfo infoForException) {
-        super(opcode, LIROperandFactory.IllegalLocation, infoForException, false, new ArrayStoreExceptionStub(infoForException), 0, 3, object, array, tmp1, tmp2, tmp3);
+                        LIRDebugInfo infoForException, LocalStub arrayStoreStub) {
+        super(opcode, LIROperandFactory.IllegalLocation, infoForException, false, arrayStoreStub, 0, 3, object, array, tmp1, tmp2, tmp3);
         this.klass = null;
         this.fastCheck = false;
         assert opcode == LIROpcode.StoreCheck;

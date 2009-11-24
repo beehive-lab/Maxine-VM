@@ -20,22 +20,26 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.lir.*;
+import com.sun.c1x.globalstub.GlobalStub;
+import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.lir.LIRDebugInfo;
 
 /**
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
+ * This class implements a local stub that simply throws an exception, typically
+ * by calling the runtime system through a global stub.
+ *
+ * @author Ben L. Titzer
  */
-public class RangeCheckStub extends LocalStub {
+public class ThrowStub extends LocalStub {
 
-    public RangeCheckStub(LIRDebugInfo info, LIROperand index) {
+    public final GlobalStub globalStub;
+
+    public ThrowStub(GlobalStub globalStub, LIRDebugInfo info, LIROperand... args) {
         super(info);
-        this.setOperands(0, 0, index);
-    }
-
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitRangeCheckStub(this);
+        this.globalStub = globalStub;
+        if (args != null && args.length > 0) {
+            setOperands(0, 0, args);
+        }
     }
 
     @Override
@@ -43,7 +47,8 @@ public class RangeCheckStub extends LocalStub {
         return true;
     }
 
-    public LIROperand index() {
-        return operand(0);
+    @Override
+    public void accept(LocalStubVisitor visitor) {
+        visitor.visitThrowStub(this);
     }
 }

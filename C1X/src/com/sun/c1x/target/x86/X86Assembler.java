@@ -3377,7 +3377,6 @@ public abstract class X86Assembler extends AbstractAssembler {
 
             // short offset operators (jmp and jcc)
             int imm8 = branchTarget - (branch + 2);
-            assert Util.is8bit(imm8) : "Short forward jump exceeds 8-bit offset";
             codeBuffer.emitByte(imm8, branch + 1);
 
         } else {

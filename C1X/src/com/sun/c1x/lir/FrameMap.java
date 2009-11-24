@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.*;
+import com.sun.c1x.globalstub.GlobalStub;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
@@ -163,5 +164,11 @@ public final class FrameMap {
 
     public CiLocation locationForMonitor(int monitorIndex) {
         return new CiLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SPILL_SLOT_SIZE, false);
+    }
+
+    public void usingGlobalStub(GlobalStub stub) {
+        if (stub.argsSize > outgoingSize) {
+            outgoingSize = Util.roundUp(stub.argsSize, SPILL_SLOT_SIZE);
+        }
     }
 }

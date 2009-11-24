@@ -20,36 +20,18 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.lir.*;
-
 /**
- * The <code>ImplicitNullCheckStub</code> class definition.
  *
- * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class ImplicitNullCheckStub extends LocalStub {
+public class AdapterFrameStub extends LocalStub {
 
-    public final int offset;
-
-    /**
-     * Creates a new instance of <code>ImplicitNullCheckStub</code>.
-     *
-     * @param offset the offset for this code stub
-     * @param info the debug information associated to this code stub
-     */
-    public ImplicitNullCheckStub(int offset, LIRDebugInfo info) {
-        super(info);
-        this.offset = offset;
+    public AdapterFrameStub() {
+        super(null);
     }
 
     @Override
-    public boolean isExceptionThrowStub() {
-        return true;
-    }
-
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitImplicitNullCheckStub(this);
+    public void accept(LocalStubVisitor visitor) {
+        visitor.visitAdapterFrameStub(this);
     }
 }

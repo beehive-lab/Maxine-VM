@@ -28,7 +28,6 @@ import com.sun.c1x.ci.*;
  * The <code>LIRCall</code> class definition.
  *
  * @author Marcelo Cintra
- *
  */
 public abstract class LIRCall extends LIRInstruction {
 

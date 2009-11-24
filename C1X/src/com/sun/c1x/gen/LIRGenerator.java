@@ -23,6 +23,7 @@ package com.sun.c1x.gen;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.globalstub.GlobalStub;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
@@ -272,7 +273,8 @@ public abstract class LIRGenerator extends ValueVisitor {
                 return;
             }
         }
-        genMonitorEnter(x);
+        // all monitor access is done with a runtime call for now
+        callRuntime(CiRuntimeCall.Monitorenter, stateFor(x, x.stateBefore()), x.object().operand());
     }
 
     @Override
@@ -286,7 +288,8 @@ public abstract class LIRGenerator extends ValueVisitor {
                 return;
             }
         }
-        genMonitorExit(x);
+        // all monitor access is done with a runtime call for now
+        callRuntime(CiRuntimeCall.Monitorexit, stateFor(x, x.stateBefore()), x.object().operand());
     }
 
     @Override
@@ -765,17 +768,35 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRAddress arrayAddr = genArrayAddress((LIRLocation) array.result(), index.result(), x.elementKind(), false);
 
         if (C1XOptions.GenBoundsChecks && needsRangeCheck) {
+            ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArrayIndexOutOfBoundsException), rangeCheckInfo, index.result());
             if (useLength) {
-                // TODO: use a (modified) version of arrayRangeCheck that does not require a constant length to be loaded to a register
                 lir.cmp(LIRCondition.BelowEqual, length.result(), index.result());
-                lir.branch(LIRCondition.BelowEqual, CiKind.Int, new RangeCheckStub(rangeCheckInfo, index.result()));
+                lir.branch(LIRCondition.BelowEqual, CiKind.Int, stub);
             } else {
                 // The range check performs the null check, so clear it out for the load
-                arrayRangeCheck(array.result(), index.result(), nullCheckInfo, rangeCheckInfo);
+                arrayRangeCheck(array.result(), index.result(), nullCheckInfo, rangeCheckInfo, stub);
             }
         }
 
         lir.move(arrayAddr, rlockResult(x, x.elementKind()), (LIRDebugInfo) null);
+    }
+
+    protected GlobalStub stubFor(CiRuntimeCall runtimeCall) {
+        GlobalStub stub = compilation.compiler.lookupGlobalStub(runtimeCall);
+        compilation.frameMap().usingGlobalStub(stub);
+        return stub;
+    }
+
+    protected GlobalStub stubFor(GlobalStub.Id globalStub) {
+        GlobalStub stub = compilation.compiler.lookupGlobalStub(globalStub);
+        compilation.frameMap().usingGlobalStub(stub);
+        return stub;
+    }
+
+    protected GlobalStub stubFor(XirTemplate template) {
+        GlobalStub stub = compilation.compiler.lookupGlobalStub(template);
+        compilation.frameMap().usingGlobalStub(stub);
+        return stub;
     }
 
     @Override
@@ -1637,16 +1658,15 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected void arrayRangeCheck(LIROperand array, LIROperand index, LIRDebugInfo nullCheckInfo, LIRDebugInfo rangeCheckInfo) {
+    protected void arrayRangeCheck(LIROperand array, LIROperand index, LIRDebugInfo nullCheckInfo, LIRDebugInfo rangeCheckInfo, ThrowStub throwStub) {
         assert nullCheckInfo != rangeCheckInfo;
-        LocalStub stub = new RangeCheckStub(rangeCheckInfo, index);
         if (index.isConstant()) {
             LIRConstant indexConstant = (LIRConstant) index;
             genCmpMemInt(LIRCondition.BelowEqual, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), indexConstant.asInt(), nullCheckInfo);
-            lir.branch(LIRCondition.BelowEqual, CiKind.Int, stub); // forward branch
+            lir.branch(LIRCondition.BelowEqual, CiKind.Int, throwStub); // forward branch
         } else {
             genCmpRegMem(LIRCondition.AboveEqual, index, (LIRLocation) array, compilation.runtime.arrayLengthOffsetInBytes(), CiKind.Int, nullCheckInfo);
-            lir.branch(LIRCondition.AboveEqual, CiKind.Int, stub); // forward branch
+            lir.branch(LIRCondition.AboveEqual, CiKind.Int, throwStub); // forward branch
         }
     }
 
@@ -1845,27 +1865,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             default:
                 Util.shouldNotReachHere();
-        }
-    }
-
-    protected void monitorEnter(LIROperand object, LIROperand lock, LIROperand hdr, LIROperand scratch, int monitorNo, LIRDebugInfo infoForException, LIRDebugInfo info) {
-        if (C1XOptions.GenSynchronization) {
-            // for slow path, use debug info for state after successful locking
-            LocalStub slowPath = new MonitorEnterStub(object, lock, info);
-            lir.loadStackAddressMonitor(monitorNo, lock);
-            // for handling NullPointerException, use debug info representing just the lock stack before this monitorenter
-            lir.lockObject(hdr, object, lock, scratch, slowPath, infoForException);
-        }
-    }
-
-    protected void monitorExit(LIROperand objReg, LIROperand lock, LIROperand newHdr, int monitorNo) {
-        if (C1XOptions.GenSynchronization) {
-            // setup registers
-            LIROperand hdr = lock;
-            lock = newHdr;
-            LocalStub slowPath = new MonitorExitStub(objReg, lock, C1XOptions.UseFastLocking, monitorNo);
-            lir.loadStackAddressMonitor(monitorNo, lock);
-            lir.unlockObject(hdr, objReg, lock, slowPath);
         }
     }
 
@@ -2206,10 +2205,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected abstract void genVolatileFieldLoad(LIRAddress address, LIROperand result, LIRDebugInfo info);
 
     protected abstract void genVolatileFieldStore(LIROperand value, LIRAddress address, LIRDebugInfo info);
-
-    protected abstract void genMonitorEnter(MonitorEnter x);
-
-    protected abstract void genMonitorExit(MonitorExit x);
 
     protected abstract void genStoreIndexed(StoreIndexed x);
 
