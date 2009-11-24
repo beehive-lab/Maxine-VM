@@ -93,9 +93,9 @@ public final class TeleProcessController {
                 }
 
                 if (!disableBreakpoints) {
-                    breakpointFactory.activateAll();
+                    breakpointFactory.setActiveAll(true);
                 } else {
-                    breakpoint.activate();
+                    breakpoint.setActive(true);
                 }
                 teleProcess().resume();
                 Trace.end(TRACE_VALUE, runToInstructionPerformTracer);
@@ -138,7 +138,7 @@ public final class TeleProcessController {
                     thread.evadeBreakpoint();
                 }
                 if (!disableBreakpoints) {
-                    teleProcess.targetBreakpointFactory().activateAll();
+                    teleProcess.targetBreakpointFactory().setActiveAll(true);
                 }
                 teleProcess().resume();
                 Trace.end(TRACE_VALUE, resumePerformTracer);

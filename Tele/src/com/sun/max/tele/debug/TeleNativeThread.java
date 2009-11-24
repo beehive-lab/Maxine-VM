@@ -374,7 +374,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         TeleTargetBreakpoint breakpoint = null;
 
         try {
-            breakpointFactory.registerBreakpointSetByVM(this);
+            // TODO (mlvdv) Obsolete
+            //breakpointFactory.registerBreakpointSetByVM(this);
 
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
             breakpoint = breakpointFactory.getTargetBreakpointAt(breakpointAddress);
@@ -594,7 +595,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     void evadeBreakpoint() throws OSExecutionRequestException {
         if (breakpoint != null && !breakpoint.isTransient()) {
-            assert !breakpoint.isActivated() : "Cannot single step at an activated breakpoint";
+            assert !breakpoint.isActive() : "Cannot single step at an activated breakpoint";
             Trace.line(TRACE_LEVEL, tracePrefix() + "single step to evade breakpoint=" + breakpoint);
             teleProcess().singleStep(this, true);
         }
