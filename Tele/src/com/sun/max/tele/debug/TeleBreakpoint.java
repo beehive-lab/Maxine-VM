@@ -29,7 +29,7 @@ import com.sun.max.tele.method.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
+public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMTriggerEventHandler {
 
     /**
      * Distinguishes among various specialized uses for breakpoints,
@@ -64,12 +64,17 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
 
     private final Kind kind;
     private final TeleCodeLocation teleCodeLocation;
+    private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
     private String description = null;
 
     /**
-     * Creates a new breakpoint in the VM.
+     * A VM breakpoint.
+     * <br>
+     * By default, this breakpoint, when enabled, will halt VM execution when triggered.
      *
-     * @param kind the kind of breakpoint
+     * @param teleVM
+     * @param teleCodeLocation location in the VM's code where the breakpoint should be set
+     * @param kind  the kind of breakpoint
      */
     protected TeleBreakpoint(TeleVM teleVM, TeleCodeLocation teleCodeLocation, Kind kind) {
         super(teleVM);
@@ -87,7 +92,7 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
     }
 
     /**
-     * Determines whether this breakpoint is to be deleted when a process execution stops or an inspection session finishes.
+     * @return whether this breakpoint is to be deleted when a process execution stops or an inspection session finishes.
      */
     public final boolean isTransient() {
         return kind == Kind.TRANSIENT;
@@ -108,29 +113,34 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
     }
 
     /**
-     * @return the optional string associated with the breakpoint for debugging;
+     * @return the optional human-readable string associated with the breakpoint, for debugging.
      */
     public final String getDescription() {
         return description;
     }
 
     /**
-     * Associates an arbitrary, optional string with the breakpoint for debugging.
+     * Associates an optional human-readable string with the breakpoint for debugging.
      */
     public final void setDescription(String description) {
         this.description = description;
     }
 
     /**
-     * @return is this breakpoint currently enabled in the VM?
+     * Whether this breakpoint is enabled; some kinds of breakpoints
+     * can be disabled and enabled at will. When disabled they have
+     * no effect on VM execution.
+     *
+     * @return whether this breakpoint is currently enabled in the VM.
      */
     public abstract boolean isEnabled();
 
     /**
-     * Updates the enabled state of this breakpoint.
+     * Enables/disables this breakpoint; disabled breakpoints
+     * continue to exist, but have no effect on VM execution.
      *
      * @param enabled new state for this breakpoint
-     * @return true if the state was actually changed
+     * @return true if the state was actually changed.
      */
     public abstract boolean setEnabled(boolean enabled);
 
@@ -140,24 +150,29 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
     public abstract BreakpointCondition condition();
 
     /**
-     * Sets a condition on the breakpoint; will only break if it evaluates to true.
+     * Sets a condition on this breakpoint; VM execution will only stop if this condition evaluates to true.
+     * <br>
+     * A null condition is equivalent to a condition that always returns true.
      *
-     * @param condition the condition
+     * @param conditionDescriptor a string that describes the condition
      * @throws ExpressionException if the conditional expression cannot be evaluated.
      */
-    public abstract void setCondition(String condition) throws ExpressionException;
+    public abstract void setCondition(String conditionDescriptor) throws ExpressionException;
 
     /**
-     * Perform any breakpoint specific processing of a trigger event and decide
-     * whether to stop VM execution or to continue silently. The default is
-     * to stop VM execution.
+     * Assigns to this breakpoint a  handler for events triggered by this breakpoint.  A null handler
+     * is equivalent to there being no handling action and a return of true (VM execution should halt).
      *
-     * @param teleNativeThread the VM thread that triggered on this breakpoint.
-     * @return true if execution should really break; false if should continue silently.
+     * @param triggerEventHandler handler for VM execution events triggered by this breakpoint.
      */
-    public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+    protected void setTriggerEventHandler(VMTriggerEventHandler triggerEventHandler) {
+        this.triggerEventHandler =
+            (triggerEventHandler == null) ? VMTriggerEventHandler.Static.ALWAYS_TRUE : triggerEventHandler;
+    }
+
+    public final boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
         assert teleNativeThread.state() == TeleNativeThread.ThreadState.BREAKPOINT;
-        return true;
+        return triggerEventHandler.handleTriggerEvent(teleNativeThread);
     }
 
     /**

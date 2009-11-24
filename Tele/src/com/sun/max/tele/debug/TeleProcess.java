@@ -165,7 +165,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     // Read VM memory and update various bits of cached state about the VM state
                     teleVM().refresh(++epoch);
                     refreshThreads();
-                    final Sequence<TeleTargetBreakpoint> deactivatedBreakpoints = targetBreakpointFactory().deactivateAll();
+                    targetBreakpointFactory().setActiveAll(false);
 
                     // Look through all the threads to see if any special attention is needed
                     for (TeleNativeThread thread : threads()) {
@@ -201,10 +201,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 // This thread not stopped at breakpoint or watchpoint
                         }
                         if (resumeExecution) {
-                            // Reactivate the deactivated breakpoints
-                            for (TeleTargetBreakpoint bp : deactivatedBreakpoints) {
-                                bp.activate();
-                            }
+                            targetBreakpointFactory().setActiveAll(true);
                             try {
                                 TeleProcess.this.resume();
                             } catch (OSExecutionRequestException executionRequestException) {

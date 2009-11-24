@@ -996,6 +996,16 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Creates a temporary reference for access to VM memory without invoking the
+     * canonicalization machinery.
+     *
+     * @return a reference to a location in VM memory that is not safe across GC
+     */
+    public final Reference wordToTemporaryReference(Address address) {
+        return vmConfiguration.referenceScheme().fromGrip(gripScheme().createTemporaryRemoteTeleGrip(address));
+    }
+
+    /**
      * @param reference a {@link Reference} to memory in the VM.
      * @param index offset into an array of references
      * @return the contents of the array at the index, interpreted as an address and wrapped in a Reference.
