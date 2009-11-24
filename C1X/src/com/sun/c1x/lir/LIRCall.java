@@ -44,12 +44,6 @@ public abstract class LIRCall extends LIRInstruction {
         return operands;
     }
 
-    /**
-     * Creates a new LIRCall instruction.
-     *
-     * @param entry
-     * @param arguments
-     */
     public LIRCall(LIROpcode opcode, CiRuntimeCall entry, LIROperand result, LIROperand receiver, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
         super(opcode, result, info, !calleeSaved, null, 0, 0, prepend(receiver, arguments));
         this.addr = entry;
@@ -78,17 +72,4 @@ public abstract class LIRCall extends LIRInstruction {
         return operand(arguments.size());
     }
 
-    /**
-     * Gets the arguments list of this call.
-     *
-     * @return the arguments
-     */
-    public List<LIROperand> arguments() {
-
-        final List<LIROperand> args = new ArrayList<LIROperand>();
-        for (int i = 0; i < arguments.size(); i++) {
-            args.add(operand(i + 1));
-        }
-        return args;
-    }
 }

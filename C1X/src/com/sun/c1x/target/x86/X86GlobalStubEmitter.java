@@ -229,7 +229,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         epilogue();
         CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, template.name);
-        return new GlobalStub(null, template.resultOperand.kind, stubObject, 0, null);
+        return new GlobalStub(null, template.resultOperand.kind, stubObject, 0, argOffsets);
     }
 
     private CiKind[] getArgumentKinds(XirTemplate template) {

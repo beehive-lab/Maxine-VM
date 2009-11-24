@@ -98,6 +98,6 @@ public class LIRAllocObj extends LIRInstruction {
         out.print(" ");
         out.printf("[obj:%d]", headerSize());
         out.print(" ");
-        out.printf("[lbl:0x%x]", stub().entry);
+         out.printf("[lbl:0x%x]", stub.entry);
     }
 }

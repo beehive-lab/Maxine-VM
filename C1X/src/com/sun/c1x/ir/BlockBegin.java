@@ -60,8 +60,6 @@ public class BlockBegin extends Instruction {
         public final int mask = 1 << ordinal();
     }
 
-    private static final int entryFlags = BlockFlag.StandardEntry.mask | BlockFlag.OsrEntry.mask | BlockFlag.ExceptionEntry.mask;
-
     public final int blockID;
 
     private int blockFlags;
@@ -79,7 +77,7 @@ public class BlockBegin extends Instruction {
     private List<ValueStack> exceptionHandlerStates;
 
     // LIR block
-    private LIRBlock lirBlock;
+    public LIRBlock lirBlock;
 
     /**
      * Constructs a new BlockBegin at the specified bytecode index.
@@ -672,38 +670,6 @@ public class BlockBegin extends Instruction {
 
     public void setLastLirInstructionId(int lastLirInstructionId) {
         lirBlock.lastLirInstructionID = lastLirInstructionId;
-    }
-
-    public void setLiveGen(BitMap liveGen) {
-        lirBlock.liveGen = liveGen;
-    }
-
-    public void setLiveKill(BitMap liveKill) {
-        lirBlock.liveKill = liveKill;
-    }
-
-    public void setLiveIn(BitMap liveIn) {
-        lirBlock.liveIn = liveIn;
-    }
-
-    public void setLiveOut(BitMap liveOut) {
-        lirBlock.liveOut = liveOut;
-    }
-
-    public BitMap liveGen() {
-        return lirBlock.liveGen;
-    }
-
-    public BitMap liveKill() {
-        return lirBlock.liveKill;
-    }
-
-    public BitMap liveIn() {
-        return lirBlock.liveIn;
-    }
-
-    public BitMap liveOut() {
-        return lirBlock.liveOut;
     }
 
     public boolean isPredecessor(BlockBegin block) {

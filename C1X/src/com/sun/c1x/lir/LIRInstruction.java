@@ -47,10 +47,10 @@ public abstract class LIRInstruction {
     public final LIRDebugInfo info;
 
     // value id for register allocation
-    private int id;
+    public int id;
 
     // backlink to the HIR instruction for debugging purposes
-    private Value source;
+    public Value source;
 
     public final boolean hasCall;
 
@@ -212,8 +212,6 @@ public abstract class LIRInstruction {
                 return addConstant((LIRConstant) input);
             } else {
                 assert operands.size() == outputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
-
-                assert input instanceof LIRLocation;
                 operands.add((LIRLocation) input);
 
                 if (isInput && isTemp) {
@@ -246,7 +244,8 @@ public abstract class LIRInstruction {
 
     private void initInputsAndTemps(int tempInputCount, int tempCount, LIROperand[] operands, LocalStub stub) {
 
-        this.operandSlots = new OperandSlot[operands.length + (stub == null || stub.operands == null ? 0 : stub.operands.length)];
+        LIROperand[] stubOperands = stub == null ? null : stub.operands;
+        this.operandSlots = new OperandSlot[operands.length + (stubOperands == null ? 0 : stubOperands.length)];
 
         // Addresses in instruction
         for (int i = 0; i < operands.length; i++) {
@@ -257,9 +256,9 @@ public abstract class LIRInstruction {
         }
 
         // Addresses in stub
-        if (stub != null && stub.operands != null) {
-            for (int i = 0; i < stub.operands.length; i++) {
-                LIROperand op = stub.operands[i];
+        if (stubOperands != null) {
+            for (int i = 0; i < stubOperands.length; i++) {
+                LIROperand op = stubOperands[i];
                 if (op.isAddress()) {
                     operandSlots[i + operands.length] = addAddress((LIRAddress) op);
                 }
@@ -274,10 +273,10 @@ public abstract class LIRInstruction {
         }
 
         // Input operands in stub
-        if (stub != null && stub.operands != null) {
-            for (int i = 0; i < stub.operands.length - stub.tempCount - stub.tempInputCount; i++) {
+        if (stubOperands != null) {
+            for (int i = 0; i < stubOperands.length - stub.tempCount - stub.tempInputCount; i++) {
                 if (operandSlots[i + operands.length] == null) {
-                    operandSlots[i + operands.length] = addOperand(stub.operands[i], true, false);
+                    operandSlots[i + operands.length] = addOperand(stubOperands[i], true, false);
                 }
             }
         }
@@ -290,10 +289,10 @@ public abstract class LIRInstruction {
         }
 
         // Input Temp operands in stub
-        if (stub != null && stub.operands != null) {
-            for (int i = stub.operands.length - stub.tempCount - stub.tempInputCount; i < stub.operands.length - stub.tempCount; i++) {
+        if (stubOperands != null) {
+            for (int i = stubOperands.length - stub.tempCount - stub.tempInputCount; i < stubOperands.length - stub.tempCount; i++) {
                 if (operandSlots[i + operands.length] == null) {
-                    operandSlots[i + operands.length] = addOperand(stub.operands[i], true, true);
+                    operandSlots[i + operands.length] = addOperand(stubOperands[i], true, true);
                 }
             }
         }
@@ -306,21 +305,26 @@ public abstract class LIRInstruction {
         }
 
         // Temp operands in stub
-        if (stub != null && stub.operands != null) {
-            for (int i = stub.operands.length - stub.tempCount; i < stub.operands.length; i++) {
+        if (stubOperands != null) {
+            for (int i = stubOperands.length - stub.tempCount; i < stubOperands.length; i++) {
                 if (operandSlots[i + operands.length] == null) {
-                    operandSlots[i + operands.length] = addOperand(stub.operands[i], false, true);
+                    operandSlots[i + operands.length] = addOperand(stubOperands[i], false, true);
                 }
             }
         }
 
-        for (int i = 0; i < operandSlots.length; i++) {
-            assert operandSlots[i] != null;
+        assert verifyOperands();
+    }
+
+    private boolean verifyOperands() {
+        for (OperandSlot operandSlot : operandSlots) {
+            assert operandSlot != null;
         }
 
-        for (int i = 0; i < this.operands.size(); i++) {
-            assert this.operands.get(i) != null;
+        for (LIRLocation operand : this.operands) {
+            assert operand != null;
         }
+        return true;
     }
 
     /**
@@ -332,10 +336,6 @@ public abstract class LIRInstruction {
         return result.get(this);
     }
 
-    public LocalStub stub() {
-        return stub;
-    }
-
     /**
      * Gets the instruction name.
      *
@@ -344,42 +344,6 @@ public abstract class LIRInstruction {
      */
     public String name() {
         return code.name();
-    }
-
-    /**
-     * Gets the value id of this instruction.
-     *
-     * @return id the value id.
-     */
-    public int id() {
-        return id;
-    }
-
-    /**
-     * Sets the value id of this instruction.
-     *
-     * @param id the value
-     */
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    /**
-     * Gets the HIR correspondent for this instruction.
-     *
-     * @return source the HIR source instruction.
-     */
-    public Value source() {
-        return source;
-    }
-
-    /**
-     * Sets the HIR correspondent for this instruction.
-     *
-     * @param source the HIR source instruction.
-     */
-    public void setSource(Value source) {
-        this.source = source;
     }
 
     /**
@@ -409,8 +373,8 @@ public abstract class LIRInstruction {
      * @param st the LogStream to print into.
      */
     public void printOn(LogStream st) {
-        if (id() != -1 || C1XOptions.PrintCFGToFile) {
-            st.printf("%4d ", id());
+        if (id != -1 || C1XOptions.PrintCFGToFile) {
+            st.printf("%4d ", id);
         } else {
             st.print("     ");
         }

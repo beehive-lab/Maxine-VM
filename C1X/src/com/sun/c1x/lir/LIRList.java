@@ -57,8 +57,8 @@ public class LIRList {
     }
 
     private void append(LIRInstruction op) {
-        if (op.source() == null) {
-            op.setSource(generator.currentInstruction());
+        if (op.source == null) {
+            op.source = generator.currentInstruction();
         }
 
         if (C1XOptions.PrintIRWithLIR) {
