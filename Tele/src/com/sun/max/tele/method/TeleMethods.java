@@ -54,7 +54,7 @@ public class TeleMethods extends AbstractTeleVMHolder {
     // Checkstyle: stop field name check
 
     // START GENERATED CONTENT
-    public final TeleStaticMethodAccess BytecodeBreakpointMessage_compilationFinished = new TeleStaticMethodAccess(teleVM(), BytecodeBreakpointMessage.class, "compilationFinished", SignatureDescriptor.create("(Lcom/sun/max/vm/compiler/target/TargetMethod;Ljava/lang/String;)V"));
+    public final TeleStaticMethodAccess BytecodeBreakpointMessage_compilationFinished = new TeleStaticMethodAccess(teleVM(), BytecodeBreakpointMessage.class, "compilationFinished", SignatureDescriptor.create("(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/max/vm/compiler/target/TargetMethod;)V"));
     public final TeleStaticMethodAccess Code_codePointerToTargetMethod = new TeleStaticMethodAccess(teleVM(), Code.class, "codePointerToTargetMethod", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;)Lcom/sun/max/vm/compiler/target/TargetMethod;"));
     public final TeleStaticMethodAccess TargetBreakpoint_findOriginalCode = new TeleStaticMethodAccess(teleVM(), TargetBreakpoint.class, "findOriginalCode", SignatureDescriptor.create("(J)[B"));
     // END GENERATED CONTENT
