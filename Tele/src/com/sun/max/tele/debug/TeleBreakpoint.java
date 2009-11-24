@@ -160,13 +160,14 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
     public abstract void setCondition(String conditionDescriptor) throws ExpressionException;
 
     /**
-     * Assigns to this breakpoint a non-default handler for events triggered by this breakpoint.
+     * Assigns to this breakpoint a  handler for events triggered by this breakpoint.  A null handler
+     * is equivalent to there being no handling action and a return of true (VM execution should halt).
      *
-     * @param triggerEventHandler non-null handler for VM execution events triggered by this breakpoint.
+     * @param triggerEventHandler handler for VM execution events triggered by this breakpoint.
      */
     protected void setTriggerEventHandler(VMTriggerEventHandler triggerEventHandler) {
-        assert triggerEventHandler != null;
-        this.triggerEventHandler = triggerEventHandler;
+        this.triggerEventHandler =
+            (triggerEventHandler == null) ? VMTriggerEventHandler.Static.ALWAYS_TRUE : triggerEventHandler;
     }
 
     public final boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
