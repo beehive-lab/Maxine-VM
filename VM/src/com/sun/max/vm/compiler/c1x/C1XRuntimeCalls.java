@@ -287,12 +287,12 @@ public class C1XRuntimeCalls {
     }
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Monitorenter)
-    public static void runtimeMonitorenter(Object obj, int monitorID) {
+    public static void runtimeMonitorenter(Object obj) {
         VMConfiguration.target().monitorScheme().monitorEnter(obj);
     }
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Monitorexit)
-    public static void runtimeMonitorexit(Object obj, int monitorID) {
+    public static void runtimeMonitorexit(Object obj) {
         VMConfiguration.target().monitorScheme().monitorExit(obj);
     }
 

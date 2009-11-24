@@ -202,7 +202,7 @@ public class C1XTest {
             out.println("Timing...");
             for (int i = 0; i < max; i++) {
                 if (i > 0 && resetMetricsOption.getValue()) {
-                    C1XMetrics.reset();
+                    resetMetrics();
                 }
                 doTimingRun(compiler, runtime, xirGenerator, methods);
                 // only aggressively resolve on the first run
@@ -221,6 +221,18 @@ public class C1XTest {
                         out.println("");
                         break;
                     }
+                }
+            }
+        }
+    }
+
+    private static void resetMetrics() {
+        for (Field f : C1XMetrics.class.getFields()) {
+            if (f.getType() == int.class) {
+                try {
+                    f.set(null, 0);
+                } catch (IllegalAccessException e) {
+                    // do nothing.
                 }
             }
         }

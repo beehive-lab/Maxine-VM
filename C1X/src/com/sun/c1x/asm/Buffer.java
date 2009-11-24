@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.ci.CiArchitecture.*;
 import com.sun.c1x.util.*;
+import com.sun.c1x.C1XMetrics;
 
 /**
  *
@@ -31,7 +32,7 @@ import com.sun.c1x.util.*;
  */
 public final class Buffer {
 
-    private static final int INITIAL_SIZE = 64;
+    private static final int INITIAL_SIZE = 104;
 
     private byte[] data;
     private int position;
@@ -55,25 +56,25 @@ public final class Buffer {
 
     public int emitByte(int b) {
         int oldPos = position;
-        position = emitByte(b, position);
+        position = emitByte(b, oldPos);
         return oldPos;
     }
 
     public int emitShort(int b) {
         int oldPos = position;
-        position = emitShort(b, position);
+        position = emitShort(b, oldPos);
         return oldPos;
     }
 
     public int emitInt(int b) {
         int oldPos = position;
-        position = emitInt(b, position);
+        position = emitInt(b, oldPos);
         return oldPos;
     }
 
     public int emitLong(long b) {
         int oldPos = position;
-        position = emitLong(b, position);
+        position = emitLong(b, oldPos);
         return oldPos;
     }
 
@@ -88,6 +89,7 @@ public final class Buffer {
     private void ensureSize(int length) {
         if (length >= data.length) {
             data = Arrays.copyOf(data, data.length * 2);
+            C1XMetrics.CodeBufferCopies++;
         }
     }
 
@@ -170,9 +172,5 @@ public final class Buffer {
 
     public byte[] getData(int start, int end) {
         return Arrays.copyOfRange(data, start, end);
-    }
-
-    public void align(int align) {
-        position = Util.roundUp(position + 1, align) - 1;
     }
 }

@@ -20,27 +20,15 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.lir.*;
-
 /**
- * The <code>ArrayStoreExceptionStub</code> class definition.
+ * A visitor interface for local stubs.
  *
- * @author Marcelo Cintra
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public class ArrayStoreExceptionStub extends LocalStub {
+public interface LocalStubVisitor {
 
-    public ArrayStoreExceptionStub(LIRDebugInfo info) {
-        super(info);
-    }
+    void visitAdapterFrameStub(AdapterFrameStub adapterFrameStub);
 
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitArrayStoreExceptionStub(this);
-    }
-
-    @Override
-    public boolean isExceptionThrowStub() {
-        return true;
-    }
+    void visitThrowStub(ThrowStub throwStub);
 }

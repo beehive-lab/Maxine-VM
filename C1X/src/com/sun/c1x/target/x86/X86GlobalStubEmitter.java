@@ -67,16 +67,16 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         allRegisters = target.arch.is64bit() ? X86.allRegisters64 : X86.allRegisters;
     }
 
-    private void reset(CiKind[] args) {
+    private void reset(CiKind resultKind, CiKind[] argTypes) {
         asm = new X86MacroAssembler(compiler, compiler.target, -1);
         localSize = 0;
         saveSize = 0;
         argsSize = 0;
-        argOffsets = new int[args.length];
+        argOffsets = new int[argTypes.length];
         registerRestoreEpilogueOffset = -1;
         registersSaved = null;
 
-        for (int i = 0; i < args.length; i++) {
+        for (int i = 0; i < argTypes.length; i++) {
             if (callerFrameContainsArguments) {
                 argOffsets[i] = argsSize;
                 argsSize += 8; // TODO: always allocate 8 bytes regardless of target word width?
@@ -84,10 +84,14 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 argOffsets[i] = -16 - (i * 8);
             }
         }
+
+        if (resultKind != CiKind.Void && argsSize == 0) {
+            argsSize = 8;
+        }
     }
 
     public GlobalStub emit(CiRuntimeCall runtimeCall, RiRuntime runtime) {
-        reset(runtimeCall.arguments);
+        reset(runtimeCall.resultKind, runtimeCall.arguments);
         emitStandardForward(null, runtimeCall);
         CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + runtimeCall);
@@ -95,7 +99,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public GlobalStub emit(GlobalStub.Id stub, RiRuntime runtime) {
-        reset(stub.arguments);
+        reset(stub.resultKind, stub.arguments);
 
         switch (stub) {
             case f2i:
@@ -147,7 +151,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     public GlobalStub emit(XirTemplate template, RiRuntime runtime) {
-        reset(getArgumentKinds(template));
+        reset(template.resultOperand.kind, getArgumentKinds(template));
 
         C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, compiler.runtime, null);
         compilation.initFrameMap(0);

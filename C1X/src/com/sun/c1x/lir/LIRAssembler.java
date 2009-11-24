@@ -333,13 +333,13 @@ public abstract class LIRAssembler {
     }
 
     protected void addDebugInfoForNullCheck(int pcOffset, LIRDebugInfo cinfo) {
-        //ImplicitNullCheckStub stub = new ImplicitNullCheckStub(pcOffset, cinfo);
+        //NullPointerExceptionStub stub = new NullPointerExceptionStub(pcOffset, cinfo);
         //emitCodeStub(stub);
         compilation.addCallInfo(pcOffset, cinfo);
     }
 
     protected void addDebugInfoForDiv0(int pcOffset, LIRDebugInfo cinfo) {
-        //DivByZeroStub stub = new DivByZeroStub(pcOffset, cinfo);
+        //ArithmeticExceptionStub stub = new ArithmeticExceptionStub(pcOffset, cinfo);
         //emitCodeStub(stub);
         compilation.addCallInfo(pcOffset, cinfo);
     }
@@ -383,9 +383,9 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case Move:
                 if (op.moveKind() == LIROp1.LIRMoveKind.Volatile) {
-                    emitVolatileMove(op.operand(), op.result(), op.type(), op.info);
+                    emitVolatileMove(op.operand(), op.result(), op.kind, op.info);
                 } else {
-                    moveOp(op.operand(), op.result(), op.type(), op.info, op.moveKind() == LIROp1.LIRMoveKind.Unaligned);
+                    moveOp(op.operand(), op.result(), op.kind, op.info, op.moveKind() == LIROp1.LIRMoveKind.Unaligned);
                 }
                 break;
             case Prefetchr:
@@ -422,9 +422,6 @@ public abstract class LIRAssembler {
                     }
                 }
                 break;
-            case Monaddr:
-                emitMonitorAddress(((LIRConstant) op.operand()).asInt(), op.result());
-                break;
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -451,9 +448,6 @@ public abstract class LIRAssembler {
                 break;
             case MembarRelease:
                 emitMembarRelease();
-                break;
-            case GetThread:
-                emitGetThread(op.result());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -618,8 +612,6 @@ public abstract class LIRAssembler {
 
     protected abstract void emitNegate(LIROperand inOpr, LIROperand resultOpr);
 
-    protected abstract void emitMonitorAddress(int asInt, LIROperand result);
-
     protected abstract void emitSafepoint(LIROperand inOpr, LIRDebugInfo info);
 
     protected abstract void emitReturn(LIROperand inOpr);
@@ -652,15 +644,9 @@ public abstract class LIRAssembler {
 
     protected abstract void emitConvert(LIRConvert convert);
 
-    protected abstract void emitAllocObj(LIRAllocObj allocObj);
-
     protected abstract void emitLIROp2(LIROp2 op2);
 
     protected abstract void emitOp3(LIROp3 op3);
-
-    protected abstract void emitAllocArray(LIRAllocArray allocArray);
-
-    protected abstract void emitLock(LIRLock lock);
 
     protected abstract void emitTypeCheck(LIRTypeCheck typeCheck);
 
@@ -681,8 +667,6 @@ public abstract class LIRAssembler {
     protected abstract void emitVirtualCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool);
 
     protected abstract void emitCallAlignment(LIROpcode code);
-
-    protected abstract void emitGetThread(LIROperand result);
 
     protected abstract void emitMembarRelease();
 
