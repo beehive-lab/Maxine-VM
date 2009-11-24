@@ -38,7 +38,6 @@ import com.sun.c1x.value.*;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
- *
  */
 public abstract class LIRAssembler {
 
@@ -266,7 +265,7 @@ public abstract class LIRAssembler {
     }
 
     void processDebugInfo(LIRInstruction op) {
-        Value ins = op.source();
+        Value ins = op.source;
         if (ins == null) {
             return;
         }
@@ -346,7 +345,7 @@ public abstract class LIRAssembler {
     }
 
     void emitRuntimeCall(LIRRuntimeCall op) {
-        emitRuntimeCall(op.result(), op.runtimeEntry, op.arguments(), op.info, op.calleeSaved);
+        emitRuntimeCall(op.runtimeEntry, op.info);
     }
 
     void emitCall(LIRJavaCall op) {
@@ -669,7 +668,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitXir(LIRXirInstruction xirInstruction);
 
-    protected abstract void emitRuntimeCall(LIROperand result, CiRuntimeCall l, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved);
+    protected abstract void emitRuntimeCall(CiRuntimeCall l, LIRDebugInfo info);
 
     protected abstract void emitXirIndirectCall(RiMethod method, LIRDebugInfo info, LIROperand operand);
 

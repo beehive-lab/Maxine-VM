@@ -34,11 +34,9 @@ import com.sun.c1x.debug.*;
 public class LIRRuntimeCall extends LIRCall {
 
     public final CiRuntimeCall runtimeEntry;
-    public final boolean calleeSaved;
 
     public LIRRuntimeCall(CiRuntimeCall entry, LIROperand result, List <LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
         super(LIROpcode.RtCall, null, result, LIROperandFactory.IllegalLocation, arguments, info, calleeSaved);
-        this.calleeSaved = calleeSaved;
         this.runtimeEntry = entry;
     }
 

@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.target.x86;
 
-import java.util.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
@@ -965,14 +963,14 @@ public class X86LIRAssembler extends LIRAssembler {
         if (op.isInitCheck()) {
             throw Util.unimplemented("check for class init status");
         }
-        masm.allocateObject(compilation.runtime, op.obj().asRegister(), op.tmp1().asRegister(), op.tmp2().asRegister(), op.headerSize(), op.obectSize(), op.klass().asRegister(), op.stub().entry);
-        masm.bind(op.stub().continuation);
+        masm.allocateObject(compilation.runtime, op.obj().asRegister(), op.tmp1().asRegister(), op.tmp2().asRegister(), op.headerSize(), op.obectSize(), op.klass().asRegister(), op.stub.entry);
+        masm.bind(op.stub.continuation);
     }
 
     @Override
     protected void emitAllocArray(LIRAllocArray op) {
         if (C1XOptions.UseSlowPath || (!C1XOptions.UseFastNewObjectArray && op.type() == CiKind.Object) || (!C1XOptions.UseFastNewTypeArray && op.type() != CiKind.Object)) {
-            masm.jmp(op.stub().entry);
+            masm.jmp(op.stub.entry);
         } else {
             CiRegister len = op.length().asRegister();
             CiRegister tmp1 = op.tmp1().asRegister();
@@ -989,9 +987,9 @@ public class X86LIRAssembler extends LIRAssembler {
             }
             int elemSize = compilation.target.sizeInBytes(op.type());
             masm.allocateArray(compilation.runtime, op.obj().asRegister(), len, tmp1, tmp2, compilation.runtime.arrayHeaderSize(op.type()),
-                            Address.ScaleFactor.fromInt(elemSize), op.klass().asRegister(), op.stub().entry);
+                            Address.ScaleFactor.fromInt(elemSize), op.klass().asRegister(), op.stub.entry);
         }
-        masm.bind(op.stub().continuation);
+        masm.bind(op.stub.continuation);
     }
 
     @Override
@@ -1004,7 +1002,7 @@ public class X86LIRAssembler extends LIRAssembler {
             CiRegister klassRInfo = op.tmp2().asRegister();
             CiRegister rtmp1 = op.tmp3().asRegister();
 
-            LocalStub stub = op.stub();
+            LocalStub stub = op.stub;
             Label done = new Label();
             masm.cmpptr(value, (int) NULLWORD);
             masm.jcc(X86Assembler.Condition.equal, done);
@@ -1023,7 +1021,7 @@ public class X86LIRAssembler extends LIRAssembler {
             masm.bind(done);
         } else if (op.code == LIROpcode.CheckCast) {
             // we always need a stub for the failure case.
-            LocalStub stub = op.stub();
+            LocalStub stub = op.stub;
             CiRegister obj = op.object().asRegister();
             CiRegister expectedHub = op.tmp1().asRegister();
             CiRegister dst = op.result().asRegister();
@@ -2272,24 +2270,24 @@ public class X86LIRAssembler extends LIRAssembler {
         CiRegister hdr = op.hdrOpr().asRegister();
         CiRegister lock = op.lockOpr().asRegister();
         if (!C1XOptions.UseFastLocking) {
-            masm.jmp(op.stub().entry);
+            masm.jmp(op.stub.entry);
         } else if (op.code == LIROpcode.Monitorenter) {
             CiRegister scratch = CiRegister.None;
             if (C1XOptions.UseBiasedLocking) {
                 scratch = op.scratchOpr().asRegister();
             }
             // add debug info for NullPointerException only if one is possible
-            int nullCheckOffset = masm.lockObject(compilation.runtime, hdr, obj, lock, scratch, op.stub().entry);
+            int nullCheckOffset = masm.lockObject(compilation.runtime, hdr, obj, lock, scratch, op.stub.entry);
             if (op.info != null) {
                 addDebugInfoForNullCheck(nullCheckOffset, op.info);
             }
             // done
         } else if (op.code == LIROpcode.Monitorexit) {
-            masm.unlockObject(compilation.runtime, hdr, obj, lock, op.stub().entry);
+            masm.unlockObject(compilation.runtime, hdr, obj, lock, op.stub.entry);
         } else {
             throw Util.shouldNotReachHere();
         }
-        masm.bind(op.stub().continuation);
+        masm.bind(op.stub.continuation);
     }
 
     @Override
@@ -2353,23 +2351,10 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitRuntimeCall(LIROperand result, CiRuntimeCall dest, List<LIROperand> args, LIRDebugInfo info, boolean calleeSaved) {
-        if (calleeSaved) {
-            // Call through global stub
-            assert result.isRegister();
-
-            Object[] argArray = new Object[args.size()];
-            int i = 0;
-            for (LIROperand op : args) {
-                argArray[i++] = asRegisterOrConstant(op);
-            }
-            masm.callRuntimeCalleeSaved(dest, info, result.asRegister(), argArray);
-        } else {
-            // Call direct
-            masm.callRuntime(dest);
-            if (info != null) {
-                addCallInfoHere(info);
-            }
+    protected void emitRuntimeCall(CiRuntimeCall dest, LIRDebugInfo info) {
+        masm.callRuntime(dest);
+        if (info != null) {
+            addCallInfoHere(info);
         }
     }
 
@@ -2423,7 +2408,6 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void emitMembar() {
         // QQQ sparc TSO uses this,
         masm.membar(X86Assembler.MembarMaskBits.StoreLoad.mask());
-
     }
 
     @Override

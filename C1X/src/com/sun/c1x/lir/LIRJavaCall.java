@@ -39,17 +39,6 @@ public class LIRJavaCall extends LIRCall {
     public final char cpi;
     public final RiConstantPool constantPool;
 
-    /**
-     * Creates a new LIRJavaCall instruction.
-     *
-     * @param opcode
-     * @param method
-     * @param receiver
-     * @param result
-     * @param address
-     * @param arguments
-     * @param info
-     */
     public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
         super(opcode, address, result, receiver, arguments, info, false);
         this.method = method;

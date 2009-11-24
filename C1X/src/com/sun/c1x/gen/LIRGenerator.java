@@ -605,10 +605,10 @@ public abstract class LIRGenerator extends ValueVisitor {
                 lir.callXirDirect(target, resultRegister, argList, info);
             } else {
                 // Indirect call
-                //LIROperand dst = LIROperandFactory.scratch(destinationAddress.kind, compilation.target);
-                //lir.move(destinationAddress, dst);
-                argList.add(destinationAddress);
-                lir.callXirIndirect(target, resultRegister, argList, info);
+                List<LIROperand> newList = new ArrayList<LIROperand>(argList.size() + 1);
+                newList.addAll(argList);
+                newList.add(destinationAddress);
+                lir.callXirIndirect(target, resultRegister, newList, info);
             }
 
         } else {
