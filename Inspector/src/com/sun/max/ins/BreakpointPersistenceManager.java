@@ -174,11 +174,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
 
             final TeleBytecodeBreakpoint breakpoint = inspection.maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition));
             breakpoint.setEnabled(enabled);
-            if (enabled) {
-                breakpoint.activate();
-            }
         }
     }
-
 
 }
