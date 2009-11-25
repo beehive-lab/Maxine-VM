@@ -43,6 +43,7 @@ import com.sun.max.io.*;
 @HOSTED_ONLY
 public class JniFunctionsGenerator {
 
+    private static final String JNI_FUNCTION_ANNOTATION = "@VM_ENTRY_POINT";
     static final int BEFORE_FIRST_JNI_FUNCTION = -1;
     static final int BEFORE_JNI_FUNCTION = 0;
     static final int BEFORE_PROLOGUE = 1;
@@ -159,7 +160,7 @@ public class JniFunctionsGenerator {
                 break;
             }
 
-            if (line.trim().equals("@JNI_FUNCTION")) {
+            if (line.trim().equals(JNI_FUNCTION_ANNOTATION)) {
                 lr.check(state == BEFORE_JNI_FUNCTION || state == BEFORE_FIRST_JNI_FUNCTION, "Illegal state (" + state + ") when parsing @JNI_FUNCTION");
                 if (state == BEFORE_FIRST_JNI_FUNCTION) {
                     out.println();

@@ -223,7 +223,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
             sigName = "<unknown>";
         }
         log_println("Trap taken on primordial thread (this is usually bad)!");
-        log_println("thread %d: %s", getThreadLocal(int, disabled_tl, ID), sigName);
+        log_println("thread handle=%p, id=%d: %s", thread_self(), getThreadLocal(int, disabled_tl, ID), sigName);
         log_println("trapInfo[0] (trap number)         = %p", trapNumber);
         log_println("trapInfo[1] (instruction pointer) = %p", getInstructionPointer(ucontext));
         log_println("trapInfo[2] (fault address)       = %p", faultAddress);
@@ -276,7 +276,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 
     if (traceTraps || log_TRAP) {
         if (sigName != NULL) {
-            log_println("thread %d: %s", getThreadLocal(int, disabled_tl, ID), sigName);
+            log_println("thread handle=%p, id=%d: %s", thread_self(), getThreadLocal(int, disabled_tl, ID), sigName);
             log_println("trapInfo[0] (trap number)         = %p", getThreadLocal(Address, disabled_tl, TRAP_NUMBER));
             log_println("trapInfo[1] (instruction pointer) = %p", getThreadLocal(Address, disabled_tl, TRAP_INSTRUCTION_POINTER));
             log_println("trapInfo[2] (fault address)       = %p", getThreadLocal(Address, disabled_tl, TRAP_FAULT_ADDRESS));

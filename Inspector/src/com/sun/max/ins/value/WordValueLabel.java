@@ -83,6 +83,8 @@ public class WordValueLabel extends ValueLabel {
         OBJECT_REFERENCE_TEXT,
         STACK_LOCATION,
         STACK_LOCATION_TEXT,
+        THREAD_LOCALS_BLOCK_LOCATION,
+        THREAD_LOCALS_BLOCK_LOCATION_TEXT,
         CALL_ENTRY_POINT,
         CALL_ENTRY_POINT_TEXT,
         CLASS_ACTOR_ID,
@@ -215,6 +217,11 @@ public class WordValueLabel extends ValueLabel {
                                 // TODO (mlvdv)  special right-button menu items appropriate to a pointer into stack memory
                                 break;
                             }
+                            case THREAD_LOCALS_BLOCK_LOCATION:
+                            case THREAD_LOCALS_BLOCK_LOCATION_TEXT: {
+                                // TODO (mlvdv)  special right-button menu items appropriate to a pointer into a thread locals block
+                                break;
+                            }
                             default: {
                                 break;
                             }
@@ -291,38 +298,43 @@ public class WordValueLabel extends ValueLabel {
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
-                    thread = maxVM().threadContaining(address);
+                    thread = maxVM().threadStackContaining(address);
                     if (thread != null) {
                         displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
                     } else {
-                        if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
-                            displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                        thread = maxVM().threadLocalsBlockContaining(address);
+                        if (thread != null) {
+                            displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                         } else {
-                            try {
-                                teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
-                                if (teleTargetMethod != null) {
-                                    final Address codeStart = teleTargetMethod.getCodeStart();
-                                    final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
-                                    final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart());
-                                    if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
-                                        displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
-                                    } else {
-                                        displayMode = (valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
+                            if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
+                                displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
+                            } else {
+                                try {
+                                    teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
+                                    if (teleTargetMethod != null) {
+                                        final Address codeStart = teleTargetMethod.getCodeStart();
+                                        final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
+                                        final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart());
+                                        if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
+                                            displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
+                                        } else {
+                                            displayMode = (valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
+                                        }
+                                    } else if (valueMode == ValueMode.ITABLE_ENTRY) {
+                                        final TeleClassActor teleClassActor = maxVM().findTeleClassActor(newValue.asWord().asAddress().toInt());
+                                        if (teleClassActor != null) {
+                                            this.teleClassActor = teleClassActor;
+                                            displayMode = DisplayMode.CLASS_ACTOR;
+                                        } else {
+                                            displayMode = DisplayMode.CLASS_ACTOR_ID;
+                                        }
                                     }
-                                } else if (valueMode == ValueMode.ITABLE_ENTRY) {
-                                    final TeleClassActor teleClassActor = maxVM().findTeleClassActor(newValue.asWord().asAddress().toInt());
-                                    if (teleClassActor != null) {
-                                        this.teleClassActor = teleClassActor;
-                                        displayMode = DisplayMode.CLASS_ACTOR;
-                                    } else {
-                                        displayMode = DisplayMode.CLASS_ACTOR_ID;
-                                    }
+                                } catch (Throwable throwable) {
+                                    // If we don't catch this the views will not be updated at all.
+                                    displayMode = DisplayMode.INVALID;
+                                    setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                                    throwable.printStackTrace(Trace.stream());
                                 }
-                            } catch (Throwable throwable) {
-                                // If we don't catch this the views will not be updated at all.
-                                displayMode = DisplayMode.INVALID;
-                                setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
-                                throwable.printStackTrace(Trace.stream());
                             }
                         }
                     }
@@ -451,6 +463,26 @@ public class WordValueLabel extends ValueLabel {
                 final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setText(threadName + " " + decimalOffsetString);
                 setToolTipText("Stack:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));
+                break;
+            }
+            case THREAD_LOCALS_BLOCK_LOCATION: {
+                setFont(style().wordDataFont());
+                setForeground(style().wordThreadLocalsBlockLocationDataColor());
+                setText(hexString);
+                final String threadName = inspection().nameDisplay().longName(thread);
+                final long offset = value().asWord().asAddress().minus(thread.threadLocalsBlock().start()).toLong();
+                final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
+                setToolTipText("Thread locals:  thread=" + threadName + ", offset=" + hexOffsetString);
+                break;
+            }
+            case THREAD_LOCALS_BLOCK_LOCATION_TEXT: {
+                setFont(style().wordAlternateTextFont());
+                setForeground(style().wordThreadLocalsBlockLocationDataColor());
+                final String threadName = inspection().nameDisplay().longName(thread);
+                final long offset = value().asWord().asAddress().minus(thread.threadLocalsBlock().start()).toLong();
+                final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
+                setText(threadName + " " + decimalOffsetString);
+                setToolTipText("Thread locals:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));
                 break;
             }
             case UNCHECKED_REFERENCE: {
@@ -636,6 +668,14 @@ public class WordValueLabel extends ValueLabel {
                 alternateValueKind = DisplayMode.STACK_LOCATION;
                 break;
             }
+            case THREAD_LOCALS_BLOCK_LOCATION: {
+                alternateValueKind = DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT;
+                break;
+            }
+            case THREAD_LOCALS_BLOCK_LOCATION_TEXT: {
+                alternateValueKind = DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
+                break;
+            }
             case CALL_ENTRY_POINT: {
                 alternateValueKind = DisplayMode.CALL_ENTRY_POINT_TEXT;
                 break;
@@ -715,6 +755,8 @@ public class WordValueLabel extends ValueLabel {
             }
             case STACK_LOCATION:
             case STACK_LOCATION_TEXT:
+            case THREAD_LOCALS_BLOCK_LOCATION:
+            case THREAD_LOCALS_BLOCK_LOCATION_TEXT:
             case WORD:
             case NULL:
             case INVALID_OBJECT_REFERENCE:
@@ -739,7 +781,9 @@ public class WordValueLabel extends ValueLabel {
                 case INVALID_OBJECT_REFERENCE:
                 case UNCHECKED_REFERENCE:
                 case STACK_LOCATION:
-                case  STACK_LOCATION_TEXT:
+                case STACK_LOCATION_TEXT:
+                case THREAD_LOCALS_BLOCK_LOCATION:
+                case THREAD_LOCALS_BLOCK_LOCATION_TEXT:
                 case CALL_ENTRY_POINT:
                 case CALL_ENTRY_POINT_TEXT:
                 case CALL_RETURN_POINT:
@@ -798,7 +842,9 @@ public class WordValueLabel extends ValueLabel {
                 case INVALID_OBJECT_REFERENCE:
                 case UNCHECKED_REFERENCE:
                 case STACK_LOCATION:
-                case  STACK_LOCATION_TEXT:
+                case STACK_LOCATION_TEXT:
+                case THREAD_LOCALS_BLOCK_LOCATION:
+                case THREAD_LOCALS_BLOCK_LOCATION_TEXT:
                 case CALL_ENTRY_POINT:
                 case CALL_RETURN_POINT:
                 case UNCHECKED_CALL_POINT:

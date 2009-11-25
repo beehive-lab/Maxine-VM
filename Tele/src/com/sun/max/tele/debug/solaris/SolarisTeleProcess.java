@@ -27,6 +27,7 @@ import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -131,8 +132,8 @@ public final class SolarisTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long lwpId, long stackBase, long stackSize, boolean hasThreadLocals) {
-        return new SolarisTeleNativeThread(this, id, lwpId, stackBase, stackSize, hasThreadLocals);
+    protected TeleNativeThread createTeleNativeThread(Params params) {
+        return new SolarisTeleNativeThread(this, params);
     }
 
     /**

@@ -43,8 +43,8 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
     public final EirABI<EirRegister_Type> j2cFunctionABI;
 
     /**
-     * The ABI for a Java method than is only called from native code. These are all the non-native methods annotated
-     * with {@link C_FUNCTION} or {@link JNI_FUNCTION}. These methods only need a single entry point and have no frame
+     * The ABI for a Java method than is only called from native code. These are all the methods annotated
+     * with {@link VM_ENTRY_POINT} or {@link JNI_FUNCTION}. These methods only need a single entry point and have no frame
      * adapter
      */
     public final EirABI<EirRegister_Type> c2jFunctionABI;
@@ -60,7 +60,7 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
      * @param javaABI
      * @param nativeABI the ABI
      * @param j2cFunctionABI ABI for {@linkplain C_FUNCTION VM exit} methods
-     * @param c2jFunctionABI ABI for {@linkplain C_FUNCTION VM entry} methods
+     * @param c2jFunctionABI ABI for {@linkplain VM_ENTRY_POINT VM entry} methods
      * @param trampolineABI
      * @param templateABI
      * @param treeABI abi for tree calls.
@@ -94,11 +94,11 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
      */
     public EirABI getABIFor(ClassMethodActor classMethodActor) {
         final MethodActor compilee = classMethodActor.compilee();
-        if (compilee.isCFunction()) {
-            return compilee.isNative() ? j2cFunctionABI : c2jFunctionABI;
-        }
-        if (compilee.isJniFunction()) {
+        if (compilee.isVmEntryPoint()) {
             return c2jFunctionABI;
+        }
+        if (compilee.isCFunction()) {
+            return j2cFunctionABI;
         }
         if (compilee.isTemplate()) {
             return templateABI;

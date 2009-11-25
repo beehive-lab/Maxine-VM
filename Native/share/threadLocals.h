@@ -59,12 +59,35 @@
  *
  */
 
-#define THREAD_LOCALS_FROM_TLBLOCK(tlBlock)        ((ThreadLocals)       (tlBlock + virtualMemory_getPageSize() - sizeof(Address) +  threadLocalsSize()))
-#define NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock) ((NativeThreadLocals) (tlBlock + virtualMemory_getPageSize() - sizeof(Address) + (threadLocalsSize() * 3)))
+#define THREAD_LOCALS_FROM_TLBLOCK(tlBlock)        ((ThreadLocals)       (tlBlock + virtualMemory_getPageSize() - sizeof(Address) +  threadLocalsAreaSize()))
+#define NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock) ((NativeThreadLocals) (tlBlock + virtualMemory_getPageSize() - sizeof(Address) + (threadLocalsAreaSize() * 3)))
 
-extern void threadLocals_initialize(int threadLocalsSize, int javaFrameAnchorSize);
+extern void threadLocals_initialize(int threadLocalsSize);
 
-extern Address threadLocalsBlock_create(jint id, Address *refMap);
+/**
+ * Creates and initializes the thread locals block (see diagram above) for the current thread.
+ * This includes protecting certain pages of the stack for stack overflow detection.
+ * To clean up these resources, the threadLocalsBlock_destroy() function should be
+ * called on the value returned by this function.
+ *
+ * @param id  > 0: the identifier reserved in the thread map for the thread being started
+ *           == 0: the primordial thread
+ *            < 0: temporary identifier (derived from the native thread handle) of a thread
+ *                 that is being attached to the VM
+ * @param allocateRefMap specifies if a reference map should be allocated
+ * @return the thread locals block for the current thread. This value has been registered
+ *         as the value associated with the ThreadLocalsKey for this thread. The destructor
+ *         function specified when registering the value is threadLocalsBlock_destroy().
+ */
+extern Address threadLocalsBlock_create(jint id, jboolean allocateRefMap);
+
+/**
+ * Releases the resources for the current thread allocated and protected by threadLocalsBlock_create().
+ * This is the function specified as the destructor for the value associated with the ThreadLocalsKey
+ * for this thread
+ *
+ * @param tlBlock a value returned by threadLocalsBlock_create()
+ */
 extern void threadLocalsBlock_destroy(Address tlBlock);
 
 /**
@@ -89,7 +112,9 @@ extern void threadLocalsBlock_destroy(Address tlBlock);
     macro(TRAP_NUMBER, 15) \
     macro(TRAP_INSTRUCTION_POINTER, 16) \
     macro(TRAP_FAULT_ADDRESS, 17) \
-    macro(TRAP_LATCH_REGISTER, 18)
+    macro(TRAP_LATCH_REGISTER, 18) \
+    macro(STACK_REFERENCE_MAP, 22) \
+    macro(STACK_REFERENCE_MAP_SIZE, 23)
 
 #define DECLARE_THREAD_LOCAL(name, index) name = index,
 typedef enum ThreadLocal {
@@ -121,14 +146,9 @@ extern void threadLocalsBlock_setCurrent(Address tlBlock);
 extern ThreadLocals threadLocals_current(void);
 
 /**
- * Gets the size of the storage required for a set of thread locals.
+ * Gets the size of a thread locals area.
  */
-extern int threadLocalsSize();
-
-/**
- * Gets the size of a Java frame anchor.
- */
-extern int javaFrameAnchorSize();
+extern int threadLocalsAreaSize();
 
 /**
  * Sets the value of a specified thread local.
@@ -174,6 +194,9 @@ extern int javaFrameAnchorSize();
 typedef struct {
     Address stackBase;
     Size stackSize;
+    Address handle;    // e.g. pthread_self()
+    Address tlBlock;
+    Address tlBlockSize;
     Address stackYellowZone; // unmapped to cause a trap on access
     Address stackRedZone;    // unmapped always - fatal exit if accessed
 

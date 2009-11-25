@@ -28,6 +28,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -93,8 +94,8 @@ public final class LinuxTeleProcess extends TeleProcess {
     private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialThreadLocals);
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long tid, long stackBase, long stackSize, boolean hasThreadLocals) {
-        return new LinuxTeleNativeThread(this, id, tid, stackBase, stackSize, hasThreadLocals);
+    protected TeleNativeThread createTeleNativeThread(Params params) {
+        return new LinuxTeleNativeThread(this, params);
     }
 
     @Override

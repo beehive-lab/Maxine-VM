@@ -54,8 +54,7 @@
     typedef void (*ThreadLocalsBlockDestructor)(void *);
 #endif
 
-    int theThreadLocalsSize = -1;
-int theJavaFrameAnchorSize = -1;
+int theThreadLocalsAreaSize = -1;
 
 /**
  * The global key used to retrieve a ThreadLocals object for a thread.
@@ -65,26 +64,27 @@ static ThreadLocalsKey theThreadLocalsKey;
 /**
  * Allocates and initializes a thread locals block.
  *
- * @param id if >= 0, the identifier reserved in the thread map for the thread to be started otherwise
- *           a temporary identifier (derived from the native thread handle) for a thread that is being
- *           attached to the VM
- * @param refMap the value in which the address of the stack reference map will be returned. If NULL, then
- *           no memory is allocated for a stack reference map.
+ * @param id  > 0: the identifier reserved in the thread map for the thread being started
+ *           == 0: the primordial thread
+ *            < 0: temporary identifier (derived from the native thread handle) of a thread
+ *                 that is being attached to the VM
+ * @param allocateRefMap specifies if a reference map should be allocated
  */
-Address threadLocalsBlock_create(jint id, Address *refMap) {
+Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
 
     c_ASSERT(threadLocalsBlock_current() == 0);
 
-    const int tlSize = threadLocalsSize();
-    const int jfaSize = javaFrameAnchorSize();
+    const int tlSize = threadLocalsAreaSize();
     const int pageSize = virtualMemory_getPageSize();
     const jboolean attaching = id < 0;
+    const jboolean primordial = id == 0;
 
     Size stackSize;
     Address stackBase;
     thread_getStackInfo(&stackBase, &stackSize);
 
-    Size refMapAreaSize = refMap == NULL ? 0 : 1 + stackSize / sizeof(Address) / 8;
+    int stackWords = stackSize / sizeof(Address);
+    Size refMapSize = !allocateRefMap ? 0 : wordAlign(1 + (stackWords / 8));
 
     /* See diagram at top of threadLocals.h */
     const int triggerPage = pageSize;
@@ -92,9 +92,9 @@ Address threadLocalsBlock_create(jint id, Address *refMap) {
                     triggerPage +
                     (3 * tlSize) +
                     sizeof(NativeThreadLocalsStruct) +
-                    jfaSize +
-                    refMapAreaSize;
+                    refMapSize;
 
+    c_ASSERT(wordAlign(tlBlockSize) == (Address) tlBlockSize);
     Address tlBlock = (Address) valloc(tlBlockSize);
     if (tlBlock == 0) {
         return 0;
@@ -107,11 +107,9 @@ Address threadLocalsBlock_create(jint id, Address *refMap) {
     Address current = (Address) disabled_tl + tlSize;
     NativeThreadLocals ntl = (NativeThreadLocals) current;
     current += sizeof(NativeThreadLocalsStruct);
-    Address anchor = current;
-    current += jfaSize;
-    if (refMap != NULL) {
-        *refMap = current;
-        current = current + refMapAreaSize;
+    Address refMap = current;
+    if (allocateRefMap) {
+        current = current + refMapSize;
     }
 
     /* Clear each of the thread local spaces: */
@@ -119,18 +117,23 @@ Address threadLocalsBlock_create(jint id, Address *refMap) {
     memset((void *) enabled_tl, 0, tlSize);
     memset((void *) disabled_tl, 0, tlSize);
 
-    /* Clear the base Java frame anchor: */
-    memset((void *) anchor, 0, jfaSize);
-
     /* Clear the NativeThreadLocals: */
     memset((void *) ntl, 0, sizeof(NativeThreadLocalsStruct));
 
+    ntl->handle = (Address) thread_self();
     ntl->stackBase = stackBase;
     ntl->stackSize = stackSize;
+    ntl->tlBlock = tlBlock;
+    ntl->tlBlockSize = tlBlockSize;
     
     Address startGuardZone;
     int guardZonePages;
-    if (!attaching) {
+    if (primordial) {
+        ntl->stackRedZone = 0;
+        ntl->stackYellowZone = 0;
+        startGuardZone = 0;
+        guardZonePages = 0;
+    } else if (!attaching) {
         /* Thread library creates a red-zone guard page just below the stack */
         ntl->stackRedZone = ntl->stackBase - (STACK_RED_ZONE_PAGES * pageSize);
 
@@ -150,25 +153,6 @@ Address threadLocalsBlock_create(jint id, Address *refMap) {
         guardZonePages = STACK_YELLOW_ZONE_PAGES + STACK_RED_ZONE_PAGES;
     }
 
-#if os_GUESTVMXEN
-    // all page protection is handled in the following call
-    guestvmXen_initStack(ntl);
-#else
-    Address endGuardZone = startGuardZone + (guardZonePages * pageSize);
-    Address sp = (Address) &ntl; // approximation of stack pointer
-    const int safetyMargin = pageSize;
-    if (sp < endGuardZone + safetyMargin) {
-        log_exit(11, "Stack is too small to safely place stack guard zones");
-    }
-
-    ntl->stackBlueZone = ntl->stackYellowZone;
-
-    /* Need to write to the yellow so that it is mapped in before being protected. */
-    *((Address *) ntl->stackYellowZone) = 0;
-
-    virtualMemory_protectPages(startGuardZone, guardZonePages);
-#endif
-
     setThreadLocal(enabled_tl, SAFEPOINTS_ENABLED_THREAD_LOCALS, enabled_tl);
     setThreadLocal(enabled_tl, SAFEPOINTS_DISABLED_THREAD_LOCALS, disabled_tl);
     setThreadLocal(enabled_tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS, triggered_tl);
@@ -186,23 +170,41 @@ Address threadLocalsBlock_create(jint id, Address *refMap) {
 
     setConstantThreadLocal(enabled_tl, NATIVE_THREAD_LOCALS, ntl);
     setConstantThreadLocal(enabled_tl, ID, id);
-
-    setThreadLocal(enabled_tl, LAST_JAVA_FRAME_ANCHOR, anchor);
+    setConstantThreadLocal(enabled_tl, STACK_REFERENCE_MAP, refMap);
+    setConstantThreadLocal(enabled_tl, STACK_REFERENCE_MAP_SIZE, refMapSize);
 
 #if log_THREADS
-    log_println("thread %3d: stackBase = %p", id, ntl->stackBase);
-    log_println("thread %3d: stackSize = %d (%p)", id, ntl->stackSize, ntl->stackSize);
-    log_println("thread %3d: redZone    = %p", id, ntl->stackRedZone);
-    log_println("thread %3d: yellowZone = %p", id, ntl->stackYellowZone);
-    log_println("thread %3d: blueZone   = %p", id, ntl->stackBlueZone);
-    log_println("thread %3d: endOfStack = %p", id, ntl->stackBase + ntl->stackSize);
+    log_println("thread %3d: stackEnd     = %p", id, ntl->stackBase + ntl->stackSize);
+    log_println("thread %3d: sp           ~ %p", id, &id);
+    log_println("thread %3d: stackBase    = %p", id, ntl->stackBase);
+    log_println("thread %3d: stackSize    = %d (%p)", id, ntl->stackSize, ntl->stackSize);
+    log_println("thread %3d: redZone      = %p", id, ntl->stackRedZone);
+    log_println("thread %3d: yellowZone   = %p", id, ntl->stackYellowZone);
+    log_println("thread %3d: blueZone     = %p", id, ntl->stackBlueZone);
     log_println("thread %3d: triggered_tl = %p", id, triggered_tl);
     log_println("thread %3d: enabled_tl   = %p", id, enabled_tl);
     log_println("thread %3d: disabled_tl  = %p", id, disabled_tl);
-    log_println("thread %3d: anchor       = %p", id, anchor);
+    log_println("thread %3d: anchor       = %p", id, getThreadLocal(Address, enabled_tl, LAST_JAVA_FRAME_ANCHOR));
     log_println("thread %3d: ntl          = %p", id, ntl);
-    if (refMap != NULL) {
-    log_println("thread %3d: refMapArea   = %p", id, *refMap);
+    log_println("thread %3d: refMap       = %p", id, refMap);
+    log_println("thread %3d: refMapSize   = %d (%p)", id, refMapSize, refMapSize);
+#endif
+
+#if os_GUESTVMXEN
+    // all page protection is handled in the following call
+    guestvmXen_initStack(ntl);
+#else
+    Address endGuardZone = startGuardZone + (guardZonePages * pageSize);
+    Address sp = (Address) &ntl; // approximation of stack pointer
+    const int safetyMargin = pageSize;
+    if (sp < endGuardZone + safetyMargin) {
+        log_exit(11, "Stack is too small to safely place stack guard zones");
+    }
+
+    ntl->stackBlueZone = ntl->stackYellowZone;
+
+    if (guardZonePages != 0) {
+        virtualMemory_protectPages(startGuardZone, guardZonePages);
     }
 #endif
 
@@ -218,38 +220,45 @@ Address threadLocalsBlock_create(jint id, Address *refMap) {
  */
 extern Mutex globalThreadAndGCLock;
 
+/**
+ * See the documentation in threadLocals.h for this function.
+ */
 void threadLocalsBlock_destroy(Address tlBlock) {
+    // The native thread library de-registers the value for a thread local key
+    // before calling the associated destructor
     c_ASSERT(threadLocalsBlock_current() == 0);
+
+    // Temporarily re-register the block for the duration of this function
+    // so that traps have a better chance of printing something useful
+    threadLocalsBlock_setCurrent(tlBlock);
 
 #if log_THREADS
     Address nativeThread = (Address) thread_self();
     log_println("threadLocalsBlock_destroy: BEGIN t=%p", nativeThread);
 #endif
 
-    /* Grab the global thread and GC lock so that:
-     *   1. We can safely remove this thread from the thread list and thread map.
-     *   2. We are blocked if a GC is currently underway. Once we have the lock,
-     *      GC is blocked and cannot occur until we complete the upcall to
-     *      VmThread.detach().
-     */
-    mutex_enter(globalThreadAndGCLock);
-
     Address tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
-    VmThreadDetachMethod method = image_offset_as_address(VmThreadDetachMethod, vmThreadDetachMethodOffset);
-#if log_THREADS
-    log_print("threadLocalsBlock_destroy: id=%d, t=%p, calling method: ", getThreadLocal(int, tl, ID), nativeThread);
-    void image_printAddress(Address address);
-    image_printAddress((Address) method);
-    log_println("");
-#endif
-    (*method)(tl);
+    NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
-    mutex_exit(globalThreadAndGCLock);
+    int id = getThreadLocal(int, tl, ID);
+    if (id >= 0) {
+        VmThreadDetachMethod method = image_offset_as_address(VmThreadDetachMethod, vmThreadDetachMethodOffset);
+#if log_THREADS
+        log_print("threadLocalsBlock_destroy: id=%d, t=%p, calling VmThread.detach(): ", id, nativeThread);
+        void image_printAddress(Address address);
+        image_printAddress((Address) method);
+        log_println("");
+#endif
+        (*method)(tl);
+    } else {
+#if log_THREADS
+        log_print("threadLocalsBlock_destroy: id=%d, t=%p, never successfully attached: ", id, nativeThread);
+#endif
+    }
 
     c_ASSERT(getThreadLocal(Address, tl, FORWARD_LINK) == 0);
     c_ASSERT(getThreadLocal(Address, tl, BACKWARD_LINK) == 0);
 
-    NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
     const jboolean attached = ntl->stackRedZone == ntl->stackBase;
     Address startGuardZone;
     int guardZonePages;
@@ -271,6 +280,10 @@ void threadLocalsBlock_destroy(Address tlBlock) {
     // on GUESTVMXEN stack protection is handled elsewhere
 #endif
 
+    // Temporarily re-establish the block for the duration of this function
+    // so that traps have a better chance of printing something useful
+    threadLocalsBlock_setCurrent(0);
+
     /* Release the memory of the TL block. */
     free((void *) tlBlock);
 
@@ -279,9 +292,8 @@ void threadLocalsBlock_destroy(Address tlBlock) {
 #endif
 }
 
-void threadLocals_initialize(int threadLocalsSize, int javaFrameAnchorSize) {
-    theThreadLocalsSize = threadLocalsSize;
-    theJavaFrameAnchorSize = javaFrameAnchorSize;
+void threadLocals_initialize(int threadLocalsAreaSize) {
+    theThreadLocalsAreaSize = threadLocalsAreaSize;
 #if !TELE
 #if os_DARWIN || os_LINUX
     pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
@@ -341,24 +353,16 @@ NativeThreadLocals nativeThreadLocals_current() {
     return NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 }
 
-int threadLocalsSize() {
-    c_ASSERT(theThreadLocalsSize > 0);
-    return theThreadLocalsSize;
-}
-
-int javaFrameAnchorSize() {
-    c_ASSERT(theJavaFrameAnchorSize > 0);
-    return theJavaFrameAnchorSize;
+int threadLocalsAreaSize() {
+    c_ASSERT(theThreadLocalsAreaSize > 0);
+    return theThreadLocalsAreaSize;
 }
 
 void threadLocals_println(ThreadLocals tl) {
     NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
     int id = getThreadLocal(int, tl, ID);
-    log_println("ThreadLocals[%d: base=%p, end=%p, size=%lu, triggered=%p, enabled=%p, disabled=%p]",
-                    id, ntl->stackBase, ntl->stackBase + ntl->stackSize, ntl->stackSize,
-                    getThreadLocal(Address, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
-                    getThreadLocal(Address, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
-                    getThreadLocal(Address, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS));
+    log_println("ThreadLocals[%d: base=%p, end=%p, size=%lu, tlBlock=%p, tlBlockSize=%lu]",
+                    id, ntl->stackBase, ntl->stackBase + ntl->stackSize, ntl->stackSize, ntl->tlBlock, ntl->tlBlockSize);
 }
 
 void threadLocals_printList(ThreadLocals tl) {

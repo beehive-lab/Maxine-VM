@@ -31,13 +31,13 @@ public class GuestVMXenNativeThread extends TeleNativeThread {
         return (GuestVMXenTeleDomain) super.teleProcess();
     }
 
-    protected GuestVMXenNativeThread(GuestVMXenTeleDomain teleDomain, int id, long handle, long stackBase, long stackSize, boolean hasThreadLocals) {
-        super(teleDomain, id, handle, stackBase, stackSize, hasThreadLocals);
+    protected GuestVMXenNativeThread(GuestVMXenTeleDomain teleDomain, Params params) {
+        super(teleDomain, params);
     }
 
     @Override
     protected boolean readRegisters(byte[] integerRegisters, byte[] floatingPointRegisters, byte[] stateRegisters) {
-        return GuestVMXenDBChannel.readRegisters((int) handle(),
+        return GuestVMXenDBChannel.readRegisters((int) localHandle(),
                         integerRegisters, integerRegisters.length,
                         floatingPointRegisters, floatingPointRegisters.length,
                         stateRegisters, stateRegisters.length);
@@ -45,12 +45,12 @@ public class GuestVMXenNativeThread extends TeleNativeThread {
 
     @Override
     protected boolean updateInstructionPointer(Address address) {
-        return GuestVMXenDBChannel.setInstructionPointer((int) handle(), address.toLong()) == 0;
+        return GuestVMXenDBChannel.setInstructionPointer((int) localHandle(), address.toLong()) == 0;
     }
 
     @Override
     protected boolean singleStep() {
-        return GuestVMXenDBChannel.singleStep((int) handle());
+        return GuestVMXenDBChannel.singleStep((int) localHandle());
     }
 
     // In the current synchronous connection with the target domain, we only ever stop at a breakpoint
@@ -58,7 +58,7 @@ public class GuestVMXenNativeThread extends TeleNativeThread {
 
     @Override
     public boolean threadSuspend() {
-        return GuestVMXenDBChannel.suspend((int) handle());
+        return GuestVMXenDBChannel.suspend((int) localHandle());
     }
 
     @Override

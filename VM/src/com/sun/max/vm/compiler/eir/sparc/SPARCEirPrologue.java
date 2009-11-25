@@ -75,7 +75,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
                 trapStateOffsetFromFramePointer = emitTrapStubPrologue(asm, stackPointer.as());
             } else {
                 final GPR scratchRegister = ((SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT)).as();
-                emitFrameBuilder(asm, eirMethod().frameSize(), stackPointer.as(), scratchRegister, eirMethod().classMethodActor().isJniFunction());
+                emitFrameBuilder(asm, eirMethod().frameSize(), stackPointer.as(), scratchRegister, eirMethod().classMethodActor().isVmEntryPoint());
             }
             if (eirMethod().literalPool().hasLiterals()) {
                 asm.bindLabel(emitter.literalBaseLabel());

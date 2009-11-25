@@ -553,7 +553,7 @@ public final class Inspection {
             if (!currentThread.isLive()) {
                 boolean foundMatchingThread = false;
                 for (MaxThread thread : maxVMState().threads()) {
-                    if (thread.handle() == currentThread.handle()) {
+                    if (thread.localHandle() == currentThread.localHandle()) {
                         focus().setThread(thread);
                         foundMatchingThread = true;
                         break;
@@ -600,7 +600,7 @@ public final class Inspection {
             }
             // Reset focus to new IP.
             final MaxThread focusThread = focus().thread();
-            focus().setStackFrame(focusThread, focusThread.frames().first(), true);
+            focus().setStackFrame(focusThread, focusThread.frames().first(), false);
         } catch (Throwable throwable) {
             new InspectorError("could not update view", throwable).display(this);
         } finally {

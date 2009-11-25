@@ -69,7 +69,8 @@
 Mutex globalThreadAndGCLock;
 
 /**
- * Gets the address and size of the calling thread's stack.
+ * Gets the address and size of the calling thread's stack. The returned values denote
+ * the stack memory above the guard page (if any) configured by the native thread library.
  *
  * @param stackBase the base (i.e. lowest) address of the stack is returned in this argument
  * @param stackSize the size of the stack is returned in this argument
@@ -93,6 +94,17 @@ void thread_getStackInfo(Address *stackBase, Size* stackSize) {
     if (result != 0) {
         log_exit(11, "Cannot locate current stack attributes [%s]", strerror(result));
     }
+
+    size_t guardSize;
+    result = pthread_attr_getguardsize(&attr, &guardSize);
+    if (result != 0) {
+        log_exit(11, "Cannot locate current stack guard size [%s]", strerror(result));
+    }
+    if (guardSize != 0) {
+        *stackSize -= guardSize;
+        *stackBase += guardSize;
+    }
+
     pthread_attr_destroy(&attr);
 #elif os_DARWIN
     pthread_t self = pthread_self();
@@ -230,27 +242,60 @@ void *thread_run(void *arg) {
     log_println("thread_run: BEGIN t=%p", nativeThread);
 #endif
 
-    Address refMap;
-    Address tlBlock = threadLocalsBlock_create(id, &refMap);
+    Address tlBlock = threadLocalsBlock_create(id, true);
     ThreadLocals tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
-    VmThreadRunMethod method = image_offset_as_address(VmThreadRunMethod, vmThreadRunMethodOffset);
+    /* Grab the global thread and GC lock so that:
+     *   1. This thread can atomically be added to the thread list
+     *   2. This thread is blocked if a GC is currently underway. Once we have the lock,
+     *      GC is blocked and cannot occur until we completed the upcall to
+     *      VmThread.attach().
+     */
+#if log_THREADS
+    log_println("thread_run: t=%p acquiring global GC and thread list lock", nativeThread);
+#endif
+    mutex_enter(globalThreadAndGCLock);
+#if log_THREADS
+    log_println("thread_run: t=%p acquired  global GC and thread list lock", nativeThread);
+#endif
+
+    VmThreadAddMethod addMethod = image_offset_as_address(VmThreadAddMethod, vmThreadAddMethodOffset);
 
 #if log_THREADS
-    log_print("thread_run: id=%d, t=%p, calling method: ", id, nativeThread);
+    log_print("thread_run: id=%d, t=%p, calling VmThread.add(): ", id, nativeThread);
     void image_printAddress(Address address);
-    image_printAddress((Address) method);
+    image_printAddress((Address) addMethod);
     log_println("");
 #endif
     Address stackEnd = ntl->stackBase + ntl->stackSize;
-    (*method)(id,
+    int result = (*addMethod)(id,
+              false,
               nativeThread,
+              tl,
               ntl->stackBase,
               stackEnd,
-              tl,
-              refMap,
               ntl->stackYellowZone);
+
+#if log_THREADS
+    log_println("thread_run: t=%p releasing global GC and thread list lock", nativeThread);
+#endif
+    mutex_exit(globalThreadAndGCLock);
+#if log_THREADS
+    log_println("thread_run: t=%p released  global GC and thread list lock", nativeThread);
+#endif
+
+    /* Adding a VM created thread to the thread list should never fail. */
+    c_ASSERT(result == 0);
+
+    VmThreadRunMethod runMethod = image_offset_as_address(VmThreadRunMethod, vmThreadRunMethodOffset);
+
+#if log_THREADS
+    log_print("thread_run: id=%d, t=%p, calling VmThread.run(): ", id, nativeThread);
+    image_printAddress((Address) runMethod);
+    log_println("");
+#endif
+    (*runMethod)(tl, ntl->stackBase, stackEnd);
 
 #if log_THREADS
     log_println("thread_run: END t=%p", nativeThread);
@@ -259,12 +304,16 @@ void *thread_run(void *arg) {
     return NULL;
 }
 
+/**
+ * Support for the AttachCurrentThread/AttachCurrentThreadAsDaemon JNI functions.
+ *
+ * @param penv the JNIEnv pointer for the attached thread is returned in this value
+ */
 int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
     Address nativeThread = (Address) thread_current();
 #if log_THREADS
     log_println("thread_attach: BEGIN t=%p", nativeThread);
 #endif
-    int result;
     if (threadLocals_current() != 0) {
         // If the thread has been attached, this operation is a no-op
         extern JNIEnv *currentJniEnv();
@@ -280,45 +329,82 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
     jint handle = (jint) nativeThread;
     jint id = handle < 0 ? handle : -handle;
 
-    Address refMap;
-    Address tlBlock = threadLocalsBlock_create(id, &refMap);
+    Address tlBlock = threadLocalsBlock_create(id, true);
     ThreadLocals tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
-    /* Grab the global thread and GC lock so that:
-     *   1. We can safely add this thread to the thread list and thread map.
-     *   2. We are blocked if a GC is currently underway. Once we have the lock,
-     *      GC is blocked and cannot occur until we completed the upcall to
-     *      VmThread.attach().
-     */
-    mutex_enter(globalThreadAndGCLock);
+    while (true) {
 
-    ThreadLocals threadLocalsListHead = image_read_value(ThreadLocals, threadLocalsListHeadOffset);
+        /* Grab the global thread and GC lock so that:
+         *   1. This thread can atomically be added to the thread list
+         *   2. This thread is blocked if a GC is currently underway. Once we have the lock,
+         *      GC is blocked and cannot occur until we completed the upcall to
+         *      VmThread.attach().
+         */
+#if log_THREADS
+    log_println("thread_attach: t=%p acquiring global GC and thread list lock", nativeThread);
+#endif
+        mutex_enter(globalThreadAndGCLock);
 
-    // insert this thread locals into the list
-    setConstantThreadLocal(tl, FORWARD_LINK, threadLocalsListHead);
-    setConstantThreadLocal(threadLocalsListHead, BACKWARD_LINK, tl);
-    // at the head
-    image_write_value(ThreadLocals, threadLocalsListHeadOffset, tl);
+        VmThreadAddMethod addMethod = image_offset_as_address(VmThreadAddMethod, vmThreadAddMethodOffset);
 
 #if log_THREADS
-    log_println("thread %3d: forwardLink = %p (id=%d)", id, threadLocalsListHead, getThreadLocal(int, threadLocalsListHead, ID));
+        log_print("thread_attach: id=%d, t=%p, calling VmThread.add(): ", id, nativeThread);
+        void image_printAddress(Address address);
+        image_printAddress((Address) addMethod);
+        log_println("");
+#endif
+        Address stackEnd = ntl->stackBase + ntl->stackSize;
+        int result = (*addMethod)(id,
+                        daemon,
+                        nativeThread,
+                        tl,
+                        ntl->stackBase,
+                        stackEnd,
+                        ntl->stackYellowZone);
+        mutex_exit(globalThreadAndGCLock);
+#if log_THREADS
+    log_println("thread_attach: t=%p released global GC and thread list lock", nativeThread);
+#endif
+
+        if (result == 0) {
+            id = getThreadLocal(jint, tl, ID);
+            break;
+        } else if (result == -1) {
+#if log_THREADS
+            log_print("thread_attach: id=%d, t=%p, lost race for thread-for-attach object; trying again in 1ms", id, nativeThread);
+#endif
+            /* Short sleep to allow one of the other attaching threads to allocate and register the
+             * next thread-for-attach object. */
+            thread_sleep(1);
+        } else {
+            c_ASSERT(result == -2);
+#if log_THREADS
+            log_print("thread_attach: id=%d, t=%p, cannot attach - main thread has terminated", id, nativeThread);
+#endif
+            thread_detachCurrent();
+            return JNI_EDETACHED;
+        }
+    }
+
+    VmThreadAttachMethod attachMethod = image_offset_as_address(VmThreadAttachMethod, vmThreadAttachMethodOffset);
+#if log_THREADS
+    log_print("thread_attach: id=%d, t=%p, calling VmThread.attach(): ", id, nativeThread);
+    void image_printAddress(Address address);
+    image_printAddress((Address) attachMethod);
+    log_println("");
 #endif
     Address stackEnd = ntl->stackBase + ntl->stackSize;
-    VmThreadAttachMethod method = image_offset_as_address(VmThreadAttachMethod, vmThreadAttachMethodOffset);
-    result = (*method)(nativeThread,
+    int result = (*attachMethod)(
               (Address) args->name,
               (Address) args->group,
               daemon,
               ntl->stackBase,
               stackEnd,
-              tl,
-              refMap,
-              ntl->stackYellowZone);
-    mutex_exit(globalThreadAndGCLock);
+              tl);
 
 #if log_THREADS
-    log_println("thread_attach: id=%d, t=%p", id, nativeThread);
+    log_println("thread_attach: END id=%d, t=%p", id, nativeThread);
 #endif
 
     if (result == JNI_OK) {

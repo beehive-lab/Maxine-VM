@@ -55,14 +55,14 @@ public final class JniNativeInterface {
         StaticMethodActor[] localStaticMethodActors = ClassActor.fromJava(JniFunctions.class).localStaticMethodActors();
         int count = 0;
         for (StaticMethodActor m : localStaticMethodActors) {
-            if (m.isJniFunction()) {
+            if (m.isVmEntryPoint()) {
                 count++;
             }
         }
         final StaticMethodActor[] jniFunctionActors = new StaticMethodActor[count];
         int i = 0;
         for (StaticMethodActor m : localStaticMethodActors) {
-            if (m.isJniFunction()) {
+            if (m.isVmEntryPoint()) {
                 jniFunctionActors[i++] = m;
             }
         }

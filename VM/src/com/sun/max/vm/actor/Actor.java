@@ -97,8 +97,8 @@ public abstract class Actor {
     public static final int UNSAFE_CAST =          0x00100000;
     // see above            TEMPLATE     =         0x00200000;
     public static final int INITIALIZER       =    0x00400000;
-    public static final int JNI_FUNCTION =         0x00800000;
     public static final int C_FUNCTION =           0x01000000;
+    public static final int VM_ENTRY_POINT =       0x02000000;
     public static final int FOLD =                 0x04000000;
     public static final int BUILTIN =              0x08000000;
     public static final int LOCAL_SUBSTITUTE =     0x10000000;
@@ -329,13 +329,13 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isUnsafeCast(int flags) {
-        return (flags & UNSAFE_CAST) != 0;
+    public static boolean isVmEntryPoint(int flags) {
+        return (flags & VM_ENTRY_POINT) != 0;
     }
 
     @INLINE
-    public static boolean isJniFunction(int flags) {
-        return (flags & JNI_FUNCTION) != 0;
+    public static boolean isUnsafeCast(int flags) {
+        return (flags & UNSAFE_CAST) != 0;
     }
 
     @INLINE
@@ -538,7 +538,7 @@ public abstract class Actor {
         appendFlag(sb, isClassInitializer(flags), "<clinit> ");
         appendFlag(sb, isInstanceInitializer(flags), "<init> ");
         appendFlag(sb, isCFunction(flags), "c_function ");
-        appendFlag(sb, isJniFunction(flags), "jni_function ");
+        appendFlag(sb, isVmEntryPoint(flags), "vm_entry ");
         appendFlag(sb, isDeclaredFoldable(flags), "fold ");
         appendFlag(sb, isBuiltin(flags), "builtin ");
         appendFlag(sb, isLocalSubstitute(flags), "substitute ");

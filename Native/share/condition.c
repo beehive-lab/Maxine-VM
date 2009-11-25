@@ -90,7 +90,7 @@ boolean condition_wait(Condition condition, Mutex mutex) {
     error = cond_wait(condition, mutex);
     if (error == EINTR) {
 #if log_MONITORS
-        log_println("condition_wait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
+        log_println("condition_wait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d) interrupted", thread_self(), condition, mutex);
 #endif
         return true;
     }

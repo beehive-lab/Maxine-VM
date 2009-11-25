@@ -141,8 +141,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("VmThread.attach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadAttachMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadAttachMethodPointer));
             final Pointer threadDetachMethodPointer = bootImageStart.plus(header.vmThreadDetachMethodOffset);
             addRow("VmThread.detach():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, threadDetachMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), threadDetachMethodPointer));
-            final Pointer runSchemeRunMethodPointer = bootImageStart.plus(header.runSchemeRunMethodOffset);
-            addRow("runSchemeRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, runSchemeRunMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runSchemeRunMethodPointer));
 
             final Pointer classRegistryPointer = bootHeapStart.plus(header.classRegistryOffset);
             addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer));

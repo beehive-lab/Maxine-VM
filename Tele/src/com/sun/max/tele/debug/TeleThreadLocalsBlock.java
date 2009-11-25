@@ -21,21 +21,35 @@
 package com.sun.max.tele.debug;
 
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
- * Encapsulates a snapshot of the frames on a stack.
+ * Describes the bounds of the  {@linkplain VmThreadLocal thread locals block} for a thread.
  *
- * @author Bernd Mathiske
  * @author Doug Simon
- * @author Aritra Bandyopadhyay
  */
-public class TeleNativeStack extends FixedMemoryRegion {
-
+public class TeleThreadLocalsBlock extends FixedMemoryRegion {
     public final TeleNativeThread teleNativeThread;
 
-    public TeleNativeStack(TeleNativeThread teleNativeThread, Address base, Size size) {
+    public TeleThreadLocalsBlock(TeleNativeThread teleNativeThread, Address base, Size size) {
         super(base, size, "Thread-" + teleNativeThread.localHandle());
         this.teleNativeThread = teleNativeThread;
+    }
+
+    /**
+     * Gets the address of one of the three thread locals areas inside a given thread locals block.
+     *
+     * @param threadLocalsBlock the address of a thread locals block
+     * @param threadLocalsAreaSize the size of a thread locals area
+     * @param state denotes which of the three thread locals areas is being requested
+     * @return the address of the thread locals areas in {@code threadLocalsBlock} corresponding to {@code state}
+     * @see VmThreadLocal
+     */
+    public static Address getThreadLocalsArea(Address threadLocalsBlock, int threadLocalsAreaSize, Safepoint.State state) {
+        final int offsetToTriggeredThreadLocals = Platform.target().pageSize - Word.size();
+        return threadLocalsBlock.plus(offsetToTriggeredThreadLocals).plus(threadLocalsAreaSize * state.ordinal());
     }
 }

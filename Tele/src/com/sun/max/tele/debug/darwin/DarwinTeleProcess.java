@@ -28,6 +28,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.prototype.*;
@@ -106,8 +107,8 @@ public final class DarwinTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long machThread, long stackBase, long stackSize, boolean hasThreadLocals) {
-        return new DarwinTeleNativeThread(this, id, machThread, stackBase, stackSize, hasThreadLocals);
+    protected TeleNativeThread createTeleNativeThread(Params params) {
+        return new DarwinTeleNativeThread(this, params);
     }
 
     /**

@@ -30,6 +30,7 @@ import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleTargetBreakpoint.*;
@@ -170,6 +171,11 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private final TeleNativeStack stack;
 
+    /**
+     * The thread locals block of a Java thread; {@code null} if this is a non-Java thread.
+     */
+    private final TeleThreadLocalsBlock threadLocalsBlock;
+
     private final Map<Safepoint.State, TeleThreadLocalValues> teleVmThreadLocals;
 
     /**
@@ -187,34 +193,48 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private final int id;
 
+    private final long localHandle;
+
     private final long handle;
 
-    protected TeleNativeThread(TeleProcess teleProcess, int id, long handle, long stackBase, long stackSize, boolean hasThreadLocals) {
+    /**
+     * The parameters accepted by {@link TeleNativeThread#TeleNativeThread(TeleProcess, Params)}.
+     */
+    public static class Params {
+        public int id;
+        public long localHandle;
+        public long handle;
+        public MemoryRegion stack;
+        public MemoryRegion threadLocalsBlock;
+
+        @Override
+        public String toString() {
+            return String.format("id=%d, localHandle=0x%08x, handle=%d, stack=%s, threadLocalsBlock=%s", id, localHandle, handle, MemoryRegion.Util.asString(stack), MemoryRegion.Util.asString(threadLocalsBlock));
+        }
+    }
+
+    protected TeleNativeThread(TeleProcess teleProcess, Params params) {
         this.teleProcess = teleProcess;
         this.teleVM = teleProcess.teleVM();
-        this.id = id;
-        this.handle = handle;
+        this.id = params.id;
+        this.localHandle = params.localHandle;
+        this.handle = params.handle;
         final VMConfiguration vmConfiguration = teleVM.vmConfiguration();
         this.integerRegisters = new TeleIntegerRegisters(vmConfiguration);
         this.floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         this.stateRegisters = new TeleStateRegisters(vmConfiguration);
 
-        this.teleVmThreadLocals = hasThreadLocals ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
-        this.stack = new TeleNativeStack(this, Address.fromLong(stackBase), Size.fromLong(stackSize));
+        this.teleVmThreadLocals = !params.threadLocalsBlock.start().isZero() ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
+        this.stack = new TeleNativeStack(this, params.stack.start(), params.stack.size());
+        this.threadLocalsBlock = new TeleThreadLocalsBlock(this, params.threadLocalsBlock.start(), params.threadLocalsBlock.size());
         this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#frames()
-     */
     public Sequence<StackFrame> frames() {
         refreshFrames();
         return frames;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#framesChanged()
-     */
     public boolean framesChanged() {
         refreshFrames();
         return framesChanged;
@@ -233,9 +253,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return teleVM;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#threadLocalsFor(com.sun.max.vm.runtime.Safepoint.State)
-     */
     public TeleThreadLocalValues threadLocalsFor(Safepoint.State state) {
         refreshThreadLocals();
         if (teleVmThreadLocals == null) {
@@ -244,25 +261,16 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return teleVmThreadLocals.get(state);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#integerRegisters()
-     */
     public TeleIntegerRegisters integerRegisters() {
         refreshRegisters();
         return integerRegisters;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#floatingPointRegisters()
-     */
     public TeleFloatingPointRegisters floatingPointRegisters() {
         refreshRegisters();
         return floatingPointRegisters;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#stateRegisters()
-     */
     public TeleStateRegisters stateRegisters() {
         refreshRegisters();
         return stateRegisters;
@@ -444,9 +452,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#breakpoint()
-     */
     public final TeleTargetBreakpoint breakpoint() {
         return breakpoint;
     }
@@ -459,23 +464,14 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private boolean breakpointIsAtInstructionPointer;
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#state()
-     */
     public final ThreadState state() {
         return state;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#isPrimordial()
-     */
     public final boolean isPrimordial() {
         return id() == 0;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#isLive()
-     */
     public final boolean isLive() {
         return state != DEAD;
     }
@@ -497,23 +493,22 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         floatingPointRegisters = null;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#id()
-     */
     public final int id() {
         return id;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#handle()
-     */
     public final long handle() {
         return handle;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#stackPointer()
-     */
+    public final String handleString() {
+        return "0x" + Long.toHexString(handle);
+    }
+
+    public final long localHandle() {
+        return localHandle;
+    }
+
     public final Pointer stackPointer() {
         if (!isLive()) {
             return Pointer.zero();
@@ -527,16 +522,20 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return integerRegisters.framePointer();
     }
 
-    /* (non-Javadoc)
+    /**
      * @see com.sun.max.tele.MaxThread#stack()
      */
     public final TeleNativeStack stack() {
         return stack;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#instructionPointer()
+    /**
+     * @see com.sun.max.tele.MaxThread#stack()
      */
+    public final TeleThreadLocalsBlock threadLocalsBlock() {
+        return threadLocalsBlock;
+    }
+
     public final Pointer instructionPointer() {
         if (!isLive()) {
             return Pointer.zero();
@@ -554,18 +553,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     protected abstract boolean updateInstructionPointer(Address address);
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#getReturnAddress()
-     */
     public Pointer getReturnAddress() {
         final StackFrame topFrame = frames().first();
         final StackFrame topFrameCaller = topFrame.callerFrame();
         return topFrameCaller == null ? null : teleVM.getCodeAddress(topFrameCaller).asPointer();
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxThread#teleVmThread()
-     */
     public MaxVMThread maxVMThread() {
         if (teleVmThread == null) {
             refreshThreadLocals();
@@ -618,14 +611,14 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     public boolean equals(Object other) {
         if (other instanceof TeleNativeThread) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) other;
-            return handle() == teleNativeThread.handle() && id() == teleNativeThread.id();
+            return localHandle() == teleNativeThread.localHandle() && id() == teleNativeThread.id();
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return (int) handle();
+        return (int) localHandle();
     }
 
     /**
@@ -640,7 +633,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         final StringBuilder sb = new StringBuilder(100);
         sb.append(isPrimordial() ? "primordial" : (teleVmThread == null ? "native" : teleVmThread.name()));
         sb.append("[id=").append(id());
-        sb.append(",handle=").append(handle());
+        sb.append(",handle=").append(handleString());
+        sb.append(",local handle=").append(localHandle());
         sb.append(",state=").append(state);
         sb.append(",type=").append(isPrimordial() ? "primordial" : (isJava() ? "Java" : "native"));
         if (isLive()) {
@@ -661,7 +655,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         final StringBuilder sb = new StringBuilder(100);
         sb.append(isPrimordial() ? "primordial" : (teleVmThread == null ? "native" : teleVmThread.name()));
         sb.append("[id=").append(id());
-        sb.append(",handle=").append(handle());
+        sb.append(",handle=").append(handleString());
+        sb.append(",local handle=").append(localHandle());
         sb.append(",type=").append(isPrimordial() ? "primordial" : (isJava() ? "Java" : "native"));
         sb.append("]");
         return sb.toString();

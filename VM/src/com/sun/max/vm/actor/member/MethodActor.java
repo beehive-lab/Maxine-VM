@@ -35,10 +35,10 @@ import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.runtime.*;
@@ -134,6 +134,11 @@ public abstract class MethodActor extends MemberActor {
     }
 
     @INLINE
+    public final boolean isVmEntryPoint() {
+        return isVmEntryPoint(flags());
+    }
+
+    @INLINE
     public final boolean isUnsafeCast() {
         return isUnsafeCast(flags());
     }
@@ -141,11 +146,6 @@ public abstract class MethodActor extends MemberActor {
     @INLINE
     public final boolean isTrapStub() {
         return Trap.isTrapStub(this);
-    }
-
-    @INLINE
-    public final boolean isJniFunction() {
-        return isJniFunction(flags());
     }
 
     @INLINE

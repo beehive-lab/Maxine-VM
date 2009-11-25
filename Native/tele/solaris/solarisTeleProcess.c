@@ -341,7 +341,7 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     jlong lwpId = lwpStatus->pr_lwpid;
     ThreadState_t threadState = lwpStatusToThreadState(lwpStatus);
 
-    ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
+    ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
     NativeThreadLocalsStruct nativeThreadLocalsStruct;
     Address stackPointer = getRegister(a->ph, lwpId, R_SP);
     Address instructionPointer = getRegister(a->ph, lwpId, R_PC);

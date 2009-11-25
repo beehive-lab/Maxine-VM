@@ -34,9 +34,13 @@ public class AttachThread {
 
     public static native void callHelloWorldOnAttachedThread();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         helloWorld("(from main)");
         callHelloWorldOnAttachedThread();
+
+        // Give second thread a moment to start
+        Thread.sleep(100);
+
         helloWorld("(from main)");
     }
 

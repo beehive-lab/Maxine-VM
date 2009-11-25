@@ -28,6 +28,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -158,7 +159,11 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
         int index = dynamicallyLoadedClassCount;
         while (index < remoteLoadedClassCount) {
             final Reference classActorReference = teleVM().getElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, index).asReference();
-            addToRegistry(classActorReference);
+            try {
+                addToRegistry(classActorReference);
+            } catch (InvalidReferenceException e) {
+                e.printStackTrace();
+            }
             index++;
         }
         dynamicallyLoadedClassCount = remoteLoadedClassCount;

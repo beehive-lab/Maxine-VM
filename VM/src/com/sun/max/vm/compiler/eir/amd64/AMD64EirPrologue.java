@@ -61,7 +61,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
                 if (frameSize != 0) {
                     asm.subq(framePointer, frameSize);
                 }
-                if (Trap.STACK_BANGING && !eirMethod().classMethodActor().isJniFunction()) {
+                if (Trap.STACK_BANGING && !eirMethod().classMethodActor().isVmEntryPoint()) {
                     // emit a read of the stack stackGuardSize bytes down to trigger a stack overflow earlier than would otherwise occur.
                     asm.mov(emitter.scratchRegister(), -Trap.stackGuardSize, emitter.stackPointer().indirect());
                 }

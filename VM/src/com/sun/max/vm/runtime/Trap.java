@@ -191,7 +191,7 @@ public abstract class Trap {
      * @param trapState a pointer to the stack location where trap state is stored
      * @param faultAddress the faulting address that caused this trap (memory faults only)
      */
-    @C_FUNCTION
+    @VM_ENTRY_POINT
     private static void trapStub(int trapNumber, Pointer trapState, Address faultAddress) {
         if (trapNumber == ASYNC_INTERRUPT) {
             VmThread.current().setInterrupted();

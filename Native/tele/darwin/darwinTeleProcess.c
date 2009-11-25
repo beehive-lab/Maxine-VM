@@ -249,7 +249,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
             return;
         }
 
-        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
+        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         ThreadLocals tl = teleProcess_findThreadLocals(task, threadLocalsList, primordialThreadLocals, threadState.__rsp, threadLocals, &nativeThreadLocalsStruct);
         teleProcess_jniGatherThread(env, process, result, thread, state, threadState.__rip, tl);

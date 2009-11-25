@@ -25,16 +25,8 @@ import java.lang.annotation.*;
 import com.sun.max.vm.jni.*;
 
 /**
- * There are two uses of this annotation for Java methods. One applies to <i>VM entry points</i>, Java methods that
- * are directly called by native code (and only methods with this annotation can be called from native code), the other
- * to <i>VM exit points</i>, native methods to be called by Java.
- * <p>
- * <h3>VM entry points</h3>
- * These are <i>static non-native</i> methods. These methods are compiled so as to conform to the native ABI (e.g.
- * implement callee saved registers if necessary) so that it can be called as a C function pointer..
- * <p>
- * <h3>VM exit points</h3>
- * These are <i>private static native</i> methods. The {@link NativeStubGenerator native stub} generated for such methods will:
+ * Denotes a <i>private static native</i> method whose stub is lighter than a standard JNI stub. In particular,
+ * the {@link NativeStubGenerator native stub} generated for such methods will:
  * <ul>
  * <li>marshal only the parameters explicit in the Java signature for the native function call (i.e. the JniEnv and
  * jclass parameters are omitted)</li>
@@ -47,10 +39,8 @@ import com.sun.max.vm.jni.*;
  *
  * @author Bernd Mathiske
  * @author Doug Simon
- * @author Mick Jordan
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface C_FUNCTION {
-    boolean isInterruptHandler() default false;
 }

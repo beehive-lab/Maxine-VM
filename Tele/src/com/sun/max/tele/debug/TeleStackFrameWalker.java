@@ -127,7 +127,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public Word readWord(VmThreadLocal local) {
-        return teleEnabledVmThreadLocalValues.getWord(local);
+        return teleEnabledVmThreadLocalValues == null ? Pointer.zero() : teleEnabledVmThreadLocalValues.getWord(local);
     }
 
     @Override

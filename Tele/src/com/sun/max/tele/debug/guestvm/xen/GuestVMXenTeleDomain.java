@@ -25,10 +25,12 @@ import java.nio.*;
 import javax.swing.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -65,14 +67,16 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long threadId, long stackBase, long stackSize, boolean hasThreadLocals) {
+    protected TeleNativeThread createTeleNativeThread(Params params) {
         /* Need to align and skip over the guard page at the base of the stack.
          * N.B. "base" is low address (i.e., actually the end of the stack!).
          */
         final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize;
-        final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
-        final long adjStackSize = stackSize - (stackBottom - stackBase);
-        return new GuestVMXenNativeThread(this, id, threadId, stackBottom, adjStackSize, hasThreadLocals);
+        final long stackBottom = pageAlign(params.stack.start().toLong(), pageSize) + pageSize;
+        final long adjStackSize = params.stack.size().toLong() - (stackBottom - params.stack.start().toLong());
+        final MemoryRegion adjStack = new FixedMemoryRegion(Address.fromLong(stackBottom), Size.fromLong(adjStackSize), params.stack.description());
+        params.stack = adjStack;
+        return new GuestVMXenNativeThread(this, params);
     }
 
     private static long pageAlign(long address, int pageSize) {

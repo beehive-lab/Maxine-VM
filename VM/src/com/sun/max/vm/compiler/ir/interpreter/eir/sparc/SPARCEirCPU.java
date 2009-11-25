@@ -153,7 +153,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         usesRegisterWindow = abi.targetABI().usesRegisterWindows();
 
         final EirStack stack = stack();
-        final Address topSP = stack.ceiling.minus(VmThreadLocal.threadLocalStorageSize().plus(Word.size()));
+        final Address topSP = stack.ceiling.minus(VmThreadLocal.threadLocalsAreaSize().plus(Word.size()));
         stack.setSP(topSP);
         writeRegister(abi.stackPointer(), new WordValue(topSP));
 

@@ -338,7 +338,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
         boolean lockDisabledSafepoints = false;
         if (Heap.traceRootScanning()) {
-            lockDisabledSafepoints = Log.lock(); // Note: This lock basically serializes stack reference map preparation
+            lockDisabledSafepoints = Log.lock(); // Note: This lock serializes stack reference map preparation
             Log.print("Preparing stack reference map for thread ");
             Log.printThread(vmThread, false);
             Log.println(":");
@@ -458,6 +458,18 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      */
     public void prepareStackReferenceMap(Pointer vmThreadLocals) {
         Pointer anchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
+        if (anchor.isZero()) {
+            // This is a thread that has return from VmThread.run() but has not
+            // yet been terminated via a call to VmThread.detach(). In this state,
+            // it has not Java stack frames that need scanning.
+            if (Heap.traceRootScanning()) {
+                boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Empty stack reference map for thread ");
+                Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
+                Log.unlock(lockDisabledSafepoints);
+            }
+            return;
+        }
         Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
         Pointer stackPointer = JavaFrameAnchor.SP.get(anchor);
         Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
