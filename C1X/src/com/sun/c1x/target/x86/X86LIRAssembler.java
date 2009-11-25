@@ -2461,11 +2461,6 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     }
 
     @Override
-    protected void resolve(CiRuntimeCall stub, LIRDebugInfo info, LIROperand dest, LIROperand index, LIROperand cp) {
-        masm.callRuntimeCalleeSaved(stub, info, dest.asRegister(), asRegisterOrConstant(index), asRegisterOrConstant(cp));
-    }
-
-    @Override
     protected void emitXir(LIRXirInstruction instruction) {
         XirSnippet snippet = instruction.snippet;
 

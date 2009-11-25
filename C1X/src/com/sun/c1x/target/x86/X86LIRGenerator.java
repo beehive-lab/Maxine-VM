@@ -299,9 +299,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg;
 
         if (x.opcode() == Bytecodes.FREM) {
-            reg = callRuntime(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
+            reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
         } else if (x.opcode() == Bytecodes.DREM) {
-            reg = callRuntime(CiRuntimeCall.ArithmeticDrem, null, left.result(), right.result());
+            reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticDrem, null, left.result(), right.result());
         } else {
             reg = newRegister(x.kind);
             arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), ILLEGAL);
@@ -341,7 +341,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 // emit direct call into the runtime
                 CiRuntimeCall runtimeCall = opcode == Bytecodes.LREM ? CiRuntimeCall.ArithmethicLrem : CiRuntimeCall.ArithmeticLdiv;
                 LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-                setResult(x, callRuntime(runtimeCall, info, x.x().operand(), x.y().operand()));
+                setResult(x, callRuntimeWithResult(runtimeCall, info, x.x().operand(), x.y().operand()));
             }
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem left = new LIRItem(x.x(), this);
@@ -626,19 +626,19 @@ public final class X86LIRGenerator extends LIRGenerator {
                 lir.sqrt(calcInput, calcResult, ILLEGAL);
                 break;
             case java_lang_Math$sin:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticSin, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticSin, null, calcInput));
                 break;
             case java_lang_Math$cos:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticCos, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticCos, null, calcInput));
                 break;
             case java_lang_Math$tan:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticTan, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticTan, null, calcInput));
                 break;
             case java_lang_Math$log:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticLog, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticLog, null, calcInput));
                 break;
             case java_lang_Math$log10:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticLog10, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticLog10, null, calcInput));
                 break;
             default:
                 Util.shouldNotReachHere();
@@ -665,12 +665,12 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
             lir.oop2reg(type.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
             // all allocation is done with a runtime call for now
-            setResult(x, callRuntime(CiRuntimeCall.NewInstance, info, hub));
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.NewInstance, info, hub));
         } else {
             LIRConstant cpi = LIROperandFactory.intConst(x.cpi);
             LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
             // all allocation is done with a runtime call for now
-            setResult(x, callRuntime(CiRuntimeCall.UnresolvedNewInstance, info, cpi, cp));
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.UnresolvedNewInstance, info, cpi, cp));
         }
     }
 
@@ -682,17 +682,15 @@ public final class X86LIRGenerator extends LIRGenerator {
         lir.oop2reg(compilation.runtime.primitiveArrayType(x.elementKind()).getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
 
         // all allocation is done with a runtime call for now
-        setResult(x, callRuntime(CiRuntimeCall.NewArray, info, hub, length));
+        setResult(x, callRuntimeWithResult(CiRuntimeCall.NewArray, info, hub, length));
     }
 
     private LIRLocation emitNewTypeArray(CiKind type, CiKind elementType, LIROperand length, LIRDebugInfo info) {
-        LIRLocation reg = resultRegisterFor(type);
         LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
         lir.oop2reg(compilation.runtime.primitiveArrayType(elementType).getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
 
         // all allocation is done with a runtime call for now
-        callRuntime(CiRuntimeCall.NewArray, info, hub, length);
-        return reg;
+        return callRuntime(CiRuntimeCall.NewArray, info, hub, length);
     }
 
     @Override
@@ -705,13 +703,13 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand length = force(x.length(), X86.rsi);
             lir.oop2reg(arrayType.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
             // all allocation is done with a runtime call for now
-            setResult(x, callRuntime(CiRuntimeCall.NewArray, info, hub, length));
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.NewArray, info, hub, length));
         } else {
             LIROperand length = load(x.length());
             LIROperand cpi = LIROperandFactory.intConst(x.cpi);
             LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
             // all allocation is done with a runtime call for now
-            setResult(x, callRuntime(CiRuntimeCall.UnresolvedNewArray, info, cpi, cp, length));
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.UnresolvedNewArray, info, cpi, cp, length));
         }
     }
 
@@ -727,7 +725,8 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // need to get the info before, as the items may become invalid through itemFree
         LIRDebugInfo patchingInfo = null;
-        if (!x.elementKind.isLoaded() || C1XOptions.TestPatching) {
+        boolean resolved = x.elementKind.isLoaded();
+        if (!resolved || C1XOptions.TestPatching) {
             patchingInfo = stateFor(x, x.stateBefore());
 
             // cannot re-use same xhandlers for multiple CodeEmitInfos, so
@@ -736,13 +735,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         LIRDebugInfo info = stateFor(x, x.stateBefore());
-
-        LIROperand hub = newRegister(CiKind.Object);
-        if (x.elementKind.isLoaded()) {
-            lir.oop2reg(x.elementKind.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
-        } else {
-            lir.resolveInstruction(hub, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
-        }
 
         LIROperand length = LIROperandFactory.singleLocation(CiKind.Int, X86.rbx);
         lir.move(LIROperandFactory.intConst(dims.length), length);
@@ -753,7 +745,15 @@ public final class X86LIRGenerator extends LIRGenerator {
             emitSafeArrayStore(dimensions, LIROperandFactory.intConst(i), size.result(), CiKind.Int, false);
         }
 
-        setResult(x, callRuntime(CiRuntimeCall.NewMultiArray, info.copy(), hub, dimensions));
+        if (resolved) {
+            LIROperand hub = newRegister(CiKind.Object);
+            lir.oop2reg(x.elementKind.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.NewMultiArray, info.copy(), hub, dimensions));
+        } else {
+            LIRConstant cpi = LIROperandFactory.intConst(x.cpi);
+            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.UnresolvedNewMultiArray, info.copy(), cpi, cp, dimensions));
+        }
     }
 
     @Override
