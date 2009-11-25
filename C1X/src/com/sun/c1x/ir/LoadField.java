@@ -28,7 +28,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class LoadField extends AccessField {
+public final class LoadField extends AccessField {
 
     /**
      * Creates a new LoadField instance.

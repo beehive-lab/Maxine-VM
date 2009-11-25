@@ -468,7 +468,7 @@ public class Canonicalizer extends ValueVisitor {
                         clearStoreCheck(i);
                     } else {
                         RiType declaredType = value.declaredType();
-                        if (declaredType != null && declaredType.isSubtypeOf(exactType)) {
+                        if (declaredType != null && declaredType.isLoaded() && declaredType.isSubtypeOf(exactType)) {
                             // the value being stored has a known type
                             clearStoreCheck(i);
                         }

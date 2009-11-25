@@ -27,7 +27,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class MonitorExit extends AccessMonitor {
+public final class MonitorExit extends AccessMonitor {
 
     /**
      * Creates a new MonitorExit instruction.

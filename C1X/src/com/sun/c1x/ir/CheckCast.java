@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class CheckCast extends TypeCheck {
+public final class CheckCast extends TypeCheck {
 
     /**
      * Creates a new CheckCast instruction.

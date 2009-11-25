@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class TableSwitch extends Switch {
+public final class TableSwitch extends Switch {
 
     final int lowKey;
 

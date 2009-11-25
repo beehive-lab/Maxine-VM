@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class ArithmeticOp extends Op2 {
+public final class ArithmeticOp extends Op2 {
 
     ValueStack stateBefore;
 

@@ -28,7 +28,7 @@ import com.sun.c1x.ri.*;
  *
  * @author Ben L. Titzer
  */
-public class IfInstanceOf extends BlockEnd {
+public final class IfInstanceOf extends BlockEnd {
 
     final RiType targetClass;
     Value object;

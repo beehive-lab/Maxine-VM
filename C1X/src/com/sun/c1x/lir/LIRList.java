@@ -182,23 +182,11 @@ public class LIRList {
     }
 
     public void resolveInstruction(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Resolve, index, cp, result));
-    }
-
-    public void resolveStaticFieldsInstruction(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.ResolveStaticFields, index, cp, result));
-    }
-
-    public void resolveJavaClass(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.ResolveJavaClass, index, cp, result));
-    }
-
-    public void resolveArrayClassInstruction(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.ResolveArrayClass, index, cp, result));
+        append(new LIROp2(LIROpcode.Resolve, index, cp, result, info.copy()));
     }
 
     public void resolveFieldIndex(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.ResolveFieldOffset, index, cp, result));
+        append(new LIROp2(LIROpcode.ResolveFieldOffset, index, cp, result, info.copy()));
     }
 
     public void returnOp(LIROperand result) {

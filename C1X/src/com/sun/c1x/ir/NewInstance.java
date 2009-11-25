@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class NewInstance extends StateSplit {
+public final class NewInstance extends StateSplit {
 
     final RiType instanceClass;
     public final char cpi;

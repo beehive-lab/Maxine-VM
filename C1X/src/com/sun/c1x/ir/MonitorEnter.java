@@ -27,7 +27,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class MonitorEnter extends AccessMonitor {
+public final class MonitorEnter extends AccessMonitor {
 
     /**
      * Creates a new MonitorEnter instruction.

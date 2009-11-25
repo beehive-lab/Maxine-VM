@@ -23,11 +23,11 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>OsrEntry</code> instruction represents the entrypoint for an OSR.
+ * The <code>OsrEntry</code> instruction represents the buffer for an OSR.
  *
  * @author Ben L. Titzer
  */
-public class OsrEntry extends Instruction {
+public final class OsrEntry extends Instruction {
 
     /**
      * Constructs a new OsrEntry instruction.

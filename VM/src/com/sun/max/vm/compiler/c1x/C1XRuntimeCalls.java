@@ -143,7 +143,17 @@ public class C1XRuntimeCalls {
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.NewInstance)
     public static Object runtimeNewInstance(Hub hub) {
-        final ClassActor classActor = hub.classActor;
+        return createObject(hub.classActor);
+    }
+
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedNewInstance)
+    public static Object runtimeUnresolvedNewInstance(int index, ConstantPool constantPool) {
+        final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
+        return createObject(classActor);
+    }
+
+    @INLINE
+    private static Object createObject(ClassActor classActor) {
         if (MaxineVM.isHosted()) {
             try {
                 return Objects.allocateInstance(classActor.toJava());
@@ -177,6 +187,12 @@ public class C1XRuntimeCalls {
         return createArray(arrayClassActor, length);
     }
 
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedNewArray)
+    public static Object runtimeUnresolvedNewArray(int index, ConstantPool constantPool, int length) {
+        ArrayClassActor arrayClass = ArrayClassActor.forComponentClassActor(constantPool.classAt(index).resolve(constantPool, index));
+        return createArray(arrayClass.dynamicHub(), length);
+    }
+
     @UNSAFE
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.RetrieveInterfaceIndex)
     public static int retrieveInterfaceIndex(Object receiver, int interfaceId) {
@@ -187,7 +203,7 @@ public class C1XRuntimeCalls {
         final Class receiverClass = receiver.getClass();
         final ClassActor classActor = ClassActor.fromJava(receiverClass);
         final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
-        return interfaceIIndex * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize(); // TODO (tw): return word size here!
+        return interfaceIIndex * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize();
     }
 
     @UNSAFE
@@ -223,6 +239,17 @@ public class C1XRuntimeCalls {
             }
         }
         return runtimeNewMultiArrayHelper(0, arrayClassHub.classActor, lengths);
+    }
+
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedNewMultiArray)
+    public static Object runtimeUnresolvedNewMultiArray(int index, ConstantPool constantPool, int[] lengths) {
+        final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
+        for (int length : lengths) {
+            if (length < 0) {
+                Throw.negativeArraySizeException(length);
+            }
+        }
+        return runtimeNewMultiArrayHelper(0, classActor, lengths);
     }
 
     private static Object runtimeNewMultiArrayHelper(int index, ClassActor arrayClassActor, int[] lengths) {
@@ -394,12 +421,6 @@ public class C1XRuntimeCalls {
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         MakeClassInitialized.makeClassInitialized(classActor);
         return classActor.dynamicHub();
-    }
-
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveArrayClass)
-    public static Object resolveArrayClass(int index, ConstantPool constantPool) {
-        final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
-        return ArrayClassActor.forComponentClassActor(classActor).dynamicHub();
     }
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveStaticFields)

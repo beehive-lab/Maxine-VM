@@ -30,7 +30,7 @@ import com.sun.c1x.ci.CiKind;
  *
  * @author Ben L. Titzer
  */
-public class StorePointer extends StateSplit {
+public final class StorePointer extends StateSplit {
 
     Value pointer;
     Value value;

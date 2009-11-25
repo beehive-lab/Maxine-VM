@@ -211,24 +211,24 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitResolveClass(ResolveClass i) {
+        LIRDebugInfo info = stateFor(i);
         if (xir != null && i.portion == RiType.Representation.JavaClass) {
             // Xir support for LDC of a class constant
             XirSnippet snippet = xir.xir.genResolveClassObject(xir.site(i), i.type);
             if (snippet != null) {
-                emitXir(snippet, i, stateFor(i), null, true);
+                emitXir(snippet, i, info, null, true);
                 return;
             }
         }
 
-        assert i.stateBefore() != null;
-        LIROperand result = rlockResult(i);
+        LIRConstant cpi = LIROperandFactory.intConst(i.cpi);
+        LIROperand cp = LIROperandFactory.oopConst(i.constantPool.encoding().asObject());
         if (i.portion == RiType.Representation.ObjectHub) {
-            lir.resolveInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding().asObject()), stateFor(i));
+            setResult(i, callRuntime(CiRuntimeCall.ResolveClass, info, cpi, cp));
         } else if (i.portion == RiType.Representation.StaticFields) {
-            lir.resolveStaticFieldsInstruction(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding().asObject()), stateFor(i));
+            setResult(i, callRuntime(CiRuntimeCall.ResolveStaticFields, info, cpi, cp));
         } else if (i.portion == RiType.Representation.JavaClass) {
-            lir.resolveJavaClass(result, LIROperandFactory.intConst(i.cpi), LIROperandFactory.oopConst(i.constantPool.encoding().asObject()), stateFor(i));
-
+            setResult(i, callRuntime(CiRuntimeCall.ResolveJavaClass, info, cpi, cp));
         } else {
             Util.shouldNotReachHere();
         }

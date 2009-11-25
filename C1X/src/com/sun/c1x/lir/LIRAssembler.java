@@ -474,18 +474,6 @@ public abstract class LIRAssembler {
                 resolve(CiRuntimeCall.ResolveClass, op.info, op.result(), op.opr1(), op.opr2());
                 break;
 
-            case ResolveArrayClass:
-                resolve(CiRuntimeCall.ResolveArrayClass, op.info, op.result(), op.opr1(), op.opr2());
-                break;
-
-            case ResolveStaticFields:
-                resolve(CiRuntimeCall.ResolveStaticFields, op.info, op.result(), op.opr1(), op.opr2());
-                break;
-
-            case ResolveJavaClass:
-                resolve(CiRuntimeCall.ResolveJavaClass, op.info, op.result(), op.opr1(), op.opr2());
-                break;
-
             case ResolveFieldOffset:
                 resolve(CiRuntimeCall.ResolveFieldOffset, op.info, op.result(), op.opr1(), op.opr2());
                 break;

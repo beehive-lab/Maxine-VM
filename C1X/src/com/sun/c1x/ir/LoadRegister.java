@@ -30,7 +30,7 @@ import com.sun.c1x.ci.CiRegister;
  *
  * @author Ben L. Titzer
  */
-public class LoadRegister extends Instruction {
+public final class LoadRegister extends Instruction {
 
     final CiRegister register;
 

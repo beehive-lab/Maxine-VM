@@ -28,7 +28,7 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class Base extends BlockEnd {
+public final class Base extends BlockEnd {
 
     /**
      * Constructs a new Base instruction.
