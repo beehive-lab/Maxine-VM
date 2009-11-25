@@ -30,17 +30,19 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
- * Manages a cache of information about target routines (methods and native routines) in the {@link CodeManager} in the {@link TeleVM}.
+ * Manages a cache of information about target routines (methods and native routines) in the {@link CodeManager} in the VM.
  *
  * @author Michael Van De Vanter
  */
 public class TeleCodeRegistry extends AbstractTeleVMHolder {
 
+    private static final int TRACE_VALUE = 1;
+
     public TeleCodeRegistry(TeleVM teleVM) {
         super(teleVM);
-        Trace.begin(1, tracePrefix() + " initializing");
+        Trace.begin(TRACE_VALUE, tracePrefix() + " initializing");
         final long startTimeMillis = System.currentTimeMillis();
-        Trace.end(1, tracePrefix() + " initializing", startTimeMillis);
+        Trace.end(TRACE_VALUE, tracePrefix() + " initializing", startTimeMillis);
     }
 
     private final SortedMemoryRegionList<TargetCodeRegion> targetCodeRegions = new SortedMemoryRegionList<TargetCodeRegion>();
@@ -58,7 +60,7 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
     }
 
     /**
-     * Gets the TeleTargetRoutine in this registry that contains a given address inm the {@link TeleVM}.
+     * Gets the TeleTargetRoutine in this registry that contains a given address in the VM.
      *
      * @param <TeleTargetRoutine_Type> the type of the requested TeleTargetRoutine
      * @param teleTargetRoutineType the {@link Class} instance representing {@code TeleTargetRoutine_Type}
@@ -79,7 +81,7 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
 
     /**
      * All local {@link TargetCodeRegion} objects representing all known Java {@link TargetMethod}s and native routines
-     * in target VM, arranged for lookup by address.
+     * in the VM, arranged for lookup by address.
      */
     public Iterable<TargetCodeRegion> targetCodeRegions() {
         return targetCodeRegions;
@@ -95,7 +97,6 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
             }
             lastEndAddress = targetCodeRegion.end();
             printStream.println(targetCodeRegion.start().toHexString() + "--" + targetCodeRegion.end().minus(1).toHexString() + ":  " + name);
-
         }
     }
 }
