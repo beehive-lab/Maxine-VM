@@ -470,14 +470,6 @@ public abstract class LIRAssembler {
                 emitCompareFloatInt(op.code, op.opr1(), op.opr2(), op.result(), op);
                 break;
 
-            case Resolve:
-                resolve(CiRuntimeCall.ResolveClass, op.info, op.result(), op.opr1(), op.opr2());
-                break;
-
-            case ResolveFieldOffset:
-                resolve(CiRuntimeCall.ResolveFieldOffset, op.info, op.result(), op.opr1(), op.opr2());
-                break;
-
             case Cmove:
                 emitConditionalMove(op.condition(), op.opr1(), op.opr2(), op.result());
                 break;
@@ -665,8 +657,6 @@ public abstract class LIRAssembler {
     protected abstract void emitOsrEntry();
 
     protected abstract void reg2stack(LIROperand src, LIROperand dest, CiKind type);
-
-    protected abstract void resolve(CiRuntimeCall stub, LIRDebugInfo info, LIROperand dest, LIROperand index, LIROperand cp);
 
     protected abstract void reg2mem(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned);
 

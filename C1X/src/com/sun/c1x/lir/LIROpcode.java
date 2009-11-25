@@ -77,8 +77,6 @@ public enum LIROpcode {
         Throw,
         Unwind,
         CompareTo,
-        Resolve,
-        ResolveFieldOffset,
     EndOp2,
     BeginOp3,
         Idiv,
