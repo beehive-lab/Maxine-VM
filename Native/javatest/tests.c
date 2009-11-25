@@ -92,6 +92,7 @@ void upcall(jclass cls) {
     (*env)->CallStaticVoidMethod(env, cls, mid, jstr);
 
     (*env)->DeleteGlobalRef(env, cls);
+    (*vm)->DetachCurrentThread(vm);
 }
 
 void *thread_function(void *arguments) {
