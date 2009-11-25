@@ -151,28 +151,6 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #endif
 }
 
-#if 0
-static Address getStackPointer(UContext *ucontext) {
-#if os_SOLARIS
-  return ucontext->uc_mcontext.gregs[REG_SP];
-#elif os_LINUX
-#   if isa_AMD64
-        return ucontext->uc_mcontext.gregs[REG_RSP];
-#   elif isa_IA32
-        return ucontext->uc_mcontext.gregs[REG_UESP];
-#   else
-        c_UNIMPLEMENTED();
-#   endif
-#elif os_DARWIN
-    return ucontext->uc_mcontext->__ss.__rsp;
-#elif os_GUESTVMXEN
-        return ucontext->rsp;
-#else
-        c_UNIMPLEMENTED();
-#endif
-}
-#endif
-
 static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #if (os_DARWIN || os_SOLARIS || os_LINUX )
     return (Address) sigInfo->si_addr;
@@ -198,6 +176,102 @@ static void blueZoneTrap(NativeThreadLocals ntl) {
 #endif
 }
 
+#if isa_AMD64
+/**
+ * According to the JVM specification for the IDIV and LDIV instructions:
+ *
+ *    There is one special case that does not satisfy this rule: if the dividend is the
+ *    negative integer of largest possible magnitude for the int/long type, and the divisor
+ *    is -1, then overflow occurs, and the result is equal to the dividend. Despite
+ *    the overflow, no exception is thrown in this case.
+ *
+ * On AMD64 (and x86), the CPU traps in this case. This function determines
+ * if the trap is due to Integer.MIN_VALUE / -1 and if so, sets the result to
+ * the dividend and advances the instruction pointer in the given trap context
+ * to the next instruction.
+ */
+static boolean handleDivideOverflow(UContext *ucontext) {
+    unsigned char *rip = (unsigned char *) getInstructionPointer(ucontext);
+
+    boolean is64Bit = false;
+
+    if ((rip[0] & 0xf0) == 0x40) {
+        /* Decode REX byte */
+        unsigned char rex = rip[0] & 0x0f;
+        is64Bit = (rex & 0x08) != 0;
+        rip++;
+    }
+
+    if (rip[0] == 0xf7) {
+#if os_SOLARIS
+        Address dividend = ucontext->uc_mcontext.gregs[REG_RAX];
+#elif os_LINUX
+        Address dividend = ucontext->uc_mcontext.gregs[REG_RAX];
+#elif os_DARWIN
+        Address dividend = ucontext->uc_mcontext->__ss.__rax;
+#elif os_GUESTVMXEN
+        Address dividend = ucontext->rax;
+#else
+        c_UNIMPLEMENTED();
+#endif
+        boolean isDividendMinValue = false;
+        unsigned char modrm = rip[1];
+
+        if (((modrm >> 3) & 7) == 7) {
+            if (is64Bit) {
+                isDividendMinValue = (dividend == 0x8000000000000000L);
+            } else {
+                isDividendMinValue = ((dividend & 0xffffffff) == 0x80000000);
+            }
+        }
+
+        if (isDividendMinValue) {
+            unsigned char rm = modrm & 7;
+            /* Set the remainder to 0. */
+#if os_SOLARIS
+            ucontext->uc_mcontext.gregs[REG_RDX] = 0;
+#elif os_LINUX
+            ucontext->uc_mcontext.gregs[REG_RDX] = 0;
+#elif os_DARWIN
+            ucontext->uc_mcontext->__ss.__rdx = 0;
+#elif os_GUESTVMXEN
+            ucontext->rdx = 0;
+#else
+            c_UNIMPLEMENTED();
+#endif
+            switch (modrm >> 6) {
+                case 0:  /* register indirect */
+                    if (rm == 5) {  /* 32-bit displacement */
+                        rip += 4;
+                    }
+                    if (rm == 4) { /* A SIB byte follows the ModR/M byte */
+                        rip += 1;
+                    }
+                    break;
+                case 1:  /* register indirect + 8-bit displacement */
+                    rip += 1;
+                    if (rm == 4) { /* A SIB byte follows the ModR/M byte */
+                        rip += 1;
+                    }
+                    break;
+                case 2:  /* register indirect + 32-bit displacement */
+                    rip += 4;
+                    if (rm == 4) { /* A SIB byte follows the ModR/M byte */
+                        rip += 1;
+                    }
+                    break;
+                case 3:
+                    break;
+            }
+            rip += 2;
+            setInstructionPointer(ucontext, (Address) rip);
+            return true;
+        }
+    }
+    return false;
+}
+#endif
+
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
     int primordial = 0;
     char *sigName;
@@ -208,6 +282,17 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         }
         log_println("SIGNAL: %0d [%s]", signal, sigName);
     }
+
+#if isa_AMD64
+    if (signal == SIGFPE && handleDivideOverflow(ucontext)) {
+        // TODO: Determine if trap occurred in Java code; should be fatal otherwise
+        if (traceTraps || log_TRAP) {
+            log_println("SIGNAL: Handled Integer.MIN_VALUE / -1");
+        }
+        return;
+    }
+#endif
+
     ThreadLocals tl = threadLocals_current();
     NativeThreadLocals ntl = nativeThreadLocals_current();
     if (ntl == 0) {
