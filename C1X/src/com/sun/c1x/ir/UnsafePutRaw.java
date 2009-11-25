@@ -27,7 +27,7 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class UnsafePutRaw extends UnsafeRawOp {
+public final class UnsafePutRaw extends UnsafeRawOp {
 
     Value value;
 

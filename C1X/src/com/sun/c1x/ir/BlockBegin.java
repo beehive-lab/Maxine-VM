@@ -36,7 +36,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class BlockBegin extends Instruction {
+public final class BlockBegin extends Instruction {
     // XXX: could use a shared, empty ArrayList
     private static final List<BlockBegin> NO_HANDLERS = Util.uncheckedCast(Collections.EMPTY_LIST);
 

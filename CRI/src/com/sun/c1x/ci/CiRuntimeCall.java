@@ -30,8 +30,13 @@ import static com.sun.c1x.ci.CiKind.Void;
 import static com.sun.c1x.ci.CiKind.Word;
 
 /**
+ * This enumeration lists the calls that must be provided by the runtime system. The compiler
+ * may generate code that calls the runtime services for unresolved and slow cases of some
+ * bytecodes.
+ *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public enum CiRuntimeCall {
     UnwindException(Void, Object),
@@ -40,11 +45,14 @@ public enum CiRuntimeCall {
     ThrowNullPointerException(Void),
     ThrowArrayStoreException(Void),
     ThrowClassCastException(Void, Object),
-    ThrowIncompatibleClassChangeError,
+    ThrowIncompatibleClassChangeError(Void),
     RegisterFinalizer(Void),
     NewInstance(Object, Object),
     NewArray(Object, Object, Int),
     NewMultiArray(Object, Object, Object),
+    UnresolvedNewInstance(Object, Int, Object),
+    UnresolvedNewArray(Object, Int, Object, Int),
+    UnresolvedNewMultiArray(Object, Int, Object, Object),
     HandleException(Void, Object),
     SlowSubtypeCheck(Boolean, Object, Object),
     SlowCheckCast(Object, Object, Object),
@@ -58,10 +66,15 @@ public enum CiRuntimeCall {
     OopArrayCopy(Void),
     PrimitiveArrayCopy(Void),
     ArrayCopy(Void),
+    Debug(Void),
     ResolveOptVirtualCall(Word, Int, Object),
     ResolveStaticCall(Word, Int, Object),
-    Debug(Void),
     ResolveInterfaceIndex(Int, Object, Int, Object),
+    ResolveClass(Object, Int, Object),
+    ResolveStaticFields(Object, Int, Object),
+    ResolveJavaClass(Object, Int, Object),
+    ResolveFieldOffset(Int, Int, Object),
+    ResolveVTableIndex(Int, Int, Object),
     RetrieveInterfaceIndex(Int, Object, Int),
     ArithmethicLrem(Long, Long, Long),
     ArithmeticLdiv(Long, Long, Long),
@@ -71,21 +84,10 @@ public enum CiRuntimeCall {
     ArithmeticTan(Double, Double),
     ArithmeticLog(Double, Double),
     ArithmeticLog10(Double, Double),
-    ArithmeticSin(Double, Double),
-    ResolveClass(Object, Int, Object),
-    ResolveArrayClass(Object, Int, Object),
-    ResolveStaticFields(Object, Int, Object),
-    ResolveJavaClass(Object, Int, Object),
-    ResolveFieldOffset(Int, Int, Object),
-    ResolveVTableIndex(Int, Int, Object);
+    ArithmeticSin(Double, Double);
 
     public final CiKind resultKind;
     public final CiKind[] arguments;
-
-    private CiRuntimeCall() {
-        resultKind = Void;
-        arguments = new CiKind[0];
-    }
 
     private CiRuntimeCall(CiKind resultKind, CiKind... args) {
         this.resultKind = resultKind;

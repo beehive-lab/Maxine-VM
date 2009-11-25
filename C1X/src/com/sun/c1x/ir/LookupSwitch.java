@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class LookupSwitch extends Switch {
+public final class LookupSwitch extends Switch {
 
     final int[] keys;
 

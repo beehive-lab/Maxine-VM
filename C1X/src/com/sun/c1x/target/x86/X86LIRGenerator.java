@@ -659,18 +659,19 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void genNewInstance(NewInstance x) {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
-        // TODO: don't reserve RDI explicitly, but make callRuntime() smarter
-        LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
 
         RiType type = x.instanceClass();
         if (x.instanceClass().isLoaded()) {
+            LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
             lir.oop2reg(type.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
+            // all allocation is done with a runtime call for now
+            setResult(x, callRuntime(CiRuntimeCall.NewInstance, info, hub));
         } else {
-            lir.resolveInstruction(hub, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info);
+            LIRConstant cpi = LIROperandFactory.intConst(x.cpi);
+            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            // all allocation is done with a runtime call for now
+            setResult(x, callRuntime(CiRuntimeCall.UnresolvedNewInstance, info, cpi, cp));
         }
-
-        // all allocation is done with a runtime call for now
-        setResult(x, callRuntime(CiRuntimeCall.NewInstance, info, hub));
     }
 
     @Override
@@ -698,18 +699,20 @@ public final class X86LIRGenerator extends LIRGenerator {
     protected void genNewObjectArray(NewObjectArray x) {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
 
-        LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
-        LIROperand length = force(x.length(), X86.rsi);
-
         RiType arrayType = x.elementClass().arrayOf();
         if (arrayType.isLoaded()) {
+            LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
+            LIROperand length = force(x.length(), X86.rsi);
             lir.oop2reg(arrayType.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
+            // all allocation is done with a runtime call for now
+            setResult(x, callRuntime(CiRuntimeCall.NewArray, info, hub, length));
         } else {
-            lir.resolveArrayClassInstruction(hub, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
+            LIROperand length = load(x.length());
+            LIROperand cpi = LIROperandFactory.intConst(x.cpi);
+            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            // all allocation is done with a runtime call for now
+            setResult(x, callRuntime(CiRuntimeCall.UnresolvedNewArray, info, cpi, cp, length));
         }
-
-        // all allocation is done with a runtime call for now
-        setResult(x, callRuntime(CiRuntimeCall.NewArray, info, hub, length));
     }
 
     @Override
@@ -750,8 +753,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             emitSafeArrayStore(dimensions, LIROperandFactory.intConst(i), size.result(), CiKind.Int, false);
         }
 
-        // Create a new code emit info as they must not be shared!
-        setResult(x, callRuntime(CiRuntimeCall.NewMultiArray, stateFor(x, x.stateBefore()), hub, dimensions));
+        setResult(x, callRuntime(CiRuntimeCall.NewMultiArray, info.copy(), hub, dimensions));
     }
 
     @Override

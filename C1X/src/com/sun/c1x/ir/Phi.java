@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class Phi extends Value {
+public final class Phi extends Value {
 
     private final BlockBegin block;
     private final int index;

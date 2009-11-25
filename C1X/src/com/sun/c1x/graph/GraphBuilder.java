@@ -38,7 +38,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class GraphBuilder {
+public final class GraphBuilder {
 
     final IR ir;
     final C1XCompilation compilation;

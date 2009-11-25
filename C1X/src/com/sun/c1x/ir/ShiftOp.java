@@ -25,7 +25,7 @@ package com.sun.c1x.ir;
  *
  * @author Ben L. Titzer
  */
-public class ShiftOp extends Op2 {
+public final class ShiftOp extends Op2 {
 
     /**
      * Creates a new shift operation.

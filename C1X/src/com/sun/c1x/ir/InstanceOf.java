@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class InstanceOf extends TypeCheck {
+public final class InstanceOf extends TypeCheck {
 
     /**
      * Constructs a new InstanceOf instruction.

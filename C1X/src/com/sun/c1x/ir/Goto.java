@@ -28,7 +28,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class Goto extends BlockEnd {
+public final class Goto extends BlockEnd {
 
     /**
      * Constructs a new Goto instruction.
