@@ -28,7 +28,7 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class Constant extends Instruction {
+public final class Constant extends Instruction {
 
     public final CiConstant value;
 

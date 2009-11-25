@@ -30,7 +30,7 @@ import com.sun.c1x.util.*;
  * @author Marcelo Cintra
  * @author Ben L. Titzer
  */
-public class LIRAddress extends LIROperand {
+public final class LIRAddress extends LIROperand {
 
     public enum Scale {
         Times1,
@@ -51,61 +51,45 @@ public class LIRAddress extends LIROperand {
     public final LIRLocation base;
     public final LIRLocation index;
     public final Scale scale;
-    private final int displacement;
+    public final int displacement;
 
     /**
-     * Creates a new LIRAddress with the specified base address, index, and basic type.
+     * Creates a new LIRAddress with the specified base address, index, and kind.
      *
      * @param base the LIROperand representing the base address
      * @param index the LIROperand representing the index
-     * @param basicType the basic type of the resulting operand
+     * @param kind the kind of the resulting operand
      */
-    public LIRAddress(LIRLocation base, LIRLocation index, CiKind basicType) {
-        this(base, index, Scale.Times1, 0, basicType);
+    public LIRAddress(LIRLocation base, LIRLocation index, CiKind kind) {
+        this(base, index, Scale.Times1, 0, kind);
     }
 
     /**
-     * Creates a new LIRAddress with the specified base address, displacement, and basic type.
+     * Creates a new LIRAddress with the specified base address, displacement, and kind.
      *
      * @param base the LIROperand representing the base address
      * @param displacement the constant displacement from the base address
-     * @param basicType the basic type of the resulting operand
+     * @param kind the kind of the resulting operand
      */
-    public LIRAddress(LIRLocation base, int displacement, CiKind basicType) {
-        this(base, LIROperandFactory.IllegalLocation, Scale.Times1, displacement, basicType);
+    public LIRAddress(LIRLocation base, int displacement, CiKind kind) {
+        this(base, LIROperandFactory.IllegalLocation, Scale.Times1, displacement, kind);
     }
 
     /**
-     * Creates a new LIRAddress with the specified base address, index, and basic type.
+     * Creates a new LIRAddress with the specified base address, index, and kind.
      *
      * @param base the LIROperand representing the base address
      * @param index the LIROperand representing the index
      * @param scale the scaling factor for the index
      * @param displacement the constant displacement from the base address
-     * @param basicType the basic type of the resulting operand
+     * @param kind the kind of the resulting operand
      */
-    public LIRAddress(LIRLocation base, LIRLocation index, Scale scale, int displacement, CiKind basicType) {
-        super(basicType);
+    public LIRAddress(LIRLocation base, LIRLocation index, Scale scale, int displacement, CiKind kind) {
+        super(kind);
         this.base = base;
         this.index = index;
         this.scale = scale;
         this.displacement = displacement;
-    }
-
-    public LIRLocation base() {
-        return base;
-    }
-
-    public LIRLocation index() {
-        return index;
-    }
-
-    public Scale scale() {
-        return scale;
-    }
-
-    public int displacement() {
-        return displacement;
     }
 
     /**
@@ -125,9 +109,9 @@ public class LIRAddress extends LIROperand {
     @Override
     public String toString() {
         final StringBuffer out = new StringBuffer();
-        out.append("Base:" + base);
+        out.append("Base:").append(base);
         if (!index.isIllegal()) {
-            out.append(" Index:" + index);
+            out.append(" Index:").append(index);
             switch (scale) {
                 case Times1:
                     break;
@@ -142,7 +126,7 @@ public class LIRAddress extends LIROperand {
                     break;
             }
         }
-        out.append(" Disp: %d" + displacement);
+        out.append(" Disp: %d").append(displacement);
         return out.toString();
     }
 

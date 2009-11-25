@@ -298,7 +298,7 @@ public class MaxRiType implements RiType {
      * Gets the basic type for this compiler interface type.
      * @return the basic type
      */
-    public CiKind basicType() {
+    public CiKind kind() {
         return basicType;
     }
 
@@ -414,7 +414,7 @@ public class MaxRiType implements RiType {
         throw ProgramError.unexpected();
     }
 
-    public CiKind getBasicType(RiType.Representation r) {
+    public CiKind getRepresentationKind(RiType.Representation r) {
         // all portions of a type are represented by objects in Maxine
         return CiKind.Object;
     }

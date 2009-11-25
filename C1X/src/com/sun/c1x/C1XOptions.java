@@ -103,6 +103,7 @@ public class C1XOptions {
     public static boolean CanonicalizeObjectCheckCast        = true;
     public static boolean CanonicalizeObjectInstanceOf       = true;
     public static boolean CanonicalizeFoldableMethods        = true;
+    public static boolean CanonicalizeArrayStoreChecks       = true;
 
     // all optimization settings
     public static boolean OptCanonicalize;
@@ -151,8 +152,10 @@ public class C1XOptions {
     public static boolean GenArrayStoreCheck            = true;
     public static boolean GenBoundsChecks               = true;
     public static boolean GenExplicitNullChecks         = ____;
+    public static boolean GenExplicitDiv0Checks         = ____;
+    public static boolean GenSpecialDivChecks           = true;
     public static boolean GenStackBanging               = true;
-    public static boolean GenAssertionCode              = true;
+    public static boolean GenAssertionCode              = ____;
     public static boolean GenFinalizerRegistration      = true;
     public static boolean GenTableRanges                = ____;
 
@@ -162,7 +165,6 @@ public class C1XOptions {
     // Runtime settings
     public static boolean UseXIR                        = ____;
     public static boolean UseBiasedLocking              = ____;
-    public static boolean UseImplicitDiv0Checks         = ____;
     public static boolean UseTLAB                       = ____;
     public static int     ReadPrefetchInstr             = 0;
     public static boolean UseFastLocking                = ____;

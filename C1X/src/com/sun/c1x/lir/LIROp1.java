@@ -44,7 +44,7 @@ public class LIROp1 extends LIRInstruction {
      * @param opcode the instruction's opcode
      * @param opr the first input operand
      * @param result the operand that holds the result of this instruction
-     * @param type the basic type of this instruction
+     * @param type the kind of this instruction
      * @param info the object holding information needed to emit debug information
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRDebugInfo info) {
@@ -60,7 +60,7 @@ public class LIROp1 extends LIRInstruction {
      * @param opcode the instruction's opcode
      * @param opr the first input operand
      * @param result the operand that holds the result of this instruction
-     * @param type the basic type of this instruction
+     * @param type the kind of this instruction
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type) {
         this(opcode, opr, result, type, null);
@@ -93,7 +93,7 @@ public class LIROp1 extends LIRInstruction {
      * @param moveKind the kind of move the instruction represents
      * @param opr the first input operand
      * @param result the operand that holds the result of this instruction
-     * @param type the basic type of this instruction
+     * @param type the kind of this instruction
      * @param info the object holding information needed to emit debug information
      */
     public LIROp1(LIRMoveKind moveKind, LIROperand opr, LIROperand result, CiKind type, LIRDebugInfo info) {
@@ -126,7 +126,7 @@ public class LIROp1 extends LIRInstruction {
     }
 
     /**
-     * Gets the basic type of this this instruction.
+     * Gets the kind of this this instruction.
      *
      * @return type the instruction's type.
      */

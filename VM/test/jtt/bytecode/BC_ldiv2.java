@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,36 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package jtt.bytecode;
 
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
-
-/**
- * The <code>NewInstanceStub</code> class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
+/*
+ * @Harness: java
+ * @Runs: (-9223372036854775808L, -1) = -9223372036854775808L;
+ * @Runs: (-9223372036854775808L, 1) = -9223372036854775808L;
  */
-public class NewInstanceStub extends CodeStub {
-
-    public final RiType klass;
-    public final GlobalStub globalStub;
-
-    public NewInstanceStub(LIROperand klassReg, LIROperand result, RiType klass, LIRDebugInfo info, GlobalStub globalStub) {
-        super(info, result);
-        this.klass = klass;
-        this.globalStub = globalStub;
-        this.setOperands(0, 0, klassReg);
-    }
-
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitNewInstanceStub(this);
-    }
-
-    public LIROperand klassReg() {
-        return operand(0);
+public class BC_ldiv2 {
+    public static long test(long a, long b) {
+        return a / b;
     }
 }

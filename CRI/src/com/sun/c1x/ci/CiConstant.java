@@ -67,6 +67,14 @@ public final class CiConstant extends CiValue {
     }
 
     /**
+     * Checks whether this constant is null.
+     * @return {@code true} if this constant is the null constant
+     */
+    public boolean isNull() {
+        return kind == CiKind.Object && value == null;
+    }
+
+    /**
      * Converts this constant to a string.
      */
     @Override

@@ -33,14 +33,14 @@ public class UnsafePutObject extends UnsafeObjectOp {
 
     /**
      * Creates a new UnsafePutObject instruction.
-     * @param basicType the basic type of the operation
+     * @param opKind the kind of the operation
      * @param object the instruction generating the object
      * @param offset the instruction generating the offset
      * @param value the instruction generating the value
      * @param isVolatile <code>true</code> if the operation is volatile
      */
-    public UnsafePutObject(CiKind basicType, Value object, Value offset, Value value, boolean isVolatile) {
-        super(basicType, object, offset, true, isVolatile);
+    public UnsafePutObject(CiKind opKind, Value object, Value offset, Value value, boolean isVolatile) {
+        super(opKind, object, offset, true, isVolatile);
         this.value = value;
     }
 

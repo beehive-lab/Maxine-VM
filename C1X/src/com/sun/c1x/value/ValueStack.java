@@ -206,7 +206,7 @@ public class ValueStack {
             if (x.isIllegal()) {
                 return null;
             }
-            assert x.type().isSingleWord() || values[i + 1] == null || values[i + 1] instanceof Phi;
+            assert x.kind.isSingleWord() || values[i + 1] == null || values[i + 1] instanceof Phi;
         }
         return x;
     }
@@ -319,7 +319,7 @@ public class ValueStack {
      * @param x the instruction to push onto the stack
      */
     public void push(CiKind type, Value x) {
-        xpush(assertType(type, x));
+        xpush(assertKind(type, x));
         if (type.sizeInSlots() == 2) {
             xpush(null);
         }
@@ -394,14 +394,14 @@ public class ValueStack {
     /**
      * Pops an instruction off the stack with the expected type.
      *
-     * @param basicType the tag of the expected type
+     * @param kind the tag of the expected type
      * @return the instruction on the top of the stack
      */
-    public Value pop(CiKind basicType) {
-        if (basicType.sizeInSlots() == 2) {
+    public Value pop(CiKind kind) {
+        if (kind.sizeInSlots() == 2) {
             xpop();
         }
-        return assertType(basicType, xpop());
+        return assertKind(kind, xpop());
     }
 
     /**
@@ -567,7 +567,7 @@ public class ValueStack {
                 return;
             }
         }
-        values[maxLocals + i] = new Phi(p.type(), block, -i - 1);
+        values[maxLocals + i] = new Phi(p.kind, block, -i - 1);
     }
 
     /**
@@ -584,7 +584,7 @@ public class ValueStack {
                 return;
             }
         }
-        storeLocal(i, new Phi(p.type(), block, i));
+        storeLocal(i, new Phi(p.kind, block, i));
     }
 
     /**
@@ -683,41 +683,41 @@ public class ValueStack {
     }
 
     private static boolean typeMismatch(Value x, Value y) {
-        return y == null || x.type() != y.type();
+        return y == null || x.kind != y.kind;
     }
 
-    private static Value assertType(CiKind basicType, Value x) {
-        assert x != null && x.type() == basicType;
+    private static Value assertKind(CiKind kind, Value x) {
+        assert x != null && x.kind == kind;
         return x;
     }
 
     private static Value assertLong(Value x) {
-        assert x != null && x.type() == CiKind.Long;
+        assert x != null && x.kind == CiKind.Long;
         return x;
     }
 
     private static Value assertJsr(Value x) {
-        assert x != null && x.type() == CiKind.Jsr;
+        assert x != null && x.kind == CiKind.Jsr;
         return x;
     }
 
     private static Value assertInt(Value x) {
-        assert x != null && x.type() == CiKind.Int;
+        assert x != null && x.kind == CiKind.Int;
         return x;
     }
 
     private static Value assertFloat(Value x) {
-        assert x != null && x.type() == CiKind.Float;
+        assert x != null && x.kind == CiKind.Float;
         return x;
     }
 
     private static Value assertObject(Value x) {
-        assert x != null && x.type() == CiKind.Object;
+        assert x != null && x.kind == CiKind.Object;
         return x;
     }
 
     private static Value assertDouble(Value x) {
-        assert x != null && x.type() == CiKind.Double;
+        assert x != null && x.kind == CiKind.Double;
         return x;
     }
 
@@ -726,7 +726,7 @@ public class ValueStack {
     }
 
     private static boolean isDoubleWord(Value x) {
-        return x != null && x.type().isDoubleWord();
+        return x != null && x.kind.isDoubleWord();
     }
 
     /**

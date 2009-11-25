@@ -33,7 +33,7 @@ public class OsrEntry extends Instruction {
      * Constructs a new OsrEntry instruction.
      */
     public OsrEntry() {
-        // TODO: this should be a BasicType.Word
+        // TODO: this should be a CiKind.Word
         super(CiKind.Jsr);
     }
 

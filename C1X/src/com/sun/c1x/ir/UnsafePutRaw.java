@@ -33,12 +33,12 @@ public class UnsafePutRaw extends UnsafeRawOp {
 
     /**
      * Constructs a new UnsafeGetRaw instruction.
-     * @param basicType the basic type of the operation
+     * @param opKind the kind of the operation
      * @param addr the instruction generating the base address
      * @param value the instruction generating the value to store
      */
-    public UnsafePutRaw(CiKind basicType, Value addr, Value value) {
-        super(basicType, addr, false);
+    public UnsafePutRaw(CiKind opKind, Value addr, Value value) {
+        super(opKind, addr, false);
         this.value = value;
     }
 

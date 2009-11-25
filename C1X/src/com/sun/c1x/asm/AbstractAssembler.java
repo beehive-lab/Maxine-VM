@@ -37,12 +37,16 @@ public abstract class AbstractAssembler {
 
     public final Buffer codeBuffer;
     public final CiTarget target;
-    protected final CiTargetMethod targetMethod;
+    public final CiTargetMethod targetMethod;
+    public final boolean is64;
+    public final boolean is32;
 
     public AbstractAssembler(CiTarget target, int frameSize) {
         this.target = target;
         this.targetMethod = new CiTargetMethod(target.allocatableRegs.registerRefMapSize);
         this.codeBuffer = new Buffer(target.arch.byteOrder);
+        this.is32 = target.arch.is32bit();
+        this.is64 = target.arch.is64bit();
         targetMethod.setFrameSize(frameSize);
     }
 

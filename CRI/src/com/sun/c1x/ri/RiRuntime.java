@@ -230,4 +230,10 @@ public interface RiRuntime {
      */
     RiType getRiType(Class<?> javaClass);
 
+    /**
+     * Checks whether the specified runtime type is the same as for {@code Object[]}.
+     * @param type the runtime type to test
+     * @return {@code true} if the tested type represents {@code Object[]}.
+     */
+    boolean isObjectArrayType(RiType type);
 }

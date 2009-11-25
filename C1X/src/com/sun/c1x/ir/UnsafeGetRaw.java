@@ -34,25 +34,25 @@ public class UnsafeGetRaw extends UnsafeRawOp {
 
     /**
      * Constructs a new UnsafeGetRaw instruction.
-     * @param basicType the basic type of the operation
+     * @param opKind the kind of the operation
      * @param addr the instruction generating the base address
      * @param mayBeUnaligned <code>true</code> if this operation may be unaligned
      */
-    public UnsafeGetRaw(CiKind basicType, Value addr, boolean mayBeUnaligned) {
-        super(basicType, addr, false);
+    public UnsafeGetRaw(CiKind opKind, Value addr, boolean mayBeUnaligned) {
+        super(opKind, addr, false);
         this.mayBeUnaligned = mayBeUnaligned;
     }
 
     /**
      * Constructs a new UnsafeGetRaw instruction.
-     * @param basicType the basic type of the operation
+     * @param opKind the kind of the operation
      * @param addr the instruction generating the base address
      * @param index the instruction generating the index
      * @param log2scale the log base 2 of the scaling factor
      * @param mayBeUnaligned <code>true</code> if this operation may be unaligned
      */
-    public UnsafeGetRaw(CiKind basicType, Value addr, Value index, int log2scale, boolean mayBeUnaligned) {
-        super(basicType, addr, index, log2scale, false);
+    public UnsafeGetRaw(CiKind opKind, Value addr, Value index, int log2scale, boolean mayBeUnaligned) {
+        super(opKind, addr, index, log2scale, false);
         this.mayBeUnaligned = mayBeUnaligned;
     }
 

@@ -40,7 +40,7 @@ public class NullCheck extends StateSplit {
      * @param stateBefore the state before executing the null check
      */
     public NullCheck(Value obj, ValueStack stateBefore) {
-        super(obj.type(), stateBefore);
+        super(obj.kind, stateBefore);
         this.object = obj;
         setFlag(Flag.NonNull);
         if (object.isNonNull()) {

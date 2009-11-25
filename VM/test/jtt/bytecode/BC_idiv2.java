@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,33 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package jtt.bytecode;
 
-import com.sun.c1x.lir.*;
-
-/**
- * The <code>NewTypeArrayStub</code> class definition.
- *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
+/*
+ * @Harness: java
+ * @Runs: (-2147483648,-1)=-2147483648;
+ * @Runs: (-2147483648, 1)=-2147483648;
  */
-public class NewTypeArrayStub extends LocalStub {
-
-    public NewTypeArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, LIRDebugInfo info) {
-        super(info, result);
-        this.setOperands(0, 0, klassReg, length);
-    }
-
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitNewTypeArrayStub(this);
-    }
-
-    public LIROperand klassReg() {
-        return operand(0);
-    }
-
-    public LIROperand length() {
-        return operand(1);
+public class BC_idiv2 {
+    public static int test(int a, int b) {
+        return a / b;
     }
 }

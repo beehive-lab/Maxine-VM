@@ -27,12 +27,13 @@ import com.sun.c1x.debug.*;
  * The <code>LIROp2</code> class represents a LIR instruction that performs an operation on two operands.
  *
  * @author Marcelo Cintra
- *
+ * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class LIROp2 extends LIRInstruction {
 
-    CiKind type;
-    LIRCondition condition;
+    final CiKind type;
+    final LIRCondition condition;
 
     /**
      * Constructs a new LIROp2 instruction.

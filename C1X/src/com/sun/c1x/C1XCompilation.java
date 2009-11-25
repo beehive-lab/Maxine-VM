@@ -97,15 +97,6 @@ public class C1XCompilation {
     }
 
     /**
-     * Gets the root method being compiled.
-     *
-     * @return the method being compiled
-     */
-    public RiMethod method() {
-        return method;
-    }
-
-    /**
      * Records that this compilation has exception handlers.
      */
     public void setHasExceptionHandlers() {
@@ -275,7 +266,7 @@ public class C1XCompilation {
         } catch (CiBailout b) {
             return new CiResult(null, b, stats);
         } catch (Throwable t) {
-            return new CiResult(null, new CiBailout("Exception while compiling: " + this.method(), t), stats);
+            return new CiResult(null, new CiBailout("Exception while compiling: " + method, t), stats);
         }
 
         return new CiResult(targetMethod, null, stats);
@@ -290,7 +281,7 @@ public class C1XCompilation {
             hir = new IR(this);
             hir.build();
         } catch (Throwable t) {
-            bailout = new CiBailout("Unexpected exception while compiling: " + this.method(), t);
+            bailout = new CiBailout("Unexpected exception while compiling: " + method, t);
             throw bailout;
         }
         return hir;
@@ -332,7 +323,7 @@ public class C1XCompilation {
             lirAssembler.emitCode(hir.linearScanOrder());
 
             // generate code or slow cases
-            lirAssembler.emitSlowCaseStubs();
+            lirAssembler.emitLocalStubs();
 
             // generate exception adapters
             lirAssembler.emitExceptionEntries(exceptionInfoList);

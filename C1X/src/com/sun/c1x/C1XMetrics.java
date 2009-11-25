@@ -43,6 +43,7 @@ public class C1XMetrics {
     public static int NullCheckEliminations;
     public static int NullChecksRedundant;
     public static int ZeroChecksRedundant;
+    public static int StoreChecksRedundant;
     public static int EquivalentConstantsMerged;
     public static int EquivalentConstantsChecked;
     public static int ConditionalEliminations;
@@ -63,6 +64,7 @@ public class C1XMetrics {
     public static int NumberOfHIRInstructions;
     public static int LSRAIntervalsCreated;
     public static int LSRANumberOfSpills;
+    public static int LoadConstantIterations;
 
     public static Map<String, Integer> StaticHIRInstructionCount = new HashMap<String, Integer>();
 
@@ -81,6 +83,7 @@ public class C1XMetrics {
         NullCheckEliminations = 0;
         NullChecksRedundant = 0;
         ZeroChecksRedundant = 0;
+        StoreChecksRedundant = 0;
         EquivalentConstantsMerged = 0;
         EquivalentConstantsChecked = 0;
         ConditionalEliminations = 0;
@@ -101,6 +104,7 @@ public class C1XMetrics {
         NumberOfHIRInstructions = 0;
         LSRAIntervalsCreated = 0;
         LSRANumberOfSpills = 0;
+        LoadConstantIterations = 0;
 
         StaticHIRInstructionCount = new HashMap<String, Integer>();
     }

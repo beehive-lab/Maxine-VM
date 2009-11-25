@@ -28,7 +28,7 @@ import com.sun.c1x.util.*;
  *
  * @author Marcelo Cintra
  */
-public class LIRConstant extends LIROperand {
+public final class LIRConstant extends LIROperand {
 
     public final CiConstant value;
 

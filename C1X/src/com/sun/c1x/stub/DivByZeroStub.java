@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class DivByZeroStub extends CodeStub {
+public class DivByZeroStub extends LocalStub {
 
     public final int offset;
 

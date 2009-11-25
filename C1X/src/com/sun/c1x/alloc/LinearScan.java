@@ -1123,7 +1123,7 @@ public class LinearScan {
             CiKind oprType = registerKind(opr);
             if (oprType == CiKind.Float || oprType == CiKind.Double) {
                 if ((C1XOptions.SSEVersion == 1 && oprType == CiKind.Float) || C1XOptions.SSEVersion >= 2) {
-                    // SSE float instruction (BasicType.Double only supported with SSE2)
+                    // SSE float instruction (CiKind.Double only supported with SSE2)
                     switch (op.code) {
                         case Cmp:
                         case Add:
@@ -1186,7 +1186,7 @@ public class LinearScan {
 
             if (move.operand().isStack()) {
                 if (C1XOptions.DetailedAsserts) {
-                    int argSize = compilation.method().signatureType().argumentSlots(!compilation.method.isStatic());
+                    int argSize = compilation.method.signatureType().argumentSlots(!compilation.method.isStatic());
                     LIROperand o = move.operand();
                     if (o.isSingleStack()) {
                         assert o.singleStackIndex() >= 0 && o.singleStackIndex() < argSize : "out of range";
@@ -1224,11 +1224,11 @@ public class LinearScan {
             if (move.result().isDoubleCpu() && inOpr.isLocation()) {
                 if (inOpr instanceof LIRAddress) {
                     final LIRAddress pointer = (LIRAddress) inOpr;
-                    LIRLocation base = pointer.base();
+                    LIRLocation base = pointer.base;
                     if (!base.isIllegal()) {
                         addTemp(base, op.id(), IntervalUseKind.noUse, registerKind(base));
                     }
-                    LIRLocation index = pointer.index();
+                    LIRLocation index = pointer.index;
                     if (!index.isIllegal()) {
                         addTemp(index, op.id(), IntervalUseKind.noUse, registerKind(index));
                     }
@@ -2981,7 +2981,7 @@ public class LinearScan {
             case Word:
                 return (compilation.target.arch.is64bit()) ? 2 : 1;
         }
-        throw new IllegalArgumentException("invalid BasicType " + this + " for .sizeInBytes()");
+        throw new IllegalArgumentException("invalid kind " + this + " for .sizeInBytes()");
     }
 
     // TODO: Platform specific!!

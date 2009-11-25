@@ -39,12 +39,12 @@ public final class LIRLocation extends LIROperand {
     /**
      * Creates a new LIRLocation representing a CPU register.
      *
-     * @param basicType the basic type of the location
+     * @param kind the kind of the location
      * @param number the register
      */
-    LIRLocation(CiKind basicType, CiRegister number) {
-        super(basicType);
-        assert basicType.size == 1 || (basicType.size == -1 && number == CiRegister.None);
+    LIRLocation(CiKind kind, CiRegister number) {
+        super(kind);
+        assert kind.size == 1 || (kind.size == -1 && number == CiRegister.None);
         assert number != null;
         this.location1 = number;
         this.location2 = CiRegister.None;
@@ -55,10 +55,8 @@ public final class LIRLocation extends LIROperand {
      * Creates a new LIRLocation representing either a virtual register or a stack location, negative indices
      * represent stack locations.
      *
-     * @param kind
-     *            the basic type of the location
-     * @param number
-     *            the virtual register index or the stack location index if negative
+     * @param kind the kind of the location
+     * @param number the virtual register index or the stack location index if negative
      */
     LIRLocation(CiKind kind, int number) {
         super(kind);
@@ -71,12 +69,9 @@ public final class LIRLocation extends LIROperand {
     /**
      * Creates a new LIRLocation representing either a stack value or a CPU register.
      *
-     * @param kind
-     *            the basic type of the location
-     * @param location1
-     *            the number of the location
-     * @param location2
-     *            the number of the second location
+     * @param kind the kind of the location
+     * @param location1 the number of the location
+     * @param location2 the number of the second location
      */
     LIRLocation(CiKind kind, CiRegister location1, CiRegister location2) {
         super(kind);
