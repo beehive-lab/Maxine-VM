@@ -60,7 +60,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.run.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -122,10 +121,6 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  * @author Aritra Bandyopadhyay
- */
-/**
- * @author Michael Van De Vanter
- *
  */
 public class InspectionActions extends AbstractInspectionHolder implements Prober{
 
@@ -2326,17 +2321,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction viewThreadRunMethodCodeInBootImage() {
         return viewThreadRunMethodCodeInBootImageAction;
-    }
-
-    private final InspectorAction viewSchemeRunMethodCodeInBootImageAction =
-            new ViewMethodCodeInBootImageAction(maxVM().bootImage().header.runSchemeRunMethodOffset, maxVM().vmConfiguration().runPackage.schemeTypeToImplementation(RunScheme.class), "run");
-
-    /**
-     * @return an Action that displays in the {@link MethodInspector} the code of
-     * the {@link RunScheme#run()} method in the boot image.
-     */
-    public final InspectorAction viewSchemeRunMethodCodeInBootImage() {
-        return viewSchemeRunMethodCodeInBootImageAction;
     }
 
     /**
@@ -4644,7 +4628,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final JMenu bootMethodSub = new JMenu("View boot image method code");
                 bootMethodSub.add(actions().viewRunMethodCodeInBootImage());
                 bootMethodSub.add(actions().viewThreadRunMethodCodeInBootImage());
-                bootMethodSub.add(actions().viewSchemeRunMethodCodeInBootImage());
                 menu.add(bootMethodSub);
                 final JMenu byAddressSub = new JMenu("View target code by address");
                 byAddressSub.add(actions().viewMethodCodeByAddress());

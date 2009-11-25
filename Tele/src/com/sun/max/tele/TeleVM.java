@@ -474,7 +474,7 @@ public abstract class TeleVM implements MaxVM {
         this.bootImageFile = bootImageFile;
         this.bootImage = bootImage;
         this.sourcepath = sourcepath;
-        nativeInitialize(bootImage.header.threadLocalsSize, bootImage.header.javaFrameAnchorSize);
+        nativeInitialize(bootImage.header.threadLocalsAreaSize);
         final MaxineVM vm = createVM(this.bootImage);
         this.vmConfiguration = vm.configuration;
 
@@ -531,9 +531,8 @@ public abstract class TeleVM implements MaxVM {
      * Initializes native tele code.
      *
      * @param threadLocalsSize the size of thread local storage as read from the image
-     * @param javaFrameAnchorSize the storage size of a {@link JavaFrameAnchor}
      */
-    private static native void nativeInitialize(int threadLocalsSize, int javaFrameAnchorSize);
+    private static native void nativeInitialize(int threadLocalsSize);
 
     /**
      * Starts a new VM process and returns a handle to it.
@@ -706,6 +705,10 @@ public abstract class TeleVM implements MaxVM {
             if (!stack.size().isZero()) {
                 regions.append(stack);
             }
+            TeleThreadLocalsBlock threadLocalsBlock = thread.threadLocalsBlock();
+            if (!threadLocalsBlock.size().isZero()) {
+                regions.append(threadLocalsBlock);
+            }
         }
         return regions;
     }
@@ -717,10 +720,16 @@ public abstract class TeleVM implements MaxVM {
             if (memoryRegion == null) {
                 memoryRegion = teleCodeManager().regionContaining(address);
                 if (memoryRegion == null) {
-                    final MaxThread maxThread = threadContaining(address);
+                    MaxThread maxThread = threadStackContaining(address);
                     if (maxThread != null) {
                         memoryRegion = maxThread.stack();
+                    } else {
+                        maxThread = threadLocalsBlockContaining(address);
+                        if (maxThread != null) {
+                            memoryRegion = maxThread.threadLocalsBlock();
+                        }
                     }
+
                 }
             }
         } catch (DataIOError dataIOError) {
@@ -831,7 +840,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final boolean containsInThread(Address address) {
-        return threadContaining(address) != null;
+        return threadStackContaining(address) != null || threadLocalsBlockContaining(address) != null;
     }
 
     private RemoteTeleGrip createTemporaryRemoteTeleGrip(Word rawGrip) {
@@ -1279,16 +1288,10 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#describeTeleTargetRoutines(java.io.PrintStream)
-     */
     public final void describeTeleTargetRoutines(PrintStream printStream) {
         teleCodeRegistry().writeSummaryToStream(printStream);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#getThread(long)
-     */
     public final MaxThread getThread(long threadID) {
         for (MaxThread maxThread : teleVMState.threads()) {
             if (maxThread.id() == threadID) {
@@ -1298,10 +1301,7 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#threadContaining(com.sun.max.unsafe.Address)
-     */
-    public final MaxThread threadContaining(Address address) {
+    public final MaxThread threadStackContaining(Address address) {
         for (MaxThread thread : teleVMState.threads()) {
             if (thread.stack().contains(address)) {
                 return thread;
@@ -1310,9 +1310,15 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#getCodeAddress(com.sun.max.vm.stack.StackFrame)
-     */
+    public MaxThread threadLocalsBlockContaining(Address address) {
+        for (MaxThread thread : teleVMState.threads()) {
+            if (thread.threadLocalsBlock().contains(address)) {
+                return thread;
+            }
+        }
+        return null;
+    }
+
     public Address getCodeAddress(StackFrame stackFrame) {
         Pointer instructionPointer = stackFrame.instructionPointer;
         final StackFrame callee = stackFrame.calleeFrame();
@@ -1397,23 +1403,14 @@ public abstract class TeleVM implements MaxVM {
         return bytecodeBreakpointFactory.getBreakpoint(key);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#watchpointsEnabled()
-     */
     public final boolean watchpointsEnabled() {
         return teleProcess.maximumWatchpointCount() > 0;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#addWatchpointObserver(java.util.Observer)
-     */
     public final void addWatchpointObserver(Observer observer) {
         teleProcess.watchpointFactory().addObserver(observer);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setRegionWatchpoint(java.lang.String, com.sun.max.memory.MemoryRegion, boolean, boolean, boolean, boolean)
-     */
     public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
@@ -1425,33 +1422,21 @@ public abstract class TeleVM implements MaxVM {
         return setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setObjectWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, boolean, boolean, boolean, boolean)
-     */
     public final MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setObjectWatchpoint(description, teleObject, after, read, write, exec, gc);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setFieldWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.actor.member.FieldActor, boolean, boolean, boolean, boolean)
-     */
     public final MaxWatchpoint setFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setFieldWatchpoint(description, teleObject, fieldActor, after, read, write, exec, gc);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setArrayElementWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.type.Kind, com.sun.max.unsafe.Offset, int, boolean, boolean, boolean, boolean, boolean)
-     */
     public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setHeaderWatchpoint(java.lang.String, com.sun.max.tele.object.TeleObject, com.sun.max.vm.layout.Layout.HeaderField, boolean, boolean, boolean, boolean)
-     */
     public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
         return teleProcess.watchpointFactory().setHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec, gc);
@@ -1462,30 +1447,18 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.watchpointFactory().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#findWatchpoints(com.sun.max.memory.MemoryRegion)
-     */
     public final Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) {
         return teleProcess.watchpointFactory().findWatchpoints(memoryRegion);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#watchpoints()
-     */
     public final IterableWithLength<MaxWatchpoint> watchpoints() {
         return teleProcess.watchpointFactory().watchpoints();
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#setTransportDebugLevel(int)
-     */
     public final void setTransportDebugLevel(int level) {
         teleProcess.setTransportDebugLevel(level);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVM#transportDebugLevel()
-     */
     public final int transportDebugLevel() {
         return teleProcess.transportDebugLevel();
     }

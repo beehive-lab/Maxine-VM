@@ -58,7 +58,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         conditionFlags = new boolean[ConditionFlag.VALUES.length()];
 
         final EirStack stack = stack();
-        final Address topSP = stack.ceiling.minus(VmThreadLocal.threadLocalStorageSize().plus(Word.size()));
+        final Address topSP = stack.ceiling.minus(VmThreadLocal.threadLocalsAreaSize().plus(Word.size()));
         stack.setSP(topSP);
         write(AMD64EirRegister.General.RSP, new WordValue(topSP));
 

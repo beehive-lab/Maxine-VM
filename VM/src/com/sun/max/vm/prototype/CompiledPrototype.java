@@ -602,7 +602,7 @@ public class CompiledPrototype extends Prototype {
     public void compileUnsafeMethods() {
         Trace.begin(1, "compiling unsafe methods");
         for (ClassMethodActor classMethodActor : UNSAFE.Static.methods()) {
-            if (!(classMethodActor.isNative() && classMethodActor.isJniFunction())) {
+            if (!(classMethodActor.isNative() && classMethodActor.isVmEntryPoint())) {
                 worklist.add(classMethodActor);
             }
         }

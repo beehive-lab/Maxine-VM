@@ -87,6 +87,9 @@ public interface InspectorStyle {
     /** special foreground color for displaying a word that points into a stack. */
     Color wordStackLocationDataColor();
 
+    /** special foreground color for displaying a word that points into a thread locals block. */
+    Color wordThreadLocalsBlockLocationDataColor();
+
     /** special foreground color for displaying invalid word data. */
     Color wordInvalidDataColor();
 

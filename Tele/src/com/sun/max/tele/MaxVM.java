@@ -324,9 +324,10 @@ public interface MaxVM {
 
     /**
      * @param address a memory address in the VM.
-     * @return is the address within a {@link MemoryRegion} allocated to a thread?
+     * @return is the address within a {@link MemoryRegion} associated with a thread?
      * @see #allocatedMemoryRegions()
      * @see TeleNativeStack
+     * @see TeleThreadLocalsBlock
      */
     boolean containsInThread(Address address);
 
@@ -559,14 +560,24 @@ public interface MaxVM {
     MaxThread getThread(long threadID);
 
     /**
-     * Returns a VM thread, if any, whose memory includes a specified address.
+     * Returns a VM thread, if any, whose stack memory contains a specified address.
      * <br>
      * Thread-safe.
      *
      * @param address an address in the VM
      * @return thread whose stack contains the address, null if none.
      */
-    MaxThread threadContaining(Address address);
+    MaxThread threadStackContaining(Address address);
+
+    /**
+     * Returns a VM thread, if any, whose thread locals block contains a specified address.
+     * <br>
+     * Thread-safe.
+     *
+     * @param address an address in the VM
+     * @return thread whose thread locals block contains the address, null if none.
+     */
+    MaxThread threadLocalsBlockContaining(Address address);
 
     /**
      * Returns the target code execution address in a stack frame, either IP (top frame) or call return address.

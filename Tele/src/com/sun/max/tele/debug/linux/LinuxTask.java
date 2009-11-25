@@ -274,9 +274,9 @@ public final class LinuxTask {
         if (!isLeader()) {
             return leader().readBytes(src, dst, offset, length);
         }
+        assert !src.isZero();
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                assert !src.isZero();
                 final long addr = src.toLong();
                 if (addr < 0) {
                     // RandomAccessFile.see() can't handle unsigned long offsets: have to resort to a JNI call

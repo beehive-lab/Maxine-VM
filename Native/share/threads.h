@@ -33,35 +33,42 @@
 #define STACK_RED_ZONE_PAGES 1
 
 /**
- * The signature of the Java method entrypoint for new threads.
- * This must match the signature of 'com.sun.max.vm.thread.VmThread.run()'.
+ * The signature of the VM entry point for adding a thread to the thread list.
+ * This must match the signature of 'com.sun.max.vm.thread.VmThread.add()'.
  */
-typedef void (*VmThreadRunMethod)(jint id, Address nativeThread,
-	            Address stackBase,
-	            Address vmThreadLocals,
-	            Address refMapArea,
-	            Address yellowZone,
-	            Address stackEnd);
+typedef jint (*VmThreadAddMethod)(jint id,
+                jboolean daemon,
+                Address nativeThread,
+                Address threadLocals,
+                Address stackBase,
+                Address stackEnd,
+                Address stackYellowZone);
 
 /**
- * The signature of the Java method used to attach native threads.
+ * The signature of the VM entry point for running a new VM-created thread.
+ * This must match the signature of 'com.sun.max.vm.thread.VmThread.run()'.
+ */
+typedef void (*VmThreadRunMethod)(Address threadLocals,
+                Address stackBase,
+                Address stackEnd);
+
+/**
+ * The signature of the VM entry point for attaching a native thread.
  * This must match the signature of 'com.sun.max.vm.thread.VmThread.attach()'.
  */
-typedef int (*VmThreadAttachMethod)(Address nativeThread,
+typedef int (*VmThreadAttachMethod)(
                 Address name,
                 Address group,
                 jboolean daemon,
                 Address stackBase,
-                Address vmThreadLocals,
-                Address refMapArea,
-                Address yellowZone,
-                Address stackEnd);
+                Address stackEnd,
+                Address threadLocals);
 
 /**
  * The signature of the Java method used to detach native threads.
  * This must match the signature of 'com.sun.max.vm.thread.VmThread.detach()'.
  */
-typedef void (*VmThreadDetachMethod)(Address vmThreadLocals);
+typedef void (*VmThreadDetachMethod)(Address threadLocals);
 
 /**
  * Sleeps the current thread for a given number of milliseconds.

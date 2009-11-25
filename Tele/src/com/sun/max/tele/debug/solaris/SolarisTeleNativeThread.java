@@ -35,14 +35,14 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
         return (SolarisTeleProcess) super.teleProcess();
     }
 
-    public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, int id, long lwpId, long stackBase, long stackSize, boolean hasThreadLocals) {
-        super(teleProcess, id, lwpId, stackBase, stackSize, hasThreadLocals);
+    public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, Params params) {
+        super(teleProcess, params);
     }
 
     private static native boolean nativeSetInstructionPointer(long processHandle, long lwpId, long address);
 
     private long lwpId() {
-        return handle();
+        return localHandle();
     }
 
     @Override

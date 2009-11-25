@@ -220,7 +220,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             if (index >= 0 && index < stackFrameListModel.getSize()) {
                 final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
                 // New stack frame selection; set the global focus.
-                inspection().focus().setStackFrame(thread, stackFrame, true);
+                inspection().focus().setStackFrame(thread, stackFrame, false);
                 if (stackFrame instanceof JavaStackFrame) {
                     if (stackFrame instanceof AdapterStackFrame) {
                         final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
@@ -410,7 +410,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         menu.add(new InspectorAction(inspection(), "Select frame (Left-Button)") {
             @Override
             protected void procedure() {
-                inspection().focus().setStackFrame(thread, stackFrame, true);
+                inspection().focus().setStackFrame(thread, stackFrame, false);
             }
         });
         if (stackFrame instanceof JavaStackFrame) {
@@ -420,8 +420,20 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             final MemoryRegion memoryRegion = new FixedMemoryRegion(stackPointer, Size.fromInt(frameSize), "");
             final String frameName = javaStackFrameName(javaStackFrame);
             menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
-
         }
+        if (stackFrame instanceof NativeStackFrame) {
+            final Pointer instructionPointer = stackFrame.instructionPointer;
+            final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
+            if (teleNativeTargetRoutine == null) {
+                menu.add(new InspectorAction(inspection(), "Open native code dialog...") {
+                    @Override
+                    protected void procedure() {
+                        inspection().focus().setCodeLocation(maxVM().createCodeLocation(stackFrame), true);
+                    }
+                });
+            }
+        }
+
         return menu;
     }
 

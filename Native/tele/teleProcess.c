@@ -30,23 +30,23 @@
 
 static jmethodID jniGatherThreadID = NULL;
 
-void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong handle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl) {
+void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong localHandle, ThreadState_t state, jlong instructionPointer, ThreadLocals tl) {
     if (jniGatherThreadID == NULL) {
         jclass c = (*env)->GetObjectClass(env, teleProcess);
         c_ASSERT(c != NULL);
-        jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IJIJJJJJJ)V");
+        jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IJJIJJJJII)V");
         c_ASSERT(jniGatherThreadID != NULL);
     }
-
-    ThreadLocals noThreadLocals = (ThreadLocals) alloca(threadLocalsSize());
+    const int tlaSize = threadLocalsAreaSize();
+    ThreadLocals noThreadLocals = (ThreadLocals) alloca(tlaSize);
     NativeThreadLocalsStruct noNativeThreadLocalsStruct;
     NativeThreadLocals ntl;
     if (tl == 0) {
         tl = noThreadLocals;
         ntl = &noNativeThreadLocalsStruct;
-        memset((void *) tl, 0, threadLocalsSize());
+        memset((void *) tl, 0, threadLocalsAreaSize());
         memset(ntl, 0, sizeof(NativeThreadLocalsStruct));
-        jint id = handle;
+        jint id = localHandle;
         /* Make id negative to indicate no thread locals were available for the thread.
          * This will be the case for a native thread or a Java thread that has not yet
          * executed past the point in VmThread.run() where it is added to the active
@@ -58,33 +58,35 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
         ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
     }
 
-    tele_log_println("Gathered thread[id=%d, handle=%lu, pc=%p, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
+    tele_log_println("Gathered thread[id=%d, localHandle=%lu, handle=%p, pc=%p, stackBase=%p, stackEnd=%p, stackSize=%lu, tlb=%p, tlbSize=%d, tlaSize=%d]",
                     getThreadLocal(int, tl, ID),
-                    handle,
+                    localHandle,
+                    ntl->handle,
                     instructionPointer,
                     ntl->stackBase,
                     ntl->stackBase + ntl->stackSize,
                     ntl->stackSize,
-                    getThreadLocal(ThreadLocals, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
-                    getThreadLocal(ThreadLocals, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
-                    getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS));
+                    ntl->tlBlock,
+                    ntl->tlBlockSize,
+                    tlaSize);
 
     (*env)->CallVoidMethod(env, teleProcess, jniGatherThreadID, threadSequence,
                     getThreadLocal(int, tl, ID),
-                    handle,
+                    localHandle,
+                    ntl->handle,
                     state,
                     instructionPointer,
                     ntl->stackBase,
                     ntl->stackSize,
-                    getThreadLocal(ThreadLocals, tl, SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
-                    getThreadLocal(ThreadLocals, tl, SAFEPOINTS_ENABLED_THREAD_LOCALS),
-                    getThreadLocal(ThreadLocals, tl, SAFEPOINTS_DISABLED_THREAD_LOCALS));
+                    ntl->tlBlock,
+                    ntl->tlBlockSize,
+                    tlaSize);
 }
 
 static boolean isThreadLocalsForStackPointer(PROCESS_MEMORY_PARAMS Address stackPointer, Address tl, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
     Address ntl;
 
-    READ_PROCESS_MEMORY(tl, tlCopy, threadLocalsSize());
+    READ_PROCESS_MEMORY(tl, tlCopy, threadLocalsAreaSize());
     ntl = getThreadLocal(Address, tlCopy, NATIVE_THREAD_LOCALS);
     READ_PROCESS_MEMORY(ntl, ntlCopy, sizeof(NativeThreadLocalsStruct));
     setThreadLocal(tlCopy, NATIVE_THREAD_LOCALS, ntlCopy);
@@ -99,7 +101,7 @@ static boolean isThreadLocalsForStackPointer(PROCESS_MEMORY_PARAMS Address stack
 
 ThreadLocals teleProcess_findThreadLocals(PROCESS_MEMORY_PARAMS Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
 
-    memset((void *) tlCopy, 0, threadLocalsSize());
+    memset((void *) tlCopy, 0, threadLocalsAreaSize());
     memset((void *) ntlCopy, 0, sizeof(NativeThreadLocalsStruct));
 
     if (threadLocalsList != 0) {

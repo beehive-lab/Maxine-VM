@@ -29,7 +29,6 @@ import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.BootImage.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -178,7 +177,6 @@ public final class VmThreadMap {
     private static native void nativeSetGlobalThreadAndGCLock(Pointer mutex);
 
     private final IDMap idMap = new IDMap(64);
-    private volatile int threadStartCount;
 
     /**
      * The number of currently running non-daemon threads running, excluding
@@ -195,6 +193,11 @@ public final class VmThreadMap {
      * platform specific mechanisms (such as thread_db on Solaris and Linux or Mach APIs on Darwin).
      */
     private Pointer threadLocalsListHead = Pointer.zero();
+
+    /**
+     * Once true, no more threads can be started.
+     */
+    private volatile boolean mainThreadExited;
 
     @INLINE
     private static Pointer getPrev(Pointer threadLocals) {
@@ -221,61 +224,68 @@ public final class VmThreadMap {
     }
 
     /**
-     * Add the main thread (or an attached thread) to the thread map ACTIVE.
+     * Adds a pre-allocated thread to the map. This reserves an ID for the thread
+     * but does not add its thread locals to the global list of running threads.
      *
-     * @param thread the VmThread representing the main or attached thread
-     * @param daemon specifies if {@code thread} is a daemon
+     * @param thread a pre-allocated thread
      */
-    public static void addAttachedThread(VmThread thread, boolean daemon) {
+    public static void addPreallocatedThread(VmThread thread) {
         ACTIVE.idMap.acquire(thread);
-        if (!MaxineVM.isHosted() && !daemon && thread != VmThread.MAIN_VM_THREAD) {
-            ACTIVE.nonDaemonThreads++;
-        }
-
     }
 
     /**
      * Adds the specified thread locals to the ACTIVE thread map and initializes several of its
      * important values (such as its ID and VM thread reference).
      *
-     * Note that this method does not perform synchronization on the thread map, because it must
-     * only be executed in a newly created thread while the creating thread holds the lock on
-     * the ACTIVE thread map.
-     *
-     * @param id the ID of the VM thread, which should match the ID of the VmThread
-     * @param threadLocals a pointer to the VM thread locals for the thread
-     * @return a reference to the VmThread for this thread
-     */
-    public static VmThread addThreadLocals(int id, Pointer threadLocals) {
-        final VmThread thread = ACTIVE.idMap.get(id);
-        addThreadLocals(thread, threadLocals);
-        return thread;
-    }
-
-    /**
-     * Adds the specified thread locals to the ACTIVE thread map and initializes several of its
-     * important values (such as its ID and VM thread reference).
-     *
-     * Note that this method does not perform synchronization on the thread map, because it must
-     * only be executed in a newly created thread while the creating thread holds the lock on
-     * the ACTIVE thread map.
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
      *
      * @param thread the VmThread to add
      * @param threadLocals a pointer to the VM thread locals for the thread
+     * @param daemon specifies if {@code thread} is a daemon
      */
-    public static void addThreadLocals(VmThread thread, Pointer threadLocals) {
-        VmThreadLocal.VM_THREAD.setConstantReference(threadLocals, Reference.fromJava(thread));
-        // insert this thread locals into the list
+    public static void addThreadLocals(VmThread thread, Pointer threadLocals, boolean daemon) {
         setNext(threadLocals, ACTIVE.threadLocalsListHead);
         setPrev(ACTIVE.threadLocalsListHead, threadLocals);
-        // at the head
         ACTIVE.threadLocalsListHead = threadLocals;
-        // account for a non-daemon thread
-        if (!thread.javaThread().isDaemon() && thread != VmThread.MAIN_VM_THREAD) {
-            ACTIVE.nonDaemonThreads++;
+    }
+
+    /**
+     * Increments the number of active non-daemon threads by 1.
+     *
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+     *
+     * @return {@code true} if the non-daemon thread can continue running; {@code false} if the main thread has already exited
+     */
+    static boolean incrementNonDaemonThreads() {
+        if (ACTIVE.mainThreadExited) {
+            return false;
         }
-        // and signal that this thread has started up and joined the list
-        ACTIVE.threadStartCount++;
+        if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Adding non-daemon thread - ");
+            Log.print(ACTIVE.nonDaemonThreads + 1);
+            Log.println(" non-daemon threads now running");
+            Log.unlock(lockDisabledSafepoints);
+        }
+        ACTIVE.nonDaemonThreads++;
+        return true;
+    }
+
+    /**
+     * Decrements the number of active non-daemon threads by 1.
+     *
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+     */
+    static void decrementNonDaemonThreads() {
+        if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Removed non-daemon thread - ");
+            Log.print(ACTIVE.nonDaemonThreads - 1);
+            Log.println(" non-daemon threads remain");
+            Log.unlock(lockDisabledSafepoints);
+        }
+        ACTIVE.nonDaemonThreads--;
+        ACTIVE.notify();
     }
 
     /**
@@ -286,8 +296,8 @@ public final class VmThreadMap {
      * @param threadLocals the thread locals to remove from this map
      * @param daemon specifies if the thread is a daemon
      */
-    public void removeThreadLocals(Pointer threadLocals, boolean daemon) {
-        final int id = VmThreadLocal.ID.getConstantWord(threadLocals).asAddress().toInt();
+    public void removeThreadLocals(VmThread thread) {
+        Pointer threadLocals = thread.vmThreadLocals();
         if (threadLocalsListHead == threadLocals) {
             // this vm thread locals is at the head of list
             threadLocalsListHead = getNext(threadLocalsListHead);
@@ -302,12 +312,9 @@ public final class VmThreadMap {
         setPrev(threadLocals, Pointer.zero());
         setNext(threadLocals, Pointer.zero());
         // release the ID for a later thread's use
-        VmThread thread = idMap.get(id);
-        idMap.release(id);
-
-        if (!daemon && thread != VmThread.MAIN_VM_THREAD) {
-            nonDaemonThreads--;
-            ACTIVE.notify();
+        idMap.release(thread.id());
+        if (!thread.daemon && thread != VmThread.MAIN_VM_THREAD) {
+            decrementNonDaemonThreads();
         }
     }
 
@@ -323,10 +330,16 @@ public final class VmThreadMap {
      * @param priority the initial priority of the thread
      * @return the native thread created
      */
-    public Word startThread(VmThread thread, Size stackSize, int priority) {
+    public void startThread(VmThread thread, Size stackSize, int priority) {
         synchronized (ACTIVE) {
             final int id = idMap.acquire(thread);
-            final int count = threadStartCount;
+            thread.daemon = thread.javaThread().isDaemon();
+            if (!thread.daemon) {
+                if (!incrementNonDaemonThreads()) {
+                    throw new IllegalStateException("Cannot start " + thread.javaThread() + " after the main thread has exited");
+                }
+            }
+
             final Word nativeThread = VmThread.nativeThreadCreate(id, stackSize, priority);
             if (nativeThread.isZero()) {
                 /* This means that we did not create the native thread at all so there is nothing to
@@ -336,11 +349,6 @@ public final class VmThreadMap {
                  */
                 throw new OutOfMemoryError("Unable to create new native thread");
             }
-            if (!waitForThreadStartup(count)) {
-                thread.beTerminated();
-                throw new InternalError("waitForThreadStartup() failed");
-            }
-            return nativeThread;
         }
     }
 
@@ -370,24 +378,7 @@ public final class VmThreadMap {
         if (VmThread.TRACE_THREADS_OPTION.getValue()) {
             Log.println("Main thread finished waiting for all non-daemon threads to terminate");
         }
-    }
-
-    private boolean waitForThreadStartup(int count) {
-        int spin = 10000;
-        while (threadStartCount == count) {
-            // spin for a little while, waiting for other thread to start
-            if (spin-- == 0) {
-                spin = 100;
-                while (threadStartCount == count) {
-                    // wait for 100ms, 1ms at a time
-                    if (spin-- == 0) {
-                        return false;
-                    }
-                    VmThread.nonJniSleep(1);
-                }
-            }
-        }
-        return true;
+        mainThreadExited = true;
     }
 
     /**

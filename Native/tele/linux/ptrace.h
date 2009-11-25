@@ -21,7 +21,7 @@
 
 /**
  * This header is a collection of the definitions and macros normal found in <sys/ptrace.h>.
- * The reason that <sys/ptrace.h> can simply be used is that its content is inconsistent
+ * The reason that <sys/ptrace.h> cannot be directly used is that its content is inconsistent
  * across various versions of glibc found in Linux distros. As such, all
  * ptrace functionality that the tele code depends on is included here.
  *

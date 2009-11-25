@@ -29,6 +29,7 @@ import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
+import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -524,7 +525,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     protected abstract void gatherThreads(AppendableSequence<TeleNativeThread> threads);
 
-    protected abstract TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize, boolean hasThreadLocals);
+    protected abstract TeleNativeThread createTeleNativeThread(Params params);
 
     /**
      * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
@@ -534,48 +535,67 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      *            {@link VmThread Java thread}. If {@code id == 0}, then this is the primordial thread. Otherwise, this
      *            is a native thread or a Java thread that has not yet executed past the point in
      *            {@link VmThread#run()} where it is added to the active thread list.
-     * @param handle the native thread library {@linkplain TeleNativeThread#handle() handle} to this thread (e.g. the
-     *            LWP of a Solaris thread)
+     * @param localHandle the platform-specific process control library handle to this thread
+     * @param handle the native thread library {@linkplain TeleNativeThread#handle() handle} to this thread
      * @param state
      * @param instructionPointer the current value of the instruction pointer
-     * @param stackBase the lowest known address of the stack. This may be 0 for an native thread that has not been
-     *            attached to the VM via the AttachCurrentThread function that is part of the JNI Invocation API. .
+     * @param stackBase the lowest known address of the stack
      * @param stackSize the size of the stack in bytes
-     * @param triggeredVmThreadLocals the address of the native memory holding the safepoints-triggered VM thread locals
-     * @param enabledVmThreadLocals the address of the native memory holding the safepoints-enabled VM thread locals
-     * @param disabledVmThreadLocals the address of the native memory holding the safepoints-disabled VM thread locals
+     * @param tlb the thread locals block of the thread
+     * @param tlbSize the size of the thread locals block
+     * @param tlaSize the size of a thread locals area
      */
-    public final void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int id, long handle, int state, long instructionPointer, long stackBase, long stackSize,
-                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
+    public final void jniGatherThread(AppendableSequence<TeleNativeThread> threads,
+                    int id,
+                    long localHandle,
+                    long handle,
+                    int state,
+                    long instructionPointer,
+                    long stackBase,
+                    long stackSize,
+                    long tlb,
+                    int tlbSize,
+                    int tlaSize) {
         assert state >= 0 && state < ThreadState.VALUES.length() : state;
-        TeleNativeThread thread = handleToThreadMap.get(handle);
-        boolean hasThreadLocals = triggeredVmThreadLocals != 0;
+        TeleNativeThread thread = handleToThreadMap.get(localHandle);
+
+        MemoryRegion stack = new FixedMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack");
+        MemoryRegion threadLocalsBlock = new FixedMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals block");
+
+        Params params = new Params();
+        params.id = id;
+        params.localHandle = localHandle;
+        params.handle = handle;
+        params.stack = stack;
+        params.threadLocalsBlock = threadLocalsBlock;
+
         if (thread == null) {
-            thread = createTeleNativeThread(id, handle, stackBase, stackSize, hasThreadLocals);
+            thread = createTeleNativeThread(params);
         } else {
             // Handle the cases where a thread was added/removed from the global thread list since the last epoch
             if (id > 0) {
                 if (thread.id() != id) {
-                    assert !thread.isJava();
                     // This is a Java thread that added from the global thread list since the last epoch.
-                    thread = createTeleNativeThread(id, handle, stackBase, stackSize, hasThreadLocals);
+                    thread = createTeleNativeThread(params);
                 }
             } else {
                 if (thread.id() != id) {
-                    assert thread.isJava();
+                    assert thread.isJava() : thread.id() + " != " + id + ": " + thread + ", params=" + params;
                     // This is a Java thread that removed from the global thread list since the last epoch
-                    thread = createTeleNativeThread(id, handle, stackBase, stackSize, hasThreadLocals);
+                    thread = createTeleNativeThread(params);
                 }
             }
         }
 
         final Map<Safepoint.State, Pointer> vmThreadLocals;
-        if (hasThreadLocals) {
-            assert enabledVmThreadLocals != 0 && disabledVmThreadLocals != 0;
+        if (tlb != 0) {
+            Pointer enabledVmThreadLocals = TeleThreadLocalsBlock.getThreadLocalsArea(threadLocalsBlock.start(), tlaSize, Safepoint.State.ENABLED).asPointer();
+            Pointer disabledVmThreadLocals = TeleThreadLocalsBlock.getThreadLocalsArea(threadLocalsBlock.start(), tlaSize, Safepoint.State.DISABLED).asPointer();
+            Pointer triggeredVmThreadLocals = TeleThreadLocalsBlock.getThreadLocalsArea(threadLocalsBlock.start(), tlaSize, Safepoint.State.TRIGGERED).asPointer();
             vmThreadLocals = new EnumMap<Safepoint.State, Pointer>(Safepoint.State.class);
-            vmThreadLocals.put(Safepoint.State.ENABLED, Pointer.fromLong(enabledVmThreadLocals));
-            vmThreadLocals.put(Safepoint.State.DISABLED, Pointer.fromLong(disabledVmThreadLocals));
-            vmThreadLocals.put(Safepoint.State.TRIGGERED, Pointer.fromLong(triggeredVmThreadLocals));
+            vmThreadLocals.put(Safepoint.State.ENABLED, enabledVmThreadLocals);
+            vmThreadLocals.put(Safepoint.State.DISABLED, disabledVmThreadLocals);
+            vmThreadLocals.put(Safepoint.State.TRIGGERED, triggeredVmThreadLocals);
         } else {
             vmThreadLocals = null;
         }
@@ -601,16 +621,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             // Refresh the thread
             thread.refresh(epoch());
 
-            newHandleToThreadMap.put(thread.handle(), thread);
-            final TeleNativeThread oldThread = handleToThreadMap.get(thread.handle());
+            newHandleToThreadMap.put(thread.localHandle(), thread);
+            final TeleNativeThread oldThread = handleToThreadMap.get(thread.localHandle());
             if (oldThread != null) {
                 if (oldThread != thread) {
                     threadsStarted.add(thread);
-                    if (!oldThread.isJava()) {
-                        assert thread.isJava() : "should be a Java thread just added to the global thread list";
-                    } else {
-                        assert !thread.isJava() : "should be a Java thread just removed from the global thread list";
-                    }
                 } else {
                     threadsDied.remove(thread);
                     Trace.line(TRACE_VALUE, "    "  + thread);

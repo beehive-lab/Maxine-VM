@@ -46,10 +46,10 @@ typedef struct image_Header {
     jint pageSize;           /* multiple of 1024 */
 
     jint vmRunMethodOffset;
+    jint vmThreadAddMethodOffset;
     jint vmThreadRunMethodOffset;
     jint vmThreadAttachMethodOffset;
     jint vmThreadDetachMethodOffset;
-    jint runSchemeRunMethodOffset;
 
     jint classRegistryOffset;
 
@@ -74,11 +74,8 @@ typedef struct image_Header {
 
     jint primordialThreadLocalsOffset;
 
-    /* The storage size of one set of VM thread locals. */
-    jint threadLocalsSize;
-
-    /* The storage size of a Java frame anchor. */
-    jint javaFrameAnchorSize;
+    /* The size of a thread locals area. */
+    jint threadLocalsAreaSize;
 
     /* The indexes of the VM thread locals accessed directly by C code. */
     jint SAFEPOINT_LATCH;
@@ -95,6 +92,8 @@ typedef struct image_Header {
     jint TRAP_INSTRUCTION_POINTER;
     jint TRAP_FAULT_ADDRESS;
     jint TRAP_LATCH_REGISTER;
+    jint STACK_REFERENCE_MAP;
+    jint STACK_REFERENCE_MAP_SIZE;
 
 } *image_Header;
 

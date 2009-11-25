@@ -77,17 +77,18 @@ public enum JavaFrameAnchor {
 
     /**
      * Determines if a given anchor indicates a frame that transitioned into Java code.
+     * That is, a frame in a {@linkplain VM_ENTRY_POINT VM entry point}.
      * This will return true if the {@link #PC} is zero.
      *
      * @param anchor the anchor to test
-     * @return {@code true} if {@code PC} is zero in {@code anchor}
+     * @return {@code true} if {@code anchor} is zero or {@code PC} is zero in {@code anchor}
      */
     public static boolean inJava(Pointer anchor) {
-        return JavaFrameAnchor.PC.get(anchor).isZero();
+        return !anchor.isZero() && JavaFrameAnchor.PC.get(anchor).isZero();
     }
 
     /**
-     * Gets the current anchor for a given thread.
+     * Gets the current anchor (which may be null) for a given thread.
      *
      * @param vmThreadLocals the thread locals for a thread
      * @return the Java frame anchor recorded for the thread denoted by {@code vmThreadLocals}

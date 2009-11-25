@@ -88,6 +88,7 @@ public final class ThreadsTable extends InspectorTable {
             super(ThreadsColumnKind.VALUES.length(), viewPreferences);
             addColumn(ThreadsColumnKind.ID, new IDCellRenderer(inspection()), null);
             addColumn(ThreadsColumnKind.HANDLE, new HandleCellRenderer(inspection()), null);
+            addColumn(ThreadsColumnKind.LOCAL_HANDLE, new LocalHandleCellRenderer(inspection()), null);
             addColumn(ThreadsColumnKind.KIND, new KindCellRenderer(inspection()), null);
             addColumn(ThreadsColumnKind.NAME, new NameCellRenderer(inspection()), null);
             addColumn(ThreadsColumnKind.STATUS, new StatusCellRenderer(inspection()), null);
@@ -185,9 +186,27 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
-            final String handleString = Long.toString(thread.handle());
+            final String handleString = thread.handleString();
             setText(handleString);
-            setToolTipText("Native thread handle:  " + handleString);
+            setToolTipText("Thread handle:  " + handleString);
+            setForeground(getRowTextColor(row));
+            setBackground(cellBackgroundColor(isSelected));
+            return this;
+        }
+    }
+
+    private final class LocalHandleCellRenderer extends PlainLabel implements TableCellRenderer {
+
+        LocalHandleCellRenderer(Inspection inspection) {
+            super(inspection, null);
+            setOpaque(true);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MaxThread thread = (MaxThread) value;
+            final String handleString = Long.toString(thread.localHandle());
+            setText(handleString);
+            setToolTipText("Local thread handle:  " + handleString);
             setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;

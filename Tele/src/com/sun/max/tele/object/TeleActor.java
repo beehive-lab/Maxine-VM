@@ -162,9 +162,9 @@ public abstract class TeleActor extends TeleTupleObject {
             // 0x01000000
             sb.append("C_FUNCTION, ");
         }
-        if ((flagsValue & Actor.JNI_FUNCTION) != 0) {
-            // 0x02000000
-            sb.append("JNI_FUNCTION, ");
+        if ((flagsValue & Actor.VM_ENTRY_POINT) != 0) {
+            // 0x01000000
+            sb.append("VM_ENTRY_POINT, ");
         }
         if ((flagsValue & Actor.FOLD) != 0) {
             // 0x04000000

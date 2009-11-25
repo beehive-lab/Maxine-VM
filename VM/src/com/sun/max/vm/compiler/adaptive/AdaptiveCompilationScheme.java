@@ -189,7 +189,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme recommendedCompiler, RuntimeCompilerScheme prohibitedCompiler) {
         Compilation compilation;
         synchronized (classMethodActor) {
-            assert !(classMethodActor.isNative() && classMethodActor.isJniFunction()) : "cannot compile JNI functions that are native";
+            assert !(classMethodActor.isNative() && classMethodActor.isVmEntryPoint()) : "cannot compile JNI functions that are native";
             Object targetState = classMethodActor.targetState;
             if (targetState == null) {
                 // this is the first compilation.
