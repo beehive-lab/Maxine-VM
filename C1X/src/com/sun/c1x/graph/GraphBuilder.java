@@ -127,7 +127,7 @@ public class GraphBuilder {
                 }
                 if (tryInlineIntrinsic(rootMethod, args, isStatic, intrinsic)) {
                     // intrinsic inlining succeeded, add the return node
-                    CiKind rt = returnBasicType(rootMethod);
+                    CiKind rt = returnKind(rootMethod);
                     Value result = null;
                     if (rt != CiKind.Void) {
                         result = pop(rt);
@@ -240,13 +240,13 @@ public class GraphBuilder {
         curState.apush(x);
     }
 
-    void push(CiKind basicType, Value x) {
-        curState.push(basicType, x);
+    void push(CiKind kind, Value x) {
+        curState.push(kind, x);
     }
 
-    void pushReturn(CiKind basicType, Value x) {
-        if (basicType != CiKind.Void) {
-            curState.push(basicType.stackType(), x);
+    void pushReturn(CiKind kind, Value x) {
+        if (kind != CiKind.Void) {
+            curState.push(kind.stackType(), x);
         }
     }
 
@@ -270,29 +270,29 @@ public class GraphBuilder {
         return curState.apop();
     }
 
-    Value pop(CiKind basicType) {
-        return curState.pop(basicType);
+    Value pop(CiKind kind) {
+        return curState.pop(kind);
     }
 
-    void loadLocal(int index, CiKind basicType) {
-        push(basicType, curState.loadLocal(index));
+    void loadLocal(int index, CiKind kind) {
+        push(kind, curState.loadLocal(index));
     }
 
-    void storeLocal(CiKind basicType, int index) {
+    void storeLocal(CiKind kind, int index) {
         if (scopeData.parsingJsr()) {
             // We need to do additional tracking of the location of the return
             // address for jsrs since we don't handle arbitrary jsr/ret
             // constructs. Here we are figuring out in which circumstances we
             // need to bail out.
-            if (basicType == CiKind.Object) {
+            if (kind == CiKind.Object) {
                 // might be storing the JSR return address
                 Value x = curState.xpop();
-                if (x.type().isJsr()) {
+                if (x.kind.isJsr()) {
                     setJsrReturnAddressLocal(index);
                     curState.storeLocal(index, x);
                 } else {
                     // nope, not storing the JSR return address
-                    assert x.type().isObject();
+                    assert x.kind.isObject();
                     curState.storeLocal(index, x);
                     overwriteJsrReturnAddressLocal(index);
                 }
@@ -303,7 +303,7 @@ public class GraphBuilder {
             }
         }
 
-        curState.storeLocal(index, roundFp(pop(basicType)));
+        curState.storeLocal(index, roundFp(pop(kind)));
     }
 
     private void overwriteJsrReturnAddressLocal(int index) {
@@ -327,7 +327,7 @@ public class GraphBuilder {
 
     Value roundFp(Value x) {
         if (C1XOptions.RoundFPResults && C1XOptions.SSEVersion < 2) {
-            if (x.type().isDouble() && !(x instanceof Constant) && !(x instanceof Local) && !(x instanceof RoundFP)) {
+            if (x.kind.isDouble() && !(x instanceof Constant) && !(x instanceof Local) && !(x instanceof RoundFP)) {
                 return append(new RoundFP(x));
             }
         }
@@ -553,41 +553,41 @@ public class GraphBuilder {
 
     }
 
-    void genArithmeticOp(CiKind basicType, int opcode) {
-        genArithmeticOp(basicType, opcode, null);
+    void genArithmeticOp(CiKind kind, int opcode) {
+        genArithmeticOp(kind, opcode, null);
     }
 
-    void genArithmeticOp(CiKind basicType, int opcode, ValueStack stack) {
-        Value y = pop(basicType);
-        Value x = pop(basicType);
+    void genArithmeticOp(CiKind kind, int opcode, ValueStack stack) {
+        Value y = pop(kind);
+        Value x = pop(kind);
         Value result = append(new ArithmeticOp(opcode, x, y, method().isStrictFP(), stack));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             result = roundFp(result);
         }
-        push(basicType, result);
+        push(kind, result);
     }
 
-    void genNegateOp(CiKind basicType) {
-        push(basicType, append(new NegateOp(pop(basicType))));
+    void genNegateOp(CiKind kind) {
+        push(kind, append(new NegateOp(pop(kind))));
     }
 
-    void genShiftOp(CiKind basicType, int opcode) {
+    void genShiftOp(CiKind kind, int opcode) {
         Value s = ipop();
-        Value x = pop(basicType);
+        Value x = pop(kind);
         // note that strength reduction of e << K >>> K is correctly handled in canonicalizer now
-        push(basicType, append(new ShiftOp(opcode, x, s)));
+        push(kind, append(new ShiftOp(opcode, x, s)));
     }
 
-    void genLogicOp(CiKind basicType, int opcode) {
-        Value y = pop(basicType);
-        Value x = pop(basicType);
-        push(basicType, append(new LogicOp(opcode, x, y)));
+    void genLogicOp(CiKind kind, int opcode) {
+        Value y = pop(kind);
+        Value x = pop(kind);
+        push(kind, append(new LogicOp(opcode, x, y)));
     }
 
-    void genCompareOp(CiKind basicType, int opcode) {
+    void genCompareOp(CiKind kind, int opcode) {
         ValueStack stateBefore = curState.immutableCopy();
-        Value y = pop(basicType);
-        Value x = pop(basicType);
+        Value y = pop(kind);
+        Value x = pop(kind);
         ipush(append(new CompareOp(opcode, x, y, stateBefore)));
     }
 
@@ -630,10 +630,10 @@ public class GraphBuilder {
         ifNode(x, cond, y, stateBefore);
     }
 
-    void genIfSame(CiKind basicType, Condition cond) {
+    void genIfSame(CiKind kind, Condition cond) {
         ValueStack stateBefore = curState.immutableCopy();
-        Value y = pop(basicType);
-        Value x = pop(basicType);
+        Value y = pop(kind);
+        Value x = pop(kind);
         ifNode(x, cond, y, stateBefore);
     }
 
@@ -759,12 +759,12 @@ public class GraphBuilder {
         append(store);
     }
 
-    private void appendOptimizedLoadField(CiKind basicType, LoadField load) {
+    private void appendOptimizedLoadField(CiKind kind, LoadField load) {
         if (memoryMap != null) {
             Value replacement = memoryMap.load(load);
             if (replacement != load) {
                 // the memory buffer found a replacement for this load (no need to append)
-                push(basicType.stackType(), replacement);
+                push(kind.stackType(), replacement);
                 return;
             }
         }
@@ -774,7 +774,7 @@ public class GraphBuilder {
             // local optimization happened, replace its value in the memory map
             memoryMap.setResult(load, optimized);
         }
-        push(basicType.stackType(), optimized);
+        push(kind.stackType(), optimized);
     }
 
     void genInvokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
@@ -836,8 +836,8 @@ public class GraphBuilder {
         }
     }
 
-    private CiKind returnBasicType(RiMethod target) {
-        return target.signatureType().returnBasicType();
+    private CiKind returnKind(RiMethod target) {
+        return target.signatureType().returnKind();
     }
 
     void genInvokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
@@ -856,7 +856,7 @@ public class GraphBuilder {
     }
 
     private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
-        CiKind resultType = returnBasicType(target);
+        CiKind resultType = returnKind(target);
         Value result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool, stateBefore));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             pushReturn(resultType, roundFp(result));
@@ -912,7 +912,7 @@ public class GraphBuilder {
         }
         if (exactType == null && receiver instanceof Local && ((Local) receiver).javaIndex() == 0) {
             // the exact type isn't known, but the receiver is parameter 0 => use holder
-            receiverType = compilation.method().holder();
+            receiverType = compilation.method.holder();
             exactType = receiverType.exactType();
         }
         boolean needsCheck = true;
@@ -973,7 +973,7 @@ public class GraphBuilder {
             // trim back stack to the caller's stack size
             curState.truncateStack(scopeData.callerStackSize());
             if (x != null) {
-                curState.push(x.type(), x);
+                curState.push(x.kind, x);
             }
             Goto gotoCallee = new Goto(scopeData.continuation(), null, false);
 
@@ -987,7 +987,7 @@ public class GraphBuilder {
             // return value, if any, of the inlined method on operand stack.
             curState = scopeData.continuationState().copy();
             if (x != null) {
-                curState.push(x.type(), x);
+                curState.push(x.kind, x);
             }
 
             // The current bci() is in the wrong scope, so use the bci() of
@@ -1272,7 +1272,7 @@ public class GraphBuilder {
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i);
-            CiKind vt = type.basicType().stackType();
+            CiKind vt = type.kind().stackType();
             Local local = new Local(vt, index);
             if (type.isLoaded()) {
                 local.setDeclaredType(type);
@@ -1316,7 +1316,7 @@ public class GraphBuilder {
         }
 
         // get the arguments for the intrinsic
-        CiKind resultType = returnBasicType(target);
+        CiKind resultType = returnKind(target);
 
         // create the intrinsic node
         Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, target, args, isStatic, curState.copy(), preservesState, canTrap);
@@ -1328,7 +1328,7 @@ public class GraphBuilder {
     private boolean tryFoldable(RiMethod target, Value[] args) {
         CiConstant result = Canonicalizer.foldInvocation(target, args);
         if (result != null) {
-            pushReturn(returnBasicType(target), append(new Constant(result)));
+            pushReturn(returnKind(target), append(new Constant(result)));
             return true;
         }
         return false;
@@ -1654,13 +1654,13 @@ public class GraphBuilder {
             int offset = frame.getLocalOffset(i);
             if (local != null) {
                 // this is a live local according to compiler
-                if (local.type().isObject() && !frame.isLiveObject(i)) {
+                if (local.kind.isObject() && !frame.isLiveObject(i)) {
                     // the compiler thinks this is live, but not the interpreter
                     // pretend that it passed null
                     get = appendConstant(CiConstant.NULL_OBJECT);
                 } else {
                     Value oc = appendConstant(CiConstant.forInt(offset));
-                    get = append(new UnsafeGetRaw(local.type(), e, oc, 0, true));
+                    get = append(new UnsafeGetRaw(local.kind, e, oc, 0, true));
                 }
                 state.storeLocal(i, get);
             }

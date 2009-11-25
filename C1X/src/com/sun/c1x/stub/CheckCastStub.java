@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class CheckCastStub extends CodeStub {
+public class CheckCastStub extends LocalStub {
 
     public CheckCastStub(LIROperand obj, LIRDebugInfo info) {
         super(info);

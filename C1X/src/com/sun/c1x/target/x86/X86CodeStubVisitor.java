@@ -57,7 +57,7 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
 
         // Receive calling convention (for the current method, but with outgoing==true, i.e. as if we were calling the current method)
         FrameMap map = compilation.frameMap();
-        CallingConvention cc = map.javaCallingConvention(Util.signatureToBasicTypes(compilation.method.signatureType(), !compilation.method.isStatic()), true, false);
+        CallingConvention cc = map.javaCallingConvention(Util.signatureToKinds(compilation.method.signatureType(), !compilation.method.isStatic()), true, false);
 
         // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
         final int adapterFrameSize = cc.overflowArgumentSize;
@@ -160,32 +160,11 @@ public final class X86CodeStubVisitor extends CodeStubVisitor {
         masm.bind(stub.entry);
         if (stub.computeLock) {
             // lockReg was destroyed by fast unlocking attempt => recompute it
-            ce.monitorAddress(stub.monitorIx, stub.lockReg());
+            ce.emitMonitorAddress(stub.monitorIx, stub.lockReg());
         }
 
         int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.Monitorexit, stub.info, CiRegister.None, stub.objReg().asRegister(), stub.lockReg().asRegister());
         compilation.addCallInfo(infoPos, stub.info);
-        masm.jmp(stub.continuation);
-    }
-
-    @Override
-    public void visitNewInstanceStub(NewInstanceStub stub) {
-        masm.bind(stub.entry);
-        ce.verifyOopMap(stub.info);
-        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.NewInstance, stub.info, stub.result().asRegister(), stub.klassReg().asRegister());
-        compilation.addCallInfo(infoPos, stub.info);
-        masm.jmp(stub.continuation);
-    }
-
-    @Override
-    public void visitNewObjectArrayStub(NewObjectArrayStub stub) {
-        masm.bind(stub.entry);
-        assert stub.length().asRegister() == X86.rbx : "length must in X86Register.rbx : ";
-        assert stub.klassReg().asRegister() == X86.rdx : "klassReg must in X86Register.rdx";
-        int infoPos = masm.callRuntimeCalleeSaved(CiRuntimeCall.NewArray, stub.info, X86.rax, X86.rdx, X86.rbx);
-        compilation.addCallInfo(infoPos, stub.info);
-        ce.verifyOopMap(stub.info);
-        assert stub.result().asRegister() == X86.rax : "result must in X86Register.rax : ";
         masm.jmp(stub.continuation);
     }
 

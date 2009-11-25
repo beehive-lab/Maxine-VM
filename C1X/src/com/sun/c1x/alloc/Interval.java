@@ -143,7 +143,7 @@ public final class Interval {
 
     void setType(CiKind type) {
         assert registerNumber < CiRegister.FirstVirtualRegisterNumber || this.type == CiKind.Illegal || this.type == type : "overwriting existing type";
-        assert type != CiKind.Boolean && type != CiKind.Byte && type != CiKind.Char : "these basic types should have int type registers";
+        assert type != CiKind.Boolean && type != CiKind.Byte && type != CiKind.Char : "these kinds should have int type registers";
         this.type = type;
     }
 

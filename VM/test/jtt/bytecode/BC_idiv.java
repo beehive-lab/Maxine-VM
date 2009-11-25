@@ -22,7 +22,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: (1,2)=0; (2,-1)=-2; (256,4)=64; (135,7)=19
+ * @Runs: (1,2)=0; (2,-1)=-2; (256,4)=64; (135,7)=19;
  */
 public class BC_idiv {
     public static int test(int a, int b) {

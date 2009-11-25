@@ -439,7 +439,7 @@ public class BlockBegin extends Instruction {
             Value x = newState.localAt(i);
             if (x != null) {
                 if (requiresPhi != null) {
-                    if (requiresPhi.get(i) || x.type().isDoubleWord() && requiresPhi.get(i + 1)) {
+                    if (requiresPhi.get(i) || x.kind.isDoubleWord() && requiresPhi.get(i + 1)) {
                         // selectively do a phi
                         newState.setupPhiForLocal(this, i);
                     }

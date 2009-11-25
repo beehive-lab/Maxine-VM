@@ -37,7 +37,7 @@ public class Return extends BlockEnd {
      * is a void return
      */
     public Return(Value result) {
-        super(result == null ? CiKind.Void : result.type(), null, true);
+        super(result == null ? CiKind.Void : result.kind, null, true);
         this.result = result;
     }
 

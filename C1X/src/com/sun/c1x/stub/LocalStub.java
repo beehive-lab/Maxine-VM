@@ -25,14 +25,12 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.lir.*;
 
 /**
- * The <code>CodeStub</code> class definition. CodeStubs are little 'out-of-line'
- * pieces of code that usually handle slow cases of operations. All code stubs are
- * collected and code is emitted at the end of the method.
+ * LocalStubs are small sequences of code that handle slow cases of operations.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public abstract class CodeStub {
+public abstract class LocalStub {
 
     public LIRDebugInfo info;
     public final Label entry = new Label();            // label at the stub entry point
@@ -40,18 +38,18 @@ public abstract class CodeStub {
 
     protected LIRInstruction instruction;
 
-    private LIROperand[] operands;
-    private LIROperand result;
-    private LIRInstruction.OperandSlot resultSlot;
+    public LIROperand[] operands;
+    public LIROperand result;
+    public LIRInstruction.OperandSlot resultSlot;
 
-    protected int tempCount;
-    protected int tempInputCount;
+    public int tempCount;
+    public int tempInputCount;
 
-    public CodeStub(LIRDebugInfo info) {
+    public LocalStub(LIRDebugInfo info) {
         this(info, LIROperandFactory.IllegalLocation);
     }
 
-    public CodeStub(LIRDebugInfo info, LIROperand result) {
+    public LocalStub(LIRDebugInfo info, LIROperand result) {
         this.info = info;
         this.result = result;
     }
@@ -66,19 +64,11 @@ public abstract class CodeStub {
         return instruction.stubOperand(index);
     }
 
-    /**
-     * Asserts that the code stub has bounded labels.
-     */
     public boolean assertNoUnboundLabels() {
         assert !entry.isUnbound() && !continuation.isUnbound() : "Code stub has an unbound label";
         return true;
     }
 
-    /**
-     * Checks if this is an exception throw code stub.
-     *
-     * @return false
-     */
     public boolean isExceptionThrowStub() {
         return false;
     }
@@ -99,18 +89,6 @@ public abstract class CodeStub {
 
     public LIROperand result() {
         return resultSlot.get(instruction);
-    }
-
-    public LIROperand[] operands() {
-        return operands;
-    }
-
-    public int tempCount() {
-        return tempCount;
-    }
-
-    public int tempInputCount() {
-        return tempInputCount;
     }
 
     public void setResultSlot(LIRInstruction.OperandSlot resultSlot) {

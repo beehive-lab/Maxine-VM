@@ -65,6 +65,21 @@ public class Info {
         java_lang_ArithmeticException,
 
         /**
+         * This instruction may throw {@link NegativeArraySizeException}.
+         */
+        java_lang_NegativeArraySizeException,
+
+        /**
+         * This instruction may throw {@link OutOfMemoryError}.
+         */
+        java_lang_OutOfMemoryError,
+
+        /**
+         * This instruction may throw {@link IncompatibleClassChangeError}.
+         */
+        java_lang_IncompatibleClassChangeError,
+
+        /**
          * This instruction may cause a safepoint.
          */
         Safepoint,

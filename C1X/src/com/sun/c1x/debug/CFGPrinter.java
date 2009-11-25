@@ -208,7 +208,7 @@ public class CFGPrinter {
               printLirOperand(value);
               out.println();
               out.enableIndentation();
-              i += value.type().sizeInSlots();
+              i += value.kind.sizeInSlots();
           }
           end("stack");
         }
@@ -242,7 +242,7 @@ public class CFGPrinter {
                     out.println();
                     out.enableIndentation();
                     // also ignore illegal HiWords
-                    i += value.isIllegal() ? 1 : value.type().sizeInSlots();
+                    i += value.isIllegal() ? 1 : value.kind.sizeInSlots();
                 } else {
                     i++;
                 }

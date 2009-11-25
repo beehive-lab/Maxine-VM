@@ -37,7 +37,7 @@ public class NegateOp extends Instruction {
      * @param x the instruction producing the value that is input to this instruction
      */
     public NegateOp(Value x) {
-        super(x.type());
+        super(x.kind);
         this.x = x;
     }
 

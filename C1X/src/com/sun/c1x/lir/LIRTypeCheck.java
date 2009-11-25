@@ -35,58 +35,33 @@ public class LIRTypeCheck extends LIRInstruction {
     private RiType klass;
     private boolean fastCheck;
 
-    // Helpers for Tier1UpdateMethodData
-    RiMethod profiledMethod;
-    int profiledBci;
-
-    /**
-     * Constructs a new TypeCheck instruction.
-     *
-     * @param opcode
-     * @param result
-     * @param object
-     * @param tmp1
-     * @param tmp2
-     * @param tmp3
-     * @param fastCheck
-     * @param infoForPatch
-     * @param infoForException
-     * @param stub
-     * @param profiledMethod
-     * @param profiledBci
-     */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForException,
-                        LIRDebugInfo infoForPatch, CodeStub stub, RiMethod profiledMethod, int profiledBci) {
+    public LIRTypeCheck(LIROpcode opcode,
+                        LIROperand result,
+                        LIROperand object,
+                        RiType klass,
+                        LIROperand tmp1,
+                        LIROperand tmp2,
+                        LIROperand tmp3,
+                        boolean fastCheck,
+                        LIRDebugInfo infoForException,
+                        LocalStub stub) {
         super(opcode, result, infoForException, false, stub, 1, 2, object, LIROperandFactory.IllegalLocation, tmp1, tmp2, tmp3);
 
         assert opcode == LIROpcode.CheckCast || opcode == LIROpcode.InstanceOf;
         this.klass = klass;
         this.fastCheck = fastCheck;
-        this.profiledMethod = profiledMethod;
-        this.profiledBci = profiledBci;
     }
 
-    /**
-     * Constructs a new TypeCheck instruction.
-     *
-     * @param opcode
-     * @param object
-     * @param array
-     * @param tmp1
-     * @param tmp2
-     * @param tmp3
-     * @param infoForException
-     * @param profiledMethod
-     * @param profiledBci
-     */
-    public LIRTypeCheck(LIROpcode opcode, LIROperand object, LIROperand array,
-                        LIROperand tmp1, LIROperand tmp2, LIROperand tmp3,
-                        LIRDebugInfo infoForException, RiMethod profiledMethod, int profiledBci) {
+    public LIRTypeCheck(LIROpcode opcode,
+                        LIROperand object,
+                        LIROperand array,
+                        LIROperand tmp1,
+                        LIROperand tmp2,
+                        LIROperand tmp3,
+                        LIRDebugInfo infoForException) {
         super(opcode, LIROperandFactory.IllegalLocation, infoForException, false, new ArrayStoreExceptionStub(infoForException), 0, 3, object, array, tmp1, tmp2, tmp3);
         this.klass = null;
         this.fastCheck = false;
-        this.profiledMethod = profiledMethod;
-        this.profiledBci = profiledBci;
         assert opcode == LIROpcode.StoreCheck;
         assert infoForException != null : "infoForException must not be null. StoreCheck instrution throws exceptions.";
     }
@@ -110,29 +85,14 @@ public class LIRTypeCheck extends LIRInstruction {
         return operand(1);
     }
 
-    /**
-     * Gets the tmp1 of this type check instruction.
-     *
-     * @return the tmp1
-     */
     public LIROperand tmp1() {
         return operand(2);
     }
 
-    /**
-     * Gets the tmp2 of this type check instruction.
-     *
-     * @return the tmp2
-     */
     public LIROperand tmp2() {
         return operand(3);
     }
 
-    /**
-     * Gets the tmp3 of this type check instruction.
-     *
-     * @return the tmp3
-     */
     public LIROperand tmp3() {
         return operand(4);
     }
@@ -149,26 +109,22 @@ public class LIRTypeCheck extends LIRInstruction {
 
     /**
      * Gets the fastCheck of this type check instruction.
-     *
      * @return the fastCheck
      */
     public boolean isFastCheck() {
-        assert code == LIROpcode.InstanceOf || code == LIROpcode.CheckCast : "opcode is not valid.";
         return fastCheck;
     }
 
     /**
      * Gets the profiledMethod of this type check.
-     *
      * @return the profiledMethod
      */
     public RiMethod profiledMethod() {
-        return profiledMethod;
+        return null;
     }
 
     /**
      * Emits target assembly code for this instruction.
-     *
      * @param masm the target assembler
      */
     @Override

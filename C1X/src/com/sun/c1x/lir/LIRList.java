@@ -313,7 +313,7 @@ public class LIRList {
         append(new LIRBranch(LIRCondition.Always, CiKind.Illegal, block));
     }
 
-    public void jump(CodeStub stub) {
+    public void jump(LocalStub stub) {
         append(new LIRBranch(LIRCondition.Always, CiKind.Illegal, stub));
     }
 
@@ -326,7 +326,7 @@ public class LIRList {
         append(new LIRBranch(cond, type, block));
     }
 
-    public void branch(LIRCondition cond, CiKind type, CodeStub stub) {
+    public void branch(LIRCondition cond, CiKind type, LocalStub stub) {
         assert type != CiKind.Float && type != CiKind.Double : "no fp comparisons";
         append(new LIRBranch(cond, type, stub));
     }
@@ -356,10 +356,6 @@ public class LIRList {
         append(new LIRRuntimeCall(routine, result, arguments, info, false));
     }
 
-    public void callRuntimeCalleeSaved(CiRuntimeCall routine, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRRuntimeCall(routine, result, arguments, info, true));
-    }
-
     public void loadStackAddressMonitor(int monitorIx, LIROperand dst) {
         append(new LIROp1(LIROpcode.Monaddr, LIROperandFactory.intConst(monitorIx), dst));
     }
@@ -372,16 +368,16 @@ public class LIRList {
         append(new LIROp3(LIROpcode.Idiv, left, right, tmp, res, info));
     }
 
-    public void idiv(LIROperand left, int right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
-        append(new LIROp3(LIROpcode.Idiv, left, LIROperandFactory.intConst(right), tmp, res, info));
-    }
-
     public void irem(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Irem, left, right, tmp, res, info));
     }
 
-    public void irem(LIROperand left, int right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
-        append(new LIROp3(LIROpcode.Irem, left, LIROperandFactory.intConst(right), tmp, res, info));
+    public void ldiv(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Ldiv, left, right, tmp, res, info));
+    }
+
+    public void lrem(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Lrem, left, right, tmp, res, info));
     }
 
     public void cmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, LIRDebugInfo info) {
@@ -392,11 +388,11 @@ public class LIRList {
         append(new LIROp2(LIROpcode.Cmp, condition, reg, addr, info));
     }
 
-    public void allocateObject(LIROperand dst, LIROperand t1, LIROperand t2, LIROperand t3, LIROperand t4, int headerSize, int objectSize, LIROperand klass, boolean initCheck, CodeStub stub) {
+    public void allocateObject(LIROperand dst, LIROperand t1, LIROperand t2, LIROperand t3, LIROperand t4, int headerSize, int objectSize, LIROperand klass, boolean initCheck, LocalStub stub) {
         append(new LIRAllocObj(klass, dst, t1, t2, t3, t4, headerSize, objectSize, initCheck, stub));
     }
 
-    public void allocateArray(LIROperand dst, LIROperand len, LIROperand t1, LIROperand t2, LIROperand t3, LIROperand t4, CiKind type, LIROperand klass, CodeStub stub) {
+    public void allocateArray(LIROperand dst, LIROperand len, LIROperand t1, LIROperand t2, LIROperand t3, LIROperand t4, CiKind type, LIROperand klass, LocalStub stub) {
         append(new LIRAllocArray(klass, len, dst, t1, t2, t3, t4, type, stub));
     }
 
@@ -416,25 +412,24 @@ public class LIRList {
         append(new LIROp2(isUnorderedLess ? LIROpcode.Ucmpfd2i : LIROpcode.Cmpfd2i, left, right, dst));
     }
 
-    public void lockObject(LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, CodeStub stub, LIRDebugInfo info) {
+    public void lockObject(LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, LocalStub stub, LIRDebugInfo info) {
         append(new LIRLock(LIROpcode.Monitorenter, hdr, obj, lock, scratch, stub, info));
     }
 
-    public void unlockObject(LIROperand hdr, LIROperand obj, LIROperand lock, CodeStub stub) {
+    public void unlockObject(LIROperand hdr, LIROperand obj, LIROperand lock, LocalStub stub) {
         append(new LIRLock(LIROpcode.Monitorexit, hdr, obj, lock, LIROperandFactory.IllegalLocation, stub, null));
     }
 
-    public void checkcast(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForException,
-                    LIRDebugInfo infoForPatch, CodeStub stub, RiMethod profiledMethod, int profiledBci) {
-        append(new LIRTypeCheck(LIROpcode.CheckCast, result, object, klass, tmp1, tmp2, tmp3, fastCheck, infoForException, infoForPatch, stub, profiledMethod, profiledBci));
+    public void checkcast(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForException, LocalStub stub) {
+        append(new LIRTypeCheck(LIROpcode.CheckCast, result, object, klass, tmp1, tmp2, tmp3, fastCheck, infoForException, stub));
     }
 
     public void genInstanceof(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForPatch) {
-        append(new LIRTypeCheck(LIROpcode.InstanceOf, result, object, klass, tmp1, tmp2, tmp3, fastCheck, null, infoForPatch, null, null, 0));
+        append(new LIRTypeCheck(LIROpcode.InstanceOf, result, object, klass, tmp1, tmp2, tmp3, fastCheck, null, null));
     }
 
     public void storeCheck(LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIRDebugInfo infoForException) {
-        append(new LIRTypeCheck(LIROpcode.StoreCheck, object, array, tmp1, tmp2, tmp3, infoForException, null, 0));
+        append(new LIRTypeCheck(LIROpcode.StoreCheck, object, array, tmp1, tmp2, tmp3, infoForException));
     }
 
     public void casLong(LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand t1, LIROperand t2) {

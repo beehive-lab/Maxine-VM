@@ -375,7 +375,7 @@ public class LogStream {
         if (value == null) {
             lineBuffer.append("null");
         } else {
-            lineBuffer.append(value.type().typeChar).append(value.id);
+            lineBuffer.append(value.kind.typeChar).append(value.id);
         }
         return this;
     }

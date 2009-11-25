@@ -26,7 +26,7 @@ import com.sun.c1x.lir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class RangeCheckStub extends CodeStub {
+public class RangeCheckStub extends LocalStub {
 
     public RangeCheckStub(LIRDebugInfo info, LIROperand index) {
         super(info);

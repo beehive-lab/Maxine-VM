@@ -61,7 +61,7 @@ public class LIRBranch extends LIRInstruction {
      * @param stub
      *
      */
-    public LIRBranch(LIRCondition cond, CiKind type, CodeStub stub) {
+    public LIRBranch(LIRCondition cond, CiKind type, LocalStub stub) {
         super(LIROpcode.Branch, LIROperandFactory.IllegalLocation, null, false, stub, 0, 0);
         this.cond = cond;
         this.label = stub.entry;

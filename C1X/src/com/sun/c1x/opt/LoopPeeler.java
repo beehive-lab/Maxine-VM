@@ -374,7 +374,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitConvert(Convert i) {
-        Convert other = new Convert(i.opcode(), lookup(i.value()), i.type());
+        Convert other = new Convert(i.opcode(), lookup(i.value()), i.kind);
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -394,7 +394,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitInvoke(Invoke i) {
-        Invoke other = new Invoke(i.opcode(), i.type(), cloneArguments(i.arguments()), i.isStatic(), i.vtableIndex(), i.target(), i.cpi, i.constantPool, i.stateBefore().copy());
+        Invoke other = new Invoke(i.opcode(), i.kind, cloneArguments(i.arguments()), i.isStatic(), i.vtableIndex(), i.target(), i.cpi, i.constantPool, i.stateBefore().copy());
         other.setBCI(i.bci());
         other.setExceptionHandlers(i.exceptionHandlers());
         bind(i, other);
@@ -501,7 +501,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitIntrinsic(Intrinsic i) {
-        Intrinsic other = new Intrinsic(i.type(), i.intrinsic(), i.target(), cloneArguments(i.arguments()), i.isStatic(), i.stateBefore().copy(), i.preservesState(), i.canTrap());
+        Intrinsic other = new Intrinsic(i.kind, i.intrinsic(), i.target(), cloneArguments(i.arguments()), i.isStatic(), i.stateBefore().copy(), i.preservesState(), i.canTrap());
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());
@@ -635,7 +635,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitUnsafeGetRaw(UnsafeGetRaw i) {
-        UnsafeGetRaw other = new UnsafeGetRaw(i.type(), lookup(i.base()), i.mayBeUnaligned());
+        UnsafeGetRaw other = new UnsafeGetRaw(i.kind, lookup(i.base()), i.mayBeUnaligned());
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -643,7 +643,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitUnsafePutRaw(UnsafePutRaw i) {
-        UnsafePutRaw other = new UnsafePutRaw(i.type(), lookup(i.base()), lookup(i.value()));
+        UnsafePutRaw other = new UnsafePutRaw(i.kind, lookup(i.base()), lookup(i.value()));
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -651,7 +651,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitUnsafeGetObject(UnsafeGetObject i) {
-        UnsafeGetObject other = new UnsafeGetObject(i.type(), lookup(i.object()), lookup(i.offset()), i.isVolatile());
+        UnsafeGetObject other = new UnsafeGetObject(i.kind, lookup(i.object()), lookup(i.offset()), i.isVolatile());
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -659,7 +659,7 @@ public class LoopPeeler extends ValueVisitor {
 
     @Override
     public void visitUnsafePutObject(UnsafePutObject i) {
-        UnsafePutObject other = new UnsafePutObject(i.type(), lookup(i.object()), lookup(i.offset()), lookup(i.value()), i.isVolatile());
+        UnsafePutObject other = new UnsafePutObject(i.kind, lookup(i.object()), lookup(i.offset()), lookup(i.value()), i.isVolatile());
         other.setBCI(i.bci());
         bind(i, other);
         addInstruction(other);
@@ -794,7 +794,7 @@ public class LoopPeeler extends ValueVisitor {
                 Value previousLocal = stateAtDestination.localAt(i);
                 //stateAtDestination.setupPhiForLocal(edge.destination, i);
                 if (previousLocal != null) {
-                    stateAtDestination.storeLocal(i, new Phi(x.type(), edge.destination, i));
+                    stateAtDestination.storeLocal(i, new Phi(x.kind, edge.destination, i));
                     mapValueToPhi.put(previousLocal, stateAtDestination.localAt(i));
                     hasSubstitution = true;
                 }

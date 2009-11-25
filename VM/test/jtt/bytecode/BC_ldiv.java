@@ -22,7 +22,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: (1L, 2L) = 0L; (2L, -1L) = -2L; (256L, 4L) = 64L; (135L, 7L) = 19L
+ * @Runs: (1L, 2L) = 0L; (2L, -1L) = -2L; (256L, 4L) = 64L; (135L, 7L) = 19L;
  */
 public class BC_ldiv {
     public static long test(long a, long b) {

@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class MonitorEnterStub extends CodeStub {
+public class MonitorEnterStub extends LocalStub {
 
     /**
      * Creates a new instance of <code>MonitorEnterStub</code>.

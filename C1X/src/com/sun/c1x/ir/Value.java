@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.ri.RiType;
+import com.sun.c1x.ri.RiRuntime;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiConstant;
@@ -105,14 +106,6 @@ public abstract class Value {
      */
     public final void clearLive() {
         flags = flags & ~LIVE_FLAGS;
-    }
-
-    /**
-     * Gets the type of the value pushed to the stack by this instruction.
-     * @return the value type of this instruction
-     */
-    public final CiKind type() {
-        return kind;
     }
 
     /**
@@ -251,6 +244,14 @@ public abstract class Value {
     }
 
     /**
+     * Checks whether this value represents the null constant.
+     * @return {@code true} if this value represents the null constant
+     */
+    public final boolean isNullConstant() {
+        return this instanceof Constant && ((Constant) this).value.isNull();
+    }
+
+    /**
      * Checks whether this instruction "is illegal"--i.e. it represents a dead
      * phi or an instruction which does not produce a value.
      * @return {@code true} if this instruction is illegal as an input value to another instruction
@@ -356,5 +357,15 @@ public abstract class Value {
      * @param v the visitor to accept
      */
     public abstract void accept(ValueVisitor v);
+
+    public static RiType exactType(Value value, RiRuntime runtime) {
+        if (value.isConstant()) {
+            Object obj = value.asConstant().asObject();
+            if (obj != null) {
+                return runtime.getRiType(obj.getClass());
+            }
+        }
+        return value.exactType();
+    }
 
 }

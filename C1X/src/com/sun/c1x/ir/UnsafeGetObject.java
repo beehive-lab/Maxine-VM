@@ -31,13 +31,13 @@ public class UnsafeGetObject extends UnsafeObjectOp {
 
     /**
      * Constructs a new UnsafeGetObject operation.
-     * @param basicType the basic type of the operation
+     * @param opKind the kind of the operation
      * @param object the instruction generating the object
      * @param offset the instruction generating the offset
      * @param isVolatile <code>true</code> if this operation is volatile
      */
-    public UnsafeGetObject(CiKind basicType, Value object, Value offset, boolean isVolatile) {
-        super(basicType, object, offset, false, isVolatile);
+    public UnsafeGetObject(CiKind opKind, Value object, Value offset, boolean isVolatile) {
+        super(opKind, object, offset, false, isVolatile);
     }
 
     /**

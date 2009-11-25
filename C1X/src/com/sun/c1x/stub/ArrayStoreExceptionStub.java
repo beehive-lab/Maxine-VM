@@ -28,7 +28,7 @@ import com.sun.c1x.lir.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class ArrayStoreExceptionStub extends CodeStub {
+public class ArrayStoreExceptionStub extends LocalStub {
 
     public ArrayStoreExceptionStub(LIRDebugInfo info) {
         super(info);
