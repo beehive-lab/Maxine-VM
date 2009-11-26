@@ -478,6 +478,33 @@ public interface AMD64EirInstruction {
                     break;
                 }
             }
+            if (isNativeFunctionCall) {
+                // Sign extend or zero the upper bits of a return value smaller than an int to
+                // preserve the invariant that all such values are represented by an int
+                // in the VM. We cannot rely on the native C compiler doing this for us.
+                Kind resultKind = javaFrameDescriptor().classMethodActor.resultKind();
+                switch (resultKind.asEnum) {
+                    case BOOLEAN:
+                    case BYTE: {
+                        assert result().location() == AMD64EirRegister.General.RAX;
+                        emitter.assembler().movsxb(AMD64GeneralRegister32.EAX, AMD64GeneralRegister8.AL);
+                        break;
+                    }
+                    case SHORT: {
+                        assert result().location() == AMD64EirRegister.General.RAX;
+                        emitter.assembler().movsxw(AMD64GeneralRegister32.EAX, AMD64GeneralRegister16.AX);
+                        break;
+                    }
+                    case CHAR: {
+                        assert result().location() == AMD64EirRegister.General.RAX;
+                        emitter.assembler().movzxw(AMD64GeneralRegister32.EAX, AMD64GeneralRegister16.AX);
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
         }
     }
 
