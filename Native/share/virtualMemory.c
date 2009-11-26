@@ -127,11 +127,11 @@ Address virtualMemory_deallocate(Address start, Size size, int type) {
 #endif
 }
 
-Address virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
+boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
 #if os_SOLARIS || os_DARWIN
-  return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0));
+    return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0)) != ALLOC_FAILED;
 #elif os_GUESTVMXEN
-  return (Address) guestvmXen_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type);
+    return (Address) guestvmXen_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type) != ALLOC_FAILED;
 #else
     c_UNIMPLEMENTED();
     return false;
