@@ -124,9 +124,11 @@ public final class FatalError extends Error {
         }
         recursionCount++;
 
-        final boolean lockDisabledSafepoints = Log.lock();
         final VmThread vmThread = VmThread.current();
-        vmThread.stackDumpStackFrameWalker().reset();
+        final boolean lockDisabledSafepoints = Log.lock();
+        if (vmThread != null) {
+            vmThread.stackDumpStackFrameWalker().reset();
+        }
 
         Log.println();
         Log.print("FATAL VM ERROR[");
@@ -147,15 +149,17 @@ public final class FatalError extends Error {
             TrapStateAccess.instance().logTrapState(trapState);
         }
 
-        dumpStackAndThreadLocals(VmThread.currentVmThreadLocals(), trappedInNative);
+        if (vmThread != null) {
+            dumpStackAndThreadLocals(VmThread.currentVmThreadLocals(), trappedInNative);
 
-        if (throwable != null) {
-            Log.print("------ Cause Exception ------");
-            throwable.printStackTrace(Log.out);
+            if (throwable != null) {
+                Log.print("------ Cause Exception ------");
+                throwable.printStackTrace(Log.out);
+            }
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, dumpStackOfNonCurrentThread);
         }
-        VmThreadMap.ACTIVE.forAllThreadLocals(null, dumpStackOfNonCurrentThread);
 
-        if (trappedInNative || Throw.scanStackOnFatalError.getValue()) {
+        if (vmThread == null || trappedInNative || Throw.scanStackOnFatalError.getValue()) {
             final Word highestStackAddress = VmThreadLocal.HIGHEST_STACK_SLOT_ADDRESS.getConstantWord();
             Throw.stackScan("RAW STACK SCAN FOR CODE POINTERS:", VMRegister.getCpuStackPointer(), highestStackAddress.asPointer());
         }
