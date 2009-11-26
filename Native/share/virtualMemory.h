@@ -38,7 +38,7 @@ extern Address virtualMemory_mapFileIn31BitSpace(jint size, jint fd, Size offset
 
 extern Address virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd, Size offset);
 
-extern Address virtualMemory_allocateAtFixedAddress(Address address, Size size, int type);
+extern boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int type);
 
 extern Address virtualMemory_allocate(Size size, int type);
 extern Address virtualMemory_allocateIn31BitSpace(Size size, int type);
