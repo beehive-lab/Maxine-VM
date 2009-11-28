@@ -373,9 +373,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         TeleTargetBreakpoint breakpoint = null;
 
         try {
-            // TODO (mlvdv) Obsolete
-            //breakpointFactory.registerBreakpointSetByVM(this);
-
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
             breakpoint = breakpointFactory.getTargetBreakpointAt(breakpointAddress);
         } catch (DataIOError dataIOError) {
