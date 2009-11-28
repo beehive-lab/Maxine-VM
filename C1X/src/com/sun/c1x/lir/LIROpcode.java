@@ -85,7 +85,7 @@ public enum LIROpcode {
         Lrem,
     EndOp3,
     StaticCall,
-    OptVirtualCall,
+    SpecialCall,
     InterfaceCall,
     VirtualCall,
     XirDirectCall,

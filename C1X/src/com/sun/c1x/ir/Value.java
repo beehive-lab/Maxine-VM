@@ -46,6 +46,7 @@ public abstract class Value {
         NoReadBarrier,      // does not require read barrier
         NoWriteBarrier,     // does not require write barrier
         NoZeroCheck,        // divide or modulus cannot cause exception
+        NoDivSpecialCase,   // divide or modulus cannot be special case of MIN_INT / -1
         DirectCompare,
         IsLoaded,           // field or method is resolved and class is loaded and initialized
         IsStatic,           // field or method access is static

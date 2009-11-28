@@ -47,9 +47,18 @@ public final class ArithmeticOp extends Op2 {
         if (stateBefore != null) {
             // state before is only used in the case of a division or remainder,
             // and isn't needed if the zero check is redundant
-            if (y.isConstant() && y.asConstant().asLong() != 0) {
-                C1XMetrics.ZeroChecksRedundant++;
-                setFlag(Flag.NoZeroCheck);
+            if (y.isConstant()) {
+                long divisor = y.asConstant().asLong();
+                if (divisor != 0) {
+                    C1XMetrics.ZeroChecksRedundant++;
+                    setFlag(Flag.NoZeroCheck);
+                } else {
+                    this.stateBefore = stateBefore;
+                }
+                if (divisor != -1) {
+                    C1XMetrics.DivideSpecialChecksRedundant++;
+                    setFlag(Flag.NoDivSpecialCase);
+                }
             } else {
                 this.stateBefore = stateBefore;
             }

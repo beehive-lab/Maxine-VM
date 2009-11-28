@@ -1114,7 +1114,7 @@ public class MaxXirGenerator extends RiXirGenerator {
                         rtArgs[i] = stubAsm.createInputParameter("rtArgs[" + i + "]", ciKind);
                     }
                     stubAsm.callRuntime(runtime.getRiMethod((ClassMethodActor) methodActor), resultVariable, rtArgs);
-                    stub = stubAsm.finishStub(method + "-stub");
+                    stub = stubAsm.finishStub("stub-" + method);
 
                     if (C1XOptions.PrintXirTemplates) {
                         stub.print(System.out);
@@ -1132,6 +1132,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     }
 
     private void callRuntime(CiXirAssembler asm, String method, XirOperand result, XirOperand... args) {
+        // TODO: make direct runtime calls work in XIR!
         RiMethod rtmethod = runtimeMethods.get(method);
         if (rtmethod == null) {
             // search for the runtime call and create the stub

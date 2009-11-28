@@ -43,6 +43,7 @@ public class C1XMetrics {
     public static int NullCheckEliminations;
     public static int NullChecksRedundant;
     public static int ZeroChecksRedundant;
+    public static int DivideSpecialChecksRedundant;
     public static int StoreChecksRedundant;
     public static int EquivalentConstantsMerged;
     public static int EquivalentConstantsChecked;

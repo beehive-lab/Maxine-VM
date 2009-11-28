@@ -67,7 +67,7 @@ public enum CiRuntimeCall {
     PrimitiveArrayCopy(Void),
     ArrayCopy(Void),
     Debug(Void),
-    ResolveOptVirtualCall(Word, Int, Object),
+    ResolveSpecialCall(Word, Int, Object),
     ResolveStaticCall(Word, Int, Object),
     ResolveInterfaceIndex(Int, Object, Int, Object),
     ResolveClass(Object, Int, Object),

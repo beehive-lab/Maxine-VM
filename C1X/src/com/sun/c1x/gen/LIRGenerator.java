@@ -625,14 +625,13 @@ public abstract class LIRGenerator extends ValueVisitor {
                 case Bytecodes.INVOKESPECIAL:
                 case Bytecodes.INVOKEVIRTUAL:
                 case Bytecodes.INVOKEINTERFACE:
+                    assert x.hasReceiver();
                     if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
                         if (x.needsNullCheck()) {
-                            assert x.hasReceiver();
                             lir.nullCheck(receiver, info.copy());
                         }
-                        lir.callOptVirtual(target, receiver, resultRegister, CiRuntimeCall.ResolveOptVirtualCall, argList, info, x.cpi, x.constantPool);
+                        lir.callSpecial(target, receiver, resultRegister, CiRuntimeCall.ResolveSpecialCall, argList, info, x.cpi, x.constantPool);
                     } else {
-
                         if (x.opcode() == Bytecodes.INVOKEINTERFACE) {
                             lir.callInterface(target, receiver, resultRegister, argList, info, x.cpi, x.constantPool);
                         } else {
@@ -938,7 +937,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             operands[param.index] = op;
 
             if (op.isRegister()) {
-
                 if (snippet.template.isParameterDestroyed(paramIndex)) {
                     LIROperand newOp = newRegister(op.kind);
                     lir.move(op, newOp);

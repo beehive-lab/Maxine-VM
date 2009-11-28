@@ -332,6 +332,7 @@ public class JTConfig {
         jtt.hotpath.HP_scope02.class,
         jtt.hotpath.HP_series.class,
         jtt.hotpath.HP_trees01.class,
+        jtt.jasm.Invokevirtual_private00.class,
         jtt.jasm.Loop00.class,
         jtt.jdk.Class_getName.class,
         jtt.jdk.EnumMap01.class,
