@@ -344,32 +344,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             return clientBreakpoints.get(address.toLong());
         }
 
-        // TODO (mlvdv) Deprecate with eventual bytecode breakpoint redesign.
-        /**
-         * Creates a breakpoint for a given target code address.
-         *
-         * @param address the address at which the breakpoint is to be created
-         * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
-         *            instruction. If this value is null, then the code will be read from {@code address}.
-         * @param isTransient specifies if the created breakpoint is to be deleted when a process execution stops or an
-         *            inspection session finishes
-         * @return the created breakpoint
-         */
-        private synchronized TeleTargetBreakpoint createBreakpoint(Address address, byte[] originalCode, boolean isTransient) {
-            //breakpoint = new TeleTargetBreakpoint(teleVM, this, address, originalCode, isTransient);
-            if (isTransient) {
-                final TransientTargetBreakpoint transientBreakpoint = new TransientTargetBreakpoint(teleVM, this, address, originalCode);
-                final TeleTargetBreakpoint oldBreakpoint = transientBreakpoints.put(address.toLong(), transientBreakpoint);
-                assert oldBreakpoint == null;
-                return transientBreakpoint;
-            }
-            final ClientTargetBreakpoint clientBreakpoint = new ClientTargetBreakpoint(teleVM, this, address, originalCode);
-            final TeleTargetBreakpoint oldBreakpoint = clientBreakpoints.put(address.toLong(), clientBreakpoint);
-            assert oldBreakpoint == null;
-            announceStateChange();
-            return clientBreakpoint;
-        }
-
         /**
          * Gets the client breakpoint at a specified target code address in the tele VM, creating a new one first if needed.
          *
