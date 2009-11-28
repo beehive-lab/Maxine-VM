@@ -355,7 +355,7 @@ public abstract class LIRAssembler {
             case StaticCall:
                 emitDirectCall(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
-            case OptVirtualCall:
+            case SpecialCall:
                 emitDirectCall(op.method(), op.addr, op.info, op.cpi, op.constantPool);
                 break;
             case InterfaceCall:

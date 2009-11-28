@@ -1997,7 +1997,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             int offset = masm.codeBuffer.position();
             switch (code) {
                 case StaticCall:
-                case OptVirtualCall:
+                case SpecialCall:
                     offset += compilation.target.arch.machineCodeCallDisplacementOffset;
                     break;
                 case VirtualCall:

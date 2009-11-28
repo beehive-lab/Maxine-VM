@@ -358,7 +358,7 @@ public class C1XRuntimeCalls {
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveOptVirtualCall)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveSpecialCall)
     public static long runtimeResolveOptVirtualCall(int index, ConstantPool constantPool) {
         final VirtualMethodActor methodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
         return CompilationScheme.Static.compile(methodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();

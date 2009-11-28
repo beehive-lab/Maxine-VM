@@ -99,6 +99,8 @@ public class C1XTest {
         "Show help message and exit.");
     private static final Option<Integer> c1xOptLevel = options.newIntegerOption("c1x-optlevel", -1,
         "Set the overall optimization level of C1X (-1 to use default settings)");
+    private static final Option<List<String>> metricsOption = options.newStringListOption("print-metrics", new String[0],
+        "A list of metrics from the C1XMetrics class to print.");
 
     static {
         // add all the fields from C1XOptions as options
@@ -596,23 +598,19 @@ public class C1XTest {
         if (C1XOptions.PrintMetrics) {
             printClassFields(C1XMetrics.class);
         }
-        if (false) {
-            // TODO: print out individual metrics
-            printField("Methods", C1XMetrics.TargetMethods);
-            printField("Bytecodes", totalBytes);
-            printField("HIR count", C1XMetrics.NumberOfHIRInstructions);
-            printField("LIR count", C1XMetrics.NumberOfLIRInstructions);
-            printField("Code size", C1XMetrics.CodeBytesEmitted);
-            printField("Time", averageTime());
-            printField("XIR count", C1XMetrics.NumberOfLIRXIRInstructions);
-            out.print("Above:");
-            out.print("\t" + C1XMetrics.TargetMethods);
-            out.print("\t" + totalBytes);
-            out.print("\t" + C1XMetrics.NumberOfHIRInstructions);
-            out.print("\t" + C1XMetrics.NumberOfLIRInstructions);
-            out.print("\t" + C1XMetrics.CodeBytesEmitted);
-            out.print("\t" + averageTime());
-            out.print("\t" + C1XMetrics.NumberOfLIRXIRInstructions);
+        List<String> metrics = metricsOption.getValue();
+        if (metrics.size() > 0) {
+            for (String s : metrics) {
+                out.print(s + "\t");
+            }
+            out.println();
+            for (String s : metrics) {
+                try {
+                    printField(C1XMetrics.class.getDeclaredField(s), true);
+                } catch (NoSuchFieldException e) {
+                    out.println("-----");
+                }
+            }
             out.println();
         }
     }
@@ -650,27 +648,29 @@ public class C1XTest {
         final String className = javaClass.getSimpleName();
         out.println(className + " {");
         for (final Field field : javaClass.getFields()) {
-            printField(field);
+            printField(field, false);
         }
         out.println("}");
     }
 
-    private static void printField(final Field field) {
+    private static void printField(final Field field, boolean tabbed) {
         final String fieldName = Strings.padLengthWithSpaces(field.getName(), 35);
         try {
+            String prefix = tabbed ? "" : "    " + fieldName + " = ";
+            String postfix = tabbed ? "\t" : "\n";
             if (field.getType() == int.class) {
-                out.print("    " + fieldName + " = " + field.getInt(null) + "\n");
+                out.print(prefix + field.getInt(null) + postfix);
             } else if (field.getType() == boolean.class) {
-                out.print("    " + fieldName + " = " + field.getBoolean(null) + "\n");
+                out.print(prefix + field.getBoolean(null) + postfix);
             } else if (field.getType() == float.class) {
-                out.print("    " + fieldName + " = " + field.getFloat(null) + "\n");
+                out.print(prefix + field.getFloat(null) + postfix);
             } else if (field.getType() == String.class) {
-                out.print("    " + fieldName + " = " + field.get(null) + "\n");
+                out.print(prefix + field.get(null) + postfix);
             } else if (field.getType() == Map.class) {
                 Map m = (Map) field.get(null);
-                out.print("    " + fieldName + " = " + printMap(m) + "\n");
+                out.print(prefix + printMap(m) + postfix);
             } else {
-                out.print("    " + fieldName + " = " + field.get(null) + "\n");
+                out.print(prefix + field.get(null) + postfix);
             }
         } catch (IllegalAccessException e) {
             // do nothing.
