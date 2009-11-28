@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.collect.*;
@@ -186,15 +187,21 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     @Override
     public void remove() {
-        Trace.line(TRACE_VALUE, tracePrefix() + "removing=" + this);
+        Trace.line(TRACE_VALUE, tracePrefix() + "removing breakpoint=" + this);
         clearAllTargetBreakpoints();
         factory.removeBreakpoint(this);
     }
 
     @Override
     public String toString() {
-        return "Bytecode breakpoint" + key() + " " + attributesToString();
+        final StringBuilder sb = new StringBuilder("Bytecode breakpoint");
+        sb.append("{").append(key().toString()).append(", ");
+        sb.append(kind().toString()).append(", ");
+        sb.append(isEnabled() ? "enabled " : "disabled ");
+        sb.append("}");
+        return sb.toString();
     }
+
 
     /**
      * @return description of the bytecode location of this breakpoint.
@@ -477,6 +484,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 return null;
             }
             return teleTargetBreakpointFactory.makeSystemBreakpoint(address, "Generated from bytecode breakpoint for key=" + key);
+        }
+
+        public void writeSummaryToStream(PrintStream printStream) {
+            printStream.println("Bytecode breakpoints :");
+            for (TeleBytecodeBreakpoint bytecodeBreakpoint : breakpoints.values()) {
+                printStream.println("  " + bytecodeBreakpoint);
+            }
         }
 
     }

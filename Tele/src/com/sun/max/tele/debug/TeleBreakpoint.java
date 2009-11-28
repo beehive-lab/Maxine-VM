@@ -179,13 +179,4 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
      * Removes this breakpoint from the VM.
      */
     public abstract void remove();
-
-    /**
-     * @return a textual description of the attributes of this breakpoint.
-     */
-    public String attributesToString() {
-        final StringBuilder sb = new StringBuilder(isEnabled() ? "enabled " : "disabled ");
-        sb.append(kind.toString());
-        return sb.toString();
-    }
 }
