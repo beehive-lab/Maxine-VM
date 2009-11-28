@@ -173,6 +173,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(actions.listVMStateHistory());
         menu.add(actions.listCodeRegistry());
         menu.add(actions.listCodeRegistryToFile());
+        menu.add(actions.listBreakpoints());
 
         final InspectorMenu testBreakMenu = new InspectorMenu("Break at");
         final TeleClassMethodActor teleClassMethodActor = actions.inspection().maxVM().teleMethods().InspectableCodeInfo_compilationFinished.teleClassMethodActor();

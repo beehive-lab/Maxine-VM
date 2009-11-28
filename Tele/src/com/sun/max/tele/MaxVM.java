@@ -680,6 +680,12 @@ public interface MaxVM {
     TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key);
 
     /**
+     * Writes a textual summary describing the current breakpoints set in the VM, with
+     * more internal detail than is typically displayed.
+     */
+    void describeBreakpoints(PrintStream printStream);
+
+    /**
      * @return are watchpoints implemented in this VM configuration?
      */
     boolean watchpointsEnabled();

@@ -1402,6 +1402,11 @@ public abstract class TeleVM implements MaxVM {
         return bytecodeBreakpointFactory.getBreakpoint(key);
     }
 
+    public void describeBreakpoints(PrintStream printStream) {
+        teleProcess.targetBreakpointFactory().writeSummaryToStream(printStream);
+        bytecodeBreakpointFactory.writeSummaryToStream(printStream);
+    }
+
     /* (non-Javadoc)
      * @see com.sun.max.tele.MaxVM#watchpointsEnabled()
      */
