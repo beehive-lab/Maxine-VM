@@ -4616,6 +4616,32 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action:  lists to the console all existing breakpoints.
+     */
+    final class ListBreakpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "List all breakpoints";
+
+        ListBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            maxVM().describeBreakpoints(System.out);
+        }
+    }
+
+    private InspectorAction listBreakpoints = new ListBreakpointsAction(null);
+
+    /**
+     * @return an Action that will list to the console the entries in the {@link TeleCodeRegistry}.
+     */
+    public final InspectorAction listBreakpoints() {
+        return listBreakpoints;
+    }
+
+    /**
      * @return menu items for memory-related actions that are independent of context
      */
     public InspectorMenuItems genericMemoryMenuItems() {
