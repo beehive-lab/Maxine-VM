@@ -2042,6 +2042,12 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     }
 
     @Override
+    protected void emitIndirectCall(RiMethod method, LIROperand addr, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
+        masm.call(addr.asRegister(), method, info.oopMap.stackMap());
+        addCallInfoHere(info);
+    }
+
+    @Override
     protected void emitVirtualCall(RiMethod method, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
         Address callAddress;
         if (method.vtableIndex() >= 0) {

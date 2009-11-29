@@ -90,6 +90,7 @@ public enum LIROpcode {
     VirtualCall,
     XirDirectCall,
     XirIndirectCall,
+    IndirectCall,
     InstanceOf,
     CheckCast,
     StoreCheck,

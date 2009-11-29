@@ -25,13 +25,13 @@ import java.util.*;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>LIRCall</code> class definition.
+ * This class represents a call instruction; either to a runtime method or a Java method.
  *
  * @author Marcelo Cintra
  */
 public abstract class LIRCall extends LIRInstruction {
 
-    protected CiRuntimeCall addr;
+    protected CiRuntimeCall runtimeCall;
     protected List<LIROperand> arguments;
 
     private static LIROperand[] prepend(LIROperand receiver, List<LIROperand> arguments) {
@@ -43,24 +43,14 @@ public abstract class LIRCall extends LIRInstruction {
         return operands;
     }
 
-    public LIRCall(LIROpcode opcode, CiRuntimeCall entry, LIROperand result, LIROperand receiver, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
+    public LIRCall(LIROpcode opcode, CiRuntimeCall rtCall, LIROperand result, LIROperand receiver, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
         super(opcode, result, info, !calleeSaved, null, 0, 0, prepend(receiver, arguments));
-        this.addr = entry;
+        this.runtimeCall = rtCall;
         this.arguments = arguments;
     }
 
     /**
-     * Gets the address of this call.
-     *
-     * @return the address
-     */
-    public CiRuntimeCall address() {
-        return addr;
-    }
-
-    /**
      * Returns the receiver for this method call.
-     *
      * @return the receiver
      */
     public LIROperand receiver() {
