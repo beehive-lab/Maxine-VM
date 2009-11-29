@@ -475,7 +475,7 @@ public class MaxXirGenerator extends RiXirGenerator {
     private ResolutionGuard guardForComponentType(RiType type) {
         // XXX: cache resolution guards
         MaxRiType m = (MaxRiType) type;
-        return new ResolutionGuard(m.constantPool.constantPool, m.cpi, true);
+        return new ResolutionGuard(m.constantPool.constantPool, m.cpi);
     }
 
     private ResolutionGuard guardFor(RiType type) {

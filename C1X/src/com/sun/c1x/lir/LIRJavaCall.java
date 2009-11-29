@@ -73,7 +73,7 @@ public class LIRJavaCall extends LIRCall {
     @Override
     public void printInstruction(LogStream out) {
         out.print("call: ");
-        out.printf("[addr: %s]", (address() == null) ? "null" : address().name());
+        out.printf("[addr: %s]", (runtimeCall == null) ? "null" : runtimeCall.name());
         if (!receiver().isIllegal()) {
             out.printf(" [recv: %s]", receiver());
         }

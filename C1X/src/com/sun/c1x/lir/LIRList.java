@@ -72,8 +72,7 @@ public class LIRList {
     }
 
     private boolean verifyInstruction(LIRInstruction op) {
-        op.verify();
-        return true;
+        return op.verify();
     }
 
     public List<LIRInstruction> instructionsList() {
@@ -98,6 +97,10 @@ public class LIRList {
 
     public void callStatic(RiMethod method, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
         append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.IllegalLocation, result, dest, arguments, info, cpi, constantPool));
+    }
+
+    public void callIndirect(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
+        append(new LIRJavaCall(LIROpcode.StaticCall, method, receiver, result, null, arguments, info, cpi, constantPool));
     }
 
     public void callInterface(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {

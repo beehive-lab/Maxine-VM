@@ -344,19 +344,19 @@ public abstract class LIRAssembler {
         compilation.addCallInfo(pcOffset, cinfo);
     }
 
-    void emitRuntimeCall(LIRRuntimeCall op) {
-        emitRuntimeCall(op.runtimeEntry, op.info);
-    }
-
     void emitCall(LIRJavaCall op) {
         verifyOopMap(op.info);
 
         switch (op.code) {
+            case IndirectCall:
+                // TODO: use the address operand
+                emitIndirectCall(op.method(), null, op.info, op.cpi, op.constantPool);
+                break;
             case StaticCall:
-                emitDirectCall(op.method(), op.addr, op.info, op.cpi, op.constantPool);
+                emitDirectCall(op.method(), op.runtimeCall, op.info, op.cpi, op.constantPool);
                 break;
             case SpecialCall:
-                emitDirectCall(op.method(), op.addr, op.info, op.cpi, op.constantPool);
+                emitDirectCall(op.method(), op.runtimeCall, op.info, op.cpi, op.constantPool);
                 break;
             case InterfaceCall:
                 emitInterfaceCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
@@ -641,6 +641,8 @@ public abstract class LIRAssembler {
     protected abstract void emitXirDirectCall(RiMethod method, LIRDebugInfo info);
 
     protected abstract void emitDirectCall(RiMethod ciMethod, CiRuntimeCall addr, LIRDebugInfo info, char cpi, RiConstantPool constantPool);
+
+    protected abstract void emitIndirectCall(RiMethod ciMethod, LIROperand addr, LIRDebugInfo info, char cpi, RiConstantPool cp);
 
     protected abstract void emitInterfaceCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool);
 
