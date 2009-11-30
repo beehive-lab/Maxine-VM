@@ -34,17 +34,12 @@ public abstract class LIRCall extends LIRInstruction {
     protected CiRuntimeCall runtimeCall;
     protected List<LIROperand> arguments;
 
-    private static LIROperand[] prepend(LIROperand receiver, List<LIROperand> arguments) {
-        LIROperand[] operands = new LIROperand[arguments.size() + 1];
-        operands[0] = receiver;
-        for (int i = 0; i < arguments.size(); i++) {
-            operands[i + 1] = arguments.get(i);
-        }
-        return operands;
+    private static LIROperand[] toArray(List<LIROperand> arguments) {
+        return arguments.toArray(new LIROperand[arguments.size()]);
     }
 
-    public LIRCall(LIROpcode opcode, CiRuntimeCall rtCall, LIROperand result, LIROperand receiver, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
-        super(opcode, result, info, !calleeSaved, null, 0, 0, prepend(receiver, arguments));
+    public LIRCall(LIROpcode opcode, CiRuntimeCall rtCall, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
+        super(opcode, result, info, !calleeSaved, null, 0, 0, toArray(arguments));
         this.runtimeCall = rtCall;
         this.arguments = arguments;
     }
