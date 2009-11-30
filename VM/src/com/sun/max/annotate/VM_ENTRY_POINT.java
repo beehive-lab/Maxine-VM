@@ -40,5 +40,4 @@ import com.sun.max.vm.jni.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface VM_ENTRY_POINT {
-    boolean isInterruptHandler() default false;
 }
