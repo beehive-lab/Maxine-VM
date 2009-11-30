@@ -154,7 +154,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @Override
-    public void run() {
+    public void run() throws Throwable {
         // The JavaTesterRunScheme no longer overrides run.
         // Instead it checks whether  to run tests in the STARTING
         // phase of the initialize method.

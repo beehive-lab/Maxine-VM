@@ -543,12 +543,12 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         private ModalLockword64 revokeWithOwnerSafepointedAndBulkRevoke(Object object) {
             ModalLockword64 postRevokeLockword;
             synchronized (VmThreadMap.ACTIVE) {
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
+                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
+                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
                 final Hub hub = ObjectAccess.readHub(object);
                 hub.biasedLockEpoch = BiasedLockEpoch.bulkRevocation();
                 postRevokeLockword = revokeBias(object);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);
+                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);
             }
             return postRevokeLockword;
         }
@@ -556,13 +556,13 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         private ModalLockword64 revokeWithOwnerSafepointedAndBulkRebias(Object object) {
             ModalLockword64 postRevokeLockword;
             synchronized (VmThreadMap.ACTIVE) {
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
+                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
+                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
                 final Hub hub = ObjectAccess.readHub(object);
                 final BiasedLockEpoch epoch = hub.biasedLockEpoch;
                 hub.biasedLockEpoch = epoch.increment();
                 postRevokeLockword = revokeBias(object);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);
+                VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);
             }
             return postRevokeLockword;
         }

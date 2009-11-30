@@ -47,7 +47,7 @@ public final class NativeMutex extends Mutex {
             super(m, refQueue);
         }
 
-        private void disposeNative() {
+        void disposeNative() {
             Memory.deallocate(mutex);
         }
     }

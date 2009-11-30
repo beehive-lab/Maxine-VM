@@ -55,12 +55,12 @@ public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
     }
 
     /**
-     * Functions annotated with {@link C_FUNCTION} fall currently in two categories: VM entry points and VM exits
-     * points.
+     * Creates an ABI for a VM entry point or VM exit point.
      *
      * @param isVmEntryPoint {@code true} if this is an ABI for methods called from C/native code, {@code false} if it
      *            is for {@code native} methods called from compiled Java code
      * @see C_FUNCTION
+     * @see VM_ENTRY_POINT
      */
     public UnixAMD64EirCFunctionABI(VMConfiguration vmConfiguration, boolean isVmEntryPoint) {
         super(vmConfiguration);

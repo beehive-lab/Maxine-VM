@@ -918,7 +918,12 @@ public final class ClassfileReader {
         final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
         if (annotationTypeDescriptor.equals(forJavaClass(C_FUNCTION.class))) {
             ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
+            ProgramError.check(isNative(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-native method: " + memberString(name, descriptor));
             flags |= C_FUNCTION;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(VM_ENTRY_POINT.class))) {
+            ensureSignatureIsPrimitive(descriptor, VM_ENTRY_POINT.class);
+            ProgramError.check(isStatic(flags), "Cannot apply " + VM_ENTRY_POINT.class.getName() + " to a non-native method: " + memberString(name, descriptor));
+            flags |= VM_ENTRY_POINT;
         } else if (annotationTypeDescriptor.equals(forJavaClass(NO_SAFEPOINTS.class))) {
             flags |= NO_SAFEPOINTS;
         } else if (annotationTypeDescriptor.equals(forJavaClass(BUILTIN.class))) {
@@ -954,13 +959,6 @@ public final class ClassfileReader {
             ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() +
                 " to a method with exactly one parameter: " + memberString(name, descriptor));
             flags |= UNSAFE_CAST;
-        } else if (annotationTypeDescriptor.equals(forJavaClass(JNI_FUNCTION.class))) {
-            boolean isStatic = (flags & Actor.ACC_STATIC) != 0;
-            ensureSignatureIsPrimitive(descriptor, JNI_FUNCTION.class);
-            ProgramError.check(!isSynchronized(flags), "Cannot apply " + JNI_FUNCTION.class.getName() + " to a synchronized method: " + memberString(name, descriptor));
-            ProgramError.check(isStatic, "Cannot apply " + JNI_FUNCTION.class.getName() + " to non-static method: " + memberString(name, descriptor));
-            flags |= JNI_FUNCTION;
-            flags |= C_FUNCTION;
         } else if (annotationTypeDescriptor.equals(forJavaClass(FOLD.class))) {
             flags |= FOLD;
         } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE.class))) {

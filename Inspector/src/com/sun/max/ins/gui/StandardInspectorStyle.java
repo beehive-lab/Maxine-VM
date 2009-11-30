@@ -128,6 +128,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     private Color wordUncheckedReferenceDataColor = InspectorStyle.LightGreen;
     private Color wordInvalidReferenceDataColor = InspectorStyle.Red;
     private Color wordStackLocationDataColor = InspectorStyle.MediumOrchid;
+    private Color wordThreadLocalsBlockLocationDataColor = InspectorStyle.Pink;
     private Color invalidDataColor = InspectorStyle.Red;
     private Color wordCallEntryPointColor = InspectorStyle.MediumBlue;
     private Color wordCallReturnPointColor = new Color(64, 64, 192);
@@ -162,6 +163,10 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     @Override
     public Color wordStackLocationDataColor() {
         return wordStackLocationDataColor;
+    }
+    @Override
+    public Color wordThreadLocalsBlockLocationDataColor() {
+        return wordThreadLocalsBlockLocationDataColor;
     }
     @Override
     public Color wordCallEntryPointColor() {

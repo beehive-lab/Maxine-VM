@@ -32,7 +32,6 @@ import sun.misc.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
@@ -218,7 +217,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * up the user-specified main class, and invokes its main method with the specified
      * command-line arguments
      */
-    public void run() {
+    public void run() throws Throwable {
         boolean error = true;
         try {
             initializeBasicFeatures();
@@ -265,7 +264,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             // This is an application exception: let VmThread.run() handle this.
             // We only catch it here to set the VM exit code to a non-zero value.
             error = true;
-            throw Exceptions.cast(RuntimeException.class, invocationTargetException.getCause());
+            throw invocationTargetException.getCause();
         } catch (IllegalAccessException illegalAccessException) {
             error = true;
             System.err.println("Illegal access trying to invoke main method: " + illegalAccessException);

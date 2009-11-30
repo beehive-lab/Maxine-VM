@@ -174,6 +174,10 @@ public final class MemoryRegionsTable extends InspectorTable {
                 if (!stack.size().isZero()) {
                     sortedMemoryRegions.add(new StackRegionDisplay(stack));
                 }
+                TeleThreadLocalsBlock threadLocalsBlock = thread.threadLocalsBlock();
+                if (!threadLocalsBlock.size().isZero()) {
+                    sortedMemoryRegions.add(new ThreadLocalsRegionDisplay(threadLocalsBlock));
+                }
             }
             super.refresh();
         }
@@ -484,9 +488,23 @@ public final class MemoryRegionsTable extends InspectorTable {
         Size allocated() {
             // Stack grows downward from the end of the region;
             // no account taken here for thread locals.
-            return end().minus(teleNativeStack.teleNativeThread().stackPointer()).asSize();
+            return end().minus(teleNativeStack.teleNativeThread.stackPointer()).asSize();
         }
 
+    }
+
+    private final class ThreadLocalsRegionDisplay extends MemoryRegionDisplay {
+
+        private final TeleThreadLocalsBlock threadLocalsBlock;
+
+        @Override
+        MemoryRegion memoryRegion() {
+            return threadLocalsBlock;
+        }
+
+        ThreadLocalsRegionDisplay(TeleThreadLocalsBlock threadLocalsBlock) {
+            this.threadLocalsBlock = threadLocalsBlock;
+        }
     }
 
     private final class OtherRegionDisplay extends MemoryRegionDisplay {

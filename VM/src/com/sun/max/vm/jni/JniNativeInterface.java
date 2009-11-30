@@ -55,14 +55,14 @@ public final class JniNativeInterface {
         StaticMethodActor[] localStaticMethodActors = ClassActor.fromJava(JniFunctions.class).localStaticMethodActors();
         int count = 0;
         for (StaticMethodActor m : localStaticMethodActors) {
-            if (m.isJniFunction()) {
+            if (m.isVmEntryPoint()) {
                 count++;
             }
         }
         final StaticMethodActor[] jniFunctionActors = new StaticMethodActor[count];
         int i = 0;
         for (StaticMethodActor m : localStaticMethodActors) {
-            if (m.isJniFunction()) {
+            if (m.isVmEntryPoint()) {
                 jniFunctionActors[i++] = m;
             }
         }
@@ -165,7 +165,7 @@ public final class JniNativeInterface {
     /**
      * Completes the JNI function table for the JNI functions that are implemented in Java.
      *
-     * @param jniEnv pointer the JNI function table
+     * @param jniEnv pointer to the JNI function table
      */
     public static void initialize(Pointer jniEnv) {
         JniNativeInterface.jniEnv = jniEnv;

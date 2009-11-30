@@ -30,6 +30,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.prototype.BootImage.*;
@@ -116,7 +117,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize, boolean hasThreadLocals) {
+    protected TeleNativeThread createTeleNativeThread(Params params) {
         ProgramError.unexpected(FAIL_MESSAGE);
         return null;
     }

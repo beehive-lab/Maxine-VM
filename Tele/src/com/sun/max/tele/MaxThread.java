@@ -111,12 +111,25 @@ public interface MaxThread {
     int id();
 
     /**
-     * Gets the platform dependent handle to the native thread data structure. For example, on Solaris this will be
-     * the LWP identifier for this thread. This value is guaranteed to be unique for any running thread.
+     * Gets the platform dependent handle to the native thread data structure in the VM's address space.
+     * For example, on Linux this will be the pthread_self(3) value for this thread. If non-zero,
+     * this value is guaranteed to be unique for any running thread.
+     */
+    long handle();
+
+    /**
+     * Gets the value returned by {@link #handle()} as a String.
+     */
+    String handleString();
+
+    /**
+     * Gets the platform dependent debug handle to the thread in the local
+     * address space. For example, on Linux this will be the {@code /proc} task ID for this thread.
+     * This value is guaranteed to be unique for any running thread.
      * <br>
      * Immutable; thread-safe.
      */
-    long handle();
+    long localHandle();
 
     /**
      * @return the current stack pointer for the thread, zero if thread has died.
@@ -131,6 +144,15 @@ public interface MaxThread {
      * @return this thread's stack
      */
     TeleNativeStack stack();
+
+    /**
+     * Gets the {@linkplain VmThreadLocal thread locals block} for this thread.
+     * <br>
+     * The identity of the result is immutable and thread-safe, although its contents are not.
+     *
+     * @return this thread's thread locals block
+     */
+    TeleThreadLocalsBlock threadLocalsBlock();
 
     /**
      * @return the current instruction pointer for the thread, zero if thread has died.

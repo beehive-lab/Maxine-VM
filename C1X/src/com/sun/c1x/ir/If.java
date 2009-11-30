@@ -21,8 +21,11 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
+<<<<<<< local
+import com.sun.c1x.util.*;
+=======
+>>>>>>> other
 import com.sun.c1x.value.*;
-import com.sun.c1x.util.Util;
 
 /**
  * The <code>If</code> instruction represents a branch that can go one of two directions

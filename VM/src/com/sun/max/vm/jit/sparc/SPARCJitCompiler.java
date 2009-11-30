@@ -110,7 +110,7 @@ public class SPARCJitCompiler extends JitCompiler {
             // This complete call-chain must be inlined down to the native call
             // so that no further stack banging instructions
             // are executed before execution jumps to the catch handler.
-            VirtualMemory.protectPage(VmThread.current().guardPage());
+            VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
         }
 
         SpecialBuiltin.flushRegisterWindows();

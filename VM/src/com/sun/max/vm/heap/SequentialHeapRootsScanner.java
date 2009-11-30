@@ -50,7 +50,7 @@ public class SequentialHeapRootsScanner {
 
         public void run(Pointer vmThreadLocals) {
             if (Heap.traceGCPhases()) {
-                Log.print("Scanning roots in stack for thread ");
+                Log.print("Scanning thread local and stack roots for thread ");
                 Log.printThread(VmThread.fromVmThreadLocals(vmThreadLocals), true);
             }
             VmThreadLocal.scanReferences(vmThreadLocals, pointerIndexVisitor);
@@ -60,7 +60,7 @@ public class SequentialHeapRootsScanner {
     private final VmThreadLocalsScanner vmThreadLocalsScanner = new VmThreadLocalsScanner();
 
     public void run() {
-        VmThreadMap.ACTIVE.forAllVmThreadLocals(null, vmThreadLocalsScanner);
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, vmThreadLocalsScanner);
         VMConfiguration.hostOrTarget().monitorScheme().scanReferences(pointerIndexVisitor);
     }
 

@@ -74,7 +74,7 @@ public final class MaxineMessenger {
             final Size dataSize = info.getWord(0).asSize();
             final Pointer inData = info.getWord(1).asPointer();
             final Pointer outData = info.getWord(2).asPointer();
-            messenger.activate(MemoryDataAccess.POINTER_DATA_ACCESS, inData, outData, dataSize.toInt());
+            messenger.activate(MemoryDataAccess.MEMORY_DATA_ACCESS, inData, outData, dataSize.toInt());
             messenger.flush();
         }
     }

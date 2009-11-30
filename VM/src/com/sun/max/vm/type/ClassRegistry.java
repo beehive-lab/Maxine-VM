@@ -115,6 +115,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final MethodActor ReferenceHandler_init = findMethod(java_lang_ref_Reference$ReferenceHandler, "<init>", ThreadGroup.class, String.class);
     public static final MethodActor Method_invoke = findMethod(Method.class, "invoke", Object.class, Object[].class);
     public static final MethodActor MaxineVM_run = findMethod("run", MaxineVM.class);
+    public static final MethodActor VmThread_add = findMethod("add", VmThread.class);
     public static final MethodActor VmThread_run = findMethod("run", VmThread.class);
     public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
@@ -276,12 +277,12 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             // Some of these methods are called during VM startup
             // so they are compiled in the image.
             CallEntryPoint callEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT;
-            if (methodActor.isCFunction()) {
+            if (methodActor.isVmEntryPoint()) {
                 callEntryPoint = CallEntryPoint.C_ENTRY_POINT;
             }
             new CriticalMethod((ClassMethodActor) methodActor, callEntryPoint);
         }
-        if (!methodActor.isCFunction()) {
+        if (!methodActor.isCFunction() && !methodActor.isVmEntryPoint()) {
             // Some of these methods are called via reflection during VM startup
             // so their reflection stubs are prebuilt into the image.
             MaxineVM.registerImageInvocationStub(methodActor);

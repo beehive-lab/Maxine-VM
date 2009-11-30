@@ -35,7 +35,7 @@ public final class MemoryDataAccess implements DataAccess {
     private MemoryDataAccess() {
     }
 
-    public static final MemoryDataAccess POINTER_DATA_ACCESS = new MemoryDataAccess();
+    public static final MemoryDataAccess MEMORY_DATA_ACCESS = new MemoryDataAccess();
 
     public void readFully(Address address, ByteBuffer buffer) {
         DataIO.Static.readFully(this, address, buffer);

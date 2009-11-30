@@ -221,7 +221,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(
     threads = gather_threads(&num_threads);
     int i;
     for (i=0; i<num_threads; i++) {
-        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsSize());
+        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         struct db_regs *db_regs = checked_get_regs("nativeGatherThreads", threads[i].id);
         threadLocals = teleProcess_findThreadLocals(threadLocalsList, primordialThreadLocals, threads[i].stack, threadLocals, &nativeThreadLocalsStruct);

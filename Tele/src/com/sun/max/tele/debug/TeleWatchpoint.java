@@ -123,17 +123,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#isRead()
-     */
     public boolean isRead() {
         return read;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#setRead(boolean)
-     */
     public boolean setRead(boolean read) {
         ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
         this.read = read;
@@ -143,17 +136,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         return factory.resetWatchpoint(this);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#isWrite()
-     */
     public boolean isWrite() {
         return write;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#setWrite(boolean)
-     */
     public boolean setWrite(boolean write) {
         ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
         this.write = write;
@@ -163,17 +149,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         return factory.resetWatchpoint(this);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#isExec()
-     */
     public boolean isExec() {
         return exec;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#setExec(boolean)
-     */
     public boolean setExec(boolean exec) {
         ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
         this.exec = exec;
@@ -183,18 +162,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         return factory.resetWatchpoint(this);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#isEnabledDuringGC()
-     */
     public boolean isEnabledDuringGC() {
         return isEnabledDuringGC;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#setEnabledDuringGC(boolean)
-     */
     public void setEnabledDuringGC(boolean isEnabledDuringGC) {
         ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
         this.isEnabledDuringGC = isEnabledDuringGC;
@@ -205,24 +176,14 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#isEnabled()
-     */
     public boolean isEnabled() {
         return active && (read || write || exec);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#remove()
-     */
     public boolean dispose() {
         return factory.removeWatchpoint(this);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#getTeleObject()
-     */
     public TeleObject getTeleObject() {
         return null;
     }
@@ -231,10 +192,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         return teleObjectStartAddressOffset;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#setEagerRelocationUpdate(boolean)
-     */
     public void setEagerRelocationUpdate(boolean eagerRelocationUpdate) {
         this.eagerRelocationUpdate = eagerRelocationUpdate;
         if (getTeleObject() != null) {
@@ -266,10 +223,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#isEagerRelocationUpdateSet()
-     */
     public boolean isEagerRelocationUpdateSet() {
         return eagerRelocationUpdate;
     }
@@ -290,18 +243,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#disable()
-     */
     public boolean disable() {
         return factory.deactivateWatchpoint(this);
     }
 
-    /*
-     * (non-Javadoc)
-     * @see com.sun.max.tele.MaxWatchpoint#enable()
-     */
     public boolean enable() {
         return factory.activateWatchpoint(this);
     }

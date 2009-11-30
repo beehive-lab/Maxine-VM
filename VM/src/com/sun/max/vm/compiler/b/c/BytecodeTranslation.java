@@ -1126,12 +1126,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected void prologue() {
         if (blockState.birBlock().hasSafepoint()) {
             if (MaxineVM.isHosted()) {
-                final C_FUNCTION cFunctionAnnotation = methodTranslation.classMethodActor().getAnnotation(C_FUNCTION.class);
-                if (cFunctionAnnotation == null || !cFunctionAnnotation.isInterruptHandler()) {
+                final VM_ENTRY_POINT vmEntryPointAnnotation = methodTranslation.classMethodActor().getAnnotation(VM_ENTRY_POINT.class);
+                if (vmEntryPointAnnotation == null || !vmEntryPointAnnotation.isInterruptHandler()) {
                     callAndPush(JavaOperator.SAFEPOINT_OP);
                 }
             } else {
-                if (methodTranslation.classMethodActor().isCFunction()) {
+                if (methodTranslation.classMethodActor().isVmEntryPoint()) {
                     callAndPush(JavaOperator.SAFEPOINT_OP);
                 }
             }

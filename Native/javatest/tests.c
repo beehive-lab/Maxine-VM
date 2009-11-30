@@ -91,6 +91,7 @@ void upcall(jclass cls) {
     jstr = (*env)->NewStringUTF(env, "(from upcall)");
     (*env)->CallStaticVoidMethod(env, cls, mid, jstr);
 
+    (*env)->DeleteGlobalRef(env, cls);
     (*vm)->DetachCurrentThread(vm);
 }
 
@@ -102,9 +103,14 @@ void *thread_function(void *arguments) {
 JNIEXPORT void JNICALL
 Java_test_output_AttachThread_callHelloWorldOnAttachedThread(JNIEnv *env, jclass clazz) {
     pthread_t thread_id;
-    const pthread_attr_t *attributes = NULL;
+    pthread_attr_t attributes;
+
+    /* Convert argument to be a global handle as it is going to the new thread */
+    clazz = (*env)->NewGlobalRef(env, clazz);
     void *arguments = clazz;
 
-    pthread_create(&thread_id, attributes, thread_function, arguments);
-    pthread_join(thread_id, NULL);
+    pthread_attr_init(&attributes);
+    pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_JOINABLE);
+    pthread_create(&thread_id, &attributes, thread_function, arguments);
+    pthread_attr_destroy(&attributes);
 }

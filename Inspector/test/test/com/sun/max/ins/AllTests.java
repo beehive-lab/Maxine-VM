@@ -34,9 +34,7 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(AllTests.class.getPackage().getName());
-        suite.addTestSuite(MethodAnnotationsTest.class);
-        return suite;
+        return new TestSuite(AllTests.class.getPackage().getName());
     }
 
 }

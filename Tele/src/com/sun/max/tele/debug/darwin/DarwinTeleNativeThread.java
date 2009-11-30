@@ -34,8 +34,8 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
         return (DarwinTeleProcess) super.teleProcess();
     }
 
-    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, int id, long machThread, long stackBase, long stackSize, boolean hasThreadLocals) {
-        super(teleProcess, id, machThread, stackBase, stackSize, hasThreadLocals);
+    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, Params params) {
+        super(teleProcess, params);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
     }
 
     private long machThread() {
-        return handle();
+        return localHandle();
     }
 
     private static native boolean nativeReadRegisters(long machThread,

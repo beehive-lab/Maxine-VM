@@ -480,8 +480,8 @@ int process_wait_all_threads_stopped(pid_t pid) {
 
             /* Stop all threads by sending SIGSTOP to the process group (which is why the VM
              * must run in a separate process group from the debugger!). Note that the tasks
-             * already be stopped due to a previous SIGSTOP will simply ignore this SIGSTOP.
-             * However, the SIGSTOP must be sent until all tasks have stopped so that we can
+             * already stopped due to a previous SIGSTOP will simply ignore this SIGSTOP.
+             * However, the SIGSTOP must be sent until all tasks have stopped so that we catch
              * tasks that start in between each SIGSTOP. */
             tele_log_println("Not all tasks stopped yet - sending SIGSTOP to process group %d", pgid);
             kill(-pgid, SIGSTOP);

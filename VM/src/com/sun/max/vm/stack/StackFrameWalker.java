@@ -40,7 +40,6 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * The mechanism for iterating over the frames in a thread's stack.
@@ -148,7 +147,7 @@ public abstract class StackFrameWalker {
         this.stackPointer = stackPointer;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
-        boolean inNative = !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
+        boolean inNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
         TargetMethod lastJavaCallee = null;
         Pointer lastJavaCalleeStackPointer = Pointer.zero();
@@ -169,11 +168,15 @@ public abstract class StackFrameWalker {
                     } else {
                         Log.printMethod(targetMethod.classMethodActor(), false);
                     }
-                    Log.print(" [IP=");
+                    Log.print(", pc=");
                     Log.print(this.instructionPointer);
-                    Log.print(", isTopFrame=");
+                    Log.print("[");
+                    Log.print(targetMethod.codeStart());
+                    Log.print("+");
+                    Log.print(this.instructionPointer.minus(targetMethod.codeStart()).toInt());
+                    Log.print("], isTopFrame=");
                     Log.print(isTopFrame);
-                    Log.println("]");
+                    Log.println("");
                 }
 
                 // Java frame
@@ -217,12 +220,13 @@ public abstract class StackFrameWalker {
                     advanceFrameInNative(purpose);
                 } else {
                     if (lastJavaCallee == null) {
-                        // This is the native thread start routine (i.e. VmThread.run())
+                        // This is a native function that called a VM entry point such as the VmThread.run(),
+                        // MaxineVM.run() or a JNI function.
                         break;
                     }
 
                     final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
-                    if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isCFunction()) {
+                    if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
                         if (lastJavaCalleeMethodActor.isTrapStub()) {
                             // This can only occur in the inspector and implies that execution is in the platform specific
                             // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
@@ -230,7 +234,7 @@ public abstract class StackFrameWalker {
                             // pointer at which the fault occurred.
                             break;
                         }
-                        if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
+                        if (!advanceVmEntryPointFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor == null) {
@@ -253,38 +257,32 @@ public abstract class StackFrameWalker {
     private void checkVmEntrypointCaller(TargetMethod lastJavaCallee, final TargetMethod targetMethod) {
         if (lastJavaCallee != null && lastJavaCallee.classMethodActor() != null) {
             final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
-            if (classMethodActor.isCFunction() && !classMethodActor.isTrapStub()) {
-                Log.print("Caller of VM entry point (@C_FUNCTION method) \"");
+            if (classMethodActor.isVmEntryPoint() && !classMethodActor.isTrapStub()) {
+                Log.print("Caller of VM entry point (@VM_ENTRY_POINT annotated method) \"");
                 Log.print(lastJavaCallee.description());
                 Log.print("\" is not native code: ");
                 Log.print(targetMethod.description());
                 Log.print(targetMethod.classMethodActor().descriptor().string);
                 Log.print(" in ");
                 Log.println(targetMethod.classMethodActor().holder().name.string);
-                FatalError.unexpected("Caller of a VM entry point (@C_FUNCTION method) must be native code");
+                FatalError.unexpected("Caller of a VM entry point (@VM_ENTRY_POINT method) must be native code");
             }
         }
     }
 
-    private boolean isRunMethod(final ClassMethodActor lastJavaCalleeMethodActor) {
-        return lastJavaCalleeMethodActor != null &&
-            (lastJavaCalleeMethodActor.equals(ClassRegistry.MaxineVM_run) ||
-             lastJavaCalleeMethodActor.equals(ClassRegistry.VmThread_run));
-    }
-
     /**
-     * Advances this stack walker through the frame of a method annotated with {@link C_FUNCTION}.
+     * Advances this stack walker through the frame of a method annotated with {@link VM_ENTRY_POINT}.
      *
      * @param purpose the reason this walk is being performed
      * @param lastJavaCallee
      * @param lastJavaCalleeStackPointer
      * @param lastJavaCalleeFramePointer
-     * @return true if the stack walker was advanced to the caller of the method annotated with {@link C_FUNCTION}, false otherwise
+     * @return true if the stack walker was advanced
      */
-    private boolean advanceCFunctionFrame(Purpose purpose, TargetMethod lastJavaCallee, Pointer lastJavaCalleeStackPointer, Pointer lastJavaCalleeFramePointer, Object context) {
+    private boolean advanceVmEntryPointFrame(Purpose purpose, TargetMethod lastJavaCallee, Pointer lastJavaCalleeStackPointer, Pointer lastJavaCalleeFramePointer, Object context) {
         final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
-        if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isJniFunction()) {
-            Pointer anchor = nextAnchor();
+        if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
+            Pointer anchor = nextNativeStubAnchor();
             if (anchor.isZero()) {
                 return false;
             }
@@ -296,9 +294,6 @@ public abstract class StackFrameWalker {
                     lastJavaCallerFramePointer);
             return true;
         }
-        if (!isRunMethod(lastJavaCalleeMethodActor)) {
-            FatalError.check(purpose == INSPECTING || purpose == RAW_INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
-        }
         return false;
     }
 
@@ -307,8 +302,8 @@ public abstract class StackFrameWalker {
      * in native code.
      */
     private void advanceFrameInNative(Purpose purpose) {
-        Pointer anchor = nextAnchor();
-        FatalError.check(!anchor.isZero(), "No anchor found when executing 'in native'");
+        Pointer anchor = nextNativeStubAnchor();
+        FatalError.check(!anchor.isZero(), "No native stub frame anchor found when executing 'in native'");
         Pointer lastJavaCallerInstructionPointer = readWord(anchor, JavaFrameAnchor.PC.offset).asPointer();
         if (lastJavaCallerInstructionPointer.isZero()) {
             FatalError.check(!lastJavaCallerInstructionPointer.isZero(), "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
@@ -318,16 +313,32 @@ public abstract class StackFrameWalker {
             readWord(anchor, JavaFrameAnchor.FP.offset));
     }
 
-    private Pointer nextAnchor() {
-        FatalError.check(!currentAnchor.isZero(), "No more anchors");
+    /**
+     * Gets the next anchor in a VM exit frame. That is, get the frame in the next {@linkplain NativeStubGenerator native stub} on the stack.
+     *
+     * @return {@link Pointer#zero()} if there are no more native stub frame anchors
+     */
+    private Pointer nextNativeStubAnchor() {
+        if (currentAnchor.isZero()) {
+            // We're at a VM entry point that has no Java frames above it.
+            return Pointer.zero();
+        }
+
+        // Skip over an anchor in a VM entry point frame. The test is the same as JavaFrameAnchor.inJava()
+        // except we can't use the latter here if in a separate address space (e.g. the Inspector) than the VM.
         Pointer pc = readWord(currentAnchor, JavaFrameAnchor.PC.offset).asPointer();
         if (pc.isZero()) {
             currentAnchor = readWord(currentAnchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();
+            if (currentAnchor.isZero()) {
+                // We're at a VM entry point that has no Java frames above it.
+                return Pointer.zero();
+            }
         }
+
         pc = readWord(currentAnchor, JavaFrameAnchor.PC.offset).asPointer();
         if (pc.isZero()) {
-            // No more anchors
-            return pc;
+            // Java frame anchors should always alternate between VM entry and exit frames.
+            FatalError.unexpected("Found two adjacent VM entry point frame anchors");
         }
         Pointer anchor = this.currentAnchor;
         this.currentAnchor = readWord(anchor, JavaFrameAnchor.PREVIOUS.offset).asPointer();

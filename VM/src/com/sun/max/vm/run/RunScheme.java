@@ -38,7 +38,7 @@ public interface RunScheme extends VMScheme {
     /**
      * The run method for the main Java thread.
      */
-    void run();
+    void run() throws Throwable;
 
     /**
      * While bootstrapping, gather static native methods in JDK classes that need to be re-executed at target startup.

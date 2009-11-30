@@ -22,11 +22,7 @@ package com.sun.max.vm.compiler.b.c;
 
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.jit.JitInstrumentation;
-import com.sun.max.vm.profile.MethodProfile;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -47,6 +43,8 @@ import com.sun.max.vm.compiler.snippet.NonFoldableSnippet.*;
 import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jit.*;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -827,11 +825,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         if (!isCFunction) {
             call = call(nativeCallEpilogue, cont(ccBody), ce());
         } else {
-            if (MaxineVM.isHosted() && !classMethodActor.getAnnotation(C_FUNCTION.class).isInterruptHandler()) {
-                call = call(nativeCallEpilogueForC, cont(ccBody), ce());
-            } else {
-                call = ccBody;
-            }
+            call = call(nativeCallEpilogueForC, cont(ccBody), ce());
         }
 
         cc.setBody(call);
@@ -841,15 +835,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         if (!isCFunction) {
             call = call(nativeCallPrologue, cont(call), ce());
         } else {
-            if (classMethodActor.isCFunction()) {
-                if (MaxineVM.isHosted()) {
-                    if (!classMethodActor.getAnnotation(C_FUNCTION.class).isInterruptHandler()) {
-                        call = call(nativeCallPrologueForC, cont(call), ce());
-                    }
-                } else {
-                    call = call(nativeCallPrologueForC, cont(call), ce());
-                }
-            }
+            call = call(nativeCallPrologueForC, cont(call), ce());
         }
 
         set(call(

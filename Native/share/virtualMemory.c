@@ -127,51 +127,56 @@ Address virtualMemory_deallocate(Address start, Size size, int type) {
 #endif
 }
 
-Address virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
+boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
 #if os_SOLARIS || os_DARWIN
-  return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0));
+    return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0)) != ALLOC_FAILED;
 #elif os_GUESTVMXEN
-  return (Address) guestvmXen_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type);
+    return (Address) guestvmXen_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type) != ALLOC_FAILED;
 #else
     c_UNIMPLEMENTED();
     return false;
 #endif
 }
 
-void virtualMemory_protectPage(Address pageAddress) {
-    c_ASSERT(virtualMemory_pageAlign(pageAddress) == pageAddress);
+void virtualMemory_protectPages(Address address, int count) {
+    c_ASSERT(virtualMemory_pageAlign(address) == address);
 
 #if os_SOLARIS || os_DARWIN || os_LINUX
-    if (mprotect((Word) pageAddress, virtualMemory_getPageSize(), PROT_NONE) != 0) {
+    if (mprotect((Word) address, count * virtualMemory_getPageSize(), PROT_NONE) != 0) {
          int error = errno;
-         log_exit(error, "protectPage: mprotect(%p) failed: %s", pageAddress, strerror(error));
+         log_exit(error, "protectPages: mprotect(%p) failed: %s", address, strerror(error));
     }
 #elif os_GUESTVMXEN
-    guestvmXen_virtualMemory_protectPage(pageAddress);
+    guestvmXen_virtualMemory_protectPages(address, count);
 #else
     c_UNIMPLEMENTED();
 #endif
 }
 
-void virtualMemory_unprotectPage(Address pageAddress) {
-	c_ASSERT(virtualMemory_pageAlign(pageAddress) == pageAddress);
+void virtualMemory_unprotectPages(Address address, int count) {
+	c_ASSERT(virtualMemory_pageAlign(address) == address);
 #if os_SOLARIS || os_DARWIN || os_LINUX
-	if (mprotect((Word) pageAddress, virtualMemory_getPageSize(), PROT_READ| PROT_WRITE) != 0){
+	if (mprotect((Word) address, count * virtualMemory_getPageSize(), PROT_READ| PROT_WRITE) != 0){
          int error = errno;
-		 log_exit(error, "unprotectPage: mprotect(%p) failed: %s", pageAddress, strerror(error));
+		 log_exit(error, "unprotectPages: mprotect(%p) failed: %s", address, strerror(error));
 	}
 #elif os_GUESTVMXEN
-	guestvmXen_virtualMemory_unProtectPage(pageAddress);
+	guestvmXen_virtualMemory_unProtectPages(address, count);
 #else
 	c_UNIMPLEMENTED();
 #endif
 }
 
+static unsigned int pageSize = 0;
+
 unsigned int virtualMemory_getPageSize(void){
 #if os_GUESTVMXEN
     return guestvmXen_virtualMemory_pageSize();
 #else
-    return getpagesize();
+    if (pageSize == 0) {
+        pageSize = getpagesize();
+    }
+    return pageSize;
 #endif
 }
 

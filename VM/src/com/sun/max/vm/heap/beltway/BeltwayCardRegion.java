@@ -239,7 +239,7 @@ public class BeltwayCardRegion {
             // copy the primordial card table to the regular card table
             regularCardTable.writeByte(index, primordialCardTable.readByte(index));
         }
-        VmThreadMap.ACTIVE.forAllVmThreads(null, setLocals);
+        VmThreadMap.ACTIVE.forAllThreads(null, setLocals);
     }
 
     public final Size cardTableSize() {

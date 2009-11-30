@@ -41,6 +41,7 @@
 #include "threads.h"
 #include "messenger.h"
 #include "os.h"
+#include "virtualMemory.h"
 
 #include "maxine.h"
 
@@ -321,7 +322,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     fd = loadImage();
 
-    threadLocals_initialize(image_header()->threadLocalsSize, image_header()->javaFrameAnchorSize);
+    threadLocals_initialize(image_header()->threadLocalsAreaSize);
 
     debugger_initialize();
 
@@ -329,21 +330,13 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
-    // Allocate the primordial VM thread locals:
-    ThreadLocals primordial_threadLocalsAndAnchor = (ThreadLocals) alloca(threadLocalsSize() + javaFrameAnchorSize() + sizeof(Address));
+    Address tlBlock =  threadLocalsBlock_create(0, false);
 
-    // Align primordial VM thread locals to Word boundary:
-    primordial_threadLocalsAndAnchor = (ThreadLocals) wordAlign(primordial_threadLocalsAndAnchor);
-
-    // Initialize all primordial VM thread locals to 0/null:
-    memset((char *) primordial_threadLocalsAndAnchor, 0, threadLocalsSize() + javaFrameAnchorSize());
-
-    image_write_value(ThreadLocals, primordialThreadLocalsOffset, primordial_threadLocalsAndAnchor);
-
-    threads_initialize(primordial_threadLocalsAndAnchor);
+    Address primordial_tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
+    image_write_value(Address, primordialThreadLocalsOffset, primordial_tl);
 
 #if log_LOADER
-    log_println("primordial VM thread locals allocated at: %p", primordial_threadLocalsAndAnchor);
+    log_println("primordial thread locals: %p", primordial_tl);
 #endif
 
     Address auxiliarySpace = 0;
@@ -360,7 +353,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     }
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM::run(bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, argc=%d, argv=%p)",
+    log_println("entering Java by calling MaxineVM.run(bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, argc=%d, argv=%p)",
                     image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), argc, argv);
 #endif
     exitCode = (*method)(image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), argc, argv);
