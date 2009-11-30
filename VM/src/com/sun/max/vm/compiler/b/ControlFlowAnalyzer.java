@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.b;
 import java.util.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.bir.*;
 
@@ -46,6 +47,7 @@ public class ControlFlowAnalyzer extends ControlFlowAdapter {
         }
     }
 
+    private final ClassMethodActor classMethodActor;
     private final byte[] code;
     private final BirBlock[] blockMap;
     private final boolean[] starts;
@@ -53,7 +55,8 @@ public class ControlFlowAnalyzer extends ControlFlowAdapter {
     private final boolean[] terminations;
     private final List<Jump> jumps;
 
-    public ControlFlowAnalyzer(byte[] code) {
+    public ControlFlowAnalyzer(ClassMethodActor classMethodActor, byte[] code) {
+        this.classMethodActor = classMethodActor;
         this.code = code;
         this.blockMap = new BirBlock[code.length];
         this.starts = new boolean[code.length];
@@ -182,7 +185,7 @@ public class ControlFlowAnalyzer extends ControlFlowAdapter {
                 toBlock.addPredecessor(fallingThrough);
             }
 
-            if (jump.toAddress < jump.fromAddress) {
+            if (jump.toAddress < jump.fromAddress && !classMethodActor.noSafepoints()) {
                 // Backwards branch detected, provision a safepoint at its target:
                 toBlock.haveSafepoint();
             }

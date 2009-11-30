@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.b.c;
 
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -1125,16 +1124,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void prologue() {
         if (blockState.birBlock().hasSafepoint()) {
-            if (MaxineVM.isHosted()) {
-                final VM_ENTRY_POINT vmEntryPointAnnotation = methodTranslation.classMethodActor().getAnnotation(VM_ENTRY_POINT.class);
-                if (vmEntryPointAnnotation == null || !vmEntryPointAnnotation.isInterruptHandler()) {
-                    callAndPush(JavaOperator.SAFEPOINT_OP);
-                }
-            } else {
-                if (methodTranslation.classMethodActor().isVmEntryPoint()) {
-                    callAndPush(JavaOperator.SAFEPOINT_OP);
-                }
-            }
+            callAndPush(JavaOperator.SAFEPOINT_OP);
         }
     }
 
