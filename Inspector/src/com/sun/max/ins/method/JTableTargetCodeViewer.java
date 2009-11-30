@@ -755,7 +755,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     final Address literalAddress = targetCodeInstruction.literalSourceAddress.asAddress();
                     renderer = literalRenderer.render(inspection, text, literalAddress);
                     inspectorLabels[row] = renderer;
-                } else if (rowToCalleeIndex(row) >= 0) {
+                } else if (rowToCalleeIndex(row) >= 0 && targetCodeInstruction.mnemonic.contains("call")) {
                     final PoolConstantLabel poolConstantLabel = PoolConstantLabel.make(inspection, rowToCalleeIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
                     poolConstantLabel.setToolTipPrefix(text);
                     renderer = poolConstantLabel;
