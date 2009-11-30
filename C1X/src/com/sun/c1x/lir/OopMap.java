@@ -41,13 +41,8 @@ public class OopMap {
     public OopMap(int frameSize, CiTarget target) {
         this.frameSize = frameSize;
         this.target = target;
-        initMaps();
-    }
-
-    private void initMaps() {
-        assert frameSize % target.arch.wordSize == 0 : "must be aligned";
-        stackMap = new BitMap(frameSize / target.arch.wordSize);
-        registerMap = new BitMap(target.allocatableRegs.registerRefMapSize);
+        stackMap = new BitMap(this.frameSize / this.target.arch.wordSize);
+        registerMap = new BitMap(this.target.allocatableRegs.registerRefMapSize);
     }
 
     public void setOop(CiLocation location) {

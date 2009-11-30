@@ -334,13 +334,12 @@ public class C1XRuntimeCalls {
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.JavaTimeMillis)
     public static long runtimeJavaTimeMillis() {
-        return System.currentTimeMillis();
+        return MaxineVM.native_currentTimeMillis();
     }
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.JavaTimeNanos)
     public static long runtimeJavaTimeNanos() {
-        // TODO: Implement correctly!
-        return 0;
+        return MaxineVM.native_nanoTime();
     }
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.OopArrayCopy)

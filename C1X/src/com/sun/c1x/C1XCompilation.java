@@ -60,7 +60,6 @@ public class C1XCompilation {
 
     private CFGPrinter cfgPrinter;
 
-    private List<ExceptionInfo> exceptionInfoList;
     private DebugInformationRecorder debugInfo;
 
     /**
@@ -229,16 +228,6 @@ public class C1XCompilation {
         return assembler;
     }
 
-    public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
-        if (C1XOptions.PrintExceptionHandlers) {
-            TTY.println("  added exception scope for pco %d", pcOffset);
-        }
-        if (exceptionInfoList == null) {
-            exceptionInfoList = new ArrayList<ExceptionInfo>();
-        }
-        exceptionInfoList.add(new ExceptionInfo(pcOffset, exceptionHandlers));
-    }
-
     public DebugInformationRecorder debugInfoRecorder() {
         if (debugInfo == null) {
             debugInfo = new DebugInformationRecorder();
@@ -327,9 +316,9 @@ public class C1XCompilation {
             lirAssembler.emitLocalStubs();
 
             // generate exception adapters
-            lirAssembler.emitExceptionEntries(exceptionInfoList);
+            lirAssembler.emitExceptionEntries();
 
-            CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, frameMap.frameSize(), exceptionInfoList, -1);
+            CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, frameMap.frameSize(), -1);
 
             if (C1XOptions.PrintCFGToFile) {
                 cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
@@ -358,16 +347,5 @@ public class C1XCompilation {
 
     public boolean needsDebugInformation() {
         return false;
-    }
-
-    public void addCallInfo(int pcOffset, LIRDebugInfo cinfo) {
-        if (cinfo == null) {
-            return;
-        }
-
-        cinfo.recordDebugInfo(debugInfoRecorder(), pcOffset);
-        if (cinfo.exceptionHandlers != null) {
-            addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers);
-        }
     }
 }

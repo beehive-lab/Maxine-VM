@@ -93,7 +93,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     public GlobalStub emit(CiRuntimeCall runtimeCall, RiRuntime runtime) {
         reset(runtimeCall.resultKind, runtimeCall.arguments);
         emitStandardForward(null, runtimeCall);
-        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + runtimeCall);
         return new GlobalStub(null, runtimeCall.resultKind, stubObject, argsSize, argOffsets);
     }
@@ -122,7 +122,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 break;
         }
 
-        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + stub);
         return new GlobalStub(stub, stub.resultKind, stubObject, argsSize, argOffsets);
     }
@@ -231,7 +231,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         compilation.frameMap().setFrameSize(frameSize());
         assembler.emitXirInstructions(null, template.fastPath, labels, operands);
         epilogue();
-        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), null, registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, template.name);
         return new GlobalStub(null, template.resultOperand.kind, stubObject, 0, argOffsets);
     }
@@ -438,7 +438,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         }
 
         // Call to the runtime
-        asm.callRuntime(call);
+        asm.directCall(call, null);
 
         if (call.resultKind != CiKind.Void) {
             this.storeArgument(0, target.config.getReturnRegister(call.resultKind));

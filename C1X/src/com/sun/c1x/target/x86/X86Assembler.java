@@ -23,9 +23,7 @@ package com.sun.c1x.target.x86;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.globalstub.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
@@ -456,7 +454,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC8 | encode);
     }
 
-    public final void call(Label l) {
+    public final void internalCall(Label l) {
         if (l.isBound()) {
             int longSize = 5;
             int offs = Util.safeToInt(target(l) - codeBuffer.position());
@@ -474,57 +472,37 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void call(CiRegister dst, RiMethod method, boolean[] stackReferenceMap) {
-        recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
-        // this may be true but dbx disassembles it as if it
-        // were 32bits...
-        // int encode = prefixAndEncode(dst.encoding());
-        // if (offset() != x) assert dst.encoding() >= 8 : "what?";
+    public final int directCall(Object target, LIRDebugInfo info) {
+        int before = codeBuffer.position();
+        emitByte(0xE8);
+        emitInt(0);
+        int after = codeBuffer.position();
+        recordDirectCall(before, after, target, info);
+        recordExceptionHandlers(after, info);
+        return before;
+    }
+
+    public final int indirectCall(CiRegister dst, Object target, LIRDebugInfo info) {
+        int before = codeBuffer.position();
         int encode = prefixqAndEncode(dst.encoding);
 
         emitByte(0xFF);
         emitByte(0xD0 | encode);
+        int after = codeBuffer.position();
+        recordIndirectCall(before, after, target, info);
+        recordExceptionHandlers(after, info);
+        return before;
     }
 
-    public final void call(RiMethod method, boolean[] stackReferenceMap) {
-        recordDirectCall(codeBuffer.position(), method, stackReferenceMap);
-        emitByte(0xE8);
-        emitInt(0);
-    }
-
-    public final void call(Address addr, RiMethod method, boolean[] stackReferenceMap) {
-        recordIndirectCall(codeBuffer.position(), method, stackReferenceMap);
+    public final int indirectCall(Address addr, Object target, LIRDebugInfo info) {
+        int before = codeBuffer.position();
         prefix(addr);
         emitByte(0xFF);
         emitOperand(X86.rdx, addr);
-    }
-
-    protected final int emitGlobalStubCall(Object globalStubID, LIRDebugInfo info) {
-        assert !(globalStubID instanceof GlobalStub);
-
-        int position = codeBuffer.position();
-        if (info == null) {
-            recordGlobalStubCall(position, globalStubID, null, null);
-        } else {
-            recordGlobalStubCall(position, globalStubID, info.oopMap.registerMap(), info.oopMap.stackMap());
-        }
-
-        emitByte(0xE8);
-        emitInt(0);
-        return codeBuffer.position();
-    }
-
-    /**
-     * Emits a call to the runtime. It generates the bytes for the call, fills in 0 for the destination address and
-     * records the position as a relocation to the runtime.
-     *
-     * @param runtimeCall the destination of the call
-     */
-    public void callRuntime(CiRuntimeCall runtimeCall) {
-        // TODO: Fill in reference map correctly!
-        recordRuntimeCall(codeBuffer.position(), runtimeCall, new boolean[targetMethod.frameSize() / target.arch.wordSize]);
-        emitByte(0xE8);
-        emitInt(0);
+        int after = codeBuffer.position();
+        recordIndirectCall(before, after, target, info);
+        recordExceptionHandlers(after, info);
+        return before;
     }
 
     public final void cdql() {
