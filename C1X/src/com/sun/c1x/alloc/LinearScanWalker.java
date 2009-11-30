@@ -943,7 +943,6 @@ final class LinearScanWalker extends IntervalWalker {
         assert 0 <= firstReg && firstReg < allocatableRegisters.nofRegs : "out of range";
         assert 0 <= lastReg && lastReg < allocatableRegisters.nofRegs : "out of range";
     }
-    // TODO: Platform specific!
 
     private boolean pdInitRegsForAlloc(Interval cur) {
         assert compilation.target.arch.isX86();

@@ -70,7 +70,7 @@ public class X86MacroAssembler extends X86Assembler {
             storeParameter(args[i], stub.argOffsets[i]);
         }
 
-        int pos = emitGlobalStubCall(stub.stubObject, info);
+        int pos = directCall(stub.stubObject, info);
 
         if (result != CiRegister.None) {
             this.loadResult(result, 0, resultKind);
@@ -227,7 +227,6 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void lneg(CiRegister hi, CiRegister lo) {
-
         assert !is64 : "should not be used in 64 bit mode";
         negl(lo);
         adcl(hi, 0);
@@ -442,7 +441,7 @@ public class X86MacroAssembler extends X86Assembler {
         if (C1XOptions.GenAssertionCode) {
             if (is64) {
                 // TODO: pass a pointer to the message
-                callRuntime(CiRuntimeCall.Debug);
+                directCall(CiRuntimeCall.Debug, null);
                 hlt();
             } else {
                 throw Util.unimplemented();

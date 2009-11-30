@@ -53,7 +53,6 @@ public abstract class LIRCall extends LIRInstruction {
     }
 
     public LIROperand lastArgument() {
-        return operand(arguments.size());
+        return operand(arguments.size() - 1);
     }
-
 }

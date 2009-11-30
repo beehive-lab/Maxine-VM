@@ -48,6 +48,8 @@ import com.sun.c1x.xir.CiXirAssembler.*;
  */
 public abstract class LIRGenerator extends ValueVisitor {
 
+    private static final LIRLocation ILLEGAL = LIROperandFactory.IllegalLocation;
+
     // the range of values in a lookupswitch or tableswitch statement
     private static final class SwitchRange {
         final int lowKey;
@@ -581,9 +583,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true, true);
-
         List<LIROperand> argList = visitInvokeArguments(x, cc);
-        LIROperand receiver = LIROperandFactory.IllegalLocation;
 
         // setup result register
         LIROperand resultRegister = resultRegisterFor(x.kind);
@@ -595,10 +595,8 @@ public abstract class LIRGenerator extends ValueVisitor {
                 lir.callXirDirect(target, resultRegister, argList, info);
             } else {
                 // Indirect call
-                List<LIROperand> newList = new ArrayList<LIROperand>(argList.size() + 1);
-                newList.addAll(argList);
-                newList.add(destinationAddress);
-                lir.callXirIndirect(target, resultRegister, newList, info);
+                argList.add(destinationAddress);
+                lir.callXirIndirect(target, resultRegister, argList, info);
             }
 
         } else {
@@ -693,14 +691,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
             LIRLocation tempResult = callRuntime(CiRuntimeCall.ResolveFieldOffset, info.copy(), cpi, cp);
             address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
-
-            // we need to patch the offset in the instruction so don't allow
-            // generateAddress to try to be smart about emitting the -1.
-            // Otherwise the patching code won't know how to find the
-            // instruction to patch.
-            //address = new LIRAddress(object.result(), Integer.MAX_VALUE, fieldType);
         } else {
-            address = genAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
+            address = genAddress((LIRLocation) object.result(), ILLEGAL, 0, x.offset(), fieldType);
         }
 
         if (isVolatile) {
@@ -849,7 +841,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitReturn(Return x) {
         if (x.kind.isVoid()) {
-            lir.returnOp(LIROperandFactory.IllegalLocation);
+            lir.returnOp(ILLEGAL);
         } else {
             LIROperand reg = resultRegisterFor(x.kind);
             LIRItem result = new LIRItem(x.result(), this);
@@ -901,7 +893,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         XirOperand resultOperand = snippet.template.resultOperand;
 
         if (snippet.template.allocateResultOperand) {
-            LIROperand outputOperand = LIROperandFactory.IllegalLocation;
+            LIROperand outputOperand = ILLEGAL;
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
@@ -978,7 +970,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIROperand allocatedResultOperand = operands[resultOperand.index];
         if (!allocatedResultOperand.isRegister()) {
-            allocatedResultOperand = LIROperandFactory.IllegalLocation;
+            allocatedResultOperand = ILLEGAL;
         }
 
         if (setInstructionResult && !allocatedResultOperand.isIllegal()) {
@@ -989,7 +981,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // XIR instruction is only needed when the operand is not a constant!
             lir.xir(snippet, operands, allocatedResultOperand, inputTempOperands.size(), tempOperands.size(),
                     operandArray, operandIndicesArray,
-                    (operands[resultOperand.index] == LIROperandFactory.IllegalLocation) ? -1 : resultOperand.index,
+                    (operands[resultOperand.index] == ILLEGAL) ? -1 : resultOperand.index,
                     info, method);
         }
 
@@ -1072,7 +1064,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             LIRLocation tempResult = callRuntime(CiRuntimeCall.ResolveFieldOffset, info.copy(), cpi, cp);
             address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
         } else {
-            address = genAddress((LIRLocation) object.result(), LIROperandFactory.IllegalLocation, 0, x.offset(), fieldType);
+            address = genAddress((LIRLocation) object.result(), ILLEGAL, 0, x.offset(), fieldType);
         }
 
         if (isVolatile && compilation.runtime.isMP()) {
@@ -1364,7 +1356,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         lir.branchDestination(block.label());
         if (block == ir.startBlock) {
-            lir.stdEntry(LIROperandFactory.IllegalLocation);
+            lir.stdEntry(ILLEGAL);
             setOperandsForLocals(block.end().stateAfter());
         }
     }
@@ -1661,7 +1653,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiKind rtype = runtimeCall.resultKind;
         CiKind[] ptypes = runtimeCall.arguments;
 
-        LIRLocation physReg = rtype.isVoid() ? LIROperandFactory.IllegalLocation : resultRegisterFor(rtype);
+        LIRLocation physReg = rtype.isVoid() ? ILLEGAL : resultRegisterFor(rtype);
 
         List<LIROperand> argumentList;
         if (ptypes.length > 0) {
@@ -2085,7 +2077,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected LIRLocation resultRegisterFor(CiKind kind) {
         if (kind == CiKind.Void) {
-            return LIROperandFactory.IllegalLocation;
+            return ILLEGAL;
         }
         CiRegister returnRegister = compilation.target.config.getReturnRegister(kind);
         assert is64 : "64 bit only for now";

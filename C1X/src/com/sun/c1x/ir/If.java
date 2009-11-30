@@ -21,10 +21,7 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
-<<<<<<< local
 import com.sun.c1x.util.*;
-=======
->>>>>>> other
 import com.sun.c1x.value.*;
 
 /**
