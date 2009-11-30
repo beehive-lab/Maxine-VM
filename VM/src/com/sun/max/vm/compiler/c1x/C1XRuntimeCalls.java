@@ -33,6 +33,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
+import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -370,6 +371,35 @@ public class C1XRuntimeCalls {
         final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
         MakeHolderInitialized.makeHolderInitialized(staticMethodActor);
         return CompilationScheme.Static.compile(staticMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
+    }
+
+    @UNSAFE
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedInvokeStatic)
+    public static long runtimeUnresolvedInvokeStatic(int index, ConstantPool constantPool) {
+        final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
+        MakeHolderInitialized.makeHolderInitialized(staticMethodActor);
+        return CompilationScheme.Static.compile(staticMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
+    }
+
+    @UNSAFE
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedInvokeSpecial)
+    public static long runtimeUnresolvedInvokeSpecial(Object receiver, int index, ConstantPool constantPool) {
+        final ClassMethodActor classMethodActor = (ClassMethodActor) constantPool.classMethodAt(index).resolve(constantPool, index);
+        return CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
+    }
+
+    @UNSAFE
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedInvokeVirtual)
+    public static long runtimeUnresolvedInvokeVirtual(Object receiver, int index, ConstantPool constantPool) {
+        final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
+        return MethodSelectionSnippet.SelectVirtualMethod.selectVirtualMethod(receiver, virtualMethodActor).asAddress().toLong();
+    }
+
+    @UNSAFE
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedInvokeInterface)
+    public static long runtimeUnresolvedInvokeInterface(Object receiver, int index, ConstantPool constantPool) {
+        final InterfaceMethodActor virtualMethodActor = (InterfaceMethodActor) constantPool.classMethodAt(index).resolve(constantPool, index);
+        return MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, virtualMethodActor).asAddress().toLong();
     }
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Debug)

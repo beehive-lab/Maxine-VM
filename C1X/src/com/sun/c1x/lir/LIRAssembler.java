@@ -350,25 +350,25 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case IndirectCall:
                 // TODO: use the address operand
-                emitIndirectCall(op.method(), null, op.info, op.cpi, op.constantPool);
+                emitIndirectCall(op.method, null, op.info, op.cpi, op.constantPool);
                 break;
             case StaticCall:
-                emitDirectCall(op.method(), op.runtimeCall, op.info, op.cpi, op.constantPool);
+                emitDirectCall(op.method, op.runtimeCall, op.info, op.cpi, op.constantPool);
                 break;
             case SpecialCall:
-                emitDirectCall(op.method(), op.runtimeCall, op.info, op.cpi, op.constantPool);
+                emitDirectCall(op.method, op.runtimeCall, op.info, op.cpi, op.constantPool);
                 break;
             case InterfaceCall:
-                emitInterfaceCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
+                emitInterfaceCall(op.method, op.receiver(), op.info, op.cpi, op.constantPool);
                 break;
             case VirtualCall:
-                emitVirtualCall(op.method(), op.receiver(), op.info, op.cpi, op.constantPool);
+                emitVirtualCall(op.method, op.receiver(), op.info, op.cpi, op.constantPool);
                 break;
             case XirDirectCall:
-                emitXirDirectCall(op.method(), op.info);
+                emitXirDirectCall(op.method, op.info);
                 break;
             case XirIndirectCall:
-                emitXirIndirectCall(op.method(), op.info, op.lastArgument());
+                emitXirIndirectCall(op.method, op.info, op.lastArgument());
                 break;
             default:
                 throw Util.shouldNotReachHere();

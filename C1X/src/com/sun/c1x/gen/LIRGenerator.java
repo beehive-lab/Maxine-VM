@@ -582,23 +582,11 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true, true);
 
-        List<LIROperand> argList = Arrays.asList(cc.operands);
-        List<LIRItem> args = visitInvokeArguments(x);
+        List<LIROperand> argList = visitInvokeArguments(x, cc);
         LIROperand receiver = LIROperandFactory.IllegalLocation;
 
         // setup result register
-        LIROperand resultRegister = LIROperandFactory.IllegalLocation;
-        if (!x.kind.isVoid()) {
-            resultRegister = resultRegisterFor(x.kind);
-        }
-
-        assert args.size() == argList.size();
-        loadInvokeArguments(x, args, argList);
-
-        if (x.hasReceiver()) {
-            args.get(0).loadItemForce(cc.operands[0]);
-            receiver = args.get(0).result();
-        }
+        LIROperand resultRegister = resultRegisterFor(x.kind);
 
         if (snippet != null && destinationAddress != null) {
             if (destinationAddress instanceof LIRConstant) {
@@ -616,7 +604,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
             // emit invoke code
             boolean optimized = target.isLoaded() && target.isFinalMethod();
-            assert receiver.isIllegal() || receiver.equals(cc.operands[0]) : "must match";
 
             switch (x.opcode()) {
                 case Bytecodes.INVOKESTATIC:
@@ -628,14 +615,14 @@ public abstract class LIRGenerator extends ValueVisitor {
                     assert x.hasReceiver();
                     if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
                         if (x.needsNullCheck()) {
-                            lir.nullCheck(receiver, info.copy());
+                            lir.nullCheck(argList.get(0), info.copy());
                         }
-                        lir.callSpecial(target, receiver, resultRegister, CiRuntimeCall.ResolveSpecialCall, argList, info, x.cpi, x.constantPool);
+                        lir.callSpecial(target, resultRegister, CiRuntimeCall.ResolveSpecialCall, argList, info, x.cpi, x.constantPool);
                     } else {
                         if (x.opcode() == Bytecodes.INVOKEINTERFACE) {
-                            lir.callInterface(target, receiver, resultRegister, argList, info, x.cpi, x.constantPool);
+                            lir.callInterface(target, resultRegister, argList, info, x.cpi, x.constantPool);
                         } else {
-                            lir.callVirtual(target, receiver, resultRegister, argList, info, x.cpi, x.constantPool);
+                            lir.callVirtual(target, resultRegister, argList, info, x.cpi, x.constantPool);
                         }
                     }
                     break;
@@ -1806,38 +1793,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         C1XMetrics.NumberOfHIRInstructions += livenessMarker.liveCount();
     }
 
-    void loadInvokeArguments(Invoke x, List<LIRItem> args, List<LIROperand> argList) {
-        int i = x.hasReceiver() ? 1 : 0;
-        for (; i < args.size(); i++) {
-            LIRItem param = args.get(i);
-            LIROperand loc = argList.get(i);
-            if (loc.isRegister()) {
-                param.loadItemForce(loc);
-            } else {
-                assert loc.isAddress();
-                LIRAddress addr = (LIRAddress) loc;
-                param.loadForStore(addr.kind);
-                if (addr.kind == CiKind.Long || addr.kind == CiKind.Double) {
-                    lir.unalignedMove(param.result(), addr);
-                } else {
-                    lir.move(param.result(), addr);
-                }
-            }
-        }
-        // XXX: why is the receiver loaded last? seems odd....
-        if (x.hasReceiver()) {
-            LIRItem receiver = args.get(0);
-            LIROperand loc = argList.get(0);
-            if (loc.isRegister()) {
-                receiver.loadItemForce(loc);
-            } else {
-                assert loc.isAddress();
-                receiver.loadForStore(CiKind.Object);
-                lir.move(receiver.result(), loc);
-            }
-        }
-    }
-
     protected void logicOp(int code, LIROperand resultOp, LIROperand leftOp, LIROperand rightOp) {
         if (C1XOptions.TwoOperandLIRForm && leftOp != resultOp) {
             assert rightOp != resultOp : "malformed";
@@ -2086,16 +2041,29 @@ public abstract class LIRGenerator extends ValueVisitor {
         return new LIRDebugInfo(state, x.bci(), ignoreXhandler ? null : x.exceptionHandlers());
     }
 
-    List<LIRItem> visitInvokeArguments(Invoke x) {
-        // for each argument, create a new LIRItem
-        final List<LIRItem> argumentItems = new ArrayList<LIRItem>();
-        for (int i = 0; i < x.arguments().length; i++) {
-            if (x.arguments()[i] != null) {
-                LIRItem param = new LIRItem(x.arguments()[i], this);
-                argumentItems.add(param);
+    List<LIROperand> visitInvokeArguments(Invoke x, CallingConvention cc) {
+        // for each argument, load it into the correct location
+        Value[] args = x.arguments();
+        List<LIROperand> argList = new ArrayList<LIROperand>(args.length);
+        for (int i = 0, j = 0; i < args.length; i++) {
+            if (args[i] != null) {
+                LIRItem param = new LIRItem(args[i], this);
+                LIROperand loc = cc.operands[j++];
+                if (loc.isRegister()) {
+                    param.loadItemForce(loc);
+                } else {
+                    LIRAddress addr = (LIRAddress) loc;
+                    param.loadForStore(addr.kind);
+                    if (addr.kind == CiKind.Long || addr.kind == CiKind.Double) {
+                        lir.unalignedMove(param.result(), addr);
+                    } else {
+                        lir.move(param.result(), addr);
+                    }
+                }
+                argList.add(loc);
             }
         }
-        return argumentItems;
+        return argList;
     }
 
     protected void walk(Value instr) {
@@ -2115,13 +2083,16 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert instr instanceof Constant || !instr.operand().isIllegal() : "this root has not been visited yet";
     }
 
-    protected LIRLocation resultRegisterFor(CiKind type) {
-        CiRegister returnRegister = compilation.target.config.getReturnRegister(type);
-        assert is64 : "64 bit only for now";
-        if (type.size == 2) {
-            return LIROperandFactory.doubleLocation(type, returnRegister, returnRegister);
+    protected LIRLocation resultRegisterFor(CiKind kind) {
+        if (kind == CiKind.Void) {
+            return LIROperandFactory.IllegalLocation;
         }
-        return LIROperandFactory.singleLocation(type, returnRegister);
+        CiRegister returnRegister = compilation.target.config.getReturnRegister(kind);
+        assert is64 : "64 bit only for now";
+        if (kind.size == 2) {
+            return LIROperandFactory.doubleLocation(kind, returnRegister, returnRegister);
+        }
+        return LIROperandFactory.singleLocation(kind, returnRegister);
     }
 
     protected static LIRCondition lirCond(Condition cond) {

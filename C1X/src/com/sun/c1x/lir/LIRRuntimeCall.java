@@ -29,12 +29,11 @@ import com.sun.c1x.debug.*;
  * The <code>LIRRTCall</code> class definition.
  *
  * @author Marcelo Cintra
- *
  */
 public class LIRRuntimeCall extends LIRCall {
 
     public LIRRuntimeCall(CiRuntimeCall rtCall, LIROperand result, List <LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
-        super(LIROpcode.RtCall, rtCall, result, LIROperandFactory.IllegalLocation, arguments, info, calleeSaved);
+        super(LIROpcode.RtCall, rtCall, result, arguments, info, calleeSaved);
     }
 
     /**
