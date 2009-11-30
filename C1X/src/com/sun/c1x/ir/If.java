@@ -21,7 +21,10 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
+<<<<<<< local
 import com.sun.c1x.util.*;
+=======
+>>>>>>> other
 import com.sun.c1x.value.*;
 
 /**
@@ -30,7 +33,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class If extends BlockEnd {
+public final class If extends BlockEnd {
 
     Value x;
     Value y;

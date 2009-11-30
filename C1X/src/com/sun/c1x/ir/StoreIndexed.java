@@ -28,7 +28,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class StoreIndexed extends AccessIndexed {
+public final class StoreIndexed extends AccessIndexed {
 
     Value value;
 

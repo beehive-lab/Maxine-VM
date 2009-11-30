@@ -25,8 +25,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
- * A token that "guards" the {@linkplain PoolConstant#callWithResolutionAndClassInitialization(ConstantPool, int)
- * resolution} of a constant pool entry to an {@link Actor}.
+ * A token that "guards" the resolution of a constant pool entry to an {@link Actor}.
  *
  * This pattern of use is intended:
  *
@@ -41,8 +40,6 @@ public final class ResolutionGuard {
 
     public final int constantPoolIndex;
 
-    public final boolean arrayActor;
-
     @CONSTANT_WHEN_NOT_ZERO
     public Actor value;
 
@@ -50,25 +47,16 @@ public final class ResolutionGuard {
         this.constantPool = constantPool;
         this.constantPoolIndex = constantPoolIndex;
         assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
-        arrayActor = false;
-    }
-
-    public ResolutionGuard(ConstantPool constantPool, int constantPoolIndex, boolean arrayActor) {
-        this.constantPool = constantPool;
-        this.constantPoolIndex = constantPoolIndex;
-        assert constantPoolIndex >= 0 : "must be a valid constant pool index!";
-        this.arrayActor = arrayActor;
     }
 
     public ResolutionGuard(Actor value) {
         this.value = value;
         this.constantPool = null;
         this.constantPoolIndex = -1;
-        arrayActor = false;
     }
 
     /**
-     * Gets the pool constant whose resolution is guarded by this object.
+     * @return the pool constant whose resolution is guarded by this object.
      */
     public PoolConstant poolConstant() {
         return constantPool.at(constantPoolIndex);
@@ -76,7 +64,6 @@ public final class ResolutionGuard {
 
     @Override
     public String toString() {
-
         if (value != null) {
             return getClass().getSimpleName() + "[" + value + "]";
         }

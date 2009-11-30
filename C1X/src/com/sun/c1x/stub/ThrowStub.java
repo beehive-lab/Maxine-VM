@@ -20,27 +20,26 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.lir.*;
+import com.sun.c1x.globalstub.GlobalStub;
+import com.sun.c1x.lir.LIROperand;
+import com.sun.c1x.lir.LIRDebugInfo;
 
 /**
- * The <code>ImplicitNullCheckStub</code> class definition.
+ * This class implements a local stub that simply throws an exception, typically
+ * by calling the runtime system through a global stub.
  *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public class ImplicitNullCheckStub extends LocalStub {
+public class ThrowStub extends LocalStub {
 
-    public final int offset;
+    public final GlobalStub globalStub;
 
-    /**
-     * Creates a new instance of <code>ImplicitNullCheckStub</code>.
-     *
-     * @param offset the offset for this code stub
-     * @param info the debug information associated to this code stub
-     */
-    public ImplicitNullCheckStub(int offset, LIRDebugInfo info) {
+    public ThrowStub(GlobalStub globalStub, LIRDebugInfo info, LIROperand... args) {
         super(info);
-        this.offset = offset;
+        this.globalStub = globalStub;
+        if (args != null && args.length > 0) {
+            setOperands(0, 0, args);
+        }
     }
 
     @Override
@@ -49,7 +48,7 @@ public class ImplicitNullCheckStub extends LocalStub {
     }
 
     @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitImplicitNullCheckStub(this);
+    public void accept(LocalStubVisitor visitor) {
+        visitor.visitThrowStub(this);
     }
 }

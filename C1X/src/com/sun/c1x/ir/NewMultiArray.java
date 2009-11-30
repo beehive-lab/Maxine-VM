@@ -29,10 +29,11 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class NewMultiArray extends NewArray {
+public final class NewMultiArray extends NewArray {
     public final RiType elementKind;
     final Value[] dimensions;
     public final char cpi;
+    public final RiConstantPool constantPool;
 
     /**
      * Constructs a new NewMultiArray instruction.
@@ -43,7 +44,8 @@ public class NewMultiArray extends NewArray {
      * @param riConstantPool the constant pool for resolution
      */
     public NewMultiArray(RiType elementKind, Value[] dimensions, ValueStack stateBefore, char cpi, RiConstantPool riConstantPool) {
-        super(null, stateBefore, riConstantPool);
+        super(null, stateBefore);
+        this.constantPool = riConstantPool;
         this.elementKind = elementKind;
         this.dimensions = dimensions;
         this.cpi = cpi;

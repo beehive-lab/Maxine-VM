@@ -20,31 +20,18 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.lir.*;
-
 /**
- * The <code>NewTypeArrayStub</code> class definition.
  *
- * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  */
-public class NewTypeArrayStub extends LocalStub {
+public class AdapterFrameStub extends LocalStub {
 
-    public NewTypeArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, LIRDebugInfo info) {
-        super(info, result);
-        this.setOperands(0, 0, klassReg, length);
+    public AdapterFrameStub() {
+        super(null);
     }
 
     @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitNewTypeArrayStub(this);
-    }
-
-    public LIROperand klassReg() {
-        return operand(0);
-    }
-
-    public LIROperand length() {
-        return operand(1);
+    public void accept(LocalStubVisitor visitor) {
+        visitor.visitAdapterFrameStub(this);
     }
 }

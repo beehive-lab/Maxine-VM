@@ -25,7 +25,7 @@ import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Represents a region of memory in the {@link TeleVM}  that holds compiled target code.
+ * Represents a region of memory in the {@link TeleVM} that holds compiled target code.
  *
  * @author Michael Van De Vanter
   */

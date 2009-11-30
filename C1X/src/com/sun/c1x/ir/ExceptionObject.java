@@ -27,7 +27,7 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class ExceptionObject extends Instruction {
+public final class ExceptionObject extends Instruction {
 
     /**
      * Constructs a new ExceptionObject instruction.

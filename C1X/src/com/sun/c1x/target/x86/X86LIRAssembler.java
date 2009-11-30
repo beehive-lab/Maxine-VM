@@ -20,8 +20,6 @@
  */
 package com.sun.c1x.target.x86;
 
-import java.util.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
@@ -36,8 +34,9 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.xir.*;
 import com.sun.c1x.xir.CiXirAssembler.*;
 
-public class X86LIRAssembler extends LIRAssembler {
+public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
+    private static final Object[] NO_PARAMS = new Object[0];
     private static final long NULLWORD = 0;
     private static final CiRegister SHIFTCount = X86.rcx;
 
@@ -961,40 +960,6 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitAllocObj(LIRAllocObj op) {
-        if (op.isInitCheck()) {
-            throw Util.unimplemented("check for class init status");
-        }
-        masm.allocateObject(compilation.runtime, op.obj().asRegister(), op.tmp1().asRegister(), op.tmp2().asRegister(), op.headerSize(), op.obectSize(), op.klass().asRegister(), op.stub().entry);
-        masm.bind(op.stub().continuation);
-    }
-
-    @Override
-    protected void emitAllocArray(LIRAllocArray op) {
-        if (C1XOptions.UseSlowPath || (!C1XOptions.UseFastNewObjectArray && op.type() == CiKind.Object) || (!C1XOptions.UseFastNewTypeArray && op.type() != CiKind.Object)) {
-            masm.jmp(op.stub().entry);
-        } else {
-            CiRegister len = op.length().asRegister();
-            CiRegister tmp1 = op.tmp1().asRegister();
-            CiRegister tmp2 = op.tmp2().asRegister();
-            CiRegister tmp3 = op.tmp3().asRegister();
-            if (len == tmp1) {
-                tmp1 = tmp3;
-            } else if (len == tmp2) {
-                tmp2 = tmp3;
-            } else if (len == tmp3) {
-                // everything is ok
-            } else {
-                masm.mov(tmp3, len);
-            }
-            int elemSize = compilation.target.sizeInBytes(op.type());
-            masm.allocateArray(compilation.runtime, op.obj().asRegister(), len, tmp1, tmp2, compilation.runtime.arrayHeaderSize(op.type()),
-                            Address.ScaleFactor.fromInt(elemSize), op.klass().asRegister(), op.stub().entry);
-        }
-        masm.bind(op.stub().continuation);
-    }
-
-    @Override
     protected void emitTypeCheck(LIRTypeCheck op) {
         LIROpcode code = op.code;
         if (code == LIROpcode.StoreCheck) {
@@ -1004,7 +969,7 @@ public class X86LIRAssembler extends LIRAssembler {
             CiRegister klassRInfo = op.tmp2().asRegister();
             CiRegister rtmp1 = op.tmp3().asRegister();
 
-            LocalStub stub = op.stub();
+            LocalStub stub = op.stub;
             Label done = new Label();
             masm.cmpptr(value, (int) NULLWORD);
             masm.jcc(X86Assembler.Condition.equal, done);
@@ -1023,7 +988,7 @@ public class X86LIRAssembler extends LIRAssembler {
             masm.bind(done);
         } else if (op.code == LIROpcode.CheckCast) {
             // we always need a stub for the failure case.
-            LocalStub stub = op.stub();
+            LocalStub stub = op.stub;
             CiRegister obj = op.object().asRegister();
             CiRegister expectedHub = op.tmp1().asRegister();
             CiRegister dst = op.result().asRegister();
@@ -1543,7 +1508,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitIntrinsicOp(LIROpcode code, LIROperand value, LIROperand unused, LIROperand dest, LIROp2 op) {
-
         if (value.isDoubleXmm()) {
             switch (code) {
                 case Abs:
@@ -2033,7 +1997,7 @@ public class X86LIRAssembler extends LIRAssembler {
             int offset = masm.codeBuffer.position();
             switch (code) {
                 case StaticCall:
-                case OptVirtualCall:
+                case SpecialCall:
                     offset += compilation.target.arch.machineCodeCallDisplacementOffset;
                     break;
                 case VirtualCall:
@@ -2049,7 +2013,6 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitXirIndirectCall(RiMethod method, LIRDebugInfo info, LIROperand callAddress) {
-
         CiRegister reg = compilation.target.scratchRegister;
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
@@ -2072,9 +2035,15 @@ public class X86LIRAssembler extends LIRAssembler {
             masm.call(method, info.oopMap.stackMap());
         } else {
             assert entry != null;
-            masm.callRuntimeCalleeSaved(entry, info, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm.callRuntimeCalleeSaved(entry, info, rscratch1, CiConstant.forInt(cpi), constantPool.encoding());
             masm.call(rscratch1, method, info.oopMap.stackMap());
         }
+        addCallInfoHere(info);
+    }
+
+    @Override
+    protected void emitIndirectCall(RiMethod method, LIROperand addr, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
+        masm.call(addr.asRegister(), method, info.oopMap.stackMap());
         addCallInfoHere(info);
     }
 
@@ -2091,7 +2060,7 @@ public class X86LIRAssembler extends LIRAssembler {
             masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset()));
         } else {
             assert method.vtableIndex() == -1 && !method.isLoaded();
-            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveVTableIndex, info, rscratch1, new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveVTableIndex, info, rscratch1, CiConstant.forInt(cpi), constantPool.encoding());
             addCallInfoHere(info);
             int vtableEntrySize = compilation.runtime.vtableEntrySize();
             assert Util.isPowerOf2(vtableEntrySize);
@@ -2113,7 +2082,7 @@ public class X86LIRAssembler extends LIRAssembler {
 
         if (method.vtableIndex() == -1) {
             // Unresolved method
-            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveInterfaceIndex, info, rscratch1, new RegisterOrConstant(receiver.asRegister()), new RegisterOrConstant(cpi), new RegisterOrConstant(constantPool.encoding().asObject()));
+            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveInterfaceIndex, info, rscratch1, receiver.asRegister(), CiConstant.forInt(cpi), constantPool.encoding());
         } else {
             // TODO: emit interface ID calculation inline
             masm.movl(rscratch1, method.interfaceID());
@@ -2267,37 +2236,6 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitLock(LIRLock op) {
-        CiRegister obj = op.objOpr().asRegister(); // may not be an oop
-        CiRegister hdr = op.hdrOpr().asRegister();
-        CiRegister lock = op.lockOpr().asRegister();
-        if (!C1XOptions.UseFastLocking) {
-            masm.jmp(op.stub().entry);
-        } else if (op.code == LIROpcode.Monitorenter) {
-            CiRegister scratch = CiRegister.None;
-            if (C1XOptions.UseBiasedLocking) {
-                scratch = op.scratchOpr().asRegister();
-            }
-            // add debug info for NullPointerException only if one is possible
-            int nullCheckOffset = masm.lockObject(compilation.runtime, hdr, obj, lock, scratch, op.stub().entry);
-            if (op.info != null) {
-                addDebugInfoForNullCheck(nullCheckOffset, op.info);
-            }
-            // done
-        } else if (op.code == LIROpcode.Monitorexit) {
-            masm.unlockObject(compilation.runtime, hdr, obj, lock, op.stub().entry);
-        } else {
-            throw Util.shouldNotReachHere();
-        }
-        masm.bind(op.stub().continuation);
-    }
-
-    @Override
-    protected void emitMonitorAddress(int monitorNo, LIROperand dst) {
-        masm.movl(dst.asRegister(), frameMap.addressForMonitorLock(monitorNo));
-    }
-
-    @Override
     protected void emitAlignment() {
         masm.align(compilation.target.arch.wordSize);
     }
@@ -2353,33 +2291,10 @@ public class X86LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitRuntimeCall(LIROperand result, CiRuntimeCall dest, List<LIROperand> args, LIRDebugInfo info, boolean calleeSaved) {
-        if (calleeSaved) {
-            // Call through global stub
-            assert result.isRegister();
-
-            final List<RegisterOrConstant> arguments = new ArrayList<RegisterOrConstant>();
-            for (LIROperand op : args) {
-                if (op.isConstant()) {
-                    LIRConstant constantOp = (LIRConstant) op;
-                    assert op.kind == CiKind.Int || op.kind == CiKind.Object;
-                    if (op.kind == CiKind.Int) {
-                        arguments.add(new RegisterOrConstant(constantOp.asInt()));
-                    } else if (op.kind == CiKind.Object) {
-                        arguments.add(new RegisterOrConstant(((LIRConstant) op).asObject()));
-                    }
-                } else {
-                    assert op.isRegister();
-                    arguments.add(new RegisterOrConstant(op.asRegister()));
-                }
-            }
-            masm.callRuntimeCalleeSaved(dest, info, result.asRegister(), arguments.toArray(new RegisterOrConstant[arguments.size()]));
-        } else {
-            // Call direct
-            masm.callRuntime(dest);
-            if (info != null) {
-                addCallInfoHere(info);
-            }
+    protected void emitRuntimeCall(CiRuntimeCall dest, LIRDebugInfo info) {
+        masm.callRuntime(dest);
+        if (info != null) {
+            addCallInfoHere(info);
         }
     }
 
@@ -2433,7 +2348,6 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void emitMembar() {
         // QQQ sparc TSO uses this,
         masm.membar(X86Assembler.MembarMaskBits.StoreLoad.mask());
-
     }
 
     @Override
@@ -2446,16 +2360,6 @@ public class X86LIRAssembler extends LIRAssembler {
     protected void emitMembarRelease() {
         // No x86 machines currently require store fences
         // lir(). storeFence();
-    }
-
-    @Override
-    protected void emitGetThread(LIROperand resultReg) {
-        assert resultReg.isRegister() : "check";
-        if (is64) {
-            masm.mov(resultReg.asRegister(), compilation.target.config.getThreadRegister());
-        } else {
-            masm.getThread(resultReg.asRegister());
-        }
     }
 
     @Override
@@ -2531,10 +2435,9 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitPrologue() {
-
         int entryCodeOffset = compilation.runtime.codeOffset();
         if (entryCodeOffset > 0) {
-            JITAdapterFrameStub stub = new JITAdapterFrameStub();
+            AdapterFrameStub stub = new AdapterFrameStub();
             adapterFrameStub = stub;
 
             masm.jmp(stub.entry);
@@ -2550,29 +2453,17 @@ public class X86LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCode(LocalStub s) {
-        s.accept(new X86CodeStubVisitor(this));
+        s.accept(this);
     }
 
-    private static RegisterOrConstant asRegisterOrConstant(LIROperand operand) {
+    public static Object asRegisterOrConstant(LIROperand operand) {
         if (operand.isRegister()) {
-            return new RegisterOrConstant(operand.asRegister());
+            return operand.asRegister();
         } else if (operand.isConstant()) {
-            final LIRConstant c = (LIRConstant) operand;
-            if (c.value.kind == CiKind.Int) {
-                return new RegisterOrConstant(c.value.asInt());
-            } else if (c.value.kind == CiKind.Object) {
-                return new RegisterOrConstant(c.value.asObject());
-            } else {
-                throw Util.shouldNotReachHere();
-            }
+            return ((LIRConstant) operand).value;
         } else {
             throw Util.shouldNotReachHere();
         }
-    }
-
-    @Override
-    protected void resolve(CiRuntimeCall stub, LIRDebugInfo info, LIROperand dest, LIROperand index, LIROperand cp) {
-        masm.callRuntimeCalleeSaved(stub, info, dest.asRegister(), asRegisterOrConstant(index), asRegisterOrConstant(cp));
     }
 
     @Override
@@ -2744,11 +2635,11 @@ public class X86LIRAssembler extends LIRAssembler {
                     if (inst.result != null) {
                         result = ops[inst.result.index].asRegister();
                     }
-                    RegisterOrConstant[] args = new RegisterOrConstant[inst.arguments.length];
+                    Object[] args = new Object[inst.arguments.length];
                     for (int i = 0; i < args.length; i++) {
                         args[i] = asRegisterOrConstant(ops[inst.arguments[i].index]);
                     }
-                    int infoPos = masm.callGlobalStub(stubId, this.compilation, xir.info, result, args);
+                    int infoPos = masm.callGlobalStub(stubId, xir.info, result, args);
                     compilation.addCallInfo(infoPos, xir.info);
                     break;
 
@@ -2850,5 +2741,87 @@ public class X86LIRAssembler extends LIRAssembler {
         LIROperand y = ops[inst.y().index];
         emitCompare(lirCondition, x, y, null);
         masm.jcc(condition, label);
+    }
+
+    public void visitAdapterFrameStub(AdapterFrameStub stub) {
+        masm.bind(stub.entry);
+
+        // Computing how much space need to be allocated on the stack for the adapter. It's at least one slot for saving framePointer(), plus
+        // space for out-of-band arguments.
+        // The stack will look like this:
+        //        <low address>  oarg(n), oarg(n-1), oarg(m), RBP, RIP, jarg(n), jarg(n -1), ... jarg0, ...  <high address>
+        //                               |<--------------------------------------------->|
+        //                                             adapterFrameSize
+        // where "oarg" is an overflow argument and "jarg" is an argument from the caller's java stack.
+        // save the caller's RBP
+
+        final int wordSize =  compilation.target.arch.wordSize;
+
+        // Receive calling convention (for the current method, but with outgoing==true, i.e. as if we were calling the current method)
+        FrameMap map = compilation.frameMap();
+        CallingConvention cc = map.javaCallingConvention(Util.signatureToKinds(compilation.method.signatureType(), !compilation.method.isStatic()), true, false);
+
+        // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
+        final int adapterFrameSize = cc.overflowArgumentSize;
+
+        // Allocate space on the stack (adapted parameters + caller's frame pointer)
+        masm.push(X86.rbp);
+        if (adapterFrameSize != 0) {
+            masm.decrement(X86.rsp, adapterFrameSize);
+        }
+
+         // Prefix of a frame is RIP + saved RBP.
+        final int framePrefixSize = 2 * wordSize;
+
+        // On entry to the adapter, the top of the stack contains the RIP. The last argument on the stack is
+        // immediately above the RIP.
+        // We set an offset to that last argument (relative to the new stack pointer) and iterate over the arguments
+        // in reverse order,
+        // from last to first.
+        // This avoids computing the size of the arguments to get the offset to the first argument.
+        int jitCallerStackOffset = adapterFrameSize + framePrefixSize;
+
+        final int jitSlotSize = compilation.runtime.getJITStackSlotSize();
+        for (int i = cc.locations.length - 1; i >= 0;  i--) {
+            CiLocation location = cc.locations[i];
+            LIROperand src = LIROperandFactory.address(CiRegister.Stack, jitCallerStackOffset, location.kind);
+            moveOp(src, cc.operands[i], location.kind, null, false);
+            jitCallerStackOffset += location.kind.size * jitSlotSize;
+        }
+
+        // jitCallerOffset is now set to the first location before the first parameter, i.e., the point where
+        // the caller stack will retract to.
+        masm.call(stub.continuation);
+        final int jitCallArgumentSize = jitCallerStackOffset - (adapterFrameSize + framePrefixSize);
+        if (adapterFrameSize != 0) {
+            masm.increment(X86.rsp, adapterFrameSize);
+        }
+        masm.pop(X86.rbp);
+        // Retract the stack pointer back to its position before the first argument on the caller's stack.
+        masm.ret(Util.safeToShort(jitCallArgumentSize));
+    }
+
+    public void visitThrowStub(ThrowStub stub) {
+        masm.bind(stub.entry);
+        LIROperand[] operands = stub.operands;
+        Object[] params;
+        if (operands != null) {
+            params = new Object[operands.length];
+            for (int i = 0; i < params.length; i++) {
+                params[i] = asRegisterOrConstant(stub.operand(i));
+            }
+        } else {
+            params = NO_PARAMS;
+        }
+
+        int infoPos = masm.callGlobalStub(stub.globalStub, stub.info, CiRegister.None, params);
+        compilation.addCallInfo(infoPos, stub.info);
+
+        // Insert nop such that the IP is within the range of the target at the position after the call
+        masm.nop();
+
+        if (C1XOptions.GenAssertionCode) {
+            masm.shouldNotReachHere();
+        }
     }
 }

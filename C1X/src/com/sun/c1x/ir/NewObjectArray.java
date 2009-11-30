@@ -28,10 +28,11 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class NewObjectArray extends NewArray {
+public final class NewObjectArray extends NewArray {
 
     final RiType elementClass;
     public final char cpi;
+    public final RiConstantPool constantPool;
 
     /**
      * Constructs a new NewObjectArray instruction.
@@ -42,7 +43,8 @@ public class NewObjectArray extends NewArray {
      * @param constantPool the constant pool
      */
     public NewObjectArray(RiType elementClass, Value length, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
-        super(length, stateBefore, constantPool);
+        super(length, stateBefore);
+        this.constantPool = constantPool;
         this.elementClass = elementClass;
         this.cpi = cpi;
     }

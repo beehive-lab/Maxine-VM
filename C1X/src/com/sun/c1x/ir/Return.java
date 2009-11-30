@@ -27,7 +27,7 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class Return extends BlockEnd {
+public final class Return extends BlockEnd {
 
     Value result;
 

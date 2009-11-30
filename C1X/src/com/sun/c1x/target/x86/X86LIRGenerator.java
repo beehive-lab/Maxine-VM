@@ -58,6 +58,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     private static final LIROperand LONG_1_64 = LIROperandFactory.doubleLocation(CiKind.Long, X86.rbx, X86.rbx);
 
     private static final LIRLocation SHIFT_COUNT_IN = LIROperandFactory.singleLocation(CiKind.Int, X86.rcx);
+    protected static final LIRLocation ILLEGAL = LIROperandFactory.IllegalLocation;
 
     public X86LIRGenerator(C1XCompilation compilation) {
         super(compilation);
@@ -67,7 +68,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIROperand exceptionPcOpr() {
-        return LIROperandFactory.IllegalLocation;
+        return ILLEGAL;
     }
 
     private LIROperand syncTempOpr() {
@@ -108,7 +109,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIROperand safepointPollRegister() {
-        return LIROperandFactory.IllegalLocation;
+        return ILLEGAL;
     }
 
     @Override
@@ -225,7 +226,7 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     private void emitSafeArrayStore(LIRLocation array, LIROperand index, LIROperand value, CiKind elementType, boolean needsBarrier) {
-        emitArrayStore(array, index, value, LIROperandFactory.IllegalLocation, elementType, false, false, needsBarrier, null, null);
+        emitArrayStore(array, index, value, ILLEGAL, elementType, false, false, needsBarrier, null, null);
     }
 
     private void emitArrayStore(LIRLocation array, LIROperand index, LIROperand value, LIROperand length, CiKind elementType, boolean needsRangeCheck, boolean needsStoreCheck, boolean needsBarrier,
@@ -234,11 +235,12 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRAddress arrayAddr = genArrayAddress(array, index, elementType, needsBarrier);
 
         if (C1XOptions.GenBoundsChecks && needsRangeCheck) {
-            if (length != LIROperandFactory.IllegalLocation) {
+            ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArrayIndexOutOfBoundsException), rangeCheckInfo, index);
+            if (length != ILLEGAL) {
                 lir.cmp(LIRCondition.BelowEqual, length, index);
-                lir.branch(LIRCondition.BelowEqual, CiKind.Int, new RangeCheckStub(rangeCheckInfo, index));
+                lir.branch(LIRCondition.BelowEqual, CiKind.Int, stub);
             } else {
-                arrayRangeCheck(array, index, nullCheckInfo, rangeCheckInfo);
+                arrayRangeCheck(array, index, nullCheckInfo, rangeCheckInfo, stub);
                 // rangeCheck also does the null check
                 nullCheckInfo = null;
             }
@@ -250,7 +252,8 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand tmp3 = newRegister(CiKind.Object);
 
             LIRDebugInfo storeCheckInfo = rangeCheckInfo.copy();
-            lir.storeCheck(value, array, tmp1, tmp2, tmp3, storeCheckInfo);
+            ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArrayStoreException), storeCheckInfo);
+            lir.storeCheck(value, array, tmp1, tmp2, tmp3, storeCheckInfo, stub);
         }
 
         if (needsBarrier) {
@@ -262,49 +265,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         } else {
             lir.move(value, arrayAddr, nullCheckInfo);
         }
-    }
-
-    @Override
-    protected void genMonitorEnter(MonitorEnter x) {
-        assert x.isLive() : "";
-        LIRItem obj = new LIRItem(x.object(), this);
-        obj.loadItem();
-
-        assert !obj.result().isIllegal();
-
-        setNoResult(x);
-
-        // "lock" stores the address of the monitor stack slot, so this is not an oop
-        LIROperand lock = newRegister(CiKind.Int);
-        // Need a scratch register for biased locking on x86
-        LIROperand scratch = LIROperandFactory.IllegalLocation;
-        if (C1XOptions.UseBiasedLocking) {
-            scratch = newRegister(CiKind.Int);
-        }
-
-        LIRDebugInfo infoForException = null;
-        if (x.needsNullCheck()) {
-            infoForException = stateFor(x, x.stateBefore());
-        }
-        // this CodeEmitInfo must not have the xhandlers because here the
-        // object is already locked (xhandlers expect object to be unlocked)
-        LIRDebugInfo info = stateFor(x, x.stateBefore(), true);
-        monitorEnter(obj.result(), lock, syncTempOpr(), scratch, x.lockNumber(), infoForException, info);
-    }
-
-    @Override
-    protected void genMonitorExit(MonitorExit x) {
-        assert x.isLive() : "";
-
-        LIRItem obj = new LIRItem(x.object(), this);
-
-        LIROperand lock = newRegister(CiKind.Int);
-        setNoResult(x);
-
-        obj.loadItem();
-        LIROperand objTemp = obj.result();
-        assert objTemp.isRegister();
-        monitorExit(objTemp, lock, syncTempOpr(), x.lockNumber());
     }
 
     @Override
@@ -339,12 +299,12 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg;
 
         if (x.opcode() == Bytecodes.FREM) {
-            reg = callRuntime(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
+            reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
         } else if (x.opcode() == Bytecodes.DREM) {
-            reg = callRuntime(CiRuntimeCall.ArithmeticDrem, null, left.result(), right.result());
+            reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticDrem, null, left.result(), right.result());
         } else {
             reg = newRegister(x.kind);
-            arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), LIROperandFactory.IllegalLocation);
+            arithmeticOpFpu(x.opcode(), reg, left.result(), right.result(), ILLEGAL);
         }
 
         setResult(x, reg);
@@ -361,8 +321,9 @@ public final class X86LIRGenerator extends LIRGenerator {
                 LIROperand divisor = load(x.y());            // divisor can be in any (other) register
 
                 if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
+                    ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArithmeticException), info);
                     lir.cmp(LIRCondition.Equal, divisor, LIROperandFactory.longConst(0));
-                    lir.branch(LIRCondition.Equal, CiKind.Long, new DivByZeroStub(info));
+                    lir.branch(LIRCondition.Equal, CiKind.Long, stub);
                     info = null;
                 }
                 LIROperand result = rlockResult(x);
@@ -380,7 +341,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 // emit direct call into the runtime
                 CiRuntimeCall runtimeCall = opcode == Bytecodes.LREM ? CiRuntimeCall.ArithmethicLrem : CiRuntimeCall.ArithmeticLdiv;
                 LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-                setResult(x, callRuntime(runtimeCall, info, x.x().operand(), x.y().operand()));
+                setResult(x, callRuntimeWithResult(runtimeCall, info, x.x().operand(), x.y().operand()));
             }
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem left = new LIRItem(x.x(), this);
@@ -419,8 +380,9 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand divisor = load(x.y());            // divisor can be in any (other) register
 
             if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
+                ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArithmeticException), info);
                 lir.cmp(LIRCondition.Equal, divisor, LIROperandFactory.intConst(0));
-                lir.branch(LIRCondition.Equal, CiKind.Int, new DivByZeroStub(info));
+                lir.branch(LIRCondition.Equal, CiKind.Int, stub);
                 info = null;
             }
             LIROperand result = rlockResult(x);
@@ -468,7 +430,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 if (!useConstant) {
                     rightArg.loadItem();
                 }
-                LIROperand tmp = LIROperandFactory.IllegalLocation;
+                LIROperand tmp = ILLEGAL;
                 if (useTmp) {
                     tmp = newRegister(CiKind.Int);
                 }
@@ -477,7 +439,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 arithmeticOpInt(opcode, x.operand(), leftArg.result(), rightArg.result(), tmp);
             } else {
                 rlockResult(x);
-                LIROperand tmp = LIROperandFactory.IllegalLocation;
+                LIROperand tmp = ILLEGAL;
                 arithmeticOpInt(opcode, x.operand(), leftArg.result(), rightArg.result(), tmp);
             }
         }
@@ -518,7 +480,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         value.loadItem();
         LIROperand reg = rlockResult(x);
 
-        shiftOp(x.opcode(), reg, value.result(), count.result(), LIROperandFactory.IllegalLocation);
+        shiftOp(x.opcode(), reg, value.result(), count.result(), ILLEGAL);
     }
 
     @Override
@@ -580,8 +542,8 @@ public final class X86LIRGenerator extends LIRGenerator {
         int valueOffset = compilation.runtime.sunMiscAtomicLongCSImplValueOffset();
         LIROperand addr = obj.result();
         lir.add(addr, LIROperandFactory.intConst(valueOffset), addr);
-        LIROperand t1 = LIROperandFactory.IllegalLocation; // no temp needed
-        LIROperand t2 = LIROperandFactory.IllegalLocation; // no temp needed
+        LIROperand t1 = ILLEGAL; // no temp needed
+        LIROperand t2 = ILLEGAL; // no temp needed
         lir.casLong(addr, cmpValue.result(), newValue.result(), t1, t2);
 
         // generate conditional move of boolean result
@@ -629,7 +591,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             preBarrier(addr, false, null);
         }
 
-        LIROperand ill = LIROperandFactory.IllegalLocation; // for convenience
+        LIROperand ill = ILLEGAL; // for convenience
         if (type.isObject()) {
             lir.casObj(addr, cmp.result(), val.result(), ill, ill);
         } else if (type.isInt()) {
@@ -658,25 +620,25 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         switch (x.intrinsic()) {
             case java_lang_Math$abs:
-                lir.abs(calcInput, calcResult, LIROperandFactory.IllegalLocation);
+                lir.abs(calcInput, calcResult, ILLEGAL);
                 break;
             case java_lang_Math$sqrt:
-                lir.sqrt(calcInput, calcResult, LIROperandFactory.IllegalLocation);
+                lir.sqrt(calcInput, calcResult, ILLEGAL);
                 break;
             case java_lang_Math$sin:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticSin, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticSin, null, calcInput));
                 break;
             case java_lang_Math$cos:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticCos, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticCos, null, calcInput));
                 break;
             case java_lang_Math$tan:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticTan, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticTan, null, calcInput));
                 break;
             case java_lang_Math$log:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticLog, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticLog, null, calcInput));
                 break;
             case java_lang_Math$log10:
-                setResult(x, callRuntime(CiRuntimeCall.ArithmeticLog10, null, calcInput));
+                setResult(x, callRuntimeWithResult(CiRuntimeCall.ArithmeticLog10, null, calcInput));
                 break;
             default:
                 Util.shouldNotReachHere();
@@ -697,18 +659,19 @@ public final class X86LIRGenerator extends LIRGenerator {
     @Override
     protected void genNewInstance(NewInstance x) {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
-        // TODO: don't reserve RDI explicitly, but make callRuntime() smarter
-        LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
 
         RiType type = x.instanceClass();
         if (x.instanceClass().isLoaded()) {
+            LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
             lir.oop2reg(type.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
+            // all allocation is done with a runtime call for now
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.NewInstance, info, hub));
         } else {
-            lir.resolveInstruction(hub, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info);
+            LIRConstant cpi = LIROperandFactory.intConst(x.cpi);
+            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            // all allocation is done with a runtime call for now
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.UnresolvedNewInstance, info, cpi, cp));
         }
-
-        // all allocation is done with a runtime call for now
-        setResult(x, callRuntime(CiRuntimeCall.NewInstance, info, hub));
     }
 
     @Override
@@ -719,42 +682,35 @@ public final class X86LIRGenerator extends LIRGenerator {
         lir.oop2reg(compilation.runtime.primitiveArrayType(x.elementKind()).getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
 
         // all allocation is done with a runtime call for now
-        setResult(x, callRuntime(CiRuntimeCall.NewArray, info, hub, length));
+        setResult(x, callRuntimeWithResult(CiRuntimeCall.NewArray, info, hub, length));
     }
 
-    private LIRLocation emitNewTypeArray(CiKind type, CiKind elementType, LIROperand len, LIRDebugInfo info) {
-        LIRLocation reg = resultRegisterFor(type);
-        assert len.asRegister() == X86.rbx;
-        LIROperand tmp1 = LIROperandFactory.singleLocation(CiKind.Object, X86.rcx);
-        LIROperand tmp2 = LIROperandFactory.singleLocation(CiKind.Object, X86.rsi);
-        LIROperand tmp3 = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
-        LIROperand tmp4 = reg;
-        LIROperand klassReg = LIROperandFactory.singleLocation(CiKind.Object, X86.rdx);
-        CiKind elemType = elementType;
+    private LIRLocation emitNewTypeArray(CiKind type, CiKind elementType, LIROperand length, LIRDebugInfo info) {
+        LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
+        lir.oop2reg(compilation.runtime.primitiveArrayType(elementType).getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
 
-        lir.oop2reg(compilation.runtime.primitiveArrayType(elemType).getEncoding(RiType.Representation.ObjectHub).asObject(), klassReg);
-
-        LocalStub slowPath = new NewTypeArrayStub(klassReg, len, reg, info);
-        lir.allocateArray(reg, len, tmp1, tmp2, tmp3, tmp4, elemType, klassReg, slowPath);
-        return reg;
+        // all allocation is done with a runtime call for now
+        return callRuntime(CiRuntimeCall.NewArray, info, hub, length);
     }
 
     @Override
     protected void genNewObjectArray(NewObjectArray x) {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
 
-        LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
-        LIROperand length = force(x.length(), X86.rsi);
-
         RiType arrayType = x.elementClass().arrayOf();
         if (arrayType.isLoaded()) {
+            LIROperand hub = LIROperandFactory.singleLocation(CiKind.Object, X86.rdi);
+            LIROperand length = force(x.length(), X86.rsi);
             lir.oop2reg(arrayType.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
+            // all allocation is done with a runtime call for now
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.NewArray, info, hub, length));
         } else {
-            lir.resolveArrayClassInstruction(hub, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), info.copy());
+            LIROperand length = load(x.length());
+            LIROperand cpi = LIROperandFactory.intConst(x.cpi);
+            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            // all allocation is done with a runtime call for now
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.UnresolvedNewArray, info, cpi, cp, length));
         }
-
-        // all allocation is done with a runtime call for now
-        setResult(x, callRuntime(CiRuntimeCall.NewArray, info, hub, length));
     }
 
     @Override
@@ -769,7 +725,8 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // need to get the info before, as the items may become invalid through itemFree
         LIRDebugInfo patchingInfo = null;
-        if (!x.elementKind.isLoaded() || C1XOptions.TestPatching) {
+        boolean resolved = x.elementKind.isLoaded();
+        if (!resolved || C1XOptions.TestPatching) {
             patchingInfo = stateFor(x, x.stateBefore());
 
             // cannot re-use same xhandlers for multiple CodeEmitInfos, so
@@ -778,13 +735,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         LIRDebugInfo info = stateFor(x, x.stateBefore());
-
-        LIROperand hub = newRegister(CiKind.Object);
-        if (x.elementKind.isLoaded()) {
-            lir.oop2reg(x.elementKind.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
-        } else {
-            lir.resolveInstruction(hub, LIROperandFactory.intConst(x.cpi), LIROperandFactory.oopConst(x.constantPool.encoding().asObject()), patchingInfo);
-        }
 
         LIROperand length = LIROperandFactory.singleLocation(CiKind.Int, X86.rbx);
         lir.move(LIROperandFactory.intConst(dims.length), length);
@@ -795,8 +745,15 @@ public final class X86LIRGenerator extends LIRGenerator {
             emitSafeArrayStore(dimensions, LIROperandFactory.intConst(i), size.result(), CiKind.Int, false);
         }
 
-        // Create a new code emit info as they must not be shared!
-        setResult(x, callRuntime(CiRuntimeCall.NewMultiArray, stateFor(x, x.stateBefore()), hub, dimensions));
+        if (resolved) {
+            LIROperand hub = newRegister(CiKind.Object);
+            lir.oop2reg(x.elementKind.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.NewMultiArray, info.copy(), hub, dimensions));
+        } else {
+            LIRConstant cpi = LIROperandFactory.intConst(x.cpi);
+            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            setResult(x, callRuntimeWithResult(CiRuntimeCall.UnresolvedNewMultiArray, info.copy(), cpi, cp, dimensions));
+        }
     }
 
     @Override
@@ -813,11 +770,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         // info for exceptions
         LIRDebugInfo infoForException = stateFor(x, x.stateBefore().copyLocks());
 
-        LocalStub stub = new CheckCastStub(obj.result(), infoForException);
+        ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowClassCastException), infoForException, obj.result());
         LIROperand reg = rlockResult(x);
-        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), LIROperandFactory.IllegalLocation, LIROperandFactory.IllegalLocation,
-                        x.directCompare(), infoForException, stub
-        );
+        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), ILLEGAL, ILLEGAL, x.directCompare(), infoForException, stub);
     }
 
     @Override
@@ -827,7 +782,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg = rlockResult(x);
         LIRDebugInfo patchingInfo = null;
         obj.loadItem();
-        lir.genInstanceof(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(CiKind.Object), LIROperandFactory.IllegalLocation, x.directCompare(), patchingInfo);
+        lir.genInstanceof(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(CiKind.Object), ILLEGAL, x.directCompare(), patchingInfo);
     }
 
     @Override
@@ -864,7 +819,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             // increment backedge counter if needed
             incrementBackedgeCounter(stateFor(x, x.stateAfter()));
 
-            lir.safepoint(LIROperandFactory.IllegalLocation, stateFor(x, x.stateAfter()));
+            lir.safepoint(ILLEGAL, stateFor(x, x.stateAfter()));
         }
         setNoResult(x);
 

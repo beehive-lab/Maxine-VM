@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public class ResolveClass extends StateSplit {
+public final class ResolveClass extends StateSplit {
 
     public final RiType type;
     public final RiType.Representation portion;

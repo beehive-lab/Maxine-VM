@@ -27,7 +27,7 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class UnsafePutObject extends UnsafeObjectOp {
+public final class UnsafePutObject extends UnsafeObjectOp {
 
     Value value;
 

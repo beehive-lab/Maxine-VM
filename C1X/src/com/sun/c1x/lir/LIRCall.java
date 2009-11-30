@@ -25,49 +25,27 @@ import java.util.*;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>LIRCall</code> class definition.
+ * This class represents a call instruction; either to a runtime method or a Java method.
  *
  * @author Marcelo Cintra
- *
  */
 public abstract class LIRCall extends LIRInstruction {
 
-    protected CiRuntimeCall addr;
+    protected CiRuntimeCall runtimeCall;
     protected List<LIROperand> arguments;
 
-    private static LIROperand[] prepend(LIROperand receiver, List<LIROperand> arguments) {
-        LIROperand[] operands = new LIROperand[arguments.size() + 1];
-        operands[0] = receiver;
-        for (int i = 0; i < arguments.size(); i++) {
-            operands[i + 1] = arguments.get(i);
-        }
-        return operands;
+    private static LIROperand[] toArray(List<LIROperand> arguments) {
+        return arguments.toArray(new LIROperand[arguments.size()]);
     }
 
-    /**
-     * Creates a new LIRCall instruction.
-     *
-     * @param entry
-     * @param arguments
-     */
-    public LIRCall(LIROpcode opcode, CiRuntimeCall entry, LIROperand result, LIROperand receiver, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
-        super(opcode, result, info, !calleeSaved, null, 0, 0, prepend(receiver, arguments));
-        this.addr = entry;
+    public LIRCall(LIROpcode opcode, CiRuntimeCall rtCall, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
+        super(opcode, result, info, !calleeSaved, null, 0, 0, toArray(arguments));
+        this.runtimeCall = rtCall;
         this.arguments = arguments;
     }
 
     /**
-     * Gets the address of this call.
-     *
-     * @return the address
-     */
-    public CiRuntimeCall address() {
-        return addr;
-    }
-
-    /**
      * Returns the receiver for this method call.
-     *
      * @return the receiver
      */
     public LIROperand receiver() {
@@ -78,17 +56,4 @@ public abstract class LIRCall extends LIRInstruction {
         return operand(arguments.size());
     }
 
-    /**
-     * Gets the arguments list of this call.
-     *
-     * @return the arguments
-     */
-    public List<LIROperand> arguments() {
-
-        final List<LIROperand> args = new ArrayList<LIROperand>();
-        for (int i = 0; i < arguments.size(); i++) {
-            args.add(operand(i + 1));
-        }
-        return args;
-    }
 }
