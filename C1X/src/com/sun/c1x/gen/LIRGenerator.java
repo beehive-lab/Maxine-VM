@@ -506,7 +506,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             case java_lang_System$currentTimeMillis: {
                 assert x.numberOfArguments() == 0 : "wrong type";
-                LIROperand reg = callRuntimeWithResult(CiRuntimeCall.JavaTimeMillis, null, null);
+                LIROperand reg = callRuntimeWithResult(CiRuntimeCall.JavaTimeMillis, null, (LIROperand[]) null);
                 LIROperand result = rlockResult(x);
                 lir.move(reg, result);
                 break;
@@ -514,7 +514,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             case java_lang_System$nanoTime: {
                 assert x.numberOfArguments() == 0 : "wrong type";
-                LIROperand reg = callRuntimeWithResult(CiRuntimeCall.JavaTimeNanos, null, null);
+                LIROperand reg = callRuntimeWithResult(CiRuntimeCall.JavaTimeNanos, null, (LIROperand[]) null);
                 LIROperand result = rlockResult(x);
                 lir.move(reg, result);
                 break;
