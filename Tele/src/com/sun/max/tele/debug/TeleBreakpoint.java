@@ -91,9 +91,6 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
         return kind;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.debug.MaxBreakpoint#isTransient()
-     */
     public final boolean isTransient() {
         return kind == Kind.TRANSIENT;
     }
@@ -105,46 +102,27 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
         return kind == Kind.CLIENT;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.debug.MaxBreakpoint#teleCodeLocation()
-     */
     public final TeleCodeLocation getCodeLocation() {
         return teleCodeLocation;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.debug.MaxBreakpoint#getDescription()
-     */
     public final String getDescription() {
         return description;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxBreakpoint#setDescription(java.lang.String)
-     */
     public final void setDescription(String description) {
         this.description = description;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.debug.MaxBreakpoint#isEnabled()
-     */
     public abstract boolean isEnabled();
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.debug.MaxBreakpoint#setEnabled(boolean)
-     */
     public abstract boolean setEnabled(boolean enabled);
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.debug.MaxBreakpoint#condition()
-     */
     public abstract BreakpointCondition getCondition();
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.debug.MaxBreakpoint#setCondition(java.lang.String)
-     */
     public abstract void setCondition(String conditionDescriptor) throws ExpressionException;
+
+    public abstract void remove();
 
     /**
      * Assigns to this breakpoint a  handler for events triggered by this breakpoint.  A null handler
@@ -161,9 +139,4 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
         assert teleNativeThread.state() == TeleNativeThread.ThreadState.BREAKPOINT;
         return triggerEventHandler.handleTriggerEvent(teleNativeThread);
     }
-
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.debug.MaxBreakpoint#remove()
-     */
-    public abstract void remove();
 }
