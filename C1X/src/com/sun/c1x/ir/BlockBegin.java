@@ -256,7 +256,7 @@ public final class BlockBegin extends Instruction {
      * @param flag the flag to test
      * @return <code>true</code> if this block has the flag
      */
-    public final boolean checkBlockFlag(BlockFlag flag) {
+    public boolean checkBlockFlag(BlockFlag flag) {
         return (blockFlags & flag.mask) != 0;
     }
 
@@ -449,91 +449,91 @@ public final class BlockBegin extends Instruction {
         }
     }
 
-    public final boolean isStandardEntry() {
+    public boolean isStandardEntry() {
         return checkBlockFlag(BlockFlag.StandardEntry);
     }
 
-    public final void setStandardEntry() {
+    public void setStandardEntry() {
         setBlockFlag(BlockFlag.StandardEntry);
     }
 
-    public final boolean isOsrEntry() {
+    public boolean isOsrEntry() {
         return checkBlockFlag(BlockFlag.OsrEntry);
     }
 
-    public final void setOsrEntry(boolean value) {
+    public void setOsrEntry(boolean value) {
         setBlockFlag(BlockFlag.OsrEntry, value);
     }
 
-    public final boolean isBackwardBranchTarget() {
+    public boolean isBackwardBranchTarget() {
         return checkBlockFlag(BlockFlag.BackwardBranchTarget);
     }
 
-    public final void setBackwardBranchTarget(boolean value) {
+    public void setBackwardBranchTarget(boolean value) {
         setBlockFlag(BlockFlag.BackwardBranchTarget, value);
     }
 
-    public final boolean isCriticalEdgeSplit() {
+    public boolean isCriticalEdgeSplit() {
         return checkBlockFlag(BlockFlag.CriticalEdgeSplit);
     }
 
-    public final void setCriticalEdgeSplit(boolean value) {
+    public void setCriticalEdgeSplit(boolean value) {
         setBlockFlag(BlockFlag.CriticalEdgeSplit, value);
     }
 
-    public final boolean isExceptionEntry() {
+    public boolean isExceptionEntry() {
         return checkBlockFlag(BlockFlag.ExceptionEntry);
     }
 
-    public final void setExceptionEntry() {
+    public void setExceptionEntry() {
         setBlockFlag(BlockFlag.ExceptionEntry);
     }
 
-    public final boolean isSubroutineEntry() {
+    public boolean isSubroutineEntry() {
         return checkBlockFlag(BlockFlag.SubroutineEntry);
     }
 
-    public final void setSubroutineEntry() {
+    public void setSubroutineEntry() {
         setBlockFlag(BlockFlag.SubroutineEntry);
     }
 
-    public final boolean isOnWorkList() {
+    public boolean isOnWorkList() {
         return checkBlockFlag(BlockFlag.IsOnWorkList);
     }
 
-    public final void setOnWorkList(boolean value) {
+    public void setOnWorkList(boolean value) {
         setBlockFlag(BlockFlag.IsOnWorkList, value);
     }
 
-    public final boolean wasVisited() {
+    public boolean wasVisited() {
         return checkBlockFlag(BlockFlag.WasVisited);
     }
 
-    public final void setWasVisited(boolean value) {
+    public void setWasVisited(boolean value) {
         setBlockFlag(BlockFlag.WasVisited, value);
     }
 
-    public final boolean isParserLoopHeader() {
+    public boolean isParserLoopHeader() {
         return checkBlockFlag(BlockFlag.ParserLoopHeader);
     }
 
-    public final void setParserLoopHeader(boolean value) {
+    public void setParserLoopHeader(boolean value) {
         setBlockFlag(BlockFlag.ParserLoopHeader, value);
     }
 
-    public final boolean isLinearScanLoopHeader() {
+    public boolean isLinearScanLoopHeader() {
         return checkBlockFlag(BlockFlag.LinearScanLoopHeader);
     }
 
-    public final void setLinearScanLoopHeader(boolean value) {
+    public void setLinearScanLoopHeader(boolean value) {
         setBlockFlag(BlockFlag.LinearScanLoopHeader, value);
     }
 
-    public final boolean isLinearScanLoopEnd() {
+    public boolean isLinearScanLoopEnd() {
         return checkBlockFlag(BlockFlag.LinearScanLoopEnd);
     }
 
-    public final void setLinearScanLoopEnd(boolean value) {
+    public void setLinearScanLoopEnd(boolean value) {
         setBlockFlag(BlockFlag.LinearScanLoopEnd, value);
     }
 
