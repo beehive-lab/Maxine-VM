@@ -125,7 +125,7 @@ Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
     ntl->stackSize = stackSize;
     ntl->tlBlock = tlBlock;
     ntl->tlBlockSize = tlBlockSize;
-    
+
     Address startGuardZone;
     int guardZonePages;
     if (primordial) {
@@ -173,6 +173,24 @@ Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
     setConstantThreadLocal(enabled_tl, STACK_REFERENCE_MAP, refMap);
     setConstantThreadLocal(enabled_tl, STACK_REFERENCE_MAP_SIZE, refMapSize);
 
+    Address endGuardZone = startGuardZone + (guardZonePages * pageSize);
+    Address sp = (Address) &ntl; // approximation of stack pointer
+    const int safetyMargin = pageSize;
+    if (sp < endGuardZone + safetyMargin) {
+        log_exit(11, "Stack is too small to safely place stack guard zones");
+    }
+
+#if os_GUESTVMXEN
+    // all page protection is handled in the following call
+    guestvmXen_initStack(ntl);
+#else
+    ntl->stackBlueZone = ntl->stackYellowZone;
+
+    if (guardZonePages != 0) {
+        virtualMemory_protectPages(startGuardZone, guardZonePages);
+    }
+#endif
+
 #if log_THREADS
     log_println("thread %3d: stackEnd     = %p", id, ntl->stackBase + ntl->stackSize);
     log_println("thread %3d: sp           ~ %p", id, &id);
@@ -188,24 +206,6 @@ Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
     log_println("thread %3d: ntl          = %p", id, ntl);
     log_println("thread %3d: refMap       = %p", id, refMap);
     log_println("thread %3d: refMapSize   = %d (%p)", id, refMapSize, refMapSize);
-#endif
-
-#if os_GUESTVMXEN
-    // all page protection is handled in the following call
-    guestvmXen_initStack(ntl);
-#else
-    Address endGuardZone = startGuardZone + (guardZonePages * pageSize);
-    Address sp = (Address) &ntl; // approximation of stack pointer
-    const int safetyMargin = pageSize;
-    if (sp < endGuardZone + safetyMargin) {
-        log_exit(11, "Stack is too small to safely place stack guard zones");
-    }
-
-    ntl->stackBlueZone = ntl->stackYellowZone;
-
-    if (guardZonePages != 0) {
-        virtualMemory_protectPages(startGuardZone, guardZonePages);
-    }
 #endif
 
     /* Protect the first page of the TL block (which contains the first word of the triggered thread locals) */
