@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.lir.LIRDebugInfo;
-import com.sun.c1x.globalstub.GlobalStub;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;

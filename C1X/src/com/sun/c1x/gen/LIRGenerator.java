@@ -2037,9 +2037,10 @@ public abstract class LIRGenerator extends ValueVisitor {
         // for each argument, load it into the correct location
         Value[] args = x.arguments();
         List<LIROperand> argList = new ArrayList<LIROperand>(args.length);
-        for (int i = 0, j = 0; i < args.length; i++) {
-            if (args[i] != null) {
-                LIRItem param = new LIRItem(args[i], this);
+        int j = 0;
+        for (Value arg : args) {
+            if (arg != null) {
+                LIRItem param = new LIRItem(arg, this);
                 LIROperand loc = cc.operands[j++];
                 if (loc.isRegister()) {
                     param.loadItemForce(loc);

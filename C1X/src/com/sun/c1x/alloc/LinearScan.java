@@ -714,7 +714,8 @@ public class LinearScan {
     }
 
     private void verifyTemp(BitMap liveKill, LIROperand opr) {
-        int reg;// fixed intervals are never live at block boundaries, so
+        int reg;
+        // fixed intervals are never live at block boundaries, so
         // they need not be processed in live sets
         // process them only in debug mode so that this can be checked
         if (!opr.isVirtualRegister()) {
@@ -730,7 +731,8 @@ public class LinearScan {
     }
 
     private void verifyInput(BlockBegin block, BitMap liveKill, LIROperand opr) {
-        int reg;// fixed intervals are never live at block boundaries, so
+        int reg;
+        // fixed intervals are never live at block boundaries, so
         // they need not be processed in live sets.
         // this is checked by these assertions to be sure about it.
         // the entry block may have incoming
