@@ -30,16 +30,16 @@ import com.sun.max.collect.*;
 public enum ThreadsColumnKind implements ColumnKind {
 
     ID("ID", "ID assigned by VM, none if native", true, 15),
-    HANDLE("Handle", "Native thread library handle", true, 15),
-    LOCAL_HANDLE("Local Handle", "Local thread handle", true, 15),
-    KIND("Kind", null, true, -1),
-    NAME("Name", null, true, -1) {
+    HANDLE("Handle", "Thread handle assigned by the remote native thread library", true, 15),
+    LOCAL_HANDLE("Local Handle", "Thread handle assigned by the process control API used by the Inspector", true, 15),
+    KIND("Kind", "Either a Java thread or some other kind", true, -1),
+    NAME("Name", "Name assigned to the thread", true, -1) {
         @Override
         public boolean canBeMadeInvisible() {
             return false;
         }
     },
-    STATUS("Status", null, true, -1);
+    STATUS("Status", "Current thread status, e.g. Suspended, Breakpoint, Watchpoint", true, -1);
 
     private final String label;
     private final String toolTipText;
