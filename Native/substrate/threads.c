@@ -118,9 +118,9 @@ void thread_getStackInfo(Address *stackBase, Size* stackSize) {
     }
     *stackBase = (Address) stackTop - *stackSize;
 #elif os_GUESTVMXEN
-    stackinfo_t stackInfo;
+    guestvmXen_stackinfo_t stackInfo;
     guestvmXen_get_stack_info(&stackInfo);
-    *stackBase = stackInfo.ss_sp - stackInfo.ss_size;
+    *stackBase = stackInfo.ss_base;
     *stackSize = stackInfo.ss_size;
 #else
     c_UNIMPLEMENTED();
@@ -155,18 +155,15 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 #endif
 
 #if os_GUESTVMXEN
-    /* allocate stack if necessary */
-    Address stackBase = (Address) guestvmXen_allocate_stack(ntl, stackSize);
-    if (stackBase == 0) {
-        free(ntl);
-        return NULL;
-    }
-    thread = guestvmXen_create_thread_with_stack("java_thread",
+    thread = guestvmXen_create_thread(
     	(void (*)(void *)) thread_run,
-		(void*) stackBase,
 	    stackSize,
 		priority,
-		(void*) ntl);
+		(void *) (Address) id);
+    if (thread == NULL) {
+        log_println("thread_create failed");
+        return (Thread) 0;
+    }
 #elif (os_LINUX || os_DARWIN)
     pthread_attr_t attributes;
     pthread_attr_init(&attributes);

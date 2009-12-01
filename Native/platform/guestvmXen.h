@@ -26,7 +26,7 @@
 
 #if os_GUESTVMXEN
     typedef void *guestvmXen_Thread;
-    extern void *guestvmXen_create_thread_with_stack(char *name, void (*function)(void *), void *stack, unsigned long stacksize, int priority, void *data);
+    extern void *guestvmXen_create_thread(void (*function)(void *), unsigned long stacksize, int priority, void *runArg);
     extern void* guestvmXen_get_current(void);
     extern int guestvmXen_thread_join(guestvmXen_Thread);
     typedef void *guestvmXen_monitor_t;
@@ -46,14 +46,13 @@
     extern void guestvmXen_yield(void);
     extern void guestvmXen_interrupt(void *thread);
     extern void guestvmXen_set_priority(void *thread, int priority);
-    extern void *guestvmXen_allocate_stack(void *nativeThreadLocals, size_t size);
     extern void *guestvmXen_virtualMemory_allocate(size_t size, int type);
     extern void *guestvmXen_virtualMemory_deallocate(void *address, size_t size, int type);
     extern void *guestvmXen_virtualMemory_allocateIn31BitSpace(size_t size, int type);
     extern void *guestvmXen_virtualMemory_allocateAtFixedAddress(unsigned long address, size_t size, int type);
-    extern int guestvmXen_virtualMemory_pageSize();
-    extern int guestvmXen_virtualMemory_protectPage(unsigned long address);
-    extern int guestvmXen_virtualMemory_unProtectPage(unsigned long address);
+    extern int guestvmXen_virtualMemory_pageSize(void);
+    extern int guestvmXen_virtualMemory_protectPages(unsigned long address, int count);
+    extern int guestvmXen_virtualMemory_unProtectPages(unsigned long address, int count);
     extern void guestvmXen_set_javaId(guestvmXen_Thread, int id);
     extern void guestvmXen_initStack(void *nativeThreadLocals);
     extern void guestvmXen_blue_zone_trap(void *nativeThreadLocals);
@@ -103,11 +102,11 @@
     typedef struct fault_regs UContext;
     extern void guestvmXen_register_fault_handler(int fault, fault_handler_t fault_handler);
     typedef	struct {
-    	unsigned long ss_sp;
+    	unsigned long ss_base;
     	size_t	ss_size;
-    } stackinfo_t;
+    } guestvmXen_stackinfo_t;
 
-    extern int guestvmXen_get_stack_info(stackinfo_t *info);
+    extern void guestvmXen_get_stack_info(guestvmXen_stackinfo_t *info);
 #endif
 
 #endif /*__guestvmXen_h__*/
