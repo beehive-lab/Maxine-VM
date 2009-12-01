@@ -927,22 +927,4 @@ public final class X86LIRGenerator extends LIRGenerator {
         return Util.nonFatalUnimplemented(null);
     }
 
-    private LIROperand force(Value v, CiRegister reg) {
-        LIRItem item = new LIRItem(v, this);
-        item.loadItemForce(LIROperandFactory.singleLocation(v.kind, reg));
-        return item.result();
-    }
-
-    private LIROperand force(Value v, LIROperand o) {
-        LIRItem item = new LIRItem(v, this);
-        item.loadItemForce(o);
-        return item.result();
-    }
-
-    private LIROperand load(Value val) {
-        LIRItem value = new LIRItem(val, this);
-        value.loadItem();
-        return value.result();
-    }
-
 }
