@@ -165,8 +165,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     // Read VM memory and update various bits of cached state about the VM state
                     teleVM().refresh(++epoch);
                     refreshThreads();
-                    targetBreakpointFactory().setActiveAll(false);
 
+                    // TODO (mlvdv) remove this debugging code when no longer needed.
+//                    boolean atBreakpoint = false;
+//                    for (TeleNativeThread thread : threads()) {
+//                        if (thread.state() == ThreadState.BREAKPOINT) {
+//                            atBreakpoint = true;
+//                            break;
+//                        }
+//                    }
+//                    ProgramWarning.check(atBreakpoint, "vm stopped; no thread at breakpoint");
+
+                    targetBreakpointFactory().setActiveAll(false);
                     // Look through all the threads to see if any special attention is needed
                     for (TeleNativeThread thread : threads()) {
                         switch(thread.state()) {
@@ -199,15 +209,15 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 break;
                             default:
                                 // This thread not stopped at breakpoint or watchpoint
+                                break;
                         }
-                        if (resumeExecution) {
-                            targetBreakpointFactory().setActiveAll(true);
-                            try {
-                                TeleProcess.this.resume();
-                            } catch (OSExecutionRequestException executionRequestException) {
-                                throw new ProcessTerminatedException("attempting to resume after handling transient breakpoint or watchpoint");
-                            }
-                            break;
+                    }
+                    if (resumeExecution) {
+                        targetBreakpointFactory().setActiveAll(true);
+                        try {
+                            TeleProcess.this.resume();
+                        } catch (OSExecutionRequestException executionRequestException) {
+                            throw new ProcessTerminatedException("attempting to resume after handling transient breakpoint or watchpoint");
                         }
                     }
                 } while (resumeExecution);
