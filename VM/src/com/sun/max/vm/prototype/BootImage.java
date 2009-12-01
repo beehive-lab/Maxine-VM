@@ -43,7 +43,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.CompilationScheme.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -198,10 +197,10 @@ public class BootImage {
         public final int pageSize;
 
         public final int vmRunMethodOffset;
+        public final int vmThreadAddMethodOffset;
         public final int vmThreadRunMethodOffset;
         public final int vmThreadAttachMethodOffset;
         public final int vmThreadDetachMethodOffset;
-        public final int runSchemeRunMethodOffset;
 
         public final int classRegistryOffset;
 
@@ -234,12 +233,7 @@ public class BootImage {
         /**
          * The storage size of one set of VM thread locals.
          */
-        public final int threadLocalsSize;
-
-        /**
-         * The storage size of a {@link JavaFrameAnchor}.
-         */
-        public final int javaFrameAnchorSize;
+        public final int threadLocalsAreaSize;
 
         /**
          * The indexes of the VM thread locals accessed directly by C code.
@@ -258,6 +252,8 @@ public class BootImage {
         public final int TRAP_INSTRUCTION_POINTER;
         public final int TRAP_FAULT_ADDRESS;
         public final int TRAP_LATCH_REGISTER;
+        public final int STACK_REFERENCE_MAP;
+        public final int STACK_REFERENCE_MAP_SIZE;
 
         public WordWidth wordWidth() {
             return WordWidth.fromInt(wordSize * 8);
@@ -278,10 +274,10 @@ public class BootImage {
             pageSize = endian.readInt(dataInputStream);
 
             vmRunMethodOffset = endian.readInt(dataInputStream);
+            vmThreadAddMethodOffset = endian.readInt(dataInputStream);
             vmThreadRunMethodOffset = endian.readInt(dataInputStream);
             vmThreadAttachMethodOffset = endian.readInt(dataInputStream);
             vmThreadDetachMethodOffset = endian.readInt(dataInputStream);
-            runSchemeRunMethodOffset = endian.readInt(dataInputStream);
             classRegistryOffset = endian.readInt(dataInputStream);
 
             stringInfoSize = endian.readInt(dataInputStream);
@@ -299,8 +295,7 @@ public class BootImage {
             threadLocalsListHeadOffset = endian.readInt(dataInputStream);
             primordialThreadLocalsOffset = endian.readInt(dataInputStream);
 
-            threadLocalsSize = endian.readInt(dataInputStream);
-            javaFrameAnchorSize = endian.readInt(dataInputStream);
+            threadLocalsAreaSize = endian.readInt(dataInputStream);
 
             SAFEPOINT_LATCH = endian.readInt(dataInputStream);
             SAFEPOINTS_ENABLED_THREAD_LOCALS = endian.readInt(dataInputStream);
@@ -316,6 +311,8 @@ public class BootImage {
             TRAP_INSTRUCTION_POINTER = endian.readInt(dataInputStream);
             TRAP_FAULT_ADDRESS = endian.readInt(dataInputStream);
             TRAP_LATCH_REGISTER = endian.readInt(dataInputStream);
+            STACK_REFERENCE_MAP = endian.readInt(dataInputStream);
+            STACK_REFERENCE_MAP_SIZE = endian.readInt(dataInputStream);
         }
 
         private int staticFieldPointerOffset(DataPrototype dataPrototype, Class javaClass, String staticFieldName) {
@@ -335,10 +332,10 @@ public class BootImage {
             cacheAlignment = vmConfiguration.platform().processorKind.dataModel.cacheAlignment;
             pageSize = vmConfiguration.platform().pageSize;
             vmRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.MaxineVM_run, CallEntryPoint.C_ENTRY_POINT).toInt();
+            vmThreadAddMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_add, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadRunMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_run, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadAttachMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_attach, CallEntryPoint.C_ENTRY_POINT).toInt();
             vmThreadDetachMethodOffset = Static.getCriticalEntryPoint((ClassMethodActor) ClassRegistry.VmThread_detach, CallEntryPoint.C_ENTRY_POINT).toInt();
-            runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getMethodActorFor("run", vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();
             classRegistryOffset = dataPrototype.objectToOrigin(ClassRegistry.BOOT_CLASS_REGISTRY).toInt();
             this.stringInfoSize = stringInfoSize;
             relocationDataSize = dataPrototype.relocationData().length;
@@ -354,8 +351,7 @@ public class BootImage {
             threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
             primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
 
-            threadLocalsSize = VmThreadLocal.threadLocalStorageSize().toInt();
-            javaFrameAnchorSize = JavaFrameAnchor.size();
+            threadLocalsAreaSize = VmThreadLocal.threadLocalsAreaSize().toInt();
 
             SAFEPOINT_LATCH = VmThreadLocal.SAFEPOINT_LATCH.index;
             SAFEPOINTS_ENABLED_THREAD_LOCALS = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index;
@@ -371,7 +367,8 @@ public class BootImage {
             TRAP_INSTRUCTION_POINTER = VmThreadLocal.TRAP_INSTRUCTION_POINTER.index;
             TRAP_FAULT_ADDRESS = VmThreadLocal.TRAP_FAULT_ADDRESS.index;
             TRAP_LATCH_REGISTER = VmThreadLocal.TRAP_LATCH_REGISTER.index;
-
+            STACK_REFERENCE_MAP = VmThreadLocal.STACK_REFERENCE_MAP.index;
+            STACK_REFERENCE_MAP_SIZE = VmThreadLocal.STACK_REFERENCE_MAP_SIZE.index;
         }
 
         public void check() throws BootImageException {

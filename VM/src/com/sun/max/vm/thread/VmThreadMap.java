@@ -24,17 +24,17 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.BootImage.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
 /**
  * The VmThreadMap class contains all the active threads in the MaxineVM.
  *
- * N.B. The (singleton) ACTIVE VmThreadMap object is bound with a
+ * N.B. The {@link #ACTIVE} object is bound with a
  * special JavaMonitor that prevents a terminated thread's state from
  * changing from TERMINATED during removeThreadLocals.
  * It is therefore imperative that all synchronization in this class use the
@@ -43,25 +43,30 @@ import com.sun.max.vm.runtime.*;
  * @author Ben L. Titzer
  * @author Bernd Mathiske
  * @author Paul Caprioli
+ * @author Doug Simon
  */
 public final class VmThreadMap {
 
     /**
-     * Specialized JavaMonitor intended to be bound to the
-     * VMThreadMap.ACTIVE object at image build time.
+     * Specialized JavaMonitor intended to be bound to {@link VmThreadMap#ACTIVE} at image build time.
      *
      * MonitorEnter semantics are slightly modified to
      * halt a meta-circular regression arising from thread termination clean-up.
      * See VmThread.beTerminated().
      *
+     * In addition, this object serves as the global GC lock and it is
+     * {@linkplain VmThreadMap#nativeSetGlobalThreadAndGCLock(Pointer) exposed}
+     * to the native code so that it can be locked when attaching a thread to the VM.
+     *
      * @author Simon Wilkinson
+     * @author Doug Simon
      */
     static final class VMThreadMapJavaMonitor extends StandardJavaMonitor {
         @Override
         public void allocate() {
             super.allocate();
             NativeMutex nativeMutex = (NativeMutex) mutex;
-            nativeSetGlobalThreadANDGCLock(nativeMutex.asPointer());
+            nativeSetGlobalThreadAndGCLock(nativeMutex.asPointer());
         }
 
         @Override
@@ -82,6 +87,15 @@ public final class VmThreadMap {
     }
 
     /**
+     * The global thread map of active threads in the VM. This object also serves the role
+     * of a global GC and thread creation lock.
+     */
+    public static final VmThreadMap ACTIVE = new VmThreadMap();
+    static {
+        JavaMonitorManager.bindStickyMonitor(ACTIVE, new VMThreadMapJavaMonitor());
+    }
+
+    /**
      * The {@code IDMap} class manages thread IDs and a mapping between thread IDs and
      * the corresponding {@code VmThread} instance.
      * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockword64}).
@@ -92,11 +106,11 @@ public final class VmThreadMap {
     private static final class IDMap {
         private int nextID = 1;
         private int[] freeList;
-        private VmThread[] vmThreads;
+        private VmThread[] threads;
 
         IDMap(int initialSize) {
             freeList = new int[initialSize];
-            vmThreads = new VmThread[initialSize];
+            threads = new VmThread[initialSize];
             for (int i = 0; i < freeList.length; i++) {
                 freeList[i] = i + 1;
             }
@@ -107,11 +121,11 @@ public final class VmThreadMap {
          *
          * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
          *
-         * @param vmThread the VmThread for which an ID should be assigned
-         * @return the ID assigned to {@code vmThread}
+         * @param thread the VmThread for which an ID should be assigned
+         * @return the ID assigned to {@code thread}
          */
-        int acquire(VmThread vmThread) {
-            FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
+        int acquire(VmThread thread) {
+            FatalError.check(thread.id() == 0, "VmThread already has an ID");
             final int length = freeList.length;
             if (nextID >= length) {
                 // grow the free list and initialize the new part
@@ -121,17 +135,17 @@ public final class VmThreadMap {
                 }
                 freeList = newFreeList;
 
-                // grow the vmThreads list and copy
+                // grow the threads list and copy
                 final VmThread[] newVmThreads = new VmThread[length * 2];
                 for (int i = 0; i < length; i++) {
-                    newVmThreads[i] = vmThreads[i];
+                    newVmThreads[i] = threads[i];
                 }
-                vmThreads = newVmThreads;
+                threads = newVmThreads;
             }
             final int id = nextID;
             nextID = freeList[nextID];
-            vmThreads[id] = vmThread;
-            vmThread.setID(id);
+            threads[id] = thread;
+            thread.setID(id);
             return id;
         }
 
@@ -142,24 +156,15 @@ public final class VmThreadMap {
          */
         void release(int id) {
             freeList[id] = nextID;
-            vmThreads[id] = null;
+            threads[id] = null;
             nextID = id;
         }
 
         @INLINE
         VmThread get(int id) {
             // this operation may be performance critical, so avoid the bounds check
-            return UnsafeCast.asVmThread(ArrayAccess.getObject(vmThreads, id));
+            return UnsafeCast.asVmThread(ArrayAccess.getObject(threads, id));
         }
-    }
-
-    /**
-     * The global thread map of active threads in the VM. This object also serves the role
-     * of a global GC and thread creation lock.
-     */
-    public static final VmThreadMap ACTIVE = new VmThreadMap();
-    static {
-        JavaMonitorManager.bindStickyMonitor(ACTIVE, new VMThreadMapJavaMonitor());
     }
 
     /**
@@ -169,10 +174,15 @@ public final class VmThreadMap {
      * @param mutex the address of a platform specific mutex
      */
     @C_FUNCTION
-    private static native void nativeSetGlobalThreadANDGCLock(Pointer mutex);
+    private static native void nativeSetGlobalThreadAndGCLock(Pointer mutex);
 
     private final IDMap idMap = new IDMap(64);
-    private volatile int vmThreadStartCount;
+
+    /**
+     * The number of currently running non-daemon threads running, excluding
+     * the {@linkplain VmThread#MAIN_VM_THREAD main} thread.
+     */
+    private volatile int nonDaemonThreads;
 
     /**
      * The head of the VM thread locals list.
@@ -184,101 +194,127 @@ public final class VmThreadMap {
      */
     private Pointer threadLocalsListHead = Pointer.zero();
 
+    /**
+     * Once true, no more threads can be started.
+     */
+    private volatile boolean mainThreadExited;
+
     @INLINE
-    private static Pointer getPrev(Pointer vmThreadLocals) {
-        return VmThreadLocal.BACKWARD_LINK.getConstantWord(vmThreadLocals).asPointer();
+    private static Pointer getPrev(Pointer threadLocals) {
+        return VmThreadLocal.BACKWARD_LINK.getConstantWord(threadLocals).asPointer();
     }
 
     @INLINE
-    private static Pointer getNext(Pointer vmThreadLocals) {
-        return VmThreadLocal.FORWARD_LINK.getConstantWord(vmThreadLocals).asPointer();
+    private static Pointer getNext(Pointer threadLocals) {
+        return VmThreadLocal.FORWARD_LINK.getConstantWord(threadLocals).asPointer();
     }
 
     @INLINE
-    private static void setPrev(Pointer vmThreadLocals, Pointer prev) {
-        if (!vmThreadLocals.isZero()) {
-            VmThreadLocal.BACKWARD_LINK.setConstantWord(vmThreadLocals, prev);
+    private static void setPrev(Pointer threadLocals, Pointer prev) {
+        if (!threadLocals.isZero()) {
+            VmThreadLocal.BACKWARD_LINK.setConstantWord(threadLocals, prev);
         }
     }
 
     @INLINE
-    private static void setNext(Pointer vmThreadLocals, Pointer next) {
-        if (!vmThreadLocals.isZero()) {
-            VmThreadLocal.FORWARD_LINK.setConstantWord(vmThreadLocals, next);
+    private static void setNext(Pointer threadLocals, Pointer next) {
+        if (!threadLocals.isZero()) {
+            VmThreadLocal.FORWARD_LINK.setConstantWord(threadLocals, next);
         }
     }
 
     /**
-     * Add the main thread (or an attached thread) to the thread map ACTIVE.
+     * Adds a pre-allocated thread to the map. This reserves an ID for the thread
+     * but does not add its thread locals to the global list of running threads.
      *
-     * @param vmThread the vmThread representing the main or attached thread
+     * @param thread a pre-allocated thread
      */
-    public static void addVmThread(VmThread vmThread) {
-        ACTIVE.idMap.acquire(vmThread);
+    public static void addPreallocatedThread(VmThread thread) {
+        ACTIVE.idMap.acquire(thread);
     }
 
     /**
      * Adds the specified thread locals to the ACTIVE thread map and initializes several of its
      * important values (such as its ID and VM thread reference).
      *
-     * Note that this method does not perform synchronization on the thread map, because it must
-     * only be executed in a newly created thread while the creating thread holds the lock on
-     * the ACTIVE thread map.
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
      *
-     * @param id the ID of the VM thread, which should match the ID of the VmThread
-     * @param vmThreadLocals a pointer to the VM thread locals for the thread
-     * @return a reference to the VmThread for this thread
+     * @param thread the VmThread to add
+     * @param threadLocals a pointer to the VM thread locals for the thread
+     * @param daemon specifies if {@code thread} is a daemon
      */
-    public static VmThread addVmThreadLocals(int id, Pointer vmThreadLocals) {
-        final VmThread vmThread = ACTIVE.idMap.get(id);
-        addVmThreadLocals(vmThread, vmThreadLocals);
-        return vmThread;
+    public static void addThreadLocals(VmThread thread, Pointer threadLocals, boolean daemon) {
+        setNext(threadLocals, ACTIVE.threadLocalsListHead);
+        setPrev(ACTIVE.threadLocalsListHead, threadLocals);
+        ACTIVE.threadLocalsListHead = threadLocals;
     }
 
     /**
-     * Adds the specified thread locals to the ACTIVE thread map and initializes several of its
-     * important values (such as its ID and VM thread reference).
+     * Increments the number of active non-daemon threads by 1.
      *
-     * Note that this method does not perform synchronization on the thread map, because it must
-     * only be executed in a newly created thread while the creating thread holds the lock on
-     * the ACTIVE thread map.
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
      *
-     * @param vmThread the VmThread to add
-     * @param vmThreadLocals a pointer to the VM thread locals for the thread
+     * @return {@code true} if the non-daemon thread can continue running; {@code false} if the main thread has already exited
      */
-    public static void addVmThreadLocals(VmThread vmThread, Pointer vmThreadLocals) {
-        VmThreadLocal.VM_THREAD.setConstantReference(vmThreadLocals, Reference.fromJava(vmThread));
-        // insert this thread locals into the list
-        setNext(vmThreadLocals, ACTIVE.threadLocalsListHead);
-        setPrev(ACTIVE.threadLocalsListHead, vmThreadLocals);
-        // at the head
-        ACTIVE.threadLocalsListHead = vmThreadLocals;
-        // and signal that this thread has started up and joined the list
-        ACTIVE.vmThreadStartCount++;
+    static boolean incrementNonDaemonThreads() {
+        if (ACTIVE.mainThreadExited) {
+            return false;
+        }
+        if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Adding non-daemon thread - ");
+            Log.print(ACTIVE.nonDaemonThreads + 1);
+            Log.println(" non-daemon threads now running");
+            Log.unlock(lockDisabledSafepoints);
+        }
+        ACTIVE.nonDaemonThreads++;
+        return true;
+    }
+
+    /**
+     * Decrements the number of active non-daemon threads by 1.
+     *
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+     */
+    static void decrementNonDaemonThreads() {
+        if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Removed non-daemon thread - ");
+            Log.print(ACTIVE.nonDaemonThreads - 1);
+            Log.println(" non-daemon threads remain");
+            Log.unlock(lockDisabledSafepoints);
+        }
+        ACTIVE.nonDaemonThreads--;
+        ACTIVE.notify();
     }
 
     /**
      * Remove the specified VM thread locals from this thread map.
-     * @param vmThreadLocals the thread locals to remove from this map
+     *
+     * <b>NOTE: This method is not synchronized. It is required that the caller synchronizes on ACTIVE.</b>
+     *
+     * @param threadLocals the thread locals to remove from this map
+     * @param daemon specifies if the thread is a daemon
      */
-    public void removeVmThreadLocals(Pointer vmThreadLocals) {
-        synchronized (ACTIVE) {
-            final int id = VmThreadLocal.ID.getConstantWord(vmThreadLocals).asAddress().toInt();
-            if (threadLocalsListHead == vmThreadLocals) {
-                // this vm thread locals is at the head of list
-                threadLocalsListHead = getNext(threadLocalsListHead);
-            } else {
-                // this vm thread locals is somewhere in the middle
-                final Pointer prev = getPrev(vmThreadLocals);
-                final Pointer next = getNext(vmThreadLocals);
-                setPrev(next, prev);
-                setNext(prev, next);
-            }
-            // set this vm thread locals' links to zero
-            setPrev(vmThreadLocals, Pointer.zero());
-            setNext(vmThreadLocals, Pointer.zero());
-            // release the ID for a later thread's use
-            idMap.release(id);
+    public void removeThreadLocals(VmThread thread) {
+        Pointer threadLocals = thread.vmThreadLocals();
+        if (threadLocalsListHead == threadLocals) {
+            // this vm thread locals is at the head of list
+            threadLocalsListHead = getNext(threadLocalsListHead);
+        } else {
+            // this vm thread locals is somewhere in the middle
+            final Pointer prev = getPrev(threadLocals);
+            final Pointer next = getNext(threadLocals);
+            setPrev(next, prev);
+            setNext(prev, next);
+        }
+        // set this vm thread locals' links to zero
+        setPrev(threadLocals, Pointer.zero());
+        setNext(threadLocals, Pointer.zero());
+        // release the ID for a later thread's use
+        idMap.release(thread.id());
+        if (!thread.daemon && thread != VmThread.MAIN_VM_THREAD) {
+            decrementNonDaemonThreads();
         }
     }
 
@@ -289,15 +325,21 @@ public final class VmThreadMap {
      * Creates the native thread for a VM thread and start it running. This method acquires an ID
      * for the new thread and returns it to the caller.
      *
-     * @param vmThread the VM thread to create
+     * @param thread the VM thread to create
      * @param stackSize the requested stack size
      * @param priority the initial priority of the thread
      * @return the native thread created
      */
-    public Word startVmThread(VmThread vmThread, Size stackSize, int priority) {
+    public void startThread(VmThread thread, Size stackSize, int priority) {
         synchronized (ACTIVE) {
-            final int id = idMap.acquire(vmThread);
-            final int count = vmThreadStartCount;
+            final int id = idMap.acquire(thread);
+            thread.daemon = thread.javaThread().isDaemon();
+            if (!thread.daemon) {
+                if (!incrementNonDaemonThreads()) {
+                    throw new IllegalStateException("Cannot start " + thread.javaThread() + " after the main thread has exited");
+                }
+            }
+
             final Word nativeThread = VmThread.nativeThreadCreate(id, stackSize, priority);
             if (nativeThread.isZero()) {
                 /* This means that we did not create the native thread at all so there is nothing to
@@ -307,59 +349,36 @@ public final class VmThreadMap {
                  */
                 throw new OutOfMemoryError("Unable to create new native thread");
             }
-            if (!waitForThreadStartup(count)) {
-                vmThread.beTerminated();
-                throw new InternalError("waitForThreadStartup() failed");
-            }
-            return nativeThread;
         }
     }
 
     /**
-     * Waits for all non-daemon threads in the thread map to finish, except current.
+     * Waits for all non-daemon threads to finish.
+     *
+     * This must only be called by the {@linkplain VmThread#MAIN_VM_THREAD main} thread.
      */
     public void joinAllNonDaemons() {
-        while (true) {
-            final VmThread vmThread = findNonDaemon();
-            if (vmThread == null) {
-                return;
+        FatalError.check(VmThread.current() == VmThread.MAIN_VM_THREAD, "Only the main thread should join non-daemon threads");
+        while (nonDaemonThreads > 0) {
+            if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+                boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Main thread waiting for ");
+                Log.print(nonDaemonThreads);
+                Log.println(" non-daemon threads to terminate");
+                Log.unlock(lockDisabledSafepoints);
             }
-            vmThread.join();
-        }
-    }
-
-    /**
-     * Finds a non-daemon thread except current.
-     * @return
-     */
-    private VmThread findNonDaemon() {
-        Pointer vmThreadLocals = threadLocalsListHead;
-        while (!vmThreadLocals.isZero()) {
-            final VmThread vmThread = UnsafeCast.asVmThread(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
-            if (vmThread != VmThread.current() && !vmThread.javaThread().isDaemon()) {
-                return vmThread;
-            }
-            vmThreadLocals = VmThreadLocal.FORWARD_LINK.getConstantWord(vmThreadLocals).asPointer();
-        }
-        return null;
-    }
-
-    private boolean waitForThreadStartup(int count) {
-        int spin = 10000;
-        while (vmThreadStartCount == count) {
-            // spin for a little while, waiting for other thread to start
-            if (spin-- == 0) {
-                spin = 100;
-                while (vmThreadStartCount == count) {
-                    // wait for 100ms, 1ms at a time
-                    if (spin-- == 0) {
-                        return false;
-                    }
-                    VmThread.nonJniSleep(1);
+            synchronized (ACTIVE) {
+                try {
+                    ACTIVE.wait();
+                } catch (Exception exception) {
+                    FatalError.unexpected("Error waiting for all non-daemon threads", exception);
                 }
             }
         }
-        return true;
+        if (VmThread.TRACE_THREADS_OPTION.getValue()) {
+            Log.println("Main thread finished waiting for all non-daemon threads to terminate");
+        }
+        mainThreadExited = true;
     }
 
     /**
@@ -368,14 +387,14 @@ public final class VmThreadMap {
      * @param predicate a predicate to apply on each thread
      * @param procedure the procedure to apply to each VM thread
      */
-    public void forAllVmThreads(Predicate<VmThread> predicate, Procedure<VmThread> procedure) {
-        Pointer vmThreadLocals = threadLocalsListHead;
-        while (!vmThreadLocals.isZero()) {
-            final VmThread vmThread = UnsafeCast.asVmThread(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
-            if (predicate == null || predicate.evaluate(vmThread)) {
-                procedure.run(vmThread);
+    public void forAllThreads(Predicate<VmThread> predicate, Procedure<VmThread> procedure) {
+        Pointer threadLocals = threadLocalsListHead;
+        while (!threadLocals.isZero()) {
+            final VmThread thread = UnsafeCast.asVmThread(VmThreadLocal.VM_THREAD.getConstantReference(threadLocals).toJava());
+            if (predicate == null || predicate.evaluate(thread)) {
+                procedure.run(thread);
             }
-            vmThreadLocals = getNext(vmThreadLocals);
+            threadLocals = getNext(threadLocals);
         }
     }
 
@@ -385,19 +404,19 @@ public final class VmThreadMap {
      * @param predicate a predicate to check on the VM thread locals
      * @param procedure the procedure to apply to each VM thread locals
      */
-    public void forAllVmThreadLocals(Pointer.Predicate predicate, Pointer.Procedure procedure) {
-        Pointer vmThreadLocals = threadLocalsListHead;
-        while (!vmThreadLocals.isZero()) {
-            if (predicate == null || predicate.evaluate(vmThreadLocals)) {
-                procedure.run(vmThreadLocals);
+    public void forAllThreadLocals(Pointer.Predicate predicate, Pointer.Procedure procedure) {
+        Pointer threadLocals = threadLocalsListHead;
+        while (!threadLocals.isZero()) {
+            if (predicate == null || predicate.evaluate(threadLocals)) {
+                procedure.run(threadLocals);
             }
-            vmThreadLocals = getNext(vmThreadLocals);
+            threadLocals = getNext(threadLocals);
         }
     }
 
     public static final Pointer.Predicate isNotCurrent = new Pointer.Predicate() {
-        public boolean evaluate(Pointer vmThreadLocals) {
-            return vmThreadLocals != VmThread.current().vmThreadLocals();
+        public boolean evaluate(Pointer threadLocals) {
+            return threadLocals != VmThread.current().vmThreadLocals();
         }
     };
 
@@ -411,5 +430,4 @@ public final class VmThreadMap {
     public VmThread getVmThreadForID(int id) {
         return idMap.get(id);
     }
-
 }

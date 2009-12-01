@@ -151,28 +151,6 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #endif
 }
 
-#if 0
-static Address getStackPointer(UContext *ucontext) {
-#if os_SOLARIS
-  return ucontext->uc_mcontext.gregs[REG_SP];
-#elif os_LINUX
-#   if isa_AMD64
-        return ucontext->uc_mcontext.gregs[REG_RSP];
-#   elif isa_IA32
-        return ucontext->uc_mcontext.gregs[REG_UESP];
-#   else
-        c_UNIMPLEMENTED();
-#   endif
-#elif os_DARWIN
-    return ucontext->uc_mcontext->__ss.__rsp;
-#elif os_GUESTVMXEN
-        return ucontext->rsp;
-#else
-        c_UNIMPLEMENTED();
-#endif
-}
-#endif
-
 static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #if (os_DARWIN || os_SOLARIS || os_LINUX )
     return (Address) sigInfo->si_addr;
@@ -198,6 +176,102 @@ static void blueZoneTrap(NativeThreadLocals ntl) {
 #endif
 }
 
+#if isa_AMD64
+/**
+ * According to the JVM specification for the IDIV and LDIV instructions:
+ *
+ *    There is one special case that does not satisfy this rule: if the dividend is the
+ *    negative integer of largest possible magnitude for the int/long type, and the divisor
+ *    is -1, then overflow occurs, and the result is equal to the dividend. Despite
+ *    the overflow, no exception is thrown in this case.
+ *
+ * On AMD64 (and x86), the CPU traps in this case. This function determines
+ * if the trap is due to Integer.MIN_VALUE / -1 and if so, sets the result to
+ * the dividend and advances the instruction pointer in the given trap context
+ * to the next instruction.
+ */
+static boolean handleDivideOverflow(UContext *ucontext) {
+    unsigned char *rip = (unsigned char *) getInstructionPointer(ucontext);
+
+    boolean is64Bit = false;
+
+    if ((rip[0] & 0xf0) == 0x40) {
+        /* Decode REX byte */
+        unsigned char rex = rip[0] & 0x0f;
+        is64Bit = (rex & 0x08) != 0;
+        rip++;
+    }
+
+    if (rip[0] == 0xf7) {
+#if os_SOLARIS
+        Address dividend = ucontext->uc_mcontext.gregs[REG_RAX];
+#elif os_LINUX
+        Address dividend = ucontext->uc_mcontext.gregs[REG_RAX];
+#elif os_DARWIN
+        Address dividend = ucontext->uc_mcontext->__ss.__rax;
+#elif os_GUESTVMXEN
+        Address dividend = ucontext->rax;
+#else
+        c_UNIMPLEMENTED();
+#endif
+        boolean isDividendMinValue = false;
+        unsigned char modrm = rip[1];
+
+        if (((modrm >> 3) & 7) == 7) {
+            if (is64Bit) {
+                isDividendMinValue = (dividend == 0x8000000000000000L);
+            } else {
+                isDividendMinValue = ((dividend & 0xffffffff) == 0x80000000);
+            }
+        }
+
+        if (isDividendMinValue) {
+            unsigned char rm = modrm & 7;
+            /* Set the remainder to 0. */
+#if os_SOLARIS
+            ucontext->uc_mcontext.gregs[REG_RDX] = 0;
+#elif os_LINUX
+            ucontext->uc_mcontext.gregs[REG_RDX] = 0;
+#elif os_DARWIN
+            ucontext->uc_mcontext->__ss.__rdx = 0;
+#elif os_GUESTVMXEN
+            ucontext->rdx = 0;
+#else
+            c_UNIMPLEMENTED();
+#endif
+            switch (modrm >> 6) {
+                case 0:  /* register indirect */
+                    if (rm == 5) {  /* 32-bit displacement */
+                        rip += 4;
+                    }
+                    if (rm == 4) { /* A SIB byte follows the ModR/M byte */
+                        rip += 1;
+                    }
+                    break;
+                case 1:  /* register indirect + 8-bit displacement */
+                    rip += 1;
+                    if (rm == 4) { /* A SIB byte follows the ModR/M byte */
+                        rip += 1;
+                    }
+                    break;
+                case 2:  /* register indirect + 32-bit displacement */
+                    rip += 4;
+                    if (rm == 4) { /* A SIB byte follows the ModR/M byte */
+                        rip += 1;
+                    }
+                    break;
+                case 3:
+                    break;
+            }
+            rip += 2;
+            setInstructionPointer(ucontext, (Address) rip);
+            return true;
+        }
+    }
+    return false;
+}
+#endif
+
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
     int primordial = 0;
     char *sigName;
@@ -208,8 +282,19 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         }
         log_println("SIGNAL: %0d [%s]", signal, sigName);
     }
-    ThreadLocals tl = thread_currentThreadLocals();
-    NativeThreadLocals ntl = getThreadLocal(NativeThreadLocals, tl, NATIVE_THREAD_LOCALS);
+
+#if isa_AMD64
+    if (signal == SIGFPE && handleDivideOverflow(ucontext)) {
+        // TODO: Determine if trap occurred in Java code; should be fatal otherwise
+        if (traceTraps || log_TRAP) {
+            log_println("SIGNAL: Handled Integer.MIN_VALUE / -1");
+        }
+        return;
+    }
+#endif
+
+    ThreadLocals tl = threadLocals_current();
+    NativeThreadLocals ntl = nativeThreadLocals_current();
     if (ntl == 0) {
         log_exit(-22, "could not find native thread locals in trap handler");
     }
@@ -223,7 +308,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
             sigName = "<unknown>";
         }
         log_println("Trap taken on primordial thread (this is usually bad)!");
-        log_println("thread %d: %s", getThreadLocal(int, disabled_tl, ID), sigName);
+        log_println("thread handle=%p, id=%d: %s", thread_self(), getThreadLocal(int, disabled_tl, ID), sigName);
         log_println("trapInfo[0] (trap number)         = %p", trapNumber);
         log_println("trapInfo[1] (instruction pointer) = %p", getInstructionPointer(ucontext));
         log_println("trapInfo[2] (fault address)       = %p", faultAddress);
@@ -239,11 +324,11 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     if (faultAddress >= ntl->stackRedZone && faultAddress < ntl->stackBase + ntl->stackSize && !primordial) {
         if (faultAddress < ntl->stackYellowZone) {
             /* The faultAddress is in the red zone; we shouldn't be alive */
-            virtualMemory_unprotectPage(ntl->stackRedZone);
+            virtualMemory_unprotectPages(ntl->stackRedZone, STACK_RED_ZONE_PAGES);
             trapNumber = STACK_FATAL;
         } else if (faultAddress < ntl->stackYellowZone + virtualMemory_getPageSize()) {
             /* the faultAddress is in the yellow zone; assume this is a stack fault. */
-            virtualMemory_unprotectPage(ntl->stackYellowZone);
+            virtualMemory_unprotectPages(ntl->stackYellowZone, STACK_YELLOW_ZONE_PAGES);
             trapNumber = STACK_FAULT;
         } else {
             blueZoneTrap(ntl);
@@ -276,7 +361,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 
     if (traceTraps || log_TRAP) {
         if (sigName != NULL) {
-            log_println("thread %d: %s", getThreadLocal(int, disabled_tl, ID), sigName);
+            log_println("thread handle=%p, id=%d: %s", thread_self(), getThreadLocal(int, disabled_tl, ID), sigName);
             log_println("trapInfo[0] (trap number)         = %p", getThreadLocal(Address, disabled_tl, TRAP_NUMBER));
             log_println("trapInfo[1] (instruction pointer) = %p", getThreadLocal(Address, disabled_tl, TRAP_INSTRUCTION_POINTER));
             log_println("trapInfo[2] (fault address)       = %p", getThreadLocal(Address, disabled_tl, TRAP_FAULT_ADDRESS));

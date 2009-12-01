@@ -25,7 +25,7 @@ package com.sun.c1x.ir;
  *
  * @author Ben L. Titzer
  */
-public class UnsafePrefetchWrite extends UnsafePrefetch {
+public final class UnsafePrefetchWrite extends UnsafePrefetch {
 
     /**
      * Creates a new UnsafePrefetchWrite instruction.

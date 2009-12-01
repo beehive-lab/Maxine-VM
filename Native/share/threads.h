@@ -26,43 +26,49 @@
 #include "word.h"
 #include "threadLocals.h"
 
-/**
- * Global symbol that the Inspector can look up to check whether a thread's start function is this one.
+/*
+ * The constants must be in sync with the static variables of the same name in VmThread.java
  */
-extern void *thread_runJava(void *jniNativeInterface);
+#define STACK_YELLOW_ZONE_PAGES 1
+#define STACK_RED_ZONE_PAGES 1
 
-int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon);
-int thread_detachCurrent();
 /**
- * The signature of the Java method entrypoint for new threads.
+ * The signature of the VM entry point for adding a thread to the thread list.
+ * This must match the signature of 'com.sun.max.vm.thread.VmThread.add()'.
+ */
+typedef jint (*VmThreadAddMethod)(jint id,
+                jboolean daemon,
+                Address nativeThread,
+                Address threadLocals,
+                Address stackBase,
+                Address stackEnd,
+                Address stackYellowZone);
+
+/**
+ * The signature of the VM entry point for running a new VM-created thread.
  * This must match the signature of 'com.sun.max.vm.thread.VmThread.run()'.
  */
-typedef void (*VmThreadRunMethod)(jint id, Address nativeThread,
-	            Address stackBase,
-	            Address vmThreadLocals,
-	            Address refMapArea,
-	            Address yellowZone,
-	            Address stackEnd);
+typedef void (*VmThreadRunMethod)(Address threadLocals,
+                Address stackBase,
+                Address stackEnd);
 
 /**
- * The signature of the Java method used to attach native threads.
+ * The signature of the VM entry point for attaching a native thread.
  * This must match the signature of 'com.sun.max.vm.thread.VmThread.attach()'.
  */
-typedef int (*VmThreadAttachMethod)(Address nativeThread,
+typedef int (*VmThreadAttachMethod)(
                 Address name,
                 Address group,
                 jboolean daemon,
                 Address stackBase,
-                Address vmThreadLocals,
-                Address refMapArea,
-                Address yellowZone,
-                Address stackEnd);
+                Address stackEnd,
+                Address threadLocals);
 
 /**
  * The signature of the Java method used to detach native threads.
  * This must match the signature of 'com.sun.max.vm.thread.VmThread.detach()'.
  */
-typedef int (*VmThreadDetachMethod)(Address vmThreadLocals);
+typedef void (*VmThreadDetachMethod)(Address threadLocals);
 
 /**
  * Sleeps the current thread for a given number of milliseconds.
@@ -71,13 +77,16 @@ typedef int (*VmThreadDetachMethod)(Address vmThreadLocals);
  */
 extern jboolean thread_sleep(jlong numberOfMilliSeconds);
 
-extern void threads_initialize(Address primordial_threadLocalsAndAnchor);
+int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon);
+int thread_detachCurrent();
 
 /**
- * Gets a ThreadLocals object associated with the current thread.
- * This is the safepoints-enabled copy of thread locals.
+ * Gets the address and size of the calling thread's stack.
+ *
+ * @param stackBase the base (i.e. lowest) address of the stack is returned in this argument
+ * @param stackSize the size of the stack is returned in this argument
  */
-extern ThreadLocals thread_currentThreadLocals(void);
+extern void thread_getStackInfo(Address *stackBase, Size* stackSize);
 
 /**
  * For debugging purposes:

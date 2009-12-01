@@ -28,12 +28,12 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class NewTypeArray extends NewArray {
+public final class NewTypeArray extends NewArray {
 
     final CiKind elementType;
 
     public NewTypeArray(Value length, CiKind elementType, ValueStack stateBefore) {
-        super(length, stateBefore, null);
+        super(length, stateBefore);
         this.elementType = elementType;
     }
 

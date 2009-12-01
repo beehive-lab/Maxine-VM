@@ -191,7 +191,7 @@ public abstract class Trap {
      * @param trapState a pointer to the stack location where trap state is stored
      * @param faultAddress the faulting address that caused this trap (memory faults only)
      */
-    @C_FUNCTION
+    @VM_ENTRY_POINT
     private static void trapStub(int trapNumber, Pointer trapState, Address faultAddress) {
         if (trapNumber == ASYNC_INTERRUPT) {
             VmThread.current().setInterrupted();
@@ -393,7 +393,7 @@ public abstract class Trap {
                 // This complete call-chain must be inlined down to the native call
                 // so that no further stack banging instructions
                 // are executed before execution jumps to the catch handler.
-                VirtualMemory.protectPage(VmThread.current().guardPage());
+                VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
             }
         } else {
             VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);

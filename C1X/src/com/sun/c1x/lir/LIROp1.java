@@ -27,7 +27,6 @@ import com.sun.c1x.util.Util;
  * The <code>LIROp1</code> class definition. The LIROp1 instruction has only one input operand.
  *
  * @author Marcelo Cintra
- *
  */
 public class LIROp1 extends LIRInstruction {
 
@@ -35,8 +34,8 @@ public class LIROp1 extends LIRInstruction {
         Normal, Volatile, Unaligned
     }
 
-    protected final CiKind type;          // the operand type
-    protected final LIRMoveKind moveKind; // flag that indicate the kind of move
+    public final CiKind kind;          // the operand type
+    public final LIRMoveKind moveKind; // flag that indicate the kind of move
 
     /**
      * Constructs a new LIROp1 instruction.
@@ -44,12 +43,12 @@ public class LIROp1 extends LIRInstruction {
      * @param opcode the instruction's opcode
      * @param opr the first input operand
      * @param result the operand that holds the result of this instruction
-     * @param type the kind of this instruction
+     * @param kind the kind of this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type, LIRDebugInfo info) {
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind kind, LIRDebugInfo info) {
         super(opcode, result, info, false, null, 0, 0, opr);
-        this.type = type;
+        this.kind = kind;
         this.moveKind = LIRMoveKind.Normal;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
     }
@@ -60,10 +59,10 @@ public class LIROp1 extends LIRInstruction {
      * @param opcode the instruction's opcode
      * @param opr the first input operand
      * @param result the operand that holds the result of this instruction
-     * @param type the kind of this instruction
+     * @param kind the kind of this instruction
      */
-    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind type) {
-        this(opcode, opr, result, type, null);
+    public LIROp1(LIROpcode opcode, LIROperand opr, LIROperand result, CiKind kind) {
+        this(opcode, opr, result, kind, null);
     }
 
     /**
@@ -93,12 +92,12 @@ public class LIROp1 extends LIRInstruction {
      * @param moveKind the kind of move the instruction represents
      * @param opr the first input operand
      * @param result the operand that holds the result of this instruction
-     * @param type the kind of this instruction
+     * @param kind the kind of this instruction
      * @param info the object holding information needed to emit debug information
      */
-    public LIROp1(LIRMoveKind moveKind, LIROperand opr, LIROperand result, CiKind type, LIRDebugInfo info) {
+    public LIROp1(LIRMoveKind moveKind, LIROperand opr, LIROperand result, CiKind kind, LIRDebugInfo info) {
         super(LIROpcode.Move, result, info, false, null, 0, 0, opr);
-        this.type = type;
+        this.kind = kind;
         this.moveKind = moveKind;
     }
 
@@ -111,7 +110,7 @@ public class LIROp1 extends LIRInstruction {
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, LIRDebugInfo info) {
         super(opcode, LIROperandFactory.IllegalLocation, info, false, null, 0, 0, opr);
-        this.type = CiKind.Illegal;
+        this.kind = CiKind.Illegal;
         this.moveKind = LIRMoveKind.Normal;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
     }
@@ -123,15 +122,6 @@ public class LIROp1 extends LIRInstruction {
      */
     public LIROperand operand() {
         return operand(0);
-    }
-
-    /**
-     * Gets the kind of this this instruction.
-     *
-     * @return type the instruction's type.
-     */
-    public CiKind type() {
-        return type;
     }
 
     /**

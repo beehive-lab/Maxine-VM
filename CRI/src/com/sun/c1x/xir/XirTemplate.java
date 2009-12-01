@@ -45,7 +45,6 @@ public class XirTemplate {
     	GLOBAL_STUB;
 
     	public final int mask = 1 << ordinal();
-
     }
 
     public final String name;
@@ -112,7 +111,6 @@ public class XirTemplate {
     }
 
     public void print(PrintStream p) {
-
     	final String indent = "   ";
 
     	p.println();

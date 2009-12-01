@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class If extends BlockEnd {
+public final class If extends BlockEnd {
 
     Value x;
     Value y;

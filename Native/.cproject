@@ -71,18 +71,9 @@
 <storageModule buildSystemId="org.eclipse.cdt.core.defaultConfigDataProvider" id="converted.config.925327494" moduleId="org.eclipse.cdt.core.settings" name="convertedConfig">
 <externalSettings/>
 <extensions>
-<extension id="org.eclipse.cdt.core.ctagsindexer" point="org.eclipse.cdt.core.CIndexer">
-<attribute key="ctagsindexincludes" value="false"/>
-<attribute key="ctagslocationtype" value="ctags_path_default"/>
-<attribute key="ctagfilelocation" value=""/>
-<attribute key="ctagslocation" value=""/>
-<attribute key="ctagfiletype" value="ctags_internal"/>
-</extension>
+<extension id="org.eclipse.cdt.core.ctagsindexer" point="org.eclipse.cdt.core.CIndexer"/>
 <extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
-<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser">
-<attribute key="addr2line" value="addr2line"/>
-<attribute key="c++filt" value="c++filt"/>
-</extension>
+<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 </extensions>
 </storageModule>
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>

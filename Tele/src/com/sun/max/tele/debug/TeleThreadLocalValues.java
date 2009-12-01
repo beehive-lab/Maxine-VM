@@ -48,7 +48,7 @@ import com.sun.max.vm.thread.*;
  */
 public final class TeleThreadLocalValues extends FixedMemoryRegion {
 
-    private final Map<String, Long> values = new LinkedHashMap<String, Long>(VmThreadLocal.threadLocalStorageSize().dividedBy(Word.size()).toInt());
+    private final Map<String, Long> values = new LinkedHashMap<String, Long>(VmThreadLocal.threadLocalsAreaSize().dividedBy(Word.size()).toInt());
     private final TeleNativeThread teleNativeThread;
     private final Safepoint.State safepointState;
 
@@ -63,7 +63,7 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
      * @param start memory location in the VM where the variables are stored, {@link Address#zero()} if the variables are invalid.
      */
     public TeleThreadLocalValues(TeleNativeThread teleNativeThread, Safepoint.State safepointState, Pointer start) {
-        super(start, start.isZero() ? Size.zero() : VmThreadLocal.threadLocalStorageSize(), "Thread local variables for: ");
+        super(start, start.isZero() ? Size.zero() : VmThreadLocal.threadLocalsAreaSize(), "Thread local variables for: ");
         this.teleNativeThread = teleNativeThread;
         assert !start.isZero();
         for (VmThreadLocal threadLocal : VmThreadLocal.values()) {
@@ -134,7 +134,7 @@ public final class TeleThreadLocalValues extends FixedMemoryRegion {
         return start().plus(vmThreadLocal.offset);
     }
     /**
-     * @return the memory occupied by  the {@linkplain VmThreadLocal thread local variable} at a specified index.
+     * @return the memory occupied by the {@linkplain VmThreadLocal thread local variable} at a specified index.
      */
     public MemoryRegion getMemoryRegion(int index) {
         return new FixedMemoryRegion(getAddress(index), teleNativeThread.teleVM().wordSize(), "");

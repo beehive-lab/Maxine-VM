@@ -27,7 +27,7 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class UnsafeGetObject extends UnsafeObjectOp {
+public final class UnsafeGetObject extends UnsafeObjectOp {
 
     /**
      * Constructs a new UnsafeGetObject operation.

@@ -60,7 +60,7 @@ public class C1XCompilation {
 
     private CFGPrinter cfgPrinter;
 
-    private List<ExceptionInfo> exceptionInfoList;
+    private DebugInformationRecorder debugInfo;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -214,7 +214,6 @@ public class C1XCompilation {
 
     /**
      * Returns the frame map of this compilation.
-     *
      * @return the frame map
      */
     public FrameMap frameMap() {
@@ -229,19 +228,11 @@ public class C1XCompilation {
         return assembler;
     }
 
-    public void addExceptionHandlersForPco(int pcOffset, List<ExceptionHandler> exceptionHandlers) {
-        if (C1XOptions.PrintExceptionHandlers) {
-            TTY.println("  added exception scope for pco %d", pcOffset);
-        }
-        if (exceptionInfoList == null) {
-            exceptionInfoList = new ArrayList<ExceptionInfo>();
-        }
-        exceptionInfoList.add(new ExceptionInfo(pcOffset, exceptionHandlers));
-    }
-
     public DebugInformationRecorder debugInfoRecorder() {
-        // TODO: Implement correctly, for now return skeleton class for code to work
-        return new DebugInformationRecorder();
+        if (debugInfo == null) {
+            debugInfo = new DebugInformationRecorder();
+        }
+        return debugInfo;
     }
 
     public boolean hasExceptionHandlers() {
@@ -249,7 +240,6 @@ public class C1XCompilation {
     }
 
     public CiResult compile() {
-
         Value.nextID = 0;
 
         if (C1XOptions.PrintCompilation) {
@@ -326,9 +316,9 @@ public class C1XCompilation {
             lirAssembler.emitLocalStubs();
 
             // generate exception adapters
-            lirAssembler.emitExceptionEntries(exceptionInfoList);
+            lirAssembler.emitExceptionEntries();
 
-            CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, frameMap().frameSize(), exceptionInfoList, -1);
+            CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, frameMap.frameSize(), -1);
 
             if (C1XOptions.PrintCFGToFile) {
                 cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
@@ -357,21 +347,5 @@ public class C1XCompilation {
 
     public boolean needsDebugInformation() {
         return false;
-    }
-
-    public void recordImplicitException(int offset, int offset2) {
-        // TODO move to CiTargetMethod?
-
-    }
-
-    public void addCallInfo(int pcOffset, LIRDebugInfo cinfo) {
-        if (cinfo == null) {
-            return;
-        }
-
-        cinfo.recordDebugInfo(debugInfoRecorder(), pcOffset);
-        if (cinfo.exceptionHandlers != null) {
-            addExceptionHandlersForPco(pcOffset, cinfo.exceptionHandlers);
-        }
     }
 }

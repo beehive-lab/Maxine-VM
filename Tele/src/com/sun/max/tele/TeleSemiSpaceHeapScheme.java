@@ -63,7 +63,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
                 }
                 for (TeleNativeThread teleNativeThread : teleVM().teleProcess().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
                     TeleThreadLocalValues teleThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
-                    if (!teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME).equals(Word.zero())) {
+                    if (teleThreadLocalValues != null && !teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME).equals(Word.zero())) {
                         if (address.greaterEqual(teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME).asAddress())
                                         && teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_TOP_THREAD_LOCAL_NAME).asAddress().greaterThan(address)) {
                             return false;
@@ -77,7 +77,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
     }
 
     public boolean isForwardingPointer(Pointer pointer) {
-        return (!pointer.isZero()) &&  pointer.and(1).toLong() == 1;
+        return (!pointer.isZero()) && pointer.and(1).toLong() == 1;
     }
 
     public Pointer getTrueLocationFromPointer(Pointer pointer) {

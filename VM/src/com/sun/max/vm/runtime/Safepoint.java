@@ -90,24 +90,29 @@ public abstract class Safepoint {
     public static final boolean UseCASBasedGCMutatorSynchronization = false;
 
     /**
-     * Constant denoting a mutator thread is executing Java code.
-     */
-    public static final Word THREAD_IN_JAVA = Address.fromInt(0);
-
-    /**
      * Constant denoting a mutator thread is executing native code.
      */
-    public static final Word THREAD_IN_NATIVE = Address.fromInt(1);
+    public static final Word THREAD_IN_NATIVE = Address.fromInt(0);
+
+    /**
+     * Constant denoting a mutator thread is executing Java code.
+     */
+    public static final Word THREAD_IN_JAVA = Address.fromInt(1);
 
     /**
      * Constant denoting a mutator thread is stopped for garbage collection.
      */
     public static final Word THREAD_IN_GC = Address.fromInt(2);
 
+    /**
+     * The three states a thread can be in with respect to safepoints.
+     * Note that the order of these enum matches the layout of the three
+     * {@linkplain VmThreadLocal thread local areas}.
+     */
     public enum State implements PoolObject {
+        TRIGGERED(SAFEPOINTS_TRIGGERED_THREAD_LOCALS),
         ENABLED(SAFEPOINTS_ENABLED_THREAD_LOCALS),
-        DISABLED(SAFEPOINTS_DISABLED_THREAD_LOCALS),
-        TRIGGERED(SAFEPOINTS_TRIGGERED_THREAD_LOCALS);
+        DISABLED(SAFEPOINTS_DISABLED_THREAD_LOCALS);
 
         public static final IndexedSequence<State> CONSTANTS = new ArraySequence<State>(values());
 

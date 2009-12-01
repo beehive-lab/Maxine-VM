@@ -28,7 +28,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class StoreField extends AccessField {
+public final class StoreField extends AccessField {
     Value value;
 
     /**

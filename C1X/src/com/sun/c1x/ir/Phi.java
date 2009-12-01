@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class Phi extends Value {
+public final class Phi extends Value {
 
     private final BlockBegin block;
     private final int index;
@@ -58,7 +58,7 @@ public class Phi extends Value {
      * Check whether this phi corresponds to a local variable.
      * @return <code>true</code> if this phi refers to a local variable
      */
-    public final boolean isLocal() {
+    public boolean isLocal() {
         return index >= 0;
     }
 
@@ -66,7 +66,7 @@ public class Phi extends Value {
      * Check whether this phi corresponds to a stack location.
      * @return <code>true</code> if this phi refers to a stack location
      */
-    public final boolean isOnStack() {
+    public boolean isOnStack() {
         return index < 0;
     }
 
@@ -74,7 +74,7 @@ public class Phi extends Value {
      * Get the local index of this phi.
      * @return the local index
      */
-    public final int localIndex() {
+    public int localIndex() {
         assert isLocal();
         return index;
     }
@@ -83,7 +83,7 @@ public class Phi extends Value {
      * Get the stack index of this phi.
      * @return the stack index of this phi
      */
-    public final int stackIndex() {
+    public int stackIndex() {
         assert isOnStack();
         return -(index + 1);
     }
@@ -94,7 +94,7 @@ public class Phi extends Value {
      * @param i the index of the predecessor
      * @return the instruction that produced the value in the i'th predecessor
      */
-    public final Value operandAt(int i) {
+    public Value operandAt(int i) {
         ValueStack state;
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
@@ -109,7 +109,7 @@ public class Phi extends Value {
      * @param state the state to access
      * @return the instruction producing the value
      */
-    public final Value operandIn(ValueStack state) {
+    public Value operandIn(ValueStack state) {
         if (isLocal()) {
             return state.localAt(localIndex());
         } else {

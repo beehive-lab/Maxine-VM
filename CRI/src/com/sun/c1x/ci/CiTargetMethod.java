@@ -223,29 +223,6 @@ public class CiTargetMethod {
     }
 
     /**
-     * Records a reference map at a call location in the code array.
-     *
-     * @param codePosition the position in the code array
-     * @param runtimeCall  the runtime call
-     * @param stackMap     the bitmap that indicates which stack locations
-     */
-    public void recordRuntimeCall(int codePosition, CiRuntimeCall runtimeCall, boolean[] stackMap) {
-        directCalls.add(new Call(codePosition, runtimeCall, null, null, null, stackMap));
-    }
-
-    /**
-     * Records a global stub call in the code array.
-     *
-     * @param codePosition the position of the start of the call instruction in the code array
-     * @param globalStubCallID the object identifying the global stub
-     * @param registerMap the register reference map for the call site (may be null)
-     * @param stackMap the stack reference map for the call site
-     */
-    public void recordGlobalStubCall(int codePosition, Object globalStubCallID, boolean[] registerMap, boolean[] stackMap) {
-        directCalls.add(new Call(codePosition, null, null, globalStubCallID, registerMap, stackMap));
-    }
-
-    /**
      * Records a reference to the data section in the code section (e.g. to load an integer or floating point constant).
      *
      * @param codePosition the position in the code where the data reference occurs
@@ -260,12 +237,14 @@ public class CiTargetMethod {
      * Records a direct method call to the specified method in the code.
      *
      * @param codePosition the position in the code array
-     * @param method the method being called
+     * @param target the method or runtime call or stub being called
      * @param stackMap the bitmap that indicates which stack locations
      * @param direct true if this is a direct call, false otherwise
      */
-    public void recordCall(int codePosition, RiMethod method, boolean[] stackMap, boolean direct) {
-        final Call callSite = new Call(codePosition, null, method, null, null, stackMap);
+    public void recordCall(int codePosition, Object target, boolean[] stackMap, boolean direct) {
+        CiRuntimeCall rt = target instanceof CiRuntimeCall ? (CiRuntimeCall) target : null;
+        RiMethod meth = target instanceof RiMethod ? (RiMethod) target : null;
+        final Call callSite = new Call(codePosition, rt, meth, target, null, stackMap);
         if (direct) {
             directCalls.add(callSite);
         } else {

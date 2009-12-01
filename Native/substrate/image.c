@@ -195,6 +195,7 @@ static void readStringInfo(int fd) {
     } \
 } while(0)
 
+#define CHECK_THREAD_LOCAL(name, index) checkThreadLocalIndex(name);
 
 static void checkImage(void) {
 #if log_LOADER
@@ -215,22 +216,11 @@ static void checkImage(void) {
     if (theHeader->cacheAlignment < MIN_CACHE_ALIGNMENT) {
         log_exit(2, "image has insufficient alignment - expected: %d, found: %d", MIN_CACHE_ALIGNMENT, theHeader->cacheAlignment);
     }
-    if (theHeader->pageSize != getpagesize()) {
-        log_exit(2, "image has wrong page size - expected: %d, found: %d", getpagesize(), theHeader->pageSize);
+    if (theHeader->pageSize != (jint) virtualMemory_getPageSize()) {
+        log_exit(2, "image has wrong page size - expected: %d, found: %d", virtualMemory_getPageSize(), theHeader->pageSize);
     }
-    checkThreadLocalIndex(SAFEPOINT_LATCH);
-    checkThreadLocalIndex(SAFEPOINTS_ENABLED_THREAD_LOCALS);
-    checkThreadLocalIndex(SAFEPOINTS_DISABLED_THREAD_LOCALS);
-    checkThreadLocalIndex(SAFEPOINTS_TRIGGERED_THREAD_LOCALS);
-    checkThreadLocalIndex(NATIVE_THREAD_LOCALS);
-    checkThreadLocalIndex(FORWARD_LINK);
-    checkThreadLocalIndex(BACKWARD_LINK);
-    checkThreadLocalIndex(ID);
-    checkThreadLocalIndex(JNI_ENV);
-    checkThreadLocalIndex(LAST_JAVA_FRAME_ANCHOR);
-    checkThreadLocalIndex(TRAP_INSTRUCTION_POINTER);
-    checkThreadLocalIndex(TRAP_FAULT_ADDRESS);
-    checkThreadLocalIndex(TRAP_LATCH_REGISTER);
+
+    FOR_ALL_THREAD_LOCALS(CHECK_THREAD_LOCAL)
 }
 
 static void checkTrailer(int fd) {

@@ -201,7 +201,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
 
                     // Ask if GC is in progress:
                     if (enabledVmThreadLocals.getWord(GC_STATE.index).isZero()) {
-                        // If GC was not in progress that the state transition above was valid (common path)
+                        // If GC was not in progress then the state transition above was valid (common case)
                         return;
                     }
 

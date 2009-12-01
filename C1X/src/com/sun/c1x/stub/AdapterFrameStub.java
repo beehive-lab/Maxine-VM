@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,17 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate.processor;
-
-import com.sun.max.*;
+package com.sun.c1x.stub;
 
 /**
- * @see MaxPackage
- * 
- * @author Bernd Mathiske
+ *
+ * @author Thomas Wuerthinger
  */
-public class Package extends MaxPackage {
-    public Package() {
-        super();
+public class AdapterFrameStub extends LocalStub {
+
+    public AdapterFrameStub() {
+        super(null);
+    }
+
+    @Override
+    public void accept(LocalStubVisitor visitor) {
+        visitor.visitAdapterFrameStub(this);
     }
 }

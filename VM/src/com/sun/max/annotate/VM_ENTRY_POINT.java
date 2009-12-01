@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,33 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.stub;
+package com.sun.max.annotate;
 
-import com.sun.c1x.lir.*;
+import java.lang.annotation.*;
+
+import com.sun.max.vm.jni.*;
 
 /**
- * The <code>NewTypeArrayStub</code> class definition.
+ * Denotes a method that is a VM entry point (e.g. a {@linkplain JniFunctions JNI function}.
+ * These must be <i>static</i> methods and are compiled so as to
+ * conform to the native ABI (e.g. implement callee saved registers if necessary) so that it can be called as
+ * a C function pointer.
  *
- * @author Marcelo Cintra
- * @author Thomas Wuerthinger
+ * No parameter type or return type of VM entry or exit points may refer to object references - only primitive Java
+ * values and 'Word' values are allowed.
+ *
+ * @author Bernd Mathiske
+ * @author Doug Simon
+ * @author Mick Jordan
  */
-public class NewTypeArrayStub extends LocalStub {
-
-    public NewTypeArrayStub(LIROperand klassReg, LIROperand length, LIROperand result, LIRDebugInfo info) {
-        super(info, result);
-        this.setOperands(0, 0, klassReg, length);
-    }
-
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitNewTypeArrayStub(this);
-    }
-
-    public LIROperand klassReg() {
-        return operand(0);
-    }
-
-    public LIROperand length() {
-        return operand(1);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface VM_ENTRY_POINT {
 }

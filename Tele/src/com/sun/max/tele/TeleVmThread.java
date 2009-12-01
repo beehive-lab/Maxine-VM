@@ -48,9 +48,6 @@ public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
         super(teleVM, vmThreadReference);
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVMThread#name()
-     */
     public String name() {
         if (teleVM().teleProcess().epoch() > lastRefreshedEpoch) {
             final Reference nameReference = teleVM().teleFields().VmThread_name.readReference(reference());
@@ -73,9 +70,6 @@ public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
         return name;
     }
 
-    /* (non-Javadoc)
-     * @see com.sun.max.tele.MaxVMThread#maxThread()
-     */
     public MaxThread maxThread() {
         for (MaxThread maxThread : teleVM().maxVMState().threads()) {
             if (this.equals(maxThread.maxVMThread())) {

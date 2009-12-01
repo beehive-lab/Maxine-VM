@@ -156,7 +156,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public String longName(MaxVMThread vmThread) {
         final MaxThread thread = vmThread.maxThread();
         if (thread != null) {
-            return shortName(vmThread) + " [" + thread.handle() + "]";
+            return shortName(vmThread) + " [" + thread.handleString() + "]";
         }
         return shortName(vmThread);
     }
@@ -169,7 +169,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final StringBuilder result = new StringBuilder(20);
         result.append(shortName(vmThread));
         if (thread != null) {
-            result.append(" [").append(thread.handle()).append("]");
+            result.append(" [").append(thread.handleString()).append("]");
             result.append(" (").append(thread.state()).append(")");
         }
         return result.toString();
@@ -201,7 +201,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (thread.maxVMThread() != null) {
             return longName(thread.maxVMThread());
         }
-        return shortName(thread) + " [" + thread.handle() + "]";
+        return shortName(thread) + " [" + thread.handleString() + "]";
     }
 
     /**
@@ -214,7 +214,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (thread.maxVMThread() != null) {
             return longNameWithState(thread.maxVMThread());
         }
-        return shortName(thread) + " [" + thread.handle() + "] (" + thread.state() + ")";
+        return shortName(thread) + " [" + thread.handleString() + "] (" + thread.state() + ")";
     }
 
     /**
@@ -451,9 +451,13 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
         if (memoryRegion instanceof TeleNativeStack) {
             final TeleNativeStack stack = (TeleNativeStack) memoryRegion;
-            return "Thread region: " + longName(stack.teleNativeThread());
+            return "Thread stack: " + longName(stack.teleNativeThread);
         }
-        return "Unknown region";
+        if (memoryRegion instanceof TeleThreadLocalsBlock) {
+            final TeleThreadLocalsBlock tlb = (TeleThreadLocalsBlock) memoryRegion;
+            return "Thread locals block: " + longName(tlb.teleNativeThread);
+        }
+        return "Unknown region: " + description;
     }
 
     /**

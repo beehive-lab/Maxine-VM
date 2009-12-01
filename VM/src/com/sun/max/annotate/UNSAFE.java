@@ -50,7 +50,7 @@ import com.sun.max.vm.type.*;
  * <ul>
  * <li>{@link BUILTIN}</li>
  * <li>{@link C_FUNCTION}</li>
- * <li>{@link JNI_FUNCTION}</li>
+ * <li>{@link VM_ENTRY_POINT}</li>
  * <li>{@link SUBSTITUTE}: the substitutee is unsafe</li>
  * <li>{@link LOCAL_SUBSTITUTION}: the substitutee is unsafe</li>
  * </ul>
@@ -114,7 +114,7 @@ public @interface UNSAFE {
             if (codeAttribute == null) {
                 return false;
             }
-            if (classMethodActor.isCFunction() || classMethodActor.isJniFunction()) {
+            if (classMethodActor.isCFunction() || classMethodActor.isVmEntryPoint()) {
                 return true;
             }
             if (classMethodActor.isClassInitializer()) { // TODO: check whether the latter is always correct

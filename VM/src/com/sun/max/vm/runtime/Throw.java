@@ -226,7 +226,7 @@ public final class Throw {
         }
 
         Pointer anchor = JavaFrameAnchor.from(vmThreadLocals);
-        final Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
+        final Pointer instructionPointer = anchor.isZero() ? Pointer.zero() : JavaFrameAnchor.PC.get(anchor);
         final VmThread vmThread = VmThread.fromVmThreadLocals(vmThreadLocals);
         if (instructionPointer.isZero()) {
             Log.print("Cannot dump stack for non-stopped thread ");

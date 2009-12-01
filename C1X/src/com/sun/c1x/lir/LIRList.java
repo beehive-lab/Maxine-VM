@@ -45,6 +45,7 @@ public class LIRList {
     private List<LIRInstruction> operations;
     private final LIRGenerator generator;
     private final BlockBegin block;
+    private static final LIRLocation ILLEGAL = LIROperandFactory.IllegalLocation;
 
     public LIRList(LIRGenerator generator) {
         this(generator, null);
@@ -57,8 +58,8 @@ public class LIRList {
     }
 
     private void append(LIRInstruction op) {
-        if (op.source() == null) {
-            op.setSource(generator.currentInstruction());
+        if (op.source == null) {
+            op.source = generator.currentInstruction();
         }
 
         if (C1XOptions.PrintIRWithLIR) {
@@ -68,12 +69,7 @@ public class LIRList {
         }
 
         operations.add(op);
-        assert verifyInstruction(op);
-    }
-
-    private boolean verifyInstruction(LIRInstruction op) {
-        op.verify();
-        return true;
+        assert op.verify();
     }
 
     public List<LIRInstruction> instructionsList() {
@@ -88,32 +84,32 @@ public class LIRList {
         return operations.get(i);
     }
 
-    public BlockBegin block() {
-        return block;
-    }
-
-    public void callOptVirtual(RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        append(new LIRJavaCall(LIROpcode.OptVirtualCall, method, receiver, result, dest, arguments, info, cpi, constantPool));
+    public void callSpecial(RiMethod method, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
+        append(new LIRJavaCall(LIROpcode.SpecialCall, method, result, dest, arguments, info, cpi, constantPool));
     }
 
     public void callStatic(RiMethod method, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        append(new LIRJavaCall(LIROpcode.StaticCall, method, LIROperandFactory.IllegalLocation, result, dest, arguments, info, cpi, constantPool));
+        append(new LIRJavaCall(LIROpcode.StaticCall, method, result, dest, arguments, info, cpi, constantPool));
     }
 
-    public void callInterface(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        append(new LIRJavaCall(LIROpcode.InterfaceCall, method, receiver, result, null, arguments, info, cpi, constantPool));
+    public void callIndirect(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
+        append(new LIRJavaCall(LIROpcode.StaticCall, method, result, null, arguments, info, cpi, constantPool));
     }
 
-    public void callVirtual(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        append(new LIRJavaCall(LIROpcode.VirtualCall, method, receiver, result, null, arguments, info, cpi, constantPool));
+    public void callInterface(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
+        append(new LIRJavaCall(LIROpcode.InterfaceCall, method, result, null, arguments, info, cpi, constantPool));
+    }
+
+    public void callVirtual(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
+        append(new LIRJavaCall(LIROpcode.VirtualCall, method, result, null, arguments, info, cpi, constantPool));
     }
 
     public void callXirDirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRJavaCall(LIROpcode.XirDirectCall, method, LIROperandFactory.IllegalLocation, result, null, arguments, info, (char) 0, null));
+        append(new LIRJavaCall(LIROpcode.XirDirectCall, method, result, null, arguments, info, (char) 0, null));
     }
 
     public void callXirIndirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRJavaCall(LIROpcode.XirIndirectCall, method, LIROperandFactory.IllegalLocation, result, null, arguments, info, (char) 0, null));
+        append(new LIRJavaCall(LIROpcode.XirIndirectCall, method, result, null, arguments, info, (char) 0, null));
     }
 
     public void membar() {
@@ -181,26 +177,6 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Move, LIROperandFactory.oopConst(o), reg));
     }
 
-    public void resolveInstruction(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Resolve, index, cp, result));
-    }
-
-    public void resolveStaticFieldsInstruction(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.ResolveStaticFields, index, cp, result));
-    }
-
-    public void resolveJavaClass(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.ResolveJavaClass, index, cp, result));
-    }
-
-    public void resolveArrayClassInstruction(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.ResolveArrayClass, index, cp, result));
-    }
-
-    public void resolveFieldIndex(LIROperand result, LIROperand index, LIROperand cp, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.ResolveFieldOffset, index, cp, result));
-    }
-
     public void returnOp(LIROperand result) {
         append(new LIROp1(LIROpcode.Return, result));
     }
@@ -230,11 +206,11 @@ public class LIRList {
     }
 
     public void throwException(LIROperand exceptionPC, LIROperand exceptionOop, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, LIROperandFactory.IllegalLocation, info, CiKind.Illegal, true));
+        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, ILLEGAL, info, CiKind.Illegal, true));
     }
 
     public void unwindException(LIROperand exceptionPC, LIROperand exceptionOop, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Unwind, exceptionPC, exceptionOop, LIROperandFactory.IllegalLocation, info));
+        append(new LIROp2(LIROpcode.Unwind, exceptionPC, exceptionOop, ILLEGAL, info));
     }
 
     public void compareTo(LIROperand left, LIROperand right, LIROperand dst) {
@@ -337,15 +313,15 @@ public class LIRList {
     }
 
     public void shiftLeft(LIROperand value, int count, LIROperand dst) {
-        shiftLeft(value, LIROperandFactory.intConst(count), dst, LIROperandFactory.IllegalLocation);
+        shiftLeft(value, LIROperandFactory.intConst(count), dst, ILLEGAL);
     }
 
     public void shiftRight(LIROperand value, int count, LIROperand dst) {
-        shiftRight(value, LIROperandFactory.intConst(count), dst, LIROperandFactory.IllegalLocation);
+        shiftRight(value, LIROperandFactory.intConst(count), dst, ILLEGAL);
     }
 
     public void unsignedShiftRight(LIROperand value, int count, LIROperand dst) {
-        unsignedShiftRight(value, LIROperandFactory.intConst(count), dst, LIROperandFactory.IllegalLocation);
+        unsignedShiftRight(value, LIROperandFactory.intConst(count), dst, ILLEGAL);
     }
 
     public void lcmp2int(LIROperand left, LIROperand right, LIROperand dst) {
@@ -354,10 +330,6 @@ public class LIRList {
 
     public void callRuntime(CiRuntimeCall routine, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
         append(new LIRRuntimeCall(routine, result, arguments, info, false));
-    }
-
-    public void loadStackAddressMonitor(int monitorIx, LIROperand dst) {
-        append(new LIROp1(LIROpcode.Monaddr, LIROperandFactory.intConst(monitorIx), dst));
     }
 
     public void prefetch(LIRAddress addr, boolean isStore) {
@@ -388,14 +360,6 @@ public class LIRList {
         append(new LIROp2(LIROpcode.Cmp, condition, reg, addr, info));
     }
 
-    public void allocateObject(LIROperand dst, LIROperand t1, LIROperand t2, LIROperand t3, LIROperand t4, int headerSize, int objectSize, LIROperand klass, boolean initCheck, LocalStub stub) {
-        append(new LIRAllocObj(klass, dst, t1, t2, t3, t4, headerSize, objectSize, initCheck, stub));
-    }
-
-    public void allocateArray(LIROperand dst, LIROperand len, LIROperand t1, LIROperand t2, LIROperand t3, LIROperand t4, CiKind type, LIROperand klass, LocalStub stub) {
-        append(new LIRAllocArray(klass, len, dst, t1, t2, t3, t4, type, stub));
-    }
-
     public void shiftLeft(LIROperand value, LIROperand count, LIROperand dst, LIROperand tmp) {
         append(new LIROp2(LIROpcode.Shl, value, count, dst, tmp));
     }
@@ -412,14 +376,6 @@ public class LIRList {
         append(new LIROp2(isUnorderedLess ? LIROpcode.Ucmpfd2i : LIROpcode.Cmpfd2i, left, right, dst));
     }
 
-    public void lockObject(LIROperand hdr, LIROperand obj, LIROperand lock, LIROperand scratch, LocalStub stub, LIRDebugInfo info) {
-        append(new LIRLock(LIROpcode.Monitorenter, hdr, obj, lock, scratch, stub, info));
-    }
-
-    public void unlockObject(LIROperand hdr, LIROperand obj, LIROperand lock, LocalStub stub) {
-        append(new LIRLock(LIROpcode.Monitorexit, hdr, obj, lock, LIROperandFactory.IllegalLocation, stub, null));
-    }
-
     public void checkcast(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForException, LocalStub stub) {
         append(new LIRTypeCheck(LIROpcode.CheckCast, result, object, klass, tmp1, tmp2, tmp3, fastCheck, infoForException, stub));
     }
@@ -428,8 +384,8 @@ public class LIRList {
         append(new LIRTypeCheck(LIROpcode.InstanceOf, result, object, klass, tmp1, tmp2, tmp3, fastCheck, null, null));
     }
 
-    public void storeCheck(LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIRDebugInfo infoForException) {
-        append(new LIRTypeCheck(LIROpcode.StoreCheck, object, array, tmp1, tmp2, tmp3, infoForException));
+    public void storeCheck(LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIRDebugInfo infoForException, LocalStub arrayStoreStub) {
+        append(new LIRTypeCheck(LIROpcode.StoreCheck, object, array, tmp1, tmp2, tmp3, infoForException, arrayStoreStub));
     }
 
     public void casLong(LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand t1, LIROperand t2) {

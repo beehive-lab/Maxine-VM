@@ -286,21 +286,6 @@ public class CompiledPrototype extends Prototype {
             for (Object literal : targetMethod.referenceLiterals()) {
                 if (literal instanceof MethodActor) {
                     add((MethodActor) literal, classMethodActor, Relationship.LITERAL);
-                } else if (literal instanceof ResolutionGuard) {
-                    // resolve any unresolved guards now if possible
-                    final ResolutionGuard guard = (ResolutionGuard) literal;
-                    if (guard.value == null && !guard.arrayActor) {
-                        final ConstantPool pool = guard.constantPool;
-                        final ResolvableConstant resolvable = pool.resolvableAt(guard.constantPoolIndex);
-                        if (resolvable.isResolvableWithoutClassLoading(pool)) {
-                            try {
-                                guard.value = resolvable.resolve(pool, guard.constantPoolIndex);
-                            } catch (OmittedClassError omittedClassError) {
-                            } catch (HostOnlyFieldError hostOnlyFieldError) {
-                            } catch (HostOnlyMethodError hostOnlyMethodError) {
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -602,7 +587,7 @@ public class CompiledPrototype extends Prototype {
     public void compileUnsafeMethods() {
         Trace.begin(1, "compiling unsafe methods");
         for (ClassMethodActor classMethodActor : UNSAFE.Static.methods()) {
-            if (!(classMethodActor.isNative() && classMethodActor.isJniFunction())) {
+            if (!(classMethodActor.isNative() && classMethodActor.isVmEntryPoint())) {
                 worklist.add(classMethodActor);
             }
         }

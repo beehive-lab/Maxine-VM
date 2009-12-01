@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class NullCheck extends StateSplit {
+public final class NullCheck extends StateSplit {
 
     Value object;
 

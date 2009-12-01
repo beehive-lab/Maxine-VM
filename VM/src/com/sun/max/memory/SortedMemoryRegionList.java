@@ -104,7 +104,7 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
                 if (equals(rightRegion, memoryRegion)) {
                     return rightRegion;
                 }
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("mr=" + MemoryRegion.Util.asString(memoryRegion) + ", rightRegion=" + MemoryRegion.Util.asString(rightRegion));
             }
         }
         memoryRegions.add(right, memoryRegion);

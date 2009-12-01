@@ -28,7 +28,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class CompareOp extends Op2 {
+public final class CompareOp extends Op2 {
 
     ValueStack stateBefore;
 

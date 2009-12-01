@@ -28,7 +28,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class Throw extends BlockEnd {
+public final class Throw extends BlockEnd {
 
     Value exception;
 

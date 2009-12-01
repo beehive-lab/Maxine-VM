@@ -20,30 +20,15 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.c1x.lir.*;
-
 /**
- * @author Marcelo Cintra
+ * A visitor interface for local stubs.
+ *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public class RangeCheckStub extends LocalStub {
+public interface LocalStubVisitor {
 
-    public RangeCheckStub(LIRDebugInfo info, LIROperand index) {
-        super(info);
-        this.setOperands(0, 0, index);
-    }
+    void visitAdapterFrameStub(AdapterFrameStub adapterFrameStub);
 
-    @Override
-    public void accept(CodeStubVisitor visitor) {
-        visitor.visitRangeCheckStub(this);
-    }
-
-    @Override
-    public boolean isExceptionThrowStub() {
-        return true;
-    }
-
-    public LIROperand index() {
-        return operand(0);
-    }
+    void visitThrowStub(ThrowStub throwStub);
 }
