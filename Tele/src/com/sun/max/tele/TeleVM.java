@@ -414,15 +414,6 @@ public abstract class TeleVM implements MaxVM {
         return typesOnClasspath;
     }
 
-    private final TeleMessenger messenger = new VMTeleMessenger(this);
-
-    /**
-     * @return access to two-way asynchronous message passing with the VM.
-     */
-    public TeleMessenger messenger() {
-        return messenger;
-    }
-
     private int interpreterUseLevel = 0;
 
     private final TeleHeapManager teleHeapManager;
@@ -535,6 +526,14 @@ public abstract class TeleVM implements MaxVM {
     private static native void nativeInitialize(int threadLocalsSize);
 
     /**
+     * Enables inspectable facilities in the VM.
+     */
+    private void setVMInspectable() {
+        final Pointer infoPointer = bootImageStart().plus(bootImage().header.inspectableSwitchOffset);
+        dataAccess().writeWord(infoPointer, Address.fromInt(1)); // setting to non-zero indicates enabling
+    }
+
+    /**
      * Starts a new VM process and returns a handle to it.
      *
      * @param commandLineArguments the command line arguments to use when starting the VM process
@@ -611,10 +610,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final void describeVMStateHistory(PrintStream printStream) {
         teleVMState.writeSummaryToStream(printStream);
-    }
-
-    public final boolean activateMessenger() {
-        return messenger.activate();
     }
 
     public final int getInterpreterUseLevel() {
@@ -1002,6 +997,16 @@ public abstract class TeleVM implements MaxVM {
 
     public final Reference wordToReference(Word word) {
         return vmConfiguration.referenceScheme().fromGrip(gripScheme().fromOrigin(word.asPointer()));
+    }
+
+    /**
+     * Creates a temporary reference for access to VM memory without invoking the
+     * canonicalization machinery.
+     *
+     * @return a reference to a location in VM memory that is not safe across GC
+     */
+    public final Reference wordToTemporaryReference(Address address) {
+        return vmConfiguration.referenceScheme().fromGrip(gripScheme().createTemporaryRemoteTeleGrip(address));
     }
 
     /**
@@ -1403,6 +1408,11 @@ public abstract class TeleVM implements MaxVM {
         return bytecodeBreakpointFactory.getBreakpoint(key);
     }
 
+    public void describeBreakpoints(PrintStream printStream) {
+        teleProcess.targetBreakpointFactory().writeSummaryToStream(printStream);
+        bytecodeBreakpointFactory.writeSummaryToStream(printStream);
+    }
+
     public final boolean watchpointsEnabled() {
         return teleProcess.maximumWatchpointCount() > 0;
     }
@@ -1524,7 +1534,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public void advanceToJavaEntryPoint() throws IOException {
-        messenger.enable();
+        setVMInspectable();
         final Address startEntryPoint = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
         try {
             runToInstruction(startEntryPoint, true, false);

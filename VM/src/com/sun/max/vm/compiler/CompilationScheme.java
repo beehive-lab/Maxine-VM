@@ -24,6 +24,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.MethodProfile;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
@@ -207,6 +208,16 @@ public interface CompilationScheme extends VMScheme {
             if (newMethod != oldMethod) {
                 oldMethod.forwardTo(newMethod);
             }
+        }
+
+        /**
+         * Announces that a compilation has just been completed; must be called for
+         * certain inspection services to work.
+         *
+         * @param targetMethod a compilation that was just completed.
+         */
+        public static void notifyCompilationComplete(TargetMethod targetMethod) {
+            InspectableCodeInfo.notifyCompilationComplete(targetMethod);
         }
     }
 }

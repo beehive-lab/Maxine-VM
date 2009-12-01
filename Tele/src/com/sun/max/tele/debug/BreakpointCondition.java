@@ -34,7 +34,7 @@ import com.sun.max.util.*;
  *
  * @author Mick Jordan
  */
-public class BreakpointCondition extends AbstractTeleVMHolder {
+public class BreakpointCondition extends AbstractTeleVMHolder implements VMTriggerEventHandler {
 
     private String condition;
     private StreamTokenizer streamTokenizer;
@@ -49,6 +49,11 @@ public class BreakpointCondition extends AbstractTeleVMHolder {
             integerRegisterSymbols = Symbolizer.Static.toSymbolMap(TeleIntegerRegisters.symbolizer(teleVM.vmConfiguration()));
         }
         this.expression = parse();
+    }
+
+    @Override
+    public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+        return evaluate(teleVM.teleProcess(), teleNativeThread);
     }
 
     public boolean evaluate(TeleProcess teleProcess, TeleNativeThread teleNativeThread) {

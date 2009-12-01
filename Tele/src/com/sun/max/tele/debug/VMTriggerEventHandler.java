@@ -20,36 +20,38 @@
  */
 package com.sun.max.tele.debug;
 
-import com.sun.max.tele.*;
-import com.sun.max.vm.actor.member.*;
 
-public interface TeleMessenger {
-
-    /**
-     * Writes information into the {@link TeleVM} causing it to set up for two way messaging;
-     * must be done early in the startup sequence.
-     */
-    void enable();
+/**
+ * Handler for an event that triggers the VM to stop execution per
+ * some request, for example a breakpoint or watchpoint.
+ *
+ * @author Michael Van De Vanter
+ */
+public interface VMTriggerEventHandler {
 
     /**
-     * Completes the set-up of two way messaging with the {@link TeleVM}, if not
-     * yet done.
-     * Requires that {@link #enable()} has been called early in the startup sequence.
+     * Perform any specific processing of a trigger event, for example a breakpoint
+     * or watchpoint,  and decide
+     * whether to stop VM execution or to resume execution silently. The default is
+     * to stop VM execution.
      *
-     * @return whether two-way messaging is active.
+     * @param teleNativeThread the VM thread that triggered this event.
+     * @return true if VM execution should really stop; false if VM execution should resume silently.
      */
-    boolean activate();
+    boolean handleTriggerEvent(TeleNativeThread teleNativeThread);
 
-    /**
-     * @param methodKey
-     * @param bytecodePosition < 0 selects homogeneous call entry point
-     */
-    void requestBytecodeBreakpoint(MethodKey methodKey, int bytecodePosition);
+    public static final class Static {
+        private Static() {
+        }
 
-    /**
-     * @param methodKey
-     * @param bytecodePosition < 0 selects homogeneous call entry point
-     */
-    void cancelBytecodeBreakpoint(MethodKey methodKey, int bytecodePosition);
+        /**
+         * A default handler for VM triggered VM events that always returns true.
+         */
+        public static VMTriggerEventHandler ALWAYS_TRUE = new VMTriggerEventHandler()      {
+            public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+                return true;
+            }
+        };
+    }
 
 }

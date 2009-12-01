@@ -3127,7 +3127,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().activateMessenger() && teleClassMethodActor.hasCodeAttribute());
+            setEnabled(inspection().hasProcess() && teleClassMethodActor.hasCodeAttribute());
         }
     }
 
@@ -3170,7 +3170,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
+            setEnabled(inspection().hasProcess());
         }
     }
 
@@ -3206,7 +3206,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
+            setEnabled(inspection().hasProcess());
         }
     }
 
@@ -4597,6 +4597,32 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction listCodeRegistryToFile() {
         return listCodeRegistryToFile;
+    }
+
+    /**
+     * Action:  lists to the console all existing breakpoints.
+     */
+    final class ListBreakpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "List all breakpoints";
+
+        ListBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            maxVM().describeBreakpoints(System.out);
+        }
+    }
+
+    private InspectorAction listBreakpoints = new ListBreakpointsAction(null);
+
+    /**
+     * @return an Action that will list to the console the entries in the {@link TeleCodeRegistry}.
+     */
+    public final InspectorAction listBreakpoints() {
+        return listBreakpoints;
     }
 
     /**

@@ -119,12 +119,6 @@ public interface MaxVM {
     TeleMethods teleMethods();
 
     /**
-     * Activates two-way messaging with the VM, if not already active.
-     * @return whether two-way messaging is operating.
-     */
-    boolean activateMessenger();
-
-    /**
      * @return how much reliance is placed on the {@link TeleInterpreter} when
      * communicating with the VM (0=none, 1=some, etc)
      */
@@ -695,6 +689,12 @@ public interface MaxVM {
      * @return an ordinary, non-transient bytecode breakpoint, null if doesn't exist
      */
     TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key);
+
+    /**
+     * Writes a textual summary describing the current breakpoints set in the VM, with
+     * more internal detail than is typically displayed.
+     */
+    void describeBreakpoints(PrintStream printStream);
 
     /**
      * @return are watchpoints implemented in this VM configuration?

@@ -39,7 +39,6 @@
 #include "log.h"
 #include "image.h"
 #include "threads.h"
-#include "messenger.h"
 #include "os.h"
 #include "virtualMemory.h"
 
@@ -325,8 +324,6 @@ int maxine(int argc, char *argv[], char *executablePath) {
     threadLocals_initialize(image_header()->threadLocalsAreaSize);
 
     debugger_initialize();
-
-    messenger_initialize();
 
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
