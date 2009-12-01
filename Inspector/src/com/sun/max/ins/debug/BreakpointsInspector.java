@@ -29,7 +29,7 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.*;
+import com.sun.max.tele.*;
 
 /**
  * Singleton inspector that displays information about all kinds of breakpoints that might be set in the VM.
@@ -152,7 +152,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    public  void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
+    public  void breakpointFocusSet(MaxBreakpoint oldBreakpoint, MaxBreakpoint breakpoint) {
         if (table != null) {
             table.updateFocusSelection();
         }

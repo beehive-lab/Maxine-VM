@@ -26,14 +26,13 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.actor.member.ClassMethodActor;
 
 /**
  * Base class for views of disassembled target code for a single method in the VM.
@@ -310,8 +309,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
     /**
      * Does the instruction address have a target code breakpoint set in the VM.
      */
-    protected TeleTargetBreakpoint getTargetBreakpointAtRow(int row) {
-        return maxVM().getTargetBreakpoint(instructions.get(row).address);
+    protected MaxBreakpoint getTargetBreakpointAtRow(int row) {
+        return maxVM().getBreakpointAt(instructions.get(row).address);
     }
 
     protected final String rowToTagText(int row) {

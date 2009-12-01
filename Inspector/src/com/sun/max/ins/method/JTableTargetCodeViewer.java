@@ -41,7 +41,6 @@ import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
@@ -478,10 +477,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 setForeground(null);
             }
             setText(rowToTagText(row));
-            final TeleTargetBreakpoint teleTargetBreakpoint = getTargetBreakpointAtRow(row);
-            if (teleTargetBreakpoint != null) {
-                toolTipText.append(teleTargetBreakpoint);
-                if (teleTargetBreakpoint.isEnabled()) {
+            final MaxBreakpoint targetBreakpoint = getTargetBreakpointAtRow(row);
+            if (targetBreakpoint != null) {
+                toolTipText.append(targetBreakpoint);
+                if (targetBreakpoint.isEnabled()) {
                     setBorder(style().debugEnabledTargetBreakpointTagBorder());
                 } else {
                     setBorder(style().debugDisabledTargetBreakpointTagBorder());

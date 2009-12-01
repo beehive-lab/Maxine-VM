@@ -173,7 +173,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     @Override
-    public BreakpointCondition condition() {
+    public BreakpointCondition getCondition() {
         return condition;
     }
 
@@ -207,7 +207,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * @return description of the bytecode location of this breakpoint.
      */
     public Key key() {
-        return teleCodeLocation().key();
+        return getCodeLocation().key();
     }
 
     /**
@@ -321,10 +321,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @return all bytecode breakpoints that currently exist in the VM.
          * Modification safe against breakpoint removal.
          */
-        public synchronized Iterable<TeleBytecodeBreakpoint> breakpoints() {
-            final AppendableSequence<TeleBytecodeBreakpoint> breakpoints = new LinkSequence<TeleBytecodeBreakpoint>();
-            for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : this.breakpoints.values()) {
-                breakpoints.append(teleBytecodeBreakpoint);
+        public synchronized Iterable<MaxBreakpoint> breakpoints() {
+            final AppendableSequence<MaxBreakpoint> breakpoints = new LinkSequence<MaxBreakpoint>();
+            for (MaxBreakpoint bytecodeBreakpoint : this.breakpoints.values()) {
+                breakpoints.append(bytecodeBreakpoint);
             }
             return breakpoints;
         }
@@ -340,7 +340,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @param key description of a bytecode position in a method
          * @return a breakpoint set at the position, null if none.
          */
-        public synchronized TeleBytecodeBreakpoint getBreakpoint(Key key) {
+        public synchronized MaxBreakpoint getBreakpoint(Key key) {
             return breakpoints.get(key);
         }
 
@@ -363,7 +363,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @param key description of a bytecode position in a method
          * @return a possibly new, enabled bytecode breakpoint
          */
-        public synchronized TeleBytecodeBreakpoint makeBreakpoint(Key key) {
+        public synchronized MaxBreakpoint makeBreakpoint(Key key) {
             TeleBytecodeBreakpoint breakpoint = breakpoints.get(key);
             if (breakpoint == null) {
                 breakpoint = createBreakpoint(key);

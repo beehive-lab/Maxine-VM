@@ -25,7 +25,6 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -173,7 +172,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 setStackFrame(thread, newStackFrame, false);
             } else {
                 // No prior frame selection
-                final TeleTargetBreakpoint breakpoint = this.thread.breakpoint();
+                final MaxBreakpoint breakpoint = this.thread.breakpoint();
                 if (breakpoint != null && !breakpoint.isTransient()) {
                     // thread is at a breakpoint; focus on the breakpoint, which should also cause focus on code and frame
                     setBreakpoint(breakpoint);
@@ -335,12 +334,12 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
     }
 
-    private TeleBreakpoint breakpoint;
+    private MaxBreakpoint breakpoint;
 
     private final Object breakpointFocusTracer = new Object() {
         @Override
         public String toString() {
-            return tracePrefix() + "Focus(Breakpoint):  " + (breakpoint == null ? "null" : inspection().nameDisplay().longName(breakpoint.teleCodeLocation()));
+            return tracePrefix() + "Focus(Breakpoint):  " + (breakpoint == null ? "null" : inspection().nameDisplay().longName(breakpoint.getCodeLocation()));
         }
     };
 
@@ -348,7 +347,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Currently selected breakpoint, typically controlled by the {@link BreakpointsInspector}.
      * May be null.
      */
-    public TeleBreakpoint breakpoint() {
+    public MaxBreakpoint breakpoint() {
         return breakpoint;
     }
 
@@ -363,19 +362,19 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Selects a breakpoint that is of immediate visual interest to the user, possibly null.
      * This is view state only, not necessarily related to VM execution.
      */
-    public void setBreakpoint(TeleBreakpoint teleBreakpoint) {
-        if (breakpoint != teleBreakpoint) {
-            final TeleBreakpoint oldTeleBreakpoint = breakpoint;
-            breakpoint = teleBreakpoint;
+    public void setBreakpoint(MaxBreakpoint maxBreakpoint) {
+        if (breakpoint != maxBreakpoint) {
+            final MaxBreakpoint oldMaxBreakpoint = breakpoint;
+            breakpoint = maxBreakpoint;
             Trace.line(TRACE_VALUE, breakpointFocusTracer);
             for (ViewFocusListener listener : listeners.clone()) {
-                listener.breakpointFocusSet(oldTeleBreakpoint, teleBreakpoint);
+                listener.breakpointFocusSet(oldMaxBreakpoint, maxBreakpoint);
             }
         }
-        if (teleBreakpoint != null) {
+        if (maxBreakpoint != null) {
             MaxThread threadAtBreakpoint = null;
             for (MaxThread thread : maxVMState().threads()) {
-                if (thread.breakpoint() == teleBreakpoint) {
+                if (thread.breakpoint() == maxBreakpoint) {
                     threadAtBreakpoint = thread;
                     break;
                 }
@@ -386,7 +385,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             if (threadAtBreakpoint != null) {
                 setStackFrame(threadAtBreakpoint, threadAtBreakpoint.frames().first(), false);
             } else {
-                setCodeLocation(teleBreakpoint.teleCodeLocation(), false);
+                setCodeLocation(maxBreakpoint.getCodeLocation(), false);
             }
         }
     }
