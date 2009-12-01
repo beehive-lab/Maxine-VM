@@ -23,6 +23,7 @@ package com.sun.c1x.asm;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.lir.LIRDebugInfo;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
@@ -38,6 +39,7 @@ public abstract class AbstractAssembler {
     public final Buffer codeBuffer;
     public final CiTarget target;
     public final CiTargetMethod targetMethod;
+    public final List<ExceptionInfo> exceptionInfoList;
     public final boolean is64;
     public final boolean is32;
 
@@ -47,24 +49,26 @@ public abstract class AbstractAssembler {
         this.codeBuffer = new Buffer(target.arch.byteOrder);
         this.is32 = target.arch.is32bit();
         this.is64 = target.arch.is64bit();
+        this.exceptionInfoList = new ArrayList<ExceptionInfo>();
         targetMethod.setFrameSize(frameSize);
     }
 
-    public void bind(Label l) {
+    public final void bind(Label l) {
         if (l.isBound()) {
             // Assembler can bind a label more than once to the same place.
             assert l.position() == codeBuffer.position() : "attempt to redefine label";
-            return;
+        } else {
+            // bind the label and patch any references to it
+            l.bind(codeBuffer.position());
+            l.patchInstructions(this);
         }
-        l.bind(codeBuffer.position());
-        l.patchInstructions(this);
     }
 
     public void setFrameSize(int frameSize) {
         targetMethod.setFrameSize(frameSize);
     }
 
-    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, List<ExceptionInfo> exceptionInfoList, int registerRestoreEpilogueOffset) {
+    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, int registerRestoreEpilogueOffset) {
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
@@ -131,50 +135,20 @@ public abstract class AbstractAssembler {
         return targetMethod;
     }
 
-    protected void recordGlobalStubCall(int pos, Object globalStubCall, boolean[] registerMap, boolean[] stackMap) {
-        assert globalStubCall != null;
-
-        if (C1XOptions.TraceRelocation) {
-            TTY.print("Global stub call: pos = %d, name = %s", pos, globalStubCall);
-            if (registerMap != null) {
-                TTY.print(", registerMap.length=%d", registerMap.length);
-            }
-            if (stackMap != null) {
-                TTY.print(", stackMap.length=%d", stackMap.length);
-            }
+    public void recordExceptionHandlers(int pcOffset, LIRDebugInfo info) {
+        if (info != null && info.exceptionHandlers != null) {
+            exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers));
         }
-
-        targetMethod.recordGlobalStubCall(pos, globalStubCall, registerMap, stackMap);
     }
 
-    protected void recordDirectCall(int pos, RiMethod call, boolean[] stackMap) {
-        assert call != null && stackMap != null;
-
-        if (C1XOptions.TraceRelocation) {
-            TTY.println("Direct call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
-        }
-
-        targetMethod.recordCall(pos, call, stackMap, true);
+    protected void recordDirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
+        boolean[] stackMap = info != null ? info.oopMap.stackMap() : null;
+        targetMethod.recordCall(posBefore, target, stackMap, true);
     }
 
-    protected void recordIndirectCall(int pos, RiMethod call, boolean[] stackMap) {
-        assert call != null && stackMap != null;
-
-        if (C1XOptions.TraceRelocation) {
-            TTY.println("Indirect call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
-        }
-
-        targetMethod.recordCall(pos, call, stackMap, false);
-    }
-
-    protected void recordRuntimeCall(int pos, CiRuntimeCall call, boolean[] stackMap) {
-        assert call != null && stackMap != null;
-
-        if (C1XOptions.TraceRelocation) {
-            TTY.println("Runtime call: pos = %d, name = %s, stackMap.length = %d", pos, call.name(), stackMap.length);
-        }
-
-        targetMethod.recordRuntimeCall(pos, call, stackMap);
+    protected void recordIndirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
+        boolean[] stackMap = info != null ? info.oopMap.stackMap() : null;
+        targetMethod.recordCall(posBefore, target, stackMap, false);
     }
 
     protected void recordSafepoint(int pos, boolean[] registerMap, boolean[] stackMap) {

@@ -30,7 +30,7 @@ import com.sun.c1x.ci.CiKind;
  *
  * @author Ben L. Titzer
  */
-public class LoadPointer extends StateSplit {
+public final class LoadPointer extends StateSplit {
 
     Value pointer;
     final boolean isVolatile;

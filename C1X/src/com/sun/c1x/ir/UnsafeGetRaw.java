@@ -28,7 +28,7 @@ import com.sun.c1x.ci.*;
  *
  * @author Ben L. Titzer
  */
-public class UnsafeGetRaw extends UnsafeRawOp {
+public final class UnsafeGetRaw extends UnsafeRawOp {
 
     final boolean mayBeUnaligned;
 

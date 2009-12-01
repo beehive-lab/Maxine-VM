@@ -35,35 +35,22 @@ import com.sun.c1x.ri.*;
  */
 public class LIRJavaCall extends LIRCall {
 
-    private RiMethod method;
+    public final RiMethod method;
     public final char cpi;
     public final RiConstantPool constantPool;
 
-    /**
-     * Creates a new LIRJavaCall instruction.
-     *
-     * @param opcode
-     * @param method
-     * @param receiver
-     * @param result
-     * @param address
-     * @param arguments
-     * @param info
-     */
-    public LIRJavaCall(LIROpcode opcode, RiMethod method, LIROperand receiver, LIROperand result, CiRuntimeCall address, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        super(opcode, address, result, receiver, arguments, info, false);
+    public LIRJavaCall(LIROpcode opcode,
+                       RiMethod method,
+                       LIROperand result,
+                       CiRuntimeCall address,
+                       List<LIROperand> arguments,
+                       LIRDebugInfo info,
+                       char cpi,
+                       RiConstantPool constantPool) {
+        super(opcode, address, result, arguments, info, false);
         this.method = method;
         this.cpi = cpi;
         this.constantPool = constantPool;
-    }
-
-    /**
-     * Gets the method of this java call.
-     *
-     * @return the method
-     */
-    public RiMethod method() {
-        return method;
     }
 
     /**
@@ -84,7 +71,7 @@ public class LIRJavaCall extends LIRCall {
     @Override
     public void printInstruction(LogStream out) {
         out.print("call: ");
-        out.printf("[addr: %s]", (address() == null) ? "null" : address().name());
+        out.printf("[addr: %s]", (runtimeCall == null) ? "null" : runtimeCall.name());
         if (!receiver().isIllegal()) {
             out.printf(" [recv: %s]", receiver());
         }

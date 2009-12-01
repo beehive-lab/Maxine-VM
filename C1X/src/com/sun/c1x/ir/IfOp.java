@@ -30,7 +30,7 @@ import com.sun.c1x.util.*;
  *
  * @author Ben L. Titzer
  */
-public class IfOp extends Op2 {
+public final class IfOp extends Op2 {
 
     Condition cond;
     Value trueVal;

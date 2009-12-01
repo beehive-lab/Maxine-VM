@@ -334,37 +334,39 @@ public class C1XTargetMethod extends TargetMethod {
         Object[] directCallees = new Object[ciTargetMethod.directCalls.size()];
 
         for (Call site : ciTargetMethod.directCalls) {
-            initStopPosition(ciTargetMethod, index, stopPositions, site.codePos, site.registerMap, site.stackMap);
+            initStopPosition(index, stopPositions, site.codePos, site.registerMap, site.stackMap);
 
-            if (site.globalStubID != null) {
-                TargetMethod globalStubMethod = (TargetMethod) site.globalStubID;
-                assert globalStubMethod != null;
-                directCallees[index] = globalStubMethod;
-            } else {
-                final ClassMethodActor cma = getClassMethodActor(site.runtimeCall, site.method);
+            if (site.method != null) {
+                final MaxRiMethod maxMethod = (MaxRiMethod) site.method;
+                final ClassMethodActor cma = maxMethod.asClassMethodActor("directCall()");
                 assert cma != null : "unresolved direct call!";
                 directCallees[index] = cma;
+            } else if (site.runtimeCall != null) {
+                final ClassMethodActor cma = C1XRuntimeCalls.getClassMethodActor(site.runtimeCall);
+                assert cma != null : "unresolved runtime call!";
+                directCallees[index] = cma;
+            } else {
+                assert site.globalStubID != null;
+                TargetMethod globalStubMethod = (TargetMethod) site.globalStubID;
+                directCallees[index] = globalStubMethod;
             }
-
-            assert directCallees[index] != null;
-
             index++;
         }
 
         for (Call site : ciTargetMethod.indirectCalls) {
-            initStopPosition(ciTargetMethod, index, stopPositions, site.codePos, site.registerMap, site.stackMap);
+            initStopPosition(index, stopPositions, site.codePos, site.registerMap, site.stackMap);
             index++;
         }
 
         for (CiTargetMethod.Safepoint safepoint : ciTargetMethod.safepoints) {
-            initStopPosition(ciTargetMethod, index, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
+            initStopPosition(index, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
             index++;
         }
 
         this.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
     }
 
-    private void initStopPosition(CiTargetMethod ciTargetMethod, int index, int[] stopPositions, int codePos, boolean[] registerMap, boolean[] stackMap) {
+    private void initStopPosition(int index, int[] stopPositions, int codePos, boolean[] registerMap, boolean[] stackMap) {
         stopPositions[index] = codePos;
 
         if (registerMap != null) {

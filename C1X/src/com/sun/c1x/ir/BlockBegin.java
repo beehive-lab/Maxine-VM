@@ -36,7 +36,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class BlockBegin extends Instruction {
+public final class BlockBegin extends Instruction {
     // XXX: could use a shared, empty ArrayList
     private static final List<BlockBegin> NO_HANDLERS = Util.uncheckedCast(Collections.EMPTY_LIST);
 
@@ -60,8 +60,6 @@ public class BlockBegin extends Instruction {
         public final int mask = 1 << ordinal();
     }
 
-    private static final int entryFlags = BlockFlag.StandardEntry.mask | BlockFlag.OsrEntry.mask | BlockFlag.ExceptionEntry.mask;
-
     public final int blockID;
 
     private int blockFlags;
@@ -79,7 +77,7 @@ public class BlockBegin extends Instruction {
     private List<ValueStack> exceptionHandlerStates;
 
     // LIR block
-    private LIRBlock lirBlock;
+    public LIRBlock lirBlock;
 
     /**
      * Constructs a new BlockBegin at the specified bytecode index.
@@ -258,7 +256,7 @@ public class BlockBegin extends Instruction {
      * @param flag the flag to test
      * @return <code>true</code> if this block has the flag
      */
-    public final boolean checkBlockFlag(BlockFlag flag) {
+    public boolean checkBlockFlag(BlockFlag flag) {
         return (blockFlags & flag.mask) != 0;
     }
 
@@ -451,91 +449,91 @@ public class BlockBegin extends Instruction {
         }
     }
 
-    public final boolean isStandardEntry() {
+    public boolean isStandardEntry() {
         return checkBlockFlag(BlockFlag.StandardEntry);
     }
 
-    public final void setStandardEntry() {
+    public void setStandardEntry() {
         setBlockFlag(BlockFlag.StandardEntry);
     }
 
-    public final boolean isOsrEntry() {
+    public boolean isOsrEntry() {
         return checkBlockFlag(BlockFlag.OsrEntry);
     }
 
-    public final void setOsrEntry(boolean value) {
+    public void setOsrEntry(boolean value) {
         setBlockFlag(BlockFlag.OsrEntry, value);
     }
 
-    public final boolean isBackwardBranchTarget() {
+    public boolean isBackwardBranchTarget() {
         return checkBlockFlag(BlockFlag.BackwardBranchTarget);
     }
 
-    public final void setBackwardBranchTarget(boolean value) {
+    public void setBackwardBranchTarget(boolean value) {
         setBlockFlag(BlockFlag.BackwardBranchTarget, value);
     }
 
-    public final boolean isCriticalEdgeSplit() {
+    public boolean isCriticalEdgeSplit() {
         return checkBlockFlag(BlockFlag.CriticalEdgeSplit);
     }
 
-    public final void setCriticalEdgeSplit(boolean value) {
+    public void setCriticalEdgeSplit(boolean value) {
         setBlockFlag(BlockFlag.CriticalEdgeSplit, value);
     }
 
-    public final boolean isExceptionEntry() {
+    public boolean isExceptionEntry() {
         return checkBlockFlag(BlockFlag.ExceptionEntry);
     }
 
-    public final void setExceptionEntry() {
+    public void setExceptionEntry() {
         setBlockFlag(BlockFlag.ExceptionEntry);
     }
 
-    public final boolean isSubroutineEntry() {
+    public boolean isSubroutineEntry() {
         return checkBlockFlag(BlockFlag.SubroutineEntry);
     }
 
-    public final void setSubroutineEntry() {
+    public void setSubroutineEntry() {
         setBlockFlag(BlockFlag.SubroutineEntry);
     }
 
-    public final boolean isOnWorkList() {
+    public boolean isOnWorkList() {
         return checkBlockFlag(BlockFlag.IsOnWorkList);
     }
 
-    public final void setOnWorkList(boolean value) {
+    public void setOnWorkList(boolean value) {
         setBlockFlag(BlockFlag.IsOnWorkList, value);
     }
 
-    public final boolean wasVisited() {
+    public boolean wasVisited() {
         return checkBlockFlag(BlockFlag.WasVisited);
     }
 
-    public final void setWasVisited(boolean value) {
+    public void setWasVisited(boolean value) {
         setBlockFlag(BlockFlag.WasVisited, value);
     }
 
-    public final boolean isParserLoopHeader() {
+    public boolean isParserLoopHeader() {
         return checkBlockFlag(BlockFlag.ParserLoopHeader);
     }
 
-    public final void setParserLoopHeader(boolean value) {
+    public void setParserLoopHeader(boolean value) {
         setBlockFlag(BlockFlag.ParserLoopHeader, value);
     }
 
-    public final boolean isLinearScanLoopHeader() {
+    public boolean isLinearScanLoopHeader() {
         return checkBlockFlag(BlockFlag.LinearScanLoopHeader);
     }
 
-    public final void setLinearScanLoopHeader(boolean value) {
+    public void setLinearScanLoopHeader(boolean value) {
         setBlockFlag(BlockFlag.LinearScanLoopHeader, value);
     }
 
-    public final boolean isLinearScanLoopEnd() {
+    public boolean isLinearScanLoopEnd() {
         return checkBlockFlag(BlockFlag.LinearScanLoopEnd);
     }
 
-    public final void setLinearScanLoopEnd(boolean value) {
+    public void setLinearScanLoopEnd(boolean value) {
         setBlockFlag(BlockFlag.LinearScanLoopEnd, value);
     }
 
@@ -672,38 +670,6 @@ public class BlockBegin extends Instruction {
 
     public void setLastLirInstructionId(int lastLirInstructionId) {
         lirBlock.lastLirInstructionID = lastLirInstructionId;
-    }
-
-    public void setLiveGen(BitMap liveGen) {
-        lirBlock.liveGen = liveGen;
-    }
-
-    public void setLiveKill(BitMap liveKill) {
-        lirBlock.liveKill = liveKill;
-    }
-
-    public void setLiveIn(BitMap liveIn) {
-        lirBlock.liveIn = liveIn;
-    }
-
-    public void setLiveOut(BitMap liveOut) {
-        lirBlock.liveOut = liveOut;
-    }
-
-    public BitMap liveGen() {
-        return lirBlock.liveGen;
-    }
-
-    public BitMap liveKill() {
-        return lirBlock.liveKill;
-    }
-
-    public BitMap liveIn() {
-        return lirBlock.liveIn;
-    }
-
-    public BitMap liveOut() {
-        return lirBlock.liveOut;
     }
 
     public boolean isPredecessor(BlockBegin block) {

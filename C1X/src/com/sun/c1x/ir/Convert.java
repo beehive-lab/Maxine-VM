@@ -28,7 +28,7 @@ import com.sun.c1x.util.*;
  *
  * @author Ben L. Titzer
  */
-public class Convert extends Instruction {
+public final class Convert extends Instruction {
 
     final int opcode;
     Value value;

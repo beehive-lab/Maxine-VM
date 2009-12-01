@@ -60,7 +60,7 @@ public abstract class LocalStub {
         this.operands = operands;
     }
 
-    protected LIROperand operand(int index) {
+    public LIROperand operand(int index) {
         return instruction.stubOperand(index);
     }
 
@@ -73,7 +73,7 @@ public abstract class LocalStub {
         return false;
     }
 
-    public abstract void accept(CodeStubVisitor visitor);
+    public abstract void accept(LocalStubVisitor visitor);
 
     public void printName(LogStream out) {
         out.print(name());

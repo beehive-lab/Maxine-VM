@@ -164,7 +164,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Color wordStackLocationDataColor() {
         return wordStackLocationDataColor;
     }
-    @Override
     public Color wordThreadLocalsBlockLocationDataColor() {
         return wordThreadLocalsBlockLocationDataColor;
     }

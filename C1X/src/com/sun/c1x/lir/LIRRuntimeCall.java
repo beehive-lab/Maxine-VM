@@ -29,17 +29,11 @@ import com.sun.c1x.debug.*;
  * The <code>LIRRTCall</code> class definition.
  *
  * @author Marcelo Cintra
- *
  */
 public class LIRRuntimeCall extends LIRCall {
 
-    public final CiRuntimeCall runtimeEntry;
-    public final boolean calleeSaved;
-
-    public LIRRuntimeCall(CiRuntimeCall entry, LIROperand result, List <LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
-        super(LIROpcode.RtCall, null, result, LIROperandFactory.IllegalLocation, arguments, info, calleeSaved);
-        this.calleeSaved = calleeSaved;
-        this.runtimeEntry = entry;
+    public LIRRuntimeCall(CiRuntimeCall rtCall, LIROperand result, List <LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
+        super(LIROpcode.RtCall, rtCall, result, arguments, info, calleeSaved);
     }
 
     /**
@@ -48,7 +42,7 @@ public class LIRRuntimeCall extends LIRCall {
      */
     @Override
     public void printInstruction(LogStream out) {
-        out.print(nameForAddress());
+        out.print(runtimeCall.toString());
         super.printInstruction(out);
     }
 
@@ -58,25 +52,6 @@ public class LIRRuntimeCall extends LIRCall {
      */
     @Override
     public void emitCode(LIRAssembler masm) {
-        masm.emitRuntimeCall(this);
-    }
-
-    /**
-     * Verifies this instruction.
-     */
-    @Override
-    public boolean verify() {
-        assert !"<unknown function>".equals(nameForAddress()) : "unknown function";
-        return true;
-    }
-
-    /**
-     * Gets the function name at a given address.
-     *
-     * @return a string with the function name, if the address represents a function address, otherwise return "<unknown function>"
-     *
-     */
-    private String nameForAddress() {
-        return String.valueOf(addr); // TODO needs to get the String at the address by calling Runtime. Check the original code on Hotspot.
+        masm.emitRuntimeCall(runtimeCall, info);
     }
 }

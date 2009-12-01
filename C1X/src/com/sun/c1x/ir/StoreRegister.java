@@ -30,7 +30,7 @@ import com.sun.c1x.ci.CiRegister;
  *
  * @author Ben L. Titzer
  */
-public class StoreRegister extends Instruction {
+public final class StoreRegister extends Instruction {
 
     final CiRegister register;
     Value value;

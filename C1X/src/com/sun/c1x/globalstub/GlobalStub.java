@@ -46,22 +46,24 @@ public class GlobalStub {
         d2i(Int, Double),
         d2l(Long, Double);
 
-        public final CiKind resultType;
+        public final CiKind resultKind;
         public final CiKind[] arguments;
 
-        private Id(CiKind resultType, CiKind... args) {
-            this.resultType = resultType;
+        private Id(CiKind resultKind, CiKind... args) {
+            this.resultKind = resultKind;
             this.arguments = args;
         }
     }
 
     public final Id id;
+    public final CiKind resultKind;
     public final Object stubObject;
     public final int argsSize;
     public final int[] argOffsets;
 
-    public GlobalStub(Id id, Object stubObject, int argsSize, int[] argOffsets) {
+    public GlobalStub(Id id, CiKind resultKind, Object stubObject, int argsSize, int[] argOffsets) {
         this.id = id;
+        this.resultKind = resultKind;
         this.stubObject = stubObject;
         this.argsSize = argsSize;
         this.argOffsets = argOffsets;

@@ -25,7 +25,7 @@ package com.sun.c1x.ir;
  *
  * @author Ben L. Titzer
  */
-public class UnsafePrefetchRead extends UnsafePrefetch {
+public final class UnsafePrefetchRead extends UnsafePrefetch {
 
     /**
      * Creates a new UnsafePrefetchRead instruction.

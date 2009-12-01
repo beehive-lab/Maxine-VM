@@ -25,7 +25,7 @@ package com.sun.c1x.ir;
  *
  * @author Ben L. Titzer
  */
-public class LogicOp extends Op2 {
+public final class LogicOp extends Op2 {
 
     /**
      * Constructs a new logic operation instruction.

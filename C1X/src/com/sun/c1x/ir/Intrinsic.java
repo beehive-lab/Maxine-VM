@@ -32,7 +32,7 @@ import com.sun.c1x.value.*;
  * @author Ben L. Titzer
  * @see C1XIntrinsic
  */
-public class Intrinsic extends StateSplit {
+public final class Intrinsic extends StateSplit {
 
     final C1XIntrinsic intrinsic;
     final RiMethod target;

@@ -29,7 +29,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class LoadIndexed extends AccessIndexed {
+public final class LoadIndexed extends AccessIndexed {
 
     /**
      * Creates a new LoadIndexed instruction.

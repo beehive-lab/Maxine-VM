@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class ArrayLength extends AccessArray {
+public final class ArrayLength extends AccessArray {
 
     /**
      * Constructs a new ArrayLength instruction.

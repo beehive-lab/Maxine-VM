@@ -28,7 +28,7 @@ import com.sun.c1x.util.*;
  *
  * @author Ben L. Titzer
  */
-public class RoundFP extends Instruction {
+public final class RoundFP extends Instruction {
 
     Value value;
 

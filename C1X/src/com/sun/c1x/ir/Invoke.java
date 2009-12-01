@@ -30,7 +30,7 @@ import com.sun.c1x.value.*;
  *
  * @author Ben L. Titzer
  */
-public class Invoke extends StateSplit {
+public final class Invoke extends StateSplit {
 
     final int opcode;
     final Value[] arguments;
