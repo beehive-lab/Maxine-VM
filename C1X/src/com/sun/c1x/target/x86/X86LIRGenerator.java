@@ -724,10 +724,9 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
 
         // need to get the info before, as the items may become invalid through itemFree
-        LIRDebugInfo patchingInfo = null;
         boolean resolved = x.elementKind.isLoaded();
         if (!resolved || C1XOptions.TestPatching) {
-            patchingInfo = stateFor(x, x.stateBefore());
+            stateFor(x, x.stateBefore());
 
             // cannot re-use same xhandlers for multiple CodeEmitInfos, so
             // clone all handlers.

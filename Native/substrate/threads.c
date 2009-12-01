@@ -69,7 +69,7 @@ Mutex globalThreadAndGCLock;
 
 /**
  * Gets the address and size of the calling thread's stack. The returned values denote
- * the stack memory above the guard page (if any) configured by the native thread library.
+ * the stack memory above the red-zone guard page (if any) configured by the native thread library.
  *
  * @param stackBase the base (i.e. lowest) address of the stack is returned in this argument
  * @param stackSize the size of the stack is returned in this argument
@@ -117,9 +117,9 @@ void thread_getStackInfo(Address *stackBase, Size* stackSize) {
     }
     *stackBase = (Address) stackTop - *stackSize;
 #elif os_GUESTVMXEN
-    stackinfo_t stackInfo;
+    guestvmXen_stackinfo_t stackInfo;
     guestvmXen_get_stack_info(&stackInfo);
-    *stackBase = stackInfo.ss_sp - stackInfo.ss_size;
+    *stackBase = stackInfo.ss_base;
     *stackSize = stackInfo.ss_size;
 #else
     c_UNIMPLEMENTED();
@@ -154,18 +154,15 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 #endif
 
 #if os_GUESTVMXEN
-    /* allocate stack if necessary */
-    Address stackBase = (Address) guestvmXen_allocate_stack(ntl, stackSize);
-    if (stackBase == 0) {
-        free(ntl);
-        return NULL;
-    }
-    thread = guestvmXen_create_thread_with_stack("java_thread",
+    thread = guestvmXen_create_thread(
     	(void (*)(void *)) thread_run,
-		(void*) stackBase,
 	    stackSize,
 		priority,
-		(void*) ntl);
+		(void *) (Address) id);
+    if (thread == NULL) {
+        log_println("thread_create failed");
+        return (Thread) 0;
+    }
 #elif (os_LINUX || os_DARWIN)
     pthread_attr_t attributes;
     pthread_attr_init(&attributes);
@@ -174,8 +171,8 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
         stackSize = PTHREAD_STACK_MIN;
     }
 
-    /* The thread library allocates the stack and sets the guard page at the bottom
-     * of the stack which we use for the triggered thread locals. */
+    /* The thread library allocates the stack and sets the red-zone
+     * guard page at (Linux) or just below (Darwin) the bottom of the stack. */
     pthread_attr_setstacksize(&attributes, stackSize);
     pthread_attr_setguardsize(&attributes, virtualMemory_getPageSize());
     pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_JOINABLE);
@@ -190,8 +187,8 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     if (stackSize < thr_min_stack()) {
         stackSize = thr_min_stack();
     }
-    /* The thread library allocates the stack and sets the guard page at the bottom
-     * of the stack which we use for the triggered thread locals. */
+    /* The thread library allocates the stack and sets the red-zone
+     * guard page just below the bottom of the stack. */
     error = thr_create((void *) NULL, (size_t) stackSize, thread_run, (void *) id, THR_NEW_LWP | THR_BOUND, &thread);
     if (error != 0) {
         log_println("thr_create failed with error: %d [%s]", error, strerror(error));

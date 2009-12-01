@@ -29,7 +29,7 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.lir.LIRAddress.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.target.x86.X86Assembler.Condition;
+import com.sun.c1x.target.x86.X86Assembler.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.xir.*;
 import com.sun.c1x.xir.CiXirAssembler.*;
@@ -2650,7 +2650,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                     for (int i = 0; i < args.length; i++) {
                         args[i] = asRegisterOrConstant(ops[inst.arguments[i].index]);
                     }
-                    int infoPos = masm.callGlobalStub(stubId, info, result, args);
+                    masm.callGlobalStub(stubId, info, result, args);
                     break;
 
                 case CallRuntime:
