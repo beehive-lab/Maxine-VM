@@ -43,7 +43,7 @@ public class ActorToBirTranslator extends BirGenerator {
     private void translate(BirMethod birMethod) {
         timer.start();
         final CodeAttribute codeAttribute = birMethod.classMethodActor().compilee().codeAttribute();
-        final ControlFlowAnalyzer controlFlowAnalyzer = new ControlFlowAnalyzer(codeAttribute.code());
+        final ControlFlowAnalyzer controlFlowAnalyzer = new ControlFlowAnalyzer(birMethod.classMethodActor(), codeAttribute.code());
         final IndexedSequence<BirBlock> blocks = controlFlowAnalyzer.run();
         final BirBlock[] blockMap = controlFlowAnalyzer.blockMap();
 
