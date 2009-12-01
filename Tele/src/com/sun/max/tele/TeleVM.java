@@ -1367,7 +1367,7 @@ public abstract class TeleVM implements MaxVM {
         bytecodeBreakpointFactory.addObserver(observer);
     }
 
-    public final Iterable<TeleTargetBreakpoint> targetBreakpoints() {
+    public final Iterable<MaxBreakpoint> targetBreakpoints() {
         return teleProcess.targetBreakpointFactory().clientBreakpoints();
     }
 
@@ -1375,24 +1375,24 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.targetBreakpointFactory().clientBreakpointCount();
     }
 
-    public final TeleTargetBreakpoint makeMaxTargetBreakpoint(Address address) throws MaxVMException {
+    public final MaxBreakpoint makeBreakpointAt(Address address) throws MaxVMException {
         try {
-            return makeTargetBreakpoint(address);
+            return makeTargetBreakpointAt(address);
         } catch (DataIOError dataIOError) {
             final String message = "Cannot create breakpoint at 0x" + address.toHexString() + ":  " + dataIOError.getMessage();
             throw new MaxVMException(message);
         }
     }
 
-    public final TeleTargetBreakpoint makeTargetBreakpoint(Address address) {
-        return teleProcess.targetBreakpointFactory().makeClientBreakpoint(address);
+    public final TeleTargetBreakpoint makeTargetBreakpointAt(Address address) {
+        return teleProcess.targetBreakpointFactory().makeClientBreakpointAt(address);
     }
 
-    public final TeleTargetBreakpoint getTargetBreakpoint(Address address) {
+    public final MaxBreakpoint getBreakpointAt(Address address) {
         return teleProcess.targetBreakpointFactory().getClientTargetBreakpointAt(address);
     }
 
-    public final Iterable<TeleBytecodeBreakpoint> bytecodeBreakpoints() {
+    public final Iterable<MaxBreakpoint> bytecodeBreakpoints() {
         return bytecodeBreakpointFactory.breakpoints();
     }
 
@@ -1400,11 +1400,11 @@ public abstract class TeleVM implements MaxVM {
         return bytecodeBreakpointFactory.size();
     }
 
-    public final TeleBytecodeBreakpoint makeBytecodeBreakpoint(Key key) {
+    public final MaxBreakpoint makeBreakpointAt(Key key) {
         return bytecodeBreakpointFactory.makeBreakpoint(key);
     }
 
-    public final TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key) {
+    public final MaxBreakpoint getBreakpointAt(Key key) {
         return bytecodeBreakpointFactory.getBreakpoint(key);
     }
 
@@ -2079,15 +2079,15 @@ public abstract class TeleVM implements MaxVM {
             breakpointLocations.add(codeLocation);
             assert breakpointLocations.contains(codeLocation);
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            TeleVM.this.makeTargetBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
+            TeleVM.this.makeTargetBreakpointAt(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
             Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
         }
 
         public void removeBreakpoint(CodeLocation codeLocation) {
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final TeleTargetBreakpoint targetBreakpoint = TeleVM.this.getTargetBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
-            if (targetBreakpoint != null) {
-                targetBreakpoint.remove();
+            final MaxBreakpoint breakpoint = TeleVM.this.getBreakpointAt(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
+            if (breakpoint != null) {
+                breakpoint.remove();
             }
             assert breakpointLocations.contains(codeLocation);
             breakpointLocations.remove(codeLocation);

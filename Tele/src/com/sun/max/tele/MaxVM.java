@@ -636,7 +636,7 @@ public interface MaxVM {
      * @return all existing target code breakpoints in the VM, ignoring those set by the system..
      * Modification safe against breakpoint removal.
      */
-    Iterable<TeleTargetBreakpoint> targetBreakpoints();
+    Iterable<MaxBreakpoint> targetBreakpoints();
 
     /**
      * @return the number of target code breakpoints in the VM, ignoring transients
@@ -650,7 +650,7 @@ public interface MaxVM {
      * @return a possibly new, non-transient, target code breakpoint at the address.
      * @throws MaxVMException when the VM fails to create the breakpoint.
      */
-    TeleTargetBreakpoint makeMaxTargetBreakpoint(Address address) throws MaxVMException;
+    MaxBreakpoint makeBreakpointAt(Address address) throws MaxVMException;
 
     /**
      * Finds a target code breakpoint in the VM.
@@ -658,7 +658,7 @@ public interface MaxVM {
      * @param address an address in the VM.
      * @return an ordinary, non-transient target code breakpoint at the address in VM, null if none exists.
      */
-    TeleTargetBreakpoint getTargetBreakpoint(Address address);
+    MaxBreakpoint getBreakpointAt(Address address);
 
     /**
      * All existing bytecode breakpoints.
@@ -667,7 +667,7 @@ public interface MaxVM {
      *
      * @return all existing bytecode breakpoints in the VM.
       */
-    Iterable<TeleBytecodeBreakpoint> bytecodeBreakpoints();
+    Iterable<MaxBreakpoint> bytecodeBreakpoints();
 
     /**
      * @return the number of bytecode breakpoints in the VM.
@@ -680,7 +680,7 @@ public interface MaxVM {
      * @param key description of a bytecode position in a method
      * @return a possibly new, non-transient, enabled bytecode breakpoint at the location.
      */
-    TeleBytecodeBreakpoint makeBytecodeBreakpoint(Key key);
+    MaxBreakpoint makeBreakpointAt(Key key);
 
     /**
      * Finds a bytecode breakpoint in the VM.
@@ -688,7 +688,7 @@ public interface MaxVM {
      * @param key description of a bytecode position in a method
      * @return an ordinary, non-transient bytecode breakpoint, null if doesn't exist
      */
-    TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key);
+    MaxBreakpoint getBreakpointAt(Key key);
 
     /**
      * Writes a textual summary describing the current breakpoints set in the VM, with

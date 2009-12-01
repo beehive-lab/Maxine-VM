@@ -103,12 +103,12 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     private void saveTargetCodeBreakpoints(SaveSettingsEvent settings) {
         settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, inspection.maxVM().targetBreakpointCount());
         int index = 0;
-        for (TeleTargetBreakpoint breakpoint : inspection.maxVM().targetBreakpoints()) {
+        for (MaxBreakpoint breakpoint : inspection.maxVM().targetBreakpoints()) {
             final String prefix = TARGET_BREAKPOINT_KEY + index++;
-            final Address bootImageOffset = breakpoint.teleCodeLocation().targetCodeInstructionAddress().minus(inspection.maxVM().bootImageStart());
+            final Address bootImageOffset = breakpoint.getCodeLocation().targetCodeInstructionAddress().minus(inspection.maxVM().bootImageStart());
             settings.save(prefix + "." + ADDRESS_KEY, bootImageOffset.toLong());
             settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
-            final BreakpointCondition condition = breakpoint.condition();
+            final BreakpointCondition condition = breakpoint.getCondition();
             if (condition != null) {
                 settings.save(prefix + "." + CONDITION_KEY, condition.toString());
             }
@@ -128,12 +128,12 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final String description = settings.get(this, prefix + "." + DESCRIPTION_KEY, OptionTypes.STRING_TYPE, null);
             if (inspection.maxVM().containsInCode(address)) {
                 try {
-                    final TeleTargetBreakpoint teleBreakpoint = inspection.maxVM().makeMaxTargetBreakpoint(address);
+                    final MaxBreakpoint breakpoint = inspection.maxVM().makeBreakpointAt(address);
                     if (condition != null) {
-                        teleBreakpoint.setCondition(condition);
+                        breakpoint.setCondition(condition);
                     }
-                    teleBreakpoint.setDescription(description);
-                    teleBreakpoint.setEnabled(enabled);
+                    breakpoint.setDescription(description);
+                    breakpoint.setEnabled(enabled);
                 } catch (BreakpointCondition.ExpressionException expressionException) {
                     inspection.gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
                 } catch (MaxVMException maxVMException) {
@@ -149,9 +149,9 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         int index;
         settings.save(BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, inspection.maxVM().bytecodeBreakpointCount());
         index = 0;
-        for (TeleBytecodeBreakpoint breakpoint : inspection.maxVM().bytecodeBreakpoints()) {
+        for (MaxBreakpoint breakpoint : inspection.maxVM().bytecodeBreakpoints()) {
             final String prefix = BYTECODE_BREAKPOINT_KEY + index++;
-            final TeleBytecodeBreakpoint.Key key = breakpoint.key();
+            final TeleBytecodeBreakpoint.Key key = breakpoint.getCodeLocation().key();
             settings.save(prefix + "." + METHOD_HOLDER_KEY, key.holder().string);
             settings.save(prefix + "." + METHOD_NAME_KEY, key.name().string);
             settings.save(prefix + "." + METHOD_SIGNATURE_KEY, key.signature().string);
@@ -171,8 +171,8 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final int bytecodePosition = settings.get(this, prefix + "." + POSITION_KEY, OptionTypes.INT_TYPE, 0);
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
 
-            final TeleBytecodeBreakpoint breakpoint = inspection.maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition));
-            breakpoint.setEnabled(enabled);
+            final MaxBreakpoint bytecodeBreakpoint = inspection.maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition));
+            bytecodeBreakpoint.setEnabled(enabled);
         }
     }
 

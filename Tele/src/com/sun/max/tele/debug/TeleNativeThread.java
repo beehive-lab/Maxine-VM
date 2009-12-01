@@ -392,7 +392,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
             state = BREAKPOINT;
             this.breakpoint = breakpoint;
-            final Address address = this.breakpoint.teleCodeLocation().targetCodeInstructionAddress();
+            final Address address = this.breakpoint.getCodeLocation().targetCodeInstructionAddress();
             if (updateInstructionPointer(address)) {
                 stateRegisters.setInstructionPointer(address);
                 Trace.line(TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);

@@ -29,7 +29,7 @@ import com.sun.max.tele.method.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMTriggerEventHandler {
+public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMTriggerEventHandler, MaxBreakpoint {
 
     /**
      * Distinguishes among various specialized uses for breakpoints,
@@ -65,7 +65,7 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
     private final Kind kind;
     private final TeleCodeLocation teleCodeLocation;
     private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
-    private String description = null;
+    public String description = null;
 
     /**
      * A VM breakpoint.
@@ -91,8 +91,8 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
         return kind;
     }
 
-    /**
-     * @return whether this breakpoint is to be deleted when a process execution stops or an inspection session finishes.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.debug.MaxBreakpoint#isTransient()
      */
     public final boolean isTransient() {
         return kind == Kind.TRANSIENT;
@@ -105,57 +105,44 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
         return kind == Kind.CLIENT;
     }
 
-    /**
-     * @return the location of the breakpoint in the VM, expressed in a standard, polymorphic format.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.debug.MaxBreakpoint#teleCodeLocation()
      */
-    public final TeleCodeLocation teleCodeLocation() {
+    public final TeleCodeLocation getCodeLocation() {
         return teleCodeLocation;
     }
 
-    /**
-     * @return the optional human-readable string associated with the breakpoint, for debugging.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.debug.MaxBreakpoint#getDescription()
      */
     public final String getDescription() {
         return description;
     }
 
-    /**
-     * Associates an optional human-readable string with the breakpoint for debugging.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.MaxBreakpoint#setDescription(java.lang.String)
      */
     public final void setDescription(String description) {
         this.description = description;
     }
 
-    /**
-     * Whether this breakpoint is enabled; some kinds of breakpoints
-     * can be disabled and enabled at will. When disabled they have
-     * no effect on VM execution.
-     *
-     * @return whether this breakpoint is currently enabled in the VM.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.debug.MaxBreakpoint#isEnabled()
      */
     public abstract boolean isEnabled();
 
-    /**
-     * Enables/disables this breakpoint; disabled breakpoints
-     * continue to exist, but have no effect on VM execution.
-     *
-     * @param enabled new state for this breakpoint
-     * @return true if the state was actually changed.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.debug.MaxBreakpoint#setEnabled(boolean)
      */
     public abstract boolean setEnabled(boolean enabled);
 
-    /**
-     * @return optional conditional specification for breakpoint, null if none
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.debug.MaxBreakpoint#condition()
      */
-    public abstract BreakpointCondition condition();
+    public abstract BreakpointCondition getCondition();
 
-    /**
-     * Sets a condition on this breakpoint; VM execution will only stop if this condition evaluates to true.
-     * <br>
-     * A null condition is equivalent to a condition that always returns true.
-     *
-     * @param conditionDescriptor a string that describes the condition
-     * @throws ExpressionException if the conditional expression cannot be evaluated.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.debug.MaxBreakpoint#setCondition(java.lang.String)
      */
     public abstract void setCondition(String conditionDescriptor) throws ExpressionException;
 
@@ -175,8 +162,8 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
         return triggerEventHandler.handleTriggerEvent(teleNativeThread);
     }
 
-    /**
-     * Removes this breakpoint from the VM.
+    /* (non-Javadoc)
+     * @see com.sun.max.tele.debug.MaxBreakpoint#remove()
      */
     public abstract void remove();
 }

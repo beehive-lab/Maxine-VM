@@ -30,7 +30,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -227,27 +226,27 @@ public abstract class BytecodeViewer extends CodeViewer {
      * Determines if the compiled code for the bytecode has a target breakpoint set at this location in the VM, in
      * situations where we can map between locations.
      */
-    protected Sequence<TeleTargetBreakpoint> getTargetBreakpointsAtRow(int row) {
-        final AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
+    protected Sequence<MaxBreakpoint> getTargetBreakpointsAtRow(int row) {
+        final AppendableSequence<MaxBreakpoint> breakpoints = new LinkSequence<MaxBreakpoint>();
         if (haveTargetCodeAddresses) {
-            for (TeleTargetBreakpoint teleTargetBreakpoint : maxVM().targetBreakpoints()) {
-                if (rowContainsAddress(row, teleTargetBreakpoint.teleCodeLocation().targetCodeInstructionAddress())) {
-                    teleTargetBreakpoints.append(teleTargetBreakpoint);
+            for (MaxBreakpoint breakpoint : maxVM().targetBreakpoints()) {
+                if (rowContainsAddress(row, breakpoint.getCodeLocation().targetCodeInstructionAddress())) {
+                    breakpoints.append(breakpoint);
                 }
             }
         }
-        return teleTargetBreakpoints;
+        return breakpoints;
     }
 
     /**
      * @return the bytecode breakpoint, if any, set at the bytecode being displayed in the row.
      */
-    protected TeleBytecodeBreakpoint getBytecodeBreakpointAtRow(int row) {
-        for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
-            final Key key = teleBytecodeBreakpoint.key();
+    protected MaxBreakpoint getBytecodeBreakpointAtRow(int row) {
+        for (MaxBreakpoint breakpoint : maxVM().bytecodeBreakpoints()) {
+            final Key key = breakpoint.getCodeLocation().key();
             // the direction of key comparison is significant
             if (methodActorKey.equals(key) &&  bytecodeInstructions().get(row).position() == key.position()) {
-                return teleBytecodeBreakpoint;
+                return breakpoint;
             }
         }
         return null;

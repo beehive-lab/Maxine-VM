@@ -76,7 +76,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
      * @return address of this breakpoint in the VM.
      */
     private Address address() {
-        return teleCodeLocation().targetCodeInstructionAddress();
+        return getCodeLocation().targetCodeInstructionAddress();
     }
 
     @Override
@@ -157,7 +157,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         @Override
-        public BreakpointCondition condition() {
+        public BreakpointCondition getCondition() {
             return condition;
         }
 
@@ -208,7 +208,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         @Override
-        public BreakpointCondition condition() {
+        public BreakpointCondition getCondition() {
             return condition;
         }
 
@@ -251,7 +251,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         @Override
-        public BreakpointCondition condition() {
+        public BreakpointCondition getCondition() {
             // Transients do not have conditions.
             return null;
         }
@@ -303,8 +303,8 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          * @return all the client-visible persistent target code breakpoints that currently exist
          * in the VM.  Modification safe against breakpoint removal.
          */
-        public synchronized Iterable<TeleTargetBreakpoint> clientBreakpoints() {
-            return new ArrayListSequence<TeleTargetBreakpoint>(clientBreakpoints.values());
+        public synchronized Iterable<MaxBreakpoint> clientBreakpoints() {
+            return new ArrayListSequence<MaxBreakpoint>(clientBreakpoints.values());
         }
 
         /**
@@ -349,7 +349,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          *
          * @param address the address at which the breakpoint is to be created
          */
-        public synchronized TeleTargetBreakpoint makeClientBreakpoint(Address address) {
+        public synchronized TeleTargetBreakpoint makeClientBreakpointAt(Address address) {
             TeleTargetBreakpoint breakpoint = getTargetBreakpointAt(address);
             if (breakpoint == null || breakpoint.isTransient()) {
                 final ClientTargetBreakpoint clientBreakpoint = new ClientTargetBreakpoint(teleVM, this, address, null);

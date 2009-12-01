@@ -81,7 +81,7 @@ public interface MaxThread {
      *
      * @return null if this thread is not stopped at a breakpoint or if thread has died
      */
-    TeleTargetBreakpoint breakpoint();
+    MaxBreakpoint breakpoint();
 
     /**
      * @return the current state of the thread.
