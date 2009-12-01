@@ -84,32 +84,20 @@ public class LIRList {
         return operations.get(i);
     }
 
-    public void callSpecial(RiMethod method, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        append(new LIRJavaCall(LIROpcode.SpecialCall, method, result, dest, arguments, info, cpi, constantPool));
+    public void callInterface(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+        append(new LIRCall(LIROpcode.InterfaceCall, method, result, arguments, info, false));
     }
 
-    public void callStatic(RiMethod method, LIROperand result, CiRuntimeCall dest, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        append(new LIRJavaCall(LIROpcode.StaticCall, method, result, dest, arguments, info, cpi, constantPool));
+    public void callVirtual(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+        append(new LIRCall(LIROpcode.VirtualCall, method, result, arguments, info, false));
     }
 
-    public void callIndirect(RiMethod method, LIROperand receiver, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        append(new LIRJavaCall(LIROpcode.StaticCall, method, result, null, arguments, info, cpi, constantPool));
+    public void callDirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+        append(new LIRCall(LIROpcode.DirectCall, method, result, arguments, info, false));
     }
 
-    public void callInterface(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        append(new LIRJavaCall(LIROpcode.InterfaceCall, method, result, null, arguments, info, cpi, constantPool));
-    }
-
-    public void callVirtual(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        append(new LIRJavaCall(LIROpcode.VirtualCall, method, result, null, arguments, info, cpi, constantPool));
-    }
-
-    public void callXirDirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRJavaCall(LIROpcode.XirDirectCall, method, result, null, arguments, info, (char) 0, null));
-    }
-
-    public void callXirIndirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRJavaCall(LIROpcode.XirIndirectCall, method, result, null, arguments, info, (char) 0, null));
+    public void callIndirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+        append(new LIRCall(LIROpcode.IndirectCall, method, result, arguments, info, false));
     }
 
     public void membar() {
@@ -133,7 +121,6 @@ public class LIRList {
     }
 
     public void branchDestination(Label lbl) {
-        assert lbl != null;
         append(new LIRLabel(lbl));
     }
 
@@ -328,8 +315,8 @@ public class LIRList {
         append(new LIROp2(LIROpcode.Cmpl2i, left, right, dst));
     }
 
-    public void callRuntime(CiRuntimeCall routine, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRRuntimeCall(routine, result, arguments, info, false));
+    public void callRuntime(CiRuntimeCall rtCall, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+        append(new LIRCall(LIROpcode.DirectCall, rtCall, result, arguments, info, false));
     }
 
     public void prefetch(LIRAddress addr, boolean isStore) {

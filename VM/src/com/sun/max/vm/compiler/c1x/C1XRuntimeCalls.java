@@ -208,22 +208,6 @@ public class C1XRuntimeCalls {
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInterfaceIndex)
-    public static int resolveInterfaceIndex(Object receiver, int index, ConstantPool constantPool) {
-        if (receiver == null) {
-            return 0;
-        }
-
-        final InterfaceMethodActor methodActor = (InterfaceMethodActor) constantPool.interfaceMethodAt(index).resolve(constantPool, index);
-        final InterfaceActor interfaceActor = (InterfaceActor) methodActor.holder();
-        int interfaceId = interfaceActor.id;
-        final Class receiverClass = receiver.getClass();
-        final ClassActor classActor = ClassActor.fromJava(receiverClass);
-        final int interfaceIIndex = classActor.dynamicHub().getITableIndex(interfaceId);
-        return interfaceIIndex * Word.size() + VMConfiguration.target().layoutScheme().hybridLayout.headerSize() + Word.size() * methodActor.iIndexInInterface(); // TODO (tw): return word size here!
-    }
-
-    @UNSAFE
     @INLINE
     private static Object createNonNegativeSizeArray(ClassActor arrayClassActor, int length) {
         if (MaxineVM.isHosted()) {
@@ -358,22 +342,7 @@ public class C1XRuntimeCalls {
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveSpecialCall)
-    public static long runtimeResolveOptVirtualCall(int index, ConstantPool constantPool) {
-        final VirtualMethodActor methodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
-        return CompilationScheme.Static.compile(methodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
-    }
-
-    @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveStaticCall)
-    public static long runtimeResolveStaticCall(int index, ConstantPool constantPool) {
-        final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
-        MakeHolderInitialized.makeHolderInitialized(staticMethodActor);
-        return CompilationScheme.Static.compile(staticMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
-    }
-
-    @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedInvokeStatic)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInvokeStatic)
     public static long runtimeUnresolvedInvokeStatic(int index, ConstantPool constantPool) {
         final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
         MakeHolderInitialized.makeHolderInitialized(staticMethodActor);
@@ -381,23 +350,27 @@ public class C1XRuntimeCalls {
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedInvokeSpecial)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInvokeSpecial)
     public static long runtimeUnresolvedInvokeSpecial(Object receiver, int index, ConstantPool constantPool) {
         final ClassMethodActor classMethodActor = (ClassMethodActor) constantPool.classMethodAt(index).resolve(constantPool, index);
-        return CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
+        long dest = CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
+        if (receiver == null) {
+            throw new NullPointerException();
+        }
+        return dest;
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedInvokeVirtual)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInvokeVirtual)
     public static long runtimeUnresolvedInvokeVirtual(Object receiver, int index, ConstantPool constantPool) {
         final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
         return MethodSelectionSnippet.SelectVirtualMethod.selectVirtualMethod(receiver, virtualMethodActor).asAddress().toLong();
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedInvokeInterface)
+    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInvokeInterface)
     public static long runtimeUnresolvedInvokeInterface(Object receiver, int index, ConstantPool constantPool) {
-        final InterfaceMethodActor virtualMethodActor = (InterfaceMethodActor) constantPool.classMethodAt(index).resolve(constantPool, index);
+        final InterfaceMethodActor virtualMethodActor = (InterfaceMethodActor) constantPool.methodAt(index).resolve(constantPool, index);
         return MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, virtualMethodActor).asAddress().toLong();
     }
 
@@ -470,12 +443,6 @@ public class C1XRuntimeCalls {
     public static int resolveFieldOffset(int index, ConstantPool constantPool) {
         final FieldActor fieldActor = constantPool.fieldAt(index).resolve(constantPool, index);
         return fieldActor.offset();
-    }
-
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveVTableIndex)
-    public static int resolveVTableIndex(int index, ConstantPool constantPool) {
-        final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
-        return virtualMethodActor.vTableIndex();
     }
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticSin)

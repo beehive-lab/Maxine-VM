@@ -54,6 +54,8 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         target = compilation.target;
         wordSize = target.arch.wordSize;
         rscratch1 = target.scratchRegister;
+
+        assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.hubOffset());
     }
 
     private boolean isLiteralAddress(LIRAddress addr) {
@@ -2016,8 +2018,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             // make sure that the displacement word of the call ends up word aligned
             int offset = masm.codeBuffer.position();
             switch (code) {
-                case StaticCall:
-                case SpecialCall:
+                case DirectCall:
                     offset += compilation.target.arch.machineCodeCallDisplacementOffset;
                     break;
                 case VirtualCall:
@@ -2032,77 +2033,49 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     }
 
     @Override
-    protected void emitXirIndirectCall(RiMethod method, LIRDebugInfo info, LIROperand callAddress) {
+    protected void emitIndirectCall(Object target, LIRDebugInfo info, LIROperand callAddress) {
         CiRegister reg = compilation.target.scratchRegister;
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
             moveOp(callAddress, LIROperandFactory.singleLocation(callAddress.kind, reg), callAddress.kind, null, false);
         }
-        masm.indirectCall(reg, method, info);
+        masm.indirectCall(reg, target, info);
     }
 
     @Override
-    protected void emitXirDirectCall(RiMethod method, LIRDebugInfo info) {
+    protected void emitDirectCall(Object target, LIRDebugInfo info) {
+        masm.directCall(target, info);
+    }
+
+    @Override
+    protected void emitDirectCall(RiMethod method, LIRDebugInfo info) {
+        assert method.isLoaded() : "method is not resolved";
         masm.directCall(method, info);
     }
 
     @Override
-    protected void emitDirectCall(RiMethod method, CiRuntimeCall entry, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        if (method.isLoaded()) {
-            masm.directCall(method, info);
-        } else {
-            assert entry != null;
-            masm.callRuntimeCalleeSaved(entry, info, rscratch1, CiConstant.forInt(cpi), constantPool.encoding());
-            masm.indirectCall(rscratch1, method, info);
-        }
+    protected void emitVirtualCall(RiMethod method, LIROperand receiver, LIRDebugInfo info) {
+        assert method.isLoaded() : "method is not resolved";
+        assert receiver != null && receiver.isRegister() : "Receiver must be in a register";
+
+        int vtableOffset = compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset() + method.vtableIndex() * compilation.runtime.vtableEntrySize();
+
+        asm.recordExceptionHandlers(codePos(), info); // record deopt info for next instruction (possible NPE)
+        masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset())); // load hub
+        Address callAddress = new Address(rscratch1, Util.safeToInt(vtableOffset));
+        masm.indirectCall(callAddress, method, info); // perform indirect call
     }
 
     @Override
-    protected void emitIndirectCall(RiMethod method, LIROperand addr, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        masm.indirectCall(addr.asRegister(), method, info);
-    }
+    protected void emitInterfaceCall(RiMethod method, LIROperand receiver, LIRDebugInfo info) {
+        assert method.isLoaded() : "method is not resolved";
+        assert receiver != null && receiver.isRegister() : "Receiver must be in a register";
 
-    @Override
-    protected void emitVirtualCall(RiMethod method, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        Address callAddress;
-        if (method.vtableIndex() >= 0) {
-            int vtableOffset = compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset() + method.vtableIndex() * compilation.runtime.vtableEntrySize();
-            assert receiver != null && vtableOffset >= 0 : "Invalid receiver or vtable offset!";
-            assert receiver.isRegister() : "Receiver must be in a register";
-            assert !compilation.runtime.needsExplicitNullCheck(compilation.runtime.hubOffset());
-            callAddress = new Address(rscratch1, Util.safeToInt(vtableOffset));
-            asm.recordExceptionHandlers(codePos(), info);
-            masm.movq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset()));
-        } else {
-            assert method.vtableIndex() == -1 && !method.isLoaded();
-            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveVTableIndex, info, rscratch1, CiConstant.forInt(cpi), constantPool.encoding());
-            int vtableEntrySize = compilation.runtime.vtableEntrySize();
-            assert Util.isPowerOf2(vtableEntrySize);
-            masm.shlq(rscratch1, Util.log2(vtableEntrySize));
-            masm.addq(rscratch1, compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset());
-            asm.recordExceptionHandlers(codePos(), info);
-            masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset()));
-            callAddress = new Address(rscratch1);
-        }
-
-        masm.indirectCall(callAddress, method, info);
-    }
-
-    @Override
-    protected void emitInterfaceCall(RiMethod method, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool) {
-        assert receiver != null : "Invalid receiver!";
-        assert receiver.isRegister() : "Receiver must be in a register";
-
-        if (method.vtableIndex() == -1) {
-            // Unresolved method
-            masm.callRuntimeCalleeSaved(CiRuntimeCall.ResolveInterfaceIndex, info, rscratch1, receiver.asRegister(), CiConstant.forInt(cpi), constantPool.encoding());
-        } else {
-            // TODO: emit interface ID calculation inline
-            masm.movl(rscratch1, method.interfaceID());
-            masm.callRuntimeCalleeSaved(CiRuntimeCall.RetrieveInterfaceIndex, info, rscratch1, receiver.asRegister(), rscratch1);
-            masm.addq(rscratch1, method.indexInInterface() * compilation.target.arch.wordSize);
-        }
+        // TODO: emit interface ID calculation inline
+        masm.movl(rscratch1, method.interfaceID());
+        masm.callRuntimeCalleeSaved(CiRuntimeCall.RetrieveInterfaceIndex, info, rscratch1, receiver.asRegister(), rscratch1);
+        masm.addq(rscratch1, method.indexInInterface() * compilation.target.arch.wordSize);
 
         asm.recordExceptionHandlers(codePos(), info);
         masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset()));
@@ -2114,14 +2087,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
        // exception object is not added to oop map by LinearScan
        // (LinearScan assumes that no oops are in fixed registers)
        // info.addRegisterOop(exceptionOop);
-        CiRuntimeCall unwindId;
-
-        if (unwind) {
-            unwindId = CiRuntimeCall.UnwindException;
-        } else {
-            unwindId = CiRuntimeCall.HandleException;
-        }
-        masm.directCall(unwindId, info);
+        masm.directCall(unwind ? CiRuntimeCall.UnwindException : CiRuntimeCall.HandleException, info);
         // enough room for two byte trap
         masm.nop();
     }
