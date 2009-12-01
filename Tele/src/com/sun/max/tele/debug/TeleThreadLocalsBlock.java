@@ -35,7 +35,7 @@ public class TeleThreadLocalsBlock extends FixedMemoryRegion {
     public final TeleNativeThread teleNativeThread;
 
     public TeleThreadLocalsBlock(TeleNativeThread teleNativeThread, Address base, Size size) {
-        super(base, size, "Thread-" + teleNativeThread.localHandle());
+        super(base, size, "Thread-" + teleNativeThread.localHandle() + " locals");
         this.teleNativeThread = teleNativeThread;
     }
 

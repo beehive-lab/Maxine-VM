@@ -35,7 +35,7 @@ public class TeleNativeStack extends FixedMemoryRegion {
     public final TeleNativeThread teleNativeThread;
 
     public TeleNativeStack(TeleNativeThread teleNativeThread, Address base, Size size) {
-        super(base, size, "Thread-" + teleNativeThread.localHandle());
+        super(base, size, "Thread-" + teleNativeThread.localHandle() + " stack");
         this.teleNativeThread = teleNativeThread;
     }
 }
