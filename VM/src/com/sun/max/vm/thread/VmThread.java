@@ -23,15 +23,11 @@ package com.sun.max.vm.thread;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
-
-import java.lang.reflect.*;
-
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -48,7 +44,6 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.type.*;
 
 /**
  * The MaxineVM VM specific implementation of threads.
@@ -86,22 +81,6 @@ import com.sun.max.vm.type.*;
  * @author Paul Caprioli
  */
 public class VmThread {
-
-    /**
-     * The signature of {@link #run(int, Address, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer, Pointer)}.
-     */
-    public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
-
-    static {
-        Method runMethod = null;
-        for (Method method : VmThread.class.getDeclaredMethods()) {
-            if (method.getName().equals("run")) {
-                ProgramError.check(runMethod == null, "There must only be one method named \"run\" in " + MaxineVM.class);
-                runMethod = method;
-            }
-        }
-        RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
-    }
 
     static final VMBooleanXXOption TRACE_THREADS_OPTION = register(new VMBooleanXXOption("-XX:-TraceThreads", "Trace thread management activity for debugging purposes."), MaxineVM.Phase.PRISTINE);
 
