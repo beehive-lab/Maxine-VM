@@ -426,7 +426,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         /**
          * Sets the activation state of all target breakpoints in the VM.
-         *w
+         *
          * @param active new activation state for all breakpoints
          * @see TeleTargetBreakpoint#setActive(boolean)
          */
