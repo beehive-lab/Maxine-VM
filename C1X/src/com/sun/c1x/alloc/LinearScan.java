@@ -2534,6 +2534,15 @@ public class LinearScan {
         // TODO:
     }
 
+    void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
+        assert iw != null : "interval walker needed for debug information";
+        computeOopMap(iw, op);
+        for (int i = 0; i < op.infoCount(); i++) {
+            LIRDebugInfo info = op.infoAt(i);
+            computeDebugInfo(info, op.id);
+        }
+    }
+
     void computeDebugInfo(LIRDebugInfo info, int opId) {
         if (!compilation.needsDebugInformation()) {
             return;
@@ -2577,7 +2586,7 @@ public class LinearScan {
             int opId = op.id;
 
             // iterate all modes of the visitor and process all virtual operands
-            for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
+            for (LIRInstruction.OperandMode mode : LIRInstruction.OPERAND_MODES) {
                 int n = op.oprCount(mode);
                 for (int k = 0; k < n; k++) {
                     LIRLocation opr = op.oprAt(mode, k);
@@ -2597,15 +2606,8 @@ public class LinearScan {
                     }
                 }
 
-                // compute oop map
-                assert iw != null : "needed for computeOopMap";
-                computeOopMap(iw, op);
-
-                // compute debug information
-                int n = op.infoCount();
-                for (int k = 0; k < n; k++) {
-                    computeDebugInfo(op.infoAt(k), opId);
-                }
+                // compute reference map and debug information
+                computeDebugInfo(iw, op);
             }
 
             // make sure we haven't made the op invalid.
@@ -2922,7 +2924,7 @@ public class LinearScan {
                                 // that this interval represents some value that's
                                 // referenced by this op either as an input or output.
                                 boolean ok = false;
-                                for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
+                                for (LIRInstruction.OperandMode mode : LIRInstruction.OPERAND_MODES) {
                                     int n = op.oprCount(mode);
                                     for (int k = 0; k < n; k++) {
                                         LIRLocation opr = op.oprAt(mode, k);
