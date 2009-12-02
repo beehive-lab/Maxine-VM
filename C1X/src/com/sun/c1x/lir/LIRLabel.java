@@ -27,7 +27,6 @@ import com.sun.c1x.debug.*;
  * The <code>LIRLabel</code> class definition.
  *
  * @author Marcelo Cintra
- *
  */
 public class LIRLabel extends LIROp0 {
 
@@ -35,8 +34,7 @@ public class LIRLabel extends LIROp0 {
 
     /**
      * Constructs a LIRLabel instruction.
-     *
-     * @param label
+     * @param label the label
      */
     public LIRLabel(Label label) {
         super(LIROpcode.Label, LIROperandFactory.IllegalLocation, null);
@@ -46,7 +44,6 @@ public class LIRLabel extends LIROp0 {
 
     /**
      * Gets the label associated to this instruction.
-     *
      * @return the label
      */
     public Label label() {
@@ -55,7 +52,6 @@ public class LIRLabel extends LIROp0 {
 
     /**
      * Emits target assembly code for this LIRLabel instruction.
-     *
      * @param masm the LIRAssembler
      */
     @Override
@@ -65,7 +61,6 @@ public class LIRLabel extends LIROp0 {
 
     /**
      * Prints this instruction to a LogStream.
-     *
      * @param out the output stream
      */
     @Override

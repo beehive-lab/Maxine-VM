@@ -50,6 +50,24 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private static final LIRLocation ILLEGAL = LIROperandFactory.IllegalLocation;
 
+    protected LIROperand force(Value v, CiRegister reg) {
+        LIRItem item = new LIRItem(v, this);
+        item.loadItemForce(LIROperandFactory.singleLocation(v.kind, reg));
+        return item.result();
+    }
+
+    protected LIROperand force(Value v, LIROperand o) {
+        LIRItem item = new LIRItem(v, this);
+        item.loadItemForce(o);
+        return item.result();
+    }
+
+    protected LIROperand load(Value val) {
+        LIRItem value = new LIRItem(val, this);
+        value.loadItem();
+        return value.result();
+    }
+
     // the range of values in a lookupswitch or tableswitch statement
     private static final class SwitchRange {
         final int lowKey;
@@ -551,15 +569,16 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitInvoke(Invoke x) {
         RiMethod target = x.target();
-
         LIRDebugInfo info = stateFor(x, x.stateBefore());
 
         XirSnippet snippet = null;
         LIROperand destinationAddress = null;
+
+        int opcode = x.opcode();
         if (xir != null) {
             // XIR support for INVOKE bytecodes
             XirArgument receiver;
-            switch (x.opcode()) {
+            switch (opcode) {
                 case Bytecodes.INVOKESTATIC:
                     snippet = xir.xir.genInvokeStatic(xir.site(x), target);
                     break;
@@ -582,45 +601,70 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true, true);
-        List<LIROperand> argList = visitInvokeArguments(x, cc);
+        if (snippet == null && !target.isLoaded()) {
+            // handle unresolved invocations by calling resolution method, which returns destination address
+            CiRuntimeCall call;
+            switch (opcode) {
+                case Bytecodes.INVOKESTATIC:
+                    call = CiRuntimeCall.ResolveInvokeStatic;
+                    break;
+                case Bytecodes.INVOKESPECIAL:
+                    call = CiRuntimeCall.ResolveInvokeSpecial;
+                    break;
+                case Bytecodes.INVOKEVIRTUAL:
+                    call = CiRuntimeCall.ResolveInvokeVirtual;
+                    break;
+                case Bytecodes.INVOKEINTERFACE:
+                    call = CiRuntimeCall.ResolveInvokeInterface;
+                    break;
+                default:
+                    throw Util.shouldNotReachHere();
+            }
+            LIRConstant cpi = LIROperandFactory.intConst(x.cpi);
+            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            if (x.hasReceiver()) {
+                destinationAddress = callRuntimeWithResult(call, info.copy(), load(x.receiver()), cpi, cp);
+            } else {
+                destinationAddress = callRuntimeWithResult(call, info.copy(), cpi, cp);
+            }
+        }
 
-        // setup result register
         LIROperand resultRegister = resultRegisterFor(x.kind);
+        List<LIROperand> argList = visitInvokeArguments(x);
 
-        if (snippet != null && destinationAddress != null) {
+        if (destinationAddress != null) {
+            // emit direct or indirect call to the destination address
             if (destinationAddress instanceof LIRConstant) {
                 // Direct call
-                assert ((LIRConstant) destinationAddress).value.asLong() == 0;
-                lir.callXirDirect(target, resultRegister, argList, info);
+                assert ((LIRConstant) destinationAddress).value.asLong() == 0 : "destination address should be zero";
+                lir.callDirect(target, resultRegister, argList, info);
             } else {
                 // Indirect call
                 argList.add(destinationAddress);
-                lir.callXirIndirect(target, resultRegister, argList, info);
+                lir.callIndirect(target, resultRegister, argList, info);
             }
-
         } else {
             // emit invoke code
             boolean optimized = target.isLoaded() && target.isFinalMethod();
 
-            switch (x.opcode()) {
+            switch (opcode) {
                 case Bytecodes.INVOKESTATIC:
-                    lir.callStatic(target, resultRegister, CiRuntimeCall.ResolveStaticCall, argList, info, x.cpi, x.constantPool);
+                    lir.callDirect(target, resultRegister, argList, info);
                     break;
                 case Bytecodes.INVOKESPECIAL:
                 case Bytecodes.INVOKEVIRTUAL:
                 case Bytecodes.INVOKEINTERFACE:
                     assert x.hasReceiver();
-                    if (x.opcode() == Bytecodes.INVOKESPECIAL || optimized) {
+                    if (opcode == Bytecodes.INVOKESPECIAL || optimized) {
                         if (x.needsNullCheck()) {
                             lir.nullCheck(argList.get(0), info.copy());
                         }
-                        lir.callSpecial(target, resultRegister, CiRuntimeCall.ResolveSpecialCall, argList, info, x.cpi, x.constantPool);
+                        lir.callDirect(target, resultRegister, argList, info);
                     } else {
-                        if (x.opcode() == Bytecodes.INVOKEINTERFACE) {
-                            lir.callInterface(target, resultRegister, argList, info, x.cpi, x.constantPool);
+                        if (opcode == Bytecodes.INVOKEINTERFACE) {
+                            lir.callInterface(target, resultRegister, argList, info);
                         } else {
-                            lir.callVirtual(target, resultRegister, argList, info, x.cpi, x.constantPool);
+                            lir.callVirtual(target, resultRegister, argList, info);
                         }
                     }
                     break;
@@ -887,7 +931,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     LIROperand emitXir(XirSnippet snippet, Instruction x, LIRDebugInfo info, RiMethod method, boolean setInstructionResult) {
-
         final LIROperand[] operands = new LIROperand[snippet.template.variableCount];
 
         XirOperand resultOperand = snippet.template.resultOperand;
@@ -2033,8 +2076,9 @@ public abstract class LIRGenerator extends ValueVisitor {
         return new LIRDebugInfo(state, x.bci(), ignoreXhandler ? null : x.exceptionHandlers());
     }
 
-    List<LIROperand> visitInvokeArguments(Invoke x, CallingConvention cc) {
+    List<LIROperand> visitInvokeArguments(Invoke x) {
         // for each argument, load it into the correct location
+        CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true, true);
         Value[] args = x.arguments();
         List<LIROperand> argList = new ArrayList<LIROperand>(args.length);
         int j = 0;
