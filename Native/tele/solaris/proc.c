@@ -29,222 +29,44 @@
 #include "word.h"
 #include "log.h"
 
-static void* _lastCall = 0;
-
-#define proc_call(name, argsFormat, ...) do {\
-    boolean trace = log_TELE && ((void *) name != (void *) Pread || _lastCall != (void *) Pread); \
-    if (trace) { \
-        log_println("%s:%d: %s(" argsFormat ")", file, line, STRINGIZE(name), ##__VA_ARGS__); \
-    } \
-    _lastCall = (void *) name; \
-    return name(##__VA_ARGS__); \
-} while(0)
-
-#define proc_call_void(name, argsFormat, ...) do {\
-    boolean trace = log_TELE && ((void *) name != (void *) Pread || _lastCall != (void *) Pread); \
-    if (trace) { \
-        log_println("%s:%d: %s(" argsFormat ")", file, line, STRINGIZE(name), ##__VA_ARGS__); \
-    } \
-    _lastCall = (void *) name; \
-    name(##__VA_ARGS__); \
-} while(0)
-
-int	_proc_Lwait(POS_PARAMS, struct ps_lwphandle *lh, uint_t timeout) {
-    proc_call(Lwait, "%p, %lu", lh, timeout);
-}
-
-ssize_t _proc_Pread(POS_PARAMS, struct ps_prochandle *ph, void *dst, size_t size, uintptr_t src) {
-    proc_call(Pread, "ph=%p, dst=%p, size=%d, src=%p", ph, dst, size, src);
-}
-
-ssize_t _proc_Pwrite(POS_PARAMS, struct ps_prochandle *ph, const void *src, size_t size, uintptr_t dst) {
-    proc_call(Pwrite, "ph=%p, src=%p, size=%d, dst=%p", ph, src, size, dst);
-}
-
-void _proc_Lsync(POS_PARAMS, struct ps_lwphandle *lh) {
-    proc_call_void(Lsync, "%p", lh);
-}
-
-struct ps_lwphandle *_proc_Lgrab(POS_PARAMS, struct ps_prochandle *lh, lwpid_t lwpId, int *error) {
-    proc_call(Lgrab, "%p, %lu, %p", lh, lwpId, error);
-}
-
-struct ps_prochandle *_proc_Pcreate(POS_PARAMS, const char *arg0, char *const *argv, int *error, char *path, size_t pathLength) {
-    proc_call(Pcreate, "%s, %p, %p, %p, %d", arg0, argv, error, path, pathLength);
-}
-
-int	_proc_Lsetrun(POS_PARAMS, struct ps_lwphandle *lh, int sig, int flags) {
-    proc_call(Lsetrun, "%p, %d, %d", lh, sig, flags);
-}
-
-const pstatus_t *_proc_Pstatus(POS_PARAMS, struct ps_prochandle *ph) {
-    proc_call(Pstatus, "%p", ph);
-}
-
-int _proc_Pstate(POS_PARAMS, struct ps_prochandle *ph) {
-    proc_call(Pstate, "%p", ph);
-}
-
-void _proc_Psync(POS_PARAMS, struct ps_prochandle *ph) {
-    proc_call_void(Psync, "%p", ph);
-}
-
-int _proc_Pmapping_iter(POS_PARAMS, struct ps_prochandle *ph, proc_map_f *f, void *cd) {
-    proc_call(Pmapping_iter, "%p, %p, %p", ph, f, cd);
-}
-
-void _proc_Pupdate_maps(POS_PARAMS, struct ps_prochandle *ph) {
-    proc_call_void(Pupdate_maps, "%p", ph);
-}
-
-int _proc_Psetrun(POS_PARAMS, struct ps_prochandle *ph, int sig, int flags) {
-    proc_call(Psetrun, "%p, %d, %d", ph, sig, flags);
-}
-
-int _proc_Pwait(POS_PARAMS, struct ps_prochandle *ph, int msec) {
-    proc_call(Pwait, "%p, %d", ph, msec);
-}
-
-void _proc_Psetsysentry(POS_PARAMS, struct ps_prochandle *ph, const sysset_t *set) {
-    proc_call_void(Psetsysentry, "%p, %p", ph, set);
-}
-
-void _proc_Psetsysexit(POS_PARAMS, struct ps_prochandle *ph, const sysset_t *set) {
-    proc_call_void(Psetsysexit, "%p, %p", ph, set);
-}
-
-int	_proc_Lstack(POS_PARAMS, struct ps_lwphandle *lh, stack_t *stack) {
-    proc_call(Lstack, "%p, %p", lh, stack);
-}
-
-int	_proc_Lmain_stack(POS_PARAMS, struct ps_lwphandle *lh, stack_t *stack) {
-    proc_call(Lmain_stack, "%p, %p", lh, stack);
-}
-
-int	_proc_Lalt_stack(POS_PARAMS, struct ps_lwphandle *lh, stack_t *stack) {
-    proc_call(Lalt_stack, "%p, %p", lh, stack);
-}
-
-int	_proc_Lgetareg(POS_PARAMS, struct ps_lwphandle *lh, int index, prgreg_t *result) {
-    proc_call(Lgetareg, "%p, %d, %p", lh, index, result);
-}
-
-int	_proc_Lputareg(POS_PARAMS, struct ps_lwphandle *lh, int index, prgreg_t value) {
-    proc_call(Lputareg, "%p, %d, %lu", lh, index, value);
-}
-
-void _proc_Lfree(POS_PARAMS, struct ps_lwphandle *lh) {
-    proc_call_void(Lfree, "%p", lh);
-}
-
-int	_proc_Lclearfault(POS_PARAMS, struct ps_lwphandle *lh) {
-    proc_call(Lclearfault, "%p", lh);
-}
-
-int _proc_Plwp_getregs(POS_PARAMS, struct ps_prochandle *ph, lwpid_t lwpId, prgregset_t registers) {
-    proc_call(Plwp_getregs, "%p, %lu, %p", ph, lwpId, registers);
-}
-
-void log_printStatusFlags(const char *prefix, int pr_flags, const char *suffix) {
-	if (prefix != NULL) {
-		log_print(prefix);
-	}
-	if (pr_flags & PR_STOPPED) {
-		/* lwp is stopped */
-		log_print("PR_STOPPED ");
-	}
-	if (pr_flags & PR_ISTOP) {
-        /* lwp is stopped on an event of interest */
-        log_print("PR_ISTOP ");
+void log_flags(const char *prefix, int pr_flags, const char *suffix) {
+    if (prefix != NULL) {
+        log_print(prefix);
     }
-	if (pr_flags & PR_DSTOP) {
-        /* lwp has a stop directive in effect */
-        log_print("PR_DSTOP ");
-    }
-	if (pr_flags & PR_STEP) {
-        /* lwp has a single-step directive in effect */
-        log_print("PR_STEP ");
-    }
-	if (pr_flags & PR_ASLEEP) {
-        /* lwp is sleeping in a system call */
-        log_print("PR_ASLEEP ");
-    }
-	if (pr_flags & PR_PCINVAL) {
-        /* contents of pr_instr undefined */
-        log_print("PR_PCINVAL ");
-    }
-	if (pr_flags & PR_ASLWP) {
-        /* obsolete flag; never set */
-        log_print("PR_ASLWP ");
-    }
-	if (pr_flags & PR_AGENT) {
-        /* this lwp is the /proc agent lwp */
-        log_print("PR_AGENT ");
-    }
-	if (pr_flags & PR_DETACH) {
-        /* this is a detached lwp */
-        log_print("PR_DETACH ");
-    }
-	if (pr_flags & PR_DAEMON) {
-        /* this is a daemon lwp */
-        log_print("PR_DAEMON ");
-    }
-	/* The following flags apply to the process, not to an individual lwp */
-	if (pr_flags & PR_ISSYS) {
-        /* this is a system process */
-        log_print("PR_ISSYS ");
-    }
-	if (pr_flags & PR_VFORKP) {
-        /* process is the parent of a vfork()d child */
-        log_print("PR_VFORKP ");
-    }
-	if (pr_flags & PR_ORPHAN) {
-        /* process's process group is orphaned */
-        log_print("PR_ORPHAN ");
-    }
-	/* The following process flags are modes settable by PCSET/PCUNSET */
-	if (pr_flags & PR_FORK) {
-        /* inherit-on-fork is in effect */
-        log_print("PR_FORK ");
-    }
-	if (pr_flags & PR_RLC) {
-        /* run-on-last-close is in effect */
-        log_print("PR_RLC ");
-    }
-	if (pr_flags & PR_KLC) {
-        /* kill-on-last-close is in effect */
-        log_print("PR_KLC ");
-    }
-	if (pr_flags & PR_ASYNC) {
-        /* asynchronous-stop is in effect */
-        log_print("PR_ASYNC ");
-    }
-	if (pr_flags & PR_MSACCT) {
-        /* micro-state usage accounting is in effect */
-        log_print("PR_MSACCT ");
-    }
-	if (pr_flags & PR_BPTADJ) {
-        /* breakpoint trap pc adjustment is in effect */
-        log_print("PR_BPTADJ ");
-    }
-	if (pr_flags & PR_PTRACE) {
-        /* ptrace-compatibility mode is in effect */
-        log_print("PR_PTRACE ");
-    }
-	if (pr_flags & PR_MSFORK) {
-        /* micro-state accounting inherited on fork */
-        log_print("PR_MSFORK ");
-    }
-	if (pr_flags & PR_IDLE) {
-        /* lwp is a cpu's idle thread */
-        log_print("PR_IDLE ");
-    }
+#define MATCH_FLAG(id, name) if (pr_flags & id) log_print(" " name)
+    MATCH_FLAG(PR_STOPPED, "PR_STOPPED");
+    MATCH_FLAG(PR_ISTOP, "PR_ISTOP");
+    MATCH_FLAG(PR_DSTOP, "PR_DSTOP");
+    MATCH_FLAG(PR_STEP, "PR_STEP");
+    MATCH_FLAG(PR_ASLEEP, "PR_ASLEEP");
+    MATCH_FLAG(PR_PCINVAL, "PR_PCINVAL");
+    MATCH_FLAG(PR_ASLWP, "PR_ASLWP");
+    MATCH_FLAG(PR_AGENT, "PR_AGENT");
+    MATCH_FLAG(PR_DETACH, "PR_DETACH");
+    MATCH_FLAG(PR_DAEMON, "PR_DAEMON");
+    MATCH_FLAG(PR_IDLE, "PR_IDLE");
+/* The following flags apply to the process, not to an individual lwp */
+    MATCH_FLAG(PR_ISSYS, "PR_ISSYS");
+    MATCH_FLAG(PR_VFORKP, "PR_VFORKP");
+    MATCH_FLAG(PR_ORPHAN, "PR_ORPHAN");
+    MATCH_FLAG(PR_NOSIGCHLD, "PR_NOSIGCHLD");
+    MATCH_FLAG(PR_WAITPID, "PR_WAITPID");
+/* The following process flags are modes settable by PCSET/PCUNSET */
+    MATCH_FLAG(PR_FORK, "PR_FORK");
+    MATCH_FLAG(PR_RLC, "PR_RLC");
+    MATCH_FLAG(PR_KLC, "PR_KLC");
+    MATCH_FLAG(PR_ASYNC, "PR_ASYNC");
+    MATCH_FLAG(PR_MSACCT, "PR_MSACCT");
+    MATCH_FLAG(PR_BPTADJ, "PR_BPTADJ");
+    MATCH_FLAG(PR_PTRACE, "PR_PTRACE");
+    MATCH_FLAG(PR_MSFORK, "PR_MSFORK");
+#undef MATCH_FLAG
     if (suffix != NULL) {
-		log_print(suffix);
-	}
+        log_print(suffix);
+    }
 }
 
-void log_printWhyStopped(const char * prefix, const lwpstatus_t *lwpStatus, const char * suffix) {
+void log_printWhyStopped(const char * prefix, const lwpstatus_t *ls, const char * suffix) {
 	int nameLength = SYS2STR_MAX > FLT2STR_MAX ? SYS2STR_MAX : FLT2STR_MAX;
     char name[nameLength];
     uint32_t bits;
@@ -253,38 +75,97 @@ void log_printWhyStopped(const char * prefix, const lwpstatus_t *lwpStatus, cons
 		log_print(prefix);
 	}
 
-    switch (lwpStatus->pr_why) {
+    switch (ls->pr_why) {
         case PR_REQUESTED:
             log_print("PR_REQUESTED");
             break;
         case PR_SIGNALLED:
-            log_print("PR_SIGNALLED [%s]", proc_signame(lwpStatus->pr_what, name, sizeof(name)));
+            log_print("PR_SIGNALLED [%s]", proc_signame(ls->pr_what, name, sizeof(name)));
             break;
         case PR_FAULTED:
-            log_print("PR_FAULTED [%s]", proc_fltname(lwpStatus->pr_what, name, sizeof(name)));
+            log_print("PR_FAULTED [%s]", proc_fltname(ls->pr_what, name, sizeof(name)));
             break;
         case PR_SYSENTRY:
-            log_print("PR_SYSENTRY [%s]", proc_sysname(lwpStatus->pr_what, name, sizeof(name)));
+            log_print("PR_SYSENTRY [%s]", proc_sysname(ls->pr_what, name, sizeof(name)));
             break;
         case PR_SYSEXIT:
-            log_print("PR_SYSEXIT [%s]", proc_sysname(lwpStatus->pr_what, name, sizeof(name)));
+            log_print("PR_SYSEXIT [%s]", proc_sysname(ls->pr_what, name, sizeof(name)));
             break;
         case PR_JOBCONTROL:
-            log_print("PR_JOBCONTROL [%s]", proc_signame(lwpStatus->pr_what, name, sizeof(name)));
+            log_print("PR_JOBCONTROL [%s]", proc_signame(ls->pr_what, name, sizeof(name)));
             break;
         case PR_SUSPENDED:
             log_print("PR_SUSPENDED");
             break;
     }
 
-    if (lwpStatus->pr_cursig)
-        log_print(" current signal: %d", lwpStatus->pr_cursig);
+    if (ls->pr_cursig)
+        log_print(" current signal: %d", ls->pr_cursig);
 
-    bits = *((uint32_t *)&lwpStatus->pr_lwppend);
+    bits = *((uint32_t *)&ls->pr_lwppend);
     if (bits) {
         log_print(" pending signals: 0x%.8X", bits);
     }
     if (suffix != NULL) {
 		log_print(suffix);
 	}
+}
+
+static void print_lwpstatus(const lwpstatus_t *ls) {
+    log_println("    pr_flags (flags): %d", ls->pr_flags);
+    log_flags("      ", ls->pr_flags, "\n");
+    log_println("    pr_lwpid (specific lwp identifier): %d", ls->pr_lwpid);
+    log_println("    pr_why (reason for lwp stop, if stopped): %d", ls->pr_why);
+    log_println("    pr_what (more detailed reason): %d", ls->pr_what);
+    log_printWhyStopped("      ", ls, "\n");
+    log_println("    pr_cursig (current signal, if any): %d", ls->pr_cursig);
+    log_println("    pr_info (info associated with signal or fault): %d %d %d", ls->pr_info.si_signo, ls->pr_info.si_code, ls->pr_info.si_errno);
+    log_println("    pr_lwppend (set of signals pending to the lwp): %d %d %d %d", ls->pr_lwppend.__sigbits[0], ls->pr_lwppend.__sigbits[1], ls->pr_lwppend.__sigbits[2], ls->pr_lwppend.__sigbits[3]);
+    log_println("    pr_lwphold (set of signals blocked by the lwp): %d %d %d %d", ls->pr_lwphold.__sigbits[0], ls->pr_lwphold.__sigbits[1], ls->pr_lwphold.__sigbits[2], ls->pr_lwphold.__sigbits[3]);
+}
+
+static void print_pstatus(const pstatus_t *ps) {
+    log_println("  pr_flags (flags): %d", ps->pr_flags);
+    log_flags("      ", ps->pr_flags, "\n");
+    log_println("  pr_nlwp (number of active lwps in the process): %d", ps->pr_nlwp);
+    log_println("  pr_pid (process id): %d", ps->pr_pid);
+    log_println("  pr_ppid (parent process id): %d", ps->pr_ppid);
+    log_println("  pr_pgid (process group id): %d");
+    log_println("  pr_sid (session id): %d", ps->pr_sid);
+    log_println("  pr_agentid (wp id of the /proc agent lwp, if any): %d", ps->pr_agentid);
+    log_println("  pr_sigpend (set of process pending signals): %d %d %d %d", ps->pr_sigpend.__sigbits[0], ps->pr_sigpend.__sigbits[1], ps->pr_sigpend.__sigbits[2], ps->pr_sigpend.__sigbits[3]);
+    log_println("  pr_sigtrace (set of traced signals): %d %d %d %d", ps->pr_sigtrace.__sigbits[0], ps->pr_sigtrace.__sigbits[1], ps->pr_sigtrace.__sigbits[2], ps->pr_sigtrace.__sigbits[3]);
+    log_println("  pr_flttrace (set of traced faults): %d %d %d %d", ps->pr_flttrace.word[0], ps->pr_flttrace.word[1], ps->pr_flttrace.word[2], ps->pr_flttrace.word[3]);
+    log_println("  pr_nzomb (number of zombie lwps in the process): %d", ps->pr_nzomb);
+    log_println("  pr_lwp (representative lwp): %d", ps->pr_lwp);
+}
+
+static void print_lwphandle(struct ps_lwphandle *lh) {
+    const lwpstatus_t *ls = Lstatus(lh);
+    log_println("  LWP %d:", ls->pr_lwpid);
+    log_println("    lwp_state (state of the lwp): %d", Lstate(lh));
+    print_lwpstatus(ls);
+}
+
+static int print_lwp(void *data, const lwpstatus_t *lwpStatus) {
+    struct ps_prochandle *ph = (struct ps_prochandle *) data;
+    struct ps_lwphandle *lh;
+    int error;
+    lh = Lgrab(ph, lwpStatus->pr_lwpid, &error);
+    if (error != 0) {
+        log_println("Lgrab failed: %s", Lgrab_error(error)); \
+        log_println("error grabbing handle for thread %d: %s", lwpStatus->pr_lwpid, Lgrab_error(error));
+        return error;
+    }
+    print_lwphandle(lh);
+    Lfree(lh);
+}
+
+void log_process(struct ps_prochandle *ph) {
+    const pstatus_t *ps = Pstatus(ph);
+    log_println("PROCESS %d:", ps->pr_pid);
+    log_println("  state: %d", Pstate(ph));
+    print_pstatus(ps);
+
+    Plwp_iter(ph, print_lwp, ph);
 }

@@ -19,4 +19,4 @@
 # Company, Ltd.
 #
 
-OS_SOURCES = teleProcess.c solarisTeleNativeThread.c solarisTeleProcess.c solarisTeleVM.c proc.c libproc_debug.c
+OS_SOURCES = teleProcess.c solarisTeleNativeThread.c solarisTeleProcess.c proc.c
