@@ -181,8 +181,8 @@ public class InspectionFocus extends AbstractInspectionHolder {
                     setStackFrame(thread, thread.frames().first(), false);
                 }
             }
-            // User Model Policy:  when thread focus changes, also set the memory region focus to the thread's stack.
-            setMemoryRegion(this.thread.stack());
+            // User Model Policy:  when thread focus changes, also set the memory region focus to the thread's stack memory.
+            setMemoryRegion(this.thread.stackRegion());
 
         }
     }
@@ -312,7 +312,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
 
     /**
      * Shifts the focus of the Inspection to a particular {@link MemoryRegion}; notify interested inspectors.
-     * If the region is a  stack, then set the current thread to the thread owning the stack.
+     * If the region is a  stackRegion, then set the current thread to the thread owning the stack.
      * This is a view state change that can happen when there is no change to the VM state.
      */
     public void setMemoryRegion(MemoryRegion memoryRegion) {

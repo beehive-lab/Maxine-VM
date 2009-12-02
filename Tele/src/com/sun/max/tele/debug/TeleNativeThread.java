@@ -167,14 +167,14 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     private boolean framesChanged;
 
     /**
-     * The stack of a Java thread; {@code null} if this is a non-Java thread.
+     * The memory containing the stack of a Java thread; {@code null} if this is a non-Java thread.
      */
-    private final TeleNativeStack stack;
+    private final TeleNativeStackMemoryRegion stackRegion;
 
     /**
-     * The thread locals block of a Java thread; {@code null} if this is a non-Java thread.
+     * The memory containing the thread locals of a Java thread; {@code null} if this is a non-Java thread.
      */
-    private final TeleThreadLocalsBlock threadLocalsBlock;
+    private final TeleThreadLocalsMemoryRegion threadLocalsRegion;
 
     private final Map<Safepoint.State, TeleThreadLocalValues> teleVmThreadLocals;
 
@@ -204,12 +204,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         public int id;
         public long localHandle;
         public long handle;
-        public MemoryRegion stack;
-        public MemoryRegion threadLocalsBlock;
+        public MemoryRegion stackRegion;
+        public MemoryRegion threadLocalsRegion;
 
         @Override
         public String toString() {
-            return String.format("id=%d, localHandle=0x%08x, handle=%d, stack=%s, threadLocalsBlock=%s", id, localHandle, handle, MemoryRegion.Util.asString(stack), MemoryRegion.Util.asString(threadLocalsBlock));
+            return String.format("id=%d, localHandle=0x%08x, handle=%d, stackRegion=%s, threadLocalsRegion=%s", id, localHandle, handle, MemoryRegion.Util.asString(stackRegion), MemoryRegion.Util.asString(threadLocalsRegion));
         }
     }
 
@@ -224,9 +224,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         this.floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         this.stateRegisters = new TeleStateRegisters(vmConfiguration);
 
-        this.teleVmThreadLocals = !params.threadLocalsBlock.start().isZero() ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
-        this.stack = new TeleNativeStack(this, params.stack.start(), params.stack.size());
-        this.threadLocalsBlock = new TeleThreadLocalsBlock(this, params.threadLocalsBlock.start(), params.threadLocalsBlock.size());
+        this.teleVmThreadLocals = !params.threadLocalsRegion.start().isZero() ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
+        this.stackRegion = new TeleNativeStackMemoryRegion(this, params.stackRegion);
+        this.threadLocalsRegion = new TeleThreadLocalsMemoryRegion(this, params.threadLocalsRegion);
         this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
     }
 
@@ -521,17 +521,17 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
-     * @see com.sun.max.tele.MaxThread#stack()
+     * @see com.sun.max.tele.MaxThread#stackRegion()
      */
-    public final TeleNativeStack stack() {
-        return stack;
+    public final TeleNativeStackMemoryRegion stackRegion() {
+        return stackRegion;
     }
 
     /**
-     * @see com.sun.max.tele.MaxThread#stack()
+     * @see com.sun.max.tele.MaxThread#threadLocalsRegion()
      */
-    public final TeleThreadLocalsBlock threadLocalsBlock() {
-        return threadLocalsBlock;
+    public final TeleThreadLocalsMemoryRegion threadLocalsRegion() {
+        return threadLocalsRegion;
     }
 
     public final Pointer instructionPointer() {
@@ -639,8 +639,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         if (isLive()) {
             sb.append(",ip=0x").append(instructionPointer().toHexString());
             if (isJava()) {
-                sb.append(",stack_start=0x").append(stack().start().toHexString());
-                sb.append(",stack_size=").append(stack().size().toLong());
+                sb.append(",stack_start=0x").append(stackRegion().start().toHexString());
+                sb.append(",stack_size=").append(stackRegion().size().toLong());
             }
         }
         sb.append("]");
