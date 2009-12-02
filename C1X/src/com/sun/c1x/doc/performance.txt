@@ -18,7 +18,7 @@ Backend:
 	- Maxine XIR: make use of XirSite nullity, range check information
 	- better handling of tableswitch bytecode
 	- better handling of two operand LIR form
-	- Make the following bytecode implementations inline):
+	- Make the following bytecode implementations inline:
 		- f2i f2l f2d d2i d2l d2f (SSE2)
 		* lrem ldiv (64 bit)
 		- fneg dneg

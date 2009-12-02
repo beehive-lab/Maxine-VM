@@ -38,6 +38,7 @@ import com.sun.c1x.value.*;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public abstract class LIRAssembler {
 

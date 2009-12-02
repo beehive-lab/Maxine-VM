@@ -607,7 +607,7 @@ public class LinearScan {
                     hasCall.set(op.id >> 1);
                     localNumCalls++;
                 }
-                if (op.infoCount() > 0) {
+                if (op.hasInfo()) {
                     hasInfo.set(op.id >> 1);
                 }
 
@@ -1524,7 +1524,6 @@ public class LinearScan {
         Interval list1 = Interval.EndMarker;
         Interval list2 = Interval.EndMarker;
 
-        Interval[] result = new Interval[2];
         Interval list1Prev = null;
         Interval list2Prev = null;
         Interval v;
@@ -1555,9 +1554,7 @@ public class LinearScan {
         assert list1Prev == null || list1Prev.next == Interval.EndMarker : "linear list ends not with sentinel";
         assert list2Prev == null || list2Prev.next == Interval.EndMarker : "linear list ends not with sentinel";
 
-        result[0] = list1;
-        result[1] = list2;
-        return result;
+        return new Interval[] {list1, list2};
     }
 
     void sortIntervalsBeforeAllocation() {
@@ -2007,7 +2004,7 @@ public class LinearScan {
                 if (opId != -1 && hasInfo(opId)) {
                     // visit operation to collect all operands
                     //visitor.visit(op);
-                    assert op.infoCount() > 0 : "should not visit otherwise";
+                    assert op.hasInfo() : "should not visit otherwise";
 
                     for (ExceptionHandler h : op.exceptionEdges()) {
                         resolveExceptionEdge(h, opId, moveResolver);
@@ -2277,7 +2274,7 @@ public class LinearScan {
     }
 
     void computeOopMap(IntervalWalker iw, LIRInstruction op) {
-        assert op.infoCount() > 0 : "no oop map needed";
+        assert op.hasInfo() : "no oop map needed";
 
         // compute oopMap only for first CodeEmitInfo
         // because it is (in most cases) equal for all other infos of the same operation
@@ -2590,7 +2587,7 @@ public class LinearScan {
                 }
             }
 
-            if (op.infoCount() > 0) {
+            if (op.hasInfo()) {
                 // exception handling
                 if (compilation.hasExceptionHandlers()) {
                     for (ExceptionHandler handler : op.exceptionEdges()) {
@@ -2903,7 +2900,7 @@ public class LinearScan {
             for (int j = 0; j < instructions.size(); j++) {
                 LIRInstruction op = instructions.get(j);
 
-                if (op.infoCount() > 0) {
+                if (op.hasInfo()) {
                     iw.walkBefore(op.id);
                     boolean checkLive = true;
                     LIRBranch branch = null;

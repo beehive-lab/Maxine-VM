@@ -1394,7 +1394,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
         // set up the list of LIR instructions
         assert block.lir() == null : "LIR list already computed for this block";
-        lir = new LIRList(this, block);
+        lir = new LIRList(this);
         block.setLir(lir);
 
         lir.branchDestination(block.label());
