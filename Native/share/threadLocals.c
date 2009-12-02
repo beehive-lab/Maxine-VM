@@ -84,7 +84,7 @@ static Address allocate_tlBlock(size_t size) {
 #if os_GUESTVMXEN
 	return (Address) guestvmXen_virtualMemory_allocate(size, DATA_VM);
 #else
-	return (Address) valloc(tlBlockSize);
+	return (Address) valloc(size);
 #endif
 }
 
