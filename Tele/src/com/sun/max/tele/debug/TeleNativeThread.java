@@ -657,6 +657,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         sb.append(",handle=").append(handleString());
         sb.append(",local handle=").append(localHandle());
         sb.append(",type=").append(isPrimordial() ? "primordial" : (isJava() ? "Java" : "native"));
+        sb.append(",stat=").append(state.toString());
         sb.append("]");
         return sb.toString();
     }
