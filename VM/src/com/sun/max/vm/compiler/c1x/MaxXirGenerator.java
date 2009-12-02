@@ -605,6 +605,7 @@ public class MaxXirGenerator extends RiXirGenerator {
         XirTemplate unresolved;
         {
             // resolved case
+            // TODO: load the hub to provoke an NPE
             asm.restart();
             XirParameter addr = asm.createConstantInputParameter("addr", CiKind.Word); // address to call
             resolved = finishTemplate(asm, addr, "invokespecial");

@@ -233,31 +233,21 @@ public abstract class LIRAssembler {
         return null;
     }
 
-    void emitCall(LIRJavaCall op) {
+    void emitCall(LIRCall op) {
         verifyOopMap(op.info);
 
         switch (op.code) {
-            case IndirectCall:
-                // TODO: use the address operand
-                emitIndirectCall(op.method, null, op.info, op.cpi, op.constantPool);
-                break;
-            case StaticCall:
-                emitDirectCall(op.method, op.runtimeCall, op.info, op.cpi, op.constantPool);
-                break;
-            case SpecialCall:
-                emitDirectCall(op.method, op.runtimeCall, op.info, op.cpi, op.constantPool);
-                break;
             case InterfaceCall:
-                emitInterfaceCall(op.method, op.receiver(), op.info, op.cpi, op.constantPool);
+                emitInterfaceCall(op.method(), op.receiver(), op.info);
                 break;
             case VirtualCall:
-                emitVirtualCall(op.method, op.receiver(), op.info, op.cpi, op.constantPool);
+                emitVirtualCall(op.method(), op.receiver(), op.info);
                 break;
-            case XirDirectCall:
-                emitXirDirectCall(op.method, op.info);
+            case DirectCall:
+                emitDirectCall(op.target, op.info);
                 break;
-            case XirIndirectCall:
-                emitXirIndirectCall(op.method, op.info, op.lastArgument());
+            case IndirectCall:
+                emitIndirectCall(op.target, op.info, op.lastArgument());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -302,8 +292,6 @@ public abstract class LIRAssembler {
                 break;
             case NullCheck:
                 if (C1XOptions.GenExplicitNullChecks) {
-                    //NullPointerExceptionStub stub = new NullPointerExceptionStub(pcOffset, cinfo);
-                    //emitCodeStub(stub);
                     asm.recordExceptionHandlers(codePos(), op.info);
 
                     if (op.operand().isSingleCpu()) {
@@ -529,17 +517,15 @@ public abstract class LIRAssembler {
 
     protected abstract void emitRuntimeCall(CiRuntimeCall l, LIRDebugInfo info);
 
-    protected abstract void emitXirIndirectCall(RiMethod method, LIRDebugInfo info, LIROperand operand);
+    protected abstract void emitIndirectCall(Object target, LIRDebugInfo info, LIROperand operand);
 
-    protected abstract void emitXirDirectCall(RiMethod method, LIRDebugInfo info);
+    protected abstract void emitDirectCall(Object target, LIRDebugInfo info);
 
-    protected abstract void emitDirectCall(RiMethod ciMethod, CiRuntimeCall addr, LIRDebugInfo info, char cpi, RiConstantPool constantPool);
+    protected abstract void emitDirectCall(RiMethod ciMethod, LIRDebugInfo info);
 
-    protected abstract void emitIndirectCall(RiMethod ciMethod, LIROperand addr, LIRDebugInfo info, char cpi, RiConstantPool cp);
+    protected abstract void emitInterfaceCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info);
 
-    protected abstract void emitInterfaceCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool);
-
-    protected abstract void emitVirtualCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info, char cpi, RiConstantPool constantPool);
+    protected abstract void emitVirtualCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info);
 
     protected abstract void emitCallAlignment(LIROpcode code);
 

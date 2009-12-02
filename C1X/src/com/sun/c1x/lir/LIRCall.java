@@ -20,28 +20,39 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
+import com.sun.c1x.ri.RiMethod;
+import com.sun.c1x.ci.CiRuntimeCall;
 
-import com.sun.c1x.ci.*;
+import java.util.*;
 
 /**
  * This class represents a call instruction; either to a runtime method or a Java method.
  *
  * @author Marcelo Cintra
  */
-public abstract class LIRCall extends LIRInstruction {
+public class LIRCall extends LIRInstruction {
 
-    protected CiRuntimeCall runtimeCall;
-    protected List<LIROperand> arguments;
+    public final Object target;
+    public final List<LIROperand> arguments;
 
     private static LIROperand[] toArray(List<LIROperand> arguments) {
         return arguments.toArray(new LIROperand[arguments.size()]);
     }
 
-    public LIRCall(LIROpcode opcode, CiRuntimeCall rtCall, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
+    public LIRCall(LIROpcode opcode, Object target, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, boolean calleeSaved) {
         super(opcode, result, info, !calleeSaved, null, 0, 0, toArray(arguments));
-        this.runtimeCall = rtCall;
         this.arguments = arguments;
+        this.target = target;
+    }
+
+    /**
+     * Emits target assembly code for this instruction.
+     *
+     * @param masm the target assembler
+     */
+    @Override
+    public void emitCode(LIRAssembler masm) {
+        masm.emitCall(this);
     }
 
     /**
@@ -50,6 +61,14 @@ public abstract class LIRCall extends LIRInstruction {
      */
     public LIROperand receiver() {
         return operand(0);
+    }
+
+    public RiMethod method() {
+        return (RiMethod) target;
+    }
+
+    public CiRuntimeCall runtimeCall() {
+        return (CiRuntimeCall) target;
     }
 
     public LIROperand lastArgument() {
