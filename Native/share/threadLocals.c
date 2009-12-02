@@ -55,6 +55,7 @@
 #endif
 
 int theThreadLocalsAreaSize = -1;
+static int pageSize;
 
 /**
  * The global key used to retrieve a ThreadLocals object for a thread.
@@ -62,20 +63,52 @@ int theThreadLocalsAreaSize = -1;
 static ThreadLocalsKey theThreadLocalsKey;
 
 /**
+ * Returns the ThreadLocals block size for given thread.
+ * @param id thread id
+ */
+static int getTlBlockSize(jboolean primordial) {
+    Size stackSize;
+    Address stackBase;
+    thread_getStackInfo(&stackBase, &stackSize);
+    const int triggerPageSize = pageSize;
+    const int tlSize = threadLocalsAreaSize();
+    int stackWords = stackSize / sizeof(Address);
+    Size refMapSize = primordial ? 0 : wordAlign(1 + (stackWords / 8));
+	return triggerPageSize +
+	                    (3 * tlSize) +
+	                    sizeof(NativeThreadLocalsStruct) +
+	                    (primordial ? 0 : refMapSize);
+}
+
+static Address allocate_tlBlock(size_t size) {
+#if os_GUESTVMXEN
+	return (Address) guestvmXen_virtualMemory_allocate(size, DATA_VM);
+#else
+	return (Address) valloc(tlBlockSize);
+#endif
+}
+
+static void free_tlBlock(jint id, Address tlBlock) {
+#if os_GUESTVMXEN
+	guestvmXen_virtualMemory_deallocate((void *) tlBlock, getTlBlockSize(id == 0), DATA_VM);
+#else
+	free ((void *) tlBlock);
+#endif
+}
+
+/**
  * Allocates and initializes a thread locals block.
  *
  * @param id  > 0: the identifier reserved in the thread map for the thread being started
- *           == 0: the primordial thread
+ *           == 0: the primordial threadthreadLocalsAreaSize()
  *            < 0: temporary identifier (derived from the native thread handle) of a thread
  *                 that is being attached to the VM
- * @param allocateRefMap specifies if a reference map should be allocated
  */
-Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
+Address threadLocalsBlock_create(jint id) {
 
     c_ASSERT(threadLocalsBlock_current() == 0);
 
     const int tlSize = threadLocalsAreaSize();
-    const int pageSize = virtualMemory_getPageSize();
     const jboolean attaching = id < 0;
     const jboolean primordial = id == 0;
 
@@ -84,18 +117,13 @@ Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
     thread_getStackInfo(&stackBase, &stackSize);
 
     int stackWords = stackSize / sizeof(Address);
-    Size refMapSize = !allocateRefMap ? 0 : wordAlign(1 + (stackWords / 8));
+    Size refMapSize = primordial ? 0 : wordAlign(1 + (stackWords / 8));
 
     /* See diagram at top of threadLocals.h */
-    const int triggerPage = pageSize;
-    const int tlBlockSize =
-                    triggerPage +
-                    (3 * tlSize) +
-                    sizeof(NativeThreadLocalsStruct) +
-                    refMapSize;
+    const int tlBlockSize = getTlBlockSize(primordial);
 
     c_ASSERT(wordAlign(tlBlockSize) == (Address) tlBlockSize);
-    Address tlBlock = (Address) valloc(tlBlockSize);
+    Address tlBlock = allocate_tlBlock(tlBlockSize);
     if (tlBlock == 0) {
         return 0;
     }
@@ -108,7 +136,7 @@ Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
     NativeThreadLocals ntl = (NativeThreadLocals) current;
     current += sizeof(NativeThreadLocalsStruct);
     Address refMap = current;
-    if (allocateRefMap) {
+    if (!primordial) {
         current = current + refMapSize;
     }
 
@@ -285,7 +313,7 @@ void threadLocalsBlock_destroy(Address tlBlock) {
     threadLocalsBlock_setCurrent(0);
 
     /* Release the memory of the TL block. */
-    free((void *) tlBlock);
+    free_tlBlock(id, tlBlock);
 
 #if log_THREADS
     log_println("threadLocalsBlock_destroy: END t=%p", nativeThread);
@@ -294,6 +322,7 @@ void threadLocalsBlock_destroy(Address tlBlock) {
 
 void threadLocals_initialize(int threadLocalsAreaSize) {
     theThreadLocalsAreaSize = threadLocalsAreaSize;
+    pageSize = virtualMemory_getPageSize();
 #if !TELE
 #if os_DARWIN || os_LINUX
     pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);

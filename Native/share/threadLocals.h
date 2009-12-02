@@ -74,12 +74,11 @@ extern void threadLocals_initialize(int threadLocalsSize);
  *           == 0: the primordial thread
  *            < 0: temporary identifier (derived from the native thread handle) of a thread
  *                 that is being attached to the VM
- * @param allocateRefMap specifies if a reference map should be allocated
  * @return the thread locals block for the current thread. This value has been registered
  *         as the value associated with the ThreadLocalsKey for this thread. The destructor
  *         function specified when registering the value is threadLocalsBlock_destroy().
  */
-extern Address threadLocalsBlock_create(jint id, jboolean allocateRefMap);
+extern Address threadLocalsBlock_create(jint id);
 
 /**
  * Releases the resources for the current thread allocated and protected by threadLocalsBlock_create().
