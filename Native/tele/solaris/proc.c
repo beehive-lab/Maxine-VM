@@ -49,8 +49,12 @@ void log_flags(const char *prefix, int pr_flags, const char *suffix) {
     MATCH_FLAG(PR_ISSYS, "PR_ISSYS");
     MATCH_FLAG(PR_VFORKP, "PR_VFORKP");
     MATCH_FLAG(PR_ORPHAN, "PR_ORPHAN");
+#ifdef PR_NOSIGCHILD
     MATCH_FLAG(PR_NOSIGCHLD, "PR_NOSIGCHLD");
+#endif
+#ifdef PR_WAITPID
     MATCH_FLAG(PR_WAITPID, "PR_WAITPID");
+#endif
 /* The following process flags are modes settable by PCSET/PCUNSET */
     MATCH_FLAG(PR_FORK, "PR_FORK");
     MATCH_FLAG(PR_RLC, "PR_RLC");
