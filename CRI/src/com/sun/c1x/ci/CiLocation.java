@@ -31,9 +31,8 @@ public final class CiLocation extends CiValue {
     /**
      * Singleton object representing an invalid location.
      */
-    public static final CiLocation InvalidLocation = new CiLocation();
+    public static final CiLocation InvalidLocation = new CiLocation(CiKind.Illegal, null);
 
-    public final CiKind kind;
     public final CiRegister first;
     public final CiRegister second;
     public final int stackOffset;
@@ -43,42 +42,29 @@ public final class CiLocation extends CiValue {
     /**
      * Location representing a single register.
      *
-     * @param kind
-     *            the kind of the new location
-     * @param register
-     *            the register representing the new location
+     * @param kind the kind of the new location
+     * @param register the register representing the new location
      */
     public CiLocation(CiKind kind, CiRegister register) {
-        assert kind.size == 1;
-        this.kind = kind;
-        first = register;
-        second = null;
-        stackOffset = 0;
-        stackSize = 0;
-        this.callerStack = false;
-    }
-
-    public CiLocation(CiKind kind, CiRegister first, CiRegister second) {
-        assert kind.size == 2;
-        this.kind = kind;
-        this.first = first;
-        this.second = second;
-        stackOffset = 0;
-        stackSize = 0;
-        this.callerStack = false;
-    }
-
-    private CiLocation() {
-        this.kind = CiKind.Illegal;
-        this.first = null;
+        super(kind);
+        this.first = register;
         this.second = null;
         this.stackOffset = 0;
         this.stackSize = 0;
         this.callerStack = false;
     }
 
+    public CiLocation(CiKind kind, CiRegister first, CiRegister second) {
+        super(kind);
+        this.first = first;
+        this.second = second;
+        this.stackOffset = 0;
+        this.stackSize = 0;
+        this.callerStack = false;
+    }
+
     public CiLocation(CiKind kind, int stackOffset, int stackSize, boolean callerStack) {
-        this.kind = kind;
+        super(kind);
         this.first = null;
         this.second = null;
         this.stackOffset = stackOffset;
@@ -95,7 +81,7 @@ public final class CiLocation extends CiValue {
     }
 
     public boolean isRegister() {
-        return isSingleRegister() || isDoubleRegister();
+        return first != null;
     }
 
     public boolean isStackOffset() {
@@ -113,7 +99,6 @@ public final class CiLocation extends CiValue {
 
     @Override
     public boolean equals(Object obj) {
-
         if (obj == this) {
             return true;
         }
@@ -128,15 +113,13 @@ public final class CiLocation extends CiValue {
 
     @Override
     public String toString() {
-        if (isSingleRegister()) {
+        if (this == InvalidLocation) {
+            return "invalid";
+        } else if (isSingleRegister()) {
             return first.name;
         } else if (isDoubleRegister()) {
             return first.name + "+" + second.name;
-        } else if (isStackOffset()) {
-            return "STACKED REG at " + stackOffset;
-        } else {
-            assert !this.isValid();
-            return "BAD";
         }
+        return "@" + stackOffset + (callerStack ? "(caller)" : "(callee)");
     }
 }
