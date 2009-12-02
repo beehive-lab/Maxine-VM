@@ -32,6 +32,8 @@ import com.sun.c1x.util.*;
  */
 public final class LIRAddress extends LIROperand {
 
+    private static final Scale[] SCALE = Scale.values();
+    
     public enum Scale {
         Times1,
         Times2,
@@ -39,8 +41,8 @@ public final class LIRAddress extends LIROperand {
         Times8;
 
         public static Scale fromInt(int shift) {
-            assert shift < Scale.values().length;
-            return Scale.values()[shift];
+            assert shift < SCALE.length;
+            return SCALE[shift];
         }
 
         public int toInt() {

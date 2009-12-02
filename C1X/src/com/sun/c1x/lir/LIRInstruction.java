@@ -56,6 +56,7 @@ public abstract class LIRInstruction {
     public final boolean hasCall;
 
     public LocalStub stub;
+    public static final OperandMode[] OPERAND_MODES = OperandMode.values();
 
     public enum OperandMode {
         OutputMode,

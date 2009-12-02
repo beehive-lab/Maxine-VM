@@ -1271,7 +1271,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
 
             if (compilation.target.arch.isX86()) {
-                addr = new LIRAddress(baseOp, (LIRLocation) indexOp, LIRAddress.Scale.values()[log2scale], 0, dstType);
+                addr = new LIRAddress(baseOp, (LIRLocation) indexOp, LIRAddress.Scale.fromInt(log2scale), 0, dstType);
 
             } else if (compilation.target.arch.isSPARC()) {
                 if (indexOp.isIllegal() || log2scale == 0) {

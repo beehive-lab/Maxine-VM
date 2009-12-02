@@ -31,15 +31,17 @@ import com.sun.c1x.debug.*;
  */
 class IntervalWalker {
 
+    private static final IntervalKind[] INTERVAL_KINDS = IntervalKind.values();
+    
     protected final C1XCompilation compilation;
     protected final LinearScan allocator;
 
-    Interval[] unhandledFirst = new Interval[Interval.IntervalKind.values().length]; // sorted list of intervals, not
+    Interval[] unhandledFirst = new Interval[INTERVAL_KINDS.length]; // sorted list of intervals, not
                                                                                      // life before the current
                                                                                      // position
-    Interval[] activeFirst = new Interval[Interval.IntervalKind.values().length];    // sorted list of intervals, life
+    Interval[] activeFirst = new Interval[INTERVAL_KINDS.length];    // sorted list of intervals, life
                                                                                      // at the current position
-    Interval[] inactiveFirst = new Interval[Interval.IntervalKind.values().length];  // sorted list of intervals,
+    Interval[] inactiveFirst = new Interval[INTERVAL_KINDS.length];  // sorted list of intervals,
                                                                                      // intervals in a life time hole
                                                                                      // at the current position
 
@@ -91,12 +93,6 @@ class IntervalWalker {
         currentPosition = -1;
         current = null;
         nextInterval();
-    }
-
-    // append interval at top of list
-    void appendUnsorted(Interval list, Interval interval) {
-        interval.next = list;
-        list = interval; // TODO this looks like a bug
     }
 
     // append interval in order of current range from()
@@ -167,7 +163,7 @@ class IntervalWalker {
 
     void walkTo(IntervalState state, int from) {
         assert state == IntervalState.activeState || state == IntervalState.inactiveState : "wrong state";
-        for (IntervalKind kind : Interval.IntervalKind.values()) {
+        for (IntervalKind kind : INTERVAL_KINDS) {
             Interval prevprev = null;
             Interval prev = (state == IntervalState.activeState) ? activeFirst(kind) : inactiveFirst(kind);
             Interval next = prev;
