@@ -450,7 +450,7 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordStackLocationDataColor());
                 setText(hexString);
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.stack().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.stackRegion().start()).toLong();
                 final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
                 setToolTipText("Stack:  thread=" + threadName + ", offset=" + hexOffsetString);
                 break;
@@ -459,7 +459,7 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordStackLocationDataColor());
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.stack().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.stackRegion().start()).toLong();
                 final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setText(threadName + " " + decimalOffsetString);
                 setToolTipText("Stack:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));
@@ -470,7 +470,7 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 setText(hexString);
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.threadLocalsBlock().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.threadLocalsRegion().start()).toLong();
                 final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
                 setToolTipText("Thread locals:  thread=" + threadName + ", offset=" + hexOffsetString);
                 break;
@@ -479,7 +479,7 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.threadLocalsBlock().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.threadLocalsRegion().start()).toLong();
                 final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setText(threadName + " " + decimalOffsetString);
                 setToolTipText("Thread locals:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));

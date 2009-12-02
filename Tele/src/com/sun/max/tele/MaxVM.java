@@ -221,11 +221,12 @@ public interface MaxVM {
      * </ol>
      *
      * <p><b>Threads</b><br>
-     * Each thread is allocated a memory region for the thread's stack and also
-     * thread-local storage.
+     * Each thread is allocated a memory region for the thread's stack and another
+     * memory region for thread-local storage.
      * <br>See also:<ol>
      *   <li>{@link TeleProcess}</li>
-     *   <li>{@link TeleNativeStack}</li>
+     *   <li>{@link TeleNativeStackMemoryRegion}</li>
+     *   <li>{@link TeleThreadLocalsMemoryRegion}</li>
      *   <li>{@link #containsInThread(Address)}</li>
      * </ol>
      *
@@ -320,8 +321,8 @@ public interface MaxVM {
      * @param address a memory address in the VM.
      * @return is the address within a {@link MemoryRegion} associated with a thread?
      * @see #allocatedMemoryRegions()
-     * @see TeleNativeStack
-     * @see TeleThreadLocalsBlock
+     * @see TeleNativeStackMemoryRegion
+     * @see TeleThreadLocalsMemoryRegion
      */
     boolean containsInThread(Address address);
 

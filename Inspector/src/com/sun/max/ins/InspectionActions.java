@@ -1310,7 +1310,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), thread.stack(), "Thread " + thread.toShortString());
+                final Inspector inspector = new MemoryWordsInspector(inspection(), thread.stackRegion(), "Thread " + thread.toShortString());
                 inspector.highlight();
             } else {
                 gui().errorMessage("no thread selected");
