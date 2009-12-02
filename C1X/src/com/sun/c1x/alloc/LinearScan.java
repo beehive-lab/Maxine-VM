@@ -2342,21 +2342,13 @@ public class LinearScan {
     int appendScopeValueForOperand(LIROperand opr, List<CiValue> scopeValues) {
         if (opr.isSingleStack()) {
             int stackIdx = opr.singleStackIndex();
-            //boolean isOop = opr.isOopRegister();
             CiLocation location = new CiLocation(opr.kind, stackIdx, FrameMap.SPILL_SLOT_SIZE, false);
             scopeValues.add(location);
-//            if (isOop) {
-//                oopValues.add(location);
-//            }
             return 1;
 
         } else if (opr.isSingleCpu()) {
-            //boolean isOop = opr.isOopRegister();
             CiLocation location = new CiLocation(opr.kind, opr.asRegister());
             scopeValues.add(location);
-//            if (isOop) {
-//                oopValues.add(location);
-//            }
             return 1;
 
         } else if (opr.isSingleXmm() && compilation.target.arch.isX86()) {
