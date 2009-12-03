@@ -192,7 +192,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitBase(Base x) {
-        // Emit moves from physical registers / stack slots to virtual registers
+        // Emit moves from physical registers / stack slots to variables
 
         // increment invocation counters if needed
 
@@ -823,7 +823,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitLocal(Local x) {
         if (isIllegal(x.operand())) {
-            // allocate a virtual register for this local
+            // allocate a variable for this local
             x.setOperand(rlock(x.kind));
             instructionForOperand.put(x.operand().variableNumber(), x);
         }
@@ -1927,7 +1927,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 x.setOperand(forConstant(x));
             } else {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
-                // allocate a virtual register for this local or phi
+                // allocate a variable for this local or phi
                 operand = rlock(x.kind);
                 x.setOperand(operand);
                 instructionForOperand.put(operand.variableNumber(), x);
@@ -1938,7 +1938,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     private LIROperand operandForPhi(Phi phi) {
         if (phi.operand() == null || isIllegal(phi.operand())) {
-            // allocate a virtual register for this phi
+            // allocate a variable for this phi
             phi.setOperand(rlock(phi.kind));
             instructionForOperand.put(phi.operand().variableNumber(), phi);
         }

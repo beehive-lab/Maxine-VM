@@ -50,7 +50,7 @@ public class LinearScan {
     final BlockBegin[] cachedBlocks; // cached list with all blocks in linear-scan order (only correct if original list
     // keeps
     // unchanged)
-    final int numVirtualRegs; // number of virtual registers (without new registers introduced because of splitting intervals)
+    final int numVirtualRegs; // number of variables (without new registers introduced because of splitting intervals)
     // necessary)
     int numCalls; // total number of calls in this method
     int maxSpills; // number of stack slots used for intervals allocated to memory
@@ -66,7 +66,7 @@ public class LinearScan {
     BlockBegin[] blockOfOp; // mapping from LIRInstruction id to the BlockBegin containing this instruction
     BitMap hasInfo; // bit set for each LIRInstruction id that has a CodeEmitInfo
     BitMap hasCall; // bit set for each LIRInstruction id that destroys all caller save registers
-    BitMap2D intervalInLoop; // bit set for each virtual register that is contained in each loop
+    BitMap2D intervalInLoop; // bit set for each variable that is contained in each loop
     private final int numRegs;
 
     // Implementation of LinearScan
@@ -89,8 +89,8 @@ public class LinearScan {
     // * functions for converting LIR-Operands to register numbers
     //
     // Emulate a flat register file comprising physical integer registers,
-    // physical floating-point registers and virtual registers, in that order.
-    // Virtual registers already have appropriate numbers, since V0 is
+    // physical floating-point registers and variables, in that order.
+    // variables already have appropriate numbers, since V0 is
     // the number of physical registers.
     // Returns -1 for hi word if opr is a single word operand.
     //
@@ -101,7 +101,7 @@ public class LinearScan {
         assert opr.isRegister() : "should not call this otherwise";
 
         if (opr.isVariable()) {
-            assert opr.variableNumber() >= numRegs : "found a virtual register with a fixed-register number";
+            assert opr.variableNumber() >= numRegs : "found a variable with a fixed-register number";
             return opr.variableNumber();
         } else if (opr.isRegister()) {
             return opr.cpuRegNumber();
@@ -432,7 +432,7 @@ public class LinearScan {
                     // remove move from register to stack if the stack slot is guaranteed to be correct.
                     // only moves that have been inserted by LinearScan can be removed.
                     assert op.code == LIROpcode.Move : "only moves can have a opId of -1";
-                    assert op.result().isVariable() : "LinearScan inserts only moves to virtual registers";
+                    assert op.result().isVariable() : "LinearScan inserts only moves to variables";
 
                     LIROp1 op1 = (LIROp1) op;
                     Interval curInterval = intervalAt(op1.result().variableNumber());
@@ -839,7 +839,7 @@ public class LinearScan {
     }
 
     private void reportFailure(int numBlocks) {
-        TTY.println("Error: liveIn set of first block must be empty (when this fails, virtual registers are used before they are defined)");
+        TTY.println("Error: liveIn set of first block must be empty (when this fails, variables are used before they are defined)");
         TTY.print("affected registers:");
         TTY.println(ir.startBlock.lirBlock.liveIn.toString());
 
@@ -1191,7 +1191,7 @@ public class LinearScan {
     }
 
     void handleMethodArguments(LIRInstruction op) {
-        // special handling for method arguments (moves from stack to virtual register):
+        // special handling for method arguments (moves from stack to variable):
         // the interval gets no register assigned, but the stack slot.
         // it is split before the first use by the register allocator.
 
@@ -1212,7 +1212,7 @@ public class LinearScan {
 
                     assert move.id > 0 : "invalid id";
                     assert blockOfOpWithId(move.id).numberOfPreds() == 0 : "move from stack must be in first block";
-                    assert move.result().isVariable() : "result of move must be a virtual register";
+                    assert move.result().isVariable() : "result of move must be a variable";
 
                     // Util.traceLinearScan(4, "found move from stack slot %d to var %d", o.isSingleStack() ? o.singleStackIx() : o.doubleStackIx(), regNum(move.resultOpr()));
                 }

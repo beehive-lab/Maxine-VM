@@ -101,7 +101,7 @@ public final class Interval {
     }
 
     private int registerNumber;
-    private CiKind type; // valid only for virtual registers
+    private CiKind type; // valid only for variables
     private Range first; // sorted list of Ranges
     private List<Integer> usePosAndKinds; // sorted list of use-positions and their according use-kinds
 
