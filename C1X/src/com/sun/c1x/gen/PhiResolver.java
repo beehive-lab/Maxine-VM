@@ -62,7 +62,7 @@ public class PhiResolver {
 
     public void dispose() {
         int i;
-        // resolve any cycles in moves from and to virtual registers
+        // resolve any cycles in moves from and to variables
         for (i = virtualOperands().size() - 1; i >= 0; i--) {
             ResolveNode node = virtualOperands().get(i);
             if (!node.visited) {
@@ -73,7 +73,7 @@ public class PhiResolver {
             }
         }
 
-        // generate move for move from non virtual register to abitrary destination
+        // generate move for move from non variable to abitrary destination
         for (i = otherOperands().size() - 1; i >= 0; i--) {
             ResolveNode node = otherOperands().get(i);
             for (int j = node.numDestinations() - 1; j >= 0; j--) {

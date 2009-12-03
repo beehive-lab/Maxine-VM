@@ -51,11 +51,11 @@ public final class LIRLocation extends LIROperand {
     }
 
     /**
-     * Creates a new LIRLocation representing either a virtual register or a stack location, negative indices
+     * Creates a new LIRLocation representing either a variable or a stack location, with negative indices
      * represent stack locations.
      *
      * @param kind the kind of the location
-     * @param number the virtual register index or the stack location index if negative
+     * @param number the variable index or the stack location index if negative
      */
     LIRLocation(CiKind kind, int number) {
         super(kind);
@@ -66,7 +66,7 @@ public final class LIRLocation extends LIROperand {
     }
 
     /**
-     * Creates a new LIRLocation representing either a stack value or a CPU register.
+     * Creates a new LIRLocation representing a CPU register pair.
      *
      * @param kind the kind of the location
      * @param location1 the number of the location
