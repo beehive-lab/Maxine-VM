@@ -156,7 +156,7 @@ public class LIRList {
     }
 
     public void oop2reg(Object o, LIROperand reg) {
-        append(new LIROp1(LIROpcode.Move, LIROperandFactory.oopConst(o), reg));
+        append(new LIROp1(LIROpcode.Move, LIROperand.forObject(o), reg));
     }
 
     public void returnOp(LIROperand result) {
@@ -208,7 +208,7 @@ public class LIRList {
     }
 
     public void cmp(LIRCondition condition, LIROperand left, int right, LIRDebugInfo info) {
-        cmp(condition, left, LIROperandFactory.intConst(right), info);
+        cmp(condition, left, LIROperand.forInt(right), info);
     }
 
     public void cmp(LIRCondition condition, LIROperand left, int right) {
@@ -295,15 +295,15 @@ public class LIRList {
     }
 
     public void shiftLeft(LIROperand value, int count, LIROperand dst) {
-        shiftLeft(value, LIROperandFactory.intConst(count), dst, ILLEGAL);
+        shiftLeft(value, LIROperand.forInt(count), dst, ILLEGAL);
     }
 
     public void shiftRight(LIROperand value, int count, LIROperand dst) {
-        shiftRight(value, LIROperandFactory.intConst(count), dst, ILLEGAL);
+        shiftRight(value, LIROperand.forInt(count), dst, ILLEGAL);
     }
 
     public void unsignedShiftRight(LIROperand value, int count, LIROperand dst) {
-        unsignedShiftRight(value, LIROperandFactory.intConst(count), dst, ILLEGAL);
+        unsignedShiftRight(value, LIROperand.forInt(count), dst, ILLEGAL);
     }
 
     public void lcmp2int(LIROperand left, LIROperand right, LIROperand dst) {
@@ -335,7 +335,7 @@ public class LIRList {
     }
 
     public void cmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Cmp, condition, new LIRAddress(base, disp, CiKind.Int), LIROperandFactory.intConst(c), info));
+        append(new LIROp2(LIROpcode.Cmp, condition, new LIRAddress(base, disp, CiKind.Int), LIROperand.forInt(c), info));
     }
 
     public void cmpRegMem(LIRCondition condition, LIROperand reg, LIRAddress addr, LIRDebugInfo info) {

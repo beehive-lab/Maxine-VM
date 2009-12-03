@@ -228,8 +228,8 @@ final class MoveResolver {
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        LIROperand fromOpr = LIROperandFactory.virtualRegister(fromInterval.registerNumber(), fromInterval.type());
-        LIROperand toOpr = LIROperandFactory.virtualRegister(toInterval.registerNumber(), toInterval.type());
+        LIROperand fromOpr = LIROperand.forVariable(fromInterval.registerNumber(), fromInterval.type());
+        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.type());
 
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
@@ -243,7 +243,7 @@ final class MoveResolver {
         assert insertList != null && insertIdx != -1 : "must setup insert position first";
         assert insertionBuffer.lirList() == insertList : "wrong insertion buffer";
 
-        LIROperand toOpr = LIROperandFactory.virtualRegister(toInterval.registerNumber(), toInterval.type());
+        LIROperand toOpr = LIROperand.forVariable(toInterval.registerNumber(), toInterval.type());
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {

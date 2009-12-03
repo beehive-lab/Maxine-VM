@@ -86,7 +86,7 @@ public class LIRItem {
         if (gen.canStoreAsConstant(value, type)) {
             result = value.operand();
             if (!isConstant(result)) {
-                result = LIROperandFactory.constant(value);
+                result = forConstant(value);
             }
         } else if (type == CiKind.Byte || type == CiKind.Boolean) {
             loadByteItem();
@@ -151,7 +151,7 @@ public class LIRItem {
             LIROperand r = value.operand();
             if (gen.canInlineAsConstant(value)) {
                 if (!isConstant(r)) {
-                    r = LIROperandFactory.constant(value);
+                    r = forConstant(value);
                 }
                 result = r;
             } else {

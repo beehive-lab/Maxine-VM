@@ -145,7 +145,7 @@ public class LinearScan {
     final IntervalClosure isVirtualInterval = new IntervalClosure() {
         @Override
         public boolean apply(Interval i) {
-            return i.registerNumber() >= CiRegister.FirstVirtualRegisterNumber;
+            return i.registerNumber() >= CiRegister.MaxPhysicalRegisterNumber;
         }
     };
 
@@ -208,7 +208,7 @@ public class LinearScan {
         intervalsArray[regNum] = interval;
 
         // assign register number for precolored intervals
-        if (regNum < CiRegister.FirstVirtualRegisterNumber) {
+        if (regNum < CiRegister.MaxPhysicalRegisterNumber) {
             interval.assignReg(regNum);
         }
         return interval;
@@ -867,7 +867,7 @@ public class LinearScan {
         // (live set must be empty at fixed intervals)
         for (int i = 0; i < numBlocks; i++) {
             BlockBegin block = blockAt(i);
-            for (int j = 0; j < CiRegister.FirstVirtualRegisterNumber; j++) {
+            for (int j = 0; j < CiRegister.MaxPhysicalRegisterNumber; j++) {
                 assert !block.lirBlock.liveIn.get(j) : "liveIn  set of fixed register must be empty";
                 assert !block.lirBlock.liveOut.get(j) : "liveOut set of fixed register must be empty";
                 assert !block.lirBlock.liveGen.get(j) : "liveGen set of fixed register must be empty";
@@ -979,7 +979,7 @@ public class LinearScan {
     }
 
     boolean isProcessedRegNum(int reg) {
-        return reg > CiRegister.FirstVirtualRegisterNumber
+        return reg > CiRegister.MaxPhysicalRegisterNumber
                || reg >= allocatableRegisters.registerMapping.length
                || (reg >= 0 && reg < allocatableRegisters.registerMapping.length
                    && allocatableRegisters.registerMapping[reg] != null
@@ -1321,7 +1321,7 @@ public class LinearScan {
             int size = live.size();
             for (int number = live.getNextOneOffset(0, size); number < size; number = live.getNextOneOffset(number + 1, size)) {
                 assert live.get(number) : "should not stop here otherwise";
-                assert number >= CiRegister.FirstVirtualRegisterNumber : "fixed intervals must not be live on block bounds";
+                assert number >= CiRegister.MaxPhysicalRegisterNumber : "fixed intervals must not be live on block bounds";
                 // Util.traceLinearScan(2, "live in %d to %d", number, blockTo + 2);
 
                 addUse(number, blockFrom, blockTo + 2, IntervalUseKind.noUse, CiKind.Illegal);
@@ -1923,7 +1923,7 @@ public class LinearScan {
             }
             if (con != null && (LIROperand.isIllegal(con.operand()) || LIROperand.isConstant(con.operand()))) {
                 // unpinned constants may have no register, so add mapping from constant to interval
-                moveResolver.addMapping(LIROperandFactory.constant(con), toInterval);
+                moveResolver.addMapping(LIROperand.forConstant(con), toInterval);
             } else {
                 // search split child at the throwing opId
                 Interval fromInterval = intervalAtOpId(fromValue.operand().vregNumber(), throwingOpId);
@@ -2050,7 +2050,7 @@ public class LinearScan {
         if (assignedReg >= numRegs) {
             // stack slot
             assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-            return LIROperandFactory.stack(assignedReg - numRegs, type);
+            return LIROperand.forStack(assignedReg - numRegs, type);
 
         } else {
             // register
@@ -2058,13 +2058,13 @@ public class LinearScan {
                 case Object: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleLocation(CiKind.Object, toRegister(assignedReg));
+                    return LIROperand.forRegister(CiKind.Object, toRegister(assignedReg));
                 }
 
                 case Word: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleLocation(CiKind.Word, toRegister(assignedReg));
+                    return LIROperand.forRegister(CiKind.Word, toRegister(assignedReg));
                 }
 
                 case Byte:
@@ -2074,7 +2074,7 @@ public class LinearScan {
                 case Int: {
                     assert isCpu(assignedReg) : "no cpu register";
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleLocation(type, toRegister(assignedReg));
+                    return LIROperand.forRegister(type, toRegister(assignedReg));
                 }
 
                 case Long: {
@@ -2090,12 +2090,12 @@ public class LinearScan {
                     }
 
                     if (compilation.target.arch.is64bit()) {
-                        return LIROperandFactory.doubleLocation(CiKind.Long, toRegister(assignedReg), toRegister(assignedReg));
+                        return LIROperand.forRegisters(CiKind.Long, toRegister(assignedReg), toRegister(assignedReg));
                     } else {
                         if (compilation.target.arch.isSPARC()) {
-                            return LIROperandFactory.doubleLocation(CiKind.Long, toRegister(assignedRegHi), toRegister(assignedReg));
+                            return LIROperand.forRegisters(CiKind.Long, toRegister(assignedRegHi), toRegister(assignedReg));
                         } else {
-                            return LIROperandFactory.doubleLocation(CiKind.Long, toRegister(assignedReg), toRegister(assignedRegHi));
+                            return LIROperand.forRegisters(CiKind.Long, toRegister(assignedReg), toRegister(assignedRegHi));
                         }
                     }
                 }
@@ -2104,27 +2104,27 @@ public class LinearScan {
                     if (compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                        return LIROperandFactory.singleLocation(CiKind.Float, toRegister(assignedReg));
+                        return LIROperand.forRegister(CiKind.Float, toRegister(assignedReg));
                     }
 
                     assert interval.assignedRegHi() == getAnyreg() : "must not have hi register";
-                    return LIROperandFactory.singleLocation(CiKind.Float, toRegister(assignedReg));
+                    return LIROperand.forRegister(CiKind.Float, toRegister(assignedReg));
                 }
 
                 case Double: {
                     if (compilation.target.arch.isX86()) {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double xmm values are stored in one register)";
-                        return LIROperandFactory.doubleLocation(CiKind.Double, toRegister(assignedReg), toRegister(assignedReg));
+                        return LIROperand.forRegisters(CiKind.Double, toRegister(assignedReg), toRegister(assignedReg));
                     }
 
                     LIROperand result;
                     if (compilation.target.arch.isSPARC()) {
                         assert assignedReg % 2 == 0 && assignedReg + 1 == interval.assignedRegHi() : "must be sequential and even";
-                        result = LIROperandFactory.doubleLocation(CiKind.Double, toRegister(interval.assignedRegHi()), toRegister(assignedReg));
+                        result = LIROperand.forRegisters(CiKind.Double, toRegister(interval.assignedRegHi()), toRegister(assignedReg));
                     } else {
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double fpu values are stored in one register on Intel)";
-                        result = LIROperandFactory.singleLocation(CiKind.Double, toRegister(assignedReg));
+                        result = LIROperand.forRegister(CiKind.Double, toRegister(assignedReg));
                     }
                     return result;
                 }
@@ -2154,7 +2154,7 @@ public class LinearScan {
 
     LIROperand canonicalSpillOpr(Interval interval) {
         assert interval.canonicalSpillSlot() >= numRegs : "canonical spill slot not set";
-        return LIROperandFactory.stack(interval.canonicalSpillSlot() - numRegs, interval.type());
+        return LIROperand.forStack(interval.canonicalSpillSlot() - numRegs, interval.type());
     }
 
     LIRLocation colorLirOpr(LIROperand opr, int opId, LIRInstruction.OperandMode mode) {
@@ -2234,7 +2234,7 @@ public class LinearScan {
 
             assert interval.currentFrom() <= op.id && op.id <= interval.currentTo() : "interval should not be active otherwise";
             assert interval.assignedRegHi() == getAnyreg() : "oop must be single word";
-            assert interval.registerNumber() >= CiRegister.FirstVirtualRegisterNumber : "fixed interval found";
+            assert interval.registerNumber() >= CiRegister.MaxPhysicalRegisterNumber : "fixed interval found";
 
             // Check if this range covers the instruction. Intervals that
             // start or end at the current operation are not included in the
@@ -2399,7 +2399,7 @@ public class LinearScan {
                 // Unpinned constants may have a virtual operand for a part of the lifetime
                 // or may be illegal when it was optimized away,
                 // so always use a constant operand
-                opr = LIROperandFactory.constant(con);
+                opr = LIROperand.forConstant(con);
             }
             assert opr.isVariable() || LIROperand.isConstant(opr) : "other cases not allowed here";
 
@@ -2794,7 +2794,7 @@ public class LinearScan {
                 throw new CiBailout("");
             }
 
-            if (i1.registerNumber() >= CiRegister.FirstVirtualRegisterNumber && i1.type() == CiKind.Illegal) {
+            if (i1.registerNumber() >= CiRegister.MaxPhysicalRegisterNumber && i1.type() == CiKind.Illegal) {
                 TTY.println("Interval %d has no type assigned", i1.registerNumber());
                 i1.print(TTY.out, this);
                 TTY.cr();

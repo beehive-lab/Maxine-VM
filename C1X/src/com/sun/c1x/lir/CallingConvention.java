@@ -54,9 +54,9 @@ public class CallingConvention {
         if (location.isStack()) {
             int stackOffset = location.stackOffset();
             if (location.isCallerFrame()) {
-                return LIROperandFactory.address(LIROperandFactory.singleLocation(CiKind.Int, CiRegister.CallerStack), stackOffset, location.kind);
+                return LIROperand.forAddress(LIROperand.forRegister(CiKind.Int, CiRegister.CallerStack), stackOffset, location.kind);
             } else {
-                return LIROperandFactory.address(LIROperandFactory.singleLocation(CiKind.Int, CiRegister.Stack), stackOffset, location.kind);
+                return LIROperand.forAddress(LIROperand.forRegister(CiKind.Int, CiRegister.Stack), stackOffset, location.kind);
             }
         } else if (location.second() == null) {
             assert location.first() != null;
