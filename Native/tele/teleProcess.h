@@ -45,8 +45,8 @@ int task_write(task_t task, vm_address_t dst, void *src, size_t size);
 #include "proc.h"
 #define PROCESS_MEMORY_PARAMS struct ps_prochandle *ph,
 #define PROCESS_MEMORY_ARGS ph,
-#define READ_PROCESS_MEMORY(src, dst, size) proc_Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
-#define WRITE_PROCESS_MEMORY(dst, src, size) proc_Pwrite(ph, src, length, (uintptr_t) dst);
+#define READ_PROCESS_MEMORY(src, dst, size) Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
+#define WRITE_PROCESS_MEMORY(dst, src, size) Pwrite(ph, src, length, (uintptr_t) dst);
 #elif os_GUESTVMXEN
 extern unsigned short readbytes(unsigned long src, char *dst, unsigned short n);
 extern unsigned short writebytes(unsigned long dst, char *src, unsigned short n);

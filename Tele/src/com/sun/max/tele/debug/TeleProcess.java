@@ -201,17 +201,16 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                             default:
                                 // This thread not stopped at breakpoint or watchpoint
                         }
-                        if (resumeExecution) {
-                            // Reactivate the deactivated breakpoints
-                            for (TeleTargetBreakpoint bp : deactivatedBreakpoints) {
-                                bp.activate();
-                            }
-                            try {
-                                TeleProcess.this.resume();
-                            } catch (OSExecutionRequestException executionRequestException) {
-                                throw new ProcessTerminatedException("attempting to resume after handling transient breakpoint or watchpoint");
-                            }
-                            break;
+                    }
+                    if (resumeExecution) {
+                        // Reactivate the deactivated breakpoints
+                        for (TeleTargetBreakpoint bp : deactivatedBreakpoints) {
+                            bp.activate();
+                        }
+                        try {
+                            TeleProcess.this.resume();
+                        } catch (OSExecutionRequestException executionRequestException) {
+                            throw new ProcessTerminatedException("attempting to resume after handling transient breakpoint or watchpoint");
                         }
                     }
                 } while (resumeExecution);

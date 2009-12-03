@@ -67,7 +67,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeReadRegisters(
     prfpregset_t osFloatingPointRegisters;
 
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
-	if (proc_Plwp_getregs(ph, lwpId, osRegisters) != 0) {
+	if (Plwp_getregs(ph, lwpId, osRegisters) != 0) {
 		log_println("Plwp_getregs failed");
 		return false;
 	}
@@ -91,23 +91,25 @@ static jboolean setRegister(jlong processHandle, jlong lwpId, int registerIndex,
 	struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 	INIT_LWP_HANDLE(lh, processHandle, lwpId, false);
 
-	if (proc_Lwait(lh, 0) != 0) {
-    	log_println("Lwait failed");
-    	proc_Lfree(lh);
-		return false;
-	}
+    /* This is only called after a Pwait so all threads should be stopped. */
+    c_ASSERT((lh->lwp_status.pr_flags & PR_STOPPED) != 0);
 
+#if 0
+    Lputareg(lh, registerIndex, value);
+#else
 	/* We use Plwp_getregs & Plwp_setregs instead of Lputareg as the latter is buggy. */
     prgregset_t osRegisters;
-    if (proc_Plwp_getregs(ph, lwpId, osRegisters) != 0) {
+    if (Plwp_getregs(ph, lwpId, osRegisters) != 0) {
         log_println("Plwp_getregs failed");
-        proc_Lfree(lh);
+        Lfree(lh);
         return false;
     }
     osRegisters[registerIndex] = value;
     Plwp_setregs(ph, lwpId, osRegisters);
+#endif
 
-    proc_Lfree(lh);
+    Lsync(lh);
+    Lfree(lh);
     return true;
 }
 
@@ -121,18 +123,12 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeSingleStep(JNI
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     INIT_LWP_HANDLE(lh, processHandle, lwpId, false);
 
-    if (proc_Lclearfault(lh) != 0) {
-        log_println("Lclearfault failed");
-        proc_Lfree(lh);
-        return false;
-    }
-
-    if (proc_Lsetrun(lh, 0, PRSTEP) != 0) {
+    if (Lsetrun(lh, 0, PRSTEP | PRCFAULT) != 0) {
         log_println("Lsetrun failed");
-        proc_Lfree(lh);
+        Lfree(lh);
         return false;
     }
 
-    proc_Lfree(lh);
+    Lfree(lh);
     return true;
 }

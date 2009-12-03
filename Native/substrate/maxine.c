@@ -330,7 +330,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
-    Address tlBlock =  threadLocalsBlock_create(0, false);
+    Address tlBlock =  threadLocalsBlock_create(0);
 
     Address primordial_tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
     image_write_value(Address, primordialThreadLocalsOffset, primordial_tl);
