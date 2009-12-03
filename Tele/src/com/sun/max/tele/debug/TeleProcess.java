@@ -201,6 +201,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 break;
                         }
                     }
+                    if (pauseRequestPending) {
+                        // Whether or not the process has threads at breakpoints or watchpoints,
+                        // we must not resume execution if a client-originated pause has been requested.
+                        resumeExecution = false;
+                        pauseRequestPending = false;
+                    }
                     if (resumeExecution) {
                         targetBreakpointFactory().setActiveAll(true);
                         try {
@@ -356,6 +362,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * Threads newly died since the previous execution request (may contain newly created threads).
      */
     private final Set<TeleNativeThread> threadsDied = new TreeSet<TeleNativeThread>();
+
+    /**
+     * Whether a client-initiated request to pause the process is pending.
+     */
+    private boolean pauseRequestPending = false;
 
     private int transportDebugLevel = 0;
 
@@ -526,6 +537,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         if (processState != RUNNING) {
             throw new InvalidProcessRequestException("Can only suspend a running tele process, not a tele process that is " + processState.toString().toLowerCase());
         }
+        pauseRequestPending = true;
         suspend();
     }
 
