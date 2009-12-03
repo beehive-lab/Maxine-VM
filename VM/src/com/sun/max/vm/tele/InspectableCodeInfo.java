@@ -38,12 +38,15 @@ public class InspectableCodeInfo {
 
     /**
      * Make information inspectable about a just completed method compilation.
+     * <br>
+     * Should check Inspectable.isVmInspected() here, so that we can avoid the
+     * overhead when not being inspected, but we discovered that making this test
+     * slows things down slightly, for reasons not understood.
      *
      * @param targetMethod compilation just completed
+     * @see Inspectable#isVmInspected()
      */
     public static void notifyCompilationComplete(TargetMethod targetMethod) {
-        // Should check Inspectable.isVmInspected() here, but we discovered that it
-        // slows things down slightly, for reasons not understood.
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         compilationFinished(classMethodActor.holder().typeDescriptor.string,
             classMethodActor.name.string,
