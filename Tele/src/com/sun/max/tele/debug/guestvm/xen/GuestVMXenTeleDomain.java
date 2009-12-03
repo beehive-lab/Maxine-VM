@@ -72,10 +72,10 @@ public class GuestVMXenTeleDomain extends TeleProcess {
          * N.B. "base" is low address (i.e., actually the end of the stack!).
          */
         final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize;
-        final long stackBottom = pageAlign(params.stack.start().toLong(), pageSize) + pageSize;
-        final long adjStackSize = params.stack.size().toLong() - (stackBottom - params.stack.start().toLong());
-        final MemoryRegion adjStack = new FixedMemoryRegion(Address.fromLong(stackBottom), Size.fromLong(adjStackSize), params.stack.description());
-        params.stack = adjStack;
+        final long stackBottom = pageAlign(params.stackRegion.start().toLong(), pageSize) + pageSize;
+        final long adjStackSize = params.stackRegion.size().toLong() - (stackBottom - params.stackRegion.start().toLong());
+        final MemoryRegion adjStack = new FixedMemoryRegion(Address.fromLong(stackBottom), Size.fromLong(adjStackSize), params.stackRegion.description());
+        params.stackRegion = adjStack;
         return new GuestVMXenNativeThread(this, params);
     }
 

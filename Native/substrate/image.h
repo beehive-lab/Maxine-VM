@@ -66,8 +66,8 @@ typedef struct image_Header {
      * Used e.g. for the primordial card table. */
     jint auxiliarySpaceSize;
 
-    /* See the comment for the 'info' static field in the MaxineMessenger class. */
-    jint messengerInfoOffset;
+    /* See the comment for the 'info' static field in the Inspectable class. */
+    jint inspectableSwitchOffset;
 
     /* See the comment for the 'threadLocalsListHead' field in the VmThreadMap class. */
     jint threadLocalsListHeadOffset;

@@ -22,7 +22,6 @@ package com.sun.max.ins;
 
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -67,7 +66,7 @@ public interface ViewFocusListener {
     /**
      * Notifies that the breakpoint focus has been changed (view state only), possibly to null.
      */
-    void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint);
+    void breakpointFocusSet(MaxBreakpoint oldBreakpoint, MaxBreakpoint breakpoint);
 
     /**
      * Notifies that the watchpoint focus has been changed (view state only), possibly to null.

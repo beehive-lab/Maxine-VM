@@ -166,8 +166,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     // Read VM memory and update various bits of cached state about the VM state
                     teleVM().refresh(++epoch);
                     refreshThreads();
-                    final Sequence<TeleTargetBreakpoint> deactivatedBreakpoints = targetBreakpointFactory().deactivateAll();
 
+                    // TODO (mlvdv) remove this debugging code when no longer needed.
+//                    boolean atBreakpoint = false;
+//                    for (TeleNativeThread thread : threads()) {
+//                        if (thread.state() == ThreadState.BREAKPOINT) {
+//                            atBreakpoint = true;
+//                            break;
+//                        }
+//                    }
+//                    ProgramWarning.check(atBreakpoint, "vm stopped; no thread at breakpoint");
+
+                    targetBreakpointFactory().setActiveAll(false);
                     // Look through all the threads to see if any special attention is needed
                     for (TeleNativeThread thread : threads()) {
                         switch(thread.state()) {
@@ -200,13 +210,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 break;
                             default:
                                 // This thread not stopped at breakpoint or watchpoint
+                                break;
                         }
                     }
                     if (resumeExecution) {
-                        // Reactivate the deactivated breakpoints
-                        for (TeleTargetBreakpoint bp : deactivatedBreakpoints) {
-                            bp.activate();
-                        }
+                        targetBreakpointFactory().setActiveAll(true);
                         try {
                             TeleProcess.this.resume();
                         } catch (OSExecutionRequestException executionRequestException) {
@@ -540,8 +548,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @param instructionPointer the current value of the instruction pointer
      * @param stackBase the lowest known address of the stack
      * @param stackSize the size of the stack in bytes
-     * @param tlb the thread locals block of the thread
-     * @param tlbSize the size of the thread locals block
+     * @param tlb the thread locals region of the thread
+     * @param tlbSize the size of the thread locals region
      * @param tlaSize the size of a thread locals area
      */
     public final void jniGatherThread(AppendableSequence<TeleNativeThread> threads,
@@ -558,15 +566,15 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         assert state >= 0 && state < ThreadState.VALUES.length() : state;
         TeleNativeThread thread = handleToThreadMap.get(localHandle);
 
-        MemoryRegion stack = new FixedMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack");
-        MemoryRegion threadLocalsBlock = new FixedMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals block");
+        MemoryRegion stackRegion = new FixedMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack region");
+        MemoryRegion threadLocalsRegion = new FixedMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals region");
 
         Params params = new Params();
         params.id = id;
         params.localHandle = localHandle;
         params.handle = handle;
-        params.stack = stack;
-        params.threadLocalsBlock = threadLocalsBlock;
+        params.stackRegion = stackRegion;
+        params.threadLocalsRegion = threadLocalsRegion;
 
         if (thread == null) {
             thread = createTeleNativeThread(params);
@@ -588,9 +596,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
         final Map<Safepoint.State, Pointer> vmThreadLocals;
         if (tlb != 0) {
-            Pointer enabledVmThreadLocals = TeleThreadLocalsBlock.getThreadLocalsArea(threadLocalsBlock.start(), tlaSize, Safepoint.State.ENABLED).asPointer();
-            Pointer disabledVmThreadLocals = TeleThreadLocalsBlock.getThreadLocalsArea(threadLocalsBlock.start(), tlaSize, Safepoint.State.DISABLED).asPointer();
-            Pointer triggeredVmThreadLocals = TeleThreadLocalsBlock.getThreadLocalsArea(threadLocalsBlock.start(), tlaSize, Safepoint.State.TRIGGERED).asPointer();
+            Pointer enabledVmThreadLocals = TeleThreadLocalsMemoryRegion.getThreadLocalsArea(threadLocalsRegion, tlaSize, Safepoint.State.ENABLED).asPointer();
+            Pointer disabledVmThreadLocals = TeleThreadLocalsMemoryRegion.getThreadLocalsArea(threadLocalsRegion, tlaSize, Safepoint.State.DISABLED).asPointer();
+            Pointer triggeredVmThreadLocals = TeleThreadLocalsMemoryRegion.getThreadLocalsArea(threadLocalsRegion, tlaSize, Safepoint.State.TRIGGERED).asPointer();
             vmThreadLocals = new EnumMap<Safepoint.State, Pointer>(Safepoint.State.class);
             vmThreadLocals.put(Safepoint.State.ENABLED, enabledVmThreadLocals);
             vmThreadLocals.put(Safepoint.State.DISABLED, disabledVmThreadLocals);

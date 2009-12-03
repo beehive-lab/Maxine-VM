@@ -137,7 +137,7 @@ public class SpecialReferenceManager {
         }
 
         // Special reference map of Inspector
-        if (MaxineMessenger.isVmInspected()) {
+        if (Inspectable.isVmInspected()) {
             processInspectableWeakReferencesMemory(gripForwarder);
         }
     }

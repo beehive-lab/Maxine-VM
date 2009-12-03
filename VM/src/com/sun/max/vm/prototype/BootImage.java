@@ -216,9 +216,9 @@ public class BootImage {
         public final int auxiliarySpaceSize;
 
         /**
-         * @see MaxineMessenger#info
+         * @see Inspectable#info
          */
-        public final int messengerInfoOffset;
+        public final int inspectableSwitchOffset;
 
         /**
          * @see VmThreadMap#ACTIVE
@@ -291,7 +291,7 @@ public class BootImage {
 
             auxiliarySpaceSize = endian.readInt(dataInputStream);
 
-            messengerInfoOffset = endian.readInt(dataInputStream);
+            inspectableSwitchOffset = endian.readInt(dataInputStream);
             threadLocalsListHeadOffset = endian.readInt(dataInputStream);
             primordialThreadLocalsOffset = endian.readInt(dataInputStream);
 
@@ -347,7 +347,7 @@ public class BootImage {
 
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(heapSize + codeSize);
 
-            messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "info");
+            inspectableSwitchOffset = staticFieldPointerOffset(dataPrototype, Inspectable.class, "info");
             threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
             primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
 

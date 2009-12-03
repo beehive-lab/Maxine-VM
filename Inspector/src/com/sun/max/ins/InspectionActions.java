@@ -1310,7 +1310,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), thread.stack(), "Thread " + thread.toShortString());
+                final Inspector inspector = new MemoryWordsInspector(inspection(), thread.stackRegion(), "Thread " + thread.toShortString());
                 inspector.highlight();
             } else {
                 gui().errorMessage("no thread selected");
@@ -2439,7 +2439,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
-                public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
+                public void breakpointFocusSet(MaxBreakpoint oldBreakpoint, MaxBreakpoint breakpoint) {
                     refresh(false);
                 }
             });
@@ -2448,10 +2448,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleBreakpoint selectedTeleBreakpoint = focus().breakpoint();
-            if (selectedTeleBreakpoint != null) {
+            final MaxBreakpoint selectedBreakpoint = focus().breakpoint();
+            if (selectedBreakpoint != null) {
                 focus().setBreakpoint(null);
-                selectedTeleBreakpoint.remove();
+                selectedBreakpoint.remove();
             } else {
                 gui().errorMessage("No breakpoint selected");
             }
@@ -2479,19 +2479,19 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Remove breakpoint";
 
-        final TeleBreakpoint teleBreakpoint;
+        final MaxBreakpoint breakpoint;
 
-        RemoveBreakpointAction(TeleBreakpoint teleBreakpoint, String actionTitle) {
+        RemoveBreakpointAction(MaxBreakpoint breakpoint, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleBreakpoint = teleBreakpoint;
+            this.breakpoint = breakpoint;
         }
 
         @Override
         protected void procedure() {
-            if (focus().breakpoint() == teleBreakpoint) {
+            if (focus().breakpoint() == breakpoint) {
                 focus().setBreakpoint(null);
             }
-            teleBreakpoint.remove();
+            breakpoint.remove();
         }
     }
 
@@ -2500,8 +2500,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * @param actionTitle a string name for the Action, uses default name if null.
      * @return an Action that will remove the breakpoint
      */
-    public final InspectorAction removeBreakpoint(TeleBreakpoint teleBreakpoint, String actionTitle) {
-        return new RemoveBreakpointAction(teleBreakpoint, actionTitle);
+    public final InspectorAction removeBreakpoint(MaxBreakpoint breakpoint, String actionTitle) {
+        return new RemoveBreakpointAction(breakpoint, actionTitle);
     }
 
     /**
@@ -2525,10 +2525,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            for (TeleTargetBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
+            for (MaxBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
                 targetBreakpoint.remove();
             }
-            for (TeleBytecodeBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
+            for (MaxBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
                 bytecodeBreakpoint.remove();
             }
         }
@@ -2554,11 +2554,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class EnableBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Enable breakpoint";
-        final TeleBreakpoint teleBreakpoint;
+        final MaxBreakpoint teleBreakpoint;
 
-        EnableBreakpointAction(TeleBreakpoint teleBreakpoint, String actionTitle) {
+        EnableBreakpointAction(MaxBreakpoint breakpoint, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleBreakpoint = teleBreakpoint;
+            this.teleBreakpoint = breakpoint;
         }
 
         @Override
@@ -2577,12 +2577,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param surrogate for a breakpoint in the VM.
+     * @param breakpoint surrogate for a breakpoint in the VM.
      * @param actionTitle a string name for the Action, uses default name if null.
      * @return an Action that will enable the breakpoint
      */
-    public final InspectorAction enableBreakpoint(TeleBreakpoint teleBreakpoint, String actionTitle) {
-        return new EnableBreakpointAction(teleBreakpoint, actionTitle);
+    public final InspectorAction enableBreakpoint(MaxBreakpoint breakpoint, String actionTitle) {
+        return new EnableBreakpointAction(breakpoint, actionTitle);
     }
 
     /**
@@ -2592,30 +2592,30 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Disable breakpoint";
 
-        final TeleBreakpoint teleBreakpoint;
+        final MaxBreakpoint breakpoint;
 
-        DisableBreakpointAction(TeleBreakpoint teleBreakpoint, String actionTitle) {
+        DisableBreakpointAction(MaxBreakpoint breakpoint, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleBreakpoint = teleBreakpoint;
+            this.breakpoint = breakpoint;
         }
 
         @Override
         protected void procedure() {
-            if (focus().breakpoint() == teleBreakpoint) {
+            if (focus().breakpoint() == breakpoint) {
                 focus().setBreakpoint(null);
             }
-            teleBreakpoint.setEnabled(false);
+            breakpoint.setEnabled(false);
             inspection().refreshAll(false);
         }
     }
 
     /**
-     * @param surrogate for a breakpoint in the VM.
+     * @param breakpoint surrogate for a breakpoint in the VM.
      * @param actionTitle a string name for the Action, uses default name if null.
      * @return an Action that will disable the breakpoint
      */
-    public final InspectorAction disableBreakpoint(TeleBreakpoint teleBreakpoint, String actionTitle) {
-        return new DisableBreakpointAction(teleBreakpoint, actionTitle);
+    public final InspectorAction disableBreakpoint(MaxBreakpoint breakpoint, String actionTitle) {
+        return new DisableBreakpointAction(breakpoint, actionTitle);
     }
 
     /**
@@ -2636,7 +2636,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                final TeleTargetBreakpoint breakpoint = maxVM().makeMaxTargetBreakpoint(address);
+                final MaxBreakpoint breakpoint = maxVM().makeBreakpointAt(address);
                 focus().setBreakpoint(breakpoint);
             } catch (MaxVMException maxVMException) {
                 gui().errorMessage(maxVMException.getMessage());
@@ -2646,7 +2646,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(maxVM().getTargetBreakpoint(address) == null);
+            setEnabled(maxVM().getBreakpointAt(address) == null);
         }
     }
 
@@ -2671,7 +2671,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(address);
+            final MaxBreakpoint breakpoint = maxVM().getBreakpointAt(address);
             if (breakpoint != null) {
                 breakpoint.remove();
                 focus().setBreakpoint(null);
@@ -2680,7 +2680,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(maxVM().getTargetBreakpoint(address) != null);
+            setEnabled(maxVM().getBreakpointAt(address) != null);
         }
     }
 
@@ -2720,10 +2720,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final Address targetCodeInstructionAddress = (address != null) ? address : focus().codeLocation().targetCodeInstructionAddress();
             if (!targetCodeInstructionAddress.isZero()) {
-                TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(targetCodeInstructionAddress);
+                MaxBreakpoint breakpoint = maxVM().getBreakpointAt(targetCodeInstructionAddress);
                 if (breakpoint == null) {
                     try {
-                        breakpoint = maxVM().makeMaxTargetBreakpoint(targetCodeInstructionAddress);
+                        breakpoint = maxVM().makeBreakpointAt(targetCodeInstructionAddress);
                         focus().setBreakpoint(breakpoint);
                     } catch (MaxVMException maxVMException) {
                         gui().errorMessage(maxVMException.getMessage());
@@ -2787,7 +2787,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 public void entered(Address address, String description) {
                     if (!address.isZero()) {
                         try {
-                            final TeleTargetBreakpoint breakpoint = maxVM().makeMaxTargetBreakpoint(address);
+                            final MaxBreakpoint breakpoint = maxVM().makeBreakpointAt(address);
                             if (breakpoint == null) {
                                 gui().errorMessage("Unable to create breakpoint at: " + "0x" + address.toHexString());
                             } else {
@@ -2901,7 +2901,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            for (TeleTargetBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
+            for (MaxBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
                 targetBreakpoint.remove();
             }
         }
@@ -2936,8 +2936,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            TeleTargetBreakpoint teleTargetBreakpoint = teleTargetMethod.setTargetBreakpointAtEntry();
-            focus().setBreakpoint(teleTargetBreakpoint);
+            MaxBreakpoint targetBreakpoint = teleTargetMethod.setTargetBreakpointAtEntry();
+            focus().setBreakpoint(targetBreakpoint);
         }
 
         @Override
@@ -2979,11 +2979,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), teleClassActor, "Compiled Method Entry Breakpoints", "Set Breakpoints", true);
                 if (teleTargetMethods != null) {
                     // There may be multiple compilations of a method in the result.
-                    TeleTargetBreakpoint teleTargetBreakpoint = null;
+                    MaxBreakpoint targetBreakpoint = null;
                     for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
-                        teleTargetBreakpoint = teleTargetMethod.getTeleClassMethodActor().setTargetBreakpointAtEntry();
+                        targetBreakpoint = teleTargetMethod.getTeleClassMethodActor().setTargetBreakpointAtEntry();
                     }
-                    focus().setBreakpoint(teleTargetBreakpoint);
+                    focus().setBreakpoint(targetBreakpoint);
                 }
             }
         }
@@ -3026,12 +3026,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         if (virtualMethodActor.name == SymbolTable.INIT) {
                             final TeleClassMethodActor teleClassMethodActor = maxVM().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
                             if (teleClassMethodActor != null) {
-                                TeleTargetBreakpoint teleTargetBreakpoint = null;
+                                MaxBreakpoint targetBreakpoint = null;
                                 for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
-                                    teleTargetBreakpoint = teleTargetMethod.setTargetBreakpointAtEntry();
+                                    targetBreakpoint = teleTargetMethod.setTargetBreakpointAtEntry();
                                 }
-                                if (teleTargetBreakpoint != null) {
-                                    focus().setBreakpoint(teleTargetBreakpoint);
+                                if (targetBreakpoint != null) {
+                                    focus().setBreakpoint(targetBreakpoint);
                                 }
                             }
                         }
@@ -3080,9 +3080,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final BytecodeLocation bytecodeLocation = focus().codeLocation().bytecodeLocation();
             if (bytecodeLocation != null) {
                 final TeleBytecodeBreakpoint.Key key = new TeleBytecodeBreakpoint.Key(bytecodeLocation);
-                final TeleBytecodeBreakpoint breakpoint = maxVM().getBytecodeBreakpoint(key);
+                final MaxBreakpoint breakpoint = maxVM().getBreakpointAt(key);
                 if (breakpoint == null) {
-                    maxVM().makeBytecodeBreakpoint(key);
+                    maxVM().makeBreakpointAt(key);
                 } else {
                     breakpoint.remove();
                 }
@@ -3122,12 +3122,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final MethodActorKey methodKey = new MethodActorKey(teleClassMethodActor.methodActor());
-            maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+            maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, 0));
         }
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().activateMessenger() && teleClassMethodActor.hasCodeAttribute());
+            setEnabled(inspection().hasProcess() && teleClassMethodActor.hasCodeAttribute());
         }
     }
 
@@ -3163,14 +3163,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (typeDescriptor != null) {
                 final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
-                    maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+                    maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, 0));
                 }
             }
         }
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
+            setEnabled(inspection().hasProcess());
         }
     }
 
@@ -3200,13 +3200,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
-                maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+                maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, 0));
             }
         }
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
+            setEnabled(inspection().hasProcess());
         }
     }
 
@@ -3241,8 +3241,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            for (TeleBytecodeBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
-                bytecodeBreakpoint.remove();
+            for (MaxBreakpoint breakpoint : maxVM().bytecodeBreakpoints()) {
+                breakpoint.remove();
             }
         }
 
@@ -4597,6 +4597,32 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction listCodeRegistryToFile() {
         return listCodeRegistryToFile;
+    }
+
+    /**
+     * Action:  lists to the console all existing breakpoints.
+     */
+    final class ListBreakpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "List all breakpoints";
+
+        ListBreakpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            maxVM().describeBreakpoints(System.out);
+        }
+    }
+
+    private InspectorAction listBreakpoints = new ListBreakpointsAction(null);
+
+    /**
+     * @return an Action that will list to the console the entries in the {@link TeleCodeRegistry}.
+     */
+    public final InspectorAction listBreakpoints() {
+        return listBreakpoints;
     }
 
     /**

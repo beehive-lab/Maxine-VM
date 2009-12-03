@@ -37,8 +37,6 @@ import com.sun.max.vm.prototype.*;
  */
 public final class ReadOnlyTeleVM extends TeleVM {
 
-    private TeleMessenger messenger = new NoVMInspectorMessenger();
-
     /**
      * Creates a tele VM instance for inspecting a boot image without executing it.
      *
@@ -48,11 +46,6 @@ public final class ReadOnlyTeleVM extends TeleVM {
      */
     public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath) throws BootImageException {
         super(bootImageFile, bootImage, sourcepath, TeleProcess.NO_COMMAND_LINE_ARGUMENTS, -1, null);
-    }
-
-    @Override
-    public TeleMessenger messenger() {
-        return messenger;
     }
 
     @Override

@@ -49,7 +49,7 @@ public final class InspectableClassInfo {
      * Adds to the inspectable record of dynamically loaded classes.
      */
     public static void registerClassLoaded(ClassActor classActor) {
-        if (MaxineMessenger.isVmInspected()) {
+        if (Inspectable.isVmInspected()) {
             if (classActors == null) {
                 classActors = new ClassActor[100];
             }

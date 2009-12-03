@@ -18,43 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#include <stdlib.h>
+package com.sun.max.vm.tele;
 
-#include "image.h"
-#include "word.h"
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 
-#include "messenger.h"
-
-#define DATA_SIZE (256 * 1024)
 
 /**
- * Creates and initializes the memory block for a ring buffer.
- * The first two words must be pointers to the third word.
+ * Holder for magic word that communicates whether this VM is being inspected.
  *
- * @see RingBufferPipe.java
+ * @author Michael Van De Vanter
  */
-static void *createRingBufferData() {
-	Address *data = (Address *) malloc(DATA_SIZE);
-	Address buffer = (Address) &data[2];
-	data[0] = buffer;
-	data[1] = buffer;
-	return data;
-}
+public final class Inspectable {
 
-static int _debugger_attached = false;
+    private Inspectable() {
+    }
 
-void messenger_initialize() {
-    messenger_Info info = image_read_value(messenger_Info, messengerInfoOffset);
-	if (info != 0) {
-		info = malloc(sizeof(messenger_InfoStruct));
-		info->dataSize = (Size) DATA_SIZE;
-		info->inData = (Address) createRingBufferData();
-		info->outData = (Address) createRingBufferData();
-		image_write_value(messenger_Info, messengerInfoOffset, info);
-		_debugger_attached = true;
-	}
-}
+    /**
+     * If a non-zero value is put here remotely, then the
+     * additional steps to facilitate inspection should be activated.
+     */
+    @INSPECTED
+    private static Pointer info = Pointer.zero();
 
-int debugger_attached() {
-    return _debugger_attached;
+    public static boolean isVmInspected() {
+        return !info.isZero();
+    }
 }
