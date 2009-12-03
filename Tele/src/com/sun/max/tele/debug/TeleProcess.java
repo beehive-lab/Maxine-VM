@@ -41,7 +41,9 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Models the remote process being controlled.
+ * A model of the remote process in which the VM is running,
+ * which includes access to the memory state and debugging
+ * actions that control execution.
  *
  * @author Bernd Mathiske
  * @author Aritra Bandyopadhyay
@@ -55,45 +57,29 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     private static final Sequence<TeleNativeThread> EMPTY_THREAD_SEQUENCE = Sequence.Static.empty(TeleNativeThread.class);
 
-    public static final String[] NO_COMMAND_LINE_ARGUMENTS = {};
+    public static final String[] EMPTY_COMMAND_LINE_ARGUMENTS = {};
 
-    @Override
-    protected String  tracePrefix() {
-        return "[TeleProcess: " + Thread.currentThread().getName() + "] ";
-    }
-
-    private TeleNativeThread lastSingleStepThread;;
-
-    public abstract DataAccess dataAccess();
-
-    private final Platform platform;
-
-    public Platform platform() {
-        return platform;
-    }
-
-    private final TeleTargetBreakpoint.Factory targetBreakpointFactory;
-
-    public TeleTargetBreakpoint.Factory targetBreakpointFactory() {
-        return targetBreakpointFactory;
-    }
-
-    private final TeleWatchpoint.Factory watchpointFactory;
-
-    public TeleWatchpoint.Factory watchpointFactory() {
-        return watchpointFactory;
+    /**
+     * Allocates and initializes a buffer in native memory to hold a given set of command line arguments. De-allocating
+     * the memory for the buffer is the responsibility of the caller.
+     *
+     * @param programFile the executable that will be copied into element 0 of the returned buffer
+     * @param commandLineArguments
+     * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
+     *         {@code main} function
+     */
+    protected static Pointer createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
+        final String[] strings = new String[commandLineArguments.length + 1];
+        strings[0] = programFile.getAbsolutePath();
+        System.arraycopy(commandLineArguments, 0, strings, 1, commandLineArguments.length);
+        return CString.utf8ArrayFromStringArray(strings, true);
     }
 
     /**
-     * The controller that controls access to this TeleProcess.
+     * A thread on which local VM execution requests are made, and on which follow-up actions are
+     * performed when the VM process (or thread) stops.
      */
-    private final TeleProcessController controller;
-
-    /**
-     * The thread on which actions are performed when the process (or thread) stops after a request is issued to change
-     * it's execution state.
-     */
-    public class RequestHandlingThread extends Thread {
+    private class RequestHandlingThread extends Thread {
 
         /**
          * The action to be performed when the process (or a thread in the process) stops as a result of the
@@ -106,6 +92,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             setDaemon(true);
         }
 
+        // TODO (mlvdv) factor out watchpoint trigger event handling, migrate into the
+        // watchpoint implementations, as was done for breakpoints.
         /**
          * Special handling of a triggered watchpoint, if needed.
          * @return true if it is a transparent watchpoint, and execution should be resumed.
@@ -140,7 +128,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
 
         /**
-         * Waits until the tele process has stopped after it has been issued an execution request.
+         * Waits until the VM process has stopped after it has been issued an execution request.
          * Carry out any special processing needed in case of triggered watchpoint or breakpoint.
          * The request's post-execution action is then performed.
          * Finally, any threads waiting for an execution request to complete are notified.
@@ -151,7 +139,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             assert requestHandlingThread == Thread.currentThread();
             Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request);
             try {
-                final AppendableSequence<TeleNativeThread> breakpointThreads = new LinkSequence<TeleNativeThread>();
+                final AppendableSequence<TeleNativeThread> threadsAtBreakpoint = new LinkSequence<TeleNativeThread>();
                 TeleWatchpointEvent teleWatchpointEvent = null;
                 // Should VM execution be resumed in order to complete the requested action?
                 boolean resumeExecution;
@@ -168,14 +156,14 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     refreshThreads();
 
                     // TODO (mlvdv) remove this debugging code when no longer needed.
-//                    boolean atBreakpoint = false;
-//                    for (TeleNativeThread thread : threads()) {
-//                        if (thread.state() == ThreadState.BREAKPOINT) {
-//                            atBreakpoint = true;
-//                            break;
-//                        }
-//                    }
-//                    ProgramWarning.check(atBreakpoint, "vm stopped; no thread at breakpoint");
+                    //                    boolean atBreakpoint = false;
+                    //                    for (TeleNativeThread thread : threads()) {
+                    //                        if (thread.state() == ThreadState.BREAKPOINT) {
+                    //                            atBreakpoint = true;
+                    //                            break;
+                    //                        }
+                    //                    }
+                    //                    ProgramWarning.check(atBreakpoint, "vm stopped; no thread at breakpoint");
 
                     targetBreakpointFactory().setActiveAll(false);
                     // Look through all the threads to see if any special attention is needed
@@ -185,7 +173,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 final TeleTargetBreakpoint breakpoint = thread.breakpoint();
                                 if (breakpoint.handleTriggerEvent(thread)) {
                                     // At a breakpoint where we should really stop; create a record
-                                    breakpointThreads.append(thread);
+                                    threadsAtBreakpoint.append(thread);
                                 } else {
                                     // The breakpoint handler says not a real break, perhaps a failed conditional; prepare to resume.
                                     resumeExecution = true;
@@ -228,7 +216,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.begin(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
                 Trace.end(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
-                updateState(STOPPED, breakpointThreads, teleWatchpointEvent);
+                updateState(STOPPED, threadsAtBreakpoint, teleWatchpointEvent);
 
             } catch (ProcessTerminatedException processTerminatedException) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "VM process terminated:" + processTerminatedException.getMessage());
@@ -276,7 +264,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 }
             }
         }
-
         private void waitForSynchronousRequestToComplete(TeleEventRequest request) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
             request.waitUntilComplete();
@@ -316,51 +303,61 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
     }
 
+    @Override
+    protected String  tracePrefix() {
+        return "[TeleProcess: " + Thread.currentThread().getName() + "] ";
+    }
+
+    private final Platform platform;
+
+    /**
+     * The controller that controls access to this TeleProcess.
+     */
+    private final TeleProcessController controller;
+
+    private final TeleTargetBreakpoint.Factory targetBreakpointFactory;
+
+    private final TeleWatchpoint.Factory watchpointFactory;
+
     private final RequestHandlingThread requestHandlingThread;
 
     /**
-     *
-     * @return an object that gives access to process commands and state
+     *  The number of times that the VM's process has been run.
      */
-    public TeleProcessController controller() {
-        return controller;
-    }
-
-    /**
-     * Allocates and initializes a buffer in native memory to hold a given set of command line arguments. De-allocating
-     * the memory for the buffer is the responsibility of the caller.
-     *
-     * @param programFile the executable that will be copied into element 0 of the returned buffer
-     * @param commandLineArguments
-     * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
-     *         {@code main} function
-     */
-    public static Pointer createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
-        final String[] strings = new String[commandLineArguments.length + 1];
-        strings[0] = programFile.getAbsolutePath();
-        System.arraycopy(commandLineArguments, 0, strings, 1, commandLineArguments.length);
-        return CString.utf8ArrayFromStringArray(strings, true);
-    }
-
-    protected ProcessState processState;
-
-    /**
-     * @return the current state of the process
-     */
-    public final ProcessState processState() {
-        return processState;
-    }
-
     private long epoch;
 
     /**
-     * Gets the current epoch: the number of requested execution steps of the process since it was created.
-     *
-     * @return the current epoch
+     * The current state of the process.
      */
-    public final long epoch() {
-        return epoch;
-    }
+    private ProcessState processState;
+
+    /**
+     * All threads currently active in the process.
+     */
+    private SortedMap<Long, TeleNativeThread> handleToThreadMap = new TreeMap<Long, TeleNativeThread>();
+
+    /**
+     * Instruction pointers for all threads currently active in the process.
+     */
+    private Set<Long> instructionPointers = new HashSet<Long>();
+
+    /**
+     * The thread that was single-stepped in the most recent VM activation,
+     * null if the most recent activation was not a single step.
+     */
+    private TeleNativeThread lastSingleStepThread;
+
+    /**
+     * Threads newly created since the previous execution request.
+     */
+    private final Set<TeleNativeThread> threadsStarted = new TreeSet<TeleNativeThread>();
+
+    /**
+     * Threads newly died since the previous execution request (may contain newly created threads).
+     */
+    private final Set<TeleNativeThread> threadsDied = new TreeSet<TeleNativeThread>();
+
+    private int transportDebugLevel = 0;
 
     /**
      * @param teleVM the VM with which the Process will be associated
@@ -384,10 +381,122 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
+     * Initializes the state history for the process.  Must be called after process created, but before
+     * any requests.
+     */
+    public void initializeState() {
+        teleVM().refresh(epoch);
+        updateState(processState);
+    }
+
+    /**
+     *
+     * @return an object that gives access to process commands and state
+     */
+    public final TeleProcessController controller() {
+        return controller;
+    }
+
+    /**
+     * Gets the current epoch: the number of requested execution steps of the process since it was created.
+     *
+     * @return the current epoch
+     */
+    public final long epoch() {
+        return epoch;
+    }
+
+    public final int pageSize() {
+        return platform.pageSize;
+    }
+
+    public final int read(Address address, ByteBuffer buffer, int offset, int length) throws DataIOError {
+        if (processState == TERMINATED) {
+            throw new DataIOError(address, "Attempt to read the memory when the process is in state " + TERMINATED);
+        }
+        if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
+        //    ProgramWarning.message("Reading from process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
+        }
+        DataIO.Static.checkRead(buffer, offset, length);
+        final int bytesRead = read0(address, buffer, offset, length);
+        if (bytesRead < 0) {
+            throw new DataIOError(address);
+        }
+        return bytesRead;
+    }
+
+    public final int write(ByteBuffer buffer, int offset, int length, Address address) throws DataIOError, IndexOutOfBoundsException {
+        if (processState == TERMINATED) {
+            throw new DataIOError(address, "Attempt to write to memory when the process is in state " + TERMINATED);
+        }
+        if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
+            //ProgramWarning.message("Writing to process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
+            /* Uncomment to trace the culprit
+            try {
+                throw new Exception();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            */
+        }
+        DataIO.Static.checkWrite(buffer, offset, length);
+        return write0(buffer, offset, length, address);
+    }
+
+    /**
+     * @return the current state of the process
+     */
+    public final ProcessState processState() {
+        return processState;
+    }
+
+    /**
      * @return true if the tele is ready to execute a command that puts it in the {@link ProcessState#RUNNING} state.
      */
     public final boolean isReadyToRun() {
         return processState == STOPPED;
+    }
+
+    /**
+     * Gets the set of all the threads in this process the last time it stopped.
+     * The returned threads are sorted in ascending order of their {@linkplain TeleNativeThread#id() identifiers}.
+     *
+     * @return the threads in the process
+     */
+    public final IterableWithLength<TeleNativeThread> threads() {
+        return Iterables.toIterableWithLength(handleToThreadMap.values());
+    }
+
+    /**
+     * Determines whether an address corresponds to a current instruction pointer.
+     *
+     * @param address a memory address in the process
+     * @return whether one of the process threads is currently at the address.
+     */
+    public final boolean isInstructionPointer(Address address) {
+        return instructionPointers.contains(address.toLong());
+    }
+
+    /**
+     * @return factory for creation and management of target breakpoints in the process.
+     */
+    public final TeleTargetBreakpoint.Factory targetBreakpointFactory() {
+        return targetBreakpointFactory;
+    }
+
+    /**
+     * @return factory for creation and management of memory watchpoints in the process.
+     */
+    public final TeleWatchpoint.Factory watchpointFactory() {
+        return watchpointFactory;
+    }
+
+    /**
+     * @return platform-specific limit on how many memory watchpoints can be
+     * simultaneously active; 0 if memory watchpoints are not supported on the platform.
+     */
+    public int maximumWatchpointCount() {
+        return 0;
     }
 
     /**
@@ -408,14 +517,101 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
-     * Initializes the state history for the process.  Must be called after process created, but before
-     * any requests.
+     * Suspends this process.
+     *
+     * @throws InvalidProcessRequestException if the current process state is not {@link ProcessState#RUNNING}
+     * @throws OSExecutionRequestException if there was some problem in executing the suspension
      */
-    public void initializeState() {
-        teleVM().refresh(epoch);
-        updateState(processState);
+    public final void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
+        if (processState != RUNNING) {
+            throw new InvalidProcessRequestException("Can only suspend a running tele process, not a tele process that is " + processState.toString().toLowerCase());
+        }
+        suspend();
     }
 
+    /**
+     * @throws InvalidProcessRequestException
+     * @throws OSExecutionRequestException
+     */
+    public final void terminate() throws InvalidProcessRequestException, OSExecutionRequestException {
+        if (processState == TERMINATED) {
+            throw new InvalidProcessRequestException("Can only terminate a non-terminated tele process, not a tele process that is " + processState.toString().toLowerCase());
+        }
+        kill();
+    }
+
+    /**
+     * @return tracing level of the underlying transportation
+     * mechanism used for communication with this process.
+     *
+     * @see #setTransportDebugLevel(int)
+     */
+    public final int transportDebugLevel() {
+        return transportDebugLevel;
+    }
+
+    /**
+     * A subclass should override this method to set the tracing level of the underlying
+     * transport mechanism used for communication with the target. The override should call
+     * super.setTransportDebugLevel to cache the value here.
+     * @param level new level
+     */
+    public void setTransportDebugLevel(int level) {
+        transportDebugLevel = level;
+    }
+
+    /**
+     * @return address to data i/ from process memory; platform-specific implementation.
+     */
+    public abstract DataAccess dataAccess();
+
+    private void refreshThreads() {
+        Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
+        final long startTimeMillis = System.currentTimeMillis();
+        final AppendableSequence<TeleNativeThread> currentThreads = new ArrayListSequence<TeleNativeThread>(handleToThreadMap.size());
+        gatherThreads(currentThreads);
+
+        final SortedMap<Long, TeleNativeThread> newHandleToThreadMap = new TreeMap<Long, TeleNativeThread>();
+        final Set<Long> newInstructionPointers = new HashSet<Long>();
+
+        // List all previously live threads as possibly dead; remove the ones discovered to be current.
+        threadsDied.addAll(handleToThreadMap.values());
+
+        for (TeleNativeThread thread : currentThreads) {
+
+            // Refresh the thread
+            thread.refresh(epoch());
+
+            newHandleToThreadMap.put(thread.localHandle(), thread);
+            final TeleNativeThread oldThread = handleToThreadMap.get(thread.localHandle());
+            if (oldThread != null) {
+                if (oldThread != thread) {
+                    threadsStarted.add(thread);
+                } else {
+                    threadsDied.remove(thread);
+                    Trace.line(TRACE_VALUE, "    "  + thread);
+                }
+            } else {
+                threadsStarted.add(thread);
+                Trace.line(TRACE_VALUE, "    "  + thread + " STARTED");
+            }
+            final Pointer instructionPointer = thread.instructionPointer();
+            if (!instructionPointer.isZero()) {
+                newInstructionPointers.add(thread.instructionPointer().toLong());
+            }
+        }
+        Trace.end(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:", startTimeMillis);
+        handleToThreadMap = newHandleToThreadMap;
+        instructionPointers = newInstructionPointers;
+    }
+
+    /**
+     * Gathers information about this process and posts a thread-safe record of the state change.
+     *
+     * @param newState the current state of this process
+     * @param breakpointThreads threads currently at a breakpoint in the VM
+     * @param teleWatchpointEvent description of watchpoint trigger, if just happened.
+     */
     private void updateState(ProcessState newState, Sequence<TeleNativeThread> breakpointThreads, TeleWatchpointEvent teleWatchpointEvent) {
         processState = newState;
         if (newState == TERMINATED) {
@@ -440,27 +636,15 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
-     * Resumes this process.
+     * Resumes this process, platform-specific implementation.
      *
      * @throws OSExecutionRequestException if there was some problem while resuming this process
      */
     protected abstract void resume() throws OSExecutionRequestException;
 
     /**
-     * Suspends this process.
+     * Suspends this process, platform-specific implementation.
      *
-     * @throws InvalidProcessRequestException if the current process state is not {@link ProcessState#RUNNING}
-     * @throws OSExecutionRequestException if there was some problem in executing the suspension
-     */
-    public final void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
-        if (processState != RUNNING) {
-            throw new InvalidProcessRequestException("Can only suspend a running tele process, not a tele process that is " + processState.toString().toLowerCase());
-        }
-        suspend();
-    }
-
-    /**
-     * Suspends this process.
      * @throws OSExecutionRequestException if the request could not be performed
      */
     protected abstract void suspend() throws OSExecutionRequestException;
@@ -486,13 +670,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
     }
 
-    public final void terminate() throws InvalidProcessRequestException, OSExecutionRequestException {
-        if (processState == TERMINATED) {
-            throw new InvalidProcessRequestException("Can only terminate a non-terminated tele process, not a tele process that is " + processState.toString().toLowerCase());
-        }
-        kill();
-    }
-
+    /**
+     * Kills this process; platform-specific implementation.
+     *
+     * @throws OSExecutionRequestException
+     */
     protected abstract void kill() throws OSExecutionRequestException;
 
     /**
@@ -502,36 +684,14 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      */
     protected abstract boolean waitUntilStopped();
 
-    private int transportDebugLevel = 0;
-
-    /**
-     * A subclass should override this method to set the tracing level of the underlying
-     * transport mechanism used for communication with the target. The override should call
-     * super.setTransportDebugLevel to cache the value here.
-     * @param level new level
-     */
-    public void setTransportDebugLevel(int level) {
-        transportDebugLevel = level;
-    }
-
-    public int transportDebugLevel() {
-        return transportDebugLevel;
-    }
-
-    private Set<Long> instructionPointers = new HashSet<Long>();
-
-    public final boolean isInstructionPointer(Address address) {
-        return instructionPointers.contains(address.toLong());
-    }
-
-    private SortedMap<Long, TeleNativeThread> handleToThreadMap = new TreeMap<Long, TeleNativeThread>();
-
-    private final Set<TeleNativeThread> threadsStarted = new TreeSet<TeleNativeThread>();
-
-    private final Set<TeleNativeThread> threadsDied = new TreeSet<TeleNativeThread>();
-
     protected abstract void gatherThreads(AppendableSequence<TeleNativeThread> threads);
 
+    /**
+     * Creates a native thread; platform-specific implementation.
+     *
+     * @param params description of thread to be created.
+     * @return the new thread
+     */
     protected abstract TeleNativeThread createTeleNativeThread(Params params);
 
     /**
@@ -611,123 +771,44 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         threads.append(thread);
     }
 
-    private void refreshThreads() {
-        Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
-        final long startTimeMillis = System.currentTimeMillis();
-        final AppendableSequence<TeleNativeThread> currentThreads = new ArrayListSequence<TeleNativeThread>(handleToThreadMap.size());
-        gatherThreads(currentThreads);
-
-        final SortedMap<Long, TeleNativeThread> newHandleToThreadMap = new TreeMap<Long, TeleNativeThread>();
-        final Set<Long> newInstructionPointers = new HashSet<Long>();
-
-        // List all previously live threads as possibly dead; remove the ones discovered to be current.
-        threadsDied.addAll(handleToThreadMap.values());
-
-        for (TeleNativeThread thread : currentThreads) {
-
-            // Refresh the thread
-            thread.refresh(epoch());
-
-            newHandleToThreadMap.put(thread.localHandle(), thread);
-            final TeleNativeThread oldThread = handleToThreadMap.get(thread.localHandle());
-            if (oldThread != null) {
-                if (oldThread != thread) {
-                    threadsStarted.add(thread);
-                } else {
-                    threadsDied.remove(thread);
-                    Trace.line(TRACE_VALUE, "    "  + thread);
-                }
-            } else {
-                threadsStarted.add(thread);
-                Trace.line(TRACE_VALUE, "    "  + thread + " STARTED");
-            }
-            final Pointer instructionPointer = thread.instructionPointer();
-            if (!instructionPointer.isZero()) {
-                newInstructionPointers.add(thread.instructionPointer().toLong());
-            }
-        }
-        Trace.end(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:", startTimeMillis);
-        handleToThreadMap = newHandleToThreadMap;
-        instructionPointers = newInstructionPointers;
-    }
-
     /**
-     * Gets the set of all the threads in this process the last time it stopped.
-     * The returned threads are sorted in ascending order of their {@linkplain TeleNativeThread#id() identifiers}.
-     * @return the set of threads in the process
-     */
-    public final IterableWithLength<TeleNativeThread> threads() {
-        return Iterables.toIterableWithLength(handleToThreadMap.values());
-    }
-
-    public final int pageSize() {
-        return platform().pageSize;
-    }
-
-    public final int read(Address address, ByteBuffer buffer, int offset, int length) {
-        if (processState == TERMINATED) {
-            throw new DataIOError(address, "Attempt to read the memory when the process is in state " + TERMINATED);
-        }
-        if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
-        //    ProgramWarning.message("Reading from process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
-        }
-        DataIO.Static.checkRead(buffer, offset, length);
-        final int bytesRead = read0(address, buffer, offset, length);
-        if (bytesRead < 0) {
-            throw new DataIOError(address);
-        }
-        return bytesRead;
-    }
-
-    /**
-     * Reads bytes from an address into a given byte buffer.
+     * Reads bytes from process memory, platform-specific implementation.
      *
      * Precondition:
      * {@code buffer != null && offset >= 0 && offset < buffer.capacity() && length >= 0 && offset + length <= buffer.capacity()}
      *
-     * @param address the address from which reading should start
-     * @param buffer the buffer into which the bytes are read
-     * @param offset the offset in {@code buffer} at which the bytes are read
-     * @param length the number of bytes to be read
-     * @return the number of bytes read into {@code buffer} or -1 if there was an error while trying to read the data
+     * @param src the address from which reading should start
+     * @param dst the buffer into which the bytes are read
+     * @param dstOffset the offset in {@code dst} at which the bytes are read
+     * @param length the maximum number of bytes to be read
+     * @return the number of bytes read into {@code dst}
+     *
+     * @throws DataIOError if some IO error occurs
+     * @throws IndexOutOfBoundsException if {@code offset} is negative, {@code length} is negative, or
+     *             {@code length > buffer.limit() - offset}
+     * @see #read(Address, ByteBuffer, int, int)
      */
     protected abstract int read0(Address address, ByteBuffer buffer, int offset, int length);
 
-    public final int write(ByteBuffer buffer, int offset, int length, Address address) {
-        if (processState == TERMINATED) {
-            throw new DataIOError(address, "Attempt to write to memory when the process is in state " + TERMINATED);
-        }
-        if (processState != STOPPED && processState != null && Thread.currentThread() != requestHandlingThread) {
-            //ProgramWarning.message("Writing to process memory while processed not stopped [thread: " + Thread.currentThread().getName() + "]");
-            /* Uncomment to trace the culprit
-            try {
-                throw new Exception();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            */
-        }
-        DataIO.Static.checkWrite(buffer, offset, length);
-        return write0(buffer, offset, length, address);
-    }
 
     /**
-     * Writes bytes from a given byte buffer to a given address.
+     * Writes bytes to process memory, platform-specific implementation.
      *
      * Precondition:
      * {@code buffer != null && offset >= 0 && offset < buffer.capacity() && length >= 0 && offset + length <= buffer.capacity()}
      *
-     * @param address the address at which writing should start
-     * @param buffer the buffer from which the bytes are written
-     * @param offset the offset in {@code buffer} from which the bytes are written
+     * @param src the buffer from which the bytes are written
+     * @param srcOffset the offset in {@code src} from which the bytes are written
      * @param length the maximum number of bytes to be written
-     * @return the number of bytes written to {@code address} or -1 if there was an error while trying to write the data
+     * @param dst the address at which writing should start
+     * @return the number of bytes written to {@code dst}
+     *
+     * @throws DataIOError if some IO error occurs
+     * @throws IndexOutOfBoundsException if {@code srcOffset} is negative, {@code length} is negative, or
+     *             {@code length > src.limit() - srcOffset}
+     * @see #write(ByteBuffer, int, int, Address)
      */
     protected abstract int write0(ByteBuffer buffer, int offset, int length, Address address);
-
-    public int maximumWatchpointCount() {
-        return 0;
-    }
 
     protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
         return false;
