@@ -20,7 +20,6 @@
  */
 package com.sun.c1x;
 
-import java.util.*;
 
 /**
  * This class contains a number of fields that collect metrics about compilation, particularly
