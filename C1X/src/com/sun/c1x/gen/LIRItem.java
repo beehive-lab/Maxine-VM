@@ -125,7 +125,7 @@ public class LIRItem {
             loadItem();
             LIROperand res = result();
 
-            if (!res.isVariable() || !gen.isVregFlagSet(res, LIRGenerator.VregFlag.ByteReg)) {
+            if (!res.isVariable() || !gen.isVarFlagSet(res, LIRGenerator.VariableFlag.MustBeByteReg)) {
                 // make sure that it is a byte register
                 assert !value.kind.isFloat() && !value.kind.isDouble() : "can't load floats in byte register";
                 LIROperand reg = gen.rlockByte(CiKind.Byte);
@@ -167,7 +167,7 @@ public class LIRItem {
         value.setOperand(opr);
 
         if (opr.isVariable()) {
-            gen.instructionForOperand.put(opr.vregNumber(), value);
+            gen.instructionForOperand.put(opr.variableNumber(), value);
         }
 
         result = opr;

@@ -80,11 +80,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    // Flags that can be set on vregs
-    public enum VregFlag {
+    // Flags that can be set on variables
+    public enum VariableFlag {
         MustStartInMemory, // needs to be assigned a memory location at beginning, but may then be loaded in a register
-        ByteReg, // must be in a byte register
-        NumVregFlags
+        MustBeByteReg,     // must be in a byte register
+        Last
     }
 
     protected final C1XCompilation compilation;
@@ -94,13 +94,13 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected final boolean is64;
 
     private BlockBegin currentBlock;
-    private int virtualRegisterNumber;
+    private int currentVariableNumber;
     private Value currentInstruction;
     private Value lastInstructionPrinted; // Debugging only
 
     ArrayMap<Value> instructionForOperand;
-    // XXX: refactor this to use 3 one dimensional bitmaps
-    private BitMap2D vregFlags; // flags which can be set on a per-vreg basis
+    // XXX: refactor this to use 2 one dimensional bitmaps
+    private BitMap2D varFlags; // flags which can be set on a per-variable basis
 
     private List<LIRConstant> constants;
     private List<LIROperand> regForConstants;
@@ -108,8 +108,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.virtualRegisterNumber = CiRegister.MaxPhysicalRegisterNumber;
-        this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
+        this.currentVariableNumber = CiRegister.MaxPhysicalRegisterNumber;
+        this.varFlags = new BitMap2D(0, VariableFlag.Last.ordinal());
         this.ir = compilation.hir();
         this.xir = C1XOptions.UseXIR ? new XirSupport(compilation.compiler.xir) : null;
         this.is32 = compilation.target.arch.is32bit();
@@ -136,29 +136,29 @@ public abstract class LIRGenerator extends ValueVisitor {
         blockDoEpilog(block);
     }
 
-    public Value instructionForVreg(int regNum) {
+    public Value instructionForVar(int regNum) {
         return instructionForOperand.get(regNum);
     }
 
-    public boolean isVregFlagSet(int vregNum, VregFlag f) {
-        return vregFlags.isValidIndex(vregNum, f.ordinal()) && vregFlags.at(vregNum, f.ordinal());
+    public boolean isVarFlagSet(int varNum, VariableFlag f) {
+        return varFlags.isValidIndex(varNum, f.ordinal()) && varFlags.at(varNum, f.ordinal());
     }
 
-    public boolean isVregFlagSet(LIROperand opr, VregFlag f) {
-        return isVregFlagSet(opr.vregNumber(), f);
+    public boolean isVarFlagSet(LIROperand opr, VariableFlag f) {
+        return isVarFlagSet(opr.variableNumber(), f);
     }
 
-    public void setVregFlag(int vregNum, VregFlag f) {
-        if (vregFlags.sizeInBits() == 0) {
-            BitMap2D temp = new BitMap2D(100, VregFlag.NumVregFlags.ordinal());
+    public void setVarFlag(int varNum, VariableFlag f) {
+        if (varFlags.sizeInBits() == 0) {
+            BitMap2D temp = new BitMap2D(100, VariableFlag.Last.ordinal());
             temp.clear();
-            vregFlags = temp;
+            varFlags = temp;
         }
-        vregFlags.atPutGrow(vregNum, f.ordinal(), true);
+        varFlags.atPutGrow(varNum, f.ordinal(), true);
     }
 
-    public void setVregFlag(LIROperand opr, VregFlag f) {
-        setVregFlag(opr.vregNumber(), f);
+    public void setVarFlag(LIROperand opr, VariableFlag f) {
+        setVarFlag(opr.variableNumber(), f);
     }
 
     @Override
@@ -222,7 +222,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert type == local.kind.stackType() : "local type check failed";
             if (local.isLive()) {
                 local.setOperand(dest);
-                instructionForOperand.put(dest.vregNumber(), local);
+                instructionForOperand.put(dest.variableNumber(), local);
             }
             javaIndex += type.size;
         }
@@ -825,7 +825,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (isIllegal(x.operand())) {
             // allocate a virtual register for this local
             x.setOperand(rlock(x.kind));
-            instructionForOperand.put(x.operand().vregNumber(), x);
+            instructionForOperand.put(x.operand().variableNumber(), x);
         }
     }
 
@@ -1402,7 +1402,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         // create a spill location
-        LIROperand tmp = newRegister(t, VregFlag.MustStartInMemory);
+        LIROperand tmp = newRegister(t, VariableFlag.MustStartInMemory);
         // move from register to spill
         lir.move(value, tmp);
         return tmp;
@@ -1872,7 +1872,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // a block with only one predecessor never has phi functions
             if (sux.numberOfPreds() > 1) {
                 int maxPhis = curState.valuesSize();
-                PhiResolver resolver = new PhiResolver(this, virtualRegisterNumber + maxPhis * 2);
+                PhiResolver resolver = new PhiResolver(this, currentVariableNumber + maxPhis * 2);
 
                 ValueStack suxState = sux.stateBefore();
 
@@ -1908,15 +1908,13 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     public LIRLocation newRegister(CiKind type) {
         assert type != CiKind.Void;
-        int vreg = virtualRegisterNumber++;
-        return forVariable(vreg, type);
+        return forVariable(currentVariableNumber++, type);
     }
 
-    public LIRLocation newRegister(CiKind type, VregFlag flag) {
+    public LIRLocation newRegister(CiKind type, VariableFlag flag) {
         assert type != CiKind.Void;
-        int vreg = virtualRegisterNumber++;
-        LIRLocation location = forVariable(vreg, type);
-        setVregFlag(location, flag);
+        LIRLocation location = forVariable(currentVariableNumber++, type);
+        setVarFlag(location, flag);
         return location;
     }
 
@@ -1932,7 +1930,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 // allocate a virtual register for this local or phi
                 operand = rlock(x.kind);
                 x.setOperand(operand);
-                instructionForOperand.put(operand.vregNumber(), x);
+                instructionForOperand.put(operand.variableNumber(), x);
             }
         }
         return x.operand();
@@ -1942,7 +1940,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (phi.operand() == null || isIllegal(phi.operand())) {
             // allocate a virtual register for this phi
             phi.setOperand(rlock(phi.kind));
-            instructionForOperand.put(phi.operand().vregNumber(), phi);
+            instructionForOperand.put(phi.operand().variableNumber(), phi);
         }
         return phi.operand();
     }
@@ -1964,7 +1962,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         assert !opr.isRegister() || opr.isVariable() : "should never set result to a physical register";
         x.setOperand(opr);
         if (opr.isVariable()) {
-            instructionForOperand.put(opr.vregNumber(), x);
+            instructionForOperand.put(opr.variableNumber(), x);
         }
     }
 
@@ -2151,7 +2149,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     public int maxVirtualRegisterNumber() {
-        return virtualRegisterNumber;
+        return currentVariableNumber;
     }
 
     public Value currentInstruction() {

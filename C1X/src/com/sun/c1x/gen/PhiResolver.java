@@ -37,12 +37,12 @@ public class PhiResolver {
 
         private List<ResolveNode> virtualOperands;
         private List<ResolveNode> otherOperands;
-        private ResolveNode[] vregTable;
+        private ResolveNode[] varTable;
 
-        void reset(int maxVregs) {
-            virtualOperands = new ArrayList<ResolveNode>(maxVregs);
-            otherOperands = new ArrayList<ResolveNode>(maxVregs);
-            vregTable = new ResolveNode[maxVregs];
+        void reset(int maxVars) {
+            virtualOperands = new ArrayList<ResolveNode>(maxVars);
+            otherOperands = new ArrayList<ResolveNode>(maxVars);
+            varTable = new ResolveNode[maxVars];
 
         }
     }
@@ -53,10 +53,10 @@ public class PhiResolver {
     private ResolveNode loop;
     private LIROperand temp;
 
-    public PhiResolver(LIRGenerator gen, int maxVregs) {
+    public PhiResolver(LIRGenerator gen, int maxVars) {
         this.gen = gen;
         state = new PhiResolverState();
-        state.reset(maxVregs);
+        state.reset(maxVars);
         temp = IllegalLocation;
     }
 
@@ -94,12 +94,12 @@ public class PhiResolver {
     private ResolveNode createNode(LIROperand opr, boolean source) {
         ResolveNode node;
         if (opr.isVariable()) {
-            int vregNum = opr.vregNumber();
-            node = vregTable()[vregNum];
+            int varNum = opr.variableNumber();
+            node = varTable()[varNum];
             assert node == null || node.operand == opr;
             if (node == null) {
                 node = new ResolveNode(opr);
-                vregTable()[vregNum] = node;
+                varTable()[varNum] = node;
             }
             // Make sure that all virtual operands show up in the list when
             // they are used as the source of a move.
@@ -184,7 +184,7 @@ public class PhiResolver {
         return state.virtualOperands;
     }
 
-    private ResolveNode[] vregTable() {
-        return state.vregTable;
+    private ResolveNode[] varTable() {
+        return state.varTable;
     }
 }

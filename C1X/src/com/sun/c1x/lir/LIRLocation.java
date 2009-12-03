@@ -101,7 +101,7 @@ public final class LIRLocation extends LIROperand {
     }
 
     @Override
-    public int vregNumber() {
+    public int variableNumber() {
         assert index >= CiRegister.MaxPhysicalRegisterNumber;
         return index;
     }
@@ -183,11 +183,6 @@ public final class LIRLocation extends LIROperand {
     @Override
     public CiRegister asRegisterHigh() {
         return this.location2;
-    }
-
-    @Override
-    public boolean isVirtualRegister() {
-        return index > 0;
     }
 
     @Override
