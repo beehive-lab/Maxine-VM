@@ -24,6 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
+import static com.sun.c1x.lir.LIROperand.*;
 
 /**
  * @author Marcelo Cintra
@@ -44,17 +45,17 @@ public class LIRItem {
 
     public void setInstruction(Value value) {
         this.value = value;
-        this.result = LIROperandFactory.IllegalLocation;
+        this.result = IllegalLocation;
         if (value != null) {
             gen.walk(value);
             result = value.operand();
         }
-        newResult = LIROperandFactory.IllegalLocation;
+        newResult = IllegalLocation;
     }
 
     public LIRItem(LIRGenerator gen) {
         this.gen = gen;
-        result = LIROperandFactory.IllegalLocation;
+        result = IllegalLocation;
         setInstruction(null);
     }
 
@@ -84,8 +85,8 @@ public class LIRItem {
     public void loadForStore(CiKind type) {
         if (gen.canStoreAsConstant(value, type)) {
             result = value.operand();
-            if (!result.isConstant()) {
-                result = LIROperandFactory.constant(value);
+            if (!isConstant(result)) {
+                result = forConstant(value);
             }
         } else if (type == CiKind.Byte || type == CiKind.Boolean) {
             loadByteItem();
@@ -95,9 +96,9 @@ public class LIRItem {
     }
 
     public LIROperand result() {
-        assert !destroysRegister || (!result.isRegister() || result.isVirtual()) : "shouldn't use setDestroysRegister with physical regsiters";
+        assert !destroysRegister || (!result.isRegister() || result.isVariable()) : "shouldn't use setDestroysRegister with physical regsiters";
         if (destroysRegister && result.isRegister()) {
-            if (newResult.isIllegal()) {
+            if (isIllegal(newResult)) {
                 newResult = gen.newRegister(value.kind);
                 gen.lir.move(result, newResult);
             }
@@ -109,10 +110,6 @@ public class LIRItem {
 
     public void setDestroysRegister() {
         destroysRegister = true;
-    }
-
-    public boolean isConstant() {
-        return result.isConstant();
     }
 
     public boolean isStack() {
@@ -128,7 +125,7 @@ public class LIRItem {
             loadItem();
             LIROperand res = result();
 
-            if (!res.isVirtual() || !gen.isVregFlagSet(res, LIRGenerator.VregFlag.ByteReg)) {
+            if (!res.isVariable() || !gen.isVregFlagSet(res, LIRGenerator.VregFlag.ByteReg)) {
                 // make sure that it is a byte register
                 assert !value.kind.isFloat() && !value.kind.isDouble() : "can't load floats in byte register";
                 LIROperand reg = gen.rlockByte(CiKind.Byte);
@@ -145,7 +142,7 @@ public class LIRItem {
     public void loadNonconstant() {
         if (gen.compilation.target.arch.isX86()) {
             LIROperand r = value.operand();
-            if (r.isConstant()) {
+            if (isConstant(r)) {
                 result = r;
             } else {
                 loadItem();
@@ -153,8 +150,8 @@ public class LIRItem {
         } else if (gen.compilation.target.arch.isSPARC()) {
             LIROperand r = value.operand();
             if (gen.canInlineAsConstant(value)) {
-                if (!r.isConstant()) {
-                    r = LIROperandFactory.constant(value);
+                if (!isConstant(r)) {
+                    r = forConstant(value);
                 }
                 result = r;
             } else {
@@ -166,10 +163,10 @@ public class LIRItem {
     }
 
     void setResult(LIROperand opr) {
-        assert value.operand().isIllegal() || value.operand().isConstant() : "operand should never change";
+        assert isIllegal(value.operand()) || isConstant(value.operand()) : "operand should never change";
         value.setOperand(opr);
 
-        if (opr.isVirtual()) {
+        if (opr.isVariable()) {
             gen.instructionForOperand.put(opr.vregNumber(), value);
         }
 
@@ -177,14 +174,14 @@ public class LIRItem {
     }
 
     public void loadItem() {
-        if (result().isIllegal()) {
+        if (isIllegal(result())) {
             // update the items result
             result = value.operand();
         }
         if (!result().isRegister()) {
             LIROperand reg = gen.newRegister(value.kind);
             gen.lir.move(result(), reg);
-            if (result().isConstant()) {
+            if (isConstant(result())) {
                 result = reg;
             } else {
                 setResult(reg);

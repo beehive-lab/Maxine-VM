@@ -38,16 +38,13 @@ import com.sun.c1x.util.*;
 public class X86MacroAssembler extends X86Assembler {
 
     private CiRegister rscratch1;
-    private final int wordSize;
     private final C1XCompiler compiler;
     public static final int LONG_SIZE = 8;
 
     public X86MacroAssembler(C1XCompiler compiler, CiTarget target, int frameSize) {
         super(target, frameSize);
         this.compiler = compiler;
-
-        rscratch1 = compiler.target.scratchRegister;
-        wordSize = this.target.arch.wordSize;
+        this.rscratch1 = compiler.target.scratchRegister;
     }
 
     public final int callGlobalStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, Object... args) {
@@ -87,7 +84,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     private int calcGlobalStubParameterOffset(int index) {
         assert index >= 0 : "invalid offset from rsp";
-        return -(index + 2) * target.arch.wordSize;
+        return -(index + 2) * wordSize;
     }
 
     void loadResult(CiRegister r, int index, CiKind kind) {
@@ -199,9 +196,9 @@ public class X86MacroAssembler extends X86Assembler {
         //
         // Basic idea: lo(result) = lo(xLo * yLo)
         // hi(result) = hi(xLo * yLo) + lo(xHi * yLo) + lo(xLo * yHi)
-        Address xHi = new Address(X86.rsp, xRspOffset + target.arch.wordSize);
+        Address xHi = new Address(X86.rsp, xRspOffset + wordSize);
         Address xLo = new Address(X86.rsp, xRspOffset);
-        Address yHi = new Address(X86.rsp, yRspOffset + target.arch.wordSize);
+        Address yHi = new Address(X86.rsp, yRspOffset + wordSize);
         Address yLo = new Address(X86.rsp, yRspOffset);
         Label quick = new Label();
         // load xHi, yHi and check if quick
@@ -240,7 +237,7 @@ public class X86MacroAssembler extends X86Assembler {
         assert hi != X86.rcx : "must not use X86Register.rcx";
         assert lo != X86.rcx : "must not use X86Register.rcx";
         CiRegister s = X86.rcx; // shift count
-        int n = target.arch.wordSize * Byte.SIZE;
+        int n = wordSize * Byte.SIZE;
         Label l = new Label();
         andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
         cmpl(s, n); // if (s < n)
@@ -259,7 +256,7 @@ public class X86MacroAssembler extends X86Assembler {
         assert hi != X86.rcx : "must not use X86Register.rcx";
         assert lo != X86.rcx : "must not use X86Register.rcx";
         CiRegister s = X86.rcx; // shift count
-        int n = target.arch.wordSize * Byte.SIZE;
+        int n = wordSize * Byte.SIZE;
         Label l = new Label();
         andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
         cmpl(s, n); // if (s < n)

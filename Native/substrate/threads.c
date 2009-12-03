@@ -238,7 +238,7 @@ void *thread_run(void *arg) {
     log_println("thread_run: BEGIN t=%p", nativeThread);
 #endif
 
-    Address tlBlock = threadLocalsBlock_create(id, true);
+    Address tlBlock = threadLocalsBlock_create(id);
     ThreadLocals tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
@@ -325,7 +325,7 @@ int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon) {
     jint handle = (jint) nativeThread;
     jint id = handle < 0 ? handle : -handle;
 
-    Address tlBlock = threadLocalsBlock_create(id, true);
+    Address tlBlock = threadLocalsBlock_create(id);
     ThreadLocals tl = THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 

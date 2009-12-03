@@ -42,8 +42,8 @@ public class CallingConvention {
         for (int i = 0; i < locations.length; i++) {
             CiLocation l = locations[i];
             operands[i] = locationToOperand(l);
-            if (l.isStackOffset()) {
-                outgoing = Math.max(outgoing, l.stackOffset + l.stackSize);
+            if (l.isStack()) {
+                outgoing = Math.max(outgoing, l.stackOffset() + l.stackSize());
             }
         }
 
@@ -51,19 +51,19 @@ public class CallingConvention {
     }
 
     public static LIROperand locationToOperand(CiLocation location) {
-        if (location.isStackOffset()) {
-            int stackOffset = location.stackOffset;
-            if (location.callerStack) {
-                return LIROperandFactory.address(LIROperandFactory.singleLocation(CiKind.Int, CiRegister.CallerStack), stackOffset, location.kind);
+        if (location.isStack()) {
+            int stackOffset = location.stackOffset();
+            if (location.isCallerFrame()) {
+                return LIROperand.forAddress(LIROperand.forRegister(CiKind.Int, CiRegister.CallerStack), stackOffset, location.kind);
             } else {
-                return LIROperandFactory.address(LIROperandFactory.singleLocation(CiKind.Int, CiRegister.Stack), stackOffset, location.kind);
+                return LIROperand.forAddress(LIROperand.forRegister(CiKind.Int, CiRegister.Stack), stackOffset, location.kind);
             }
-        } else if (location.second == null) {
-            assert location.first != null;
-            return new LIRLocation(location.kind, location.first);
+        } else if (location.second() == null) {
+            assert location.first() != null;
+            return new LIRLocation(location.kind, location.first());
         } else {
-            assert location.first != null;
-            return new LIRLocation(location.kind, location.first, location.second);
+            assert location.first() != null;
+            return new LIRLocation(location.kind, location.first(), location.second());
         }
     }
 

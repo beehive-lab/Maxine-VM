@@ -61,6 +61,22 @@ int theThreadLocalsAreaSize = -1;
  */
 static ThreadLocalsKey theThreadLocalsKey;
 
+static Address allocateThreadLocalBlock(size_t tlBlockSize) {
+#if os_GUESTVMXEN
+	return (Address) guestvmXen_virtualMemory_allocate(tlBlockSize, DATA_VM);
+#else
+	return (Address) valloc(tlBlockSize);
+#endif
+}
+
+static void deallocateThreadLocalBlock(Address tlBlock, Size tlBlockSize) {
+#if os_GUESTVMXEN
+	guestvmXen_virtualMemory_deallocate((void *) tlBlock, tlBlockSize, DATA_VM);
+#else
+	free ((void *) tlBlock);
+#endif
+}
+
 /**
  * Allocates and initializes a thread locals block.
  *
@@ -68,9 +84,8 @@ static ThreadLocalsKey theThreadLocalsKey;
  *           == 0: the primordial thread
  *            < 0: temporary identifier (derived from the native thread handle) of a thread
  *                 that is being attached to the VM
- * @param allocateRefMap specifies if a reference map should be allocated
  */
-Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
+Address threadLocalsBlock_create(jint id) {
 
     c_ASSERT(threadLocalsBlock_current() == 0);
 
@@ -83,19 +98,17 @@ Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
     Address stackBase;
     thread_getStackInfo(&stackBase, &stackSize);
 
-    int stackWords = stackSize / sizeof(Address);
-    Size refMapSize = !allocateRefMap ? 0 : wordAlign(1 + (stackWords / 8));
-
     /* See diagram at top of threadLocals.h */
-    const int triggerPage = pageSize;
-    const int tlBlockSize =
-                    triggerPage +
-                    (3 * tlSize) +
-                    sizeof(NativeThreadLocalsStruct) +
-                    refMapSize;
+    const int triggerPageSize = pageSize;
+    int stackWords = stackSize / sizeof(Address);
+    Size refMapSize = primordial ? 0 : wordAlign(1 + (stackWords / 8));
+    const int tlBlockSize = triggerPageSize +
+                            (3 * tlSize) +
+                            sizeof(NativeThreadLocalsStruct) +
+                            (primordial ? 0 : refMapSize);
 
     c_ASSERT(wordAlign(tlBlockSize) == (Address) tlBlockSize);
-    Address tlBlock = (Address) valloc(tlBlockSize);
+    Address tlBlock = allocateThreadLocalBlock(tlBlockSize);
     if (tlBlock == 0) {
         return 0;
     }
@@ -108,7 +121,7 @@ Address threadLocalsBlock_create(jint id, jboolean allocateRefMap) {
     NativeThreadLocals ntl = (NativeThreadLocals) current;
     current += sizeof(NativeThreadLocalsStruct);
     Address refMap = current;
-    if (allocateRefMap) {
+    if (!primordial) {
         current = current + refMapSize;
     }
 
@@ -280,12 +293,11 @@ void threadLocalsBlock_destroy(Address tlBlock) {
     // on GUESTVMXEN stack protection is handled elsewhere
 #endif
 
-    // Temporarily re-establish the block for the duration of this function
-    // so that traps have a better chance of printing something useful
+    // Undo the temporary re-establishment of the thread locals block
     threadLocalsBlock_setCurrent(0);
 
     /* Release the memory of the TL block. */
-    free((void *) tlBlock);
+    deallocateThreadLocalBlock(tlBlock, ntl->tlBlockSize);
 
 #if log_THREADS
     log_println("threadLocalsBlock_destroy: END t=%p", nativeThread);

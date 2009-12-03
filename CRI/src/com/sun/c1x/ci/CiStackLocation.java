@@ -18,53 +18,43 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-import com.sun.c1x.asm.*;
-import com.sun.c1x.debug.*;
+package com.sun.c1x.ci;
 
 /**
- * The <code>LIRLabel</code> class definition.
+ * This class represents a location on the stack, either the caller or callee's stack frame.
  *
- * @author Marcelo Cintra
+ * @author Ben L. Titzer
  */
-public class LIRLabel extends LIROp0 {
+public final class CiStackLocation extends CiLocation {
 
-    private Label label;
+    public final int stackOffset;
+    public final byte stackSize;
+    public final boolean callerFrame;
 
-    /**
-     * Constructs a LIRLabel instruction.
-     * @param label the label
-     */
-    public LIRLabel(Label label) {
-        super(LIROpcode.Label, LIROperand.IllegalLocation, null);
-        assert label != null;
-        this.label = label;
+    public CiStackLocation(CiKind kind, int stackOffset, int stackSize, boolean callerFrame) {
+        super(kind);
+        assert stackSize >= 0 && stackSize <= 8;
+        this.stackOffset = stackOffset;
+        this.stackSize = (byte) stackSize;
+        this.callerFrame = callerFrame;
     }
 
-    /**
-     * Gets the label associated to this instruction.
-     * @return the label
-     */
-    public Label label() {
-        return label;
+    public int hashCode() {
+        return kind.ordinal() + stackOffset + (callerFrame ? 91 : 83);
     }
 
-    /**
-     * Emits target assembly code for this LIRLabel instruction.
-     * @param masm the LIRAssembler
-     */
-    @Override
-    public void emitCode(LIRAssembler masm) {
-        masm.emitOpLabel(this);
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof CiStackLocation) {
+            CiStackLocation l = (CiStackLocation) o;
+            return l.kind == kind && l.stackOffset == stackOffset && l.stackSize == stackSize && l.callerFrame == callerFrame;
+        }
+        return false;
     }
 
-    /**
-     * Prints this instruction to a LogStream.
-     * @param out the output stream
-     */
-    @Override
-    public void printInstruction(LogStream out) {
-        out.printf("[label:%s]", label);
+    public String toString() {
+        return (callerFrame ? "+" : "-") + stackOffset + ":" + kind;
     }
 }

@@ -128,11 +128,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private LIROperand allocateOperand(XirParameter param, int parameterIndex) {
-        return LIROperandFactory.address(X86.rsp, argumentIndexToStackOffset(parameterIndex), param.kind);
+        return LIROperand.forAddress(X86.rsp, argumentIndexToStackOffset(parameterIndex), param.kind);
     }
 
     private LIROperand allocateResultOperand(XirOperand result) {
-        return LIROperandFactory.address(X86.rsp, argumentIndexToStackOffset(0), result.kind);
+        return LIROperand.forAddress(X86.rsp, argumentIndexToStackOffset(0), result.kind);
     }
 
     private LIROperand allocateOperand(XirTemp temp) {
@@ -147,7 +147,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private LIROperand newRegister(CiKind kind) {
         assert kind != CiKind.Float && kind != CiKind.Double;
         assert allocatableRegisters.size() > 0;
-        return LIROperandFactory.singleLocation(kind, allocatableRegisters.remove(allocatableRegisters.size() - 1));
+        return LIROperand.forRegister(kind, allocatableRegisters.remove(allocatableRegisters.size() - 1));
     }
 
     public GlobalStub emit(XirTemplate template, RiRuntime runtime) {
@@ -168,9 +168,9 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             if (t instanceof XirFixed) {
                 final XirFixed fixed = (XirFixed) t;
                 if (fixed.location.isRegister()) {
-                    allocatableRegisters.remove(fixed.location.first);
+                    allocatableRegisters.remove(fixed.location.first());
                     if (fixed.location.isDoubleRegister()) {
-                        allocatableRegisters.remove(fixed.location.second);
+                        allocatableRegisters.remove(fixed.location.second());
                     }
                 }
             }
@@ -183,7 +183,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         XirOperand resultOperand = template.resultOperand;
 
         if (template.allocateResultOperand) {
-            LIROperand outputOperand = LIROperandFactory.IllegalLocation;
+            LIROperand outputOperand = LIROperand.IllegalLocation;
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
@@ -210,7 +210,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         for (XirConstant c : template.constants) {
             assert operands[c.index] == null;
-            operands[c.index] = LIROperandFactory.constant(c.value);
+            operands[c.index] = LIROperand.forConstant(c.value);
         }
 
         for (XirTemp t : template.temps) {
@@ -434,7 +434,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         // Load arguments
         CiLocation[] result = target.config.getRuntimeParameterLocations(call.arguments);
         for (int i = 0; i < call.arguments.length; i++) {
-            loadArgument(i, result[i].first);
+            loadArgument(i, result[i].first());
         }
 
         // Call to the runtime

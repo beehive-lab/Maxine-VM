@@ -23,6 +23,7 @@ package com.sun.c1x.gen;
 import java.util.*;
 
 import com.sun.c1x.lir.*;
+import static com.sun.c1x.lir.LIROperand.*;
 
 /**
  * Converts the HIR program's Phi instructions into moves.
@@ -56,7 +57,7 @@ public class PhiResolver {
         this.gen = gen;
         state = new PhiResolverState();
         state.reset(maxVregs);
-        temp = LIROperandFactory.IllegalLocation;
+        temp = IllegalLocation;
     }
 
     public void dispose() {
@@ -68,7 +69,7 @@ public class PhiResolver {
                 loop = null;
                 move(null, node);
                 node.startNode = true;
-                assert temp.isIllegal() : "moveTempTo() call missing";
+                assert isIllegal(temp) : "moveTempTo() call missing";
             }
         }
 
@@ -82,17 +83,17 @@ public class PhiResolver {
     }
 
     public void move(LIROperand src, LIROperand dest) {
-        assert dest.isVirtual() : "destination must be virtual";
+        assert dest.isVariable() : "destination must be virtual";
         // tty.print("move "); src.print(); tty.print(" to "); dest.print(); tty.cr();
-        assert !src.isIllegal() : "source for phi move is illegal";
-        assert !dest.isIllegal() : "destination for phi move is illegal";
+        assert isLegal(src) : "source for phi move is illegal";
+        assert isLegal(dest) : "destination for phi move is illegal";
         ResolveNode source = sourceNode(src);
         source.append(destinationNode(dest));
       }
 
     private ResolveNode createNode(LIROperand opr, boolean source) {
         ResolveNode node;
-        if (opr.isVirtual()) {
+        if (opr.isVariable()) {
             int vregNum = opr.vregNumber();
             node = vregTable()[vregNum];
             assert node == null || node.operand == opr;
@@ -118,8 +119,8 @@ public class PhiResolver {
     }
 
     private void emitMove(LIROperand src, LIROperand dest) {
-        assert !src.isIllegal();
-        assert !dest.isIllegal();
+        assert isLegal(src);
+        assert isLegal(dest);
         gen().lir.move(src, dest);
     }
 
@@ -160,13 +161,13 @@ public class PhiResolver {
     }
 
     private void moveTempTo(LIROperand dest) {
-        assert !temp.isIllegal();
+        assert isLegal(temp);
         emitMove(temp, dest);
-        temp = LIROperandFactory.IllegalLocation;
+        temp = IllegalLocation;
     }
 
     private void moveToTemp(LIROperand src) {
-        assert temp.isIllegal();
+        assert isIllegal(temp);
         temp = gen().newRegister(src.kind);
         emitMove(src, temp);
     }

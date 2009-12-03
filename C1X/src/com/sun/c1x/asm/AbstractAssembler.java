@@ -42,6 +42,7 @@ public abstract class AbstractAssembler {
     public final List<ExceptionInfo> exceptionInfoList;
     public final boolean is64;
     public final boolean is32;
+    protected final int wordSize;
 
     public AbstractAssembler(CiTarget target, int frameSize) {
         this.target = target;
@@ -50,6 +51,7 @@ public abstract class AbstractAssembler {
         this.is32 = target.arch.is32bit();
         this.is64 = target.arch.is64bit();
         this.exceptionInfoList = new ArrayList<ExceptionInfo>();
+        this.wordSize = target.arch.wordSize;
         targetMethod.setFrameSize(frameSize);
     }
 

@@ -39,8 +39,8 @@ public class DebugInfoBuilder {
 
     private CiCodePos currentCodePos;
     private CiDebugInfo.Frame currentFrame;
-    private boolean[] currentRegisterRefMap;
-    private boolean[] currentStackRefMap;
+    private byte[] currentRegisterRefMap;
+    private byte[] currentStackRefMap;
 
     public DebugInfoBuilder(CiTarget target, ValueLocator locator, int frameSize) {
         this.target = target;
@@ -72,7 +72,7 @@ public class DebugInfoBuilder {
     }
 
     private CiDebugInfo.Frame makeFrame(ValueStack stack, int bci) {
-        // TODO: cache the debug information for each value stack if equivalent to previous
+        // XXX: cache the debug information for each value stack if equivalent to previous
         return createFrame(stack, bci);
     }
 
@@ -80,15 +80,15 @@ public class DebugInfoBuilder {
         int stackBegin = stack.callerStackSize();
         int numStack = 0;
         int numLocals = 0;
-        int numLocks = 0;
+        int numLocks;
         for (int i = 0; i < stack.localsSize(); i++) {
             if (stack.localAt(i) != null) {
-                numLocals = i;
+                numLocals = 1 + i;
             }
         }
-        for (int i = stackBegin; i < stack.stackSize(); i++) {
+        for (int i = 0; i < stack.stackSize(); i++) {
             if (stack.stackAt(i) != null) {
-                numStack = i - stackBegin;
+                numStack = 1 + i;
             }
         }
         numLocks = stack.locksSize();
@@ -109,9 +109,8 @@ public class DebugInfoBuilder {
         }
         for (int i = 0; i < stack.locksSize(); i++, pos++) {
             Value v = stack.lockAt(i);
-            if (v != null) {
-                values[pos] = locator.locate(v);
-            }
+            assert v != null;
+            values[pos] = locator.locate(v);
         }
 
         ValueStack caller = stack.scope().callerState();
@@ -123,26 +122,37 @@ public class DebugInfoBuilder {
     }
 
     public void setOop(CiLocation location) {
-        if (location.isStackOffset()) {
-            int offset = location.stackOffset;
+        if (location.isStack()) {
+            int offset = location.stackOffset();
             assert offset % target.arch.wordSize == 0 : "must be aligned";
             int stackMapIndex = offset / target.arch.wordSize;
             if (currentStackRefMap == null) {
-                currentStackRefMap = new boolean[frameSize];
+                currentStackRefMap = newRefMap(frameSize);
             }
-            currentStackRefMap[stackMapIndex] = true;
+            setBit(currentStackRefMap, stackMapIndex);
         } else {
-            int index = target.allocatableRegs.referenceMapIndex[location.first.number];
+            int index = target.allocatableRegs.referenceMapIndex[location.first().number];
             if (currentRegisterRefMap == null) {
-                currentRegisterRefMap = new boolean[target.allocatableRegs.registerRefMapSize];
+                currentRegisterRefMap = newRefMap(target.allocatableRegs.registerRefMapSize);
             }
-            assert index >= 0 : "object cannot be in non-object register " + location.first;
+            assert index >= 0 : "object cannot be in non-object register " + location.first();
             assert location.isSingleRegister() : "objects can only be in a single register";
-            currentRegisterRefMap[index] = true;
+            setBit(currentRegisterRefMap, index);
         }
     }
 
     public abstract class ValueLocator {
         public abstract CiValue locate(Value value);
+    }
+
+    private byte[] newRefMap(int slots) {
+        return new byte[(slots + 7) >> 3];
+    }
+
+    private void setBit(byte[] array, int bit) {
+        int index = bit >> 3;
+        int offset = bit & 0x7;
+
+        array[index] = (byte) (array[index] | (1 << offset));
     }
 }

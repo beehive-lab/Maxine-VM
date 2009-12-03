@@ -23,6 +23,7 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
@@ -35,7 +36,7 @@ import com.sun.c1x.stub.*;
  */
 public abstract class LIRInstruction {
 
-    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(LIROperandFactory.IllegalLocation);
+    private static final OperandSlot ILLEGAL_SLOT = new OperandSlot(LIROperand.IllegalLocation);
 
     // the opcode of this instruction
     public final LIROpcode code;
@@ -55,6 +56,7 @@ public abstract class LIRInstruction {
     public final boolean hasCall;
 
     public LocalStub stub;
+    public static final OperandMode[] OPERAND_MODES = OperandMode.values();
 
     public enum OperandMode {
         OutputMode,
@@ -92,11 +94,11 @@ public abstract class LIRInstruction {
         public LIROperand get(LIRInstruction inst) {
             if (!resolved) {
                 LIROperand result = null;
-                if (direct != null && direct.isAddress()) {
+                if (direct != null && LIROperand.isAddress(direct)) {
                     LIRAddress address = (LIRAddress) direct;
                     LIRLocation baseOperand = inst.operands.get(base);
-                    LIRLocation indexOperand = LIROperandFactory.IllegalLocation;
-                    if (!address.index.isIllegal()) {
+                    LIRLocation indexOperand = LIROperand.IllegalLocation;
+                    if (LIROperand.isLegal(address.index)) {
                         indexOperand = inst.operands.get(base + 1);
                         assert indexOperand.isRegister();
                     }
@@ -109,11 +111,11 @@ public abstract class LIRInstruction {
                 assert result != null;
 
                 direct = result;
-                if (result.isRegister() && !result.isVirtual()) {
+                if (result.isRegister() && !result.isVariable()) {
                     resolved = true;
                 }
 
-                if (result.isAddress() && !((LIRAddress) result).base.isVirtual()) {
+                if (LIROperand.isAddress(result) && !((LIRAddress) result).base.isVariable()) {
                     resolved = true;
                 }
 
@@ -158,7 +160,7 @@ public abstract class LIRInstruction {
 
     private OperandSlot addOutput(LIROperand output) {
         assert output != null;
-        if (output != LIROperandFactory.IllegalLocation) {
+        if (output != LIROperand.IllegalLocation) {
             if (output instanceof LIRAddress) {
                 return addAddress((LIRAddress) output);
             }
@@ -180,13 +182,13 @@ public abstract class LIRInstruction {
         allocatorInputCount++;
         operands.add(address.base);
 
-        if (!address.index.isIllegal()) {
+        if (LIROperand.isLegal(address.index)) {
             allocatorInputCount++;
             operands.add(address.index);
         }
 
-        if (address.base.isRegister() && !address.base.isVirtual()) {
-            assert address.index.isIllegal() || !address.index.isVirtual();
+        if (address.base.isRegister() && !address.base.isVariable()) {
+            assert LIROperand.isIllegal(address.index) || !address.index.isVariable();
             return new OperandSlot(address);
         }
 
@@ -204,11 +206,11 @@ public abstract class LIRInstruction {
 
     private OperandSlot addOperand(LIROperand input, boolean isInput, boolean isTemp) {
         assert input != null;
-        if (input != LIROperandFactory.IllegalLocation) {
+        if (input != LIROperand.IllegalLocation) {
             assert !(input instanceof LIRAddress);
             if (input.isStack()) {
                 return addStackSlot(input);
-            } else if (input.isConstant()) {
+            } else if (LIROperand.isConstant(input)) {
                 return addConstant((LIRConstant) input);
             } else {
                 assert operands.size() == outputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
@@ -232,7 +234,7 @@ public abstract class LIRInstruction {
 
     protected final LIROperand operand(int index) {
         if (index >= operandSlots.length) {
-            return LIROperandFactory.IllegalLocation;
+            return LIROperand.IllegalLocation;
         }
 
         return operandSlots[index].get(this);
@@ -250,7 +252,7 @@ public abstract class LIRInstruction {
         // Addresses in instruction
         for (int i = 0; i < operands.length; i++) {
             LIROperand op = operands[i];
-            if (op.isAddress()) {
+            if (LIROperand.isAddress(op)) {
                 operandSlots[i] = addAddress((LIRAddress) op);
             }
         }
@@ -259,7 +261,7 @@ public abstract class LIRInstruction {
         if (stubOperands != null) {
             for (int i = 0; i < stubOperands.length; i++) {
                 LIROperand op = stubOperands[i];
-                if (op.isAddress()) {
+                if (LIROperand.isAddress(op)) {
                     operandSlots[i + operands.length] = addAddress((LIRAddress) op);
                 }
             }
@@ -485,6 +487,10 @@ public abstract class LIRInstruction {
         }
     }
 
+    public boolean hasInfo() {
+        return info != null || (stub != null && stub.info != null);
+    }
+
     public int infoCount() {
         int result = 0;
         if (info != null) {
@@ -499,25 +505,20 @@ public abstract class LIRInstruction {
     }
 
     public List<ExceptionHandler> exceptionEdges() {
+        int count = infoCount();
         List<ExceptionHandler> result = null;
-
-        int i;
-        for (i = 0; i < infoCount(); i++) {
-            if (infoAt(i).exceptionHandlers != null) {
-                result = infoAt(i).exceptionHandlers;
-                break;
+        for (int i = 0; i < count; i++) {
+            List<ExceptionHandler> handlers = infoAt(i).exceptionHandlers;
+            if (handlers != null) {
+                assert result == null : "only one xhandler list allowed per LIR-operation";
+                result = handlers;
             }
         }
 
-        for (i = 0; i < infoCount(); i++) {
-            assert infoAt(i).exceptionHandlers == null || infoAt(i).exceptionHandlers == result : "only one xhandler list allowed per LIR-operation";
+        if (result == null) {
+            result = Util.uncheckedCast(Collections.EMPTY_LIST);
         }
-
-        if (result != null) {
-            return result;
-        } else {
-            return new ArrayList<ExceptionHandler>();
-        }
+        return result;
     }
 
     public LIRDebugInfo infoAt(int k) {

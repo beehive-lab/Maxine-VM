@@ -28,7 +28,6 @@ import com.sun.c1x.ci.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
- *
  */
 public final class LIRLocation extends LIROperand {
 
@@ -60,7 +59,7 @@ public final class LIRLocation extends LIROperand {
      */
     LIRLocation(CiKind kind, int number) {
         super(kind);
-        assert number != 0;
+        assert number < 0 || number >= CiRegister.MaxPhysicalRegisterNumber;
         this.location1 = CiRegister.None;
         this.location2 = CiRegister.None;
         this.index = number;
@@ -103,7 +102,7 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public int vregNumber() {
-        assert index >= CiRegister.FirstVirtualRegisterNumber;
+        assert index >= CiRegister.MaxPhysicalRegisterNumber;
         return index;
     }
 
@@ -118,13 +117,13 @@ public final class LIRLocation extends LIROperand {
     }
 
     @Override
-    public boolean isVirtualCpu() {
-        return !isStack() && index >= CiRegister.FirstVirtualRegisterNumber;
+    public boolean isVariable() {
+        return index >= CiRegister.MaxPhysicalRegisterNumber;
     }
 
     @Override
     public boolean isFixedCpu() {
-        return !isStack() && index < CiRegister.FirstVirtualRegisterNumber;
+        return !isStack() && index < CiRegister.MaxPhysicalRegisterNumber;
     }
 
     @Override
@@ -154,19 +153,19 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public int stackIndex() {
-        assert (isSingleStack() || isDoubleStack()) && !isVirtual() : "type check";
+        assert (isSingleStack() || isDoubleStack()) && !this.isVariable() : "type check";
         return -index - 1;
     }
 
     @Override
     public int singleStackIndex() {
-        assert isSingleStack() && !isVirtual() : "type check";
+        assert isSingleStack() && !this.isVariable() : "type check";
         return -index - 1;
     }
 
     @Override
     public int doubleStackIndex() {
-        assert isDoubleStack() && !isVirtual() : "type check";
+        assert isDoubleStack() && !this.isVariable() : "type check";
         return -index - 1;
     }
 
@@ -188,24 +187,24 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public boolean isVirtualRegister() {
-        return index != 0 && !this.isStack();
+        return index > 0;
     }
 
     @Override
     public int cpuRegNumber() {
-        assert this.isRegister() && !this.isVirtualRegister();
+        assert index == 0;
         return location1.number;
     }
 
     @Override
     public int cpuRegNumberLow() {
-        assert this.isRegister() && !this.isVirtualRegister();
+        assert index == 0;
         return location1.number;
     }
 
     @Override
     public int cpuRegNumberHigh() {
-        assert this.isRegister() && !this.isVirtualRegister();
+        assert index == 0;
         return location2.number;
     }
 }

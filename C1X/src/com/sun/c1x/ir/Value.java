@@ -286,7 +286,7 @@ public abstract class Value {
      * @param operand the operand to associate with this instruction
      */
     public final void setOperand(LIROperand operand) {
-        assert operand != null && !operand.isIllegal() : "operand must exist";
+        assert operand != null && LIROperand.isLegal(operand) : "operand must exist";
         assert operand.kind == this.kind;
         lirOperand = operand;
     }
@@ -295,7 +295,7 @@ public abstract class Value {
      * Clears the LIR operand associated with this instruction.
      */
     public final void clearOperand() {
-        lirOperand = LIROperandFactory.IllegalLocation;
+        lirOperand = LIROperand.IllegalLocation;
     }
 
     /**

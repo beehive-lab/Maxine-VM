@@ -23,10 +23,7 @@ package com.sun.c1x.xir;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sun.c1x.ci.CiConstant;
-import com.sun.c1x.ci.CiKind;
-import com.sun.c1x.ci.CiLocation;
-import com.sun.c1x.ci.CiRegister;
+import com.sun.c1x.ci.*;
 
 /**
  * This class represents an assembler which allows a client such as the runtime system to
@@ -505,7 +502,7 @@ public abstract class CiXirAssembler {
 
     public XirOperand createRegister(String name, CiKind kind, CiRegister register) {
     	assert !finished;
-        XirFixed fixed = new XirFixed(name, new CiLocation(kind, register));
+        XirFixed fixed = new XirFixed(name, new CiRegisterLocation(kind, register));
         temps.add(fixed);
         return fixed;
     }

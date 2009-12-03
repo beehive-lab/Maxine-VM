@@ -26,4 +26,17 @@ package com.sun.c1x.ci;
  * @author Thomas Wuerthinger
  */
 public abstract class CiValue {
+
+    /**
+     * Stores the kind of this value.
+     */
+    public final CiKind kind;
+
+    /**
+     * Initializes a new value of the specified kind.
+     * @param kind the kind
+     */
+    protected CiValue(CiKind kind) {
+        this.kind = kind;
+    }
 }
