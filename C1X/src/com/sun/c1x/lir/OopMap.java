@@ -46,14 +46,14 @@ public class OopMap {
     }
 
     public void setOop(CiLocation location) {
-        if (location.isStackOffset()) {
-            int offset = location.stackOffset;
+        if (location.isStack()) {
+            int offset = location.stackOffset();
             assert offset % target.arch.wordSize == 0 : "must be aligned";
             int stackMapIndex = offset / target.arch.wordSize;
             stackMap.set(stackMapIndex);
         } else {
             assert location.isSingleRegister() : "objects can only be in a single register";
-            setOop(location.first);
+            setOop(location.first());
         }
     }
 

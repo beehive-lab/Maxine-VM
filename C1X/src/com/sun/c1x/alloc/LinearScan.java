@@ -2342,17 +2342,17 @@ public class LinearScan {
     int appendScopeValueForOperand(LIROperand opr, List<CiValue> scopeValues) {
         if (opr.isSingleStack()) {
             int stackIdx = opr.singleStackIndex();
-            CiLocation location = new CiLocation(opr.kind, stackIdx, FrameMap.SPILL_SLOT_SIZE, false);
+            CiLocation location = new CiStackLocation(opr.kind, stackIdx, FrameMap.SPILL_SLOT_SIZE, false);
             scopeValues.add(location);
             return 1;
 
         } else if (opr.isSingleCpu()) {
-            CiLocation location = new CiLocation(opr.kind, opr.asRegister());
+            CiLocation location = new CiRegisterLocation(opr.kind, opr.asRegister());
             scopeValues.add(location);
             return 1;
 
         } else if (opr.isSingleXmm() && compilation.target.arch.isX86()) {
-            CiLocation location = new CiLocation(opr.kind, opr.asRegister());
+            CiLocation location = new CiRegisterLocation(opr.kind, opr.asRegister());
             scopeValues.add(location);
             return 1;
 
@@ -2363,13 +2363,13 @@ public class LinearScan {
 
             if (opr.isDoubleStack()) {
                 assert compilation.target.arch.is64bit();
-                first = new CiLocation(opr.kind, opr.doubleStackIndex(), FrameMap.SPILL_SLOT_SIZE * 2, false);
+                first = new CiStackLocation(opr.kind, opr.doubleStackIndex(), FrameMap.SPILL_SLOT_SIZE * 2, false);
             } else if (opr.isDoubleCpu()) {
                 assert compilation.target.arch.is64bit();
-                first = new CiLocation(opr.kind, opr.asRegister());
+                first = new CiRegisterLocation(opr.kind, opr.asRegister());
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
                 assert opr.asRegisterLow() == opr.asRegisterHigh() : "assumed in calculation";
-                first = new CiLocation(opr.kind, opr.asRegister());
+                first = new CiRegisterLocation(opr.kind, opr.asRegister());
 
             } else {
                 Util.shouldNotReachHere();

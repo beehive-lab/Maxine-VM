@@ -211,9 +211,9 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                     if (currentGeneral < generalParameterRegisters.length) {
                         CiRegister register = generalParameterRegisters[currentGeneral++];
                         if (kind == CiKind.Long) {
-                            result[i] = new CiLocation(kind, register, register);
+                            result[i] = new CiRegisterLocation(kind, register, register);
                         } else {
-                            result[i] = new CiLocation(kind, register);
+                            result[i] = new CiRegisterLocation(kind, register);
                         }
                     }
                     break;
@@ -223,9 +223,9 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
                     if (currentXMM < xmmParameterRegisters.length) {
                         CiRegister register = xmmParameterRegisters[currentXMM++];
                         if (kind == CiKind.Float) {
-                            result[i] = new CiLocation(kind, register);
+                            result[i] = new CiRegisterLocation(kind, register);
                         } else {
-                            result[i] = new CiLocation(kind, register, register);
+                            result[i] = new CiRegisterLocation(kind, register, register);
                         }
                     }
                     break;
@@ -235,7 +235,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
             }
 
             if (result[i] == null) {
-                result[i] = new CiLocation(kind, currentStackSlot, wordSize, !outgoing);
+                result[i] = new CiStackLocation(kind, currentStackSlot, wordSize, !outgoing);
                 currentStackSlot += wordSize;
             }
         }
