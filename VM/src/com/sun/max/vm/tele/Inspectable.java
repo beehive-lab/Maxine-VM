@@ -23,7 +23,6 @@ package com.sun.max.vm.tele;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
-
 /**
  * Holder for magic word that communicates whether this VM is being inspected.
  *

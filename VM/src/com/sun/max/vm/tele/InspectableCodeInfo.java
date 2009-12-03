@@ -25,7 +25,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
 
-
 /**
  * Makes critical state information about code
  * remotely inspectable.
