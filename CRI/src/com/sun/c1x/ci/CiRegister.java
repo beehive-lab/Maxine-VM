@@ -46,7 +46,7 @@ public final class CiRegister {
      */
     public static final CiRegister CallerStack = new CiRegister(-3, -3, "caller-stackreg", RegisterFlag.CPU);
 
-    public static final int FirstVirtualRegisterNumber = 40;
+    public static final int MaxPhysicalRegisterNumber = 40;
 
     public final int number;
     public final String name;
@@ -61,7 +61,7 @@ public final class CiRegister {
     }
 
     public CiRegister(int number, int encoding, String name, RegisterFlag... flags) {
-        assert number < FirstVirtualRegisterNumber : "cannot have a register number greater or equal " + FirstVirtualRegisterNumber;
+        assert number < MaxPhysicalRegisterNumber : "cannot have a register number greater or equal " + MaxPhysicalRegisterNumber;
         this.number = number;
         this.name = name;
         this.flags = createMask(flags);

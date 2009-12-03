@@ -128,11 +128,11 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private LIROperand allocateOperand(XirParameter param, int parameterIndex) {
-        return LIROperandFactory.address(X86.rsp, argumentIndexToStackOffset(parameterIndex), param.kind);
+        return LIROperand.forAddress(X86.rsp, argumentIndexToStackOffset(parameterIndex), param.kind);
     }
 
     private LIROperand allocateResultOperand(XirOperand result) {
-        return LIROperandFactory.address(X86.rsp, argumentIndexToStackOffset(0), result.kind);
+        return LIROperand.forAddress(X86.rsp, argumentIndexToStackOffset(0), result.kind);
     }
 
     private LIROperand allocateOperand(XirTemp temp) {
@@ -147,7 +147,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private LIROperand newRegister(CiKind kind) {
         assert kind != CiKind.Float && kind != CiKind.Double;
         assert allocatableRegisters.size() > 0;
-        return LIROperandFactory.singleLocation(kind, allocatableRegisters.remove(allocatableRegisters.size() - 1));
+        return LIROperand.forRegister(kind, allocatableRegisters.remove(allocatableRegisters.size() - 1));
     }
 
     public GlobalStub emit(XirTemplate template, RiRuntime runtime) {
@@ -210,7 +210,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         for (XirConstant c : template.constants) {
             assert operands[c.index] == null;
-            operands[c.index] = LIROperandFactory.constant(c.value);
+            operands[c.index] = LIROperand.forConstant(c.value);
         }
 
         for (XirTemp t : template.temps) {

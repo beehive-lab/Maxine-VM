@@ -51,7 +51,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected LIROperand force(Value v, CiRegister reg) {
         LIRItem item = new LIRItem(v, this);
-        item.loadItemForce(LIROperandFactory.singleLocation(v.kind, reg));
+        item.loadItemForce(forRegister(v.kind, reg));
         return item.result();
     }
 
@@ -108,7 +108,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.virtualRegisterNumber = CiRegister.FirstVirtualRegisterNumber;
+        this.virtualRegisterNumber = CiRegister.MaxPhysicalRegisterNumber;
         this.vregFlags = new BitMap2D(0, VregFlag.NumVregFlags.ordinal());
         this.ir = compilation.hir();
         this.xir = C1XOptions.UseXIR ? new XirSupport(compilation.compiler.xir) : null;
@@ -240,8 +240,8 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        LIRConstant cpi = LIROperandFactory.intConst(i.cpi);
-        LIROperand cp = LIROperandFactory.oopConst(i.constantPool.encoding().asObject());
+        LIRConstant cpi = forInt(i.cpi);
+        LIROperand cp = forObject(i.constantPool.encoding().asObject());
         if (i.portion == RiType.Representation.ObjectHub) {
             setResult(i, callRuntimeWithResult(CiRuntimeCall.ResolveClass, info, cpi, cp));
         } else if (i.portion == RiType.Representation.StaticFields) {
@@ -395,7 +395,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
             LIROperand res = x.operand();
             if (!(isLegal(res))) {
-                res = LIROperandFactory.constant(x);
+                res = forConstant(x);
             }
             if (isConstant(res)) {
                 LIROperand reg = rlockResult(x);
@@ -418,7 +418,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         LIROperand result = newRegister(CiKind.Object);
-        LIRLocation threadReg = LIROperandFactory.singleLocation(CiKind.Object, compilation.target.config.getThreadRegister());
+        LIRLocation threadReg = forRegister(CiKind.Object, compilation.target.config.getThreadRegister());
         lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOffset(), CiKind.Object), result);
         setResult(x, result);
     }
@@ -619,8 +619,8 @@ public abstract class LIRGenerator extends ValueVisitor {
                 default:
                     throw Util.shouldNotReachHere();
             }
-            LIRConstant cpi = LIROperandFactory.intConst(x.cpi);
-            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            LIRConstant cpi = forInt(x.cpi);
+            LIROperand cp = forConstant(x.constantPool.encoding());
             if (x.hasReceiver()) {
                 destinationAddress = callRuntimeWithResult(call, info.copy(), load(x.receiver()), cpi, cp);
             } else {
@@ -682,7 +682,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitLoadRegister(LoadRegister x) {
         LIROperand reg = rlockResult(x);
-        lir.move(LIROperandFactory.singleLocation(x.kind, x.register()), reg);
+        lir.move(forRegister(x.kind, x.register()), reg);
     }
 
     @Override
@@ -730,8 +730,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIROperand reg = rlockResult(x, fieldType);
         LIRAddress address;
         if (info != null && needsPatching) {
-            LIRConstant cpi = LIROperandFactory.intConst(x.cpi);
-            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            LIRConstant cpi = forInt(x.cpi);
+            LIROperand cp = forConstant(x.constantPool.encoding());
             LIRLocation tempResult = callRuntime(CiRuntimeCall.ResolveFieldOffset, info.copy(), cpi, cp);
             address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
         } else {
@@ -976,7 +976,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         for (XirConstant c : snippet.template.constants) {
             assert operands[c.index] == null;
-            operands[c.index] = LIROperandFactory.constant(c.value);
+            operands[c.index] = forConstant(c.value);
         }
 
         final List<LIROperand> tempOperands = new ArrayList<LIROperand>();
@@ -1032,7 +1032,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitStoreRegister(StoreRegister x) {
-        LIROperand reg = LIROperandFactory.singleLocation(x.kind, x.register());
+        LIROperand reg = forRegister(x.kind, x.register());
         LIRItem src = new LIRItem(x.value(), this);
         lir.move(src.result(), reg);
     }
@@ -1097,8 +1097,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIRAddress address;
         if (info != null && needsPatching) {
-            LIRConstant cpi = LIROperandFactory.intConst(x.cpi);
-            LIROperand cp = LIROperandFactory.constant(x.constantPool.encoding());
+            LIRConstant cpi = forInt(x.cpi);
+            LIROperand cp = forConstant(x.constantPool.encoding());
             LIRLocation tempResult = callRuntime(CiRuntimeCall.ResolveFieldOffset, info.copy(), cpi, cp);
             address = new LIRAddress((LIRLocation) object.result(), tempResult, fieldType);
         } else {
@@ -1409,7 +1409,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     private LIROperand loadConstant(Constant x) {
-        return loadConstant((LIRConstant) LIROperandFactory.constant(x), x.kind);
+        return loadConstant((LIRConstant) forConstant(x), x.kind);
     }
 
     protected LIROperand loadConstant(LIRConstant c, CiKind kind) {
@@ -1461,9 +1461,9 @@ public abstract class LIRGenerator extends ValueVisitor {
                 int takenCountOffset = md.branchTakenCountOffset(bci);
                 int notTakenCountOffset = md.branchNotTakenCountOffset(bci);
                 LIRLocation mdReg = newRegister(CiKind.Object);
-                lir.move(LIROperandFactory.oopConst(md.encoding().asObject()), mdReg);
+                lir.move(forObject(md.encoding().asObject()), mdReg);
                 LIRLocation dataOffsetReg = newRegister(CiKind.Int);
-                lir.cmove(lirCond(cond), LIROperandFactory.intConst(takenCountOffset), LIROperandFactory.intConst(notTakenCountOffset), dataOffsetReg);
+                lir.cmove(lirCond(cond), forInt(takenCountOffset), forInt(notTakenCountOffset), dataOffsetReg);
                 LIRLocation dataReg = newRegister(CiKind.Int);
                 LIRAddress dataAddr = new LIRAddress(mdReg, dataOffsetReg, CiKind.Int);
                 lir.move(dataAddr, dataReg);
@@ -1909,13 +1909,13 @@ public abstract class LIRGenerator extends ValueVisitor {
     public LIRLocation newRegister(CiKind type) {
         assert type != CiKind.Void;
         int vreg = virtualRegisterNumber++;
-        return LIROperandFactory.virtualRegister(vreg, type);
+        return forVariable(vreg, type);
     }
 
     public LIRLocation newRegister(CiKind type, VregFlag flag) {
         assert type != CiKind.Void;
         int vreg = virtualRegisterNumber++;
-        LIRLocation location = LIROperandFactory.virtualRegister(vreg, type);
+        LIRLocation location = forVariable(vreg, type);
         setVregFlag(location, flag);
         return location;
     }
@@ -1926,7 +1926,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (x instanceof Constant) {
                 // XXX: why isn't this a LIRConstant of some kind?
                 // XXX: why isn't this put in the instructionForOperand map?
-                x.setOperand(LIROperandFactory.constant(x));
+                x.setOperand(forConstant(x));
             } else {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
                 // allocate a virtual register for this local or phi
@@ -2120,9 +2120,9 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiRegister returnRegister = compilation.target.config.getReturnRegister(kind);
         assert is64 : "64 bit only for now";
         if (kind.size == 2) {
-            return LIROperandFactory.doubleLocation(kind, returnRegister, returnRegister);
+            return forRegisters(kind, returnRegister, returnRegister);
         }
-        return LIROperandFactory.singleLocation(kind, returnRegister);
+        return forRegister(kind, returnRegister);
     }
 
     protected static LIRCondition lirCond(Condition cond) {

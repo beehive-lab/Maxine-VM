@@ -2040,7 +2040,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
-            moveOp(callAddress, LIROperandFactory.singleLocation(callAddress.kind, reg), callAddress.kind, null, false);
+            moveOp(callAddress, forRegister(callAddress.kind, reg), callAddress.kind, null, false);
         }
         masm.indirectCall(reg, target, info);
     }
@@ -2643,7 +2643,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                         // (tw) remove this hack!
                         CiKind kind = CiKind.Long;
                         CiRegister register = this.compilation.target.config.getReturnRegister(inst.result.kind);
-                        LIROperand resultLocation = LIROperandFactory.doubleLocation(kind, register, register);
+                        LIROperand resultLocation = forRegisters(kind, register, register);
                         moveOp(resultLocation, ops[inst.result.index], kind, null, false);
                     }
                     break;
@@ -2705,7 +2705,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
     private LIROperand assureInRegister(LIROperand pointer) {
         if (isConstant(pointer)) {
-            LIROperand newPointerOperand = LIROperandFactory.scratch(pointer.kind, compilation.target);
+            LIROperand newPointerOperand = forScratch(pointer.kind, compilation.target);
             moveOp(pointer, newPointerOperand, pointer.kind, null, false);
             return newPointerOperand;
         }
@@ -2760,7 +2760,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         final int jitSlotSize = compilation.runtime.getJITStackSlotSize();
         for (int i = cc.locations.length - 1; i >= 0;  i--) {
             CiLocation location = cc.locations[i];
-            LIROperand src = LIROperandFactory.address(CiRegister.Stack, jitCallerStackOffset, location.kind);
+            LIROperand src = forAddress(CiRegister.Stack, jitCallerStackOffset, location.kind);
             moveOp(src, cc.operands[i], location.kind, null, false);
             jitCallerStackOffset += location.kind.size * jitSlotSize;
         }

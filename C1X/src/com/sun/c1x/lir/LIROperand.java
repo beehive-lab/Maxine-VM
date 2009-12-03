@@ -21,6 +21,7 @@
 package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ir.Value;
 
 /**
  * The <code>LIROperand</code> class represents an operand, either
@@ -30,33 +31,12 @@ import com.sun.c1x.ci.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-
 public class LIROperand {
     public final CiKind kind;
     public static final LIRLocation IllegalLocation = new LIRLocation(CiKind.Illegal, CiRegister.None);
 
     protected LIROperand(CiKind kind) {
         this.kind = kind;
-    }
-
-    public static boolean isIllegal(LIROperand operand) {
-        return operand == IllegalLocation;
-    }
-
-    public static boolean isLegal(LIROperand operand) {
-        return operand != null && operand != IllegalLocation;
-    }
-
-    public static boolean isConstant(LIROperand operand) {
-        return operand instanceof LIRConstant;
-    }
-
-    public static boolean isAddress(LIROperand operand) {
-        return operand instanceof LIRAddress;
-    }
-
-    public static boolean isLocation(LIROperand operand) {
-        return operand instanceof LIRLocation;
     }
 
     @Override
@@ -186,4 +166,82 @@ public class LIROperand {
         }
         return asRegister();
     }
+
+    public static LIRLocation forRegister(CiKind type, CiRegister reg) {
+        return new LIRLocation(type, reg);
+    }
+
+    public static LIRLocation forRegisters(CiKind type, CiRegister reg1, CiRegister reg2) {
+        return new LIRLocation(type, reg1, reg2);
+    }
+
+    public static LIRLocation forVariable(int index, CiKind type) {
+        return new LIRLocation(type, index);
+    }
+
+    public static LIRLocation forStack(int index, CiKind type) {
+        assert index >= 0;
+        return new LIRLocation(type, -index - 1);
+    }
+
+    public static LIRConstant forInt(int i) {
+        return new LIRConstant(CiConstant.forInt(i));
+    }
+
+    public static LIROperand forLong(long l) {
+        return new LIRConstant(CiConstant.forLong(l));
+    }
+
+    public static LIROperand forFloat(float f) {
+        return new LIRConstant(CiConstant.forFloat(f));
+    }
+
+    public static LIROperand forDouble(double d) {
+        return new LIRConstant(CiConstant.forDouble(d));
+    }
+
+    public static LIROperand forObject(Object o) {
+        return new LIRConstant(CiConstant.forObject(o));
+    }
+
+    public static LIROperand forConstant(Value type) {
+        return new LIRConstant(type.asConstant());
+    }
+
+    public static LIROperand forAddress(LIRLocation register, int disp, CiKind t) {
+        return new LIRAddress(register, disp, t);
+    }
+
+    public static LIROperand forAddress(CiRegister rsp, int disp, CiKind t) {
+        return forAddress(new LIRLocation(CiKind.Int, rsp), disp, t);
+    }
+
+    public static LIROperand forConstant(CiConstant value) {
+        return new LIRConstant(value);
+    }
+
+    public static LIROperand forScratch(CiKind type, CiTarget target) {
+        return forRegister(type, target.scratchRegister);
+    }
+
+    public static boolean isIllegal(LIROperand operand) {
+        return operand == IllegalLocation;
+    }
+
+    public static boolean isLegal(LIROperand operand) {
+        return operand != null && operand != IllegalLocation;
+    }
+
+    public static boolean isConstant(LIROperand operand) {
+        return operand instanceof LIRConstant;
+    }
+
+    public static boolean isAddress(LIROperand operand) {
+        return operand instanceof LIRAddress;
+    }
+
+    public static boolean isLocation(LIROperand operand) {
+        return operand instanceof LIRLocation;
+    }
+
 }

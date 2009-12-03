@@ -59,7 +59,7 @@ public final class LIRLocation extends LIROperand {
      */
     LIRLocation(CiKind kind, int number) {
         super(kind);
-        assert number != 0;
+        assert number < 0 || number >= CiRegister.MaxPhysicalRegisterNumber;
         this.location1 = CiRegister.None;
         this.location2 = CiRegister.None;
         this.index = number;
@@ -102,7 +102,7 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public int vregNumber() {
-        assert index >= CiRegister.FirstVirtualRegisterNumber;
+        assert index >= CiRegister.MaxPhysicalRegisterNumber;
         return index;
     }
 
@@ -118,12 +118,12 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public boolean isVariable() {
-        return !isStack() && index >= CiRegister.FirstVirtualRegisterNumber;
+        return index >= CiRegister.MaxPhysicalRegisterNumber;
     }
 
     @Override
     public boolean isFixedCpu() {
-        return !isStack() && index < CiRegister.FirstVirtualRegisterNumber;
+        return !isStack() && index < CiRegister.MaxPhysicalRegisterNumber;
     }
 
     @Override
