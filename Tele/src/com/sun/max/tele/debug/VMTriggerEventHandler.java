@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele.debug;
 
-
 /**
  * Handler for an event that triggers the VM to stop execution per
  * some request, for example a breakpoint or watchpoint.
@@ -53,5 +52,4 @@ public interface VMTriggerEventHandler {
             }
         };
     }
-
 }
