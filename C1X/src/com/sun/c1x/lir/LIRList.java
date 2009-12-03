@@ -45,7 +45,7 @@ public class LIRList {
 
     private List<LIRInstruction> operations;
     private final LIRGenerator generator;
-    private static final LIRLocation ILLEGAL = LIROperandFactory.IllegalLocation;
+    private static final LIRLocation ILLEGAL = LIROperand.IllegalLocation;
 
     public LIRList(LIRGenerator generator) {
         this.generator = generator;

@@ -45,7 +45,7 @@ public class LIRTypeCheck extends LIRInstruction {
                         boolean fastCheck,
                         LIRDebugInfo infoForException,
                         LocalStub stub) {
-        super(opcode, result, infoForException, false, stub, 1, 2, object, LIROperandFactory.IllegalLocation, tmp1, tmp2, tmp3);
+        super(opcode, result, infoForException, false, stub, 1, 2, object, LIROperand.IllegalLocation, tmp1, tmp2, tmp3);
 
         assert opcode == LIROpcode.CheckCast || opcode == LIROpcode.InstanceOf;
         this.klass = klass;
@@ -59,11 +59,11 @@ public class LIRTypeCheck extends LIRInstruction {
                         LIROperand tmp2,
                         LIROperand tmp3,
                         LIRDebugInfo infoForException, LocalStub arrayStoreStub) {
-        super(opcode, LIROperandFactory.IllegalLocation, infoForException, false, arrayStoreStub, 0, 3, object, array, tmp1, tmp2, tmp3);
+        super(opcode, LIROperand.IllegalLocation, infoForException, false, arrayStoreStub, 0, 3, object, array, tmp1, tmp2, tmp3);
         this.klass = null;
         this.fastCheck = false;
         assert opcode == LIROpcode.StoreCheck;
-        assert infoForException != null : "infoForException must not be null. StoreCheck instrution throws exceptions.";
+        assert infoForException != null : "infoForException must not be null. StoreCheck instruction throws exceptions.";
     }
 
     /**

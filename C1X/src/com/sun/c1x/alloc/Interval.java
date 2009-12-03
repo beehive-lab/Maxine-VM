@@ -331,7 +331,7 @@ public final class Interval {
         this.assignedRegister = LinearScan.getAnyreg();
         this.assignedHighRegister = LinearScan.getAnyreg();
         this.cachedTo = -1;
-        this.cachedOpr = LIROperandFactory.IllegalLocation;
+        this.cachedOpr = LIROperand.IllegalLocation;
         this.cachedVmReg = null;
         this.canonicalSpillSlot = -1;
         this.insertMoveWhenActivated = false;
@@ -816,7 +816,7 @@ public final class Interval {
         }
 
         out.printf("%d %s ", registerNumber(), typeName());
-        if (!opr.isIllegal()) {
+        if (LIROperand.isLegal(opr)) {
             out.printf("\"%s\"", opr);
         }
         out.printf("%d %d ", splitParent().registerNumber(), registerHint(false, allocator) != null ? registerHint(false, allocator).registerNumber() : -1);

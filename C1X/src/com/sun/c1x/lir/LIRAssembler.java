@@ -32,6 +32,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
+import static com.sun.c1x.lir.LIROperand.*;
 
 /**
  * The <code>LIRAssembler</code> class definition.
@@ -338,7 +339,7 @@ public abstract class LIRAssembler {
         switch (op.code) {
             case Cmp:
                 if (op.info != null) {
-                    assert op.opr1().isAddress() || op.opr2().isAddress() : "shouldn't be codeemitinfo for non-address operands";
+                    assert isAddress(op.opr1()) || isAddress(op.opr2()) : "shouldn't be codeemitinfo for non-address operands";
                     //NullPointerExceptionStub stub = new NullPointerExceptionStub(pcOffset, cinfo);
                     //emitCodeStub(stub);
                     asm.recordExceptionHandlers(codePos(), op.info);
@@ -359,7 +360,7 @@ public abstract class LIRAssembler {
             case Shl:
             case Shr:
             case Ushr:
-                if (op.opr2().isConstant()) {
+                if (isConstant(op.opr2())) {
                     emitShiftOp(op.code, op.opr1(), ((LIRConstant) op.opr2()).asInt(), op.result());
                 } else {
                     emitShiftOp(op.code, op.opr1(), op.opr2(), op.result(), op.tmp());
@@ -412,7 +413,7 @@ public abstract class LIRAssembler {
             } else if (dest.isStack()) {
                 assert info == null : "no patching and info allowed here";
                 reg2stack(src, dest, type);
-            } else if (dest.isAddress()) {
+            } else if (isAddress(dest)) {
                 reg2mem(src, dest, type, info, unaligned);
             } else {
                 throw Util.shouldNotReachHere();
@@ -428,23 +429,23 @@ public abstract class LIRAssembler {
                 throw Util.shouldNotReachHere();
             }
 
-        } else if (src.isConstant()) {
+        } else if (isConstant(src)) {
             if (dest.isRegister()) {
                 const2reg(src, dest, info); // patching is possible
             } else if (dest.isStack()) {
                 assert info == null : "no patching and info allowed here";
                 const2stack(src, dest);
-            } else if (dest.isAddress()) {
+            } else if (isAddress(dest)) {
                 const2mem(src, dest, type, info);
             } else {
                 throw Util.shouldNotReachHere();
             }
 
-        } else if (src.isAddress()) {
+        } else if (isAddress(src)) {
             if (dest.isStack()) {
                 assert info == null && !unaligned;
                 mem2stack(src, dest, type);
-            } else if (dest.isAddress()) {
+            } else if (isAddress(dest)) {
                 assert info == null && !unaligned;
                 mem2mem(src, dest, type);
             } else {

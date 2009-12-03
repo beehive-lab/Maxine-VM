@@ -183,7 +183,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         XirOperand resultOperand = template.resultOperand;
 
         if (template.allocateResultOperand) {
-            LIROperand outputOperand = LIROperandFactory.IllegalLocation;
+            LIROperand outputOperand = LIROperand.IllegalLocation;
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {

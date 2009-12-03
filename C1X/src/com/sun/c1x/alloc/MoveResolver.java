@@ -369,7 +369,7 @@ final class MoveResolver {
 
         assert fromInterval.type() == toInterval.type();
         mappingFrom.add(fromInterval);
-        mappingFromOpr.add(LIROperandFactory.IllegalLocation);
+        mappingFromOpr.add(LIROperand.IllegalLocation);
         mappingTo.add(toInterval);
     }
 
@@ -377,7 +377,7 @@ final class MoveResolver {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
             TTY.println("MoveResolver: adding mapping from %s to %d (%d, %d)", fromOpr, toInterval.registerNumber(), toInterval.assignedReg(), toInterval.assignedRegHi());
         }
-        assert fromOpr.isConstant() : "only for constants";
+        assert LIROperand.isConstant(fromOpr) : "only for constants";
 
         mappingFrom.add(null);
         mappingFromOpr.add(fromOpr);

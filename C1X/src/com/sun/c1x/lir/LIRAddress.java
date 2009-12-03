@@ -74,7 +74,7 @@ public final class LIRAddress extends LIROperand {
      * @param kind the kind of the resulting operand
      */
     public LIRAddress(LIRLocation base, int displacement, CiKind kind) {
-        this(base, LIROperandFactory.IllegalLocation, Scale.Times1, displacement, kind);
+        this(base, IllegalLocation, Scale.Times1, displacement, kind);
     }
 
     /**
@@ -112,7 +112,7 @@ public final class LIRAddress extends LIROperand {
     public String toString() {
         final StringBuffer out = new StringBuffer();
         out.append("Base:").append(base);
-        if (!index.isIllegal()) {
+        if (LIROperand.isLegal(index)) {
             out.append(" Index:").append(index);
             switch (scale) {
                 case Times1:
@@ -139,14 +139,14 @@ public final class LIRAddress extends LIROperand {
     public void verify(CiArchitecture architecture) {
         if (architecture.isSPARC()) {
             assert scale == Scale.Times1 : "Scaled addressing mode not available on SPARC and should not be used";
-            assert displacement == 0 || index.isIllegal() : "can't have both";
+            assert displacement == 0 || LIROperand.isIllegal(index) : "can't have both";
         } else if (architecture.is64bit()) {
             assert base.isRegister() : "wrong base operand";
-            assert index.isIllegal() || index.isDoubleCpu() : "wrong index operand";
+            assert LIROperand.isIllegal(index) || index.isDoubleCpu() : "wrong index operand";
             assert base.kind == CiKind.Object || base.kind == CiKind.Long : "wrong type for addresses";
         } else {
             assert base.isSingleCpu() : "wrong base operand";
-            assert index.isIllegal() || index.isSingleCpu() : "wrong index operand";
+            assert LIROperand.isIllegal(index) || index.isSingleCpu() : "wrong index operand";
             assert base.kind == CiKind.Object || base.kind == CiKind.Int : "wrong type for addresses";
         }
     }
