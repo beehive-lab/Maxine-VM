@@ -33,38 +33,35 @@ import com.sun.c1x.ci.*;
 
 public class LIROperand {
     public final CiKind kind;
+    public static final LIRLocation IllegalLocation = new LIRLocation(CiKind.Illegal, CiRegister.None);
 
     protected LIROperand(CiKind kind) {
         this.kind = kind;
     }
 
-    public final boolean isIllegal() {
-        return this == LIROperandFactory.IllegalLocation;
+    public static boolean isIllegal(LIROperand operand) {
+        return operand == IllegalLocation;
     }
 
-    public boolean isRegister() {
-        return false;
+    public static boolean isLegal(LIROperand operand) {
+        return operand != null && operand != IllegalLocation;
     }
 
-    public boolean isVirtual() {
-        return isVirtualCpu();
+    public static boolean isConstant(LIROperand operand) {
+        return operand instanceof LIRConstant;
     }
 
-    public final boolean isConstant() {
-        return this instanceof LIRConstant;
+    public static boolean isAddress(LIROperand operand) {
+        return operand instanceof LIRAddress;
     }
 
-    public final boolean isAddress() {
-        return this instanceof LIRAddress;
-    }
-
-    public final boolean isLocation() {
-        return this instanceof LIRLocation;
+    public static boolean isLocation(LIROperand operand) {
+        return operand instanceof LIRLocation;
     }
 
     @Override
     public String toString() {
-        if (isIllegal()) {
+        if (isIllegal(this)) {
             return "illegal";
         }
 
@@ -74,7 +71,7 @@ public class LIROperand {
             out.append("stack:").append(singleStackIndex());
         } else if (isDoubleStack()) {
             out.append("dblStack:").append(doubleStackIndex());
-        } else if (isVirtual()) {
+        } else if (isVariable()) {
             out.append("V").append(vregNumber());
         } else if (isSingleCpu()) {
             out.append(asRegister().name);
@@ -88,11 +85,15 @@ public class LIROperand {
         } else {
             out.append("Unknown Operand");
         }
-        if (!isIllegal()) {
+        if (isLegal(this)) {
             out.append(String.format("|%c", this.kind.typeChar));
         }
         out.append("]");
         return out.toString();
+    }
+
+    public boolean isRegister() {
+        return false;
     }
 
     public boolean isStack() {
@@ -107,7 +108,7 @@ public class LIROperand {
         return false;
     }
 
-    public boolean isVirtualCpu() {
+    public boolean isVariable() {
         return false;
     }
 
@@ -164,7 +165,7 @@ public class LIROperand {
     }
 
     public CiRegister asRegister() {
-        if (isIllegal()) {
+        if (isIllegal(this)) {
             return CiRegister.None;
         }
         throw new Error(getClass().getSimpleName() + " cannot be a register");

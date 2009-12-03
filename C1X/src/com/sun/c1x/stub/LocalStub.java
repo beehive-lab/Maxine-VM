@@ -46,7 +46,7 @@ public abstract class LocalStub {
     public int tempInputCount;
 
     public LocalStub(LIRDebugInfo info) {
-        this(info, LIROperandFactory.IllegalLocation);
+        this(info, LIROperand.IllegalLocation);
     }
 
     public LocalStub(LIRDebugInfo info, LIROperand result) {

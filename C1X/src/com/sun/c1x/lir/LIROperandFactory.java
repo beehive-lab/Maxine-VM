@@ -34,8 +34,6 @@ import com.sun.c1x.ir.*;
  */
 public class LIROperandFactory {
 
-    public static final LIRLocation IllegalLocation = new LIRLocation(CiKind.Illegal, CiRegister.None);
-
     public static LIRLocation singleLocation(CiKind type, CiRegister reg) {
         return new LIRLocation(type, reg);
     }
@@ -75,7 +73,7 @@ public class LIROperandFactory {
     }
 
     public static LIROperand illegal() {
-        return IllegalLocation;
+        return LIROperand.IllegalLocation;
     }
 
     public static LIROperand constant(Value type) {

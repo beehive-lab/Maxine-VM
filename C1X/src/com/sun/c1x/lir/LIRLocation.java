@@ -117,7 +117,7 @@ public final class LIRLocation extends LIROperand {
     }
 
     @Override
-    public boolean isVirtualCpu() {
+    public boolean isVariable() {
         return !isStack() && index >= CiRegister.FirstVirtualRegisterNumber;
     }
 
@@ -153,19 +153,19 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public int stackIndex() {
-        assert (isSingleStack() || isDoubleStack()) && !isVirtual() : "type check";
+        assert (isSingleStack() || isDoubleStack()) && !this.isVariable() : "type check";
         return -index - 1;
     }
 
     @Override
     public int singleStackIndex() {
-        assert isSingleStack() && !isVirtual() : "type check";
+        assert isSingleStack() && !this.isVariable() : "type check";
         return -index - 1;
     }
 
     @Override
     public int doubleStackIndex() {
-        assert isDoubleStack() && !isVirtual() : "type check";
+        assert isDoubleStack() && !this.isVariable() : "type check";
         return -index - 1;
     }
 

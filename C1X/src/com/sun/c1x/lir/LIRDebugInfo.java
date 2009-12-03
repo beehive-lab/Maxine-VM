@@ -69,8 +69,4 @@ public class LIRDebugInfo {
     public LIRDebugInfo copy() {
         return new LIRDebugInfo(this);
     }
-
-    public void recordDebugInfo(DebugInformationRecorder recorder, int pcOffset) {
-        // TODO: (tw) Check where to generate the oopMap!
-    }
 }

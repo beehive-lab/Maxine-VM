@@ -83,7 +83,7 @@ public class LIROp1 extends LIRInstruction {
      * @param opr the first input operand
      */
     public LIROp1(LIROpcode opcode, LIROperand opr) {
-        this(opcode, opr, LIROperandFactory.IllegalLocation);
+        this(opcode, opr, LIROperand.IllegalLocation);
     }
 
     /**
@@ -109,7 +109,7 @@ public class LIROp1 extends LIRInstruction {
      * @param info the object holding information needed to emit debug information
      */
     public LIROp1(LIROpcode opcode, LIROperand opr, LIRDebugInfo info) {
-        super(opcode, LIROperandFactory.IllegalLocation, info, false, null, 0, 0, opr);
+        super(opcode, LIROperand.IllegalLocation, info, false, null, 0, 0, opr);
         this.kind = CiKind.Illegal;
         this.moveKind = LIRMoveKind.Normal;
         assert isInRange(opcode, LIROpcode.BeginOp1, LIROpcode.EndOp1) : "The " + opcode + " is not a valid LIROp1 opcode";
@@ -161,13 +161,13 @@ public class LIROp1 extends LIRInstruction {
     public boolean verify() {
         switch (code) {
             case Move:
-                assert (!operand().isIllegal()) && (!result().isIllegal()) : "Operand and result must be valid in a LIROp1 move instruction.";
+                assert (LIROperand.isLegal(operand())) && (LIROperand.isLegal(result())) : "Operand and result must be valid in a LIROp1 move instruction.";
                 break;
             case NullCheck:
                 assert operand().isRegister() : "Operand must be a register in a LIROp1 null check instruction.";
                 break;
             case Return:
-                assert operand().isRegister() || operand().isIllegal() : "Operand must be (register | illegal) in a LIROp1 return instruction.";
+                assert operand().isRegister() || LIROperand.isIllegal(operand()) : "Operand must be (register | illegal) in a LIROp1 return instruction.";
                 break;
         }
         return true;

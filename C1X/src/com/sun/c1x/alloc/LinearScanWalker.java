@@ -968,7 +968,7 @@ final class LinearScanWalker extends IntervalWalker {
 
         LIROperand in = ((LIROp1) op).operand();
         LIROperand res = ((LIROp1) op).result();
-        return in.isVirtual() && res.isVirtual() && in.vregNumber() == from.registerNumber() && res.vregNumber() == to.registerNumber();
+        return in.isVariable() && res.isVariable() && in.vregNumber() == from.registerNumber() && res.vregNumber() == to.registerNumber();
     }
 
     // optimization (especially for phi functions of nested loops):
