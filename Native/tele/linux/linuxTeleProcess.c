@@ -66,7 +66,8 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
         Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
         ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
-        tl = teleProcess_findThreadLocals(tgid, tid, threadLocalsList, primordialThreadLocals, stackPointer, threadLocals, &nativeThreadLocalsStruct);
+        ProcessHandleStruct ph = {tgid, tid};
+        tl = teleProcess_findThreadLocals(&ph, threadLocalsList, primordialThreadLocals, stackPointer, threadLocals, &nativeThreadLocalsStruct);
     }
     teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, threadState, (jlong) canonicalStateRegisters.rip, tl);
 }
