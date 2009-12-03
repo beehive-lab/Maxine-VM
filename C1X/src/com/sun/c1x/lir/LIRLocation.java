@@ -187,24 +187,24 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public boolean isVirtualRegister() {
-        return index != 0 && !this.isStack();
+        return index > 0;
     }
 
     @Override
     public int cpuRegNumber() {
-        assert this.isRegister() && !this.isVirtualRegister();
+        assert index == 0;
         return location1.number;
     }
 
     @Override
     public int cpuRegNumberLow() {
-        assert this.isRegister() && !this.isVirtualRegister();
+        assert index == 0;
         return location1.number;
     }
 
     @Override
     public int cpuRegNumberHigh() {
-        assert this.isRegister() && !this.isVirtualRegister();
+        assert index == 0;
         return location2.number;
     }
 }
