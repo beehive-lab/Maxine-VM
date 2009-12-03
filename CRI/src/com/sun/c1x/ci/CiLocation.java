@@ -25,101 +25,62 @@ package com.sun.c1x.ci;
  * locations of parameters for calling conventions across the compiler/runtime interface.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public final class CiLocation extends CiValue {
+public abstract class CiLocation extends CiValue {
 
     /**
      * Singleton object representing an invalid location.
      */
-    public static final CiLocation InvalidLocation = new CiLocation(CiKind.Illegal, null);
+    public static final CiLocation InvalidLocation = new CiStackLocation(CiKind.Illegal, 0, 0, false);
 
-    public final CiRegister first;
-    public final CiRegister second;
-    public final int stackOffset;
-    public final int stackSize;
-    public final boolean callerStack;
-
-    /**
-     * Location representing a single register.
-     *
-     * @param kind the kind of the new location
-     * @param register the register representing the new location
-     */
-    public CiLocation(CiKind kind, CiRegister register) {
+    protected CiLocation(CiKind kind) {
         super(kind);
-        this.first = register;
-        this.second = null;
-        this.stackOffset = 0;
-        this.stackSize = 0;
-        this.callerStack = false;
-    }
-
-    public CiLocation(CiKind kind, CiRegister first, CiRegister second) {
-        super(kind);
-        this.first = first;
-        this.second = second;
-        this.stackOffset = 0;
-        this.stackSize = 0;
-        this.callerStack = false;
-    }
-
-    public CiLocation(CiKind kind, int stackOffset, int stackSize, boolean callerStack) {
-        super(kind);
-        this.first = null;
-        this.second = null;
-        this.stackOffset = stackOffset;
-        this.stackSize = stackSize;
-        this.callerStack = callerStack;
     }
 
     public boolean isSingleRegister() {
-        return second == null && first != null;
-    }
-
-    public boolean isDoubleRegister() {
-        return second != null;
-    }
-
-    public boolean isRegister() {
-        return first != null;
-    }
-
-    public boolean isStackOffset() {
-        return !isRegister() && isValid();
-    }
-
-    public boolean isValid() {
-        return this != InvalidLocation;
-    }
-
-    @Override
-    public int hashCode() {
-        return kind.hashCode() * 29 + (first == null ? 0 : first.hashCode()) * 13 + (second == null ? 0 : second.hashCode()) * 7 + stackOffset;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
+        if (this instanceof CiRegisterLocation) {
+            return ((CiRegisterLocation) this).second == null;
         }
-
-        if (obj instanceof CiLocation) {
-            final CiLocation other = (CiLocation) obj;
-            return other.kind == kind && other.first == first && other.second == second && other.stackOffset == stackOffset && other.stackSize == stackSize && other.callerStack == callerStack;
-        }
-
         return false;
     }
 
-    @Override
-    public String toString() {
-        if (this == InvalidLocation) {
-            return "invalid";
-        } else if (isSingleRegister()) {
-            return first.name;
-        } else if (isDoubleRegister()) {
-            return first.name + "+" + second.name;
+    public boolean isDoubleRegister() {
+        if (this instanceof CiRegisterLocation) {
+            return ((CiRegisterLocation) this).second != null;
         }
-        return "@" + stackOffset + (callerStack ? "(caller)" : "(callee)");
+        return false;
+    }
+
+    public boolean isRegister() {
+        return this instanceof CiRegisterLocation;
+    }
+
+    public boolean isStack() {
+        return this instanceof CiStackLocation;
+    }
+
+    public boolean isValid() {
+        return kind != CiKind.Illegal;
+    }
+
+    public CiRegister first() {
+        return ((CiRegisterLocation) this).first;
+    }
+
+    public CiRegister second() {
+        return ((CiRegisterLocation) this).second;
+    }
+
+    public int stackOffset() {
+        return ((CiStackLocation) this).stackOffset;
+    }
+
+    public int stackSize() {
+        return ((CiStackLocation) this).stackSize;
+    }
+
+    public boolean isCallerFrame() {
+        return ((CiStackLocation) this).callerFrame;
     }
 }

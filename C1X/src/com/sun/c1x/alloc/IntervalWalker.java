@@ -32,7 +32,7 @@ import com.sun.c1x.debug.*;
 class IntervalWalker {
 
     private static final IntervalKind[] INTERVAL_KINDS = IntervalKind.values();
-    
+
     protected final C1XCompilation compilation;
     protected final LinearScan allocator;
 

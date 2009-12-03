@@ -168,9 +168,9 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             if (t instanceof XirFixed) {
                 final XirFixed fixed = (XirFixed) t;
                 if (fixed.location.isRegister()) {
-                    allocatableRegisters.remove(fixed.location.first);
+                    allocatableRegisters.remove(fixed.location.first());
                     if (fixed.location.isDoubleRegister()) {
-                        allocatableRegisters.remove(fixed.location.second);
+                        allocatableRegisters.remove(fixed.location.second());
                     }
                 }
             }
@@ -434,7 +434,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         // Load arguments
         CiLocation[] result = target.config.getRuntimeParameterLocations(call.arguments);
         for (int i = 0; i < call.arguments.length; i++) {
-            loadArgument(i, result[i].first);
+            loadArgument(i, result[i].first());
         }
 
         // Call to the runtime

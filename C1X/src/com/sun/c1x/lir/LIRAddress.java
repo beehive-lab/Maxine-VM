@@ -33,7 +33,7 @@ import com.sun.c1x.util.*;
 public final class LIRAddress extends LIROperand {
 
     private static final Scale[] SCALE = Scale.values();
-    
+
     public enum Scale {
         Times1,
         Times2,

@@ -122,8 +122,8 @@ public class DebugInfoBuilder {
     }
 
     public void setOop(CiLocation location) {
-        if (location.isStackOffset()) {
-            int offset = location.stackOffset;
+        if (location.isStack()) {
+            int offset = location.stackOffset();
             assert offset % target.arch.wordSize == 0 : "must be aligned";
             int stackMapIndex = offset / target.arch.wordSize;
             if (currentStackRefMap == null) {
@@ -131,11 +131,11 @@ public class DebugInfoBuilder {
             }
             setBit(currentStackRefMap, stackMapIndex);
         } else {
-            int index = target.allocatableRegs.referenceMapIndex[location.first.number];
+            int index = target.allocatableRegs.referenceMapIndex[location.first().number];
             if (currentRegisterRefMap == null) {
                 currentRegisterRefMap = newRefMap(target.allocatableRegs.registerRefMapSize);
             }
-            assert index >= 0 : "object cannot be in non-object register " + location.first;
+            assert index >= 0 : "object cannot be in non-object register " + location.first();
             assert location.isSingleRegister() : "objects can only be in a single register";
             setBit(currentRegisterRefMap, index);
         }
@@ -153,6 +153,6 @@ public class DebugInfoBuilder {
         int index = bit >> 3;
         int offset = bit & 0x7;
 
-        array[index] = (byte)(array[index] | (1 << offset));
+        array[index] = (byte) (array[index] | (1 << offset));
     }
 }
