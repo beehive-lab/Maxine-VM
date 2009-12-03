@@ -28,7 +28,6 @@ import com.sun.c1x.ci.*;
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
- *
  */
 public final class LIRLocation extends LIROperand {
 

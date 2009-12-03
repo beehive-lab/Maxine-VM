@@ -34,6 +34,12 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.xir.*;
 import com.sun.c1x.xir.CiXirAssembler.*;
 
+/**
+ * This class implements the x86-specific code generation for LIR.
+ *
+ * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
+ */
 public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
     private static final Object[] NO_PARAMS = new Object[0];
@@ -571,8 +577,8 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             } else {
                 masm.pushl(frameMap.addressForSlot(src.doubleStackIndex(), 0));
                 // push and pop the part at src + wordSize, adding wordSize for the previous push
-                masm.pushl(frameMap.addressForSlot(src.doubleStackIndex(), 2 * compilation.target.arch.wordSize));
-                masm.popl(frameMap.addressForSlot(dest.doubleStackIndex(), 2 * compilation.target.arch.wordSize));
+                masm.pushl(frameMap.addressForSlot(src.doubleStackIndex(), 2 * wordSize));
+                masm.popl(frameMap.addressForSlot(dest.doubleStackIndex(), 2 * wordSize));
                 masm.popl(frameMap.addressForSlot(dest.doubleStackIndex(), 0));
             }
         } else {
@@ -2075,7 +2081,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         // TODO: emit interface ID calculation inline
         masm.movl(rscratch1, method.interfaceID());
         masm.callRuntimeCalleeSaved(CiRuntimeCall.RetrieveInterfaceIndex, info, rscratch1, receiver.asRegister(), rscratch1);
-        masm.addq(rscratch1, method.indexInInterface() * compilation.target.arch.wordSize);
+        masm.addq(rscratch1, method.indexInInterface() * wordSize);
 
         asm.recordExceptionHandlers(codePos(), info);
         masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset()));
@@ -2211,7 +2217,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
     @Override
     protected void emitAlignment() {
-        masm.align(compilation.target.arch.wordSize);
+        masm.align(wordSize);
     }
 
     @Override
@@ -2731,8 +2737,6 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         // where "oarg" is an overflow argument and "jarg" is an argument from the caller's java stack.
         // save the caller's RBP
 
-        final int wordSize =  compilation.target.arch.wordSize;
-
         // Receive calling convention (for the current method, but with outgoing==true, i.e. as if we were calling the current method)
         FrameMap map = compilation.frameMap();
         CallingConvention cc = map.javaCallingConvention(Util.signatureToKinds(compilation.method.signatureType(), !compilation.method.isStatic()), true, false);
@@ -2747,7 +2751,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         }
 
          // Prefix of a frame is RIP + saved RBP.
-        final int framePrefixSize = 2 * wordSize;
+        final int framePrefixSize = 2 * this.wordSize;
 
         // On entry to the adapter, the top of the stack contains the RIP. The last argument on the stack is
         // immediately above the RIP.

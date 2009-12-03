@@ -146,12 +146,12 @@ public final class FrameMap {
 
     public CiLocation regname(LIROperand opr) {
         if (opr.isStack()) {
-            return new CiLocation(opr.kind, opr.stackIndex() * SPILL_SLOT_SIZE, compilation.target.sizeInBytes(opr.kind), false);
+            return new CiStackLocation(opr.kind, opr.stackIndex() * SPILL_SLOT_SIZE, compilation.target.sizeInBytes(opr.kind), false);
         } else if (opr.isRegister()) {
             if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
-                return new CiLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
+                return new CiRegisterLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
             } else {
-                return new CiLocation(opr.kind, opr.asRegister());
+                return new CiRegisterLocation(opr.kind, opr.asRegister());
             }
         } else {
             throw Util.shouldNotReachHere();
@@ -159,11 +159,11 @@ public final class FrameMap {
     }
 
     public CiLocation objectSlotRegname(int i) {
-        return new CiLocation(CiKind.Object, this.spOffsetForSpill(i), SPILL_SLOT_SIZE, false);
+        return new CiStackLocation(CiKind.Object, this.spOffsetForSpill(i), SPILL_SLOT_SIZE, false);
     }
 
     public CiLocation locationForMonitor(int monitorIndex) {
-        return new CiLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SPILL_SLOT_SIZE, false);
+        return new CiStackLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SPILL_SLOT_SIZE, false);
     }
 
     public void usingGlobalStub(GlobalStub stub) {

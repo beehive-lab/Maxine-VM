@@ -45,16 +45,15 @@ public final class CiConstant extends CiValue {
     public static final CiConstant DOUBLE_1 = forDouble(1);
 
     private final Object value;
-    public final CiKind kind;
 
     /**
      * Create a new constant represented by the specified object reference or boxed
      * primitive.
-     * @param type the type of this constant
+     * @param kind the type of this constant
      * @param value the value of this constant
      */
-    public CiConstant(CiKind type, Object value) {
-        this.kind = type;
+    public CiConstant(CiKind kind, Object value) {
+        super(kind);
         this.value = value;
     }
 

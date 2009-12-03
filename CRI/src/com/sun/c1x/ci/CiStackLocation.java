@@ -21,22 +21,40 @@
 package com.sun.c1x.ci;
 
 /**
- * This class simply unifies {@link CiConstant} and {@link CiLocation}.
+ * This class represents a location on the stack, either the caller or callee's stack frame.
  *
- * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
-public abstract class CiValue {
+public final class CiStackLocation extends CiLocation {
 
-    /**
-     * Stores the kind of this value.
-     */
-    public final CiKind kind;
+    public final int stackOffset;
+    public final byte stackSize;
+    public final boolean callerFrame;
 
-    /**
-     * Initializes a new value of the specified kind.
-     * @param kind the kind
-     */
-    protected CiValue(CiKind kind) {
-        this.kind = kind;
+    public CiStackLocation(CiKind kind, int stackOffset, int stackSize, boolean callerFrame) {
+        super(kind);
+        assert stackSize >= 0 && stackSize <= 8;
+        this.stackOffset = stackOffset;
+        this.stackSize = (byte) stackSize;
+        this.callerFrame = callerFrame;
+    }
+
+    public int hashCode() {
+        return kind.ordinal() + stackOffset + (callerFrame ? 91 : 83);
+    }
+
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof CiStackLocation) {
+            CiStackLocation l = (CiStackLocation) o;
+            return l.kind == kind && l.stackOffset == stackOffset && l.stackSize == stackSize && l.callerFrame == callerFrame;
+        }
+        return false;
+    }
+
+    public String toString() {
+        return (callerFrame ? "+" : "-") + stackOffset + ":" + kind;
     }
 }

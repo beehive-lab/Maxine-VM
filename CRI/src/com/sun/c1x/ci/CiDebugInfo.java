@@ -38,16 +38,18 @@ public class CiDebugInfo {
     public final Frame frame;
 
     /**
-     * The reference map for the registers at this point.
+     * The reference map for the registers at this point. The reference map is <i>packed</i> in that
+     * for bit {@code k} in byte {@code n}, it refers to register number {@code k + n * 8}.
      */
-    public final boolean[] registerRefMap;
+    public final byte[] registerRefMap;
 
     /**
-     * The reference map for entire stack frame of the compiled code.
+     * The reference map for the stack frame at this point. The reference map is <i>packed</i> in that
+     * for bit {@code k} in byte {@code n}, it refers to stack slot number {@code k + n * 8}.
      */
-    public final boolean[] stackRefMap;
+    public final byte[] stackRefMap;
 
-    public CiDebugInfo(CiCodePos codePos, Frame frame, boolean[] registerRefMap, boolean[] stackRefMap) {
+    public CiDebugInfo(CiCodePos codePos, Frame frame, byte[] registerRefMap, byte[] stackRefMap) {
         this.codePos = codePos;
         this.frame = frame;
         this.registerRefMap = registerRefMap;
@@ -88,15 +90,18 @@ public class CiDebugInfo {
         public final Frame caller;
 
         /**
-         * The code position of this frame, including all inlined frames.
+         * The code position of this frame, which includes a link to the code position of the caller method.
          */
         public final CiCodePos codePos;
 
         /**
          * An array of values representing how to reconstruct the state of the Java frame.
-         * Entries [0 - numLocals) represent the Java local variables, [numLocals, numLocals + numStack)
-         * the Java operand stack, and entries [numLocals + numStack, values.length) the list of
-         * acquired monitors.
+         * Entries
+         * {@code [0 - numLocals)} represent the Java local variables,
+         * {@code [numLocals, numLocals + numStack)} the Java operand stack, and entries
+         * {@code [numLocals + numStack, values.length)} the list of acquired monitors.
+         * Note that the number of locals and the number of stack slots may be smaller than the
+         * maximum number of locals and stack slots as specified in the compiled method.
          */
         public final CiValue[] values;
 

@@ -23,6 +23,7 @@ package com.sun.c1x.lir;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.util.Util;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
@@ -55,6 +56,7 @@ public abstract class LIRInstruction {
     public final boolean hasCall;
 
     public LocalStub stub;
+    public static final OperandMode[] OPERAND_MODES = OperandMode.values();
 
     public enum OperandMode {
         OutputMode,
@@ -485,6 +487,10 @@ public abstract class LIRInstruction {
         }
     }
 
+    public boolean hasInfo() {
+        return info != null || (stub != null && stub.info != null);
+    }
+
     public int infoCount() {
         int result = 0;
         if (info != null) {
@@ -501,23 +507,17 @@ public abstract class LIRInstruction {
     public List<ExceptionHandler> exceptionEdges() {
         List<ExceptionHandler> result = null;
 
-        int i;
-        for (i = 0; i < infoCount(); i++) {
+        for (int i = 0; i < infoCount(); i++) {
             if (infoAt(i).exceptionHandlers != null) {
+                assert result == null : "only one xhandler list allowed per LIR-operation";
                 result = infoAt(i).exceptionHandlers;
-                break;
             }
         }
 
-        for (i = 0; i < infoCount(); i++) {
-            assert infoAt(i).exceptionHandlers == null || infoAt(i).exceptionHandlers == result : "only one xhandler list allowed per LIR-operation";
+        if (result == null) {
+            result = Util.uncheckedCast(Collections.EMPTY_LIST);
         }
-
-        if (result != null) {
-            return result;
-        } else {
-            return new ArrayList<ExceptionHandler>();
-        }
+        return result;
     }
 
     public LIRDebugInfo infoAt(int k) {

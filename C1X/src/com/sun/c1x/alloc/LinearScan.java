@@ -607,7 +607,7 @@ public class LinearScan {
                     hasCall.set(op.id >> 1);
                     localNumCalls++;
                 }
-                if (op.infoCount() > 0) {
+                if (op.hasInfo()) {
                     hasInfo.set(op.id >> 1);
                 }
 
@@ -1524,7 +1524,6 @@ public class LinearScan {
         Interval list1 = Interval.EndMarker;
         Interval list2 = Interval.EndMarker;
 
-        Interval[] result = new Interval[2];
         Interval list1Prev = null;
         Interval list2Prev = null;
         Interval v;
@@ -1555,9 +1554,7 @@ public class LinearScan {
         assert list1Prev == null || list1Prev.next == Interval.EndMarker : "linear list ends not with sentinel";
         assert list2Prev == null || list2Prev.next == Interval.EndMarker : "linear list ends not with sentinel";
 
-        result[0] = list1;
-        result[1] = list2;
-        return result;
+        return new Interval[] {list1, list2};
     }
 
     void sortIntervalsBeforeAllocation() {
@@ -2007,7 +2004,7 @@ public class LinearScan {
                 if (opId != -1 && hasInfo(opId)) {
                     // visit operation to collect all operands
                     //visitor.visit(op);
-                    assert op.infoCount() > 0 : "should not visit otherwise";
+                    assert op.hasInfo() : "should not visit otherwise";
 
                     for (ExceptionHandler h : op.exceptionEdges()) {
                         resolveExceptionEdge(h, opId, moveResolver);
@@ -2277,7 +2274,7 @@ public class LinearScan {
     }
 
     void computeOopMap(IntervalWalker iw, LIRInstruction op) {
-        assert op.infoCount() > 0 : "no oop map needed";
+        assert op.hasInfo() : "no oop map needed";
 
         // compute oopMap only for first CodeEmitInfo
         // because it is (in most cases) equal for all other infos of the same operation
@@ -2345,25 +2342,17 @@ public class LinearScan {
     int appendScopeValueForOperand(LIROperand opr, List<CiValue> scopeValues) {
         if (opr.isSingleStack()) {
             int stackIdx = opr.singleStackIndex();
-            //boolean isOop = opr.isOopRegister();
-            CiLocation location = new CiLocation(opr.kind, stackIdx, FrameMap.SPILL_SLOT_SIZE, false);
+            CiLocation location = new CiStackLocation(opr.kind, stackIdx, FrameMap.SPILL_SLOT_SIZE, false);
             scopeValues.add(location);
-//            if (isOop) {
-//                oopValues.add(location);
-//            }
             return 1;
 
         } else if (opr.isSingleCpu()) {
-            //boolean isOop = opr.isOopRegister();
-            CiLocation location = new CiLocation(opr.kind, opr.asRegister());
+            CiLocation location = new CiRegisterLocation(opr.kind, opr.asRegister());
             scopeValues.add(location);
-//            if (isOop) {
-//                oopValues.add(location);
-//            }
             return 1;
 
         } else if (opr.isSingleXmm() && compilation.target.arch.isX86()) {
-            CiLocation location = new CiLocation(opr.kind, opr.asRegister());
+            CiLocation location = new CiRegisterLocation(opr.kind, opr.asRegister());
             scopeValues.add(location);
             return 1;
 
@@ -2374,13 +2363,13 @@ public class LinearScan {
 
             if (opr.isDoubleStack()) {
                 assert compilation.target.arch.is64bit();
-                first = new CiLocation(opr.kind, opr.doubleStackIndex(), FrameMap.SPILL_SLOT_SIZE * 2, false);
+                first = new CiStackLocation(opr.kind, opr.doubleStackIndex(), FrameMap.SPILL_SLOT_SIZE * 2, false);
             } else if (opr.isDoubleCpu()) {
                 assert compilation.target.arch.is64bit();
-                first = new CiLocation(opr.kind, opr.asRegister());
+                first = new CiRegisterLocation(opr.kind, opr.asRegister());
             } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
                 assert opr.asRegisterLow() == opr.asRegisterHigh() : "assumed in calculation";
-                first = new CiLocation(opr.kind, opr.asRegister());
+                first = new CiRegisterLocation(opr.kind, opr.asRegister());
 
             } else {
                 Util.shouldNotReachHere();
@@ -2537,6 +2526,15 @@ public class LinearScan {
         // TODO:
     }
 
+    void computeDebugInfo(IntervalWalker iw, LIRInstruction op) {
+        assert iw != null : "interval walker needed for debug information";
+        computeOopMap(iw, op);
+        for (int i = 0; i < op.infoCount(); i++) {
+            LIRDebugInfo info = op.infoAt(i);
+            computeDebugInfo(info, op.id);
+        }
+    }
+
     void computeDebugInfo(LIRDebugInfo info, int opId) {
         if (!compilation.needsDebugInformation()) {
             return;
@@ -2580,7 +2578,7 @@ public class LinearScan {
             int opId = op.id;
 
             // iterate all modes of the visitor and process all virtual operands
-            for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
+            for (LIRInstruction.OperandMode mode : LIRInstruction.OPERAND_MODES) {
                 int n = op.oprCount(mode);
                 for (int k = 0; k < n; k++) {
                     LIRLocation opr = op.oprAt(mode, k);
@@ -2590,7 +2588,7 @@ public class LinearScan {
                 }
             }
 
-            if (op.infoCount() > 0) {
+            if (op.hasInfo()) {
                 // exception handling
                 if (compilation.hasExceptionHandlers()) {
                     for (ExceptionHandler handler : op.exceptionEdges()) {
@@ -2600,15 +2598,8 @@ public class LinearScan {
                     }
                 }
 
-                // compute oop map
-                assert iw != null : "needed for computeOopMap";
-                computeOopMap(iw, op);
-
-                // compute debug information
-                int n = op.infoCount();
-                for (int k = 0; k < n; k++) {
-                    computeDebugInfo(op.infoAt(k), opId);
-                }
+                // compute reference map and debug information
+                computeDebugInfo(iw, op);
             }
 
             // make sure we haven't made the op invalid.
@@ -2903,7 +2894,7 @@ public class LinearScan {
             for (int j = 0; j < instructions.size(); j++) {
                 LIRInstruction op = instructions.get(j);
 
-                if (op.infoCount() > 0) {
+                if (op.hasInfo()) {
                     iw.walkBefore(op.id);
                     boolean checkLive = true;
                     LIRBranch branch = null;
@@ -2925,7 +2916,7 @@ public class LinearScan {
                                 // that this interval represents some value that's
                                 // referenced by this op either as an input or output.
                                 boolean ok = false;
-                                for (LIRInstruction.OperandMode mode : LIRInstruction.OperandMode.values()) {
+                                for (LIRInstruction.OperandMode mode : LIRInstruction.OPERAND_MODES) {
                                     int n = op.oprCount(mode);
                                     for (int k = 0; k < n; k++) {
                                         LIRLocation opr = op.oprAt(mode, k);

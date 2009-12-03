@@ -39,21 +39,16 @@ import com.sun.c1x.xir.*;
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class LIRList {
 
     private List<LIRInstruction> operations;
     private final LIRGenerator generator;
-    private final BlockBegin block;
     private static final LIRLocation ILLEGAL = LIROperandFactory.IllegalLocation;
 
     public LIRList(LIRGenerator generator) {
-        this(generator, null);
-    }
-
-    public LIRList(LIRGenerator generator, BlockBegin block) {
         this.generator = generator;
-        this.block = block;
         this.operations = new ArrayList<LIRInstruction>(8);
     }
 

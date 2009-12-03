@@ -91,7 +91,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     public X86Assembler(CiTarget target, int frameSize) {
         super(target, frameSize);
-        assert is32 || is64 : "unknown word size: " + target.arch.wordSize;
+        assert is32 || is64 : "unknown word size: " + wordSize;
         assert is32 != is64 : "can't be both 32 and 64 bit";
     }
 
@@ -166,7 +166,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             base = this.target.stackPointerRegister;
         } else if (base == CiRegister.CallerStack) {
             base = this.target.stackPointerRegister;
-            disp += targetMethod.frameSize() + target.arch.wordSize;
+            disp += targetMethod.frameSize() + wordSize;
         }
 
         // Encode the registers as needed in the fields they are used in
@@ -2427,7 +2427,6 @@ public abstract class X86Assembler extends AbstractAssembler {
             assert is32;
             emitByte(0x61);
         } else {
-            final int wordSize = target.arch.wordSize;
             // 64bit
             movq(X86.r15, new Address(X86.rsp, 0));
             movq(X86.r14, new Address(X86.rsp, wordSize));
@@ -2455,7 +2454,6 @@ public abstract class X86Assembler extends AbstractAssembler {
             // 32bit
             emitByte(0x60);
         } else {
-            int wordSize = target.arch.wordSize;
 
             // we have to store original rsp. ABI says that 128 bytes
             // below rsp are local scratch.

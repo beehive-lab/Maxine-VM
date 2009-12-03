@@ -726,8 +726,6 @@ public final class X86LIRGenerator extends LIRGenerator {
         // need to get the info before, as the items may become invalid through itemFree
         boolean resolved = x.elementKind.isLoaded();
         if (!resolved || C1XOptions.TestPatching) {
-            stateFor(x, x.stateBefore());
-
             // cannot re-use same xhandlers for multiple CodeEmitInfos, so
             // clone all handlers.
             x.setExceptionHandlers(new ArrayList<ExceptionHandler>(x.exceptionHandlers()));
