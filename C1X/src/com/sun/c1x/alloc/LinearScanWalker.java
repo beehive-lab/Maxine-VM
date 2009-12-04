@@ -946,7 +946,7 @@ final class LinearScanWalker extends IntervalWalker {
 
     private boolean pdInitRegsForAlloc(Interval cur) {
         assert compilation.target.arch.isX86();
-        if (allocator.gen.isVregFlagSet(cur.registerNumber(), LIRGenerator.VregFlag.ByteReg)) {
+        if (allocator.gen.isVarFlagSet(cur.registerNumber(), LIRGenerator.VariableFlag.MustBeByteReg)) {
             assert cur.type() != CiKind.Float && cur.type() != CiKind.Double : "cpu regs only";
             firstReg = allocatableRegisters.pdFirstByteReg;
             lastReg = allocatableRegisters.pdLastByteReg;
@@ -968,7 +968,7 @@ final class LinearScanWalker extends IntervalWalker {
 
         LIROperand in = ((LIROp1) op).operand();
         LIROperand res = ((LIROp1) op).result();
-        return in.isVariable() && res.isVariable() && in.vregNumber() == from.registerNumber() && res.vregNumber() == to.registerNumber();
+        return in.isVariable() && res.isVariable() && in.variableNumber() == from.registerNumber() && res.variableNumber() == to.registerNumber();
     }
 
     // optimization (especially for phi functions of nested loops):
@@ -1053,7 +1053,7 @@ final class LinearScanWalker extends IntervalWalker {
             result = false;
 
         } else {
-            if (allocator.gen.isVregFlagSet(cur.registerNumber(), LIRGenerator.VregFlag.MustStartInMemory)) {
+            if (allocator.gen.isVarFlagSet(cur.registerNumber(), LIRGenerator.VariableFlag.MustStartInMemory)) {
                 // activating an interval that must start in a stack slot : but may get a register later
                 // used for lirRoundfp: rounding is done by store to stack and reload later
                 // Util.traceLinearScan(4, "      interval must start in stack slot . split it before first use");

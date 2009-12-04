@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.Value;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>LIROperand</code> class represents an operand, either
@@ -52,7 +53,7 @@ public class LIROperand {
         } else if (isDoubleStack()) {
             out.append("dblStack:").append(doubleStackIndex());
         } else if (isVariable()) {
-            out.append("V").append(vregNumber());
+            out.append("V").append(variableNumber());
         } else if (isSingleCpu()) {
             out.append(asRegister().name);
         } else if (isDoubleCpu()) {
@@ -72,7 +73,7 @@ public class LIROperand {
         return out.toString();
     }
 
-    public boolean isRegister() {
+    public boolean isVariableOrRegister() {
         return false;
     }
 
@@ -112,10 +113,6 @@ public class LIROperand {
         return false;
     }
 
-    public boolean isVirtualRegister() {
-        return false;
-    }
-
     public int stackIndex() {
         throw new Error(getClass().getSimpleName() + " does not have a stackIndex");
     }
@@ -140,8 +137,8 @@ public class LIROperand {
         throw new Error(getClass().getSimpleName() + " does not have a cpuRegNumberHigh");
     }
 
-    public int vregNumber() {
-        throw new Error(getClass().getSimpleName() + " does not have a vregNumber");
+    public int variableNumber() {
+        throw new Error(getClass().getSimpleName() + " does not have a variableNumber");
     }
 
     public CiRegister asRegister() {

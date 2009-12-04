@@ -96,8 +96,8 @@ public class LIRItem {
     }
 
     public LIROperand result() {
-        assert !destroysRegister || (!result.isRegister() || result.isVariable()) : "shouldn't use setDestroysRegister with physical regsiters";
-        if (destroysRegister && result.isRegister()) {
+        assert !destroysRegister || (!result.isVariableOrRegister() || result.isVariable()) : "shouldn't use setDestroysRegister with physical registers";
+        if (destroysRegister && result.isVariableOrRegister()) {
             if (isIllegal(newResult)) {
                 newResult = gen.newRegister(value.kind);
                 gen.lir.move(result, newResult);
@@ -117,7 +117,7 @@ public class LIRItem {
     }
 
     public boolean isRegister() {
-        return result.isRegister();
+        return result.isVariableOrRegister();
     }
 
     public void loadByteItem() {
@@ -125,7 +125,7 @@ public class LIRItem {
             loadItem();
             LIROperand res = result();
 
-            if (!res.isVariable() || !gen.isVregFlagSet(res, LIRGenerator.VregFlag.ByteReg)) {
+            if (!res.isVariable() || !gen.isVarFlagSet(res, LIRGenerator.VariableFlag.MustBeByteReg)) {
                 // make sure that it is a byte register
                 assert !value.kind.isFloat() && !value.kind.isDouble() : "can't load floats in byte register";
                 LIROperand reg = gen.rlockByte(CiKind.Byte);
@@ -167,7 +167,7 @@ public class LIRItem {
         value.setOperand(opr);
 
         if (opr.isVariable()) {
-            gen.instructionForOperand.put(opr.vregNumber(), value);
+            gen.instructionForOperand.put(opr.variableNumber(), value);
         }
 
         result = opr;
@@ -178,7 +178,7 @@ public class LIRItem {
             // update the items result
             result = value.operand();
         }
-        if (!result().isRegister()) {
+        if (!result().isVariableOrRegister()) {
             LIROperand reg = gen.newRegister(value.kind);
             gen.lir.move(result(), reg);
             if (isConstant(result())) {
