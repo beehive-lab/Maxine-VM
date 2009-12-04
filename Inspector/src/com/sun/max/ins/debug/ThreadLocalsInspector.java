@@ -109,6 +109,10 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
             tabbedPane.addChangeListener(new ChangeListener() {
                 // Refresh a newly exposed pane to be sure it is current
                 public void stateChanged(ChangeEvent event) {
+                    // TODO (mlvdv)  Data reading PATCH, there should be a more systematic way of handling this.
+                    if (maxVMState().processState() == ProcessState.TERMINATED) {
+                        return;
+                    }
                     final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) tabbedPane.getSelectedComponent();
                     if (threadLocalsPanel != null) {
                         threadLocalsPanel.refresh(true);
