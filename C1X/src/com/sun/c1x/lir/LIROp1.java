@@ -164,10 +164,10 @@ public class LIROp1 extends LIRInstruction {
                 assert (LIROperand.isLegal(operand())) && (LIROperand.isLegal(result())) : "Operand and result must be valid in a LIROp1 move instruction.";
                 break;
             case NullCheck:
-                assert operand().isRegister() : "Operand must be a register in a LIROp1 null check instruction.";
+                assert operand().isVariableOrRegister() : "Operand must be a register in a LIROp1 null check instruction.";
                 break;
             case Return:
-                assert operand().isRegister() || LIROperand.isIllegal(operand()) : "Operand must be (register | illegal) in a LIROp1 return instruction.";
+                assert operand().isVariableOrRegister() || LIROperand.isIllegal(operand()) : "Operand must be (register | illegal) in a LIROp1 return instruction.";
                 break;
         }
         return true;

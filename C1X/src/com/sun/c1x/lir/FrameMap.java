@@ -36,6 +36,7 @@ import com.sun.c1x.util.*;
 public final class FrameMap {
 
     public static final int SPILL_SLOT_SIZE = 4;
+    private static final int DOUBLE_SIZE = 8;
 
     private final C1XCompiler compilation;
     private final CallingConvention incomingArguments;
@@ -76,7 +77,7 @@ public final class FrameMap {
         final CallingConvention result = new CallingConvention(locations);
         if (reserveOutgoingArgumentsArea) {
             assert frameSize == -1 : "frame size must not yet be fixed!";
-            outgoingSize = Math.max(outgoingSize, result.overflowArgumentSize);
+            increaseOutgoing(result.overflowArgumentSize);
         }
         return result;
     }
@@ -94,36 +95,30 @@ public final class FrameMap {
     }
 
     int spOffsetForSlot(int index) {
-        int offset = spOffsetForSpill(index);
-        assert offset < frameSize() : "spill outside of frame";
+        assert index >= 0 && index < spillSlotCount : "invalid spill slot";
+        int offset = spillStart() + index * SPILL_SLOT_SIZE;
+        assert offset <= (frameSize() - SPILL_SLOT_SIZE) : "spill outside of frame";
         return offset;
     }
 
-    int spOffsetForSpill(int index) {
-        assert index >= 0 && index < spillSlotCount : "out of range";
-        return Util.roundUp(outgoingSize + incomingArguments.overflowArgumentSize, Double.SIZE / Byte.SIZE) + index * SPILL_SLOT_SIZE;
+    int spOffsetForMonitorBase(int index) {
+        assert index >= 0 && index < monitorCount : "invalid monitor index";
+        int size = compilation.runtime.sizeofBasicObjectLock();
+        int offset = spillEnd() + index * size;
+        assert offset <= (frameSize() - size) : "monitor outside of frame";
+        return offset;
     }
 
-    int spOffsetForMonitorBase(int index) {
-        int endOfSpills = Util.roundUp(outgoingSize + incomingArguments.overflowArgumentSize, Double.SIZE / Byte.SIZE) + spillSlotCount * SPILL_SLOT_SIZE;
-        return Util.roundUp(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
+    private int spillStart() {
+        return outgoingSize;
+    }
+
+    private int spillEnd() {
+        return spillStart() + spillSlotCount * SPILL_SLOT_SIZE;
     }
 
     int spOffsetForMonitorObject(int index)  {
-      checkMonitorIndex(index);
-      return spOffsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
-    }
-
-    void checkMonitorIndex(int monitorIndex) {
-        assert monitorIndex >= 0 && monitorIndex < monitorCount : "bad index";
-    }
-
-    public int addressForMonitorLock(int monitorNo) {
-        return Util.nonFatalUnimplemented(0);
-    }
-
-    public Address addressForMonitorObject(int i) {
-        return Util.nonFatalUnimplemented(null);
+        return spOffsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
     }
 
     public int frameSize() {
@@ -141,34 +136,38 @@ public final class FrameMap {
         assert spillSlotCount >= 0 : "must be positive";
 
         this.spillSlotCount = spillSlotCount;
-        this.frameSize = compilation.target.alignFrameSize(spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock());
-    }
-
-    public CiLocation regname(LIROperand opr) {
-        if (opr.isStack()) {
-            return new CiStackLocation(opr.kind, opr.stackIndex() * SPILL_SLOT_SIZE, compilation.target.sizeInBytes(opr.kind), false);
-        } else if (opr.isRegister()) {
-            if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
-                return new CiRegisterLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
-            } else {
-                return new CiRegisterLocation(opr.kind, opr.asRegister());
-            }
-        } else {
-            throw Util.shouldNotReachHere();
-        }
-    }
-
-    public CiLocation objectSlotRegname(int i) {
-        return new CiStackLocation(CiKind.Object, this.spOffsetForSpill(i), SPILL_SLOT_SIZE, false);
-    }
-
-    public CiLocation locationForMonitor(int monitorIndex) {
-        return new CiStackLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SPILL_SLOT_SIZE, false);
+        this.frameSize = compilation.target.alignFrameSize(spillEnd() + monitorCount * compilation.runtime.sizeofBasicObjectLock());
     }
 
     public void usingGlobalStub(GlobalStub stub) {
-        if (stub.argsSize > outgoingSize) {
-            outgoingSize = Util.roundUp(stub.argsSize, SPILL_SLOT_SIZE);
+        increaseOutgoing(stub.argsSize);
+    }
+
+    private void increaseOutgoing(int argsSize) {
+        if (argsSize > outgoingSize) {
+            outgoingSize = Util.roundUp(argsSize, DOUBLE_SIZE);
         }
+    }
+
+    public CiLocation toLocation(LIROperand opr) {
+        if (opr.isStack()) {
+            // create a stack location
+            return new CiStackLocation(opr.kind, opr.stackIndex() * SPILL_SLOT_SIZE, compilation.target.sizeInBytes(opr.kind), false);
+        } else if (opr.isSingleCpu() || opr.isSingleXmm()) {
+            // create a single register location
+            return new CiRegisterLocation(opr.kind, opr.asRegister());
+        } else if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
+            // create a double register location
+            return new CiRegisterLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
+        }
+        throw new CiBailout("cannot convert " + opr + "to location");
+    }
+
+    public CiLocation toStackLocation(CiKind kind, int index) {
+        return new CiStackLocation(kind, this.spOffsetForSlot(index), compilation.target.sizeInBytes(kind), false);
+    }
+
+    public CiLocation toMonitorLocation(int monitorIndex) {
+        return new CiStackLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SPILL_SLOT_SIZE, false);
     }
 }

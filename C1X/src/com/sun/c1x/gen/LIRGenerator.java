@@ -957,7 +957,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             assert operands[param.index] == null;
             operands[param.index] = op;
 
-            if (op.isRegister()) {
+            if (op.isVariableOrRegister()) {
                 if (snippet.template.isParameterDestroyed(paramIndex)) {
                     LIROperand newOp = newRegister(op.kind);
                     lir.move(op, newOp);
@@ -1011,7 +1011,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         LIROperand allocatedResultOperand = operands[resultOperand.index];
-        if (!allocatedResultOperand.isRegister()) {
+        if (!allocatedResultOperand.isVariableOrRegister()) {
             allocatedResultOperand = IllegalLocation;
         }
 
@@ -1394,7 +1394,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     LIROperand forceToSpill(LIROperand value, CiKind t) {
         assert isLegal(value) : "value should not be illegal";
         assert t.size == value.kind.size : "size mismatch";
-        if (!value.isRegister()) {
+        if (!value.isVariableOrRegister()) {
             // force into a register
             LIROperand r = newRegister(value.kind);
             lir.move(value, r);
@@ -1691,7 +1691,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             for (int i = 0; i < args.length; i++) {
                 LIROperand arg = args[i];
                 LIROperand loc = cc.operands[i];
-                if (loc.isRegister()) {
+                if (loc.isVariableOrRegister()) {
                     lir.move(arg, loc);
                 } else {
                     assert isAddress(loc);
@@ -1959,7 +1959,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected void setResult(Instruction x, LIROperand opr) {
         assert isLegal(opr) : "must set to valid value";
         assert isIllegal(x.operand()) : "operand should never change";
-        assert !opr.isRegister() || opr.isVariable() : "should never set result to a physical register";
+        assert !opr.isVariableOrRegister() || opr.isVariable() : "should never set result to a physical register";
         x.setOperand(opr);
         if (opr.isVariable()) {
             instructionForOperand.put(opr.variableNumber(), x);
@@ -1973,7 +1973,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             value = resultOp;
         }
 
-        assert isConstant(count) || count.isRegister() : "must be";
+        assert isConstant(count) || count.isVariableOrRegister() : "must be";
         switch (code) {
             case Bytecodes.ISHL:
             case Bytecodes.LSHL:
@@ -2077,7 +2077,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (arg != null) {
                 LIRItem param = new LIRItem(arg, this);
                 LIROperand loc = cc.operands[j++];
-                if (loc.isRegister()) {
+                if (loc.isVariableOrRegister()) {
                     param.loadItemForce(loc);
                 } else {
                     LIRAddress addr = (LIRAddress) loc;

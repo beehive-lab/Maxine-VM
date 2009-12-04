@@ -22,6 +22,7 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.Value;
+import com.sun.c1x.util.Util;
 
 /**
  * The <code>LIROperand</code> class represents an operand, either
@@ -72,7 +73,7 @@ public class LIROperand {
         return out.toString();
     }
 
-    public boolean isRegister() {
+    public boolean isVariableOrRegister() {
         return false;
     }
 

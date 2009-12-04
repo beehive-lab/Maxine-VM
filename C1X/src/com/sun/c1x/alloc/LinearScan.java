@@ -50,7 +50,7 @@ public class LinearScan {
     final BlockBegin[] cachedBlocks; // cached list with all blocks in linear-scan order (only correct if original list
     // keeps
     // unchanged)
-    final int numVirtualRegs; // number of variables (without new registers introduced because of splitting intervals)
+    final int numVariables; // number of variables (without new registers introduced because of splitting intervals)
     // necessary)
     int numCalls; // total number of calls in this method
     int maxSpills; // number of stack slots used for intervals allocated to memory
@@ -76,7 +76,7 @@ public class LinearScan {
         this.ir = ir;
         this.gen = gen;
         this.frameMap = frameMap;
-        this.numVirtualRegs = gen.maxVirtualRegisterNumber();
+        this.numVariables = gen.maxVirtualRegisterNumber();
         this.numCalls = -1;
         this.maxSpills = 0;
         this.unusedSpillSlot = -1;
@@ -98,35 +98,22 @@ public class LinearScan {
     // is done in calcOperandForInterval()
 
     int regNum(LIROperand opr) {
-        assert opr.isRegister() : "should not call this otherwise";
+        assert opr.isVariableOrRegister() : "should not call this otherwise";
 
         if (opr.isVariable()) {
             assert opr.variableNumber() >= numRegs : "found a variable with a fixed-register number";
             return opr.variableNumber();
-        } else if (opr.isRegister()) {
-            return opr.cpuRegNumber();
-        } else {
-            Util.shouldNotReachHere();
-            return -1;
         }
+        return opr.cpuRegNumber();
     }
 
     int regNumHi(LIROperand opr) {
-        assert opr.isRegister() : "should not call this otherwise";
+        assert opr.isVariableOrRegister() : "should not call this otherwise";
 
-        if (opr.isVariable()) {
-            return -1;
-        } else if (opr.isSingleCpu()) {
-            return -1;
-        } else if (opr.isDoubleCpu()) {
+        if (opr.isDoubleCpu()) {
             return opr.cpuRegNumberHigh();
-        } else if (opr.isSingleXmm()) {
-            return -1;
-        } else if (opr.isDoubleXmm()) {
-            return -1;
-        } else {
-            throw new CiBailout("should not reach here (with " + opr + ")");
         }
+        return -1;
     }
 
     // * functions for classification of intervals
@@ -248,7 +235,7 @@ public class LinearScan {
 
     // size of liveIn and liveOut sets of BasicBlocks (BitMap needs rounded size for iteration)
     int liveSetSize() {
-        return Util.roundUp(numVirtualRegs, compilation.target.arch.wordSize * Byte.SIZE);
+        return Util.roundUp(numVariables, compilation.target.arch.wordSize * Byte.SIZE);
     }
 
     int numLoops() {
@@ -550,23 +537,14 @@ public class LinearScan {
 
     void setLiveGenKill(Value value, LIRInstruction op, BitMap liveGen, BitMap liveKill) {
         LIROperand opr = value.operand();
-        Constant con = null;
-        if (value instanceof Constant) {
-            con = (Constant) value;
-        }
-
-        // check some asumptions about debug information
-        assert !value.isIllegal() : "if this local is used by the interpreter it shouldn't be of indeterminate type";
-        assert con == null || opr.isVariable() || LIROperand.isConstant(opr) || LIROperand.isIllegal(opr) : "asumption: Constant instructions have only constant operands";
-        assert con != null || opr.isVariable() : "asumption: non-Constant instructions have only virtual operands";
-
-        if ((con == null || con.isLive()) && opr.isRegister()) {
-            assert regNum(opr) == opr.variableNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
+        if (opr.isVariable()) {
             int reg = opr.variableNumber();
             if (!liveKill.get(reg)) {
                 liveGen.set(reg);
-                // Util.traceLinearScan(4, "  Setting liveGen for value %c%d, LIR opId %d, register number %d", value.type().tchar(), value.id(), op.id(), reg);
+                // Util.traceLinearScan(4, "  Setting liveGen for value %c%d, LIR opId %d, register number %d", value.kind.typeChar, value.id, op.id, reg);
             }
+        } else {
+            assert LIROperand.isConstant(opr) || LIROperand.isIllegal(opr) : "invalid operand for deoptimization value";
         }
     }
 
@@ -578,7 +556,7 @@ public class LinearScan {
         int localNumCalls = 0;
         //LIRVisitState visitor = new LIRVisitState();
 
-        BitMap2D localIntervalInLoop = new BitMap2D(numVirtualRegs, numLoops());
+        BitMap2D localIntervalInLoop = new BitMap2D(numVariables, numLoops());
 
         // iterate all blocks
         for (int i = 0; i < numBlocks; i++) {
@@ -617,7 +595,6 @@ public class LinearScan {
                 n = op.oprCount(LIRInstruction.OperandMode.InputMode);
                 for (k = 0; k < n; k++) {
                     LIROperand opr = op.oprAt(LIRInstruction.OperandMode.InputMode, k);
-                    assert opr.isRegister() : "visitor should only return register operands";
 
                     if (opr.isVariable()) {
                         assert regNum(opr) == opr.variableNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
@@ -632,6 +609,7 @@ public class LinearScan {
                     }
 
                     if (C1XOptions.DetailedAsserts) {
+                        assert opr.isVariableOrRegister() : "visitor should only return register operands";
                         verifyInput(block, liveKill, opr);
                     }
                 }
@@ -650,7 +628,6 @@ public class LinearScan {
                 n = op.oprCount(LIRInstruction.OperandMode.TempMode);
                 for (k = 0; k < n; k++) {
                     LIROperand opr = op.oprAt(LIRInstruction.OperandMode.TempMode, k);
-                    assert opr.isRegister() : "visitor should only return register operands";
 
                     if (opr.isVariable()) {
                         assert regNum(opr) == opr.variableNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
@@ -662,6 +639,7 @@ public class LinearScan {
                     }
 
                     if (C1XOptions.DetailedAsserts) {
+                        assert opr.isVariableOrRegister() : "visitor should only return register operands";
                         verifyTemp(liveKill, opr);
                     }
                 }
@@ -670,7 +648,6 @@ public class LinearScan {
                 n = op.oprCount(LIRInstruction.OperandMode.OutputMode);
                 for (k = 0; k < n; k++) {
                     LIROperand opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, k);
-                    assert opr.isRegister() : "visitor should only return register operands";
 
                     if (opr.isVariable()) {
                         assert regNum(opr) == opr.variableNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
@@ -682,6 +659,7 @@ public class LinearScan {
                     }
 
                     if (C1XOptions.DetailedAsserts) {
+                        assert opr.isVariableOrRegister() : "visitor should only return register operands";
                         // fixed intervals are never live at block boundaries, so
                         // they need not be processed in live sets
                         // process them only in debug mode so that this can be checked
@@ -897,7 +875,7 @@ public class LinearScan {
             con = (Constant) value;
         }
 
-        if ((con == null || con.isLive()) && opr.isRegister()) {
+        if ((con == null || con.isLive()) && opr.isVariableOrRegister()) {
             assert regNum(opr) == opr.variableNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
             CiKind registerKind = registerKind(opr);
             addUse((LIRLocation) opr, from, to, useKind, registerKind);
@@ -908,7 +886,7 @@ public class LinearScan {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println(" def %s defPos %d (%s)", opr, defPos, useKind.name());
         }
-        assert opr.isRegister() : "should not be called otherwise";
+        assert opr.isVariableOrRegister() : "should not be called otherwise";
 
         if (opr.isVariable()) {
             assert regNum(opr) == opr.variableNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
@@ -926,7 +904,7 @@ public class LinearScan {
     }
 
     private CiKind registerKind(LIROperand operand) {
-        assert operand.isRegister();
+        assert operand.isVariableOrRegister();
 
         if (operand.kind == CiKind.Boolean || operand.kind == CiKind.Char || operand.kind == CiKind.Byte) {
             return CiKind.Int;
@@ -939,7 +917,7 @@ public class LinearScan {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.print(" use %s from %d to %d (%s)", opr, from, to, useKind.name());
         }
-        assert opr.isRegister() : "should not be called otherwise";
+        assert opr.isVariableOrRegister() : "should not be called otherwise";
 
         if (opr.isVariable()) {
             assert regNum(opr) == opr.variableNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
@@ -960,7 +938,7 @@ public class LinearScan {
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println(" temp %s tempPos %d (%s)", opr, tempPos, useKind.name());
         }
-        assert opr.isRegister() : "should not be called otherwise";
+        assert opr.isVariableOrRegister() : "should not be called otherwise";
 
         if (opr.isVariable()) {
             assert regNum(opr) == opr.variableNumber() && !isValidRegNum(regNumHi(opr)) : "invalid optimization below";
@@ -1079,7 +1057,7 @@ public class LinearScan {
                 // method argument (condition must be equal to handleMethodArguments)
                 return IntervalUseKind.noUse;
 
-            } else if (move.operand().isRegister() && move.result().isRegister()) {
+            } else if (move.operand().isVariableOrRegister() && move.result().isVariableOrRegister()) {
                 // Move from register to register
                 if (blockOfOpWithId(op.id).checkBlockFlag(BlockBegin.BlockFlag.OsrEntry)) {
                     // special handling of phi-function moves inside osr-entry blocks
@@ -1110,7 +1088,7 @@ public class LinearScan {
                 // To avoid moves from stack to stack (not allowed) force the input operand to a register
                 return IntervalUseKind.mustHaveRegister;
 
-            } else if (move.operand().isRegister() && move.result().isRegister()) {
+            } else if (move.operand().isVariableOrRegister() && move.result().isVariableOrRegister()) {
                 // Move from register to register
                 if (blockOfOpWithId(op.id).checkBlockFlag(BlockBegin.BlockFlag.OsrEntry)) {
                     // special handling of phi-function moves inside osr-entry blocks
@@ -1128,7 +1106,7 @@ public class LinearScan {
         if (compilation.target.arch.isX86()) {
             if (op.code == LIROpcode.Cmove) {
                 // conditional moves can handle stack operands
-                assert op.result().isRegister() : "result must always be in a register";
+                assert op.result().isVariableOrRegister() : "result must always be in a register";
                 return IntervalUseKind.shouldHaveRegister;
             }
 
@@ -1146,7 +1124,7 @@ public class LinearScan {
                         case Div: {
                             LIROp2 op2 = (LIROp2) op;
                             if (op2.opr1() != op2.opr2() && op2.opr2() == opr) {
-                                assert (op2.result().isRegister() || op.code == LIROpcode.Cmp) && op2.opr1().isRegister() : "cannot mark second operand as stack if others are not in register";
+                                assert (op2.result().isVariableOrRegister() || op.code == LIROpcode.Cmp) && op2.opr1().isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
                                 return IntervalUseKind.shouldHaveRegister;
                             }
                         }
@@ -1160,7 +1138,7 @@ public class LinearScan {
                         case Div: {
                             LIROp2 op2 = (LIROp2) op;
                             if (op2.opr1() != op2.opr2() && op2.opr2() == opr) {
-                                assert (op2.result().isRegister() || op.code == LIROpcode.Cmp) && op2.opr1().isRegister() : "cannot mark second operand as stack if others are not in register";
+                                assert (op2.result().isVariableOrRegister() || op.code == LIROpcode.Cmp) && op2.opr1().isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
                                 return IntervalUseKind.shouldHaveRegister;
                             }
                         }
@@ -1178,7 +1156,7 @@ public class LinearScan {
                     case LogicXor: {
                         LIROp2 op2 = (LIROp2) op;
                         if (op2.opr1() != op2.opr2() && op2.opr2() == opr) {
-                            assert (op2.result().isRegister() || op.code == LIROpcode.Cmp) && op2.opr1().isRegister() : "cannot mark second operand as stack if others are not in register";
+                            assert (op2.result().isVariableOrRegister() || op.code == LIROpcode.Cmp) && op2.opr1().isVariableOrRegister() : "cannot mark second operand as stack if others are not in register";
                             return IntervalUseKind.shouldHaveRegister;
                         }
                     }
@@ -1260,7 +1238,7 @@ public class LinearScan {
                 LIROperand moveFrom = move.operand();
                 LIROperand moveTo = move.result();
 
-                if (moveTo.isRegister() && moveFrom.isRegister()) {
+                if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
                     Interval from = intervalAt(regNum(moveFrom));
                     Interval to = intervalAt(regNum(moveTo));
                     if (from != null && to != null) {
@@ -1276,7 +1254,7 @@ public class LinearScan {
                 LIROperand moveFrom = cmove.opr1();
                 LIROperand moveTo = cmove.result();
 
-                if (moveTo.isRegister() && moveFrom.isRegister()) {
+                if (moveTo.isVariableOrRegister() && moveFrom.isVariableOrRegister()) {
                     Interval from = intervalAt(regNum(moveFrom));
                     Interval to = intervalAt(regNum(moveTo));
                     if (from != null && to != null) {
@@ -1292,8 +1270,8 @@ public class LinearScan {
     void buildIntervals() {
         // TIMELINEARSCAN(timerBuildIntervals);
 
-        intervalsArray = new Interval[numVirtualRegs + 32];
-        intervalsSize = numVirtualRegs;
+        intervalsArray = new Interval[numVariables + 32];
+        intervalsSize = numVariables;
 
         // create a list with all caller-save registers (cpu, fpu, xmm)
         // when an instruction is a call, a temp range is created for all these registers
@@ -1365,14 +1343,14 @@ public class LinearScan {
                 n = op.oprCount(LIRInstruction.OperandMode.OutputMode);
                 for (k = 0; k < n; k++) {
                     LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, k);
-                    assert opr.isRegister() : "visitor should only return register operands";
+                    assert opr.isVariableOrRegister() : "visitor should only return register operands";
                     addDef(opr, opId, useKindOfOutputOperand(op, opr), registerKind(opr));
                 }
 
                 n = op.oprCount(LIRInstruction.OperandMode.TempMode);
                 for (k = 0; k < n; k++) {
                     LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.TempMode, k);
-                    assert opr.isRegister() : "visitor should only return register operands";
+                    assert opr.isVariableOrRegister() : "visitor should only return register operands";
                     addTemp(opr, opId, IntervalUseKind.mustHaveRegister, registerKind(opr));
                 }
 
@@ -1380,7 +1358,7 @@ public class LinearScan {
                 n = op.oprCount(LIRInstruction.OperandMode.InputMode);
                 for (k = 0; k < n; k++) {
                     LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.InputMode, k);
-                    assert opr.isRegister() : "visitor should only return register operands";
+                    assert opr.isVariableOrRegister() : "visitor should only return register operands";
                     addUse(opr, blockFrom, opId, useKindOfInputOperand(op, opr), registerKind(opr));
                 }
 
@@ -1685,21 +1663,21 @@ public class LinearScan {
     }
 
     Interval intervalAtBlockBegin(BlockBegin block, int regNum) {
-        assert numRegs <= regNum && regNum < numVirtualRegs : "register number out of bounds";
+        assert numRegs <= regNum && regNum < numVariables : "register number out of bounds";
         assert intervalAt(regNum) != null : "no interval found";
 
         return splitChildAtOpId(intervalAt(regNum), block.firstLirInstructionId(), LIRInstruction.OperandMode.OutputMode);
     }
 
     Interval intervalAtBlockEnd(BlockBegin block, int regNum) {
-        assert numRegs <= regNum && regNum < numVirtualRegs : "register number out of bounds";
+        assert numRegs <= regNum && regNum < numVariables : "register number out of bounds";
         assert intervalAt(regNum) != null : "no interval found";
 
         return splitChildAtOpId(intervalAt(regNum), block.lastLirInstructionId() + 1, LIRInstruction.OperandMode.OutputMode);
     }
 
     Interval intervalAtOpId(int regNum, int opId) {
-        assert numRegs <= regNum && regNum < numVirtualRegs : "register number out of bounds";
+        assert numRegs <= regNum && regNum < numVariables : "register number out of bounds";
         assert intervalAt(regNum) != null : "no interval found";
 
         return splitChildAtOpId(intervalAt(regNum), opId, LIRInstruction.OperandMode.InputMode);
@@ -1708,7 +1686,7 @@ public class LinearScan {
     void resolveCollectMappings(BlockBegin fromBlock, BlockBegin toBlock, MoveResolver moveResolver) {
         assert moveResolver.checkEmpty();
 
-        int numRegs = numVirtualRegs;
+        int numRegs = numVariables;
         int size = liveSetSize();
         BitMap liveAtEdge = toBlock.lirBlock.liveIn;
 
@@ -2028,8 +2006,7 @@ public class LinearScan {
     }
 
     CiLocation vmRegForOperand(LIROperand opr) {
-        assert opr.kind == CiKind.Object : "currently only implemented for oop operands";
-        return frameMap.regname(opr);
+        return frameMap.toLocation(opr);
     }
 
     LIROperand operandForInterval(Interval interval) {
@@ -2257,7 +2234,7 @@ public class LinearScan {
                     assert interval.canonicalSpillSlot() >= numRegs : "no spill slot assigned";
                     assert interval.assignedReg() < numRegs : "interval is on stack :  so stack slot is registered twice";
 
-                    map.setOop(frameMap.objectSlotRegname(interval.canonicalSpillSlot() - numRegs));
+                    map.setOop(frameMap.toStackLocation(CiKind.Object, interval.canonicalSpillSlot() - numRegs));
                 }
             }
         }
@@ -2298,10 +2275,6 @@ public class LinearScan {
                 assert info.oopMap == oopMap : "same LIRDebugInfo used for multiple LIR instructions";
             }
         }
-    }
-
-    CiLocation locationForMonitorIndex(int monitorIndex) {
-        return frameMap.locationForMonitor(monitorIndex);
     }
 
     int appendScopeValueForConstant(LIROperand opr, List<CiValue> scopeValues) {
@@ -2515,7 +2488,7 @@ public class LinearScan {
         if (nofLocks > 0) {
             monitors = new ArrayList<CiLocation>(nofLocks);
             for (int i = locksBegin; i < locksEnd; i++) {
-                monitors.add(locationForMonitorIndex(i));
+                monitors.add(frameMap.toMonitorLocation(i));
             }
         }
         return null;
@@ -2953,7 +2926,7 @@ public class LinearScan {
                 Value value = gen.instructionForVar(r);
 
                 assert value != null : "all intervals live across block boundaries must have Value";
-                assert value.operand().isRegister() && value.operand().isVariable() : "value must have virtual operand";
+                assert value.operand().isVariableOrRegister() && value.operand().isVariable() : "value must have virtual operand";
                 assert value.operand().variableNumber() == r : "register number must match";
                 // TKR assert value.asConstant() == null || value.isPinned() :
                 // "only pinned constants can be alive accross block boundaries";

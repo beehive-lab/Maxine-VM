@@ -137,7 +137,7 @@ public final class LIRLocation extends LIROperand {
     }
 
     @Override
-    public boolean isRegister() {
+    public boolean isVariableOrRegister() {
         return !isStack();
     }
 

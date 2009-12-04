@@ -96,8 +96,8 @@ public class LIRItem {
     }
 
     public LIROperand result() {
-        assert !destroysRegister || (!result.isRegister() || result.isVariable()) : "shouldn't use setDestroysRegister with physical regsiters";
-        if (destroysRegister && result.isRegister()) {
+        assert !destroysRegister || (!result.isVariableOrRegister() || result.isVariable()) : "shouldn't use setDestroysRegister with physical registers";
+        if (destroysRegister && result.isVariableOrRegister()) {
             if (isIllegal(newResult)) {
                 newResult = gen.newRegister(value.kind);
                 gen.lir.move(result, newResult);
@@ -117,7 +117,7 @@ public class LIRItem {
     }
 
     public boolean isRegister() {
-        return result.isRegister();
+        return result.isVariableOrRegister();
     }
 
     public void loadByteItem() {
@@ -178,7 +178,7 @@ public class LIRItem {
             // update the items result
             result = value.operand();
         }
-        if (!result().isRegister()) {
+        if (!result().isVariableOrRegister()) {
             LIROperand reg = gen.newRegister(value.kind);
             gen.lir.move(result(), reg);
             if (isConstant(result())) {
