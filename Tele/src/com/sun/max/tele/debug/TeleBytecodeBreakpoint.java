@@ -415,9 +415,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     // The new compilation; don't bother to construct a representation of it unless there's a match and it's needed.
                     TeleTargetMethod teleTargetMethod = null;
 
-                    final String holderTypeDescriptorString = teleVM.getString(teleVM.wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter0)));
-                    final String methodName = teleVM.getString(teleVM.wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter1)));
-                    final String signatureDescriptorString = teleVM.getString(teleVM.wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter2)));
+                    final String holderTypeDescriptorString = teleVM.getStringUnsafe(teleVM.wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter0)));
+                    final String methodName = teleVM.getStringUnsafe(teleVM.wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter1)));
+                    final String signatureDescriptorString = teleVM.getStringUnsafe(teleVM.wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter2)));
                     Trace.line(TRACE_VALUE, "VM just compiled: " + holderTypeDescriptorString + " " + methodName + " " + signatureDescriptorString);
                     for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : Factory.this.breakpoints.values()) {
                         // Streamlined comparison using as little Inspector machinery as possible, since we take this break at every VM compilation
