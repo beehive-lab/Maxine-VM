@@ -68,7 +68,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void reset(CiKind resultKind, CiKind[] argTypes) {
-        asm = new X86MacroAssembler(compiler, compiler.target, -1);
+        asm = new X86MacroAssembler(compiler, compiler.target);
         localSize = 0;
         saveSize = 0;
         argsSize = 0;
@@ -93,7 +93,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     public GlobalStub emit(CiRuntimeCall runtimeCall, RiRuntime runtime) {
         reset(runtimeCall.resultKind, runtimeCall.arguments);
         emitStandardForward(null, runtimeCall);
-        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + runtimeCall);
         return new GlobalStub(null, runtimeCall.resultKind, stubObject, argsSize, argOffsets);
     }
@@ -122,7 +122,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
                 break;
         }
 
-        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + stub);
         return new GlobalStub(stub, stub.resultKind, stubObject, argsSize, argOffsets);
     }
@@ -155,6 +155,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         C1XCompilation compilation = new C1XCompilation(compiler, compiler.target, compiler.runtime, null);
         compilation.initFrameMap(0);
+        compilation.frameMap().setFrameSize(frameSize());
         X86LIRAssembler assembler = new X86LIRAssembler(compilation);
         asm = assembler.masm;
 
@@ -228,10 +229,9 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             labels[i] = new Label();
         }
 
-        compilation.frameMap().setFrameSize(frameSize());
         assembler.emitXirInstructions(null, template.fastPath, labels, operands);
         epilogue();
-        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, frameSize(), registerRestoreEpilogueOffset);
+        CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, template.name);
         return new GlobalStub(null, template.resultOperand.kind, stubObject, 0, argOffsets);
     }

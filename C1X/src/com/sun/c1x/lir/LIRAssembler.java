@@ -279,9 +279,7 @@ public abstract class LIRAssembler {
                 emitReturn(op.operand());
                 break;
             case Safepoint:
-                if (compilation.debugInfoRecorder().lastPcOffset() == codePos()) {
-                    asm.nop();
-                }
+                // TODO: emit a nop to separate debug info?
                 emitSafepoint(op.operand(), op.info);
                 break;
             case Branch:
