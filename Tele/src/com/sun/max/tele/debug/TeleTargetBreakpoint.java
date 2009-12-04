@@ -355,9 +355,10 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
                 final ClientTargetBreakpoint clientBreakpoint = new ClientTargetBreakpoint(teleVM, this, address, null);
                 final TeleTargetBreakpoint oldBreakpoint = clientBreakpoints.put(address.toLong(), clientBreakpoint);
                 assert oldBreakpoint == null;
-                announceStateChange();
-                return clientBreakpoint;
+                setChanged();
+                breakpoint = clientBreakpoint;
             }
+            notifyObservers();
             return breakpoint;
         }
 
@@ -373,7 +374,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
                 systemBreakpoint = new SystemTargetBreakpoint(teleVM, this, address, null);
                 final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(address.toLong(), systemBreakpoint);
                 assert oldBreakpoint == null;
-                announceStateChange();
+                setChanged();
             }
             return systemBreakpoint;
         }
@@ -418,10 +419,10 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         private synchronized void removeNonTransientBreakpointAt(Address address) {
             final long addressLong = address.toLong();
-            if (clientBreakpoints.remove(addressLong) == null) {
-                systemBreakpoints.remove(addressLong);
+            if (clientBreakpoints.remove(addressLong) != null || systemBreakpoints.remove(addressLong) != null) {
+                setChanged();
             }
-            announceStateChange();
+            notifyObservers();
         }
 
         /**
