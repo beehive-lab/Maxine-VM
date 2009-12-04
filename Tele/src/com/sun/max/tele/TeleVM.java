@@ -414,15 +414,6 @@ public abstract class TeleVM implements MaxVM {
         return typesOnClasspath;
     }
 
-    private final TeleMessenger messenger = new VMTeleMessenger(this);
-
-    /**
-     * @return access to two-way asynchronous message passing with the VM.
-     */
-    public TeleMessenger messenger() {
-        return messenger;
-    }
-
     private int interpreterUseLevel = 0;
 
     private final TeleHeapManager teleHeapManager;
@@ -535,6 +526,14 @@ public abstract class TeleVM implements MaxVM {
     private static native void nativeInitialize(int threadLocalsSize);
 
     /**
+     * Enables inspectable facilities in the VM.
+     */
+    private void setVMInspectable() {
+        final Pointer infoPointer = bootImageStart().plus(bootImage().header.inspectableSwitchOffset);
+        dataAccess().writeWord(infoPointer, Address.fromInt(1)); // setting to non-zero indicates enabling
+    }
+
+    /**
      * Starts a new VM process and returns a handle to it.
      *
      * @param commandLineArguments the command line arguments to use when starting the VM process
@@ -611,10 +610,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final void describeVMStateHistory(PrintStream printStream) {
         teleVMState.writeSummaryToStream(printStream);
-    }
-
-    public final boolean activateMessenger() {
-        return messenger.activate();
     }
 
     public final int getInterpreterUseLevel() {
@@ -698,16 +693,15 @@ public abstract class TeleVM implements MaxVM {
         if (teleRuntimeCodeRegion.isAllocated()) {
             regions.append(teleRuntimeCodeRegion);
         }
-
-        // Thread memory (stacks + thread locals)
+        // Thread memory (stack + thread locals)
         for (TeleNativeThread thread : threads) {
-            final TeleNativeStack stack = thread.stack();
-            if (!stack.size().isZero()) {
-                regions.append(stack);
+            final TeleNativeStackMemoryRegion stackRegion = thread.stackRegion();
+            if (!stackRegion.size().isZero()) {
+                regions.append(stackRegion);
             }
-            TeleThreadLocalsBlock threadLocalsBlock = thread.threadLocalsBlock();
-            if (!threadLocalsBlock.size().isZero()) {
-                regions.append(threadLocalsBlock);
+            TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.threadLocalsRegion();
+            if (!threadLocalsRegion.size().isZero()) {
+                regions.append(threadLocalsRegion);
             }
         }
         return regions;
@@ -722,11 +716,11 @@ public abstract class TeleVM implements MaxVM {
                 if (memoryRegion == null) {
                     MaxThread maxThread = threadStackContaining(address);
                     if (maxThread != null) {
-                        memoryRegion = maxThread.stack();
+                        memoryRegion = maxThread.stackRegion();
                     } else {
                         maxThread = threadLocalsBlockContaining(address);
                         if (maxThread != null) {
-                            memoryRegion = maxThread.threadLocalsBlock();
+                            memoryRegion = maxThread.threadLocalsRegion();
                         }
                     }
 
@@ -1005,6 +999,16 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Creates a temporary reference for access to VM memory without invoking the
+     * canonicalization machinery.
+     *
+     * @return a reference to a location in VM memory that is not safe across GC
+     */
+    public final Reference wordToTemporaryReference(Address address) {
+        return vmConfiguration.referenceScheme().fromGrip(gripScheme().createTemporaryRemoteTeleGrip(address));
+    }
+
+    /**
      * @param reference a {@link Reference} to memory in the VM.
      * @param index offset into an array of references
      * @return the contents of the array at the index, interpreted as an address and wrapped in a Reference.
@@ -1035,6 +1039,39 @@ public abstract class TeleVM implements MaxVM {
             offset++;
         }
         return new String(chars);
+    }
+
+    /**
+     * Returns a local copy of the contents of a {@link String} object in the VM's heap,
+     * using low level mechanisms and performing no checking that the location
+     * or object are valid.
+     * <br>
+     * The intention is to provide a fast, low-level mechanism for reading strings that
+     * can be used outside of the AWT event thread without danger of deadlock,
+     * for example on the canonical grip machinery.
+     *
+     * @param stringReference a {@link String} object in the VM
+     * @return A local {@link String} representing the remote object's contents, null if it can't be read.
+     */
+    public final String getStringUnsafe(Reference stringReference) {
+        // Work only with temporary grips that are unsafe across GC
+        // Do no testing to determine if the reference points to a valid String object in live memory.
+        try {
+            final RemoteTeleGrip stringGrip = temporaryRemoteTeleGripFromOrigin(stringReference.toOrigin());
+            final Word valueWord = stringGrip.readWord(teleFields().String_value.fieldActor().offset());
+            final RemoteTeleGrip valueGrip = createTemporaryRemoteTeleGrip(valueWord);
+            int offset = stringGrip.readInt(teleFields.String_offset.fieldActor().offset());
+            final int count = stringGrip.readInt(teleFields.String_count.fieldActor().offset());
+            final char[] chars = new char[count];
+            final CharArrayLayout charArrayLayout = layoutScheme().charArrayLayout;
+            for (int i = 0; i < count; i++) {
+                chars[i] = charArrayLayout.getChar(valueGrip, offset);
+                offset++;
+            }
+            return new String(chars);
+        } catch (DataIOError dataIOError) {
+            return null;
+        }
     }
 
     /**
@@ -1303,7 +1340,7 @@ public abstract class TeleVM implements MaxVM {
 
     public final MaxThread threadStackContaining(Address address) {
         for (MaxThread thread : teleVMState.threads()) {
-            if (thread.stack().contains(address)) {
+            if (thread.stackRegion().contains(address)) {
                 return thread;
             }
         }
@@ -1312,7 +1349,7 @@ public abstract class TeleVM implements MaxVM {
 
     public MaxThread threadLocalsBlockContaining(Address address) {
         for (MaxThread thread : teleVMState.threads()) {
-            if (thread.threadLocalsBlock().contains(address)) {
+            if (thread.threadLocalsRegion().contains(address)) {
                 return thread;
             }
         }
@@ -1362,7 +1399,7 @@ public abstract class TeleVM implements MaxVM {
         bytecodeBreakpointFactory.addObserver(observer);
     }
 
-    public final Iterable<TeleTargetBreakpoint> targetBreakpoints() {
+    public final Iterable<MaxBreakpoint> targetBreakpoints() {
         return teleProcess.targetBreakpointFactory().clientBreakpoints();
     }
 
@@ -1370,24 +1407,24 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.targetBreakpointFactory().clientBreakpointCount();
     }
 
-    public final TeleTargetBreakpoint makeMaxTargetBreakpoint(Address address) throws MaxVMException {
+    public final MaxBreakpoint makeBreakpointAt(Address address) throws MaxVMException {
         try {
-            return makeTargetBreakpoint(address);
+            return makeTargetBreakpointAt(address);
         } catch (DataIOError dataIOError) {
             final String message = "Cannot create breakpoint at 0x" + address.toHexString() + ":  " + dataIOError.getMessage();
             throw new MaxVMException(message);
         }
     }
 
-    public final TeleTargetBreakpoint makeTargetBreakpoint(Address address) {
-        return teleProcess.targetBreakpointFactory().makeClientBreakpoint(address);
+    public final TeleTargetBreakpoint makeTargetBreakpointAt(Address address) {
+        return teleProcess.targetBreakpointFactory().makeClientBreakpointAt(address);
     }
 
-    public final TeleTargetBreakpoint getTargetBreakpoint(Address address) {
+    public final MaxBreakpoint getBreakpointAt(Address address) {
         return teleProcess.targetBreakpointFactory().getClientTargetBreakpointAt(address);
     }
 
-    public final Iterable<TeleBytecodeBreakpoint> bytecodeBreakpoints() {
+    public final Iterable<MaxBreakpoint> bytecodeBreakpoints() {
         return bytecodeBreakpointFactory.breakpoints();
     }
 
@@ -1395,12 +1432,17 @@ public abstract class TeleVM implements MaxVM {
         return bytecodeBreakpointFactory.size();
     }
 
-    public final TeleBytecodeBreakpoint makeBytecodeBreakpoint(Key key) {
+    public final MaxBreakpoint makeBreakpointAt(Key key) {
         return bytecodeBreakpointFactory.makeBreakpoint(key);
     }
 
-    public final TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key) {
+    public final MaxBreakpoint getBreakpointAt(Key key) {
         return bytecodeBreakpointFactory.getBreakpoint(key);
+    }
+
+    public void describeBreakpoints(PrintStream printStream) {
+        teleProcess.targetBreakpointFactory().writeSummaryToStream(printStream);
+        bytecodeBreakpointFactory.writeSummaryToStream(printStream);
     }
 
     public final boolean watchpointsEnabled() {
@@ -1524,7 +1566,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public void advanceToJavaEntryPoint() throws IOException {
-        messenger.enable();
+        setVMInspectable();
         final Address startEntryPoint = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
         try {
             runToInstruction(startEntryPoint, true, false);
@@ -2069,15 +2111,15 @@ public abstract class TeleVM implements MaxVM {
             breakpointLocations.add(codeLocation);
             assert breakpointLocations.contains(codeLocation);
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            TeleVM.this.makeTargetBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
+            TeleVM.this.makeTargetBreakpointAt(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
             Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
         }
 
         public void removeBreakpoint(CodeLocation codeLocation) {
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final TeleTargetBreakpoint targetBreakpoint = TeleVM.this.getTargetBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
-            if (targetBreakpoint != null) {
-                targetBreakpoint.remove();
+            final MaxBreakpoint breakpoint = TeleVM.this.getBreakpointAt(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
+            if (breakpoint != null) {
+                breakpoint.remove();
             }
             assert breakpointLocations.contains(codeLocation);
             breakpointLocations.remove(codeLocation);

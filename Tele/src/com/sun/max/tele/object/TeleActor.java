@@ -163,7 +163,7 @@ public abstract class TeleActor extends TeleTupleObject {
             sb.append("C_FUNCTION, ");
         }
         if ((flagsValue & Actor.VM_ENTRY_POINT) != 0) {
-            // 0x01000000
+            // 0x02000000
             sb.append("VM_ENTRY_POINT, ");
         }
         if ((flagsValue & Actor.FOLD) != 0) {

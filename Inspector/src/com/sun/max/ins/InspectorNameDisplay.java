@@ -449,13 +449,13 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (memoryRegion == maxVM().teleRuntimeCodeRegion()) {
             return "Dynamic code region: " + description;
         }
-        if (memoryRegion instanceof TeleNativeStack) {
-            final TeleNativeStack stack = (TeleNativeStack) memoryRegion;
-            return "Thread stack: " + longName(stack.teleNativeThread);
+        if (memoryRegion instanceof TeleNativeStackMemoryRegion) {
+            final TeleNativeStackMemoryRegion stackRegion = (TeleNativeStackMemoryRegion) memoryRegion;
+            return "Thread stack region: " + longName(stackRegion.teleNativeThread);
         }
-        if (memoryRegion instanceof TeleThreadLocalsBlock) {
-            final TeleThreadLocalsBlock tlb = (TeleThreadLocalsBlock) memoryRegion;
-            return "Thread locals block: " + longName(tlb.teleNativeThread);
+        if (memoryRegion instanceof TeleThreadLocalsMemoryRegion) {
+            final TeleThreadLocalsMemoryRegion threadLocalsRegion = (TeleThreadLocalsMemoryRegion) memoryRegion;
+            return "Thread locals region: " + longName(threadLocalsRegion.teleNativeThread);
         }
         return "Unknown region: " + description;
     }

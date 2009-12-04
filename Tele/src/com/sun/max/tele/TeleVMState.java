@@ -183,26 +183,35 @@ public final class TeleVMState implements MaxVMState {
                 printStream.println("\tstep=" + state.singleStepThread().toShortString());
             }
             if (state.previous() != null && state.threads() == state.previous().threads()) {
-                printStream.println("\tthreads: <unchanged>");
+                printStream.println("\tthreads active: <unchanged>");
             } else if (state.threads().length() == 0) {
-                printStream.println("\tthreads: <empty>");
+                printStream.println("\tthreads active: <empty>");
             } else {
-                printStream.println("\tthreads:");
+                printStream.println("\tthreads active:");
                 for (MaxThread thread : state.threads()) {
                     printStream.println("\t\t" + thread.toShortString());
                 }
             }
-            for (MaxThread thread : state.threadsStarted()) {
-                printStream.println("\tstarted=" + thread.toShortString());
+            if (state.threadsStarted().length() > 0) {
+                printStream.println("\tthreads newly started:");
+                for (MaxThread thread : state.threadsStarted()) {
+                    printStream.println("\t\t" + thread.toShortString());
+                }
             }
-            for (MaxThread thread : state.threadsDied()) {
-                printStream.println("\tdied=" + thread.toShortString());
+            if (state.threadsDied().length() > 0) {
+                printStream.println("\tthreads newly died:");
+                for (MaxThread thread : state.threadsDied()) {
+                    printStream.println("\t\t" + thread.toShortString());
+                }
             }
-            for (MaxThread thread : state.breakpointThreads()) {
-                printStream.println("\t@breakpoint=" + thread.toShortString());
+            if (state.breakpointThreads().length() > 0) {
+                printStream.println("\tthreads at breakpoint");
+                for (MaxThread thread : state.breakpointThreads()) {
+                    printStream.println("\t\t" + thread.toShortString());
+                }
             }
             if (state.watchpointEvent() != null) {
-                printStream.println("\t@watchpoint=" + state.watchpointEvent());
+                printStream.println("\tthread at watchpoint=" + state.watchpointEvent());
             }
             state = state.previous();
         }

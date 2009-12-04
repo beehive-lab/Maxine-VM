@@ -132,7 +132,7 @@ public final class InspectableHeapInfo {
      * @param memoryRegions regions allocated by the heap implementation
      */
     public static void init(MemoryRegion... memoryRegions) {
-        if (MaxineMessenger.isVmInspected()) {
+        if (Inspectable.isVmInspected()) {
             InspectableHeapInfo.memoryRegions = memoryRegions;
 
             try {

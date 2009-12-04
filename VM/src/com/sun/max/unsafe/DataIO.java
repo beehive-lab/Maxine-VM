@@ -33,6 +33,9 @@ public interface DataIO {
     /**
      * Reads bytes from an address into a given byte buffer.
      *
+     * Precondition:
+     * {@code buffer != null && offset >= 0 && offset < buffer.capacity() && length >= 0 && offset + length <= buffer.capacity()}
+     *
      * @param src the address from which reading should start
      * @param dst the buffer into which the bytes are read
      * @param dstOffset the offset in {@code dst} at which the bytes are read
@@ -43,10 +46,13 @@ public interface DataIO {
      * @throws IndexOutOfBoundsException if {@code offset} is negative, {@code length} is negative, or
      *             {@code length > buffer.limit() - offset}
      */
-    int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError;
+    int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError, IndexOutOfBoundsException;
 
     /**
      * Writes bytes from a given byte buffer to a given address.
+     *
+     * Precondition:
+     * {@code buffer != null && offset >= 0 && offset < buffer.capacity() && length >= 0 && offset + length <= buffer.capacity()}
      *
      * @param src the buffer from which the bytes are written
      * @param srcOffset the offset in {@code src} from which the bytes are written
@@ -58,7 +64,7 @@ public interface DataIO {
      * @throws IndexOutOfBoundsException if {@code srcOffset} is negative, {@code length} is negative, or
      *             {@code length > src.limit() - srcOffset}
      */
-    int write(ByteBuffer src, int srcOffset, int length, Address dst) throws DataIOError;
+    int write(ByteBuffer src, int srcOffset, int length, Address dst) throws DataIOError, IndexOutOfBoundsException;
 
     public static class Static {
 
@@ -87,7 +93,7 @@ public interface DataIO {
          * @param dataIO the source of data to be read
          * @param src the location in the source where reading should start
          * @param length the total number of bytes to be read
-         * @return the bytes read from the souyrce.
+         * @return the bytes read from the source.
          */
         public static byte[] readFully(DataIO dataIO, Address src, int length) {
             final ByteBuffer buffer = ByteBuffer.wrap(new byte[length]);

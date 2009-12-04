@@ -33,7 +33,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.tele.*;
 
 /**
  * @author Ben L. Titzer
@@ -107,7 +106,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
         if (compiledMethod != null) {
             C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(this, classMethodActor, compiledMethod);
-            BytecodeBreakpointMessage.makeTargetBreakpoints(c1xTargetMethod);
+            CompilationScheme.Static.notifyCompilationComplete(c1xTargetMethod);
             return c1xTargetMethod;
         }
         throw FatalError.unexpected("bailout"); // compilation failed
