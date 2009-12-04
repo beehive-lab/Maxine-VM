@@ -29,7 +29,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Bernd Mathiske
  */
-public class TemporaryTeleGrip extends ConstantTeleGrip {
+public final class TemporaryTeleGrip extends ConstantTeleGrip {
 
     TemporaryTeleGrip(TeleGripScheme teleGripScheme, Address raw) {
         super(teleGripScheme, raw);
