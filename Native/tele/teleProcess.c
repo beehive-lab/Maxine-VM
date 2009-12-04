@@ -83,12 +83,12 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
                     tlaSize);
 }
 
-static boolean isThreadLocalsForStackPointer(PROCESS_MEMORY_PARAMS Address stackPointer, Address tl, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
+static boolean isThreadLocalsForStackPointer(ProcessHandle ph, Address stackPointer, Address tl, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
     Address ntl;
 
-    READ_PROCESS_MEMORY(tl, tlCopy, threadLocalsAreaSize());
+    readProcessMemory(ph, tl, tlCopy, threadLocalsAreaSize());
     ntl = getThreadLocal(Address, tlCopy, NATIVE_THREAD_LOCALS);
-    READ_PROCESS_MEMORY(ntl, ntlCopy, sizeof(NativeThreadLocalsStruct));
+    readProcessMemory(ph, ntl, ntlCopy, sizeof(NativeThreadLocalsStruct));
     setThreadLocal(tlCopy, NATIVE_THREAD_LOCALS, ntlCopy);
 #if log_TELE
     log_print("teleProcess_findThreadLocals(%p): ", stackPointer);
@@ -99,7 +99,7 @@ static boolean isThreadLocalsForStackPointer(PROCESS_MEMORY_PARAMS Address stack
     return stackBase <= stackPointer && stackPointer < (stackBase + stackSize);
 }
 
-ThreadLocals teleProcess_findThreadLocals(PROCESS_MEMORY_PARAMS Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
+ThreadLocals teleProcess_findThreadLocals(ProcessHandle ph, Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy) {
 
     memset((void *) tlCopy, 0, threadLocalsAreaSize());
     memset((void *) ntlCopy, 0, sizeof(NativeThreadLocalsStruct));
@@ -107,21 +107,21 @@ ThreadLocals teleProcess_findThreadLocals(PROCESS_MEMORY_PARAMS Address threadLo
     if (threadLocalsList != 0) {
         Address tl = threadLocalsList;
         while (tl != 0) {
-            if (isThreadLocalsForStackPointer(PROCESS_MEMORY_ARGS stackPointer, tl, tlCopy, ntlCopy)) {
+            if (isThreadLocalsForStackPointer(ph, stackPointer, tl, tlCopy, ntlCopy)) {
                 return tlCopy;
             }
             tl = getThreadLocal(Address, tlCopy, FORWARD_LINK);
         };
     }
     if (primordialThreadLocals != 0) {
-        if (isThreadLocalsForStackPointer(PROCESS_MEMORY_ARGS stackPointer, primordialThreadLocals, tlCopy, ntlCopy)) {
+        if (isThreadLocalsForStackPointer(ph, stackPointer, primordialThreadLocals, tlCopy, ntlCopy)) {
             return tlCopy;
         }
     }
     return 0;
 }
 
-int teleProcess_read(PROCESS_MEMORY_PARAMS JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint offset, jint length) {
+int teleProcess_read(ProcessHandle ph, JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint offset, jint length) {
     Word bufferWord;
     void* dstBuffer;
     size_t size = (size_t) length;
@@ -148,7 +148,7 @@ int teleProcess_read(PROCESS_MEMORY_PARAMS JNIEnv *env, jclass c, jlong src, job
     }
 
     // Do the read
-    jint bytesRead = READ_PROCESS_MEMORY(src, dstBuffer, size);
+    jint bytesRead = readProcessMemory(ph, src, dstBuffer, size);
 
     if (!isDirectByteBuffer) {
         if (bytesRead > 0) {
@@ -161,7 +161,7 @@ int teleProcess_read(PROCESS_MEMORY_PARAMS JNIEnv *env, jclass c, jlong src, job
     return bytesRead;
 }
 
-int teleProcess_write(PROCESS_MEMORY_PARAMS JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint offset, jint length) {
+int teleProcess_write(ProcessHandle ph, JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint offset, jint length) {
     Word bufferWord;
     void* srcBuffer;
     size_t size = (size_t) length;
@@ -190,7 +190,7 @@ int teleProcess_write(PROCESS_MEMORY_PARAMS JNIEnv *env, jclass c, jlong dst, jo
         }
     }
 
-    int result = WRITE_PROCESS_MEMORY(dst, srcBuffer, size);
+    int result = writeProcessMemory(ph, dst, srcBuffer, size);
 
     if (!isDirectByteBuffer) {
         if (srcBuffer != (void *) &bufferWord) {
