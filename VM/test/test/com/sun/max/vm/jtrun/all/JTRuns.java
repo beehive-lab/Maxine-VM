@@ -698,25 +698,28 @@ public class JTRuns {
             case 613: jtt_threads_Object_wait02(); break;
             case 614: jtt_threads_Object_wait03(); break;
             case 615: jtt_threads_Object_wait04(); break;
-            case 616: jtt_threads_Thread_currentThread01(); break;
-            case 617: jtt_threads_Thread_getState01(); break;
-            case 618: jtt_threads_Thread_getState02(); break;
-            case 619: jtt_threads_Thread_holdsLock01(); break;
-            case 620: jtt_threads_Thread_isAlive01(); break;
-            case 621: jtt_threads_Thread_isInterrupted01(); break;
-            case 622: jtt_threads_Thread_isInterrupted02(); break;
-            case 623: jtt_threads_Thread_isInterrupted03(); break;
-            case 624: jtt_threads_Thread_isInterrupted04(); break;
-            case 625: jtt_threads_Thread_isInterrupted05(); break;
-            case 626: jtt_threads_Thread_join01(); break;
-            case 627: jtt_threads_Thread_join02(); break;
-            case 628: jtt_threads_Thread_join03(); break;
-            case 629: jtt_threads_Thread_new01(); break;
-            case 630: jtt_threads_Thread_new02(); break;
-            case 631: jtt_threads_Thread_setPriority01(); break;
-            case 632: jtt_threads_Thread_sleep01(); break;
-            case 633: jtt_threads_Thread_start01(); break;
-            case 634: jtt_threads_Thread_yield01(); break;
+            case 616: jtt_threads_ThreadLocal01(); break;
+            case 617: jtt_threads_ThreadLocal02(); break;
+            case 618: jtt_threads_ThreadLocal03(); break;
+            case 619: jtt_threads_Thread_currentThread01(); break;
+            case 620: jtt_threads_Thread_getState01(); break;
+            case 621: jtt_threads_Thread_getState02(); break;
+            case 622: jtt_threads_Thread_holdsLock01(); break;
+            case 623: jtt_threads_Thread_isAlive01(); break;
+            case 624: jtt_threads_Thread_isInterrupted01(); break;
+            case 625: jtt_threads_Thread_isInterrupted02(); break;
+            case 626: jtt_threads_Thread_isInterrupted03(); break;
+            case 627: jtt_threads_Thread_isInterrupted04(); break;
+            case 628: jtt_threads_Thread_isInterrupted05(); break;
+            case 629: jtt_threads_Thread_join01(); break;
+            case 630: jtt_threads_Thread_join02(); break;
+            case 631: jtt_threads_Thread_join03(); break;
+            case 632: jtt_threads_Thread_new01(); break;
+            case 633: jtt_threads_Thread_new02(); break;
+            case 634: jtt_threads_Thread_setPriority01(); break;
+            case 635: jtt_threads_Thread_sleep01(); break;
+            case 636: jtt_threads_Thread_start01(); break;
+            case 637: jtt_threads_Thread_yield01(); break;
         }
         return true;
     }
@@ -22489,6 +22492,96 @@ public class JTRuns {
             // (5) == true
                 runString = "(5)";
                 if (true != jtt.threads.Object_wait04.test(5)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_threads_ThreadLocal01() {
+            begin("jtt.threads.ThreadLocal01");
+            String runString = null;
+            try {
+            // (0) == 5
+                runString = "(0)";
+                if (5 != jtt.threads.ThreadLocal01.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 6
+                runString = "(1)";
+                if (6 != jtt.threads.ThreadLocal01.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == 7
+                runString = "(2)";
+                if (7 != jtt.threads.ThreadLocal01.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_threads_ThreadLocal02() {
+            begin("jtt.threads.ThreadLocal02");
+            String runString = null;
+            try {
+            // (0) == 5
+                runString = "(0)";
+                if (5 != jtt.threads.ThreadLocal02.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 6
+                runString = "(1)";
+                if (6 != jtt.threads.ThreadLocal02.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == 7
+                runString = "(2)";
+                if (7 != jtt.threads.ThreadLocal02.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_threads_ThreadLocal03() {
+            begin("jtt.threads.ThreadLocal03");
+            String runString = null;
+            try {
+            // (0) == 0
+                runString = "(0)";
+                if (0 != jtt.threads.ThreadLocal03.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 15
+                runString = "(1)";
+                if (15 != jtt.threads.ThreadLocal03.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == 31
+                runString = "(2)";
+                if (31 != jtt.threads.ThreadLocal03.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == 48
+                runString = "(3)";
+                if (48 != jtt.threads.ThreadLocal03.test(3)) {
                     fail(runString);
                     return;
                 }
