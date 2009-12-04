@@ -224,7 +224,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(
         ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         struct db_regs *db_regs = checked_get_regs("nativeGatherThreads", threads[i].id);
-        threadLocals = teleProcess_findThreadLocals(threadLocalsList, primordialThreadLocals, threads[i].stack, threadLocals, &nativeThreadLocalsStruct);
+        threadLocals = teleProcess_findThreadLocals(threadLocalsList, primordialThreadLocals, db_regs->rsp, threadLocals, &nativeThreadLocalsStruct);
         teleProcess_jniGatherThread(env, teleDomain, threadSeq, threads[i].id, toThreadState(threads[i].flags), db_regs->rip, threadLocals);
     }
     free(threads);
@@ -302,7 +302,6 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeResume(JNIEnv 
         }
     }
 
-out:
 // At this point at least one thread is debug_suspend'ed or we
 // got a suspendAll request. Now suspend any other runnable threads.
 // N.B. This is not an atomic operation and threads
