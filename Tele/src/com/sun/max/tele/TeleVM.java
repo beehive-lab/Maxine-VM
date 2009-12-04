@@ -1042,6 +1042,39 @@ public abstract class TeleVM implements MaxVM {
     }
 
     /**
+     * Returns a local copy of the contents of a {@link String} object in the VM's heap,
+     * using low level mechanisms and performing no checking that the location
+     * or object are valid.
+     * <br>
+     * The intention is to provide a fast, low-level mechanism for reading strings that
+     * can be used outside of the AWT event thread without danger of deadlock,
+     * for example on the canonical grip machinery.
+     *
+     * @param stringReference a {@link String} object in the VM
+     * @return A local {@link String} representing the remote object's contents, null if it can't be read.
+     */
+    public final String getStringUnsafe(Reference stringReference) {
+        // Work only with temporary grips that are unsafe across GC
+        // Do no testing to determine if the reference points to a valid String object in live memory.
+        try {
+            final RemoteTeleGrip stringGrip = temporaryRemoteTeleGripFromOrigin(stringReference.toOrigin());
+            final Word valueWord = stringGrip.readWord(teleFields().String_value.fieldActor().offset());
+            final RemoteTeleGrip valueGrip = createTemporaryRemoteTeleGrip(valueWord);
+            int offset = stringGrip.readInt(teleFields.String_offset.fieldActor().offset());
+            final int count = stringGrip.readInt(teleFields.String_count.fieldActor().offset());
+            final char[] chars = new char[count];
+            final CharArrayLayout charArrayLayout = layoutScheme().charArrayLayout;
+            for (int i = 0; i < count; i++) {
+                chars[i] = charArrayLayout.getChar(valueGrip, offset);
+                offset++;
+            }
+            return new String(chars);
+        } catch (DataIOError dataIOError) {
+            return null;
+        }
+    }
+
+    /**
      * Gets a canonical local {@link ClassActor} for the named class, creating one if needed by loading the class from
      * the classpath using the {@link HostedBootClassLoader#HOSTED_BOOT_CLASS_LOADER}.
      *
