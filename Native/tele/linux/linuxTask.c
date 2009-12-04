@@ -899,12 +899,14 @@ size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeWriteBytes(JNIEnv *env, jclass c, jint tgid, jint tid, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
-    return teleProcess_write(tgid, tid, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
+    ProcessHandleStruct ph = {tgid, tid};
+    return teleProcess_write(&ph, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadBytes(JNIEnv *env, jclass c, jint tgid, jint tid, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
-    return teleProcess_read(tgid, tid, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
+    ProcessHandleStruct ph = {tgid, tid};
+    return teleProcess_read(&ph, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jboolean JNICALL

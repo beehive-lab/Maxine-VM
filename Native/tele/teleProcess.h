@@ -25,35 +25,39 @@
 
 extern void teleProcess_initialize(void);
 
+/*
+ * Definition of the platform specific type 'ProcessHandle' and the two operations
+ * 'readProcessMemory' & 'writeProcessMemory' that use the handle to access the
+ * memory of the process.
+ */
 #if os_LINUX
 #include <sys/types.h>
 size_t task_read(pid_t tgid, pid_t tid, const void *src, void *dst, size_t size);
 size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size);
-#define PROCESS_MEMORY_PARAMS pid_t tgid, pid_t tid,
-#define PROCESS_MEMORY_ARGS tgid, tid,
-#define READ_PROCESS_MEMORY(src, dst, size) task_read(tgid, tid, (const void *) src, (void *) dst, (size_t) size)
-#define WRITE_PROCESS_MEMORY(dst, src, size) task_write(tgid, tid, (void *) dst, (const void *) src, (size_t) size)
+typedef struct {
+    pid_t tgid;
+    pid_t tid;
+} ProcessHandleStruct, *ProcessHandle;
+#define readProcessMemory(ph, src, dst, size) task_read(ph->tgid, ph->tid, (const void *) src, (void *) dst, (size_t) size)
+#define writeProcessMemory(ph, dst, src, size) task_write(ph->tgid, ph->tid, (void *) dst, (const void *) src, (size_t) size)
 #elif os_DARWIN
 #include <mach/mach.h>
 int task_read(task_t task, vm_address_t src, void *dst, size_t size);
 int task_write(task_t task, vm_address_t dst, void *src, size_t size);
-#define PROCESS_MEMORY_PARAMS task_t task,
-#define PROCESS_MEMORY_ARGS task,
-#define READ_PROCESS_MEMORY(src, dst, size) task_read(task, (vm_address_t) src, (void *) dst, (size_t) size)
-#define WRITE_PROCESS_MEMORY(dst, src, size) task_write(task, (vm_address_t) dst, (void *) src, (size_t) size)
+typedef task_t ProcessHandle;
+#define readProcessMemory(ph, src, dst, size) task_read(ph, (vm_address_t) src, (void *) dst, (size_t) size)
+#define writeProcessMemory(ph, dst, src, size) task_write(ph, (vm_address_t) dst, (void *) src, (size_t) size)
 #elif os_SOLARIS
 #include "proc.h"
-#define PROCESS_MEMORY_PARAMS struct ps_prochandle *ph,
-#define PROCESS_MEMORY_ARGS ph,
-#define READ_PROCESS_MEMORY(src, dst, size) Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
-#define WRITE_PROCESS_MEMORY(dst, src, size) Pwrite(ph, src, length, (uintptr_t) dst);
+typedef struct ps_prochandle *ProcessHandle;
+#define readProcessMemory(ph, src, dst, size) Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
+#define writeProcessMemory(ph, dst, src, size) Pwrite(ph, src, length, (uintptr_t) dst);
 #elif os_GUESTVMXEN
 extern unsigned short readbytes(unsigned long src, char *dst, unsigned short n);
 extern unsigned short writebytes(unsigned long dst, char *src, unsigned short n);
-#define PROCESS_MEMORY_PARAMS
-#define PROCESS_MEMORY_ARGS
-#define READ_PROCESS_MEMORY(src, dst, size) readbytes((unsigned long) src, (char *) dst, (unsigned short) size)
-#define WRITE_PROCESS_MEMORY(dst, src, size) writebytes((unsigned long) dst, (char *) src, (unsigned short) size);
+typedef void *ProcessHandle;
+#define readProcessMemory(ph, src, dst, size) readbytes((unsigned long) src, (char *) dst, (unsigned short) size)
+#define writeProcessMemory(ph, dst, src, size) writebytes((unsigned long) dst, (char *) src, (unsigned short) size);
 #else
 #error
 #endif
@@ -65,6 +69,7 @@ extern unsigned short writebytes(unsigned long dst, char *src, unsigned short n)
  *
  * If such an entry is found, then its contents are copied from the VM to the structs pointed to by 'tlCopy' and 'ntlCopy'.
  *
+ * @param ph a platform specific process handle
  * @param threadLocalsList the head of the thread locals list in the VM's address space
  * @param primordialThreadLocals the primordial thread locals in the VM's address space
  * @param stackPointer the stack pointer to search with
@@ -74,7 +79,7 @@ extern unsigned short writebytes(unsigned long dst, char *src, unsigned short n)
  *        (if any) will be copied from the VM's address space
  * @return the entry that was found, NULL otherwise
  */
-extern ThreadLocals teleProcess_findThreadLocals(PROCESS_MEMORY_PARAMS Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy);
+extern ThreadLocals teleProcess_findThreadLocals(ProcessHandle ph, Address threadLocalsList, Address primordialThreadLocals, Address stackPointer, ThreadLocals tlCopy, NativeThreadLocals ntlCopy);
 
 /**
  * Makes the upcall to TeleProcess.jniGatherThread
@@ -91,6 +96,7 @@ extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobjec
 /**
  * Copies bytes from the tele process into a given direct ByteBuffer or byte array.
  *
+ * @param ph a platform specific process handle
  * @param src the address in the tele process to copy from
  * @param dst the destination of the copy operation. This is a direct java.nio.ByteBuffer or a byte array
  *            depending on the value of 'isDirectByteBuffer'
@@ -99,11 +105,12 @@ extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobjec
  * @param length the number of bytes to copy
  * @return the number of bytes copied or -1 if there was an error
  */
-extern int teleProcess_read(PROCESS_MEMORY_PARAMS JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length);
+extern int teleProcess_read(ProcessHandle ph, JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length);
 
 /**
  * Copies bytes from a given direct ByteBuffer or byte array into the tele process.
  *
+ * @param ph a platform specific process handle
  * @param dst the address in the tele process to copy to
  * @param src the source of the copy operation. This is a direct java.nio.ByteBuffer or byte array
  *            depending on the value of 'isDirectByteBuffer'
@@ -112,6 +119,6 @@ extern int teleProcess_read(PROCESS_MEMORY_PARAMS JNIEnv *env, jclass c, jlong s
  * @param length the number of bytes to copy
  * @return the number of bytes copied or -1 if there was an error
  */
-extern int teleProcess_write(PROCESS_MEMORY_PARAMS JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length);
+extern int teleProcess_write(ProcessHandle ph, JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length);
 
 #endif /*__teleProcess_h__*/
