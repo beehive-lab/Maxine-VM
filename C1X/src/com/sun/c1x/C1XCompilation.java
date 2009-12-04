@@ -43,6 +43,8 @@ import com.sun.c1x.util.*;
  */
 public class C1XCompilation {
 
+    private static ThreadLocal<C1XCompilation> currentCompilation = new ThreadLocal<C1XCompilation>();
+
     public final C1XCompiler compiler;
     public final CiTarget target;
     public final RiRuntime runtime;
@@ -50,8 +52,8 @@ public class C1XCompilation {
     public final CiStatistics stats;
     public final int osrBCI;
 
-    boolean hasExceptionHandlers;
-    CiBailout bailout;
+    private boolean hasExceptionHandlers;
+    private int nextID = 1;
 
     private FrameMap frameMap;
     private AbstractAssembler assembler;
@@ -59,8 +61,6 @@ public class C1XCompilation {
     private IR hir;
 
     private CFGPrinter cfgPrinter;
-
-    private DebugInformationRecorder debugInfo;
 
     /**
      * Creates a new compilation for the specified method and runtime.
@@ -222,17 +222,10 @@ public class C1XCompilation {
 
     public AbstractAssembler masm() {
         if (assembler == null) {
-            assembler = compiler.backend.newAssembler(this.frameMap.frameSize());
-            assert assembler != null;
+            assembler = compiler.backend.newAssembler();
+            assembler.setFrameSize(frameMap.frameSize());
         }
         return assembler;
-    }
-
-    public DebugInformationRecorder debugInfoRecorder() {
-        if (debugInfo == null) {
-            debugInfo = new DebugInformationRecorder();
-        }
-        return debugInfo;
     }
 
     public boolean hasExceptionHandlers() {
@@ -240,7 +233,7 @@ public class C1XCompilation {
     }
 
     public CiResult compile() {
-        Value.nextID = 0;
+        setCurrent(this);
 
         if (C1XOptions.PrintCompilation) {
             TTY.println();
@@ -263,6 +256,8 @@ public class C1XCompilation {
     }
 
     public IR emitHIR() {
+        setCurrent(this);
+
         if (C1XOptions.PrintCompilation) {
             TTY.println();
             TTY.println("Compiling method: " + method.toString());
@@ -271,7 +266,7 @@ public class C1XCompilation {
             hir = new IR(this);
             hir.build();
         } catch (Throwable t) {
-            bailout = new CiBailout("Unexpected exception while compiling: " + method, t);
+            CiBailout bailout = new CiBailout("Unexpected exception while compiling: " + method, t);
             throw bailout;
         }
         return hir;
@@ -318,7 +313,7 @@ public class C1XCompilation {
             // generate exception adapters
             lirAssembler.emitExceptionEntries();
 
-            CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, frameMap.frameSize(), -1);
+            CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, -1);
 
             if (C1XOptions.PrintCFGToFile) {
                 cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
@@ -347,5 +342,17 @@ public class C1XCompilation {
 
     public boolean needsDebugInformation() {
         return false;
+    }
+
+    public int nextID() {
+        return nextID++;
+    }
+
+    public static C1XCompilation current() {
+        return currentCompilation.get();
+    }
+
+    private static void setCurrent(C1XCompilation compilation) {
+        currentCompilation.set(compilation);
     }
 }

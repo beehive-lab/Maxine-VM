@@ -66,5 +66,5 @@ public class C1XMetrics {
     public static int LSRANumberOfSpills;
     public static int LoadConstantIterations;
     public static int CodeBufferCopies;
-
+    public static int IdsAssigned;
 }
