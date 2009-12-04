@@ -69,7 +69,7 @@ public abstract class LIRInstruction {
     private int allocatorInputCount;
     private int allocatorTempCount;
     private int allocatorTempInputCount;
-    private List<LIRLocation> operands = new ArrayList<LIRLocation>(6);
+    private List<LIRLocation> operands = new ArrayList<LIRLocation>(3);
 
     public static final class OperandSlot {
         private int base;

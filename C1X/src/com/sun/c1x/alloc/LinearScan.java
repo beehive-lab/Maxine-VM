@@ -2541,18 +2541,13 @@ public class LinearScan {
                 continue;
             }
 
-            if (C1XOptions.TraceLinearScanLevel >= 4) {
-                TTY.println("Assigning register numbers for instruction " + op.toString());
-            }
-            int opId = op.id;
-
             // iterate all modes of the visitor and process all virtual operands
             for (LIRInstruction.OperandMode mode : LIRInstruction.OPERAND_MODES) {
                 int n = op.oprCount(mode);
                 for (int k = 0; k < n; k++) {
                     LIRLocation opr = op.oprAt(mode, k);
                     if (opr.isVariable()) {
-                        op.setOprAt(mode, k, colorLirOpr(opr, opId, mode));
+                        op.setOprAt(mode, k, colorLirOpr(opr, op.id, mode));
                     }
                 }
             }
