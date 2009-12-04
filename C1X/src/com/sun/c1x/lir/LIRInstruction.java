@@ -100,9 +100,9 @@ public abstract class LIRInstruction {
                     LIRLocation indexOperand = LIROperand.IllegalLocation;
                     if (LIROperand.isLegal(address.index)) {
                         indexOperand = inst.operands.get(base + 1);
-                        assert indexOperand.isRegister();
+                        assert indexOperand.isVariableOrRegister();
                     }
-                    assert baseOperand.isRegister();
+                    assert baseOperand.isVariableOrRegister();
                     result = address.createCopy(baseOperand, indexOperand);
                 } else if (base != -1) {
                     result = inst.operands.get(base);
@@ -111,7 +111,7 @@ public abstract class LIRInstruction {
                 assert result != null;
 
                 direct = result;
-                if (result.isRegister() && !result.isVariable()) {
+                if (result.isVariableOrRegister() && !result.isVariable()) {
                     resolved = true;
                 }
 
@@ -165,7 +165,6 @@ public abstract class LIRInstruction {
                 return addAddress((LIRAddress) output);
             }
 
-            assert output instanceof LIRLocation;
             assert operands.size() == outputCount;
             operands.add((LIRLocation) output);
             outputCount++;
@@ -176,7 +175,7 @@ public abstract class LIRInstruction {
     }
 
     private OperandSlot addAddress(LIRAddress address) {
-        assert address.base.isRegister();
+        assert address.base.isVariableOrRegister();
 
         int baseIndex = operands.size();
         allocatorInputCount++;
@@ -187,7 +186,7 @@ public abstract class LIRInstruction {
             operands.add(address.index);
         }
 
-        if (address.base.isRegister() && !address.base.isVariable()) {
+        if (address.base.isVariableOrRegister() && !address.base.isVariable()) {
             assert LIROperand.isIllegal(address.index) || !address.index.isVariable();
             return new OperandSlot(address);
         }
@@ -195,23 +194,16 @@ public abstract class LIRInstruction {
         return new OperandSlot(baseIndex, address);
     }
 
-    private OperandSlot addStackSlot(LIROperand operand) {
-        assert operand.isStack();
-        return new OperandSlot(operand);
-    }
-
-    private OperandSlot addConstant(LIRConstant constant) {
-        return new OperandSlot(constant);
-    }
-
     private OperandSlot addOperand(LIROperand input, boolean isInput, boolean isTemp) {
         assert input != null;
         if (input != LIROperand.IllegalLocation) {
             assert !(input instanceof LIRAddress);
             if (input.isStack()) {
-                return addStackSlot(input);
+                // no variables to add
+                return new OperandSlot(input);
             } else if (LIROperand.isConstant(input)) {
-                return addConstant((LIRConstant) input);
+                // no variables to add
+                return new OperandSlot(input);
             } else {
                 assert operands.size() == outputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
                 operands.add((LIRLocation) input);
@@ -248,7 +240,6 @@ public abstract class LIRInstruction {
 
         LIROperand[] stubOperands = stub == null ? null : stub.operands;
         this.operandSlots = new OperandSlot[operands.length + (stubOperands == null ? 0 : stubOperands.length)];
-
         // Addresses in instruction
         for (int i = 0; i < operands.length; i++) {
             LIROperand op = operands[i];

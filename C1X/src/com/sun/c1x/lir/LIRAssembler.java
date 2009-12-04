@@ -406,8 +406,8 @@ public abstract class LIRAssembler {
     }
 
     public void moveOp(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned) {
-        if (src.isRegister()) {
-            if (dest.isRegister()) {
+        if (src.isVariableOrRegister()) {
+            if (dest.isVariableOrRegister()) {
                 assert info == null : "no patching and info allowed here";
                 reg2reg(src, dest);
             } else if (dest.isStack()) {
@@ -421,7 +421,7 @@ public abstract class LIRAssembler {
 
         } else if (src.isStack()) {
             assert info == null : "no patching and info allowed here";
-            if (dest.isRegister()) {
+            if (dest.isVariableOrRegister()) {
                 stack2reg(src, dest, type);
             } else if (dest.isStack()) {
                 stack2stack(src, dest, type);
@@ -430,7 +430,7 @@ public abstract class LIRAssembler {
             }
 
         } else if (isConstant(src)) {
-            if (dest.isRegister()) {
+            if (dest.isVariableOrRegister()) {
                 const2reg(src, dest, info); // patching is possible
             } else if (dest.isStack()) {
                 assert info == null : "no patching and info allowed here";

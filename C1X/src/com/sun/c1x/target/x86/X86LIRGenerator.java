@@ -108,11 +108,11 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     protected LIRAddress genAddress(LIRLocation base, LIROperand index, int shift, int disp, CiKind type) {
-        assert base.isRegister() : "must be";
+        assert base.isVariableOrRegister() : "must be";
         if (LIROperand.isConstant(index)) {
             return new LIRAddress(base, (((LIRConstant) index).asInt() << shift) + disp, type);
         } else {
-            assert index.isRegister();
+            assert index.isVariableOrRegister();
             return new LIRAddress(base, ((LIRLocation) index), LIRAddress.Scale.fromInt(shift), disp, type);
         }
     }
@@ -775,7 +775,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
     @Override
     public void visitIf(If x) {
-        CiKind tag = x.x().kind;
+        CiKind kind = x.x().kind;
 
         Condition cond = x.condition();
 
@@ -784,7 +784,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem xin = xitem;
         LIRItem yin = yitem;
 
-        if (tag.isLong()) {
+        if (kind.isLong()) {
             // for longs, only conditions "eql", "neq", "lss", "geq" are valid;
             // mirror for other conditions
             if (cond == Condition.gtr || cond == Condition.leq) {
@@ -795,9 +795,9 @@ public final class X86LIRGenerator extends LIRGenerator {
             xin.setDestroysRegister();
         }
         xin.loadItem();
-        if (tag.isLong() && LIROperand.isConstant(yin.result()) && yin.asLong() == 0 && (cond == Condition.eql || cond == Condition.neq)) {
+        if (kind.isLong() && LIROperand.isConstant(yin.result()) && yin.asLong() == 0 && (cond == Condition.eql || cond == Condition.neq)) {
             // dont load item
-        } else if (tag.isLong() || tag.isFloat() || tag.isDouble()) {
+        } else if (kind.isLong() || kind.isFloat() || kind.isDouble()) {
             // longs cannot handle constants at right side
             yin.loadItem();
         }
@@ -899,7 +899,7 @@ public final class X86LIRGenerator extends LIRGenerator {
                 // Do the pre-write barrier, if any.
                 preBarrier(addr, false, null);
                 lir.move(data, addr);
-                assert src.isRegister() : "must be register";
+                assert src.isVariableOrRegister() : "must be register";
                 // Seems to be a precise address
                 postBarrier(addr, data);
             } else {

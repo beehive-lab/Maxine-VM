@@ -25,7 +25,8 @@ import com.sun.c1x.ci.CiRegister;
 
 /**
  * This class represents a LIR variable, i.e. a virtual register that can be used in LIRInstructions
- * but must be assigned to physical locations by the register allocator.
+ * as an operand. Each definition and use of a variable must be given a physical location by the register
+ * allocator.
  *
  * @author Ben L. Titzer
  */
@@ -43,7 +44,28 @@ public class LIRVariable extends LIROperand {
         return true;
     }
 
+    public boolean isVariableOrRegister() {
+        return true;
+    }
+
     public int variableNumber() {
         return index;
+    }
+
+    @Override
+    public int hashCode() {
+        return index + kind.ordinal();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof LIRVariable) {
+            LIRVariable v = (LIRVariable) o;
+            return v.index == index && v.kind == kind;
+        }
+        return false;
     }
 }

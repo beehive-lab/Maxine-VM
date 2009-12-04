@@ -88,7 +88,7 @@ final class RegisterVerifier {
         CallingConvention args = compilation().frameMap().incomingArguments();
         for (int n = 0; n < args.operands.length; n++) {
             LIROperand opr = args.operands[n];
-            if (opr.isRegister()) {
+            if (opr.isVariableOrRegister()) {
                 Interval interval = intervalAt(regNum(opr));
 
                 if (interval.assignedReg() < stateSize()) {
@@ -242,7 +242,7 @@ final class RegisterVerifier {
             int n = op.oprCount(LIRInstruction.OperandMode.InputMode);
             for (j = 0; j < n; j++) {
                 LIRLocation opr = op.oprAt(LIRInstruction.OperandMode.InputMode, j);
-                if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
+                if (opr.isVariableOrRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id != -1) {
                         interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.InputMode, allocator);
@@ -271,7 +271,7 @@ final class RegisterVerifier {
             n = op.oprCount(LIRInstruction.OperandMode.TempMode);
             for (j = 0; j < n; j++) {
                 LIROperand opr = op.oprAt(LIRInstruction.OperandMode.TempMode, j);
-                if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
+                if (opr.isVariableOrRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id != -1) {
                         interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.TempMode, allocator);
@@ -286,7 +286,7 @@ final class RegisterVerifier {
             n = op.oprCount(LIRInstruction.OperandMode.OutputMode);
             for (j = 0; j < n; j++) {
                 LIROperand opr = op.oprAt(LIRInstruction.OperandMode.OutputMode, j);
-                if (opr.isRegister() && allocator.isProcessedRegNum(regNum(opr))) {
+                if (opr.isVariableOrRegister() && allocator.isProcessedRegNum(regNum(opr))) {
                     Interval interval = intervalAt(regNum(opr));
                     if (op.id != -1) {
                         interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.OutputMode, allocator);

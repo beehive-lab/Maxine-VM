@@ -305,7 +305,6 @@ public class ValueStack {
 
     /**
      * Truncates this stack to the specified size.
-     *
      * @param size the size to truncate to
      */
     public void truncateStack(int size) {
@@ -314,7 +313,6 @@ public class ValueStack {
 
     /**
      * Pushes an instruction onto the stack with the expected type.
-     *
      * @param type the type expected for this instruction
      * @param x the instruction to push onto the stack
      */
@@ -327,7 +325,6 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack without checking the type.
-     *
      * @param x the instruction to push onto the stack
      */
     public void xpush(Value x) {
@@ -337,7 +334,6 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is an int.
-     *
      * @param x the instruction to push onto the stack
      */
     public void ipush(Value x) {
@@ -346,7 +342,6 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is a float.
-     *
      * @param x the instruction to push onto the stack
      */
     public void fpush(Value x) {
@@ -355,7 +350,6 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is an object.
-     *
      * @param x the instruction to push onto the stack
      */
     public void apush(Value x) {
@@ -364,7 +358,6 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is a JSR return address.
-     *
      * @param x the instruction to push onto the stack
      */
     public void jpush(Value x) {
@@ -383,7 +376,6 @@ public class ValueStack {
 
     /**
      * Pushes a value onto the stack and checks that it is a double.
-     *
      * @param x the instruction to push onto the stack
      */
     public void dpush(Value x) {
@@ -393,8 +385,7 @@ public class ValueStack {
 
     /**
      * Pops an instruction off the stack with the expected type.
-     *
-     * @param kind the tag of the expected type
+     * @param kind the expected type
      * @return the instruction on the top of the stack
      */
     public Value pop(CiKind kind) {
@@ -406,7 +397,6 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack without checking the type.
-     *
      * @return x the instruction popped off the stack
      */
     public Value xpop() {
@@ -416,7 +406,6 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is an int.
-     *
      * @return x the instruction popped off the stack
      */
     public Value ipop() {
@@ -425,7 +414,6 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is a float.
-     *
      * @return x the instruction popped off the stack
      */
     public Value fpop() {
@@ -434,7 +422,6 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is an object.
-     *
      * @return x the instruction popped off the stack
      */
     public Value apop() {
@@ -443,7 +430,6 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is a JSR return address.
-     *
      * @return x the instruction popped off the stack
      */
     public Value jpop() {
@@ -452,7 +438,6 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is a long.
-     *
      * @return x the instruction popped off the stack
      */
     public Value lpop() {
@@ -462,7 +447,6 @@ public class ValueStack {
 
     /**
      * Pops a value off of the stack and checks that it is a double.
-     *
      * @return x the instruction popped off the stack
      */
     public Value dpop() {
@@ -472,7 +456,6 @@ public class ValueStack {
 
     /**
      * Pop the specified number of slots off of this stack and return them as an array of instructions.
-     *
      * @param size the number of arguments off of the stack
      * @return an array containing the arguments off of the stack
      */
@@ -486,7 +469,6 @@ public class ValueStack {
 
     /**
      * Locks a new object within the specified IRScope.
-     *
      * @param scope the IRScope in which this locking operation occurs
      * @param obj the object being locked
      * @return the index of the lock within the lock stack
@@ -503,7 +485,6 @@ public class ValueStack {
 
     /**
      * Unlock the lock on the top of the stack.
-     *
      * @return the index of the lock just unlocked.
      */
     public int unlock() {
@@ -513,7 +494,6 @@ public class ValueStack {
 
     /**
      * Retrieves the lock at the specified index in the lock stack.
-     *
      * @param i the index into the lock stack
      * @return the instruction which produced the object at the specified location in the lock stack
      */
@@ -523,7 +503,6 @@ public class ValueStack {
 
     /**
      * Creates a new ValueStack corresponding to inlining the specified method into this point in this value stack.
-     *
      * @param scope the IRScope representing the inlined method
      * @return a new value stack representing the state at the beginning of inlining the specified method into this one
      */
@@ -539,7 +518,6 @@ public class ValueStack {
     /**
      * Creates a new ValueStack corresponding to the state upon returning from this inlined method into the outer
      * IRScope.
-     *
      * @return a new value stack representing the state at exit from this value stack
      */
     public ValueStack popScope() {
@@ -555,7 +533,6 @@ public class ValueStack {
 
     /**
      * Inserts a phi statement into the stack at the specified stack index.
-     *
      * @param block the block begin for which we are creating the phi
      * @param i the index into the stack for which to create a phi
      */
@@ -572,7 +549,6 @@ public class ValueStack {
 
     /**
      * Inserts a phi statement for the local at the specified index.
-     *
      * @param block the block begin for which we are creating the phi
      * @param i the index of the local variable for which to create the phi
      */
@@ -589,7 +565,6 @@ public class ValueStack {
 
     /**
      * Iterates over all the values in this value stack, including the stack, locals, and locks.
-     *
      * @param closure the closure to apply to each value
      */
     public void valuesDo(ValueClosure closure) {
