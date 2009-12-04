@@ -407,6 +407,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final int oldLevel = Trace.level();
             int newLevel = oldLevel;
             final String input = gui().inputDialog(DEFAULT_TITLE, Integer.toString(oldLevel));
+            if (input == null) {
+                // User clicked cancel.
+                return;
+            }
             try {
                 newLevel = Integer.parseInt(input);
             } catch (NumberFormatException numberFormatException) {
@@ -445,6 +449,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final int oldLevel = maxVM().getInterpreterUseLevel();
             int newLevel = oldLevel;
             final String input = gui().inputDialog("Change interpreter use level (0=none, 1=some, etc)", Integer.toString(oldLevel));
+            if (input == null) {
+                // User clicked cancel.
+                return;
+            }
             try {
                 newLevel = Integer.parseInt(input);
             } catch (NumberFormatException numberFormatException) {
@@ -489,6 +497,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final int oldLevel = maxVM().transportDebugLevel();
             int newLevel = oldLevel;
             final String input = gui().inputDialog(" (Set transport debug level, 0=none, 1=some, etc)", Integer.toString(oldLevel));
+            if (input == null) {
+                // User clicked cancel.
+                return;
+            }
             try {
                 newLevel = Integer.parseInt(input);
             } catch (NumberFormatException numberFormatException) {
@@ -586,6 +598,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final int oldLevel = maxVM().getVMTraceLevel();
             int newLevel = oldLevel;
             final String input = gui().inputDialog("Set VM Trace Level", Integer.toString(oldLevel));
+            if (input == null) {
+                // User clicked cancel.
+                return;
+            }
             try {
                 newLevel = Integer.parseInt(input);
             } catch (NumberFormatException numberFormatException) {
@@ -628,6 +644,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final long oldThreshold = maxVM().getVMTraceThreshold();
             long newThreshold = oldThreshold;
             final String input = gui().inputDialog("Set VM trace threshold", Long.toString(oldThreshold));
+            if (input == null) {
+                // User clicked cancel.
+                return;
+            }
             try {
                 newThreshold = Long.parseLong(input);
             } catch (NumberFormatException numberFormatException) {
@@ -1625,6 +1645,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final String input = gui().inputDialog("Inspect object by ID..", "");
+            if (input == null) {
+                // User clicked cancel.
+                return;
+            }
             try {
                 final long oid = Long.parseLong(input);
                 final TeleObject teleObject = maxVM().findObjectByOID(oid);
