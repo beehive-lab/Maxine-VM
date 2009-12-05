@@ -128,6 +128,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             case Boolean:
             case Byte:
             case Char:
+            case Short:
             case Jsr:
             case Int: {
                 masm.movl(dest.asRegister(), c.value.asInt());
@@ -188,6 +189,10 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         LIRConstant c = (LIRConstant) src;
 
         switch (c.kind) {
+            case Boolean:
+            case Byte:
+            case Short:
+            case Char:
             case Int: // fall through
             case Float:
                 masm.movl(frameMap.addressForSlot(dest.singleStackIndex()), c.asIntBits());
@@ -221,6 +226,16 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
         int nullCheckHere = codePos();
         switch (type) {
+            case Boolean: // fall through
+            case Byte:
+                masm.movb(asAddress(addr), c.asInt() & 0xFF);
+                break;
+
+            case Char: // fall through
+            case Short:
+                masm.movw(asAddress(addr), c.asInt() & 0xFFFF);
+                break;
+
             case Int: // fall through
             case Float:
                 masm.movl(asAddress(addr), c.asIntBits());
@@ -255,16 +270,6 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                     masm.movptr(asAddressHi(addr), c.asIntHiBits());
                     masm.movptr(asAddressLo(addr), c.asIntLoBits());
                 }
-                break;
-
-            case Boolean: // fall through
-            case Byte:
-                masm.movb(asAddress(addr), c.asInt() & 0xFF);
-                break;
-
-            case Char: // fall through
-            case Short:
-                masm.movw(asAddress(addr), c.asInt() & 0xFFFF);
                 break;
 
             default:

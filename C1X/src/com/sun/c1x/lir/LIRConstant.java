@@ -163,12 +163,17 @@ public final class LIRConstant extends LIROperand {
      * @return the int value of the constant.
      */
     public int asIntBits() {
-        if (this.kind.isFloat()) {
-            return Float.floatToIntBits(this.asFloat());
-        } else if (this.kind == CiKind.Int) {
-            return this.asInt();
-        } else {
-            throw Util.shouldNotReachHere();
+        switch (kind) {
+            case Boolean:
+            case Byte:
+            case Short:
+            case Char:
+            case Int:
+                return this.asInt();
+            case Float:
+                return Float.floatToIntBits(this.asFloat());
+            default:
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -178,11 +183,21 @@ public final class LIRConstant extends LIROperand {
      * @return the int value of the low order 32 bits of a double constant
      */
     public int asIntLoBits() {
-        // TODO: floats, longs
-        if (value.kind.isDouble()) {
-            return (int) Double.doubleToLongBits(value.asDouble());
-        } else {
-            return value.asInt();
+        switch (kind) {
+            case Boolean:
+            case Byte:
+            case Short:
+            case Char:
+            case Int:
+                return this.asInt();
+            case Float:
+                return Float.floatToIntBits(this.asFloat());
+            case Double:
+                return (int) Double.doubleToLongBits(this.asDouble());
+            case Long:
+                return (int) this.asLong();
+            default:
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -192,11 +207,20 @@ public final class LIRConstant extends LIROperand {
      * @return the int value of the high order 32 bits of a double constant
      */
     public int asIntHiBits() {
-        // TODO: floats, longs
-        if (value.kind.isDouble()) {
-            return (int) (Double.doubleToLongBits(value.asDouble()) >> 32);
-        } else {
-            return asIntHi();
+        switch (kind) {
+            case Boolean:
+            case Byte:
+            case Short:
+            case Char:
+            case Int:
+            case Float:
+                return 0;
+            case Double:
+                return (int) (Double.doubleToLongBits(this.asDouble()) >> 32);
+            case Long:
+                return (int) (this.asLong() >> 32);
+            default:
+                throw Util.shouldNotReachHere();
         }
     }
 
@@ -206,12 +230,22 @@ public final class LIRConstant extends LIROperand {
      * @return the long value of the constant, if it is a double constant.
      */
     public long asLongBits() {
-        // TODO: floats, longs
-      if (value.kind.isDouble()) {
-        return Double.doubleToLongBits(value.asDouble());
-      } else {
-        return asLong();
-      }
+        switch (kind) {
+            case Boolean:
+            case Byte:
+            case Short:
+            case Char:
+            case Int:
+                return this.asInt();
+            case Float:
+                return Float.floatToIntBits(this.asFloat());
+            case Double:
+                return Double.doubleToLongBits(this.asDouble());
+            case Long:
+                return this.asLong();
+            default:
+                throw Util.shouldNotReachHere();
+        }
     }
 
     @Override
