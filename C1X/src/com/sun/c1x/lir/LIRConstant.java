@@ -47,17 +47,14 @@ public final class LIRConstant extends LIROperand {
      * @return the int value of the constant, if it is an int
      */
     public int asInt() {
-        assertType(this, CiKind.Int);
         return value.asInt();
     }
 
     public int asChar() {
-        assertType(this, CiKind.Char);
         return value.asInt();
     }
 
     public int asShort() {
-        assertType(this, CiKind.Short);
         return value.asInt();
     }
 
@@ -67,7 +64,6 @@ public final class LIRConstant extends LIROperand {
      * @return the boolean value of the constant, if it is an boolean
      */
     public boolean asBoolean() {
-        assertType(this, CiKind.Boolean);
         return value.asBoolean();
     }
 
@@ -157,7 +153,7 @@ public final class LIRConstant extends LIROperand {
      * @return the reference to the input constant if succeeded.
      */
     public static LIRConstant assertType(LIRConstant c, CiKind t) {
-        assert c.kind == t : "constant has wrong type";
+        assert c.kind == t : "constant has wrong type: " + c + ", should be " + t;
         return c;
     }
 
