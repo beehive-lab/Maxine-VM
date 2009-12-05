@@ -23,14 +23,16 @@ package com.sun.max.tele.debug;
 /**
  * The possible states of a {@link TeleProcess}.
  *
+ * NOTE: This must be kept in sync with ProcessState in Native/tele/teleProcess.h.
+ *
  * @author Michael Van De Vanter
  */
 public enum ProcessState {
 
     /**
-     * There is no real process, only a dummy.
+     * Represents a non-process or an unknown process state.
      */
-    NO_PROCESS,
+    UNKNOWN,
 
     /**
      * The process is live, but paused.
@@ -46,4 +48,6 @@ public enum ProcessState {
      * The process was live, but has died.
      */
     TERMINATED;
+
+    public static final ProcessState[] VALUES = values();
 }

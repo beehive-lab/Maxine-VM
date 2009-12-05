@@ -36,7 +36,7 @@ public final class TeleVMState implements MaxVMState {
     private static final Sequence<TeleNativeThread> EMPTY_THREAD_SEQUENCE = Sequence.Static.empty(TeleNativeThread.class);
     private static final Collection<TeleNativeThread> EMPTY_THREAD_COLLECTION = Collections.emptyList();
 
-    public static final TeleVMState NONE = new TeleVMState(ProcessState.NO_PROCESS,
+    public static final TeleVMState NONE = new TeleVMState(ProcessState.UNKNOWN,
         -1L,
         EMPTY_THREAD_COLLECTION,
         (TeleNativeThread) null,

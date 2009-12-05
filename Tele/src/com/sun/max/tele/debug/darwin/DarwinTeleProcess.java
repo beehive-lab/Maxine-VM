@@ -49,7 +49,7 @@ public final class DarwinTeleProcess extends TeleProcess {
     private static native void nativeKill(long task);
     private static native boolean nativeSuspend(long task);
     private static native boolean nativeResume(long task);
-    private static native boolean nativeWait(long pid, long task);
+    private static native int nativeWait(long pid, long task);
 
     private final long task;
 
@@ -87,9 +87,9 @@ public final class DarwinTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected boolean waitUntilStopped() {
-        final boolean ok = nativeWait(task, task);
-        return ok;
+    protected ProcessState waitUntilStopped() {
+        final int result = nativeWait(task, task);
+        return ProcessState.VALUES[result];
     }
 
     @Override
