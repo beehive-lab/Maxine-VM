@@ -78,7 +78,8 @@ public abstract class Value {
     private int flags;
     private LIROperand lirOperand;
 
-    public Value subst; // managed by InstructionSubstituter
+    public Object optInfo; // a cache field for analysis information
+    public Value subst;    // managed by InstructionSubstituter
 
     /**
      * Creates a new value with the specified kind.
