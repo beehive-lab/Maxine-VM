@@ -2195,7 +2195,7 @@ public class LinearScan {
         return new IntervalWalker(this, oopIntervals, nonOopIntervals);
     }
 
-    OopMap computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, boolean isCallSite) {
+    void computeOopMap(IntervalWalker iw, LIRInstruction op, LIRDebugInfo info, boolean isCallSite) {
         // Util.traceLinearScan(3, "creating oop map at opId %d", op.id());
 
         // walk before the current operation . intervals that start at
@@ -2203,7 +2203,7 @@ public class LinearScan {
         // included in the oop map
         iw.walkBefore(op.id);
 
-        OopMap map = new OopMap(compilation.frameMap().frameSize(), compilation.target);
+        info.allocateRefMaps(compilation.target.allocatableRegs.registerRefMapSize, compilation.frameMap().frameSize());
 
         // Iterate through active intervals
         for (Interval interval = iw.activeFirst(IntervalKind.fixedKind); interval != Interval.EndMarker; interval = interval.next) {
@@ -2220,12 +2220,10 @@ public class LinearScan {
             // in the oop map since we may safepoint while doing the patch
             // before we've consumed the inputs.
             if (op.id < interval.currentTo()) {
-
                 // caller-save registers must not be included into oop-maps at calls
                 assert !isCallSite || assignedReg >= numRegs || !isCallerSave(assignedReg) : "interval is in a caller-save register at a call . register will be overwritten";
 
-                CiLocation name = vmRegForInterval(interval);
-                map.setOop(name);
+                info.setOop(vmRegForInterval(interval), compilation.target);
 
                 // Spill optimization: when the stack value is guaranteed to be always correct,
                 // then it must be added to the oop map even if the interval is currently in a register
@@ -2234,12 +2232,10 @@ public class LinearScan {
                     assert interval.canonicalSpillSlot() >= numRegs : "no spill slot assigned";
                     assert interval.assignedReg() < numRegs : "interval is on stack :  so stack slot is registered twice";
 
-                    map.setOop(frameMap.toStackLocation(CiKind.Object, interval.canonicalSpillSlot() - numRegs));
+                    info.setOop(frameMap.toStackLocation(CiKind.Object, interval.canonicalSpillSlot() - numRegs), compilation.target);
                 }
             }
         }
-
-        return map;
     }
 
     private boolean isCallerSave(int assignedReg) {
@@ -2249,31 +2245,10 @@ public class LinearScan {
     void computeOopMap(IntervalWalker iw, LIRInstruction op) {
         assert op.hasInfo() : "no oop map needed";
 
-        // compute oopMap only for first CodeEmitInfo
-        // because it is (in most cases) equal for all other infos of the same operation
-        LIRDebugInfo firstInfo = op.infoAt(0);
-        OopMap firstOopMap = computeOopMap(iw, op, firstInfo, op.hasCall());
-
         for (int i = 0; i < op.infoCount(); i++) {
             LIRDebugInfo info = op.infoAt(i);
-            OopMap oopMap = firstOopMap;
-
-            if (info.stack.locksSize() != firstInfo.stack.locksSize()) {
-                // this info has a different number of locks then the precomputed oop map
-                // (possible for lock and unlock instructions) . compute oop map with
-                // correct lock information
-                oopMap = computeOopMap(iw, op, info, op.hasCall());
-            }
-
-            if (info.oopMap == null) {
-                info.oopMap = oopMap;
-            } else {
-                // a CodeEmitInfo can not be shared between different LIR-instructions
-                // because interval splitting can occur anywhere between two instructions
-                // and so the oop maps must be different
-                // . check if the already set oopMap is exactly the one calculated for this operation
-                assert info.oopMap == oopMap : "same LIRDebugInfo used for multiple LIR instructions";
-            }
+            assert info.registerRefMap() == null && info.stackRefMap() == null : "oop map already computed for info";
+            computeOopMap(iw, op, info, op.hasCall());
         }
     }
 

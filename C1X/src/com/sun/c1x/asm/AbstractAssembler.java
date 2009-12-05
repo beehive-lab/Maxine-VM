@@ -143,16 +143,16 @@ public abstract class AbstractAssembler {
     }
 
     protected void recordDirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
-        boolean[] stackMap = info != null ? info.oopMap.stackMap() : null;
+        byte[] stackMap = info != null ? info.stackRefMap() : null;
         targetMethod.recordCall(posBefore, target, stackMap, true);
     }
 
     protected void recordIndirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
-        boolean[] stackMap = info != null ? info.oopMap.stackMap() : null;
+        byte[] stackMap = info != null ? info.stackRefMap() : null;
         targetMethod.recordCall(posBefore, target, stackMap, false);
     }
 
-    protected void recordSafepoint(int pos, boolean[] registerMap, boolean[] stackMap) {
+    protected void recordSafepoint(int pos, byte[] registerMap, byte[] stackMap) {
         assert registerMap != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {
