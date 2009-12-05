@@ -25,14 +25,13 @@ import java.util.*;
 import com.sun.c1x.ci.CiArchitecture.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.C1XOptions;
 
 /**
  *
  * @author Thomas Wuerthinger
  */
 public final class Buffer {
-
-    private static final int INITIAL_SIZE = 104;
 
     private byte[] data;
     private int position;
@@ -41,7 +40,7 @@ public final class Buffer {
 
     public Buffer(ByteOrder byteOrder) {
         this.byteOrder = byteOrder;
-        this.data = new byte[INITIAL_SIZE];
+        this.data = new byte[C1XOptions.InitialCodeBufferSize];
     }
 
     /**
@@ -88,7 +87,7 @@ public final class Buffer {
 
     private void ensureSize(int length) {
         if (length >= data.length) {
-            data = Arrays.copyOf(data, data.length * 2);
+            data = Arrays.copyOf(data, data.length * 4);
             C1XMetrics.CodeBufferCopies++;
         }
     }

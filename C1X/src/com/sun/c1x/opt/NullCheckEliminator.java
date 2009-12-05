@@ -481,6 +481,7 @@ public class NullCheckEliminator extends ValueVisitor {
         if (info instanceof ValueInfo) {
             return (ValueInfo) info;
         }
+        C1XMetrics.NullCheckIdsAssigned++;
         ValueInfo ninfo = new ValueInfo(value, maximumIndex++);
         value.optInfo = ninfo;
         valueInfos.add(ninfo);
