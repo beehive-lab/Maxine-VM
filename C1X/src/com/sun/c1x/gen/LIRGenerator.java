@@ -1810,7 +1810,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     void init() {
         // mark the liveness of all instructions if it hasn't already been done by the optimizer
         LivenessMarker livenessMarker = new LivenessMarker(ir);
-        C1XMetrics.NumberOfHIRInstructions += livenessMarker.liveCount();
+        C1XMetrics.HIRInstructions += livenessMarker.liveCount();
     }
 
     protected void logicOp(int code, LIROperand resultOp, LIROperand leftOp, LIROperand rightOp) {

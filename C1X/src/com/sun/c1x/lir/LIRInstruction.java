@@ -148,10 +148,10 @@ public abstract class LIRInstruction {
             stub.setResultSlot(addOutput(stub.originalResult()));
         }
 
-        C1XMetrics.NumberOfLIRInstructions++;
+        C1XMetrics.LIRInstructions++;
 
         if (opcode == LIROpcode.Move) {
-            C1XMetrics.NumberOfLIRMoveInstructions++;
+            C1XMetrics.LIRMoveInstructions++;
         }
 
         id = -1;

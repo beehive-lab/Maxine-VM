@@ -36,68 +36,38 @@ public final class Interval {
 
     enum IntervalUseKind {
         // priority of use kinds must be ascending
-        noUse("N"), loopEndMarker("L"), shouldHaveRegister("S"), mustHaveRegister("M");
-        private String name;
-
-        private IntervalUseKind(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
+        NoUse,
+        LoopEndMarker,
+        ShouldHaveRegister,
+        MustHaveRegister;
     }
 
     enum IntervalKind {
-        fixedKind, // interval pre-colored by LIR_Generator
-        anyKind // no register/memory allocated by LIR_Generator
+        FixedKind, // interval pre-colored by LIR_Generator
+        AnyKind    // no register/memory allocated by LIR_Generator
     }
 
     // during linear scan an interval is in one of four states in
     enum IntervalState {
-        unhandledState("unhandled"), // unhandled state (not processed yet)
-        activeState("active"), // life and is in a physical register
-        inactiveState("inactive"), // in a life time hole and is in a physical register
-        handledState("handled"), // spilled or not life again
-        invalidState("invalid");
-
-        private String name;
-
-        private IntervalState(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
+        Unhandled,   // unhandled state (not processed yet)
+        Active,      // live and is in a physical register
+        Inactive,    // in a life time hole and is in a physical register
+        Handled,     // spilled or not live again
+        Invalid
     }
 
     enum IntervalSpillState {
-        noDefinitionFound("no definition"), // starting state of calculation: no definition found yet
-        oneDefinitionFound("no spill store"), // one definition has already been found.
-        // Note: two consecutive definitions are treated as one (e.g. consecutive move and add because of two-operand
-        // LIR form)
+        NoDefinitionFound,   // starting state of calculation: no definition found yet
+        NoSpillStore, // one definition has already been found.
+        // Note: two consecutive definitions are treated as one (e.g. consecutive move and add because of two-operand LIR form)
         // the position of this definition is stored in definitionPos
-        oneMoveInserted ("one spill store"), // one spill move has already been inserted.
-        storeAtDefinition ("store at definition"), // the interval should be stored immediately after its definition because otherwise
+        OneSpillStore, // one spill move has already been inserted.
+        StoreAtDefinition, // the interval should be stored immediately after its definition because otherwise
         // there would be multiple redundant stores
-        startInMemory("start in memory"), // the interval starts in memory (e.g. method parameter), so a store is never necessary
-        noOptimization("no optimization");
+        StartInMemory, // the interval starts in memory (e.g. method parameter), so a store is never necessary
+        NoOptimization
         // the interval has more then one definition (e.g. resulting from phi moves), so stores to memory are not
         // optimized
-
-        private String name;
-
-        private IntervalSpillState(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
     }
 
     private int registerNumber;
@@ -252,7 +222,7 @@ public final class Interval {
 
     // returns true if this interval has a shadow copy on the stack that is always correct
     boolean alwaysInMemory() {
-        return splitParent().spillState == IntervalSpillState.storeAtDefinition || splitParent().spillState == IntervalSpillState.startInMemory;
+        return splitParent().spillState == IntervalSpillState.StoreAtDefinition || splitParent().spillState == IntervalSpillState.StartInMemory;
     }
 
     // caching of values that take time to compute and are used multiple times
@@ -327,7 +297,7 @@ public final class Interval {
         this.usePosAndKinds = new ArrayList<Integer>(12);
         this.current = Range.EndMarker;
         this.next = EndMarker;
-        this.state = IntervalState.invalidState;
+        this.state = IntervalState.Invalid;
         this.assignedRegister = LinearScan.getAnyreg();
         this.assignedHighRegister = LinearScan.getAnyreg();
         this.cachedTo = -1;
@@ -336,7 +306,7 @@ public final class Interval {
         this.canonicalSpillSlot = -1;
         this.insertMoveWhenActivated = false;
         this.registerHint = null;
-        this.spillState = IntervalSpillState.noDefinitionFound;
+        this.spillState = IntervalSpillState.NoDefinitionFound;
         this.spillDefinitionPos = -1;
         splitParent = this;
         currentSplitChild = this;
@@ -568,7 +538,7 @@ public final class Interval {
 
         // do not add use positions for precolored intervals because
         // they are never used
-        if (useKind != IntervalUseKind.noUse && registerNumber() >= CiRegister.MaxPhysicalRegisterNumber) {
+        if (useKind != IntervalUseKind.NoUse && registerNumber() >= CiRegister.MaxPhysicalRegisterNumber) {
             assert usePosAndKinds.size() % 2 == 0 : "must be";
             for (int i = 0; i < usePosAndKinds.size(); i += 2) {
                 assert pos <= usePosAndKinds.get(i) : "already added a use-position with lower position";
@@ -711,7 +681,7 @@ public final class Interval {
         assert isVirtualInterval() : "cannot split fixed intervals";
         assert splitPos > from() && splitPos < to() : "can only split inside interval";
         assert splitPos > first.from && splitPos <= first.to : "can only split inside first range";
-        assert firstUsage(IntervalUseKind.noUse) > splitPos : "can not split when use positions are present";
+        assert firstUsage(IntervalUseKind.NoUse) > splitPos : "can not split when use positions are present";
 
         // allocate new interval
         Interval result = newSplitChild();
@@ -824,7 +794,7 @@ public final class Interval {
         // print ranges
         Range cur = first;
         while (cur != Range.EndMarker) {
-            cur.print(out);
+            out.printf("[%d, %d]", cur.from, cur.to);
             cur = cur.next;
             assert cur != null : "range list not closed with range sentinel";
         }

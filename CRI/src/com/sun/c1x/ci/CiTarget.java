@@ -32,8 +32,6 @@ import com.sun.c1x.ri.RiRegisterConfig;
 public class CiTarget {
     public final CiArchitecture arch;
 
-    public final CiRegister[] registerReferenceMapOrder;
-    public final CiRegister[] callerSavedRegisters;
     public final CiRegister.AllocationSet allocatableRegs;
     public final CiRegister stackPointerRegister;
     public final CiRegister scratchRegister;
@@ -59,11 +57,9 @@ public class CiTarget {
         this.stackPointerRegister = config.getStackPointerRegister();
         this.scratchRegister = config.getScratchRegister();
 
-        this.callerSavedRegisters = config.getCallerSaveRegisters();
-        this.registerReferenceMapOrder = config.getRegisterReferenceMapOrder();
         this.pageSize = pageSize;
         this.isMP = isMP;
-        this.allocatableRegs = new CiRegister.AllocationSet(config.getAllocatableRegisters(), registerReferenceMapOrder);
+        this.allocatableRegs = new CiRegister.AllocationSet(config.getAllocatableRegisters(), config.getRegisterReferenceMapOrder(), config.getCallerSaveRegisters());
     }
 
     /**

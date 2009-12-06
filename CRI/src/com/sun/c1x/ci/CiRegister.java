@@ -21,6 +21,7 @@
 package com.sun.c1x.ci;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 
 /**
  * This class represents a machine register.
@@ -131,6 +132,8 @@ public final class CiRegister {
     public static class AllocationSet {
         public final CiRegister[] allocatableRegisters;
         public final CiRegister[] registerMapping;
+        public final CiRegister[] callerSaveRegisters;
+        public final CiRegister[] callerSaveAllocatableRegisters;
         public final boolean[] allocatableRegister;
         public final int[] referenceMapIndex;
 
@@ -144,7 +147,7 @@ public final class CiRegister {
         public final int pdFirstXmmReg;
         public final int pdLastXmmReg;
 
-        AllocationSet(CiRegister[] allocatableRegisters, CiRegister[] referenceMapTemplate) {
+        AllocationSet(CiRegister[] allocatableRegisters, CiRegister[] referenceMapTemplate, CiRegister[] callerSaveRegisters) {
             this.allocatableRegisters = allocatableRegisters;
 
             int cpuCnt = 0;
@@ -179,15 +182,24 @@ public final class CiRegister {
             assert xmmCnt > 0 && cpuCnt > 0 && byteCnt > 0 : "missing a register kind!";
 
             int maxReg = Math.max(cpuLast, xmmLast);
-            registerRefMapSize = referenceMapTemplate.length;
-            registerMapping = new CiRegister[maxReg + 1];
-            referenceMapIndex = new int[maxReg + 1];
-            allocatableRegister = new boolean[maxReg + 1];
+            this.registerRefMapSize = referenceMapTemplate.length;
+            this.registerMapping = new CiRegister[maxReg + 1];
+            this.referenceMapIndex = new int[maxReg + 1];
+            this.allocatableRegister = new boolean[maxReg + 1];
+            this.callerSaveRegisters = callerSaveRegisters;
             for (CiRegister r : allocatableRegisters) {
                 assert registerMapping[r.number] == null : "duplicate register!";
                 registerMapping[r.number] = r;
                 allocatableRegister[r.number] = true;
             }
+
+            ArrayList<CiRegister> csList = new ArrayList<CiRegister>();
+            for (CiRegister r : callerSaveRegisters) {
+                if (allocatableRegister[r.number]) {
+                    csList.add(r);
+                }
+            }
+            this.callerSaveAllocatableRegisters = csList.toArray(new CiRegister[csList.size()]);
 
             Arrays.fill(referenceMapIndex, -1);
             for (int i = 0; i < referenceMapTemplate.length; i++) {
