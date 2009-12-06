@@ -57,12 +57,13 @@ public class C1XMetrics {
     public static int DataPatches;
     public static int DirectCallSitesEmitted;
     public static int IndirectCallSitesEmitted;
-    public static int NumberOfLIRXIRInstructions;
-    public static int NumberOfLIRMoveInstructions;
-    public static int NumberOfLIRInstructions;
-    public static int NumberOfHIRInstructions;
+    public static int HIRInstructions;
+    public static int LIRInstructions;
+    public static int LIRVariables;
+    public static int LIRXIRInstructions;
+    public static int LIRMoveInstructions;
     public static int LSRAIntervalsCreated;
-    public static int LSRANumberOfSpills;
+    public static int LSRASpills;
     public static int LoadConstantIterations;
     public static int CodeBufferCopies;
     public static int UniqueValueIdsAssigned;

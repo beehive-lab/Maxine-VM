@@ -23,6 +23,7 @@ package com.sun.c1x.lir;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.Value;
 import com.sun.c1x.util.Util;
+import com.sun.c1x.C1XMetrics;
 
 /**
  * The <code>LIROperand</code> class represents an operand, either
@@ -173,6 +174,7 @@ public class LIROperand {
     }
 
     public static LIRLocation forVariable(int index, CiKind type) {
+        C1XMetrics.LIRVariables++;
         return new LIRLocation(type, index);
     }
 

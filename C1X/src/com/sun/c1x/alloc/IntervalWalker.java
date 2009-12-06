@@ -36,23 +36,21 @@ class IntervalWalker {
     protected final C1XCompilation compilation;
     protected final LinearScan allocator;
 
-    Interval[] unhandledFirst = new Interval[INTERVAL_KINDS.length]; // sorted list of intervals, not
-                                                                                     // life before the current
-                                                                                     // position
-    Interval[] activeFirst = new Interval[INTERVAL_KINDS.length];    // sorted list of intervals, life
-                                                                                     // at the current position
-    Interval[] inactiveFirst = new Interval[INTERVAL_KINDS.length];  // sorted list of intervals,
-                                                                                     // intervals in a life time hole
-                                                                                     // at the current position
+    Interval[] unhandledFirst = new Interval[INTERVAL_KINDS.length]; // sorted list of intervals, not live before
+                                                                     // the current position
+    Interval[] activeFirst = new Interval[INTERVAL_KINDS.length];    // sorted list of intervals, live
+                                                                     // at the current position
+    Interval[] inactiveFirst = new Interval[INTERVAL_KINDS.length];  // sorted list of intervals, intervals in a life
+                                                                     // time hole at the current position
 
     protected Interval current; // the current interval coming from unhandled list
     protected int currentPosition; // the current position (intercept point through the intervals)
     protected IntervalKind currentKind; // and whether it is IntervalKind.fixedKind or IntervalKind.anyKind.
 
-    // activateCurrent() is called when an unhandled interval becomes active (in current(), currentKind()).
-    // Return false if current() should not be moved the the active interval list.
-    // It is safe to append current to any interval list but the unhandled list.
     boolean activateCurrent() {
+        // activateCurrent() is called when an unhandled interval becomes active (in current(), currentKind()).
+        // Return false if current() should not be moved the the active interval list.
+        // It is safe to append current to any interval list but the unhandled list.
         return true;
     }
 
@@ -68,28 +66,24 @@ class IntervalWalker {
         return inactiveFirst[kind.ordinal()];
     }
 
-    // active contains the intervals that are live before the lirOp
     void walkBefore(int lirOpId) {
         walkTo(lirOpId - 1);
     }
 
-    // walk through all intervals
     void walk() {
         walkTo(Integer.MAX_VALUE);
     }
-
-    // * Implementation of IntervalWalker *
 
     IntervalWalker(LinearScan allocator, Interval unhandledFixedFirst, Interval unhandledAnyFirst) {
         this.compilation = allocator.compilation;
         this.allocator = allocator;
 
-        unhandledFirst[IntervalKind.fixedKind.ordinal()] = unhandledFixedFirst;
-        unhandledFirst[IntervalKind.anyKind.ordinal()] = unhandledAnyFirst;
-        activeFirst[IntervalKind.fixedKind.ordinal()] = Interval.EndMarker;
-        inactiveFirst[IntervalKind.fixedKind.ordinal()] = Interval.EndMarker;
-        activeFirst[IntervalKind.anyKind.ordinal()] = Interval.EndMarker;
-        inactiveFirst[IntervalKind.anyKind.ordinal()] = Interval.EndMarker;
+        unhandledFirst[IntervalKind.FixedKind.ordinal()] = unhandledFixedFirst;
+        unhandledFirst[IntervalKind.AnyKind.ordinal()] = unhandledAnyFirst;
+        activeFirst[IntervalKind.FixedKind.ordinal()] = Interval.EndMarker;
+        inactiveFirst[IntervalKind.FixedKind.ordinal()] = Interval.EndMarker;
+        activeFirst[IntervalKind.AnyKind.ordinal()] = Interval.EndMarker;
+        inactiveFirst[IntervalKind.AnyKind.ordinal()] = Interval.EndMarker;
         currentPosition = -1;
         current = null;
         nextInterval();
@@ -118,7 +112,7 @@ class IntervalWalker {
 
         Interval prev = null;
         Interval cur = list;
-        while (cur.from() < interval.from() || (cur.from() == interval.from() && cur.firstUsage(IntervalUseKind.noUse) < interval.firstUsage(IntervalUseKind.noUse))) {
+        while (cur.from() < interval.from() || (cur.from() == interval.from() && cur.firstUsage(IntervalUseKind.NoUse) < interval.firstUsage(IntervalUseKind.NoUse))) {
             prev = cur;
             cur = cur.next;
         }
@@ -153,19 +147,19 @@ class IntervalWalker {
     }
 
     void removeFromList(Interval i) {
-        if (i.state == IntervalState.activeState) {
-            activeFirst[IntervalKind.anyKind.ordinal()] = removeFromList(activeFirst(IntervalKind.anyKind), i);
+        if (i.state == IntervalState.Active) {
+            activeFirst[IntervalKind.AnyKind.ordinal()] = removeFromList(activeFirst(IntervalKind.AnyKind), i);
         } else {
-            assert i.state == IntervalState.inactiveState : "invalid state";
-            inactiveFirst[IntervalKind.anyKind.ordinal()] = removeFromList(inactiveFirst(IntervalKind.anyKind), i);
+            assert i.state == IntervalState.Inactive : "invalid state";
+            inactiveFirst[IntervalKind.AnyKind.ordinal()] = removeFromList(inactiveFirst(IntervalKind.AnyKind), i);
         }
     }
 
     void walkTo(IntervalState state, int from) {
-        assert state == IntervalState.activeState || state == IntervalState.inactiveState : "wrong state";
+        assert state == IntervalState.Active || state == IntervalState.Inactive : "wrong state";
         for (IntervalKind kind : INTERVAL_KINDS) {
             Interval prevprev = null;
-            Interval prev = (state == IntervalState.activeState) ? activeFirst(kind) : inactiveFirst(kind);
+            Interval prev = (state == IntervalState.Active) ? activeFirst(kind) : inactiveFirst(kind);
             Interval next = prev;
             while (next.currentFrom() <= from) {
                 Interval cur = next;
@@ -178,12 +172,12 @@ class IntervalWalker {
                 }
 
                 // also handle move from inactive list to active list
-                rangeHasChanged = rangeHasChanged || (state == IntervalState.inactiveState && cur.currentFrom() <= from);
+                rangeHasChanged = rangeHasChanged || (state == IntervalState.Inactive && cur.currentFrom() <= from);
 
                 if (rangeHasChanged) {
                     // remove cur from list
                     if (prevprev == null) {
-                        if (state == IntervalState.activeState) {
+                        if (state == IntervalState.Active) {
                             activeFirst[kind.ordinal()] = next;
                         } else {
                             inactiveFirst[kind.ordinal()] = next;
@@ -194,28 +188,28 @@ class IntervalWalker {
                     prev = next;
                     if (cur.currentAtEnd()) {
                         // move to handled state (not maintained as a list)
-                        cur.state = IntervalState.handledState;
-                        intervalMoved(cur, kind, state, IntervalState.handledState);
+                        cur.state = IntervalState.Handled;
+                        intervalMoved(cur, kind, state, IntervalState.Handled);
                     } else if (cur.currentFrom() <= from) {
                         // sort into active list
                         activeFirst[kind.ordinal()] = appendSorted(activeFirst(kind), cur);
-                        cur.state = IntervalState.activeState;
+                        cur.state = IntervalState.Active;
                         if (prev == cur) {
-                            assert state == IntervalState.activeState : "check";
+                            assert state == IntervalState.Active : "check";
                             prevprev = prev;
                             prev = cur.next;
                         }
-                        intervalMoved(cur, kind, state, IntervalState.activeState);
+                        intervalMoved(cur, kind, state, IntervalState.Active);
                     } else {
                         // sort into inactive list
                         inactiveFirst[kind.ordinal()] = appendSorted(inactiveFirst(kind), cur);
-                        cur.state = IntervalState.inactiveState;
+                        cur.state = IntervalState.Inactive;
                         if (prev == cur) {
-                            assert state == IntervalState.inactiveState : "check";
+                            assert state == IntervalState.Inactive : "check";
                             prevprev = prev;
                             prev = cur.next;
                         }
-                        intervalMoved(cur, kind, state, IntervalState.inactiveState);
+                        intervalMoved(cur, kind, state, IntervalState.Inactive);
                     }
                 } else {
                     prevprev = prev;
@@ -227,18 +221,18 @@ class IntervalWalker {
 
     void nextInterval() {
         IntervalKind kind;
-        Interval any = unhandledFirst[IntervalKind.anyKind.ordinal()];
-        Interval fixed = unhandledFirst[IntervalKind.fixedKind.ordinal()];
+        Interval any = unhandledFirst[IntervalKind.AnyKind.ordinal()];
+        Interval fixed = unhandledFirst[IntervalKind.FixedKind.ordinal()];
 
         if (any != Interval.EndMarker) {
             // intervals may start at same position . prefer fixed interval
-            kind = fixed != Interval.EndMarker && fixed.from() <= any.from() ? IntervalKind.fixedKind : IntervalKind.anyKind;
+            kind = fixed != Interval.EndMarker && fixed.from() <= any.from() ? IntervalKind.FixedKind : IntervalKind.AnyKind;
 
-            assert kind == IntervalKind.fixedKind && fixed.from() <= any.from() || kind == IntervalKind.anyKind && any.from() <= fixed.from() : "wrong interval!!!";
-            assert any == Interval.EndMarker || fixed == Interval.EndMarker || any.from() != fixed.from() || kind == IntervalKind.fixedKind : "if fixed and any-Interval start at same position, fixed must be processed first";
+            assert kind == IntervalKind.FixedKind && fixed.from() <= any.from() || kind == IntervalKind.AnyKind && any.from() <= fixed.from() : "wrong interval!!!";
+            assert any == Interval.EndMarker || fixed == Interval.EndMarker || any.from() != fixed.from() || kind == IntervalKind.FixedKind : "if fixed and any-Interval start at same position, fixed must be processed first";
 
         } else if (fixed != Interval.EndMarker) {
-            kind = IntervalKind.fixedKind;
+            kind = IntervalKind.FixedKind;
         } else {
             current = null;
             return;
@@ -267,14 +261,14 @@ class IntervalWalker {
             currentPosition = id;
 
             // call walkTo even if currentPosition == id
-            walkTo(IntervalState.activeState, id);
-            walkTo(IntervalState.inactiveState, id);
+            walkTo(IntervalState.Active, id);
+            walkTo(IntervalState.Inactive, id);
 
             if (isActive) {
-                current.state = IntervalState.activeState;
+                current.state = IntervalState.Active;
                 if (activateCurrent()) {
                     activeFirst[currentKind.ordinal()] = appendSorted(activeFirst(currentKind), current);
-                    intervalMoved(current, currentKind, IntervalState.unhandledState, IntervalState.activeState);
+                    intervalMoved(current, currentKind, IntervalState.Unhandled, IntervalState.Active);
                 }
 
                 nextInterval();
@@ -284,9 +278,9 @@ class IntervalWalker {
         }
     }
 
-    // intervalMoved() is called whenever an interval moves from one interval list to another.
-    // In the implementation of this method it is prohibited to move the interval to any list.
     void intervalMoved(Interval interval, IntervalKind kind, IntervalState from, IntervalState to) {
+        // intervalMoved() is called whenever an interval moves from one interval list to another.
+        // In the implementation of this method it is prohibited to move the interval to any list.
         if (C1XOptions.TraceLinearScanLevel >= 4) {
             TTY.print(from.toString() + " to " + to.toString());
             TTY.fillTo(23);
