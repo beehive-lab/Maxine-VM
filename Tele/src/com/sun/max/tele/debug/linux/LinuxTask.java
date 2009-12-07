@@ -211,15 +211,16 @@ public final class LinuxTask {
         }
     }
 
-    private static native boolean nativeWait(int tgid, int tid, boolean allTasks);
+    private static native int nativeWait(int tgid, int tid, boolean allTasks);
 
-    public synchronized boolean waitUntilStopped(final boolean allTasks) {
+    public synchronized ProcessState waitUntilStopped(final boolean allTasks) {
         if (!allTasks) {
             FatalError.unimplemented();
         }
-        return SingleThread.execute(new Function<Boolean>() {
-            public Boolean call() throws Exception {
-                return nativeWait(tgid, tid, allTasks);
+        return SingleThread.execute(new Function<ProcessState>() {
+            public ProcessState call() throws Exception {
+                int result = nativeWait(tgid, tid, allTasks);
+                return ProcessState.VALUES[result];
             }
         });
     }

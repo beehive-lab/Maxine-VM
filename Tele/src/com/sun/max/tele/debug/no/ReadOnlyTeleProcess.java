@@ -57,7 +57,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     public ReadOnlyTeleProcess(TeleVM teleVM, Platform platform, File programFile) throws BootImageException {
-        super(teleVM, platform, ProcessState.NO_PROCESS);
+        super(teleVM, platform, ProcessState.UNKNOWN);
         long heap = 0L;
         String heapValue = System.getProperty(HEAP_PROPERTY);
         if (heapValue != null) {
@@ -149,8 +149,8 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected boolean waitUntilStopped() {
+    protected ProcessState waitUntilStopped() {
         ProgramError.unexpected(FAIL_MESSAGE);
-        return false;
+        return ProcessState.UNKNOWN;
     }
 }
