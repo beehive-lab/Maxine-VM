@@ -41,8 +41,8 @@ public class X86MacroAssembler extends X86Assembler {
     private final C1XCompiler compiler;
     public static final int LONG_SIZE = 8;
 
-    public X86MacroAssembler(C1XCompiler compiler, CiTarget target, int frameSize) {
-        super(target, frameSize);
+    public X86MacroAssembler(C1XCompiler compiler, CiTarget target) {
+        super(target);
         this.compiler = compiler;
         this.rscratch1 = compiler.target.scratchRegister;
     }
@@ -1238,7 +1238,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     public void safepoint(LIRDebugInfo info) {
         CiRegister safepointRegister = compiler.target.config.getSafepointRegister();
-        this.recordSafepoint(codeBuffer.position(), info.oopMap.registerMap(), info.oopMap.stackMap());
+        this.recordSafepoint(codeBuffer.position(), info.registerRefMap(), info.stackRefMap());
         movq(safepointRegister, new Address(safepointRegister));
     }
 }

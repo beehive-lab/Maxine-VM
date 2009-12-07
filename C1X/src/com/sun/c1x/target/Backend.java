@@ -43,7 +43,7 @@ public abstract class Backend {
     public abstract FrameMap newFrameMap(RiMethod method, int numberOfLocks);
     public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
     public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
-    public abstract AbstractAssembler newAssembler(int frameSize);
+    public abstract AbstractAssembler newAssembler();
     public abstract GlobalStubEmitter newGlobalStubEmitter();
     public abstract CiXirAssembler newXirAssembler();
 }

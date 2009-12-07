@@ -51,10 +51,10 @@ public class CiTargetMethod {
      * Represents a safepoint and stores the register and stack reference map.
      */
     public static final class Safepoint extends Site {
-        public final boolean[] registerMap;
-        public final boolean[] stackMap;
+        public final byte[] registerMap;
+        public final byte[] stackMap;
 
-        private Safepoint(int codePos, boolean[] registerMap, boolean[] stackMap) {
+        private Safepoint(int codePos, byte[] registerMap, byte[] stackMap) {
             super(codePos);
             this.registerMap = registerMap;
             this.stackMap = stackMap;
@@ -81,10 +81,10 @@ public class CiTargetMethod {
         public final RiMethod method;
         public final Object globalStubID;
 
-        public final boolean[] stackMap;
-        public final boolean[] registerMap;
+        public final byte[] stackMap;
+        public final byte[] registerMap;
 
-        private Call(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, boolean[] registerMap, boolean[] stackMap) {
+        private Call(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, byte[] registerMap, byte[] stackMap) {
             super(codePos);
             this.runtimeCall = runtimeCall;
             this.method = method;
@@ -241,7 +241,7 @@ public class CiTargetMethod {
      * @param stackMap the bitmap that indicates which stack locations
      * @param direct true if this is a direct call, false otherwise
      */
-    public void recordCall(int codePosition, Object target, boolean[] stackMap, boolean direct) {
+    public void recordCall(int codePosition, Object target, byte[] stackMap, boolean direct) {
         CiRuntimeCall rt = target instanceof CiRuntimeCall ? (CiRuntimeCall) target : null;
         RiMethod meth = target instanceof RiMethod ? (RiMethod) target : null;
         final Call callSite = new Call(codePosition, rt, meth, target, null, stackMap);
@@ -271,9 +271,9 @@ public class CiTargetMethod {
      * @param stackMap     the bitmap that indicates which stack locations
      *                     are references
      */
-    public void recordSafepoint(int codePosition, boolean[] registerMap, boolean[] stackMap) {
+    public void recordSafepoint(int codePosition, byte[] registerMap, byte[] stackMap) {
         safepoints.add(new Safepoint(codePosition, registerMap, stackMap));
-        assert referenceRegisterCount == registerMap.length : "compiler produced register maps of different sizes";
+        assert referenceRegisterCount <= registerMap.length * 8 : "compiler produced register maps of different sizes";
     }
 
     /**
@@ -327,13 +327,16 @@ public class CiTargetMethod {
         return targetCodeSize;
     }
 
-    private static String mapToString(String name, boolean[] map) {
+    private static String mapToString(String name, byte[] map) {
         StringBuffer sb = new StringBuffer();
         sb.append(' ');
         sb.append(name);
         sb.append('[');
-        for (boolean b : map) {
-            sb.append(b ? '1' : '0');
+        for (byte b : map) {
+            for (int j = 0; j < 8; j++) {
+                int z = (b >> j) & 1;
+                sb.append(z);
+            }
         }
         sb.append(']');
         return sb.toString();

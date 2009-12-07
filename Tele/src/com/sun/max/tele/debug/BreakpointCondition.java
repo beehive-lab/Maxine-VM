@@ -51,7 +51,6 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
         this.expression = parse();
     }
 
-    @Override
     public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
         return evaluate(teleVM.teleProcess(), teleNativeThread);
     }

@@ -20,30 +20,55 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.ri.*;
+import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ci.CiRegister;
 
 /**
- * @author Thomas Wuerthinger
+ * This class represents a LIR variable, i.e. a virtual register that can be used in LIRInstructions
+ * as an operand. Each definition and use of a variable must be given a physical location by the register
+ * allocator.
+ *
+ * @author Ben L. Titzer
  */
-public class DebugInformationRecorder {
+public class LIRVariable extends LIROperand {
 
-    public boolean recordingNonSafepoints() {
+    public final int index;
+
+    public LIRVariable(CiKind kind, int index) {
+        super(kind);
+        assert index >= CiRegister.MaxPhysicalRegisterNumber;
+        this.index = index;
+    }
+
+    @Override
+    public boolean isVariable() {
+        return true;
+    }
+
+    @Override
+    public boolean isVariableOrRegister() {
+        return true;
+    }
+
+    @Override
+    public int variableNumber() {
+        return index;
+    }
+
+    @Override
+    public int hashCode() {
+        return index + kind.ordinal();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof LIRVariable) {
+            LIRVariable v = (LIRVariable) o;
+            return v.index == index && v.kind == kind;
+        }
         return false;
-    }
-
-    public int lastPcOffset() {
-        return 0;
-    }
-
-    public void addNonSafepoint(int pcOffset) {
-    }
-
-    public void describeScope(int pcOffset, RiMethod method, int[] sBci) {
-    }
-
-    public void endNonSafepoint(int pcOffset) {
-    }
-
-    public void endSafepoint(int pcOffset) {
     }
 }

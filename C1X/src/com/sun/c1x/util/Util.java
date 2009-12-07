@@ -602,14 +602,14 @@ public class Util {
     /**
      * Converts a given instruction to a value string. The representation of an instruction as
      * a value is formed by concatenating the {@linkplain com.sun.c1x.ci.CiKind#typeChar character} denoting its
-     * {@linkplain com.sun.c1x.ir.Instruction#type() type} and its {@linkplain com.sun.c1x.ir.Instruction#id}. For example,
+     * {@linkplain com.sun.c1x.ir.Instruction#kind kind} and its {@linkplain com.sun.c1x.ir.Instruction#id}. For example,
      * "i13".
      *
      * @param value the instruction to convert to a value string. If {@code value == null}, then "null" is returned.
      * @return the instruction representation as a string
      */
     public static String valueString(Value value) {
-        return value == null ? "null" : "" + value.kind.typeChar + value.id;
+        return value == null ? "null" : "" + value.kind.typeChar + value.id();
     }
 
 }
