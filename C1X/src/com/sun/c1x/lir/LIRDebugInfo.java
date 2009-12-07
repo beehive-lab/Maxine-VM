@@ -35,7 +35,7 @@ import com.sun.c1x.ci.*;
  */
 public class LIRDebugInfo {
 
-    public static abstract class ValueLocator {
+    public abstract static class ValueLocator {
         public abstract CiValue locate(Value value);
     }
 

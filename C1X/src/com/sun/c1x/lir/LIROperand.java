@@ -22,7 +22,6 @@ package com.sun.c1x.lir;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.Value;
-import com.sun.c1x.util.Util;
 import com.sun.c1x.C1XMetrics;
 
 /**
