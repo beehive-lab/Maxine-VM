@@ -989,7 +989,6 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             CiRegister klassRInfo = op.tmp2().asRegister();
             CiRegister rtmp1 = op.tmp3().asRegister();
 
-            LocalStub stub = op.stub;
             Label done = new Label();
             masm.cmpptr(value, (int) NULLWORD);
             masm.jcc(X86Assembler.Condition.equal, done);
