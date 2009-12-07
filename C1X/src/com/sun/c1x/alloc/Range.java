@@ -106,7 +106,7 @@ final class Range {
         } while (true);
     }
 
-    void print(LogStream out) {
-        out.printf("[%d, %d[ ", from, to);
+    public String toString() {
+        return "[" + from + ", " + to + "]";
     }
 }

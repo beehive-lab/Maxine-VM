@@ -18,32 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package jtt.threads;
 
-import com.sun.c1x.ri.*;
-
-/**
- * @author Thomas Wuerthinger
+/*
+ * @Harness: java
+ * @Runs: 0 = 5; 1 = 6; 2 = 7
  */
-public class DebugInformationRecorder {
+public class ThreadLocal02 {
 
-    public boolean recordingNonSafepoints() {
-        return false;
-    }
-
-    public int lastPcOffset() {
-        return 0;
-    }
-
-    public void addNonSafepoint(int pcOffset) {
-    }
-
-    public void describeScope(int pcOffset, RiMethod method, int[] sBci) {
-    }
-
-    public void endNonSafepoint(int pcOffset) {
-    }
-
-    public void endSafepoint(int pcOffset) {
+    public static int test(int i) {
+        ThreadLocal<Integer> local = new ThreadLocal<Integer>();
+        local.set(i + 5);
+        return local.get();
     }
 }

@@ -47,7 +47,7 @@ public class LIRXirInstruction extends LIRInstruction {
         this.tempCount = tempCount;
         this.inputCount = operands.length - inputTempCount - tempCount;
 
-        C1XMetrics.NumberOfLIRXIRInstructions++;
+        C1XMetrics.LIRXIRInstructions++;
     }
 
     public LIROperand[] getOperands() {

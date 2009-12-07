@@ -65,8 +65,8 @@ public class X86Backend extends Backend {
         return new FrameMap(compiler, method, numberOfLocks);
     }
     @Override
-    public AbstractAssembler newAssembler(int frameSize) {
-        return new X86MacroAssembler(compiler, compiler.target, frameSize);
+    public AbstractAssembler newAssembler() {
+        return new X86MacroAssembler(compiler, compiler.target);
     }
 
     @Override

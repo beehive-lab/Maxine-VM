@@ -76,7 +76,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         if (isIllegal(addr.index)) {
             return new Address(base, addr.displacement);
         } else {
-            if (addr.index.isRegister()) {
+            if (addr.index.isVariableOrRegister()) {
                 CiRegister index = addr.index.asPointerRegister(compilation.target.arch);
                 return new Address(base, index, Address.ScaleFactor.fromLog(addr.scale.ordinal()), addr.displacement);
             } else {
@@ -121,13 +121,14 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     @Override
     protected void const2reg(LIROperand src, LIROperand dest, LIRDebugInfo info) {
         assert isConstant(src) : "should not call otherwise";
-        assert dest.isRegister() : "should not call otherwise";
+        assert dest.isVariableOrRegister() : "should not call otherwise";
         LIRConstant c = (LIRConstant) src;
 
         switch (c.kind) {
             case Boolean:
             case Byte:
             case Char:
+            case Short:
             case Jsr:
             case Int: {
                 masm.movl(dest.asRegister(), c.value.asInt());
@@ -188,6 +189,10 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         LIRConstant c = (LIRConstant) src;
 
         switch (c.kind) {
+            case Boolean:
+            case Byte:
+            case Short:
+            case Char:
             case Int: // fall through
             case Float:
                 masm.movl(frameMap.addressForSlot(dest.singleStackIndex()), c.asIntBits());
@@ -221,6 +226,16 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
         int nullCheckHere = codePos();
         switch (type) {
+            case Boolean: // fall through
+            case Byte:
+                masm.movb(asAddress(addr), c.asInt() & 0xFF);
+                break;
+
+            case Char: // fall through
+            case Short:
+                masm.movw(asAddress(addr), c.asInt() & 0xFFFF);
+                break;
+
             case Int: // fall through
             case Float:
                 masm.movl(asAddress(addr), c.asIntBits());
@@ -257,16 +272,6 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 }
                 break;
 
-            case Boolean: // fall through
-            case Byte:
-                masm.movb(asAddress(addr), c.asInt() & 0xFF);
-                break;
-
-            case Char: // fall through
-            case Short:
-                masm.movw(asAddress(addr), c.asInt() & 0xFFFF);
-                break;
-
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -289,8 +294,8 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
     @Override
     protected void reg2reg(LIROperand src, LIROperand dest) {
-        assert src.isRegister() : "should not call otherwise";
-        assert dest.isRegister() : "should not call otherwise";
+        assert src.isVariableOrRegister() : "should not call otherwise";
+        assert dest.isVariableOrRegister() : "should not call otherwise";
 
         // move between cpu-registers
         if (dest.isSingleCpu()) {
@@ -351,7 +356,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
     @Override
     protected void reg2stack(LIROperand src, LIROperand dest, CiKind type) {
-        assert src.isRegister() : "should not call otherwise";
+        assert src.isVariableOrRegister() : "should not call otherwise";
         assert dest.isStack() : "should not call otherwise";
 
         if (src.isSingleCpu()) {
@@ -443,7 +448,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 } else {
                     CiRegister base = toAddr.base.asRegister();
                     CiRegister index = CiRegister.None;
-                    if (toAddr.index.isRegister()) {
+                    if (toAddr.index.isVariableOrRegister()) {
                         index = toAddr.index.asRegister();
                     }
                     if (base == fromLo || index == fromLo) {
@@ -489,7 +494,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     @Override
     protected void stack2reg(LIROperand src, LIROperand dest, CiKind type) {
         assert src.isStack() : "should not call otherwise";
-        assert dest.isRegister() : "should not call otherwise";
+        assert dest.isVariableOrRegister() : "should not call otherwise";
 
         if (dest.isSingleCpu()) {
             if (type == CiKind.Object || type == CiKind.Word) {
@@ -590,7 +595,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     @Override
     protected void mem2reg(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned) {
         assert isAddress(src) : "should not call otherwise";
-        assert dest.isRegister() : "should not call otherwise";
+        assert dest.isVariableOrRegister() : "should not call otherwise";
 
         LIRAddress addr = (LIRAddress) src;
         Address fromAddr = asAddress(addr);
@@ -658,7 +663,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 } else {
                     CiRegister base = addr.base.asRegister();
                     CiRegister index = CiRegister.None;
-                    if (addr.index.isRegister()) {
+                    if (addr.index.isVariableOrRegister()) {
                         index = addr.index.asRegister();
                     }
                     if ((base == toLo && index == toHi) || (base == toHi && index == toLo)) {
@@ -916,7 +921,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 break;
 
             case Bytecodes.F2I: {
-                assert src.isSingleXmm() && dest.isRegister() : "must both be XMM register (no fpu stack)";
+                assert src.isSingleXmm() && dest.isVariableOrRegister() : "must both be XMM register (no fpu stack)";
                 masm.cvttss2sil(dest.asRegister(), srcRegister);
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(Condition.notEqual, endLabel);
@@ -927,7 +932,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 break;
             }
             case Bytecodes.D2I: {
-                assert src.isDoubleXmm() && dest.isRegister() : "must both be XMM register (no fpu stack)";
+                assert src.isDoubleXmm() && dest.isVariableOrRegister() : "must both be XMM register (no fpu stack)";
                 masm.cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(Condition.notEqual, endLabel);
@@ -1184,7 +1189,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 throw Util.shouldNotReachHere();
         }
 
-        if (opr1.isRegister()) {
+        if (opr1.isVariableOrRegister()) {
             reg2reg(opr1, result);
         } else if (opr1.isStack()) {
             stack2reg(opr1, result, result.kind);
@@ -1220,7 +1225,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         } else {
             Label skip = new Label();
             masm.jcc(acond, skip);
-            if (opr2.isRegister()) {
+            if (opr2.isVariableOrRegister()) {
                 reg2reg(opr2, result);
             } else if (opr2.isStack()) {
                 stack2reg(opr2, result, result.kind);
@@ -2037,7 +2042,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     @Override
     protected void emitIndirectCall(Object target, LIRDebugInfo info, LIROperand callAddress) {
         CiRegister reg = compilation.target.scratchRegister;
-        if (callAddress.isRegister()) {
+        if (callAddress.isVariableOrRegister()) {
             reg = callAddress.asRegister();
         } else {
             moveOp(callAddress, forRegister(callAddress.kind, reg), callAddress.kind, null, false);
@@ -2059,7 +2064,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     @Override
     protected void emitVirtualCall(RiMethod method, LIROperand receiver, LIRDebugInfo info) {
         assert method.isLoaded() : "method is not resolved";
-        assert receiver != null && receiver.isRegister() : "Receiver must be in a register";
+        assert receiver != null && receiver.isVariableOrRegister() : "Receiver must be in a register";
 
         int vtableOffset = compilation.runtime.vtableEntryMethodOffsetInBytes() + compilation.runtime.vtableStartOffset() + method.vtableIndex() * compilation.runtime.vtableEntrySize();
 
@@ -2072,7 +2077,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     @Override
     protected void emitInterfaceCall(RiMethod method, LIROperand receiver, LIRDebugInfo info) {
         assert method.isLoaded() : "method is not resolved";
-        assert receiver != null && receiver.isRegister() : "Receiver must be in a register";
+        assert receiver != null && receiver.isVariableOrRegister() : "Receiver must be in a register";
 
         // TODO: emit interface ID calculation inline
         masm.movl(rscratch1, method.interfaceID());
@@ -2434,7 +2439,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     }
 
     public static Object asRegisterOrConstant(LIROperand operand) {
-        if (operand.isRegister()) {
+        if (operand.isVariableOrRegister()) {
             return operand.asRegister();
         } else if (isConstant(operand)) {
             return ((LIRConstant) operand).value;
@@ -2530,7 +2535,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                     LIROperand result = ops[inst.result.index];
                     LIROperand pointer = ops[inst.x().index];
                     pointer = assureInRegister(pointer);
-                    assert pointer.isRegister();
+                    assert pointer.isVariableOrRegister();
                     moveOp(new LIRAddress((LIRLocation) pointer, 0, inst.kind), result, inst.kind, null, false);
                     break;
                 }
@@ -2542,7 +2547,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
                     LIROperand value = ops[inst.y().index];
                     LIROperand pointer = ops[inst.x().index];
-                    assert pointer.isRegister();
+                    assert pointer.isVariableOrRegister();
                     moveOp(value, new LIRAddress((LIRLocation) pointer, 0, inst.kind), inst.kind, null, false);
                     break;
                 }
@@ -2562,7 +2567,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                     LIROperand index = ops[inst.y().index];
 
                     pointer = assureInRegister(pointer);
-                    assert pointer.isRegister();
+                    assert pointer.isVariableOrRegister();
 
                     LIROperand src = null;
                     if (isConstant(index) && index.kind == CiKind.Int) {
@@ -2591,7 +2596,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                     LIROperand index = ops[inst.y().index];
 
                     pointer = assureInRegister(pointer);
-                    assert pointer.isRegister();
+                    assert pointer.isVariableOrRegister();
 
                     LIROperand dst;
                     if (isConstant(index) && index.kind == CiKind.Int) {
@@ -2710,7 +2715,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             return newPointerOperand;
         }
 
-        assert pointer.isRegister();
+        assert pointer.isVariableOrRegister();
         return pointer;
     }
 

@@ -44,7 +44,7 @@ public abstract class AbstractAssembler {
     public final boolean is32;
     protected final int wordSize;
 
-    public AbstractAssembler(CiTarget target, int frameSize) {
+    public AbstractAssembler(CiTarget target) {
         this.target = target;
         this.targetMethod = new CiTargetMethod(target.allocatableRegs.registerRefMapSize);
         this.codeBuffer = new Buffer(target.arch.byteOrder);
@@ -52,7 +52,6 @@ public abstract class AbstractAssembler {
         this.is64 = target.arch.is64bit();
         this.exceptionInfoList = new ArrayList<ExceptionInfo>();
         this.wordSize = target.arch.wordSize;
-        targetMethod.setFrameSize(frameSize);
     }
 
     public final void bind(Label l) {
@@ -70,7 +69,7 @@ public abstract class AbstractAssembler {
         targetMethod.setFrameSize(frameSize);
     }
 
-    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int framesize, int registerRestoreEpilogueOffset) {
+    public CiTargetMethod finishTargetMethod(RiRuntime runtime, int registerRestoreEpilogueOffset) {
         // Install code, data and frame size
         targetMethod.setTargetCode(codeBuffer.finished(), codeBuffer.position());
         targetMethod.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
@@ -99,7 +98,7 @@ public abstract class AbstractAssembler {
 
         if (C1XOptions.PrintAssembly) {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
-            TTY.println("Frame size: %d", framesize);
+            TTY.println("Frame size: %d", targetMethod.frameSize());
             TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
 
             Util.printSection("Code", Util.SUB_SECTION_CHARACTER);
@@ -144,16 +143,16 @@ public abstract class AbstractAssembler {
     }
 
     protected void recordDirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
-        boolean[] stackMap = info != null ? info.oopMap.stackMap() : null;
+        byte[] stackMap = info != null ? info.stackRefMap() : null;
         targetMethod.recordCall(posBefore, target, stackMap, true);
     }
 
     protected void recordIndirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
-        boolean[] stackMap = info != null ? info.oopMap.stackMap() : null;
+        byte[] stackMap = info != null ? info.stackRefMap() : null;
         targetMethod.recordCall(posBefore, target, stackMap, false);
     }
 
-    protected void recordSafepoint(int pos, boolean[] registerMap, boolean[] stackMap) {
+    protected void recordSafepoint(int pos, byte[] registerMap, byte[] stackMap) {
         assert registerMap != null && stackMap != null;
 
         if (C1XOptions.TraceRelocation) {

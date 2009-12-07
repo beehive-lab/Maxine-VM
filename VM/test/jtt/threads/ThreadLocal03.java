@@ -18,32 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target;
+package jtt.threads;
 
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.gen.*;
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
-
-/**
- * The <code>Backend</code> class represents a compiler backend for C1X.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0 = 0; 1 = 15; 2 = 31; 3 = 48
  */
-public abstract class Backend {
-    public final C1XCompiler compiler;
+public class ThreadLocal03 {
 
-    protected Backend(C1XCompiler compiler) {
-        this.compiler = compiler;
+    static final ThreadLocal<Integer> local = new ThreadLocal<Integer>();
+
+    public static int test(int i) {
+        int sum = 0;
+        for (int j = 0; j < i; j++) {
+            TThread t = new TThread();
+            t.input = 10 + j;
+            t.run();
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                return -1;
+            }
+            sum += t.output;
+        }
+        return sum;
     }
 
-    public abstract FrameMap newFrameMap(RiMethod method, int numberOfLocks);
-    public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
-    public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
-    public abstract AbstractAssembler newAssembler();
-    public abstract GlobalStubEmitter newGlobalStubEmitter();
-    public abstract CiXirAssembler newXirAssembler();
+    private static class TThread extends Thread {
+        int input;
+        int output;
+        public void run() {
+            local.set(input + 5);
+            output = local.get();
+        }
+    }
 }

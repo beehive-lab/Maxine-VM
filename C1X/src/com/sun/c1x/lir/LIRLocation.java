@@ -51,11 +51,11 @@ public final class LIRLocation extends LIROperand {
     }
 
     /**
-     * Creates a new LIRLocation representing either a virtual register or a stack location, negative indices
+     * Creates a new LIRLocation representing either a variable or a stack location, with negative indices
      * represent stack locations.
      *
      * @param kind the kind of the location
-     * @param number the virtual register index or the stack location index if negative
+     * @param number the variable index or the stack location index if negative
      */
     LIRLocation(CiKind kind, int number) {
         super(kind);
@@ -66,7 +66,7 @@ public final class LIRLocation extends LIROperand {
     }
 
     /**
-     * Creates a new LIRLocation representing either a stack value or a CPU register.
+     * Creates a new LIRLocation representing a CPU register pair.
      *
      * @param kind the kind of the location
      * @param location1 the number of the location
@@ -101,7 +101,7 @@ public final class LIRLocation extends LIROperand {
     }
 
     @Override
-    public int vregNumber() {
+    public int variableNumber() {
         assert index >= CiRegister.MaxPhysicalRegisterNumber;
         return index;
     }
@@ -137,7 +137,7 @@ public final class LIRLocation extends LIROperand {
     }
 
     @Override
-    public boolean isRegister() {
+    public boolean isVariableOrRegister() {
         return !isStack();
     }
 
@@ -183,11 +183,6 @@ public final class LIRLocation extends LIROperand {
     @Override
     public CiRegister asRegisterHigh() {
         return this.location2;
-    }
-
-    @Override
-    public boolean isVirtualRegister() {
-        return index > 0;
     }
 
     @Override

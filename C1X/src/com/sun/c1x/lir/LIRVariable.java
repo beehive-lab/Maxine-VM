@@ -18,32 +18,54 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target;
+package com.sun.c1x.lir;
 
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.gen.*;
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
+import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ci.CiRegister;
 
 /**
- * The <code>Backend</code> class represents a compiler backend for C1X.
+ * This class represents a LIR variable, i.e. a virtual register that can be used in LIRInstructions
+ * as an operand. Each definition and use of a variable must be given a physical location by the register
+ * allocator.
  *
  * @author Ben L. Titzer
  */
-public abstract class Backend {
-    public final C1XCompiler compiler;
+public class LIRVariable extends LIROperand {
 
-    protected Backend(C1XCompiler compiler) {
-        this.compiler = compiler;
+    public final int index;
+
+    public LIRVariable(CiKind kind, int index) {
+        super(kind);
+        assert index >= CiRegister.MaxPhysicalRegisterNumber;
+        this.index = index;
     }
 
-    public abstract FrameMap newFrameMap(RiMethod method, int numberOfLocks);
-    public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
-    public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
-    public abstract AbstractAssembler newAssembler();
-    public abstract GlobalStubEmitter newGlobalStubEmitter();
-    public abstract CiXirAssembler newXirAssembler();
+    public boolean isVariable() {
+        return true;
+    }
+
+    public boolean isVariableOrRegister() {
+        return true;
+    }
+
+    public int variableNumber() {
+        return index;
+    }
+
+    @Override
+    public int hashCode() {
+        return index + kind.ordinal();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof LIRVariable) {
+            LIRVariable v = (LIRVariable) o;
+            return v.index == index && v.kind == kind;
+        }
+        return false;
+    }
 }

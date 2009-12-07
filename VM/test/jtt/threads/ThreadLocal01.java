@@ -18,32 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target;
+package jtt.threads;
 
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.gen.*;
-import com.sun.c1x.globalstub.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.xir.*;
-
-/**
- * The <code>Backend</code> class represents a compiler backend for C1X.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: 0 = 5; 1 = 6; 2 = 7
  */
-public abstract class Backend {
-    public final C1XCompiler compiler;
+public class ThreadLocal01 {
+    private static final ThreadLocal<Integer> local = new ThreadLocal<Integer>();
 
-    protected Backend(C1XCompiler compiler) {
-        this.compiler = compiler;
+    public static int test(int i) {
+        local.set(i + 5);
+        return local.get();
     }
-
-    public abstract FrameMap newFrameMap(RiMethod method, int numberOfLocks);
-    public abstract LIRGenerator newLIRGenerator(C1XCompilation compilation);
-    public abstract LIRAssembler newLIRAssembler(C1XCompilation compilation);
-    public abstract AbstractAssembler newAssembler();
-    public abstract GlobalStubEmitter newGlobalStubEmitter();
-    public abstract CiXirAssembler newXirAssembler();
 }
