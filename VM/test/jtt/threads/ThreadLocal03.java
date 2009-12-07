@@ -47,6 +47,7 @@ public class ThreadLocal03 {
     private static class TThread extends Thread {
         int input;
         int output;
+        @Override
         public void run() {
             local.set(input + 5);
             output = local.get();

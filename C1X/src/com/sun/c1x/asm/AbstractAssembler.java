@@ -153,12 +153,6 @@ public abstract class AbstractAssembler {
     }
 
     protected void recordSafepoint(int pos, byte[] registerMap, byte[] stackMap) {
-        assert registerMap != null && stackMap != null;
-
-        if (C1XOptions.TraceRelocation) {
-            TTY.print("Safepoint: pos = %d, registerMap.length = %d, stackMap.length = %d", pos, registerMap.length, stackMap.length);
-        }
-
         targetMethod.recordSafepoint(pos, registerMap, stackMap);
     }
 

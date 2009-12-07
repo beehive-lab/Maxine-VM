@@ -40,14 +40,17 @@ public class LIRVariable extends LIROperand {
         this.index = index;
     }
 
+    @Override
     public boolean isVariable() {
         return true;
     }
 
+    @Override
     public boolean isVariableOrRegister() {
         return true;
     }
 
+    @Override
     public int variableNumber() {
         return index;
     }
