@@ -172,18 +172,19 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env,
     return true;
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, jclass c, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
-    int error = Pwait(ph, 0);
-    if (error != 0) {
-        int rc = Pstate(ph);
-        log_println("nativeWait: Pwait failed in solarisTeleProcess, Pstate %d; error: %d; errno: %d", rc, error, errno);
-		log_println("ERROR: %s", strerror(errno));
-        return false;
+    if (Pwait(ph, 0) != 0) {
+        int error = errno;
+        if (error == ENOENT) {
+            return PS_TERMINATED;
+        }
+        log_println("Pwait failed with unexpected error: %s [errno: %d]", strerror(error), error);
+        return PS_UNKNOWN;
     }
 
-    return true;
+    return PS_STOPPED;
 }
 
 ThreadState_t lwpStatusToThreadState(const lwpstatus_t *ls) {

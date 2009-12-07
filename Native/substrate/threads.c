@@ -41,7 +41,6 @@
 #include "image.h"
 #include "jni.h"
 #include "word.h"
-#include "messenger.h"
 #include "mutex.h"
 #include "threads.h"
 #include "threadLocals.h"

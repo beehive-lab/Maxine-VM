@@ -170,13 +170,13 @@ public final class MemoryRegionsTable extends InspectorTable {
             }
 
             for (MaxThread thread : maxVMState().threads()) {
-                final TeleNativeStack stack = thread.stack();
-                if (!stack.size().isZero()) {
-                    sortedMemoryRegions.add(new StackRegionDisplay(stack));
+                final TeleNativeStackMemoryRegion stackRegion = thread.stackRegion();
+                if (!stackRegion.size().isZero()) {
+                    sortedMemoryRegions.add(new StackRegionDisplay(stackRegion));
                 }
-                TeleThreadLocalsBlock threadLocalsBlock = thread.threadLocalsBlock();
-                if (!threadLocalsBlock.size().isZero()) {
-                    sortedMemoryRegions.add(new ThreadLocalsRegionDisplay(threadLocalsBlock));
+                TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.threadLocalsRegion();
+                if (!threadLocalsRegion.size().isZero()) {
+                    sortedMemoryRegions.add(new ThreadLocalsRegionDisplay(threadLocalsRegion));
                 }
             }
             super.refresh();
@@ -473,37 +473,36 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     private final class StackRegionDisplay extends MemoryRegionDisplay {
 
-        private final TeleNativeStack teleNativeStack;
+        private final TeleNativeStackMemoryRegion stackRegion;
 
         @Override
         MemoryRegion memoryRegion() {
-            return teleNativeStack;
+            return stackRegion;
         }
 
-        StackRegionDisplay(TeleNativeStack teleNativeStack) {
-            this.teleNativeStack = teleNativeStack;
+        StackRegionDisplay(TeleNativeStackMemoryRegion stackRegion) {
+            this.stackRegion = stackRegion;
         }
 
         @Override
         Size allocated() {
             // Stack grows downward from the end of the region;
-            // no account taken here for thread locals.
-            return end().minus(teleNativeStack.teleNativeThread.stackPointer()).asSize();
+            return end().minus(stackRegion.teleNativeThread.stackPointer()).asSize();
         }
 
     }
 
     private final class ThreadLocalsRegionDisplay extends MemoryRegionDisplay {
 
-        private final TeleThreadLocalsBlock threadLocalsBlock;
+        private final TeleThreadLocalsMemoryRegion threadLocalsRegion;
 
         @Override
         MemoryRegion memoryRegion() {
-            return threadLocalsBlock;
+            return threadLocalsRegion;
         }
 
-        ThreadLocalsRegionDisplay(TeleThreadLocalsBlock threadLocalsBlock) {
-            this.threadLocalsBlock = threadLocalsBlock;
+        ThreadLocalsRegionDisplay(TeleThreadLocalsMemoryRegion threadLocalsRegion) {
+            this.threadLocalsRegion = threadLocalsRegion;
         }
     }
 

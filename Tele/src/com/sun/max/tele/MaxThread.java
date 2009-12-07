@@ -81,7 +81,7 @@ public interface MaxThread {
      *
      * @return null if this thread is not stopped at a breakpoint or if thread has died
      */
-    TeleTargetBreakpoint breakpoint();
+    MaxBreakpoint breakpoint();
 
     /**
      * @return the current state of the thread.
@@ -137,22 +137,22 @@ public interface MaxThread {
     Pointer stackPointer();
 
     /**
-     * Gets the stack for this thread.
+     * Gets description of  VM memory containing the stack for this thread.
      * <br>
      * The identity of the result is immutable and thread-safe, although its contents are not.
      *
-     * @return this thread's stack
+     * @return this thread's stack memory
      */
-    TeleNativeStack stack();
+    TeleNativeStackMemoryRegion stackRegion();
 
     /**
-     * Gets the {@linkplain VmThreadLocal thread locals block} for this thread.
+     * Gets description of VM memory containing the  {@linkplain VmThreadLocal thread locals} for this thread.
      * <br>
      * The identity of the result is immutable and thread-safe, although its contents are not.
      *
-     * @return this thread's thread locals block
+     * @return this thread's thread locals memory
      */
-    TeleThreadLocalsBlock threadLocalsBlock();
+    TeleThreadLocalsMemoryRegion threadLocalsRegion();
 
     /**
      * @return the current instruction pointer for the thread, zero if thread has died.

@@ -73,7 +73,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
      * @param newAddress
      */
     public void relocateWatchpoint(Pointer oldAddress, Pointer newAddress) {
-        if (MaxineMessenger.isVmInspected()) {
+        if (Inspectable.isVmInspected()) {
             //final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
             //enabledVmThreadLocals.setWord(OLD_OBJECT_ADDRESS.index, oldAddress);
             //enabledVmThreadLocals.setWord(NEW_OBJECT_ADDRESS.index, newAddress);

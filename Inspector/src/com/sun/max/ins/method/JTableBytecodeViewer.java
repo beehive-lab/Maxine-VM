@@ -36,7 +36,7 @@ import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -454,22 +454,22 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 setForeground(null);
             }
             setText(rowToTagText(row));
-            final TeleBytecodeBreakpoint teleBytecodeBreakpoint = getBytecodeBreakpointAtRow(row);
-            final Sequence<TeleTargetBreakpoint> teleTargetBreakpoints = getTargetBreakpointsAtRow(row);
-            if (teleBytecodeBreakpoint != null) {
-                toolTipText.append(teleBytecodeBreakpoint);
+            final MaxBreakpoint bytecodeBreakpoint = getBytecodeBreakpointAtRow(row);
+            final Sequence<MaxBreakpoint> targetBreakpoints = getTargetBreakpointsAtRow(row);
+            if (bytecodeBreakpoint != null) {
+                toolTipText.append(bytecodeBreakpoint);
                 toolTipText.append("; ");
-                if (teleBytecodeBreakpoint.isEnabled()) {
+                if (bytecodeBreakpoint.isEnabled()) {
                     setBorder(style().debugEnabledBytecodeBreakpointTagBorder());
                 } else {
                     setBorder(style().debugDisabledBytecodeBreakpointTagBorder());
                 }
-            } else if (teleTargetBreakpoints.length() > 0) {
+            } else if (targetBreakpoints.length() > 0) {
                 boolean enabled = false;
-                for (TeleTargetBreakpoint teleTargetBreakpoint : teleTargetBreakpoints) {
-                    toolTipText.append(teleTargetBreakpoint);
+                for (MaxBreakpoint targetBreakpoint : targetBreakpoints) {
+                    toolTipText.append(targetBreakpoint);
                     toolTipText.append("; ");
-                    enabled = enabled || teleTargetBreakpoint.isEnabled();
+                    enabled = enabled || targetBreakpoint.isEnabled();
                 }
                 if (enabled) {
                     setBorder(style().debugEnabledTargetBreakpointTagBorder());

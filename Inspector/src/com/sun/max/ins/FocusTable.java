@@ -31,7 +31,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -267,11 +266,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.BREAKPOINT.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
-                    if (teleBreakpoint == null) {
+                    final MaxBreakpoint breakpoint = inspection().focus().breakpoint();
+                    if (breakpoint == null) {
                         setValue(null, "No breakpoint focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longName(teleBreakpoint.teleCodeLocation());
+                        final String longName = inspection().nameDisplay().longName(breakpoint.getCodeLocation());
                         setValue(longName, "Breakpoint focus = " + longName);
                     }
                 }
@@ -366,7 +365,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         refresh(true);
     }
 
-    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
+    public void breakpointFocusSet(MaxBreakpoint oldBreakpoint, MaxBreakpoint breakpoint) {
         refresh(true);
     }
 

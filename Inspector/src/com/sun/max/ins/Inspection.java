@@ -142,7 +142,7 @@ public final class Inspection {
         MethodInspector.Manager.make(this);
         objectInspectorFactory = ObjectInspectorFactory.make(this);
 
-        if (maxVMState().processState() == NO_PROCESS) {
+        if (maxVMState().processState() == UNKNOWN) {
             // Inspector is working with a boot image only, no process exists.
 
             // Initialize the CodeManager and ClassRegistry, which seems to keep some heap reads
@@ -301,7 +301,7 @@ public final class Inspection {
      */
     public boolean hasProcess() {
         final ProcessState processState = maxVMState().processState();
-        return !(processState == NO_PROCESS || processState == TERMINATED);
+        return !(processState == UNKNOWN || processState == TERMINATED);
     }
 
     /**
@@ -363,7 +363,7 @@ public final class Inspection {
                 // Be sure all process-sensitive actions are disabled.
                 inspectionActions.refresh(false);
                 break;
-            case NO_PROCESS:
+            case UNKNOWN:
                 break;
         }
         inspectorMainFrame.refresh(true);

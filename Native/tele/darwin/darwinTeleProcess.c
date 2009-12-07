@@ -127,7 +127,7 @@ int task_write(task_t task, vm_address_t dst, void *src, size_t size) {
   return result == KERN_SUCCESS ? (int) size : -1;
 }
 
-jboolean waitForSignal(jlong task, int signalnum) {
+jint waitForSignal(jlong task, int signalnum) {
     int pid;
     Pid_for_task(POS, task, &pid);
     while (1) {
@@ -135,16 +135,16 @@ jboolean waitForSignal(jlong task, int signalnum) {
         int error = waitpid(pid, &status, 0);
         if (error != pid) {
             log_println("waitpid failed with error: %d [%s]", errno, strerror(error));
-            return false;
+            return PS_UNKNOWN;
         }
         if (WIFEXITED(status)) {
             log_println("Process %d exited with exit code %d", pid, WEXITSTATUS(status));
-            return false;
+            return PS_TERMINATED;
         }
         if (WIFSIGNALED(status)) {
             int signal = WTERMSIG(status);
             log_println("Process %d terminated due to signal %d [%s]", pid, signal, strsignal(signal));
-            return false;
+            return PS_TERMINATED;
         }
         if (WIFSTOPPED(status)) {
             // check whether the process received a signal, and continue with it if so.
@@ -159,14 +159,14 @@ jboolean waitForSignal(jlong task, int signalnum) {
             }
 
             if (signal == 0 || signal == signalnum) {
-                return true;
+                return PS_STOPPED;
             } else {
                 ptrace(PT_CONTINUE, pid, (char*) 1, signal);
 
                 error = errno;
                 if (error != 0) {
                     log_println("Continuing process %d failed: %d [%s]", error, strerror(error));
-                    return false;
+                    return PS_UNKNOWN;
                 }
             }
         }
@@ -273,7 +273,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, 
     return error == 0;
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWait(JNIEnv *env, jclass c, jlong pid, jlong task) {
     return waitForSignal(task, SIGTRAP);
 }

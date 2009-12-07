@@ -30,7 +30,6 @@ import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
@@ -60,11 +59,11 @@ public final class BreakpointsTable extends InspectorTable {
         final BreakpointData breakpointData = tableModel.get(row);
         final InspectorPopupMenu menu = new InspectorPopupMenu("Breakpoints");
         final String shortName = breakpointData.shortName();
-        menu.add(inspection().actions().removeBreakpoint(breakpointData.teleBreakpoint(), "Remove: " + shortName));
-        if (breakpointData.enabled()) {
-            menu.add(inspection().actions().disableBreakpoint(breakpointData.teleBreakpoint(), "Disable: " + shortName));
+        menu.add(inspection().actions().removeBreakpoint(breakpointData.breakpoint(), "Remove: " + shortName));
+        if (breakpointData.isEnabled()) {
+            menu.add(inspection().actions().disableBreakpoint(breakpointData.breakpoint(), "Disable: " + shortName));
         } else {
-            menu.add(inspection().actions().enableBreakpoint(breakpointData.teleBreakpoint(), "Enable: " + shortName));
+            menu.add(inspection().actions().enableBreakpoint(breakpointData.breakpoint(), "Enable: " + shortName));
         }
         menu.addSeparator();
         final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
@@ -84,8 +83,8 @@ public final class BreakpointsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         // Sets table selection to breakpoint, if any, that is the current user focus.
-        final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
-        final int row = tableModel.findRow(teleBreakpoint);
+        final MaxBreakpoint breakpoint = inspection().focus().breakpoint();
+        final int row = tableModel.findRow(breakpoint);
         updateSelection(row);
     }
 
@@ -100,7 +99,7 @@ public final class BreakpointsTable extends InspectorTable {
             if (row >= 0) {
                 final BreakpointData breakpointData = tableModel.get(row);
                 if (breakpointData != null) {
-                    final TeleBreakpoint teleBreakpoint = breakpointData.teleBreakpoint();
+                    final MaxBreakpoint teleBreakpoint = breakpointData.breakpoint();
                     focus().setBreakpoint(teleBreakpoint);
                 }
             }
@@ -147,7 +146,7 @@ public final class BreakpointsTable extends InspectorTable {
                 case TAG:
                     return breakpointData.kindTag();
                 case ENABLED:
-                    return breakpointData.enabled();
+                    return breakpointData.isEnabled();
                 case DESCRIPTION:
                     return breakpointData.shortName();
                 case LOCATION:
@@ -189,6 +188,7 @@ public final class BreakpointsTable extends InspectorTable {
                 case ENABLED:
                     return true;
                 case CONDITION:
+                    // TODO (mlvdv) machinery is now in place for bytecode breakpoints to be conditional; untested.
                     return get(row) instanceof TargetBreakpointData;
                 default:
                     break;
@@ -224,22 +224,22 @@ public final class BreakpointsTable extends InspectorTable {
                 breakpointData.markDeleted(true);
             }
             // add new and mark previous as not deleted
-            for (TeleTargetBreakpoint breakpoint : maxVM().targetBreakpoints()) {
-                final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.teleCodeLocation().targetCodeInstructionAddress());
+            for (MaxBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
+                final BreakpointData breakpointData = findTargetBreakpoint(targetBreakpoint.getCodeLocation().targetCodeInstructionAddress());
                 if (breakpointData == null) {
                     // new breakpoint in VM since last refresh
-                    breakpoints.add(new TargetBreakpointData(breakpoint));
+                    breakpoints.add(new TargetBreakpointData(targetBreakpoint));
                     //fireTableDataChanged();
                 } else {
                     // mark as not deleted
                     breakpointData.markDeleted(false);
                 }
             }
-            for (TeleBytecodeBreakpoint breakpoint : maxVM().bytecodeBreakpoints()) {
-                final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.key());
+            for (MaxBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
+                final BreakpointData breakpointData = findBytecodeBreakpoint(bytecodeBreakpoint.getCodeLocation().key());
                 if (breakpointData == null) {
                     // new breakpoint since last refresh
-                    breakpoints.add(new BytecodeBreakpointData(breakpoint));
+                    breakpoints.add(new BytecodeBreakpointData(bytecodeBreakpoint));
                     //fireTableDataChanged();
                 } else {
                     // mark as not deleted
@@ -271,10 +271,10 @@ public final class BreakpointsTable extends InspectorTable {
         /**
          * Return the table row in which a breakpoint is displayed.
          */
-        private int findRow(TeleBreakpoint breakpoint) {
+        private int findRow(MaxBreakpoint breakpoint) {
             int row = 0;
             for (BreakpointData breakpointData : breakpoints) {
-                if (breakpointData.teleBreakpoint() == breakpoint) {
+                if (breakpointData.breakpoint() == breakpoint) {
                     return row;
                 }
                 row++;
@@ -332,7 +332,7 @@ public final class BreakpointsTable extends InspectorTable {
             final BreakpointData breakpointData = tableModel.get(row);
             setIcon((breakpointData.triggerThread() == null) ? null : inspection().style().debugIPTagIcon());
             setText(breakpointData.kindTag());
-            setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.enabled() ? "true" : "false"));
+            setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.isEnabled() ? "true" : "false"));
             setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
@@ -425,16 +425,107 @@ public final class BreakpointsTable extends InspectorTable {
      */
     private abstract class BreakpointData implements Comparable {
 
+        // TODO (mlvdv) The need for subclasses here has diminished, and the differences between the two kinds of breakpoints
+        // could be reflected in renderer code.
+
+        private final MaxBreakpoint breakpoint;
+
+        private boolean deleted = false;
+
+        BreakpointData(MaxBreakpoint breakpoint) {
+            this.breakpoint = breakpoint;
+        }
+
         /**
          * @return the breakpoint in the VM being described
          */
-        abstract TeleBreakpoint teleBreakpoint();
+        MaxBreakpoint breakpoint() {
+            return breakpoint;
+        }
 
         /**
          * @return the location of the breakpoint in the VM in a standard format.
          */
-        TeleCodeLocation teleCodeLocation() {
-            return teleBreakpoint().teleCodeLocation();
+        final TeleCodeLocation getCodeLocation() {
+            return breakpoint.getCodeLocation();
+        }
+
+        /**
+         * @return textual expression of the condition associated with this breakpoint, if any.
+         */
+        final String condition() {
+            return breakpoint.getCondition() == null ? "" : breakpoint.getCondition().toString();
+        }
+
+        final void setCondition(String condition) {
+            try {
+                breakpoint.setCondition(condition);
+                inspection().settings().save();
+            } catch (BreakpointCondition.ExpressionException expressionException) {
+                gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
+            }
+        }
+
+        /**
+         * @return message describing the status of the condition, if any, associated with this breakpoint;
+         * suitable for a ToolTip.
+         */
+        final String conditionStatus() {
+            final String condition = condition();
+            if (!condition.equals("")) {
+                return "Breakpoint condition= \"" + condition + "\"";
+            }
+            return "No breakpoint condition set";
+        }
+
+        /**
+         * @return is this breakpoint currently enabled in the VM?
+         */
+        final boolean isEnabled() {
+            return breakpoint.isEnabled();
+        }
+
+        /**
+         * Updates the enabled state of this breakpoint.
+         *
+         * @param enabled new state for this breakpoint
+         * @return true if the state was actually changed
+         */
+        final boolean setEnabled(boolean enabled) {
+            return breakpoint.setEnabled(enabled);
+        }
+
+        /**
+         * @return whether this breakpoint is still marked deleted after the most recent sweep
+         */
+        final boolean isDeleted() {
+            return deleted;
+        }
+
+        /**
+         * @return the thread in the VM, if any, that is currently stopped at this breakpoint.
+         */
+        final MaxThread triggerThread() {
+            for (MaxThread thread : maxVMState().threads()) {
+                if (thread.breakpoint() == breakpoint) {
+                    return thread;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * @return display name of the thread, if any, that is currently stopped at this breakpoint.
+         */
+        final String triggerThreadName() {
+            return inspection().nameDisplay().longName(triggerThread());
+        }
+
+        /**
+         * sets the "deleted" state, used to update the list of breakpoints in the VM.
+         */
+        final void markDeleted(boolean deleted) {
+            this.deleted = deleted;
         }
 
         /**
@@ -468,75 +559,9 @@ public final class BreakpointsTable extends InspectorTable {
          */
         abstract String locationDescription();
 
-        /**
-         * @return is this breakpoint currently enabled in the VM?
-         */
-        boolean enabled() {
-            return teleBreakpoint().isEnabled();
-        }
-
-        /**
-         * Updates the enabled state of this breakpoint.
-         *
-         * @param enabled new state for this breakpoint
-         * @return true if the state was actually changed
-         */
-        public boolean setEnabled(boolean enabled) {
-            return teleBreakpoint().setEnabled(enabled);
-        }
-
-         /**
-         * @return textual expression of the condition associated with this breakpoint, if any.
-         */
-        String condition() {
-            return teleBreakpoint().condition() == null ? "" : teleBreakpoint().condition().toString();
-        }
-
-        abstract void setCondition(String conditionText);
-
-        /**
-         * @return message describing the status of the condition, if any, associated with this breakpoint;
-         * suitable for a ToolTip.
-         */
-        abstract String conditionStatus();
-
-        /**
-         * @return the thread in the VM, if any, that is currently stopped at this breakpoint.
-         */
-        MaxThread triggerThread() {
-            for (MaxThread thread : maxVMState().threads()) {
-                if (thread.breakpoint() == teleBreakpoint()) {
-                    return thread;
-                }
-            }
-            return null;
-        }
-
-        /**
-         * @return display name of the thread, if any, that is currently stopped at this breakpoint.
-         */
-        String triggerThreadName() {
-            return inspection().nameDisplay().longName(triggerThread());
-        }
-
-        private boolean deleted = false;
-
-        /**
-         * @return whether this breakpoint is still marked deleted after the most recent sweep
-         */
-        boolean isDeleted() {
-            return deleted;
-        }
-
-        /**
-         * sets the "deleted" state, used to update the list of breakpoints in the VM.
-         */
-        void markDeleted(boolean deleted) {
-            this.deleted = deleted;
-        }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return shortName();
         }
 
@@ -561,15 +586,14 @@ public final class BreakpointsTable extends InspectorTable {
 
     private final class TargetBreakpointData extends BreakpointData {
 
-        private final TeleTargetBreakpoint teleTargetBreakpoint;
         private Address codeStart;
         private int location = 0;
         private String shortName;
         private String longName;
 
-        TargetBreakpointData(TeleTargetBreakpoint teleTargetBreakpoint) {
-            this.teleTargetBreakpoint = teleTargetBreakpoint;
-            final Address address = teleTargetBreakpoint.teleCodeLocation().targetCodeInstructionAddress();
+        TargetBreakpointData(MaxBreakpoint targetBreakpoint) {
+            super(targetBreakpoint);
+            final Address address = getCodeLocation().targetCodeInstructionAddress();
             final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 shortName = inspection().nameDisplay().shortName(teleTargetMethod);
@@ -594,11 +618,6 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         @Override
-        TeleBreakpoint teleBreakpoint() {
-            return teleTargetBreakpoint;
-        }
-
-        @Override
         String kindTag() {
             return "T";
         }
@@ -610,7 +629,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String shortName() {
-            String description = teleTargetBreakpoint.getDescription();
+            String description = breakpoint().getDescription();
             return description != null && !description.equals("") ?  description  : shortName;
         }
 
@@ -626,43 +645,23 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String locationDescription() {
-            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + teleTargetBreakpoint.teleCodeLocation().targetCodeInstructionAddress().toHexString();
-        }
-
-        @Override
-        void setCondition(String condition) {
-            try {
-                teleTargetBreakpoint.setCondition(condition);
-                inspection().settings().save();
-            } catch (BreakpointCondition.ExpressionException expressionException) {
-                gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
-            }
-        }
-
-        @Override
-        String conditionStatus() {
-            final String condition = condition();
-            if (!condition.equals("")) {
-                return "Breakpoint condition= \"" + condition + "\"";
-            }
-            return "No breakpoint condition set";
+            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + getCodeLocation().targetCodeInstructionAddress().toHexString();
         }
 
         Address address() {
-            return teleTargetBreakpoint.teleCodeLocation().targetCodeInstructionAddress();
+            return getCodeLocation().targetCodeInstructionAddress();
         }
     }
 
     private final class BytecodeBreakpointData extends BreakpointData {
 
-        private final TeleBytecodeBreakpoint teleBytecodeBreakpoint;
         private final TeleBytecodeBreakpoint.Key key;
         String shortName;
         String longName;
 
-        BytecodeBreakpointData(TeleBytecodeBreakpoint teleBytecodeBreakpoint) {
-            this.teleBytecodeBreakpoint = teleBytecodeBreakpoint;
-            key = teleBytecodeBreakpoint.key();
+        BytecodeBreakpointData(MaxBreakpoint bytecodeBreakpoint) {
+            super(bytecodeBreakpoint);
+            key = bytecodeBreakpoint.getCodeLocation().key();
             shortName = key.holder().toJavaString(false) + "." + key.name().toString() + key.signature().toJavaString(false,  false);
 
             longName = "Method: " + key.signature().resultDescriptor().toJavaString(false) + " " + key.name().toString() + key.signature().toJavaString(false,  false);
@@ -670,11 +669,6 @@ public final class BreakpointsTable extends InspectorTable {
                 longName += " + " + key.position();
             }
             longName = longName + " in " + key.holder().toJavaString();
-        }
-
-        @Override
-        TeleBreakpoint teleBreakpoint() {
-            return teleBytecodeBreakpoint;
         }
 
         @Override
@@ -705,16 +699,6 @@ public final class BreakpointsTable extends InspectorTable {
         @Override
         String locationDescription() {
             return "Bytecode position=" + key.position();
-        }
-
-        @Override
-        void setCondition(String conditionText) {
-            throw ProgramError.unexpected("unimplemented");
-        }
-
-        @Override
-        String conditionStatus() {
-            return "Bytecode breakpoint conditions not supported yet";
         }
 
         TeleBytecodeBreakpoint.Key key() {

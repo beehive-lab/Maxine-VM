@@ -745,13 +745,16 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeResume(JNIEnv *env, jclass c, 
     return result == 0;
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeWait(JNIEnv *env, jclass c, jint tgid, jint tid, jboolean allTasks) {
     if (allTasks) {
-        return process_wait_all_threads_stopped(tgid) > 0;
+        if (process_wait_all_threads_stopped(tgid) > 0) {
+            return PS_STOPPED;
+        }
+        return PS_TERMINATED;
     }
     c_UNIMPLEMENTED();
-    return false;
+    return PS_UNKNOWN;
 }
 
 JNIEXPORT jboolean JNICALL

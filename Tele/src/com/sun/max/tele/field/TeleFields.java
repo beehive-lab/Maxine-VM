@@ -126,6 +126,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceIntFieldAccess Hub_referenceMapStartIndex = new TeleInstanceIntFieldAccess(Hub.class, "referenceMapStartIndex");
     public final TeleInstanceReferenceFieldAccess HybridClassActor_constantPool = new TeleInstanceReferenceFieldAccess(HybridClassActor.class, "constantPool", ConstantPool.class);
     public final TeleStaticReferenceFieldAccess ImmortalHeap_immortalHeap = new TeleStaticReferenceFieldAccess(ImmortalHeap.class, "immortalHeap", ImmortalMemoryRegion.class);
+    public final TeleStaticWordFieldAccess Inspectable_info = new TeleStaticWordFieldAccess(Inspectable.class, "info");
     public final TeleStaticIntFieldAccess InspectableClassInfo_classActorCount = new TeleStaticIntFieldAccess(InspectableClassInfo.class, "classActorCount");
     public final TeleStaticReferenceFieldAccess InspectableClassInfo_classActors = new TeleStaticReferenceFieldAccess(InspectableClassInfo.class, "classActors", ClassActor[].class);
     public final TeleStaticWordFieldAccess InspectableHeapInfo_cardTablePointer = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "cardTablePointer");
@@ -143,7 +144,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_referenceMapEditor = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "referenceMapEditor", AtomicReference.class);
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_stackFrameLayout = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "stackFrameLayout", JitStackFrameLayout.class);
     public final TeleInstanceCharFieldAccess Kind_character = new TeleInstanceCharFieldAccess(Kind.class, "character");
-    public final TeleStaticWordFieldAccess MaxineMessenger_info = new TeleStaticWordFieldAccess(MaxineMessenger.class, "info");
     public final TeleInstanceReferenceFieldAccess MemberActor_holder = new TeleInstanceReferenceFieldAccess(MemberActor.class, "holder", ClassActor.class);
     public final TeleInstanceIntFieldAccess MemberActor_memberIndex = new TeleInstanceIntFieldAccess(MemberActor.class, "memberIndex");
     public final TeleInstanceReferenceFieldAccess ObjectReferenceValue_value = new TeleInstanceReferenceFieldAccess(ObjectReferenceValue.class, "value", Object.class);

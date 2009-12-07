@@ -35,11 +35,11 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.eir.EirTargetEmitter.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.tele.*;
 
 /**
  * @author Bernd Mathiske
@@ -315,7 +315,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             // at target runtime, each method gets linked individually right after generating it:
             targetMethod.linkDirectCalls();
         }
-        BytecodeBreakpointMessage.makeTargetBreakpoints(targetMethod);
+        CompilationScheme.Static.notifyCompilationComplete(targetMethod);
 
         eirMethod.cleanupAfterEmitting();
     }
