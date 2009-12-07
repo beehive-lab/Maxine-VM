@@ -410,8 +410,6 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             ProgramError.check(!callEntryPoint.isZero());
             compilerTargetCodeBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(callEntryPoint);
             compilerTargetCodeBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
-
-                @Override
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
                     final TeleVM teleVM = Factory.this.teleVM;
 

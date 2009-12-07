@@ -396,7 +396,7 @@ public class C1XTargetMethod extends TargetMethod {
             // TODO: use a byte copy, not a bit by bit copy
             for (int j = 0; j < 8; j++) {
                 if (0 != (stackMap[i] >> j & 1)) {
-                   setFrameReferenceMapBit(index, i);
+                    setFrameReferenceMapBit(index, i);
                 }
             }
         }
