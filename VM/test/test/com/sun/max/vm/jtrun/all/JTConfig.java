@@ -339,7 +339,7 @@ public class JTConfig {
         jtt.jasm.BC_fcmpg.class,
         jtt.jasm.BC_fcmpg2.class,
         jtt.jasm.BC_fcmpl.class,
-        jtt.jasm.BC_fcmpg2.class,
+        jtt.jasm.BC_fcmpl2.class,
         jtt.jasm.BC_lcmp.class,
         jtt.jasm.Invokevirtual_private00.class,
         jtt.jasm.Loop00.class,

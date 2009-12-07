@@ -389,7 +389,7 @@ public class JTRuns {
             case 304: jtt_jasm_BC_fcmpg(); break;
             case 305: jtt_jasm_BC_fcmpg2(); break;
             case 306: jtt_jasm_BC_fcmpl(); break;
-            case 307: jtt_jasm_BC_fcmpg2(); break;
+            case 307: jtt_jasm_BC_fcmpl2(); break;
             case 308: jtt_jasm_BC_lcmp(); break;
             case 309: jtt_jasm_Invokevirtual_private00(); break;
             case 310: jtt_jasm_Loop00(); break;
@@ -10882,103 +10882,103 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_jasm_BC_fcmpg2() {
-            begin("jtt.jasm.BC_fcmpg2");
+        static void jtt_jasm_BC_fcmpl2() {
+            begin("jtt.jasm.BC_fcmpl2");
             String runString = null;
             try {
             // (0,0) == 0
                 runString = "(0,0)";
-                if (0 != jtt.jasm.BC_fcmpg2.test(0, 0)) {
+                if (0 != jtt.jasm.BC_fcmpl2.test(0, 0)) {
                     fail(runString);
                     return;
                 }
             // (0,1) == -1
                 runString = "(0,1)";
-                if (-1 != jtt.jasm.BC_fcmpg2.test(0, 1)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(0, 1)) {
                     fail(runString);
                     return;
                 }
-            // (0,2) == 1
+            // (0,2) == -1
                 runString = "(0,2)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(0, 2)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(0, 2)) {
                     fail(runString);
                     return;
                 }
             // (0,3) == -1
                 runString = "(0,3)";
-                if (-1 != jtt.jasm.BC_fcmpg2.test(0, 3)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(0, 3)) {
                     fail(runString);
                     return;
                 }
             // (1,0) == 1
                 runString = "(1,0)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(1, 0)) {
+                if (1 != jtt.jasm.BC_fcmpl2.test(1, 0)) {
                     fail(runString);
                     return;
                 }
             // (1,1) == 0
                 runString = "(1,1)";
-                if (0 != jtt.jasm.BC_fcmpg2.test(1, 1)) {
+                if (0 != jtt.jasm.BC_fcmpl2.test(1, 1)) {
                     fail(runString);
                     return;
                 }
-            // (1,2) == 1
+            // (1,2) == -1
                 runString = "(1,2)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(1, 2)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(1, 2)) {
                     fail(runString);
                     return;
                 }
             // (1,3) == 1
                 runString = "(1,3)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(1, 3)) {
+                if (1 != jtt.jasm.BC_fcmpl2.test(1, 3)) {
                     fail(runString);
                     return;
                 }
-            // (2,0) == 1
+            // (2,0) == -1
                 runString = "(2,0)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(2, 0)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(2, 0)) {
                     fail(runString);
                     return;
                 }
-            // (2,1) == 1
+            // (2,1) == -1
                 runString = "(2,1)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(2, 1)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(2, 1)) {
                     fail(runString);
                     return;
                 }
-            // (2,2) == 1
+            // (2,2) == -1
                 runString = "(2,2)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(2, 2)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(2, 2)) {
                     fail(runString);
                     return;
                 }
-            // (2,3) == 1
+            // (2,3) == -1
                 runString = "(2,3)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(2, 3)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(2, 3)) {
                     fail(runString);
                     return;
                 }
             // (3,0) == 1
                 runString = "(3,0)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(3, 0)) {
+                if (1 != jtt.jasm.BC_fcmpl2.test(3, 0)) {
                     fail(runString);
                     return;
                 }
             // (3,1) == -1
                 runString = "(3,1)";
-                if (-1 != jtt.jasm.BC_fcmpg2.test(3, 1)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(3, 1)) {
                     fail(runString);
                     return;
                 }
-            // (3,2) == 1
+            // (3,2) == -1
                 runString = "(3,2)";
-                if (1 != jtt.jasm.BC_fcmpg2.test(3, 2)) {
+                if (-1 != jtt.jasm.BC_fcmpl2.test(3, 2)) {
                     fail(runString);
                     return;
                 }
             // (3,3) == 0
                 runString = "(3,3)";
-                if (0 != jtt.jasm.BC_fcmpg2.test(3, 3)) {
+                if (0 != jtt.jasm.BC_fcmpl2.test(3, 3)) {
                     fail(runString);
                     return;
                 }
