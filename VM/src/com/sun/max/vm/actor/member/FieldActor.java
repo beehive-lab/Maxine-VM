@@ -219,11 +219,20 @@ public class FieldActor extends MemberActor {
                         // the values they assign to static final fields are frozen in the boot image.
                         return true;
                     }
+                    if (JDKInterceptor.hasMutabilityOverride(this)) {
+                        return false;
+                    }
                 }
 
                 // This is now a field in a class with a class initializer:
                 // before the class initializer is executed, the field's value is not guaranteed to be immutable.
                 return holder().isInitialized();
+            }
+
+            if (MaxineVM.isHosted()) {
+                if (JDKInterceptor.hasMutabilityOverride(this)) {
+                    return false;
+                }
             }
 
             // Non-static final field:
@@ -236,6 +245,7 @@ public class FieldActor extends MemberActor {
         }
         return false;
     }
+
 
     /**
      * Determines if the value read from this field will always be the same if it is a non-default value for this

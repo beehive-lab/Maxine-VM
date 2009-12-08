@@ -15,11 +15,11 @@ export VEE_TEST_OPTIONS="-timing-runs=5 -fail-fast=f -tests=specjvm98,dacapo -sp
 if [ x"$1" = xjit ]; then
     shift
 
-    echo jit-c1x0
-    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=jit-c1x0 > $RESULTS_DIR/jit-c1x0
+#    echo jit-c1x0
+#    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=jit-c1x0 > $RESULTS_DIR/jit-c1x0
 
-    echo jit-c1x0x
-    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=jit-c1x0x > $RESULTS_DIR/jit-c1x0x
+#    echo jit-c1x0x
+#    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=jit-c1x0x > $RESULTS_DIR/jit-c1x0x
 
     echo jit-c1x1
     $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=jit-c1x1 > $RESULTS_DIR/jit-c1x1
@@ -37,11 +37,11 @@ fi
 
 if [ x"$1" = xopt ]; then
 
-    echo opt-c1x0
-    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=opt-c1x0 > $RESULTS_DIR/opt-c1x0
+#    echo opt-c1x0
+#    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=opt-c1x0 > $RESULTS_DIR/opt-c1x0
 
-    echo opt-c1x0x
-    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=opt-c1x0x > $RESULTS_DIR/opt-c1x0x
+#    echo opt-c1x0x
+#    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=opt-c1x0x > $RESULTS_DIR/opt-c1x0x
     
     echo opt-c1x1
     $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=std -maxvm-config-alias=opt-c1x1 > $RESULTS_DIR/opt-c1x1
