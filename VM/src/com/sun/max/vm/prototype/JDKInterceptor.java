@@ -230,6 +230,12 @@ public final class JDKInterceptor {
         return null;
     }
 
+    public static boolean hasMutabilityOverride(FieldActor fieldActor) {
+        InterceptedField f = getInterceptedField(fieldActor);
+        return f != null && f.mutabilityOverride != null && f.mutabilityOverride;
+    }
+
+
     /**
      * Builds a map that stores the intercepted fields for each class.
      * @param specification an array of objects consisting of a ClassRef followed by a non-empty sequence of either
@@ -311,7 +317,7 @@ public final class JDKInterceptor {
             final char lastChar = name.charAt(name.length() - 1);
             if (lastChar == '-' || lastChar == '+') {
                 this.name = name.substring(0, name.length() - 1);
-                mutabilityOverride = Boolean.valueOf(lastChar == '+');
+                mutabilityOverride = (lastChar == '+');
             } else {
                 this.name = name;
                 mutabilityOverride = null;
