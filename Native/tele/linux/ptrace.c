@@ -73,31 +73,6 @@ const char* ptraceEventName(int event) {
     return "<unknown>";
 }
 
-#if 0
-/* Linux ptrace() is unreliable, but apparently retrying after descheduling helps. */
-long ptrace_withRetries(int request, int processID, void *address, void *data) {
-    int microSeconds = 100000;
-    int i = 0;
-    while (true) {
-        long result = ptrace(request, processID, address, data);
-        int error = errno;
-        if (error == 0) {
-            return result;
-        }
-        if (error != ESRCH || i >= 150) {
-            return -1;
-        }
-        usleep(microSeconds);
-        i++;
-        if (i % 10 == 0) {
-            log_println("ptrace retrying");
-        }
-    }
-}
-#else
-#define ptrace_withRetries ptrace
-#endif
-
 /*
  * Used to enforce the constraint that all access of the ptraced process from the same task/thread.
  * This value is initialized in linuxTask.c.
@@ -133,7 +108,7 @@ long _ptrace(POS_PARAMS, int request, pid_t pid, void *address, void *data) {
         log_print("%s:%d ptrace(%s, %d, %p, %p)", file, line, requestName, pid, address, data);
     }
     errno = 0;
-    result = ptrace_withRetries(request, pid, address, data);
+    result = ptrace(request, pid, address, data);
     int error = errno;
     if (trace) {
         if (request == PT_READ_D || request == PT_READ_I || request == PT_READ_U) {
