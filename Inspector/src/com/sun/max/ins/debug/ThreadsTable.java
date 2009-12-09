@@ -266,9 +266,13 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
-            final String status = thread.state().toString();
-            setText(status);
-            setToolTipText("Status:  " + status);
+            final ThreadState threadState = thread.state();
+            setText(threadState.toString());
+            String toolTipText = "Thread status: " + threadState;
+            if (threadState == ThreadState.BREAKPOINT) {
+                toolTipText = toolTipText + "(" + thread.breakpoint().getDescription() + ")";
+            }
+            setToolTipText(toolTipText);
             setForeground(getRowTextColor(row));
             setBackground(cellBackgroundColor(isSelected));
             return this;
