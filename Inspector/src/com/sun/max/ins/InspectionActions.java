@@ -3050,12 +3050,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         if (virtualMethodActor.name == SymbolTable.INIT) {
                             final TeleClassMethodActor teleClassMethodActor = maxVM().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
                             if (teleClassMethodActor != null) {
-                                MaxBreakpoint targetBreakpoint = null;
+                                MaxBreakpoint breakpoint = null;
                                 for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
-                                    targetBreakpoint = teleTargetMethod.setTargetBreakpointAtEntry();
+                                    breakpoint = teleTargetMethod.setTargetBreakpointAtEntry();
+                                    breakpoint.setDescription("Object initializer for class " + classActor.simpleName());
                                 }
-                                if (targetBreakpoint != null) {
-                                    focus().setBreakpoint(targetBreakpoint);
+                                if (breakpoint != null) {
+                                    focus().setBreakpoint(breakpoint);
                                 }
                             }
                         }
