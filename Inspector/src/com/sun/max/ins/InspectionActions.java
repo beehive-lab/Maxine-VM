@@ -3954,7 +3954,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                maxVM().resume(false, false);
+                maxVM().resume(false, true);
             } catch (Exception exception) {
                 gui().errorMessage("Run to instruction could not be performed.", exception.toString());
             }
@@ -3993,7 +3993,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    maxVM().runToInstruction(returnAddress, false, true);
+                    maxVM().runToInstruction(returnAddress, false, false);
                 } catch (Exception exception) {
                     gui().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
                 }
@@ -4034,7 +4034,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    maxVM().runToInstruction(returnAddress, false, false);
+                    maxVM().runToInstruction(returnAddress, false, true);
                 } catch (Exception exception) {
                     gui().errorMessage("Return from frame could not be performed.", exception.toString());
                 }
@@ -4079,7 +4079,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address ttargetAddress = (address != null) ? address : focus().codeLocation().targetCodeInstructionAddress();
             if (!ttargetAddress.isZero()) {
                 try {
-                    maxVM().runToInstruction(ttargetAddress, false, true);
+                    maxVM().runToInstruction(ttargetAddress, false, false);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to instruction (ignoring breakpoints) could not be performed.", exception);
                 }
@@ -4135,7 +4135,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address targetAddress = (address != null) ? address : focus().codeLocation().targetCodeInstructionAddress();
             if (!targetAddress.isZero()) {
                 try {
-                    maxVM().runToInstruction(targetAddress, false, false);
+                    maxVM().runToInstruction(targetAddress, false, true);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to selection instruction could not be performed.", exception);
                 }
@@ -4191,7 +4191,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
                 if (!nextCallAddress.isZero()) {
                     try {
-                        maxVM().runToInstruction(nextCallAddress, false, true);
+                        maxVM().runToInstruction(nextCallAddress, false, false);
                     } catch (Exception exception) {
                         throw new InspectorError("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
                     }
@@ -4236,7 +4236,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
                 if (!nextCallAddress.isZero()) {
                     try {
-                        maxVM().runToInstruction(nextCallAddress, false, false);
+                        maxVM().runToInstruction(nextCallAddress, false, true);
                     } catch (Exception exception) {
                         throw new InspectorError("Run to next call instruction could not be performed.", exception);
                     }
@@ -4314,7 +4314,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             try {
-                maxVM().stepOver(thread, false, true);
+                maxVM().stepOver(thread, false, false);
             } catch (Exception exception) {
                 gui().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
             }
@@ -4353,7 +4353,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             try {
-                maxVM().stepOver(thread, false, false);
+                maxVM().stepOver(thread, false, true);
             } catch (Exception exception) {
                 gui().errorMessage("Step over could not be performed.", exception.toString());
             }

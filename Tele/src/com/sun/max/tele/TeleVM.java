@@ -1579,8 +1579,8 @@ public abstract class TeleVM implements MaxVM {
         return TeleInterpreter.execute(this, classMethodActor, arguments);
     }
 
-    public void resume(final boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
-        teleProcess.controller().resume(synchronous, disableBreakpoints);
+    public void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
+        teleProcess.controller().resume(synchronous, withClientBreakpoints);
     }
 
     public void singleStep(final MaxThread maxThread, boolean synchronous) throws InvalidProcessRequestException, OSExecutionRequestException {
@@ -1588,13 +1588,13 @@ public abstract class TeleVM implements MaxVM {
         teleProcess.controller().singleStep(teleNativeThread, synchronous);
     }
 
-    public void stepOver(final MaxThread maxThread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
+    public void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
         final TeleNativeThread teleNativeThread = (TeleNativeThread) maxThread;
-        teleProcess.controller().stepOver(teleNativeThread, synchronous, disableBreakpoints);
+        teleProcess.controller().stepOver(teleNativeThread, synchronous, withClientBreakpoints);
     }
 
-    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean disableBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException {
-        teleProcess.controller().runToInstruction(instructionPointer, synchronous, disableBreakpoints);
+    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException {
+        teleProcess.controller().runToInstruction(instructionPointer, synchronous, withClientBreakpoints);
     }
 
     public final   void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
@@ -2057,7 +2057,7 @@ public abstract class TeleVM implements MaxVM {
                     // Nobody registered for special commands => resume the Vm.
                     try {
                         LOGGER.info("Client tried to resume the VM!");
-                        TeleVM.this.resume(false, false);
+                        TeleVM.this.resume(false, true);
                     } catch (OSExecutionRequestException e) {
                         LOGGER.log(Level.SEVERE,
                                 "Unexpected error while resuming the VM", e);

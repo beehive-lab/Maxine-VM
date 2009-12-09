@@ -874,12 +874,12 @@ public interface MaxVM {
     /**
      * Resumes execution of the VM.
      *
-     * @param synchronous should the call wait for the execution to complete.
-     * @param disableBreakpoints should existing breakpoints be disabled for the duration of the execution.
+     * @param synchronous should the call wait for the execution to complete?
+     * @param withClientBreakpoints should client breakpoints be enabled during execution?
      * @throws InvalidProcessRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void resume(final boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM.
@@ -895,23 +895,23 @@ public interface MaxVM {
      * Single steps a thread in the VM; if the instruction is a call, then resume VM execution until call returns.
      *
      * @param thread a thread in the VM.
-     * @param synchronous should the call wait for the execution to complete.
-     * @param disableBreakpoints should existing breakpoints be disabled for the duration of the execution.
+     * @param synchronous should the call wait for the execution to complete?
+     * @param withClientBreakpoints should client breakpoints be enabled during execution?
      * @throws InvalidProcessRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void stepOver(final MaxThread maxThread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
 
     /**
      * Resumes execution of the VM with a temporary breakpoint set.
      *
      * @param instructionPointer location where temporary breakpoint should be set.
-     * @param synchronous should the call wait for the execution to complete.
-     * @param disableBreakpoints should existing breakpoints be disabled for the duration of the execution.
+     * @param synchronous should the call wait for the execution to complete?
+     * @param withClientBreakpoints should client breakpoints be enabled duration of the execution?
      * @throws OSExecutionRequestException execution failed in OS.
      * @throws InvalidProcessRequestException execution not permissible in current VM state.
      */
-    void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean disableBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException;
+    void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException;
 
     /**
      * Pauses the running VM.
