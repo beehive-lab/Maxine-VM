@@ -83,9 +83,9 @@ public final class LinuxTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected boolean waitUntilStopped() {
-        final boolean result = task.waitUntilStopped(true);
-        if (!result) {
+    protected ProcessState waitUntilStopped() {
+        final ProcessState result = task.waitUntilStopped(true);
+        if (result != ProcessState.STOPPED) {
             task.close();
         }
         return result;

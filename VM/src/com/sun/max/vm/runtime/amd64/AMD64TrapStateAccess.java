@@ -173,23 +173,29 @@ public final class AMD64TrapStateAccess extends TrapStateAccess {
         Log.print(' ');
         logFlags(flags.asAddress().toInt());
         Log.println();
-        boolean seenNonZeroXMM = false;
-        for (String xmm : xmmNames) {
-            final double value = register.readDouble(0);
-            if (value != 0) {
-                if (!seenNonZeroXMM) {
-                    Log.println("Non-zero XMM registers:");
-                    seenNonZeroXMM = true;
+        if (false)  {
+            /* Doug: This code is disabled until there is a mechanism for clearing and restoring'
+             * the %mxcsr (floating point status register) before and after the printing.
+             * Without this, the printing of a float or double seems to cause a trap
+             * due to some value in %mxcsr. */
+            boolean seenNonZeroXMM = false;
+            for (String xmm : xmmNames) {
+                final double value = register.readDouble(0);
+                if (value != 0) {
+                    if (!seenNonZeroXMM) {
+                        Log.println("Non-zero XMM registers:");
+                        seenNonZeroXMM = true;
+                    }
+                    Log.print("  ");
+                    Log.print(xmm);
+                    Log.print("=");
+                    Log.print(value);
+                    Log.print("  {bits: ");
+                    Log.print(Address.fromLong(Double.doubleToRawLongBits(value)));
+                    Log.println("}");
                 }
-                Log.print("  ");
-                Log.print(xmm);
-                Log.print("=");
-                Log.print(value);
-                Log.print("  {bits: ");
-                Log.print(Address.fromLong(Double.doubleToRawLongBits(value)));
-                Log.println("}");
+                register = register.plus(Word.size() * 2);
             }
-            register = register.plus(Word.size() * 2);
         }
         final int trapNumber = getTrapNumber(trapState);
         Log.print("Trap number: ");

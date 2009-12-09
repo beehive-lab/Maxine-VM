@@ -494,7 +494,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
                     }
                     break;
                 case RUNNING:
-                case NO_PROCESS:
+                case UNKNOWN:
                     menuBar.setStateColor(inspection.style().vmRunningBackgroundColor());
                     break;
                 case TERMINATED:

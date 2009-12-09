@@ -1711,9 +1711,9 @@ public class IRInterpreter {
 
         private void printInstructionState(Instruction instruction, boolean stateAfter) {
             if (stateAfter) {
-                System.out.println("instruction: " + instruction.name() + "   ID: " + instruction.id + "   BCI: " + instruction.bci());
+                System.out.println("instruction: " + instruction.name() + "   ID: " + instruction.id() + "   BCI: " + instruction.bci());
             } else {
-                System.out.println("State at " + instruction.name() + "   ID: " + instruction.id);
+                System.out.println("State at " + instruction.name() + "   ID: " + instruction.id());
             }
             if (stateAfter) {
                 printState(instruction.stateAfter());

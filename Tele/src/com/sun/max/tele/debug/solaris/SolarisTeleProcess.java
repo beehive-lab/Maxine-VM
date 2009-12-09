@@ -114,12 +114,12 @@ public final class SolarisTeleProcess extends TeleProcess {
     /**
      * Waits until this process is stopped.
      */
-    private static native boolean nativeWait(long processHandle);
+    private static native int nativeWait(long processHandle);
 
     @Override
-    protected boolean waitUntilStopped() {
-        final boolean result = nativeWait(processHandle);
-        return result;
+    protected ProcessState waitUntilStopped() {
+        final int result = nativeWait(processHandle);
+        return ProcessState.VALUES[result];
     }
 
     private native void nativeGatherThreads(long processHandle, AppendableSequence<TeleNativeThread> threads, long threadLocalsList, long primordialVmThreadLocals);

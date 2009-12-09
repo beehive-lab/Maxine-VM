@@ -32,7 +32,7 @@ import com.sun.c1x.util.*;
  * This class implements a data-flow analysis to remove redundant null checks
  * and deoptimization info for instructions that cannot ever produce {@code NullPointerException}.
  *
- * This implementation uses an optimistic dataflow analysis by it attempting to visit all predecessors
+ * This implementation uses an optimistic dataflow analysis by attempting to visit all predecessors
  * of a block before visiting the block itself. For this purpose it uses the block numbers computed by
  * the {@link com.sun.c1x.graph.BlockMap} during graph construction, which may not actually be
  * a valid reverse post-order number (due to inlining and any previous optimizations).
@@ -65,26 +65,44 @@ public class NullCheckEliminator extends ValueVisitor {
         }
     }
 
+    static class BlockInfo {
+        // used in first pass
+        final BlockBegin block;
+        boolean marked;
+        BitMap localOut;
+        BitMap localExcept;
+        List<Value> localUses;
+        // used in iteration and flow sensitivity
+        IfEdge ifEdge;
+        BitMap localIn;
+
+        BlockInfo(BlockBegin b) {
+            this.block = b;
+        }
+    }
+
+    static class ValueInfo {
+        final Value value;
+        final int globalIndex;
+
+        ValueInfo(Value value, int index) {
+            this.value = value;
+            globalIndex = index;
+        }
+    }
+
     final IR ir;
     final BlockWorkList workList = new BlockWorkList();
 
-    boolean requiresIteration;
-
-    // maps used in first pass
-    final HashSet<BlockBegin> marked = new HashSet<BlockBegin>();
-    final HashMap<BlockBegin, HashSet<Value>> localOut = new HashMap<BlockBegin, HashSet<Value>>();
-    final HashMap<BlockBegin, HashSet<Value>> localExcept = new HashMap<BlockBegin, HashSet<Value>>();
-    final HashMap<BlockBegin, List<Value>> localUses = new HashMap<BlockBegin, List<Value>>();
-    final HashMap<BlockBegin, IfEdge> ifEdges = new HashMap<BlockBegin, IfEdge>();
+    final ArrayList<BlockInfo> blockInfos = new ArrayList<BlockInfo>(5);
+    final ArrayList<ValueInfo> valueInfos = new ArrayList<ValueInfo>(5);
+    final ArrayList<BlockInfo> remainingUses = new ArrayList<BlockInfo>(5);
 
     // maps used only in iteration
-    HashMap<Value, Integer> index;
-    HashMap<BlockBegin, BitMap> inBitmaps;
-    HashMap<BlockBegin, BitMap> outBitmaps;
+    boolean requiresIteration;
     int maximumIndex;
 
     BitMap currentBitMap;
-    HashSet<Value> currentNonNulls;
     List<Value> currentUses;
 
     /**
@@ -97,21 +115,30 @@ public class NullCheckEliminator extends ValueVisitor {
     }
 
     private void optimize() {
-        marked.add(ir.startBlock);
-        processBlock(ir.startBlock);
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.NCE.start();
+        }
+        BlockInfo start = getBlockInfo(ir.startBlock);
+        mark(start);
+        processBlock(start);
         while (!workList.isEmpty()) {
-            processBlock(workList.removeFromWorkList());
+            processBlock(getBlockInfo(workList.removeFromWorkList()));
         }
         if (requiresIteration && C1XOptions.OptIterativeNCE) {
             // there was a loop, or blocks were not visited in reverse post-order;
             // iteration is required to compute the in sets for a second pass
             iterate();
         }
+        clearInfo();
+        if (C1XOptions.PrintTimers) {
+            C1XTimers.NCE.stop();
+        }
     }
 
-    private void processBlock(BlockBegin block) {
+    private void processBlock(BlockInfo info) {
+        BlockBegin block = info.block;
         // first pass on a block
-        computeLocalInSet(block);
+        computeLocalInSet(info);
         // process any phis in the block
         for (Phi phi : block.stateBefore().allPhis(block)) {
             visitPhi(phi);
@@ -122,118 +149,107 @@ public class NullCheckEliminator extends ValueVisitor {
         }
         if (!currentUses.isEmpty()) {
             // remember any localUses in this block for later iterative processing
-            localUses.put(block, currentUses);
+            info.localUses = currentUses;
+            remainingUses.add(info);
         }
-        processSuccessors(block.end().successors());
-        processSuccessors(block.exceptionHandlerBlocks());
+        queueSuccessors(block.end().successors());
+        queueSuccessors(block.exceptionHandlerBlocks());
     }
 
-    private void processSuccessors(List<BlockBegin> successorList) {
+    private void queueSuccessors(List<BlockBegin> successorList) {
         for (BlockBegin succ : successorList) {
-            if (!marked.contains(succ)) {
+            BlockInfo info = getBlockInfo(succ);
+            if (!isMarked(info)) {
                 workList.addSorted(succ, succ.depthFirstNumber());
-                marked.add(succ);
+                mark(info);
             }
         }
     }
 
-    private void computeLocalInSet(BlockBegin block) {
+    private void computeLocalInSet(BlockInfo info) {
+        BlockBegin block = info.block;
         // compute the initial {in} set based on the {localOut} sets of predecessors, if possible
-        currentNonNulls = null;
+        currentBitMap = null;
         currentUses = new ArrayList<Value>();
-        HashMap<BlockBegin, HashSet<Value>> map = block.isExceptionEntry() ? localExcept : localOut;
         if (block.numberOfPreds() == 0) {
             // no predecessors => start block
-            assert block == ir.startBlock;
-            currentNonNulls = new HashSet<Value>();
+            assert block == ir.startBlock : "block without predecessors should be start block";
+            currentBitMap = newBitMap();
         } else {
             // block has at least one predecessor
             for (BlockBegin pred : block.predecessors()) {
-                if (map.get(pred) == null) {
+                if (getPredecessorMap(pred, block.isExceptionEntry()) == null) {
                     // one of the predecessors of this block has not been visited,
                     // we have to be conservative and start with nothing known
-                    currentNonNulls = new HashSet<Value>();
+                    currentBitMap = newBitMap();
                     requiresIteration = true;
                 }
             }
-            if (currentNonNulls == null) {
+            if (currentBitMap == null) {
                 // all the predecessors have been visited, compute the intersection of their {localOut} sets
                 for (BlockBegin pred : block.predecessors()) {
-                    currentNonNulls = intersectLocalOut(pred, currentNonNulls, map.get(pred), block);
+                    BlockInfo predInfo = getBlockInfo(pred);
+                    BitMap predMap = getPredecessorMap(predInfo, block.isExceptionEntry());
+                    currentBitMap = intersectLocalOut(predInfo, currentBitMap, predMap, block);
                 }
             }
         }
-        assert currentNonNulls != null;
+        assert currentBitMap != null : "current bitmap should be computed one or the other way";
         // if there are exception handlers for this block, then clone {in} and put it in {localExcept}
         if (block.numberOfExceptionHandlers() > 0) {
-            HashSet<Value> e = Util.uncheckedCast(currentNonNulls.clone());
-            localExcept.put(block, e);
+            info.localExcept = currentBitMap.copy();
         }
-        localOut.put(block, currentNonNulls);
+        info.localOut = currentBitMap;
     }
 
-    private HashSet<Value> intersectLocalOut(BlockBegin pred, HashSet<Value> current, HashSet<Value> n, BlockBegin succ) {
-        n = intersectFlowSensitive(pred, n, succ);
+    private BitMap intersectLocalOut(BlockInfo pred, BitMap current, BitMap predMap, BlockBegin succ) {
+        predMap = intersectFlowSensitive(pred, predMap, succ);
         if (current == null) {
-            current = Util.uncheckedCast(n.clone());
+            current = predMap.copy();
         } else {
-            current.retainAll(n);
+            current.setIntersect(predMap);
         }
         return current;
     }
 
-    private HashSet<Value> intersectFlowSensitive(BlockBegin pred, HashSet<Value> n, BlockBegin succ) {
+    private BitMap intersectFlowSensitive(BlockInfo pred, BitMap n, BlockBegin succ) {
         if (C1XOptions.OptFlowSensitiveNCE) {
             // check to see if there is an if edge between these two blocks
-            IfEdge e = ifEdges.get(pred);
-            if (e != null && e.succ == succ) {
+            if (pred.ifEdge != null && pred.ifEdge.succ == succ) {
                 // if there is a special edge between pred and block, add the checked instruction
-                n = Util.uncheckedCast(n.clone());
-                n.add(e.checked);
+                n = n.copy();
+                setValue(pred.ifEdge.checked, n);
             }
         }
         return n;
     }
 
     private void iterate() {
-        // the previous phase calculated all the {locaOut} sets; use iteration to
+        // the previous phase calculated all the {localOut} sets; use iteration to
         // calculate the {in} sets
-        if (localUses.size() > 0) {
+        if (remainingUses.size() > 0) {
             // only perform iterative flow analysis if there are checks remaining to eliminate
             C1XMetrics.NullCheckIterations++;
-            index = new HashMap<Value, Integer>();
-            inBitmaps = new HashMap<BlockBegin, BitMap>();
-            outBitmaps = new HashMap<BlockBegin, BitMap>();
-            marked.clear();
+            clearMarked();
             // start off by propagating a new set to the start block
-            propagate(ir.startBlock, new BitMap(32), ir.startBlock);
+            propagate(getBlockInfo(ir.startBlock), newBitMap(), ir.startBlock);
             while (!workList.isEmpty()) {
-                BlockBegin begin = workList.removeFromWorkList();
-                marked.remove(begin);
-                iterateBlock(begin);
+                BlockInfo block = getBlockInfo(workList.removeFromWorkList());
+                unmark(block);
+                iterateBlock(block);
             }
             // now that the fixed point is reached, reprocess any remaining localUses
             currentUses = null; // the list won't be needed this time
-            for (BlockBegin block : localUses.keySet()) {
-                reprocessUses(inBitmaps.get(block), localUses.get(block));
+            for (BlockInfo info : remainingUses) {
+                reprocessUses(info.localIn, info.localUses);
             }
         }
     }
 
-    private void iterateBlock(BlockBegin block) {
-        BitMap prevMap = inBitmaps.get(block);
+    private void iterateBlock(BlockInfo info) {
+        BitMap prevMap = info.localIn;
         assert prevMap != null : "how did the block get on the worklist without an initial in map?";
-        BitMap localOut = outBitmaps.get(block);
-        if (localOut == null) {
-            // compute {localOut} from the hash set
-            localOut = new BitMap(32);
-            for (Value i : this.localOut.get(block)) {
-                int index = makeIndex(i);
-                localOut.grow(index + 1);
-                localOut.set(index);
-            }
-            outBitmaps.put(block, localOut);
-        }
+        BitMap localOut = info.localOut;
         BitMap out;
         // copy larger and do union with smaller
         if (localOut.length() > prevMap.length()) {
@@ -243,43 +259,39 @@ public class NullCheckEliminator extends ValueVisitor {
             out = prevMap.copy();
             out.setUnion(localOut);
         }
-        propagateSuccessors(block, out, block.end().successors()); // propagate {in} U {localOut} to successors
-        propagateSuccessors(block, prevMap, block.exceptionHandlerBlocks()); // propagate {in} to exception handlers
+        propagateSuccessors(info, out, info.block.end().successors()); // propagate {in} U {localOut} to successors
+        propagateSuccessors(info, prevMap, info.block.exceptionHandlerBlocks()); // propagate {in} to exception handlers
     }
 
-    private void propagateSuccessors(BlockBegin block, BitMap out, List<BlockBegin> successorList) {
+    private void propagateSuccessors(BlockInfo block, BitMap out, List<BlockBegin> successorList) {
         for (BlockBegin succ : successorList) {
             propagate(block, out, succ);
         }
     }
 
-    private void propagate(BlockBegin pred, BitMap bitMap, BlockBegin succ) {
+    private void propagate(BlockInfo pred, BitMap bitMap, BlockBegin succ) {
         boolean changed;
         propagateFlowSensitive(pred, bitMap, succ);
-        BitMap prevMap = inBitmaps.get(succ);
-        if (prevMap == null) {
+        BlockInfo succInfo = getBlockInfo(succ);
+        if (succInfo.localIn == null) {
             // this is the first time this block is being iterated
-            prevMap = bitMap.copy();
-            inBitmaps.put(succ, prevMap);
+            succInfo.localIn = bitMap.copy();
             changed = true;
         } else {
             // perform intersection with previous map
-            changed = prevMap.setIntersect(bitMap);
+            changed = succInfo.localIn.setIntersect(bitMap);
         }
-        if (changed && !marked.contains(succ)) {
-            marked.add(succ);
+        if (changed && !isMarked(succInfo)) {
+            mark(succInfo);
             workList.addSorted(succ, succ.depthFirstNumber());
         }
     }
 
-    private void propagateFlowSensitive(BlockBegin pred, BitMap bitMap, BlockBegin succ) {
+    private void propagateFlowSensitive(BlockInfo pred, BitMap bitMap, BlockBegin succ) {
         if (C1XOptions.OptFlowSensitiveNCE) {
-            IfEdge e = ifEdges.get(pred);
-            if (e != null && e.succ == succ) {
+            if (pred.ifEdge != null && pred.ifEdge.succ == succ) {
                 // there is a special if edge between these blocks, add the checked instruction
-                int index = makeIndex(e.checked);
-                bitMap.grow(index + 1);
-                bitMap.set(index);
+                setValue(pred.ifEdge.checked, bitMap);
             }
         }
     }
@@ -289,31 +301,9 @@ public class NullCheckEliminator extends ValueVisitor {
         // and the hash sets
         assert in != null;
         currentBitMap = in;
-        currentNonNulls = new HashSet<Value>();
         for (Value i : uses) {
             i.accept(this);
         }
-    }
-
-    private boolean isNonNull(BitMap bitMap, HashSet<Value> nonNull, Value object) {
-        if (bitMap != null) {
-            // first check the bitmap if there is one
-            Integer ind = index.get(object);
-            if (ind != null && bitMap.getDefault(ind)) {
-                return true;
-            }
-        }
-        // next check the hashmap
-        return nonNull.contains(object);
-    }
-
-    private int makeIndex(Value object) {
-        Integer ind = index.get(object);
-        if (ind == null) {
-            index.put(object, maximumIndex);
-            return maximumIndex++;
-        }
-        return ind;
     }
 
     private boolean processUse(Value use, Value object, boolean implicitCheck) {
@@ -325,14 +315,14 @@ public class NullCheckEliminator extends ValueVisitor {
             return true;
         } else {
             // check if the object is non-null in the bitmap or hashset
-            if (isNonNull(currentBitMap, currentNonNulls, object)) {
+            if (checkValue(object, currentBitMap)) {
                 // the object is non-null at this site
                 use.eliminateNullCheck();
                 return true;
             } else {
                 if (implicitCheck) {
                     // the object will be non-null after executing this instruction
-                    currentNonNulls.add(object);
+                    setValue(object, currentBitMap);
                 }
                 if (currentUses != null) {
                     currentUses.add(use); // record a use for potential later iteration
@@ -344,7 +334,7 @@ public class NullCheckEliminator extends ValueVisitor {
 
     private boolean isNonNullOnEdge(BlockBegin pred, BlockBegin succ, Value i) {
         if (C1XOptions.OptFlowSensitiveNCE) {
-            IfEdge e = ifEdges.get(pred);
+            IfEdge e = getBlockInfo(pred).ifEdge;
             if (e != null && e.succ == succ && e.checked == i) {
                 return true;
             }
@@ -443,8 +433,8 @@ public class NullCheckEliminator extends ValueVisitor {
     public void visitIf(If i) {
         if (C1XOptions.OptFlowSensitiveNCE) {
             if (i.trueSuccessor() != i.falseSuccessor()) {
-                Value x = i.x();
                 // if the two successors are different, then we may learn something on one branch
+                Value x = i.x();
                 if (x.kind == CiKind.Object) {
                     // this is a comparison of object references
                     Value y = i.y();
@@ -483,6 +473,84 @@ public class NullCheckEliminator extends ValueVisitor {
     }
 
     private void propagateNonNull(If i, Value use, BlockBegin succ) {
-        ifEdges.put(i.begin(), new IfEdge(i.begin(), succ, use));
+        getBlockInfo(i.begin()).ifEdge = new IfEdge(i.begin(), succ, use);
+    }
+
+    private ValueInfo getValueInfo(Value value) {
+        Object info = value.optInfo;
+        if (info instanceof ValueInfo) {
+            return (ValueInfo) info;
+        }
+        C1XMetrics.NullCheckIdsAssigned++;
+        ValueInfo ninfo = new ValueInfo(value, maximumIndex++);
+        value.optInfo = ninfo;
+        valueInfos.add(ninfo);
+        return ninfo;
+    }
+
+    private BlockInfo getBlockInfo(BlockBegin block) {
+        Object info = block.optInfo;
+        if (info instanceof BlockInfo) {
+            return (BlockInfo) info;
+        }
+        BlockInfo ninfo = new BlockInfo(block);
+        block.optInfo = ninfo;
+        blockInfos.add(ninfo);
+        return ninfo;
+    }
+
+    private void setValue(Value value, BitMap bitmap) {
+        int index = getValueInfo(value).globalIndex;
+        bitmap.grow(index + 1);
+        bitmap.set(index);
+    }
+
+    private boolean checkValue(Value value, BitMap bitmap) {
+        Object info = value.optInfo;
+        return info instanceof ValueInfo && bitmap.getDefault(((ValueInfo) info).globalIndex);
+    }
+
+    private boolean isMarked(BlockInfo block) {
+        return block.marked;
+    }
+
+    private void mark(BlockInfo block) {
+        block.marked = true;
+    }
+
+    private void unmark(BlockInfo block) {
+        block.marked = false;
+    }
+
+    private void clearInfo() {
+        // be a good citizen and clear all the information added to nodes
+        // (also avoids confusing a later application of this same optimization)
+        for (BlockInfo info : blockInfos) {
+            assert info.block.optInfo instanceof BlockInfo : "inconsistent block information";
+            info.block.optInfo = null;
+        }
+        for (ValueInfo info : valueInfos) {
+            assert info.value.optInfo instanceof ValueInfo : "inconsistent value information";
+            info.value.optInfo = null;
+        }
+    }
+
+    private void clearMarked() {
+        for (BlockInfo info : blockInfos) {
+            info.marked = false;
+        }
+    }
+
+    private BitMap newBitMap() {
+        return new BitMap(maximumIndex > 32 ? maximumIndex : 32);
+    }
+
+    private BitMap getPredecessorMap(BlockBegin pred, boolean exceptionBlock) {
+        BlockInfo predInfo = getBlockInfo(pred);
+        return exceptionBlock ? predInfo.localExcept : predInfo.localOut;
+    }
+
+    private BitMap getPredecessorMap(BlockInfo predInfo, boolean exceptionBlock) {
+        return exceptionBlock ? predInfo.localExcept : predInfo.localOut;
     }
 }

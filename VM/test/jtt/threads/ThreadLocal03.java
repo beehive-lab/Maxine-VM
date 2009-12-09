@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,6 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#include <thread_db.h>
+package jtt.threads;
 
-#include "jni.h"
+/*
+ * @Harness: java
+ * @Runs: 0 = 0; 1 = 15; 2 = 31; 3 = 48
+ */
+public class ThreadLocal03 {
+
+    static final ThreadLocal<Integer> local = new ThreadLocal<Integer>();
+
+    public static int test(int i) {
+        int sum = 0;
+        for (int j = 0; j < i; j++) {
+            TThread t = new TThread();
+            t.input = 10 + j;
+            t.run();
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                return -1;
+            }
+            sum += t.output;
+        }
+        return sum;
+    }
+
+    private static class TThread extends Thread {
+        int input;
+        int output;
+        @Override
+        public void run() {
+            local.set(input + 5);
+            output = local.get();
+        }
+    }
+}

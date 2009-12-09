@@ -86,7 +86,7 @@ public class IRChecker extends ValueVisitor {
             Instruction prev = block;
             while (instr != null) {
                 if (instr instanceof BlockEnd) {
-                    assertNull(instr.next(), "BlockEnd should not have next: " + instr);
+                    assertNull(instr.next(), "BlockEnd should not have next");
                 }
                 prev = instr;
                 instr = instr.next();
@@ -1020,7 +1020,7 @@ public class IRChecker extends ValueVisitor {
         }
 
         public Value apply(Value x) {
-            assertNonNull(x, "must have input value for " + i);
+            assertNonNull(x, "must have input value");
             if (x.isIllegal()) {
                 fail("Value has illegal input value " + i + " <- " + x);
             }

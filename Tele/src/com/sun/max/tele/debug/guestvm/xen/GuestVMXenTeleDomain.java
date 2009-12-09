@@ -94,8 +94,8 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     // and control does not return to the inspector until that happens (see GuestVMDBChannel.nativeResume)
 
     @Override
-    protected boolean waitUntilStopped() {
-        return !terminated;
+    protected ProcessState waitUntilStopped() {
+        return terminated ? ProcessState.TERMINATED : ProcessState.STOPPED;
     }
 
     @Override

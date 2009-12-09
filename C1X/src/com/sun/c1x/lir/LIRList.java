@@ -45,7 +45,6 @@ public class LIRList {
 
     private List<LIRInstruction> operations;
     private final LIRGenerator generator;
-    private static final LIRLocation ILLEGAL = LIROperand.IllegalLocation;
 
     public LIRList(LIRGenerator generator) {
         this.generator = generator;
@@ -188,11 +187,11 @@ public class LIRList {
     }
 
     public void throwException(LIROperand exceptionPC, LIROperand exceptionOop, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, ILLEGAL, info, CiKind.Illegal, true));
+        append(new LIROp2(LIROpcode.Throw, exceptionPC, exceptionOop, LIROperand.IllegalLocation, info, CiKind.Illegal, true));
     }
 
     public void unwindException(LIROperand exceptionPC, LIROperand exceptionOop, LIRDebugInfo info) {
-        append(new LIROp2(LIROpcode.Unwind, exceptionPC, exceptionOop, ILLEGAL, info));
+        append(new LIROp2(LIROpcode.Unwind, exceptionPC, exceptionOop, LIROperand.IllegalLocation, info));
     }
 
     public void compareTo(LIROperand left, LIROperand right, LIROperand dst) {
@@ -295,15 +294,15 @@ public class LIRList {
     }
 
     public void shiftLeft(LIROperand value, int count, LIROperand dst) {
-        shiftLeft(value, LIROperand.forInt(count), dst, ILLEGAL);
+        shiftLeft(value, LIROperand.forInt(count), dst, LIROperand.IllegalLocation);
     }
 
     public void shiftRight(LIROperand value, int count, LIROperand dst) {
-        shiftRight(value, LIROperand.forInt(count), dst, ILLEGAL);
+        shiftRight(value, LIROperand.forInt(count), dst, LIROperand.IllegalLocation);
     }
 
     public void unsignedShiftRight(LIROperand value, int count, LIROperand dst) {
-        unsignedShiftRight(value, LIROperand.forInt(count), dst, ILLEGAL);
+        unsignedShiftRight(value, LIROperand.forInt(count), dst, LIROperand.IllegalLocation);
     }
 
     public void lcmp2int(LIROperand left, LIROperand right, LIROperand dst) {

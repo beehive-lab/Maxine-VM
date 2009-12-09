@@ -34,7 +34,7 @@
 #include <mach/mach_vm.h>
 #include <mach/vm_map.h>
 
-#include "darwinTeleNativeThread.h"
+#include "darwinMach.h"
 #include "log.h"
 #include "ptrace.h"
 #include "jni.h"
@@ -125,9 +125,10 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSetInstructionPo
     return true;
 }
 
-jboolean thread_set_single_step(thread_act_t thread, jboolean isEnabled) {
+boolean thread_set_single_step(thread_t thread, void *arg) {
     ThreadState threadState;
 
+    const boolean isEnabled = arg != NULL;
     mach_msg_type_number_t count = THREAD_STATE_COUNT;
     kern_return_t error = thread_get_state(thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count);
     if (error != KERN_SUCCESS) {
@@ -148,92 +149,59 @@ jboolean thread_set_single_step(thread_act_t thread, jboolean isEnabled) {
     return true;
 }
 
-static jboolean task_suspend_other_threads(jlong task, thread_t current) {
-    thread_array_t thread_list = NULL;
-    unsigned int nthreads = 0;
+static boolean suspend_noncurrent_thread(thread_t thread, void *current) {
     kern_return_t kret;
-    unsigned i;
+
+    if ((thread_t) (Address) current == thread) {
+        return true;
+    }
 
     struct thread_basic_info info;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
 
-    kret = task_threads((task_t) task, &thread_list, &nthreads);
-
-    // suspend all the other threads
-    for (i = 0; i < nthreads; i++) {
-        if (thread_list[i] != current) {
-            kret = thread_info(thread_list[i], THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    kret = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    if (kret != KERN_SUCCESS) {
+        log_println("thread_info() failed when suspending thread %d", thread);
+    } else {
+        if (info.suspend_count == 0) {
+            kret = thread_suspend(thread);
             if (kret != KERN_SUCCESS) {
-                log_println("thread_info() failed on other thread when single stepping");
-                return false;
-            }
-            if (info.suspend_count == 0) {
-                kret = thread_suspend(thread_list[i]);
-                if (kret != KERN_SUCCESS) {
-                    log_println("thread_suspend() failed on other thread when single stepping");
-                    return false;
-                }
+                log_println("thread_suspend() failed when suspending thread %d", thread);
             }
         }
     }
-
-    // deallocate thread list
-    vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
-
     return true;
 }
 
-static jboolean task_unsuspend_other_threads(jlong task, thread_t thread) {
-    thread_array_t thread_list = NULL;
-    unsigned int nthreads = 0;
+static boolean resume_noncurrent_thread(thread_t thread, void *current) {
     kern_return_t kret;
-    unsigned i, j;
+    unsigned i;
+
+    if ((thread_t) (Address) current == thread) {
+        return true;
+    }
 
     struct thread_basic_info info;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
 
-    kret = task_threads((task_t) task, &thread_list, &nthreads);
-    for (i = 0; i < nthreads; i++) {
-        if (thread_list[i] != thread) {
-            kret = thread_info(thread_list[i], THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    kret = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    if (kret != KERN_SUCCESS) {
+        log_println("thread_info() failed when resuming thread %d", thread);
+    } else {
+        for (i = 0; i < (unsigned) info.suspend_count; i++) {
+            kret = thread_resume(thread);
             if (kret != KERN_SUCCESS) {
-                log_println("thread_info() failed when single stepping");
-                return false;
-            }
-            for (j = 0; j < (unsigned) info.suspend_count; j++) {
-                kret = thread_resume(thread_list[i]);
-                if (kret != KERN_SUCCESS) {
-                    log_println("thread_resume() failed when single stepping");
-                    return false;
-                }
+                log_println("thread_resume() failed when resuming thread %d", thread);
+                break;
             }
         }
     }
-
-    // deallocate thread list
-    vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
     return true;
 }
 
-jboolean task_disable_single_stepping(jlong task) {
-    thread_array_t thread_list = NULL;
-    unsigned int nthreads = 0;
-    kern_return_t kret;
-    unsigned i;
+void resume_task(task_t task);
 
-    kret = task_threads((task_t) task, &thread_list, &nthreads);
-
-    for (i = 0; i < nthreads; i++) {
-        thread_set_single_step(thread_list[i], false);
-    }
-
-    // deallocate thread list
-    vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
-
-    return true;
-}
-
-static jboolean task_resume_thread(jlong task, thread_t thread) {
+static boolean task_resume_thread(jlong task, thread_t thread) {
     kern_return_t kret;
     struct thread_basic_info info;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
@@ -242,7 +210,7 @@ static jboolean task_resume_thread(jlong task, thread_t thread) {
     // get info for the current thread
     kret = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
     if (kret != KERN_SUCCESS) {
-        log_println("thread_info() failed on thread to step");
+        log_println("thread_info() failed when resuming thread %d", thread);
         return false;
     }
 
@@ -258,7 +226,8 @@ static jboolean task_resume_thread(jlong task, thread_t thread) {
     }
 
     // the thread will not resume unless the task is also resumed
-    task_resume((task_t) task);
+    resume_task(task);
+    //task_resume(task);
 
     return true;
 }
@@ -269,9 +238,14 @@ static jboolean task_resume_thread(jlong task, thread_t thread) {
  */
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong task, jlong thread) {
+#if log_TELE
+    log_println("Before single-stepping thread %d", thread);
+    log_task_info((task_t) task);
+#endif
     tele_log_println("Single stepping");
-    return thread_set_single_step((thread_act_t) thread, true)
-        && task_suspend_other_threads(task, (thread_t) thread)
+    jboolean result = thread_set_single_step((thread_t) thread, (void *) true)
+        && forall_threads(task, suspend_noncurrent_thread, (void *) thread)
         && task_resume_thread(task, (thread_t) thread)
-        && task_unsuspend_other_threads(task, (thread_t) thread);
+        && forall_threads(task, resume_noncurrent_thread, (void *) thread);
+    return result;
 }

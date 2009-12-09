@@ -26,6 +26,16 @@
 extern void teleProcess_initialize(void);
 
 /*
+ * This enum must be kept in sync with com.sun.max.tele.debug.ProcessState.java.
+ */
+typedef enum ProcessState {
+    PS_UNKNOWN,
+    PS_STOPPED,
+    PS_RUNNING,
+    PS_TERMINATED
+} ProcessState;
+
+/*
  * Definition of the platform specific type 'ProcessHandle' and the two operations
  * 'readProcessMemory' & 'writeProcessMemory' that use the handle to access the
  * memory of the process.
