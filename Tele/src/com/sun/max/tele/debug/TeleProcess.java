@@ -164,9 +164,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                             case BREAKPOINT:
                                 final TeleTargetBreakpoint breakpoint = thread.breakpoint();
                                 if (breakpoint.handleTriggerEvent(thread)) {
+                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering breakpoint");
                                     // At a breakpoint where we should really stop; create a record
                                     threadsAtBreakpoint.append(thread);
                                 } else {
+                                    Trace.line(TRACE_VALUE, tracePrefix() + " continuing thread [id=" + thread.id() + "] after triggering breakpoint");
                                     // The breakpoint handler says not a real break, perhaps a failed conditional; prepare to resume.
                                     resumeExecution = true;
                                     try {
@@ -174,15 +176,16 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                     } catch (OSExecutionRequestException executionRequestException) {
                                         throw new ProcessTerminatedException("error while attempting to step over breakpoint in order to resume [" + executionRequestException + "]");
                                     }
-                                    Trace.line(TRACE_VALUE, tracePrefix() + "silently continuing after triggering breakpoint");
                                 }
                                 break;
                             case WATCHPOINT:
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
                                 final MaxWatchpoint triggeredWatchpoint = watchpointFactory().findWatchpoint(triggeredWatchpointAddress);
                                 if (handleWatchpoint(thread, triggeredWatchpoint, triggeredWatchpointAddress)) {
+                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering watchpoint");
                                     resumeExecution = true;
                                 } else {
+                                    Trace.line(TRACE_VALUE, tracePrefix() + " continuing thread [id=" + thread.id() + "] after triggering watchpoint");
                                     // At a watchpoint where we should really stop; create a record of the event
                                     final int triggeredWatchpointCode = readWatchpointAccessCode();
                                     teleWatchpointEvent = new TeleWatchpointEvent(triggeredWatchpoint, thread, triggeredWatchpointAddress, triggeredWatchpointCode);

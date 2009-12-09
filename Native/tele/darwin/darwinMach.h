@@ -22,10 +22,67 @@
 #ifndef __darwinMach_h__
 #define __darwinMach_h__ 1
 
-#define POS_PARAMS const char *file, int line
-#define POS __FILE__, __LINE__
+#include "isa.h"
+
+#if isa_AMD64
+#   include <mach/x86_64/thread_act.h>
+
+#   define INTEGER_REGISTER_COUNT x86_THREAD_STATE64_COUNT
+#   define STATE_REGISTER_COUNT x86_THREAD_STATE64_COUNT
+#   define FLOATING_POINT_REGISTER_COUNT x86_FLOAT_STATE64_COUNT
+#   define THREAD_STATE_COUNT x86_THREAD_STATE64_COUNT
+
+#   define INTEGER_REGISTER_FLAVOR x86_THREAD_STATE64
+#   define STATE_REGISTER_FLAVOR x86_THREAD_STATE64
+#   define FLOAT_REGISTER_FLAVOR x86_FLOAT_STATE64
+#   define THREAD_STATE_FLAVOR x86_THREAD_STATE64
+
+    typedef _STRUCT_X86_THREAD_STATE64 OsIntegerRegistersStruct;
+    typedef _STRUCT_X86_THREAD_STATE64 OsStateRegistersStruct;
+    typedef _STRUCT_X86_FLOAT_STATE64 OsFloatingPointRegistersStruct;
+    typedef x86_thread_state64_t ThreadState;
+#else
+#   error "Only x64 is supported on Darwin"
+#endif
+
+extern boolean thread_read_registers(thread_t thread,
+        isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
+        isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters,
+        isa_CanonicalStateRegistersStruct *canonicalStateRegisters);
+
+/**
+ * Callback for iterating over the threads in a task with 'forall_threads'.
+ *
+ * @param task the task whose threads are being iterated over
+ * @param thread the thread being visited as part of the iteration
+ * @return true if the iteration should proceed, false if it shop stop
+ */
+typedef boolean (*thread_visitor)(thread_t thread, void *arg);
+
+/**
+ * Iterates over all the threads in a given task with a given visitor function.
+ *
+ * @param task the task to iterate over
+ * @param visitor the function to call for each thread in the task
+ * @return true on success, false on failure
+ */
+extern boolean forall_threads(task_t task, thread_visitor visitor, void *arg);
+
+/**
+ * Sets the single-stepping mode for a given thread.
+ *
+ * @param thread the thread whose single-stepping mode is to be set
+ * @param arg if NULL, then single-stepping is disabled for 'thread' otherwise it is enabled
+ */
+boolean thread_set_single_step(thread_t thread, void *arg);
+
+extern void log_task_info(task_t task);
+extern boolean log_thread_info(thread_t thread, void *arg);
 
 extern void report_mach_error(const char *file, int line, kern_return_t krn, const char* name, const char* argsFormat, ...);
+
+#define POS_PARAMS const char *file, int line
+#define POS __FILE__, __LINE__
 
 extern kern_return_t Task_for_pid(POS_PARAMS,
     mach_port_name_t target_tport,
