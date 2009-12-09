@@ -35,7 +35,6 @@ import com.sun.c1x.util.*;
  */
 public final class FrameMap {
 
-    public static final int SPILL_SLOT_SIZE = 4;
     private static final int DOUBLE_SIZE = 8;
 
     private final C1XCompiler compiler;
@@ -99,25 +98,6 @@ public final class FrameMap {
     }
 
     /**
-     * Creates an address for the specified stack slot.
-     * @param stackSlot the stack slot
-     * @return a {@link Address} instance representing the slot
-     */
-    public Address addressForSlot(int stackSlot) {
-        return addressForSlot(stackSlot, 0);
-    }
-
-    /**
-     * Creates an address for the specified stack slot.
-     * @param stackSlot the stack slot
-     * @param offset the offset from the stack of the stack slot
-     * @return a {@link Address} instance representing the slot
-     */
-    public Address addressForSlot(int stackSlot, int offset) {
-        return new Address(compiler.target.stackPointerRegister, spOffsetForSlot(stackSlot) + offset);
-    }
-
-    /**
      * Gets the frame size of the compiled frame.
      * @return the size in bytes of the frame
      */
@@ -165,7 +145,7 @@ public final class FrameMap {
     public CiLocation toLocation(LIROperand opr) {
         if (opr.isStack()) {
             // create a stack location
-            return new CiStackLocation(opr.kind, opr.stackIndex() * SPILL_SLOT_SIZE, compiler.target.sizeInBytes(opr.kind), false);
+            return new CiStackLocation(opr.kind, opr.stackIndex() * compiler.target.spillSlotSize, compiler.target.sizeInBytes(opr.kind), false);
         } else if (opr.isSingleCpu() || opr.isSingleXmm()) {
             // create a single register location
             return new CiRegisterLocation(opr.kind, opr.asRegister());
@@ -176,6 +156,14 @@ public final class FrameMap {
         throw new CiBailout("cannot convert " + opr + "to location");
     }
 
+    public Address toAddress(LIROperand opr, int offset) {
+        assert opr.isStack();
+        int index = opr.stackIndex();
+        int size = compiler.target.sizeInBytes(opr.kind);
+        return new Address(compiler.target.stackPointerRegister, spOffsetForSlot(index, size) + offset);
+
+    }
+
     /**
      * Converts a spill index into a stack location.
      * @param kind the type of the spill slot
@@ -183,7 +171,8 @@ public final class FrameMap {
      * @return a representation of the stack location
      */
     public CiLocation toStackLocation(CiKind kind, int index) {
-        return new CiStackLocation(kind, this.spOffsetForSlot(index), compiler.target.sizeInBytes(kind), false);
+        int size = compiler.target.sizeInBytes(kind);
+        return new CiStackLocation(kind, this.spOffsetForSlot(index, size), size, false);
     }
 
     /**
@@ -192,7 +181,7 @@ public final class FrameMap {
      * @return a representation of the stack location
      */
     public CiLocation toMonitorLocation(int monitorIndex) {
-        return new CiStackLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SPILL_SLOT_SIZE, false);
+        return new CiStackLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), compiler.target.spillSlotSize, false);
     }
 
     private void increaseOutgoing(int argsSize) {
@@ -210,10 +199,10 @@ public final class FrameMap {
         return result;
     }
 
-    private int spOffsetForSlot(int index) {
+    private int spOffsetForSlot(int index, int size) {
         assert index >= 0 && index < spillSlotCount : "invalid spill slot";
-        int offset = spillStart() + index * SPILL_SLOT_SIZE;
-        assert offset <= (frameSize() - SPILL_SLOT_SIZE) : "spill outside of frame";
+        int offset = spillStart() + index * compiler.target.spillSlotSize;
+        assert offset <= (frameSize() - size) : "spill outside of frame";
         return offset;
     }
 
@@ -230,7 +219,7 @@ public final class FrameMap {
     }
 
     private int spillEnd() {
-        return spillStart() + spillSlotCount * SPILL_SLOT_SIZE;
+        return spillStart() + spillSlotCount * compiler.target.spillSlotSize;
     }
 
     private int spOffsetForMonitorObject(int index)  {

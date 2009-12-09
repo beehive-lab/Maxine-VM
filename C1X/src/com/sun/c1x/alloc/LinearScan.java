@@ -159,12 +159,10 @@ public class LinearScan {
             }
             spillSlot = maxSpills;
             maxSpills += 2;
-
         } else if (unusedSpillSlot != -1) {
             // re-use hole that was the result of a previous double-word alignment
             spillSlot = unusedSpillSlot;
             unusedSpillSlot = -1;
-
         } else {
             spillSlot = maxSpills;
             maxSpills++;
@@ -2231,7 +2229,7 @@ public class LinearScan {
     int appendScopeValueForOperand(LIROperand opr, List<CiValue> scopeValues) {
         if (opr.isSingleStack()) {
             int stackIdx = opr.singleStackIndex();
-            CiLocation location = new CiStackLocation(opr.kind, stackIdx, FrameMap.SPILL_SLOT_SIZE, false);
+            CiLocation location = new CiStackLocation(opr.kind, stackIdx, compilation.target.spillSlotSize, false);
             scopeValues.add(location);
             return 1;
 
@@ -2252,7 +2250,7 @@ public class LinearScan {
 
             if (opr.isDoubleStack()) {
                 assert compilation.target.arch.is64bit();
-                first = new CiStackLocation(opr.kind, opr.doubleStackIndex(), FrameMap.SPILL_SLOT_SIZE * 2, false);
+                first = new CiStackLocation(opr.kind, opr.doubleStackIndex(), compilation.target.spillSlotSize, false);
             } else if (opr.isDoubleCpu()) {
                 assert compilation.target.arch.is64bit();
                 first = new CiRegisterLocation(opr.kind, opr.asRegister());
@@ -2845,24 +2843,7 @@ public class LinearScan {
     }
 
     public int numberOfSpillSlots(CiKind type) {
-        switch (type) {
-            case Boolean: // fall through
-            case Byte:    // fall through
-            case Char:    // fall through
-            case Short:   // fall through
-            case Float:   // fall through
-            case Int:     // fall through
-            case Jsr:
-                return 1;
-            case Long:     // fall through
-            case Double:
-                return 2;
-            case Object:
-                return (compilation.target.arch.is64bit()) ? 2 : 1;
-            case Word:
-                return (compilation.target.arch.is64bit()) ? 2 : 1;
-        }
-        throw new IllegalArgumentException("invalid kind " + this + " for number of spill slots");
+        return compilation.target.spillSlots[type.ordinal()];
     }
 
     // TODO: Platform specific!!
