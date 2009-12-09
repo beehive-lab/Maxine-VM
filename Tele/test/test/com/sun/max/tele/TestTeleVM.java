@@ -78,7 +78,7 @@ public class TestTeleVM {
         final TeleVM teleVM = create();
         System.out.println("end creating VM");
         try {
-            teleVM.resume(true, true);
+            teleVM.resume(true, false);
         } catch (Exception e) {
             e.printStackTrace();
         }

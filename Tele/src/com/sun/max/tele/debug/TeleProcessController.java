@@ -64,39 +64,31 @@ public final class TeleProcessController {
     private final Object runToInstructionPerformTracer = new Tracer(RUN_TO_INSTRUCTION, "perform");
 
     /**
-     * Resumes a process to make it run until a given destination instruction. All breakpoints encountered between the
-     * current instruction and the destination instruction are ignored.
+     * Resumes process to make it run until a given destination instruction is reached.
+     * <br>
+     * This is effected by creating a transient breakpoint and then performing an ordinary resume.
      *
      * @param instructionPointer the destination instruction
-     * @throws InvalidProcessRequestException
+     * @param synchronous wait for completion before returning?
+     * @param withClientBreakpoints enable client breakpoints during execution?
      * @throws OSExecutionRequestException
+     * @throws InvalidProcessRequestException
      */
-    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean disableBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException {
+    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException {
         Trace.begin(TRACE_VALUE, runToInstructionScheduleTracer);
-        final TeleEventRequest request = new TeleEventRequest(RUN_TO_INSTRUCTION, null) {
+        final TeleEventRequest request = new TeleEventRequest(RUN_TO_INSTRUCTION, null, withClientBreakpoints) {
             @Override
             public void execute() throws OSExecutionRequestException {
                 Trace.begin(TRACE_VALUE, runToInstructionPerformTracer);
                 updateWatchpointCaches();
                 final Factory breakpointFactory = teleProcess.targetBreakpointFactory();
-
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
                 TeleTargetBreakpoint breakpoint = breakpointFactory.getClientTargetBreakpointAt(instructionPointer);
                 if (breakpoint == null || !breakpoint.isEnabled()) {
                     breakpoint = breakpointFactory.makeTransientBreakpoint(instructionPointer);
-                    breakpoint.setDescription("transient breakpoint for the low-level run-to-instruction operation");
+                    breakpoint.setDescription("transient breakpoint for low-level run-to-instruction operation");
                 }
-
-                for (TeleNativeThread thread : teleProcess().threads()) {
-                    thread.evadeBreakpoint();
-                }
-
-                if (!disableBreakpoints) {
-                    breakpointFactory.setActiveAll(true);
-                } else {
-                    breakpoint.setActive(true);
-                }
-                teleProcess().resume();
+                teleProcess().restoreBreakpointsAndResume(withClientBreakpoints);
                 Trace.end(TRACE_VALUE, runToInstructionPerformTracer);
             }
         };
@@ -123,20 +115,22 @@ public final class TeleProcessController {
     private final Object resumeScheduleTracer = new Tracer(RESUME, "schedule");
     private final Object resumePerformTracer = new Tracer(RESUME, "perform");
 
-    public void resume(final boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
+    /**
+     * Resumes process execution.
+     *
+     * @param synchronous wait for completion before returning?
+     * @param withClientBreakpoints enable client breakpoints during execution?
+     * @throws OSExecutionRequestException
+     * @throws InvalidProcessRequestException
+     */
+    public void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
         Trace.begin(TRACE_VALUE, resumeScheduleTracer);
-        final TeleEventRequest request = new TeleEventRequest(RESUME, null) {
+        final TeleEventRequest request = new TeleEventRequest(RESUME, null, withClientBreakpoints) {
             @Override
             public void execute() throws OSExecutionRequestException {
                 Trace.begin(TRACE_VALUE, resumePerformTracer);
                 updateWatchpointCaches();
-                for (TeleNativeThread thread : teleProcess().threads()) {
-                    thread.evadeBreakpoint();
-                }
-                if (!disableBreakpoints) {
-                    teleProcess.targetBreakpointFactory().setActiveAll(true);
-                }
-                teleProcess().resume();
+                teleProcess().restoreBreakpointsAndResume(withClientBreakpoints);
                 Trace.end(TRACE_VALUE, resumePerformTracer);
             }
         };
@@ -149,7 +143,7 @@ public final class TeleProcessController {
 
     public void singleStep(final TeleNativeThread thread, boolean isSynchronous) throws InvalidProcessRequestException, OSExecutionRequestException    {
         Trace.begin(TRACE_VALUE, singleStepScheduleTracer);
-        final TeleEventRequest request = new TeleEventRequest(SINGLE_STEP, thread) {
+        final TeleEventRequest request = new TeleEventRequest(SINGLE_STEP, thread, false) {
             @Override
             public void execute() throws OSExecutionRequestException {
                 Trace.begin(TRACE_VALUE, singleStepPerformTracer);
@@ -165,9 +159,23 @@ public final class TeleProcessController {
     private final Object stepOverScheduleTracer = new Tracer(STEP_OVER, "schedule");
     private final Object stepOverPerformTracer = new Tracer(STEP_OVER, "perform");
 
-    public void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
+    /**
+     * Steps a single thread to the next instruction in the current method.  If the current
+     * instruction is a call, then run until the call returns.
+     * <br>
+     * This is effected by first single stepping and then noticing if execution has arrived at the
+     * next instruction (the simple case).  If not, then assume that the thread stepped into a
+     * call, set a transient breakpoint, and resume.
+     *
+     * @param thread the thread to step
+     * @param synchronous wait for execution to complete before returning?
+     * @param withClientBreakpoints should client breakpoints be enabled during execution?
+     * @throws InvalidProcessRequestException
+     * @throws OSExecutionRequestException
+     */
+    public void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
         Trace.begin(TRACE_VALUE, stepOverScheduleTracer);
-        final TeleEventRequest request = new TeleEventRequest(STEP_OVER, thread) {
+        final TeleEventRequest request = new TeleEventRequest(STEP_OVER, thread, withClientBreakpoints) {
 
             private Pointer oldInstructionPointer;
             private Pointer oldReturnAddress;
@@ -187,7 +195,7 @@ public final class TeleProcessController {
                 final Pointer stepOutAddress = getStepoutAddress(thread, oldReturnAddress, oldInstructionPointer, thread.instructionPointer());
                 if (stepOutAddress != null) {
                     try {
-                        runToInstruction(stepOutAddress, true, disableBreakpoints);
+                        runToInstruction(stepOutAddress, true, withClientBreakpoints);
                     } catch (OSExecutionRequestException e) {
                         e.printStackTrace();
                     } catch (InvalidProcessRequestException e) {
