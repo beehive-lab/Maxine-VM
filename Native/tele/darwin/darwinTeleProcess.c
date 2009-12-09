@@ -35,7 +35,6 @@
 #include <mach/mach_vm.h>
 #include <mach/vm_map.h>
 
-#include "darwinTeleNativeThread.h"
 #include "auth.h"
 #include "log.h"
 #include "ptrace.h"
@@ -51,9 +50,6 @@
 void teleProcess_initialize(void) {
 }
 
-extern jboolean task_disable_single_stepping(jlong task);
-
-#if log_TELE
 const char *threadRunStateAsString(int state) {
     switch (state) {
         case TH_STATE_RUNNING: return "RUNNING";
@@ -65,12 +61,15 @@ const char *threadRunStateAsString(int state) {
     }
 }
 
-void log_thread_info(thread_t thread) {
+boolean log_thread_info(thread_t thread, void *arg) {
     struct thread_basic_info info;
+    ThreadState state;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
     thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
-    log_print("  Thread[%d]: suspend_count=%d, user_time=%u, system_time=%u, cpu_usage=%d, run_state=",
-               thread, info.suspend_count, info.user_time, info.system_time, info.cpu_usage);
+    mach_msg_type_number_t state_count = THREAD_STATE_COUNT;
+    thread_get_state(thread, THREAD_STATE_FLAVOR, (natural_t *) &state, &state_count);
+    log_print("  Thread[%d]: suspend_count=%d, user_time=%u, system_time=%u, cpu_usage=%d, sp=%p, fp=%p, pc=%p run_state=",
+               thread, info.suspend_count, info.user_time, info.system_time, info.cpu_usage, state.__rsp, state.__rbp, state.__rip);
 
     const char *runState = threadRunStateAsString(info.run_state);
     if (runState == NULL) {
@@ -85,35 +84,17 @@ void log_thread_info(thread_t thread) {
     isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
 
     thread_read_registers(thread, &canonicalIntegerRegisters, &canonicalFloatingPointRegisters, &canonicalStateRegisters);
+    return true;
 }
 
-typedef void (*thread_visitor)(thread_t thread);
-
-void forall_threads(task_t task, thread_visitor visitor) {
-    thread_array_t thread_list = NULL;
-    unsigned int nthreads = 0;
-    unsigned i;
-
-    task_threads((task_t) task, &thread_list, &nthreads);
-    for (i = 0; i < nthreads; i++) {
-        thread_t thread = thread_list[i];
-        (*visitor)(thread);
-    }
-
-    // deallocate thread list
-    vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
-}
-
-void log_task_info(const char *file, int line, task_t task) {
+void log_task_info(task_t task) {
     struct task_basic_info info;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     task_info(task, TASK_BASIC_INFO, (task_info_t) &info, &info_count);
-    log_println("%s:%d", file, line);
     log_println("Task[%d]: suspend_count=%d, virtual_size=%u, resident_size=%u, user_time=%u, system_time=%u", task,
                     info.suspend_count, info.virtual_size, info.resident_size, info.user_time, info.system_time);
-    forall_threads(task, log_thread_info);
+    forall_threads(task, log_thread_info, NULL);
 }
-#endif
 
 int task_read(task_t task, vm_address_t src, void *dst, size_t size) {
   mach_vm_size_t bytesRead;
@@ -127,46 +108,50 @@ int task_write(task_t task, vm_address_t dst, void *src, size_t size) {
   return result == KERN_SUCCESS ? (int) size : -1;
 }
 
-jboolean waitForSignal(jlong task, int signalnum) {
+jint waitForSignal(jlong task, int signalnum) {
     int pid;
     Pid_for_task(POS, task, &pid);
     while (1) {
         int status;
+
+        // log_println("waitpid(%d)...", pid);
         int error = waitpid(pid, &status, 0);
+        // log_println("waitpid(%d)... done", pid);
         if (error != pid) {
             log_println("waitpid failed with error: %d [%s]", errno, strerror(error));
-            return false;
+            return PS_UNKNOWN;
         }
         if (WIFEXITED(status)) {
             log_println("Process %d exited with exit code %d", pid, WEXITSTATUS(status));
-            return false;
+            return PS_TERMINATED;
         }
         if (WIFSIGNALED(status)) {
             int signal = WTERMSIG(status);
             log_println("Process %d terminated due to signal %d [%s]", pid, signal, strsignal(signal));
-            return false;
+            return PS_TERMINATED;
         }
         if (WIFSTOPPED(status)) {
             // check whether the process received a signal, and continue with it if so.
             int signal = WSTOPSIG(status);
 
             tele_log_println("Process %d stopped due to signal %d [%s]", pid, signal, strsignal(signal));
-#if log_TELE && 0
-            log_task_info(__FILE__, __LINE__, task);
+#if log_TELE
+            log_println("After waitForSignal():");
+            log_task_info(task);
 #endif
             if (signalnum == signal && signalnum == SIGTRAP) {
-                task_disable_single_stepping(task);
+                forall_threads(task, thread_set_single_step, (void *) false);
             }
 
             if (signal == 0 || signal == signalnum) {
-                return true;
+                return PS_STOPPED;
             } else {
                 ptrace(PT_CONTINUE, pid, (char*) 1, signal);
 
                 error = errno;
                 if (error != 0) {
                     log_println("Continuing process %d failed: %d [%s]", error, strerror(error));
-                    return false;
+                    return PS_UNKNOWN;
                 }
             }
         }
@@ -273,15 +258,50 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, 
     return error == 0;
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWait(JNIEnv *env, jclass c, jlong pid, jlong task) {
     return waitForSignal(task, SIGTRAP);
+}
+
+/**
+ * Continually calls task_resume() on a given task while its 'suspend_count' > 0.
+ */
+void resume_task(task_t task) {
+    boolean warningPrinted = false;
+    while (true) {
+        struct task_basic_info info;
+        unsigned int info_count = TASK_BASIC_INFO_COUNT;
+        kern_return_t kret = task_info(task, TASK_BASIC_INFO, (task_info_t) &info, &info_count);
+        if (kret != KERN_SUCCESS) {
+            log_println("task_info() failed when resuming task %d", task);
+            return;
+        }
+        if (info.suspend_count > 0) {
+            if (info.suspend_count > 1 && !warningPrinted) {
+                warningPrinted = true;
+                /* This only happens (I think) when 2 or more threads hit a breakpoint simultaneously.
+                 * Given the mechanism by which deferred breakpoints are implemented (i.e. with a hidden
+                 * breakpoint on a method called after every compilation), this case is not so rare.
+                 * However, there is an unresolved issue where the VM process occasionally not resume properly after
+                 * such an event (specifically, the next call to waitpid() never returns) and so it's useful
+                 * to know that such an event just occurred. */
+                log_println("*** INFO ***: Resuming task %d %d more times indicating more than one thread trapped on a breakpoint", task, info.suspend_count);
+            }
+            task_resume((task_t) task);
+        } else {
+            break;
+        }
+    }
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong task) {
     int pid;
     Pid_for_task(POS, task, &pid);
+#if log_TELE
+    log_println("Before resume:");
+    log_task_info(task);
+#endif
     ptrace(PT_CONTINUE, pid, (char*) 1, 0);
     return true;
 }

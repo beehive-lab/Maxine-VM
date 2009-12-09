@@ -89,8 +89,8 @@ public abstract class X86Assembler extends AbstractAssembler {
         private static final int REXWRXB = 0x4F;
     }
 
-    public X86Assembler(CiTarget target, int frameSize) {
-        super(target, frameSize);
+    public X86Assembler(CiTarget target) {
+        super(target);
         assert is32 || is64 : "unknown word size: " + wordSize;
         assert is32 != is64 : "can't be both 32 and 64 bit";
     }
@@ -163,9 +163,9 @@ public abstract class X86Assembler extends AbstractAssembler {
         int disp = addr.disp;
 
         if (base == CiRegister.Stack) {
-            base = this.target.stackPointerRegister;
+            base = target.stackPointerRegister;
         } else if (base == CiRegister.CallerStack) {
-            base = this.target.stackPointerRegister;
+            base = target.stackPointerRegister;
             disp += targetMethod.frameSize() + wordSize;
         }
 

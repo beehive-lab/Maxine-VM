@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,13 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package jtt.threads;
 
-#include <sys/types.h>
-#include <mach/mach.h>
+/*
+ * @Harness: java
+ * @Runs: 0 = 5; 1 = 6; 2 = 7
+ */
+public class ThreadLocal02 {
 
-#include <unistd.h>
-#include <stdlib.h>
-
-#include "log.h"
-#include "ptrace.h"
-#include "jni.h"
+    public static int test(int i) {
+        ThreadLocal<Integer> local = new ThreadLocal<Integer>();
+        local.set(i + 5);
+        return local.get();
+    }
+}

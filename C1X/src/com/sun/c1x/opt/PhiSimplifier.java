@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.opt;
 
-import com.sun.c1x.*;
 import com.sun.c1x.graph.IR;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
@@ -95,15 +94,6 @@ public class PhiSimplifier implements BlockClosure {
                     if (phiSubst == null) {
                         phiSubst = newInstr;
                         continue;
-                    } else if (C1XOptions.OptMergeConstants) {
-                        // if the operand is the same constant, merge them
-                        if (phiSubst.isConstant()) {
-                            C1XMetrics.EquivalentConstantsChecked++;
-                            if (phiSubst.asConstant().equivalent(newInstr.asConstant())) {
-                                C1XMetrics.EquivalentConstantsMerged++;
-                                continue;
-                            }
-                        }
                     }
                     // this phi cannot be simplified
                     phi.setFlag(Value.Flag.PhiCannotSimplify);

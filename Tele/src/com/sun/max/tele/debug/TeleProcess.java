@@ -144,8 +144,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
                 // Keep resuming the process, after dealing with event handlers, as long as this is true.
                 boolean resumeExecution = true;
+                do {  // while resumeExecution = true
 
-                do {
                     // There are five legitimate cases where execution should halt (i.e. not be resumed),
                     // although there may be more than one simultaneously .
                     // Case 1. The process has died
@@ -154,22 +154,23 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt
                     // Case 5. There is a "pause" request pending
 
-                    // Tentatively assume that execution will resume; if any handler says otherwise then halt.
-                    resumeExecution = true;
-
                     // Check for the special case where we can't determine what caused the VM to stop
                     boolean eventCauseFound = false;
 
                     // Wait here for VM process to stop
-                    if (!waitUntilStopped()) {
-                        // Case 1. The process has died
-                        // Something went wrong; process presumed to be dead.
-                        throw new ProcessTerminatedException("Wait until process stopped failed");
+                    ProcessState newState = waitUntilStopped();
+
+                    // Case 1. The process has died; throw an exception.
+                    if (newState != ProcessState.STOPPED) {
+                        if (newState != ProcessState.TERMINATED) {
+                            throw new ProcessTerminatedException("unexpected state [" + newState + "]");
+                        }
+                        throw new ProcessTerminatedException("normal exit");
                     }
                     Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
 
                     if (lastSingleStepThread != null) {
-                        // Case 2. A thread was just single stepped
+                        // Case 2. A thread was just single stepped; do not continue execution.
                         eventCauseFound = true;
                         resumeExecution = false;
                     }
@@ -186,7 +187,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 eventCauseFound = true;
                                 final TeleTargetBreakpoint breakpoint = thread.breakpoint();
                                 if (breakpoint.handleTriggerEvent(thread)) {
-                                    // Case 3. At least one thread is at a breakpoint that specifies that execution should halt
+                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering breakpoint");
+                                    // Case 3. At least one thread is at a breakpoint that specifies that execution should halt; record it and do not continue.
                                     // At a breakpoint where we should really stop; create a record
                                     threadsAtBreakpoint.append(thread);
                                     resumeExecution = false;
@@ -197,8 +199,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
                                 final MaxWatchpoint triggeredWatchpoint = watchpointFactory().findWatchpoint(triggeredWatchpointAddress);
                                 if (handleWatchpoint(thread, triggeredWatchpoint, triggeredWatchpointAddress)) {
-                                    // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt
-                                    // At a watchpoint where we should really stop; create a record of the event
+                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering watchpoint");
+                                    // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
                                     final int triggeredWatchpointCode = readWatchpointAccessCode();
                                     teleWatchpointEvent = new TeleWatchpointEvent(triggeredWatchpoint, thread, triggeredWatchpointAddress, triggeredWatchpointCode);
                                     resumeExecution = false;
@@ -231,13 +233,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 updateState(STOPPED, threadsAtBreakpoint, teleWatchpointEvent);
 
             } catch (ProcessTerminatedException processTerminatedException) {
-                Trace.line(TRACE_VALUE, tracePrefix() + "VM process terminated:" + processTerminatedException.getMessage());
+                Trace.line(TRACE_VALUE, tracePrefix() + "VM process terminated: " + processTerminatedException.getMessage());
                 updateState(TERMINATED);
-
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
                 ThrowableDialog.showLater(throwable, null, tracePrefix() + "Uncaught exception while processing " + request);
-
             } finally {
                 Trace.begin(TRACE_VALUE, tracePrefix() + "notifying completion of request: " + request);
                 request.notifyOfCompletion();
@@ -392,7 +392,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
         //Initiate the thread that continuously waits on the running process.
         this.requestHandlingThread = new RequestHandlingThread();
-        if (initialState != ProcessState.NO_PROCESS) {
+        if (initialState != ProcessState.UNKNOWN) {
             this.requestHandlingThread.start();
         }
     }
@@ -702,7 +702,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             throw new OSExecutionRequestException("Error while single stepping thread " + thread);
         }
         if (block) {
-            if (!waitUntilStopped()) {
+            if (waitUntilStopped() != ProcessState.STOPPED) {
                 throw new OSExecutionRequestException("Error while waiting for complete single stepping thread " + thread);
             }
         }
@@ -720,7 +720,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      *
      * @return true if the process stopped, false if there was an error
      */
-    protected abstract boolean waitUntilStopped();
+    protected abstract ProcessState waitUntilStopped();
 
     protected abstract void gatherThreads(AppendableSequence<TeleNativeThread> threads);
 

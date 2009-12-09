@@ -30,6 +30,33 @@
 #include "darwinMach.h"
 #include "log.h"
 
+boolean forall_threads(task_t task, thread_visitor visitor, void *arg) {
+    thread_array_t thread_list = NULL;
+    unsigned int nthreads = 0;
+    unsigned i;
+
+    kern_return_t kret = task_threads((task_t) task, &thread_list, &nthreads);
+    if (kret != KERN_SUCCESS) {
+        log_println("forall_threads() failed to get the list of threads for task %d: %s", task, mach_error_string(kret));
+        return false;
+    }
+
+    for (i = 0; i < nthreads; i++) {
+        thread_t thread = thread_list[i];
+        if (!(*visitor)(thread, arg)) {
+            break;
+        }
+    }
+
+    // deallocate thread list
+    kret = vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
+    if (kret != KERN_SUCCESS) {
+        log_println("forall_threads() failed to deallocate the list of threads for task %d: %s", task, mach_error_string(kret));
+        return false;
+    }
+    return true;
+}
+
 void report_mach_error(const char *file, int line, kern_return_t krn, const char* name, const char* argsFormat, ...) {
     log_print("%s:%d %s(", file, line, name);
     va_list ap;

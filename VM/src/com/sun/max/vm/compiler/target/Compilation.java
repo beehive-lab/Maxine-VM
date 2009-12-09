@@ -209,10 +209,10 @@ public class Compilation implements Future<TargetMethod> {
         if (verboseOption.verboseCompilation) {
             methodString = classMethodActor.format("%H.%n(%p)");
             Log.printCurrentThread(false);
-            Log.println(": ");
+            Log.print(": ");
             Log.print(compiler.name());
             Log.print(": Compiling ");
-            Log.print(methodString);
+            Log.println(methodString);
         }
         return methodString;
     }

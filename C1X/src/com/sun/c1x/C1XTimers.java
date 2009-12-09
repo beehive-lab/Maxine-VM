@@ -31,6 +31,7 @@ import com.sun.c1x.debug.*;
 public enum C1XTimers {
     HIR_CREATE("Create HIR"),
     HIR_OPTIMIZE("Optimize HIR"),
+    NCE("Nullcheck elimination"),
     LIR_CREATE("Create LIR"),
     LIFETIME_ANALYSIS("Lifetime Analysis"),
     LINEAR_SCAN("Linear Scan"),

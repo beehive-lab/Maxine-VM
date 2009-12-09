@@ -178,9 +178,6 @@ public final class HostedBootClassLoader extends ClassLoader {
                     if (classActor != null) {
                         return classActor;
                     }
-//                    if (isOmittedType(typeDescriptor)) {
-//                        throw new OmittedClassError(typeDescriptor.toJavaString());
-//                    }
                     if (JavaTypeDescriptor.isArray(typeDescriptor)) {
                         final ClassActor componentClassActor = makeClassActor(typeDescriptor.componentTypeDescriptor());
                         return ClassActorFactory.createArrayClassActor(componentClassActor);

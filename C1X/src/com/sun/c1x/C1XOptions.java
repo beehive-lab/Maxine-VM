@@ -112,7 +112,6 @@ public class C1XOptions {
     public static boolean OptCSEArrayLength;
     public static boolean OptCHA;
     public static boolean OptLeafMethods;
-    public static boolean OptMergeConstants;
     public static boolean OptGlobalValueNumbering;
     public static boolean OptCEElimination;
     public static boolean OptBlockMerging;
@@ -159,6 +158,7 @@ public class C1XOptions {
     public static boolean GenFinalizerRegistration      = true;
     public static boolean GenTableRanges                = ____;
 
+    public static int     InitialCodeBufferSize         = 232;
     public static boolean TwoOperandLIRForm             = true;
     public static boolean DetailedAsserts               = ____;
 
@@ -207,7 +207,6 @@ public class C1XOptions {
         OptLocalLoadElimination         = ____;
         OptCSEArrayLength               = ____;
 
-        OptMergeConstants               = ____; // won't work until constants can be outside CFG
         PhiLoopStores = ____;
 
         // turn off backend optimizations
@@ -232,7 +231,6 @@ public class C1XOptions {
         OptCSEArrayLength               = ____;
 
         // turn on state merging optimizations
-        OptMergeConstants               = ____;
         PhiLoopStores = true;
 
         // turn on speculative optimizations
@@ -265,7 +263,6 @@ public class C1XOptions {
         OptCSEArrayLength               = ____;
 
         // turn on state merging optimizations
-        OptMergeConstants               = ____;
         PhiLoopStores = true;
 
         // turn on speculative optimizations
@@ -298,7 +295,6 @@ public class C1XOptions {
         OptCSEArrayLength               = true;
 
         // turn on state merging optimizations
-        OptMergeConstants               = ____; // won't work until constants can be outside CFG
         PhiLoopStores = true;
 
         // turn on speculative optimizations
