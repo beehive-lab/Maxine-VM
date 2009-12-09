@@ -28,6 +28,7 @@ package com.sun.max.tele.debug;
  *
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public abstract class TeleEventRequest {
 
@@ -37,6 +38,8 @@ public abstract class TeleEventRequest {
      */
     public final TeleNativeThread thread;
 
+    public final boolean withClientBreakpoints;
+
     /**
      * A descriptive name for this execution request (e.g. "single-step").
      */
@@ -44,9 +47,10 @@ public abstract class TeleEventRequest {
 
     private boolean complete = false;
 
-    public TeleEventRequest(String name, TeleNativeThread thread) {
+    public TeleEventRequest(String name, TeleNativeThread thread, boolean withClientBreakpoints) {
         this.name = name;
         this.thread = thread;
+        this.withClientBreakpoints = withClientBreakpoints;
     }
 
     /**
