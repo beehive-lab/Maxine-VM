@@ -1579,30 +1579,30 @@ public abstract class TeleVM implements MaxVM {
         return TeleInterpreter.execute(this, classMethodActor, arguments);
     }
 
-    public void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
-        teleProcess.controller().resume(synchronous, withClientBreakpoints);
+    public void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
+        teleProcess.resume(synchronous, withClientBreakpoints);
     }
 
-    public void singleStep(final MaxThread maxThread, boolean synchronous) throws InvalidProcessRequestException, OSExecutionRequestException {
+    public void singleStepThread(final MaxThread maxThread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException {
         final TeleNativeThread teleNativeThread = (TeleNativeThread) maxThread;
-        teleProcess.controller().singleStep(teleNativeThread, synchronous);
+        teleProcess.singleStepThread(teleNativeThread, synchronous);
     }
 
-    public void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
+    public void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
         final TeleNativeThread teleNativeThread = (TeleNativeThread) maxThread;
-        teleProcess.controller().stepOver(teleNativeThread, synchronous, withClientBreakpoints);
+        teleProcess.stepOver(teleNativeThread, synchronous, withClientBreakpoints);
     }
 
-    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException {
-        teleProcess.controller().runToInstruction(instructionPointer, synchronous, withClientBreakpoints);
+    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
+        teleProcess.runToInstruction(instructionPointer, synchronous, withClientBreakpoints);
     }
 
-    public final   void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
-        teleProcess.controller().pause();
+    public final  void pauseVM() throws InvalidVMRequestException, OSExecutionRequestException {
+        teleProcess.pauseProcess();
     }
 
-    public final void terminate() throws Exception {
-        teleProcess.controller().terminate();
+    public final void terminateVM() throws Exception {
+        teleProcess.terminateProcess();
     }
 
     public final ReferenceValue createReferenceValue(Reference reference) {
@@ -1991,11 +1991,11 @@ public abstract class TeleVM implements MaxVM {
             if (teleProcess.processState() == RUNNING) {
                 LOGGER.info("Pausing VM...");
                 try {
-                    TeleVM.this.pause();
+                    TeleVM.this.pauseVM();
                 } catch (OSExecutionRequestException osExecutionRequestException) {
                     LOGGER.log(Level.SEVERE,
                             "Unexpected error while pausing the VM", osExecutionRequestException);
-                } catch (InvalidProcessRequestException invalidProcessRequestException) {
+                } catch (InvalidVMRequestException invalidProcessRequestException) {
                     LOGGER.log(Level.SEVERE,
                             "Unexpected error while pausing the VM", invalidProcessRequestException);
                 }
@@ -2014,13 +2014,13 @@ public abstract class TeleVM implements MaxVM {
                     // step => perform single step instead of resume.
                     try {
                         LOGGER.info("Doing single step instead of resume!");
-                        TeleVM.this.singleStep(registeredSingleStepThread, false);
+                        TeleVM.this.singleStepThread(registeredSingleStepThread, false);
                     } catch (OSExecutionRequestException osExecutionRequestException) {
                         LOGGER.log(
                                         Level.SEVERE,
                                         "Unexpected error while performing a single step in the VM",
                                         osExecutionRequestException);
-                    } catch (InvalidProcessRequestException e) {
+                    } catch (InvalidVMRequestException e) {
                         LOGGER.log(
                                         Level.SEVERE,
                                         "Unexpected error while performing a single step in the VM",
@@ -2043,7 +2043,7 @@ public abstract class TeleVM implements MaxVM {
                                         Level.SEVERE,
                                         "Unexpected error while performing a run-to-instruction in the VM",
                                         osExecutionRequestException);
-                    } catch (InvalidProcessRequestException invalidProcessRequestException) {
+                    } catch (InvalidVMRequestException invalidProcessRequestException) {
                         LOGGER.log(
                                         Level.SEVERE,
                                         "Unexpected error while performing a run-to-instruction in the VM",
@@ -2061,7 +2061,7 @@ public abstract class TeleVM implements MaxVM {
                     } catch (OSExecutionRequestException e) {
                         LOGGER.log(Level.SEVERE,
                                 "Unexpected error while resuming the VM", e);
-                    } catch (InvalidProcessRequestException e) {
+                    } catch (InvalidVMRequestException e) {
                         LOGGER.log(Level.SEVERE,
                                 "Unexpected error while resuming the VM", e);
                     }
@@ -2073,7 +2073,7 @@ public abstract class TeleVM implements MaxVM {
 
         public void exit(int code) {
             try {
-                TeleVM.this.terminate();
+                TeleVM.this.terminateVM();
             } catch (Exception exception) {
                 LOGGER.log(Level.SEVERE,
                     "Unexpected error while exidting the VM", exception);

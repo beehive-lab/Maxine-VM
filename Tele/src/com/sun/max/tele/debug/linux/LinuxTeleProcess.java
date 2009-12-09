@@ -68,6 +68,11 @@ public final class LinuxTeleProcess extends TeleProcess {
     }
 
     @Override
+    public int maximumWatchpointCount() {
+        return 0;
+    }
+
+    @Override
     protected void kill() throws OSExecutionRequestException {
         task.kill();
     }

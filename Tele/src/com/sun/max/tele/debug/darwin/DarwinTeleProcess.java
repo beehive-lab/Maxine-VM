@@ -73,6 +73,11 @@ public final class DarwinTeleProcess extends TeleProcess {
     }
 
     @Override
+    public int maximumWatchpointCount() {
+        return 0;
+    }
+
+    @Override
     public void suspend() throws OSExecutionRequestException {
         if (!nativeSuspend(task)) {
             ProgramError.unexpected("could not suspend process");

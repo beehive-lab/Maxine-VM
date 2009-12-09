@@ -3918,7 +3918,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                maxVM().pause();
+                maxVM().pauseVM();
             } catch (Exception exception) {
                 gui().errorMessage("Pause could not be initiated", exception.toString());
             }
@@ -4276,7 +4276,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public  void procedure() {
             final MaxThread thread = focus().thread();
             try {
-                maxVM().singleStep(thread, false);
+                maxVM().singleStepThread(thread, false);
             } catch (Exception exception) {
                 gui().errorMessage("Couldn't single step", exception.toString());
             }

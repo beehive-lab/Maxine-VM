@@ -876,20 +876,20 @@ public interface MaxVM {
      *
      * @param synchronous should the call wait for the execution to complete?
      * @param withClientBreakpoints should client breakpoints be enabled during execution?
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM.
      *
      * @param thread a thread in the VM
      * @param synchronous should the call wait for the execution to complete.
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void singleStep(final MaxThread maxThread, boolean synchronous) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void singleStepThread(final MaxThread maxThread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM; if the instruction is a call, then resume VM execution until call returns.
@@ -897,10 +897,10 @@ public interface MaxVM {
      * @param thread a thread in the VM.
      * @param synchronous should the call wait for the execution to complete?
      * @param withClientBreakpoints should client breakpoints be enabled during execution?
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Resumes execution of the VM with a temporary breakpoint set.
@@ -909,22 +909,22 @@ public interface MaxVM {
      * @param synchronous should the call wait for the execution to complete?
      * @param withClientBreakpoints should client breakpoints be enabled duration of the execution?
      * @throws OSExecutionRequestException execution failed in OS.
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      */
-    void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException;
+    void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
 
     /**
      * Pauses the running VM.
      *
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void pause() throws InvalidProcessRequestException, OSExecutionRequestException;
+    void pauseVM() throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
-     * Shuts down the VM process.
+     * Shuts down the VM completely.
      */
-    void terminate() throws Exception;
+    void terminateVM() throws Exception;
 
     /**
      * Uses the configured source path in the VM to search for a source file corresponding to a class.
