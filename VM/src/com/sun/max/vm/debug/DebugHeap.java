@@ -304,4 +304,12 @@ public final class DebugHeap {
         return mark;
     }
 
+    public static boolean isValidNonnullGrip(Grip grip) {
+        if (MaxineVM.isDebug()) {
+            final Pointer origin = grip.toOrigin();
+            final Pointer cell = Layout.originToCell(origin);
+            return isValidCellTag(cell.minusWords(1).getWord(0));
+        }
+        return true;
+    }
 }

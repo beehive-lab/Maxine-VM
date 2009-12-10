@@ -542,7 +542,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         int frameSlotIndex = preparer.referenceMapBitIndex(refmapFramePointer);
         int byteIndex = stopIndex * frameReferenceMapSize();
         for (int i = 0; i < frameReferenceMapSize(); i++) {
-            final byte frameReferenceMapByte = referenceMaps()[byteIndex];
+            final byte frameReferenceMapByte = referenceMaps[byteIndex];
             preparer.traceReferenceMapByteBefore(byteIndex, frameReferenceMapByte, "Frame");
             preparer.setBits(frameSlotIndex, frameReferenceMapByte);
             preparer.traceReferenceMapByteAfter(refmapFramePointer, frameSlotIndex, frameReferenceMapByte);
