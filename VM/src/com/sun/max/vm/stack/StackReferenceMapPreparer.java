@@ -819,10 +819,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         }
 
         // If the stack reference map is being completed, then the stack walk stops after the first trap stub
-        if (completingReferenceMap && targetMethod.classMethodActor().isTrapStub()) {
-            return false;
-        }
-        return true;
+        return !(completingReferenceMap && targetMethod.classMethodActor().isTrapStub());
     }
 
     public void setBits(int baseSlotIndex, byte referenceMapByte) {
