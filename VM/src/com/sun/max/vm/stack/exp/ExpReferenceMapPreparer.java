@@ -20,11 +20,24 @@
  */
 package com.sun.max.vm.stack.exp;
 
+import com.sun.max.unsafe.Pointer;
+
 /**
- *
+ * This interface represents a callback for each frame to record its reference map.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public interface ExpReferenceMapPreparer {
-
+    /**
+     * This method is called by each frame as it prepares its reference map, informing the preparer
+     * of the words within its frame that contain references.
+     *
+     * @param layout the stack frame layout object (for debugging)
+     * @param cursor the stack frame cursor (for debugging)
+     * @param start the pointer at which these reference map bits start
+     * @param bitMap the bits of the bitmap, with bit 0 corresponding to word at offset 0 from the start
+     * @param numBits the number of bits to consider in the map
+     */
+    public void recordReferenceBits(ExpStackFrameLayout layout, ExpStackWalker.Cursor cursor, Pointer start, int bitMap, int numBits);
 }
