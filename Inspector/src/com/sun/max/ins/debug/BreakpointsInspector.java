@@ -74,6 +74,9 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
         final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
         editMenu.add(inspection().actions().removeSelectedBreakpoint());
+        editMenu.add(inspection().actions().removeAllTargetCodeBreakpoints());
+        editMenu.add(inspection().actions().removeAllBytecodeBreakpoints());
+        editMenu.add(inspection().actions().removeAllBreakpoints());
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
