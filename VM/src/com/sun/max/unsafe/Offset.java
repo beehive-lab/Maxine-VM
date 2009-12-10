@@ -23,7 +23,6 @@ package com.sun.max.unsafe;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.box.*;
 
 /**
  * Offsets from addresses or pointers. Unlike an 'Address', an 'Offset' can be negative. Both types have the identical

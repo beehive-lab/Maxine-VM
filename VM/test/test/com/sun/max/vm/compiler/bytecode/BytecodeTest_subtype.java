@@ -30,7 +30,6 @@ import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.ir.*;
@@ -41,7 +40,7 @@ import com.sun.max.vm.value.*;
  * Performs various tests to ensure that compilation of the type testing bytecodes (i.e. instanceof, aastore, checkcast)
  * matches the semantics of the host on which the tests are run (which is presumed to implement the required VM
  * semantics correctly). The tests explore a predefined set of types and instances of those types.
- * 
+ *
  * @author Doug Simon
  */
 public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends CompilerTestCase<Method_Type> {

@@ -56,7 +56,7 @@ as well (e.g. UnsafeLoophole.cast() would become nops).
 #9  wstore_2
 #10 wstore_3
 
-3. A set of (9) arithmetic operators on words:
+3. A set of (9) arithmetic operators on words (all unsigned):
 
 #11 wadd
 #12 wsub

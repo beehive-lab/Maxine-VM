@@ -42,7 +42,6 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.unsafe.box.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;

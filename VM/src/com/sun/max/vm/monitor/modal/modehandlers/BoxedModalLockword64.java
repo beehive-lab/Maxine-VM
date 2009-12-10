@@ -18,19 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.vm.monitor.modal.modehandlers;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.jni.*;
 
 /**
  * @author Bernd Mathiske
  */
-public final class BoxedFieldID extends FieldID implements UnsafeBox {
+@HOSTED_ONLY
+public final class BoxedModalLockword64 extends ModalLockword64 implements UnsafeBox {
 
     protected long nativeWord;
 
-    public BoxedFieldID(Word word) {
+    public BoxedModalLockword64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         nativeWord = unsafeBox.nativeWord();
     }

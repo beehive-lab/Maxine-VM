@@ -18,11 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.vm.monitor.modal.modehandlers.inflated;
+
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+
 /**
- * Boxed versions of the extra "primitive types" declared in com.sun.max.unsafe.
- * These boxed implementations are used on any non-MaxineVM VM,
- * especially the host VM for bootstrapping.
- *
  * @author Bernd Mathiske
  */
-package com.sun.max.unsafe.box;
+@HOSTED_ONLY
+public final class BoxedInflatedMonitorLockword64 extends InflatedMonitorLockword64 implements UnsafeBox {
+
+    protected long nativeWord;
+
+    public BoxedInflatedMonitorLockword64(Word word) {
+        final UnsafeBox unsafeBox = (UnsafeBox) word;
+        nativeWord = unsafeBox.nativeWord();
+    }
+
+    public long nativeWord() {
+        return nativeWord;
+    }
+
+}

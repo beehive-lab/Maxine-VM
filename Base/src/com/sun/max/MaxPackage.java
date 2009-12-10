@@ -119,6 +119,15 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         return fromName(name().substring(0, end));
     }
 
+    /**
+     * Gets the subclasses of {@code com.sun.max.unsafe.Word} in this package.
+     * The returned set need not include the boxed word types as they can be derived
+     * from the name of the unboxed types.
+     */
+    public Class[] wordSubclasses() {
+        return new Class[0];
+    }
+
     public MaxPackage subPackage(String... suffices) {
         String name = name();
         for (String suffix : suffices) {

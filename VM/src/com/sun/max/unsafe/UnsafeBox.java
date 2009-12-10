@@ -18,25 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.unsafe;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.jni.*;
+import com.sun.max.annotate.*;
 
 /**
+ * Interface implemented by boxed versions of the {@link Word} types.
+ * These boxed implementations are used on any non-MaxineVM VM,
+ * especially the host VM for bootstrapping.
+ *
+ * A boxed type must be in the same package as its corresponding unboxed type and
+ * its name must be composed by added the prefix "Boxed" to the name of the unboxed type.
+ *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public final class BoxedMethodID extends MethodID implements UnsafeBox {
+@HOSTED_ONLY
+public interface UnsafeBox {
 
-    protected long nativeWord;
-
-    public BoxedMethodID(Word word) {
-        final UnsafeBox unsafeBox = (UnsafeBox) word;
-        nativeWord = unsafeBox.nativeWord();
-    }
-
-    public long nativeWord() {
-        return nativeWord;
-    }
-
+    long nativeWord();
 }

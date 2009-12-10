@@ -18,14 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.vm.monitor.modal.modehandlers;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.monitor.modal.modehandlers.*;
 
 /**
  * @author Bernd Mathiske
  */
+@HOSTED_ONLY
 public final class BoxedHashableLockword64 extends HashableLockword64 implements UnsafeBox {
 
     protected long nativeWord;

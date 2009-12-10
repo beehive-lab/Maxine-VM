@@ -18,9 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.unsafe;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.annotate.*;
 
 /**
  * Boxed version of Address.
@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Bernd Mathiske
  */
+@HOSTED_ONLY
 public final class BoxedAddress extends Address implements UnsafeBox {
 
     private long nativeWord;

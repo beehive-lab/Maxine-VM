@@ -370,7 +370,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 return;
             }
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
-            final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
+            final BiasedLockEpoch64 classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
             // We cannot have any safepoints (and hence any revocation) on the code path between here and the lockword store.
             final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
             if (BiasedLockword64.isBiasedLockword(lockword)) {
@@ -387,7 +387,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             ModalLockword64 currentLockword = lockword;
             while (BiasedLockword64.isBiasedLockword(currentLockword)) {
                 final BiasedLockword64 biasedLockword = BiasedLockword64.from(currentLockword);
-                final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
+                final BiasedLockEpoch64 classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
                 if (classEpoch.isBulkRevocation()) {
                     // Objects of this class are no longer eligible for biased locking
                     if (biasedLockword.equals(biasedLockword.asAnonBiased())) {
@@ -462,7 +462,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 }
 
                 // Do we own the bias?
-                final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
+                final BiasedLockEpoch64 classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
                 final int lockwordThreadID = encodeCurrentThreadIDForLockword();
                 if (biasedLockword.getBiasOwnerID() == lockwordThreadID) {
                     if (biasedLockword.getEpoch().equals(classEpoch) || !biasedLockword.countUnderflow()) {
@@ -546,7 +546,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
                 VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
                 final Hub hub = ObjectAccess.readHub(object);
-                hub.biasedLockEpoch = BiasedLockEpoch.bulkRevocation();
+                hub.biasedLockEpoch = BiasedLockEpoch64.bulkRevocation();
                 postRevokeLockword = revokeBias(object);
                 VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);
             }
@@ -559,7 +559,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, triggerSafepoints);
                 VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, waitUntilNonMutating);
                 final Hub hub = ObjectAccess.readHub(object);
-                final BiasedLockEpoch epoch = hub.biasedLockEpoch;
+                final BiasedLockEpoch64 epoch = hub.biasedLockEpoch;
                 hub.biasedLockEpoch = epoch.increment();
                 postRevokeLockword = revokeBias(object);
                 VmThreadMap.ACTIVE.forAllThreadLocals(VmThreadMap.isNotCurrent, resetSafepoints);

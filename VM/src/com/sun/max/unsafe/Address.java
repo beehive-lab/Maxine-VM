@@ -25,7 +25,6 @@ import java.math.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.compiler.builtin.*;
 
 /**

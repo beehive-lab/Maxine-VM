@@ -22,7 +22,6 @@ package com.sun.max.vm.jni;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.actor.member.*;
 
 /**

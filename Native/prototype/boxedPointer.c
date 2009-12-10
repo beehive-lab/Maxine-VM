@@ -35,7 +35,7 @@
  */
 
 JNIEXPORT jbyte JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadByteAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadByteAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jbyte result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -43,7 +43,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadByteAtLongOffset(JNIEnv *env,
 }
 
 JNIEXPORT jbyte JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadByteAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadByteAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
 {
     jbyte result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -52,7 +52,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadByteAtIntOffset(JNIEnv *env, 
 
 
 JNIEXPORT jshort JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadShortAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadShortAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jshort result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -60,7 +60,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadShortAtLongOffset(JNIEnv *env
 }
 
 JNIEXPORT jshort JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadShortAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadShortAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
 {
     jshort result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -69,7 +69,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadShortAtIntOffset(JNIEnv *env,
 
 
 JNIEXPORT jchar JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadCharAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadCharAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jchar result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -77,7 +77,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadCharAtLongOffset(JNIEnv *env,
 }
 
 JNIEXPORT jchar JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadCharAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadCharAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
 {
     jchar result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -86,7 +86,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadCharAtIntOffset(JNIEnv *env, 
 
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadIntAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadIntAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jint result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -94,7 +94,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadIntAtLongOffset(JNIEnv *env, 
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadIntAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadIntAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
 {
     jint result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -103,7 +103,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadIntAtIntOffset(JNIEnv *env, j
 
 
 JNIEXPORT jfloat JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadFloatAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadFloatAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jfloat result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -111,7 +111,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadFloatAtLongOffset(JNIEnv *env
 }
 
 JNIEXPORT jfloat JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadFloatAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadFloatAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
 {
     jfloat result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -120,7 +120,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadFloatAtIntOffset(JNIEnv *env,
 
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadLongAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadLongAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jlong result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -128,7 +128,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadLongAtLongOffset(JNIEnv *env,
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadLongAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadLongAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
 {
     jlong result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -136,7 +136,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadLongAtIntOffset(JNIEnv *env, 
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadObjectAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadObjectAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jobject result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -144,7 +144,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadObjectAtLongOffset(JNIEnv *en
 }
 
 JNIEXPORT jdouble JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadDoubleAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadDoubleAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jdouble result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -152,7 +152,7 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadDoubleAtLongOffset(JNIEnv *en
 }
 
 JNIEXPORT jdouble JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadDoubleAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadDoubleAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
 {
     jdouble result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -161,82 +161,82 @@ Java_com_sun_max_unsafe_box_BoxedPointer_nativeReadDoubleAtIntOffset(JNIEnv *env
 
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteByteAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jbyte value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteByteAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jbyte value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteByteAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jbyte value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteShortAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jshort value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteShortAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jshort value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteIntAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jint value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteIntAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jint value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteByteAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jbyte value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteFloatAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jfloat value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteShortAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jshort value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteFloatAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jfloat value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteShortAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jshort value)
+{
+    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteIntAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jint value)
+{
+    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteIntAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jint value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteLongAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jlong value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteFloatAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jfloat value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteLongAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jlong value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteFloatAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jfloat value)
+{
+    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
+}
+
+
+JNIEXPORT void JNICALL
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteLongAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jlong value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteObjectAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jobject value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteLongAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jlong value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteDoubleAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jdouble value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteObjectAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jobject value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_box_BoxedPointer_nativeWriteDoubleAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jdouble value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteDoubleAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jdouble value)
+{
+    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
+}
+
+JNIEXPORT void JNICALL
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteDoubleAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jdouble value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }

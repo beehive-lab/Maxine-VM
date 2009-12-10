@@ -18,52 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Boxed version of Offset.
- *
  * @author Bernd Mathiske
  */
-public final class BoxedOffset extends Offset implements UnsafeBox {
+@HOSTED_ONLY
+public final class BoxedThinLockword64 extends ThinLockword64 implements UnsafeBox {
 
-    private long nativeWord;
+    protected long nativeWord;
 
-    public static final BoxedOffset ZERO = new BoxedOffset(0);
-
-    private static final class Cache {
-        private Cache() {
-        }
-
-        static final int LOWEST_VALUE = -100;
-        static final int HIGHEST_VALUE = 1000;
-
-        static final BoxedOffset[] cache = new BoxedOffset[(HIGHEST_VALUE - LOWEST_VALUE) + 1];
-
-        static {
-            for (int i = 0; i < cache.length; i++) {
-                cache[i] = new BoxedOffset(i + LOWEST_VALUE);
-            }
-        }
-    }
-
-    public static BoxedOffset from(long value) {
-        if (value == 0) {
-            return ZERO;
-        }
-        if (value >= Cache.LOWEST_VALUE && value <= Cache.HIGHEST_VALUE) {
-            return Cache.cache[(int) value - Cache.LOWEST_VALUE];
-        }
-        return new BoxedOffset(value);
-    }
-
-    private BoxedOffset(long value) {
-        nativeWord = value;
+    public BoxedThinLockword64(Word word) {
+        final UnsafeBox unsafeBox = (UnsafeBox) word;
+        nativeWord = unsafeBox.nativeWord();
     }
 
     public long nativeWord() {
         return nativeWord;
     }
+
 }
