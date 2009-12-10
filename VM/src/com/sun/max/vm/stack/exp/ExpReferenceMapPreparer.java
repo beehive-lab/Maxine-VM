@@ -39,5 +39,5 @@ public interface ExpReferenceMapPreparer {
      * @param bitMap the bits of the bitmap, with bit 0 corresponding to word at offset 0 from the start
      * @param numBits the number of bits to consider in the map
      */
-    public void recordReferenceBits(ExpStackFrameLayout layout, ExpStackWalker.Cursor cursor, Pointer start, int bitMap, int numBits);
+    void recordReferenceBits(ExpStackFrameLayout layout, ExpStackWalker.Cursor cursor, Pointer start, int bitMap, int numBits);
 }
