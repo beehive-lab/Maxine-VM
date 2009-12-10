@@ -65,7 +65,7 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
     private final Kind kind;
     private final TeleCodeLocation teleCodeLocation;
     private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
-    public String description = null;
+    private String description = null;
 
     /**
      * A VM breakpoint.
