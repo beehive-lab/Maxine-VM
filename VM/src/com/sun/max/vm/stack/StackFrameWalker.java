@@ -465,6 +465,15 @@ public abstract class StackFrameWalker {
     }
 
     /**
+     * Walks a thread's stack for the purpose of preparing the reference map of a thread's stack. This method takes care of
+     * {@linkplain #reset() resetting} this walker before returning.
+     */
+    public final void verifyReferenceMap(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, StackReferenceMapPreparer preparer) {
+        walk(instructionPointer, stackPointer, framePointer, REFERENCE_MAP_PREPARING, preparer);
+        reset();
+    }
+
+    /**
      * Terminates the current stack walk.
      */
     @INLINE

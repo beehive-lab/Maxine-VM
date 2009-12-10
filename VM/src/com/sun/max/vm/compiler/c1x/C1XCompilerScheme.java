@@ -47,7 +47,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     static {
         if (MaxineVM.isHosted()) {
-            c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 0,
+            c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 1,
                     "Set the optimization level of C1X.") {
                 @Override
                 public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {

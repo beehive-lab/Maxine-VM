@@ -25,9 +25,11 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.value.*;
 
 /**
- *
+ * This class represents a Java stack frame, including the method and a bytecode index.
+ * It may optionally include debugging (deoptimization) information.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public interface ExpJavaStackFrame {
     ClassMethodActor classMethodActor();

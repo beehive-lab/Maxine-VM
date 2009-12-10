@@ -38,17 +38,58 @@ import com.sun.max.vm.stack.exp.ExpStackWalker.*;
  */
 public interface ExpStackFrameLayout {
 
-    void advance(ExpStackWalker.Cursor current);
+    /**
+     * Advances the cursor to the next frame.
+     * @param cursor the stack frame walking cursor
+     */
+    void advance(Cursor cursor);
 
-    Address findCatchAddress(ExpStackWalker.Cursor current, Class<? extends Throwable> throwableClass);
+    /**
+     * Finds the address of an exception handler for the specified exception class in this
+     * stack frame, if any.
+     * @param cursor the cursor
+     * @param throwableClass the class of the throwable
+     * @return the address of the catch block, if any; {@link Address#zero()} otherwise.
+     */
+    Address findCatchAddress(Cursor cursor, Class<? extends Throwable> throwableClass);
 
-    void unwindToAddress(Throwable exception, ExpStackWalker.Cursor current, Address address);
+    /**
+     * Unwinds the stack to the specified catching address with the specified exception.
+     * @param exception the exception to be thrown
+     * @param cursor the cursor
+     * @param address the address of the handler
+     */
+    void unwindToAddress(Throwable exception, Cursor cursor, Address address);
 
-    void prepareReferenceMap(Cursor current, ExpReferenceMapPreparer preparer);
+    /**
+     * Prepares the reference map for this stack frame (and possibly portions of the
+     * callee's frame).
+     * @param current the current cursor
+     * @param callee the callee's frame
+     * @param preparer the reference map preparer
+     */
+    void prepareReferenceMap(Cursor current, Cursor callee, ExpReferenceMapPreparer preparer);
 
-    void prepareCalleeReferenceMap(ExpStackWalker.Cursor caller, ExpStackWalker.Cursor current, ExpReferenceMapPreparer preparer);
+    /**
+     * Produces a string description of this stack frame.
+     * @param cursor the cursor
+     * @return a string describing this stack frame
+     */
+    String description(Cursor cursor);
 
-    String description(ExpStackWalker.Cursor current);
+    /**
+     * Decomposes this stack frame into Java stack frames, if any.
+     * @param cursor the cursor
+     * @param frames the list of frames to which to append any Java frames
+     * @param debug {@code true} if the stack frame should produce debugging information (i.e.
+     * deoptimization information)
+     */
+    void appendJavaFrames(Cursor cursor, List<ExpJavaStackFrame> frames, boolean debug);
 
-    void appendJavaFrames(ExpStackWalker.Cursor current, List<ExpJavaStackFrame> frames);
+    /**
+     * Returns a pointer to the register save area, if any, on this stack frame.
+     * @param cursor the cursor
+     * @return a pointer to the register save area
+     */
+    Pointer getRegisterSaveArea(Cursor cursor);
 }

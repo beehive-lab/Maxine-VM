@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -20,22 +20,15 @@
  */
 package com.sun.max.vm.stack.exp;
 
-import com.sun.max.vm.stack.exp.ExpStackWalker.*;
+import com.sun.max.unsafe.Address;
 
 /**
- * This class represents a raw stack frame, including the instruction pointer, stack pointer, frame
- * pointer, and stack frame layout.
+ * This class implements access to the stack and the ability to identify frames for the stack walker.
  *
- * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public class ExpRawStackFrame {
+public interface ExpStackAccess {
 
-    public ExpRawStackFrame(ExpStackFrameLayout layout, Cursor cursor) {
-        this.layout = layout;
-        this.cursor = cursor;
-    }
-
-    public final ExpStackFrameLayout layout;
-    public final Cursor cursor;
+    boolean isValidIP(Address instructionPointer);
+    ExpStackFrameLayout identify(ExpStackWalker.Cursor cursor);
 }
