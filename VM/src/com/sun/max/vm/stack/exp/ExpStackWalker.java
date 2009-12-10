@@ -117,6 +117,13 @@ public abstract class ExpStackWalker {
     private final Cursor last = new Cursor();
     private final PrepareReferenceMapVisitor prepareVisitor;
 
+    /**
+     * Creates a new stack walker with the specified stack access and specified pre-allocated
+     * reference map preparer.
+     *
+     * @param stackAccess the object allowing access to the stack
+     * @param preparer the reference map preparer object
+     */
     public ExpStackWalker(ExpStackAccess stackAccess, ExpReferenceMapPreparer preparer) {
         this.stackAccess = stackAccess;
         this.prepareVisitor = new PrepareReferenceMapVisitor(preparer);
