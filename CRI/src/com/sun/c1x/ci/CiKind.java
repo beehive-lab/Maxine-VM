@@ -124,11 +124,11 @@ public enum CiKind {
 
     /**
      * Gets the size of this basic type in bytes.
-     * @param oopSize the size of an object reference
+     * @param referenceSize the size of an object reference
      * @param wordSize the size of a word in bytes
      * @return the size of this basic type in bytes
      */
-    public int sizeInBytes(int oopSize, int wordSize) {
+    public int sizeInBytes(int referenceSize, int wordSize) {
         switch (this) {
             case Boolean: return 1;
             case Byte: return 1;
@@ -138,10 +138,11 @@ public enum CiKind {
             case Long: return 8;
             case Float: return 4;
             case Double: return 8;
-            case Object: return oopSize;
+            case Object: return referenceSize;
+            case Jsr: return 4;
             case Word: return wordSize;
+            default: return 0;
         }
-        throw new IllegalArgumentException("invalid BasicType " + this + " for .sizeInBytes()");
     }
 
     /**

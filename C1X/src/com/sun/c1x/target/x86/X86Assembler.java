@@ -1950,11 +1950,9 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     public final void pushl(Address src) {
         // Note this will push 64bit on 64bit
-
         prefix(src);
         emitByte(0xFF);
         emitOperand(X86.rsi, src);
-
     }
 
     public final void pxor(CiRegister dst, Address src) {

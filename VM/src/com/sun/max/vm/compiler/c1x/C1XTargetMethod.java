@@ -541,8 +541,7 @@ public class C1XTargetMethod extends TargetMethod {
             final C1XTargetMethod c1xCallee = (C1XTargetMethod) callee;
             if (c1xCallee.isCalleeSaved()) {
                 for (int i = 0; i < referenceRegisterCount; i++) {
-                    boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
-                    if (curBit) {
+                    if (isRegisterReferenceMapBitSet(stopIndex, i)) {
 //
 //                        // TODO (tw): Check if this is correct?
 //                        int numberOfWords = i + 2;
@@ -556,16 +555,10 @@ public class C1XTargetMethod extends TargetMethod {
 
     @Override
     public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
-
-        // TODO (tw): Tentative implementation! Make correct...
-
         int stopIndex = lookupStopPosition(instructionPointer);
         for (int i = 0; i < referenceRegisterCount; i++) {
-            boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
-            if (curBit) {
-                int numberOfWords = i;
-                Pointer referencePointer = registerState.plusWords(numberOfWords);
-                preparer.setReferenceMapBit(referencePointer);
+            if (isRegisterReferenceMapBitSet(stopIndex, i)) {
+                preparer.setReferenceMapBit(registerState.plusWords(i));
             }
         }
     }

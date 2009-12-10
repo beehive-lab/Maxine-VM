@@ -97,7 +97,7 @@ public class C1XTest {
         "Reset the metrics before each timing run.");
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
         "Show help message and exit.");
-    private static final Option<Integer> c1xOptLevel = options.newIntegerOption("c1x-optlevel", -1,
+    private static final Option<Integer> c1xOptLevel = options.newIntegerOption("C1X:OptLevel", -1,
         "Set the overall optimization level of C1X (-1 to use default settings)");
     private static final Option<List<String>> metricsOption = options.newStringListOption("print-metrics", new String[0],
         "A list of metrics from the C1XMetrics class to print.");
