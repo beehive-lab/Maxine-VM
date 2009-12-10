@@ -26,6 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -35,11 +36,15 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * An abstraction over memory watchpoints.
+ *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxWatchpoint {
+public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTriggerEventHandler, MaxWatchpoint {
+
+    // TODO (mlvdv) add a description field
 
     private static final int TRACE_VALUE = 1;
 
@@ -249,6 +254,48 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
 
     public boolean enable() {
         return factory.activateWatchpoint(this);
+    }
+
+    public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+        assert teleNativeThread.state() == ThreadState.WATCHPOINT;
+        final TeleVM teleVM = factory.teleProcess.teleVM();
+        final Address triggeredWatchpointAddress = Address.fromLong(factory.teleProcess.readWatchpointAddress());
+        if (triggeredWatchpointAddress.equals(teleVM.rootEpochAddress())) {
+            // TODO (mlvdv) handle this case with a special subclass
+            // The counter signifying end of a GC has been changed.
+            try {
+                factory.lazyUpdateRelocatableWatchpoints();
+            } catch (TooManyWatchpointsException exception) {
+                ProgramError.unexpected("Handling watchpoint trigger event: " + exception);
+            } catch (DuplicateWatchpointException exception) {
+                ProgramError.unexpected("Handling watchpoint trigger event: " + exception);
+            }
+            factory.reenableWatchpointsAfterGC();
+            return false;
+        } else if (teleVM.isInGC()) {
+            // Handle watchpoint triggered in card table
+            if (teleVM.isCardTableAddress(triggeredWatchpointAddress)) {
+                Address objectOldAddress = teleVM.getObjectOldAddress();
+                try {
+                    return !factory.relocateCardTableWatchpoint(objectOldAddress, teleVM.getObjectNewAddress());
+                } catch (TooManyWatchpointsException exception) {
+                    ProgramError.unexpected("Handling watchpoint trigger event: " + exception);
+                } catch (DuplicateWatchpointException exception) {
+                    ProgramError.unexpected("Handling watchpoint trigger event: " + exception);
+                }
+            }
+
+            //Word value = thread.threadLocalsFor(Safepoint.State.ENABLED).getVmThreadLocal(VmThreadLocal.OLD_OBJECT_ADDRESS.index).getVariableWord();
+            //System.out.println("WATCHPOINT FIELDS " + thread.threadLocalsFor(Safepoint.State.ENABLED).getVmThreadLocal(VmThreadLocal.NEW_OBJECT_ADDRESS.index).getVariableWord());
+            // The VM is in GC. Turn Watchpoints off for all objects that are not interested in GC related triggers.
+            if (!factory.isInGCMode()) {
+                factory.disableWatchpointsDuringGC();
+                if (!isEnabledDuringGC()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -931,7 +978,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements MaxW
         }
 
         /**
-         * Re-enables all watchpoints after GC, which got deactived during GC.
+         * Re-enables all watchpoints after GC, which got deactivated during GC.
          */
         public void reenableWatchpointsAfterGC() {
             if (inGCMode) {
