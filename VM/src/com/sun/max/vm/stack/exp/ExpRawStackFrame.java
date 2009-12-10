@@ -23,9 +23,11 @@ package com.sun.max.vm.stack.exp;
 import com.sun.max.vm.stack.exp.ExpStackWalker.*;
 
 /**
- *
+ * This class represents a raw stack frame, including the instruction pointer, stack pointer, frame
+ * pointer, and stack frame layout.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class ExpRawStackFrame {
 

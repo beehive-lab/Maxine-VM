@@ -147,8 +147,8 @@ public final class JDKInterceptor {
             "threadLocals",
             "inheritableThreadLocals",
         JDK.java_lang_ProcessEnvironment,
-            "theEnvironment+",
-            "theUnmodifiableEnvironment+",
+            new ZeroField("theEnvironment", true),
+            new ZeroField("theUnmodifiableEnvironment", true),
         JDK.sun_misc_VM,
             "booted",
             "finalRefCount",
@@ -232,7 +232,7 @@ public final class JDKInterceptor {
 
     public static boolean hasMutabilityOverride(FieldActor fieldActor) {
         InterceptedField f = getInterceptedField(fieldActor);
-        return f != null && f.mutabilityOverride != null && f.mutabilityOverride;
+        return f != null && f.mutabilityOverride;
     }
 
 
@@ -308,21 +308,11 @@ public final class JDKInterceptor {
     public abstract static class InterceptedField {
         private final String name;
         public FieldActor fieldActor;
-        /**
-         * Override of mutability: null:no-override, TRUE:mutable, FALSE:immutable.
-         */
-        private final Boolean mutabilityOverride;
+        private final boolean mutabilityOverride;
 
-        InterceptedField(String name) {
-            final char lastChar = name.charAt(name.length() - 1);
-            if (lastChar == '-' || lastChar == '+') {
-                this.name = name.substring(0, name.length() - 1);
-                mutabilityOverride = (lastChar == '+');
-            } else {
-                this.name = name;
-                mutabilityOverride = null;
-                assert Character.isJavaIdentifierPart(lastChar) : "Invalid Java field name: " + name;
-            }
+        InterceptedField(String name, boolean makeNonFinal) {
+            this.mutabilityOverride = makeNonFinal;
+            this.name = name;
         }
 
         public String getName() {
@@ -343,10 +333,7 @@ public final class JDKInterceptor {
          * @return whether the value of this field can be modified in the VM
          */
         boolean isMutable() {
-            if (mutabilityOverride == null) {
-                return !fieldActor.isConstant();
-            }
-            return mutabilityOverride;
+            return !fieldActor.isConstant() || mutabilityOverride;
         }
     }
 
@@ -357,7 +344,7 @@ public final class JDKInterceptor {
     private static class ValueField extends InterceptedField {
         private final Value value;
         ValueField(String name, Value value) {
-            super(name);
+            super(name, false);
             this.value = value;
         }
         @Override
@@ -372,7 +359,10 @@ public final class JDKInterceptor {
      */
     public static class ZeroField extends InterceptedField {
         ZeroField(String name) {
-            super(name);
+            super(name, false);
+        }
+        ZeroField(String name, boolean mutabilityOverride) {
+            super(name, mutabilityOverride);
         }
         @Override
         public Value getValue(Object object, FieldActor field) {
@@ -382,7 +372,7 @@ public final class JDKInterceptor {
 
     private static class AtomicFieldUpdaterOffsetRecomputation extends InterceptedField {
         AtomicFieldUpdaterOffsetRecomputation(String name) {
-            super(name);
+            super(name, false);
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
@@ -422,7 +412,7 @@ public final class JDKInterceptor {
     private static class ExpiringCacheField extends InterceptedField {
         private final Map<Object, Object> newValues = new IdentityHashMap<Object, Object>();
         ExpiringCacheField(String name) {
-            super(name);
+            super(name, false);
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
@@ -443,7 +433,7 @@ public final class JDKInterceptor {
         private final ClassRef classRef;
         private final String fieldName;
         FieldOffsetRecomputation(String offsetFieldName, ClassRef classRef, String fieldName) {
-            super(offsetFieldName);
+            super(offsetFieldName, false);
             this.fieldName = fieldName;
             this.classRef = classRef;
         }
@@ -468,7 +458,7 @@ public final class JDKInterceptor {
         private final ClassRef classRef;
         private Object result;
         NewShutdownHookList(ClassRef classRef, String fieldName) {
-            super(fieldName);
+            super(fieldName, false);
             this.classRef = classRef;
         }
 
