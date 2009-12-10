@@ -29,7 +29,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * This Value subtype also serves as our canonical "boxed Java value" type,
- * whereever it may necessary to present one for values of any 'Word' type.
+ * whereever it may necessary to present one for values of any {@link Word} type.
  *
  * @author Bernd Mathiske
  */

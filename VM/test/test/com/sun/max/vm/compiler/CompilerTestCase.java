@@ -465,7 +465,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
         // UnsafeBox classes cannot be compiled as they are treated as Word types and any attempt to
         // access fields to will fail as field access only works for non Word types. An example
         // of such a type is BoxedJniHandle.
-        assert !(UnsafeBox.class.isAssignableFrom(javaClass));
+        assert !(Boxed.class.isAssignableFrom(javaClass));
 
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         if (classActor != null) {

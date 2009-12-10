@@ -27,16 +27,16 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  */
 @HOSTED_ONLY
-public final class BoxedModalLockword64 extends ModalLockword64 implements UnsafeBox {
+public final class BoxedModalLockword64 extends ModalLockword64 implements Boxed {
 
     protected long nativeWord;
 
     public BoxedModalLockword64(Word word) {
-        final UnsafeBox unsafeBox = (UnsafeBox) word;
-        nativeWord = unsafeBox.nativeWord();
+        final Boxed unsafeBox = (Boxed) word;
+        nativeWord = unsafeBox.value();
     }
 
-    public long nativeWord() {
+    public long value() {
         return nativeWord;
     }
 

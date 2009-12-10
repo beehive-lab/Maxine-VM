@@ -121,8 +121,8 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
 
     /**
      * Gets the subclasses of {@code com.sun.max.unsafe.Word} in this package.
-     * The returned set need not include the boxed word types as they can be derived
-     * from the name of the unboxed types.
+     * The returned array must not include boxed (see com.sun.max.unsafe.Boxed)
+     * word types as they are derived from the name of the unboxed types.
      */
     public Class[] wordSubclasses() {
         return new Class[0];

@@ -30,7 +30,7 @@ import com.sun.max.annotate.*;
  * @author Bernd Mathiske
  */
 @HOSTED_ONLY
-public final class BoxedAddress extends Address implements UnsafeBox {
+public final class BoxedAddress extends Address implements Boxed {
 
     private long nativeWord;
 
@@ -77,7 +77,7 @@ public final class BoxedAddress extends Address implements UnsafeBox {
         }
     }
 
-    public long nativeWord() {
+    public long value() {
         return nativeWord;
     }
 

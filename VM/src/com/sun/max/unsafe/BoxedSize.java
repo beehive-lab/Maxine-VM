@@ -30,7 +30,7 @@ import com.sun.max.annotate.*;
  * @author Bernd Mathiske
  */
 @HOSTED_ONLY
-public final class BoxedSize extends Size implements UnsafeBox {
+public final class BoxedSize extends Size implements Boxed {
 
     private long nativeWord;
 
@@ -74,7 +74,7 @@ public final class BoxedSize extends Size implements UnsafeBox {
         return from(value & BoxedWord.INT_MASK);
     }
 
-    public long nativeWord() {
+    public long value() {
         return nativeWord;
     }
 

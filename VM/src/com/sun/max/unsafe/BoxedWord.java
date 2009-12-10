@@ -30,14 +30,14 @@ import com.sun.max.annotate.*;
  * @author Bernd Mathiske
  */
 @HOSTED_ONLY
-public final class BoxedWord extends Word implements UnsafeBox {
+public final class BoxedWord extends Word implements Boxed {
 
     public static final long INT_MASK = 0x00000000ffffffffL;
 
     private long nativeWord;
 
-    public BoxedWord(UnsafeBox unsafeBox) {
-        nativeWord = unsafeBox.nativeWord();
+    public BoxedWord(Boxed unsafeBox) {
+        nativeWord = unsafeBox.value();
     }
 
     public BoxedWord(int value) {
@@ -52,7 +52,7 @@ public final class BoxedWord extends Word implements UnsafeBox {
         nativeWord = value.asOffset().toLong();
     }
 
-    public long nativeWord() {
+    public long value() {
         return nativeWord;
     }
 }

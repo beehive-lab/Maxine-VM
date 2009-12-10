@@ -28,7 +28,7 @@ import com.sun.max.annotate.*;
  * @author Bernd Mathiske
  */
 @HOSTED_ONLY
-public final class BoxedOffset extends Offset implements UnsafeBox {
+public final class BoxedOffset extends Offset implements Boxed {
 
     private long nativeWord;
 
@@ -64,7 +64,7 @@ public final class BoxedOffset extends Offset implements UnsafeBox {
         nativeWord = value;
     }
 
-    public long nativeWord() {
+    public long value() {
         return nativeWord;
     }
 }
