@@ -21,20 +21,25 @@
 package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 
 /**
- * Interface implemented by boxed versions of the {@link Word} types.
- * These boxed implementations are used on any non-MaxineVM VM,
- * especially the host VM for bootstrapping.
+ * Interface implemented by boxed versions of {@link Word} types.
+ * These boxed implementations are used when executing in {@linkplain MaxineVM#isHosted() hosted} mode.
  *
  * A boxed type must be in the same package as its corresponding unboxed type and
  * its name must be composed by added the prefix "Boxed" to the name of the unboxed type.
+ * This invariant enables the complete set of boxed types to be derived from the known
+ * set of unboxed types.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 @HOSTED_ONLY
-public interface UnsafeBox {
+public interface Boxed {
 
-    long nativeWord();
+    /**
+     * Gets the boxed value as a {@code long}.
+     */
+    long value();
 }

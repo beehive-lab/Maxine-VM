@@ -27,7 +27,7 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  */
 @HOSTED_ONLY
-public final class BoxedJniHandle extends JniHandle implements UnsafeBox {
+public final class BoxedJniHandle extends JniHandle implements Boxed {
 
     protected long nativeWord;
 
@@ -39,7 +39,7 @@ public final class BoxedJniHandle extends JniHandle implements UnsafeBox {
         nativeWord = word;
     }
 
-    public long nativeWord() {
+    public long value() {
         return nativeWord;
     }
 

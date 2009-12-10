@@ -36,23 +36,23 @@ public final class BoxedMemory {
     private static native long nativeAllocate(long size);
 
     public static Pointer allocate(Size size) {
-        final UnsafeBox box = (UnsafeBox) size;
-        return BoxedPointer.from(nativeAllocate(box.nativeWord()));
+        final Boxed box = (Boxed) size;
+        return BoxedPointer.from(nativeAllocate(box.value()));
     }
 
     private static native long nativeReallocate(long block, long size);
 
     public static Pointer reallocate(Pointer block, Size size) {
-        final UnsafeBox blockBox = (UnsafeBox) block;
-        final UnsafeBox sizeBox = (UnsafeBox) size;
-        return BoxedPointer.from(nativeReallocate(blockBox.nativeWord(), sizeBox.nativeWord()));
+        final Boxed blockBox = (Boxed) block;
+        final Boxed sizeBox = (Boxed) size;
+        return BoxedPointer.from(nativeReallocate(blockBox.value(), sizeBox.value()));
     }
 
     private static native int nativeDeallocate(long pointer);
 
     public static int deallocate(Address block) {
-        final UnsafeBox box = (UnsafeBox) block;
-        return nativeDeallocate(box.nativeWord());
+        final Boxed box = (Boxed) block;
+        return nativeDeallocate(box.value());
     }
 
     private static native void nativeWriteBytes(byte[] fromArray, int startIndex, int numberOfBytes, long toPointer);

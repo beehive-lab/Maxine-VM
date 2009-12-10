@@ -32,7 +32,7 @@ import com.sun.max.vm.reference.*;
  * @author Bernd Mathiske
  */
 @HOSTED_ONLY
-public final class BoxedPointer extends Pointer implements UnsafeBox {
+public final class BoxedPointer extends Pointer implements Boxed {
 
     // ATTENTION: this field name must match the corresponding declaration in "pointer.c"!
     private long nativeWord;
@@ -71,7 +71,7 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
         return from(value & BoxedWord.INT_MASK);
     }
 
-    public long nativeWord() {
+    public long value() {
         return nativeWord;
     }
 

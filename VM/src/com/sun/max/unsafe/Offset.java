@@ -78,7 +78,7 @@ public abstract class Offset extends Word {
     public final int toInt() {
         if (Word.isBoxed()) {
             final BoxedOffset box = (BoxedOffset) this;
-            return (int) box.nativeWord();
+            return (int) box.value();
         }
         if (Word.width() == 64) {
             final long n = UnsafeCast.asLong(this);
@@ -91,7 +91,7 @@ public abstract class Offset extends Word {
     public final long toLong() {
         if (Word.isBoxed()) {
             final BoxedOffset box = (BoxedOffset) this;
-            return box.nativeWord();
+            return box.value();
         }
         if (Word.width() == 64) {
             return UnsafeCast.asLong(this);

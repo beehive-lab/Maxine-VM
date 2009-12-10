@@ -30,13 +30,13 @@
 #include "jni.h"
 
 JNIEXPORT jlong JNICALL 
-Java_com_sun_max_unsafe_BoxedMemory_nativeAllocate(JNIEnv *env, jclass c, jlong size)
+Java_com_sun_max_memory_BoxedMemory_nativeAllocate(JNIEnv *env, jclass c, jlong size)
 {
     return (jlong) ((Address) malloc((size_t) size));
 }
 
 JNIEXPORT jint JNICALL 
-Java_com_sun_max_unsafe_BoxedMemory_nativeDeallocate(JNIEnv *env, jclass c, jlong pointer)
+Java_com_sun_max_memory_BoxedMemory_nativeDeallocate(JNIEnv *env, jclass c, jlong pointer)
 {
     free((void *) ((Address) pointer));
     return 0;

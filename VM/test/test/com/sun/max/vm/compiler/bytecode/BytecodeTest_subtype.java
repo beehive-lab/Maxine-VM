@@ -308,7 +308,7 @@ public abstract class BytecodeTest_subtype<Method_Type extends IrMethod> extends
                 final boolean actorAnswer = toTypeActor.isAssignableFrom(fromTypeActor);
                 if (fromTypeActor.kind == Kind.WORD) {
                     if (toTypeActor.kind != Kind.WORD) {
-                        if (toType != Accessor.class && toType != UnsafeBox.class && actorAnswer == true) {
+                        if (toType != Accessor.class && toType != Boxed.class && actorAnswer == true) {
                             toTypeActor.isAssignableFrom(fromTypeActor);
                             fail(fromType + " should not be assignable to non-word type " + toType);
                         }

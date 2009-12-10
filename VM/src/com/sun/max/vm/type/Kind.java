@@ -851,9 +851,9 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                 return (WordValue) boxedJavaValue;
             }
             if (Word.isBoxed()) {
-                if (boxedJavaValue instanceof UnsafeBox) {
-                    final UnsafeBox box = (UnsafeBox) boxedJavaValue;
-                    return new WordValue(Address.fromLong(box.nativeWord()));
+                if (boxedJavaValue instanceof Boxed) {
+                    final Boxed box = (Boxed) boxedJavaValue;
+                    return new WordValue(Address.fromLong(box.value()));
                 }
             }
             if (boxedJavaValue == null) {
