@@ -105,37 +105,37 @@ public abstract class ExpStackWalker {
             other.setFields(instructionPointer, stackPointer, framePointer, isTopFrame);
             return other;
         }
+
+        public ExpStackAccess stackAccess() {
+            return stackAccess;
+        }
     }
 
     // Cursors pointing to the current and the last frame during the frame walk.
+    private final ExpStackAccess stackAccess;
     private final Cursor current = new Cursor();
     private final Cursor last = new Cursor();
+    private final PrepareReferenceMapVisitor prepareVisitor;
+
+    public ExpStackWalker(ExpStackAccess stackAccess, ExpReferenceMapPreparer preparer) {
+        this.stackAccess = stackAccess;
+        this.prepareVisitor = new PrepareReferenceMapVisitor(preparer);
+    }
 
     private <T extends InternalVisitor> T walk(Pointer ip, Pointer sp, Pointer fp, T visitor) {
-        // Get offset to the top of stack to the native call stack
-        int nativeCallStackPos = readVmThreadLocal(VmThreadLocal.NATIVE_CALL_STACK_SIZE).asOffset().toInt();
-
         last.clear();
         current.setFields(ip, sp, fp, true);
 
-        while (isValidIP(current)) {
-            ExpStackFrameLayout layout = findStackFrameLayout(current);
+        while (stackAccess.isValidIP(current.instructionPointer)) {
+            ExpStackFrameLayout layout = stackAccess.identify(current);
             trace(layout, last, current);
 
             if (layout == null) {
-                // We are in native code!
-                if (nativeCallStackPos <= 0) {
-                    // We are at the end of the stack!
-                    if (traceStackWalk.getValue()) {
-                        Log.print("End of native call stack reached!");
-                    }
-
-                    return visitor;
+                // We are at the end of the stack!
+                if (traceStackWalk.getValue()) {
+                    Log.print("End of native call stack reached.");
                 }
-
-                last.copyFrom(current);
-                advanceNativeFrame(current, nativeCallStackPos);
-                nativeCallStackPos--;
+                return visitor;
             } else {
                 // found a stack frame layout, visit it
                 visitor.visit(layout, last, current);
@@ -147,23 +147,12 @@ public abstract class ExpStackWalker {
         }
 
         if (traceStackWalk.getValue()) {
-            Log.print("Unexpected end of stack walk!");
+            Log.print("Invalid IP reached: ");
+            Log.print(current.instructionPointer);
         }
 
         return visitor;
     }
-
-    private boolean isValidIP(Cursor current) {
-        return !current.instructionPointer.isZero();
-    }
-
-    /**
-     * Reads the value of a given VM thread local from the safepoint-enabled thread locals.
-     *
-     * @param local the VM thread local to read
-     * @return the value (as a pointer) of {@code local} in the safepoint-enabled thread locals
-     */
-    public abstract Word readVmThreadLocal(VmThreadLocal local);
 
     /**
      * Walks the stack to find an appropriate exception handler (based on the type of the thrown exception) for the
@@ -205,6 +194,17 @@ public abstract class ExpStackWalker {
     }
 
     /**
+     * Walks the stack and prepares the reference map for each frame.
+     * @param ip the instruction pointer of the top most frame
+     * @param sp the stack pointer of the top most frame
+     * @param fp the frame pointer of the top most frame
+     * @return the reference map preparer supplied to the constructor of this class
+     */
+    public ExpReferenceMapPreparer prepareReferenceMap(Pointer ip, Pointer sp, Pointer fp) {
+        return walk(ip, sp, fp, prepareVisitor).preparer;
+    }
+
+    /**
      * Internal visitor to perform the appropriate action(s) per frame.
      */
     abstract static class InternalVisitor {
@@ -215,7 +215,6 @@ public abstract class ExpStackWalker {
      * Visitor to prepare the reference map for a frame.
      */
     static class PrepareReferenceMapVisitor extends InternalVisitor {
-
         private final ExpReferenceMapPreparer preparer;
 
         public PrepareReferenceMapVisitor(ExpReferenceMapPreparer preparer) {
@@ -224,7 +223,7 @@ public abstract class ExpStackWalker {
 
         @Override
         void visit(ExpStackFrameLayout layout, Cursor last, Cursor current) {
-            //layout.prepareReferenceMap(last, current, preparer);
+            layout.prepareReferenceMap(current, last, preparer);
         }
     }
 
@@ -301,11 +300,4 @@ public abstract class ExpStackWalker {
         }
     }
 
-    private ExpStackFrameLayout findStackFrameLayout(Cursor c) {
-        return null;
-    }
-
-    private void advanceNativeFrame(Cursor current, int nativeCallPos) {
-        current.clear();
-    }
 }
