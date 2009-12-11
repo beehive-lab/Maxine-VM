@@ -27,7 +27,7 @@
 #include <mach/vm_map.h>
 #include <errno.h>
 
-#include "darwinMach.h"
+#include "darwin.h"
 #include "log.h"
 
 boolean forall_threads(task_t task, thread_visitor visitor, void *arg) {
@@ -35,11 +35,8 @@ boolean forall_threads(task_t task, thread_visitor visitor, void *arg) {
     unsigned int nthreads = 0;
     unsigned i;
 
-    kern_return_t kret = task_threads((task_t) task, &thread_list, &nthreads);
-    if (kret != KERN_SUCCESS) {
-        log_println("forall_threads() failed to get the list of threads for task %d: %s", task, mach_error_string(kret));
-        return false;
-    }
+    kern_return_t kr = task_threads((task_t) task, &thread_list, &nthreads);
+    RETURN_ON_MACH_ERROR("task_threads", kr, false);
 
     for (i = 0; i < nthreads; i++) {
         thread_t thread = thread_list[i];
@@ -49,11 +46,9 @@ boolean forall_threads(task_t task, thread_visitor visitor, void *arg) {
     }
 
     // deallocate thread list
-    kret = vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
-    if (kret != KERN_SUCCESS) {
-        log_println("forall_threads() failed to deallocate the list of threads for task %d: %s", task, mach_error_string(kret));
-        return false;
-    }
+    kr = vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
+    RETURN_ON_MACH_ERROR("vm_deallocate", kr, false);
+
     return true;
 }
 
@@ -72,7 +67,7 @@ void report_mach_error(const char *file, int line, kern_return_t krn, const char
     }
 }
 
-#define wrapped_mach_call(name, argsFormat, arg1, ...) { \
+#define wrapped_mach_call0(name, argsFormat, arg1, ...) { \
 	static void* lastCall = 0; \
     boolean trace = log_TELE && (name != (void *) mach_vm_read_overwrite || lastCall != (void *) mach_vm_read_overwrite); \
     if (trace) { \
@@ -87,67 +82,3 @@ void report_mach_error(const char *file, int line, kern_return_t krn, const char
     errno = error; \
     return krn; \
 }
-
-kern_return_t Task_for_pid(POS_PARAMS, mach_port_name_t target_tport, int pid, mach_port_name_t *t)
-wrapped_mach_call(task_for_pid, "%d, %d, %p", target_tport, pid, t)
-
-kern_return_t Pid_for_task(POS_PARAMS, mach_port_name_t t, int *x)
-wrapped_mach_call(pid_for_task, "%d, %p", t, x)
-
-kern_return_t Task_threads(POS_PARAMS, task_t task, thread_act_array_t *thread_list, mach_msg_type_number_t* thread_count)
-wrapped_mach_call(task_threads, "%d, %p, %p", task, thread_list, thread_count)
-
-kern_return_t Vm_deallocate(POS_PARAMS, vm_map_t target_task, vm_address_t address, vm_size_t size)
-wrapped_mach_call(vm_deallocate, "%d, %p, %d", target_task, address, size)
-
-kern_return_t Thread_get_state(POS_PARAMS,
-    thread_act_t thread,
-    thread_state_flavor_t flavor,
-    thread_state_t old,
-    mach_msg_type_number_t *count)
-wrapped_mach_call(thread_get_state, "%d, %d, %p, %p",
-                thread,
-                flavor,
-                old,
-                count)
-
-kern_return_t Mach_vm_write(POS_PARAMS,
-    vm_map_t target_task,
-    vm_address_t address,
-    vm_offset_t data,
-    mach_msg_type_number_t dataCnt)
-wrapped_mach_call(mach_vm_write, "%d, %p, %p, %d",
-                target_task,
-                address,
-                data,
-                dataCnt)
-
-kern_return_t Mach_vm_read_overwrite(POS_PARAMS,
-    vm_map_t target_task,
-    vm_address_t address,
-    mach_vm_size_t size,
-    mach_vm_address_t data,
-    mach_vm_size_t *outsize)
-wrapped_mach_call(mach_vm_read_overwrite, "%d, %p, %d, %p, %p",
-                target_task,
-                address,
-                size,
-                data,
-                outsize)
-
-kern_return_t Mach_vm_region(POS_PARAMS,
-    vm_map_t target_task,
-    mach_vm_address_t *address,
-    mach_vm_size_t *size,
-    vm_region_flavor_t flavor,
-    vm_region_info_t info,
-    mach_msg_type_number_t *infoCnt,
-    mach_port_t *object_name)
-wrapped_mach_call(mach_vm_region, "%d, %p, %p, %d, %p, %p, %p",
-                target_task,
-                address,
-                size,
-                flavor,
-                info,
-                infoCnt,
-                object_name)

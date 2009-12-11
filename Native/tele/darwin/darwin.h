@@ -45,6 +45,51 @@
 #   error "Only x64 is supported on Darwin"
 #endif
 
+/**
+ * Prints an error message for a Mach API call whose return code is not KERN_SUCCESS.
+ *
+ * @param msg name of Mach API function called
+ * @param kr the return value of the call
+ */
+#define REPORT_MACH_ERROR(msg, kr) do { \
+    if (kr != KERN_SUCCESS) {\
+        char *machErrorMessage = mach_error_string(kr); \
+        if (machErrorMessage != NULL && strlen(machErrorMessage) != 0) { \
+            log_println("%s:%d: %s: %s", __FILE__, __LINE__, msg, machErrorMessage); \
+        } else { \
+            log_println("%s:%d: %s: [errno: %d]", __FILE__, __LINE__, msg, kr); \
+        } \
+    } \
+} while (0)
+
+/**
+ * Checks whether a Mach API call failed and if so prints an error message and then
+ * goes to the label named 'out' in the caller's context.
+ *
+ * @param msg name of Mach API function called
+ * @param kr the return value of the call
+ */
+#define OUT_ON_MACH_ERROR(msg, kr) \
+    if (kr != KERN_SUCCESS) {\
+        REPORT_MACH_ERROR(msg, kr); \
+        goto out; \
+    }
+
+/**
+ * Checks whether a Mach API call failed and if so prints an error message and then
+ * executes a return from the caller's context.
+ *
+ * @param msg name of Mach API function called
+ * @param kr the return value of the call
+ */
+#define RETURN_ON_MACH_ERROR(msg, kr, retval) do { \
+    if (kr != KERN_SUCCESS) { \
+        REPORT_MACH_ERROR(msg, kr); \
+        return retval; \
+    } \
+} while (0)
+
+
 extern boolean thread_read_registers(thread_t thread,
         isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
         isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters,
@@ -78,57 +123,5 @@ boolean thread_set_single_step(thread_t thread, void *arg);
 
 extern void log_task_info(task_t task);
 extern boolean log_thread_info(thread_t thread, void *arg);
-
-extern void report_mach_error(const char *file, int line, kern_return_t krn, const char* name, const char* argsFormat, ...);
-
-#define POS_PARAMS const char *file, int line
-#define POS __FILE__, __LINE__
-
-extern kern_return_t Task_for_pid(POS_PARAMS,
-    mach_port_name_t target_tport,
-    int pid,
-    mach_port_name_t *t);
-
-extern kern_return_t Pid_for_task(POS_PARAMS,
-    mach_port_name_t t,
-    int *x);
-
-extern kern_return_t Task_threads(POS_PARAMS,
-    task_t task,
-    thread_act_array_t *thread_list,
-    mach_msg_type_number_t* thread_count);
-
-extern kern_return_t Vm_deallocate(POS_PARAMS,
-    vm_map_t target_task,
-    vm_address_t address,
-    vm_size_t size);
-
-extern kern_return_t Mach_vm_read_overwrite(POS_PARAMS,
-    vm_map_t target_task,
-    vm_address_t address,
-    mach_vm_size_t size,
-    mach_vm_address_t data,
-    mach_vm_size_t *outsize);
-
-extern kern_return_t Mach_vm_write(POS_PARAMS,
-    vm_map_t target_task,
-    vm_address_t address,
-    vm_offset_t data,
-    mach_msg_type_number_t dataCnt);
-
-extern kern_return_t Thread_get_state(POS_PARAMS,
-    thread_act_t target_act,
-    thread_state_flavor_t flavor,
-    thread_state_t old_state,
-    mach_msg_type_number_t *old_stateCnt);
-
-extern kern_return_t Mach_vm_region(POS_PARAMS,
-    vm_map_t target_task,
-    mach_vm_address_t *address,
-    mach_vm_size_t *size,
-    vm_region_flavor_t flavor,
-    vm_region_info_t info,
-    mach_msg_type_number_t *infoCnt,
-    mach_port_t *object_name);
 
 #endif

@@ -38,7 +38,7 @@
 #include "auth.h"
 #include "log.h"
 #include "ptrace.h"
-#include "darwinMach.h"
+#include "darwin.h"
 #include "jni.h"
 #include "word.h"
 #include "virtualMemory.h"
@@ -98,19 +98,21 @@ void log_task_info(task_t task) {
 
 int task_read(task_t task, vm_address_t src, void *dst, size_t size) {
   mach_vm_size_t bytesRead;
-  kern_return_t result = Mach_vm_read_overwrite(POS, task, src, size, (vm_address_t) dst, &bytesRead);
+  kern_return_t result = mach_vm_read_overwrite(task, src, size, (vm_address_t) dst, &bytesRead);
   return result == KERN_SUCCESS ? (jint) bytesRead : -1;
 }
 
 
 int task_write(task_t task, vm_address_t dst, void *src, size_t size) {
-  kern_return_t result = Mach_vm_write(POS, task, (vm_address_t) dst, (vm_offset_t) src, size);
+  kern_return_t result = mach_vm_write(task, (vm_address_t) dst, (vm_offset_t) src, size);
   return result == KERN_SUCCESS ? (int) size : -1;
 }
 
 jint waitForSignal(jlong task, int signalnum) {
     int pid;
-    Pid_for_task(POS, task, &pid);
+    kern_return_t kr = pid_for_task(task, &pid);
+    REPORT_MACH_ERROR("pid_for_task", kr);
+
     while (1) {
         int status;
 
@@ -194,9 +196,10 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
             if (acquireTaskportRightIsNowFunctional && acquireTaskportRight() != 0) {
                 return -1;
             }
-            if (Task_for_pid(POS, mach_task_self(), childPid, &childTask) != KERN_SUCCESS) {
+            kern_return_t kr = task_for_pid(mach_task_self(), childPid, &childTask);
+            if (kr != KERN_SUCCESS) {
                 log_println("");
-                log_println("    **** Could not access task for pid %d. You need to launch the Inspector as root ****", childPid);
+                log_println("    **** Could not access task for pid %d [%s]. You need to launch the Inspector as root ****", childPid, mach_error_string(kr));
                 log_println("");
                 return -1;
             }
@@ -209,48 +212,50 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeKill(JNIEnv *env, jclass c, jint task) {
     int pid;
-    Pid_for_task(POS, (task_t) task, &pid);
+    kern_return_t kr =  pid_for_task((task_t) task, &pid);
+    REPORT_MACH_ERROR("pid_for_task", kr);
+
     return ptrace(PT_KILL, pid, 0, 0) == 0;
 }
 
+typedef struct {
+    JNIEnv *env;
+    jobject process;
+    jlong task;
+    jobject result;
+    jlong threadLocalsList;
+    jlong primordialThreadLocals;
+} GatherThreadArgs;
+
+static boolean gatherThread(thread_t thread, void* args) {
+    GatherThreadArgs *a = (GatherThreadArgs *) args;
+    ThreadState_t state = TS_SUSPENDED;
+    ThreadState threadState;
+
+    mach_msg_type_number_t count = THREAD_STATE_COUNT;
+
+    kern_return_t kr = thread_get_state(thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count);
+    RETURN_ON_MACH_ERROR("thread_get_state", kr, true);
+
+    ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
+    NativeThreadLocalsStruct nativeThreadLocalsStruct;
+    ThreadLocals tl = teleProcess_findThreadLocals(a->task, a->threadLocalsList, a->primordialThreadLocals, threadState.__rsp, threadLocals, &nativeThreadLocalsStruct);
+    teleProcess_jniGatherThread(a->env, a->process, a->result, thread, state, threadState.__rip, tl);
+    return true;
+}
 
 JNIEXPORT void JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong task, jobject result, jlong threadLocalsList, jlong primordialThreadLocals) {
-    thread_act_array_t threads;
-    mach_msg_type_number_t numberOfThreads, i;
-
-    if (Task_threads(POS, (task_t) task, &threads, &numberOfThreads) != KERN_SUCCESS) {
-        return;
-    }
-
-    for (i = 0; i < numberOfThreads; i++) {
-        ThreadState_t state = TS_SUSPENDED;
-
-        ThreadState threadState;
-        thread_act_port_t thread = threads[i];
-
-        mach_msg_type_number_t count = THREAD_STATE_COUNT;
-        if (Thread_get_state(POS, thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count) != KERN_SUCCESS) {
-            return;
-        }
-
-        ThreadLocals threadLocals = (ThreadLocals) alloca(threadLocalsAreaSize());
-        NativeThreadLocalsStruct nativeThreadLocalsStruct;
-        ThreadLocals tl = teleProcess_findThreadLocals(task, threadLocalsList, primordialThreadLocals, threadState.__rsp, threadLocals, &nativeThreadLocalsStruct);
-        teleProcess_jniGatherThread(env, process, result, thread, state, threadState.__rip, tl);
-    }
-
-    if (Vm_deallocate(POS, mach_task_self(), (vm_address_t) threads, (numberOfThreads * sizeof(thread_act_port_t))) != KERN_SUCCESS) {
-        return;
-    }
+    GatherThreadArgs args = {env, process, task, result, threadLocalsList, primordialThreadLocals};
+    forall_threads(task, gatherThread, (void *) &args);
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, jclass c, jlong task) {
     int pid;
-    if (Pid_for_task(POS, (task_t) task, &pid) != KERN_SUCCESS) {
-        log_println("Could not get PID for task %d", task);
-    }
+    kern_return_t kr = pid_for_task((task_t) task, &pid);
+    REPORT_MACH_ERROR("pid_for_task", kr);
+
     int error = kill(pid, SIGTRAP);
     if (error != 0) {
         log_println("Error sending SIGTRAP to process %d: %s", pid, strerror(error));
@@ -271,8 +276,8 @@ void resume_task(task_t task) {
     while (true) {
         struct task_basic_info info;
         unsigned int info_count = TASK_BASIC_INFO_COUNT;
-        kern_return_t kret = task_info(task, TASK_BASIC_INFO, (task_info_t) &info, &info_count);
-        if (kret != KERN_SUCCESS) {
+        kern_return_t kr = task_info(task, TASK_BASIC_INFO, (task_info_t) &info, &info_count);
+        if (kr != KERN_SUCCESS) {
             log_println("task_info() failed when resuming task %d", task);
             return;
         }
@@ -297,7 +302,9 @@ void resume_task(task_t task) {
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong task) {
     int pid;
-    Pid_for_task(POS, task, &pid);
+    kern_return_t kr = pid_for_task((task_t) task, &pid);
+    REPORT_MACH_ERROR("pid_for_task", kr);
+
 #if log_TELE
     log_println("Before resume:");
     log_task_info(task);
