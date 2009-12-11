@@ -116,14 +116,4 @@ public interface MaxWatchpoint extends MemoryRegion {
      */
     boolean isEagerRelocationUpdateSet();
 
-    /**
-     * Disable watchpoint and temporary store old configuration.
-     */
-    boolean disable();
-
-    /**
-     * Re-enable watchpoint with old temporary stored configuration.
-     */
-    boolean enable();
-
 }
