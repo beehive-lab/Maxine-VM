@@ -131,27 +131,27 @@ public final class Watchpoints {
      */
     private static void buildWatchpointMenu(JMenu menu, final MaxWatchpoint watchpoint) {
         assert watchpoint != null;
-        final JCheckBoxMenuItem readItem = new JCheckBoxMenuItem("Trap on read", watchpoint.isRead());
+        final JCheckBoxMenuItem readItem = new JCheckBoxMenuItem("Trap on read", watchpoint.isTrapOnRead());
         readItem.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                watchpoint.setRead(item.getState());
+                watchpoint.setTrapOnRead(item.getState());
             }
         });
         menu.add(readItem);
-        final JCheckBoxMenuItem writeItem = new JCheckBoxMenuItem("Trap on write", watchpoint.isWrite());
+        final JCheckBoxMenuItem writeItem = new JCheckBoxMenuItem("Trap on write", watchpoint.isTrapOnWrite());
         writeItem.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                watchpoint.setWrite(item.getState());
+                watchpoint.setTrapOnWrite(item.getState());
             }
         });
         menu.add(writeItem);
-        final JCheckBoxMenuItem execItem = new JCheckBoxMenuItem("Trap on exec", watchpoint.isExec());
+        final JCheckBoxMenuItem execItem = new JCheckBoxMenuItem("Trap on exec", watchpoint.isTrapOnExec());
         execItem.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                watchpoint.setExec(item.getState());
+                watchpoint.setTrapOnExec(item.getState());
             }
         });
         menu.add(execItem);

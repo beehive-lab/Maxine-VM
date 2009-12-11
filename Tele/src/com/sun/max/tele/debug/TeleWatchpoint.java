@@ -44,8 +44,6 @@ import com.sun.max.vm.type.*;
  */
 public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTriggerEventHandler, MaxWatchpoint {
 
-    // TODO (mlvdv) add a description field
-
     private static final int TRACE_VALUE = 1;
 
     /**
@@ -54,19 +52,19 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
     private final Factory factory;
 
     /**
-     * Is this watchpoint still functional?
-     * True from the creation of the watchpoint until it is disposed, at which event
+     * Is this watchpoint still alive (not yet disposed)?
+     * This is true from the creation of the watchpoint until it is disposed, at which event
      * it becomes permanently false.
      */
-    private boolean active = true;
+    private boolean alive = true;
 
     /**
      * Watchpoint configuration flags.
      */
     private boolean after;
-    private boolean read;
-    private boolean write;
-    private boolean exec;
+    private boolean trapOnRead;
+    private boolean trapOnWrite;
+    private boolean trapOnExec;
     private boolean isEnabledDuringGC;
 
     /**
@@ -92,29 +90,29 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
      * @see RuntimeMemoryRegion#setStart(Address)
      * @see RuntimeMemoryRegion#setSize(Size)
      */
-    private TeleWatchpoint(Factory factory, String description, boolean after, boolean read, boolean write, boolean exec, boolean isEnabledDuringGC) {
-        this(factory, description, Address.zero(), Size.zero(), after, read, write, exec, isEnabledDuringGC);
+    private TeleWatchpoint(Factory factory, String description, boolean after, boolean trapOnRead, boolean trapOnWrite, boolean trapOnExec, boolean isEnabledDuringGC) {
+        this(factory, description, Address.zero(), Size.zero(), after, trapOnRead, trapOnWrite, trapOnExec, isEnabledDuringGC);
     }
 
-    private TeleWatchpoint(Factory factory, String description, Address start, Size size, boolean after, boolean read, boolean write, boolean exec, boolean isEnabledDuringGC) {
+    private TeleWatchpoint(Factory factory, String description, Address start, Size size, boolean after, boolean trapOnRead, boolean trapOnWrite, boolean trapOnExec, boolean isEnabledDuringGC) {
         super(start, size);
         setDescription(description);
         this.factory = factory;
         this.after = after;
-        this.read = read;
-        this.write = write;
-        this.exec = exec;
+        this.trapOnRead = trapOnRead;
+        this.trapOnWrite = trapOnWrite;
+        this.trapOnExec = trapOnExec;
         this.isEnabledDuringGC = isEnabledDuringGC;
     }
 
-    private TeleWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean isEnabledDuringGC) {
+    private TeleWatchpoint(Factory factory, String description, MemoryRegion memoryRegion, boolean after, boolean trapOnRead, boolean trapOnWrite, boolean trapOnExec, boolean isEnabledDuringGC) {
         super(memoryRegion);
         setDescription(description);
         this.factory = factory;
         this.after = after;
-        this.read = read;
-        this.write = write;
-        this.exec = exec;
+        this.trapOnRead = trapOnRead;
+        this.trapOnWrite = trapOnWrite;
+        this.trapOnExec = trapOnExec;
         this.isEnabledDuringGC = isEnabledDuringGC;
     }
 
@@ -128,40 +126,40 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         return false;
     }
 
-    public boolean isRead() {
-        return read;
+    public boolean isTrapOnRead() {
+        return trapOnRead;
     }
 
-    public boolean setRead(boolean read) {
-        ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
-        this.read = read;
-        if (factory.isInGCMode() && !isEnabledDuringGC) {
+    public boolean setTrapOnRead(boolean read) {
+        ProgramError.check(alive, "Attempt to set flag on disabled watchpoint");
+        this.trapOnRead = read;
+        if (factory.isInGC() && !isEnabledDuringGC) {
             return true;
         }
         return factory.resetWatchpoint(this);
     }
 
-    public boolean isWrite() {
-        return write;
+    public boolean isTrapOnWrite() {
+        return trapOnWrite;
     }
 
-    public boolean setWrite(boolean write) {
-        ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
-        this.write = write;
-        if (factory.isInGCMode() && !isEnabledDuringGC) {
+    public boolean setTrapOnWrite(boolean write) {
+        ProgramError.check(alive, "Attempt to set flag on disabled watchpoint");
+        this.trapOnWrite = write;
+        if (factory.isInGC() && !isEnabledDuringGC) {
             return true;
         }
         return factory.resetWatchpoint(this);
     }
 
-    public boolean isExec() {
-        return exec;
+    public boolean isTrapOnExec() {
+        return trapOnExec;
     }
 
-    public boolean setExec(boolean exec) {
-        ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
-        this.exec = exec;
-        if (factory.isInGCMode() && !isEnabledDuringGC) {
+    public boolean setTrapOnExec(boolean exec) {
+        ProgramError.check(alive, "Attempt to set flag on disabled watchpoint");
+        this.trapOnExec = exec;
+        if (factory.isInGC() && !isEnabledDuringGC) {
             return true;
         }
         return factory.resetWatchpoint(this);
@@ -172,17 +170,17 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
     }
 
     public void setEnabledDuringGC(boolean isEnabledDuringGC) {
-        ProgramError.check(active, "Attempt to set flag on disabled watchpoint");
+        ProgramError.check(alive, "Attempt to set flag on disabled watchpoint");
         this.isEnabledDuringGC = isEnabledDuringGC;
-        if (factory.isInGCMode() && !isEnabledDuringGC) {
-            disable();
-        } else if (factory.isInGCMode() && isEnabledDuringGC) {
-            enable();
+        if (factory.isInGC() && !isEnabledDuringGC) {
+            setActive(false);
+        } else if (factory.isInGC() && isEnabledDuringGC) {
+            setActive(true);
         }
     }
 
     public boolean isEnabled() {
-        return active && (read || write || exec);
+        return alive && (trapOnRead || trapOnWrite || trapOnExec);
     }
 
     public boolean dispose() {
@@ -193,7 +191,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         return null;
     }
 
-    public long getTeleObjectStartAddressOffset() {
+    private long getTeleObjectStartAddressOffset() {
         return teleObjectStartAddressOffset;
     }
 
@@ -207,20 +205,20 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             if (eagerRelocationUpdate) {
                 if (objectReferences > 0) {
                     watchpoint = (TeleWatchpoint) factory.findInvisibleWatchpoint(cardTableAddress);
-                    watchpoint.disable();
+                    watchpoint.setActive(false);
                 } else {
                     watchpoint = factory.createInvisibleWatchpoint("Card table watchpoint", new FixedMemoryRegion(cardTableAddress, Size.fromInt(Word.size()), "Card table entry"), true, true, false, false, true);
                 }
                 objectReferences++;
                 factory.teleProcess.teleVM().writeCardTableEntry(index, objectReferences);
-                watchpoint.enable();
+                watchpoint.setActive(true);
             } else {
                 watchpoint = (TeleWatchpoint) factory.findInvisibleWatchpoint(cardTableAddress);
-                watchpoint.disable();
+                watchpoint.setActive(false);
                 objectReferences--;
                 factory.teleProcess.teleVM().writeCardTableEntry(index, objectReferences);
                 if (objectReferences > 0) {
-                    watchpoint.enable();
+                    watchpoint.setActive(true);
                 } else {
                     factory.removeInvisibleWatchpoint(watchpoint);
                 }
@@ -248,12 +246,12 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         }
     }
 
-    public boolean disable() {
-        return factory.deactivateWatchpoint(this);
-    }
-
-    public boolean enable() {
-        return factory.activateWatchpoint(this);
+    private void setActive(boolean active) {
+        if (active) {
+            factory.activateWatchpoint(this);
+        } else {
+            factory.deactivateWatchpoint(this);
+        }
     }
 
     public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -270,7 +268,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             } catch (DuplicateWatchpointException exception) {
                 ProgramError.unexpected("Handling watchpoint trigger event: " + exception);
             }
-            factory.reenableWatchpointsAfterGC();
+            factory.setInGC(false);
             return false;
         } else if (teleVM.isInGC()) {
             // Handle watchpoint triggered in card table
@@ -288,8 +286,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             //Word value = thread.threadLocalsFor(Safepoint.State.ENABLED).getVmThreadLocal(VmThreadLocal.OLD_OBJECT_ADDRESS.index).getVariableWord();
             //System.out.println("WATCHPOINT FIELDS " + thread.threadLocalsFor(Safepoint.State.ENABLED).getVmThreadLocal(VmThreadLocal.NEW_OBJECT_ADDRESS.index).getVariableWord());
             // The VM is in GC. Turn Watchpoints off for all objects that are not interested in GC related triggers.
-            if (!factory.isInGCMode()) {
-                factory.disableWatchpointsDuringGC();
+            if (!factory.isInGC()) {
+                factory.setInGC(true);
                 if (!isEnabledDuringGC()) {
                     return false;
                 }
@@ -368,8 +366,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         private final TeleObject teleObject;
         private final int index;
 
-        public TeleArrayElementWatchpoint(Factory factory, String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc) {
-            super(factory, description, teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes)), Size.fromInt(elementKind.width.numberOfBytes), after, read, write, exec, gc);
+        public TeleArrayElementWatchpoint(Factory factory, String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean trapOnRead, boolean trapOnWrite, boolean trapOnExec, boolean gc) {
+            super(factory, description, teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes)), Size.fromInt(elementKind.width.numberOfBytes), after, trapOnRead, trapOnWrite, trapOnExec, gc);
             this.teleObject = teleObject;
             this.index = index;
             teleObjectStartAddressOffset = teleObject.getCurrentOrigin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes)).minus(teleObject.getCurrentMemoryRegion().start()).toLong();
@@ -460,7 +458,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         private final TreeSet<TeleWatchpoint> watchpoints = new TreeSet<TeleWatchpoint>(this);
 
         // A thread-safe, immutable collection of the current watchpoint list.
-        // This list will be read many, many more times than it will change.
+        // This list will be trapOnRead many, many more times than it will change.
         private volatile IterableWithLength<MaxWatchpoint> watchpointsCache;
 
         // CardTable watchpoints used for eager watchpoint relocation algorithm
@@ -468,7 +466,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         private volatile IterableWithLength<MaxWatchpoint> invisibleWatchpointsCache;
 
         // Is VM currently in GC
-        private boolean inGCMode = false;
+        private boolean inGC = false;
 
         // Holds the number of relocatable watchpoints
         private int relocatableWatchpointsCounter = 0;
@@ -497,8 +495,8 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             endOfGCWatchpoint = createInvisibleWatchpoint("End of GC", new FixedMemoryRegion(teleProcess.teleVM().rootEpochAddress(), Size.fromInt(Pointer.size()), "Root epoch address"), true, false, true, false, true);
         }
 
-        public boolean isInGCMode() {
-            return inGCMode;
+        private boolean isInGC() {
+            return inGC;
         }
 
         private void updateCache() {
@@ -511,9 +509,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param description text useful to a person, for example capturing the intent of the watchpoint
          * @param memoryRegion the region of memory in the VM to be watched.
          * @param after before or after watchpoint
-         * @param read read watchpoint
-         * @param write write watchpoint
-         * @param exec execute watchpoint
+         * @param trapOnRead trapOnRead watchpoint
+         * @param trapOnWrite trapOnWrite watchpoint
+         * @param trapOnExec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -531,9 +529,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param description text useful to a person, for example capturing the intent of the watchpoint
          * @param teleObject a heap object in the VM
          * @param after before or after watchpoint
-         * @param read read watchpoint
-         * @param write write watchpoint
-         * @param exec execute watchpoint
+         * @param trapOnRead trapOnRead watchpoint
+         * @param trapOnWrite trapOnWrite watchpoint
+         * @param trapOnExec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -552,9 +550,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param teleObject a heap object in the VM
          * @param fieldActor description of a field in object of that type
          * @param after before or after watchpoint
-         * @param read read watchpoint
-         * @param write write watchpoint
-         * @param exec execute watchpoint
+         * @param trapOnRead trapOnRead watchpoint
+         * @param trapOnWrite trapOnWrite watchpoint
+         * @param trapOnExec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -576,9 +574,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param arrayOffsetFromOrigin location relative to the object's origin of element 0 in the array
          * @param index index of the element to watch
          * @param after before or after watchpoint
-         * @param read read watchpoint
-         * @param write write watchpoint
-         * @param exec execute watchpoint
+         * @param trapOnRead trapOnRead watchpoint
+         * @param trapOnWrite trapOnWrite watchpoint
+         * @param trapOnExec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -598,9 +596,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param teleObject a heap object in the VM
          * @param headerField a field in the object's header
          * @param after before or after watchpoint
-         * @param read read watchpoint
-         * @param write write watchpoint
-         * @param exec execute watchpoint
+         * @param trapOnRead trapOnRead watchpoint
+         * @param trapOnWrite trapOnWrite watchpoint
+         * @param trapOnExec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -620,9 +618,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param teleThreadLocalValues a set of thread local values
          * @param index identifies the particular thread local variable
          * @param after before or after watchpoint
-         * @param read read watchpoint
-         * @param write write watchpoint
-         * @param exec execute watchpoint
+         * @param trapOnRead trapOnRead watchpoint
+         * @param trapOnWrite trapOnWrite watchpoint
+         * @param trapOnExec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -642,9 +640,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param description
          * @param memoryRegion
          * @param after
-         * @param read
-         * @param write
-         * @param exec
+         * @param trapOnRead
+         * @param trapOnWrite
+         * @param trapOnExec
          * @param gc
          * @return a new watchpoint, if successful
          *
@@ -664,16 +662,16 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @return true, if successful
          */
         public synchronized boolean removeInvisibleWatchpoint(TeleWatchpoint teleWatchpoint) {
-            ProgramError.check(teleWatchpoint.active, "Attempt to delete an already deleted watchpoint ");
+            ProgramError.check(teleWatchpoint.alive, "Attempt to delete an already deleted watchpoint ");
             if (invisibleWatchpoints.remove(teleWatchpoint)) {
                 if (teleProcess.deactivateWatchpoint(teleWatchpoint)) {
                     Trace.line(TRACE_VALUE, "Removed invisible watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
-                    teleWatchpoint.active = false;
+                    teleWatchpoint.alive = false;
 
                     updateCache();
                     return true;
                 } else {
-                    // Can't deactivate for some reason, so put back in the active collection.
+                    // Can't deactivate for some reason, so put back in the alive collection.
                     invisibleWatchpoints.add(teleWatchpoint);
                 }
             }
@@ -689,7 +687,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @throws DuplicateWatchpointException
          */
         private synchronized TeleWatchpoint addWatchpoint(TeleWatchpoint teleWatchpoint)  throws TooManyWatchpointsException, DuplicateWatchpointException {
-            teleWatchpoint.active = false;
+            teleWatchpoint.alive = false;
             if (watchpoints.size() >= teleProcess.maximumWatchpointCount()) {
                 throw new TooManyWatchpointsException("Number of watchpoints supported by platform (" +
                     teleProcess.maximumWatchpointCount() + ") exceeded");
@@ -706,7 +704,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                 watchpoints.remove(teleWatchpoint);
                 throw new DuplicateWatchpointException("Watchpoint already exists that overlaps with start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
             }
-            if (teleWatchpoint.isEnabledDuringGC() || !isInGCMode()) {
+            if (teleWatchpoint.isEnabledDuringGC() || !isInGC()) {
                 if (!teleProcess.activateWatchpoint(teleWatchpoint)) {
                     Trace.line(TRACE_VALUE, "Failed to create watchpoint " + teleWatchpoint.toString());
                     watchpoints.remove(teleWatchpoint);
@@ -717,12 +715,12 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             }
 
             Trace.line(TRACE_VALUE, "Created watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
-            teleWatchpoint.active = true;
+            teleWatchpoint.alive = true;
 
             if (teleWatchpoint.getTeleObject() != null) {
                 relocatableWatchpointsCounter++;
                 if (relocatableWatchpointsCounter == 1) {
-                    endOfGCWatchpoint.enable();
+                    endOfGCWatchpoint.setActive(true);
                 }
             }
 
@@ -750,7 +748,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             }
 
             Trace.line(TRACE_VALUE, "Watchpoint reseted " + teleWatchpoint.start().toHexString());
-            teleWatchpoint.active = true;
+            teleWatchpoint.alive = true;
             updateCache();
             setChanged();
             notifyObservers();
@@ -786,23 +784,23 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         }
 
         /**
-         * Removes an active memory watchpoint from the VM.
+         * Removes an alive memory watchpoint from the VM.
          *
          * @param maxWatchpoint an existing watchpoint in the VM
-         * @return true if successful; false if watchpoint is not active in VM.
+         * @return true if successful; false if watchpoint is not alive in VM.
          */
         private synchronized boolean removeWatchpoint(TeleWatchpoint teleWatchpoint) {
-            ProgramError.check(teleWatchpoint.active, "Attempt to delete an already deleted watchpoint ");
+            ProgramError.check(teleWatchpoint.alive, "Attempt to delete an already deleted watchpoint ");
             if (watchpoints.remove(teleWatchpoint)) {
                 if (teleProcess.deactivateWatchpoint(teleWatchpoint)) {
                     Trace.line(TRACE_VALUE, "Removed watchpoint at start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
-                    teleWatchpoint.active = false;
+                    teleWatchpoint.alive = false;
 
                     if (teleWatchpoint.getTeleObject() != null) {
-                        if (relocatableWatchpointsCounter == 1) {
-                            endOfGCWatchpoint.disable();
-                        }
                         relocatableWatchpointsCounter--;
+                        if (relocatableWatchpointsCounter == 0) {
+                            endOfGCWatchpoint.setActive(false);
+                        }
                     }
 
                     updateCache();
@@ -810,7 +808,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                     notifyObservers();
                     return true;
                 } else {
-                    // Can't deactivate for some reason, so put back in the active collection.
+                    // Can't deactivate for some reason, so put back in the alive collection.
                     watchpoints.add(teleWatchpoint);
                 }
             }
@@ -828,7 +826,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @throws DuplicateWatchpointException
          */
         private synchronized boolean relocateWatchpoint(TeleWatchpoint teleWatchpoint) throws TooManyWatchpointsException, DuplicateWatchpointException {
-            ProgramError.check(teleWatchpoint.active, "Attempt to relocate an already deleted watchpoint ");
+            ProgramError.check(teleWatchpoint.alive, "Attempt to relocate an already deleted watchpoint ");
             TeleObject teleObject = teleWatchpoint.getTeleObject();
             if (teleObject != null) {
                 if (teleObject.isLive()) {
@@ -861,7 +859,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                 } else {
                     if (removeWatchpoint(teleWatchpoint)) {
                         TeleWatchpoint teleRegionWatchpoint = setRegionWatchpoint("RegionWatchpoint - GC removed corresponding Object", new FixedMemoryRegion(teleWatchpoint.start(), teleWatchpoint.size(), "Old memory location of watched object"),
-                            teleWatchpoint.after, teleWatchpoint.read, teleWatchpoint.write, teleWatchpoint.exec, teleWatchpoint.isEnabledDuringGC);
+                            teleWatchpoint.after, teleWatchpoint.trapOnRead, teleWatchpoint.trapOnWrite, teleWatchpoint.trapOnExec, teleWatchpoint.isEnabledDuringGC);
                         if (teleRegionWatchpoint != null) {
                             return true;
                         } else {
@@ -883,7 +881,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @throws DuplicateWatchpointException
          */
         private synchronized boolean relocateWatchpoint(TeleWatchpoint teleWatchpoint, Address newAddress) throws TooManyWatchpointsException, DuplicateWatchpointException {
-            ProgramError.check(teleWatchpoint.active, "Attempt to relocate an already deleted watchpoint ");
+            ProgramError.check(teleWatchpoint.alive, "Attempt to relocate an already deleted watchpoint ");
             TeleObject teleObject = teleWatchpoint.getTeleObject();
             if (teleObject != null) {
                 if (teleObject.isLive()) {
@@ -929,11 +927,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             if (oldObjectReferences == 0) {
                 removeInvisibleWatchpoint(watchpoint);
             } else {
-                watchpoint.disable();
+                watchpoint.setActive(false);
             }
             teleProcess.teleVM().writeCardTableEntry(oldIndex, oldObjectReferences);
             if (oldObjectReferences > 0) {
-                watchpoint.enable();
+                watchpoint.setActive(true);
             }
 
             int newObjectReferences = teleProcess.teleVM().readCardTableEntry(newIndex);
@@ -942,11 +940,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                 watchpoint = createInvisibleWatchpoint("Card table watchpoint", new FixedMemoryRegion(newCardTableAddress, Size.fromInt(Word.size()), "Card table entry"), true, true, false, false, true);
             } else {
                 watchpoint = (TeleWatchpoint) findInvisibleWatchpoint(newCardTableAddress);
-                watchpoint.disable();
+                watchpoint.setActive(false);
             }
             newObjectReferences++;
             teleProcess.teleVM().writeCardTableEntry(newIndex, newObjectReferences);
-            watchpoint.enable();
+            watchpoint.setActive(true);
 
             // finally move watchpoint
             updateRelocatableWatchpoint(oldAddress, newAddress);
@@ -964,31 +962,19 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         }
 
         /**
-         * Disables all watchpoints during GC, which are not interested in GC actions.
+         * Notifies the factory of the VM GC state.
+         *
+         * @param inGC whether the VM is currently in GC.
          */
-        public void disableWatchpointsDuringGC() {
-            if (!inGCMode) {
-                for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
-                    if (!maxWatchpoint.isEnabledDuringGC()) {
-                        maxWatchpoint.disable();
+        private void setInGC(boolean inGC) {
+            if (inGC != this.inGC) {
+                for (TeleWatchpoint teleWatchpoint : watchpoints) {
+                    if (!teleWatchpoint.isEnabledDuringGC()) {
+                        teleWatchpoint.setActive(!inGC);
                     }
                 }
-                inGCMode = true;
             }
-        }
-
-        /**
-         * Re-enables all watchpoints after GC, which got deactivated during GC.
-         */
-        public void reenableWatchpointsAfterGC() {
-            if (inGCMode) {
-                for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
-                    if (!maxWatchpoint.isEnabledDuringGC()) {
-                        maxWatchpoint.enable();
-                    }
-                }
-                inGCMode = false;
-            }
+            this.inGC = inGC;
         }
 
         /**
@@ -1013,7 +999,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param address
          * @return invisible watchpoint
          */
-        public MaxWatchpoint findInvisibleWatchpoint(Address address) {
+        private MaxWatchpoint findInvisibleWatchpoint(Address address) {
             for (MaxWatchpoint maxWatchpoint : invisibleWatchpointsCache) {
                 if (maxWatchpoint.contains(address)) {
                     return maxWatchpoint;
@@ -1027,7 +1013,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @throws TooManyWatchpointsException
          * @throws DuplicateWatchpointException
          */
-        public void lazyUpdateRelocatableWatchpoints() throws TooManyWatchpointsException, DuplicateWatchpointException {
+        private void lazyUpdateRelocatableWatchpoints() throws TooManyWatchpointsException, DuplicateWatchpointException {
             for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
                 relocateWatchpoint((TeleWatchpoint) maxWatchpoint);
             }
@@ -1040,7 +1026,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @throws TooManyWatchpointsException
          * @throws DuplicateWatchpointException
          */
-        public void updateRelocatableWatchpoint(Address oldAddress, Address newAddress) throws TooManyWatchpointsException, DuplicateWatchpointException {
+        private void updateRelocatableWatchpoint(Address oldAddress, Address newAddress) throws TooManyWatchpointsException, DuplicateWatchpointException {
             for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
                 if (maxWatchpoint.start().equals(oldAddress)) {
                     relocateWatchpoint((TeleWatchpoint) maxWatchpoint, newAddress);
@@ -1055,7 +1041,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @throws TooManyWatchpointsException
          * @throws DuplicateWatchpointException
          */
-        public void updateRelocatableWatchpoints(Address start, Address end) throws TooManyWatchpointsException, DuplicateWatchpointException {
+        private void updateRelocatableWatchpoints(Address start, Address end) throws TooManyWatchpointsException, DuplicateWatchpointException {
             for (MaxWatchpoint maxWatchpoint : watchpointsCache) {
                 if (maxWatchpoint.start().greaterEqual(start) && end.greaterEqual(maxWatchpoint.start())) {
                     relocateWatchpoint((TeleWatchpoint) maxWatchpoint);
