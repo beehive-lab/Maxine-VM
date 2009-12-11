@@ -143,11 +143,11 @@ public final class WatchpointsTable extends InspectorTable {
                 case CODE_TRIGGERED:
                     return watchpoint;
                 case READ:
-                    return watchpoint.isRead();
+                    return watchpoint.isTrapOnRead();
                 case WRITE:
-                    return watchpoint.isWrite();
+                    return watchpoint.isTrapOnWrite();
                 case EXEC:
-                    return watchpoint.isExec();
+                    return watchpoint.isTrapOnExec();
                 case GC:
                     return watchpoint.isEnabledDuringGC();
                 case EAGER:
@@ -165,19 +165,19 @@ public final class WatchpointsTable extends InspectorTable {
             switch (WatchpointsColumnKind.VALUES.get(column)) {
                 case READ:
                     newState = (Boolean) value;
-                    if (watchpoint.setRead(newState)) {
+                    if (watchpoint.setTrapOnRead(newState)) {
                         inspection().settings().save();
                     }
                     break;
                 case WRITE:
                     newState = (Boolean) value;
-                    if (watchpoint.setWrite(newState)) {
+                    if (watchpoint.setTrapOnWrite(newState)) {
                         inspection().settings().save();
                     }
                     break;
                 case EXEC:
                     newState = (Boolean) value;
-                    if (watchpoint.setExec(newState)) {
+                    if (watchpoint.setTrapOnExec(newState)) {
                         inspection().settings().save();
                     }
                     break;
