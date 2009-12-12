@@ -52,11 +52,11 @@ import com.sun.max.vm.thread.*;
 /**
  * @author Bernd Mathiske
  */
-public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements TargetGeneratorScheme {
+public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetGeneratorScheme {
 
     private final AMD64EirToTargetTranslator eirToTargetTranslator;
 
-    public BcdeTargetAMD64Compiler(VMConfiguration vmConfiguration) {
+    public AMD64CPSCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         eirToTargetTranslator = new AMD64EirToTargetTranslator(this);
     }
@@ -362,7 +362,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isHosted()) {
-            unwindMethod = ClassActor.fromJava(BcdeTargetAMD64Compiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
+            unwindMethod = ClassActor.fromJava(AMD64CPSCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
             assert unwindMethod != null;
         }
     }

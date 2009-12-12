@@ -23,7 +23,6 @@ package com.sun.max.vm.stack;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
@@ -41,7 +40,7 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     private boolean dumpingFatalStackTrace;
 
     public VmStackFrameWalker(Pointer vmThreadLocals) {
-        super(VMConfiguration.hostOrTarget().bootCompilerScheme());
+        super();
         this.vmThreadLocals = vmThreadLocals;
     }
 

@@ -39,7 +39,6 @@ public interface RawStackFrameVisitor {
     /**
      * Processes a given frame that is being traversed as part of a {@linkplain StackFrameWalker#walk stack walk}.
      *
-     * @param stackFrame
      * @return true if the walk should continue to the caller of {@code stackFrame}, false if it should terminate now
      */
     boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags);
