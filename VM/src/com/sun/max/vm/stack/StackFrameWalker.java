@@ -54,15 +54,116 @@ public abstract class StackFrameWalker {
      */
     public static final VMBooleanXXOption TRACE_STACK_WALK = register(new VMBooleanXXOption("-XX:-TraceStackWalk", ""), MaxineVM.Phase.STARTING);
 
-    private final BootstrapCompilerScheme compilerScheme;
+    /**
+     * The cursor class encapsulates all the state associated with a single stack frame,
+     * including the target method, the instruction pointer, stack pointer, frame pointer, register state,
+     * and whether the frame is the top frame. The stack frame walker manages two cursors internally: the current
+     * frame (caller frame) and the last frame (callee frame) and destructively updates their contents
+     * when walking the stack, rather than allocating new ones, since allocation is disallowed when
+     * walking the stack for reference map preparation.
+     */
+    public final class Cursor {
 
-    protected StackFrameWalker(BootstrapCompilerScheme compilerScheme) {
-        this.compilerScheme = compilerScheme;
+        private TargetMethod targetMethod;
+        private Pointer instructionPointer = Pointer.zero();
+        private Pointer stackPointer = Pointer.zero();
+        private Pointer framePointer = Pointer.zero();
+        private Pointer registerState = Pointer.zero();
+        private boolean isTopFrame = false;
+
+        private Cursor() {
+        }
+
+        /**
+         * Updates the cursor to point to the next stack frame.
+         * This method implicitly sets {@link Cursor#isTopFrame()} of this cursor to {@code false} and
+         * {@link Cursor#targetMethod()} of this cursor to {@code null}.
+         * @param instructionPointer the new instruction pointer
+         * @param stackPointer the new stack pointer
+         * @param framePointer the new frame pointer
+         */
+        public void advance(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+            setFields(null, instructionPointer, stackPointer, framePointer, Pointer.zero(), false);
+        }
+
+        private void clear() {
+            setFields(null, Pointer.zero(), Pointer.zero(), Pointer.zero(), Pointer.zero(), false);
+        }
+
+        private void copyFrom(Cursor other) {
+            setFields(other.targetMethod, other.instructionPointer, other.stackPointer, other.framePointer, other.registerState, other.isTopFrame);
+        }
+
+        private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, Pointer registerState, boolean isTopFrame) {
+            this.targetMethod = targetMethod;
+            this.instructionPointer = ip;
+            this.stackPointer = sp;
+            this.framePointer = fp;
+            this.registerState = registerState;
+            this.isTopFrame = isTopFrame;
+            return this;
+        }
+
+        private Cursor copy() {
+            return new Cursor().setFields(targetMethod, instructionPointer, stackPointer, framePointer, registerState, isTopFrame);
+        }
+
+        /**
+         * @return the stack frame walker for this cursor
+         */
+        public StackFrameWalker stackFrameWalker() {
+            return StackFrameWalker.this;
+        }
+
+        /**
+         * @return the target method corresponding to the instruction pointer.
+         */
+        public TargetMethod targetMethod() {
+            return targetMethod;
+        }
+
+        /**
+         * @return the current instruction pointer.
+         */
+        public Pointer instructionPointer() {
+            return instructionPointer;
+        }
+
+        /**
+         * @return the current stack pointer.
+         */
+        public Pointer stackPointer() {
+            return stackPointer;
+        }
+
+        /**
+         * @return the current frame pointer.
+         */
+        public Pointer framePointer() {
+            return framePointer;
+        }
+
+        /**
+         * @return the register state within this frame, if any.
+         */
+        public Pointer registerState() {
+            return registerState;
+        }
+
+        /**
+         * @return {@code true} if this frame is the top frame
+         */
+        public boolean isTopFrame() {
+            return isTopFrame;
+        }
+    }
+
+    protected StackFrameWalker() {
     }
 
     /**
      * Constants denoting the finite set of reasons for which a stack walk can be performed.
-     * Every implementation of {@link RuntimeCompilerScheme#walkFrame(StackFrameWalker, boolean, TargetMethod, Purpose, Object)}
+     * Every implementation of {@link RuntimeCompilerScheme#walkFrame(StackFrameWalker, boolean, com.sun.max.vm.compiler.target.TargetMethod, com.sun.max.vm.compiler.target.TargetMethod, com.sun.max.vm.stack.StackFrameWalker.Purpose, Object)}
      * must deal with each type of stack walk.
      *
      * @author Doug Simon
@@ -111,9 +212,6 @@ public abstract class StackFrameWalker {
     private Pointer framePointer;
     private Pointer currentAnchor;
     private Pointer instructionPointer;
-    private Pointer calleeStackPointer = Pointer.zero();
-    private Pointer calleeFramePointer;
-    private Pointer calleeInstructionPointer;
     private StackFrame calleeStackFrame;
     private Pointer trapState;
 
@@ -132,12 +230,7 @@ public abstract class StackFrameWalker {
      *            {@code purpose}
      */
     private void walk(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Purpose purpose, Object context) {
-        final boolean traceStackWalk = TRACE_STACK_WALK.getValue();
-        if (traceStackWalk) {
-            Log.print("StackFrameWalk: Start stack frame walk for purpose ");
-            Log.println(purpose);
-        }
-
+        traceWalkPurpose(purpose);
         checkPurpose(purpose, context);
 
         this.trapState = Pointer.zero();
@@ -160,24 +253,8 @@ public abstract class StackFrameWalker {
                 if (inNative) {
                     inNative = false;
                 }
-
-                if (traceStackWalk) {
-                    Log.print("StackFrameWalk: Frame for ");
-                    if (targetMethod.classMethodActor() == null) {
-                        Log.print(targetMethod.description());
-                    } else {
-                        Log.printMethod(targetMethod.classMethodActor(), false);
-                    }
-                    Log.print(", pc=");
-                    Log.print(this.instructionPointer);
-                    Log.print("[");
-                    Log.print(targetMethod.codeStart());
-                    Log.print("+");
-                    Log.print(this.instructionPointer.minus(targetMethod.codeStart()).toInt());
-                    Log.print("], isTopFrame=");
-                    Log.print(isTopFrame);
-                    Log.println("");
-                }
+                // do tracing
+                traceWalkTargetMethod(isTopFrame, targetMethod);
 
                 // Java frame
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
@@ -197,11 +274,8 @@ public abstract class StackFrameWalker {
                     trapState = Pointer.zero();
                 }
             } else {
-                if (traceStackWalk) {
-                    Log.print("StackFrameWalk: Frame for native function [IP=");
-                    Log.print(this.instructionPointer);
-                    Log.println(']');
-                }
+                // do tracing
+                traceWalkNative();
                 if (purpose == INSPECTING) {
                     final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                     if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, this.instructionPointer, this.framePointer, this.stackPointer))) {
@@ -251,6 +325,41 @@ public abstract class StackFrameWalker {
                 lastJavaCallee = null;
             }
             isTopFrame = false;
+        }
+    }
+
+    private void traceWalkPurpose(Purpose purpose) {
+        if (TRACE_STACK_WALK.getValue()) {
+            Log.print("StackFrameWalk: Start stack frame walk for purpose ");
+            Log.println(purpose);
+        }
+    }
+
+    private void traceWalkNative() {
+        if (TRACE_STACK_WALK.getValue()) {
+            Log.print("StackFrameWalk: Frame for native function [IP=");
+            Log.print(this.instructionPointer);
+            Log.println(']');
+        }
+    }
+
+    private void traceWalkTargetMethod(boolean topFrame, TargetMethod targetMethod) {
+        if (TRACE_STACK_WALK.getValue()) {
+            Log.print("StackFrameWalk: Frame for ");
+            if (targetMethod.classMethodActor() == null) {
+                Log.print(targetMethod.description());
+            } else {
+                Log.printMethod(targetMethod.classMethodActor(), false);
+            }
+            Log.print(", pc=");
+            Log.print(this.instructionPointer);
+            Log.print("[");
+            Log.print(targetMethod.codeStart());
+            Log.print("+");
+            Log.print(this.instructionPointer.minus(targetMethod.codeStart()).toInt());
+            Log.print("], isTopFrame=");
+            Log.print(topFrame);
+            Log.println("");
         }
     }
 
@@ -511,12 +620,7 @@ public abstract class StackFrameWalker {
         return stackPointer;
     }
 
-    @INLINE
     public final void advance(Word instructionPointer, Word stackPointer, Word framePointer) {
-        this.calleeInstructionPointer = this.instructionPointer;
-        this.calleeFramePointer = this.framePointer;
-        this.calleeStackPointer = this.stackPointer;
-
         this.instructionPointer = instructionPointer.asPointer();
         this.stackPointer = stackPointer.asPointer();
         this.framePointer = framePointer.asPointer();

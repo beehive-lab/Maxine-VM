@@ -348,7 +348,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
         final int registersSlotIndex = preparer.referenceMapBitIndex(registerState);
         for (int i = 0; i < registerReferenceMapSize(); i++) {
-            final byte referenceMapByte = referenceMaps()[byteIndex];
+            final byte referenceMapByte = referenceMaps[byteIndex];
             preparer.traceReferenceMapByteBefore(byteIndex, referenceMapByte, "Register");
             final int baseSlotIndex = registersSlotIndex + (i * Bytes.WIDTH);
             preparer.setBits(baseSlotIndex, referenceMapByte);

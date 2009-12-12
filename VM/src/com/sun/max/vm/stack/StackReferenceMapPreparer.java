@@ -80,8 +80,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     private final VmThread owner;
     private final Timer timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer triggeredVmThreadLocals;
-    private Pointer enabledVmThreadLocals;
-    private Pointer disabledVmThreadLocals;
     private Pointer referenceMap;
     private Pointer lowestStackSlot;
     private boolean completingReferenceMap;
@@ -321,8 +319,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     public long prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean ignoreTopFrame) {
         timer.start();
         ignoreCurrentFrame = ignoreTopFrame;
-        enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         referenceMap = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
         lowestStackSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
@@ -372,9 +368,8 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             Log.unlock(lockDisabledSafepoints);
         }
         timer.stop();
-        final long time = timer.getLastElapsedTime();
-        preparationTime = time;
-        return time;
+        preparationTime = timer.getLastElapsedTime();
+        return preparationTime;
     }
 
     /**
@@ -386,6 +381,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * @param vmThreadLocals the VM thread locals for the thread whose stack reference map is to be completed
      */
     public void completeStackReferenceMap(Pointer vmThreadLocals) {
+        timer.start();
         FatalError.check(!ignoreCurrentFrame, "All frames should be scanned when competing a stack reference map");
         Pointer anchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
         Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
@@ -394,7 +390,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         if (instructionPointer.isZero()) {
             FatalError.unexpected("A mutator thread in Java at safepoint should be blocked on a monitor");
         }
-        timer.start();
         final Pointer highestSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
 
         // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
@@ -934,6 +929,12 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         return pointer.greaterEqual(lowestStackSlot);
     }
 
+    /**
+     * This method can be called to walk the stack of the current thread from the current
+     * instruction pointer, stack pointer, and frame pointer, verifying the reference map
+     * for each stack frame by using the {@link Heap#isValidGrip(com.sun.max.vm.grip.Grip)}
+     * heuristic.
+     */
     public static void verifyReferenceMapsForThisThread() {
         VmThread current = VmThread.current();
         current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), current.stackReferenceMapVerifier());
