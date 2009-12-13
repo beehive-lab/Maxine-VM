@@ -243,8 +243,6 @@ public abstract class StackFrameWalker {
         boolean inNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
         TargetMethod lastJavaCallee = null;
-        Pointer lastJavaCalleeStackPointer = Pointer.zero();
-        Pointer lastJavaCalleeFramePointer = Pointer.zero();
 
         while (!this.stackPointer.isZero()) {
             final TargetMethod targetMethod = targetMethodFor(this.instructionPointer);
@@ -263,8 +261,6 @@ public abstract class StackFrameWalker {
 
                 // Record the last Java callee frame info based on the current frame *before* the
                 // compiler scheme updates the current frame during the call to walkFrame() below
-                lastJavaCalleeStackPointer = this.stackPointer;
-                lastJavaCalleeFramePointer = this.framePointer;
 
                 if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, lastJavaCallee, purpose, context)) {
                     break;
@@ -299,7 +295,7 @@ public abstract class StackFrameWalker {
                         break;
                     }
 
-                    final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
+                    ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
                     if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
                         if (lastJavaCalleeMethodActor.isTrapStub()) {
                             // This can only occur in the inspector and implies that execution is in the platform specific
@@ -308,7 +304,7 @@ public abstract class StackFrameWalker {
                             // pointer at which the fault occurred.
                             break;
                         }
-                        if (!advanceVmEntryPointFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
+                        if (!advanceVmEntryPointFrame(lastJavaCallee)) {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor == null) {
@@ -382,13 +378,10 @@ public abstract class StackFrameWalker {
     /**
      * Advances this stack walker through the frame of a method annotated with {@link VM_ENTRY_POINT}.
      *
-     * @param purpose the reason this walk is being performed
-     * @param lastJavaCallee
-     * @param lastJavaCalleeStackPointer
-     * @param lastJavaCalleeFramePointer
+     * @param lastJavaCallee the last java method called
      * @return true if the stack walker was advanced
      */
-    private boolean advanceVmEntryPointFrame(Purpose purpose, TargetMethod lastJavaCallee, Pointer lastJavaCalleeStackPointer, Pointer lastJavaCalleeFramePointer, Object context) {
+    private boolean advanceVmEntryPointFrame(TargetMethod lastJavaCallee) {
         final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
         if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
             Pointer anchor = nextNativeStubAnchor();
