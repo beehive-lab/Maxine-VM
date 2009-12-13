@@ -373,15 +373,14 @@ public abstract class Trap {
      * @param throwable
      * @param stackPointer
      * @param framePointer
-     * @param instructionPointer
+     * @param throwAddress
      */
-    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
+    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer throwAddress) {
 
         if (targetMethod instanceof JitTargetMethod) {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
+            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
         }
 
-        final Address throwAddress = instructionPointer;
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, throwAddress, throwable.getClass());
         if (!catchAddress.isZero()) {
             final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
@@ -395,7 +394,7 @@ public abstract class Trap {
                 VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
             }
         } else {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
+            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
         }
     }
 }

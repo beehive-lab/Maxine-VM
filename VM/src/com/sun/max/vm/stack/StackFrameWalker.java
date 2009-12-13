@@ -163,7 +163,7 @@ public abstract class StackFrameWalker {
 
     /**
      * Constants denoting the finite set of reasons for which a stack walk can be performed.
-     * Every implementation of {@link RuntimeCompilerScheme#walkFrame(com.sun.max.vm.stack.StackFrameWalker.Cursor, com.sun.max.vm.stack.StackFrameWalker.Cursor,boolean,com.sun.max.vm.compiler.target.TargetMethod, com.sun.max.vm.stack.StackFrameWalker.Purpose, Object)}
+     * Every implementation of {@link RuntimeCompilerScheme#walkFrame(com.sun.max.vm.stack.StackFrameWalker.Cursor, com.sun.max.vm.stack.StackFrameWalker.Cursor,com.sun.max.vm.compiler.target.TargetMethod, com.sun.max.vm.stack.StackFrameWalker.Purpose, Object)}
      * must deal with each type of stack walk.
      *
      * @author Doug Simon
@@ -267,7 +267,7 @@ public abstract class StackFrameWalker {
                 // Record the last Java callee frame info based on the current frame *before* the
                 // compiler scheme updates the current frame during the call to walkFrame() below
 
-                if (!compilerScheme.walkFrame(current, callee, isTopFrame, lastJavaCallee, purpose, context)) {
+                if (!compilerScheme.walkFrame(current, callee, lastJavaCallee, purpose, context)) {
                     break;
                 }
                 lastJavaCallee = targetMethod;

@@ -225,9 +225,10 @@ public class SPARCJitCompiler extends JitCompiler {
         return true;
     }
 
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, boolean isTopFrame, TargetMethod calleeMethod, Purpose purpose, Object context) {
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, TargetMethod calleeMethod, Purpose purpose, Object context) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         TargetMethod targetMethod = current.targetMethod();
+        boolean isTopFrame = current.isTopFrame();
         final SPARCJitTargetMethod jitTargetMethod = (SPARCJitTargetMethod) targetMethod;
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();
         final Pointer jitEntryPoint = JIT_ENTRY_POINT.in(targetMethod);
