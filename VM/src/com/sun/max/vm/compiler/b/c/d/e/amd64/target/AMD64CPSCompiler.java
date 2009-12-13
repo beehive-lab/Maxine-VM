@@ -193,8 +193,8 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, boolean isTopFrame, TargetMethod calleeMethod, Purpose purpose, Object context) {
-        return walkFrameHelper(current.stackFrameWalker(), isTopFrame, current.targetMethod(), calleeMethod, purpose, context);
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, TargetMethod calleeMethod, Purpose purpose, Object context) {
+        return walkFrameHelper(current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), calleeMethod, purpose, context);
     }
 
     public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
@@ -380,7 +380,6 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
 
     @NEVER_INLINE
     private static void unwindToCalleeEpilogue(Throwable throwable, Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
-
         // Overwrite return address of callee with catch address
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);
