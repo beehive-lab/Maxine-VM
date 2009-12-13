@@ -328,8 +328,9 @@ public class AMD64JitCompiler extends JitCompiler {
     /**
      * @see AMD64JitStackFrame
      */
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
-        assert targetMethod instanceof AMD64JitTargetMethod;
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, boolean isTopFrame, TargetMethod calleeMethod, Purpose purpose, Object context) {
+        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+        TargetMethod targetMethod = current.targetMethod();
         // FIXME: need to encapsulate adapter frame related code in an
         // adapter frame scheme so that this code does not comprise any adapter related code.
         final Pointer instructionPointer = stackFrameWalker.instructionPointer();

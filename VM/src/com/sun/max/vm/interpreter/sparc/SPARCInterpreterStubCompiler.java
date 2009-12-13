@@ -45,7 +45,9 @@ public class SPARCInterpreterStubCompiler extends InterpreterStubCompiler {
         return new SPARCInterpreterStub(classMethodActor, this, vmConfiguration().targetABIsScheme().optimizedJavaABI());
     }
 
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, boolean isTopFrame, TargetMethod calleeMethod, Purpose purpose, Object context) {
+        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+        TargetMethod targetMethod = current.targetMethod();
         final Pointer stackPointer = stackFrameWalker.stackPointer();
         switch (purpose) {
             case RAW_INSPECTING: {
