@@ -18,9 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.unsafe;
 
-import com.sun.max.unsafe.*;
+import com.sun.max.annotate.*;
 
 /**
  * Boxed version of Size.
@@ -29,7 +29,8 @@ import com.sun.max.unsafe.*;
  *
  * @author Bernd Mathiske
  */
-public final class BoxedSize extends Size implements UnsafeBox {
+@HOSTED_ONLY
+public final class BoxedSize extends Size implements Boxed {
 
     private long nativeWord;
 
@@ -73,7 +74,7 @@ public final class BoxedSize extends Size implements UnsafeBox {
         return from(value & BoxedWord.INT_MASK);
     }
 
-    public long nativeWord() {
+    public long value() {
         return nativeWord;
     }
 

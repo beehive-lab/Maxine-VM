@@ -25,7 +25,6 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -852,9 +851,9 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                 return (WordValue) boxedJavaValue;
             }
             if (Word.isBoxed()) {
-                if (boxedJavaValue instanceof UnsafeBox) {
-                    final UnsafeBox box = (UnsafeBox) boxedJavaValue;
-                    return new WordValue(Address.fromLong(box.nativeWord()));
+                if (boxedJavaValue instanceof Boxed) {
+                    final Boxed box = (Boxed) boxedJavaValue;
+                    return new WordValue(Address.fromLong(box.value()));
                 }
             }
             if (boxedJavaValue == null) {

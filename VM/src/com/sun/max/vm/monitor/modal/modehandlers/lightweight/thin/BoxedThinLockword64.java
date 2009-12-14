@@ -18,40 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Boxed version of Word.
- * 
- * @see Word
- *
  * @author Bernd Mathiske
  */
-public final class BoxedWord extends Word implements UnsafeBox {
+@HOSTED_ONLY
+public final class BoxedThinLockword64 extends ThinLockword64 implements Boxed {
 
-    public static final long INT_MASK = 0x00000000ffffffffL;
+    protected long nativeWord;
 
-    private long nativeWord;
-
-    public BoxedWord(UnsafeBox unsafeBox) {
-        nativeWord = unsafeBox.nativeWord();
+    public BoxedThinLockword64(Word word) {
+        final Boxed unsafeBox = (Boxed) word;
+        nativeWord = unsafeBox.value();
     }
 
-    public BoxedWord(int value) {
-        nativeWord = value & INT_MASK;
-    }
-
-    public BoxedWord(long value) {
-        nativeWord = value;
-    }
-
-    public BoxedWord(Word value) {
-        nativeWord = value.asOffset().toLong();
-    }
-
-    public long nativeWord() {
+    public long value() {
         return nativeWord;
     }
+
 }

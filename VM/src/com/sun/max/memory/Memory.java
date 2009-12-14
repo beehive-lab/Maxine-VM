@@ -23,7 +23,6 @@ package com.sun.max.memory;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.unsafe.box.*;
 
 /**
  * This class provides methods to access raw memory through pointers.

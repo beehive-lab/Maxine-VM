@@ -47,7 +47,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     static {
         if (MaxineVM.isHosted()) {
-            c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 0,
+            c1xOptLevel = VMOptions.register(new VMIntOption("-C1X:OptLevel=", 1,
                     "Set the optimization level of C1X.") {
                 @Override
                 public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
@@ -113,6 +113,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, StackFrameWalker.Purpose purpose, Object context) {
-        return BcdeTargetAMD64Compiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, callee, purpose, context);
+        return AMD64CPSCompiler.walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, callee, purpose, context);
     }
 }

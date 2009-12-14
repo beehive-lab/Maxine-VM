@@ -137,7 +137,9 @@ public class VmThread {
 
     private final VmStackFrameWalker stackDumpStackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
-    private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(this);
+    private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(this, false);
+
+    private final StackReferenceMapPreparer stackReferenceMapVerifier = new StackReferenceMapPreparer(this, true);
 
     private final CompactReferenceMapInterpreter compactReferenceMapInterpreter = new CompactReferenceMapInterpreter();
 
@@ -702,6 +704,15 @@ public class VmThread {
     }
 
     /**
+     * Gets a preallocated, thread local object that can be used to walk the frames in this thread's stack
+     * and check their reference maps.
+     */
+    public VmStackFrameWalker referenceMapVerifyingStackFrameWalker() {
+        FatalError.check(stackDumpStackFrameWalker != null, "Thread-local stack frame walker cannot be null for a running thread");
+        return stackDumpStackFrameWalker;
+    }
+
+    /**
      * Gets a preallocated, thread local object that can be used to log a stack dump without incurring any allocation.
      */
     public VmStackFrameWalker stackDumpStackFrameWalker() {
@@ -714,6 +725,13 @@ public class VmThread {
      */
     public StackReferenceMapPreparer stackReferenceMapPreparer() {
         return stackReferenceMapPreparer;
+    }
+
+    /**
+     * Gets the thread-local object used to verify the reference map for this stack's thread.
+     */
+    public StackReferenceMapPreparer stackReferenceMapVerifier() {
+        return stackReferenceMapVerifier;
     }
 
     public CompactReferenceMapInterpreter compactReferenceMapInterpreter() {

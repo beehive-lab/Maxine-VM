@@ -35,6 +35,11 @@ public class Package extends VMPackage {
     }
 
     @Override
+    public Class[] wordSubclasses() {
+        return new Class[] {LightweightLockword64.class};
+    }
+
+    @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return vmConfiguration.monitorPackage.isSubPackageOf(this.superPackage().superPackage());
     }
