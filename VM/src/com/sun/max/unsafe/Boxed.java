@@ -18,25 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.unsafe;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
+import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 
 /**
+ * Interface implemented by boxed versions of {@link Word} types.
+ * These boxed implementations are used when executing in {@linkplain MaxineVM#isHosted() hosted} mode.
+ *
+ * A boxed type must be in the same package as its corresponding unboxed type and
+ * its name must be composed by added the prefix "Boxed" to the name of the unboxed type.
+ * This invariant enables the complete set of boxed types to be derived from the known
+ * set of unboxed types.
+ *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public final class BoxedThinLockword64 extends ThinLockword64 implements UnsafeBox {
+@HOSTED_ONLY
+public interface Boxed {
 
-    protected long nativeWord;
-
-    public BoxedThinLockword64(Word word) {
-        final UnsafeBox unsafeBox = (UnsafeBox) word;
-        nativeWord = unsafeBox.nativeWord();
-    }
-
-    public long nativeWord() {
-        return nativeWord;
-    }
-
+    /**
+     * Gets the boxed value as a {@code long}.
+     */
+    long value();
 }

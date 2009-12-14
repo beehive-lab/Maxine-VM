@@ -22,35 +22,34 @@ package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.unsafe.box.*;
 
 /**
 
  * @author Simon Wilkinson
  */
-public abstract class BiasedLockEpoch extends Word {
+public abstract class BiasedLockEpoch64 extends Word {
 
-    private static final BiasedLockEpoch UNUSED = BiasedLockEpoch.from(Word.zero());
-    private static final BiasedLockEpoch BULK_REVOCATION = BiasedLockEpoch.from(Address.fromInt(1).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
-    static final BiasedLockEpoch REVOKED = BiasedLockEpoch.from(Address.fromInt(2).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
-    private static final BiasedLockEpoch MIN = BiasedLockEpoch.from(Address.fromInt(3).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
-    private static final BiasedLockEpoch MAX = BiasedLockEpoch.from(BiasedLockword64.EPOCH_MASK);
+    private static final BiasedLockEpoch64 UNUSED = BiasedLockEpoch64.from(Word.zero());
+    private static final BiasedLockEpoch64 BULK_REVOCATION = BiasedLockEpoch64.from(Address.fromInt(1).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+    static final BiasedLockEpoch64 REVOKED = BiasedLockEpoch64.from(Address.fromInt(2).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+    private static final BiasedLockEpoch64 MIN = BiasedLockEpoch64.from(Address.fromInt(3).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+    private static final BiasedLockEpoch64 MAX = BiasedLockEpoch64.from(BiasedLockword64.EPOCH_MASK);
 
-    protected BiasedLockEpoch() {
+    protected BiasedLockEpoch64() {
     }
 
     @UNSAFE_CAST
-    public static BiasedLockEpoch from(Word word) {
+    public static BiasedLockEpoch64 from(Word word) {
         return new BoxedBiasedLockEpoch64(word);
     }
 
     @INLINE
-    final BiasedLockEpoch increment() {
+    final BiasedLockEpoch64 increment() {
         if (this.equals(MAX)) {
             return MIN;
         }
         int epoch = toIntInternal();
-        return BiasedLockEpoch.from(Address.fromUnsignedInt(epoch++).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+        return BiasedLockEpoch64.from(Address.fromUnsignedInt(epoch++).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
     }
 
     @INLINE
@@ -59,7 +58,7 @@ public abstract class BiasedLockEpoch extends Word {
     }
 
     @INLINE
-    static final BiasedLockEpoch bulkRevocation() {
+    static final BiasedLockEpoch64 bulkRevocation() {
         return BULK_REVOCATION;
     }
 
@@ -72,7 +71,7 @@ public abstract class BiasedLockEpoch extends Word {
         return toIntInternal();
     }
 
-    public static BiasedLockEpoch init() {
+    public static BiasedLockEpoch64 init() {
         return MIN;
     }
 

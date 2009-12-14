@@ -25,13 +25,13 @@
 #include "jni.h"
 
 JNIEXPORT jlong JNICALL 
-Java_com_sun_max_unsafe_box_BoxedAddress_nativeDivide(JNIEnv *env, jclass c, jlong dividend, jlong divisor) 
+Java_com_sun_max_unsafe_BoxedAddress_nativeDivide(JNIEnv *env, jclass c, jlong dividend, jlong divisor)
 {
     return (jlong) ((Address) dividend / (Address) divisor);
 }
 
 JNIEXPORT jlong JNICALL 
-Java_com_sun_max_unsafe_box_BoxedAddress_nativeRemainder(JNIEnv *env, jclass c, jlong dividend, jlong divisor) 
+Java_com_sun_max_unsafe_BoxedAddress_nativeRemainder(JNIEnv *env, jclass c, jlong dividend, jlong divisor)
 {
     return (jlong) ((Address) dividend % (Address) divisor);
 }

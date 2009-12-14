@@ -22,7 +22,6 @@ package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
 
@@ -103,7 +102,7 @@ public abstract class BiasedLockword64 extends LightweightLockword64 {
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockword64 asBiasedAndLockedOnceBy(int lockwordThreadID, BiasedLockEpoch epoch) {
+    public final BiasedLockword64 asBiasedAndLockedOnceBy(int lockwordThreadID, BiasedLockEpoch64 epoch) {
         return BiasedLockword64.from(asBiasedTo(lockwordThreadID, epoch).asAddress().or(RCOUNT_INC_WORD));
     }
 
@@ -128,7 +127,7 @@ public abstract class BiasedLockword64 extends LightweightLockword64 {
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockword64 asBiasedTo(int lockwordThreadID, BiasedLockEpoch epoch) {
+    public final BiasedLockword64 asBiasedTo(int lockwordThreadID, BiasedLockEpoch64 epoch) {
         return BiasedLockword64.from(asAnonBiased().asAddress().or(epoch.asAddress()).or(Address.fromUnsignedInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
     }
 
@@ -140,7 +139,7 @@ public abstract class BiasedLockword64 extends LightweightLockword64 {
      */
     @INLINE
     public static final boolean isBiasedLockword(ModalLockword64 lockword) {
-        return !lockword.asAddress().and(EPOCH_MASK).equals(BiasedLockEpoch.REVOKED) && lockword.isLightweight();
+        return !lockword.asAddress().and(EPOCH_MASK).equals(BiasedLockEpoch64.REVOKED) && lockword.isLightweight();
     }
 
     /**
@@ -168,7 +167,7 @@ public abstract class BiasedLockword64 extends LightweightLockword64 {
      *         {@code lockwordThreadID} is the bias owner; false otherwise
      */
     @INLINE
-    public static final boolean isBiasedLockAndBiasedTo(ModalLockword64 lockword, BiasedLockEpoch epoch, int lockwordThreadID) {
+    public static final boolean isBiasedLockAndBiasedTo(ModalLockword64 lockword, BiasedLockEpoch64 epoch, int lockwordThreadID) {
         return BiasedLockword64.from(lockword).asBiasedTo(lockwordThreadID, epoch).equals(lockword.asAddress().and(BIASED_OWNED_MASK));
     }
 
@@ -179,7 +178,7 @@ public abstract class BiasedLockword64 extends LightweightLockword64 {
      */
     @INLINE
     public final BiasedLockword64 asUnbiasable() {
-        return asWithEpoch(BiasedLockEpoch.REVOKED);
+        return asWithEpoch(BiasedLockEpoch64.REVOKED);
     }
 
     /**
@@ -188,8 +187,8 @@ public abstract class BiasedLockword64 extends LightweightLockword64 {
      * @return the bias epoch
      */
     @INLINE
-    public final BiasedLockEpoch getEpoch() {
-        return BiasedLockEpoch.from(asAddress().and(EPOCH_MASK));
+    public final BiasedLockEpoch64 getEpoch() {
+        return BiasedLockEpoch64.from(asAddress().and(EPOCH_MASK));
     }
 
     /**
@@ -199,7 +198,7 @@ public abstract class BiasedLockword64 extends LightweightLockword64 {
      * @return the copy lock word
      */
     @INLINE
-    public final BiasedLockword64 asWithEpoch(BiasedLockEpoch epoch) {
+    public final BiasedLockword64 asWithEpoch(BiasedLockEpoch64 epoch) {
         return BiasedLockword64.from(asAddress().and(NON_EPOCH_MASK).or(epoch.asAddress()));
     }
 

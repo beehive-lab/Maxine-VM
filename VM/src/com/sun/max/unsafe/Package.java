@@ -24,11 +24,22 @@ import com.sun.max.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class Package extends BasePackage {
     public Package() {
         super();
+    }
+
+    @Override
+    public Class[] wordSubclasses() {
+        return new Class[] {
+            Address.class,
+            Offset.class,
+            Pointer.class,
+            Size.class,
+            Word.class
+        };
     }
 }

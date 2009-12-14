@@ -25,6 +25,9 @@ import static com.sun.max.vm.VMOptions.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.Code;
+import com.sun.max.vm.debug.DebugHeap;
+import com.sun.max.vm.grip.Grip;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
@@ -494,4 +497,20 @@ public final class Heap {
             Log.println(": immortal heap allocation disabled");
         }
     }
+
+    public static boolean isValidGrip(Grip grip) {
+        if (grip.isZero()) {
+            return true;
+        }
+        Pointer origin = grip.toOrigin();
+        if (!bootHeapRegion.contains(origin) && !contains(origin) && !Code.contains(origin) && !ImmortalHeap.getImmortalHeap().contains(origin)) {
+            return false;
+        }
+        if (MaxineVM.isDebug()) {
+            return DebugHeap.isValidNonnullGrip(grip);
+        }
+        return true;
+    }
+
+
 }

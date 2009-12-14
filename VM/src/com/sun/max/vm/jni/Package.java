@@ -25,11 +25,16 @@ import com.sun.max.vm.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class Package extends VMPackage {
     public Package() {
         super();
+    }
+
+    @Override
+    public Class[] wordSubclasses() {
+        return new Class[] {MemberID.class, FieldID.class, MethodID.class, JniHandle.class};
     }
 }

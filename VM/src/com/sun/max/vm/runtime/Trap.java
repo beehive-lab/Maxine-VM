@@ -122,7 +122,6 @@ public abstract class Trap {
      *  Note that SPARC code is more efficient if this is set below 6K.  Specifically, set to (6K - 1 - typical_frame_size).
      */
     public static final int stackGuardSize = 12 * Ints.K;
-    // TODO (tw): Check why the LSRA needs the value 12K above. Can probably be reduced after implementing better stack slot sharing.
 
     /**
      * This method is {@linkplain #isTrapStub(MethodActor) known} by the compilation system. In particular, no adapter

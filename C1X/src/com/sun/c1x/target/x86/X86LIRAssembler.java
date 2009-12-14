@@ -195,20 +195,20 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             case Char:
             case Int: // fall through
             case Float:
-                masm.movl(frameMap.addressForSlot(dest.singleStackIndex()), c.asIntBits());
+                masm.movl(frameMap.toAddress(dest, 0), c.asIntBits());
                 break;
 
             case Object:
-                masm.movoop(frameMap.addressForSlot(dest.singleStackIndex()), CiConstant.forObject(c.asObject()));
+                masm.movoop(frameMap.toAddress(dest, 0), CiConstant.forObject(c.asObject()));
                 break;
 
             case Long: // fall through
             case Double:
                 if (is64) {
-                    masm.movptr(frameMap.addressForSlot(dest.doubleStackIndex(), compilation.target.arch.lowWordOffset), c.asLongBits());
+                    masm.movptr(frameMap.toAddress(dest, 0), c.asLongBits());
                 } else {
-                    masm.movptr(frameMap.addressForSlot(dest.doubleStackIndex(), compilation.target.arch.lowWordOffset), c.asIntLoBits());
-                    masm.movptr(frameMap.addressForSlot(dest.doubleStackIndex(), compilation.target.arch.highWordOffset), c.asIntHiBits());
+                    masm.movptr(frameMap.toAddress(dest, compilation.target.arch.lowWordOffset), c.asIntLoBits());
+                    masm.movptr(frameMap.toAddress(dest, compilation.target.arch.highWordOffset), c.asIntHiBits());
                 }
                 break;
 
@@ -360,7 +360,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         assert dest.isStack() : "should not call otherwise";
 
         if (src.isSingleCpu()) {
-            Address dst = frameMap.addressForSlot(dest.singleStackIndex());
+            Address dst = frameMap.toAddress(dest, 0);
             if (type == CiKind.Object || type == CiKind.Word) {
                 if (type == CiKind.Object) {
                     masm.verifyOop(src.asRegister());
@@ -371,23 +371,22 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             }
 
         } else if (src.isDoubleCpu()) {
-            if (!is64) {
-                Address dstLO = frameMap.addressForSlot(dest.doubleStackIndex(), compilation.target.arch.lowWordOffset);
+            if (is64) {
+                Address dstLO = frameMap.toAddress(dest, 0);
                 masm.movptr(dstLO, src.asRegisterLow());
-                Address dstHI = frameMap.addressForSlot(dest.doubleStackIndex(), compilation.target.arch.highWordOffset);
-                masm.movptr(dstHI, src.asRegisterHigh());
             } else {
-                Address dstLO = frameMap.addressForSlot(dest.doubleStackIndex(), compilation.target.arch.lowWordOffset);
+                Address dstLO = frameMap.toAddress(dest, compilation.target.arch.lowWordOffset);
                 masm.movptr(dstLO, src.asRegisterLow());
-
+                Address dstHI = frameMap.toAddress(dest, compilation.target.arch.highWordOffset);
+                masm.movptr(dstHI, src.asRegisterHigh());
             }
 
         } else if (src.isSingleXmm()) {
-            Address dstAddr = frameMap.addressForSlot(dest.singleStackIndex());
+            Address dstAddr = frameMap.toAddress(dest, 0);
             masm.movflt(dstAddr, asXmmFloatReg(src));
 
         } else if (src.isDoubleXmm()) {
-            Address dstAddr = frameMap.addressForSlot(dest.doubleStackIndex());
+            Address dstAddr = frameMap.toAddress(dest, 0);
             masm.movdbl(dstAddr, asXmmDoubleReg(src));
 
         } else {
@@ -498,28 +497,31 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
         if (dest.isSingleCpu()) {
             if (type == CiKind.Object || type == CiKind.Word) {
-                masm.movptr(dest.asRegister(), frameMap.addressForSlot(src.singleStackIndex()));
+                masm.movptr(dest.asRegister(), frameMap.toAddress(src, 0));
                 if (type == CiKind.Object) {
                     masm.verifyOop(dest.asRegister());
                 }
             } else {
-                masm.movl(dest.asRegister(), frameMap.addressForSlot(src.singleStackIndex()));
+                masm.movl(dest.asRegister(), frameMap.toAddress(src, 0));
             }
 
         } else if (dest.isDoubleCpu()) {
-            Address srcAddrLO = frameMap.addressForSlot(src.doubleStackIndex(), compilation.target.arch.lowWordOffset);
-            Address srcAddrHI = frameMap.addressForSlot(src.doubleStackIndex(), compilation.target.arch.highWordOffset);
-            masm.movptr(dest.asRegisterLow(), srcAddrLO);
-            if (!is64) {
+            if (is64) {
+                Address srcAddrLO = frameMap.toAddress(src, 0);
+                masm.movptr(dest.asRegisterLow(), srcAddrLO);
+            } else {
+                Address srcAddrLO = frameMap.toAddress(src, compilation.target.arch.lowWordOffset);
+                Address srcAddrHI = frameMap.toAddress(src, compilation.target.arch.highWordOffset);
+                masm.movptr(dest.asRegisterLow(), srcAddrLO);
                 masm.movptr(dest.asRegisterHigh(), srcAddrHI);
             }
 
         } else if (dest.isSingleXmm()) {
-            Address srcAddr = frameMap.addressForSlot(src.singleStackIndex());
+            Address srcAddr = frameMap.toAddress(src, 0);
             masm.movflt(asXmmFloatReg(dest), srcAddr);
 
         } else if (dest.isDoubleXmm()) {
-            Address srcAddr = frameMap.addressForSlot(src.doubleStackIndex());
+            Address srcAddr = frameMap.toAddress(src, 0);
             masm.movdbl(asXmmDoubleReg(dest), srcAddr);
 
         } else {
@@ -551,15 +553,15 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         if (dest.isSingleStack()) {
             if (type == CiKind.Object || type == CiKind.Word) {
                 masm.pushptr(asAddress((LIRAddress) src));
-                masm.popptr(frameMap.addressForSlot(dest.singleStackIndex()));
+                masm.popptr(frameMap.toAddress(dest, 0));
             } else {
                 masm.pushl(asAddress((LIRAddress) src));
-                masm.popl(frameMap.addressForSlot(dest.singleStackIndex()));
+                masm.popl(frameMap.toAddress(dest, 0));
             }
         } else if (dest.isDoubleStack()) {
             assert is64;
             masm.pushptr(asAddress((LIRAddress) src));
-            masm.popptr(frameMap.addressForSlot(dest.doubleStackIndex()));
+            masm.popptr(frameMap.toAddress(dest, 0));
         } else {
             throw Util.shouldNotReachHere();
         }
@@ -569,23 +571,23 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     protected void stack2stack(LIROperand src, LIROperand dest, CiKind type) {
         if (src.isSingleStack()) {
             if (type == CiKind.Object || type == CiKind.Word) {
-                masm.pushptr(frameMap.addressForSlot(src.singleStackIndex()));
-                masm.popptr(frameMap.addressForSlot(dest.singleStackIndex()));
+                masm.pushptr(frameMap.toAddress(src, 0));
+                masm.popptr(frameMap.toAddress(dest, 0));
             } else {
-                masm.pushl(frameMap.addressForSlot(src.singleStackIndex()));
-                masm.popl(frameMap.addressForSlot(dest.singleStackIndex()));
+                masm.pushl(frameMap.toAddress(src, 0));
+                masm.popl(frameMap.toAddress(dest, 0));
             }
 
         } else if (src.isDoubleStack()) {
             if (is64) {
-                masm.pushptr(frameMap.addressForSlot(src.doubleStackIndex()));
-                masm.popptr(frameMap.addressForSlot(dest.doubleStackIndex()));
+                masm.pushptr(frameMap.toAddress(src, 0));
+                masm.popptr(frameMap.toAddress(dest, 0));
             } else {
-                masm.pushl(frameMap.addressForSlot(src.doubleStackIndex(), 0));
+                masm.pushl(frameMap.toAddress(src, 0));
                 // push and pop the part at src + wordSize, adding wordSize for the previous push
-                masm.pushl(frameMap.addressForSlot(src.doubleStackIndex(), 2 * wordSize));
-                masm.popl(frameMap.addressForSlot(dest.doubleStackIndex(), 2 * wordSize));
-                masm.popl(frameMap.addressForSlot(dest.doubleStackIndex(), 0));
+                masm.pushl(frameMap.toAddress(src, 2 * wordSize));
+                masm.popl(frameMap.toAddress(dest, 2 * wordSize));
+                masm.popl(frameMap.toAddress(dest, 0));
             }
         } else {
             throw Util.shouldNotReachHere();
@@ -1211,11 +1213,11 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                     masm.cmovptr(ncond, result.asRegisterHigh(), opr2.asRegisterHigh());
                 }
             } else if (opr2.isSingleStack()) {
-                masm.cmovl(ncond, result.asRegister(), frameMap.addressForSlot(opr2.singleStackIndex()));
+                masm.cmovl(ncond, result.asRegister(), frameMap.toAddress(opr2, 0));
             } else if (opr2.isDoubleStack()) {
-                masm.cmovptr(ncond, result.asRegisterLow(), frameMap.addressForSlot(opr2.doubleStackIndex(), compilation.target.arch.lowWordOffset));
+                masm.cmovptr(ncond, result.asRegisterLow(), frameMap.toAddress(opr2, compilation.target.arch.lowWordOffset));
                 if (!is64) {
-                    masm.cmovptr(ncond, result.asRegisterHigh(), frameMap.addressForSlot(opr2.doubleStackIndex(), compilation.target.arch.highWordOffset));
+                    masm.cmovptr(ncond, result.asRegisterHigh(), frameMap.toAddress(opr2, compilation.target.arch.highWordOffset));
                 }
             } else {
                 throw Util.shouldNotReachHere();
@@ -1264,7 +1266,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
             } else if (right.isStack()) {
                 // cpu register - stack
-                Address raddr = frameMap.addressForSlot(right.singleStackIndex());
+                Address raddr = frameMap.toAddress(right, 0);
                 switch (code) {
                     case Add:
                         masm.addl(lreg, raddr);
@@ -1399,7 +1401,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             } else {
                 Address raddr;
                 if (right.isSingleStack()) {
-                    raddr = frameMap.addressForSlot(right.singleStackIndex());
+                    raddr = frameMap.toAddress(right, 0);
                 } else if (isConstant(right)) {
                     raddr = masm.recordDataReferenceInCode(CiConstant.forFloat(((LIRConstant) right).asFloat()));
                 } else {
@@ -1450,7 +1452,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             } else {
                 Address raddr;
                 if (right.isDoubleStack()) {
-                    raddr = frameMap.addressForSlot(right.doubleStackIndex());
+                    raddr = frameMap.toAddress(right, 0);
                 } else if (isConstant(right)) {
                     // hack for now
                     raddr = masm.recordDataReferenceInCode(CiConstant.forDouble(((LIRConstant) right).asDouble()));
@@ -1480,7 +1482,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
             Address laddr;
             if (left.isSingleStack()) {
-                laddr = frameMap.addressForSlot(left.singleStackIndex());
+                laddr = frameMap.toAddress(left, 0);
             } else if (isAddress(left)) {
                 laddr = asAddress((LIRAddress) left);
             } else {
@@ -1568,7 +1570,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 }
             } else if (right.isStack()) {
                 // added support for stack operands
-                Address raddr = frameMap.addressForSlot(right.singleStackIndex());
+                Address raddr = frameMap.toAddress(right, 0);
                 switch (code) {
                     case LogicAnd:
                         masm.andl(reg, raddr);
@@ -1831,9 +1833,9 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             } else if (opr2.isStack()) {
                 // cpu register - stack
                 if (opr1.kind == CiKind.Object || opr1.kind == CiKind.Word) {
-                    masm.cmpptr(reg1, frameMap.addressForSlot(opr2.singleStackIndex()));
+                    masm.cmpptr(reg1, frameMap.toAddress(opr2, 0));
                 } else {
-                    masm.cmpl(reg1, frameMap.addressForSlot(opr2.singleStackIndex()));
+                    masm.cmpl(reg1, frameMap.toAddress(opr2, 0));
                 }
             } else if (isConstant(opr2)) {
                 // cpu register - constant
@@ -1906,7 +1908,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 masm.ucomiss(reg1, asXmmFloatReg(opr2));
             } else if (opr2.isStack()) {
                 // xmm register - stack
-                masm.ucomiss(reg1, frameMap.addressForSlot(opr2.singleStackIndex()));
+                masm.ucomiss(reg1, frameMap.toAddress(opr2, 0));
             } else if (isConstant(opr2)) {
                 // xmm register - constant
                 masm.ucomiss(reg1, masm.recordDataReferenceInCode(CiConstant.forFloat(((LIRConstant) opr2).asFloat())));
@@ -1930,7 +1932,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 masm.ucomisd(reg1, asXmmDoubleReg(opr2));
             } else if (opr2.isStack()) {
                 // xmm register - stack
-                masm.ucomisd(reg1, frameMap.addressForSlot(opr2.doubleStackIndex()));
+                masm.ucomisd(reg1, frameMap.toAddress(opr2, 0));
             } else if (isConstant(opr2)) {
                 // xmm register - constant
                 masm.ucomisd(reg1, masm.recordDataReferenceInCode(CiConstant.forDouble(((LIRConstant) opr2).asDouble())));
@@ -2295,7 +2297,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                     masm.movdl(dest.asRegisterHigh(), asXmmDoubleReg(src));
                 }
             } else if (dest.isDoubleStack()) {
-                masm.movdbl(frameMap.addressForSlot(dest.doubleStackIndex()), asXmmDoubleReg(src));
+                masm.movdbl(frameMap.toAddress(dest, 0), asXmmDoubleReg(src));
             } else if (isAddress(dest)) {
                 masm.movdbl(asAddress((LIRAddress) dest), asXmmDoubleReg(src));
             } else {
@@ -2304,7 +2306,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
         } else if (dest.isDoubleXmm()) {
             if (src.isDoubleStack()) {
-                masm.movdbl(asXmmDoubleReg(dest), frameMap.addressForSlot(src.doubleStackIndex()));
+                masm.movdbl(asXmmDoubleReg(dest), frameMap.toAddress(src, 0));
             } else if (isAddress(src)) {
                 masm.movdbl(asXmmDoubleReg(dest), asAddress((LIRAddress) src));
             } else {

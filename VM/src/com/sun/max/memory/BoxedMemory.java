@@ -18,52 +18,47 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.memory;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Boxed version of Offset.
+ * Memory access using wrapped Word types.
  *
  * @author Bernd Mathiske
  */
-public final class BoxedOffset extends Offset implements UnsafeBox {
-
-    private long nativeWord;
-
-    public static final BoxedOffset ZERO = new BoxedOffset(0);
-
-    private static final class Cache {
-        private Cache() {
-        }
-
-        static final int LOWEST_VALUE = -100;
-        static final int HIGHEST_VALUE = 1000;
-
-        static final BoxedOffset[] cache = new BoxedOffset[(HIGHEST_VALUE - LOWEST_VALUE) + 1];
-
-        static {
-            for (int i = 0; i < cache.length; i++) {
-                cache[i] = new BoxedOffset(i + LOWEST_VALUE);
-            }
-        }
+@HOSTED_ONLY
+public final class BoxedMemory {
+    private BoxedMemory() {
     }
 
-    public static BoxedOffset from(long value) {
-        if (value == 0) {
-            return ZERO;
-        }
-        if (value >= Cache.LOWEST_VALUE && value <= Cache.HIGHEST_VALUE) {
-            return Cache.cache[(int) value - Cache.LOWEST_VALUE];
-        }
-        return new BoxedOffset(value);
+    private static native long nativeAllocate(long size);
+
+    public static Pointer allocate(Size size) {
+        final Boxed box = (Boxed) size;
+        return BoxedPointer.from(nativeAllocate(box.value()));
     }
 
-    private BoxedOffset(long value) {
-        nativeWord = value;
+    private static native long nativeReallocate(long block, long size);
+
+    public static Pointer reallocate(Pointer block, Size size) {
+        final Boxed blockBox = (Boxed) block;
+        final Boxed sizeBox = (Boxed) size;
+        return BoxedPointer.from(nativeReallocate(blockBox.value(), sizeBox.value()));
     }
 
-    public long nativeWord() {
-        return nativeWord;
+    private static native int nativeDeallocate(long pointer);
+
+    public static int deallocate(Address block) {
+        final Boxed box = (Boxed) block;
+        return nativeDeallocate(box.value());
     }
+
+    private static native void nativeWriteBytes(byte[] fromArray, int startIndex, int numberOfBytes, long toPointer);
+
+    public static void writeBytes(byte[] fromArray, int startIndex, int numberOfBytes, Pointer toPointer) {
+        nativeWriteBytes(fromArray, startIndex, numberOfBytes, toPointer.toLong());
+    }
+
 }

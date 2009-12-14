@@ -22,7 +22,6 @@ package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.unsafe.box.*;
 
 /**
  * Use this type rather than Address to remark that you are referring to the size of something. A "size" is always

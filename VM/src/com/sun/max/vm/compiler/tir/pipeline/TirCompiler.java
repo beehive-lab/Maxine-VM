@@ -66,7 +66,7 @@ public class TirCompiler {
         final AMD64EirGeneratorScheme generator = (AMD64EirGeneratorScheme) VMConfiguration.target().bootCompilerScheme();
         final TreeEirMethod eirMethod = (TreeEirMethod) generator.eirGenerator().makeIrMethod(dirTranslator.method());
 
-        final BcdeTargetAMD64Compiler targetGenerator = (BcdeTargetAMD64Compiler) VMConfiguration.target().bootCompilerScheme();
+        final AMD64CPSCompiler targetGenerator = (AMD64CPSCompiler) VMConfiguration.target().bootCompilerScheme();
         final TargetMethod targetMethod = targetGenerator.targetGenerator().makeIrMethod(eirMethod);
 
         targetTree.setGenerated(eirMethod, targetMethod);

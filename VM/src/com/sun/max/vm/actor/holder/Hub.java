@@ -54,7 +54,7 @@ public abstract class Hub extends Hybrid {
     @INSPECTED
     public final ClassActor classActor;
     public final Layout.Category layoutCategory;
-    public BiasedLockEpoch biasedLockEpoch = BiasedLockEpoch.init();
+    public BiasedLockEpoch64 biasedLockEpoch = BiasedLockEpoch64.init();
     @CONSTANT_WHEN_NOT_ZERO
     private static int firstWordIndex;
     public final int iTableStartIndex;

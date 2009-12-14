@@ -25,7 +25,6 @@ import java.math.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.compiler.builtin.*;
 
 /**
@@ -158,8 +157,8 @@ public abstract class Address extends Word {
     @INLINE
     public final int toInt() {
         if (Word.isBoxed()) {
-            final UnsafeBox box = (UnsafeBox) this;
-            return (int) box.nativeWord();
+            final Boxed box = (Boxed) this;
+            return (int) box.value();
         }
         if (Word.width() == 64) {
             final long n = UnsafeCast.asLong(this);
@@ -171,8 +170,8 @@ public abstract class Address extends Word {
     @INLINE
     public final long toLong() {
         if (Word.isBoxed()) {
-            final UnsafeBox box = (UnsafeBox) this;
-            return box.nativeWord();
+            final Boxed box = (Boxed) this;
+            return box.value();
         }
         if (Word.width() == 64) {
             return UnsafeCast.asLong(this);

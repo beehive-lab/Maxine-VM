@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.unsafe.box;
+package com.sun.max.vm.stack.exp;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.jni.*;
+import com.sun.max.unsafe.Address;
 
 /**
- * @author Bernd Mathiske
+ * This class implements access to the stack and the ability to identify frames for the stack walker.
+ *
+ * @author Ben L. Titzer
  */
-public final class BoxedFieldID extends FieldID implements UnsafeBox {
+public interface ExpStackAccess {
 
-    protected long nativeWord;
-
-    public BoxedFieldID(Word word) {
-        final UnsafeBox unsafeBox = (UnsafeBox) word;
-        nativeWord = unsafeBox.nativeWord();
-    }
-
-    public long nativeWord() {
-        return nativeWord;
-    }
-
+    boolean isValidIP(Address instructionPointer);
+    ExpStackFrameLayout identify(ExpStackWalker.Cursor cursor);
 }

@@ -376,6 +376,7 @@ public class Canonicalizer extends ValueVisitor {
             RiField field = i.field();
             if (field.isConstant()) {
                 if (method.isStatic() && method.isInitializer()) {
+                    // don't do canonicalization in the initializer method
                     return;
                 }
 

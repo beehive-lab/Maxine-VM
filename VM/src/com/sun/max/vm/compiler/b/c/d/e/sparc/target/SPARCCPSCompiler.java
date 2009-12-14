@@ -57,7 +57,7 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  * @author Paul Caprioli
  */
-public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements TargetGeneratorScheme {
+public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetGeneratorScheme {
 
     private static final int CALL_INSTRUCTION = 0x40000000;
 
@@ -72,7 +72,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         return new SPARCEirToTargetTranslator(this);
     }
 
-    public BcdeTargetSPARCCompiler(VMConfiguration vmConfiguration) {
+    public SPARCCPSCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         jitFramePointer = (GPR) vmConfiguration.targetABIsScheme().jitABI().framePointer();
         eirToTargetTranslator = new SPARCEirToTargetTranslator(this);

@@ -24,7 +24,7 @@ import com.sun.max.*;
 
 /**
  * Denotes a package of classes that are (potentially) in the VM.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
