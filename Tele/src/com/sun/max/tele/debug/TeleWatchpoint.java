@@ -117,6 +117,11 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
     }
 
     @Override
+    public String getDescription() {
+        return description();
+    }
+
+    @Override
     public boolean equals(Object o) {
         // For the purposes of the collection, define ordering and equality in terms of start location only.
         if (o instanceof TeleWatchpoint) {
@@ -254,6 +259,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         }
     }
 
+    // TODO (mlvdv) factor these out so that a Watchpoint has a handler (see TeleBreakpoint)
     public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
         assert teleNativeThread.state() == ThreadState.WATCHPOINT;
         final TeleVM teleVM = factory.teleProcess.teleVM();
