@@ -49,19 +49,19 @@ public class SPARCInterpreterStubCompiler extends InterpreterStubCompiler {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         TargetMethod targetMethod = current.targetMethod();
         boolean isTopFrame = current.isTopFrame();
-        final Pointer stackPointer = stackFrameWalker.stackPointer();
+        final Pointer stackPointer = current.stackPointer();
         switch (purpose) {
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
                 final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
-                if (!stackFrameVisitor.visitFrame(targetMethod, stackFrameWalker.instructionPointer(), stackPointer, stackPointer, flags)) {
+                if (!stackFrameVisitor.visitFrame(targetMethod, current.instructionPointer(), stackPointer, stackPointer, flags)) {
                     return false;
                 }
                 break;
             }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                if (!stackFrameVisitor.visitFrame(new SPARCJavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, stackFrameWalker.instructionPointer(), stackFrameWalker.framePointer(), stackPointer))) {
+                if (!stackFrameVisitor.visitFrame(new SPARCJavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, current.instructionPointer(), current.framePointer(), stackPointer))) {
                     return false;
                 }
                 break;
@@ -72,7 +72,7 @@ public class SPARCInterpreterStubCompiler extends InterpreterStubCompiler {
         }
 
         final Pointer callerInstructionPointer = stackFrameWalker.readWord(stackPointer, 0).asPointer();
-        stackFrameWalker.advance(callerInstructionPointer, stackPointer, stackFrameWalker.framePointer());
+        stackFrameWalker.advance(callerInstructionPointer, stackPointer, current.framePointer());
         return true;
     }
 }

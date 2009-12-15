@@ -48,7 +48,7 @@ public interface RuntimeCompilerScheme extends VMScheme {
      * Walks a frame for a target method that was produced by this compiler.
      *
      * @param current the cursor for the current frame
-     * @param callee the cursor for the callee frame
+     * @param callee the cursor for the callee frame (i.e. current called callee directly or through a series of native methods)
      * @param calleeMethod the target method whose frame is below this frame being walked (i.e. the frame of {@code
      *            targetMethod}'s callee). This will be null if {@code targetMethod} called a native function.
      * @param purpose the purpose of this stack walk
