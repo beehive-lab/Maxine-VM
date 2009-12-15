@@ -65,9 +65,9 @@ public abstract class StackFrameWalker {
     public final class Cursor {
 
         private TargetMethod targetMethod;
-        private Pointer instructionPointer = Pointer.zero();
-        private Pointer stackPointer = Pointer.zero();
-        private Pointer framePointer = Pointer.zero();
+        private Pointer ip = Pointer.zero();
+        private Pointer sp = Pointer.zero();
+        private Pointer fp = Pointer.zero();
         private Pointer registerState = Pointer.zero();
         private boolean isTopFrame = false;
 
@@ -91,21 +91,21 @@ public abstract class StackFrameWalker {
         }
 
         private void copyFrom(Cursor other) {
-            setFields(other.targetMethod, other.instructionPointer, other.stackPointer, other.framePointer, other.registerState, other.isTopFrame);
+            setFields(other.targetMethod, other.ip, other.sp, other.fp, other.registerState, other.isTopFrame);
         }
 
         private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, Pointer registerState, boolean isTopFrame) {
             this.targetMethod = targetMethod;
-            this.instructionPointer = ip;
-            this.stackPointer = sp;
-            this.framePointer = fp;
+            this.ip = ip;
+            this.sp = sp;
+            this.fp = fp;
             this.registerState = registerState;
             this.isTopFrame = isTopFrame;
             return this;
         }
 
         private Cursor copy() {
-            return new Cursor().setFields(targetMethod, instructionPointer, stackPointer, framePointer, registerState, isTopFrame);
+            return new Cursor().setFields(targetMethod, ip, sp, fp, registerState, isTopFrame);
         }
 
         /**
@@ -126,21 +126,21 @@ public abstract class StackFrameWalker {
          * @return the current instruction pointer.
          */
         public Pointer instructionPointer() {
-            return instructionPointer;
+            return ip;
         }
 
         /**
          * @return the current stack pointer.
          */
         public Pointer stackPointer() {
-            return stackPointer;
+            return sp;
         }
 
         /**
          * @return the current frame pointer.
          */
         public Pointer framePointer() {
-            return framePointer;
+            return fp;
         }
 
         /**
