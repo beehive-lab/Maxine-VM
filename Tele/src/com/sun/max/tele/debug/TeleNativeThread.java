@@ -359,7 +359,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 }
             }
 
-            final TeleThreadLocalValues enabledVmThreadLocalValues = threadLocalsFor(Safepoint.State.ENABLED);
+            final TeleThreadLocalValues enabledVmThreadLocalValues = teleVmThreadLocals.get(Safepoint.State.ENABLED);
             teleVmThread = null;
             if (enabledVmThreadLocalValues != null) {
                 final Long threadLocalValue = enabledVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
@@ -926,7 +926,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 }
             }
 
-            frameCache = Sequence.Static.toArray(result, FrameProvider.class);
+            frameCache = Sequence.Static.toArray(result, new FrameProvider[result.length()]);
             return frameCache;
         }
     }

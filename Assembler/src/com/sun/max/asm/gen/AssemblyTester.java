@@ -137,7 +137,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
         ArgumentListIterator(Template_Type template, TestCaseLegality testCaseLegality) {
             this.testCaseLegality  = testCaseLegality;
             this.template = template;
-            this.parameters = Sequence.Static.toArray(template.parameters(), Parameter.class);
+            this.parameters = Sequence.Static.toArray(template.parameters(), new Parameter[template.parameters().length()]);
             this.count = template.parameters().length();
             this.arguments = new Argument[count];
             this.next = new ArraySequence<Argument>(arguments);

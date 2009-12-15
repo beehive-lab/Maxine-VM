@@ -2279,7 +2279,7 @@ public abstract class TeleVM implements MaxVM {
                 }
             }
 
-            return Sequence.Static.toArray(result, ReferenceTypeProvider.class);
+            return Sequence.Static.toArray(result, new ReferenceTypeProvider[result.length()]);
         }
 
         public ThreadGroupProvider[] getThreadGroups() {

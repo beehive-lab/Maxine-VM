@@ -22,6 +22,7 @@ package com.sun.max.tele;
 
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -50,22 +51,26 @@ public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
 
     public String name() {
         if (teleVM().teleProcess().epoch() > lastRefreshedEpoch) {
-            final Reference nameReference = teleVM().teleFields().VmThread_name.readReference(reference());
-            if (this.nameReference == null || !nameReference.equals(this.nameReference)) {
-                if (nameReference.isZero()) {
-                    name = "*unset*";
-                } else {
-                    // Assume strings in the {@link TeleVM} don't change, so we don't need to re-read
-                    // if we've already seen the string (depends on canonical references).
-                    this.nameReference = nameReference;
-                    try {
-                        name = teleVM().getString(this.nameReference);
-                    } catch (InvalidReferenceException invalidReferenceExceptoin) {
-                        name = "?";
+            try {
+                final Reference nameReference = teleVM().teleFields().VmThread_name.readReference(reference());
+                if (this.nameReference == null || !nameReference.equals(this.nameReference)) {
+                    if (nameReference.isZero()) {
+                        name = "*unset*";
+                    } else {
+                        // Assume strings in the {@link TeleVM} don't change, so we don't need to re-read
+                        // if we've already seen the string (depends on canonical references).
+                        this.nameReference = nameReference;
+                        try {
+                            name = teleVM().getString(this.nameReference);
+                        } catch (InvalidReferenceException invalidReferenceExceptoin) {
+                            name = "?";
+                        }
                     }
                 }
+                lastRefreshedEpoch = teleVM().teleProcess().epoch();
+            } catch (DataIOError dataIOError) {
+                name = "?";
             }
-            lastRefreshedEpoch = teleVM().teleProcess().epoch();
         }
         return name;
     }

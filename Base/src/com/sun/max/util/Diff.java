@@ -147,8 +147,8 @@ public class Diff {
      * A command line interface for using this diff utility to implement a textual, line-based file diff.
      */
     public static void main(String[] args) throws IOException {
-        final Object[] leftFile = Sequence.Static.toArray(readLines(new File(args[0])), Object.class);
-        final Object[] rightFile = Sequence.Static.toArray(readLines(new File(args[1])), Object.class);
+        final Object[] leftFile = Sequence.Static.toArray(readLines(new File(args[0])), new Object[readLines(new File(args[0])).length()]);
+        final Object[] rightFile = Sequence.Static.toArray(readLines(new File(args[1])), new Object[readLines(new File(args[1])).length()]);
         final Diff diff = new Diff(leftFile, rightFile, new ObjectEquality());
 
         System.out.println("------- " + args[0] + " --------");
