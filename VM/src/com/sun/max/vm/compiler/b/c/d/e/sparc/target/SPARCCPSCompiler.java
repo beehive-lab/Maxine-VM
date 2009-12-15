@@ -115,7 +115,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
                         VMRegister.getCpuStackPointer(),
                         VMRegister.getCpuFramePointer(),
                         context);
-        final Pointer callSite = context.instructionPointer;
+        final Pointer callSite = context.ip;
         // Get the target method that calls the static trampoline
         final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
         // We can now search the caller for the ClassMethodActor corresponding to the direct call.
@@ -183,9 +183,9 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
     }
 
     private boolean walkAdapterFrame(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
-        final Pointer instructionPointer = current.instructionPointer();
+        final Pointer instructionPointer = current.ip();
         final int adapterFrameSize = SPARCAdapterFrameGenerator.jitToOptimizedAdapterFrameSize(stackFrameWalker, startOfAdapter);
-        final Pointer stackPointer = current.stackPointer();
+        final Pointer stackPointer = current.sp();
 
         final Pointer callerStackPointer;
         if (adapterFrameSize > 0 && instructionPointer.greaterThan(startOfAdapter)) {
@@ -208,14 +208,14 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
                 final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
-                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, current.framePointer(), stackPointer, flags)) {
+                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, current.fp(), stackPointer, flags)) {
                     return false;
                 }
                 break;
             }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, false), targetMethod, instructionPointer, current.framePointer(), stackPointer);
+                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, false), targetMethod, instructionPointer, current.fp(), stackPointer);
                 if (!stackFrameVisitor.visitFrame(stackFrame)) {
                     return false;
                 }
@@ -262,7 +262,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         TargetMethod targetMethod = current.targetMethod();
         boolean isTopFrame = current.isTopFrame();
-        final Pointer instructionPointer = current.instructionPointer();
+        final Pointer instructionPointer = current.ip();
         final Pointer entryPoint;
         if (targetMethod.abi().callEntryPoint().equals(C_ENTRY_POINT)) {
             // Simple case (no adapter)
@@ -298,11 +298,11 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
         if (inCallerRegisterWindow) {
             // The save instruction hasn't been executed. The frame pointer is the same as the caller's stack pointer.
             // We need to compute the stack pointer for this frame
-            framePointer =  current.stackPointer();
+            framePointer =  current.sp();
             stackPointer = framePointer.minus(targetMethod.frameSize());
         } else {
-            framePointer = current.framePointer();
-            stackPointer =  current.stackPointer();
+            framePointer = current.fp();
+            stackPointer =  current.sp();
         }
 
         final Pointer trapStateInPreviousFrame = stackFrameWalker.trapState();
@@ -437,7 +437,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
                 // When purpose is other than inspecting, this situation can only occur when we trapped in a prologue (e.g.,
                 // when banging the stack).
                 // We can fish for the caller's instruction pointer in the trap state.
-                final Pointer trapStateInPreviousUnwalkedFrame = current.stackPointer().plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
+                final Pointer trapStateInPreviousUnwalkedFrame = current.sp().plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
                 callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousUnwalkedFrame);
             }
         } else {
@@ -456,9 +456,9 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
                     // to use the caller's ABI, which will set the frame pointer to the appropriate
                     // register. This works only because we're in the caller's register window.
                     stackFrameWalker.useABI(caller.abi());
-                    callerFramePointer = current.framePointer();
+                    callerFramePointer = current.fp();
                 } else {
-                    final Pointer savedRegisterWindow = StackBias.SPARC_V9.unbias(current.stackPointer());
+                    final Pointer savedRegisterWindow = StackBias.SPARC_V9.unbias(current.sp());
                     callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, savedRegisterWindow, GPR.L6).asPointer();
                 }
             } else {
@@ -467,7 +467,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
             }
         } else {
             if (inCallerRegisterWindow) {
-                callerFramePointer = current.framePointer();
+                callerFramePointer = current.fp();
             } else {
                 callerFramePointer = SPARCStackFrameLayout.getCallerFramePointer(current, stackFrameWalker);
             }

@@ -74,12 +74,11 @@ public final class TargetBreakpoint {
     public static final byte[] breakpointCode = createBreakpointCode(Platform.target().processorKind.instructionSet);
 
     private final Pointer instructionPointer;
+    private byte[] originalCode;
 
     private TargetBreakpoint(Address instructionPointer) {
         this.instructionPointer = instructionPointer.asPointer();
     }
-
-    private byte[] originalCode;
 
     public boolean isEnabled() {
         return originalCode != null;

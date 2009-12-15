@@ -1357,7 +1357,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public Address getCodeAddress(StackFrame stackFrame) {
-        Pointer instructionPointer = stackFrame.instructionPointer;
+        Pointer instructionPointer = stackFrame.ip;
         final StackFrame callee = stackFrame.calleeFrame();
         if (callee == null) {
             // Top frame, not a call return so no adjustment.

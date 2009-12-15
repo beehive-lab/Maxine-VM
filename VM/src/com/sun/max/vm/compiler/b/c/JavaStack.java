@@ -30,26 +30,28 @@ import com.sun.max.vm.type.*;
  */
 final class JavaStack extends JavaSlots {
 
+    private int stackIndex = 0;
+    private static final FillerJavaStackSlot FILLER = new FillerJavaStackSlot();
+
     JavaStack(StackVariableFactory variableFactory) {
         super(variableFactory);
     }
 
-    private int stackPointer = 0;
 
     public CirVariable push(Kind kind) {
-        final CirVariable variable = variableFactory.makeVariable(kind, stackPointer);
+        final CirVariable variable = variableFactory.makeVariable(kind, stackIndex);
         final VariableJavaStackSlot slot = new VariableJavaStackSlot(variable);
-        slots[stackPointer] = slot;
-        stackPointer++;
+        slots[stackIndex] = slot;
+        stackIndex++;
         if (kind == Kind.LONG || kind == Kind.DOUBLE) {
-            slots[stackPointer] = new FillerJavaStackSlot();
-            stackPointer++;
+            slots[stackIndex] = FILLER;
+            stackIndex++;
         }
         return variable;
     }
 
     CirVariable get(Kind kind, int nSlotsDown) {
-        final int slotIndex = stackPointer - nSlotsDown;
+        final int slotIndex = stackIndex - nSlotsDown;
         final JavaStackSlot slot = slots[slotIndex];
         assert slot instanceof VariableJavaStackSlot;
         final CirVariable variable = ((VariableJavaStackSlot) slot).cirVariable();
@@ -58,9 +60,9 @@ final class JavaStack extends JavaSlots {
     }
 
     public CirVariable getTop() {
-        final JavaStackSlot top = slots[stackPointer - 1];
+        final JavaStackSlot top = slots[stackIndex - 1];
         if (top instanceof FillerJavaStackSlot) {
-            final JavaStackSlot slot = slots[stackPointer - 2];
+            final JavaStackSlot slot = slots[stackIndex - 2];
             assert slot instanceof VariableJavaStackSlot;
             return ((VariableJavaStackSlot) slot).cirVariable();
         }
@@ -69,11 +71,11 @@ final class JavaStack extends JavaSlots {
     }
 
     public CirVariable pop() {
-        --stackPointer;
-        final JavaStackSlot slot = slots[stackPointer];
+        --stackIndex;
+        final JavaStackSlot slot = slots[stackIndex];
         if (slot instanceof FillerJavaStackSlot) {
-            --stackPointer;
-            final JavaStackSlot slot2 = slots[stackPointer];
+            --stackIndex;
+            final JavaStackSlot slot2 = slots[stackIndex];
             assert slot2 instanceof VariableJavaStackSlot;
             return ((VariableJavaStackSlot) slot2).cirVariable();
         }
@@ -88,8 +90,8 @@ final class JavaStack extends JavaSlots {
 
     @Override
     protected int effectiveLength() {
-        int result = stackPointer;
-        while (result > 0 && slots[stackPointer - 1] instanceof FillerJavaStackSlot) {
+        int result = stackIndex;
+        while (result > 0 && slots[stackIndex - 1] instanceof FillerJavaStackSlot) {
             result--;
         }
         return result;

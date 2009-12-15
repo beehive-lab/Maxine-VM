@@ -94,7 +94,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
                                                       VMRegister.getCpuStackPointer(),
                                                       VMRegister.getCpuFramePointer(),
                                                       context);
-        final Pointer callSite = context.instructionPointer.minus(RIP_CALL_INSTRUCTION_SIZE);
+        final Pointer callSite = context.ip.minus(RIP_CALL_INSTRUCTION_SIZE);
         final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
 
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
@@ -104,7 +104,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
         patchRipCallSite(callSite, calleeEntryPoint);
 
         // Make the trampoline's caller re-execute the now modified CALL instruction after we return from the trampoline:
-        final Pointer stackPointer = context.stackPointer.minus(Word.size());
+        final Pointer stackPointer = context.sp.minus(Word.size());
         stackPointer.setWord(callSite); // patch return address
     }
 
@@ -126,11 +126,11 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     private static final byte RET2 = (byte) 0xC2;
 
     private static boolean walkAdapterFrame(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
-        final Pointer instructionPointer = current.instructionPointer();
-        final Pointer stackPointer = current.stackPointer();
+        final Pointer instructionPointer = current.ip();
+        final Pointer stackPointer = current.sp();
         final Pointer jitEntryPoint = JIT_ENTRY_POINT.in(targetMethod);
         final int adapterFrameSize = AMD64AdapterFrameGenerator.jitToOptimizingAdapterFrameSize(stackFrameWalker, startOfAdapter);
-        Pointer callerFramePointer = current.framePointer();
+        Pointer callerFramePointer = current.fp();
 
         Pointer ripPointer = stackPointer; // stack pointer at call entry point (where the RIP is).
         final byte firstInstructionByte = stackFrameWalker.readByte(instructionPointer, 0);
@@ -151,12 +151,12 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
                 final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
-                stackFrameVisitor.visitFrame(targetMethod, callerInstructionPointer, current.framePointer(), stackPointer, flags);
+                stackFrameVisitor.visitFrame(targetMethod, callerInstructionPointer, current.fp(), stackPointer, flags);
                 break;
             }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, true), targetMethod, instructionPointer, current.framePointer(), stackPointer);
+                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, true), targetMethod, instructionPointer, current.fp(), stackPointer);
                 if (!stackFrameVisitor.visitFrame(stackFrame)) {
                     return false;
                 }
@@ -198,8 +198,8 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     public static boolean walkFrameHelper(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
-        final Pointer instructionPointer = current.instructionPointer();
-        final Pointer stackPointer = current.stackPointer();
+        final Pointer instructionPointer = current.ip();
+        final Pointer stackPointer = current.sp();
         final Pointer entryPoint;
         if (targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT)) {
             // Simple case (no adapter)
