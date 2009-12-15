@@ -4651,6 +4651,32 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
+     * Action:  lists to the console all existing watchpoints.
+     */
+    final class ListWatchpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "List all watchpoints";
+
+        ListWatchpointsAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            maxVM().describeWatchpoints(System.out);
+        }
+    }
+
+    private InspectorAction listWatchpoints = new ListWatchpointsAction(null);
+
+    /**
+     * @return an Action that will list to the console the entries in the {@link TeleCodeRegistry}.
+     */
+    public final InspectorAction listWatchpoints() {
+        return listWatchpoints;
+    }
+
+    /**
      * @return menu items for memory-related actions that are independent of context
      */
     public InspectorMenuItems genericMemoryMenuItems() {
