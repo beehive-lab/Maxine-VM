@@ -29,8 +29,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 
@@ -54,7 +52,15 @@ public final class ImmortalHeap {
         = register(new VMBooleanXXOption("-XX:-TraceImmortal", "Trace allocation from the immortal heap."), MaxineVM.Phase.PRISTINE);
 
     /**
-     * VM option to set the size of the immortal heap (MaxPermSize called in Hotspot).
+     * VM option to set the size of the immortal heap. Maxine currently only supports a non-growable
+     * immortal heap and so the greater of this option and the {@link #maxPermSize} option is allocated.
+     */
+    public static final VMSizeOption permSize =
+        register(new VMSizeOption("-XX:PermSize=", Size.M.times(1), "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
+
+    /**
+     * VM option to set the size of the immortal heap. Maxine currently only supports a non-growable
+     * immortal heap and so the greater of this option and the {@link #permSize} option is allocated.
      */
     public static final VMSizeOption maxPermSize =
         register(new VMSizeOption("-XX:MaxPermSize=", Size.M.times(1), "Size of immortal heap."), MaxineVM.Phase.PRISTINE);
@@ -124,35 +130,10 @@ public final class ImmortalHeap {
     }
 
     /**
-     * This method should be called to allocate an object on the immortal heap.
-     * !!! Attention !!!
-     * This method is like a plain allocation method for a class. Just memory is allocated for a given class,
-     * but no constructor is called.
-     * This method is probably removed in the future if it is not used.
-     * @param javaClass
-     * @return allocated object
-     */
-    public static Object allocate(Class javaClass) {
-        Heap.enableImmortalMemoryAllocation();
-        final ClassActor classActor = ClassActor.fromJava(javaClass);
-        MakeClassInitialized.makeClassInitialized(classActor);
-        Object object;
-        if (classActor.isArrayClassActor()) {
-            object = Heap.createArray(classActor.dynamicHub(), 0);
-        } else if (classActor.isTupleClassActor()) {
-            object = Heap.createTuple(classActor.dynamicHub());
-        } else {
-            object = null;
-        }
-        Heap.disableImmortalMemoryAllocation();
-        return object;
-    }
-
-    /**
      * Initialize the immortal heap memory.
      */
     public static void initialize() {
-        immortalHeap.initialize(maxPermSize.getValue());
+        immortalHeap.initialize(Size.fromLong(Math.max(maxPermSize.getValue().toLong(), permSize.getValue().toLong())));
     }
 
     /**
