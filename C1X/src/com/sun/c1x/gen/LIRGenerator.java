@@ -456,7 +456,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitIfOp(IfOp x) {
-
         CiKind xtype = x.x().kind;
         CiKind ttype = x.trueValue().kind;
         assert xtype.isInt() || xtype.isObject() : "cannot handle others";

@@ -299,7 +299,6 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
         // move between cpu-registers
         if (dest.isSingleCpu()) {
-
             if (is64) {
                 if (src.kind == CiKind.Long) {
                     // Can do LONG . OBJECT
