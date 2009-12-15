@@ -194,7 +194,7 @@ public final class SolarisTeleProcess extends TeleProcess {
 
     @Override
     protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        return nativeActivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, teleWatchpoint.isRead(), teleWatchpoint.isWrite(), teleWatchpoint.isExec());
+        return nativeActivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, teleWatchpoint.isTrapOnRead(), teleWatchpoint.isTrapOnWrite(), teleWatchpoint.isTrapOnExec());
     }
 
     @Override

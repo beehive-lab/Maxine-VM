@@ -426,7 +426,8 @@ public final class BreakpointsTable extends InspectorTable {
     private abstract class BreakpointData implements Comparable {
 
         // TODO (mlvdv) The need for subclasses here has diminished, and the differences between the two kinds of breakpoints
-        // could be reflected in renderer code.
+        // could be reflected in renderer code.  However, one value of this approach is that some values are cached and can
+        // still display correctly after the process has terminated.
 
         private final MaxBreakpoint breakpoint;
 

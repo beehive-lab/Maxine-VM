@@ -615,7 +615,7 @@ public final class Inspection {
         settings().quit();
         try {
             if (maxVMState().processState() != TERMINATED) {
-                maxVM().terminate();
+                maxVM().terminateVM();
             }
         } catch (Exception exception) {
             ProgramWarning.message("error during VM termination: " + exception);
