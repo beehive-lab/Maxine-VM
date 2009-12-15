@@ -1455,7 +1455,7 @@ public abstract class TeleVM implements MaxVM {
 
     public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setWordWatchpoint(String description, Address address, boolean after, boolean read, boolean write, boolean exec, boolean gc)
@@ -1466,35 +1466,39 @@ public abstract class TeleVM implements MaxVM {
 
     public final MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setObjectWatchpoint(description, teleObject, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createObjectWatchpoint(description, teleObject, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setFieldWatchpoint(description, teleObject, fieldActor, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createFieldWatchpoint(description, teleObject, fieldActor, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);
+        return teleProcess.watchpointFactory().createArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);
     }
 
     public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
         throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
     }
 
     public final Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) {
-        return teleProcess.watchpointFactory().findWatchpoints(memoryRegion);
+        return teleProcess.watchpointFactory().findClientWatchpoints(memoryRegion);
     }
 
     public final IterableWithLength<MaxWatchpoint> watchpoints() {
-        return teleProcess.watchpointFactory().watchpoints();
+        return teleProcess.watchpointFactory().clientWatchpoints();
+    }
+
+    public void describeWatchpoints(PrintStream printStream) {
+        teleProcess.watchpointFactory().writeSummaryToStream(printStream);
     }
 
     public final void setTransportDebugLevel(int level) {
