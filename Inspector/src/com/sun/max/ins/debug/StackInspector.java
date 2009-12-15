@@ -517,7 +517,9 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void watchpointSetChanged() {
-        refreshView(false);
+        if (maxVMState().processState() != ProcessState.TERMINATED) {
+            refreshView(true);
+        }
     }
 
     public void viewConfigurationChanged() {

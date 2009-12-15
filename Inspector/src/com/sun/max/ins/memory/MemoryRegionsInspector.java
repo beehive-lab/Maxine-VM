@@ -28,6 +28,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.debug.*;
 
 /**
  * A singleton inspector that displays a list of {@link MemoryRegion}s that have been allocated in the VM.
@@ -135,7 +136,9 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
 
     @Override
     public void watchpointSetChanged() {
-        refreshView(true);
+        if (maxVMState().processState() != ProcessState.TERMINATED) {
+            refreshView(true);
+        }
     }
 
     public void tableColumnViewPreferencesChanged() {
