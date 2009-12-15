@@ -269,7 +269,7 @@ public final class ThreadsTable extends InspectorTable {
             final ThreadState threadState = thread.state();
             setText(threadState.toString());
             String toolTipText = "Thread status: " + threadState;
-            if (threadState == ThreadState.BREAKPOINT) {
+            if (thread.breakpoint() != null) {
                 toolTipText = toolTipText + "(" + thread.breakpoint().getDescription() + ")";
             }
             setToolTipText(toolTipText);

@@ -253,7 +253,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
                     return;
                 }
             }
-            for (EirOperand operand : Sequence.Static.toArray(variable.operands(), EirOperand.class)) {
+            for (EirOperand operand : Sequence.Static.toArray(variable.operands(), new EirOperand[variable.operands().length()])) {
                 operand.setEirValue(preallocatedValue);
             }
             variable.setLocation(null);
@@ -335,7 +335,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         removeInstruction(assignment);
 
         // Make a copy of acquiree's current operands as this set is potentially modified by the following loop
-        final EirOperand[] originalOperands = Sequence.Static.toArray(acquiree.operands(), EirOperand.class);
+        final EirOperand[] originalOperands = Sequence.Static.toArray(acquiree.operands(), new EirOperand[acquiree.operands().length()]);
         for (EirOperand operand : originalOperands) {
             operands.add(operand);
             operand.setEirValue(acquirer);

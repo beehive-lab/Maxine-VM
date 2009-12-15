@@ -762,6 +762,6 @@ public class InvocationStubGenerator<T> {
      * This must be the last thing executed in the static initializer.
      */
     static {
-        PROTOTYPE_CONSTANTS = Sequence.Static.toArray(prototypeConstants, PoolConstant.class);
+        PROTOTYPE_CONSTANTS = Sequence.Static.toArray(prototypeConstants, new PoolConstant[prototypeConstants.length()]);
     }
 }

@@ -135,7 +135,7 @@ public abstract class EirMethodGeneration {
 
     public Pool<EirBlock> eirBlockPool() {
         if (eirBlockPool == null) {
-            eirBlockPool = new ArrayPool<EirBlock>(Sequence.Static.toArray(eirBlocks(), EirBlock.class));
+            eirBlockPool = new ArrayPool<EirBlock>(Sequence.Static.toArray(eirBlocks(), new EirBlock[eirBlocks().length()]));
         }
         return eirBlockPool;
     }
@@ -251,7 +251,7 @@ public abstract class EirMethodGeneration {
      */
     public Pool<EirVariable> variablePool() {
         if (variablePool == null) {
-            variablePool = new ArrayPool<EirVariable>(Sequence.Static.toArray(variables, EirVariable.class));
+            variablePool = new ArrayPool<EirVariable>(Sequence.Static.toArray(variables, new EirVariable[variables.length()]));
         }
         return variablePool;
     }

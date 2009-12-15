@@ -140,7 +140,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         if (stackMapFrames.isEmpty()) {
             return null;
         }
-        return new StackMapTable(Sequence.Static.toArray(stackMapFrames, StackMapFrame.class), constantPoolEditor);
+        return new StackMapTable(Sequence.Static.toArray(stackMapFrames, new StackMapFrame[stackMapFrames.length()]), constantPoolEditor);
     }
 
     @Override

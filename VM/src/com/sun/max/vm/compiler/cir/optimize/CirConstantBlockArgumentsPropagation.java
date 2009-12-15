@@ -110,7 +110,7 @@ public final class CirConstantBlockArgumentsPropagation {
             }
         }
         if (!remainingFreeVariables.isEmpty()) {
-            final CirVariable[] variables = Sequence.Static.toArray(remainingFreeVariables, CirVariable.class);
+            final CirVariable[] variables = Sequence.Static.toArray(remainingFreeVariables, new CirVariable[remainingFreeVariables.length()]);
             closure.setParameters(com.sun.max.lang.Arrays.append(closure.parameters(), variables));
             for (CirCall call : calls) {
                 call.setArguments(com.sun.max.lang.Arrays.append(call.arguments(), variables));
