@@ -127,7 +127,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         this.after = after;
     }
 
-    @Override
     public String getDescription() {
         return description();
     }
@@ -496,9 +495,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param description text useful to a person, for example capturing the intent of the watchpoint
          * @param memoryRegion the region of memory in the VM to be watched.
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -519,9 +518,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param description text useful to a person, for example capturing the intent of the watchpoint
          * @param teleObject a heap object in the VM
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -543,9 +542,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param teleObject a heap object in the VM
          * @param fieldActor description of a field in object of that type
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -570,9 +569,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param arrayOffsetFromOrigin location relative to the object's origin of element 0 in the array
          * @param index index of the element to watch
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -595,9 +594,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param teleObject a heap object in the VM
          * @param headerField a field in the object's header
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -620,9 +619,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param teleThreadLocalValues a set of thread local values
          * @param index identifies the particular thread local variable
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -695,9 +694,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param description
          * @param memoryRegion
          * @param after
-         * @param trapOnRead
-         * @param trapOnWrite
-         * @param trapOnExec
+         * @param read
+         * @param write
+         * @param exec
          * @param gc
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException
