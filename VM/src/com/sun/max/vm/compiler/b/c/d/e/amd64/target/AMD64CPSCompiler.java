@@ -125,12 +125,12 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     private static final byte RET = (byte) 0xC3;
     private static final byte RET2 = (byte) 0xC2;
 
-    private static boolean walkAdapterFrame(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
-        final Pointer instructionPointer = stackFrameWalker.instructionPointer();
-        final Pointer stackPointer = stackFrameWalker.stackPointer();
+    private static boolean walkAdapterFrame(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
+        final Pointer instructionPointer = current.instructionPointer();
+        final Pointer stackPointer = current.stackPointer();
         final Pointer jitEntryPoint = JIT_ENTRY_POINT.in(targetMethod);
         final int adapterFrameSize = AMD64AdapterFrameGenerator.jitToOptimizingAdapterFrameSize(stackFrameWalker, startOfAdapter);
-        Pointer callerFramePointer = stackFrameWalker.framePointer();
+        Pointer callerFramePointer = current.framePointer();
 
         Pointer ripPointer = stackPointer; // stack pointer at call entry point (where the RIP is).
         final byte firstInstructionByte = stackFrameWalker.readByte(instructionPointer, 0);
@@ -151,12 +151,12 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
                 final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
-                stackFrameVisitor.visitFrame(targetMethod, callerInstructionPointer, stackFrameWalker.framePointer(), stackPointer, flags);
+                stackFrameVisitor.visitFrame(targetMethod, callerInstructionPointer, current.framePointer(), stackPointer, flags);
                 break;
             }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, true), targetMethod, instructionPointer, stackFrameWalker.framePointer(), stackPointer);
+                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, true), targetMethod, instructionPointer, current.framePointer(), stackPointer);
                 if (!stackFrameVisitor.visitFrame(stackFrame)) {
                     return false;
                 }
@@ -193,13 +193,13 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
-        return walkFrameHelper(stackFrameWalker, isTopFrame, targetMethod, callee, purpose, context);
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, TargetMethod calleeMethod, Purpose purpose, Object context) {
+        return walkFrameHelper(current, current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), calleeMethod, purpose, context);
     }
 
-    public static boolean walkFrameHelper(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
-        final Pointer instructionPointer = stackFrameWalker.instructionPointer();
-        final Pointer stackPointer = stackFrameWalker.stackPointer();
+    public static boolean walkFrameHelper(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
+        final Pointer instructionPointer = current.instructionPointer();
+        final Pointer stackPointer = current.stackPointer();
         final Pointer entryPoint;
         if (targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT)) {
             // Simple case (no adapter)
@@ -213,7 +213,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
             if (hasAdapterFrame) {
                 final Pointer startOfAdapter = AMD64AdapterFrameGenerator.jitEntryPointJmpTarget(stackFrameWalker, targetMethod);
                 if (inAdapterFrameCode(isTopFrame, instructionPointer, optimizedEntryPoint, startOfAdapter)) {
-                    return walkAdapterFrame(stackFrameWalker, targetMethod, purpose, context, startOfAdapter, isTopFrame);
+                    return walkAdapterFrame(current, stackFrameWalker, targetMethod, purpose, context, startOfAdapter, isTopFrame);
                 }
             }
             entryPoint = optimizedEntryPoint;
@@ -380,7 +380,6 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
 
     @NEVER_INLINE
     private static void unwindToCalleeEpilogue(Throwable throwable, Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
-
         // Overwrite return address of callee with catch address
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);

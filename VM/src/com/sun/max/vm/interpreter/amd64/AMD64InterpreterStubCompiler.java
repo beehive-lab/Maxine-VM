@@ -45,20 +45,23 @@ public class AMD64InterpreterStubCompiler extends InterpreterStubCompiler {
         return new AMD64InterpreterStub(classMethodActor, this, vmConfiguration().targetABIsScheme().optimizedJavaABI());
     }
 
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
-        final Pointer stackPointer = stackFrameWalker.stackPointer();
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, TargetMethod calleeMethod, Purpose purpose, Object context) {
+        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+        TargetMethod targetMethod = current.targetMethod();
+        boolean isTopFrame = current.isTopFrame();
+        final Pointer stackPointer = current.stackPointer();
         switch (purpose) {
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
                 final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
-                if (!stackFrameVisitor.visitFrame(targetMethod, stackFrameWalker.instructionPointer(), stackPointer, stackPointer, flags)) {
+                if (!stackFrameVisitor.visitFrame(targetMethod, current.instructionPointer(), stackPointer, stackPointer, flags)) {
                     return false;
                 }
                 break;
             }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                if (!stackFrameVisitor.visitFrame(new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, stackFrameWalker.instructionPointer(), stackPointer, stackPointer))) {
+                if (!stackFrameVisitor.visitFrame(new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, current.instructionPointer(), stackPointer, stackPointer))) {
                     return false;
                 }
                 break;
@@ -69,7 +72,7 @@ public class AMD64InterpreterStubCompiler extends InterpreterStubCompiler {
         }
 
         final Pointer callerInstructionPointer = stackFrameWalker.readWord(stackPointer, 0).asPointer();
-        stackFrameWalker.advance(callerInstructionPointer, stackPointer, stackFrameWalker.framePointer());
+        stackFrameWalker.advance(callerInstructionPointer, stackPointer, current.framePointer());
         return true;
     }
 }
