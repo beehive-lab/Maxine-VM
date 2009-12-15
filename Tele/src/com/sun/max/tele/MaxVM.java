@@ -838,6 +838,12 @@ public interface MaxVM {
     IterableWithLength<MaxWatchpoint> watchpoints();
 
     /**
+     * Writes a textual summary describing the current watchpoints set in the VM, with
+     * more internal detail than is typically displayed.
+     */
+    void describeWatchpoints(PrintStream printStream);
+
+    /**
      * Sets debugging trace level for the transport
      * mechanism that communicates with the VM.
      *

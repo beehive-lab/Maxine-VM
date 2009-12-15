@@ -170,7 +170,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                             case WATCHPOINT:
                                 eventCauseFound = true;
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
-                                final TeleWatchpoint teleWatchpoint = (TeleWatchpoint) watchpointFactory().findWatchpoint(triggeredWatchpointAddress);
+                                final TeleWatchpoint teleWatchpoint = watchpointFactory().findClientWatchpoint(triggeredWatchpointAddress);
                                 if (teleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
@@ -996,6 +996,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     private void updateWatchpointCaches() {
-        watchpointFactory.updateWatchpointCaches();
+        watchpointFactory.updateWatchpointMemoryCaches();
     }
 }
