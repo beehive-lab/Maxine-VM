@@ -27,7 +27,6 @@ import java.util.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * This class implements stack walking functionality and can be used to walk the stack
@@ -143,14 +142,13 @@ public abstract class ExpStackWalker {
                     Log.print("End of native call stack reached.");
                 }
                 return visitor;
-            } else {
-                // found a stack frame layout, visit it
-                visitor.visit(layout, last, current);
-                // copy current to last
-                last.copyFrom(current);
-                // ask the stack frame layout to advance to the next
-                layout.advance(current);
             }
+            // found a stack frame layout, visit it
+            visitor.visit(layout, last, current);
+            // copy current to last
+            last.copyFrom(current);
+            // ask the stack frame layout to advance to the next
+            layout.advance(current);
         }
 
         if (traceStackWalk.getValue()) {
