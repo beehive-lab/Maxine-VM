@@ -251,32 +251,28 @@ public abstract class StackFrameWalker {
         while (!current.stackPointer.isZero()) {
             TargetMethod targetMethod = targetMethodFor(current.instructionPointer);
             current.targetMethod = targetMethod;
+            traceCursor(current);
+
             if (targetMethod != null && (!inNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
+                // found target method
+                inNative = false;
 
-                if (inNative) {
-                    inNative = false;
-                }
-                // do tracing
-                traceWalkTargetMethod(isTopFrame, targetMethod);
-
-                // Java frame
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
 
-                final RuntimeCompilerScheme compilerScheme = targetMethod.compilerScheme;
+                // Record the last Java callee frame info
+                lastJavaCallee = targetMethod;
 
-                // Record the last Java callee frame info based on the current frame *before* the
-                // compiler scheme updates the current frame during the call to walkFrame() below
-
-                if (!compilerScheme.walkFrame(current, callee, lastJavaCallee, purpose, context)) {
+                // walk the frame
+                if (!targetMethod.compilerScheme.walkFrame(current, callee, lastJavaCallee, purpose, context)) {
                     break;
                 }
-                lastJavaCallee = targetMethod;
+
+                // clear the trap state if we didn't just walk over the trap stub
                 if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
                     trapState = Pointer.zero();
                 }
             } else {
-                // do tracing
-                traceWalkNative();
+                // did not find target method => in native code
                 if (purpose == INSPECTING) {
                     final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                     if (!stackFrameVisitor.visitFrame(new NativeStackFrame(calleeStackFrame, current.instructionPointer, current.framePointer, current.stackPointer))) {
@@ -336,31 +332,29 @@ public abstract class StackFrameWalker {
         }
     }
 
-    private void traceWalkNative() {
+    private void traceCursor(Cursor cursor) {
         if (TRACE_STACK_WALK.getValue()) {
-            Log.print("StackFrameWalk: Frame for native function [IP=");
-            Log.print(current.instructionPointer);
-            Log.println(']');
-        }
-    }
-
-    private void traceWalkTargetMethod(boolean topFrame, TargetMethod targetMethod) {
-        if (TRACE_STACK_WALK.getValue()) {
-            Log.print("StackFrameWalk: Frame for ");
-            if (targetMethod.classMethodActor() == null) {
-                Log.print(targetMethod.description());
+            if (cursor.targetMethod != null) {
+                Log.print("StackFrameWalk: Frame for ");
+                if (cursor.targetMethod.classMethodActor() == null) {
+                    Log.print(cursor.targetMethod.description());
+                } else {
+                    Log.printMethod(cursor.targetMethod.classMethodActor(), false);
+                }
+                Log.print(", pc=");
+                Log.print(cursor.instructionPointer);
+                Log.print("[");
+                Log.print(cursor.targetMethod.codeStart());
+                Log.print("+");
+                Log.print(cursor.instructionPointer.minus(cursor.targetMethod.codeStart()).toInt());
+                Log.print("], isTopFrame=");
+                Log.print(cursor.isTopFrame);
+                Log.println("");
             } else {
-                Log.printMethod(targetMethod.classMethodActor(), false);
+                Log.print("StackFrameWalk: Frame for native function [IP=");
+                Log.print(cursor.instructionPointer);
+                Log.println(']');
             }
-            Log.print(", pc=");
-            Log.print(current.instructionPointer);
-            Log.print("[");
-            Log.print(targetMethod.codeStart());
-            Log.print("+");
-            Log.print(current.instructionPointer.minus(targetMethod.codeStart()).toInt());
-            Log.print("], isTopFrame=");
-            Log.print(topFrame);
-            Log.println("");
         }
     }
 
@@ -461,7 +455,8 @@ public abstract class StackFrameWalker {
         if (!current.stackPointer.isZero()) {
             Log.print("Stack walker already in use for ");
             Log.println(this.purpose.name());
-            current.stackPointer = Pointer.zero();
+            current.reset();
+            callee.reset();
             this.purpose = null;
             FatalError.unexpected("Stack walker already in use");
         }
@@ -615,24 +610,9 @@ public abstract class StackFrameWalker {
         return !current.stackPointer.isZero();
     }
 
-    @INLINE
-    public final Pointer stackPointer() {
-        return current.stackPointer;
-    }
-
     public final void advance(Word instructionPointer, Word stackPointer, Word framePointer) {
         callee.copyFrom(current);
         current.advance(instructionPointer.asPointer(), stackPointer.asPointer(), framePointer.asPointer());
-    }
-
-    @INLINE
-    public final Pointer framePointer() {
-        return current.framePointer;
-    }
-
-    @INLINE
-    public final Pointer instructionPointer() {
-        return current.instructionPointer;
     }
 
     /**

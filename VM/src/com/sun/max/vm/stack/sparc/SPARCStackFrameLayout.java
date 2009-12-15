@@ -160,15 +160,15 @@ public final class SPARCStackFrameLayout {
 
     /**
      * Returns the instruction pointer of the caller of the current stack frame referenced by the stackFrameWalker.
-     * @param stackFrameWalker
-     * @return an instruction pointer.
+     * @param current
+     *@param stackFrameWalker  @return an instruction pointer.
      */
-    public static Pointer getCallerPC(StackFrameWalker stackFrameWalker) {
-        return getRegisterInSavedWindow(stackFrameWalker, GPR.I7).asPointer();
+    public static Pointer getCallerPC(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker) {
+        return getRegisterInSavedWindow(current, stackFrameWalker, GPR.I7).asPointer();
     }
 
-    public static Word getRegisterInSavedWindow(StackFrameWalker stackFrameWalker, GPR register) {
-        final Pointer unbiasedFramePointer = unbias(stackFrameWalker.stackPointer());
+    public static Word getRegisterInSavedWindow(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, GPR register) {
+        final Pointer unbiasedFramePointer = unbias(current.stackPointer());
         return getRegisterInSavedWindow(stackFrameWalker, unbiasedFramePointer, register);
     }
 
@@ -176,12 +176,12 @@ public final class SPARCStackFrameLayout {
         return stackFrameWalker.readWord(savedRegisterWindow, offset_in_saved_window(register));
     }
 
-    public static Pointer getReturnAddress(StackFrameWalker stackFrameWalker) {
-        return getCallerPC(stackFrameWalker).plus(InstructionSet.SPARC.offsetToReturnPC);
+    public static Pointer getReturnAddress(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker) {
+        return getCallerPC(current, stackFrameWalker).plus(InstructionSet.SPARC.offsetToReturnPC);
     }
 
-    public static Pointer getCallerFramePointer(StackFrameWalker stackFrameWalker) {
-        return getCallerFramePointer(stackFrameWalker, unbias(stackFrameWalker.framePointer()));
+    public static Pointer getCallerFramePointer(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker) {
+        return getCallerFramePointer(stackFrameWalker, unbias(current.framePointer()));
     }
 
     public static Pointer getCallerFramePointer(StackFrameWalker stackFrameWalker, Pointer unbiasedFramePointer) {

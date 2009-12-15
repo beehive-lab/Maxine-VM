@@ -113,6 +113,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, TargetMethod calleeMethod, StackFrameWalker.Purpose purpose, Object context) {
-        return AMD64CPSCompiler.walkFrameHelper(current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), calleeMethod, purpose, context);
+        return AMD64CPSCompiler.walkFrameHelper(current, current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), calleeMethod, purpose, context);
     }
 }
