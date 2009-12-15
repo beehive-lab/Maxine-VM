@@ -262,7 +262,7 @@ public class JavaStackFrameTable extends InspectorTable {
             if (targetMethod instanceof JitTargetMethod) {
                 final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
                 final JitStackFrameLayout jitLayout = (JitStackFrameLayout) javaStackFrame.layout;
-                final int bytecodePosition = jitTargetMethod.bytecodePositionFor(javaStackFrame.instructionPointer);
+                final int bytecodePosition = jitTargetMethod.bytecodePositionFor(javaStackFrame.ip);
                 final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
                 CodeAttribute codeAttribute = classMethodActor == null ? null : classMethodActor.codeAttribute();
                 if (bytecodePosition != -1 && codeAttribute != null) {

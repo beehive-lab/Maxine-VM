@@ -60,7 +60,7 @@ public class SPARCJitStackFrame extends JitStackFrame {
     @Override
     public int operandStackDepth() {
         final Pointer operandStackBase = operandStackPointer(0);
-        return Unsigned.idiv(stackPointer.minus(operandStackBase).toInt(), JitStackFrameLayout.JIT_SLOT_SIZE);
+        return Unsigned.idiv(sp.minus(operandStackBase).toInt(), JitStackFrameLayout.JIT_SLOT_SIZE);
     }
 
     @Override
