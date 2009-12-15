@@ -164,11 +164,18 @@ public class CEEliminator implements BlockClosure {
             ifPrev = ifPrev.setNext(fc, bci);
         }
 
-        // it is very unlikely that the condition can be statically decided
-        // (this was checked previously by the Canonicalizer), so always
-        // append IfOp
-        Instruction result = new IfOp(curIf.x(), curIf.condition(), curIf.y(), tValue, fValue);
-        ifPrev = ifPrev.setNext(result, bci);
+        Value result;
+        if (tValue == fValue) {
+            // conditional choses the same value regardless
+            result = tValue;
+            C1XMetrics.RedundantConditionals++;
+        } else {
+            // it is very unlikely that the condition can be statically decided
+            // (this was checked previously by the Canonicalizer), so always
+            // append IfOp
+            result = new IfOp(curIf.x(), curIf.condition(), curIf.y(), tValue, fValue);
+            ifPrev = ifPrev.setNext((Instruction) result, bci);
+        }
 
         // append Goto to successor
         ValueStack stateBefore = curIf.isSafepoint() ? curIf.stateAfter() : null;
