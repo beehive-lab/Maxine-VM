@@ -37,7 +37,7 @@ public abstract class JavaStackFrame extends StackFrame {
     private final TargetMethod targetMethod;
 
     public JavaStackFrame(StackFrame callee, JavaStackFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
-        super(callee, instructionPointer, framePointer, stackPointer);
+        super(callee, instructionPointer, stackPointer, framePointer);
         this.layout = layout;
         this.targetMethod = targetMethod;
     }
@@ -65,9 +65,9 @@ public abstract class JavaStackFrame extends StackFrame {
     public String toString() {
         ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         if (classMethodActor != null) {
-            return classMethodActor.format("%H.%n(%p)@") + instructionPointer.toHexString();
+            return classMethodActor.format("%H.%n(%p)@") + ip.toHexString();
         }
-        return targetMethod.description() + "@" + instructionPointer.toHexString();
+        return targetMethod.description() + "@" + ip.toHexString();
     }
 
 }

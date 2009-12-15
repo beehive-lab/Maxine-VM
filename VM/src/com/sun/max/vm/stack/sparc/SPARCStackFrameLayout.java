@@ -168,7 +168,7 @@ public final class SPARCStackFrameLayout {
     }
 
     public static Word getRegisterInSavedWindow(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, GPR register) {
-        final Pointer unbiasedFramePointer = unbias(current.stackPointer());
+        final Pointer unbiasedFramePointer = unbias(current.sp());
         return getRegisterInSavedWindow(stackFrameWalker, unbiasedFramePointer, register);
     }
 
@@ -181,7 +181,7 @@ public final class SPARCStackFrameLayout {
     }
 
     public static Pointer getCallerFramePointer(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker) {
-        return getCallerFramePointer(stackFrameWalker, unbias(current.framePointer()));
+        return getCallerFramePointer(stackFrameWalker, unbias(current.fp()));
     }
 
     public static Pointer getCallerFramePointer(StackFrameWalker stackFrameWalker, Pointer unbiasedFramePointer) {

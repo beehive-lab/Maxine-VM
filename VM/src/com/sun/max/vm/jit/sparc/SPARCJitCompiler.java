@@ -145,7 +145,7 @@ public class SPARCJitCompiler extends JitCompiler {
     }
 
     private boolean walkAdapterFrame(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, boolean isTopFrame) {
-        final Pointer instructionPointer = current.instructionPointer();
+        final Pointer instructionPointer = current.ip();
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
         // The frame pointer read off the JIT frame called by this adapter is unbiased.
         final Pointer framePointer;
@@ -159,11 +159,11 @@ public class SPARCJitCompiler extends JitCompiler {
         if (inCallerRegisterWindow) {
             // The save instruction hasn't been executed. The frame pointer is the same as the caller's stack pointer.
             // We need to compute the stack pointer for this frame
-            framePointer = current.stackPointer();
+            framePointer = current.sp();
             stackPointer = framePointer.minus(adapterFrameSize);
         } else {
-            framePointer = isTopFrame ? current.framePointer() : StackBias.SPARC_V9.bias(current.framePointer());
-            stackPointer = current.stackPointer();
+            framePointer = isTopFrame ? current.fp() : StackBias.SPARC_V9.bias(current.fp());
+            stackPointer = current.sp();
         }
 
         switch (purpose) {
@@ -201,8 +201,8 @@ public class SPARCJitCompiler extends JitCompiler {
             // retrieve values from there.
             if (inCallerRegisterWindow) {
                 callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
-                callerStackPointer = current.stackPointer();
-                callerFramePointer = current.framePointer();
+                callerStackPointer = current.sp();
+                callerFramePointer = current.fp();
             } else {
                 callerInstructionPointer = SPARCStackFrameLayout.getCallerPC(current, stackFrameWalker);
                 callerStackPointer = framePointer;
@@ -215,7 +215,7 @@ public class SPARCJitCompiler extends JitCompiler {
             callerInstructionPointer = stackFrameWalker.readWord(ripSaveArea, 0).asPointer();
             // We can obtain the caller's frame pointer from its register window saving area, which is at the
             // adapter frame's frame pointer.
-            final Pointer unbiasedFramePointer = current.framePointer();
+            final Pointer unbiasedFramePointer = current.fp();
             callerStackPointer = framePointer;
             callerFramePointer = SPARCStackFrameLayout.getCallerFramePointer(stackFrameWalker, unbiasedFramePointer);
         }
@@ -230,7 +230,7 @@ public class SPARCJitCompiler extends JitCompiler {
         TargetMethod targetMethod = current.targetMethod();
         boolean isTopFrame = current.isTopFrame();
         final SPARCJitTargetMethod jitTargetMethod = (SPARCJitTargetMethod) targetMethod;
-        final Pointer instructionPointer = current.instructionPointer();
+        final Pointer instructionPointer = current.ip();
         final Pointer jitEntryPoint = JIT_ENTRY_POINT.in(targetMethod);
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
         final boolean hasAdapterFrame = !jitEntryPoint.equals(optimizedEntryPoint);
@@ -295,7 +295,7 @@ public class SPARCJitCompiler extends JitCompiler {
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
                 final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
-                if (!stackFrameVisitor.visitFrame(targetMethod, current.instructionPointer(), current.stackPointer(), localVariablesBase, flags)) {
+                if (!stackFrameVisitor.visitFrame(targetMethod, current.ip(), current.sp(), localVariablesBase, flags)) {
                     return false;
                 }
                 break;
@@ -303,7 +303,7 @@ public class SPARCJitCompiler extends JitCompiler {
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
                 final StackFrame stackFrame = new SPARCJitStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod,
-                                current.instructionPointer(), current.stackPointer(), localVariablesBase, localVariablesBase);
+                                current.ip(), current.sp(), localVariablesBase, localVariablesBase);
                 if (!stackFrameVisitor.visitFrame(stackFrame)) {
                     return false;
                 }
@@ -322,7 +322,7 @@ public class SPARCJitCompiler extends JitCompiler {
             } else if (isTopFrame && frameState == FrameState.BUILDING_CALLEE_FRAME && (purpose == Purpose.EXCEPTION_HANDLING || purpose == Purpose.REFERENCE_MAP_PREPARING)) {
                 // When purpose is other than inspecting, this situation can only occur when we trapped in a prologue (e.g., when banging the stack).
                 // We can fish for the caller's instruction pointer in the trap state.
-                final Pointer trapStateInPreviousUnwalkedFrame = current.stackPointer().plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
+                final Pointer trapStateInPreviousUnwalkedFrame = current.sp().plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
                 callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousUnwalkedFrame);
             } else {
                 callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, jitTargetMethod.abi()).asPointer();
@@ -349,13 +349,13 @@ public class SPARCJitCompiler extends JitCompiler {
             }
         }
         final Pointer localVariablesBase = frameState.localVariablesBase(current);
-        final Pointer operandStackPointer = StackBias.SPARC_V9.unbias(current.stackPointer());
-        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, current.instructionPointer(), localVariablesBase,
+        final Pointer operandStackPointer = StackBias.SPARC_V9.unbias(current.sp());
+        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, current.ip(), localVariablesBase,
                                                      operandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE);
     }
 
     private FrameState stackFrameState(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod) {
-        final Pointer instructionPointer = current.instructionPointer();
+        final Pointer instructionPointer = current.ip();
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
         if (instructionPointer.lessThan(optimizedEntryPoint)) {
             return FrameState.IN_CALLER_FRAME;
@@ -401,7 +401,7 @@ public class SPARCJitCompiler extends JitCompiler {
             }
             @Override
             Pointer localVariablesBase(StackFrameWalker.Cursor current) {
-                return current.framePointer();
+                return current.fp();
             }
 
             @Override
@@ -409,7 +409,7 @@ public class SPARCJitCompiler extends JitCompiler {
                 // The RIP is the top slot in the caller save
                 // area, so we have to remove a stack slot to the computed size.
                 final int dispToRip = offsetToTopOfFrame(targetMethodOf(current)) - JitStackFrameLayout.STACK_SLOT_SIZE;
-                return current.framePointer().plus(dispToRip);
+                return current.fp().plus(dispToRip);
             }
 
             @Override
@@ -428,11 +428,11 @@ public class SPARCJitCompiler extends JitCompiler {
             Pointer localVariablesBase(StackFrameWalker.Cursor current) {
                 //  We just need to subtract the offset to the top of the frame from the frame pointer.
                 final int offsetToCalleeFramePointer = offsetToTopOfFrame(targetMethodOf(current));
-                return current.stackPointer().minus(offsetToCalleeFramePointer);
+                return current.sp().minus(offsetToCalleeFramePointer);
             }
             @Override
             Pointer callerStackPointer(StackFrameWalker.Cursor current) {
-                return current.stackPointer();
+                return current.sp();
             }
         },
 
@@ -447,7 +447,7 @@ public class SPARCJitCompiler extends JitCompiler {
             Pointer localVariablesBase(StackFrameWalker.Cursor current) {
                 final int offsetToCalleeFramePointer = targetMethodOf(current).stackFrameLayout().sizeOfNonParameterLocals()  +
                     SPARCStackFrameLayout.OFFSET_FROM_SP_TO_FIRST_SLOT;
-                return current.stackPointer().plus(offsetToCalleeFramePointer);
+                return current.sp().plus(offsetToCalleeFramePointer);
             }
        },
 
@@ -458,7 +458,7 @@ public class SPARCJitCompiler extends JitCompiler {
                 // This is not crucial as this is only used for inspection.
                 // A better approach would be to read the callee frame pointer directly off the O5 register.
                 final int offsetToCalleeFramePointer =   targetMethodOf(current).stackFrameLayout().sizeOfNonParameterLocals();
-                return current.stackPointer().plus(offsetToCalleeFramePointer);
+                return current.sp().plus(offsetToCalleeFramePointer);
             }
         };
 
@@ -470,7 +470,7 @@ public class SPARCJitCompiler extends JitCompiler {
         }
 
         Pointer callerFramePointer(StackFrameWalker.Cursor current) {
-            return current.framePointer();
+            return current.fp();
         }
 
         boolean isReturnInstructionPointerOnStack() {
@@ -478,7 +478,7 @@ public class SPARCJitCompiler extends JitCompiler {
         }
 
         Pointer callerStackPointer(StackFrameWalker.Cursor current) {
-            return current.stackPointer().plus(targetMethodOf(current).stackFrameLayout().frameSize());
+            return current.sp().plus(targetMethodOf(current).stackFrameLayout().frameSize());
         }
 
         SPARCJitTargetMethod targetMethodOf(StackFrameWalker.Cursor current) {
