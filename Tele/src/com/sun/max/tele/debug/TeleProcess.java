@@ -297,6 +297,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     private final TeleTargetBreakpoint.Factory targetBreakpointFactory;
 
+    /**
+     * A factory for creating and managing memory watchpoints in the VM;
+     * null if watchpoints are not supported on this platform.
+     *
+     * @see #watchpointsEnabled()
+     */
     private final TeleWatchpoint.Factory watchpointFactory;
 
     private final RequestHandlingThread requestHandlingThread;
@@ -355,7 +361,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         this.processState = initialState;
         epoch = 0;
         this.targetBreakpointFactory = new TeleTargetBreakpoint.Factory(teleVM);
-        this.watchpointFactory = new TeleWatchpoint.Factory(this);
+        this.watchpointFactory = watchpointsEnabled() ? new TeleWatchpoint.Factory(this) : null;
 
         //Initiate the thread that continuously waits on the running process.
         this.requestHandlingThread = new RequestHandlingThread();
@@ -616,7 +622,16 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
-     * @return factory for creation and management of target breakpoints in the process.
+     * @return whether watchpoints are supported on this platform.
+     */
+    public boolean watchpointsEnabled() {
+        return maximumWatchpointCount() > 0;
+    }
+
+    /**
+     * @return factory for creation and management of target breakpoints in the process,
+     * null if watchpoints not enabled.
+     * @see #watchpointsEnabled()
      */
     public final TeleTargetBreakpoint.Factory targetBreakpointFactory() {
         return targetBreakpointFactory;
@@ -996,6 +1011,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     private void updateWatchpointCaches() {
-        watchpointFactory.updateWatchpointMemoryCaches();
+        if (watchpointFactory != null) {
+            watchpointFactory.updateWatchpointMemoryCaches();
+        }
     }
 }
