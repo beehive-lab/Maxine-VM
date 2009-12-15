@@ -981,6 +981,96 @@ function run_eclipse() {
 }
 
 #=======================================
+# 'makejdk' command
+#=======================================
+
+makejdk_usage="[<destination directory>]"
+makejdk_help="create a JDK directory based on the Maxine VM
+
+    Create a JDK directory by replicating the file structure of $JAVA_HOME
+    and replacing the 'java' executable with the Maxine VM
+    executable. This produces a Maxine VM based JDK for applications
+    (such as NetBeans) which expect a certain directory structure
+    and executable names in a JDK installation."
+
+function run_makejdk() {
+#    set -x
+
+    if [ $# -eq 0 ]; then
+        maxjdk_dir="$maxine_dir/maxjdk"
+    else
+        maxjdk_dir="$1"
+    fi
+
+	if [ -e $maxjdk_dir ]; then
+	    echo "The destination directory already exists: $maxjdk_dir"
+	    echo "Delete it first? [y/n]"
+	    done=
+	    while [ -z "$done" ]; do 
+            read reply leftover
+            case $reply in
+                [yY] | [yY][eE][sS])
+                    echo "Deleting $maxjdk_dir..." 
+                    rm -rf $maxjdk_dir || {
+                        echo "Could not remove $maxjdk_dir."
+                        echo "Please remove it manually and retry."
+                        exit 1;
+                    }
+                    done=1
+                    ;;
+                [nN] | [nN][oO])
+                    done=1
+                    ;;
+                *)
+                    echo "Please enter \"yes\" or \"no\"."
+                    ;;
+            esac
+        done
+    fi
+	mkdir -p $maxjdk_dir    
+	
+    pushd $JAVA_HOME >/dev/null
+    entries=$(find . | wc -l) 
+    echo "Replicating JDK in $maxjdk_dir"
+    i=0;
+    percent_done=0
+    one_percent=$(( entries / 100 ))
+    for f in `find .`; do
+        mod=$(($i % $one_percent))
+        if [ $mod -eq 0 ]; then
+            echo -e "\r$percent_done%\c"
+            percent_done=$(($percent_done + 1))
+            
+        fi
+        i=$(($i + 1))
+
+        if [ -d $f ]; then
+            mkdir -p $maxjdk_dir/$f
+        elif [ ! -f $maxjdk_dir/$f ]; then
+            ln -s $JAVA_HOME/$f $maxjdk_dir/$f
+        fi
+    done
+    echo -e "\r100%"
+    popd >/dev/null
+    for f in ${maxine_dir}/Native/generated/${MAXINE_OS}/*; do
+        if [ -f $f ]; then
+            cp $f $maxjdk_dir/bin
+            if [ "$OS" != "Darwin" ]; then
+                cp $f $maxjdk_dir/jre/bin
+            fi
+        fi
+    done
+    rm $maxjdk_dir/bin/java
+    ln -s $maxjdk_dir/bin/maxvm $maxjdk_dir/bin/java 
+    if [ "$OS" != "Darwin" ]; then
+        rm $maxjdk_dir/jre/bin/java
+        ln -s $maxjdk_dir/jre/bin/maxvm $maxjdk_dir/jre/bin/java
+    fi 
+    
+    echo "Created Maxine based JDK in $maxjdk_dir"
+}
+
+#=======================================
 # 'javap' command
 #=======================================
 
@@ -1080,8 +1170,14 @@ function run_inspect() {
                 mkdir -p $save_class_dir || { echo "Failed to created directory $save_class_dir"; exit 1; }
                 inspector_cp="$inspector_cp:$save_class_dir"
                 ;;
-            *)
+            -*)
                 vm_args="$vm_args $1"
+                ;;
+            *)
+                # This is the main class argument; copy it and any following
+                # arguments to the VM verbatim
+                vm_args="$vm_args $@"
+                break
                 ;;
         esac
         shift
