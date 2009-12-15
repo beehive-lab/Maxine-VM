@@ -58,7 +58,6 @@ typedef struct image_Header {
 
     jint heapSize;     /* multiple of 'pageSize' */
     jint codeSize;     /* multiple of 'pageSize' */
-    jint codeCacheSize;    /* multiple of 'pageSize' */
 
     jint heapRegionsPointerOffset;
 

@@ -40,7 +40,6 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.CompilationScheme.*;
 import com.sun.max.vm.tele.*;
@@ -209,7 +208,6 @@ public class BootImage {
 
         public final int heapSize;
         public final int codeSize;
-        public final int codeCacheSize;
 
         public final int heapRegionsPointerOffset;
 
@@ -285,7 +283,6 @@ public class BootImage {
 
             heapSize = endian.readInt(dataInputStream);
             codeSize = endian.readInt(dataInputStream);
-            codeCacheSize = endian.readInt(dataInputStream);
 
             heapRegionsPointerOffset = endian.readInt(dataInputStream);
 
@@ -341,7 +338,6 @@ public class BootImage {
             relocationDataSize = dataPrototype.relocationData().length;
             heapSize = dataPrototype.heapData().length;
             codeSize = dataPrototype.codeData().length;
-            codeCacheSize = CodeManager.runtimeCodeRegionSize.getValue().toInt();
 
             heapRegionsPointerOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "memoryRegions");
 
