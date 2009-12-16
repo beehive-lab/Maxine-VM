@@ -1551,7 +1551,11 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             if (isResolved(classMethodRef)) {
                 try {
                     final VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
-                    if (shouldProfileMethodCall(virtualMethodActor)) {
+                    if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal()) {
+                        // this is an invokevirtual to a private or final method, treat it like invokespecial
+                        invokespecial(index);
+                    } else if (shouldProfileMethodCall(virtualMethodActor)) {
+                        // emit a profiled call
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEVIRTUAL, selectorKind, TemplateChooser.Selector.RESOLVED_INSTRUMENTED);
                         beginBytecode(INVOKEVIRTUAL);
                         final int vtableIndex = virtualMethodActor.vTableIndex();
@@ -1561,6 +1565,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                         assignIntTemplateArgument(3, methodProfileBuilder.addMethodProfile(index, JitInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES));
                         emitAndRecordStops(template);
                     } else {
+                        // emit an unprofiled virtual dispatch
                         final CompiledBytecodeTemplate template = getTemplate(INVOKEVIRTUAL, selectorKind, TemplateChooser.Selector.RESOLVED);
                         beginBytecode(INVOKEVIRTUAL);
                         assignIntTemplateArgument(0, virtualMethodActor.vTableIndex());
