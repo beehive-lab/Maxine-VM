@@ -35,24 +35,24 @@ public abstract class StackFrame {
      * The address of the current execution point in this frame (i.e. the address of the next instruction that will
      * be executed in the frame).
      */
-    public final Pointer instructionPointer;
-    public final Pointer framePointer;
-    public final Pointer stackPointer;
+    public final Pointer ip;
+    public final Pointer sp;
+    public final Pointer fp;
     public final StackFrame callee;
     private StackFrame caller;
 
-    protected StackFrame(StackFrame callee, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
+    protected StackFrame(StackFrame callee, Pointer ip, Pointer sp, Pointer fp) {
         this.callee = callee;
         if (callee != null) {
             callee.caller = this;
         }
-        this.instructionPointer = instructionPointer;
-        this.framePointer = framePointer;
-        this.stackPointer = stackPointer;
+        this.ip = ip;
+        this.fp = fp;
+        this.sp = sp;
     }
 
     /**
-     * Gets the target method enclosing the {@linkplain #instructionPointer() execution point} in this frame.
+     * Gets the target method enclosing the {@linkplain #ip execution point} in this frame.
      *
      * @return null if this is a frame of a native function
      */
@@ -66,7 +66,7 @@ public abstract class StackFrame {
      * By default this is the frame pointer.
      */
     public Pointer slotBase() {
-        return framePointer;
+        return fp;
     }
 
     /**

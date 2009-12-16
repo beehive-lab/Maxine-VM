@@ -342,6 +342,7 @@ public class JTConfig {
         jtt.jasm.BC_fcmpl2.class,
         jtt.jasm.BC_lcmp.class,
         jtt.jasm.Invokevirtual_private00.class,
+        jtt.jasm.Invokevirtual_private01.class,
         jtt.jasm.Loop00.class,
         jtt.jdk.Class_getName.class,
         jtt.jdk.EnumMap01.class,
