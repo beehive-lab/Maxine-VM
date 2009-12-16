@@ -380,7 +380,7 @@ public class OptionsDialog extends JDialog {
                 }
             }
 
-            final MaxPackage[] pkgs = Sequence.Static.toArray(maxPackages, MaxPackage.class);
+            final MaxPackage[] pkgs = Sequence.Static.toArray(maxPackages, new MaxPackage[maxPackages.length()]);
             Arrays.sort(pkgs, new Comparator<MaxPackage>() {
                 public int compare(MaxPackage o1, MaxPackage o2) {
                     return o1.name().compareTo(o2.name());
