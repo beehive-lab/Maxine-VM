@@ -112,7 +112,7 @@ abstract class JavaStackFramePanel<StackFrame_Type extends JavaStackFrame> exten
             addInspectorLabel(new DataLabel.BiasedStackAddressAsHex(inspection(), bias) {
                 @Override
                 public void refresh(boolean force) {
-                    setValue(JavaStackFramePanel.this.stackFrame.framePointer);
+                    setValue(JavaStackFramePanel.this.stackFrame.fp);
                 }
             });
 
@@ -120,7 +120,7 @@ abstract class JavaStackFramePanel<StackFrame_Type extends JavaStackFrame> exten
             addInspectorLabel(new DataLabel.BiasedStackAddressAsHex(inspection(), bias) {
                 @Override
                 public void refresh(boolean force) {
-                    setValue(JavaStackFramePanel.this.stackFrame.framePointer);
+                    setValue(JavaStackFramePanel.this.stackFrame.fp);
                 }
             });
 
@@ -128,7 +128,7 @@ abstract class JavaStackFramePanel<StackFrame_Type extends JavaStackFrame> exten
             addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, this) {
                 @Override
                 public Value fetchValue() {
-                    return WordValue.from(JavaStackFramePanel.this.stackFrame.instructionPointer);
+                    return WordValue.from(JavaStackFramePanel.this.stackFrame.ip);
                 }
             });
 
