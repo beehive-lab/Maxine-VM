@@ -298,6 +298,8 @@ public class JTConfig {
         jtt.except.StackTrace_CCE_00.class,
         jtt.except.StackTrace_NPE_00.class,
         jtt.except.StackTrace_NPE_01.class,
+        jtt.except.StackTrace_NPE_02.class,
+        jtt.except.StackTrace_NPE_03.class,
         jtt.except.Throw_InCatch01.class,
         jtt.except.Throw_InCatch02.class,
         jtt.except.Throw_InCatch03.class,

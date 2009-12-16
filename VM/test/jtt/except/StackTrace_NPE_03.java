@@ -22,37 +22,44 @@ package jtt.except;
 
 /*
  * @Harness: java
- * @Runs: 0 = 0; 2 = -100; 3 = -100; 4 = 4
+ * @Runs: 0=0; 1=0; -2=-1; 3=0
  */
-public class StackTrace_CCE_00 {
-    static Object object2 = new Object();
-    static Object object3 = "";
-    static Object object4 = new StackTrace_CCE_00();
+public class StackTrace_NPE_03 {
 
-    public static int test(int arg) {
-        Object obj = null;
-        if (arg == 2) {
-            obj = object2;
-        }
-        if (arg == 3) {
-            obj = object3;
-        }
-        if (arg == 4) {
-            obj = object4;
-        }
+    private static String[] trace = {"test2", "test1", "test"};
+
+    public static int test(int a) {
         try {
-            final StackTrace_CCE_00 bc = (StackTrace_CCE_00) obj;
-            if (bc == null) {
-                return arg;
+            if (a >= 0) {
+                return test1();
             }
-            return arg;
-        } catch (ClassCastException npe) {
-            for (StackTraceElement e : npe.getStackTrace()) {
-                if (e.getClassName().equals(StackTrace_CCE_00.class.getName()) && e.getMethodName().equals("test")) {
-                    return -100;
+        } catch (NullPointerException npe) {
+            String thisClass = StackTrace_NPE_03.class.getName();
+            StackTraceElement[] stackTrace = npe.getStackTrace();
+            for (int i = 0; i < stackTrace.length; i++) {
+                StackTraceElement e = stackTrace[i];
+                if (e.getClassName().equals(thisClass)) {
+                    for (int j = 0; j < trace.length; j++) {
+                        StackTraceElement f = stackTrace[i + j];
+                        if (!f.getClassName().equals(thisClass)) {
+                            return -2;
+                        }
+                        if (!f.getMethodName().equals(trace[j])) {
+                            return -3;
+                        }
+                    }
+                    return 0;
                 }
             }
-            return -200;
         }
+        return -1;
+    }
+
+    private static int test1() {
+        return test2();
+    }
+
+    private static int test2() {
+        throw new NullPointerException();
     }
 }
