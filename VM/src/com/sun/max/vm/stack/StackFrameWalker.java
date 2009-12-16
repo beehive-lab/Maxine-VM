@@ -259,13 +259,13 @@ public abstract class StackFrameWalker {
 
                 checkVmEntrypointCaller(lastJavaCallee, targetMethod);
 
-                // Record the last Java callee frame info
-                lastJavaCallee = targetMethod;
-
                 // walk the frame
                 if (!targetMethod.compilerScheme.walkFrame(current, callee, lastJavaCallee, purpose, context)) {
                     break;
                 }
+
+                // Record the last Java callee frame info
+                lastJavaCallee = targetMethod;
 
                 // clear the trap state if we didn't just walk over the trap stub
                 if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
