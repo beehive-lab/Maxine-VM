@@ -163,23 +163,23 @@ public interface Sequence<Element_Type> extends IterableWithLength<Element_Type>
             return true;
         }
 
-        public static <Element_Type> Element_Type[] toArray(IterableWithLength<? extends Element_Type> sequence, Class<Element_Type> elementType) {
-            final Element_Type[] array = com.sun.max.lang.Arrays.newInstance(elementType, sequence.length());
+        /**
+         * Copies the elements of a given sequence into a given array.
+         *
+         * @param sequence the source sequence
+         * @param array the destination array. The elements in {@code array} at an index greater than or equal to
+         *            {@code sequence.length()} are not modified.
+         * @return the value of {@code array}
+         * @throws NullPointerException if {@code array == null && !sequence.isEmpty()}
+         * @throws IndexOutOfBoundsException if {@code array.length < sequence.length()}
+         */
+        public static <Element_Type> Element_Type[] toArray(IterableWithLength<? extends Element_Type> sequence, Element_Type[] array) {
             int i = 0;
             for (Element_Type element : sequence) {
                 array[i] = element;
                 i++;
             }
             return array;
-        }
-
-        public static <Element_Type> int copyIntoArray(Sequence<? extends Element_Type> sequence, int start, Element_Type[] array) {
-            int i = start;
-            for (Element_Type element : sequence) {
-                array[i] = element;
-                i++;
-            }
-            return i;
         }
 
         /**
@@ -257,10 +257,6 @@ public interface Sequence<Element_Type> extends IterableWithLength<Element_Type>
 
         public static <Element_Type> Sequence<Element_Type> reverse(Sequence<Element_Type> sequence) {
             return IndexedSequence.Static.reverse(sequence);
-        }
-
-        public static <Element_Type> Sequence<Element_Type> sort(Sequence<Element_Type> sequence, Class<Element_Type> elementType) {
-            return IndexedSequence.Static.sort(sequence, elementType);
         }
 
         public static <Element_Type> List<Element_Type> toList(Sequence<Element_Type> sequence) {

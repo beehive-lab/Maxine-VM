@@ -23,7 +23,6 @@ package com.sun.max.unsafe;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.box.*;
 
 /**
  * Offsets from addresses or pointers. Unlike an 'Address', an 'Offset' can be negative. Both types have the identical
@@ -79,7 +78,7 @@ public abstract class Offset extends Word {
     public final int toInt() {
         if (Word.isBoxed()) {
             final BoxedOffset box = (BoxedOffset) this;
-            return (int) box.nativeWord();
+            return (int) box.value();
         }
         if (Word.width() == 64) {
             final long n = UnsafeCast.asLong(this);
@@ -92,7 +91,7 @@ public abstract class Offset extends Word {
     public final long toLong() {
         if (Word.isBoxed()) {
             final BoxedOffset box = (BoxedOffset) this;
-            return box.nativeWord();
+            return box.value();
         }
         if (Word.width() == 64) {
             return UnsafeCast.asLong(this);

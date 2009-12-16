@@ -27,6 +27,7 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.grip.Grip;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -79,11 +80,10 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     private final VmThread owner;
     private final Timer timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer triggeredVmThreadLocals;
-    private Pointer enabledVmThreadLocals;
-    private Pointer disabledVmThreadLocals;
     private Pointer referenceMap;
     private Pointer lowestStackSlot;
     private boolean completingReferenceMap;
+    private final boolean verifyOnly;
     private long preparationTime;
 
     /**
@@ -97,6 +97,11 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
     private TargetMethod trampolineTargetMethod;
     private Pointer trampolineRefmapPointer;
+
+    public StackReferenceMapPreparer(VmThread owner, boolean verifyOnly) {
+        this.owner = owner;
+        this.verifyOnly = verifyOnly;
+    }
 
     private static Pointer slotAddress(int slotIndex, Pointer vmThreadLocals) {
         return LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer().plusWords(slotIndex);
@@ -285,13 +290,9 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         }
     }
 
-    public StackReferenceMapPreparer(VmThread owner) {
-        this.owner = owner;
-    }
-
     /**
      * Gets the time taken for the last call to {@link #prepareStackReferenceMap(Pointer, Pointer, Pointer, Pointer, boolean)}.
-     * If there was an interleaving call to {@link #completeStackReferenceMap(Pointer, Pointer, Pointer, Pointer)}, then that
+     * If there was an interleaving call to {@link #completeStackReferenceMap(com.sun.max.unsafe.Pointer)} completeStackReferenceMap(Pointer, Pointer, Pointer, Pointer)}, then that
      * time is included as well. That is, this method gives the amount of time spent preparing the stack
      * reference map for the associated thread during the last/current GC.
      *
@@ -318,8 +319,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     public long prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean ignoreTopFrame) {
         timer.start();
         ignoreCurrentFrame = ignoreTopFrame;
-        enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         referenceMap = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
         lowestStackSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
@@ -369,9 +368,8 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             Log.unlock(lockDisabledSafepoints);
         }
         timer.stop();
-        final long time = timer.getLastElapsedTime();
-        preparationTime = time;
-        return time;
+        preparationTime = timer.getLastElapsedTime();
+        return preparationTime;
     }
 
     /**
@@ -383,6 +381,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * @param vmThreadLocals the VM thread locals for the thread whose stack reference map is to be completed
      */
     public void completeStackReferenceMap(Pointer vmThreadLocals) {
+        timer.start();
         FatalError.check(!ignoreCurrentFrame, "All frames should be scanned when competing a stack reference map");
         Pointer anchor = LAST_JAVA_FRAME_ANCHOR.getVariableWord(vmThreadLocals).asPointer();
         Pointer instructionPointer = JavaFrameAnchor.PC.get(anchor);
@@ -391,7 +390,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         if (instructionPointer.isZero()) {
             FatalError.unexpected("A mutator thread in Java at safepoint should be blocked on a monitor");
         }
-        timer.start();
         final Pointer highestSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
 
         // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
@@ -547,7 +545,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * @param referenceMapByte the value of the reference map byte
      * @param referenceMapLabel a label indicating whether this reference map is for a frame or for the registers
      */
-    public void traceReferenceMapByteBefore(int byteIndex, final byte referenceMapByte, String referenceMapLabel) {
+    public void traceReferenceMapByteBefore(int byteIndex, byte referenceMapByte, String referenceMapLabel) {
         if (Heap.traceRootScanning()) {
             Log.print("    ");
             Log.print(referenceMapLabel);
@@ -557,6 +555,35 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             Log.print(referenceMapLabel);
             Log.print(" map byte:       ");
             Log.println(Address.fromInt(referenceMapByte & 0xff));
+        }
+    }
+
+    /**
+     * If {@linkplain Heap#traceRootScanning() GC tracing} is enabled, then this method traces one byte's worth
+     * of a frame/register reference map.
+     *
+     * @param internalFramePointer the index of the reference map byte
+     * @param referenceMapByte the value of the reference map byte
+     * @param referenceMapLabel a label indicating whether this reference map is for a frame or for the registers
+     */
+    public void traceReferenceMapByte(Pointer framePointer, Pointer internalFramePointer, byte referenceMapByte, String referenceMapLabel) {
+        if (Heap.traceRootScanning()) {
+            Log.print("    ");
+            Log.print(referenceMapLabel);
+            Log.print(" internal frame pointer: ");
+            Log.println(internalFramePointer);
+            Log.print("    ");
+            Log.print(referenceMapLabel);
+            Log.print(" map byte:       ");
+            Log.println(Address.fromInt(referenceMapByte & 0xff));
+            for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
+                if (((referenceMapByte >>> bitIndex) & 1) != 0) {
+                    final int slotIndex = referenceMapBitIndex(internalFramePointer) + bitIndex;
+                    Log.print("      Slot: ");
+                    printSlot(slotIndex, framePointer);
+                    Log.println();
+                }
+            }
         }
     }
 
@@ -819,13 +846,97 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         }
 
         // If the stack reference map is being completed, then the stack walk stops after the first trap stub
-        if (completingReferenceMap && targetMethod.classMethodActor().isTrapStub()) {
-            return false;
-        }
-        return true;
+        return !(completingReferenceMap && targetMethod.classMethodActor().isTrapStub());
     }
 
     public void setBits(int baseSlotIndex, byte referenceMapByte) {
         referenceMap.setBits(baseSlotIndex, referenceMapByte);
+    }
+
+    /**
+     * Updates the reference map bits for a range of slots within a frame.
+     *
+     * @param frameStart a pointer to the start of the frame (for debugging only)
+     * @param slotPointer the pointer to the first slot that corresponds to bit 0 in the reference map
+     * @param refMap an integer containing up to 32 reference map bits for up to 32 successive slots in the frame
+     * @param numBits the number of bits in the reference map
+     * @param label a label (for debugging only)
+     */
+    public void setReferenceMapBits(Pointer frameStart, Pointer slotPointer, int refMap, int numBits, String label) {
+        if (Heap.traceRootScanning()) {
+            Log.print("    setReferenceMapBits: fp = ");
+            Log.print(frameStart);
+            Log.print(", slots @ ");
+            Log.print(slotPointer);
+            Log.print(", bits = ");
+            for (int i = 0; i < numBits; i++) {
+                Log.print((refMap >>> i) & 1);
+            }
+            Log.print(", label = ");
+            Log.println(label);
+        }
+        if (!inThisStack(frameStart)) {
+            throw FatalError.unexpected("fp not in this stack");
+        }
+        if (!inThisStack(frameStart)) {
+            throw FatalError.unexpected("slots not in this stack");
+        }
+        if ((refMap & (-1 << numBits)) != 0) {
+            throw FatalError.unexpected("reference map has extraneous high order bits set");
+        }
+        if (verifyOnly) {
+            // only look at the contents of the stack and check they are valid grips
+            for (int i = 0; i < numBits; i++) {
+                if (((refMap >> i) & 1) == 1) {
+                    Grip grip = slotPointer.getGrip(i);
+                    boolean valid = Heap.isValidGrip(grip);
+                    if (!valid || Heap.traceRootScanning()) {
+                        Log.print("    grip @ ");
+                        Log.print(slotPointer.plusWords(i));
+                        Log.print(" = ");
+                        Log.print(grip);
+                        Log.print(valid ? " ok" : " (invalid)");
+                        if (!valid) {
+                            // we are f'd
+                            throw FatalError.unexpected("invalid grip");
+                        }
+                    }
+                }
+            }
+        } else {
+            // copy the bits into the complete reference map for the stack
+            int mapBits = refMap;
+            int slotIndex = referenceMapBitIndex(slotPointer);
+            int slotEnd = referenceMapBitIndex(slotPointer.plusWords(numBits));
+
+            while (slotIndex < slotEnd) {
+                int rest = slotIndex % Bytes.WIDTH; // number of bits to shift mapBits over
+                int bits = Bytes.WIDTH - rest;      // number of bits from mapBits to use
+                int byteIndex = Unsigned.idiv(slotIndex, Bytes.WIDTH);
+
+                byte prev = referenceMap.getByte(byteIndex);
+                prev |= mapBits << rest;
+                referenceMap.setByte(byteIndex, prev);
+
+                slotIndex += bits;
+                mapBits >>>= bits;
+            }
+        }
+
+    }
+
+    private boolean inThisStack(Pointer pointer) {
+        return pointer.greaterEqual(lowestStackSlot);
+    }
+
+    /**
+     * This method can be called to walk the stack of the current thread from the current
+     * instruction pointer, stack pointer, and frame pointer, verifying the reference map
+     * for each stack frame by using the {@link Heap#isValidGrip(com.sun.max.vm.grip.Grip)}
+     * heuristic.
+     */
+    public static void verifyReferenceMapsForThisThread() {
+        VmThread current = VmThread.current();
+        current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), current.stackReferenceMapVerifier());
     }
 }

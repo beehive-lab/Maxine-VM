@@ -39,7 +39,7 @@ public final class ClassActorFactory {
     }
 
     /**
-     * Creates the actor for the type representing an n-dimensional array of a given {@linkplain ClassActor#componentClassActor() component type}.
+     * Creates the actor for the type representing an 1-dimensional array of a given {@linkplain ClassActor#componentClassActor() component type}.
      */
     public static ArrayClassActor createArrayClassActor(ClassActor componentClassActor) {
         return ClassRegistry.put(new ArrayClassActor(componentClassActor));

@@ -124,13 +124,16 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     public TeleTargetBreakpoint setTargetBreakpointAtEntry() {
-        return teleVM().makeTargetBreakpointAt(callEntryPoint());
+        final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(callEntryPoint());
+        teleTargetBreakpoint.setDescription("entry for native routine " + getName());
+        return teleTargetBreakpoint;
     }
 
     public void setTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label != null) {
-                teleVM().makeTargetBreakpointAt(targetCodeInstruction.address);
+                final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(targetCodeInstruction.address);
+                teleTargetBreakpoint.setDescription("Label " + targetCodeInstruction.label.toString() + " in " + getName());
             }
         }
     }

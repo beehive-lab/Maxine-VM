@@ -208,7 +208,7 @@ final class JDK_java_lang_Class {
     public Class[] getInterfaces() {
         final AppendableSequence<Class> javaInterfaces = new LinkSequence<Class>();
         getInterfaces(thisClassActor(), javaInterfaces);
-        return Sequence.Static.toArray(javaInterfaces, Class.class);
+        return Sequence.Static.toArray(javaInterfaces, new Class[javaInterfaces.length()]);
     }
 
     /**
@@ -383,7 +383,7 @@ final class JDK_java_lang_Class {
                 result.append(fieldActor.toJava());
             }
         }
-        return Sequence.Static.toArray(result, Field.class);
+        return Sequence.Static.toArray(result, new Field[result.length()]);
     }
 
     /**
@@ -411,7 +411,7 @@ final class JDK_java_lang_Class {
                 result.append(methodActor.toJava());
             }
         }
-        return Sequence.Static.toArray(result, Method.class);
+        return Sequence.Static.toArray(result, new Method[result.length()]);
     }
 
     /**
@@ -429,7 +429,7 @@ final class JDK_java_lang_Class {
                 result.append(methodActor.toJavaConstructor());
             }
         }
-        return Sequence.Static.toArray(result, Constructor.class);
+        return Sequence.Static.toArray(result, new Constructor[result.length()]);
     }
 
     /**

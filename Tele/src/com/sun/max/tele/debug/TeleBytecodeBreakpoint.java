@@ -89,7 +89,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * @param key an abstract description of the location for this breakpoint, expressed in terms of the method and bytecode offset.
      */
     private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, Key key) {
-        super(teleVM, new TeleCodeLocation(teleVM, key), Kind.CLIENT);
+        super(teleVM, new TeleCodeLocation(teleVM, key), BreakpointKind.CLIENT);
         this.factory = factory;
         this.key = key;
         this.holderTypeDescriptorString = key.holder().string;
@@ -409,9 +409,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             final Address callEntryPoint = javaTargetMethod.callEntryPoint();
             ProgramError.check(!callEntryPoint.isZero());
             compilerTargetCodeBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(callEntryPoint);
+            compilerTargetCodeBreakpoint.setDescription("System trap for VM compiler");
             compilerTargetCodeBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
-
-                @Override
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
                     final TeleVM teleVM = Factory.this.teleVM;
 
@@ -486,7 +485,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 Trace.line(TRACE_VALUE, tracePrefix + "Target breakpoint already exists at 0x" + address.toHexString() + " in " + teleTargetMethod);
                 return null;
             }
-            return teleTargetBreakpointFactory.makeSystemBreakpoint(address, "Generated from bytecode breakpoint for key=" + key);
+            final TeleTargetBreakpoint teleTargetBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(address);
+            teleTargetBreakpoint.setDescription("For bytecode key=" + key);
+            return teleTargetBreakpoint;
         }
 
         public void writeSummaryToStream(PrintStream printStream) {

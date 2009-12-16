@@ -974,8 +974,10 @@ public abstract class TeleVM implements MaxVM {
         return isValidGrip(reference.toGrip());
     }
 
-    public void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException {
-        teleProcess.watchpointFactory().initFactory();
+    public void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        if (watchpointsEnabled()) {
+            teleProcess.watchpointFactory().initFactory();
+        }
     }
 
     /**
@@ -1446,55 +1448,70 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final boolean watchpointsEnabled() {
-        return teleProcess.maximumWatchpointCount() > 0;
+        return teleProcess.watchpointsEnabled();
     }
 
-    public final void addWatchpointObserver(Observer observer) {
+    public final void addWatchpointObserver(Observer observer) throws UnsupportedOperationException {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         teleProcess.watchpointFactory().addObserver(observer);
     }
 
     public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
+        throws TooManyWatchpointsException, DuplicateWatchpointException, UnsupportedOperationException {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        return teleProcess.watchpointFactory().createRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setWordWatchpoint(String description, Address address, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         final MemoryRegion memoryRegion = new FixedMemoryRegion(address, wordSize(), "");
         return setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setObjectWatchpoint(description, teleObject, after, read, write, exec, gc);
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        return teleProcess.watchpointFactory().createObjectWatchpoint(description, teleObject, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setFieldWatchpoint(description, teleObject, fieldActor, after, read, write, exec, gc);
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        return teleProcess.watchpointFactory().createFieldWatchpoint(description, teleObject, fieldActor, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        return teleProcess.watchpointFactory().createArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);
     }
 
     public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec, gc);
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        return teleProcess.watchpointFactory().createHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
-        return teleProcess.watchpointFactory().setVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        return teleProcess.watchpointFactory().createVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
     }
 
-    public final Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) {
-        return teleProcess.watchpointFactory().findWatchpoints(memoryRegion);
+    public final Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) throws ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        return teleProcess.watchpointFactory().findClientWatchpoints(memoryRegion);
     }
 
-    public final IterableWithLength<MaxWatchpoint> watchpoints() {
-        return teleProcess.watchpointFactory().watchpoints();
+    public final IterableWithLength<MaxWatchpoint> watchpoints() throws ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        return teleProcess.watchpointFactory().clientWatchpoints();
+    }
+
+    public void describeWatchpoints(PrintStream printStream) throws ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        teleProcess.watchpointFactory().writeSummaryToStream(printStream);
     }
 
     public final void setTransportDebugLevel(int level) {
@@ -1579,30 +1596,30 @@ public abstract class TeleVM implements MaxVM {
         return TeleInterpreter.execute(this, classMethodActor, arguments);
     }
 
-    public void resume(final boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
-        teleProcess.controller().resume(synchronous, disableBreakpoints);
+    public void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
+        teleProcess.resume(synchronous, withClientBreakpoints);
     }
 
-    public void singleStep(final MaxThread maxThread, boolean synchronous) throws InvalidProcessRequestException, OSExecutionRequestException {
+    public void singleStepThread(final MaxThread maxThread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException {
         final TeleNativeThread teleNativeThread = (TeleNativeThread) maxThread;
-        teleProcess.controller().singleStep(teleNativeThread, synchronous);
+        teleProcess.singleStepThread(teleNativeThread, synchronous);
     }
 
-    public void stepOver(final MaxThread maxThread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
+    public void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
         final TeleNativeThread teleNativeThread = (TeleNativeThread) maxThread;
-        teleProcess.controller().stepOver(teleNativeThread, synchronous, disableBreakpoints);
+        teleProcess.stepOver(teleNativeThread, synchronous, withClientBreakpoints);
     }
 
-    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean disableBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException {
-        teleProcess.controller().runToInstruction(instructionPointer, synchronous, disableBreakpoints);
+    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
+        teleProcess.runToInstruction(instructionPointer, synchronous, withClientBreakpoints);
     }
 
-    public final   void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
-        teleProcess.controller().pause();
+    public final  void pauseVM() throws InvalidVMRequestException, OSExecutionRequestException {
+        teleProcess.pauseProcess();
     }
 
-    public final void terminate() throws Exception {
-        teleProcess.controller().terminate();
+    public final void terminateVM() throws Exception {
+        teleProcess.terminateProcess();
     }
 
     public final ReferenceValue createReferenceValue(Reference reference) {
@@ -1991,11 +2008,11 @@ public abstract class TeleVM implements MaxVM {
             if (teleProcess.processState() == RUNNING) {
                 LOGGER.info("Pausing VM...");
                 try {
-                    TeleVM.this.pause();
+                    TeleVM.this.pauseVM();
                 } catch (OSExecutionRequestException osExecutionRequestException) {
                     LOGGER.log(Level.SEVERE,
                             "Unexpected error while pausing the VM", osExecutionRequestException);
-                } catch (InvalidProcessRequestException invalidProcessRequestException) {
+                } catch (InvalidVMRequestException invalidProcessRequestException) {
                     LOGGER.log(Level.SEVERE,
                             "Unexpected error while pausing the VM", invalidProcessRequestException);
                 }
@@ -2014,13 +2031,13 @@ public abstract class TeleVM implements MaxVM {
                     // step => perform single step instead of resume.
                     try {
                         LOGGER.info("Doing single step instead of resume!");
-                        TeleVM.this.singleStep(registeredSingleStepThread, false);
+                        TeleVM.this.singleStepThread(registeredSingleStepThread, false);
                     } catch (OSExecutionRequestException osExecutionRequestException) {
                         LOGGER.log(
                                         Level.SEVERE,
                                         "Unexpected error while performing a single step in the VM",
                                         osExecutionRequestException);
-                    } catch (InvalidProcessRequestException e) {
+                    } catch (InvalidVMRequestException e) {
                         LOGGER.log(
                                         Level.SEVERE,
                                         "Unexpected error while performing a single step in the VM",
@@ -2043,7 +2060,7 @@ public abstract class TeleVM implements MaxVM {
                                         Level.SEVERE,
                                         "Unexpected error while performing a run-to-instruction in the VM",
                                         osExecutionRequestException);
-                    } catch (InvalidProcessRequestException invalidProcessRequestException) {
+                    } catch (InvalidVMRequestException invalidProcessRequestException) {
                         LOGGER.log(
                                         Level.SEVERE,
                                         "Unexpected error while performing a run-to-instruction in the VM",
@@ -2057,11 +2074,11 @@ public abstract class TeleVM implements MaxVM {
                     // Nobody registered for special commands => resume the Vm.
                     try {
                         LOGGER.info("Client tried to resume the VM!");
-                        TeleVM.this.resume(false, false);
+                        TeleVM.this.resume(false, true);
                     } catch (OSExecutionRequestException e) {
                         LOGGER.log(Level.SEVERE,
                                 "Unexpected error while resuming the VM", e);
-                    } catch (InvalidProcessRequestException e) {
+                    } catch (InvalidVMRequestException e) {
                         LOGGER.log(Level.SEVERE,
                                 "Unexpected error while resuming the VM", e);
                     }
@@ -2073,7 +2090,7 @@ public abstract class TeleVM implements MaxVM {
 
         public void exit(int code) {
             try {
-                TeleVM.this.terminate();
+                TeleVM.this.terminateVM();
             } catch (Exception exception) {
                 LOGGER.log(Level.SEVERE,
                     "Unexpected error while exidting the VM", exception);
@@ -2275,7 +2292,7 @@ public abstract class TeleVM implements MaxVM {
                 }
             }
 
-            return Sequence.Static.toArray(result, ReferenceTypeProvider.class);
+            return Sequence.Static.toArray(result, new ReferenceTypeProvider[result.length()]);
         }
 
         public ThreadGroupProvider[] getThreadGroups() {

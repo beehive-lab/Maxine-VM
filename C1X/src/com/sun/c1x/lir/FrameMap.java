@@ -35,9 +35,9 @@ import com.sun.c1x.util.*;
  */
 public final class FrameMap {
 
-    public static final int SPILL_SLOT_SIZE = 4;
+    private static final int DOUBLE_SIZE = 8;
 
-    private final C1XCompiler compilation;
+    private final C1XCompiler compiler;
     private final CallingConvention incomingArguments;
     private final int monitorCount;
 
@@ -45,11 +45,18 @@ public final class FrameMap {
     private int frameSize;
     private int spillSlotCount;
 
-    // Area occupied by outgoing overflow arguments. This value is adjusted as calling conventions for outgoing calls are retrieved.
+    // Area occupied by outgoing overflow arguments.
+    // This value is adjusted as calling conventions for outgoing calls are retrieved.
     private int outgoingSize;
 
+    /**
+     * Creates a new frame map for the specified method.
+     * @param compiler the compiler, which includes the runtime and target
+     * @param method the outermost method being compiled
+     * @param monitors the number of monitors allocated on the stack for this method
+     */
     public FrameMap(C1XCompiler compiler, RiMethod method, int monitors) {
-        this.compilation = compiler;
+        this.compiler = compiler;
         this.frameSize = -1;
         this.spillSlotCount = -1;
 
@@ -62,113 +69,161 @@ public final class FrameMap {
         }
     }
 
+    /**
+     * Gets the calling convention for calling runtime methods with the specified signature.
+     * @param signature the signature of the arguments and return value
+     * @return a {@link CallingConvention} instance describing the location of parameters and the return value
+     */
     public CallingConvention runtimeCallingConvention(CiKind[] signature) {
-        CiLocation[] locations = compilation.target.config.getRuntimeParameterLocations(signature);
+        CiLocation[] locations = compiler.target.config.getRuntimeParameterLocations(signature);
         return createCallingConvention(locations, false);
     }
 
+    /**
+     * Gets the calling convention for calling Java methods with the specified signature.
+     * @param signature the signature of the arguments and return value
+     * @return a {@link CallingConvention} instance describing the location of parameters and the return value
+     */
     public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing, boolean reserveOutgoingArgumentsArea) {
-        CiLocation[] locations = compilation.target.config.getJavaParameterLocations(signature, outgoing);
+        CiLocation[] locations = compiler.target.config.getJavaParameterLocations(signature, outgoing);
         return createCallingConvention(locations, reserveOutgoingArgumentsArea);
     }
 
-    private CallingConvention createCallingConvention(CiLocation[] locations, boolean reserveOutgoingArgumentsArea) {
-        final CallingConvention result = new CallingConvention(locations);
-        if (reserveOutgoingArgumentsArea) {
-            assert frameSize == -1 : "frame size must not yet be fixed!";
-            outgoingSize = Math.max(outgoingSize, result.overflowArgumentSize);
-        }
-        return result;
-    }
-
+    /**
+     * Gets the calling convention for the incoming arguments to the compiled method.
+     * @return the calling convention for incoming arguments
+     */
     public CallingConvention incomingArguments() {
         return incomingArguments;
     }
 
-    public Address addressForSlot(int stackSlot) {
-        return addressForSlot(stackSlot, 0);
-    }
-
-    public Address addressForSlot(int stackSlot, int offset) {
-        return new Address(compilation.target.stackPointerRegister, spOffsetForSlot(stackSlot) + offset);
-    }
-
-    int spOffsetForSlot(int index) {
-        int offset = spOffsetForSpill(index);
-        assert offset < frameSize() : "spill outside of frame";
-        return offset;
-    }
-
-    int spOffsetForSpill(int index) {
-        assert index >= 0 && index < spillSlotCount : "out of range";
-        return Util.roundUp(outgoingSize + incomingArguments.overflowArgumentSize, Double.SIZE / Byte.SIZE) + index * SPILL_SLOT_SIZE;
-    }
-
-    int spOffsetForMonitorBase(int index) {
-        int endOfSpills = Util.roundUp(outgoingSize + incomingArguments.overflowArgumentSize, Double.SIZE / Byte.SIZE) + spillSlotCount * SPILL_SLOT_SIZE;
-        return Util.roundUp(endOfSpills, compilation.target.arch.wordSize) + index * compilation.runtime.sizeofBasicObjectLock();
-    }
-
-    int spOffsetForMonitorObject(int index)  {
-      checkMonitorIndex(index);
-      return spOffsetForMonitorBase(index) + compilation.runtime.basicObjectLockOffsetInBytes();
-    }
-
-    void checkMonitorIndex(int monitorIndex) {
-        assert monitorIndex >= 0 && monitorIndex < monitorCount : "bad index";
-    }
-
-    public int addressForMonitorLock(int monitorNo) {
-        return Util.nonFatalUnimplemented(0);
-    }
-
-    public Address addressForMonitorObject(int i) {
-        return Util.nonFatalUnimplemented(null);
-    }
-
+    /**
+     * Gets the frame size of the compiled frame.
+     * @return the size in bytes of the frame
+     */
     public int frameSize() {
+        assert this.frameSize != -1 : "frame size not computed yet";
         return frameSize;
     }
 
+    /**
+     * Sets the frame size for this frame.
+     * @param frameSize the frame size in bytes
+     */
     public void setFrameSize(int frameSize) {
         assert this.frameSize == -1 : "should only be calculated once";
         this.frameSize = frameSize;
     }
 
+    /**
+     * Computes the frame size for this frame, given the number of spill slots.
+     * @param spillSlotCount the number of spill slots
+     */
     public void finalizeFrame(int spillSlotCount) {
         assert this.spillSlotCount == -1 : "can only be set once";
         assert this.frameSize == -1 : "should only be calculated once";
         assert spillSlotCount >= 0 : "must be positive";
 
         this.spillSlotCount = spillSlotCount;
-        this.frameSize = compilation.target.alignFrameSize(spOffsetForMonitorBase(0) + monitorCount * compilation.runtime.sizeofBasicObjectLock());
+        this.frameSize = compiler.target.alignFrameSize(spillEnd() + monitorCount * compiler.runtime.sizeofBasicObjectLock());
     }
 
-    public CiLocation regname(LIROperand opr) {
-        if (opr.isStack()) {
-            return new CiStackLocation(opr.kind, opr.stackIndex() * SPILL_SLOT_SIZE, compilation.target.sizeInBytes(opr.kind), false);
-        } else if (opr.isRegister()) {
-            if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
-                return new CiRegisterLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
-            } else {
-                return new CiRegisterLocation(opr.kind, opr.asRegister());
-            }
-        } else {
-            throw Util.shouldNotReachHere();
-        }
-    }
-
-    public CiLocation objectSlotRegname(int i) {
-        return new CiStackLocation(CiKind.Object, this.spOffsetForSpill(i), SPILL_SLOT_SIZE, false);
-    }
-
-    public CiLocation locationForMonitor(int monitorIndex) {
-        return new CiStackLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), SPILL_SLOT_SIZE, false);
-    }
-
+    /**
+     * Informs the frame map that the compiled code uses a particular global stub, which
+     * may need stack space for outgoing arguments.
+     * @param stub the global stub
+     */
     public void usingGlobalStub(GlobalStub stub) {
-        if (stub.argsSize > outgoingSize) {
-            outgoingSize = Util.roundUp(stub.argsSize, SPILL_SLOT_SIZE);
+        increaseOutgoing(stub.argsSize);
+    }
+
+    /**
+     * Converts a {@link LIROperand} into a {@code CiLocation} within this frame.
+     * @param opr the operand
+     * @return a location
+     */
+    public CiLocation toLocation(LIROperand opr) {
+        if (opr.isStack()) {
+            // create a stack location
+            return new CiStackLocation(opr.kind, opr.stackIndex() * compiler.target.spillSlotSize, compiler.target.sizeInBytes(opr.kind), false);
+        } else if (opr.isSingleCpu() || opr.isSingleXmm()) {
+            // create a single register location
+            return new CiRegisterLocation(opr.kind, opr.asRegister());
+        } else if (opr.isDoubleCpu() || opr.isDoubleXmm()) {
+            // create a double register location
+            return new CiRegisterLocation(opr.kind, opr.asRegisterLow(), opr.asRegisterHigh());
+        }
+        throw new CiBailout("cannot convert " + opr + "to location");
+    }
+
+    public Address toAddress(LIROperand opr, int offset) {
+        assert opr.isStack();
+        int index = opr.stackIndex();
+        int size = compiler.target.sizeInBytes(opr.kind);
+        return new Address(compiler.target.stackPointerRegister, spOffsetForSlot(index, size) + offset);
+
+    }
+
+    /**
+     * Converts a spill index into a stack location.
+     * @param kind the type of the spill slot
+     * @param index the index into the spill slots
+     * @return a representation of the stack location
+     */
+    public CiLocation toStackLocation(CiKind kind, int index) {
+        int size = compiler.target.sizeInBytes(kind);
+        return new CiStackLocation(kind, this.spOffsetForSlot(index, size), size, false);
+    }
+
+    /**
+     * Converts the monitor index into a stack location.
+     * @param monitorIndex the monitor index
+     * @return a representation of the stack location
+     */
+    public CiLocation toMonitorLocation(int monitorIndex) {
+        return new CiStackLocation(CiKind.Object, spOffsetForMonitorObject(monitorIndex), compiler.target.spillSlotSize, false);
+    }
+
+    private void increaseOutgoing(int argsSize) {
+        if (argsSize > outgoingSize) {
+            outgoingSize = Util.roundUp(argsSize, DOUBLE_SIZE);
         }
     }
+
+    private CallingConvention createCallingConvention(CiLocation[] locations, boolean reserveOutgoingArgumentsArea) {
+        final CallingConvention result = new CallingConvention(locations);
+        if (reserveOutgoingArgumentsArea) {
+            assert frameSize == -1 : "frame size must not yet be fixed!";
+            increaseOutgoing(result.overflowArgumentSize);
+        }
+        return result;
+    }
+
+    private int spOffsetForSlot(int index, int size) {
+        assert index >= 0 && index < spillSlotCount : "invalid spill slot";
+        int offset = spillStart() + index * compiler.target.spillSlotSize;
+        assert offset <= (frameSize() - size) : "spill outside of frame";
+        return offset;
+    }
+
+    private int spOffsetForMonitorBase(int index) {
+        assert index >= 0 && index < monitorCount : "invalid monitor index";
+        int size = compiler.runtime.sizeofBasicObjectLock();
+        int offset = spillEnd() + index * size;
+        assert offset <= (frameSize() - size) : "monitor outside of frame";
+        return offset;
+    }
+
+    private int spillStart() {
+        return outgoingSize;
+    }
+
+    private int spillEnd() {
+        return spillStart() + spillSlotCount * compiler.target.spillSlotSize;
+    }
+
+    private int spOffsetForMonitorObject(int index)  {
+        return spOffsetForMonitorBase(index) + compiler.runtime.basicObjectLockOffsetInBytes();
+    }
+
 }

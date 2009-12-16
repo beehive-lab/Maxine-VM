@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.jni;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
 import java.nio.*;

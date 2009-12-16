@@ -66,7 +66,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
      *            instruction. If this value is null, then the code will be read from {@code address}.
      * @param the kind of breakpoint
      */
-    private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, Kind kind) {
+    private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, BreakpointKind kind) {
         super(teleVM, new TeleCodeLocation(teleVM, address), kind);
         this.factory = factory;
         this.originalCodeAtBreakpoint = originalCode == null ? teleVM.dataAccess().readFully(address, factory.codeSize()) : originalCode;
@@ -138,7 +138,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         *            instruction. If this value is null, then the code will be read from {@code address}.
         */
         ClientTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode) {
-            super(teleVM, factory, address, originalCode, Kind.CLIENT);
+            super(teleVM, factory, address, originalCode, BreakpointKind.CLIENT);
         }
 
         @Override
@@ -189,7 +189,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         *            instruction. If this value is null, then the code will be read from {@code address}.
         */
         SystemTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode) {
-            super(teleVM, factory, address, originalCode, Kind.SYSTEM);
+            super(teleVM, factory, address, originalCode, BreakpointKind.SYSTEM);
         }
 
         @Override
@@ -235,7 +235,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          *            instruction. If this value is null, then the code will be read from {@code address}.
          */
         TransientTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode) {
-            super(teleVM, factory, address, originalCode, Kind.TRANSIENT);
+            super(teleVM, factory, address, originalCode, BreakpointKind.TRANSIENT);
         }
 
         @Override
@@ -366,7 +366,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          * Gets the system breakpoint at a specified target code address in the tele VM, creating a new one first if needed.
          *
          * @param address the address at which the breakpoint is to be created
-         */
+          */
         public synchronized TeleTargetBreakpoint makeSystemBreakpoint(Address address) {
             SystemTargetBreakpoint systemBreakpoint = systemBreakpoints.get(address.toLong());
             // TODO (mlvdv) handle case where there is already a client breakpoint at this address.
@@ -377,12 +377,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
                 setChanged();
             }
             return systemBreakpoint;
-        }
-
-        public TeleTargetBreakpoint makeSystemBreakpoint(Address address, String description) {
-            final TeleTargetBreakpoint teleTargetBreakpoint = makeSystemBreakpoint(address);
-            teleTargetBreakpoint.setDescription(description);
-            return teleTargetBreakpoint;
         }
 
         /**
@@ -415,7 +409,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * Removes the client or system breakpoint, if it exists, at specified target code address in the {@link TeleVM}.
+         * Removes the client or system breakpoint, if it exists, at specified target code address in the VM.
          */
         private synchronized void removeNonTransientBreakpointAt(Address address) {
             final long addressLong = address.toLong();
@@ -437,6 +431,23 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
                     breakpoint.setActive(active);
                 }
             }
+            for (TeleTargetBreakpoint breakpoint : systemBreakpoints.values()) {
+                if (breakpoint.isEnabled()) {
+                    breakpoint.setActive(active);
+                }
+            }
+            for (TeleTargetBreakpoint breakpoint : transientBreakpoints.values()) {
+                breakpoint.setActive(active);
+            }
+        }
+
+        /**
+         * Sets the activation state of all non-client target breakpoints in the VM.
+         *
+         * @param active new activation state for all breakpoints
+         * @see TeleTargetBreakpoint#setActive(boolean)
+         */
+        public synchronized void setActiveNonClient(boolean active) {
             for (TeleTargetBreakpoint breakpoint : systemBreakpoints.values()) {
                 if (breakpoint.isEnabled()) {
                     breakpoint.setActive(active);

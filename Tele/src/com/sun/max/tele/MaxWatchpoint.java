@@ -33,22 +33,32 @@ import com.sun.max.tele.object.*;
 public interface MaxWatchpoint extends MemoryRegion {
 
     /**
+     * @return the optional human-readable string associated with the watchpoint, for debugging.
+     */
+    String getDescription();
+
+    /**
+     * Associates an optional human-readable string with the watchpoint for debugging.
+     */
+    void setDescription(String description);
+
+     /**
      * Checks if watchpoint is set for reading.
      * @return true while the watchpoint is activated for read access,
      */
-    boolean isRead();
+    boolean isTrapOnRead();
 
     /**
      * Checks if watchpoint is set for writing.
      * @return true while the watchpoint is activated for write access,
      */
-    boolean isWrite();
+    boolean isTrapOnWrite();
 
     /**
      * Checks if watchpoint is set for executing.
      * @return true while the watchpoint is activated for executing,
      */
-    boolean isExec();
+    boolean isTrapOnExec();
 
     /**
      * Checks if this watchpoint is set during garbage collection.
@@ -75,21 +85,21 @@ public interface MaxWatchpoint extends MemoryRegion {
      * @param read whether the watchpoint should trap when watched memory is read from
      * @return whether set succeeded
      */
-    boolean setRead(boolean read);
+    boolean setTrapOnRead(boolean read);
 
     /**
      * Set write flag for this watchpoint.
      * @param write whether the watchpoint should trap when watched memory is written to
      * @return whether set succeeded.
      */
-    boolean setWrite(boolean write);
+    boolean setTrapOnWrite(boolean write);
 
     /**
      * Set execute flag for this watchpoint.
      * @param exec whether the watchpoint should trap when watched memory is executed from
      * @return whether set succeeded.
      */
-    boolean setExec(boolean exec);
+    boolean setTrapOnExec(boolean exec);
 
     /**
      * Set gc flag for this watchpoint.
@@ -115,15 +125,5 @@ public interface MaxWatchpoint extends MemoryRegion {
      * @return true if eager relocation update activated
      */
     boolean isEagerRelocationUpdateSet();
-
-    /**
-     * Disable watchpoint and temporary store old configuration.
-     */
-    boolean disable();
-
-    /**
-     * Re-enable watchpoint with old temporary stored configuration.
-     */
-    boolean enable();
 
 }

@@ -32,14 +32,14 @@ import com.sun.c1x.ri.RiRegisterConfig;
 public class CiTarget {
     public final CiArchitecture arch;
 
-    public final CiRegister[] registerReferenceMapOrder;
-    public final CiRegister[] callerSavedRegisters;
     public final CiRegister.AllocationSet allocatableRegs;
     public final CiRegister stackPointerRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig config;
     public final int pageSize;
     public final boolean isMP;
+    public final int[] spillSlots;
+    public final int spillSlotSize;
 
     public int referenceSize;
     public int stackAlignment;
@@ -54,16 +54,26 @@ public class CiTarget {
         this.stackAlignment = arch.wordSize;
         this.cacheAlignment = arch.wordSize;
         this.heapAlignment = arch.wordSize;
+        this.spillSlotSize = arch.wordSize;
         this.codeAlignment = 16;
 
         this.stackPointerRegister = config.getStackPointerRegister();
         this.scratchRegister = config.getScratchRegister();
 
-        this.callerSavedRegisters = config.getCallerSaveRegisters();
-        this.registerReferenceMapOrder = config.getRegisterReferenceMapOrder();
         this.pageSize = pageSize;
         this.isMP = isMP;
-        this.allocatableRegs = new CiRegister.AllocationSet(config.getAllocatableRegisters(), registerReferenceMapOrder);
+        this.allocatableRegs = new CiRegister.AllocationSet(config.getAllocatableRegisters(), config.getRegisterReferenceMapOrder(), config.getCallerSaveRegisters());
+        this.spillSlots = new int[CiKind.values().length];
+
+        for (CiKind k : CiKind.values()) {
+            // initialize the number of spill slots required for each basic type
+            int size = k.sizeInBytes(referenceSize, arch.wordSize);
+            int slots = 0;
+            while (slots * spillSlotSize < size) {
+                slots++;
+            }
+            spillSlots[k.ordinal()] = slots;
+        }
     }
 
     /**

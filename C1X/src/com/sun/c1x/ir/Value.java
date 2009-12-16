@@ -22,6 +22,7 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.ri.RiType;
 import com.sun.c1x.ri.RiRuntime;
 import com.sun.c1x.lir.*;
@@ -71,15 +72,14 @@ public abstract class Value {
                                           Flag.LiveDeopt.mask |
                                           Flag.LiveControl.mask |
                                           Flag.LiveSideEffect.mask;
-    public static int nextID;
-
-    public final int id;
     public final CiKind kind;
 
+    private int id;
     private int flags;
     private LIROperand lirOperand;
 
-    public Value subst; // managed by InstructionSubstituter
+    public Object optInfo; // a cache field for analysis information
+    public Value subst;    // managed by InstructionSubstituter
 
     /**
      * Creates a new value with the specified kind.
@@ -87,7 +87,6 @@ public abstract class Value {
      */
     public Value(CiKind type) {
         kind = type;
-        id = nextID++;
     }
 
     /**
@@ -327,7 +326,7 @@ public abstract class Value {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName());
         builder.append(" #");
-        builder.append(id);
+        builder.append(id());
         if (this instanceof Instruction) {
             builder.append(" @ ");
             builder.append(((Instruction) this).bci());
@@ -359,8 +358,15 @@ public abstract class Value {
      */
     public abstract void accept(ValueVisitor v);
 
+    /**
+     * Utility method for computing the exact type of the specified value. Handles object constants by
+     * querying the supplied {@link RiRuntime} instance.
+     * @param value the value to get the exact type of
+     * @param runtime the runtime interface to query in the case of an object constant
+     * @return the exact type of the value if it can be computed; {@code null} otherwise
+     */
     public static RiType exactType(Value value, RiRuntime runtime) {
-        if (value.isConstant()) {
+        if (value.isConstant() && value.kind == CiKind.Object) {
             Object obj = value.asConstant().asObject();
             if (obj != null) {
                 return runtime.getRiType(obj.getClass());
@@ -369,4 +375,19 @@ public abstract class Value {
         return value.exactType();
     }
 
+    /**
+     * This method returns a unique identification number for this value. The number returned is unique
+     * only to the compilation that produced this node and is computed lazily by using the current compilation
+     * for the current thread. Thus the first access is a hash lookup using {@link java.lang.ThreadLocal} and
+     * should not be considered fast. Because of the potentially slow first access, use of this ID should be
+     * restricted to debugging output.
+     * @return a unique ID for this value
+     */
+    public int id() {
+        if (id == 0) {
+            C1XMetrics.UniqueValueIdsAssigned++;
+            id = C1XCompilation.current().nextID();
+        }
+        return id;
+    }
 }

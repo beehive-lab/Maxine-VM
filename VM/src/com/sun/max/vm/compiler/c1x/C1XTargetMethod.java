@@ -366,7 +366,7 @@ public class C1XTargetMethod extends TargetMethod {
         this.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
     }
 
-    private void initStopPosition(int index, int[] stopPositions, int codePos, boolean[] registerMap, boolean[] stackMap) {
+    private void initStopPosition(int index, int[] stopPositions, int codePos, byte[] registerMap, byte[] stackMap) {
         stopPositions[index] = codePos;
 
         if (registerMap != null) {
@@ -378,20 +378,26 @@ public class C1XTargetMethod extends TargetMethod {
         }
     }
 
-    private void initRegisterMap(int index, boolean[] registerMap) {
-        assert registerMap.length == referenceRegisterCount;
+    private void initRegisterMap(int index, byte[] registerMap) {
+        assert registerMap.length * 8 >= referenceRegisterCount;
         for (int i = 0; i < registerMap.length; i++) {
-            if (registerMap[i]) {
-                setRegisterReferenceMapBit(index, i);
+            // TODO: use a byte copy, not a bit by bit copy
+            for (int j = 0; j < 8; j++) {
+                if (0 != (registerMap[i] >> j & 1)) {
+                    setRegisterReferenceMapBit(index, i * 8 + j);
+                }
             }
         }
     }
 
-    private void initStackMap(int index, boolean[] stackMap) {
-        assert stackMap.length == frameWords();
+    private void initStackMap(int index, byte[] stackMap) {
+        assert stackMap.length * 8 >= frameWords();
         for (int i = 0; i < stackMap.length; i++) {
-            if (stackMap[i]) {
-                setFrameReferenceMapBit(index, i);
+            // TODO: use a byte copy, not a bit by bit copy
+            for (int j = 0; j < 8; j++) {
+                if (0 != (stackMap[i] >> j & 1)) {
+                    setFrameReferenceMapBit(index, i);
+                }
             }
         }
     }
@@ -535,8 +541,7 @@ public class C1XTargetMethod extends TargetMethod {
             final C1XTargetMethod c1xCallee = (C1XTargetMethod) callee;
             if (c1xCallee.isCalleeSaved()) {
                 for (int i = 0; i < referenceRegisterCount; i++) {
-                    boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
-                    if (curBit) {
+                    if (isRegisterReferenceMapBitSet(stopIndex, i)) {
 //
 //                        // TODO (tw): Check if this is correct?
 //                        int numberOfWords = i + 2;
@@ -550,16 +555,10 @@ public class C1XTargetMethod extends TargetMethod {
 
     @Override
     public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
-
-        // TODO (tw): Tentative implementation! Make correct...
-
         int stopIndex = lookupStopPosition(instructionPointer);
         for (int i = 0; i < referenceRegisterCount; i++) {
-            boolean curBit = isRegisterReferenceMapBitSet(stopIndex, i);
-            if (curBit) {
-                int numberOfWords = i;
-                Pointer referencePointer = registerState.plusWords(numberOfWords);
-                preparer.setReferenceMapBit(referencePointer);
+            if (isRegisterReferenceMapBitSet(stopIndex, i)) {
+                preparer.setReferenceMapBit(registerState.plusWords(i));
             }
         }
     }

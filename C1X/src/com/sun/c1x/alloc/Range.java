@@ -20,7 +20,6 @@
  */
 package com.sun.c1x.alloc;
 
-import com.sun.c1x.debug.*;
 
 /**
  * Represents a range of integers from a start (inclusive) to an end (exclusive.
@@ -106,7 +105,8 @@ final class Range {
         } while (true);
     }
 
-    void print(LogStream out) {
-        out.printf("[%d, %d[ ", from, to);
+    @Override
+    public String toString() {
+        return "[" + from + ", " + to + "]";
     }
 }
