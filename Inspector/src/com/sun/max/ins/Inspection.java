@@ -135,7 +135,9 @@ public final class Inspection {
 
         maxVM().addVMStateObserver(new VMStateObserver());
         maxVM().addBreakpointObserver(new BreakpointObserver());
-        maxVM().addWatchpointObserver(new WatchpointObserver());
+        if (maxVM().watchpointsEnabled()) {
+            maxVM().addWatchpointObserver(new WatchpointObserver());
+        }
 
         inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
 
@@ -175,7 +177,9 @@ public final class Inspection {
                 StackInspector.make(this);
                 BreakpointsInspector.make(this);
                 focus.setCodeLocation(maxVM.createCodeLocation(focus.thread().instructionPointer()), false);
-                maxVM().initGarbageCollectorDebugging();
+                if (maxVM().watchpointsEnabled()) {
+                    maxVM().initGarbageCollectorDebugging();
+                }
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
                 throwable.printStackTrace();

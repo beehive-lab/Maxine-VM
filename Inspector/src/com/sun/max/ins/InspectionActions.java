@@ -3890,7 +3890,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(maxVM().watchpoints().length() > 0);
+            setEnabled(maxVM().watchpointsEnabled() && maxVM().watchpoints().length() > 0);
         }
     }
 
@@ -4644,7 +4644,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private InspectorAction listBreakpoints = new ListBreakpointsAction(null);
 
     /**
-     * @return an Action that will list to the console the entries in the {@link TeleCodeRegistry}.
+     * @return an Action that will list to the console a summary of breakpoints in the VM.
      */
     public final InspectorAction listBreakpoints() {
         return listBreakpoints;
@@ -4670,7 +4670,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private InspectorAction listWatchpoints = new ListWatchpointsAction(null);
 
     /**
-     * @return an Action that will list to the console the entries in the {@link TeleCodeRegistry}.
+     * @return an Action that will list to the console a summary of watchpoints in the VM.
      */
     public final InspectorAction listWatchpoints() {
         return listWatchpoints;
