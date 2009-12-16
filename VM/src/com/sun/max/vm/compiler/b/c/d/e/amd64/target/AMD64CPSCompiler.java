@@ -193,8 +193,8 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, TargetMethod calleeMethod, Purpose purpose, Object context) {
-        return walkFrameHelper(current, current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), calleeMethod, purpose, context);
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
+        return walkFrameHelper(current, current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), callee.targetMethod(), purpose, context);
     }
 
     public static boolean walkFrameHelper(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {

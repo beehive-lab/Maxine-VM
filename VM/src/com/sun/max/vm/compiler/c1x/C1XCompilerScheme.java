@@ -112,7 +112,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         throw FatalError.unexpected("bailout"); // compilation failed
     }
 
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, TargetMethod calleeMethod, StackFrameWalker.Purpose purpose, Object context) {
-        return AMD64CPSCompiler.walkFrameHelper(current, current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), calleeMethod, purpose, context);
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context) {
+        return AMD64CPSCompiler.walkFrameHelper(current, current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), callee.targetMethod(), purpose, context);
     }
 }

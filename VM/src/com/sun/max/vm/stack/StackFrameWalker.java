@@ -234,10 +234,9 @@ public abstract class StackFrameWalker {
         boolean isTopFrame = true;
         boolean inNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
-        TargetMethod lastJavaCallee = null;
-
         while (!current.sp.isZero()) {
             TargetMethod targetMethod = targetMethodFor(current.ip);
+            TargetMethod calleeMethod = callee.targetMethod;
             current.targetMethod = targetMethod;
             traceCursor(current);
 
@@ -245,15 +244,12 @@ public abstract class StackFrameWalker {
                 // found target method
                 inNative = false;
 
-                checkVmEntrypointCaller(lastJavaCallee, targetMethod);
+                checkVmEntrypointCaller(calleeMethod, targetMethod);
 
                 // walk the frame
-                if (!targetMethod.compilerScheme.walkFrame(current, callee, lastJavaCallee, purpose, context)) {
+                if (!targetMethod.compilerScheme.walkFrame(current, callee, purpose, context)) {
                     break;
                 }
-
-                // Record the last Java callee frame info
-                lastJavaCallee = targetMethod;
 
                 // clear the trap state if we didn't just walk over the trap stub
                 if (targetMethod.classMethodActor() == null || !targetMethod.classMethodActor().isTrapStub()) {
@@ -278,13 +274,13 @@ public abstract class StackFrameWalker {
                     inNative = false;
                     advanceFrameInNative(purpose);
                 } else {
-                    if (lastJavaCallee == null) {
+                    if (calleeMethod == null) {
                         // This is a native function that called a VM entry point such as the VmThread.run(),
                         // MaxineVM.run() or a JNI function.
                         break;
                     }
 
-                    ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
+                    ClassMethodActor lastJavaCalleeMethodActor = calleeMethod.classMethodActor();
                     if (lastJavaCalleeMethodActor != null && lastJavaCalleeMethodActor.isVmEntryPoint()) {
                         if (lastJavaCalleeMethodActor.isTrapStub()) {
                             // This can only occur in the inspector and implies that execution is in the platform specific
@@ -293,7 +289,7 @@ public abstract class StackFrameWalker {
                             // pointer at which the fault occurred.
                             break;
                         }
-                        if (!advanceVmEntryPointFrame(lastJavaCallee)) {
+                        if (!advanceVmEntryPointFrame(calleeMethod)) {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor == null) {
@@ -307,7 +303,6 @@ public abstract class StackFrameWalker {
                         FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point");
                     }
                 }
-                lastJavaCallee = null;
             }
             isTopFrame = false;
         }

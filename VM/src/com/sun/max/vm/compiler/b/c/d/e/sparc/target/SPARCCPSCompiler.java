@@ -258,7 +258,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, TargetMethod lastJavaCallee, Purpose purpose, Object context) {
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         TargetMethod targetMethod = current.targetMethod();
         boolean isTopFrame = current.isTopFrame();

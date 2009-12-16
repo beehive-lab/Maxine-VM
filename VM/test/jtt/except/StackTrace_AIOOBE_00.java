@@ -18,23 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.stack;
+package jtt.except;
 
-/**
- * A visitor for traversing the frames on a thread's stack. The details of each frame traversed in the
- * stack walk are passed to {@link #visitFrame(StackFrame)}
- * in a newly allocated {@link StackFrame} object.
- *
- * @see RawStackFrameVisitor
- * @author Doug Simon
+/*
+ * @Harness: java
+ * @Runs: 0=0; 1=0; -2=-1; 3=-1
  */
-public interface StackFrameVisitor {
+public class StackTrace_AIOOBE_00 {
 
-    /**
-     * Processes a given frame that is being traversed as part of a {@linkplain StackFrameWalker#walk stack walk}.
-     *
-     * @param stackFrame an object encapsulating the details of the frame
-     * @return true if the walk should continue to the caller of {@code stackFrame}, false if it should terminate now
-     */
-    boolean visitFrame(StackFrame stackFrame);
+    private static int[] array = new int[3];
+
+    public static int test(int a) {
+        try {
+            return array[a];
+        } catch (ArrayIndexOutOfBoundsException npe) {
+            for (StackTraceElement e : npe.getStackTrace()) {
+                if (e.getClassName().equals(StackTrace_AIOOBE_00.class.getName()) && e.getMethodName().equals("test")) {
+                    return -1;
+                }
+            }
+        }
+        return -2;
+    }
 }

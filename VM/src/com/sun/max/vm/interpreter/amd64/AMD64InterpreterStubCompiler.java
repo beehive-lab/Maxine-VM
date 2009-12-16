@@ -45,7 +45,7 @@ public class AMD64InterpreterStubCompiler extends InterpreterStubCompiler {
         return new AMD64InterpreterStub(classMethodActor, this, vmConfiguration().targetABIsScheme().optimizedJavaABI());
     }
 
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, TargetMethod calleeMethod, Purpose purpose, Object context) {
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         TargetMethod targetMethod = current.targetMethod();
         boolean isTopFrame = current.isTopFrame();
