@@ -33,7 +33,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
@@ -68,7 +67,6 @@ public abstract class StackFrameWalker {
         private Pointer ip = Pointer.zero();
         private Pointer sp = Pointer.zero();
         private Pointer fp = Pointer.zero();
-        private Pointer registerState = Pointer.zero();
         private boolean isTopFrame = false;
 
         private Cursor() {
@@ -83,29 +81,28 @@ public abstract class StackFrameWalker {
          * @param fp the new frame pointer
          */
         public void advance(Pointer ip, Pointer sp, Pointer fp) {
-            setFields(null, ip, sp, fp, Pointer.zero(), false);
+            setFields(null, ip, sp, fp, false);
         }
 
         private void reset() {
-            setFields(null, Pointer.zero(), Pointer.zero(), Pointer.zero(), Pointer.zero(), false);
+            setFields(null, Pointer.zero(), Pointer.zero(), Pointer.zero(), false);
         }
 
         private void copyFrom(Cursor other) {
-            setFields(other.targetMethod, other.ip, other.sp, other.fp, other.registerState, other.isTopFrame);
+            setFields(other.targetMethod, other.ip, other.sp, other.fp, other.isTopFrame);
         }
 
-        private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, Pointer registerState, boolean isTopFrame) {
+        private Cursor setFields(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame) {
             this.targetMethod = targetMethod;
             this.ip = ip;
             this.sp = sp;
             this.fp = fp;
-            this.registerState = registerState;
             this.isTopFrame = isTopFrame;
             return this;
         }
 
         private Cursor copy() {
-            return new Cursor().setFields(targetMethod, ip, sp, fp, registerState, isTopFrame);
+            return new Cursor().setFields(targetMethod, ip, sp, fp, isTopFrame);
         }
 
         /**
@@ -118,42 +115,35 @@ public abstract class StackFrameWalker {
         /**
          * @return the target method corresponding to the instruction pointer.
          */
-        public final TargetMethod targetMethod() {
+        public TargetMethod targetMethod() {
             return targetMethod;
         }
 
         /**
          * @return the current instruction pointer.
          */
-        public final Pointer ip() {
+        public Pointer ip() {
             return ip;
         }
 
         /**
          * @return the current stack pointer.
          */
-        public final Pointer sp() {
+        public Pointer sp() {
             return sp;
         }
 
         /**
          * @return the current frame pointer.
          */
-        public final Pointer fp() {
+        public Pointer fp() {
             return fp;
-        }
-
-        /**
-         * @return the register state within this frame, if any.
-         */
-        public final Pointer registerState() {
-            return registerState;
         }
 
         /**
          * @return {@code true} if this frame is the top frame
          */
-        public final boolean isTopFrame() {
+        public boolean isTopFrame() {
             return isTopFrame;
         }
     }
@@ -163,8 +153,6 @@ public abstract class StackFrameWalker {
 
     /**
      * Constants denoting the finite set of reasons for which a stack walk can be performed.
-     * Every implementation of {@link RuntimeCompilerScheme#walkFrame(com.sun.max.vm.stack.StackFrameWalker.Cursor, com.sun.max.vm.stack.StackFrameWalker.Cursor,com.sun.max.vm.compiler.target.TargetMethod, com.sun.max.vm.stack.StackFrameWalker.Purpose, Object)}
-     * must deal with each type of stack walk.
      *
      * @author Doug Simon
      */
