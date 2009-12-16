@@ -161,6 +161,6 @@ public abstract class CiArchitecture {
      */
     public boolean twoOperandMode() {
         // TODO: override this method in appropriate subclasses
-        return isSPARC();
+        return isX86();
     }
 }

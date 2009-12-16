@@ -301,10 +301,6 @@ public class LIRList {
         shiftRight(value, LIROperand.forInt(count), dst, LIROperand.IllegalLocation);
     }
 
-    public void unsignedShiftRight(LIROperand value, int count, LIROperand dst) {
-        unsignedShiftRight(value, LIROperand.forInt(count), dst, LIROperand.IllegalLocation);
-    }
-
     public void lcmp2int(LIROperand left, LIROperand right, LIROperand dst) {
         append(new LIROp2(LIROpcode.Cmpl2i, left, right, dst));
     }
