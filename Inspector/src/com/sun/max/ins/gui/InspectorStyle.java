@@ -145,13 +145,10 @@ public interface InspectorStyle {
     Color vmRunningBackgroundColor();
     Color vmTerminatedBackgroundColor();
 
-    Color debugSelectedCodeBorderColor();
-
     Border debugEnabledTargetBreakpointTagBorder();
     Border debugDisabledTargetBreakpointTagBorder();
     Border debugEnabledBytecodeBreakpointTagBorder();
     Border debugDisabledBytecodeBreakpointTagBorder();
-    Border watchpointTagBorder();
 
     Color debugIPTextColor();
     Color debugIPTagColor();
