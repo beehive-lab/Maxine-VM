@@ -92,6 +92,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected final XirSupport xir;
     protected final boolean is32;
     protected final boolean is64;
+    protected final boolean isTwoOperand;
 
     private BlockBegin currentBlock;
     private int currentVariableNumber;
@@ -114,6 +115,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         this.xir = C1XOptions.UseXIR ? new XirSupport(compilation.compiler.xir) : null;
         this.is32 = compilation.target.arch.is32bit();
         this.is64 = compilation.target.arch.is64bit();
+        this.isTwoOperand = compilation.target.arch.twoOperandMode();
 
         instructionForOperand = new ArrayMap<Value>();
         constants = new ArrayList<LIRConstant>();
@@ -456,7 +458,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitIfOp(IfOp x) {
-
         CiKind xtype = x.x().kind;
         CiKind ttype = x.trueValue().kind;
         assert xtype.isInt() || xtype.isObject() : "cannot handle others";
@@ -1571,7 +1572,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected void arithmeticOpFpu(int code, LIROperand result, LIROperand left, LIROperand right, LIROperand tmp) {
         LIROperand leftOp = left;
 
-        if (C1XOptions.TwoOperandLIRForm && leftOp != result) {
+        if (isTwoOperand && leftOp != result) {
             assert right != result : "malformed";
             lir.move(leftOp, result);
             leftOp = result;
@@ -1602,7 +1603,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected void arithmeticOpInt(int code, LIROperand result, LIROperand left, LIROperand right, LIROperand tmp) {
         LIROperand leftOp = left;
 
-        if (C1XOptions.TwoOperandLIRForm && leftOp != result) {
+        if (isTwoOperand && leftOp != result) {
             assert right != result : "malformed";
             lir.move(leftOp, result);
             leftOp = result;
@@ -1642,7 +1643,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected void arithmeticOpLong(int code, LIROperand result, LIROperand left, LIROperand right, LIRDebugInfo info) {
         LIROperand leftOp = left;
 
-        if (C1XOptions.TwoOperandLIRForm && leftOp != result) {
+        if (isTwoOperand && leftOp != result) {
             assert right != result : "malformed";
             lir.move(leftOp, result);
             leftOp = result;
@@ -1814,7 +1815,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void logicOp(int code, LIROperand resultOp, LIROperand leftOp, LIROperand rightOp) {
-        if (C1XOptions.TwoOperandLIRForm && leftOp != resultOp) {
+        if (isTwoOperand && leftOp != resultOp) {
             assert rightOp != resultOp : "malformed";
             lir.move(leftOp, resultOp);
             leftOp = resultOp;
@@ -1967,7 +1968,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected void shiftOp(int code, LIROperand resultOp, LIROperand value, LIROperand count, LIROperand tmp) {
-        if (C1XOptions.TwoOperandLIRForm && value != resultOp) {
+        if (isTwoOperand && value != resultOp) {
             assert count != resultOp : "malformed";
             lir.move(value, resultOp);
             value = resultOp;
