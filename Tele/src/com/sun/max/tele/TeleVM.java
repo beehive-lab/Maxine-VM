@@ -974,8 +974,10 @@ public abstract class TeleVM implements MaxVM {
         return isValidGrip(reference.toGrip());
     }
 
-    public void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException {
-        teleProcess.watchpointFactory().initFactory();
+    public void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        if (watchpointsEnabled()) {
+            teleProcess.watchpointFactory().initFactory();
+        }
     }
 
     /**
@@ -1446,58 +1448,69 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final boolean watchpointsEnabled() {
-        return teleProcess.maximumWatchpointCount() > 0;
+        return teleProcess.watchpointsEnabled();
     }
 
-    public final void addWatchpointObserver(Observer observer) {
+    public final void addWatchpointObserver(Observer observer) throws UnsupportedOperationException {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         teleProcess.watchpointFactory().addObserver(observer);
     }
 
     public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        throws TooManyWatchpointsException, DuplicateWatchpointException, UnsupportedOperationException {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         return teleProcess.watchpointFactory().createRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setWordWatchpoint(String description, Address address, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         final MemoryRegion memoryRegion = new FixedMemoryRegion(address, wordSize(), "");
         return setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         return teleProcess.watchpointFactory().createObjectWatchpoint(description, teleObject, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         return teleProcess.watchpointFactory().createFieldWatchpoint(description, teleObject, fieldActor, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         return teleProcess.watchpointFactory().createArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);
     }
 
     public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         return teleProcess.watchpointFactory().createHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec, gc);
     }
 
     public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException {
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         return teleProcess.watchpointFactory().createVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
     }
 
-    public final Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) {
+    public final Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) throws ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         return teleProcess.watchpointFactory().findClientWatchpoints(memoryRegion);
     }
 
-    public final IterableWithLength<MaxWatchpoint> watchpoints() {
+    public final IterableWithLength<MaxWatchpoint> watchpoints() throws ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         return teleProcess.watchpointFactory().clientWatchpoints();
     }
 
-    public void describeWatchpoints(PrintStream printStream) {
+    public void describeWatchpoints(PrintStream printStream) throws ProgramError {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         teleProcess.watchpointFactory().writeSummaryToStream(printStream);
     }
 
