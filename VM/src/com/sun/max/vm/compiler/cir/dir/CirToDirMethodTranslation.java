@@ -665,7 +665,7 @@ class CirToDirMethodTranslation {
                     break;
                 }
                 default: {
-                    final DirBlock[] array = Sequence.Static.toArray(sequence, DirBlock.class);
+                    final DirBlock[] array = Sequence.Static.toArray(sequence, new DirBlock[sequence.length()]);
                     for (int i = 0; i < array.length; i++) {
                         final DirBlock a = array[i];
                         if (blockMap.get(a) == null) {

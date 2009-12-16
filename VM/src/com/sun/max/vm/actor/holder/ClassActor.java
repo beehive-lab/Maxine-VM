@@ -122,6 +122,11 @@ public abstract class ClassActor extends Actor {
     @INSPECTED
     private final ClassActor componentClassActor;
 
+    /**
+     * A lazily initialized value holding the type representing an 1-dimensional array of this type.
+     */
+    ArrayClassActor arrayClassActor;
+
     public Object[] signers;
 
     private ProtectionDomain protectionDomain;
@@ -236,7 +241,8 @@ public abstract class ClassActor extends Actor {
                 ClassActor.this.staticTuple = StaticTuple.create(ClassActor.this);
 
                 final IdentityHashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
-                ClassActor.this.allVirtualMethodActors = Sequence.Static.toArray(gatherVirtualMethodActors(allInterfaceActors, methodLookup), VirtualMethodActor.class);
+                Sequence<VirtualMethodActor> virtualMethodActors = gatherVirtualMethodActors(allInterfaceActors, methodLookup);
+                ClassActor.this.allVirtualMethodActors = Sequence.Static.toArray(virtualMethodActors, new VirtualMethodActor[virtualMethodActors.length()]);
                 assignHolderToLocalMethodActors();
                 if (isReferenceClassActor() || isInterfaceActor()) {
                     final Size dynamicTupleSize = layoutFields(specificLayout);

@@ -75,15 +75,21 @@ public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends Refer
               NO_ENCLOSING_METHOD_INFO);
     }
 
+    /**
+     * Gets the type representing an 1-dimensional array of a given {@linkplain ClassActor#componentClassActor() component type}.
+     */
     public static ArrayClassActor forComponentClassActor(ClassActor componentClassActor) {
-        final TypeDescriptor arrayTypeDescriptor = JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor, 1);
-        synchronized (componentClassActor.classLoader) {
-            ArrayClassActor arrayClassActor = (ArrayClassActor) ClassRegistry.get(componentClassActor.classLoader, arrayTypeDescriptor, false);
-            if (arrayClassActor == null) {
-                arrayClassActor = ClassActorFactory.createArrayClassActor(componentClassActor);
+        if (componentClassActor.arrayClassActor == null) {
+            final TypeDescriptor arrayTypeDescriptor = JavaTypeDescriptor.getArrayDescriptorForDescriptor(componentClassActor.typeDescriptor, 1);
+            synchronized (componentClassActor.classLoader) {
+                ArrayClassActor arrayClassActor = (ArrayClassActor) ClassRegistry.get(componentClassActor.classLoader, arrayTypeDescriptor, false);
+                if (arrayClassActor == null) {
+                    arrayClassActor = ClassActorFactory.createArrayClassActor(componentClassActor);
+                }
+                componentClassActor.arrayClassActor = arrayClassActor;
             }
-            return arrayClassActor;
         }
+        return componentClassActor.arrayClassActor;
     }
 
     public static ArrayClassActor forComponentClassActor(ClassActor elementClassActor, int dimensions) {

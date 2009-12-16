@@ -73,17 +73,19 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      */
     public Sequence<MaxWatchpoint> getWatchpoints(int row) {
         DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
-        for (MaxWatchpoint watchpoint : inspection.maxVM().watchpoints()) {
-            if (watchpoint.overlaps(getMemoryRegion(row))) {
-                if (watchpoints.isEmpty()) {
-                    watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
-                } else if (watchpoints.length() == 1) {
-                    GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
-                    newSet.add(watchpoint);
-                    watchpoints = newSet;
-                } else {
-                    final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
-                    growableSet.add(watchpoint);
+        if (inspection.maxVM().watchpointsEnabled()) {
+            for (MaxWatchpoint watchpoint : inspection.maxVM().watchpoints()) {
+                if (watchpoint.overlaps(getMemoryRegion(row))) {
+                    if (watchpoints.isEmpty()) {
+                        watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
+                    } else if (watchpoints.length() == 1) {
+                        GrowableDeterministicSet<MaxWatchpoint> newSet = new LinkedIdentityHashSet<MaxWatchpoint>(watchpoints.first());
+                        newSet.add(watchpoint);
+                        watchpoints = newSet;
+                    } else {
+                        final GrowableDeterministicSet<MaxWatchpoint> growableSet = (GrowableDeterministicSet<MaxWatchpoint>) watchpoints;
+                        growableSet.add(watchpoint);
+                    }
                 }
             }
         }

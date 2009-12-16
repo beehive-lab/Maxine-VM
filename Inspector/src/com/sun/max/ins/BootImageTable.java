@@ -131,8 +131,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("boot code size:", new DataLabel.IntAsHex(inspection(), header.codeSize), null);
             addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeEnd));
 
-            addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header.codeCacheSize), null);
-
             final Pointer runMethodPointer = bootImageStart.plus(header.vmRunMethodOffset);
             addRow("MaxineVM.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer));
             final Pointer threadRunMethodPointer = bootImageStart.plus(header.vmThreadRunMethodOffset);

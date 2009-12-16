@@ -351,7 +351,7 @@ public class VmThreadLocal {
                     REFERENCE_MAP |= 1L << value.index;
                 }
             }
-            VmThreadLocal.valuesNeedingInitialization = Sequence.Static.toArray(valuesNeedingInitialization, VmThreadLocal.class);
+            VmThreadLocal.valuesNeedingInitialization = Sequence.Static.toArray(valuesNeedingInitialization, new VmThreadLocal[valuesNeedingInitialization.length()]);
         } catch (NoSuchMethodException e) {
             throw ProgramError.unexpected(e);
         }

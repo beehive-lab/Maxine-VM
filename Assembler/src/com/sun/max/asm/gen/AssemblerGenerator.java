@@ -181,8 +181,15 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
             }
 
             if (sortAssemblerMethods) {
-                templates = Sequence.Static.sort(templates, assembly().templateType());
-                labelTemplates = Sequence.Static.sort(labelTemplates, assembly().templateType());
+                Class<Template_Type[]> type = null;
+                Template_Type[] sortedTemplates = StaticLoophole.cast(type, Array.newInstance(assembly().templateType(), templates.length()));
+                Template_Type[] sortedLabelTemplates = StaticLoophole.cast(type, Array.newInstance(assembly().templateType(), labelTemplates.length()));
+                Sequence.Static.toArray(templates, sortedTemplates);
+                Arrays.sort(sortedTemplates);
+                templates = new ArraySequence<Template_Type>(sortedTemplates);
+                Sequence.Static.toArray(labelTemplates, sortedLabelTemplates);
+                Arrays.sort(sortedLabelTemplates);
+                labelTemplates = new ArraySequence<Template_Type>(sortedLabelTemplates);
             }
         }
     }

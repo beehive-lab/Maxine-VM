@@ -128,7 +128,7 @@ public final class JavaProject {
         if (sourcePath.isEmpty()) {
             throw new JavaProjectNotFoundException("Could not find path to Java project sources");
         }
-        return new Classpath(Sequence.Static.toArray(sourcePath, String.class));
+        return new Classpath(Sequence.Static.toArray(sourcePath, new String[sourcePath.length()]));
     }
 
     public static File findSourceDirectory() {

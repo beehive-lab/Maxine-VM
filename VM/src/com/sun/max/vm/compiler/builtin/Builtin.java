@@ -110,7 +110,9 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
      */
     @HOSTED_ONLY
     public static void initialize() {
-        builtins = IndexedSequence.Static.sort(builtins, Builtin.class);
+        Builtin[] result = Sequence.Static.toArray(builtins, new Builtin[builtins.length()]);
+        java.util.Arrays.sort(result);
+        builtins = new ArraySequence<Builtin>(result);
         for (int i = 0; i < builtins.length(); i++) {
             final Builtin builtin = builtins.get(i);
             builtin.serial = i;

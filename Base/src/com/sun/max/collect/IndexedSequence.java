@@ -21,7 +21,6 @@
 package com.sun.max.collect;
 
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.lang.*;
 import com.sun.max.util.*;
@@ -33,7 +32,7 @@ public interface IndexedSequence<Element_Type> extends Sequence<Element_Type> {
 
     /**
      * Gets the element from this sequence located at a given index.
-     * 
+     *
      * @throws IndexOutOfBoundsException if {@code 0 < index || index >= length()}
      */
     Element_Type get(int index);
@@ -91,12 +90,6 @@ public interface IndexedSequence<Element_Type> extends Sequence<Element_Type> {
                 result.set(i, element);
             }
             return result;
-        }
-
-        public static <Element_Type> IndexedSequence<Element_Type> sort(Sequence<Element_Type> sequence, Class<Element_Type> elementType) {
-            final Element_Type[] array = Sequence.Static.toArray(sequence, elementType);
-            Arrays.sort(array);
-            return new ArraySequence<Element_Type>(array);
         }
 
         public static <Element_Type> List<Element_Type> toList(Sequence<Element_Type> sequence) {

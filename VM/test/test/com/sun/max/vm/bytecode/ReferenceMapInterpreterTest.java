@@ -136,7 +136,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
 
         InterpreterMapMaker(BirMethod birMethod) {
             classMethodActor = birMethod.classMethodActor();
-            blocks = Sequence.Static.toArray(birMethod.blocks(), BirBlock.class);
+            blocks = Sequence.Static.toArray(birMethod.blocks(), new BirBlock[birMethod.blocks().length()]);
             blockFrames = ReferenceMapInterpreter.createFrames(this);
             final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
             exceptionHandlerMap = ExceptionHandler.createHandlerMap(codeAttribute);

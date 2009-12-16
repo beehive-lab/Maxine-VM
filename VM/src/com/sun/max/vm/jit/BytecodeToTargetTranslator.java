@@ -663,7 +663,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             return null;
         }
         if (MaxineVM.isHosted()) {
-            return Sequence.Static.toArray(referenceLiterals, Object.class);
+            return Sequence.Static.toArray(referenceLiterals, new Object[referenceLiterals.length()]);
         }
         // Must not cause checkcast here, since some reference literals may be static tuples.
         final Object[] result = new Object[referenceLiterals.length()];
