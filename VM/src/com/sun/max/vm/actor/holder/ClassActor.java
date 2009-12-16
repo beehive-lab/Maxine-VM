@@ -186,6 +186,7 @@ public abstract class ClassActor extends Actor {
         this.typeDescriptor = typeDescriptor;
         this.superClassActor = superClassActor;
         this.sourceFileName = sourceFileName;
+        assert classLoader !=null;
         this.classLoader = classLoader;
 
         final ClassRegistry classRegistry = classRegistry();
