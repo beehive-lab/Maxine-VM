@@ -33,6 +33,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.lang.Function;
 
 /**
  * @author Ben L. Titzer
@@ -101,15 +102,19 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         return target;
     }
 
-    public final TargetMethod compile(ClassMethodActor classMethodActor) {
-        RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
-        CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
-        if (compiledMethod != null) {
-            C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(this, classMethodActor, compiledMethod);
-            CompilationScheme.Static.notifyCompilationComplete(c1xTargetMethod);
-            return c1xTargetMethod;
-        }
-        throw FatalError.unexpected("bailout"); // compilation failed
+    public final TargetMethod compile(final ClassMethodActor classMethodActor) {
+        return MaxineVM.usingTarget(new Function<TargetMethod>() {
+            public TargetMethod call() {
+                RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
+                CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
+                if (compiledMethod != null) {
+                    C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(C1XCompilerScheme.this, classMethodActor, compiledMethod);
+                    CompilationScheme.Static.notifyCompilationComplete(c1xTargetMethod);
+                    return c1xTargetMethod;
+                }
+                throw FatalError.unexpected("bailout"); // compilation failed
+            }
+        });
     }
 
     public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context) {

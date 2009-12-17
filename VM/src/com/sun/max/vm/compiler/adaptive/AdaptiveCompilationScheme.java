@@ -188,6 +188,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
 
     private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme recommendedCompiler, RuntimeCompilerScheme prohibitedCompiler) {
         Compilation compilation;
+        boolean doCompile = true;
         synchronized (classMethodActor) {
             assert !(classMethodActor.isNative() && classMethodActor.isVmEntryPoint()) : "cannot compile JNI functions that are native";
             Object targetState = classMethodActor.targetState;
@@ -197,16 +198,11 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
                 classMethodActor.targetState = compilation;
             } else if (targetState instanceof Compilation) {
-                // the method is currently being compiled, wait for the result
+                // the method is currently being compiled, just wait for the result
                 compilation = (Compilation) targetState;
-
-                try {
-                    return compilation.get();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                doCompile = false;
             } else {
-                // this method has already been compiled
+                // this method has already been compiled once
                 RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, recommendedCompiler, prohibitedCompiler);
                 TargetMethod targetMethod = classMethodActor.currentTargetMethod();
                 if (targetMethod != null && targetMethod.compilerScheme == compiler) {
@@ -218,8 +214,13 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         }
 
         try {
-            return compilation.compile(observers);
+            if (doCompile) {
+                return compilation.compile(observers);
+            } else {
+                return compilation.get();
+            }
         } catch (Throwable t) {
+            // compilation failed for some reason
             Trace.line(1, "Exception occurred during compilation of method " + classMethodActor.toString() + ": " + t.toString());
             Trace.line(1, "Compiler scheme is: " + compilation.compilerScheme.toString() + " - trying different compiler scheme...");
             if (failoverOption.getValue()) {
