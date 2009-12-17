@@ -217,12 +217,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
 
     // default display of any kind of code
-    private final Color codeAlternateBackgroundColor = paleBlue;
     private final Color codeStopBackgroundColor = paleGray;
-
-    public Color defaultCodeAlternateBackgroundColor() {
-        return codeAlternateBackgroundColor;
-    }
 
     // Display of machine code
 
@@ -306,11 +301,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     @Override
     public Border debugDisabledBytecodeBreakpointTagBorder() {
         return debugDisabledBytecodeBreakpointTagBorder;
-    }
-
-    @Override
-    public Border watchpointTagBorder() {
-        return debugEnabledTargetBreakpointTagBorder();
     }
 
     @Override
