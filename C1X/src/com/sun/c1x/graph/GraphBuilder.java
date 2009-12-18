@@ -780,7 +780,7 @@ public final class GraphBuilder {
     void genInvokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
         ValueStack stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signatureType().argumentSlots(false));
-        if (!tryOptimizeCall(target, args, true)) {
+        if (!tryRemoveCall(target, args, true)) {
             if (!tryInline(target, args, null, stateBefore)) {
                 appendInvoke(Bytecodes.INVOKESTATIC, target, args, true, cpi, constantPool, stateBefore);
             }
@@ -790,68 +790,71 @@ public final class GraphBuilder {
     void genInvokeInterface(RiMethod target, char cpi, RiConstantPool constantPool) {
         ValueStack stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
-        if (!tryOptimizeCall(target, args, false)) {
-            // XXX: attempt devirtualization / deinterfacification of INVOKEINTERFACE
-            appendInvoke(Bytecodes.INVOKEINTERFACE, target, args, false, cpi, constantPool, stateBefore);
+        if (!tryRemoveCall(target, args, false)) {
+            genInvokeIndirect(Bytecodes.INVOKEINTERFACE, target, args, stateBefore, cpi, constantPool);
         }
     }
 
     void genInvokeVirtual(RiMethod target, char cpi, RiConstantPool constantPool) {
         ValueStack stateBefore = curState.immutableCopy();
         Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
-        if (!tryOptimizeCall(target, args, false)) {
-            Value receiver = args[0];
-            // attempt to devirtualize the call
-            if (target.isLoaded() && target.holder().isLoaded()) {
-                RiType klass = target.holder();
-                // 0. check for trivial cases
-                if (target.canBeStaticallyBound() && !target.isAbstract()) {
-                    // check for trivial cases (e.g. final methods, nonvirtual methods)
-                    invokeDirect(target, args, target.holder(), cpi, constantPool, stateBefore);
-                    return;
-                }
-                // 1. check if the exact type of the receiver can be determined
-                RiType exact = getExactType(klass, receiver);
-                if (exact != null && exact.isLoaded()) {
-                    // either the holder class is exact, or the receiver object has an exact type
-                    invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool, stateBefore);
-                    return;
-                }
-                // 2. check if an assumed leaf method can be found
-                RiMethod leaf = getAssumedLeafMethod(target, receiver);
-                if (leaf != null && leaf.isLoaded() && !leaf.isAbstract() && leaf.holder().isLoaded()) {
-                    invokeDirect(leaf, args, null, cpi, constantPool, stateBefore);
-                    return;
-                }
-                // 3. check if the either of the holder or declared type of receiver can be assumed to be a leaf
-                exact = getAssumedLeafType(klass, receiver);
-                if (exact != null && exact.isLoaded()) {
-                    // either the holder class is exact, or the receiver object has an exact type
-                    invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool, stateBefore);
-                    return;
-                }
-            }
-            // devirtualization failed, produce an actual invokevirtual
-            appendInvoke(Bytecodes.INVOKEVIRTUAL, target, args, false, cpi, constantPool, stateBefore);
+        if (!tryRemoveCall(target, args, false)) {
+            genInvokeIndirect(Bytecodes.INVOKEVIRTUAL, target, args, stateBefore, cpi, constantPool);
         }
+    }
+
+    void genInvokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
+        ValueStack stateBefore = curState.immutableCopy();
+        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
+        if (!tryRemoveCall(target, args, false)) {
+            invokeDirect(target, args, knownHolder, cpi, constantPool, stateBefore);
+        }
+    }
+
+    private void genInvokeIndirect(int opcode, RiMethod target, Value[] args, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
+        Value receiver = args[0];
+        // attempt to devirtualize the call
+        if (target.isLoaded() && target.holder().isLoaded()) {
+            RiType klass = target.holder();
+            // 0. check for trivial cases
+            if (target.canBeStaticallyBound() && !target.isAbstract()) {
+                // check for trivial cases (e.g. final methods, nonvirtual methods)
+                invokeDirect(target, args, target.holder(), cpi, constantPool, stateBefore);
+                return;
+            }
+            // 1. check if the exact type of the receiver can be determined
+            RiType exact = getExactType(klass, receiver);
+            if (exact != null && exact.isLoaded()) {
+                // either the holder class is exact, or the receiver object has an exact type
+                invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool, stateBefore);
+                return;
+            }
+            // 2. check if an assumed leaf method can be found
+            RiMethod leaf = getAssumedLeafMethod(target, receiver);
+            if (leaf != null && leaf.isLoaded() && !leaf.isAbstract() && leaf.holder().isLoaded()) {
+                invokeDirect(leaf, args, null, cpi, constantPool, stateBefore);
+                return;
+            }
+            // 3. check if the either of the holder or declared type of receiver can be assumed to be a leaf
+            exact = getAssumedLeafType(klass, receiver);
+            if (exact != null && exact.isLoaded()) {
+                // either the holder class is exact, or the receiver object has an exact type
+                invokeDirect(exact.resolveMethodImpl(target), args, exact, cpi, constantPool, stateBefore);
+                return;
+            }
+        }
+        // devirtualization failed, produce an actual invokevirtual
+        appendInvoke(opcode, target, args, false, cpi, constantPool, stateBefore);
     }
 
     private CiKind returnKind(RiMethod target) {
         return target.signatureType().returnKind();
     }
 
-    void genInvokeSpecial(RiMethod target, RiType knownHolder, char cpi, RiConstantPool constantPool) {
-        ValueStack stateBefore = curState.immutableCopy();
-        Value[] args = curState.popArguments(target.signatureType().argumentSlots(true));
-        invokeDirect(target, args, knownHolder, cpi, constantPool, stateBefore);
-    }
-
     private void invokeDirect(RiMethod target, Value[] args, RiType knownHolder, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
-        if (!tryOptimizeCall(target, args, false)) {
-            if (!tryInline(target, args, knownHolder, stateBefore)) {
-                // could not optimize or inline the method call
-                appendInvoke(Bytecodes.INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
-            }
+        if (!tryInline(target, args, knownHolder, stateBefore)) {
+            // could not optimize or inline the method call
+            appendInvoke(Bytecodes.INVOKESPECIAL, target, args, false, cpi, constantPool, stateBefore);
         }
     }
 
@@ -895,7 +898,7 @@ public final class GraphBuilder {
         RiType declared = receiver.declaredType();
         if (declared != null && declared.isLoaded() && !declared.isInterface()) {
             RiMethod impl = declared.resolveMethodImpl(target);
-            if (impl != null && assumeLeafClass(declared)) {
+            if (impl != null && (assumeLeafMethod(impl) || assumeLeafClass(declared))) {
                 return impl;
             }
         }
@@ -1283,10 +1286,10 @@ public final class GraphBuilder {
         return state;
     }
 
-    boolean tryOptimizeCall(RiMethod target, Value[] args, boolean isStatic) {
+    boolean tryRemoveCall(RiMethod target, Value[] args, boolean isStatic) {
         if (target.isLoaded()) {
             if (C1XOptions.OptIntrinsify) {
-                // try to create an intrinsic node
+                // try to create an intrinsic node instead of a call
                 C1XIntrinsic intrinsic = C1XIntrinsic.getIntrinsic(target);
                 if (intrinsic != null && tryInlineIntrinsic(target, args, isStatic, intrinsic)) {
                     // this method is not an intrinsic
@@ -1994,7 +1997,7 @@ public final class GraphBuilder {
 
     boolean assumeLeafMethod(RiMethod method) {
         if (!C1XOptions.TestSlowPath && method.isLoaded()) {
-            if (method.isFinalMethod()) {
+            if (method.isLeafMethod()) {
                 return true;
             }
             if (C1XOptions.UseDeopt && C1XOptions.OptLeafMethods) {

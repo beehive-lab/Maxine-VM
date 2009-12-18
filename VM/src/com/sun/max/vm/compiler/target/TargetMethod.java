@@ -685,6 +685,10 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         }
     }
 
+    public boolean isTrapStub() {
+        return classMethodActor != null && classMethodActor.isTrapStub();
+    }
+
     /**
      * Gets a string representation of the reference map for each stop in this target method.
      */
