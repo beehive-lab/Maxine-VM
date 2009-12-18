@@ -112,8 +112,9 @@ public interface MaxThread {
 
     /**
      * Gets the platform dependent handle to the native thread data structure in the VM's address space.
-     * For example, on Linux this will be the pthread_self(3) value for this thread. If non-zero,
-     * this value is guaranteed to be unique for any running thread.
+     * For example, on Linux this will be the pthread_self(3) value for this thread, but only becomes
+     * valid once the thread has executed to the point where it is on the VM managed thread list.
+     * If non-zero, this value is guaranteed to be immutable and unique among running threads.
      */
     long handle();
 
