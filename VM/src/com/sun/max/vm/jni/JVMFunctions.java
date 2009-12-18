@@ -29,6 +29,7 @@ import sun.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -40,7 +41,7 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
- * This class implements part of the Maxine version of the JVM_* interface which the VM presents to the  JDK's native code.
+ * This class implements part of the Maxine version of the JVM_* interface which the VM presents to the JDK's native code.
  * Some of the JVM interface is implemented directly in C in "jvm.c" and
  * some is implemented by upcalls to this Java code, which calls into the Maxine VM.
  *
@@ -110,12 +111,24 @@ public class JVMFunctions {
 
     public static String[] GetSystemPackages() {
         return null;
-        //throw Problem.unimplemented();
-
     }
 
     public static void ArrayCopy(Object src, int srcPos, Object dest, int destPos, int length) {
         System.arraycopy(src, srcPos, dest, destPos, length);
+    }
+
+    public static Thread[] GetAllThreads() {
+        final List<Thread> allThreads = new ArrayList<Thread>();
+        VmThreadMap.ACTIVE.forAllThreads(null, new Procedure<VmThread>() {
+            @Override
+            public void run(VmThread argument) {
+                Thread javaThread = argument.javaThread();
+                if (javaThread != null) {
+                    allThreads.add(javaThread);
+                }
+            }
+        });
+        return allThreads.toArray(new Thread[allThreads.size()]);
     }
 
     // Checkstyle: resume method name check

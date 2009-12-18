@@ -264,6 +264,13 @@ void debugger_initialize() {
 extern JNIEnv jniEnv();
 
 /**
+ * Gets a pointer to the global JMM function table.
+ *
+ * Defined in Native/substrate/jmm.c
+ */
+void* getJMMInterface(int version);
+
+/**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
 typedef jint (*VMRunMethod)(
@@ -273,6 +280,7 @@ typedef jint (*VMRunMethod)(
                 void *dlsym(void *, const char *),
                 char *dlerror(void),
                 JNIEnv jniEnv,
+                void *jmmInterface,
                 int argc,
                 char *argv[]);
 
@@ -350,10 +358,10 @@ int maxine(int argc, char *argv[], char *executablePath) {
     }
 
 #if log_LOADER
-    log_println("entering Java by calling MaxineVM.run(bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, argc=%d, argv=%p)",
-                    image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), argc, argv);
+    log_println("entering Java by calling MaxineVM.run(bootHeapRegionStart=%p, auxiliarySpace=%p, openDynamicLibrary=%p, dlsym=%p, dlerror=%p, jniEnv=%p, jmmInterface=%p, argc=%d, argv=%p)",
+                    image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
 #endif
-    exitCode = (*method)(image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), argc, argv);
+    exitCode = (*method)(image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, jniEnv(), getJMMInterface(-1), argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);

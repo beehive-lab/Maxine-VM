@@ -202,6 +202,12 @@ public abstract class TypeDescriptor extends Descriptor {
      * @return the resolved class
      */
     public Class resolveType(ClassLoader classLoader) {
+        if (!MaxineVM.isHosted()) {
+            ClassActor classActor = ClassRegistry.get(classLoader, this, true);
+            if (classActor != null) {
+                return classActor.mirror();
+            }
+        }
         return JavaTypeDescriptor.resolveToJavaClass(this, classLoader);
     }
 
