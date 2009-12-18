@@ -67,4 +67,5 @@ public class C1XMetrics {
     public static int LoadConstantIterations;
     public static int CodeBufferCopies;
     public static int UniqueValueIdsAssigned;
+    public static int RedundantConditionals;
 }

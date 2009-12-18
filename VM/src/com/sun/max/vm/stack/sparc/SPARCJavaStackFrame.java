@@ -42,14 +42,14 @@ public class SPARCJavaStackFrame extends JavaStackFrame {
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof SPARCJavaStackFrame) {
-            return targetMethod().equals(stackFrame.targetMethod()) && stackPointer.equals(stackFrame.stackPointer);
+            return targetMethod().equals(stackFrame.targetMethod()) && sp.equals(stackFrame.sp);
         }
         return false;
     }
 
     @Override
     public Pointer slotBase() {
-        final Pointer topOfFrame = bias().unbias(stackPointer);
+        final Pointer topOfFrame = bias().unbias(sp);
         assert topOfFrame.equals(topOfFrame.aligned(SPARCStackFrameLayout.STACK_FRAME_ALIGNMENT));
         return topOfFrame;
     }

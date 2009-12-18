@@ -801,15 +801,15 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             if (isTopFrame) {
                 return instructionPointer().asAddress().toLong();
             }
-            return stackFrame.instructionPointer.asAddress().toLong();
+            return stackFrame.ip.asAddress().toLong();
         }
 
         public long getFramePointer() {
-            return stackFrame.framePointer.asAddress().toLong();
+            return stackFrame.fp.asAddress().toLong();
         }
 
         public long getStackPointer() {
-            return stackFrame.stackPointer.asAddress().toLong();
+            return stackFrame.sp.asAddress().toLong();
         }
 
         public ThreadProvider getThread() {
@@ -867,7 +867,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             for (final StackFrame stackFrame : frames()) {
                 z++;
 
-                final Address address = stackFrame.instructionPointer;
+                final Address address = stackFrame.ip;
                 TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM, address);
                 if (teleTargetMethod == null) {
                     if (stackFrame.targetMethod() == null) {
@@ -892,7 +892,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
                 int index = -1;
                 if (stackFrame.targetMethod() != null && stackFrame.targetMethod() instanceof CPSTargetMethod) {
-                    index = ((CPSTargetMethod) stackFrame.targetMethod()).findClosestStopIndex(stackFrame.instructionPointer);
+                    index = ((CPSTargetMethod) stackFrame.targetMethod()).findClosestStopIndex(stackFrame.ip);
                 }
                 if (index != -1) {
                     final int stopIndex = index;

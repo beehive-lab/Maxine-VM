@@ -53,17 +53,17 @@ public abstract class ExpStackWalker {
         /**
          * The current instruction pointer.
          */
-        public Pointer instructionPointer = Pointer.zero();
+        public Pointer ip = Pointer.zero();
 
         /**
          * The current stack pointer.
          */
-        public Pointer stackPointer = Pointer.zero();
+        public Pointer sp = Pointer.zero();
 
         /**
          * The current frame pointer.
          */
-        public Pointer framePointer = Pointer.zero();
+        public Pointer fp = Pointer.zero();
 
         /**
          * Indicates whether this frame is on the top of the stack.
@@ -89,19 +89,19 @@ public abstract class ExpStackWalker {
         }
 
         private void copyFrom(Cursor other) {
-            setFields(other.instructionPointer, other.stackPointer, other.framePointer, other.isTopFrame);
+            setFields(other.ip, other.sp, other.fp, other.isTopFrame);
         }
 
         private void setFields(Pointer instructionPointer, Pointer stackPointer, Pointer fp, boolean isTopFrame) {
-            this.instructionPointer = instructionPointer;
-            this.stackPointer = stackPointer;
-            this.framePointer = fp;
+            this.ip = instructionPointer;
+            this.sp = stackPointer;
+            this.fp = fp;
             this.isTopFrame = isTopFrame;
         }
 
         private Cursor copy() {
             Cursor other = new Cursor();
-            other.setFields(instructionPointer, stackPointer, framePointer, isTopFrame);
+            other.setFields(ip, sp, fp, isTopFrame);
             return other;
         }
 
@@ -132,7 +132,7 @@ public abstract class ExpStackWalker {
         last.clear();
         current.setFields(ip, sp, fp, true);
 
-        while (stackAccess.isValidIP(current.instructionPointer)) {
+        while (stackAccess.isValidIP(current.ip)) {
             ExpStackFrameLayout layout = stackAccess.identify(current);
             trace(layout, last, current);
 
@@ -153,7 +153,7 @@ public abstract class ExpStackWalker {
 
         if (traceStackWalk.getValue()) {
             Log.print("Invalid IP reached: ");
-            Log.print(current.instructionPointer);
+            Log.print(current.ip);
         }
 
         return visitor;
@@ -289,9 +289,9 @@ public abstract class ExpStackWalker {
         if (traceStackWalk.getValue()) {
             boolean b = Log.lock();
             Log.print("Frame[ip=");
-            Log.print(current.instructionPointer.toLong());
-            Log.print(", sp=" + current.stackPointer.toLong());
-            Log.print(", fp=" + current.framePointer.toLong());
+            Log.print(current.ip.toLong());
+            Log.print(", sp=" + current.sp.toLong());
+            Log.print(", fp=" + current.fp.toLong());
             Log.print(", layout=");
 
             if (layout != null) {

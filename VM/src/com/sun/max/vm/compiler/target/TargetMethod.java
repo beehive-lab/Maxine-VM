@@ -328,7 +328,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public final boolean linkDirectCalls() {
         boolean linkedAll = true;
-        final Object[] directCallees = directCallees();
         if (directCallees != null) {
             for (int i = 0; i < directCallees.length; i++) {
                 final int offset = getCallEntryOffset(directCallees[i], i);

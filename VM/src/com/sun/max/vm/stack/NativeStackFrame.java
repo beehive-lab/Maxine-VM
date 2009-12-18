@@ -38,7 +38,7 @@ import com.sun.max.vm.jni.*;
 public final class NativeStackFrame extends StackFrame {
 
     public NativeStackFrame(StackFrame callee, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
-        super(callee, instructionPointer, framePointer, stackPointer);
+        super(callee, instructionPointer, stackPointer, framePointer);
     }
 
     /**
@@ -49,13 +49,13 @@ public final class NativeStackFrame extends StackFrame {
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof NativeStackFrame) {
-            return stackFrame.stackPointer.equals(stackPointer) && stackFrame.framePointer.equals(framePointer);
+            return stackFrame.sp.equals(sp) && stackFrame.fp.equals(fp);
         }
         return false;
     }
 
     @Override
     public String toString() {
-        return "<native@" + instructionPointer.toHexString() + ">";
+        return "<native@" + ip.toHexString() + ">";
     }
 }

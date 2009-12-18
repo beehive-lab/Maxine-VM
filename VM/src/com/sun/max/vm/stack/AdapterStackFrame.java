@@ -42,7 +42,7 @@ public class AdapterStackFrame extends JavaStackFrame {
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame.getClass().equals(getClass())) {
-            return stackFrame.stackPointer.equals(stackPointer) && stackFrame.framePointer.equals(framePointer);
+            return stackFrame.sp.equals(sp) && stackFrame.fp.equals(fp);
         }
         return false;
     }

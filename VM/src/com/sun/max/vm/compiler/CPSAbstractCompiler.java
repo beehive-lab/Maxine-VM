@@ -126,7 +126,7 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
     public void initializeForJitCompilations() {
     }
 
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
         throw new UnsupportedOperationException();
     }
 
