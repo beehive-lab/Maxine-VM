@@ -88,7 +88,6 @@
 <pathentry base-path="Native" excluding="tele" include="substrate" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" excluding="tele" include="prototype" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" excluding="tele" include="platform" kind="inc" path="" system="true"/>
-<pathentry base-path="Native" excluding="tele" include="jni" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="tele" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="tele/linux" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="tele/darwin" kind="inc" path="" system="true"/>
