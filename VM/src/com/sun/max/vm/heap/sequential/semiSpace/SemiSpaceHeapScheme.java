@@ -60,6 +60,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     public static final String TO_GROW_REGION_NAME = "Heap-To-Grow";
     public static final String LINEAR_GROW_POLICY_NAME = "Linear";
     public static final String DOUBLE_GROW_POLICY_NAME = "Double";
+    public static final String NO_GROW_POLICY_NAME = "None";
 
     /**
      * A VM option for specifying how heap memory is to be allocated.
@@ -219,6 +220,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 this.growPolicy = new DoubleGrowPolicy();
             } else if (growPolicy.equals(LINEAR_GROW_POLICY_NAME)) {
                 this.growPolicy = new LinearGrowPolicy(growPolicy);
+            } else if (growPolicy.equals(NO_GROW_POLICY_NAME)) {
+                this.growPolicy = null;
             } else {
                 Log.print("Unknown heap growth policy, using default policy");
                 this.growPolicy = new DoubleGrowPolicy();
@@ -709,7 +712,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     private boolean grow(GrowPolicy growPolicy) {
-        if (cannotGrow()) {
+        if (growPolicy == null || cannotGrow()) {
             return false;
         }
         boolean result = true;

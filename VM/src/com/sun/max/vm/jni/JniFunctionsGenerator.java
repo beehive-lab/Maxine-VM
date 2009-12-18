@@ -28,8 +28,10 @@ import com.sun.max.ide.*;
 import com.sun.max.io.*;
 
 /**
- * This class implements the {@linkplain #generate() process} by which the source in {@link JniFunctionsSource JniFunctionsSource.java}.
- * is pre-processed to produce source in {@link JniFunctions JniFunctions.java}. The generated source is delineated by the following lines:
+ * This class implements the {@linkplain #generate() process} by which the source in {@link JniFunctionsSource JniFunctionsSource.java}
+ * and {@link JmmFunctionsSource JmmFunctionsSource.java} is pre-processed to produce source in
+ * {@link JniFunctions JniFunctions.java} and {@link JmmFunctions JmmFunctions.java}.
+ * The generated source is delineated by the following lines:
  * <pre>
  * // START GENERATED CODE
  *
@@ -126,8 +128,8 @@ public class JniFunctionsGenerator {
     }
 
     /**
-     * Inserts or updates generated source into {@link JniFunctions JniFunctions.java}. The generated source is derived from
-     * {@link JniFunctionsSource JniFunctionsSource.java} and is delineated in {@code JniFunctions.java} by the following lines:
+     * Inserts or updates generated source into {@code target}. The generated source is derived from
+     * {@code source} and is delineated in {@code target} by the following lines:
      * <pre>
      * // START GENERATED CODE
      *
@@ -137,14 +139,14 @@ public class JniFunctionsGenerator {
      * </pre>
 
      *
-     * @param checkOnly if {@code true}, then {@code JniFunctions.java} is not updated; the value returned by this method indicates
+     * @param checkOnly if {@code true}, then {@code target} is not updated; the value returned by this method indicates
      *            whether it would have been updated were this argument {@code true}
-     * @return {@code true} if {@link JniFunctions JniFunctions.java}. was modified (or would have been if {@code checkOnly} was {@code false}); {@code false} otherwise
+     * @return {@code true} if {@code target} was modified (or would have been if {@code checkOnly} was {@code false}); {@code false} otherwise
      */
-    static boolean generate(boolean checkOnly) throws Exception {
+    static boolean generate(boolean checkOnly, Class source, Class target) throws Exception {
         File base = new File(JavaProject.findVcsProjectDirectory().getParentFile().getAbsoluteFile(), "VM/src");
-        File inputFile = new File(base, JniFunctionsSource.class.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
-        File outputFile = new File(base, JniFunctions.class.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
+        File inputFile = new File(base, source.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
+        File outputFile = new File(base, target.getName().replace('.', File.separatorChar) + ".java").getAbsoluteFile();
 
         LineReader lr = new LineReader(inputFile);
         String line = null;
@@ -257,12 +259,16 @@ public class JniFunctionsGenerator {
 
     /**
      * Command line interface for running the source code generator.
-     * If the generation process modifies {@link JniFunctions JniFunctions.java}, then the exit
+     * If the generation process modifies the existing source, then the exit
      * code of the JVM process will be non-zero.
      */
     public static void main(String[] args) throws Exception {
-        if (generate(false)) {
+        if (generate(false, JniFunctionsSource.class, JniFunctions.class)) {
             System.out.println("Source for " + JniFunctions.class + " was updated");
+            System.exit(1);
+        }
+        if (generate(false, JmmFunctionsSource.class, JmmFunctions.class)) {
+            System.out.println("Source for " + JmmFunctions.class + " was updated");
             System.exit(1);
         }
     }
