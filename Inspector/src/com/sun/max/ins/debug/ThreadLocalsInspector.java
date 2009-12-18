@@ -230,7 +230,9 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     public void watchpointSetChanged() {
-        refreshView(false);
+        if (maxVMState().processState() != ProcessState.TERMINATED) {
+            refreshView(true);
+        }
     }
 
     @Override

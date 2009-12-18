@@ -25,6 +25,7 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
@@ -705,9 +706,11 @@ public interface MaxVM {
     /**
      * Adds a observer for watchpoint changes in the VM.
      *
-     * @param listener will be notified whenever watchpoints in VM change.
+     * @param observer will be notified whenever watchpoints in VM change.
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
      */
-    void addWatchpointObserver(Observer observer);
+    void addWatchpointObserver(Observer observer) throws ProgramError;
 
     /**
      * Creates a new memory watchpoint in the VM.
@@ -722,9 +725,11 @@ public interface MaxVM {
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
      */
     MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException;
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError;
 
     /**
      * Creates a new memory watchpoint for a VM heap object.
@@ -740,9 +745,11 @@ public interface MaxVM {
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
      */
     MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException;
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError;
 
     /**
      * Creates a new memory watchpoint for a field in a VM heap object.
@@ -759,9 +766,11 @@ public interface MaxVM {
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
      */
     MaxWatchpoint setFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException;
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError;
 
     /**
      * Creates a new memory watchpoint for an element of a VM heap object (array or hybrid).
@@ -780,9 +789,11 @@ public interface MaxVM {
      * @return a new memory watchpoint
      * @throws TooManyWatchpointsException
      * @throws DuplicateWatchpointException when the watchpoint overlaps in whole or part with an existing watchpoint
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
      */
     MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException;
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError;
 
     /**
      * Creates a new watchpoint that covers a field in an object's header in the VM.
@@ -798,9 +809,11 @@ public interface MaxVM {
      * @return a new watchpoint, if successful
      * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
      * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
      */
     MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException;
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError;
 
     /**
      * Creates a new watchpoint that covers a thread local variable in the VM.
@@ -815,17 +828,21 @@ public interface MaxVM {
      * @return a new watchpoint, if successful
      * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
      * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
      */
     MaxWatchpoint setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
-        throws TooManyWatchpointsException, DuplicateWatchpointException;
+        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError;
 
     /**
      * Finds all VM memory watchpoints that overlap a specified memory region.
      *
      * @param memoryRegion an area of memory in the VM
      * @return the watchpoints whose memory region overlaps, empty sequence if none.
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
      */
-    Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion);
+    Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) throws ProgramError;
 
     /**
      * All existing memory watchpoints set in the VM.
@@ -833,9 +850,19 @@ public interface MaxVM {
      * Immutable collection; membership is thread-safe; likely implemented as a copy.
      *
      * @return all existing watchpoints; empty if none.
-     * .
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
      */
-    IterableWithLength<MaxWatchpoint> watchpoints();
+    IterableWithLength<MaxWatchpoint> watchpoints() throws ProgramError;
+
+    /**
+     * Writes a textual summary describing the current watchpoints set in the VM, with
+     * more internal detail than is typically displayed.
+     *
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
+     */
+    void describeWatchpoints(PrintStream printStream) throws ProgramError;
 
     /**
      * Sets debugging trace level for the transport
@@ -876,20 +903,20 @@ public interface MaxVM {
      *
      * @param synchronous should the call wait for the execution to complete?
      * @param withClientBreakpoints should client breakpoints be enabled during execution?
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM.
      *
      * @param thread a thread in the VM
      * @param synchronous should the call wait for the execution to complete.
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void singleStep(final MaxThread maxThread, boolean synchronous) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void singleStepThread(final MaxThread maxThread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM; if the instruction is a call, then resume VM execution until call returns.
@@ -897,10 +924,10 @@ public interface MaxVM {
      * @param thread a thread in the VM.
      * @param synchronous should the call wait for the execution to complete?
      * @param withClientBreakpoints should client breakpoints be enabled during execution?
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException;
+    void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Resumes execution of the VM with a temporary breakpoint set.
@@ -909,22 +936,22 @@ public interface MaxVM {
      * @param synchronous should the call wait for the execution to complete?
      * @param withClientBreakpoints should client breakpoints be enabled duration of the execution?
      * @throws OSExecutionRequestException execution failed in OS.
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      */
-    void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException;
+    void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
 
     /**
      * Pauses the running VM.
      *
-     * @throws InvalidProcessRequestException execution not permissible in current VM state.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void pause() throws InvalidProcessRequestException, OSExecutionRequestException;
+    void pauseVM() throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
-     * Shuts down the VM process.
+     * Shuts down the VM completely.
      */
-    void terminate() throws Exception;
+    void terminateVM() throws Exception;
 
     /**
      * Uses the configured source path in the VM to search for a source file corresponding to a class.
@@ -943,8 +970,12 @@ public interface MaxVM {
 
     /**
      * Initialize debugging mode for garbage collection.
+     *
+     * @throws TooManyWatchpointsException
+     * @throws DuplicateWatchpointException
+     * @throws ProgramError if watchpoints not enabled on this platform
      */
-    void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException;
+    void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError;
 
 }
 

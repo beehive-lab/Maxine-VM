@@ -181,7 +181,7 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static AccessControlContext getStackAccessControlContext() {
-        return new AccessControlContext(Sequence.Static.toArray(getProtectionDomains(), ProtectionDomain.class));
+        return new AccessControlContext(Sequence.Static.toArray(getProtectionDomains(), new ProtectionDomain[getProtectionDomains().length()]));
     }
 
     /**

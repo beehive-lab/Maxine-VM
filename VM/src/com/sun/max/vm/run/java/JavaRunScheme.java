@@ -91,7 +91,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 }
             }
         }
-        initIDMethods = Sequence.Static.toArray(methods, StaticMethodActor.class);
+        initIDMethods = Sequence.Static.toArray(methods, new StaticMethodActor[methods.length()]);
         return methods;
     }
 
@@ -120,7 +120,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 ProgramError.unexpected(throwable);
             }
         }
-        initIDMethods = Sequence.Static.toArray(methods, StaticMethodActor.class);
+        initIDMethods = Sequence.Static.toArray(methods, new StaticMethodActor[methods.length()]);
     }
 
     /**

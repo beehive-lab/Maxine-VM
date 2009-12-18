@@ -122,7 +122,6 @@ public abstract class Trap {
      *  Note that SPARC code is more efficient if this is set below 6K.  Specifically, set to (6K - 1 - typical_frame_size).
      */
     public static final int stackGuardSize = 12 * Ints.K;
-    // TODO (tw): Check why the LSRA needs the value 12K above. Can probably be reduced after implementing better stack slot sharing.
 
     /**
      * This method is {@linkplain #isTrapStub(MethodActor) known} by the compilation system. In particular, no adapter
@@ -374,15 +373,14 @@ public abstract class Trap {
      * @param throwable
      * @param stackPointer
      * @param framePointer
-     * @param instructionPointer
+     * @param throwAddress
      */
-    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
+    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer throwAddress) {
 
         if (targetMethod instanceof JitTargetMethod) {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
+            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
         }
 
-        final Address throwAddress = instructionPointer;
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, throwAddress, throwable.getClass());
         if (!catchAddress.isZero()) {
             final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
@@ -396,7 +394,7 @@ public abstract class Trap {
                 VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
             }
         } else {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(instructionPointer, stackPointer, framePointer, throwable);
+            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
         }
     }
 }

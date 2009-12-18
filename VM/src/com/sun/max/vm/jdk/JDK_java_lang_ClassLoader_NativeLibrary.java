@@ -50,18 +50,18 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
             final Address onload = DynamicLinker.lookupSymbol(address, "JNI_OnLoad").asAddress();
             if (!onload.isZero()) {
                 try {
-                    if (JniNativeInterface.verbose()) {
+                    if (NativeInterfaces.verbose()) {
                         Log.println("Invoking JNI_OnLoad for library loaded from " + absolutePathname);
                     }
                     DynamicLinker.invokeJNIOnLoad(onload);
                     // TODO: check against the supported JNI version of this VM and throw UnsatisfiedLinkError if not supported
                 } catch (Throwable t) {
-                    if (JniNativeInterface.verbose()) {
+                    if (NativeInterfaces.verbose()) {
                         Log.println("Error loading library from " + absolutePathname + ":");
                         t.printStackTrace(Log.out);
                     }
                     DynamicLinker.close(address);
-                    if (JniNativeInterface.verbose()) {
+                    if (NativeInterfaces.verbose()) {
                         Log.println("Closed library loaded from " + absolutePathname);
                     }
                     throw t;

@@ -409,7 +409,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             return classActor;
         }
 
-        if (!searchParents) {
+        if (!searchParents || classLoader == null) {
             return null;
         }
 

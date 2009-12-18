@@ -72,7 +72,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     private boolean showAll;
 
     public LocalsInspector(Inspection inspection, MaxThread thread, JitStackFrame jitStackFrame) {
-        super(inspection, LongValue.from(jitStackFrame.framePointer.toLong()));
+        super(inspection, LongValue.from(jitStackFrame.fp.toLong()));
         assert jitStackFrame.targetMethod().compilerScheme == maxVM().vmConfiguration().jitCompilerScheme();
         this.thread = thread;
         this.jitStackFrame = jitStackFrame;
@@ -115,7 +115,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
                 if (stackFrame instanceof JitStackFrame) {
                     final JitStackFrame jitStackFrame = (JitStackFrame) stackFrame;
                     if (this.jitStackFrame.isSameFrame(jitStackFrame)) {
-                        stackPointer = jitStackFrame.stackPointer;
+                        stackPointer = jitStackFrame.sp;
                         break;
                     }
                 }
@@ -228,7 +228,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
             final Word localVar = readlocalVariable(localVarIndex);
             final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, localVar, localsPanel);
             JLabel indexLabel = new LocalIndex(localVarIndex);
-            final int bytecodePosition = targetMethod.bytecodePositionFor(jitStackFrame.instructionPointer);
+            final int bytecodePosition = targetMethod.bytecodePositionFor(jitStackFrame.ip);
             if (bytecodePosition != -1) {
                 final Entry entry = localVariableTable.findLocalVariable(localVarIndex, bytecodePosition);
                 if (entry != null) {
@@ -275,7 +275,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     @Override
     public String getTextForTitle() {
-        return "StackFrame @ " + jitStackFrame.framePointer.toHexString();
+        return "StackFrame @ " + jitStackFrame.fp.toHexString();
     }
 
     @Override

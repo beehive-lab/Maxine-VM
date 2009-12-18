@@ -153,4 +153,14 @@ public abstract class CiArchitecture {
     public boolean isSPARC() {
         return "SPARC".equals(platform);
     }
+
+    /**
+     * Checks whether this architecture's normal arithmetic instructions use a two-operand form
+     * (e.g. x86 which overwrites one operand register with the result when adding).
+     * @return {@code true} if this architecture uses two-operand mode
+     */
+    public boolean twoOperandMode() {
+        // TODO: override this method in appropriate subclasses
+        return isX86();
+    }
 }

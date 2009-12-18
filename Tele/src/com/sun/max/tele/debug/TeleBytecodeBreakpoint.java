@@ -89,7 +89,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * @param key an abstract description of the location for this breakpoint, expressed in terms of the method and bytecode offset.
      */
     private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, Key key) {
-        super(teleVM, new TeleCodeLocation(teleVM, key), Kind.CLIENT);
+        super(teleVM, new TeleCodeLocation(teleVM, key), BreakpointKind.CLIENT);
         this.factory = factory;
         this.key = key;
         this.holderTypeDescriptorString = key.holder().string;

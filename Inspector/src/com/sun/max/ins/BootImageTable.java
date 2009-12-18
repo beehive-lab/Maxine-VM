@@ -131,8 +131,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("boot code size:", new DataLabel.IntAsHex(inspection(), header.codeSize), null);
             addRow("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootCodeEnd));
 
-            addRow("code cache size:", new DataLabel.IntAsHex(inspection(), header.codeCacheSize), null);
-
             final Pointer runMethodPointer = bootImageStart.plus(header.vmRunMethodOffset);
             addRow("MaxineVM.run():", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  runMethodPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), runMethodPointer));
             final Pointer threadRunMethodPointer = bootImageStart.plus(header.vmThreadRunMethodOffset);
@@ -146,9 +144,6 @@ public final class BootImageTable extends InspectorTable {
             addRow("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, classRegistryPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), classRegistryPointer));
             final Pointer bootHeapPointer = bootHeapStart.plus(header.heapRegionsPointerOffset);
             addRow("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), bootHeapPointer));
-
-            final Pointer inspectableSwitchPointer = bootImageStart.plus(header.inspectableSwitchOffset);
-            addRow("inspectable switch pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, inspectableSwitchPointer, BootImageTable.this), new MemoryRegionValueLabel(inspection(), inspectableSwitchPointer));
 
             final Pointer vmThreadLocalsListHead = bootImageStart.plus(header.threadLocalsListHeadOffset);
             addRow("VM thread locals list head:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, vmThreadLocalsListHead, BootImageTable.this), new MemoryRegionValueLabel(inspection(), vmThreadLocalsListHead));

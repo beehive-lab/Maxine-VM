@@ -263,7 +263,7 @@ final class FreeVariableCapturing {
     private void declareFreeVariablesAsParameters() {
         for (BlockInfo info : blockInfos) {
             traceDeclareFreeVariables(info);
-            final CirVariable[] free = Sequence.Static.toArray(info.freeVariables, CirVariable.class);
+            final CirVariable[] free = Sequence.Static.toArray(info.freeVariables, new CirVariable[info.freeVariables.length()]);
             final CirVariable[] params = info.block.closure().parameters();
 
             final CirVariable[] all = CirClosure.newParameters(free.length + params.length);
@@ -291,7 +291,7 @@ final class FreeVariableCapturing {
             return;
         }
 
-        final CirValue[] free = Sequence.Static.toArray(info.freeVariables, CirValue.class);
+        final CirValue[] free = Sequence.Static.toArray(info.freeVariables, new CirValue[info.freeVariables.length()]);
         final CirValue[] all = CirCall.newArguments(free.length + args.length);
         for (int i = 0; i < free.length; i++) {
             all[i] = free[i];

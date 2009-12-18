@@ -381,11 +381,11 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
                 result.append(interfaceProvider);
             }
         }
-        return Sequence.Static.toArray(result, InterfaceProvider.class);
+        return Sequence.Static.toArray(result, new InterfaceProvider[result.length()]);
     }
 
     public MethodProvider[] getMethods() {
-        return Sequence.Static.toArray(this.getTeleMethodActors(), MethodProvider.class);
+        return Sequence.Static.toArray(this.getTeleMethodActors(), new MethodProvider[this.getTeleMethodActors().length()]);
     }
 
     public ReferenceTypeProvider[] getNestedTypes() {

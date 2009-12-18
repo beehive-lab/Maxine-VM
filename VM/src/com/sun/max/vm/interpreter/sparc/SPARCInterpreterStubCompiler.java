@@ -45,20 +45,23 @@ public class SPARCInterpreterStubCompiler extends InterpreterStubCompiler {
         return new SPARCInterpreterStub(classMethodActor, this, vmConfiguration().targetABIsScheme().optimizedJavaABI());
     }
 
-    public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context) {
-        final Pointer stackPointer = stackFrameWalker.stackPointer();
+    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
+        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+        TargetMethod targetMethod = current.targetMethod();
+        boolean isTopFrame = current.isTopFrame();
+        final Pointer stackPointer = current.sp();
         switch (purpose) {
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
                 final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
-                if (!stackFrameVisitor.visitFrame(targetMethod, stackFrameWalker.instructionPointer(), stackPointer, stackPointer, flags)) {
+                if (!stackFrameVisitor.visitFrame(targetMethod, current.ip(), stackPointer, stackPointer, flags)) {
                     return false;
                 }
                 break;
             }
             case INSPECTING: {
                 final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                if (!stackFrameVisitor.visitFrame(new SPARCJavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, stackFrameWalker.instructionPointer(), stackFrameWalker.framePointer(), stackPointer))) {
+                if (!stackFrameVisitor.visitFrame(new SPARCJavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, current.ip(), current.fp(), stackPointer))) {
                     return false;
                 }
                 break;
@@ -69,7 +72,7 @@ public class SPARCInterpreterStubCompiler extends InterpreterStubCompiler {
         }
 
         final Pointer callerInstructionPointer = stackFrameWalker.readWord(stackPointer, 0).asPointer();
-        stackFrameWalker.advance(callerInstructionPointer, stackPointer, stackFrameWalker.framePointer());
+        stackFrameWalker.advance(callerInstructionPointer, stackPointer, current.fp());
         return true;
     }
 }

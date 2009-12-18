@@ -188,7 +188,7 @@ public final class CirFreeVariableSearch {
     public static void applyClosureConversion(CirClosure closure) {
         final GrowableDeterministicSet<CirVariable> freeVariableSet = new LinkedIdentityHashSet<CirVariable>();
         findFreeVariables(closure, freeVariableSet);
-        final CirVariable[] parameters = Sequence.Static.toArray(freeVariableSet, CirVariable.class);
+        final CirVariable[] parameters = Sequence.Static.toArray(freeVariableSet, new CirVariable[freeVariableSet.length()]);
         closure.setParameters(parameters);
 
     }

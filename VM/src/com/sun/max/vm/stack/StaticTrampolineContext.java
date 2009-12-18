@@ -33,14 +33,14 @@ public final class StaticTrampolineContext implements StackFrameVisitor {
     private static Pointer trampolineInstructionPointer;
 
     boolean foundFirstTrampolineFrame;
-    public Pointer stackPointer;
-    public Pointer instructionPointer;
+    public Pointer ip;
+    public Pointer sp;
 
     public boolean visitFrame(StackFrame stackFrame) {
         if (stackFrame.isTopFrame() || stackFrame instanceof AdapterStackFrame) {
             return true;
         }
-        final Pointer instructionPointer = stackFrame.instructionPointer;
+        final Pointer instructionPointer = stackFrame.ip;
         if (trampolineInstructionPointer.isZero() && Code.codePointerToTargetMethod(instructionPointer).classMethodActor().holder().toJava() == StaticTrampoline.class) {
             StaticTrampolineContext.trampolineInstructionPointer = instructionPointer;
         }
@@ -48,8 +48,8 @@ public final class StaticTrampolineContext implements StackFrameVisitor {
             this.foundFirstTrampolineFrame = true;
         } else if (foundFirstTrampolineFrame) {
             // This is the first non-adapter frame before the trampoline.
-            this.stackPointer = stackFrame.stackPointer;
-            this.instructionPointer = instructionPointer;
+            this.sp = stackFrame.sp;
+            this.ip = instructionPointer;
             return false;
         }
         return true;

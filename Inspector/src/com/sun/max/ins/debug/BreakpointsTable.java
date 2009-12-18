@@ -89,6 +89,15 @@ public final class BreakpointsTable extends InspectorTable {
     }
 
     @Override
+    public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+        // Suppress row selection when clicking on the "Enabled" checkbox;
+        final int modelColumnIndex = convertColumnIndexToModel(columnIndex);
+        if (modelColumnIndex != BreakpointsColumnKind.ENABLED.ordinal()) {
+            super.changeSelection(rowIndex, columnIndex, toggle, extend);
+        }
+    }
+
+    @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
         // TODO: Add MaxBreakpoint interface and generalize this code (cf. WatchpointsTable)
         // Row selection changed, perhaps by user mouse click or navigation;
@@ -426,7 +435,8 @@ public final class BreakpointsTable extends InspectorTable {
     private abstract class BreakpointData implements Comparable {
 
         // TODO (mlvdv) The need for subclasses here has diminished, and the differences between the two kinds of breakpoints
-        // could be reflected in renderer code.
+        // could be reflected in renderer code.  However, one value of this approach is that some values are cached and can
+        // still display correctly after the process has terminated.
 
         private final MaxBreakpoint breakpoint;
 

@@ -66,7 +66,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
      *            instruction. If this value is null, then the code will be read from {@code address}.
      * @param the kind of breakpoint
      */
-    private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, Kind kind) {
+    private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, BreakpointKind kind) {
         super(teleVM, new TeleCodeLocation(teleVM, address), kind);
         this.factory = factory;
         this.originalCodeAtBreakpoint = originalCode == null ? teleVM.dataAccess().readFully(address, factory.codeSize()) : originalCode;
@@ -138,7 +138,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         *            instruction. If this value is null, then the code will be read from {@code address}.
         */
         ClientTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode) {
-            super(teleVM, factory, address, originalCode, Kind.CLIENT);
+            super(teleVM, factory, address, originalCode, BreakpointKind.CLIENT);
         }
 
         @Override
@@ -189,7 +189,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         *            instruction. If this value is null, then the code will be read from {@code address}.
         */
         SystemTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode) {
-            super(teleVM, factory, address, originalCode, Kind.SYSTEM);
+            super(teleVM, factory, address, originalCode, BreakpointKind.SYSTEM);
         }
 
         @Override
@@ -235,7 +235,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          *            instruction. If this value is null, then the code will be read from {@code address}.
          */
         TransientTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode) {
-            super(teleVM, factory, address, originalCode, Kind.TRANSIENT);
+            super(teleVM, factory, address, originalCode, BreakpointKind.TRANSIENT);
         }
 
         @Override

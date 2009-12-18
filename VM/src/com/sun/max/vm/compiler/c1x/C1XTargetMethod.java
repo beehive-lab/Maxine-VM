@@ -33,6 +33,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.debug.DebugBreak;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
@@ -581,6 +582,18 @@ public class C1XTargetMethod extends TargetMethod {
     @Override
     @HOSTED_ONLY
     public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
+        // first gather methods in the directCallees array
+        if (directCallees != null) {
+            ClassMethodActor ma = classMethodActor();
+            if (ma != null && ma.holder().name.equals("jtt.max.Unsigned_idiv01")) {
+                DebugBreak.here();
+            }
+            for (Object o : directCallees) {
+                if (o instanceof MethodActor) {
+                    directCalls.append((MethodActor) o);
+                }
+            }
+        }
 
         // iterate over direct calls
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.directCalls) {

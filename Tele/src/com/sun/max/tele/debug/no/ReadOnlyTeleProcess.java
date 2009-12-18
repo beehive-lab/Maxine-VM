@@ -82,6 +82,11 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         }
     }
 
+    @Override
+    public int maximumWatchpointCount() {
+        return 0;
+    }
+
     public Pointer heap() {
         return heap;
     }
