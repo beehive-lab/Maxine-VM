@@ -406,7 +406,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
             return null;
         }
         final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(callEntryPoint);
-        teleTargetBreakpoint.setDescription("Entry to method " + getName());
+        teleTargetBreakpoint.setDescription("Method entry");
         return teleTargetBreakpoint;
     }
 
@@ -420,7 +420,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
             for (TargetCodeInstruction targetCodeInstruction : instructions) {
                 if (targetCodeInstruction.label != null) {
                     final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(targetCodeInstruction.address);
-                    teleTargetBreakpoint.setDescription("Label " + targetCodeInstruction.label.toString() + " in " + getName());
+                    teleTargetBreakpoint.setDescription("Label " + targetCodeInstruction.label.toString());
                 }
             }
         }
