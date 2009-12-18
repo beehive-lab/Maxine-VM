@@ -156,7 +156,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public String longName(MaxVMThread vmThread) {
         final MaxThread thread = vmThread.maxThread();
         if (thread != null) {
-            return shortName(vmThread) + " [" + thread.handleString() + "]";
+            return shortName(vmThread) + " [" + thread.id() + "]";
         }
         return shortName(vmThread);
     }
@@ -169,7 +169,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         final StringBuilder result = new StringBuilder(20);
         result.append(shortName(vmThread));
         if (thread != null) {
-            result.append(" [").append(thread.handleString()).append("]");
+            result.append(" [").append(thread.id()).append("]");
             result.append(" (").append(thread.state()).append(")");
         }
         return result.toString();
@@ -201,7 +201,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (thread.maxVMThread() != null) {
             return longName(thread.maxVMThread());
         }
-        return shortName(thread) + " [" + thread.handleString() + "]";
+        return shortName(thread) + " [" + thread.id() + "]";
     }
 
     /**
@@ -214,7 +214,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (thread.maxVMThread() != null) {
             return longNameWithState(thread.maxVMThread());
         }
-        return shortName(thread) + " [" + thread.handleString() + "] (" + thread.state() + ")";
+        return shortName(thread) + " [" + thread.id() + "] (" + thread.state() + ")";
     }
 
     /**
