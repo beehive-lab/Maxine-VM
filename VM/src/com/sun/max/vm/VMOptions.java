@@ -182,6 +182,9 @@ public final class VMOptions {
                 return true;
             }
         }, MaxineVM.Phase.STARTING);
+
+        register(new VMOption("-client", "ignored (present for compatibility)"), MaxineVM.Phase.STARTING);
+        register(new VMOption("-server", "ignored (present for compatibility)"), MaxineVM.Phase.STARTING);
     }
 
     private VMOptions() {

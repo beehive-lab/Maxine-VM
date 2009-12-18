@@ -47,14 +47,11 @@ public interface RuntimeCompilerScheme extends VMScheme {
     /**
      * Walks a frame for a target method that was produced by this compiler.
      *
-     * @param stackFrameWalker the stack frame walker object
-     * @param isTopFrame {@code true} if this frame is the top frame; {@code false} otherwise
-     * @param targetMethod the target method corresponding to this stack frame
-     * @param callee the target method whose frame is below this frame being walked (i.e. the frame of {@code
-     *            targetMethod}'s callee). This will be null if {@code targetMethod} called a native function.
+     * @param current the cursor for the current frame
+     * @param callee the cursor for the callee frame (i.e. current called callee directly or through a series of native methods)
      * @param purpose the purpose of this stack walk
      * @param context the context for the stack walk
      * @return whether stack walking may continue after executing this method
      */
-    boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, TargetMethod callee, Purpose purpose, Object context);
+    boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context);
 }

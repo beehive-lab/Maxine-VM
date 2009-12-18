@@ -329,7 +329,11 @@ public class WordValueLabel extends ValueLabel {
                                             displayMode = DisplayMode.CLASS_ACTOR_ID;
                                         }
                                     }
+                                } catch (DataIOError dataIOError) {
+                                    // Can't read anything, so just display as a plain word.
+                                    displayMode = DisplayMode.WORD;
                                 } catch (Throwable throwable) {
+
                                     // If we don't catch this the views will not be updated at all.
                                     displayMode = DisplayMode.INVALID;
                                     setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");

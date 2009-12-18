@@ -128,7 +128,6 @@ public interface InspectorStyle {
     Color javaUnresolvedNameColor();
 
     // Default display of any kind of code
-    Color defaultCodeAlternateBackgroundColor();
     Icon codeViewCloseIcon();
 
     // Display of target code
@@ -146,13 +145,10 @@ public interface InspectorStyle {
     Color vmRunningBackgroundColor();
     Color vmTerminatedBackgroundColor();
 
-    Color debugSelectedCodeBorderColor();
-
     Border debugEnabledTargetBreakpointTagBorder();
     Border debugDisabledTargetBreakpointTagBorder();
     Border debugEnabledBytecodeBreakpointTagBorder();
     Border debugDisabledBytecodeBreakpointTagBorder();
-    Border watchpointTagBorder();
 
     Color debugIPTextColor();
     Color debugIPTagColor();

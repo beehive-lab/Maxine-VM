@@ -49,10 +49,10 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
 
     protected void splitVariables() {
         // Make a copy of the existing variables so that they iterated over while new variables are being created:
-        final EirVariable[] variables = Sequence.Static.toArray(methodGeneration().variables(), EirVariable.class);
+        final EirVariable[] variables = Sequence.Static.toArray(methodGeneration().variables(), new EirVariable[methodGeneration().variables().length()]);
         for (EirVariable variable : variables) {
             if (!variable.isLocationFixed() && !variable.isSpillingPrevented() && variable.kind() != Kind.VOID) {
-                final EirOperand[] operands = Sequence.Static.toArray(variable.operands(), EirOperand.class);
+                final EirOperand[] operands = Sequence.Static.toArray(variable.operands(), new EirOperand[variable.operands().length()]);
                 for (EirOperand operand : operands) {
                     if (!operand.locationCategories().contains(EirLocationCategory.STACK_SLOT) ||
                                     operand.requiredLocation() != null ||

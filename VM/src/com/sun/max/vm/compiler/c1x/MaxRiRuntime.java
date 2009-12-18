@@ -125,7 +125,8 @@ public class MaxRiRuntime implements RiRuntime {
      * to allow the compiler to use its own heuristics
      */
     public boolean mustInline(RiMethod method) {
-        return asClassMethodActor(method, "mustInline()").isInline();
+        ClassMethodActor classMethodActor = asClassMethodActor(method, "mustInline()");
+        return classMethodActor.isInline() && !classMethodActor.isUnsafe();
     }
 
     /**

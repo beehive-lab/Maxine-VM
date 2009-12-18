@@ -30,6 +30,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -221,7 +222,9 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public void watchpointSetChanged() {
-        refreshView(false);
+        if (maxVMState().processState() != ProcessState.TERMINATED) {
+            refreshView(true);
+        }
     }
 
     @Override

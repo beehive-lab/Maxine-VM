@@ -159,7 +159,6 @@ public class C1XOptions {
     public static boolean GenTableRanges                = ____;
 
     public static int     InitialCodeBufferSize         = 232;
-    public static boolean TwoOperandLIRForm             = true;
     public static boolean DetailedAsserts               = ____;
 
     // Runtime settings

@@ -121,6 +121,10 @@ public class ArraySequence<Element_Type> implements MutableSequence<Element_Type
         return new ArraySequence<Element_Type>(array.clone());
     }
 
+    public Element_Type[] cloneArray() {
+        return array.clone();
+    }
+
     public static <From_Type, To_Type> Sequence<To_Type> map(Sequence<From_Type> from, Class<To_Type> toType, MapFunction<From_Type, To_Type> mapFunction) {
         final MutableSequence<To_Type> to = new ArraySequence<To_Type>(from.length());
         int i = 0;

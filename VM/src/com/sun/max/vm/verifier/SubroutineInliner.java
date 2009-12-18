@@ -440,7 +440,7 @@ public class SubroutineInliner {
             }
         }
 
-        return new LineNumberTable(Sequence.Static.toArray(newEntries, LineNumberTable.Entry.class));
+        return new LineNumberTable(Sequence.Static.toArray(newEntries, new LineNumberTable.Entry[newEntries.length()]));
     }
 
     private LocalVariableTable fixupLocalVariableTable() {

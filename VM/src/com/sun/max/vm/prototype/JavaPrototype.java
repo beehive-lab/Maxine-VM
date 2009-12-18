@@ -85,7 +85,9 @@ public class JavaPrototype extends Prototype {
                 return maxPackageClass.isInstance(maxPackage) && vmConfiguration().isMaxineVMPackage(maxPackage);
             }
         });
-        return Sequence.Static.sort(packages, MaxPackage.class);
+        MaxPackage[] result = Sequence.Static.toArray(packages, new MaxPackage[packages.length()]);
+        java.util.Arrays.sort(result);
+        return new ArraySequence<MaxPackage>(result);
     }
 
     /**

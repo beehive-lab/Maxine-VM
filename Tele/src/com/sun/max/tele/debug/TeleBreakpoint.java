@@ -35,7 +35,7 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
      * Distinguishes among various specialized uses for breakpoints,
      * independently of how the location is specified.
      */
-    enum Kind {
+    enum BreakpointKind {
 
         /**
          * A breakpoint created on behalf of a client external to the {@link TeleVM}.  Such
@@ -62,10 +62,10 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
         TRANSIENT;
     }
 
-    private final Kind kind;
+    private final BreakpointKind kind;
     private final TeleCodeLocation teleCodeLocation;
     private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
-    public String description = null;
+    private String description = null;
 
     /**
      * A VM breakpoint.
@@ -76,7 +76,7 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
      * @param teleCodeLocation location in the VM's code where the breakpoint should be set
      * @param kind  the kind of breakpoint
      */
-    protected TeleBreakpoint(TeleVM teleVM, TeleCodeLocation teleCodeLocation, Kind kind) {
+    protected TeleBreakpoint(TeleVM teleVM, TeleCodeLocation teleCodeLocation, BreakpointKind kind) {
         super(teleVM);
         this.teleCodeLocation = teleCodeLocation;
         this.kind = kind;
@@ -87,19 +87,19 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
      *
      * @return the kind of breakpoint.
      */
-    public final Kind kind() {
+    public final BreakpointKind kind() {
         return kind;
     }
 
     public final boolean isTransient() {
-        return kind == Kind.TRANSIENT;
+        return kind == BreakpointKind.TRANSIENT;
     }
 
     /**
      * @return whether this breakpoint was created on behalf of a client.
      */
     public final boolean isClient() {
-        return kind == Kind.CLIENT;
+        return kind == BreakpointKind.CLIENT;
     }
 
     public final TeleCodeLocation getCodeLocation() {

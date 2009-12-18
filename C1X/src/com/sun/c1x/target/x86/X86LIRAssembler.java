@@ -299,7 +299,6 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
         // move between cpu-registers
         if (dest.isSingleCpu()) {
-
             if (is64) {
                 if (src.kind == CiKind.Long) {
                     // Can do LONG . OBJECT
@@ -1190,48 +1189,62 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 throw Util.shouldNotReachHere();
         }
 
-        if (opr1.isVariableOrRegister()) {
-            reg2reg(opr1, result);
-        } else if (opr1.isStack()) {
-            stack2reg(opr1, result, result.kind);
-        } else if (isConstant(opr1)) {
-            const2reg(opr1, result, null);
+        LIROperand def = opr1; // assume left operand as default
+        LIROperand other = opr2;
+
+        if (opr2.isSingleCpu() && opr2.asRegister() == result.asRegister()) {
+            // if the right operand is already in the result register, then use it as the default
+            def = opr2;
+            other = opr1;
+            // and flip the condition
+            Condition tcond = acond;
+            acond = ncond;
+            ncond = tcond;
+        }
+
+        if (def.isVariableOrRegister()) {
+            reg2reg(def, result);
+        } else if (def.isStack()) {
+            stack2reg(def, result, result.kind);
+        } else if (isConstant(def)) {
+            const2reg(def, result, null);
         } else {
             throw Util.shouldNotReachHere();
         }
 
-        if (compilation.target.supportsCmov() && !isConstant(opr2)) {
+        if (compilation.target.supportsCmov() && !isConstant(other)) {
             // optimized version that does not require a branch
-            if (opr2.isSingleCpu()) {
-                assert opr2.asRegister() != result.asRegister() : "opr2 already overwritten by previous move";
-                masm.cmov(ncond, result.asRegister(), opr2.asRegister());
-            } else if (opr2.isDoubleCpu()) {
-                assert opr2.cpuRegNumberLow() != result.cpuRegNumberLow() && opr2.cpuRegNumberLow() != result.cpuRegNumberHigh() : "opr2 already overwritten by previous move";
-                assert opr2.cpuRegNumberHigh() != result.cpuRegNumberLow() && opr2.cpuRegNumberHigh() != result.cpuRegNumberHigh() : "opr2 already overwritten by previous move";
-                masm.cmovptr(ncond, result.asRegisterLow(), opr2.asRegisterLow());
+            if (other.isSingleCpu()) {
+                assert other.asRegister() != result.asRegister() : "other already overwritten by previous move";
+                masm.cmov(ncond, result.asRegister(), other.asRegister());
+            } else if (other.isDoubleCpu()) {
+                assert other.cpuRegNumberLow() != result.cpuRegNumberLow() && other.cpuRegNumberLow() != result.cpuRegNumberHigh() : "other already overwritten by previous move";
+                assert other.cpuRegNumberHigh() != result.cpuRegNumberLow() && other.cpuRegNumberHigh() != result.cpuRegNumberHigh() : "other already overwritten by previous move";
+                masm.cmovptr(ncond, result.asRegisterLow(), other.asRegisterLow());
                 if (!is64) {
-                    masm.cmovptr(ncond, result.asRegisterHigh(), opr2.asRegisterHigh());
+                    masm.cmovptr(ncond, result.asRegisterHigh(), other.asRegisterHigh());
                 }
-            } else if (opr2.isSingleStack()) {
-                masm.cmovl(ncond, result.asRegister(), frameMap.toAddress(opr2, 0));
-            } else if (opr2.isDoubleStack()) {
-                masm.cmovptr(ncond, result.asRegisterLow(), frameMap.toAddress(opr2, compilation.target.arch.lowWordOffset));
+            } else if (other.isSingleStack()) {
+                masm.cmovl(ncond, result.asRegister(), frameMap.toAddress(other, 0));
+            } else if (other.isDoubleStack()) {
+                masm.cmovptr(ncond, result.asRegisterLow(), frameMap.toAddress(other, compilation.target.arch.lowWordOffset));
                 if (!is64) {
-                    masm.cmovptr(ncond, result.asRegisterHigh(), frameMap.toAddress(opr2, compilation.target.arch.highWordOffset));
+                    masm.cmovptr(ncond, result.asRegisterHigh(), frameMap.toAddress(other, compilation.target.arch.highWordOffset));
                 }
             } else {
                 throw Util.shouldNotReachHere();
             }
 
         } else {
+            // conditional move not available, use emit a branch and move
             Label skip = new Label();
             masm.jcc(acond, skip);
-            if (opr2.isVariableOrRegister()) {
-                reg2reg(opr2, result);
-            } else if (opr2.isStack()) {
-                stack2reg(opr2, result, result.kind);
-            } else if (isConstant(opr2)) {
-                const2reg(opr2, result, null);
+            if (other.isVariableOrRegister()) {
+                reg2reg(other, result);
+            } else if (other.isStack()) {
+                stack2reg(other, result, result.kind);
+            } else if (isConstant(other)) {
+                const2reg(other, result, null);
             } else {
                 throw Util.shouldNotReachHere();
             }

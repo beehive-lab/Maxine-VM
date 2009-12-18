@@ -21,6 +21,7 @@ test-logs.zip
 *~
 output.cfg
 vee2010-results
+Base/loaded-classes.jar
 
 # switch to regexp syntax
 syntax: regexp

@@ -57,7 +57,7 @@ public class ThreadGroupProviderImpl implements ThreadGroupProvider {
                 result.append(t);
             }
         }
-        return Sequence.Static.toArray(result, ThreadProvider.class);
+        return Sequence.Static.toArray(result, new ThreadProvider[result.length()]);
     }
 
     public ThreadGroupProvider[] getThreadGroupChildren() {

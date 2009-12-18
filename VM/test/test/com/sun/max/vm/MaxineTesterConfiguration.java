@@ -104,6 +104,7 @@ public class MaxineTesterConfiguration {
         output(test.output.WeakReferenceTest04.class);
         output(test.output.MegaThreads.class, RAND_SPARC);
 
+        jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                      RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                      RAND_ALL);

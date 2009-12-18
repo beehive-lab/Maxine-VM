@@ -47,7 +47,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     private final Pointer cpuFramePointer;
 
     public TeleStackFrameWalker(TeleVM teleVM, TeleNativeThread teleNativeThread) {
-        super(teleVM.vmConfiguration().bootCompilerScheme());
+        super();
         this.teleVM = teleVM;
         this.teleNativeThread = teleNativeThread;
         this.teleEnabledVmThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
@@ -62,8 +62,8 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
      */
     public class ErrorStackFrame extends StackFrame {
         private final String errorMessage;
-        ErrorStackFrame(StackFrame callee, StackFrameWalker walker, String errorMessage) {
-            super(callee, walker.instructionPointer(), walker.stackPointer(), walker.framePointer());
+        ErrorStackFrame(StackFrame callee, String errorMessage) {
+            super(callee, Pointer.zero(), Pointer.zero(), Pointer.zero());
             this.errorMessage = errorMessage;
         }
 
@@ -96,7 +96,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         } catch (Throwable e) {
             e.printStackTrace();
             final StackFrame parentFrame = frames.isEmpty() ? null : frames.last();
-            frames.append(new ErrorStackFrame(parentFrame, this, e.toString()));
+            frames.append(new ErrorStackFrame(parentFrame, e.toString()));
         }
         return frames;
     }

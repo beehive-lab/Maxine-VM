@@ -31,9 +31,9 @@ import com.sun.max.vm.compiler.*;
  */
 public class Package extends VMPackage {
     public Package() {
-        registerScheme(BootstrapCompilerScheme.class, BcdeTargetSPARCCompiler.class);
-        // The BcdeTargetSPARCCompiler can play as a DynamicCompilerScheme as well.
-        registerScheme(RuntimeCompilerScheme.class, BcdeTargetSPARCCompiler.class);
+        registerScheme(BootstrapCompilerScheme.class, SPARCCPSCompiler.class);
+        // The SPARCCPSCompiler can play as a DynamicCompilerScheme as well.
+        registerScheme(RuntimeCompilerScheme.class, SPARCCPSCompiler.class);
     }
 
     @Override
