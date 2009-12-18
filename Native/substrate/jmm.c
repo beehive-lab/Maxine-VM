@@ -35,7 +35,7 @@ static jint jmm_GetOptionalSupport(JNIEnv *env, jmmOptionalSupport* support) {
     return 0;
 }
 
-const struct jmmInterface_1_ jmm_interface = {
+struct jmmInterface_1_ jmm_interface = {
     (void *) jmm_reserved,
     (void *) jmm_reserved,
     jmm_GetVersion,
