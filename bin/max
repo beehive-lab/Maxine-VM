@@ -1000,6 +1000,9 @@ function run_makejdk() {
         maxjdk_dir="$maxine_dir/maxjdk"
     else
         maxjdk_dir="$1"
+        if [[ "$maxjdk_dir" != /* ]]; then
+            maxjdk_dir="$PWD/$1"
+        fi
     fi
 
 	if [ -e $maxjdk_dir ]; then

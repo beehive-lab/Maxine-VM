@@ -313,7 +313,7 @@ public class VmThread {
         // Disable safepoints:
         Safepoint.setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(threadLocals).asPointer());
 
-        JNI_ENV.setConstantWord(threadLocals, JniNativeInterface.jniEnv());
+        JNI_ENV.setConstantWord(threadLocals, NativeInterfaces.jniEnv());
 
         // Add the VM thread locals to the active map
         VmThread thread;

@@ -216,9 +216,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         try {
             if (doCompile) {
                 return compilation.compile(observers);
-            } else {
-                return compilation.get();
             }
+            return compilation.get();
         } catch (Throwable t) {
             // compilation failed for some reason
             Trace.line(1, "Exception occurred during compilation of method " + classMethodActor.toString() + ": " + t.toString());

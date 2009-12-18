@@ -54,8 +54,8 @@ import com.sun.max.vm.value.*;
  * {@link JniFunctions} includes a call to {@link #generate()} to double-check that the source
  * is up-to-date with respect to any edits made to this class.
  *
- * All the methods annotated by {@link JNI_FUNCTION} appear in the exact same order as specified in
- * jni.h. In addition, any methods annotated by {@link JNI_FUNCTION} that are declared
+ * All the methods annotated by {@link VM_ENTRY_POINT} appear in the exact same order as specified in
+ * jni.h. In addition, any methods annotated by {@link VM_ENTRY_POINT} that are declared
  * {@code native} have implementations in jni.c and their entries in the JNI function table
  * are initialized in jni.c.
  *
