@@ -291,15 +291,9 @@ public abstract class LIRAssembler {
                 emitLeal(((LIRAddress) op.operand()), ((LIRLocation) op.result()));
                 break;
             case NullCheck:
-                if (C1XOptions.GenExplicitNullChecks) {
-                    asm.recordExceptionHandlers(codePos(), op.info);
-
-                    if (op.operand().isSingleCpu()) {
-                        asm.nullCheck(op.operand().asRegister());
-                    } else {
-                        throw Util.shouldNotReachHere();
-                    }
-                }
+                asm.recordExceptionHandlers(codePos(), op.info);
+                assert op.operand().isSingleCpu();
+                asm.nullCheck(op.operand().asRegister());
                 break;
             default:
                 throw Util.shouldNotReachHere();

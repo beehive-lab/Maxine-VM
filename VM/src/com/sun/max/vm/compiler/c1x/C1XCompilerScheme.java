@@ -28,11 +28,11 @@ import com.sun.max.asm.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.amd64.AMD64StackWalking;
 import com.sun.max.lang.Function;
 
 /**
@@ -118,6 +118,6 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context) {
-        return AMD64CPSCompiler.walkFrameHelper(current, current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), callee.targetMethod(), purpose, context);
+        return AMD64StackWalking.walkOptimizedFrame(current, callee, purpose, context);
     }
 }
