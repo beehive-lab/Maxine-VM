@@ -60,7 +60,7 @@ import com.sun.max.vm.value.*;
  * Instead, modify the corresponding source in JniFunctionsSource.java denoted by the "// Source: ..." comments.
  * Once finished with editing, execute {@link JniFunctionsGenerator} as a Java application to refresh this file.
  *
- * @see JniNativeInterface
+ * @see NativeInterfaces
  * @see JniFunctionsSource
  * @see Native/substrate/jni.c
  *
@@ -169,23 +169,6 @@ public final class JniFunctions {
             Log.print(name);
             Log.println("]");
             Log.unlock(lockDisabledSafepoints);
-        }
-    }
-
-    // Run the generator for the source of this file. If it differs from the on-disk source, throw an error
-    // indicating that this source file needs to be recompiled and the bootstrapping process restarted.
-    static {
-        try {
-            if (JniFunctionsGenerator.generate(true)) {
-                String thisFile = JniFunctions.class.getSimpleName() + ".java";
-                String sourceFile = JniFunctionsSource.class.getSimpleName() + ".java";
-                FatalError.unexpected(String.format("%n%n" + thisFile +
-                    " is out of sync with respect to " + sourceFile + ".%n" +
-                    "Run " + JniFunctionsGenerator.class.getSimpleName() + ".java (via 'max jnigen'), recompile " + thisFile + " (or refresh it in your IDE)" +
-                    " and restart the bootstrapping process.%n%n"));
-            }
-        } catch (Exception exception) {
-            FatalError.unexpected("Error while generating source for " + JniFunctions.class, exception);
         }
     }
 
