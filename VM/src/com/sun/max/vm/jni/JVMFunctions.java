@@ -120,7 +120,6 @@ public class JVMFunctions {
     public static Thread[] GetAllThreads() {
         final List<Thread> allThreads = new ArrayList<Thread>();
         VmThreadMap.ACTIVE.forAllThreads(null, new Procedure<VmThread>() {
-            @Override
             public void run(VmThread argument) {
                 Thread javaThread = argument.javaThread();
                 if (javaThread != null) {

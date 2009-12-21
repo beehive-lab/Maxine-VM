@@ -252,7 +252,7 @@ public class AMD64StackWalking {
                         Pointer callerCatchAddress = catchAddress.asPointer();
                         final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
                         if (callerTargetMethod != null) {
-                            callerTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapStateAccess.getRegisterState(trapState), xx);
+                            callerTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapStateAccess.getRegisterState(trapState), StackReferenceMapPreparer.CalleeKind.TRAP);
                         }
                     }
                 } else {
@@ -262,7 +262,7 @@ public class AMD64StackWalking {
 
                     final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
                     if (callerTargetMethod != null) {
-                        callerTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapStateAccess.getRegisterState(trapState), xx);
+                        callerTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapStateAccess.getRegisterState(trapState), StackReferenceMapPreparer.CalleeKind.TRAP);
                     }
                 }
             }
