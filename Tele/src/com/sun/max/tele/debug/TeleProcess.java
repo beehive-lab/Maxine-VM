@@ -171,7 +171,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                 eventCauseFound = true;
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
                                 final TeleWatchpoint teleWatchpoint = watchpointFactory().findClientWatchpoint(triggeredWatchpointAddress);
-                                if (teleWatchpoint.handleTriggerEvent(thread)) {
+                                if (teleWatchpoint != null && teleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
                                     final int triggeredWatchpointCode = readWatchpointAccessCode();

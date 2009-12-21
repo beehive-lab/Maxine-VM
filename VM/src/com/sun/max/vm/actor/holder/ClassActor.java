@@ -49,6 +49,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 
@@ -131,9 +132,13 @@ public abstract class ClassActor extends Actor {
 
     private ProtectionDomain protectionDomain;
 
-    private InitializationState initializationState;
-
-    private Thread initializingThread;
+    /**
+     * An object representing the initialization state of this class. This value will either be one of the sentinel
+     * objects representing a state (i.e. {@link #VERIFIED}, {@link #PREPARED}, {@link #INITIALIZED}) or be an object
+     * whose type denotes the state ({@code Throwable == ERROR}, {@code Thread == INITIALIZING}) and whose value gives
+     * further details about the state.
+     */
+    private Object initializationState;
 
     public final Kind kind;
 
@@ -160,7 +165,7 @@ public abstract class ClassActor extends Actor {
         if (MaxineVM.isHosted()) {
             checkProhibited(name);
             if (MaxineVM.isMaxineClass(typeDescriptor)) {
-                initializationState = InitializationState.INITIALIZED;
+                initializationState = INITIALIZED;
             } else {
                 // TODO: At some point, it may be worth trying to put JDK classes into the image in the VERIFIED state
                 // so that their class initializers are run at the 'right time' (i.e. according to the JVM spec).
@@ -170,11 +175,11 @@ public abstract class ClassActor extends Actor {
                 // classes that will be re-initialized. Also, all code in the boot image will need to have
                 // the appropriate class initialization barriers (that would be required if the same code
                 // was compiled at runtime).
-                initializationState = InitializationState.INITIALIZED;
+                initializationState = INITIALIZED;
             }
 
         } else {
-            initializationState = InitializationState.PREPARED;
+            initializationState = PREPARED;
         }
 
         this.majorVersion = majorVersion;
@@ -187,6 +192,8 @@ public abstract class ClassActor extends Actor {
         this.superClassActor = superClassActor;
         this.sourceFileName = sourceFileName;
         this.classLoader = classLoader;
+
+        FatalError.check(classLoader != null, "Class loader cannot be null for class actor " + name);
 
         final ClassRegistry classRegistry = classRegistry();
         classRegistry.set(ENCLOSING_METHOD_INFO, this, enclosingMethodInfo);
@@ -1387,24 +1394,25 @@ public abstract class ClassActor extends Actor {
     }
 
     /**
-     * Constants denoting the initialization state for a class. The terminal state for any class is either
-     * {@link #INITIALIZED} or {@link #ERROR}.
+     * Constant denoting that a class is initialized. This value is {@code null} so that
+     * the {@linkplain ClassActor#isInitialized() initialization test} for a class
+     * is as small and fast as possible. Most importantly, it must not require loading of a static variable.
+     *
+     * This means there is a short window in the beginning of the {@link ClassActor#ClassActor constructor} during which
+     * the {@code ClassActor} instance being initialized may appear initialized. Care must be taken to ensure
+     * {@link ClassActor#isInitialized()} is never called inside this window.
      */
-    enum InitializationState {
-        ERROR, PREPARED, VERIFIED, INITIALIZING;
+    private static final Object INITIALIZED = null;
 
-        /**
-         * State denoting that a class is initialized. This is not represented as a enum constant
-         * as the {@linkplain ClassActor#isInitialized() test} for whether or not a class is initialized
-         * is inlined everywhere the JVM semantics require a class initialization barrier. To make
-         * this code as small and fast as possible, it must not require loading of a static variable.
-         *
-         * This means there is a short window in the beginning of the {@link ClassActor#ClassActor constructor} during which
-         * the {@code ClassActor} instance being initialized may appear initialized. Care must be taken to ensure
-         * {@link ClassActor#isInitialized()} is never called inside this window.
-         */
-        public static final InitializationState INITIALIZED = null;
-    }
+    /**
+     * Constant denoting that a class is prepared.
+     */
+    private static final Object PREPARED = new Object();
+
+    /**
+     * Constant denoting that a class is verified.
+     */
+    private static final Object VERIFIED = new Object();
 
     /**
      * Determines if this class actor has a parameterless static method named "<clinit>".
@@ -1417,7 +1425,7 @@ public abstract class ClassActor extends Actor {
         if (clinit != null) {
             SpecialBuiltin.call(CompilationScheme.Static.compile(clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT));
         }
-        initializationState = InitializationState.INITIALIZED;
+        initializationState = INITIALIZED;
     }
 
     private boolean tryInitialization() {
@@ -1426,41 +1434,56 @@ public abstract class ClassActor extends Actor {
                 if (isInitialized()) {
                     return false;
                 }
-                switch (initializationState) {
-                    case ERROR: {
-                        throw new NoClassDefFoundError();
+                Object initializationState = this.initializationState;
+                if (isPrepared(initializationState)) {
+                    verify();
+                    this.initializationState = VERIFIED;
+                } else if (isVerified(initializationState)) {
+                    this.initializationState = Thread.currentThread();
+                    if (VMOptions.verboseOption.verboseClass) {
+                        Log.println("[Initializing " + name + "]");
                     }
-                    case PREPARED: {
-                        verify();
-                        initializationState = InitializationState.VERIFIED;
-                        break;
+                    return true;
+                } else if (isInitializing(initializationState)) {
+                    // INITIALIZING:
+                    Thread initializingThread = (Thread) initializationState;
+                    if (initializingThread == Thread.currentThread()) {
+                        return false;
                     }
-                    case VERIFIED: {
-                        initializingThread = Thread.currentThread();
-                        initializationState = InitializationState.INITIALIZING;
-                        if (VMOptions.verboseOption.verboseClass) {
-                            Log.println("[Initializing " + name + "]");
-                        }
-                        return true;
+                    try {
+                        wait();
+                    } catch (InterruptedException interruptedException) {
                     }
-                    case INITIALIZING: {
-                        if (initializingThread == Thread.currentThread()) {
-                            return false;
-                        }
-                        try {
-                            wait();
-                        } catch (InterruptedException interruptedException) {
-                        }
-                        break;
-                    }
+                } else if (isError(initializationState)) {
+                    throw (NoClassDefFoundError) new NoClassDefFoundError().initCause((Throwable) initializationState);
                 }
             }
         }
     }
 
-    private synchronized void terminateInitialization(InitializationState state) {
+    private static boolean isError(Object initializationState) {
+        return initializationState instanceof Throwable;
+    }
+
+    @INLINE
+    private static boolean isInitialized(Object initializationState) {
+        return initializationState == null;
+    }
+
+    private static boolean isInitializing(Object initializationState) {
+        return initializationState instanceof Thread;
+    }
+
+    private static boolean isVerified(Object initializationState) {
+        return initializationState == VERIFIED;
+    }
+
+    private static boolean isPrepared(Object initializationState) {
+        return initializationState == PREPARED;
+    }
+
+    private synchronized void terminateInitialization(Object state) {
         this.initializationState = state;
-        this.initializingThread = null;
         notifyAll();
     }
 
@@ -1474,7 +1497,7 @@ public abstract class ClassActor extends Actor {
      */
     @INLINE
     public final boolean isInitialized() {
-        return initializationState == null;
+        return isInitialized(initializationState);
     }
 
     /**
@@ -1485,22 +1508,20 @@ public abstract class ClassActor extends Actor {
             if (superClassActor != null) {
                 try {
                     superClassActor.makeInitialized();
-                } catch (Exception exception) {
-                    ProgramError.unexpected("exception not wrapped by ExceptionInInitializerError: " + exception);
                 } catch (Error error) {
-                    terminateInitialization(InitializationState.ERROR);
+                    terminateInitialization(error);
                     throw error;
                 }
             }
             try {
                 callInitializer();
-                terminateInitialization(InitializationState.INITIALIZED);
+                terminateInitialization(INITIALIZED);
                 return;
             } catch (Exception exception) {
-                terminateInitialization(InitializationState.ERROR);
+                terminateInitialization(exception);
                 throw new ExceptionInInitializerError(exception);
             } catch (Error error) {
-                terminateInitialization(InitializationState.ERROR);
+                terminateInitialization(error);
                 throw error;
             }
         }

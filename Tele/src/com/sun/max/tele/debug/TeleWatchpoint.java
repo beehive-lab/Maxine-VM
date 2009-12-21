@@ -421,7 +421,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
 
         private final TeleProcess teleProcess;
 
-        private final Comparator<TeleWatchpoint> watchpointComparitor = new Comparator<TeleWatchpoint>() {
+        private final Comparator<TeleWatchpoint> watchpointComparator = new Comparator<TeleWatchpoint>() {
 
             public int compare(TeleWatchpoint o1, TeleWatchpoint o2) {
                 // For the purposes of the collection, define equality and comparison to be based
@@ -434,14 +434,14 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         // Keep the set ordered by start address only, implemented by the comparator and equals().
         // An additional constraint imposed by this factory is that no regions overlap,
         // either in part or whole, with others in the set.
-        private final TreeSet<TeleWatchpoint> clientWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparitor);
+        private final TreeSet<TeleWatchpoint> clientWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparator);
 
         // A thread-safe, immutable collection of the current watchpoint list.
         // This list will be trapOnRead many, many more times than it will change.
         private volatile IterableWithLength<MaxWatchpoint> clientWatchpointsCache;
 
         // Watchpoints used for internal purposes, for example for GC and relocation services
-        private final TreeSet<TeleWatchpoint> systemWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparitor);
+        private final TreeSet<TeleWatchpoint> systemWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparator);
         private volatile IterableWithLength<MaxWatchpoint> systemWatchpointsCache;
 
         // Is VM known to be in GC?
@@ -846,6 +846,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             if (teleWatchpoint.getTeleObject() != null) {
                 relocatableWatchpointsCounter++;
                 if (relocatableWatchpointsCounter == 1) {
+                    teleProcess.teleVM().modifyInspectableFlags(Inspectable.ACTIVE_RELOCATABLE_WATCHPOINTS, true);
                     endOfGCWatchpoint.setActive(true);
                 }
             }
@@ -895,6 +896,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                             if (teleWatchpoint.getTeleObject() != null) {
                                 relocatableWatchpointsCounter--;
                                 if (relocatableWatchpointsCounter == 0) {
+                                    teleProcess.teleVM().modifyInspectableFlags(Inspectable.ACTIVE_RELOCATABLE_WATCHPOINTS, false);
                                     endOfGCWatchpoint.setActive(false);
                                 }
                             }
