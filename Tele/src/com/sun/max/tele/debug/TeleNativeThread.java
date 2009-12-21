@@ -557,11 +557,18 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return topFrameCaller == null ? null : teleVM.getCodeAddress(topFrameCaller).asPointer();
     }
 
-    public MaxVMThread maxVMThread() {
+    public TeleObject vmThreadObject() {
         if (teleVmThread == null) {
             refreshThreadLocals();
         }
         return teleVmThread;
+    }
+
+    public String vmThreadName() {
+        if (teleVmThread != null) {
+            return teleVmThread.name();
+        }
+        return null;
     }
 
     protected abstract boolean readRegisters(byte[] integerRegisters, byte[] floatingPointRegisters, byte[] stateRegisters);

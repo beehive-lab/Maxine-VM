@@ -144,38 +144,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * @return human readable string identifying a VM thread by a terse name.
-     */
-    public String shortName(MaxVMThread maxVMThread) {
-        return maxVMThread.name();
-    }
-
-    /**
-     * @return human readable string identifying a VM thread in a standard format.
-     */
-    public String longName(MaxVMThread vmThread) {
-        final MaxThread thread = vmThread.maxThread();
-        if (thread != null) {
-            return shortName(vmThread) + " [" + thread.id() + "]";
-        }
-        return shortName(vmThread);
-    }
-
-    /**
-     * @return human readable string identifying a VM thread in a standard format.
-     */
-    public String longNameWithState(MaxVMThread vmThread) {
-        final MaxThread thread = vmThread.maxThread();
-        final StringBuilder result = new StringBuilder(20);
-        result.append(shortName(vmThread));
-        if (thread != null) {
-            result.append(" [").append(thread.id()).append("]");
-            result.append(" (").append(thread.state()).append(")");
-        }
-        return result.toString();
-    }
-
-    /**
      * @return human readable string identifying a thread in a terse standard format.
      */
     public String shortName(MaxThread thread) {
@@ -185,8 +153,9 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (thread.isPrimordial()) {
             return "primordial";
         }
-        if (thread.maxVMThread() != null) {
-            return shortName(thread.maxVMThread());
+        if (thread.isJava()) {
+            final String vmThreadName = thread.vmThreadName();
+            return vmThreadName == null ? "?" : vmThreadName;
         }
         return "native unnamed";
     }
@@ -198,9 +167,6 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (thread == null) {
             return "null";
         }
-        if (thread.maxVMThread() != null) {
-            return longName(thread.maxVMThread());
-        }
         return shortName(thread) + " [" + thread.id() + "]";
     }
 
@@ -211,10 +177,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (thread == null) {
             return "null";
         }
-        if (thread.maxVMThread() != null) {
-            return longNameWithState(thread.maxVMThread());
-        }
-        return shortName(thread) + " [" + thread.id() + "] (" + thread.state() + ")";
+        return longName(thread) + " (" + thread.state() + ")";
     }
 
     /**
@@ -909,12 +872,12 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     private class VmThreadReferenceRenderer implements ReferenceRenderer{
         public String referenceLabelText(TeleObject teleObject) {
             final TeleVmThread teleVmThread = (TeleVmThread) teleObject;
-            return objectReference(null, teleObject, "VmThread", longName(teleVmThread));
+            return objectReference(null, teleObject, "VmThread", longName(teleVmThread.maxThread()));
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
             final TeleVmThread teleVmThread = (TeleVmThread) teleObject;
-            return objectReference(null, teleObject, "VmThread", longName(teleVmThread));
+            return objectReference(null, teleObject, "VmThread", longName(teleVmThread.maxThread()));
         }
     }
 
