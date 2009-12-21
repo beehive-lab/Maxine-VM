@@ -525,7 +525,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer, TargetMethod callee) {
+    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer) {
         preparer.tracePrepareReferenceMap(this, stopIndex, refmapFramePointer, "frame");
         int frameSlotIndex = preparer.referenceMapBitIndex(refmapFramePointer);
         int byteIndex = stopIndex * totalReferenceMapSize();
@@ -537,25 +537,15 @@ public class C1XTargetMethod extends TargetMethod {
             frameSlotIndex += Bytes.WIDTH;
             byteIndex++;
         }
-
-        if (callee instanceof C1XTargetMethod) {
-            final C1XTargetMethod c1xCallee = (C1XTargetMethod) callee;
-            if (c1xCallee.isCalleeSaved()) {
-                for (int i = 0; i < referenceRegisterCount; i++) {
-                    if (isRegisterReferenceMapBitSet(stopIndex, i)) {
-//
-//                        // TODO (tw): Check if this is correct?
-//                        int numberOfWords = i + 2;
-//                        Pointer referencePointer = stackPointer.minusWords(numberOfWords);
-//                        result.setReferenceMapBit(referencePointer);
-                    }
-                }
-            }
-        }
     }
 
     @Override
-    public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
+    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
+        prepareFrameReferenceMap(findClosestStopIndex(current.ip()), current.sp(), preparer);
+    }
+
+    @Override
+    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackReferenceMapPreparer.CalleeKind calleeKind) {
         int stopIndex = lookupStopPosition(instructionPointer);
         for (int i = 0; i < referenceRegisterCount; i++) {
             if (isRegisterReferenceMapBitSet(stopIndex, i)) {

@@ -74,6 +74,10 @@ public abstract class InterpreterStub extends TargetMethod {
     }
 
     @Override
-    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer, TargetMethod callee) {
+    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer) {
+    }
+
+    @Override
+    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
     }
 }
