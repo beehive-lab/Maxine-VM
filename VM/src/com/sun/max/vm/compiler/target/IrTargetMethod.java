@@ -75,4 +75,9 @@ public class IrTargetMethod extends CPSTargetMethod {
     public JavaStackFrameLayout stackFrameLayout() {
         throw ProgramError.unexpected();
     }
+
+    @Override
+    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
+        throw ProgramError.unexpected();
+    }
 }
