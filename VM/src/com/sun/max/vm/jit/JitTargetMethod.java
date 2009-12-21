@@ -291,17 +291,20 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         }
     }
 
-    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer framePointer, Pointer operandStackPointer, int offsetToFirstParameter) {
+    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer preparer, Pointer ip, Pointer fp, Pointer operandStackPointer, int offsetToFirstParameter) {
         finalizeReferenceMaps();
 
-        if (stackReferenceMapPreparer.checkIgnoreCurrentFrame()) {
+        if (preparer.checkIgnoreCurrentFrame()) {
             return true;
         }
 
-        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter, null);
+        return preparer.prepareFrameReferenceMap(this, ip, fp.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter, null);
     }
 
-    public Pointer getFramePointer(Pointer cpuStackPointer, Pointer cpuFramePointer, Pointer osSignalIntegerRegisters) {
-        return cpuFramePointer;
+    @Override
+    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
+        prepareFrameReferenceMap(findClosestStopIndex(current.ip()), current.sp(), preparer);
     }
+
+
 }

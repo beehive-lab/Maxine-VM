@@ -842,7 +842,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                 trampolineTargetMethod = null;
                 trampolineRefmapPointer = Pointer.zero();
             }
-            targetMethod.prepareFrameReferenceMap(stopIndex, refmapFramePointer, this, callee);
+            targetMethod.prepareFrameReferenceMap(stopIndex, refmapFramePointer, this);
         }
 
         // If the stack reference map is being completed, then the stack walk stops after the first trap stub
@@ -938,5 +938,11 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     public static void verifyReferenceMapsForThisThread() {
         VmThread current = VmThread.current();
         current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), current.stackReferenceMapVerifier());
+    }
+
+    public enum CalleeKind {
+        TRAP,
+        TRAMPOLINE,
+        CALLEE_SAVED
     }
 }

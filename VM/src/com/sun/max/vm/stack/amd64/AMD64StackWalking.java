@@ -50,6 +50,7 @@ import com.sun.max.memory.VirtualMemory;
  * @author Ben L. Titzer
  */
 public class AMD64StackWalking {
+
     public static final int RIP_CALL_INSTRUCTION_SIZE = 5;
     public static final byte RET = (byte) 0xC3;
     public static final byte RET2 = (byte) 0xC2;
@@ -251,7 +252,7 @@ public class AMD64StackWalking {
                         Pointer callerCatchAddress = catchAddress.asPointer();
                         final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
                         if (callerTargetMethod != null) {
-                            callerTargetMethod.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), callerCatchAddress, preparer);
+                            callerTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapStateAccess.getRegisterState(trapState), xx);
                         }
                     }
                 } else {
@@ -261,7 +262,7 @@ public class AMD64StackWalking {
 
                     final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
                     if (callerTargetMethod != null) {
-                        callerTargetMethod.prepareRegisterReferenceMap(trapStateAccess.getRegisterState(trapState), callerInstructionPointer, preparer);
+                        callerTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapStateAccess.getRegisterState(trapState), xx);
                     }
                 }
             }
@@ -344,11 +345,33 @@ public class AMD64StackWalking {
         assert AMD64StackWalking.unwindMethod != null;
     }
 
-    private Pointer getTrapState(StackFrameWalker.Cursor cursor) {
-        TargetMethod targetMethod = cursor.targetMethod();
-        if (targetMethod != null && targetMethod.isTrapStub()) {
-            return AMD64TrapStateAccess.getTrapStateFromRipPointer(cursor.sp().plus(targetMethod.frameSize()));
+    public static void prepareReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee) {
+        TargetMethod calleeMethod = callee.targetMethod();
+        Pointer registerState = Pointer.zero();
+        StackReferenceMapPreparer.CalleeKind calleeKind = null;
+        if (calleeMethod != null) {
+            if (calleeMethod.isTrapStub()) {
+                // find the register state in the trap stub method
+                registerState = AMD64TrapStateAccess.getTrapStateFromRipPointer(callee.sp().plus(calleeMethod.frameSize()));
+                calleeKind = StackReferenceMapPreparer.CalleeKind.TRAP;
+            }
+            if (calleeMethod.isCalleeSaved()) {
+                // find the register state in the callee method
+                registerState = callee.sp().plus(calleeMethod.frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                calleeKind = StackReferenceMapPreparer.CalleeKind.CALLEE_SAVED;
+            }
+            if (calleeMethod.isTrampoline()) {
+                // find the register state in the trampoline
+                registerState = callee.sp().plus(calleeMethod.frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                calleeKind = StackReferenceMapPreparer.CalleeKind.TRAMPOLINE;
+            }
         }
-        return Pointer.zero();
+        if (!registerState.isZero()) {
+            // now that the location of the registers has been determined
+            // ask the target method to prepare its register reference map
+            current.targetMethod().prepareRegisterReferenceMap(preparer, current.ip(), registerState, calleeKind);
+        }
+        // ask the target method to prepare its frame reference map
+        current.targetMethod().prepareFrameReferenceMap(preparer, current);
     }
 }
