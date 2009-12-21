@@ -31,6 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.object.*;
 
 /**
  * A table specialized for displaying the threads in the VM.
@@ -75,9 +76,9 @@ public final class ThreadsTable extends InspectorTable {
     protected Transferable getTransferable(int row, int col) {
         final MaxThread thread = tableModel.getThreadAt(row);
         assert thread != null;
-        final MaxVMThread vmThread  =  thread.maxVMThread();
-        if (vmThread != null) {
-            return new InspectorTransferable.TeleObjectTransferable(inspection(), vmThread.teleVmThread());
+        final TeleObject vmThreadObject  =  thread.vmThreadObject();
+        if (vmThreadObject != null) {
+            return new InspectorTransferable.TeleObjectTransferable(inspection(), vmThreadObject);
         }
         return null;
     }
@@ -222,9 +223,8 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
-            final MaxVMThread maxVMThread = thread.maxVMThread();
             String kind;
-            if (maxVMThread != null) {
+            if (thread.isJava()) {
                 kind = "Java";
             } else {
                 if (thread.isPrimordial()) {
