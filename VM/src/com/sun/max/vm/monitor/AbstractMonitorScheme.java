@@ -40,7 +40,11 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme  implements
         if (MaxineVM.isHosted()) {
             return System.identityHashCode(object);
         }
-        return Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ counter++;
+
+        int hashCode = Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ counter++;
+        // Ensure the hash code is positive. Even though the specification does not require this, at
+        // least one application (NetBeans) assumes this is the case (see https://netbeans.org/bugzilla/show_bug.cgi?id=178688).
+        return hashCode & ~0x80000000;
     }
 
 }

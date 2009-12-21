@@ -71,6 +71,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -526,11 +527,26 @@ public abstract class TeleVM implements MaxVM {
     private static native void nativeInitialize(int threadLocalsSize);
 
     /**
-     * Enables inspectable facilities in the VM.
+     * Sets or clears some bits of the {@link Inspectable#flags} field in the VM process.
+     *
+     * @param flags specifies which bits to set or clear
+     * @param set if {@code true}, then the bits are set otherwise they are cleared
+     */
+    public void modifyInspectableFlags(int flags, boolean set) {
+        int newFlags = teleFields.Inspectable_flags.readInt(this);
+        if (set) {
+            newFlags |= flags;
+        } else {
+            newFlags &= ~flags;
+        }
+        teleFields.Inspectable_flags.writeInt(this, newFlags);
+    }
+
+    /**
+     * Enables inspector facilities in the VM.
      */
     private void setVMInspectable() {
-        final Pointer infoPointer = bootImageStart().plus(bootImage().header.inspectableSwitchOffset);
-        dataAccess().writeWord(infoPointer, Address.fromInt(1)); // setting to non-zero indicates enabling
+        modifyInspectableFlags(Inspectable.INSPECTED, true);
     }
 
     /**

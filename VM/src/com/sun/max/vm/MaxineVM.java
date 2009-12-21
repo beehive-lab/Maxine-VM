@@ -401,11 +401,15 @@ public final class MaxineVM {
             }
         }
 
-        final Class<?> enclosingClass = javaClass.getEnclosingClass();
-        if (enclosingClass != null) {
-            final boolean result = isHostedOnly(enclosingClass);
-            HOSTED_CLASSES.put(javaClass, result);
-            return result;
+        try {
+            final Class<?> enclosingClass = javaClass.getEnclosingClass();
+            if (enclosingClass != null) {
+                final boolean result = isHostedOnly(enclosingClass);
+                HOSTED_CLASSES.put(javaClass, result);
+                return result;
+            }
+        } catch (LinkageError linkageError) {
+            ProgramWarning.message("Error trying to get the enclosing class for " + javaClass + ": " + linkageError);
         }
         HOSTED_CLASSES.put(javaClass, Boolean.FALSE);
         return false;
@@ -476,7 +480,7 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, int argc, Pointer argv) {
+    public static int run(Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, Pointer jniEnv, Pointer jmmInterface, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
@@ -501,7 +505,7 @@ public final class MaxineVM {
 
         ImmortalHeap.initialize();
 
-        JniNativeInterface.initialize(jniEnv);
+        NativeInterfaces.initialize(jniEnv, jmmInterface);
 
         VMConfiguration.target().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 

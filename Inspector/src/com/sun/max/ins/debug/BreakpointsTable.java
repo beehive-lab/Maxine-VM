@@ -612,7 +612,7 @@ public final class BreakpointsTable extends InspectorTable {
                 if (breakpoint().getDescription() == null) {
                     sb.append("Method");
                 } else {
-                    sb.append(breakpoint().getDescription());;
+                    sb.append(breakpoint().getDescription());
                 }
                 sb.append(") ");
                 sb.append(inspection().nameDisplay().longName(teleTargetMethod, address));
