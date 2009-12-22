@@ -34,7 +34,7 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
+public class TeleVmThread extends TeleTupleObject {
 
     private String name;
 
@@ -75,16 +75,19 @@ public class TeleVmThread extends TeleTupleObject implements MaxVMThread {
         return name;
     }
 
+    /**
+     * Returns the native thread associated with this Java thread.
+     * <br>
+     * Thread safe.
+     * @return the thread associated with this Java thread.
+     */
     public MaxThread maxThread() {
         for (MaxThread maxThread : teleVM().maxVMState().threads()) {
-            if (this.equals(maxThread.maxVMThread())) {
+            if (maxThread.vmThreadObject() == this) {
                 return maxThread;
             }
         }
         return null;
     }
 
-    public TeleVmThread teleVmThread() {
-        return this;
-    }
 }

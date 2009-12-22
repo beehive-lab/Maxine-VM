@@ -607,7 +607,16 @@ public final class BreakpointsTable extends InspectorTable {
             final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 shortName = inspection().nameDisplay().shortName(teleTargetMethod);
-                longName = "method: " + inspection().nameDisplay().longName(teleTargetMethod, address);
+                final StringBuilder sb = new StringBuilder();
+                sb.append("(");
+                if (breakpoint().getDescription() == null) {
+                    sb.append("Method");
+                } else {
+                    sb.append(breakpoint().getDescription());
+                }
+                sb.append(") ");
+                sb.append(inspection().nameDisplay().longName(teleTargetMethod, address));
+                longName = sb.toString();
                 codeStart = teleTargetMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
@@ -639,8 +648,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String shortName() {
-            String description = breakpoint().getDescription();
-            return description != null && !description.equals("") ?  description  : shortName;
+            return shortName;
         }
 
         @Override
