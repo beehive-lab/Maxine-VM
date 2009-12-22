@@ -23,11 +23,11 @@ package test.com.sun.max.vm.bytecode;
 import java.util.*;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.bir.*;
+import com.sun.max.vm.compiler.cps.bir.*;
 
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
 public class BytecodePreprocessorTest extends CompilerTestCase<BirMethod> {

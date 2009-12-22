@@ -73,7 +73,7 @@ public class NoninlineTemplateRuntime {
     public static Object resolveClassForNewAndCreate(ResolutionGuard guard) {
         final ClassActor classActor = ResolveClassForNew.resolveClassForNew(guard);
         MakeClassInitialized.makeClassInitialized(classActor);
-        final Object tuple = NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor);
+        final Object tuple = CreateTupleOrHybrid.createTupleOrHybrid(classActor);
         return tuple;
     }
 
@@ -378,7 +378,7 @@ public class NoninlineTemplateRuntime {
 
     @NEVER_INLINE
     public static Object noninlineNew(ClassActor classActor) {
-        return NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor);
+        return CreateTupleOrHybrid.createTupleOrHybrid(classActor);
     }
 
 }

@@ -28,7 +28,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
@@ -130,12 +129,12 @@ public final class DynamicHub extends Hub {
      * Determines whether or not the currently configured compiler compiles all the way down to target methods.
      *
      * TODO: Remove this once the notion of a compiler not being able to compile to target methods is removed from
-     * {@link BootstrapCompilerScheme}. That is, once the {@link BootstrapCompilerScheme#compileIR(ClassMethodActor)}
+     * {@link BootstrapCompilerScheme}. That is, once the {@link BootstrapCompilerScheme#compilesToTargetMethod()}
      * method no longer exists.
      */
     @FOLD
     private static boolean compilerCreatesTargetMethods() {
-        return !MaxineVM.isHosted() || TargetMethod.class.isAssignableFrom(VMConfiguration.target().bootCompilerScheme().irGenerator().irMethodType);
+        return !MaxineVM.isHosted() || VMConfiguration.target().bootCompilerScheme().compilesToTargetMethod();
     }
 
     @Override

@@ -22,7 +22,7 @@ package test.com.sun.max.vm.compiler.c1x;
 
 import java.lang.reflect.*;
 
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;

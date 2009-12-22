@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.hotpath.compiler;
 
-import com.sun.max.vm.compiler.tir.*;
+import com.sun.max.vm.compiler.cps.tir.*;
 
 public class Bailout {
     private final TirGuard guard;

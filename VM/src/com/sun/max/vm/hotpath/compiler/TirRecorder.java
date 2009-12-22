@@ -28,16 +28,17 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.ClassConstant.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.dir.*;
+import com.sun.max.vm.compiler.cps.dir.*;
+import com.sun.max.vm.compiler.cps.tir.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.tir.*;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
 import com.sun.max.vm.hotpath.compiler.Tracer.*;
 import com.sun.max.vm.hotpath.state.*;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
-import com.sun.max.vm.profile.TreeAnchor;
 
 public class TirRecorder {
     public static OptionSet optionSet = new OptionSet();
@@ -150,12 +151,12 @@ public class TirRecorder {
     }
 
     private void call(Snippet snippet, TirInstruction... arguments) {
-        final MethodActor method = snippet.foldingMethodActor();
+        final MethodActor method = snippet.executable;
         if (method.isInline()) {
             if (printState.getValue()) {
-                append(new TirInstruction.Placeholder("INLINING SNIPPET: " + snippet.foldingMethodActor().simpleName()));
-                Console.printThinDivider("INLINING SNIPPET: " + snippet.foldingMethodActor().simpleName());
-                final DirMethod dirMethod = DirTracer.makeDirMethod((ClassMethodActor) snippet.foldingMethodActor());
+                append(new TirInstruction.Placeholder("INLINING SNIPPET: " + snippet.executable.simpleName()));
+                Console.printThinDivider("INLINING SNIPPET: " + snippet.executable.simpleName());
+                final DirMethod dirMethod = DirTracer.makeDirMethod((ClassMethodActor) snippet.executable);
                 Trace.stream().println(dirMethod.traceToString());
                 Console.printThinDivider();
             }
@@ -306,14 +307,14 @@ public class TirRecorder {
             final Resolved resolvedClass = (Resolved) classConstant;
             final TirConstant constant = TirConstant.fromObject(resolvedClass.classActor);
             final TirInstruction length = TirRecorder.this.pop(Kind.INT);
-            call(NonFoldableSnippet.CreateReferenceArray.SNIPPET, constant, length);
+            call(CreateReferenceArray.SNIPPET, constant, length);
         }
 
         @Override
         protected void allocateArray(Kind kind) {
             final TirInstruction length = TirRecorder.this.pop(Kind.INT);
             final TirConstant kindConstant = TirConstant.fromObject(kind);
-            call(NonFoldableSnippet.CreatePrimitiveArray.SNIPPET, kindConstant, length);
+            call(CreatePrimitiveArray.SNIPPET, kindConstant, length);
         }
 
         @Override
@@ -325,7 +326,7 @@ public class TirRecorder {
         protected void allocate(ClassConstant classConstant, int index) {
             final Resolved resolvedClass = (Resolved) classConstant;
             final TirConstant constant = TirConstant.fromObject(resolvedClass.classActor);
-            call(NonFoldableSnippet.CreateTupleOrHybrid.SNIPPET, constant);
+            call(CreateTupleOrHybrid.SNIPPET, constant);
         }
 
         @Override

@@ -21,17 +21,20 @@
 package com.sun.max.vm.template.generate;
 
 import java.lang.reflect.*;
+import java.lang.reflect.Method;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.jit.JitInstrumentation;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.TargetLocation.*;
+import com.sun.max.vm.jit.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
@@ -40,10 +43,10 @@ import com.sun.max.vm.type.*;
 @HOSTED_ONLY
 public class TemplateGenerator {
 
-    protected TargetGenerator targetGenerator;
+    protected RuntimeCompilerScheme targetCompiler;
 
     public TemplateGenerator() {
-        targetGenerator = ((TargetGeneratorScheme) MaxineVM.target().configuration.bootCompilerScheme()).targetGenerator();
+        targetCompiler = MaxineVM.target().configuration.bootCompilerScheme();
 
         // Make sure the JavaStackFrame class used for generating the templates are initialized in the target.
         // This will enable all sorts of compiler optimization that we want the templates to benefit from.
@@ -59,8 +62,8 @@ public class TemplateGenerator {
         verifyInvariants();
     }
 
-    protected TargetGenerator targetGenerator() {
-        return targetGenerator;
+    protected RuntimeCompilerScheme targetGenerator() {
+        return targetCompiler;
     }
 
     public ClassMethodActor getClassMethodActor(Method method) {
@@ -110,11 +113,22 @@ public class TemplateGenerator {
         return templates;
     }
 
+    public static boolean hasStackParameters(ClassMethodActor classMethodActor) {
+        TargetABI abi = VMConfiguration.host().targetABIsScheme().optimizedJavaABI();
+        TargetLocation[] locations = abi.getParameterTargetLocations(classMethodActor.getParameterKinds());
+        for (TargetLocation location : locations) {
+            if (!(location instanceof IntegerRegister) && !(location instanceof FloatingPointRegister)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public TargetMethod generateTargetTemplate(final ClassMethodActor sourceTemplate) {
         return MaxineVM.usingTarget(new Function<TargetMethod>() {
             public TargetMethod call() {
-                ProgramError.check(targetGenerator().hasStackParameters(sourceTemplate), "Template must not have *any* stack parameters: " + sourceTemplate);
-                final TargetMethod targetMethod = targetGenerator().makeIrMethod(sourceTemplate);
+                ProgramError.check(hasStackParameters(sourceTemplate), "Template must not have *any* stack parameters: " + sourceTemplate);
+                final TargetMethod targetMethod = targetGenerator().compile(sourceTemplate);
                 ProgramError.check(targetMethod.referenceLiterals() == null, "Template must not have *any* reference literals: " + targetMethod);
                 ProgramError.check(targetMethod.scalarLiterals() == null, "Template must not have *any* scalar literals: " + targetMethod);
                 return targetMethod;

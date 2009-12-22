@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
@@ -284,7 +285,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
 
     private static final Mapping<CPSTargetMethod, IndexedSequence<TargetJavaFrameDescriptor>> methodToJavaFrameDescriptors = Memoizer.create(inflate);
 
-    static final TargetJavaFrameDescriptor get(CPSTargetMethod targetMethod, int index) {
+    public static final TargetJavaFrameDescriptor get(CPSTargetMethod targetMethod, int index) {
         final IndexedSequence<TargetJavaFrameDescriptor> indexedSequence = methodToJavaFrameDescriptors.get(targetMethod);
         if (indexedSequence != null) {
             return indexedSequence.get(index);

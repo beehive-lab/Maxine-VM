@@ -33,13 +33,13 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.DebugBreak;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.JavaStackFrameLayout.*;
@@ -138,6 +138,11 @@ public class C1XTargetMethod extends TargetMethod {
         if (!MaxineVM.isHosted()) {
             linkDirectCalls();
         }
+    }
+
+    @Override
+    public byte[] referenceMaps() {
+        return referenceMaps;
     }
 
     /**

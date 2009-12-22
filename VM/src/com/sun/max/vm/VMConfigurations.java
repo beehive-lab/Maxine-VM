@@ -41,9 +41,9 @@ public final class VMConfigurations {
     public static VMPackage defaultCompilerScheme(Platform platform) {
         switch (platform.processorKind.instructionSet) {
             case AMD64:
-                return new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
+                return new com.sun.max.vm.compiler.cps.b.c.d.e.amd64.target.Package();
             case SPARC:
-                return new com.sun.max.vm.compiler.b.c.d.e.sparc.target.Package();
+                return new com.sun.max.vm.compiler.cps.b.c.d.e.sparc.target.Package();
             default:
                 throw FatalError.unimplemented();
         }

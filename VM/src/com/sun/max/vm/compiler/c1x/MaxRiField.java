@@ -20,15 +20,15 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.C1XOptions;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.reference.Reference;
 
 /**
  * The {@code MaxRiField} implements a compiler interface field. A field can

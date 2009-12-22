@@ -25,13 +25,12 @@ import static com.sun.max.vm.verifier.types.VerificationType.*;
 import java.io.*;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.*;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 import com.sun.max.vm.verifier.types.*;
@@ -40,7 +39,7 @@ import com.sun.max.vm.verifier.types.*;
  * @author David Liu
  * @author Doug Simon
  */
-public class VerificationTypeTest extends CompilerTestCase<CPSTargetMethod> {
+public class VerificationTypeTest extends VmTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(VerificationTypeTest.class.getSimpleName());

@@ -24,7 +24,7 @@ import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 
 import java.lang.reflect.*;
 
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -44,7 +44,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Laurent Daynes
  */
-public abstract class TemplateTableTestCase extends CompilerTestCase<CPSTargetMethod> {
+public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMethod> {
 
     protected static String fieldActorToString(FieldActor fieldActor) {
         final StringBuilder sb = new StringBuilder();
@@ -224,7 +224,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<CPSTargetMe
         final TemplateProcessor processor = new TemplateProcessor() {
             public void processTemplate(CompiledBytecodeTemplate template) {
                 final Bytecode bytecode = template.bytecode;
-                final CPSTargetMethod targetMethod = template.targetMethod;
+                final TargetMethod targetMethod = template.targetMethod;
                 final Kind kind = template.kind;
                 String numOperands = "";
                 if (bytecode == Bytecode.MULTIANEWARRAY) {
@@ -236,9 +236,6 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<CPSTargetMe
                 Trace.line(1, "Generated Template for " + bytecode + (kind == null ? " (" : " [" + kind + "] (") + numOperands + targetMethod.codeLength() + " bytes)");
                 if (targetMethod.code().length > 0) {
                     traceBundleAndDisassemble(targetMethod);
-                    if (template.targetMethod.numberOfCatchRanges() > 0) {
-                        Trace.line(1, "\t*** WARNING: template has exception handlers: " + targetMethod.numberOfCatchRanges() + " catch ranges");
-                    }
                 }
                 stats.update(template);
             }
@@ -280,8 +277,8 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<CPSTargetMe
     }
 
     @Override
-    protected CompilerTestSetup<CPSTargetMethod> compilerTestSetup() {
-        final Class<CompilerTestSetup<CPSTargetMethod>> compilerTestSetupType = null;
+    protected CompilerTestSetup<TargetMethod> compilerTestSetup() {
+        final Class<CompilerTestSetup<TargetMethod>> compilerTestSetupType = null;
         return StaticLoophole.cast(compilerTestSetupType, CompilerTestSetup.compilerTestSetup());
     }
 

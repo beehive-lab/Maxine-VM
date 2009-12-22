@@ -22,9 +22,8 @@ package com.sun.max.vm.compiler;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * This compiler interface extends the {@link RuntimeCompilerScheme} to denote the extra operations
@@ -59,8 +58,6 @@ public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
     @HOSTED_ONLY
     void compileSnippets();
 
-    IrMethod compileIR(ClassMethodActor classMethodActor);
-
     /**
      * Checks whether the compiler has finished compiling its internal snippets.
      *
@@ -85,9 +82,11 @@ public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
     void staticTrampoline();
 
     /**
-     * Gets this compiler's last IR generator (typically a {@link com.sun.max.vm.compiler.target.TargetGenerator}).
+     * Determines if the {@link #compile(com.sun.max.vm.actor.member.ClassMethodActor)} method actually
+     * returns a {@link TargetMethod} instance.
      *
-     * @return the last IR generator of this compiler
+     * This is only required while the CPS compiler exists and is composed of intermediate compilers
+     * that produce IR methods that are not TargetMethods.
      */
-    IrGenerator irGenerator();
+    boolean compilesToTargetMethod();
 }

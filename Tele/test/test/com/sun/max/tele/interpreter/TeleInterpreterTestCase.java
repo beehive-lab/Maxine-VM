@@ -24,13 +24,13 @@ import static com.sun.max.vm.classfile.constant.SymbolTable.*;
 
 import java.lang.reflect.*;
 
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.cps.ir.*;
 import com.sun.max.vm.value.*;
 
 /**

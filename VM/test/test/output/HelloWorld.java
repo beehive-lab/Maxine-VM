@@ -28,6 +28,17 @@ package test.output;
 public class HelloWorld {
     public static void main(String[] args) {
         // DO NOT HACK ME!
-        System.out.println("Hello World!");
+        String msg = "Hello World!";
+        print(print(msg) + f());
+        f();
+    }
+
+    private static float f() {
+        return 76.4f;
+    }
+
+    private static String print(String msg) {
+        System.out.println(msg);
+        return msg;
     }
 }

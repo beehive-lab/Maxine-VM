@@ -20,10 +20,12 @@
  */
 package test.com.sun.max.vm.jit;
 
-import test.com.sun.max.vm.compiler.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
+import test.com.sun.max.vm.bytecode.*;
+import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.compiler.cps.bytecode.*;
 
 import com.sun.max.program.*;
+import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.generate.*;
@@ -77,7 +79,7 @@ public class JITTest_simpleBranch extends CompilerTestCase<CPSTargetMethod> {
      * }.
      */
     public void test_ifne() {
-        new TestBytecodeAssembler(false, "test_ifne", SignatureDescriptor.create("(I)I")) {
+        compile(new TestBytecodeAssembler(false, "test_ifne", SignatureDescriptor.create("(I)I")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -92,7 +94,7 @@ public class JITTest_simpleBranch extends CompilerTestCase<CPSTargetMethod> {
                 ishl();
                 ireturn();
             }
-        }.compile(getClass());
+        }, getClass());
     }
 
     /**
@@ -105,7 +107,7 @@ public class JITTest_simpleBranch extends CompilerTestCase<CPSTargetMethod> {
      * }.
      */
     public void test_ifne2() {
-        new TestBytecodeAssembler(false, "perform_ifne2", SignatureDescriptor.create("(I)I")) {
+        compile(new TestBytecodeAssembler(false, "perform_ifne2", SignatureDescriptor.create("(I)I")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -126,7 +128,7 @@ public class JITTest_simpleBranch extends CompilerTestCase<CPSTargetMethod> {
                 iload(c);
                 ireturn();
             }
-        }.compile(getClass());
+        }, getClass());
     }
 
     private void do_unresolved_invoke(final String testName) {

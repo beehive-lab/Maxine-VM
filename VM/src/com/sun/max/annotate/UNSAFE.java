@@ -110,7 +110,14 @@ public @interface UNSAFE {
             if (classMethodActor.isUnsafe()) {
                 return true;
             }
-            final CodeAttribute codeAttribute = classMethodActor.compilee().codeAttribute();
+            final CodeAttribute codeAttribute;
+            try {
+                codeAttribute = classMethodActor.compilee().codeAttribute();
+            } catch (HostOnlyMethodError hostOnlyMethodError) {
+                // a reference to a @HOSTED_ONLY method - do nothing
+                return false;
+            }
+
             if (codeAttribute == null) {
                 return false;
             }
@@ -171,8 +178,8 @@ public @interface UNSAFE {
                             if (methodActor.isUnsafe()) {
                                 isUnsafe.setValue(true);
                             }
-                        } catch (NoSuchMethodError noSuchMethodError) {
-                            // probably a reference to a @HOSTED_ONLY method - do nothing
+                        } catch (HostOnlyMethodError hostOnlyMethodError) {
+                            // a reference to a @HOSTED_ONLY method - do nothing
                         }
                     }
                 }

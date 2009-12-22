@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
@@ -38,13 +37,8 @@ public abstract class SpecialBuiltin extends Builtin {
         super(SpecialBuiltin.class);
     }
 
-    protected SpecialBuiltin(Class foldingMethodHolder) {
-        super(foldingMethodHolder);
-    }
-
-    @Override
-    public boolean isFoldable(IrValue[] arguments) {
-        return false;
+    protected SpecialBuiltin(Class executableHolder) {
+        super(executableHolder);
     }
 
     /**

@@ -21,7 +21,7 @@
 package test.com.sun.max.vm.compiler.c1x.amd64;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.platform.*;

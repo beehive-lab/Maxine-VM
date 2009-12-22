@@ -21,7 +21,7 @@
 package test.com.sun.max.vm.verifier;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
@@ -29,14 +29,13 @@ import com.sun.max.vm.*;
 /**
  * @author David Liu
  */
-public class VerifierTestSetup extends BirCompilerTestSetup {
+public class VerifierTestSetup extends VmTestSetup {
     public VerifierTestSetup(Test test) {
         super(test);
     }
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
-                        new com.sun.max.vm.compiler.b.Package());
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host());
     }
 }

@@ -32,10 +32,10 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Bernd Mathiske
  */
-public final class StaticTrampoline extends NonFoldableSnippet {
+public final class StaticTrampoline extends Snippet {
 
     private StaticTrampoline() {
-        new CriticalMethod(classMethodActor(), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        new CriticalMethod(executable, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     /**
@@ -61,7 +61,7 @@ public final class StaticTrampoline extends NonFoldableSnippet {
 
     public static Pointer codeStart() {
         if (codeStart.isZero()) {
-            codeStart = CompilationScheme.Static.getCurrentTargetMethod(snippet.classMethodActor()).codeStart();
+            codeStart = CompilationScheme.Static.getCurrentTargetMethod(snippet.executable).codeStart();
         }
         return codeStart;
     }

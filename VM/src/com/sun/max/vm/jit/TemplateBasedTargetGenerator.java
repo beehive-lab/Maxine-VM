@@ -28,6 +28,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
@@ -38,7 +39,7 @@ import com.sun.max.vm.template.source.*;
  *
  * @author Laurent Daynes
  */
-public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
+public abstract class TemplateBasedTargetGenerator extends CPSTargetGenerator {
 
     @CONSTANT_WHEN_NOT_ZERO
     private TemplateTable templateTable;

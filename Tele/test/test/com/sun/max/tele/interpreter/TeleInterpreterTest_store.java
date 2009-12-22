@@ -21,9 +21,9 @@
 package test.com.sun.max.tele.interpreter;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
+import test.com.sun.max.vm.compiler.cps.bytecode.*;
 
-import com.sun.max.vm.compiler.cir.*;
+import com.sun.max.vm.compiler.cps.cir.*;
 
 public class TeleInterpreterTest_store extends BytecodeTest_store<CirMethod> {
 

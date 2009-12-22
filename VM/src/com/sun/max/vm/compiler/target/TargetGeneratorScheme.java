@@ -21,10 +21,11 @@
 package com.sun.max.vm.compiler.target;
 
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.cps.target.*;
 
 /**
  * @author Bernd Mathiske
  */
 public interface TargetGeneratorScheme extends BootstrapCompilerScheme {
-    TargetGenerator targetGenerator();
+    CPSTargetGenerator targetGenerator();
 }

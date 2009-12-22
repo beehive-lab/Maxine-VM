@@ -20,7 +20,6 @@
  */
 package com.sun.max;
 
-import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.collect.*;
@@ -121,30 +120,6 @@ public class PackageLoader {
         try {
             for (Class outerClass : load(MaxPackage.fromClass(representative), false)) {
                 initializeAll(outerClass);
-            }
-        } catch (Throwable throwable) {
-            ProgramError.unexpected(throwable);
-        }
-    }
-
-    private void initializeAllAndInstantiateLeaves(Class<?> c, Class<?> root) {
-        Classes.initialize(c);
-        if ((c.getModifiers() & Modifier.FINAL) != 0 && root.isAssignableFrom(c)) {
-            try {
-                c.newInstance();
-            } catch (Throwable throwable) {
-                ProgramError.unexpected("could not instantiate leaf class of " + root.getSimpleName() + ": " + c, throwable);
-            }
-        }
-        for (Class innerClass : c.getDeclaredClasses()) {
-            initializeAllAndInstantiateLeaves(innerClass, root);
-        }
-    }
-
-    public void loadAndInitializeAllAndInstantiateLeaves(Class root) {
-        try {
-            for (Class outerClass : load(MaxPackage.fromClass(root), false)) {
-                initializeAllAndInstantiateLeaves(outerClass, root);
             }
         } catch (Throwable throwable) {
             ProgramError.unexpected(throwable);

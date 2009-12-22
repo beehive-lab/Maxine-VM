@@ -28,7 +28,7 @@ import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.eir.sparc.*;
+import com.sun.max.vm.compiler.cps.eir.sparc.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.sparc.*;

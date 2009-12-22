@@ -24,7 +24,7 @@ import java.io.*;
 import java.util.*;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -33,7 +33,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.bir.*;
+import com.sun.max.vm.compiler.cps.bir.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 import com.sun.max.vm.verifier.types.*;

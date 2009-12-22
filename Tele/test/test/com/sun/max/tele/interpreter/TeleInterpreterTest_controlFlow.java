@@ -21,7 +21,7 @@
 package test.com.sun.max.tele.interpreter;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 public class TeleInterpreterTest_controlFlow extends CompilerTest_controlFlow {
 

@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 
@@ -36,11 +35,6 @@ public class TupleOffsetSnippet extends BuiltinsSnippet {
 
     protected TupleOffsetSnippet() {
         super();
-    }
-
-    @Override
-    public boolean isFoldable(IrValue[] arguments) {
-        return false;
     }
 
     /**

@@ -20,11 +20,11 @@
  */
 package test.com.sun.max.vm.jit;
 
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 

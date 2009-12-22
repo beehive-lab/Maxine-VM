@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.ir.*;
 
 /**
  * @author Bernd Mathiske
@@ -31,10 +30,4 @@ public abstract class PointerBuiltin extends Builtin {
     protected PointerBuiltin() {
         super(Pointer.class);
     }
-
-    @Override
-    public boolean isFoldable(IrValue[] arguments) {
-        return false;
-    }
-
 }
