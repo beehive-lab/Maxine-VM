@@ -21,8 +21,8 @@
 package com.sun.max.vm.hotpath;
 
 import com.sun.max.collect.*;
-import com.sun.max.vm.compiler.tir.*;
-import com.sun.max.vm.compiler.tir.pipeline.*;
+import com.sun.max.vm.compiler.cps.tir.*;
+import com.sun.max.vm.compiler.cps.tir.pipeline.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
 
 public class NameMap {
@@ -51,7 +51,7 @@ public class NameMap {
 
                 @Override
                 public void visit(TirBuiltinCall call) {
-                    result.setValue(call.builtin().classMethodActor().name.toString());
+                    result.setValue(call.builtin().executable.name.toString());
                 }
 
                 @Override

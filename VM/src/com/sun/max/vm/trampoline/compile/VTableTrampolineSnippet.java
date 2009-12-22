@@ -35,7 +35,7 @@ import com.sun.max.vm.trampoline.*;
  *
  * @author Bernd Mathiske
  */
-public final class VTableTrampolineSnippet extends NonFoldableSnippet {
+public final class VTableTrampolineSnippet extends Snippet {
 
     private VTableTrampolineSnippet() {
         super();
@@ -50,7 +50,7 @@ public final class VTableTrampolineSnippet extends NonFoldableSnippet {
 
     private static final VTableTrampolineSnippet snippet = new VTableTrampolineSnippet();
 
-    private static final TrampolineGenerator trampolineGenerator = new RecompileTrampolineGenerator.VtableTrampolineGenerator(snippet.classMethodActor());
+    private static final TrampolineGenerator trampolineGenerator = new RecompileTrampolineGenerator.VtableTrampolineGenerator(snippet.executable);
 
     @SNIPPET
     @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.VIRTUAL)
@@ -63,7 +63,7 @@ public final class VTableTrampolineSnippet extends NonFoldableSnippet {
     }
 
     public static synchronized boolean isVTableTrampoline(MethodActor classMethodActor) {
-        return classMethodActor == snippet.classMethodActor();
+        return classMethodActor == snippet.executable;
     }
 
     public static synchronized boolean isVTableTrampolineInstructionPointer(Address instructionPointer) {
@@ -71,6 +71,6 @@ public final class VTableTrampolineSnippet extends NonFoldableSnippet {
         if (targetMethod == null) {
             return false;
         }
-        return targetMethod.classMethodActor() == snippet.classMethodActor();
+        return targetMethod.classMethodActor() == snippet.executable;
     }
 }

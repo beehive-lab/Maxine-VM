@@ -26,20 +26,14 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.type.*;
 
 public class FieldWriteSnippet extends BuiltinsSnippet {
 
     protected FieldWriteSnippet() {
         super();
-    }
-
-    @Override
-    public boolean isFoldable(IrValue[] arguments) {
-        return false;
     }
 
     public static final class WriteByte extends FieldWriteSnippet {

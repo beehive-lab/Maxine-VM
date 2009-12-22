@@ -486,8 +486,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
                 Class<?> type = teleObject.classActorForType().toJava();
                 if (VMConfiguration.hostOrTarget().bootCompilerScheme().getClass() == type) {
                     return VMConfiguration.hostOrTarget().bootCompilerScheme();
-                } else if (VMConfiguration.hostOrTarget().interpreterStubCompiler.getClass() == type) {
-                    return VMConfiguration.hostOrTarget().interpreterStubCompiler;
                 } else if (VMConfiguration.hostOrTarget().jitCompilerScheme().getClass() == type) {
                     return VMConfiguration.hostOrTarget().jitCompilerScheme();
                 } else if (C1XCompilerScheme.class == type) {

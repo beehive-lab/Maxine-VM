@@ -20,7 +20,7 @@
  */
 package test.com.sun.max.vm.jit;
 
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -28,8 +28,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.template.source.*;

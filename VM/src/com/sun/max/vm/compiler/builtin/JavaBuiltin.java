@@ -22,9 +22,7 @@ package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.type.*;
 
 public abstract class JavaBuiltin extends Builtin {
 
@@ -35,19 +33,6 @@ public abstract class JavaBuiltin extends Builtin {
     @Override
     public final boolean hasSideEffects() {
         return false;
-    }
-
-    @Override
-    public boolean isFoldable(IrValue[] arguments) {
-        if (!super.isFoldable(arguments)) {
-            return false;
-        }
-        for (IrValue argument : arguments) {
-            if (argument.kind() == Kind.REFERENCE) {
-                return false;
-            }
-        }
-        return true;
     }
 
     public static class IntNegated extends JavaBuiltin {

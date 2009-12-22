@@ -21,7 +21,7 @@
 package test.com.sun.max.vm.compiler.c1x.amd64;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 /**
  * Translates and optimizes almost all packages in the project to test the optimizer.

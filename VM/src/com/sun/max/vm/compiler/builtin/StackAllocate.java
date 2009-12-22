@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.ir.*;
 
 /**
  * A mechanism for allocating a block of memory within an activation frame for the lifetime of the frame.
@@ -34,11 +33,6 @@ public final class StackAllocate extends SpecialBuiltin {
 
     private StackAllocate() {
         super(null);
-    }
-
-    @Override
-    public boolean isFoldable(IrValue[] arguments) {
-        return false;
     }
 
     @Override

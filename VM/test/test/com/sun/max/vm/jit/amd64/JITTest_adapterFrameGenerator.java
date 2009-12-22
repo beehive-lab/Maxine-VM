@@ -23,8 +23,8 @@ package test.com.sun.max.vm.jit.amd64;
 import java.io.*;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
-import test.com.sun.max.vm.compiler.amd64.*;
+import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.compiler.cps.amd64.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
@@ -36,9 +36,9 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
-import com.sun.max.vm.compiler.eir.*;
-import com.sun.max.vm.compiler.eir.amd64.*;
+import com.sun.max.vm.compiler.cps.b.c.d.e.amd64.target.*;
+import com.sun.max.vm.compiler.cps.eir.*;
+import com.sun.max.vm.compiler.cps.eir.amd64.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;

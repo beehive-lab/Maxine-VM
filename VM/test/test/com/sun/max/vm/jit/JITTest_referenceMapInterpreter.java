@@ -22,7 +22,7 @@ package test.com.sun.max.vm.jit;
 
 import java.io.*;
 
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.jit.*;

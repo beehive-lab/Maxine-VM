@@ -28,11 +28,8 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.compiler.ir.interpreter.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -44,7 +41,7 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  * @author Hannes Payer
  */
-public abstract class NativeStubSnippet extends NonFoldableSnippet {
+public abstract class NativeStubSnippet extends Snippet {
 
     /**
      * Finds the address of the native function for a {@code native} Java method.
@@ -53,19 +50,6 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
      * {@linkplain IrInterpreter IR interpreter}.
      */
     public static final class LinkNativeMethod extends Snippet {
-        @Override
-        public boolean isFoldable(IrValue[] arguments) {
-            if (MaxineVM.isHosted() || !super.isFoldable(arguments)) {
-                return false;
-            }
-            try {
-                final ClassMethodActor classMethodActor = (ClassMethodActor) arguments[0].value().asObject();
-                return !classMethodActor.nativeFunction.link().isZero();
-            } catch (UnsatisfiedLinkError unsatisfiedLinkError) {
-                return false;
-            }
-        }
-
         @SNIPPET
         public static Word linkNativeMethod(ClassMethodActor classMethodActor) {
             return classMethodActor.nativeFunction.link();

@@ -23,7 +23,7 @@ package com.sun.max.vm.jit.sparc;
 import com.sun.max.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.eir.sparc.*;
+import com.sun.max.vm.compiler.cps.eir.sparc.*;
 
 /**
  * @see MaxPackage

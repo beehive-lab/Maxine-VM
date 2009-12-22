@@ -21,7 +21,7 @@
 package test.com.sun.max.vm.bytecode;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.cir.generate.*;
+import test.com.sun.max.vm.compiler.cps.cir.generate.*;
 
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;

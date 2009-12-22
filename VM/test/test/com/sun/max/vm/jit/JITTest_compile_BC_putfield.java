@@ -20,10 +20,10 @@
  */
 package test.com.sun.max.vm.jit;
 
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 import test.com.sun.max.vm.jtrun.all.*;
 
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.template.source.*;
 
 /**

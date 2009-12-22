@@ -20,9 +20,10 @@
  */
 package test.com.sun.max.vm.jit;
 
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.bytecode.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
@@ -44,7 +45,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_forward_ifne() {
-        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_forward_ifne", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = compile(new TestBytecodeAssembler(false, "perform_forward_ifne", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -62,7 +63,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
                 istore(n);
                 vreturn();
             }
-        }.compile(getClass());
+        }, getClass());
         traceCompiledMethod(targetMethod);
     }
 
@@ -75,7 +76,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_backward_ifne() {
-        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_backward_ifne", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = compile(new TestBytecodeAssembler(false, "perform_backward_ifne", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -95,7 +96,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
                 ifne(loopHead);
                 vreturn();
             }
-        }.compile(getClass());
+        }, getClass());
         traceCompiledMethod(targetMethod);
     }
 
@@ -108,7 +109,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_backward_ifgt() {
-        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_backward_ifgt", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = compile(new TestBytecodeAssembler(false, "perform_backward_ifgt", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -128,7 +129,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
                 ifgt(loopHead);
                 vreturn();
             }
-        }.compile(getClass());
+        }, getClass());
         traceCompiledMethod(targetMethod);
     }
 
@@ -141,7 +142,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_backward_iflt() {
-        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_backward_iflt", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = compile(new TestBytecodeAssembler(false, "perform_backward_iflt", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -161,7 +162,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
                 iflt(loopHead);
                 vreturn();
             }
-        }.compile(getClass());
+        }, getClass());
         traceCompiledMethod(targetMethod);
     }
 
@@ -176,7 +177,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
      * }.
      */
     public void test_perform_forward_if_icmpne() {
-        final CPSTargetMethod targetMethod = new TestBytecodeAssembler(false, "perform_forward_if_icmpne", SignatureDescriptor.create("(I)V")) {
+        final CPSTargetMethod targetMethod = compile(new TestBytecodeAssembler(false, "perform_forward_if_icmpne", SignatureDescriptor.create("(I)V")) {
             @Override
             public void generateCode() {
                 final int i = 1;
@@ -198,7 +199,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
                 istore(n);
                 vreturn();
             }
-        }.compile(getClass());
+        }, getClass());
         traceCompiledMethod(targetMethod);
     }
 

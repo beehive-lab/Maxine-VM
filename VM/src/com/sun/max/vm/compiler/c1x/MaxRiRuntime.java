@@ -27,6 +27,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
+import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.io.*;
@@ -43,7 +44,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.annotate.UNSAFE;
 
 /**
  * The {@code MaxRiRuntime} class implements the runtime interface needed by C1X.

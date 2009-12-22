@@ -21,7 +21,7 @@
 package test.com.sun.max.vm.jit.sparc;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.sparc.*;
+import test.com.sun.max.vm.compiler.cps.sparc.*;
 import test.com.sun.max.vm.jit.*;
 
 import com.sun.max.asm.*;

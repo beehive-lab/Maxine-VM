@@ -40,8 +40,9 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.cir.*;
-import com.sun.max.vm.compiler.cir.bytecode.*;
+import com.sun.max.vm.compiler.cps.cir.*;
+import com.sun.max.vm.compiler.cps.cir.bytecode.*;
+import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 

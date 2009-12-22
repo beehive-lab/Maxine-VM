@@ -20,8 +20,8 @@
  */
 package test.com.sun.max.vm.jit.amd64;
 
-import test.com.sun.max.vm.jit.*;
 import junit.framework.*;
+import test.com.sun.max.vm.jit.*;
 
 import com.sun.max.vm.template.source.*;
 /**

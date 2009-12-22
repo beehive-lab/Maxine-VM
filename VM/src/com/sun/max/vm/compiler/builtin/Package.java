@@ -22,7 +22,7 @@ package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.cir.*;
+import com.sun.max.vm.compiler.cps.cir.*;
 
 /**
  * @see MaxPackage

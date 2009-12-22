@@ -34,10 +34,11 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.compiler.ir.observer.*;
+import com.sun.max.vm.compiler.cps.ir.*;
+import com.sun.max.vm.compiler.cps.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
@@ -130,6 +131,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final ClassMethodActor classMethodActor() {
         return classMethodActor;
     }
+
+    public abstract byte[] referenceMaps();
 
     /**
      * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
@@ -689,4 +692,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * Gets a string representation of the reference map for each stop in this target method.
      */
     public abstract String referenceMapsToString();
+
+    public ByteArrayBitMap registerReferenceMapFor(int index) {
+        throw FatalError.unimplemented();
+    }
+
+    public ByteArrayBitMap frameReferenceMapFor(StopType type, int index) {
+        throw FatalError.unimplemented();
+    }
 }

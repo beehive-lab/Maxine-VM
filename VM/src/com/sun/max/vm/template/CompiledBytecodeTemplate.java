@@ -35,14 +35,14 @@ import com.sun.max.vm.type.*;
 public final class CompiledBytecodeTemplate implements BytecodeInfo {
 
     public final Bytecode bytecode;
-    public final CPSTargetMethod targetMethod;
+    public final TargetMethod targetMethod;
     public final TemplateChooser.Initialized initialized;
     public final TemplateChooser.Resolved resolved;
     public final TemplateChooser.Instrumented instrumented;
     public final TemplateChooser.Traced traced;
     public final Kind kind;
 
-    public CompiledBytecodeTemplate(CPSTargetMethod targetMethod) {
+    public CompiledBytecodeTemplate(TargetMethod targetMethod) {
         assert targetMethod.classMethodActor().isTemplate();
         final BYTECODE_TEMPLATE bytecodeAnnotation = targetMethod.classMethodActor().getAnnotation(BYTECODE_TEMPLATE.class);
 

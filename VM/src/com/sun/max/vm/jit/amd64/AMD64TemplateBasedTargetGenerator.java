@@ -22,8 +22,8 @@ package com.sun.max.vm.jit.amd64;
 
 import com.sun.max.asm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
-import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.cps.b.c.d.e.amd64.target.*;
+import com.sun.max.vm.compiler.cps.eir.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.template.*;
 

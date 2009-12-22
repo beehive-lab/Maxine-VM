@@ -22,9 +22,9 @@ package com.sun.max.vm.jit.amd64;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.cps.target.amd64.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.amd64.*;
-import com.sun.max.vm.compiler.RuntimeCompilerScheme;
 import com.sun.max.vm.jit.*;
 
 /**

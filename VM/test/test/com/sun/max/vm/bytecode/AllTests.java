@@ -24,7 +24,7 @@ import junit.framework.*;
 
 import org.junit.runner.*;
 
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.cps.*;
 
 import com.sun.max.ide.*;
 
