@@ -31,7 +31,7 @@ public enum ThreadsColumnKind implements ColumnKind {
 
     ID("ID", "ID assigned by VM, none if native", true, 15),
     HANDLE("Handle", "Thread handle assigned by the remote native thread library", true, 15),
-    LOCAL_HANDLE("Local Handle", "Thread handle assigned by the process control API used by the Inspector", true, 15),
+    LOCAL_HANDLE("Local Handle", "Thread handle assigned by the process control API used by the Inspector", false, 15),
     KIND("Kind", "Either a Java thread or some other kind", true, -1),
     NAME("Name", "Name assigned to the thread", true, -1) {
         @Override
