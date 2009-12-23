@@ -33,7 +33,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
@@ -461,7 +460,7 @@ public abstract class StackFrameWalker {
      * @return the address of the second byte of the native function call after {@code instructionPointer} or zero if no such call exists
      */
     private Pointer getNativeFunctionCallInstructionPointerInNativeStub(Pointer ip, boolean fatalIfNotFound) {
-        final CPSTargetMethod nativeStubTargetMethod = (CPSTargetMethod) targetMethodFor(ip);
+        final TargetMethod nativeStubTargetMethod = targetMethodFor(ip);
         if (nativeStubTargetMethod != null) {
             final int targetCodePosition = nativeStubTargetMethod.targetCodePositionFor(ip);
             final int nativeFunctionCallPosition = nativeStubTargetMethod.findNextCall(targetCodePosition, true);

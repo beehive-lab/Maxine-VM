@@ -24,8 +24,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.cps.b.c.*;
-import com.sun.max.vm.compiler.cps.cir.operator.*;
 
 /**
  * Denotes an operation that may produce a <i>stop</i> in the translated code. A stop is a position in the translated

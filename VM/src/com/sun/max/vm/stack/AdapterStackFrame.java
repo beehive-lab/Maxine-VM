@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Laurent Daynes
  */
-public class AdapterStackFrame extends JavaStackFrame {
+public class AdapterStackFrame extends CompiledStackFrame {
 
     public AdapterStackFrame(StackFrame callee, AdapterStackFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, layout, targetMethod, instructionPointer, framePointer, stackPointer);

@@ -33,7 +33,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -376,25 +375,22 @@ public abstract class Trap {
      * @param throwAddress
      */
     private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer throwAddress) {
+        if (!targetMethod.isJitCompiled()) {
+            final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, throwAddress, throwable.getClass());
+            if (!catchAddress.isZero()) {
+                final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+                trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
+                VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
 
-        if (targetMethod instanceof JitTargetMethod) {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
-        }
-
-        final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, throwAddress, throwable.getClass());
-        if (!catchAddress.isZero()) {
-            final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-            trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
-            VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
-
-            if (throwable instanceof StackOverflowError) {
-                // This complete call-chain must be inlined down to the native call
-                // so that no further stack banging instructions
-                // are executed before execution jumps to the catch handler.
-                VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
+                if (throwable instanceof StackOverflowError) {
+                    // This complete call-chain must be inlined down to the native call
+                    // so that no further stack banging instructions
+                    // are executed before execution jumps to the catch handler.
+                    VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
+                }
+                return;
             }
-        } else {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
         }
+        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
     }
 }

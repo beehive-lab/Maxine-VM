@@ -20,17 +20,17 @@
  */
 package test.com.sun.max.vm.bytecode;
 
-import java.util.*;
+import java.util.Arrays;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.cps.bir.*;
 
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public class BytecodePreprocessorTest extends CompilerTestCase<BirMethod> {
+public class BytecodePreprocessorTest extends VmTestCase {
 
     public BytecodePreprocessorTest(String name) {
         super(name);
@@ -39,7 +39,7 @@ public class BytecodePreprocessorTest extends CompilerTestCase<BirMethod> {
     public static Test suite() {
         final TestSuite suite = new TestSuite(BytecodePreprocessorTest.class.getName());
         suite.addTestSuite(BytecodePreprocessorTest.class);
-        return new BirCompilerTestSetup(suite);
+        return new VmTestSetup(suite);
     }
 
     public static void main(String[] args) {
@@ -67,10 +67,9 @@ public class BytecodePreprocessorTest extends CompilerTestCase<BirMethod> {
     }
 
     private void assertProcessedCodeIsDifferent(String methodName) {
-        final ClassMethodActor classMethodActor = getClassMethodActor(methodName);
+        final ClassMethodActor classMethodActor = ClassMethodActor.fromJava(Classes.getDeclaredMethod(getClass(), methodName, int.class));
         final CodeAttribute originalCodeAttribute = classMethodActor.originalCodeAttribute();
-        compileMethod(classMethodActor);
-        assertFalse(Arrays.equals(originalCodeAttribute.code(), classMethodActor.codeAttribute().code()));
+        assertFalse(Arrays.equals(originalCodeAttribute.code(), classMethodActor.compilee().codeAttribute().code()));
     }
 
     public void test_virtualSync() {

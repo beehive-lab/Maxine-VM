@@ -27,7 +27,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.grip.Grip;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -36,8 +35,8 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -521,7 +520,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             Log.print("  Preparing reference map for ");
             Log.print(label);
             Log.print(" of ");
-            if (targetMethod instanceof JitTargetMethod) {
+            if (targetMethod.isJitCompiled()) {
                 Log.print("JitTargetMethod ");
             }
             Log.printMethod(targetMethod.classMethodActor(), false);
@@ -626,7 +625,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * @param refmapFramePointer the address in the frame of {@code caller} to which the reference map for {@code caller} is relative
      * @param operandStackPointer pointer to the top value on the operand stack in the frame of {@code caller}
      */
-    private void prepareTrampolineFrameForJITCaller(JitTargetMethod caller, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer) {
+    private void prepareTrampolineFrameForJITCaller(TargetMethod caller, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer) {
         final int bytecodePosition = caller.bytecodePositionForCallSite(instructionPointer);
         final CodeAttribute codeAttribute = caller.classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool;
@@ -654,7 +653,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
         if (numberOfSlots != 0) {
             final int fpSlotIndex = referenceMapBitIndex(refmapFramePointer);
-            final JitStackFrameLayout stackFrameLayout = caller.stackFrameLayout();
+            final JitStackFrameLayout stackFrameLayout = (JitStackFrameLayout) caller.stackFrameLayout();
             final Pointer operandStackSlot0Pointer = refmapFramePointer.plus(stackFrameLayout.sizeOfOperandStack());
             final Pointer lastParameterPointer = operandStackPointer;
             final Pointer firstParameterPointer = lastParameterPointer.plus(numberOfSlots * JitStackFrameLayout.JIT_SLOT_SIZE);
@@ -827,13 +826,13 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             if (trampolineTargetMethod != null) {
                 if (Heap.traceRootScanning()) {
                     Log.print("  Preparing reference map for trampoline frame called by ");
-                    Log.print((targetMethod instanceof JitTargetMethod) ? "JIT'ed" : "optimized");
+                    Log.print((targetMethod.isJitCompiled()) ? "JIT'ed" : "optimized");
                     Log.print(" caller ");
                     Log.printMethod(targetMethod.classMethodActor(), true);
                 }
-                if (targetMethod instanceof JitTargetMethod) {
+                if (targetMethod.isJitCompiled()) {
                     // This is a call from a JIT target method to a trampoline.
-                    prepareTrampolineFrameForJITCaller((JitTargetMethod) targetMethod, instructionPointer, refmapFramePointer, operandStackPointer);
+                    prepareTrampolineFrameForJITCaller(targetMethod, instructionPointer, refmapFramePointer, operandStackPointer);
                 } else {
                     // This is a call from an optimized target method to a trampoline.
                     prepareTrampolineFrameForOptimizedCaller(targetMethod, stopIndex, offsetToFirstParameter);

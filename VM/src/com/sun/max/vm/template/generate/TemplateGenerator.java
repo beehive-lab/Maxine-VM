@@ -34,7 +34,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetLocation.*;
-import com.sun.max.vm.jit.*;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
@@ -57,7 +57,7 @@ public class TemplateGenerator {
         initializeClassInTarget(ResolvedAtCompileTime.class);
 
         // need to initialize the instrumentation class so calls to it are resolved
-        initializeClassInTarget(JitInstrumentation.class);
+        initializeClassInTarget(MethodInstrumentation.class);
 
         verifyInvariants();
     }
@@ -114,7 +114,7 @@ public class TemplateGenerator {
     }
 
     public static boolean hasStackParameters(ClassMethodActor classMethodActor) {
-        TargetABI abi = VMConfiguration.host().targetABIsScheme().optimizedJavaABI();
+        TargetABI abi = VMConfiguration.target().targetABIsScheme().optimizedJavaABI();
         TargetLocation[] locations = abi.getParameterTargetLocations(classMethodActor.getParameterKinds());
         for (TargetLocation location : locations) {
             if (!(location instanceof IntegerRegister) && !(location instanceof FloatingPointRegister)) {

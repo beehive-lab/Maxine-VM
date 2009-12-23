@@ -22,8 +22,6 @@ package test.com.sun.max.vm.compiler.c1x;
 
 import java.lang.reflect.*;
 
-import test.com.sun.max.vm.compiler.cps.*;
-
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
@@ -45,7 +43,7 @@ public class HIRTestExecutor implements Executor {
     public static final MaxRiRuntime runtime = new MaxRiRuntime();
 
     private static void initialize(boolean loadingPackages) {
-        C1XOptions.setOptimizationLevel(Integer.parseInt(JavaTester.options.getStringValue("c1x-optlevel")));
+        //C1XOptions.setOptimizationLevel(Integer.parseInt(JavaTester.options.getStringValue("c1x-optlevel")));
 
         new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping

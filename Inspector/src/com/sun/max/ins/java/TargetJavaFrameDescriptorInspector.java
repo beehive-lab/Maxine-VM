@@ -29,6 +29,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.value.*;

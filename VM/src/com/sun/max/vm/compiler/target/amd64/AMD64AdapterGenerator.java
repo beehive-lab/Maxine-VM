@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,29 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.hotpath;
+package com.sun.max.vm.compiler.target.amd64;
 
-import com.sun.max.program.*;
-import com.sun.max.lang.MutableInnerClassGlobal;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.Adapter.*;
 
-/**
- * @author Bernd Mathiske
- */
-public class SingleResult<Object_Type> extends MutableInnerClassGlobal<Object_Type> {
 
-    public SingleResult() {
+public class AMD64AdapterGenerator extends AdapterGenerator {
+
+    public AMD64AdapterGenerator() {
         super();
     }
 
     @Override
-    public Object_Type value() {
-        ProgramError.check(super.value() != null, "no result");
-        return super.value();
+    protected Adapter create(String signature, Type type) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    @Override
-    public void setValue(Object_Type result) {
-        ProgramError.check(super.value() == null, "multiple results when only one was expected: " + result + " and " + super.value());
-        super.setValue(result);
-    }
+
 }

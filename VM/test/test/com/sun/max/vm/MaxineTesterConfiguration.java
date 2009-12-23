@@ -24,12 +24,10 @@ import java.io.*;
 import java.util.*;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.cps.*;
-import test.com.sun.max.vm.compiler.cps.bytecode.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.c1x.C1XCompilerScheme;
+import com.sun.max.vm.compiler.c1x.*;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes
@@ -379,12 +377,24 @@ public class MaxineTesterConfiguration {
         return ExpectedResult.PASS;
     }
 
-    static final Set<Class> slowAutoTestClasses = new HashSet<Class>(Arrays.asList((Class)
-                    CompilerTest_max.class,
-                    CompilerTest_coreJava.class,
-                    CompilerTest_large.class,
-                    JitCompilerTestCase.class,
-                    BytecodeTest_subtype.class));
+
+
+    static final Set<Class> slowAutoTestClasses = new HashSet<Class>();
+
+    private static void addIfExists(Set<Class> classes, String className) {
+        try {
+            classes.add(Class.forName(className));
+        } catch (ClassNotFoundException e) {
+        }
+    }
+
+    static {
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.CompilerTest_max");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.CompilerTest_coreJava");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.CompilerTest_large");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.JitCompilerTestCase");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.bytecode.BytecodeTest_subtype");
+    }
 
     /**
      * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.

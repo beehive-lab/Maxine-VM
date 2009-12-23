@@ -27,7 +27,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.cps.ir.interpreter.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -119,7 +118,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
 
     private void setValue(Grip grip, int displacement, int index, Object wordOrBoxedJavaValue) {
         final Object object = toJava(grip);
-        final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
+        final PrototypeObjectMirror mirror = new PrototypeObjectMirror(object);
         final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
         ProgramError.check(displacement == ((ArrayLayout) specificLayout).getElementOffsetFromOrigin(0).toInt(), "invalid array displacement");
         final Value value = wordOrBoxedJavaValue instanceof Word ? WordValue.from((Word) wordOrBoxedJavaValue) : Value.fromBoxedJavaValue(wordOrBoxedJavaValue);
@@ -128,7 +127,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
 
     private <T> T getValue(Grip grip, Class<T> type, int displacement, int index) {
         final Object object = toJava(grip);
-        final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
+        final PrototypeObjectMirror mirror = new PrototypeObjectMirror(object);
         final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
         ProgramError.check(displacement == ((ArrayLayout) specificLayout).getElementOffsetFromOrigin(0).toInt(), "invalid array displacement");
         final Kind kind = Kind.fromJava(type);
@@ -148,7 +147,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
                 ProgramError.unexpected("could not write field: " + fieldActor, throwable);
             }
         } else {
-            final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
+            final PrototypeObjectMirror mirror = new PrototypeObjectMirror(object);
             final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout;
 
             final Value value = wordOrBoxedJavaValue instanceof Word ? WordValue.from((Word) wordOrBoxedJavaValue) : Value.fromBoxedJavaValue(wordOrBoxedJavaValue);
@@ -171,7 +170,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
             }
         }
 
-        final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
+        final PrototypeObjectMirror mirror = new PrototypeObjectMirror(object);
         final ClassActor classActor = mirror.classActor();
         final SpecificLayout specificLayout = classActor.dynamicHub().specificLayout;
 

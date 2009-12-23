@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.cps.cir.*;
 
 /**
  * @see MaxPackage
@@ -33,10 +32,4 @@ public class Package extends VMPackage {
     public Package() {
         super();
     }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.bootCompilerScheme() instanceof CirGeneratorScheme;
-    }
-
 }

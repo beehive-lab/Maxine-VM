@@ -37,8 +37,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.cps.ir.*;
-import com.sun.max.vm.compiler.cps.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
@@ -55,7 +53,7 @@ import com.sun.max.vm.template.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  */
-public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMethod {
+public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     public static final VMStringOption printTargetMethods = VMOptions.register(new VMStringOption("-XX:PrintTargetMethods=", false, null,
         "Print compiled target methods whose fully qualified name matches <value>."), MaxineVM.Phase.STARTING);
@@ -67,7 +65,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final RuntimeCompilerScheme compilerScheme;
 
     @INSPECTED
-    private final ClassMethodActor classMethodActor;
+    public final ClassMethodActor classMethodActor;
 
     /**
      * The stop positions are encoded in the lower 31 bits of each element.
@@ -462,6 +460,20 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     /**
+     * Gets the position of the next call (direct or indirect) in this target method after a given position.
+     *
+     * @param targetCodePosition the position from which to start searching
+     * @param nativeFunctionCall if {@code true}, then the search is refined to only consider
+     *            {@linkplain #isNativeFunctionCall(int) native function calls}.
+     *
+     * @return -1 if the search fails
+     */
+    public int findNextCall(int targetCodePosition, boolean nativeFunctionCall) {
+        return -1;
+    }
+
+
+    /**
      * Gets the index of a stop position within this target method derived from a given instruction pointer. If the
      * instruction pointer is equal to a safepoint position, then the index in {@link #stopPositions()} of that
      * safepoint is returned. Otherwise, the index of the highest stop position that is less than or equal to the
@@ -558,10 +570,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     public int count(Builtin builtin, int defaultResult) {
         return 0;
-    }
-
-    public Class<? extends IrTraceObserver> irTraceObserverType() {
-        return null;
     }
 
     public boolean isGenerated() {
@@ -698,6 +706,39 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     public ByteArrayBitMap frameReferenceMapFor(StopType type, int index) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * Determines if this method was compiled with the template JIT compiler.
+     */
+    public boolean isJitCompiled() {
+        return false;
+    }
+
+    /**
+     * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
+     */
+    public CompiledStackFrameLayout stackFrameLayout() {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * Gets the bytecode position for a machine code call site address.
+     *
+     * @param returnInstructionPointer an instruction pointer that denotes a call site in this target method. The pointer
+     *        is passed as was written to the platform-specific link register.  E.g. on SPARC, the instructionPointer is
+     *        the PC of the call itself.  On AMD64, the instructionPointer is the PC of the instruction following the call.
+     * @return the start position of the bytecode instruction that is implemented at the instruction pointer or -1 if
+     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will be
+     *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
+     *         code, prologue or epilogue.
+     */
+    public int bytecodePositionForCallSite(Pointer returnInstructionPointer) {
+        throw FatalError.unimplemented();
+    }
+
+    public TargetMethod duplicate() {
         throw FatalError.unimplemented();
     }
 }

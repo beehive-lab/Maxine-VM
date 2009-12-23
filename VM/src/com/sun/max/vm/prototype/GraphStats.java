@@ -29,7 +29,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.GraphPrototype.*;
@@ -227,13 +226,13 @@ public class GraphStats {
     private int computeTargetMethodSize(TargetMethod targetMethod) {
         int total = sizeOf(targetMethod);
         total += sizeOf(targetMethod.code());
-        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchRangePositions() : null);
-        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchBlockPositions() : null);
+//        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchRangePositions() : null);
+//        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchBlockPositions() : null);
         total += sizeOf(targetMethod.referenceLiterals());
         total += sizeOf(targetMethod.directCallees());
-        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).referenceMaps() : null);
+        total += sizeOf(targetMethod.referenceMaps());
         total += sizeOf(targetMethod.scalarLiterals());
-        total += sizeOf((targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).stopPositions() : null);
+        total += sizeOf(targetMethod.stopPositions());
         return total;
     }
 

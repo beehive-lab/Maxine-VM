@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.trampoline.*;
 
@@ -50,17 +49,7 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
     }
 
     @CONSTANT_WHEN_NOT_ZERO
-    private CPSTargetMethod template;
-
-    private synchronized void generateTemplate() {
-        if (MaxineVM.isHosted()) {
-            // The template is created while bootstrapping only.
-            if (template == null) {
-                template = (CPSTargetMethod) CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor);
-                assert template.referenceLiterals().length == 1;
-            }
-        }
-    }
+    private TargetMethod template;
 
     protected abstract DynamicTrampoline allocateTrampoline(int dispatchTableIndex, TargetMethod trampoline);
 
@@ -73,7 +62,9 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
     @Override
     public DynamicTrampoline createTrampoline(int tableIndex) {
         if (MaxineVM.isHosted() && template == null) {
-            generateTemplate();
+            // The template is created while bootstrapping only.
+            template = CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor);
+            assert template.referenceLiterals().length == 1;
         }
         // Clone the template.
         final TargetMethod trampoline = template.duplicate();

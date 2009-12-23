@@ -26,11 +26,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.amd64.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * Describes a stack frame for a method produced by the {@linkplain AMD64JitCompiler AMD64 JIT compiler}.
+ * Describes a stack frame for a method produced by the AMD64 JIT compiler.
  * The JIT compiler's calling convention uses both a stack and a frame pointer (respectively, {@link AMD64GeneralRegister64#RSP RSP}
  * and {@link AMD64GeneralRegister64#RBP RBP} on AMD64).
  * The frame pointer serves as a base for accessing local variables (as defined in class files of Java methods).

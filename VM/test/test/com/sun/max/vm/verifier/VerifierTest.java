@@ -75,7 +75,7 @@ public class VerifierTest extends VmTestCase {
     public static Test suite() {
         final TestSuite suite = new TestSuite(VerifierTest.class.getSimpleName());
         suite.addTestSuite(VerifierTest.class);
-        return new VerifierTestSetup(suite);
+        return new VmTestSetup(suite);
     }
 
     private enum Policy {

@@ -42,7 +42,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.JavaStackFrameLayout.*;
+import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 
 /**
  * This class implements a {@link TargetMethod target method} for
@@ -660,7 +660,7 @@ public class C1XTargetMethod extends TargetMethod {
             return "";
         }
         final StringBuilder buf = new StringBuilder();
-        final JavaStackFrameLayout layout = new C1XStackFrameLayout(frameSize());
+        final CompiledStackFrameLayout layout = new C1XStackFrameLayout(frameSize());
         final Slots slots = layout.slots();
         final int firstSafepointStopIndex = numberOfDirectCalls() + numberOfIndirectCalls();
         for (int stopIndex = 0; stopIndex < numberOfStopPositions(); ++stopIndex) {

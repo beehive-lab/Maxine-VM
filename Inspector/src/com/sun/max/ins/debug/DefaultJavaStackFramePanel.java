@@ -34,13 +34,13 @@ import com.sun.max.vm.stack.*;
  *
  * @author Michael Van De Vanter
  */
-public final class DefaultJavaStackFramePanel extends JavaStackFramePanel<JavaStackFrame> {
+public final class DefaultJavaStackFramePanel extends CompiledStackFramePanel<CompiledStackFrame> {
 
-    private final JavaStackFrameTable javaStackFrameTable;
+    private final CompiledStackFrameTable javaStackFrameTable;
 
-    public DefaultJavaStackFramePanel(Inspection inspection, JavaStackFrame javaStackFrame, MaxThread thread, JavaStackFrameViewPreferences preferences) {
+    public DefaultJavaStackFramePanel(Inspection inspection, CompiledStackFrame javaStackFrame, MaxThread thread, CompiledStackFrameViewPreferences preferences) {
         super(inspection, javaStackFrame);
-        javaStackFrameTable = new JavaStackFrameTable(inspection, javaStackFrame, thread, preferences);
+        javaStackFrameTable = new CompiledStackFrameTable(inspection, javaStackFrame, thread, preferences);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), javaStackFrameTable);
         add(scrollPane, BorderLayout.CENTER);
         refresh(true);

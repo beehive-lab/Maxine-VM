@@ -776,7 +776,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
                 // TODO: Resolve this hack that uses a special function in the Java stack frame layout.
 
-                final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
+                final CompiledStackFrame javaStackFrame = (CompiledStackFrame) stackFrame;
                 int offset = index * Word.size() + javaStackFrame.layout.frameSize();
                 offset += javaStackFrame.layout.isReturnAddressPushedByCall() ? Word.size() : 0;
 

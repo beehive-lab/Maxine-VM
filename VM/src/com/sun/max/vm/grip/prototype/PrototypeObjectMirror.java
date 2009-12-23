@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.cps.ir.interpreter;
+package com.sun.max.vm.grip.prototype;
 
 import java.lang.reflect.*;
 
@@ -38,11 +38,11 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Bernd Mathiske
  */
-public class InterpreterObjectMirror implements ObjectMirror {
+public class PrototypeObjectMirror implements ObjectMirror {
     private final Object object;
     private final ClassActor classActor;
 
-    public InterpreterObjectMirror(final Object object) {
+    public PrototypeObjectMirror(final Object object) {
         this.object = object;
         classActor = MaxineVM.usingTarget(new Function<ClassActor>() {
             public ClassActor call() {
