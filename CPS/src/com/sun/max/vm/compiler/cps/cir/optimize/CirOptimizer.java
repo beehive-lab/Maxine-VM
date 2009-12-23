@@ -107,6 +107,7 @@ public class CirOptimizer {
         } while (inflated);
     }
 
+    @HOSTED_ONLY
     public boolean hasNoInlining() {
         return classMethodActor().getAnnotation(NO_INLINING.class) != null ||
         classMethodActor().holder().getAnnotation(NO_INLINING.class) != null;

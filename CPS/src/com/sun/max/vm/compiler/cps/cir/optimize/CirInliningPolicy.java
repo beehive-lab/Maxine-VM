@@ -92,7 +92,7 @@ public class CirInliningPolicy {
 
         @Override
         public boolean shouldInline(CirOptimizer cirOptimizer, CirMethod method, CirValue[] arguments) {
-            if (cirOptimizer.hasNoInlining()) {
+            if (MaxineVM.isHosted() && cirOptimizer.hasNoInlining()) {
                 // static inlining heuristics have been turned off for this method or class
                 return false;
             }

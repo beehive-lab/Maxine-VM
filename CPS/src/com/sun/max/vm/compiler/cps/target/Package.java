@@ -18,22 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
+package com.sun.max.vm.compiler.cps.target;
 
-import java.lang.annotation.*;
+import com.sun.max.*;
+import com.sun.max.vm.*;
 
 /**
- * Every thus annotated class should not have static inlining heuristics applied.
- * The only inlining that should occur in classes with this annotation should
- * be methods explicitly marked {@linked INLINE}.
- *
- * This annotation exists primarily for annotating classes that call other methods
- * that <b>should not</b> be inlined for testing reasons (e.g. a test() method should not
- * be inlined into the testing framework that calls test()).
- *
- * @author Ben L. Titzer
+ * @see MaxPackage
+ * 
+ * @author Bernd Mathiske
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
-public @interface NO_INLINING {
+public class Package extends VMPackage {
+    public Package() {
+        super();
+    }
 }
