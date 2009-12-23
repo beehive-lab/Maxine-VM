@@ -28,7 +28,6 @@ import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.cps.eir.sparc.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -71,8 +70,11 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
     public static final int TRAP_CALL_ADDRESS_OFFSET;
     public static final int TRAP_LATCH_OFFSET;
 
+    public static final GPR[] OUT_REGISTERS = {O0, O1, O2, O3, O4, O5, O6, O7};
+    public static final GPR[] INTEGER_NON_SYSTEM_RESERVED_GLOBAL_REGISTERS = {G1, G2, G3, G4, G5};
+
     static {
-        final int globalRegisterWords = SPARCEirABI.integerNonSystemReservedGlobalRegisters.length(); // %g1 to %g5
+        final int globalRegisterWords = INTEGER_NON_SYSTEM_RESERVED_GLOBAL_REGISTERS.length; // %g1 to %g5
         final int outRegisterWords = IN_SYMBOLIZER.numberOfValues();    // %o0 to %o7
         final int floatingPointRegisterWords = 32; // %f0-%f32
         final int stateRegisters = 2;
@@ -95,7 +97,7 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
      * Gets the number of bytes needed for a bitmap covering the integer registers in a trap state.
      */
     public static int registerReferenceMapSize() {
-        return ByteArrayBitMap.computeBitMapSize(SPARCEirABI.integerNonSystemReservedGlobalRegisters.length() + SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.length());
+        return ByteArrayBitMap.computeBitMapSize(INTEGER_NON_SYSTEM_RESERVED_GLOBAL_REGISTERS.length + OUT_REGISTERS.length);
     }
 
     @HOSTED_ONLY
@@ -158,17 +160,18 @@ public final class SPARCTrapStateAccess extends TrapStateAccess {
 
     @Override
     public void logTrapState(Pointer trapState) {
-        for (int i = 0; i < SPARCEirABI.integerNonSystemReservedGlobalRegisters.length(); ++i) {
-            SPARCEirRegister.GeneralPurpose register = SPARCEirABI.integerNonSystemReservedGlobalRegisters.get(i);
+        int trapStateIndex = 0;
+        for (GPR register : INTEGER_NON_SYSTEM_RESERVED_GLOBAL_REGISTERS) {
             Log.print(register.toString());
             Log.print(": ");
-            Log.println(trapState.readWord(register.trapStateIndex() * Word.size()));
+            Log.println(trapState.readWord(trapStateIndex * Word.size()));
+            trapStateIndex++;
         }
-        for (int i = 0; i < SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.length(); ++i) {
-            SPARCEirRegister.GeneralPurpose register = SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.get(i);
+        for (GPR register : OUT_REGISTERS) {
             Log.print(register.toString());
             Log.print(": ");
-            Log.println(trapState.readWord(register.trapStateIndex() * Word.size()));
+            Log.println(trapState.readWord(trapStateIndex * Word.size()));
+            trapStateIndex++;
         }
         final int trapNumber = getTrapNumber(trapState);
         Log.print("Trap number: ");

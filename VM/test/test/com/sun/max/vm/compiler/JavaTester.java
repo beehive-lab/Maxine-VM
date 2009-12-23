@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.cps;
+package test.com.sun.max.vm.compiler;
 
 import java.io.*;
 import java.util.*;
@@ -104,9 +104,9 @@ public final class JavaTester {
         }
 
         executors.registerClass("reflect", ReflectiveExecutor.class);
-        executors.registerClass("cir", CIRTestExecutor.class);
-        executors.registerClass("dir", DIRTestExecutor.class);
-        executors.registerClass("eir", EIRTestExecutor.class);
+        executors.registerClass("cir", "test.com.sun.max.vm.compiler.cps.CIRTestExecutor");
+        executors.registerClass("dir", "test.com.sun.max.vm.compiler.cps.DIRTestExecutor");
+        executors.registerClass("eir", "test.com.sun.max.vm.compiler.cps.EIRTestExecutor");
         executors.registerClass("hir", HIRTestExecutor.class);
 
         // run each executor.
@@ -140,7 +140,7 @@ public final class JavaTester {
             // generate an image if necessary
             Trace.line(0, "Generating target image...");
             final String[] generatorArgs = {"-trace=1", "-run=" + JTAbstractRunScheme.class.getPackage().getName() + "." + RUNSCHEME_PACKAGE.getValue()};
-            final String[] systemProperties = {"sun.misc.ProxyGenerator.saveGeneratedFiles=true", "sun.reflect.noInflation=false", "sun.reflect.inflationThreshold=1000000"};
+            final String[] systemProperties = {};
             final String[] javaArgs = buildJavaArgs(BootImageGenerator.class,
                             appendArgs(systemProperties, GEN_IMAGE_PROPS.getValue()),
                             appendArgs(generatorArgs, GEN_IMAGE_ARGS.getValue()));

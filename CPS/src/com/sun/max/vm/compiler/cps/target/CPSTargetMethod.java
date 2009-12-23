@@ -36,7 +36,6 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.cps.b.c.*;
-import com.sun.max.vm.compiler.cps.cir.*;
 import com.sun.max.vm.compiler.cps.ir.*;
 import com.sun.max.vm.compiler.cps.ir.observer.*;
 import com.sun.max.vm.compiler.cps.jit.*;
@@ -98,17 +97,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @Override
     public boolean isNative() {
         return classMethodActor().isNative();
-    }
-
-    @Override
-    public final void cleanup() {
-    	if (MaxineVM.isHosted()) {
-    		if (!classMethodActor.isInline()) {
-    			// TODO: what exactly should be the policy for discarding CIR?
-    			final CirGenerator cirGenerator = ((CirGeneratorScheme) compilerScheme).cirGenerator();
-    			cirGenerator.removeCirMethod(classMethodActor);
-    		}
-    	}
     }
 
     @Override

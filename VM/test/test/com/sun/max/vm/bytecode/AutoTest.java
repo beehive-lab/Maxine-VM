@@ -24,6 +24,8 @@ import junit.framework.*;
 
 import org.junit.runner.*;
 
+import test.com.sun.max.vm.*;
+
 import com.sun.max.ide.*;
 
 @RunWith(org.junit.runners.AllTests.class)
@@ -36,6 +38,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new TestCaseClassSet(new Package()).toTestSuite();
+        return new VmTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
     }
 }

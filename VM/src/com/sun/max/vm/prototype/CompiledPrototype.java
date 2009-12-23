@@ -292,7 +292,6 @@ public class CompiledPrototype extends Prototype {
         addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
         addMethods(classMethodActor, virtualCalls, Relationship.VIRTUAL_CALL);
         addMethods(classMethodActor, interfaceCalls, Relationship.INTERFACE_CALL);
-        targetMethod.cleanup();
     }
 
     private void traceNewTargetMethod(TargetMethod targetMethod) {

@@ -22,7 +22,9 @@ package com.sun.max.vm.compiler.cps.cir;
 
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.cps.cir.variable.*;
 import com.sun.max.vm.compiler.cps.ir.*;
@@ -48,6 +50,9 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
     public static final String CIR_VERIFY_PROPERTY = "max.cir.verify";
 
     private static final Map<ClassMethodActor, CirMethod> cirCache = new HashMap<ClassMethodActor, CirMethod>();
+
+    @HOSTED_ONLY
+    private static final Map<ClassMethodActor, CirMethod> hostedCirCache = new HashMap<ClassMethodActor, CirMethod>();
 
     private CirVerifyingObserver cirVerifyingObserver;
 
@@ -97,22 +102,30 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
             super.addIrObserver(observer);
         }
     }
-
+    
     public void removeCirMethod(ClassMethodActor classMethodActor) {
         synchronized (cirCache) {
             cirCache.remove(classMethodActor);
         }
     }
 
-    public void setCirMethod(ClassMethodActor classMethodActor, CirMethod cirMethod) {
+	public void setCirMethod(ClassMethodActor classMethodActor, CirMethod cirMethod) {
         synchronized (cirCache) {
-            cirCache.put(classMethodActor, cirMethod);
+        	if (MaxineVM.isHosted() && !classMethodActor.isInline()) {
+        		hostedCirCache.put(classMethodActor, cirMethod);
+        	} else {
+        		cirCache.put(classMethodActor, cirMethod);
+        	}
         }
     }
 
     public CirMethod getCirMethod(ClassMethodActor classMethodActor) {
         synchronized (cirCache) {
-            return cirCache.get(classMethodActor);
+            CirMethod cirMethod = cirCache.get(classMethodActor);
+            if (cirMethod == null && MaxineVM.isHosted()) {
+            	cirMethod = hostedCirCache.get(classMethodActor);
+            }
+			return cirMethod;
         }
     }
 
