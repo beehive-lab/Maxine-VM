@@ -40,8 +40,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.c1x.*;
-import com.sun.max.vm.compiler.cps.cir.*;
-import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jdk.*;
@@ -157,10 +155,6 @@ public class CompiledPrototype extends Prototype {
 
     public BootstrapCompilerScheme compilerScheme() {
         return vmConfiguration().bootCompilerScheme();
-    }
-
-    public TargetGeneratorScheme targetGeneratorScheme() {
-        return (TargetGeneratorScheme) compilerScheme();
     }
 
     public RuntimeCompilerScheme jitScheme() {
@@ -298,18 +292,7 @@ public class CompiledPrototype extends Prototype {
         addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
         addMethods(classMethodActor, virtualCalls, Relationship.VIRTUAL_CALL);
         addMethods(classMethodActor, interfaceCalls, Relationship.INTERFACE_CALL);
-        if (targetMethod instanceof CPSTargetMethod) {
-            clearCirCache(targetMethod);
-        }
-    }
-
-    private void clearCirCache(TargetMethod targetMethod) {
-        final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-        if (!classMethodActor.isInline()) {
-            // TODO: what exactly should be the policy for discarding CIR?
-            final CirGenerator cirGenerator = ((CirGeneratorScheme) compilerScheme()).cirGenerator();
-            cirGenerator.removeCirMethod(classMethodActor);
-        }
+        targetMethod.cleanup();
     }
 
     private void traceNewTargetMethod(TargetMethod targetMethod) {

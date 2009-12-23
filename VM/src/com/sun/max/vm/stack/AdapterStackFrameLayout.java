@@ -25,7 +25,7 @@ package com.sun.max.vm.stack;
  *
  * @author Doug Simon
  */
-public class AdapterStackFrameLayout extends JavaStackFrameLayout {
+public class AdapterStackFrameLayout extends CompiledStackFrameLayout {
 
     private final int frameSize;
     private final boolean isReturnAddressPushedByCall;

@@ -9,7 +9,7 @@
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="test.com.sun.max.vm.compiler.cps.JavaTester"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-scenario=target &#10;-run-scheme-package=some&#10;-native-tests&#10;-force-compile&#10;jtt/jasm"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="VM"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CPS"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:VM}/test"/>
 </launchConfiguration>

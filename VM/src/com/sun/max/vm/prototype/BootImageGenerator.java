@@ -21,29 +21,16 @@
 package com.sun.max.vm.prototype;
 
 import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.profile.*;
-import com.sun.max.profile.ValueMetrics.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.cps.cir.*;
-import com.sun.max.vm.compiler.cps.cir.bytecode.*;
-import com.sun.max.vm.compiler.cps.target.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -196,7 +183,6 @@ public final class BootImageGenerator {
      */
     public BootImageGenerator(String[] programArguments) {
         final long start = System.currentTimeMillis();
-        BootstrapCompilerScheme compilerScheme = null;
         try {
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
             Trace.addTo(options);
@@ -225,7 +211,6 @@ public final class BootImageGenerator {
             VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.BOOTSTRAPPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
-            compilerScheme = dataPrototype.vmConfiguration().bootCompilerScheme();
 
             VMOptions.beforeExit();
 
@@ -247,7 +232,7 @@ public final class BootImageGenerator {
             final long timeInMilliseconds = System.currentTimeMillis() - start;
             if (statsOption.getValue()) {
                 try {
-                    writeMiscStatistics(compilerScheme, Trace.stream());
+                    writeMiscStatistics(Trace.stream());
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
                 }
@@ -362,128 +347,13 @@ public final class BootImageGenerator {
 
     /**
      * Writes various statistics about the image creation process to the standard output.
-     *
-     * @param compilerScheme the compiler, which typically includes compilation statistics
      * @param out the output stream to which to write the statistics
      */
-    private static void writeMiscStatistics(BootstrapCompilerScheme compilerScheme, PrintStream out) {
+    private static void writeMiscStatistics(PrintStream out) {
         Trace.line(1, "# utf8 constants: " + SymbolTable.length());
         Trace.line(1, "# type descriptors: " + TypeDescriptor.numberOfDescriptors());
         Trace.line(1, "# signature descriptors: " + SignatureDescriptor.totalNumberOfDescriptors());
 
-        int totalConstants = 0;
-        final int[] constantPoolHistogram = new int[ConstantPool.Tag.VALUES.length()];
-
-        int birBytecodeTotal = 0;
-        int cirBytecodeTotal = 0;
-
-        final Field bytecodeField = Classes.getDeclaredField(CirMethod.class, "cirBytecode");
-        bytecodeField.setAccessible(true);
-
-        CirGenerator cirGenerator = null;
-        if (compilerScheme != null && compilerScheme instanceof CirGeneratorScheme) {
-            cirGenerator = ((CirGeneratorScheme) compilerScheme).cirGenerator();
-        }
-        // report total of CIR bytecodes
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
-            final ConstantPool constantPool = classActor.constantPool();
-            if (constantPool != null) {
-                final int numberOfConstants = constantPool.numberOfConstants();
-                totalConstants += numberOfConstants;
-                for (int i = 1; i < numberOfConstants; i++) {
-                    constantPoolHistogram[constantPool.tagAt(i).ordinal()]++;
-                }
-
-                final AppendableSequence<ClassMethodActor> allClassMethodActors = new ArrayListSequence<ClassMethodActor>();
-                AppendableSequence.Static.appendAll(allClassMethodActors, classActor.localVirtualMethodActors());
-                AppendableSequence.Static.appendAll(allClassMethodActors, classActor.localStaticMethodActors());
-                for (ClassMethodActor classMethodActor : allClassMethodActors) {
-                    final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-                    if (codeAttribute != null) {
-                        birBytecodeTotal += codeAttribute.code().length;
-                    }
-                    if (cirGenerator != null) {
-                        final CirMethod cirMethod = cirGenerator.getCirMethod(classMethodActor);
-                        if (cirMethod != null) {
-                            try {
-                                final CirBytecode cirBytecode = (CirBytecode) bytecodeField.get(cirMethod);
-                                if (cirBytecode != null) {
-                                    cirBytecodeTotal += cirBytecode.code().length;
-                                }
-                            } catch (Exception exception) {
-                                ProgramError.unexpected(exception);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // report potential savings from collecting target method junk into the code region
-        final int headerSize = VMConfiguration.target().layoutScheme().arrayHeaderLayout.headerSize();
-        final ObjectDistribution<Object> distribution = ValueMetrics.newObjectDistribution(null);
-        int zeroLiterals = 0;
-        int zeroCatchRangePositions = 0;
-        int zeroCatchBlockPositions = 0;
-        int zeroStopPositions = 0;
-        int zeroDirectCallees = 0;
-        int zeroReferenceMaps = 0;
-        int zeroScalarLiterals = 0;
-        for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
-            final Object[] referenceLiterals = targetMethod.referenceLiterals();
-            if (referenceLiterals != null) {
-                for (int i = 0; i < referenceLiterals.length; i++) {
-                    distribution.record(referenceLiterals[i]);
-                }
-            }
-            zeroLiterals += savingsFrom(headerSize, referenceLiterals);
-            zeroCatchRangePositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchRangePositions() : null);
-            zeroCatchBlockPositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).catchBlockPositions() : null);
-            zeroStopPositions += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).stopPositions() : null);
-            zeroDirectCallees += savingsFrom(headerSize, targetMethod.directCallees());
-            zeroReferenceMaps += savingsFrom(headerSize, (targetMethod instanceof CPSTargetMethod) ? ((CPSTargetMethod) targetMethod).referenceMaps() : null);
-            zeroScalarLiterals += savingsFrom(headerSize, targetMethod.scalarLiterals());
-        }
-        int redundantReferenceLiterals = 0;
-        for (Map.Entry<Object, Integer> entry : distribution.asMap().entrySet()) {
-            redundantReferenceLiterals += (entry.getValue() - 1) * Word.size();
-        }
-        out.println("Potential savings from reference literal merging: " + redundantReferenceLiterals + " bytes");
-        out.println("Potential savings from compressing reference literal arrays: " + zeroLiterals + " bytes");
-        out.println("Potential savings from compressing catch range position arrays: " + zeroCatchRangePositions + " bytes");
-        out.println("Potential savings from compressing catch block position arrays: " + zeroCatchBlockPositions + " bytes");
-        out.println("Potential savings from compressing stop position arrays: " + zeroStopPositions + " bytes");
-        out.println("Potential savings from compressing reference map arrays: " + zeroReferenceMaps + " bytes");
-        out.println("Potential savings from compressing scalar literal arrays: " + zeroScalarLiterals + " bytes");
-        out.println("Total potential savings: " + (redundantReferenceLiterals + zeroLiterals + zeroCatchBlockPositions + zeroCatchBlockPositions + zeroStopPositions + zeroReferenceMaps + zeroScalarLiterals) + " bytes");
-
-        out.println("Constant pool constants:");
-        for (ConstantPool.Tag tag : ConstantPool.Tag.values()) {
-            final int count = constantPoolHistogram[tag.ordinal()];
-            if (count != 0) {
-                out.printf("    %25s: %8d (%d%%)\n", tag.toString(), count, count * 100 / totalConstants);
-            }
-        }
-        out.printf("    %25s: %8d\n", "Total", totalConstants);
-        out.println("Bytecode:");
-        out.println("    BIR: " + birBytecodeTotal);
-        out.println("    CIR: " + cirBytecodeTotal);
-
         GlobalMetrics.report(Trace.stream());
-    }
-
-    /**
-     * Helper to compute the savings from removing the specified object's header, and if null,
-     * the field that referred to it.
-     * @param headerSize the size of the object's header
-     * @param o the object itself
-     * @return the number of bytes that could be saved by removing the object's header and the field
-     * that refers to it.
-     */
-    private static int savingsFrom(int headerSize, Object o) {
-        if (o == null) {
-            return Word.size() + headerSize;
-        }
-        return headerSize;
     }
 }

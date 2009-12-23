@@ -44,7 +44,7 @@ public class VerificationTypeTest extends VmTestCase {
     public static Test suite() {
         final TestSuite suite = new TestSuite(VerificationTypeTest.class.getSimpleName());
         suite.addTestSuite(VerificationTypeTest.class);
-        return new VerifierTestSetup(suite);
+        return new VmTestSetup(suite);
     }
 
     public static void main(String[] args) {

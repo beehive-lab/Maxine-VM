@@ -1082,9 +1082,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     @Override
     public void finalize(MaxineVM.Phase phase) {
-        if (MaxineVM.isHosted()) {
-            StopTheWorldGCDaemon.checkInvariants();
-        }
         if (MaxineVM.Phase.RUNNING == phase) {
             if (Heap.traceGCTime()) {
                 final boolean lockDisabledSafepoints = Log.lock();

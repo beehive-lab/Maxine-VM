@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.cps;
+package test.com.sun.max.vm;
 
 import java.io.*;
 
@@ -29,7 +29,7 @@ import org.junit.*;
 
 import com.sun.max.*;
 import com.sun.max.ide.*;
-import com.sun.max.profile.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
@@ -43,7 +43,7 @@ import com.sun.max.vm.prototype.*;
  *
  * @author Doug Simon
  */
-public abstract class VmTestSetup extends TestSetup {
+public class VmTestSetup extends TestSetup {
 
     private static JavaPrototype javaPrototype = null;
 
@@ -51,7 +51,9 @@ public abstract class VmTestSetup extends TestSetup {
         super(test);
     }
 
-    protected abstract VMConfiguration createVMConfiguration();
+    protected VMConfiguration createVMConfiguration() {
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host());
+    }
 
     public static JavaPrototype javaPrototype() {
         return javaPrototype;
@@ -100,8 +102,5 @@ public abstract class VmTestSetup extends TestSetup {
     protected final void tearDown() {
         javaPrototype.vmConfiguration().finalizeSchemes(Phase.RUNNING);
         ClassfileReader.writeClassfilesToJar(new File(JavaProject.findVcsProjectDirectory(), "loaded-classes.jar"));
-        if (Trace.hasLevel(1)) {
-            GlobalMetrics.report(Trace.stream());
-        }
     }
 }

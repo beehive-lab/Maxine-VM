@@ -24,8 +24,6 @@ import junit.framework.*;
 
 import org.junit.runner.*;
 
-import test.com.sun.max.vm.compiler.cps.*;
-
 import com.sun.max.ide.*;
 
 @RunWith(org.junit.runners.AllTests.class)
@@ -38,7 +36,7 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        return new BirCompilerTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
+        return new TestCaseClassSet(new Package()).toTestSuite();
     }
 
 }

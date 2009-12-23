@@ -24,25 +24,15 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A daemon thread that hangs around, waiting, then executes a given GC procedure when requested, then waits again.
@@ -284,7 +274,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                     }
 
                     // The next 2 statements *must* be adjacent as the reference map for this frame must
-                    // be the same at both calls. This is verified by StopTheWorldDaemon.checkInvariants().
+                    // be the same at both calls.
                     final long time = VmThreadLocal.prepareCurrentStackReferenceMap();
                     collector.run();
 
@@ -307,47 +297,6 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
                 }
             }
         }
-    }
-
-    /**
-     * This must be called from {@link HeapScheme#finalize(com.sun.max.vm.MaxineVM.Phase)} of any {@link HeapScheme}
-     * implementation that uses the {@link StopTheWorldGCDaemon}.
-     */
-    @HOSTED_ONLY
-    public static void checkInvariants() {
-        final ClassMethodActor classMethodActor = ClassActor.fromJava(GCRequest.class).findLocalClassMethodActor(SymbolTable.makeSymbol("run"), SignatureDescriptor.VOID);
-        final TargetMethod targetMethod = CompilationScheme.Static.getCurrentTargetMethod(classMethodActor);
-        if (targetMethod != null && targetMethod instanceof CPSTargetMethod) {
-            final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
-            final Object[] directCallees = targetMethod.directCallees();
-            for (int stopIndex = 0; stopIndex < directCallees.length; ++stopIndex) {
-
-                final Object current = directCallees[stopIndex];
-                if (current instanceof MethodActor) {
-                    final MethodActor currentCallee = (MethodActor) current;
-                    if (currentCallee.name.string.equals("prepareCurrentStackReferenceMap")) {
-                        final int stopPosition = targetMethod.stopPosition(stopIndex);
-                        final int nextCallPosition = cpsTargetMethod.findNextCall(stopPosition, false);
-                        if (nextCallPosition >= 0) {
-                            final int[] stopPositions = targetMethod.stopPositions();
-                            for (int nextCallStopIndex = 0; nextCallStopIndex < stopPositions.length; ++nextCallStopIndex) {
-                                if (stopPositions[nextCallStopIndex] == nextCallPosition) {
-                                    final ByteArrayBitMap nextCallRefmap = cpsTargetMethod.frameReferenceMapFor(nextCallStopIndex);
-                                    final ByteArrayBitMap firstCallRefmap = cpsTargetMethod.frameReferenceMapFor(stopIndex);
-                                    if (nextCallRefmap.equals(firstCallRefmap)) {
-                                        // OK
-                                        return;
-                                    }
-                                }
-                            }
-                            throw ProgramError.unexpected("Cannot find stop in " + classMethodActor.format("%H.%n(%p)") + " for call to _procedure.run()");
-                        }
-                    }
-                }
-            }
-            throw ProgramError.unexpected("Cannot find stop in " + classMethodActor.format("%H.%n(%p)") + " for call to VmThreadLocal.prepareCurrentStackReferenceMap()");
-        }
-        ProgramWarning.message("Could not find CPS target method for " + classMethodActor);
     }
 
     private final GCRequest gcRequest = new GCRequest();

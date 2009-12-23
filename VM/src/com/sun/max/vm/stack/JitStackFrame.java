@@ -22,21 +22,15 @@ package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.*;
 
 /**
  *
  * @author Doug Simon
  */
-public abstract class JitStackFrame extends JavaStackFrame {
+public abstract class JitStackFrame extends CompiledStackFrame {
 
     public JitStackFrame(StackFrame callee, JitStackFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, layout, targetMethod, instructionPointer, framePointer, stackPointer);
-    }
-
-    @Override
-    public JitTargetMethod targetMethod() {
-        return (JitTargetMethod) super.targetMethod();
     }
 
     /**

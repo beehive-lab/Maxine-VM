@@ -315,9 +315,9 @@ public class JavaPrototype extends Prototype {
             try {
                 return super.loadClass(className);
             } catch (HostOnlyClassError e) {
-                Trace.line(1, "Ignoring prototype only type: " + className);
+                Trace.line(2, "Ignoring hosted only type: " + className);
             } catch (OmittedClassError e) {
-                Trace.line(1, "Ignoring explicitly omitted type: " + className);
+                Trace.line(2, "Ignoring explicitly omitted type: " + className);
             }
             return null;
         }

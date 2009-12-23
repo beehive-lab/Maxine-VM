@@ -29,10 +29,9 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profile.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.profile.MethodProfile;
-import com.sun.max.vm.jit.JitInstrumentation;
 
 /**
  * Templates for invokevirutal and invokeinterface that contains instrumentation.
@@ -118,7 +117,7 @@ public final class InstrumentedInvokeTemplateSource {
     private static Address selectVirtualMethod(final Object receiver, int vTableIndex, MethodProfile mpo, int mpoIndex) {
         final Hub hub = ObjectAccess.readHub(receiver);
         final Address entryPoint = hub.getWord(vTableIndex).asAddress();
-        JitInstrumentation.recordType(mpo, hub, mpoIndex, JitInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
+        MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }
 
@@ -126,7 +125,7 @@ public final class InstrumentedInvokeTemplateSource {
     private static Address selectInterfaceMethod(final Object receiver, InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex) {
         final Hub hub = ObjectAccess.readHub(receiver);
         final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
-        JitInstrumentation.recordType(mpo, hub, mpoIndex, JitInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
+        MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }
 }

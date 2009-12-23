@@ -29,7 +29,6 @@ import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.cps.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
@@ -117,7 +116,13 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         });
     }
 
+    public abstract static class WalkFrameHelper {
+        public static WalkFrameHelper instance;
+        public abstract boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context);
+    }
+
+
     public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context) {
-        return AMD64CPSCompiler.walkFrameHelper(current, current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), callee.targetMethod(), purpose, context);
+        return WalkFrameHelper.instance.walkFrame(current, callee, purpose, context);
     }
 }
