@@ -27,8 +27,8 @@ import java.util.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.cps.jit.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.template.*;
 

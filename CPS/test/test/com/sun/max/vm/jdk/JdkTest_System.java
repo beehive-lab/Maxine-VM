@@ -22,9 +22,9 @@ package test.com.sun.max.vm.jdk;
 
 import java.lang.reflect.*;
 
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.vm.compiler.cps.ir.*;
+import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;

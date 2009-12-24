@@ -20,8 +20,8 @@
  */
 package test.com.sun.max.vm.jit;
 
-import test.com.sun.max.vm.compiler.cps.*;
-import test.com.sun.max.vm.compiler.cps.bytecode.*;
+import test.com.sun.max.vm.cps.*;
+import test.com.sun.max.vm.cps.bytecode.*;
 
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;

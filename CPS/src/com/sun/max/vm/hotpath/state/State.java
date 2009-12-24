@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * A generic abstract Java stack used for bytecode interpretation and recording. This code is
- * similar to the {@link com.sun.max.vm.compiler.cps.b.c.JavaStack} class, but more general.
+ * similar to the {@link com.sun.max.vm.cps.b.c.JavaStack} class, but more general.
  *
  * @author Michael Bebenita
  * Checkstyle: stop

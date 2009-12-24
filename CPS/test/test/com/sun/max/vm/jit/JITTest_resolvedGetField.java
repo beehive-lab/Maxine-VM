@@ -20,9 +20,9 @@
  */
 package test.com.sun.max.vm.jit;
 
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.vm.compiler.cps.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 

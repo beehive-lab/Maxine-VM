@@ -23,8 +23,8 @@ package com.sun.max.vm.stack.amd64;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.cps.jit.amd64.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.jit.amd64.*;
 import com.sun.max.vm.stack.*;
 
 /**

@@ -22,7 +22,7 @@ package test.com.sun.max.vm.jit;
 
 import java.lang.reflect.*;
 
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.template.source.*;

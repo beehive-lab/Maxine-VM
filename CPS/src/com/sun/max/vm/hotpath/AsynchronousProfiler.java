@@ -26,7 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.profile.Metrics.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.vm.compiler.cps.tir.*;
+import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.hotpath.compiler.*;
 
 public class AsynchronousProfiler implements Runnable {

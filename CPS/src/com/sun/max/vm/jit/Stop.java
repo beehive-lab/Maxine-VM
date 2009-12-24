@@ -24,8 +24,8 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.cps.jit.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.jit.*;
 
 /**
  * A stop denotes a target code position for which the location of object references are precisely known.

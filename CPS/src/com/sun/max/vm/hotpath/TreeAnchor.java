@@ -24,7 +24,7 @@ package com.sun.max.vm.hotpath;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.cps.tir.*;
+import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.hotpath.compiler.*;
 
 /**

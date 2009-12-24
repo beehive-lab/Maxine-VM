@@ -24,8 +24,8 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.cps.jit.*;
-import com.sun.max.vm.compiler.cps.tir.*;
+import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.thread.*;
 
