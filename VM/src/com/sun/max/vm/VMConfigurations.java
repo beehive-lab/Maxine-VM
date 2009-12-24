@@ -42,9 +42,9 @@ public final class VMConfigurations {
     public static VMPackage defaultCompilerScheme(Platform platform) {
         switch (platform.processorKind.instructionSet) {
             case AMD64:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.compiler.cps.b.c.d.e.amd64.target");
+                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             case SPARC:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.compiler.cps.b.c.d.e.sparc.target");
+                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.sparc.target");
             default:
                 throw FatalError.unimplemented();
         }
@@ -53,9 +53,9 @@ public final class VMConfigurations {
     public static VMPackage defaultJitCompilerScheme(Platform platform) {
         switch (platform.processorKind.instructionSet) {
             case AMD64:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.compiler.cps.jit.amd64");
+                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
             case SPARC:
-                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.compiler.cps.jit.sparc");
+                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.sparc");
             default:
                 throw FatalError.unimplemented();
         }

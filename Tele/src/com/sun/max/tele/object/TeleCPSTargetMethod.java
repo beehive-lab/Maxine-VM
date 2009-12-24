@@ -27,8 +27,8 @@ import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.type.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
 
 public class TeleCPSTargetMethod extends TeleTargetMethod {

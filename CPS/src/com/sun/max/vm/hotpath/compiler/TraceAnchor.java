@@ -21,7 +21,7 @@
 package com.sun.max.vm.hotpath.compiler;
 
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.cps.tir.*;
+import com.sun.max.vm.cps.tir.*;
 
 public class TraceAnchor extends Anchor {
     private TirTrace trace;

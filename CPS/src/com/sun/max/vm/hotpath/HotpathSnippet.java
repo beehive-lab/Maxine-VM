@@ -23,8 +23,8 @@ package com.sun.max.vm.hotpath;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.compiler.cps.tir.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.cps.tir.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.object.*;
 

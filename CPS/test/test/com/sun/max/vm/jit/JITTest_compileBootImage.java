@@ -22,15 +22,15 @@ package test.com.sun.max.vm.jit;
 
 import java.util.*;
 
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 
 /**
  * Compiles all methods that makes the alternate jit-ed VM start.

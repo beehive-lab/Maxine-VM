@@ -21,9 +21,9 @@
 package test.com.sun.max.tele.interpreter;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.vm.compiler.cps.cir.*;
+import com.sun.max.vm.cps.cir.*;
 
 /**
  * @author Hiroshi Yamauchi

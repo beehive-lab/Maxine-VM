@@ -24,7 +24,7 @@ import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 
 import java.lang.reflect.*;
 
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -34,8 +34,8 @@ import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;

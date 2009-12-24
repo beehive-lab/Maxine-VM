@@ -104,9 +104,9 @@ public final class JavaTester {
         }
 
         executors.registerClass("reflect", ReflectiveExecutor.class);
-        executors.registerClass("cir", "test.com.sun.max.vm.compiler.cps.CIRTestExecutor");
-        executors.registerClass("dir", "test.com.sun.max.vm.compiler.cps.DIRTestExecutor");
-        executors.registerClass("eir", "test.com.sun.max.vm.compiler.cps.EIRTestExecutor");
+        executors.registerClass("cir", "test.com.sun.max.vm.cps.CIRTestExecutor");
+        executors.registerClass("dir", "test.com.sun.max.vm.cps.DIRTestExecutor");
+        executors.registerClass("eir", "test.com.sun.max.vm.cps.EIRTestExecutor");
         executors.registerClass("hir", HIRTestExecutor.class);
 
         // run each executor.

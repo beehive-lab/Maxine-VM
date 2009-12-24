@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.hotpath;
 
-import com.sun.max.vm.compiler.cps.tir.*;
+import com.sun.max.vm.cps.tir.*;
 
 public class Visualizer {
     public static void print(DirTree method) {

@@ -21,12 +21,12 @@
 package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.bytecode.*;
-import test.com.sun.max.vm.compiler.cps.*;
-import test.com.sun.max.vm.compiler.cps.bytecode.*;
+import test.com.sun.max.vm.cps.*;
+import test.com.sun.max.vm.cps.bytecode.*;
 
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.cps.target.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.generate.*;
 import com.sun.max.vm.type.*;

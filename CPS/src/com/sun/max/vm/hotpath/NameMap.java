@@ -21,8 +21,8 @@
 package com.sun.max.vm.hotpath;
 
 import com.sun.max.collect.*;
-import com.sun.max.vm.compiler.cps.tir.*;
-import com.sun.max.vm.compiler.cps.tir.pipeline.*;
+import com.sun.max.vm.cps.tir.*;
+import com.sun.max.vm.cps.tir.pipeline.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
 
 public class NameMap {

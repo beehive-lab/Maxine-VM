@@ -20,7 +20,7 @@
  */
 package test.com.sun.max.vm.jit;
 
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;

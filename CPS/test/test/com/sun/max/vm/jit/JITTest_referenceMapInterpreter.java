@@ -22,10 +22,10 @@ package test.com.sun.max.vm.jit;
 
 import java.io.*;
 
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.compiler.cps.jit.*;
+import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 

@@ -178,15 +178,15 @@ public class MaxineTesterConfiguration {
         shootout("wc",              new File("wc.stdin"));
         shootout("wordfreq",        new File("wordfreq.stdin"));
 
-        auto("test_manyObjectParameters(test.com.sun.max.vm.compiler.cps.eir.sparc.SPARCEirTranslatorTest_native)",   FAIL_ALL);
-        auto("test_arrayCopyForKinds(test.com.sun.max.vm.compiler.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)",  FAIL_ALL);
-        auto("test_catchNull(test.com.sun.max.vm.compiler.cps.eir.sparc.SPARCEirTranslatorTest_throw)",               FAIL_ALL);
-        auto("test_manyParameters(test.com.sun.max.vm.compiler.cps.eir.sparc.SPARCEirTranslatorTest_native)",         FAIL_ALL);
-        auto("test_nop(test.com.sun.max.vm.compiler.cps.eir.sparc.SPARCEirTranslatorTest_native)",                    FAIL_ALL);
-        auto("test_nop_cfunction(test.com.sun.max.vm.compiler.cps.eir.sparc.SPARCEirTranslatorTest_native)",          FAIL_ALL);
-        auto("test_reference_identity(test.com.sun.max.vm.compiler.cps.eir.sparc.SPARCEirTranslatorTest_native)",     FAIL_ALL);
-        auto("test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
-        auto("test_c1xAutoTest(test.com.sun.max.vm.compiler.cps.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
+        auto("test_manyObjectParameters(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",   FAIL_ALL);
+        auto("test_arrayCopyForKinds(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)",  FAIL_ALL);
+        auto("test_catchNull(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_throw)",               FAIL_ALL);
+        auto("test_manyParameters(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",         FAIL_ALL);
+        auto("test_nop(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",                    FAIL_ALL);
+        auto("test_nop_cfunction(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",          FAIL_ALL);
+        auto("test_reference_identity(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",     FAIL_ALL);
+        auto("test_sameNullsArrayCopy(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
+        auto("test_c1xAutoTest(test.com.sun.max.vm.cps.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
 
         imageConfig("java", "-run=java");
         imageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
@@ -389,11 +389,11 @@ public class MaxineTesterConfiguration {
     }
 
     static {
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.CompilerTest_max");
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.CompilerTest_coreJava");
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.CompilerTest_large");
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.JitCompilerTestCase");
-        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.compiler.cps.bytecode.BytecodeTest_subtype");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_max");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_coreJava");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_large");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.JitCompilerTestCase");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.bytecode.BytecodeTest_subtype");
     }
 
     /**

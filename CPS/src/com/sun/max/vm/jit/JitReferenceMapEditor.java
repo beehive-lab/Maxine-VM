@@ -30,7 +30,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.cps.jit.*;
+import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.stack.*;
 

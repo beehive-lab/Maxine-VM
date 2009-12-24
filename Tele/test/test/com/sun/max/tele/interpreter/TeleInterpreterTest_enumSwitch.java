@@ -21,7 +21,7 @@
 package test.com.sun.max.tele.interpreter;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.cps.*;
+import test.com.sun.max.vm.cps.*;
 
 public class TeleInterpreterTest_enumSwitch extends CompilerTest_enumSwitch {
 
