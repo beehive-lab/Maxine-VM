@@ -48,6 +48,11 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class StackFrameWalker {
 
+    public enum CalleeKind {
+        TRAP,
+        TRAMPOLINE,
+        CALLEE_SAVED
+    }
     /**
      * A VM option for enabling stack frame walk tracing.
      */
@@ -761,5 +766,4 @@ public abstract class StackFrameWalker {
      * @param targetABI
      */
     public abstract void useABI(TargetABI targetABI);
-
 }

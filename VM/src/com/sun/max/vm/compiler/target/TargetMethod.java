@@ -518,7 +518,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return (classMethodActor == null) ? description() : classMethodActor.format("%H.%n(%p)");
     }
 
-    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackReferenceMapPreparer.CalleeKind calleeKind) {
+    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
 
     }
 

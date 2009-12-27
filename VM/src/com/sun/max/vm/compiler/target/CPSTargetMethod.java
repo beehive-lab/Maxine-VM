@@ -333,9 +333,9 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      * @param calleeKind the kind of callee method that
      */
     @Override
-    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer ip, Pointer registerState, StackReferenceMapPreparer.CalleeKind calleeKind) {
+    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer ip, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
         Pointer resumptionIp = ip;
-        if (calleeKind == StackReferenceMapPreparer.CalleeKind.TRAP) {
+        if (calleeKind == StackFrameWalker.CalleeKind.TRAP) {
             // this trap will cause an exception to be delivered
             int trapNum = TrapStateAccess.instance().getTrapNumber(registerState);
             Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNum);
@@ -371,7 +371,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
                 preparer.traceReferenceMapByteAfter(Pointer.zero(), baseSlotIndex, referenceMapByte);
                 byteIndex++;
             }
-        } else if (calleeKind == StackReferenceMapPreparer.CalleeKind.TRAMPOLINE) {
+        } else if (calleeKind == StackFrameWalker.CalleeKind.TRAMPOLINE) {
             // this method called a trampoline; put in the register map according to the calling convention
         } else {
             // CPS methods should never directly call callee-saved methods

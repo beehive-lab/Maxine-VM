@@ -545,7 +545,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackReferenceMapPreparer.CalleeKind calleeKind) {
+    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
         int stopIndex = lookupStopPosition(instructionPointer);
         for (int i = 0; i < referenceRegisterCount; i++) {
             if (isRegisterReferenceMapBitSet(stopIndex, i)) {
