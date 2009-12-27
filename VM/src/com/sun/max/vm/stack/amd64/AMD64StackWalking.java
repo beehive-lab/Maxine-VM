@@ -252,7 +252,7 @@ public class AMD64StackWalking {
                         Pointer callerCatchAddress = catchAddress.asPointer();
                         final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
                         if (callerTargetMethod != null) {
-                            callerTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapStateAccess.getRegisterState(trapState), StackReferenceMapPreparer.CalleeKind.TRAP);
+                            callerTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapStateAccess.getRegisterState(trapState), StackFrameWalker.CalleeKind.TRAP);
                         }
                     }
                 } else {
@@ -262,7 +262,7 @@ public class AMD64StackWalking {
 
                     final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
                     if (callerTargetMethod != null) {
-                        callerTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapStateAccess.getRegisterState(trapState), StackReferenceMapPreparer.CalleeKind.TRAP);
+                        callerTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapStateAccess.getRegisterState(trapState), StackFrameWalker.CalleeKind.TRAP);
                     }
                 }
             }
@@ -348,22 +348,22 @@ public class AMD64StackWalking {
     public static void prepareReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee) {
         TargetMethod calleeMethod = callee.targetMethod();
         Pointer registerState = Pointer.zero();
-        StackReferenceMapPreparer.CalleeKind calleeKind = null;
+        StackFrameWalker.CalleeKind calleeKind = null;
         if (calleeMethod != null) {
             if (calleeMethod.isTrapStub()) {
                 // find the register state in the trap stub method
                 registerState = AMD64TrapStateAccess.getTrapStateFromRipPointer(callee.sp().plus(calleeMethod.frameSize()));
-                calleeKind = StackReferenceMapPreparer.CalleeKind.TRAP;
+                calleeKind = StackFrameWalker.CalleeKind.TRAP;
             }
             if (calleeMethod.isCalleeSaved()) {
                 // find the register state in the callee method
                 registerState = callee.sp().plus(calleeMethod.frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
-                calleeKind = StackReferenceMapPreparer.CalleeKind.CALLEE_SAVED;
+                calleeKind = StackFrameWalker.CalleeKind.CALLEE_SAVED;
             }
             if (calleeMethod.isTrampoline()) {
                 // find the register state in the trampoline
                 registerState = callee.sp().plus(calleeMethod.frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
-                calleeKind = StackReferenceMapPreparer.CalleeKind.TRAMPOLINE;
+                calleeKind = StackFrameWalker.CalleeKind.TRAMPOLINE;
             }
         }
         if (!registerState.isZero()) {

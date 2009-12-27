@@ -940,9 +940,4 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), current.stackReferenceMapVerifier());
     }
 
-    public enum CalleeKind {
-        TRAP,
-        TRAMPOLINE,
-        CALLEE_SAVED
-    }
 }
