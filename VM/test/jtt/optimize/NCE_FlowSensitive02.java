@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,22 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.fail;
+package jtt.optimize;
 
 /*
  * @Harness: java
- * @Runs: 0=true; 1=!java.lang.NullPointerException
+ * @Runs: null=!java.lang.NullPointerException; "x"="x"; "yay"="yay"
  */
-public class BC_invokevirtual02 {
-    private static final BC_invokevirtual02 obj = new BC_invokevirtual02();
-    public static boolean test(int arg) {
-        BC_invokevirtual02 object = null;
-        if (arg == 0) {
-            object = obj;
+public class NCE_FlowSensitive02 {
+
+    public static String test(String arg) {
+        if (arg != null) {
+            return arg.toString();
         }
-        return object.method();
-    }
-    public final boolean method() {
-        return true;
+        return arg.toString();
     }
 }
