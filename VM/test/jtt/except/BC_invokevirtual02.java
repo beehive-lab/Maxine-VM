@@ -18,22 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package jtt.fail;
+package jtt.except;
 
 /*
  * @Harness: java
  * @Runs: 0=true; 1=!java.lang.NullPointerException
  */
-public class BC_invokespecial01 {
-    private static final BC_invokespecial01 obj = new BC_invokespecial01();
+public class BC_invokevirtual02 {
+    private static final BC_invokevirtual02 obj = new BC_invokevirtual02();
     public static boolean test(int arg) {
-        BC_invokespecial01 object = null;
+        BC_invokevirtual02 object = null;
         if (arg == 0) {
             object = obj;
         }
         return object.method();
     }
-    private boolean method() {
+    public final boolean method() {
         return true;
     }
 }

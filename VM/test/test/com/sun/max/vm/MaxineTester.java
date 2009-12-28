@@ -1209,10 +1209,12 @@ public class MaxineTester {
                             }
 
                         } else if (line.contains("failed")) {
-                            failedLines.append(line); // found a line with "failed"--probably a failed test
-                            // (tw) bug?
+                            // found a line with "failed"--probably a failed test
                             if (lastTest != null) {
-                                addTestResult(lastTest, line);
+                                if (!addTestResult(lastTest, line)) {
+                                    // add the line if it was not an expected failure
+                                    failedLines.append(line);
+                                }
                             }
                             lastTest = null;
                             lastTestNumber = null;
@@ -1235,9 +1237,9 @@ public class MaxineTester {
                         failedLines.append("\t" + lastTestNumber + ", " + lastTest + ": crashed or hung the VM");
                     }
                     if (failedLines.isEmpty()) {
-                        return new JTResult("no failures", nextTestOption);
+                        return new JTResult("no unexpected failures", nextTestOption);
                     }
-                    StringBuffer buffer = new StringBuffer("failures: ");
+                    StringBuffer buffer = new StringBuffer("unexpected failures: ");
                     for (String failed : failedLines) {
                         buffer.append("\n").append(failed);
                     }
