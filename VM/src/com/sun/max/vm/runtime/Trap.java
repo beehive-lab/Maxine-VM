@@ -100,9 +100,8 @@ public abstract class Trap {
                 return NullPointerException.class;
             } else if (trapNumber == STACK_FAULT || trapNumber == STACK_FATAL) {
                 return StackOverflowError.class;
-            } else {
-                throw FatalError.unexpected("Should not be called, when there is no implicit exception that throws an exception object!");
             }
+            return null;
         }
 
         private Number() {

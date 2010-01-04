@@ -33,6 +33,8 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.amd64.AMD64StackWalking;
+import com.sun.max.lang.Function;
 
 /**
  * @author Ben L. Titzer

@@ -357,7 +357,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
                                 Pointer callerCatchAddress = catchAddress.asPointer();
                                 final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
                                 if (callerTargetMethod != null) {
-                                    cpsTargetMethod.prepareRegisterReferenceMap(trapState, callerCatchAddress, preparer);
+                                    cpsTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapState, StackFrameWalker.CalleeKind.TRAP);
                                 }
                             }
                         } else {
@@ -366,7 +366,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
                             final Pointer callerInstructionPointer = trapStateAccess.getInstructionPointer(trapState);
                             final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
                             if (callerTargetMethod != null) {
-                                cpsTargetMethod.prepareRegisterReferenceMap(trapState, callerInstructionPointer, preparer);
+                                cpsTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapState, StackFrameWalker.CalleeKind.TRAP);
                             }
                         }
                     }

@@ -25,6 +25,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.compiler.RuntimeCompilerScheme;
+import com.sun.max.vm.stack.StackReferenceMapPreparer;
+import com.sun.max.vm.stack.StackFrameWalker;
+import com.sun.max.program.ProgramError;
 
 /**
  * @author Bernd Mathiske
@@ -53,5 +57,10 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
         AMD64TargetMethod.forwardTo(this, newTargetMethod);
+    }
+
+    @Override
+    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
+        throw ProgramError.unexpected();
     }
 }

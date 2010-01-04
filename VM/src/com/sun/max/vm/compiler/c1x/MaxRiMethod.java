@@ -205,8 +205,9 @@ public class MaxRiMethod implements RiMethod {
      * @return {@code true} if this method is final
      * @throws MaxRiUnresolved if the method is unresolved
      */
-    public boolean isFinalMethod() {
-        return asMethodActor("isFinalMethod()").isFinal();
+    public boolean isLeafMethod() {
+        MethodActor methodActor = asMethodActor("isLeafMethod()");
+        return methodActor.isFinal() || methodActor.isPrivate() || methodActor.holder().isFinal();
     }
 
     /**

@@ -308,15 +308,9 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
-    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
-
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
         return callEntryPoint.in(this);
     }
-
-    public abstract void patchCallSite(int callOffset, Word callEntryPoint);
-
-    public abstract void forwardTo(TargetMethod newTargetMethod);
 
     /**
      * Links all the calls from this target method to other methods for which the exact method actor is known. Linking a
@@ -397,8 +391,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     public boolean isCalleeSaved() {
         return false;
     }
-
-    public abstract void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer, TargetMethod callee);
 
     public byte[] encodedInlineDataDescriptors() {
         return null;
@@ -536,24 +528,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         return stopIndexWithClosestPosition;
     }
 
-    /**
-     * Analyzes the target method that this compiler produced to build a call graph. This method appends the direct
-     * calls (i.e. static and special calls), the virtual calls, and the interface calls to the appendable sequences
-     * supplied.
-     *
-     * @param directCalls a sequence of the direct calls to which this method should append
-     * @param virtualCalls a sequence of virtual calls to which this method should append
-     * @param interfaceCalls a sequence of interface calls to which this method should append
-     */
-    @HOSTED_ONLY
-    public abstract void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
-
     @Override
     public final String toString() {
         return (classMethodActor == null) ? description() : classMethodActor.format("%H.%n(%p)");
     }
 
-    public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
+    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
 
     }
 
@@ -619,13 +599,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     }
 
     /**
-     * Traces the exception handlers of the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public abstract void traceExceptionHandlers(IndentWriter writer);
-
-    /**
      * Traces the {@linkplain #directCallees() direct callees} of the compiled code represented by this object.
      *
      * @param writer where the trace is written
@@ -677,13 +650,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     }
 
     /**
-     * Traces the debug info for the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public abstract void traceDebugInfo(IndentWriter writer);
-
-    /**
      * Traces the {@linkplain #referenceMaps() reference maps} for the stops in the compiled code represented by this object.
      *
      * @param writer where the trace is written
@@ -695,6 +661,47 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
             writer.println(Strings.indent(refmaps, writer.indentation()));
         }
     }
+
+    public boolean isTrapStub() {
+        return classMethodActor != null && classMethodActor.isTrapStub();
+    }
+
+    public final boolean isTrampoline() {
+        return classMethodActor != null && classMethodActor.isTrampoline();
+    }
+
+    /**
+     * Analyzes the target method that this compiler produced to build a call graph. This method appends the direct
+     * calls (i.e. static and special calls), the virtual calls, and the interface calls to the appendable sequences
+     * supplied.
+     *
+     * @param directCalls a sequence of the direct calls to which this method should append
+     * @param virtualCalls a sequence of virtual calls to which this method should append
+     * @param interfaceCalls a sequence of interface calls to which this method should append
+     */
+    @HOSTED_ONLY
+    public abstract void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
+
+    public abstract void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer);
+
+    public abstract void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current);
+
+    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
+
+    public abstract void patchCallSite(int callOffset, Word callEntryPoint);
+
+    public abstract void forwardTo(TargetMethod newTargetMethod);
+
+    /**
+     * Traces the debug info for the compiled code represented by this object.
+     * @param writer where the trace is written
+     */
+    public abstract void traceDebugInfo(IndentWriter writer);
+
+    /**
+     * @param writer where the trace is written
+     */
+    public abstract void traceExceptionHandlers(IndentWriter writer);
 
     /**
      * Gets a string representation of the reference map for each stop in this target method.
