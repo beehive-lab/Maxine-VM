@@ -33,8 +33,6 @@ import com.sun.max.vm.cps.ir.observer.*;
 /**
  * Generates CIR.
  *
- * TODO: cache eviction.
- *
  * @author Bernd Mathiske
  */
 public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMethod> {
@@ -102,20 +100,20 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
             super.addIrObserver(observer);
         }
     }
-    
+
     public void removeCirMethod(ClassMethodActor classMethodActor) {
         synchronized (cirCache) {
             cirCache.remove(classMethodActor);
         }
     }
 
-	public void setCirMethod(ClassMethodActor classMethodActor, CirMethod cirMethod) {
+    public void setCirMethod(ClassMethodActor classMethodActor, CirMethod cirMethod) {
         synchronized (cirCache) {
-        	if (MaxineVM.isHosted() && !classMethodActor.isInline()) {
-        		hostedCirCache.put(classMethodActor, cirMethod);
-        	} else {
-        		cirCache.put(classMethodActor, cirMethod);
-        	}
+            if (MaxineVM.isHosted() && !classMethodActor.isInline()) {
+                hostedCirCache.put(classMethodActor, cirMethod);
+            } else {
+                cirCache.put(classMethodActor, cirMethod);
+            }
         }
     }
 
@@ -123,9 +121,9 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
         synchronized (cirCache) {
             CirMethod cirMethod = cirCache.get(classMethodActor);
             if (cirMethod == null && MaxineVM.isHosted()) {
-            	cirMethod = hostedCirCache.get(classMethodActor);
+                cirMethod = hostedCirCache.get(classMethodActor);
             }
-			return cirMethod;
+            return cirMethod;
         }
     }
 
