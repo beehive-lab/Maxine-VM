@@ -58,13 +58,18 @@ public class Adapter extends TargetMethod {
     }
 
     @Override
-    public void patchCallSite(int callOffset, Word callEntryPoint) {
-        FatalError.unimplemented();
+    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer) {
+        // TODO Auto-generated method stub
     }
 
     @Override
-    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer, TargetMethod callee) {
+    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
         // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void patchCallSite(int callOffset, Word callEntryPoint) {
+        FatalError.unimplemented();
     }
 
     @Override

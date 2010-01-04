@@ -24,7 +24,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.jit.amd64.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -46,7 +45,7 @@ public class AMD64OptimizedToJitAdapterFrame extends AdapterStackFrame {
         if (isFrameless() && instructionPointer.equals(CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod()))) {
             ripPointer = stackPointer;
         } else {
-            ripPointer = stackPointer.plus(AMD64JitCompiler.adapterFrameSize(targetMethod().classMethodActor()));
+            ripPointer = stackPointer.plus(AMD64StackWalking.adapterFrameSize(targetMethod().classMethodActor()));
         }
     }
 

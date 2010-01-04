@@ -37,44 +37,35 @@ public class PrototypeCompilerScheme extends AbstractVMScheme implements Bootstr
         super(vmConfiguration);
     }
 
-    @Override
     public boolean compilesToTargetMethod() {
         return false;
     }
 
-    @Override
     public void createBuiltins(PackageLoader packageLoader) {
     }
 
-    @Override
     public void createSnippets(PackageLoader packageLoader) {
     }
 
-    @Override
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
     }
 
-    @Override
     public void staticTrampoline() {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public TargetMethod compile(ClassMethodActor classMethodActor) {
         return null;
     }
 
-    @Override
     public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
         return false;
     }
 
-    @Override
     public void compileSnippets() {
     }
 
-    @Override
     public boolean areSnippetsCompiled() {
         return true;
     }
