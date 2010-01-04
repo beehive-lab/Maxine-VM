@@ -61,12 +61,12 @@ public class AMD64StackWalking {
     private static final byte NEAR_JMP = (byte) 0xE9;
     /**
      * Length in bytes of a short jump instruction on AMD64 (1 byte instruction encoding + 8 bits displacement).
-      */
-     private static final int SHORT_JMP_SIZE = 2;
+     */
+    private static final int SHORT_JMP_SIZE = 2;
     /**
      * Length in bytes of a near jump instruction on AMD64 (1 byte instruction encoding + 32 bits displacement).
-      */
-     private static final int NEAR_JMP_SIZE = 5;
+     */
+    private static final int NEAR_JMP_SIZE = 5;
     private static final byte PUSH_RBP = (byte) 0x55;
     private static final byte ENTER = (byte) 0xC8;
 
@@ -83,7 +83,7 @@ public class AMD64StackWalking {
         }
 
         final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
-        switch(purpose) {
+        switch (purpose) {
             case EXCEPTION_HANDLING: {
                 // adapter frames do not have exception handlers
                 break;
@@ -315,10 +315,10 @@ public class AMD64StackWalking {
 
     /**
      * Unwinds a thread's stack to an exception handler.
-     * <p>
+     * <p/>
      * The compiled version of this method must have its own frame but the frame size must be known at image build
      * time. This is because this code manually adjusts the stack pointer.
-     * <p>
+     * <p/>
      * The critical state of the registers before the RET instruction is:
      * <ul>
      * <li>RAX must hold the exception object</li>
@@ -326,10 +326,10 @@ public class AMD64StackWalking {
      * <li>The value at [RSP] must be the address of the handler code</li>
      * </ul>
      *
-     * @param throwable the exception object
+     * @param throwable    the exception object
      * @param catchAddress the address of the exception handler code
      * @param stackPointer the stack pointer denoting the frame of the handler to which the stack is unwound upon
-     *            returning from this method
+     *                     returning from this method
      */
     @NEVER_INLINE
     private static void unwindOptimized(Throwable throwable, Address catchAddress, Pointer stackPointer) {
@@ -400,32 +400,32 @@ public class AMD64StackWalking {
 
     /**
      * Returns the target of the jump instruction at the JIT entry point.
-      *
-      * The target is the first instruction in a target method compiled by the JIT compiler, the frame adapter in target
-      * method compiled by the optimizing compiler.
-      * <p>
-      * FIXME: This method may be invoked by the inspector with an incomplete targetMethod object,
-      * (i.e., one without the _targetABI field correctly set. Because of this, we pass an extra parameter to ease
-      * figuring out what offset the jump instruction is (normally, we could figure this out with
-      * targetABI().callEntryPoint()). Fix the inspector so that TargetMethod are always provided with a TargetABI
-      * object.
-      *
-      * @return
-      */
-     public static Pointer jitEntryPointJmpTarget(StackFrameWalker stackFrameWalker, TargetMethod targetMethod) {
-         final Pointer jitEntryPoint = com.sun.max.vm.compiler.CallEntryPoint.JIT_ENTRY_POINT.in(targetMethod);
-         final byte jumpInstruction = stackFrameWalker.readByte(jitEntryPoint, 0);
-         int distance = 0;
-         if (jumpInstruction == SHORT_JMP) {
-             distance = SHORT_JMP_SIZE + stackFrameWalker.readByte(jitEntryPoint, 1);
-         } else if (jumpInstruction == NEAR_JMP) {
-             distance = NEAR_JMP_SIZE + stackFrameWalker.readInt(jitEntryPoint, 1);
-         } else {
-             // (tw) Did not find a jump here => return max
-             distance = Integer.MAX_VALUE;
-         }
-         return jitEntryPoint.plus(distance);
-     }
+     * <p/>
+     * The target is the first instruction in a target method compiled by the JIT compiler, the frame adapter in target
+     * method compiled by the optimizing compiler.
+     * <p/>
+     * FIXME: This method may be invoked by the inspector with an incomplete targetMethod object,
+     * (i.e., one without the _targetABI field correctly set. Because of this, we pass an extra parameter to ease
+     * figuring out what offset the jump instruction is (normally, we could figure this out with
+     * targetABI().callEntryPoint()). Fix the inspector so that TargetMethod are always provided with a TargetABI
+     * object.
+     *
+     * @return
+     */
+    public static Pointer jitEntryPointJmpTarget(StackFrameWalker stackFrameWalker, TargetMethod targetMethod) {
+        final Pointer jitEntryPoint = com.sun.max.vm.compiler.CallEntryPoint.JIT_ENTRY_POINT.in(targetMethod);
+        final byte jumpInstruction = stackFrameWalker.readByte(jitEntryPoint, 0);
+        int distance = 0;
+        if (jumpInstruction == SHORT_JMP) {
+            distance = SHORT_JMP_SIZE + stackFrameWalker.readByte(jitEntryPoint, 1);
+        } else if (jumpInstruction == NEAR_JMP) {
+            distance = NEAR_JMP_SIZE + stackFrameWalker.readInt(jitEntryPoint, 1);
+        } else {
+            // (tw) Did not find a jump here => return max
+            distance = Integer.MAX_VALUE;
+        }
+        return jitEntryPoint.plus(distance);
+    }
 
     /**
      * Returns the adapter frame size. The size is deduced from the first instruction of the adapter, which decreases the
