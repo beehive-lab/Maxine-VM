@@ -111,7 +111,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public boolean compilesToTargetMethod() {
         return TargetMethod.class.isAssignableFrom(irGenerator().irMethodType);
     }

@@ -832,7 +832,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                 }
                 if (targetMethod.isJitCompiled()) {
                     // This is a call from a JIT target method to a trampoline.
-                    prepareTrampolineFrameForJITCaller((JitTargetMethod) targetMethod, ip, refmapFramePointer, operandStackPointer);
+                    prepareTrampolineFrameForJITCaller(targetMethod, ip, refmapFramePointer, operandStackPointer);
                 } else {
                     // This is a call from an optimized target method to a trampoline.
                     prepareTrampolineFrameForOptimizedCaller(targetMethod, stopIndex, offsetToFirstParameter);

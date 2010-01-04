@@ -23,12 +23,11 @@ package com.sun.max.vm.stack.amd64;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.jit.amd64.*;
 import com.sun.max.vm.stack.*;
 
 /**
  * Mechanism for accessing values on a stack frame for a method produced by the
- * {@linkplain AMD64JitCompiler AMD64 JIT compiler}.
+ * JIT compiler.
  *
  * @see AMD64JitStackFrameLayout
  *

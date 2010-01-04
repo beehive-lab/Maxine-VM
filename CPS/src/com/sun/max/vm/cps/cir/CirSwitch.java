@@ -134,7 +134,6 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
         visitor.visitSwitch(this);
     }
 
-    @Override
     public MethodActor foldingMethodActor() {
         throw new UnsupportedOperationException();
     }

@@ -27,10 +27,8 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
@@ -45,6 +43,7 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.memory.VirtualMemory;
 
 /**
  * @author Bernd Mathiske
@@ -130,7 +129,6 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
         }
     }
 
-<<<<<<< local
     private static ClassMethodActor unwindMethod;
 
     private static int unwindFrameSize = -1;
@@ -194,12 +192,12 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
         returnAddressPointer.setWord(catchAddress);
         VMRegister.setCpuStackPointer(returnAddressPointer.minus(unwindFrameSize));
     }
- 
+
     static {
     	C1XCompilerScheme.WalkFrameHelper.instance = new C1XCompilerScheme.WalkFrameHelper() {
     		@Override
 			public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
-				return walkFrameHelper(current, current.stackFrameWalker(), current.isTopFrame(), current.targetMethod(), callee.targetMethod(), purpose, context);
+				return AMD64StackWalking.walkOptimizedFrame(current, callee, purpose, context);
 			}
 		};
     }

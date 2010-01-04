@@ -24,10 +24,8 @@ import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.compiler.b.c.d.e.amd64.target.AMD64AdapterFrameGenerator;
-import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.compiler.CompilationScheme;
-import com.sun.max.vm.Log;
+import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.classfile.constant.SymbolTable;
 import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.thread.VmThreadLocal;
@@ -35,14 +33,16 @@ import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.code.Code;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.VMConfiguration;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Word;
-import com.sun.max.unsafe.UnsafeCast;
 import com.sun.max.unsafe.Address;
-import com.sun.max.program.ProgramError;
-import com.sun.max.asm.amd64.AMD64GeneralRegister64;
+import com.sun.max.unsafe.UnsafeCast;
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.memory.VirtualMemory;
+import com.sun.max.program.ProgramError;
+import com.sun.max.asm.amd64.AMD64GeneralRegister64;
 
 /**
  * This class collects together stack-walking related functionality that is (somewhat) compiler-independent.
@@ -57,10 +57,22 @@ public class AMD64StackWalking {
 
     private static int unwindFrameSize = -1;
     private static ClassMethodActor unwindMethod;
+    private static final byte SHORT_JMP = (byte) 0xEB;
+    private static final byte NEAR_JMP = (byte) 0xE9;
+    /**
+     * Length in bytes of a short jump instruction on AMD64 (1 byte instruction encoding + 8 bits displacement).
+      */
+     private static final int SHORT_JMP_SIZE = 2;
+    /**
+     * Length in bytes of a near jump instruction on AMD64 (1 byte instruction encoding + 32 bits displacement).
+      */
+     private static final int NEAR_JMP_SIZE = 5;
+    private static final byte PUSH_RBP = (byte) 0x55;
+    private static final byte ENTER = (byte) 0xC8;
 
     private static boolean walkJitOptAdapterFrame(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, StackFrameWalker.Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
         final Pointer jitEntryPoint = com.sun.max.vm.compiler.CallEntryPoint.JIT_ENTRY_POINT.in(targetMethod);
-        final int adapterFrameSize = AMD64AdapterFrameGenerator.jitToOptimizingAdapterFrameSize(stackFrameWalker, startOfAdapter);
+        final int adapterFrameSize = jitToOptimizingAdapterFrameSize(stackFrameWalker, startOfAdapter);
         Pointer callerFramePointer = current.fp();
 
         Pointer ripPointer = current.sp(); // stack pointer at call entry point (where the RIP is).
@@ -98,21 +110,6 @@ public class AMD64StackWalking {
         return true;
     }
 
-    private static boolean inAdapterFrameCode(boolean inTopFrame, final Pointer ip, final Pointer optimizedEntryPoint, final Pointer startOfAdapter) {
-        if (ip.lessThan(optimizedEntryPoint)) {
-            return true;
-        }
-        if (inTopFrame) {
-            return ip.greaterEqual(startOfAdapter);
-        }
-        // Since we are not in the top frame, instructionPointer is really the return instruction pointer of
-        // a call. If it happens that the call is to a method that is never expected to return normally (e.g. a method that only exits by throwing an exception),
-        // the call may well be the very last instruction in the method prior to the adapter frame code.
-        // In this case, we're only in adapter frame code if the instructionPointer is greater than
-        // the start of the adapter frame code.
-        return ip.greaterThan(startOfAdapter);
-    }
-
     public static boolean walkOptimizedFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         TargetMethod targetMethod = current.targetMethod();
@@ -130,7 +127,7 @@ public class AMD64StackWalking {
             boolean hasAdapterFrame = !(jitEntryPoint.equals(optimizedEntryPoint));
 
             if (hasAdapterFrame) {
-                final Pointer startOfAdapter = AMD64AdapterFrameGenerator.jitEntryPointJmpTarget(stackFrameWalker, targetMethod);
+                final Pointer startOfAdapter = jitEntryPointJmpTarget(stackFrameWalker, targetMethod);
                 if (inAdapterFrameCode(current.isTopFrame(), ip, optimizedEntryPoint, startOfAdapter)) {
                     return walkJitOptAdapterFrame(current, stackFrameWalker, targetMethod, purpose, context, startOfAdapter, current.isTopFrame());
                 }
@@ -212,6 +209,22 @@ public class AMD64StackWalking {
         }
         stackFrameWalker.advance(callerIP, callerSP, callerFP);
         return true;
+    }
+
+
+    private static boolean inAdapterFrameCode(boolean inTopFrame, final Pointer ip, final Pointer optimizedEntryPoint, final Pointer startOfAdapter) {
+        if (ip.lessThan(optimizedEntryPoint)) {
+            return true;
+        }
+        if (inTopFrame) {
+            return ip.greaterEqual(startOfAdapter);
+        }
+        // Since we are not in the top frame, instructionPointer is really the return instruction pointer of
+        // a call. If it happens that the call is to a method that is never expected to return normally (e.g. a method that only exits by throwing an exception),
+        // the call may well be the very last instruction in the method prior to the adapter frame code.
+        // In this case, we're only in adapter frame code if the instructionPointer is greater than
+        // the start of the adapter frame code.
+        return ip.greaterThan(startOfAdapter);
     }
 
     private static boolean prepareReferenceMap(Pointer ripPointer, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
@@ -373,5 +386,68 @@ public class AMD64StackWalking {
         }
         // ask the target method to prepare its frame reference map
         current.targetMethod().prepareFrameReferenceMap(preparer, current);
+    }
+
+    /**
+     * Size in bytes of parameters on a stack frame.
+     *
+     * @return size in bytes
+     */
+    public static int adapterFrameSize(ClassMethodActor classMethodActor) {
+        int paramSize = JitStackFrameLayout.JIT_SLOT_SIZE * classMethodActor.numberOfParameterSlots();
+        return VMConfiguration.target().targetABIsScheme().jitABI().alignFrameSize(paramSize);
+    }
+
+    /**
+     * Returns the target of the jump instruction at the JIT entry point.
+      *
+      * The target is the first instruction in a target method compiled by the JIT compiler, the frame adapter in target
+      * method compiled by the optimizing compiler.
+      * <p>
+      * FIXME: This method may be invoked by the inspector with an incomplete targetMethod object,
+      * (i.e., one without the _targetABI field correctly set. Because of this, we pass an extra parameter to ease
+      * figuring out what offset the jump instruction is (normally, we could figure this out with
+      * targetABI().callEntryPoint()). Fix the inspector so that TargetMethod are always provided with a TargetABI
+      * object.
+      *
+      * @return
+      */
+     public static Pointer jitEntryPointJmpTarget(StackFrameWalker stackFrameWalker, TargetMethod targetMethod) {
+         final Pointer jitEntryPoint = com.sun.max.vm.compiler.CallEntryPoint.JIT_ENTRY_POINT.in(targetMethod);
+         final byte jumpInstruction = stackFrameWalker.readByte(jitEntryPoint, 0);
+         int distance = 0;
+         if (jumpInstruction == SHORT_JMP) {
+             distance = SHORT_JMP_SIZE + stackFrameWalker.readByte(jitEntryPoint, 1);
+         } else if (jumpInstruction == NEAR_JMP) {
+             distance = NEAR_JMP_SIZE + stackFrameWalker.readInt(jitEntryPoint, 1);
+         } else {
+             // (tw) Did not find a jump here => return max
+             distance = Integer.MAX_VALUE;
+         }
+         return jitEntryPoint.plus(distance);
+     }
+
+    /**
+     * Returns the adapter frame size. The size is deduced from the first instruction of the adapter, which decreases the
+     * stack pointer if the adapter has a frame of size greater than 0. This is the only sub instruction in an adapter
+     * frame, so if the first instruction isn't a sub instruction, the size of the frame is 0.
+     *
+     * @param stackFrameWalker
+     * @param targetMethod
+     * @return
+     */
+    public static int jitToOptimizingAdapterFrameSize(StackFrameWalker stackFrameWalker, Pointer adapterFirstInstruction) {
+        final byte instruction = stackFrameWalker.readByte(adapterFirstInstruction, 0);
+        if (instruction == ENTER) {
+            final int lo = stackFrameWalker.readByte(adapterFirstInstruction, 1) & 0xff;
+            final int hi = stackFrameWalker.readByte(adapterFirstInstruction, 2) & 0xff;
+            final int frameSize = hi << 8 | lo;
+            return frameSize + Word.size();
+        }
+        if (instruction == PUSH_RBP) {
+            // Frame size == a single slot for saving RBP
+            return Word.size();
+        }
+        return 0;
     }
 }

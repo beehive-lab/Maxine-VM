@@ -73,75 +73,8 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
         return AMD64GeneralRegister64.RAX;
     }
 
-    private static final byte SHORT_JMP = (byte) 0xEB;
-    private static final byte NEAR_JMP = (byte) 0xE9;
     private static final byte SUB_IMM8 = (byte) 0x83;
     private static final byte SUB_IMM32 = (byte) 0x81;
-    private static final byte PUSH_RBP = (byte) 0x55;
-    private static final byte ENTER = (byte) 0xC8;
-
-   /**
-     * Length in bytes of a short jump instruction on AMD64 (1 byte instruction encoding + 8 bits displacement).
-     */
-    private static final int SHORT_JMP_SIZE = 2;
-
-    /**
-     * Length in bytes of a near jump instruction on AMD64 (1 byte instruction encoding + 32 bits displacement).
-     */
-    private static final int NEAR_JMP_SIZE = 5;
-
-    /**
-     * Returns the target of the jump instruction at the JIT entry point.
-     *
-     * The target is the first instruction in a target method compiled by the JIT compiler, the frame adapter in target
-     * method compiled by the optimizing compiler.
-     * <p>
-     * FIXME: This method may be invoked by the inspector with an incomplete targetMethod object,
-     * (i.e., one without the _targetABI field correctly set. Because of this, we pass an extra parameter to ease
-     * figuring out what offset the jump instruction is (normally, we could figure this out with
-     * targetABI().callEntryPoint()). Fix the inspector so that TargetMethod are always provided with a TargetABI
-     * object.
-     *
-     * @return
-     */
-    public static Pointer jitEntryPointJmpTarget(StackFrameWalker stackFrameWalker, TargetMethod targetMethod) {
-        final Pointer jitEntryPoint = JIT_ENTRY_POINT.in(targetMethod);
-        final byte jumpInstruction = stackFrameWalker.readByte(jitEntryPoint, 0);
-        int distance = 0;
-        if (jumpInstruction == SHORT_JMP) {
-            distance = SHORT_JMP_SIZE + stackFrameWalker.readByte(jitEntryPoint, 1);
-        } else if (jumpInstruction == NEAR_JMP) {
-            distance = NEAR_JMP_SIZE + stackFrameWalker.readInt(jitEntryPoint, 1);
-        } else {
-            // (tw) Did not find a jump here => return max
-            distance = Integer.MAX_VALUE;
-        }
-        return jitEntryPoint.plus(distance);
-    }
-
-    /**
-     * Returns the adapter frame size. The size is deduced from the first instruction of the adapter, which decreases the
-     * stack pointer if the adapter has a frame of size greater than 0. This is the only sub instruction in an adapter
-     * frame, so if the first instruction isn't a sub instruction, the size of the frame is 0.
-     *
-     * @param stackFrameWalker
-     * @param targetMethod
-     * @return
-     */
-    public static int jitToOptimizingAdapterFrameSize(StackFrameWalker stackFrameWalker, Pointer adapterFirstInstruction) {
-        final byte instruction = stackFrameWalker.readByte(adapterFirstInstruction, 0);
-        if (instruction == ENTER) {
-            final int lo = stackFrameWalker.readByte(adapterFirstInstruction, 1) & 0xff;
-            final int hi = stackFrameWalker.readByte(adapterFirstInstruction, 2) & 0xff;
-            final int frameSize = hi << 8 | lo;
-            return frameSize + Word.size();
-        }
-        if (instruction == PUSH_RBP) {
-            // Frame size == a single slot for saving RBP
-            return Word.size();
-        }
-        return 0;
-    }
 
     public static AMD64AdapterFrameGenerator jitToOptimizingCompilerAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
         return new JitToOptimizingFrameAdapterGenerator(classMethodActor, optimizingCompilerAbi);

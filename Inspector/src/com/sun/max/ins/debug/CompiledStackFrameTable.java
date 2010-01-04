@@ -42,10 +42,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 import com.sun.max.vm.value.*;
+import com.sun.max.vm.cps.jit.JitTargetMethod;
 
 /**
  * A table that displays the contents of a Java method stack frame in the VM.

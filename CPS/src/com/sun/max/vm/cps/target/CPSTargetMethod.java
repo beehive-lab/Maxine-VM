@@ -109,7 +109,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return defaultResult;
     }
 
-    @Override
     public Class<? extends IrTraceObserver> irTraceObserverType() {
         return IrTraceObserver.class;
     }

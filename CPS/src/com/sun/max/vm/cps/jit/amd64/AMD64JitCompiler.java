@@ -85,16 +85,6 @@ public class AMD64JitCompiler extends JitCompiler {
      */
     private static final int OFFSET_TO_LAST_PROLOGUE_INSTRUCTION = 4;
 
-    /**
-     * Size in bytes of parameters on a stack frame.
-     *
-     * @return size in bytes
-     */
-    public static int adapterFrameSize(ClassMethodActor classMethodActor) {
-        int paramSize = JitStackFrameLayout.JIT_SLOT_SIZE * classMethodActor.numberOfParameterSlots();
-        return VMConfiguration.target().targetABIsScheme().jitABI().alignFrameSize(paramSize);
-    }
-
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
@@ -203,7 +193,7 @@ public class AMD64JitCompiler extends JitCompiler {
             ripPointer = stackPointer;
         } else {
             // The adapter frame was constructed. Add space taken by the parameters for the placeholder of RBP.
-            ripPointer = stackPointer.plus(adapterFrameSize(classMethodActor));
+            ripPointer = stackPointer.plus(AMD64StackWalking.adapterFrameSize(classMethodActor));
         }
         return ripPointer;
     }
