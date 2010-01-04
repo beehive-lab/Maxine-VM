@@ -27,9 +27,8 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.object.TupleAccess;
 import com.sun.max.vm.type.*;
 
 /**
@@ -47,11 +46,6 @@ public class FieldReadSnippet extends BuiltinsSnippet {
 
     public TupleOffsetSnippet tupleOffsetSnippet() {
         return tupleOffsetSnippet;
-    }
-
-    @Override
-    public boolean isFoldable(IrValue[] arguments) {
-        return false;
     }
 
     public static final class ReadByte extends FieldReadSnippet {

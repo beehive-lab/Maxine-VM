@@ -25,11 +25,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.sparc.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * Describes a stack frame for a method produced by the {@linkplain SPARCJitCompiler SPARC JIT compiler}.
+ * Describes a stack frame for a method produced by the SPARC JIT compiler.
  * The JIT compiler doesn't use register windows for JIT-compiled code. Instead, it re-uses the same register window
  * across successive jit-compiled code to jit-compiled code calls.
  * As for the sparcv9 (64 bit) JIT compiler, it uses a frame and a stack pointer.

@@ -20,39 +20,31 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
+import java.lang.reflect.*;
+import java.util.*;
+
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
+import com.sun.c1x.target.x86.*;
+import com.sun.c1x.util.*;
 import com.sun.c1x.xir.*;
 import com.sun.c1x.xir.CiXirAssembler.*;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.target.x86.X86;
-import com.sun.max.vm.layout.Layout;
-import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.object.ArrayAccess;
-import com.sun.max.vm.heap.Heap;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet;
-import com.sun.max.vm.compiler.CompilationScheme;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.unsafe.Word;
-import com.sun.max.unsafe.UnsafeCast;
-import com.sun.max.unsafe.WordArray;
-import com.sun.max.program.ProgramError;
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
-import com.sun.max.annotate.INLINE;
-import com.sun.max.annotate.UNSAFE;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Array;
-import java.util.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class implements the VM interface for generating XIR snippets that express

@@ -44,7 +44,7 @@ import com.sun.max.vm.trampoline.*;
  * @see TemplateBasedTrampolineGenerator
  * @author Laurent Daynes
  */
-public final class TemplateBasedITableTrampoline extends NonFoldableSnippet {
+public final class TemplateBasedITableTrampoline extends Snippet {
     private TemplateBasedITableTrampoline() {
         super();
     }
@@ -54,7 +54,7 @@ public final class TemplateBasedITableTrampoline extends NonFoldableSnippet {
     /**
      * Template-based generator for trampoline code.
      */
-    private static final TrampolineGenerator trampolineGenerator = new TemplateBasedTrampolineGenerator.ItableTrampolineGenerator(SNIPPET.classMethodActor());
+    private static final TrampolineGenerator trampolineGenerator = new TemplateBasedTrampolineGenerator.ItableTrampolineGenerator(SNIPPET.executable);
 
     /*
      * Template for a dynamic trampoline.
@@ -72,7 +72,7 @@ public final class TemplateBasedITableTrampoline extends NonFoldableSnippet {
     }
 
     public static synchronized boolean isITableTrampoline(MethodActor classMethodActor) {
-        return classMethodActor == SNIPPET.classMethodActor();
+        return classMethodActor == SNIPPET.executable;
     }
 
     public static synchronized boolean isITableTrampolineInstructionPointer(Address instructionPointer) {
@@ -80,7 +80,7 @@ public final class TemplateBasedITableTrampoline extends NonFoldableSnippet {
         if (targetMethod == null) {
             return false;
         }
-        return targetMethod.classMethodActor() == SNIPPET.classMethodActor();
+        return targetMethod.classMethodActor() == SNIPPET.executable;
     }
 }
 

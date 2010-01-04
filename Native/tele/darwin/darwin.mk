@@ -18,4 +18,4 @@
 # UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open 
 # Company, Ltd.
 #
-OS_SOURCES = teleProcess.c darwinMach.c ptrace.c darwinTeleProcess.c darwinTeleNativeThread.c auth.c
+OS_SOURCES = teleProcess.c darwin.c ptrace.c darwinTeleProcess.c darwinTeleNativeThread.c auth.c

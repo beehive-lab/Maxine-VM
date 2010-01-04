@@ -27,12 +27,11 @@ import com.sun.max.vm.compiler.target.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class Package extends VMPackage {
     public Package() {
-        super();
         registerScheme(TargetABIsScheme.class, AMD64TargetABIsScheme.class);
     }
 

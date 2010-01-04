@@ -212,7 +212,6 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
                 }
             }
         }
-        System.out.println("target locations for parameter kinds (" + parameterKinds + ": " + result);
         return result;
     }
 }

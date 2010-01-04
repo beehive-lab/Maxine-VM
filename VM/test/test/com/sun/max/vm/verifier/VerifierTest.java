@@ -24,7 +24,8 @@ import java.io.*;
 import java.util.*;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.*;
+import test.com.sun.max.vm.bytecode.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.Arrays;
@@ -33,7 +34,6 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.bir.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
@@ -48,7 +48,7 @@ import com.sun.max.vm.verifier.*;
  * @author Doug Simon
  * @author David Liu
  */
-public class VerifierTest extends CompilerTestCase<BirMethod> {
+public class VerifierTest extends VmTestCase {
 
     private static final OptionSet options = new OptionSet();
 
@@ -75,7 +75,7 @@ public class VerifierTest extends CompilerTestCase<BirMethod> {
     public static Test suite() {
         final TestSuite suite = new TestSuite(VerifierTest.class.getSimpleName());
         suite.addTestSuite(VerifierTest.class);
-        return new VerifierTestSetup(suite);
+        return new VmTestSetup(suite);
     }
 
     private enum Policy {

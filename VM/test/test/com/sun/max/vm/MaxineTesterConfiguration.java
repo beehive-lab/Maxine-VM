@@ -24,12 +24,10 @@ import java.io.*;
 import java.util.*;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.c1x.C1XCompilerScheme;
+import com.sun.max.vm.compiler.c1x.*;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes
@@ -182,15 +180,15 @@ public class MaxineTesterConfiguration {
         shootout("wc",              new File("wc.stdin"));
         shootout("wordfreq",        new File("wordfreq.stdin"));
 
-        auto("test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",   FAIL_ALL);
-        auto("test_arrayCopyForKinds(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)",  FAIL_ALL);
-        auto("test_catchNull(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_throw)",               FAIL_ALL);
-        auto("test_manyParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",         FAIL_ALL);
-        auto("test_nop(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",                    FAIL_ALL);
-        auto("test_nop_cfunction(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",          FAIL_ALL);
-        auto("test_reference_identity(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",     FAIL_ALL);
-        auto("test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
-        auto("test_c1xAutoTest(test.com.sun.max.vm.compiler.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
+        auto("test_manyObjectParameters(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",   FAIL_ALL);
+        auto("test_arrayCopyForKinds(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)",  FAIL_ALL);
+        auto("test_catchNull(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_throw)",               FAIL_ALL);
+        auto("test_manyParameters(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",         FAIL_ALL);
+        auto("test_nop(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",                    FAIL_ALL);
+        auto("test_nop_cfunction(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",          FAIL_ALL);
+        auto("test_reference_identity(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",     FAIL_ALL);
+        auto("test_sameNullsArrayCopy(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
+        auto("test_c1xAutoTest(test.com.sun.max.vm.cps.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
 
         imageConfig("java", "-run=java");
         imageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
@@ -381,12 +379,24 @@ public class MaxineTesterConfiguration {
         return ExpectedResult.PASS;
     }
 
-    static final Set<Class> slowAutoTestClasses = new HashSet<Class>(Arrays.asList((Class)
-                    CompilerTest_max.class,
-                    CompilerTest_coreJava.class,
-                    CompilerTest_large.class,
-                    JitCompilerTestCase.class,
-                    BytecodeTest_subtype.class));
+
+
+    static final Set<Class> slowAutoTestClasses = new HashSet<Class>();
+
+    private static void addIfExists(Set<Class> classes, String className) {
+        try {
+            classes.add(Class.forName(className));
+        } catch (ClassNotFoundException e) {
+        }
+    }
+
+    static {
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_max");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_coreJava");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_large");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.JitCompilerTestCase");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.bytecode.BytecodeTest_subtype");
+    }
 
     /**
      * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.

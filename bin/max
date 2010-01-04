@@ -237,6 +237,7 @@ projects=( \
     Base:src,test,$base_ide_dir   \
     Assembler:src,test            \
     VM:src,test                   \
+    CPS:src,test                   \
     VMDI:src                      \
     Tele:src                      \
     JDWP:src                      \

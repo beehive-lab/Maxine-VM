@@ -24,7 +24,6 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
@@ -33,11 +32,6 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
 
     private ArraySetSnippet() {
         super();
-    }
-
-    @Override
-    public final boolean isFoldable(IrValue[] arguments) {
-        return false;
     }
 
     public static final class SetByte extends ArraySetSnippet {

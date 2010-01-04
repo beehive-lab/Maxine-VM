@@ -32,6 +32,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -289,7 +290,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         int stackPosition = 0;
         for (StackFrame frame : frames) {
             final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
-            final boolean isFrameForThisCode = frame instanceof JavaStackFrame ?
+            final boolean isFrameForThisCode = frame instanceof CompiledStackFrame ?
                             targetCodeRegion.overlaps(frame.targetMethod()) :
                             targetCodeRegion.contains(maxVM().getCodeAddress(frame));
             if (isFrameForThisCode) {

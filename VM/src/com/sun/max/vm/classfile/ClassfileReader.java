@@ -432,7 +432,6 @@ public final class ClassfileReader {
                             } else if (info.annotationTypeDescriptor().equals(forJavaClass(RESET.class))) {
                                 assert !Actor.isFinal(flags) :
                                     "A final field cannot have the RESET annotation: " + classDescriptor.toJavaString() + "." + name;
-                                flags |= RESET;
                             } else if (info.annotationTypeDescriptor().equals(forJavaClass(CONSTANT.class))) {
                                 flags |= CONSTANT;
                             } else if (info.annotationTypeDescriptor().equals(forJavaClass(CONSTANT_WHEN_NOT_ZERO.class))) {

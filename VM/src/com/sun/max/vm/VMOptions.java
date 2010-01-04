@@ -27,7 +27,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
-import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
@@ -94,27 +93,6 @@ public final class VMOptions {
      */
     private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, null,
         "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
-
-    /**
-     * An option to {@linkplain GlobalMetrics#report(java.io.PrintStream) report} on all global metrics gathered during execution.
-     * TODO: If this option is not enabled, then global metrics should not be gathered.
-     */
-    private static final VMBooleanXXOption printRuntimeMetrics = register(new VMBooleanXXOption("-XX:-PrintRuntimeMetrics", "Report random metrics gathered during execution.") {
-        @Override
-        public boolean parseValue(Pointer optionValue) {
-            if (getValue()) {
-                GlobalMetrics.reset();
-            }
-            return true;
-        }
-
-        @Override
-        protected void beforeExit() {
-            if (getValue()) {
-                GlobalMetrics.report(Log.out);
-            }
-        }
-    }, MaxineVM.Phase.STARTING);
 
     /**
      * The '-verbose' option and all its variants (e.g. '-verbose:gc', '-verbose:class' etc).

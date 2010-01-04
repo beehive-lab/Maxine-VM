@@ -158,7 +158,7 @@ public class PreferenceDialog extends SimpleDialog {
         javaStackFrameLabelPanel.add(new TextLabel(inspection, "Java Stack Frames"), BorderLayout.WEST);
         prefPanel.add(javaStackFrameLabelPanel);
 
-        final JPanel javaStackFramePanel = JavaStackFrameViewPreferences.globalPreferencesPanel(inspection);
+        final JPanel javaStackFramePanel = CompiledStackFrameViewPreferences.globalPreferencesPanel(inspection);
         javaStackFramePanel.setBorder(border);
         prefPanel.add(javaStackFramePanel);
 

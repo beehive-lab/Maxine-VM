@@ -29,7 +29,7 @@ import com.sun.max.vm.collect.*;
  *
  * @author Doug Simon
  */
-public class OptoStackFrameLayout extends JavaStackFrameLayout {
+public class OptoStackFrameLayout extends CompiledStackFrameLayout {
 
     private final int frameSize;
     private final boolean isReturnAddressPushedByCall;

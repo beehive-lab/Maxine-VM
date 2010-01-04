@@ -24,10 +24,8 @@ import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
-import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
@@ -87,7 +85,7 @@ public final class PrototypeGenerator {
             "Specifies the compiler scheme for the target.");
     private final Option<MaxPackage> optScheme = schemeOption("opt", new com.sun.max.vm.compiler.Package(), RuntimeCompilerScheme.class,
             "Specifies the optimizing compiler scheme for the target.");
-    private final Option<MaxPackage> jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), RuntimeCompilerScheme.class,
+    private final Option<MaxPackage> jitScheme = schemeOption("jit", MaxPackage.fromName("com.sun.max.vm.jit"), RuntimeCompilerScheme.class,
             "Specifies the JIT scheme for the target.");
     private final Option<MaxPackage> trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
             "Specifies the dynamic trampoline scheme for the target.");
@@ -244,8 +242,6 @@ public final class PrototypeGenerator {
         }
         try {
             javaPrototype.loadCoreJavaPackages();
-            final Timer compileTimer = GlobalMetrics.newTimer("CompiledPrototype", Clock.SYSTEM_MILLISECONDS);
-            final Timer graphTimer = GlobalMetrics.newTimer("GraphPrototype", Clock.SYSTEM_MILLISECONDS);
 
             return MaxineVM.usingTarget(new Function<GraphPrototype>() {
                 public GraphPrototype call() {
@@ -259,23 +255,15 @@ public final class PrototypeGenerator {
                             compiledPrototype.add(methodActor, null, null);
                         }
                         numberOfClassActors = currentNumberOfClasses();
-                        compileTimer.start();
                         if (compiledPrototype.compile()) {
-                            compileTimer.stop();
-                            graphTimer.start();
                             graphPrototype = new GraphPrototype(compiledPrototype, tree);
-                            graphTimer.stop();
-                        } else {
-                            compileTimer.stop();
                         }
                     } while (currentNumberOfClasses() != numberOfClassActors);
 
                     compiledPrototype.compileUnsafeMethods();
                     compiledPrototype.link();
 
-                    graphTimer.start();
                     graphPrototype = new GraphPrototype(compiledPrototype, tree);
-                    graphTimer.stop();
 
                     Code.bootCodeRegion.trim();
                     return graphPrototype;
@@ -296,11 +284,8 @@ public final class PrototypeGenerator {
      * @return a completed data prototype
      */
     DataPrototype createDataPrototype(boolean tree, boolean prototypeJit) {
-        final Timer dataTimer = GlobalMetrics.newTimer("DataPrototype", Clock.SYSTEM_MILLISECONDS);
         final GraphPrototype graphPrototype = createGraphPrototype(tree, prototypeJit);
-        dataTimer.start();
         final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null);
-        dataTimer.stop();
         return dataPrototype;
     }
 

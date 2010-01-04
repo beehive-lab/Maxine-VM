@@ -22,7 +22,7 @@ package com.sun.max.ins.gui;
 
 import com.sun.max.ins.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 

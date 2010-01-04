@@ -29,7 +29,7 @@ import com.sun.max.vm.monitor.*;
  * @author Mick Jordan
  * @author Bernd Mathiske
  */
-public abstract class MonitorSnippet extends NonFoldableSnippet {
+public abstract class MonitorSnippet extends Snippet {
 
     private MonitorSnippet() {
         super();

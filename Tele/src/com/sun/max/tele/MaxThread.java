@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -112,8 +113,9 @@ public interface MaxThread {
 
     /**
      * Gets the platform dependent handle to the native thread data structure in the VM's address space.
-     * For example, on Linux this will be the pthread_self(3) value for this thread. If non-zero,
-     * this value is guaranteed to be unique for any running thread.
+     * For example, on Linux this will be the pthread_self(3) value for this thread, but only becomes
+     * valid once the thread has executed to the point where it is on the VM managed thread list.
+     * If non-zero, this value is guaranteed to be immutable and unique among running threads.
      */
     long handle();
 
@@ -170,16 +172,24 @@ public interface MaxThread {
     Pointer getReturnAddress();
 
     /**
-     * Gets the surrogate for the {@link VmThread} in the tele process denoted by this object.
+     * Gets the surrogate for the heap object in the VM that implements this thread.
      * This method returns {@code null} for any of the following reasons:
      *
      * 1. The thread is a non-Java thread
      * 2. The thread is a Java thread that has not yet reached the execution point (somewhere in {@link VmThread#run})
      *    that initializes {@link VmThreadLocal#VM_THREAD}.
      *
-     * @return null if this thread is not (yet) associated with VmThread
+     * @return null if this thread is not (yet) associated with a VM thread
      */
-    MaxVMThread maxVMThread();
+    TeleObject vmThreadObject();
+
+    /**
+     * Gets the name for this thread in the VM, if it is a Java thread and is ready to run.
+     *
+     * @return the name of the associated VM thread, null if none.
+     * @see vmThreadObject
+     */
+    String vmThreadName();
 
     /**
      * @return a printable version of the thread's internal state that only shows key aspects
@@ -188,7 +198,7 @@ public interface MaxThread {
 
     /**
      * Determines if this thread is associated with a {@link VmThread} instance. Note that even if this method returns
-     * {@code true}, the {@link #maxVMThread()} method will return {@code null} if the thread has not reached the
+     * {@code true}, the {@link #vThreadObject()} method will return {@code null} if the thread has not reached the
      * execution point in {@link VmThread#run} where the {@linkplain VmThreadLocal#VM_THREAD reference} to the
      * {@link VmThread} object has been initialized.
      * <br>

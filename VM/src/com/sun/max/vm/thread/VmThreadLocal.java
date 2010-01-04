@@ -29,7 +29,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.Log.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;

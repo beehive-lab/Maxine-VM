@@ -176,7 +176,8 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         if (schemeTypeToImplementation == null) {
             schemeTypeToImplementation = new IdentityHashMap<Class<? extends Scheme>, Class<? extends Scheme>>();
         }
-        schemeTypeToImplementation.put(schemeType, schemeImplementation);
+        Class<? extends Scheme> oldValue = schemeTypeToImplementation.put(schemeType, schemeImplementation);
+        assert oldValue == null;
     }
 
     /**

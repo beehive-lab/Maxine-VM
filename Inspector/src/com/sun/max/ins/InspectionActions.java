@@ -57,6 +57,7 @@ import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.reference.*;

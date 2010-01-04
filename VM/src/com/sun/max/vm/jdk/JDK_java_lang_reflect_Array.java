@@ -24,7 +24,7 @@ import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.type.*;
@@ -432,7 +432,7 @@ final class JDK_java_lang_reflect_Array {
         for (int i = 1; i < dimensions.length; i++) {
             arrayClassActor = ArrayClassActor.forComponentClassActor(arrayClassActor);
         }
-        return NonFoldableSnippet.CreateMultiReferenceArray.createMultiReferenceArray(arrayClassActor, dimensions);
+        return CreateMultiReferenceArray.createMultiReferenceArray(arrayClassActor, dimensions);
     }
 
 }

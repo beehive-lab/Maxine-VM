@@ -24,9 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -45,17 +43,6 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
     @Override
     public int reasonsMayStop() {
         return Stoppable.NULL_POINTER_CHECK;
-    }
-
-    /**
-     * After optimizing CIR, given a direct reference scheme, we may find objects/references in the position of pointers.
-     * If this occurs at a foldable variant of a pointer load instruction,
-     * then we can deduce a field access that we can meta-evaluate on the host VM.
-     * Typically, this is the case when we access the 'offset' field of a FieldActor.
-     */
-    @Override
-    public boolean isHostFoldable(IrValue[] arguments) {
-        return IrValue.Static.areConstant(arguments) && arguments[0].kind() == Kind.REFERENCE;
     }
 
     public static class ReadByteAtLongOffset extends PointerLoadBuiltin {

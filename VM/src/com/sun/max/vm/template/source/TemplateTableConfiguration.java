@@ -30,13 +30,20 @@ public class TemplateTableConfiguration {
     public static final Class[] RESOLVED_TEMPLATE_SOURCES = new Class[] {ResolvedBytecodeTemplateSource.class, ResolvedInvokeTemplateSource.class, ResolvedFieldAccessTemplateSource.class };
     public static final Class[] INITIALIZED_TEMPLATE_SOURCES = new Class[] {InitializedBytecodeTemplateSource.class, InitializedStaticFieldAccessTemplateSource.class };
     public static final Class[] INSTRUMENTED_TEMPLATE_SOURCES = new Class[] {InstrumentedBytecodeSource.class, InstrumentedInvokeTemplateSource.class};
-    public static final Class[] TRACED_TEMPLATE_SOURCES = new Class[] {TracedBytecodeTemplateSource.class};
-    public static final Class[] OPTIMIZED_TEMPLATE_SOURCES = Arrays.append(
-                                                             Arrays.append(
-                                                             Arrays.append(
-                                                             Arrays.append(UNOPTIMIZED_TEMPLATE_SOURCES, RESOLVED_TEMPLATE_SOURCES),
-                                                             INITIALIZED_TEMPLATE_SOURCES),
-                                                             INSTRUMENTED_TEMPLATE_SOURCES),
-                                                             TRACED_TEMPLATE_SOURCES);
+    public static final Class[] OPTIMIZED_TEMPLATE_SOURCES;
 
+    static {
+        Class[] sources = Arrays.append(
+                          Arrays.append(
+                              Arrays.append(UNOPTIMIZED_TEMPLATE_SOURCES, RESOLVED_TEMPLATE_SOURCES),
+                              INITIALIZED_TEMPLATE_SOURCES),
+                              INSTRUMENTED_TEMPLATE_SOURCES);
+        String extraSources = System.getProperty("max.template.extraSources");
+        if (extraSources != null) {
+            for (String className : extraSources.split(",")) {
+                sources = Arrays.append(sources, Classes.forName(className));
+            }
+        }
+        OPTIMIZED_TEMPLATE_SOURCES = sources;
+    }
 }

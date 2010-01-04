@@ -43,6 +43,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetLocation.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -557,11 +558,18 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return topFrameCaller == null ? null : teleVM.getCodeAddress(topFrameCaller).asPointer();
     }
 
-    public MaxVMThread maxVMThread() {
+    public TeleObject vmThreadObject() {
         if (teleVmThread == null) {
             refreshThreadLocals();
         }
         return teleVmThread;
+    }
+
+    public String vmThreadName() {
+        if (teleVmThread != null) {
+            return teleVmThread.name();
+        }
+        return null;
     }
 
     protected abstract boolean readRegisters(byte[] integerRegisters, byte[] floatingPointRegisters, byte[] stateRegisters);
@@ -768,7 +776,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
                 // TODO: Resolve this hack that uses a special function in the Java stack frame layout.
 
-                final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
+                final CompiledStackFrame javaStackFrame = (CompiledStackFrame) stackFrame;
                 int offset = index * Word.size() + javaStackFrame.layout.frameSize();
                 offset += javaStackFrame.layout.isReturnAddressPushedByCall() ? Word.size() : 0;
 

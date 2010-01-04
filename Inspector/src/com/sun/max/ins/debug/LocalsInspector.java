@@ -36,7 +36,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.*;
-import com.sun.max.vm.jit.*;
+import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
@@ -213,7 +213,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     }
 
     private void initPanelView() {
-        final JitTargetMethod targetMethod = jitStackFrame.targetMethod();
+        final JitTargetMethod targetMethod = (JitTargetMethod) jitStackFrame.targetMethod();
         final Word callEntryPoint = targetMethod.codeStart();
         final WordValueLabel header = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, callEntryPoint, localsPanel);
         // header.setToolTipText(_jitStackFrame.targetMethod().name());

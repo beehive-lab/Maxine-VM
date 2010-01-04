@@ -21,15 +21,15 @@
 package test.com.sun.max.tele.interpreter;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.compiler.ir.interpreter.*;
+import com.sun.max.vm.cps.ir.*;
+import com.sun.max.vm.cps.ir.interpreter.*;
 
 /**
  *  @author Athul Acharya
