@@ -254,7 +254,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         /**
          * Gets the Java source variable name (if any) for a given slot.
          *
-         * @param slot the slot for which the Java source variable name is being requested
+         * @param row the slot for which the Java source variable name is being requested
          * @return the Java source name for {@code slot} or null if a name is not available
          */
         public String sourceVariableName(int row) {
