@@ -99,9 +99,9 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
 
     @Override
     public boolean isJitCompiled() {
-    	return true;
+        return true;
     }
-    
+
     /**
      * @return the code position to which the JIT method returns in its optimized-to-JIT adapter code or -1 if there is no adapter.
      */
@@ -134,7 +134,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     @Override
     public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
         final BytecodeLocation bytecodeLocation = new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
-        return Iterators.iterator(new BytecodeLocation[] {bytecodeLocation});
+        return Iterators.iterator(new BytecodeLocation[]{bytecodeLocation});
     }
 
     /**
@@ -167,9 +167,8 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     /**
      * Gets the bytecode position for a target code position in this JIT target method.
      *
-     * @param targetCodePosition
-     *                a target code position that may denote an instruction in this target method that correlates with a
-     *                bytecode
+     * @param targetCodePosition a target code position that may denote an instruction in this target method that correlates with a
+     *                           bytecode
      * @return the start position of the bytecode instruction that is implemented at {@code targetCodePosition} or -1 if
      *         {@code targetCodePosition} is outside the range(s) of target code positions in this target method that
      *         correlate with a bytecode.
@@ -201,42 +200,42 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     }
 
     public final void setGenerated(
-                    int[] catchRangePositions,
-                    int[] catchBlockPositions,
-                    int[] stopPositions,
-                    BytecodeStopsIterator bytecodeStopsIterator,
-                    byte[] compressedJavaFrameDescriptors,
-                    ClassMethodActor[] directCallees,
-                    int numberOfIndirectCalls,
-                    int numberOfSafepoints,
-                    byte[] referenceMaps,
-                    byte[] scalarLiteralBytes,
-                    Object[] referenceLiterals,
-                    Object codeOrCodeBuffer,
-                    int optimizedCallerAdapterFrameCodeSize,
-                    int adapterReturnPosition,
-                    byte[] encodedInlineDataDescriptors,
-                    ByteArrayBitMap isDirectRuntimeCall,
-                    int[] bytecodeToTargetCodePositionMap,
-                    BytecodeInfo[] bytecodeInfos,
-                    int numberOfBlocks,
-                    boolean[] blockStarts,
-                    JitStackFrameLayout jitStackFrameLayout, TargetABI abi) {
+            int[] catchRangePositions,
+            int[] catchBlockPositions,
+            int[] stopPositions,
+            BytecodeStopsIterator bytecodeStopsIterator,
+            byte[] compressedJavaFrameDescriptors,
+            ClassMethodActor[] directCallees,
+            int numberOfIndirectCalls,
+            int numberOfSafepoints,
+            byte[] referenceMaps,
+            byte[] scalarLiteralBytes,
+            Object[] referenceLiterals,
+            Object codeOrCodeBuffer,
+            int optimizedCallerAdapterFrameCodeSize,
+            int adapterReturnPosition,
+            byte[] encodedInlineDataDescriptors,
+            ByteArrayBitMap isDirectRuntimeCall,
+            int[] bytecodeToTargetCodePositionMap,
+            BytecodeInfo[] bytecodeInfos,
+            int numberOfBlocks,
+            boolean[] blockStarts,
+            JitStackFrameLayout jitStackFrameLayout, TargetABI abi) {
         setGenerated(
-            catchRangePositions,
-            catchBlockPositions,
-            stopPositions,
-            compressedJavaFrameDescriptors,
-            directCallees,
-            numberOfIndirectCalls,
-            numberOfSafepoints,
-            referenceMaps,
-            scalarLiteralBytes,
-            referenceLiterals,
-            codeOrCodeBuffer,
-            encodedInlineDataDescriptors,
-            jitStackFrameLayout.frameSize(),
-            jitStackFrameLayout.frameReferenceMapSize(), abi
+                catchRangePositions,
+                catchBlockPositions,
+                stopPositions,
+                compressedJavaFrameDescriptors,
+                directCallees,
+                numberOfIndirectCalls,
+                numberOfSafepoints,
+                referenceMaps,
+                scalarLiteralBytes,
+                referenceLiterals,
+                codeOrCodeBuffer,
+                encodedInlineDataDescriptors,
+                jitStackFrameLayout.frameSize(),
+                jitStackFrameLayout.frameReferenceMapSize(), abi
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
@@ -260,12 +259,12 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     /**
      * Ensures that the {@linkplain #referenceMaps() reference maps} for this JIT target method are finalized. Only
      * finalized reference maps are guaranteed to never change for the remaining lifetime of this target method.
-     *
+     * <p/>
      * Although this method may be called multiple threads, it cannot use standard synchronization as that may block
      * one of the threads in native code on a mutex. This would incorrectly be interpreted by the GC as meaning
      * the mutator thread has blocked for GC after taking a safepoint trap. To avoid blocking in native code,
      * a spin loop is used instead.
-     *
+     * <p/>
      * If this method is called while preparing the stack reference map for a thread that has taken a safepoint
      * for GC, then safepoints are currently disabled and so there is no need to use the {@link NO_SAFEPOINTS}
      * annotation on this method.

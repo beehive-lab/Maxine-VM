@@ -85,9 +85,9 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     public void staticTrampoline() {
         final StaticTrampolineContext context = new StaticTrampolineContext();
         new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
-                                                      VMRegister.getCpuStackPointer(),
-                                                      VMRegister.getCpuFramePointer(),
-                                                      context);
+                VMRegister.getCpuStackPointer(),
+                VMRegister.getCpuFramePointer(),
+                context);
         final Pointer callSite = context.ip.minus(AMD64StackWalking.RIP_CALL_INSTRUCTION_SIZE);
         final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
 
@@ -155,10 +155,10 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
 
     /**
      * Unwinds a thread's stack to an exception handler.
-     * <p>
+     * <p/>
      * The compiled version of this method must have it's own frame but the frame size must be known at image build
      * time. This is because this code manually adjusts the stack pointer.
-     * <p>
+     * <p/>
      * The critical state of the registers before the RET instruction is:
      * <ul>
      * <li>RAX must hold the exception object</li>
@@ -166,10 +166,10 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
      * <li>The value at [RSP] must be the address of the handler code</li>
      * </ul>
      *
-     * @param throwable the exception object
+     * @param throwable    the exception object
      * @param catchAddress the address of the exception handler code
      * @param stackPointer the stack pointer denoting the frame of the handler to which the stack is unwound upon
-     *            returning from this method
+     *                     returning from this method
      */
     @NEVER_INLINE
     private static void unwind(Throwable throwable, Address catchAddress, Pointer stackPointer) {
@@ -194,11 +194,11 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     static {
-    	C1XCompilerScheme.WalkFrameHelper.instance = new C1XCompilerScheme.WalkFrameHelper() {
-    		@Override
-			public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
-				return AMD64StackWalking.walkOptimizedFrame(current, callee, purpose, context);
-			}
-		};
+        C1XCompilerScheme.WalkFrameHelper.instance = new C1XCompilerScheme.WalkFrameHelper() {
+            @Override
+            public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
+                return AMD64StackWalking.walkOptimizedFrame(current, callee, purpose, context);
+            }
+        };
     }
 }
