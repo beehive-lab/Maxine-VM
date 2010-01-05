@@ -109,10 +109,6 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         return adapterReturnPosition;
     }
 
-    public boolean isDirectCallToRuntime(int stopIndex) {
-        return isDirectCallToRuntime != null && (stopIndex < numberOfDirectCalls()) && ByteArrayBitMap.isSet(isDirectCallToRuntime, 0, isDirectCallToRuntime.length, stopIndex);
-    }
-
     @Override
     protected CallEntryPoint callEntryPointForDirectCall(int directCallIndex) {
         if (isDirectCallToRuntime != null && ByteArrayBitMap.isSet(isDirectCallToRuntime, 0, isDirectCallToRuntime.length, directCallIndex)) {
