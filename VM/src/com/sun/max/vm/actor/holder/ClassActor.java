@@ -191,6 +191,7 @@ public abstract class ClassActor extends Actor {
         this.typeDescriptor = typeDescriptor;
         this.superClassActor = superClassActor;
         this.sourceFileName = sourceFileName;
+        assert classLoader !=null;
         this.classLoader = classLoader;
 
         FatalError.check(classLoader != null, "Class loader cannot be null for class actor " + name);
