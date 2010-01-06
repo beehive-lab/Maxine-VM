@@ -128,13 +128,15 @@ public class ExtendImageRunScheme extends JavaRunScheme {
             }
         }
 
+        // This call will, amongst other things, set up the system properties which may be needed
+        // by the classes to be reinitialized
+        super.initialize(phase);
+
         if (phase == MaxineVM.Phase.STARTING) {
             for (ClassActor classActor : reinitClasses) {
                 classActor.callInitializer();
             }
         }
-
-        super.initialize(phase);
 
         if (phase == MaxineVM.Phase.RUNNING) {
             final Enumeration<?> propEnum = properties.propertyNames();
