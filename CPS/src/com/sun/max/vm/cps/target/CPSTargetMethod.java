@@ -43,6 +43,7 @@ import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
+import com.sun.max.program.ProgramError;
 
 /**
  * Target method that saves for each catch block the ranges in the code that can
@@ -319,7 +320,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @Override
     public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer ip, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
         Pointer resumptionIp = ip;
-        if (calleeKind == StackFrameWalker.CalleeKind.TRAP) {
+        if (calleeKind == StackFrameWalker.CalleeKind.TRAP_STUB) {
             // this trap will cause an exception to be delivered
             int trapNum = TrapStateAccess.instance().getTrapNumber(registerState);
             Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNum);
@@ -647,4 +648,21 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             writer.outdent();
         }
     }
+
+    public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        throw ProgramError.unexpected();
+    }
+
+    public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+        throw ProgramError.unexpected();
+    }
+
+    public boolean acceptJavaFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+        throw ProgramError.unexpected();
+    }
+
+    public void advance(StackFrameWalker.Cursor current) {
+        throw ProgramError.unexpected();
+    }
+    
 }

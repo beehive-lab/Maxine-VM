@@ -48,8 +48,12 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class StackFrameWalker {
 
+    private static final boolean USE_NEW_API = false;
+
     public enum CalleeKind {
-        TRAP,
+        NATIVE,
+        JAVA,
+        TRAP_STUB,
         TRAMPOLINE,
         CALLEE_SAVED
     }
@@ -150,6 +154,27 @@ public abstract class StackFrameWalker {
          */
         public boolean isTopFrame() {
             return isTopFrame;
+        }
+
+        /**
+         * Get the callee kind of this method, which determines if there is register state in this frame
+         * and where it is stored.
+         * @return the callee kind of this method
+         */
+        public CalleeKind calleeKind() {
+            if (targetMethod == null) {
+                return CalleeKind.NATIVE;
+            }
+            if (targetMethod.isTrapStub()) {
+                return CalleeKind.TRAP_STUB;
+            }
+            if (targetMethod.isTrampoline()) {
+                return CalleeKind.TRAMPOLINE;
+            }
+            if (targetMethod.isCalleeSaved()) {
+                return CalleeKind.CALLEE_SAVED;
+            }
+            return CalleeKind.JAVA;
         }
     }
 
@@ -252,7 +277,7 @@ public abstract class StackFrameWalker {
                 checkVmEntrypointCaller(calleeMethod, targetMethod);
 
                 // walk the frame
-                if (!targetMethod.compilerScheme.walkFrame(current, callee, purpose, context)) {
+                if (!walkFrame(current, callee, targetMethod, purpose, context)) {
                     break;
                 }
 
@@ -311,6 +336,37 @@ public abstract class StackFrameWalker {
             }
             isTopFrame = false;
         }
+    }
+
+    private boolean walkFrame(Cursor current, Cursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
+        if (!USE_NEW_API) {
+            // use old API until new API is fully functional
+            return targetMethod.compilerScheme.walkFrame(current, callee, purpose, context);
+        }
+        if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
+            // walk the frame for reference map preparation
+            StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
+            if (preparer.checkIgnoreCurrentFrame()) {
+                return true;
+            }
+            targetMethod.prepareReferenceMap(current, callee, preparer);
+        } else if (purpose == Purpose.EXCEPTION_HANDLING) {
+            // walk the frame for exception handling
+            Throwable throwable = (Throwable) context;
+            targetMethod.catchException(current, callee, throwable);
+        } else if (purpose == Purpose.INSPECTING) {
+            // walk the frame for inspecting (Java frames)
+            StackFrameVisitor visitor = (StackFrameVisitor) context;
+            return targetMethod.acceptJavaFrameVisitor(current, callee, visitor);
+        } else if (purpose == Purpose.RAW_INSPECTING) {
+            // walk the frame for inspect (compiled frames)
+            RawStackFrameVisitor visitor = (RawStackFrameVisitor) context;
+            final int flags = RawStackFrameVisitor.Util.makeFlags(current.isTopFrame(), false);
+            return visitor.visitFrame(current.targetMethod(), current.ip(), current.sp(), current.sp(), flags);
+        }
+        // in any case, advance to the next frame
+        targetMethod.advance(current);
+        return true;
     }
 
     private void traceWalkPurpose(Purpose purpose) {

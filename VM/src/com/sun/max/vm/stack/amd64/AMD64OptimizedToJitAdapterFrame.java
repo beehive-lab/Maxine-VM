@@ -45,7 +45,7 @@ public class AMD64OptimizedToJitAdapterFrame extends AdapterStackFrame {
         if (isFrameless() && instructionPointer.equals(CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod()))) {
             ripPointer = stackPointer;
         } else {
-            ripPointer = stackPointer.plus(AMD64StackWalking.adapterFrameSize(targetMethod().classMethodActor()));
+            ripPointer = stackPointer.plus(AMD64OptStackWalking.adapterFrameSize(targetMethod().classMethodActor()));
         }
     }
 

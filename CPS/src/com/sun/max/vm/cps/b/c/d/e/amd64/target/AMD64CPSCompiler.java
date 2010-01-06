@@ -73,7 +73,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
 
     @INLINE
     private static void patchRipCallSite(Pointer callSite, Address calleeEntryPoint) {
-        final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64StackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
+        final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
         callSite.writeInt(1, calleeOffset);
     }
 
@@ -88,7 +88,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
                 VMRegister.getCpuStackPointer(),
                 VMRegister.getCpuFramePointer(),
                 context);
-        final Pointer callSite = context.ip.minus(AMD64StackWalking.RIP_CALL_INSTRUCTION_SIZE);
+        final Pointer callSite = context.ip.minus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
         final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
 
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
@@ -118,14 +118,14 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
 
     @Override
     public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
-        return AMD64StackWalking.walkOptimizedFrame(current, callee, purpose, context);
+        return AMD64OptStackWalking.walkOptimizedFrame(current, callee, purpose, context);
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isHosted()) {
-            AMD64StackWalking.initialize();
+            AMD64OptStackWalking.initialize();
         }
     }
 
@@ -197,7 +197,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
         C1XCompilerScheme.WalkFrameHelper.instance = new C1XCompilerScheme.WalkFrameHelper() {
             @Override
             public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
-                return AMD64StackWalking.walkOptimizedFrame(current, callee, purpose, context);
+                return AMD64OptStackWalking.walkOptimizedFrame(current, callee, purpose, context);
             }
         };
     }

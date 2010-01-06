@@ -67,7 +67,6 @@ public class IrTargetMethod extends CPSTargetMethod {
         throw ProgramError.unexpected();
     }
 
-    @Override
     public int registerReferenceMapSize() {
         throw ProgramError.unexpected();
     }
@@ -77,8 +76,19 @@ public class IrTargetMethod extends CPSTargetMethod {
         throw ProgramError.unexpected();
     }
 
-    @Override
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
+    public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        throw ProgramError.unexpected();
+    }
+
+    public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+        throw ProgramError.unexpected();
+    }
+
+    public boolean acceptJavaFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+        throw ProgramError.unexpected();
+    }
+
+    public void advance(StackFrameWalker.Cursor current) {
         throw ProgramError.unexpected();
     }
 }

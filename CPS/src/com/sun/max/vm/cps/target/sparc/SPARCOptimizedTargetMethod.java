@@ -26,9 +26,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.sparc.*;
-import com.sun.max.vm.stack.StackReferenceMapPreparer;
-import com.sun.max.vm.stack.StackFrameWalker;
-import com.sun.max.program.ProgramError;
 
 /**
  * @author Bernd Mathiske
@@ -54,8 +51,4 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
         SPARCTargetMethod.Static.forwardTo(this, newTargetMethod);
     }
 
-    @Override
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
-        throw ProgramError.unexpected();
-    }
 }

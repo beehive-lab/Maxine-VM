@@ -26,6 +26,8 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.amd64.*;
+import com.sun.max.vm.stack.StackFrameWalker;
+import com.sun.max.vm.stack.JitStackFrameLayout;
 
 /**
  * @author Bernd Mathiske
@@ -65,5 +67,112 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
         AMD64TargetMethod.forwardTo(this, newTargetMethod);
+    }
+
+    enum FramePointerState {
+        /**
+         * RBP holds the frame pointer of the current method activation. caller's RIP is at [RBP + FrameSize], caller's
+         * frame pointer is at [RBP + FrameSize -1]
+         */
+        IN_RBP {
+
+            @Override
+            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
+                return current.fp();
+            }
+
+            @Override
+            Pointer returnInstructionPointer(StackFrameWalker.Cursor current) {
+                TargetMethod targetMethod = current.targetMethod();
+                int dispToRip = targetMethod.frameSize() - sizeOfNonParameterLocals(targetMethod);
+                return current.fp().plus(dispToRip);
+            }
+
+            @Override
+            Pointer callerFramePointer(StackFrameWalker.Cursor current) {
+                return current.stackFrameWalker().readWord(returnInstructionPointer(current), -Word.size()).asPointer();
+            }
+        },
+
+        /**
+         * RBP holds the frame pointer of the caller, caller's RIP is at [RSP] This state occurs when entering the
+         * method or exiting it.
+         */
+        CALLER_FRAME_IN_RBP {
+
+            @Override
+            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
+                int offsetToSaveArea = current.targetMethod().frameSize();
+                return current.sp().minus(offsetToSaveArea);
+            }
+
+            @Override
+            Pointer returnInstructionPointer(StackFrameWalker.Cursor current) {
+                return current.sp();
+            }
+
+            @Override
+            Pointer callerFramePointer(StackFrameWalker.Cursor current) {
+                return current.fp();
+            }
+        },
+
+        /**
+         * RBP points at the bottom of the "saving area". Caller's frame pointer is at [RBP], caller's RIP is at [RBP +
+         * WordSize].
+         */
+        CALLER_FRAME_AT_RBP {
+
+            @Override
+            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
+                TargetMethod targetMethod = current.targetMethod();
+                int dispToFrameStart = targetMethod.frameSize() - (sizeOfNonParameterLocals(targetMethod) + Word.size());
+                return current.fp().minus(dispToFrameStart);
+            }
+
+            @Override
+            Pointer returnInstructionPointer(StackFrameWalker.Cursor current) {
+                return current.fp().plus(Word.size());
+            }
+
+            @Override
+            Pointer callerFramePointer(StackFrameWalker.Cursor current) {
+                return current.stackFrameWalker().readWord(current.fp(), 0).asPointer();
+            }
+        },
+
+        /**
+         * Returning from a runtime call (or actually in a runtime call). RBP may have been clobbered by the runtime.
+         * The frame pointer for the current activation record is 'RSP + stack slot size'.
+         */
+        RETURNING_FROM_RUNTIME {
+
+            @Override
+            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
+                return current.stackFrameWalker().readWord(current.sp(), 0).asPointer();
+            }
+
+            @Override
+            Pointer returnInstructionPointer(StackFrameWalker.Cursor current) {
+                TargetMethod targetMethod = current.targetMethod();
+                int dispToRip = targetMethod.frameSize() - sizeOfNonParameterLocals(targetMethod);
+                return localVariablesBase(current).plus(dispToRip);
+            }
+
+            @Override
+            Pointer callerFramePointer(StackFrameWalker.Cursor current) {
+                return current.stackFrameWalker().readWord(returnInstructionPointer(current), -Word.size()).asPointer();
+            }
+        };
+
+        abstract Pointer localVariablesBase(StackFrameWalker.Cursor current);
+
+        abstract Pointer returnInstructionPointer(StackFrameWalker.Cursor current);
+
+        abstract Pointer callerFramePointer(StackFrameWalker.Cursor current);
+
+        int sizeOfNonParameterLocals(TargetMethod targetMethod) {
+            return JitStackFrameLayout.JIT_SLOT_SIZE * (targetMethod.classMethodActor().codeAttribute().maxLocals - targetMethod.classMethodActor().numberOfParameterSlots());
+        }
     }
 }
