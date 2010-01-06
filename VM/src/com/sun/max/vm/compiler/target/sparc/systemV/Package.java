@@ -31,7 +31,6 @@ import com.sun.max.vm.compiler.target.*;
  */
 public class Package extends VMPackage {
     public Package() {
-        super();
         registerScheme(TargetABIsScheme.class, SPARCSystemVTargetABIsScheme.class);
     }
 

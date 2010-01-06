@@ -31,7 +31,7 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
     }
 
     private PointerStoreBuiltin() {
-        final SignatureDescriptor signature = foldingMethodActor().descriptor();
+        final SignatureDescriptor signature = executable.descriptor();
         kind = signature.parameterDescriptorAt(signature.numberOfParameters() - 1).toKind();
     }
 

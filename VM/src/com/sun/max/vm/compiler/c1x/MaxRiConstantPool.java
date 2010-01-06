@@ -22,10 +22,9 @@ package com.sun.max.vm.compiler.c1x;
 
 import java.util.*;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.C1XMetrics;
 import com.sun.max.program.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;

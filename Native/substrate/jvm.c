@@ -48,6 +48,30 @@ extern JNIEnv *currentJniEnv();
 #define lseek64 lseek
 #endif
 
+
+// Platform-independent error return values from OS functions
+enum OSReturn {
+  OS_OK         =  0,        // Operation was successful
+  OS_ERR        = -1,        // Operation failed
+  OS_INTRPT     = -2,        // Operation was interrupted
+  OS_TIMEOUT    = -3,        // Operation timed out
+  OS_NOMEM      = -5,        // Operation failed for lack of memory
+  OS_NORESOURCE = -6         // Operation failed for lack of nonmemory resource
+};
+
+#define RESTARTABLE(_cmd, _result) do { \
+		do { \
+			_result = _cmd; \
+		} while((_result == OS_ERR) && (errno == EINTR)); \
+} while(false)
+
+#define RESTARTABLE_RETURN_INT(_cmd) do { \
+		int _result; \
+		RESTARTABLE(_cmd, _result); \
+		return _result; \
+} while(false)
+
+
 /*****************************************************************/
 #define JVM_EEXIST -100
 //#define DEBUG_JVM_X 1
@@ -207,10 +231,31 @@ jlong JVM_TotalMemory(void) {
     return JVM_MaxMemory();
 }
 
+#if os_SOLARIS
+#include <sys/pset.h>
+#endif
+
 jint
 JVM_ActiveProcessorCount(void) {
+#if os_SOLARIS
+    int online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    pid_t pid = getpid();
+    psetid_t pset = PS_NONE;
+    // Are we running in a processor set or is there any processor set around?
+    if (pset_bind(PS_QUERY, P_PID, pid, &pset) == 0) {
+        uint_t pset_cpus;
+        // Query the number of cpus available to us.
+        if (pset_info(pset, NULL, &pset_cpus, NULL) == 0) {
+            c_ASSERT(pset_cpus > 0 && pset_cpus <= online_cpus);
+            return pset_cpus;
+        }
+    }
+    // Otherwise return number of online cpus
+    return online_cpus;
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 #if os_SOLARIS || os_LINUX
@@ -433,9 +478,9 @@ JVM_DumpAllStacks(JNIEnv *env, jclass unused) {
 }
 
 jobjectArray
-JVM_GetAllThreads(JNIEnv *env, jclass c) {
-    c_UNIMPLEMENTED();
-    return 0;
+JVM_GetAllThreads(JNIEnv *env, jclass dummy) {
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetAllThreads", "()[Ljava/lang/Thread;");
+    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod);
 }
 
 /* getStackTrace() and getAllStackTraces() method */
@@ -1808,65 +1853,121 @@ JVM_Timeout(int fd, long timeout) {
 
 jint
 JVM_Listen(jint fd, jint count) {
+#if os_SOLARIS || os_LINUX
+    return listen(fd, count);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_Connect(jint fd, struct sockaddr *him, jint len) {
+#if os_SOLARIS || os_LINUX
+    return connect(fd, him, len);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_Bind(jint fd, struct sockaddr *him, jint len) {
+#if os_SOLARIS || os_LINUX
+    return bind(fd, him, len);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_Accept(jint fd, struct sockaddr *him, jint *len) {
+#if os_SOLARIS
+    if (fd < 0) {
+        return -1;
+    }
+    return accept(fd, him, (socklen_t*) len);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_RecvFrom(jint fd, char *buf, int nBytes,
                   int flags, struct sockaddr *from, int *fromlen) {
+#if os_SOLARIS
+    return recvfrom(fd, buf, nBytes, (unsigned int) flags, from, (socklen_t *)fromlen);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_SendTo(jint fd, char *buf, int len,
                 int flags, struct sockaddr *to, int tolen) {
+#if os_SOLARIS
+    return sendto(fd, buf, len, (unsigned int) flags, to, tolen);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
+#if os_SOLARIS
+#include <sys/filio.h>
+#endif
+
 jint
-JVM_SocketAvailable(jint fd, jint *result) {
+JVM_SocketAvailable(jint fd, jint *pbytes) {
+#if os_SOLARIS
+    if (fd < 0) {
+        return 0;
+    }
+
+    int ret;
+    RESTARTABLE(ioctl(fd, FIONREAD, pbytes), ret);
+
+    // note ioctl can return 0 when successful, JVM_SocketAvailable
+    // is expected to return 0 on failure and 1 on success to the jdk.
+    return (ret == OS_ERR) ? 0 : 1;
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 
 jint
 JVM_GetSockName(jint fd, struct sockaddr *him, int *len) {
+#if os_SOLARIS
+    return getsockname(fd, him, (socklen_t*) len);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen) {
+#if os_SOLARIS
+    return getsockopt(fd, level, optname, optval, (socklen_t*) optlen);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 jint
 JVM_SetSockOpt(jint fd, int level, int optname, const char *optval, int optlen) {
+#if os_SOLARIS
+    return setsockopt(fd, level, optname, optval, optlen);
+#else
     c_UNIMPLEMENTED();
     return 0;
+#endif
 }
 
 /*
@@ -1971,7 +2072,8 @@ void JVM_RawMonitorExit(void *monitor) {
  * java.lang.management support
  */
 void *JVM_GetManagement(jint version) {
-    return NULL;
+    void* getJMMInterface(int version);
+    return getJMMInterface(version);
 }
 
 /*

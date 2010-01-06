@@ -24,7 +24,6 @@ import java.io.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.io.*;
-import com.sun.max.profile.*;
 import com.sun.max.program.option.*;
 
 /**
@@ -34,9 +33,6 @@ import com.sun.max.program.option.*;
  * @author Bernd Mathiske
  */
 public final class Trace {
-
-    private static final Metrics.Counter traceCalls = GlobalMetrics.newCounter("Trace.calls");
-    private static final Metrics.Counter tracePrints = GlobalMetrics.newCounter("Trace.prints");
 
     private Trace() {
         // do nothing.
@@ -196,9 +192,7 @@ public final class Trace {
      */
     public static void line(int requiredLevel) {
         if (ENABLED) {
-            traceCalls.increment();
             if (hasLevel(requiredLevel)) {
-                tracePrints.increment();
                 stream.println();
                 stream.flush();
             }
@@ -210,9 +204,7 @@ public final class Trace {
      */
     public static void line(int requiredLevel, Object message) {
         if (ENABLED) {
-            traceCalls.increment();
             if (hasLevel(requiredLevel)) {
-                tracePrints.increment();
                 printPrefix(requiredLevel);
                 stream.println(message);
                 stream.flush();
@@ -225,9 +217,7 @@ public final class Trace {
      */
     public static void begin(int requiredLevel, Object message) {
         if (ENABLED) {
-            traceCalls.increment();
             if (hasLevel(requiredLevel)) {
-                tracePrints.increment();
                 printPrefix(requiredLevel);
                 stream.print("BEGIN: ");
                 stream.println(message);
@@ -253,10 +243,8 @@ public final class Trace {
      */
     public static void end(int requiredLevel, Object message, long startTimeMillis) {
         if (ENABLED) {
-            traceCalls.increment();
             if (hasLevel(requiredLevel)) {
                 final long endTimeMillis = System.currentTimeMillis();
-                tracePrints.increment();
                 indentation--;
                 // It's quite possible for indentation to go negative in a multithreaded environment
                 //assert _indentation >= 0;

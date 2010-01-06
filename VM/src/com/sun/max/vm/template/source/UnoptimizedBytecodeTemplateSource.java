@@ -30,7 +30,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.NonFoldableSnippet.*;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -101,7 +101,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void anewarray(ResolutionGuard guard) {
         final ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(resolveArrayClass(guard));
         final int length = JitStackFrameOperation.peekInt(0);
-        JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreateReferenceArray.noninlineCreateReferenceArray(arrayClassActor, length));
+        JitStackFrameOperation.pokeReference(0, CreateReferenceArray.noninlineCreateReferenceArray(arrayClassActor, length));
     }
 
     @INLINE
@@ -1535,7 +1535,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     @INLINE
     public static void newarray(Kind kind) {
         final int length = JitStackFrameOperation.peekInt(0);
-        JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreatePrimitiveArray.noninlineCreatePrimitiveArray(kind, length));
+        JitStackFrameOperation.pokeReference(0, CreatePrimitiveArray.noninlineCreatePrimitiveArray(kind, length));
     }
 
     @INLINE

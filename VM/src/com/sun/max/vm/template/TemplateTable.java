@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.template;
 
-import static com.sun.max.vm.stack.JavaStackFrameLayout.*;
+import static com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;

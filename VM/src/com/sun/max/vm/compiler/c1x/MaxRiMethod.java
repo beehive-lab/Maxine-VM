@@ -22,14 +22,14 @@ package com.sun.max.vm.compiler.c1x;
 
 import java.util.*;
 
-import com.sun.c1x.ri.*;
 import com.sun.c1x.*;
+import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.max.collect.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.collect.Sequence;
 
 /**
  * The {@code MaxRiMethod} implements a compiler interface method. A method can
@@ -205,8 +205,9 @@ public class MaxRiMethod implements RiMethod {
      * @return {@code true} if this method is final
      * @throws MaxRiUnresolved if the method is unresolved
      */
-    public boolean isFinalMethod() {
-        return asMethodActor("isFinalMethod()").isFinal();
+    public boolean isLeafMethod() {
+        MethodActor methodActor = asMethodActor("isLeafMethod()");
+        return methodActor.isFinal() || methodActor.isPrivate() || methodActor.holder().isFinal();
     }
 
     /**

@@ -127,7 +127,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         this.after = after;
     }
 
-    @Override
     public String getDescription() {
         return description();
     }
@@ -422,7 +421,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
 
         private final TeleProcess teleProcess;
 
-        private final Comparator<TeleWatchpoint> watchpointComparitor = new Comparator<TeleWatchpoint>() {
+        private final Comparator<TeleWatchpoint> watchpointComparator = new Comparator<TeleWatchpoint>() {
 
             public int compare(TeleWatchpoint o1, TeleWatchpoint o2) {
                 // For the purposes of the collection, define equality and comparison to be based
@@ -435,14 +434,14 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         // Keep the set ordered by start address only, implemented by the comparator and equals().
         // An additional constraint imposed by this factory is that no regions overlap,
         // either in part or whole, with others in the set.
-        private final TreeSet<TeleWatchpoint> clientWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparitor);
+        private final TreeSet<TeleWatchpoint> clientWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparator);
 
         // A thread-safe, immutable collection of the current watchpoint list.
         // This list will be trapOnRead many, many more times than it will change.
         private volatile IterableWithLength<MaxWatchpoint> clientWatchpointsCache;
 
         // Watchpoints used for internal purposes, for example for GC and relocation services
-        private final TreeSet<TeleWatchpoint> systemWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparitor);
+        private final TreeSet<TeleWatchpoint> systemWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparator);
         private volatile IterableWithLength<MaxWatchpoint> systemWatchpointsCache;
 
         // Is VM known to be in GC?
@@ -496,9 +495,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param description text useful to a person, for example capturing the intent of the watchpoint
          * @param memoryRegion the region of memory in the VM to be watched.
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -519,9 +518,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param description text useful to a person, for example capturing the intent of the watchpoint
          * @param teleObject a heap object in the VM
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -543,9 +542,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param teleObject a heap object in the VM
          * @param fieldActor description of a field in object of that type
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -570,9 +569,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param arrayOffsetFromOrigin location relative to the object's origin of element 0 in the array
          * @param index index of the element to watch
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -595,9 +594,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param teleObject a heap object in the VM
          * @param headerField a field in the object's header
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -620,9 +619,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param teleThreadLocalValues a set of thread local values
          * @param index identifies the particular thread local variable
          * @param after before or after watchpoint
-         * @param trapOnRead trapOnRead watchpoint
-         * @param trapOnWrite trapOnWrite watchpoint
-         * @param trapOnExec execute watchpoint
+         * @param read trapOnRead watchpoint
+         * @param write trapOnWrite watchpoint
+         * @param exec execute watchpoint
          *
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
@@ -695,9 +694,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @param description
          * @param memoryRegion
          * @param after
-         * @param trapOnRead
-         * @param trapOnWrite
-         * @param trapOnExec
+         * @param read
+         * @param write
+         * @param exec
          * @param gc
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException
@@ -847,6 +846,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             if (teleWatchpoint.getTeleObject() != null) {
                 relocatableWatchpointsCounter++;
                 if (relocatableWatchpointsCounter == 1) {
+                    teleProcess.teleVM().modifyInspectableFlags(Inspectable.ACTIVE_RELOCATABLE_WATCHPOINTS, true);
                     endOfGCWatchpoint.setActive(true);
                 }
             }
@@ -896,6 +896,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                             if (teleWatchpoint.getTeleObject() != null) {
                                 relocatableWatchpointsCounter--;
                                 if (relocatableWatchpointsCounter == 0) {
+                                    teleProcess.teleVM().modifyInspectableFlags(Inspectable.ACTIVE_RELOCATABLE_WATCHPOINTS, false);
                                     endOfGCWatchpoint.setActive(false);
                                 }
                             }

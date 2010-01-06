@@ -291,10 +291,8 @@ public final class MemoryWordsTable extends InspectorTable {
             final JLabel renderer = getRenderer(tableModel.getMemoryRegion(row), focus().thread(), tableModel.getWatchpoints(row));
             renderer.setOpaque(true);
             renderer.setForeground(getRowTextColor(row));
-            if (isBoundaryRow(row)) {
+            if (renderer.getBorder() == null && isBoundaryRow(row)) {
                 renderer.setBorder(style().defaultPaneTopBorder());
-            } else {
-                renderer.setBorder(null);
             }
             return renderer;
         }

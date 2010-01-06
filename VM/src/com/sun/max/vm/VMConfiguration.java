@@ -34,7 +34,6 @@ import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
@@ -64,7 +63,6 @@ public final class VMConfiguration {
     public final VMPackage targetABIsPackage;
     public final VMPackage runPackage;
     public final Safepoint safepoint;
-    public final InterpreterStubCompiler interpreterStubCompiler;
     public final TrapStateAccess trapStateAccess;
     private final int[] offsetsToCallEntryPoints;
     private final int[] offsetsToCalleeEntryPoints;
@@ -124,7 +122,6 @@ public final class VMConfiguration {
         this.targetABIsPackage = targetABIsPackage;
         this.runPackage = runPackage;
         this.safepoint = Safepoint.create(this);
-        this.interpreterStubCompiler = InterpreterStubCompiler.create(this);
         this.trapStateAccess = TrapStateAccess.create(this);
         // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
         if (this.jitCompilerPackage == null || this.jitCompilerPackage.equals(this.bootCompilerPackage)) {

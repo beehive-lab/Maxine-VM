@@ -25,7 +25,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.NonFoldableSnippet.*;
+import com.sun.max.vm.compiler.snippet.CreateArraySnippet.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
@@ -59,7 +59,7 @@ public final class ResolvedBytecodeTemplateSource {
     @INLINE
     public static void anewarray(ArrayClassActor arrayClassActor) {
         final int length = JitStackFrameOperation.peekInt(0);
-        JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreateReferenceArray.noninlineCreateReferenceArray(arrayClassActor, length));
+        JitStackFrameOperation.pokeReference(0, CreateReferenceArray.noninlineCreateReferenceArray(arrayClassActor, length));
     }
 
     @INLINE

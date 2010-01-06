@@ -39,9 +39,10 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.JavaStackFrameLayout.*;
+import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 
 /**
  * This class implements a {@link TargetMethod target method} for
@@ -137,6 +138,11 @@ public class C1XTargetMethod extends TargetMethod {
         if (!MaxineVM.isHosted()) {
             linkDirectCalls();
         }
+    }
+
+    @Override
+    public byte[] referenceMaps() {
+        return referenceMaps;
     }
 
     /**
@@ -524,7 +530,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer, TargetMethod callee) {
+    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer) {
         preparer.tracePrepareReferenceMap(this, stopIndex, refmapFramePointer, "frame");
         int frameSlotIndex = preparer.referenceMapBitIndex(refmapFramePointer);
         int byteIndex = stopIndex * totalReferenceMapSize();
@@ -536,25 +542,15 @@ public class C1XTargetMethod extends TargetMethod {
             frameSlotIndex += Bytes.WIDTH;
             byteIndex++;
         }
-
-        if (callee instanceof C1XTargetMethod) {
-            final C1XTargetMethod c1xCallee = (C1XTargetMethod) callee;
-            if (c1xCallee.isCalleeSaved()) {
-                for (int i = 0; i < referenceRegisterCount; i++) {
-                    if (isRegisterReferenceMapBitSet(stopIndex, i)) {
-//
-//                        // TODO (tw): Check if this is correct?
-//                        int numberOfWords = i + 2;
-//                        Pointer referencePointer = stackPointer.minusWords(numberOfWords);
-//                        result.setReferenceMapBit(referencePointer);
-                    }
-                }
-            }
-        }
     }
 
     @Override
-    public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
+    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
+        prepareFrameReferenceMap(findClosestStopIndex(current.ip()), current.sp(), preparer);
+    }
+
+    @Override
+    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
         int stopIndex = lookupStopPosition(instructionPointer);
         for (int i = 0; i < referenceRegisterCount; i++) {
             if (isRegisterReferenceMapBitSet(stopIndex, i)) {
@@ -581,6 +577,18 @@ public class C1XTargetMethod extends TargetMethod {
     @Override
     @HOSTED_ONLY
     public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
+        // first gather methods in the directCallees array
+        if (directCallees != null) {
+            ClassMethodActor ma = classMethodActor();
+            if (ma != null && ma.holder().name.equals("jtt.max.Unsigned_idiv01")) {
+                DebugBreak.here();
+            }
+            for (Object o : directCallees) {
+                if (o instanceof MethodActor) {
+                    directCalls.append((MethodActor) o);
+                }
+            }
+        }
 
         // iterate over direct calls
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.directCalls) {
@@ -642,7 +650,7 @@ public class C1XTargetMethod extends TargetMethod {
             return "";
         }
         final StringBuilder buf = new StringBuilder();
-        final JavaStackFrameLayout layout = new C1XStackFrameLayout(frameSize());
+        final CompiledStackFrameLayout layout = new C1XStackFrameLayout(frameSize());
         final Slots slots = layout.slots();
         final int firstSafepointStopIndex = numberOfDirectCalls() + numberOfIndirectCalls();
         for (int stopIndex = 0; stopIndex < numberOfStopPositions(); ++stopIndex) {

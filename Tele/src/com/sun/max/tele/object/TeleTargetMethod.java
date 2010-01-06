@@ -37,6 +37,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
@@ -406,7 +407,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
             return null;
         }
         final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(callEntryPoint);
-        teleTargetBreakpoint.setDescription("Entry to method " + getName());
+        teleTargetBreakpoint.setDescription("Method entry");
         return teleTargetBreakpoint;
     }
 
@@ -420,7 +421,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
             for (TargetCodeInstruction targetCodeInstruction : instructions) {
                 if (targetCodeInstruction.label != null) {
                     final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(targetCodeInstruction.address);
-                    teleTargetBreakpoint.setDescription("Label " + targetCodeInstruction.label.toString() + " in " + getName());
+                    teleTargetBreakpoint.setDescription("Label " + targetCodeInstruction.label.toString());
                 }
             }
         }
@@ -486,8 +487,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
                 Class<?> type = teleObject.classActorForType().toJava();
                 if (VMConfiguration.hostOrTarget().bootCompilerScheme().getClass() == type) {
                     return VMConfiguration.hostOrTarget().bootCompilerScheme();
-                } else if (VMConfiguration.hostOrTarget().interpreterStubCompiler.getClass() == type) {
-                    return VMConfiguration.hostOrTarget().interpreterStubCompiler;
                 } else if (VMConfiguration.hostOrTarget().jitCompilerScheme().getClass() == type) {
                     return VMConfiguration.hostOrTarget().jitCompilerScheme();
                 } else if (C1XCompilerScheme.class == type) {

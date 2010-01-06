@@ -82,13 +82,13 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         }
     }
 
-    private static JavaStackFrameViewPreferences viewPreferences;
+    private static CompiledStackFrameViewPreferences viewPreferences;
 
     static class TruncatedStackFrame extends StackFrame {
         private StackFrame truncatedStackFrame;
 
         TruncatedStackFrame(StackFrame callee, StackFrame truncatedStackFrame) {
-            super(callee, truncatedStackFrame.instructionPointer, truncatedStackFrame.framePointer, truncatedStackFrame.stackPointer);
+            super(callee, truncatedStackFrame.ip, truncatedStackFrame.sp, truncatedStackFrame.fp);
             this.truncatedStackFrame = truncatedStackFrame;
         }
 
@@ -129,7 +129,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer();
 
     private boolean stateChanged = true;  // conservative assessment of possible stack change
-    private JavaStackFramePanel<? extends JavaStackFrame> selectedFramePanel;
+    private CompiledStackFramePanel<? extends CompiledStackFrame> selectedFramePanel;
 
     private final class StackFrameListCellRenderer extends DefaultListCellRenderer {
 
@@ -139,9 +139,9 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             String name;
             String toolTip = null;
             Component component;
-            if (stackFrame instanceof JavaStackFrame) {
-                final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
-                final Address address = javaStackFrame.instructionPointer;
+            if (stackFrame instanceof CompiledStackFrame) {
+                final CompiledStackFrame javaStackFrame = (CompiledStackFrame) stackFrame;
+                final Address address = javaStackFrame.ip;
                 final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
                 if (teleTargetMethod != null) {
                     name = inspection().nameDisplay().veryShortName(teleTargetMethod);
@@ -171,7 +171,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 toolTip = ((TeleStackFrameWalker.ErrorStackFrame) stackFrame).errorMessage();
             } else {
                 ProgramWarning.check(stackFrame instanceof NativeStackFrame, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
-                final Pointer instructionPointer = stackFrame.instructionPointer;
+                final Pointer instructionPointer = stackFrame.ip;
                 final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
                 if (teleNativeTargetRoutine != null) {
                     // native that we know something about
@@ -221,12 +221,12 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
                 // New stack frame selection; set the global focus.
                 inspection().focus().setStackFrame(thread, stackFrame, false);
-                if (stackFrame instanceof JavaStackFrame) {
+                if (stackFrame instanceof CompiledStackFrame) {
                     if (stackFrame instanceof AdapterStackFrame) {
                         final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
                         selectedFramePanel = new AdapterStackFramePanel(inspection(), adapterStackFrame);
                     } else {
-                        final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
+                        final CompiledStackFrame javaStackFrame = (CompiledStackFrame) stackFrame;
                         selectedFramePanel = new DefaultJavaStackFramePanel(inspection(), javaStackFrame, thread, viewPreferences);
                     }
                     newRightComponent = selectedFramePanel;
@@ -253,7 +253,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
 
-        viewPreferences = JavaStackFrameViewPreferences.globalPreferences(inspection);
+        viewPreferences = CompiledStackFrameViewPreferences.globalPreferences(inspection);
         viewPreferences.addListener(this);
 
         final InspectorFrame frame = createFrame(true);
@@ -382,13 +382,13 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             public void procedure() {
                 // TODO (mlvdv) view options
                 //new SimpleDialog(inspection(), globalPreferences(inspection()).getPanel(), "Stack Inspector view options", true);
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<JavaStackFrameColumnKind>(inspection(), "Stack Frame Options", viewPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<CompiledStackFrameColumnKind>(inspection(), "Stack Frame Options", viewPreferences);
             }
         };
     }
 
-    private String javaStackFrameName(JavaStackFrame javaStackFrame) {
-        final Address address = javaStackFrame.instructionPointer;
+    private String javaStackFrameName(CompiledStackFrame javaStackFrame) {
+        final Address address = javaStackFrame.ip;
         final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
         String name;
         if (teleTargetMethod != null) {
@@ -413,16 +413,16 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 inspection().focus().setStackFrame(thread, stackFrame, false);
             }
         });
-        if (stackFrame instanceof JavaStackFrame) {
-            final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
+        if (stackFrame instanceof CompiledStackFrame) {
+            final CompiledStackFrame javaStackFrame = (CompiledStackFrame) stackFrame;
             final int frameSize = javaStackFrame.layout.frameSize();
-            final Pointer stackPointer = javaStackFrame.stackPointer;
+            final Pointer stackPointer = javaStackFrame.sp;
             final MemoryRegion memoryRegion = new FixedMemoryRegion(stackPointer, Size.fromInt(frameSize), "");
             final String frameName = javaStackFrameName(javaStackFrame);
             menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
         }
         if (stackFrame instanceof NativeStackFrame) {
-            final Pointer instructionPointer = stackFrame.instructionPointer;
+            final Pointer instructionPointer = stackFrame.ip;
             final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
             if (teleNativeTargetRoutine == null) {
                 menu.add(new InspectorAction(inspection(), "Open native code dialog...") {

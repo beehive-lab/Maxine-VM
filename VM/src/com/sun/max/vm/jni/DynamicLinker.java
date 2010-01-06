@@ -122,7 +122,7 @@ public final class DynamicLinker {
                 throw new UnsatisfiedLinkError();
             }
         }
-        if (JniNativeInterface.verbose()) {
+        if (NativeInterfaces.verbose()) {
             Log.println("Loaded library from " + absolutePath + " to " + handle.toHexString());
         }
         return handle;

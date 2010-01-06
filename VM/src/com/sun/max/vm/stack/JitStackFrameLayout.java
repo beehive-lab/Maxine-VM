@@ -38,20 +38,21 @@ import com.sun.max.vm.type.*;
  *
  * @author Doug Simon
  */
-public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
+public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
 
     protected final int numberOfLocalSlots;
     protected final int numberOfOperandStackSlots;
     protected final int numberOfParameterSlots;
 
     /**
-     * Size of a stack slot maintained by JIT-ed code. It may differ from {@link JavaStackFrameLayout#STACK_SLOT_SIZE} due to alignment
-     * constraints imposed on a stack frame by the target platform (e.g., Darwin AMD64 and SPARC 64 requires 16-byte aligned stack frame).
-     * In this case, it may be simpler for the JIT to use a custom size of slots for its stack frame that differs from the stack slot sized used by
-     * the optimizing compiler (e.g., 16 bytes instead of 8 on both Solaris / SPARC 64 and Darwin / AMD 64).
+     * Size of a stack slot. It may differ from {@link CompiledStackFrameLayout#STACK_SLOT_SIZE} due to alignment
+     * constraints imposed on a stack frame by the target platform (e.g., Darwin-AMD64 and Solaris-SPARC64 requires 16-byte aligned stack frame).
+     * In this case, it's simpler to use a slot size larger than the optimal stack slot sized used by
+     * an optimizing compiler (e.g., 16 bytes instead of 8 on both Solaris-SPARC64 and Darwin-AMD64).
      *
-     * If the JIT uses more than one stack slot for a JIT variable, then there is an assumption that the variable only occupies
-     * the stack slot at the lower (or lowest if more than 2 stack slots are used per JIT variable) address.
+     * If {@code JVMS_SLOT_SIZE} is greater than {@link CompiledStackFrameLayout#STACK_SLOT_SIZE}, then stack values occupy
+     * the lower address(es). For example, on a 64 bit machine with {@code JVMS_SLOT_SIZE == 16}, an integer in the
+     * stack slot at address {@code sp} occupies the 4 bytes starting at {@code sp}.
      */
     public static final int JIT_SLOT_SIZE = getJitSlotSize();
 

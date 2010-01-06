@@ -25,7 +25,6 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.jit.*;
 
 /**
  * Code buffer abstraction used by template-based code generator. It provides the illusion of an append-only, linear byte buffer
@@ -93,7 +92,7 @@ public abstract class CodeBuffer {
         try {
             assembler.output(outputStream(), null);
         } catch (Exception exception) {
-            throw new TranslationException(exception);
+            throw new RuntimeException(exception);
         }
     }
 

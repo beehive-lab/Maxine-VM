@@ -214,11 +214,6 @@ public class BootImage {
         public final int auxiliarySpaceSize;
 
         /**
-         * @see Inspectable#info
-         */
-        public final int inspectableSwitchOffset;
-
-        /**
          * @see VmThreadMap#ACTIVE
          */
         public final int threadLocalsListHeadOffset;
@@ -288,7 +283,6 @@ public class BootImage {
 
             auxiliarySpaceSize = endian.readInt(dataInputStream);
 
-            inspectableSwitchOffset = endian.readInt(dataInputStream);
             threadLocalsListHeadOffset = endian.readInt(dataInputStream);
             primordialThreadLocalsOffset = endian.readInt(dataInputStream);
 
@@ -343,7 +337,6 @@ public class BootImage {
 
             auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(heapSize + codeSize);
 
-            inspectableSwitchOffset = staticFieldPointerOffset(dataPrototype, Inspectable.class, "info");
             threadLocalsListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("threadLocalsListHead").offset();
             primordialThreadLocalsOffset = staticFieldPointerOffset(dataPrototype, MaxineVM.class, "primordialThreadLocals");
 

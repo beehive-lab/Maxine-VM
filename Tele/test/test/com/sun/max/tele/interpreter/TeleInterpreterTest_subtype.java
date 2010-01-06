@@ -21,7 +21,7 @@
 package test.com.sun.max.tele.interpreter;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
+import test.com.sun.max.vm.cps.bytecode.*;
 
 public class TeleInterpreterTest_subtype extends BytecodeTest_subtype {
 

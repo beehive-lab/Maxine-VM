@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.target.*;
  *
  * @author Laurent Daynes
  */
-public class AdapterStackFrame extends JavaStackFrame {
+public class AdapterStackFrame extends CompiledStackFrame {
 
     public AdapterStackFrame(StackFrame callee, AdapterStackFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, layout, targetMethod, instructionPointer, framePointer, stackPointer);
@@ -42,7 +42,7 @@ public class AdapterStackFrame extends JavaStackFrame {
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame.getClass().equals(getClass())) {
-            return stackFrame.stackPointer.equals(stackPointer) && stackFrame.framePointer.equals(framePointer);
+            return stackFrame.sp.equals(sp) && stackFrame.fp.equals(fp);
         }
         return false;
     }

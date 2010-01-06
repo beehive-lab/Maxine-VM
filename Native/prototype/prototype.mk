@@ -23,10 +23,10 @@ PROJECT = ../../..
 
 LIB = prototype
 
-SOURCES = address.c boxedMemory.c boxedPointer.c c.c log.c jni.c \
+SOURCES = address.c boxedMemory.c boxedPointer.c c.c log.c \
           platform.c prototype.c relocation.c dataio.c tests.c mutex.c
 
-SOURCE_DIRS = jni platform prototype share substrate
+SOURCE_DIRS = platform prototype share substrate
 
 include $(PROJECT)/platform/platform.mk
 include $(PROJECT)/share/share.mk

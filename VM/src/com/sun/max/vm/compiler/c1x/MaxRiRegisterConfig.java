@@ -20,22 +20,20 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.ri.RiRegisterConfig;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.util.Util;
-import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.compiler.target.RegisterRoleAssignment;
-import com.sun.max.vm.compiler.target.TargetABI;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.VMRegister;
-import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
-import com.sun.max.asm.InstructionSet;
-import com.sun.max.asm.amd64.AMD64GeneralRegister64;
-import com.sun.max.asm.amd64.AMD64XMMRegister;
-import com.sun.max.util.Symbol;
-import com.sun.max.lang.StaticLoophole;
-
 import java.util.*;
+
+import com.sun.c1x.ci.*;
+import com.sun.c1x.ri.*;
+import com.sun.c1x.util.*;
+import com.sun.max.asm.*;
+import com.sun.max.asm.amd64.*;
+import com.sun.max.lang.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
 
 /**
  * This class implements the register configuration for Maxine supplied to the C1X compiler.
@@ -194,7 +192,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         int currentGeneral = 0;
         int currentXMM = 0;
         int currentStackSlot = 0;
-        final int wordSize = VMConfiguration.hostOrTarget().platform.wordWidth().numberOfBytes;
+        final int wordSize = Word.size();
 
         for (int i = 0; i < types.length; i++) {
             final CiKind kind = types[i];

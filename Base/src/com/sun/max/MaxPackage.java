@@ -48,6 +48,7 @@ import com.sun.max.program.*;
 public abstract class MaxPackage implements Comparable<MaxPackage> {
 
     private final String packageName;
+    private static final Class[] NO_CLASSES = new Class[0];
 
     protected MaxPackage() {
         packageName = toJava().getName();
@@ -125,7 +126,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
      * word types as they are derived from the name of the unboxed types.
      */
     public Class[] wordSubclasses() {
-        return new Class[0];
+        return NO_CLASSES;
     }
 
     public MaxPackage subPackage(String... suffices) {
@@ -175,7 +176,8 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         if (schemeTypeToImplementation == null) {
             schemeTypeToImplementation = new IdentityHashMap<Class<? extends Scheme>, Class<? extends Scheme>>();
         }
-        schemeTypeToImplementation.put(schemeType, schemeImplementation);
+        Class<? extends Scheme> oldValue = schemeTypeToImplementation.put(schemeType, schemeImplementation);
+        assert oldValue == null;
     }
 
     /**

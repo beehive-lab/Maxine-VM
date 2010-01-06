@@ -47,9 +47,9 @@ import com.sun.max.vm.trampoline.*;
  *
  * @author Laurent Daynes
  */
-public final class TemplateBasedVTableTrampoline extends NonFoldableSnippet {
+public final class TemplateBasedVTableTrampoline extends Snippet {
 
-    private CriticalMethod classMethodActor = new CriticalMethod(classMethodActor(), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    private CriticalMethod classMethodActor = new CriticalMethod(executable, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
     private TemplateBasedVTableTrampoline() {
         super();
@@ -59,7 +59,7 @@ public final class TemplateBasedVTableTrampoline extends NonFoldableSnippet {
     /**
      * Template-based generator for trampoline code.
      */
-    private static final TrampolineGenerator trampolineGenerator = new TemplateBasedTrampolineGenerator.VtableTrampolineGenerator(snippet.classMethodActor());
+    private static final TrampolineGenerator trampolineGenerator = new TemplateBasedTrampolineGenerator.VtableTrampolineGenerator(snippet.executable);
 
     /*
      * Template for a dynamic trampoline.
@@ -78,7 +78,7 @@ public final class TemplateBasedVTableTrampoline extends NonFoldableSnippet {
     }
 
     public static boolean isVTableTrampoline(MethodActor classMethodActor) {
-        return classMethodActor == snippet.classMethodActor();
+        return classMethodActor == snippet.executable;
     }
 
     public static boolean isVTableTrampolineInstructionPointer(Address instructionPointer) {
@@ -86,6 +86,6 @@ public final class TemplateBasedVTableTrampoline extends NonFoldableSnippet {
         if (targetMethod == null) {
             return false;
         }
-        return targetMethod.classMethodActor() == snippet.classMethodActor();
+        return targetMethod.classMethodActor() == snippet.executable;
     }
 }

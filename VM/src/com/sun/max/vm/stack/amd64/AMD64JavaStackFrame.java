@@ -29,7 +29,7 @@ import com.sun.max.vm.stack.*;
  *
  * @author Doug Simon
  */
-public class AMD64JavaStackFrame extends JavaStackFrame {
+public class AMD64JavaStackFrame extends CompiledStackFrame {
 
     public AMD64JavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
         super(callee, new OptoStackFrameLayout(targetMethod.frameSize(), true), targetMethod, instructionPointer, framePointer, stackPointer);
@@ -38,7 +38,7 @@ public class AMD64JavaStackFrame extends JavaStackFrame {
     @Override
     public boolean isSameFrame(StackFrame stackFrame) {
         if (stackFrame instanceof AMD64JavaStackFrame) {
-            return targetMethod().equals(stackFrame.targetMethod()) && stackPointer.equals(stackFrame.stackPointer);
+            return targetMethod().equals(stackFrame.targetMethod()) && sp.equals(stackFrame.sp);
         }
         return false;
     }

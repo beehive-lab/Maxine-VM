@@ -34,7 +34,7 @@
 #include <mach/mach_vm.h>
 #include <mach/vm_map.h>
 
-#include "darwinMach.h"
+#include "darwin.h"
 #include "log.h"
 #include "ptrace.h"
 #include "jni.h"
@@ -150,7 +150,7 @@ boolean thread_set_single_step(thread_t thread, void *arg) {
 }
 
 static boolean suspend_noncurrent_thread(thread_t thread, void *current) {
-    kern_return_t kret;
+    kern_return_t kr;
 
     if ((thread_t) (Address) current == thread) {
         return true;
@@ -159,13 +159,13 @@ static boolean suspend_noncurrent_thread(thread_t thread, void *current) {
     struct thread_basic_info info;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
 
-    kret = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
-    if (kret != KERN_SUCCESS) {
+    kr = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    if (kr != KERN_SUCCESS) {
         log_println("thread_info() failed when suspending thread %d", thread);
     } else {
         if (info.suspend_count == 0) {
-            kret = thread_suspend(thread);
-            if (kret != KERN_SUCCESS) {
+            kr = thread_suspend(thread);
+            if (kr != KERN_SUCCESS) {
                 log_println("thread_suspend() failed when suspending thread %d", thread);
             }
         }
@@ -174,7 +174,7 @@ static boolean suspend_noncurrent_thread(thread_t thread, void *current) {
 }
 
 static boolean resume_noncurrent_thread(thread_t thread, void *current) {
-    kern_return_t kret;
+    kern_return_t kr;
     unsigned i;
 
     if ((thread_t) (Address) current == thread) {
@@ -184,13 +184,13 @@ static boolean resume_noncurrent_thread(thread_t thread, void *current) {
     struct thread_basic_info info;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
 
-    kret = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
-    if (kret != KERN_SUCCESS) {
+    kr = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    if (kr != KERN_SUCCESS) {
         log_println("thread_info() failed when resuming thread %d", thread);
     } else {
         for (i = 0; i < (unsigned) info.suspend_count; i++) {
-            kret = thread_resume(thread);
-            if (kret != KERN_SUCCESS) {
+            kr = thread_resume(thread);
+            if (kr != KERN_SUCCESS) {
                 log_println("thread_resume() failed when resuming thread %d", thread);
                 break;
             }
@@ -202,14 +202,14 @@ static boolean resume_noncurrent_thread(thread_t thread, void *current) {
 void resume_task(task_t task);
 
 static boolean task_resume_thread(jlong task, thread_t thread) {
-    kern_return_t kret;
+    kern_return_t kr;
     struct thread_basic_info info;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
     unsigned int j;
 
     // get info for the current thread
-    kret = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
-    if (kret != KERN_SUCCESS) {
+    kr = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    if (kr != KERN_SUCCESS) {
         log_println("thread_info() failed when resuming thread %d", thread);
         return false;
     }

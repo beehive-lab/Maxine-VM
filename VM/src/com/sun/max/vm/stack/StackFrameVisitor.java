@@ -20,12 +20,9 @@
  */
 package com.sun.max.vm.stack;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
-
 /**
  * A visitor for traversing the frames on a thread's stack. The details of each frame traversed in the
- * stack walk are passed to {@link #visitFrame(TargetMethod, Pointer, Pointer, Pointer, int)}
+ * stack walk are passed to {@link #visitFrame(StackFrame)}
  * in a newly allocated {@link StackFrame} object.
  *
  * @see RawStackFrameVisitor

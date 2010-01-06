@@ -89,6 +89,15 @@ public final class BreakpointsTable extends InspectorTable {
     }
 
     @Override
+    public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+        // Suppress row selection when clicking on the "Enabled" checkbox;
+        final int modelColumnIndex = convertColumnIndexToModel(columnIndex);
+        if (modelColumnIndex != BreakpointsColumnKind.ENABLED.ordinal()) {
+            super.changeSelection(rowIndex, columnIndex, toggle, extend);
+        }
+    }
+
+    @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
         // TODO: Add MaxBreakpoint interface and generalize this code (cf. WatchpointsTable)
         // Row selection changed, perhaps by user mouse click or navigation;
@@ -598,7 +607,16 @@ public final class BreakpointsTable extends InspectorTable {
             final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 shortName = inspection().nameDisplay().shortName(teleTargetMethod);
-                longName = "method: " + inspection().nameDisplay().longName(teleTargetMethod, address);
+                final StringBuilder sb = new StringBuilder();
+                sb.append("(");
+                if (breakpoint().getDescription() == null) {
+                    sb.append("Method");
+                } else {
+                    sb.append(breakpoint().getDescription());
+                }
+                sb.append(") ");
+                sb.append(inspection().nameDisplay().longName(teleTargetMethod, address));
+                longName = sb.toString();
                 codeStart = teleTargetMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
@@ -630,8 +648,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String shortName() {
-            String description = breakpoint().getDescription();
-            return description != null && !description.equals("") ?  description  : shortName;
+            return shortName;
         }
 
         @Override

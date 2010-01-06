@@ -23,7 +23,7 @@ package test.com.sun.max.tele.interpreter;
 import junit.framework.*;
 import test.com.sun.max.vm.jdk.*;
 
-import com.sun.max.vm.compiler.cir.*;
+import com.sun.max.vm.cps.cir.*;
 
 public class TeleInterpreterTest_jdk_System extends JdkTest_System<CirMethod> {
 
