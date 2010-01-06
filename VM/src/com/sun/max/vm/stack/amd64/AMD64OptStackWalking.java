@@ -24,6 +24,7 @@ import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.compiler.target.TargetABI;
 import com.sun.max.vm.compiler.CompilationScheme;
 import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.classfile.constant.SymbolTable;
@@ -35,6 +36,11 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.VMConfiguration;
+import com.sun.max.vm.trampoline.DynamicTrampoline;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.type.TypeDescriptor;
+import com.sun.max.vm.type.Kind;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Word;
 import com.sun.max.unsafe.Address;
@@ -43,72 +49,22 @@ import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.memory.VirtualMemory;
 import com.sun.max.program.ProgramError;
 import com.sun.max.asm.amd64.AMD64GeneralRegister64;
+import com.sun.max.collect.IndexedSequence;
 
 /**
  * This class collects together stack-walking related functionality that is (somewhat) compiler-independent.
+ * Mostly, this means stack walking functionality that is shared between methods produced by the
+ * CPS and C1X compilers.
  *
  * @author Ben L. Titzer
  */
-public class AMD64StackWalking {
+public class AMD64OptStackWalking {
 
     public static final int RIP_CALL_INSTRUCTION_SIZE = 5;
     public static final byte RET = (byte) 0xC3;
-    public static final byte RET2 = (byte) 0xC2;
 
     private static int unwindFrameSize = -1;
     private static ClassMethodActor unwindMethod;
-    private static final byte SHORT_JMP = (byte) 0xEB;
-    private static final byte NEAR_JMP = (byte) 0xE9;
-    /**
-     * Length in bytes of a short jump instruction on AMD64 (1 byte instruction encoding + 8 bits displacement).
-     */
-    private static final int SHORT_JMP_SIZE = 2;
-    /**
-     * Length in bytes of a near jump instruction on AMD64 (1 byte instruction encoding + 32 bits displacement).
-     */
-    private static final int NEAR_JMP_SIZE = 5;
-    private static final byte PUSH_RBP = (byte) 0x55;
-    private static final byte ENTER = (byte) 0xC8;
-
-    private static boolean walkJitOptAdapterFrame(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, StackFrameWalker.Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
-        final Pointer jitEntryPoint = com.sun.max.vm.compiler.CallEntryPoint.JIT_ENTRY_POINT.in(targetMethod);
-        final int adapterFrameSize = jitToOptimizingAdapterFrameSize(stackFrameWalker, startOfAdapter);
-        Pointer callerFramePointer = current.fp();
-
-        Pointer ripPointer = current.sp(); // stack pointer at call entry point (where the RIP is).
-        final byte firstInstructionByte = stackFrameWalker.readByte(current.ip(), 0);
-        if (!current.ip().equals(jitEntryPoint) && !current.ip().equals(startOfAdapter) && firstInstructionByte != RET2) {
-            ripPointer = current.sp().plus(adapterFrameSize);
-            callerFramePointer = stackFrameWalker.readWord(ripPointer, -Word.size()).asPointer();
-        }
-
-        final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
-        switch (purpose) {
-            case EXCEPTION_HANDLING: {
-                // adapter frames do not have exception handlers
-                break;
-            }
-            case REFERENCE_MAP_PREPARING: {
-                break;
-            }
-            case RAW_INSPECTING: {
-                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
-                stackFrameVisitor.visitFrame(targetMethod, callerInstructionPointer, current.fp(), current.sp(), flags);
-                break;
-            }
-            case INSPECTING: {
-                final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, true), targetMethod, current.ip(), current.fp(), current.sp());
-                if (!stackFrameVisitor.visitFrame(stackFrame)) {
-                    return false;
-                }
-                break;
-            }
-        }
-        stackFrameWalker.advance(callerInstructionPointer, ripPointer.plus(Word.size() /* skip RIP */), callerFramePointer);
-        return true;
-    }
 
     public static boolean walkOptimizedFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
@@ -127,9 +83,9 @@ public class AMD64StackWalking {
             boolean hasAdapterFrame = !(jitEntryPoint.equals(optimizedEntryPoint));
 
             if (hasAdapterFrame) {
-                final Pointer startOfAdapter = jitEntryPointJmpTarget(stackFrameWalker, targetMethod);
-                if (inAdapterFrameCode(current.isTopFrame(), ip, optimizedEntryPoint, startOfAdapter)) {
-                    return walkJitOptAdapterFrame(current, stackFrameWalker, targetMethod, purpose, context, startOfAdapter, current.isTopFrame());
+                final Pointer startOfAdapter = AMD64AdapterStackWalking.jitOptAdapterCodeStart(stackFrameWalker, targetMethod);
+                if (AMD64AdapterStackWalking.inJitOptAdapterFrameCode(current.isTopFrame(), ip, optimizedEntryPoint, startOfAdapter)) {
+                    return AMD64AdapterStackWalking.walkJitOptAdapterFrame(current, stackFrameWalker, targetMethod, purpose, context, startOfAdapter, current.isTopFrame());
                 }
             }
             entryPoint = optimizedEntryPoint;
@@ -212,21 +168,6 @@ public class AMD64StackWalking {
     }
 
 
-    private static boolean inAdapterFrameCode(boolean inTopFrame, final Pointer ip, final Pointer optimizedEntryPoint, final Pointer startOfAdapter) {
-        if (ip.lessThan(optimizedEntryPoint)) {
-            return true;
-        }
-        if (inTopFrame) {
-            return ip.greaterEqual(startOfAdapter);
-        }
-        // Since we are not in the top frame, instructionPointer is really the return instruction pointer of
-        // a call. If it happens that the call is to a method that is never expected to return normally (e.g. a method that only exits by throwing an exception),
-        // the call may well be the very last instruction in the method prior to the adapter frame code.
-        // In this case, we're only in adapter frame code if the instructionPointer is greater than
-        // the start of the adapter frame code.
-        return ip.greaterThan(startOfAdapter);
-    }
-
     private static boolean prepareReferenceMap(Pointer ripPointer, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         TargetMethod targetMethod = current.targetMethod();
@@ -265,7 +206,7 @@ public class AMD64StackWalking {
                         Pointer callerCatchAddress = catchAddress.asPointer();
                         final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
                         if (callerTargetMethod != null) {
-                            callerTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapStateAccess.getRegisterState(trapState), StackFrameWalker.CalleeKind.TRAP);
+                            callerTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapStateAccess.getRegisterState(trapState), StackFrameWalker.CalleeKind.TRAP_STUB);
                         }
                     }
                 } else {
@@ -275,7 +216,7 @@ public class AMD64StackWalking {
 
                     final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
                     if (callerTargetMethod != null) {
-                        callerTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapStateAccess.getRegisterState(trapState), StackFrameWalker.CalleeKind.TRAP);
+                        callerTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapStateAccess.getRegisterState(trapState), StackFrameWalker.CalleeKind.TRAP_STUB);
                     }
                 }
             }
@@ -301,7 +242,7 @@ public class AMD64StackWalking {
     }
 
     @NEVER_INLINE
-    private static void unwindToCalleeEpilogue(Throwable throwable, Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
+    public static void unwindToCalleeEpilogue(Throwable throwable, Address catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
         // Overwrite return address of callee with catch address
         final Pointer returnAddressPointer = stackPointer.minus(Word.size());
         returnAddressPointer.setWord(catchAddress);
@@ -332,7 +273,7 @@ public class AMD64StackWalking {
      *                     returning from this method
      */
     @NEVER_INLINE
-    private static void unwindOptimized(Throwable throwable, Address catchAddress, Pointer stackPointer) {
+    public static void unwindOptimized(Throwable throwable, Address catchAddress, Pointer stackPointer) {
         final int unwindFrameSize = getUnwindFrameSize();
 
         // Put the exception where the exception handler expects to find it
@@ -354,38 +295,8 @@ public class AMD64StackWalking {
     }
 
     public static void initialize() {
-        AMD64StackWalking.unwindMethod = ClassActor.fromJava(AMD64StackWalking.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwindOptimized"), null);
-        assert AMD64StackWalking.unwindMethod != null;
-    }
-
-    public static void prepareReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee) {
-        TargetMethod calleeMethod = callee.targetMethod();
-        Pointer registerState = Pointer.zero();
-        StackFrameWalker.CalleeKind calleeKind = null;
-        if (calleeMethod != null) {
-            if (calleeMethod.isTrapStub()) {
-                // find the register state in the trap stub method
-                registerState = AMD64TrapStateAccess.getTrapStateFromRipPointer(callee.sp().plus(calleeMethod.frameSize()));
-                calleeKind = StackFrameWalker.CalleeKind.TRAP;
-            }
-            if (calleeMethod.isCalleeSaved()) {
-                // find the register state in the callee method
-                registerState = callee.sp().plus(calleeMethod.frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
-                calleeKind = StackFrameWalker.CalleeKind.CALLEE_SAVED;
-            }
-            if (calleeMethod.isTrampoline()) {
-                // find the register state in the trampoline
-                registerState = callee.sp().plus(calleeMethod.frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
-                calleeKind = StackFrameWalker.CalleeKind.TRAMPOLINE;
-            }
-        }
-        if (!registerState.isZero()) {
-            // now that the location of the registers has been determined
-            // ask the target method to prepare its register reference map
-            current.targetMethod().prepareRegisterReferenceMap(preparer, current.ip(), registerState, calleeKind);
-        }
-        // ask the target method to prepare its frame reference map
-        current.targetMethod().prepareFrameReferenceMap(preparer, current);
+        AMD64OptStackWalking.unwindMethod = ClassActor.fromJava(AMD64OptStackWalking.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwindOptimized"), null);
+        assert AMD64OptStackWalking.unwindMethod != null;
     }
 
     /**
@@ -398,56 +309,131 @@ public class AMD64StackWalking {
         return VMConfiguration.target().targetABIsScheme().jitABI().alignFrameSize(paramSize);
     }
 
-    /**
-     * Returns the target of the jump instruction at the JIT entry point.
-     * <p/>
-     * The target is the first instruction in a target method compiled by the JIT compiler, the frame adapter in target
-     * method compiled by the optimizing compiler.
-     * <p/>
-     * FIXME: This method may be invoked by the inspector with an incomplete targetMethod object,
-     * (i.e., one without the _targetABI field correctly set. Because of this, we pass an extra parameter to ease
-     * figuring out what offset the jump instruction is (normally, we could figure this out with
-     * targetABI().callEntryPoint()). Fix the inspector so that TargetMethod are always provided with a TargetABI
-     * object.
-     *
-     * @return
-     */
-    public static Pointer jitEntryPointJmpTarget(StackFrameWalker stackFrameWalker, TargetMethod targetMethod) {
-        final Pointer jitEntryPoint = com.sun.max.vm.compiler.CallEntryPoint.JIT_ENTRY_POINT.in(targetMethod);
-        final byte jumpInstruction = stackFrameWalker.readByte(jitEntryPoint, 0);
-        int distance = 0;
-        if (jumpInstruction == SHORT_JMP) {
-            distance = SHORT_JMP_SIZE + stackFrameWalker.readByte(jitEntryPoint, 1);
-        } else if (jumpInstruction == NEAR_JMP) {
-            distance = NEAR_JMP_SIZE + stackFrameWalker.readInt(jitEntryPoint, 1);
-        } else {
-            // (tw) Did not find a jump here => return max
-            distance = Integer.MAX_VALUE;
+    public static void catchException(TargetMethod targetMethod, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+        Pointer ip = current.ip();
+        Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), ip, throwable.getClass());
+        if (!catchAddress.isZero()) {
+            if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+                Log.print("StackFrameWalk: Handler position for exception at position ");
+                Log.print(ip.minus(targetMethod.codeStart()).toInt());
+                Log.print(" is ");
+                Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
+            }
+
+            // Reset the stack walker
+            current.stackFrameWalker().reset();
+            // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
+            Safepoint.enable();
+
+            TargetMethod calleeMethod = callee.targetMethod();
+            if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
+                unwindToCalleeEpilogue(throwable, catchAddress, current.sp(), calleeMethod);
+            } else {
+                unwindOptimized(throwable, catchAddress, current.sp());
+            }
+            ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
         }
-        return jitEntryPoint.plus(distance);
     }
 
-    /**
-     * Returns the adapter frame size. The size is deduced from the first instruction of the adapter, which decreases the
-     * stack pointer if the adapter has a frame of size greater than 0. This is the only sub instruction in an adapter
-     * frame, so if the first instruction isn't a sub instruction, the size of the frame is 0.
-     *
-     * @param stackFrameWalker
-     * @param targetMethod
-     * @return
-     */
-    public static int jitToOptimizingAdapterFrameSize(StackFrameWalker stackFrameWalker, Pointer adapterFirstInstruction) {
-        final byte instruction = stackFrameWalker.readByte(adapterFirstInstruction, 0);
-        if (instruction == ENTER) {
-            final int lo = stackFrameWalker.readByte(adapterFirstInstruction, 1) & 0xff;
-            final int hi = stackFrameWalker.readByte(adapterFirstInstruction, 2) & 0xff;
-            final int frameSize = hi << 8 | lo;
-            return frameSize + Word.size();
+    public static boolean acceptJavaFrameVisitor(TargetMethod targetMethod, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+        // TODO: detect adapter frames
+        return visitor.visitFrame(new AMD64JavaStackFrame(current.stackFrameWalker().calleeStackFrame(), current.targetMethod(), current.ip(), current.sp(), current.sp()));
+    }
+
+    public static void advance(TargetMethod targetMethod, StackFrameWalker.Cursor current) {
+        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+        Pointer ip = current.ip();
+        Pointer sp = current.sp();
+        if (!targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT)) {
+            // we may be in an adapter
+            Pointer jitEntryPoint = CallEntryPoint.JIT_ENTRY_POINT.in(targetMethod);
+            Pointer optimizedEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
+
+            if (!(jitEntryPoint.equals(optimizedEntryPoint))) {
+                // this method has an adapter, check if the IP is within it
+                final Pointer startOfAdapter = AMD64AdapterStackWalking.jitOptAdapterCodeStart(stackFrameWalker, targetMethod);
+                if (AMD64AdapterStackWalking.inJitOptAdapterFrameCode(current.isTopFrame(), ip, optimizedEntryPoint, startOfAdapter)) {
+                    AMD64AdapterStackWalking.advanceJitOptAdapterFrame(current);
+                    return;
+                }
+            }
         }
-        if (instruction == PUSH_RBP) {
-            // Frame size == a single slot for saving RBP
-            return Word.size();
+
+        Pointer ripPointer = atFirstOrLastInstruction(current) ? sp : sp.plus(targetMethod.frameSize());
+        Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
+        Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
+        Pointer callerFP;
+        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor().isTrapStub()) {
+            // framePointer is whatever was in the frame pointer register at the time of the trap
+            Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
+            callerFP = stackFrameWalker.readWord(trapState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
+        } else {
+            // framePointer == stackPointer for this scheme.
+            callerFP = callerSP;
         }
-        return 0;
+        stackFrameWalker.advance(callerIP, callerSP, callerFP);
+    }
+
+    private static boolean atFirstOrLastInstruction(StackFrameWalker.Cursor current) {
+        TargetMethod targetMethod = current.targetMethod();
+        Pointer entryPoint = targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT) ?
+                CallEntryPoint.C_ENTRY_POINT.in(targetMethod) :
+                CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
+
+        return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == RET;
+    }
+
+    public static void prepareTrampolineRefMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        TargetMethod trampolineTargetMethod = callee.targetMethod();
+        ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
+        ClassMethodActor calleeMethod;
+        TargetMethod targetMethod = current.targetMethod();
+        TargetABI abi = targetMethod.abi();
+        IndexedSequence parameters = abi.integerIncomingParameterRegisters();
+        if (trampolineMethodActor.isStaticTrampoline()) {
+            int stopIndex = targetMethod.findClosestStopIndex(current.ip());
+            calleeMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
+        } else {
+            // this is an virtual or interface call; figure out the receiver method based on the
+            // virtual or interface index
+            Pointer registerState = Pointer.zero();
+            AMD64GeneralRegister64 receiverRegister = (AMD64GeneralRegister64) parameters.get(0);
+            final Object receiver = registerState.getReference(receiverRegister.value()).toJava();
+            final ClassActor classActor = ObjectAccess.readClassActor(receiver);
+            assert trampolineTargetMethod.referenceLiterals().length == 1;
+            final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
+            if (trampolineMethodActor.isVirtualTrampoline()) {
+                calleeMethod = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex());
+            } else {
+                calleeMethod = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex());
+            }
+        }
+
+/*
+        TODO
+        final int framePointerSlotIndex = preparer.referenceMapBitIndex(trampolineRefmapPointer.plus(offsetToFirstParameter));
+        int parameterRegisterIndex = 0;
+        if (!calleeMethod.isStatic()) {
+            setTrampolineStackSlotBitForRegister(framePointerSlotIndex, 0);
+            parameterRegisterIndex = 1;
+        }
+
+        SignatureDescriptor descriptor = calleeMethod.descriptor();
+        for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
+            final TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
+            final Kind parameterKind = parameter.toKind();
+            if (parameterKind == Kind.REFERENCE) {
+                setTrampolineStackSlotBitForRegister(framePointerSlotIndex, parameterRegisterIndex);
+            }
+            if (abi.putIntoIntegerRegister(parameterKind)) {
+                parameterRegisterIndex++;
+                if (parameterRegisterIndex >= trampolineTargetMethod.abi().integerIncomingParameterRegisters().length()) {
+                    // done since all subsequent parameters are known to be passed on the stack
+                    return;
+                }
+            }
+        }
+*/
+
     }
 }

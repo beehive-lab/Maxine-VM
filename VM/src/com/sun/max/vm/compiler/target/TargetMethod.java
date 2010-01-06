@@ -684,8 +684,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     public abstract void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer);
 
-    public abstract void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current);
-
     public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
 
     public abstract void patchCallSite(int callOffset, Word callEntryPoint);
@@ -705,6 +703,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     /**
      * Gets a string representation of the reference map for each stop in this target method.
+     * @return a string representation of the reference map
      */
     public abstract String referenceMapsToString();
 
@@ -725,6 +724,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     /**
      * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
+     * @return an object that represents the layout of this stack frame
      */
     public CompiledStackFrameLayout stackFrameLayout() {
         throw FatalError.unimplemented();
@@ -745,7 +745,43 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         throw FatalError.unimplemented();
     }
 
+    /**
+     * Creates an duplicate of this target method.
+     * @return a new instance of this target method
+     */
     public TargetMethod duplicate() {
         throw FatalError.unimplemented();
     }
+
+    /**
+     * Prepares the reference map for the current frame (and potentially for registers stored in a callee frame).
+     * @param current the current stack frame
+     * @param callee the callee stack frame, which may contain saved registers
+     * @param preparer the reference map preparer which receives the reference map
+     */
+    public abstract void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer);
+
+    /**
+     * Attempts to catch an exception thrown by this method or a callee method. This method should not return
+     * if this method catches the exception, but instead should unwind the stack and resume execution at the handler.
+     * @param current the current stack frame
+     * @param callee the callee stack frame, which may contain saved registers
+     * @param throwable the exception thrown
+     */
+    public abstract void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable);
+
+    /**
+     * Accepts a visitor for this stack frame.
+     * @param current the current stack frame
+     * @param callee the callee stack frame
+     * @param visitor the visitor which will visit the frame
+     * @return {@code true} if the visitor indicates the stack walk should continue
+     */
+    public abstract boolean acceptJavaFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor);
+
+    /**
+     * Advances the stack frame cursor from this frame to the next frame.
+     * @param current the current stack frame cursor
+     */
+    public abstract void advance(StackFrameWalker.Cursor current);
 }

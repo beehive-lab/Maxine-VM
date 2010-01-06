@@ -290,10 +290,5 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         return preparer.prepareFrameReferenceMap(this, ip, fp.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter, null);
     }
 
-    @Override
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
-        prepareFrameReferenceMap(findClosestStopIndex(current.ip()), current.sp(), preparer);
-    }
-
 
 }

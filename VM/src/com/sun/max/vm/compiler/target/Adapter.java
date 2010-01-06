@@ -27,6 +27,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.program.ProgramError;
 
 /**
  * An adapter is a code stub interposing a call between two methods that have different calling conventions.
@@ -63,11 +64,6 @@ public class Adapter extends TargetMethod {
     }
 
     @Override
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
     public void patchCallSite(int callOffset, Word callEntryPoint) {
         FatalError.unimplemented();
     }
@@ -96,5 +92,21 @@ public class Adapter extends TargetMethod {
     public byte[] referenceMaps() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        throw ProgramError.unexpected();
+    }
+
+    public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+        throw ProgramError.unexpected();
+    }
+
+    public boolean acceptJavaFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+        throw ProgramError.unexpected();
+    }
+
+    public void advance(StackFrameWalker.Cursor current) {
+        throw ProgramError.unexpected();
     }
 }
