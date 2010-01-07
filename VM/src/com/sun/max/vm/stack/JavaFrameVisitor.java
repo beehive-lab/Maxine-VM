@@ -36,7 +36,7 @@ public interface JavaFrameVisitor {
      * the method location, this method allows the common case to avoid generating unneeded debug values.
      * @return {@code true} if the frame should generate the debugging values
      */
-    public boolean generateDebugValues();
+    boolean generateDebugValues();
 
     /**
      * This method is called by each frame as it is visited to enumerate the Java stack frames corresponding
@@ -46,11 +46,11 @@ public interface JavaFrameVisitor {
      * Elements 0...maxlocals-1 contain the local variables
      * <br>
      * Elements maxlocals...debugValues.length-1 contain the operand stack
-     * 
+     *
      * @param classMethodActor the method actor corresponding to the Java method
      * @param bci the bytecode index in the method actor
      * @param debugValues the debugging values, containing the actual runtime values of the stack, if requested
      * @return {@code true} if the stack walk should continue
      */
-    public boolean visit(ClassMethodActor classMethodActor, int bci, Value[] debugValues);
+    boolean visit(ClassMethodActor classMethodActor, int bci, Value[] debugValues);
 }
