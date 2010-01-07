@@ -23,7 +23,6 @@ package com.sun.max.vm.stack.sparc;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.jit.sparc.*;
 import com.sun.max.vm.stack.*;
 
 /**
