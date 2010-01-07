@@ -22,6 +22,7 @@ package com.sun.max.vm.stack.amd64;
 
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Word;
 
@@ -172,5 +173,23 @@ public class AMD64AdapterStackWalking {
             return Pointer.zero();
         }
         return jitEntryPoint.plus(distance);
+    }
+
+    public static boolean isJitOptAdapterFrameCode(StackFrameWalker.Cursor current) {
+        Pointer ip = current.ip();
+        TargetMethod targetMethod = current.targetMethod();
+        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+        if (!targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT)) {
+            // we may be in an adapter
+            Pointer jitEntryPoint = CallEntryPoint.JIT_ENTRY_POINT.in(targetMethod);
+            Pointer optimizedEntryPoint = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
+
+            if (!(jitEntryPoint.equals(optimizedEntryPoint))) {
+                // this method has an adapter, check if the IP is within it
+                final Pointer startOfAdapter = AMD64AdapterStackWalking.jitOptAdapterCodeStart(stackFrameWalker, targetMethod);
+                return AMD64AdapterStackWalking.inJitOptAdapterFrameCode(current.isTopFrame(), ip, optimizedEntryPoint, startOfAdapter);
+            }
+        }
+        return false;
     }
 }

@@ -49,6 +49,7 @@ import com.sun.max.vm.thread.*;
 public abstract class StackFrameWalker {
 
     private static final boolean USE_NEW_API = false;
+    private static final boolean USE_NEW_API_HOSTED = false;
 
     public enum CalleeKind {
         NATIVE,
@@ -339,34 +340,42 @@ public abstract class StackFrameWalker {
     }
 
     private boolean walkFrame(Cursor current, Cursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
-        if (!USE_NEW_API) {
+        if (!useNewAPI()) {
             // use old API until new API is fully functional
             return targetMethod.compilerScheme.walkFrame(current, callee, purpose, context);
         }
+        boolean proceed = true;
         if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
             // walk the frame for reference map preparation
             StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
             if (preparer.checkIgnoreCurrentFrame()) {
-                return true;
+                return proceed;
             }
             targetMethod.prepareReferenceMap(current, callee, preparer);
         } else if (purpose == Purpose.EXCEPTION_HANDLING) {
             // walk the frame for exception handling
-            Throwable throwable = (Throwable) context;
+            Throwable throwable = ((StackUnwindingContext) context).throwable;
             targetMethod.catchException(current, callee, throwable);
         } else if (purpose == Purpose.INSPECTING) {
             // walk the frame for inspecting (Java frames)
             StackFrameVisitor visitor = (StackFrameVisitor) context;
-            return targetMethod.acceptJavaFrameVisitor(current, callee, visitor);
+            proceed = targetMethod.acceptStackFrameVisitor(current, callee, visitor);
         } else if (purpose == Purpose.RAW_INSPECTING) {
             // walk the frame for inspect (compiled frames)
             RawStackFrameVisitor visitor = (RawStackFrameVisitor) context;
-            final int flags = RawStackFrameVisitor.Util.makeFlags(current.isTopFrame(), false);
-            return visitor.visitFrame(current.targetMethod(), current.ip(), current.sp(), current.sp(), flags);
+            int flags = RawStackFrameVisitor.Util.makeFlags(current.isTopFrame(), false);
+            proceed = visitor.visitFrame(current.targetMethod(), current.ip(), current.sp(), current.sp(), flags);
         }
         // in any case, advance to the next frame
         targetMethod.advance(current);
-        return true;
+        return proceed;
+    }
+
+    private boolean useNewAPI() {
+        if (MaxineVM.isHosted()) {
+            return USE_NEW_API_HOSTED;
+        }
+        return USE_NEW_API;
     }
 
     private void traceWalkPurpose(Purpose purpose) {

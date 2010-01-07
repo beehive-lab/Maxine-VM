@@ -777,7 +777,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * @param visitor the visitor which will visit the frame
      * @return {@code true} if the visitor indicates the stack walk should continue
      */
-    public abstract boolean acceptJavaFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor);
+    public abstract boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor);
 
     /**
      * Advances the stack frame cursor from this frame to the next frame.
