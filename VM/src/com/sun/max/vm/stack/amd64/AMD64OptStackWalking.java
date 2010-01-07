@@ -310,6 +310,7 @@ public class AMD64OptStackWalking {
 
     public static void catchException(TargetMethod targetMethod, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
         Pointer ip = current.ip();
+        Pointer sp = current.sp();
         Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), ip, throwable.getClass());
         if (!catchAddress.isZero()) {
             if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
@@ -326,9 +327,9 @@ public class AMD64OptStackWalking {
 
             TargetMethod calleeMethod = callee.targetMethod();
             if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
-                unwindToCalleeEpilogue(throwable, catchAddress, current.sp(), calleeMethod);
+                unwindToCalleeEpilogue(throwable, catchAddress, sp, calleeMethod);
             } else {
-                unwindOptimized(throwable, catchAddress, current.sp());
+                unwindOptimized(throwable, catchAddress, sp);
             }
             ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
         }
