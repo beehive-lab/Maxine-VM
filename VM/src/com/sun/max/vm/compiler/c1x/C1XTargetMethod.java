@@ -44,6 +44,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.AMD64OptStackWalking;
+import com.sun.max.vm.stack.amd64.AMD64AdapterStackWalking;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 
 /**
@@ -692,12 +693,15 @@ public class C1XTargetMethod extends TargetMethod {
      */
     @Override
     public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
+            // TODO: deal with adapter frame overflow arguments
+            return;
+        }
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
         Pointer registerState = Pointer.zero();
         switch (calleeKind) {
             case TRAMPOLINE:
                 // compute the register reference map from the call at this site
-                // TODO: get the signature from the call somehow
                 AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
@@ -719,6 +723,7 @@ public class C1XTargetMethod extends TargetMethod {
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = registerState;
             int byteIndex = stopIndex * totalReferenceMapSize();
+            preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
             for (int i = frameReferenceMapSize; i < registerReferenceMapSize() + frameReferenceMapSize; i++) {
                 preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
                 slotPointer = slotPointer.plusWords(Bytes.WIDTH);
@@ -728,7 +733,7 @@ public class C1XTargetMethod extends TargetMethod {
 
         // prepare the map for this stack frame
         Pointer slotPointer = current.sp();
-        preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "frame");
+        preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X stack frame");
         int byteIndex = stopIndex * totalReferenceMapSize();
         for (int i = 0; i < frameReferenceMapSize; i++) {
             preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
@@ -756,8 +761,8 @@ public class C1XTargetMethod extends TargetMethod {
      * @return {@code true} if the stack walker should continue walking, {@code false} if the visitor is finished visiting
      */
     @Override
-    public boolean acceptJavaFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
-        return AMD64OptStackWalking.acceptJavaFrameVisitor(this, current, callee, visitor);
+    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+        return AMD64OptStackWalking.acceptStackFrameVisitor(current, callee, visitor);
     }
 
     /**
@@ -766,6 +771,6 @@ public class C1XTargetMethod extends TargetMethod {
      */
     @Override
     public void advance(StackFrameWalker.Cursor current) {
-        AMD64OptStackWalking.advance(this, current);
+        AMD64OptStackWalking.advance(current);
     }
 }

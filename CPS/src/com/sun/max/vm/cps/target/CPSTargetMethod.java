@@ -657,12 +657,12 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         throw ProgramError.unexpected();
     }
 
-    public boolean acceptJavaFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
         throw ProgramError.unexpected();
     }
 
     public void advance(StackFrameWalker.Cursor current) {
         throw ProgramError.unexpected();
     }
-    
+
 }

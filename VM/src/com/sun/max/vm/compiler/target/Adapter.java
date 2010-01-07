@@ -102,7 +102,7 @@ public class Adapter extends TargetMethod {
         throw ProgramError.unexpected();
     }
 
-    public boolean acceptJavaFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
         throw ProgramError.unexpected();
     }
 

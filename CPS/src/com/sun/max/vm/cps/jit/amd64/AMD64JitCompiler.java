@@ -83,7 +83,7 @@ public class AMD64JitCompiler extends JitCompiler {
      * Offset to the last instruction of the prologue from the JIT entry point. The prologue comprises two instructions,
      * the first one of which is enter (fixed size, 4 bytes long).
      */
-    private static final int OFFSET_TO_LAST_PROLOGUE_INSTRUCTION = 4;
+    public static final int OFFSET_TO_LAST_PROLOGUE_INSTRUCTION = 4;
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
@@ -263,10 +263,10 @@ public class AMD64JitCompiler extends JitCompiler {
             }
         }
 
-        Pointer returnInstructionPointer = framePointerState.returnInstructionPointer(current);
+        Pointer returnInstructionPointer = framePointerState.returnIP(current);
         Pointer callerInstructionPointer = stackFrameWalker.readWord(returnInstructionPointer, 0).asPointer();
         Pointer callerStackPointer = returnInstructionPointer.plus(Word.size()); // Skip the rip
-        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, framePointerState.callerFramePointer(current));
+        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, framePointerState.callerFP(current));
         return true;
     }
 

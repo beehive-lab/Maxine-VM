@@ -29,9 +29,11 @@ import com.sun.max.vm.stack.StackReferenceMapPreparer;
 import com.sun.max.vm.stack.StackFrameWalker;
 import com.sun.max.vm.stack.StackFrameVisitor;
 import com.sun.max.vm.stack.amd64.AMD64OptStackWalking;
+import com.sun.max.vm.stack.amd64.AMD64AdapterStackWalking;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
 import com.sun.max.program.ProgramError;
+import com.sun.max.lang.Bytes;
 
 /**
  * @author Bernd Mathiske
@@ -64,12 +66,15 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
 
     @Override
     public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
+            // TODO: deal with adapter frame overflow arguments
+            return;
+        }
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
         Pointer registerState = Pointer.zero();
         switch (calleeKind) {
             case TRAMPOLINE:
                 // compute the register reference map from the call at this site
-                // TODO: get the signature from the call somehow
                 AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
@@ -94,9 +99,15 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
         }
 
         // prepare the map for this stack frame
-        Pointer refmapFramePointer = current.sp();
-        preparer.tracePrepareReferenceMap(this, stopIndex, refmapFramePointer, "frame");
-        throw ProgramError.unexpected();
+        Pointer slotPointer = current.sp();
+        preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "CPS frame");
+        int framReferenceMapSize = frameReferenceMapSize();
+        int byteIndex = stopIndex * framReferenceMapSize;
+        for (int i = 0; i < frameReferenceMapSize; i++) {
+            preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
+            slotPointer = slotPointer.plusWords(Bytes.WIDTH);
+            byteIndex++;
+        }
     }
 
     @Override
@@ -105,12 +116,12 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
     }
 
     @Override
-    public boolean acceptJavaFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
-        return AMD64OptStackWalking.acceptJavaFrameVisitor(this, current, callee, visitor);
+    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+        return AMD64OptStackWalking.acceptStackFrameVisitor(current, callee, visitor);
     }
 
     @Override
     public void advance(StackFrameWalker.Cursor current) {
-        AMD64OptStackWalking.advance(this, current);
+        AMD64OptStackWalking.advance(current);
     }
 }
