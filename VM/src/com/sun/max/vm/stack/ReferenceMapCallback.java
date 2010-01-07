@@ -28,10 +28,9 @@ public interface ReferenceMapCallback {
 
     /**
      * Updates the reference map bits for a pointer within a particular frame.
-     * @param framePointer the frame pointer that contains the frame (for debugging only)
-     * @param internalFramePointer the pointer to the first slot that corresponds to bit 0 in the reference map byte
+     * @param cursor
+     * @param slotPointer
      * @param refMap a byte containing 8 reference map bits for 8 successive slots in the frame
-     * @param label a label (for debugging only)
      */
-    void setReferenceMapBits(Pointer framePointer, Pointer internalFramePointer, int refMap, int numBits, String label);
+    void setReferenceMapBits(StackFrameWalker.Cursor cursor, Pointer slotPointer, int refMap, int numBits);
 }

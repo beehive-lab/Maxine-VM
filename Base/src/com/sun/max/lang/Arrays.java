@@ -25,6 +25,7 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.util.*;
+import com.sun.max.program.ProgramError;
 
 /**
  * Additional methods that one could expect in java.util.Arrays.
@@ -497,5 +498,70 @@ public final class Arrays {
             newArray[i] = array[i];
         }
         return newArray;
+    }
+
+    /**
+     * Gets an integer element of a {@code byte[]}, {@code char[]}, {@code short[]}, or {@code int[]}.
+     * This is useful for saving space by having densely encoded arrays of integers when it
+     * is known that all values in the array fit in a small range.
+     * @param array the array object
+     * @param index the index into the array
+     * @return the integer value at the specified index
+     */
+    public int getIntElement(Object array, int index) {
+        if (array instanceof byte[]) {
+            return ((byte[]) array)[index];
+        }
+        if (array instanceof char[]) {
+            return ((char[]) array)[index];
+        }
+        if (array instanceof short[]) {
+            return ((short[]) array)[index];
+        }
+        if (array instanceof int[]) {
+            return ((int[]) array)[index];
+        }
+        throw ProgramError.unexpected("unexpected dense int array type: " + array.getClass());
+    }
+
+    /**
+     * Sets an integer element of a {@code byte[]}, {@code char[]}, {@code short[]}, or {@code int[]}.
+     * This is useful for saving space by having densely encoded arrays of integers when it
+     * is known that all values in the array fit in a small range.
+     * @param array the array object
+     * @param index the index into the array
+     * @param value the value to put into the array
+     * @throws ProgramError if the value will not fit into the specified array
+     */
+    public void setIntElement(Object array, int index, int value) {
+        if (array instanceof byte[]) {
+            byte v = (byte) value;
+            if (v != value) {
+                ProgramError.unexpected("integer value will not fit into byte");
+            }
+            byte[] a = (byte[]) array;
+            a[index] = v;
+        }
+        if (array instanceof char[]) {
+            char v = (char) value;
+            if (v != value) {
+                ProgramError.unexpected("integer value will not fit into char");
+            }
+            char[] a = (char[]) array;
+            a[index] = v;
+        }
+        if (array instanceof short[]) {
+            short v = (short) value;
+            if (v != value) {
+                ProgramError.unexpected("integer value will not fit into short");
+            }
+            short[] a = (short[]) array;
+            a[index] = v;
+        }
+        if (array instanceof int[]) {
+            int[] a = (int[]) array;
+            a[index] = value;
+        }
+        throw ProgramError.unexpected("unexpected dense int array type: " + array.getClass());
     }
 }

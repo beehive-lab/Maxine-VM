@@ -83,7 +83,7 @@ public class AMD64JitCompiler extends JitCompiler {
      * Offset to the last instruction of the prologue from the JIT entry point. The prologue comprises two instructions,
      * the first one of which is enter (fixed size, 4 bytes long).
      */
-    private static final int OFFSET_TO_LAST_PROLOGUE_INSTRUCTION = 4;
+    public static final int OFFSET_TO_LAST_PROLOGUE_INSTRUCTION = 4;
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
@@ -193,131 +193,24 @@ public class AMD64JitCompiler extends JitCompiler {
             ripPointer = stackPointer;
         } else {
             // The adapter frame was constructed. Add space taken by the parameters for the placeholder of RBP.
-            ripPointer = stackPointer.plus(AMD64StackWalking.adapterFrameSize(classMethodActor));
+            ripPointer = stackPointer.plus(AMD64OptStackWalking.adapterFrameSize(classMethodActor));
         }
         return ripPointer;
     }
 
-    enum FRAME_POINTER_STATE {
-        /**
-         * RBP holds the frame pointer of the current method activation. caller's RIP is at [RBP + FrameSize], caller's
-         * frame pointer is at [RBP + FrameSize -1]
-         */
-        IN_RBP {
-
-            @Override
-            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
-                return current.fp();
-            }
-
-            @Override
-            Pointer returnInstructionPointer(StackFrameWalker.Cursor current) {
-                TargetMethod targetMethod = current.targetMethod();
-                int dispToRip = targetMethod.frameSize() - sizeOfNonParameterLocals(targetMethod);
-                return current.fp().plus(dispToRip);
-            }
-
-            @Override
-            Pointer callerFramePointer(StackFrameWalker.Cursor current) {
-                return current.stackFrameWalker().readWord(returnInstructionPointer(current), -Word.size()).asPointer();
-            }
-        },
-
-        /**
-         * RBP holds the frame pointer of the caller, caller's RIP is at [RSP] This state occurs when entering the
-         * method or exiting it.
-         */
-        CALLER_FRAME_IN_RBP {
-
-            @Override
-            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
-                int offsetToSaveArea = current.targetMethod().frameSize();
-                return current.sp().minus(offsetToSaveArea);
-            }
-
-            @Override
-            Pointer returnInstructionPointer(StackFrameWalker.Cursor current) {
-                return current.sp();
-            }
-
-            @Override
-            Pointer callerFramePointer(StackFrameWalker.Cursor current) {
-                return current.fp();
-            }
-        },
-
-        /**
-         * RBP points at the bottom of the "saving area". Caller's frame pointer is at [RBP], caller's RIP is at [RBP +
-         * WordSize].
-         */
-        CALLER_FRAME_AT_RBP {
-
-            @Override
-            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
-                TargetMethod targetMethod = current.targetMethod();
-                int dispToFrameStart = targetMethod.frameSize() - (sizeOfNonParameterLocals(targetMethod) + Word.size());
-                return current.fp().minus(dispToFrameStart);
-            }
-
-            @Override
-            Pointer returnInstructionPointer(StackFrameWalker.Cursor current) {
-                return current.fp().plus(Word.size());
-            }
-
-            @Override
-            Pointer callerFramePointer(StackFrameWalker.Cursor current) {
-                return current.stackFrameWalker().readWord(current.fp(), 0).asPointer();
-            }
-        },
-
-        /**
-         * Returning from a runtime call (or actually in a runtime call). RBP may have been clobbered by the runtime.
-         * The frame pointer for the current activation record is 'RSP + stack slot size'.
-         */
-        RETURNING_FROM_RUNTIME {
-
-            @Override
-            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
-                return current.stackFrameWalker().readWord(current.sp(), 0).asPointer();
-            }
-
-            @Override
-            Pointer returnInstructionPointer(StackFrameWalker.Cursor current) {
-                TargetMethod targetMethod = current.targetMethod();
-                int dispToRip = targetMethod.frameSize() - sizeOfNonParameterLocals(targetMethod);
-                return localVariablesBase(current).plus(dispToRip);
-            }
-
-            @Override
-            Pointer callerFramePointer(StackFrameWalker.Cursor current) {
-                return current.stackFrameWalker().readWord(returnInstructionPointer(current), -Word.size()).asPointer();
-            }
-        };
-
-        abstract Pointer localVariablesBase(StackFrameWalker.Cursor current);
-
-        abstract Pointer returnInstructionPointer(StackFrameWalker.Cursor current);
-
-        abstract Pointer callerFramePointer(StackFrameWalker.Cursor current);
-
-        int sizeOfNonParameterLocals(TargetMethod targetMethod) {
-            return JitStackFrameLayout.JIT_SLOT_SIZE * (targetMethod.classMethodActor().codeAttribute().maxLocals - targetMethod.classMethodActor().numberOfParameterSlots());
-        }
-    }
-
-    private FRAME_POINTER_STATE stackFrameState(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, Pointer lastPrologueInstr) {
+    private AMD64JitTargetMethod.FramePointerState stackFrameState(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, Pointer lastPrologueInstr) {
         Pointer instructionPointer = current.ip();
         byte byteAtInstructionPointer = stackFrameWalker.readByte(instructionPointer, 0);
         if (instructionPointer.lessThan(lastPrologueInstr) || byteAtInstructionPointer == ENTER || byteAtInstructionPointer == RET || byteAtInstructionPointer == RET2) {
-            return FRAME_POINTER_STATE.CALLER_FRAME_IN_RBP;
+            return AMD64JitTargetMethod.FramePointerState.CALLER_FRAME_IN_RBP;
         }
         if (instructionPointer.equals(lastPrologueInstr) || byteAtInstructionPointer == LEAVE) {
-            return FRAME_POINTER_STATE.CALLER_FRAME_AT_RBP;
+            return AMD64JitTargetMethod.FramePointerState.CALLER_FRAME_AT_RBP;
         }
         if (byteAtInstructionPointer == POP_RBP) {
-            return FRAME_POINTER_STATE.RETURNING_FROM_RUNTIME;
+            return AMD64JitTargetMethod.FramePointerState.RETURNING_FROM_RUNTIME;
         }
-        return FRAME_POINTER_STATE.IN_RBP;
+        return AMD64JitTargetMethod.FramePointerState.IN_RBP;
     }
 
     /**
@@ -348,7 +241,7 @@ public class AMD64JitCompiler extends JitCompiler {
             startOfPrologue = jitEntryPoint;
         }
         Pointer lastPrologueInstruction = startOfPrologue.plus(OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
-        FRAME_POINTER_STATE framePointerState = stackFrameState(current, stackFrameWalker, lastPrologueInstruction);
+        AMD64JitTargetMethod.FramePointerState framePointerState = stackFrameState(current, stackFrameWalker, lastPrologueInstruction);
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
@@ -370,14 +263,14 @@ public class AMD64JitCompiler extends JitCompiler {
             }
         }
 
-        Pointer returnInstructionPointer = framePointerState.returnInstructionPointer(current);
+        Pointer returnInstructionPointer = framePointerState.returnIP(current);
         Pointer callerInstructionPointer = stackFrameWalker.readWord(returnInstructionPointer, 0).asPointer();
         Pointer callerStackPointer = returnInstructionPointer.plus(Word.size()); // Skip the rip
-        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, framePointerState.callerFramePointer(current));
+        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, framePointerState.callerFP(current));
         return true;
     }
 
-    private boolean walkFrameForInspecting(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
+    private boolean walkFrameForInspecting(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, AMD64JitTargetMethod.FramePointerState framePointerState) {
         Pointer localVariablesBase = framePointerState.localVariablesBase(current);
         if (context instanceof StackFrameVisitor) {
             StackFrame stackFrame = new AMD64JitStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, current.ip(), current.sp(), localVariablesBase, localVariablesBase);
@@ -389,7 +282,7 @@ public class AMD64JitCompiler extends JitCompiler {
         return stackFrameVisitor.visitFrame(targetMethod, current.ip(), current.sp(), localVariablesBase, flags);
     }
 
-    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, AMD64JitTargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
+    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, AMD64JitTargetMethod targetMethod, Object context, AMD64JitTargetMethod.FramePointerState framePointerState) {
         Pointer trapState = stackFrameWalker.trapState();
         if (!trapState.isZero()) {
             FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
@@ -406,7 +299,7 @@ public class AMD64JitCompiler extends JitCompiler {
         return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, current.ip(), localVariablesBase, current.sp(), 0);
     }
 
-    private void walkFrameForExceptionHandling(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
+    private void walkFrameForExceptionHandling(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, AMD64JitTargetMethod.FramePointerState framePointerState) {
         Address throwAddress = current.ip();
         StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
         Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, throwAddress, stackUnwindingContext.throwable.getClass());
