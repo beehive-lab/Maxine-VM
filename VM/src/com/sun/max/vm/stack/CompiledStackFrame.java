@@ -36,8 +36,8 @@ public abstract class CompiledStackFrame extends StackFrame {
 
     private final TargetMethod targetMethod;
 
-    public CompiledStackFrame(StackFrame callee, CompiledStackFrameLayout layout, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
-        super(callee, instructionPointer, stackPointer, framePointer);
+    public CompiledStackFrame(StackFrame callee, CompiledStackFrameLayout layout, TargetMethod targetMethod, Pointer ip, Pointer fp, Pointer sp) {
+        super(callee, ip, sp, fp);
         this.layout = layout;
         this.targetMethod = targetMethod;
     }
@@ -55,7 +55,7 @@ public abstract class CompiledStackFrame extends StackFrame {
      * <li>Both frames have a known canonical frame pointer and its value is the same for both frames.</li>
      * <li>Both frames denote the same target method.</li>
      * </ul>
-     * Other frame attributes such as the {@linkplain #instructionPointer()} and the value in each frame slot may differ
+     * Other frame attributes such as the {@linkplain #ip} and the value in each frame slot may differ
      * for the two frames.
      */
     @Override

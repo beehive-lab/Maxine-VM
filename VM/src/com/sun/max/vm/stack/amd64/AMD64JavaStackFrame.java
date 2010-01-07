@@ -31,8 +31,8 @@ import com.sun.max.vm.stack.*;
  */
 public class AMD64JavaStackFrame extends CompiledStackFrame {
 
-    public AMD64JavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
-        super(callee, new OptoStackFrameLayout(targetMethod.frameSize(), true), targetMethod, instructionPointer, framePointer, stackPointer);
+    public AMD64JavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer ip, Pointer fp, Pointer sp) {
+        super(callee, new OptoStackFrameLayout(targetMethod.frameSize(), true), targetMethod, ip, fp, sp);
     }
 
     @Override

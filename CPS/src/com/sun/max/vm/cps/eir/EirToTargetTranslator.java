@@ -46,11 +46,8 @@ import com.sun.max.vm.object.*;
  */
 public abstract class EirToTargetTranslator extends TargetGenerator {
 
-    private final int registerReferenceMapSize;
-
     protected EirToTargetTranslator(TargetGeneratorScheme targetGeneratorScheme, InstructionSet instructionSet, int registerReferenceMapSize) {
         super(targetGeneratorScheme, instructionSet);
-        this.registerReferenceMapSize = registerReferenceMapSize;
     }
 
     private Address fixLiteralLabels(EirTargetEmitter emitter, Sequence<EirLiteral> literals, Address address) {
@@ -201,17 +198,6 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         }
         assert bitMap.offset() == referenceMaps.length;
         return referenceMaps;
-    }
-
-    private int getMarkerPosition(EirTargetEmitter<?> emitter) {
-        if (emitter.markerLabel().state() == Label.State.BOUND) {
-            try {
-                return emitter.markerLabel().position();
-            } catch (AssemblyException e) {
-                ProgramError.unexpected();
-            }
-        }
-        return -1;
     }
 
     protected abstract EirTargetEmitter createEirTargetEmitter(EirMethod eirMethod);

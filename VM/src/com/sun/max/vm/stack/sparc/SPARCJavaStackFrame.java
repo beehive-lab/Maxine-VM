@@ -29,7 +29,6 @@ import com.sun.max.vm.stack.*;
  * The stack frame is constructed with raw stack and frame pointer, as read off the stack and frame pointer registers (%i6 and %o6).
  * All bias computation that may be imposed by the underlying OS (e.g., Solaris 64-bits) is hidden and encapsulated here.
  *
- *
  * @author Bernd Mathiske
  * @author Laurent Daynes
  */

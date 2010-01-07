@@ -109,10 +109,6 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         return adapterReturnPosition;
     }
 
-    public boolean isDirectCallToRuntime(int stopIndex) {
-        return isDirectCallToRuntime != null && (stopIndex < numberOfDirectCalls()) && ByteArrayBitMap.isSet(isDirectCallToRuntime, 0, isDirectCallToRuntime.length, stopIndex);
-    }
-
     @Override
     protected CallEntryPoint callEntryPointForDirectCall(int directCallIndex) {
         if (isDirectCallToRuntime != null && ByteArrayBitMap.isSet(isDirectCallToRuntime, 0, isDirectCallToRuntime.length, directCallIndex)) {
@@ -292,11 +288,6 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         }
 
         return preparer.prepareFrameReferenceMap(this, ip, fp.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter, null);
-    }
-
-    @Override
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
-        prepareFrameReferenceMap(findClosestStopIndex(current.ip()), current.sp(), preparer);
     }
 
 

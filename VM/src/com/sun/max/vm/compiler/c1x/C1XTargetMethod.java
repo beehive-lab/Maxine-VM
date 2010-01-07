@@ -41,7 +41,10 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.amd64.AMD64OptStackWalking;
+import com.sun.max.vm.stack.amd64.AMD64AdapterStackWalking;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 
 /**
@@ -545,11 +548,6 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
-        prepareFrameReferenceMap(findClosestStopIndex(current.ip()), current.sp(), preparer);
-    }
-
-    @Override
     public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
         int stopIndex = lookupStopPosition(instructionPointer);
         for (int i = 0; i < referenceRegisterCount; i++) {
@@ -685,5 +683,94 @@ public class C1XTargetMethod extends TargetMethod {
         }
 
         return buf.toString();
+    }
+
+    /**
+     * Prepares the reference map for this frame.
+     * @param current the current frame
+     * @param callee the callee frame
+     * @param preparer the reference map preparer
+     */
+    @Override
+    public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
+            // TODO: deal with adapter frame overflow arguments
+            return;
+        }
+        StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
+        Pointer registerState = Pointer.zero();
+        switch (calleeKind) {
+            case TRAMPOLINE:
+                // compute the register reference map from the call at this site
+                AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
+                break;
+            case TRAP_STUB:  // fall through
+            case CALLEE_SAVED:
+                // get the register state from the callee's frame
+                registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                break;
+            case NATIVE:
+                // no register state.
+                break;
+            case JAVA:
+                // no register state.
+                break;
+        }
+        int stopIndex = findClosestStopIndex(current.ip());
+        int frameReferenceMapSize = frameReferenceMapSize();
+        if (!registerState.isZero()) {
+            // the callee contains register state from this frame;
+            // use register reference maps in this method to fill in the map for the callee
+            Pointer slotPointer = registerState;
+            int byteIndex = stopIndex * totalReferenceMapSize();
+            preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
+            for (int i = frameReferenceMapSize; i < registerReferenceMapSize() + frameReferenceMapSize; i++) {
+                preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
+                slotPointer = slotPointer.plusWords(Bytes.WIDTH);
+                byteIndex++;
+            }
+        }
+
+        // prepare the map for this stack frame
+        Pointer slotPointer = current.sp();
+        preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X stack frame");
+        int byteIndex = stopIndex * totalReferenceMapSize();
+        for (int i = 0; i < frameReferenceMapSize; i++) {
+            preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
+            slotPointer = slotPointer.plusWords(Bytes.WIDTH);
+            byteIndex++;
+        }
+    }
+
+    /**
+     * Attempt to catch an exception that has been thrown with this method on the call stack.
+     * @param current the current stack frame
+     * @param callee the callee stack frame
+     * @param throwable the exception being thrown
+     */
+    @Override
+    public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+        AMD64OptStackWalking.catchException(this, current, callee, throwable);
+    }
+
+    /**
+     * Accept a visitor for this frame.
+     * @param current the current stack frame
+     * @param callee the callee stack frame
+     * @param visitor the visitor
+     * @return {@code true} if the stack walker should continue walking, {@code false} if the visitor is finished visiting
+     */
+    @Override
+    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+        return AMD64OptStackWalking.acceptStackFrameVisitor(current, callee, visitor);
+    }
+
+    /**
+     * Advances the cursor to the caller's frame.
+     * @param current the current frame
+     */
+    @Override
+    public void advance(StackFrameWalker.Cursor current) {
+        AMD64OptStackWalking.advance(current);
     }
 }

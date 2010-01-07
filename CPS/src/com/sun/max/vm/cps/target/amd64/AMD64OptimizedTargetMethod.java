@@ -22,13 +22,18 @@ package com.sun.max.vm.cps.target.amd64;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.compiler.RuntimeCompilerScheme;
 import com.sun.max.vm.stack.StackReferenceMapPreparer;
 import com.sun.max.vm.stack.StackFrameWalker;
+import com.sun.max.vm.stack.StackFrameVisitor;
+import com.sun.max.vm.stack.amd64.AMD64OptStackWalking;
+import com.sun.max.vm.stack.amd64.AMD64AdapterStackWalking;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
 import com.sun.max.program.ProgramError;
+import com.sun.max.lang.Bytes;
 
 /**
  * @author Bernd Mathiske
@@ -60,7 +65,63 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
     }
 
     @Override
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer preparer, StackFrameWalker.Cursor current) {
-        throw ProgramError.unexpected();
+    public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
+            // TODO: deal with adapter frame overflow arguments
+            return;
+        }
+        StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
+        Pointer registerState = Pointer.zero();
+        switch (calleeKind) {
+            case TRAMPOLINE:
+                // compute the register reference map from the call at this site
+                AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
+                break;
+            case TRAP_STUB:  // fall through
+                // get the register state from the callee's frame
+                registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                break;
+            case NATIVE:
+                // no register state.
+                break;
+            case JAVA:
+                // no register state.
+                break;
+            case CALLEE_SAVED:
+                throw FatalError.unexpected("opt methods should not call callee-saved methods");
+        }
+        int stopIndex = findClosestStopIndex(current.ip());
+
+        if (!registerState.isZero()) {
+            // the callee contains register state from this frame;
+            // use register reference maps in this method to fill in the map for the callee
+            throw ProgramError.unexpected();
+        }
+
+        // prepare the map for this stack frame
+        Pointer slotPointer = current.sp();
+        preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "CPS frame");
+        int framReferenceMapSize = frameReferenceMapSize();
+        int byteIndex = stopIndex * framReferenceMapSize;
+        for (int i = 0; i < frameReferenceMapSize; i++) {
+            preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
+            slotPointer = slotPointer.plusWords(Bytes.WIDTH);
+            byteIndex++;
+        }
+    }
+
+    @Override
+    public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+        AMD64OptStackWalking.catchException(this, current, callee, throwable);
+    }
+
+    @Override
+    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+        return AMD64OptStackWalking.acceptStackFrameVisitor(current, callee, visitor);
+    }
+
+    @Override
+    public void advance(StackFrameWalker.Cursor current) {
+        AMD64OptStackWalking.advance(current);
     }
 }

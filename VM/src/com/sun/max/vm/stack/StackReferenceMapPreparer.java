@@ -76,13 +76,13 @@ import com.sun.max.vm.type.*;
  */
 public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
-    private final VmThread owner;
     private final Timer timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer triggeredVmThreadLocals;
     private Pointer referenceMap;
     private Pointer lowestStackSlot;
     private boolean completingReferenceMap;
-    private final boolean verifyOnly;
+    private final boolean verify;
+    private final boolean prepare;
     private long preparationTime;
 
     /**
@@ -97,9 +97,9 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     private TargetMethod trampolineTargetMethod;
     private Pointer trampolineRefmapPointer;
 
-    public StackReferenceMapPreparer(VmThread owner, boolean verifyOnly) {
-        this.owner = owner;
-        this.verifyOnly = verifyOnly;
+    public StackReferenceMapPreparer(boolean verify, boolean prepare) {
+        this.verify = verify;
+        this.prepare = prepare;
     }
 
     private static Pointer slotAddress(int slotIndex, Pointer vmThreadLocals) {
@@ -855,36 +855,37 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     /**
      * Updates the reference map bits for a range of slots within a frame.
      *
-     * @param frameStart a pointer to the start of the frame (for debugging only)
+     * @param cursor the cursor corresponding to the frame for which the bits are being filled in
      * @param slotPointer the pointer to the first slot that corresponds to bit 0 in the reference map
      * @param refMap an integer containing up to 32 reference map bits for up to 32 successive slots in the frame
      * @param numBits the number of bits in the reference map
-     * @param label a label (for debugging only)
      */
-    public void setReferenceMapBits(Pointer frameStart, Pointer slotPointer, int refMap, int numBits, String label) {
+    public void setReferenceMapBits(StackFrameWalker.Cursor cursor, Pointer slotPointer, int refMap, int numBits) {
         if (Heap.traceRootScanning()) {
             Log.print("    setReferenceMapBits: fp = ");
-            Log.print(frameStart);
+            Log.print(cursor.fp());
+            Log.print(" sp = ");
+            Log.print(cursor.sp());
             Log.print(", slots @ ");
             Log.print(slotPointer);
             Log.print(", bits = ");
             for (int i = 0; i < numBits; i++) {
                 Log.print((refMap >>> i) & 1);
             }
-            Log.print(", label = ");
-            Log.println(label);
+            Log.print(", description = ");
+            Log.println(cursor.targetMethod().description());
         }
-        if (!inThisStack(frameStart)) {
-            throw FatalError.unexpected("fp not in this stack");
+        if (!inThisStack(cursor.sp())) {
+            throw FatalError.unexpected("sp not in this stack");
         }
-        if (!inThisStack(frameStart)) {
+        if (!inThisStack(slotPointer)) {
             throw FatalError.unexpected("slots not in this stack");
         }
         if ((refMap & (-1 << numBits)) != 0) {
             throw FatalError.unexpected("reference map has extraneous high order bits set");
         }
-        if (verifyOnly) {
-            // only look at the contents of the stack and check they are valid grips
+        if (verify) {
+            // look at the contents of the stack and check they are valid grips
             for (int i = 0; i < numBits; i++) {
                 if (((refMap >> i) & 1) == 1) {
                     Grip grip = slotPointer.getGrip(i);
@@ -896,13 +897,13 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                         Log.print(grip);
                         Log.print(valid ? " ok" : " (invalid)");
                         if (!valid) {
-                            // we are f'd
                             throw FatalError.unexpected("invalid grip");
                         }
                     }
                 }
             }
-        } else {
+        }
+        if (prepare) {
             // copy the bits into the complete reference map for the stack
             int mapBits = refMap;
             int slotIndex = referenceMapBitIndex(slotPointer);
