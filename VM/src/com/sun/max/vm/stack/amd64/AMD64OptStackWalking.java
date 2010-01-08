@@ -435,4 +435,10 @@ public class AMD64OptStackWalking {
             }
         }
     }
+
+    public abstract static class WalkFrameHelper {
+        public static WalkFrameHelper instance;
+
+        public abstract boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context);
+    }
 }

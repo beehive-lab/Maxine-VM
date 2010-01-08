@@ -69,7 +69,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         return operandGeneralRegister();
     }
 
-    public SPARCEirRegister.FloatingPoint destinationFloatingPointRegister() {
+    public SPARCEirRegister.SinglePrecision destinationFloatingPointRegister() {
         return operandFloatingPointRegister();
     }
 
@@ -104,16 +104,16 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
     public SPARCEirRegister.GeneralPurpose rightGeneralRegister() {
         return sourceGeneralRegister();
     }
-    public SPARCEirRegister.FloatingPoint rightFloatingPointRegister() {
-        return (SPARCEirRegister.FloatingPoint) rightLocation();
+    public SPARCEirRegister.SinglePrecision rightFloatingPointRegister() {
+        return (SPARCEirRegister.SinglePrecision) rightLocation();
     }
 
     public SPARCEirRegister.GeneralPurpose sourceGeneralRegister() {
         return (SPARCEirRegister.GeneralPurpose) sourceLocation();
     }
 
-    public SPARCEirRegister.FloatingPoint sourceFloatingPointRegister() {
-        return (SPARCEirRegister.FloatingPoint) sourceLocation();
+    public SPARCEirRegister.SinglePrecision sourceFloatingPointRegister() {
+        return (SPARCEirRegister.SinglePrecision) sourceLocation();
     }
 
     /**
@@ -141,8 +141,8 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         return (SPARCEirRegister.GeneralPurpose) leftLocation();
     }
 
-    public SPARCEirRegister.FloatingPoint leftFloatingPointRegister() {
-        return (SPARCEirRegister.FloatingPoint) leftLocation();
+    public SPARCEirRegister.SinglePrecision leftFloatingPointRegister() {
+        return (SPARCEirRegister.SinglePrecision) leftLocation();
     }
 
     @Override
@@ -376,8 +376,8 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 super(block, destination, destinationEffect, F, leftSource, leftSourceEffect, F);
             }
 
-            protected abstract void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint leftRegister, SPARCEirRegister.FloatingPoint rightRegister);
-            protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint rightRegister) {
+            protected abstract void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.SinglePrecision destinationRegister, SPARCEirRegister.SinglePrecision leftRegister, SPARCEirRegister.SinglePrecision rightRegister);
+            protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.SinglePrecision destinationRegister, SPARCEirRegister.SinglePrecision rightRegister) {
                 emit_F_F_F(emitter, destinationRegister, destinationRegister, rightRegister);
             }
 
@@ -423,7 +423,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 selectedConditionCode = FCCOperand.FCC0;
             }
 
-            protected abstract void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint operand1Register, SPARCEirRegister.FloatingPoint operand2Register);
+            protected abstract void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.SinglePrecision operand1Register, SPARCEirRegister.SinglePrecision operand2Register);
 
             @Override
             public void emit(SPARCEirTargetEmitter emitter) {

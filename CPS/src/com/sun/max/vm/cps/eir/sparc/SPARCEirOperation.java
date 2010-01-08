@@ -49,8 +49,8 @@ public abstract class SPARCEirOperation extends EirInstruction<SPARCEirInstructi
         return (SPARCEirRegister.GeneralPurpose) location;
     }
 
-    public static SPARCEirRegister.FloatingPoint toFloatingPointRegister(EirLocation location) {
-        return (SPARCEirRegister.FloatingPoint) location;
+    public static SPARCEirRegister.SinglePrecision toFloatingPointRegister(EirLocation location) {
+        return (SPARCEirRegister.SinglePrecision) location;
     }
 
     protected SPARCEirOperation(EirBlock block) {

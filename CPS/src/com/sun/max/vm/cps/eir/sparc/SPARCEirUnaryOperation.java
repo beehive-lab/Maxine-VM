@@ -67,8 +67,8 @@ public abstract class SPARCEirUnaryOperation extends SPARCEirOperation {
         return (SPARCEirRegister.GeneralPurpose) operandLocation();
     }
 
-    public SPARCEirRegister.FloatingPoint operandFloatingPointRegister() {
-        return (SPARCEirRegister.FloatingPoint) operandLocation();
+    public SPARCEirRegister.SinglePrecision operandFloatingPointRegister() {
+        return (SPARCEirRegister.SinglePrecision) operandLocation();
     }
 
     @Override

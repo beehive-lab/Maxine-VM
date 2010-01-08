@@ -31,19 +31,16 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.b.c.d.e.amd64.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.memory.VirtualMemory;
 
 /**
  * @author Bernd Mathiske
@@ -130,7 +127,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     static {
-        C1XCompilerScheme.WalkFrameHelper.instance = new C1XCompilerScheme.WalkFrameHelper() {
+        AMD64OptStackWalking.WalkFrameHelper.instance = new AMD64OptStackWalking.WalkFrameHelper() {
             @Override
             public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
                 return AMD64OptStackWalking.walkOptimizedFrame(current, callee, purpose, context);

@@ -70,7 +70,7 @@ public final class SPARCEirStore extends SPARCEirPointerOperation {
         return destinationGeneralRegister();
     }
 
-    public SPARCEirRegister.FloatingPoint valueFloatingPointRegister() {
+    public SPARCEirRegister.SinglePrecision valueFloatingPointRegister() {
         return destinationFloatingPointRegister();
     }
 

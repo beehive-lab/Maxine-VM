@@ -181,13 +181,13 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
                 break;
             }
             case FLOAT: {
-                final SPARCEirRegister.FloatingPoint scratchRegister = (SPARCEirRegister.FloatingPoint) emitter.abi().getScratchRegister(Kind.FLOAT);
+                final SPARCEirRegister.SinglePrecision scratchRegister = (SPARCEirRegister.SinglePrecision) emitter.abi().getScratchRegister(Kind.FLOAT);
                 emitter.assembler().ld(literalBase.as(), emitter.literalBaseLabel(), sourceLocation().asLiteral().asLabel(), scratchRegister.asSinglePrecision());
                 emit_GF_S(emitter, scratchRegister);
                 break;
             }
             case DOUBLE: {
-                final SPARCEirRegister.FloatingPoint scratchRegister = (SPARCEirRegister.FloatingPoint) emitter.abi().getScratchRegister(Kind.DOUBLE);
+                final SPARCEirRegister.SinglePrecision scratchRegister = (SPARCEirRegister.SinglePrecision) emitter.abi().getScratchRegister(Kind.DOUBLE);
                 emitter.assembler().ldd(literalBase.as(), emitter.literalBaseLabel(), sourceLocation().asLiteral().asLabel(), scratchRegister.asDoublePrecision());
                 emit_GF_S(emitter, scratchRegister);
                 break;
