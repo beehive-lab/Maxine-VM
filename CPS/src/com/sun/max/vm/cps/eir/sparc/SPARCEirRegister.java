@@ -198,9 +198,9 @@ public abstract class SPARCEirRegister extends EirRegister {
      * EIR representation of floating-point register for SPARC.
      *
      */
-    public static class FloatingPoint extends SPARCEirRegister {
+    public static class SinglePrecision extends SPARCEirRegister {
 
-        protected FloatingPoint(int value) {
+        protected SinglePrecision(int value) {
             super(value);
         }
 
@@ -225,7 +225,7 @@ public abstract class SPARCEirRegister extends EirRegister {
         /**
          * Returns the single precision floating-point register this register overlaps with, null if none.
          */
-        public FloatingPoint overlappingSinglePrecision() {
+        public SinglePrecision overlappingSinglePrecision() {
             final int value = ordinal;
             if (isDoublePrecision()) {
                 return isDoublePrecisionOnly(value) ? null : singlePrecisionValues[value + 1];
@@ -234,39 +234,39 @@ public abstract class SPARCEirRegister extends EirRegister {
         }
 
         public static final DoublePrecision F0 = new DoublePrecision(0);
-        public static final FloatingPoint F1 = new FloatingPoint(1);
+        public static final SinglePrecision F1 = new SinglePrecision(1);
         public static final DoublePrecision F2 = new DoublePrecision(2);
-        public static final FloatingPoint F3 = new FloatingPoint(3);
+        public static final SinglePrecision F3 = new SinglePrecision(3);
         public static final DoublePrecision F4 = new DoublePrecision(4);
-        public static final FloatingPoint F5 = new FloatingPoint(5);
+        public static final SinglePrecision F5 = new SinglePrecision(5);
         public static final DoublePrecision F6 = new DoublePrecision(6);
-        public static final FloatingPoint F7 = new FloatingPoint(7);
+        public static final SinglePrecision F7 = new SinglePrecision(7);
         public static final DoublePrecision F8 = new DoublePrecision(8);
-        public static final FloatingPoint F9 = new FloatingPoint(9);
+        public static final SinglePrecision F9 = new SinglePrecision(9);
         public static final DoublePrecision F10 = new DoublePrecision(10);
-        public static final FloatingPoint F11 = new FloatingPoint(11);
+        public static final SinglePrecision F11 = new SinglePrecision(11);
         public static final DoublePrecision F12 = new DoublePrecision(12);
-        public static final FloatingPoint F13 = new FloatingPoint(13);
+        public static final SinglePrecision F13 = new SinglePrecision(13);
         public static final DoublePrecision F14 = new DoublePrecision(14);
-        public static final FloatingPoint F15 = new FloatingPoint(15);
+        public static final SinglePrecision F15 = new SinglePrecision(15);
         public static final DoublePrecision F16 = new DoublePrecision(16);
-        public static final FloatingPoint F17 = new FloatingPoint(17);
+        public static final SinglePrecision F17 = new SinglePrecision(17);
         public static final DoublePrecision F18 = new DoublePrecision(18);
-        public static final FloatingPoint F19 = new FloatingPoint(19);
+        public static final SinglePrecision F19 = new SinglePrecision(19);
         public static final DoublePrecision F20 = new DoublePrecision(20);
-        public static final FloatingPoint F21 = new FloatingPoint(21);
+        public static final SinglePrecision F21 = new SinglePrecision(21);
         public static final DoublePrecision F22 = new DoublePrecision(22);
-        public static final FloatingPoint F23 = new FloatingPoint(23);
+        public static final SinglePrecision F23 = new SinglePrecision(23);
         public static final DoublePrecision F24 = new DoublePrecision(24);
-        public static final FloatingPoint F25 = new FloatingPoint(25);
+        public static final SinglePrecision F25 = new SinglePrecision(25);
         public static final DoublePrecision F26 = new DoublePrecision(26);
-        public static final FloatingPoint F27 = new FloatingPoint(27);
+        public static final SinglePrecision F27 = new SinglePrecision(27);
         public static final DoublePrecision F28 = new DoublePrecision(28);
-        public static final FloatingPoint F29 = new FloatingPoint(29);
+        public static final SinglePrecision F29 = new SinglePrecision(29);
         public static final DoublePrecision F30 = new DoublePrecision(30);
-        public static final FloatingPoint F31 = new FloatingPoint(31);
+        public static final SinglePrecision F31 = new SinglePrecision(31);
 
-        private static final FloatingPoint[] singlePrecisionValues = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31};
+        private static final SinglePrecision[] singlePrecisionValues = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31};
 
         public static final DoublePrecision F32 = new DoublePrecision(32);
         public static final DoublePrecision F34 = new DoublePrecision(34);
@@ -287,23 +287,23 @@ public abstract class SPARCEirRegister extends EirRegister {
 
         private static final DoublePrecision[] doublePrecisionValues = {F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28, F30, F32, F34, F36, F38, F40, F42, F44, F46, F48, F50, F52, F54, F56, F58, F60, F62};
 
-        private static final FloatingPoint[] values = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31,
+        private static final SinglePrecision[] values = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31,
             F32, F34, F36, F38, F40, F42, F44, F46, F48, F50, F52, F54, F56, F58, F60, F62};
 
         /**
          * A sequence describing all the EIR representations of the floating-point registers.
          */
-        public static final IndexedSequence<FloatingPoint> VALUES = new ArraySequence<FloatingPoint>(values);
+        public static final IndexedSequence<SinglePrecision> VALUES = new ArraySequence<SinglePrecision>(values);
 
         /**
          * A sequence describing all the EIR representations of the single-precision floating-point registers.
          */
-        public static final IndexedSequence<FloatingPoint> SINGLE_PRECISION_VALUES = new ArraySequence<FloatingPoint>(singlePrecisionValues);
+        public static final IndexedSequence<SinglePrecision> SINGLE_PRECISION_VALUES = new ArraySequence<SinglePrecision>(singlePrecisionValues);
 
         /**
          * A sequence describing all the EIR representations of the double-precision floating-point registers.
          */
-        public static final IndexedSequence<FloatingPoint> DOUBLE_PRECISION_VALUES = new ArraySequence<FloatingPoint>(doublePrecisionValues);
+        public static final IndexedSequence<SinglePrecision> DOUBLE_PRECISION_VALUES = new ArraySequence<SinglePrecision>(doublePrecisionValues);
 
         private static final PoolSet<SPARCEirRegister> poolSet = PoolSet.of(pool, values);
         private static final PoolSet<SPARCEirRegister> doublePrecisionPoolSet = PoolSet.of(pool, doublePrecisionValues);
@@ -321,7 +321,7 @@ public abstract class SPARCEirRegister extends EirRegister {
             return singlePrecisionPoolSet;
         }
 
-        public static FloatingPoint doublePrecisionFrom(FPR register) {
+        public static SinglePrecision doublePrecisionFrom(FPR register) {
             final int value = register.value();
             if ((value & 1) != 0) {
                 throw new IllegalArgumentException();
@@ -360,7 +360,7 @@ public abstract class SPARCEirRegister extends EirRegister {
         }
     }
 
-    public static final class DoublePrecision extends FloatingPoint {
+    public static final class DoublePrecision extends SinglePrecision {
 
         private DoublePrecision(int value) {
             super(value);

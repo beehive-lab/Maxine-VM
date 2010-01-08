@@ -141,8 +141,8 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
 
         java.util.Arrays.fill(generalRegisterContents, WordValue.ZERO);
 
-        sFPRegisterContents = new Value[SPARCEirRegister.FloatingPoint.SINGLE_PRECISION_VALUES.length()];
-        final int numberOfNonOverlappingDoubleRegister = SPARCEirRegister.FloatingPoint.DOUBLE_PRECISION_VALUES.length() - SPARCEirRegister.FloatingPoint.SINGLE_PRECISION_VALUES.length()  / 2;
+        sFPRegisterContents = new Value[SPARCEirRegister.SinglePrecision.SINGLE_PRECISION_VALUES.length()];
+        final int numberOfNonOverlappingDoubleRegister = SPARCEirRegister.SinglePrecision.DOUBLE_PRECISION_VALUES.length() - SPARCEirRegister.SinglePrecision.SINGLE_PRECISION_VALUES.length()  / 2;
         dFPRegisterContents = new Value[numberOfNonOverlappingDoubleRegister];
 
         icc = new boolean[IntegerConditionFlag.VALUES.length()];
@@ -199,7 +199,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
             generalRegisters.add(Strings.padLengthWithSpaces(register.toString(), 5) + ": " + valueToString(value));
         }
         final TextTableColumn floatingPointRegisters = new TextTableColumn("Floating Point Registers:");
-        for (SPARCEirRegister register : SPARCEirRegister.FloatingPoint.SINGLE_PRECISION_VALUES) {
+        for (SPARCEirRegister register : SPARCEirRegister.SinglePrecision.SINGLE_PRECISION_VALUES) {
             final Value value =    sFPRegisterContents[register.ordinal];
             floatingPointRegisters.add(Strings.padLengthWithSpaces(register.toString(), 5) + ": " + valueToString(value));
         }
@@ -293,7 +293,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
             case INTEGER_REGISTER:
                 return generalRegisterContents[((SPARCEirRegister.GeneralPurpose) location).ordinal];
             case FLOATING_POINT_REGISTER:
-                return sFPRegisterContents[((SPARCEirRegister.FloatingPoint) location).ordinal];
+                return sFPRegisterContents[((SPARCEirRegister.SinglePrecision) location).ordinal];
             default:
                 return super.read(location);
         }

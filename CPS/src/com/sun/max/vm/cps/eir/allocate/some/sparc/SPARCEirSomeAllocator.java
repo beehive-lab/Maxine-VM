@@ -69,7 +69,7 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
         }
 
         allocatableFloatingPointRegisters = PoolSet.allOf(SPARCEirRegister.pool());
-        allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.poolSet());
+        allocatableFloatingPointRegisters.and(SPARCEirRegister.SinglePrecision.poolSet());
         allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
     }
 
@@ -87,8 +87,8 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
         // Iterate over the pool to search the first free double precision register
         final Iterator<SPARCEirRegister> i = registers.iterator();
         while (i.hasNext()) {
-            final SPARCEirRegister.FloatingPoint register = (SPARCEirRegister.FloatingPoint) i.next();
-            final SPARCEirRegister.FloatingPoint overlappingRegister = register.overlappingSinglePrecision();
+            final SPARCEirRegister.SinglePrecision register = (SPARCEirRegister.SinglePrecision) i.next();
+            final SPARCEirRegister.SinglePrecision overlappingRegister = register.overlappingSinglePrecision();
             if (overlappingRegister == null) {
                 assert register.isDoublePrecision();
                 registers.remove(register);
@@ -110,8 +110,8 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
         final SPARCEirRegister register = (SPARCEirRegister) variable.location();
         availableRegisters.remove(register);
         if (variable.kind() == Kind.DOUBLE) {
-            final SPARCEirRegister.FloatingPoint fpRegister = (SPARCEirRegister.FloatingPoint) register;
-            final SPARCEirRegister.FloatingPoint overlappingRegister = fpRegister.overlappingSinglePrecision();
+            final SPARCEirRegister.SinglePrecision fpRegister = (SPARCEirRegister.SinglePrecision) register;
+            final SPARCEirRegister.SinglePrecision overlappingRegister = fpRegister.overlappingSinglePrecision();
             if (overlappingRegister != null) {
                 availableRegisters.remove(overlappingRegister);
             }
