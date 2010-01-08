@@ -94,18 +94,22 @@ public class Adapter extends TargetMethod {
         return null;
     }
 
+    @Override
     public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
         throw ProgramError.unexpected();
     }
 
+    @Override
     public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
         throw ProgramError.unexpected();
     }
 
+    @Override
     public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
         throw ProgramError.unexpected();
     }
 
+    @Override
     public void advance(StackFrameWalker.Cursor current) {
         throw ProgramError.unexpected();
     }

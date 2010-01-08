@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64.target;
 
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
-
 import com.sun.max.asm.*;
 import com.sun.max.asm.Assembler.*;
 import com.sun.max.asm.amd64.*;
@@ -31,7 +29,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.stack.*;
