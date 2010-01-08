@@ -34,7 +34,6 @@ import com.sun.max.vm.stack.amd64.AMD64OptStackWalking;
 import com.sun.max.vm.stack.amd64.AMD64OptimizedToJitAdapterFrame;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.runtime.Safepoint;
-import com.sun.max.program.ProgramError;
 import com.sun.max.lang.Bytes;
 
 /**
@@ -195,15 +194,22 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     @Override
     public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
         if (inAdapterCode(current)) {
-            // no references in adapter frame
+            // no references in adapter frame, because the parameters become locals in the JIT frame
             return;
         }
         finalizeReferenceMaps();
+        // TODO: handle call of trampoline!
         int stopIndex = findClosestStopIndex(current.ip());
         int frameReferenceMapSize = frameReferenceMapSize();
 
         // prepare the map for this stack frame
-        Pointer slotPointer = current.sp();
+/*
+        Pointer startOfPrologue = JIT_ENTRY_POINT.in(this);
+        Pointer lastPrologueInstruction = startOfPrologue.plus(AMD64JitCompiler.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
+        FramePointerState framePointerState = computeFramePointerState(current, current.stackFrameWalker(), lastPrologueInstruction);
+        Pointer localVariablesBase = framePointerState.localVariablesBase(current);
+*/
+        Pointer slotPointer = current.fp().plus(frameReferenceMapOffset);
         preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "JIT frame");
         int byteIndex = stopIndex * frameReferenceMapSize;
         for (int i = 0; i < frameReferenceMapSize; i++) {
@@ -211,7 +217,6 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             slotPointer = slotPointer.plusWords(Bytes.WIDTH);
             byteIndex++;
         }
-        throw ProgramError.unexpected();
     }
 
     @Override

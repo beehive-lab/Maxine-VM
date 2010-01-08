@@ -55,13 +55,17 @@ public final class Throw {
     public static VMBooleanXXOption scanStackOnFatalError = register(new VMBooleanXXOption("-XX:-ScanStackOnFatalError",
         "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
 
-    private static class StackFrameDumper implements RawStackFrameVisitor {
-        private int maximum;
-        private int count;
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
+    public static class StackFrameDumper implements RawStackFrameVisitor {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, int flags) {
             final boolean lockDisabledSafepoints = Log.lock();
             // N.B. use "->" to make dumped stacks look slightly different than exception stack traces.
-            Log.print("        -> ");
+            dumpFrame("        -> ", targetMethod, ip, flags);
+            Log.unlock(lockDisabledSafepoints);
+            return true;
+        }
+
+        public static void dumpFrame(String prefix, TargetMethod targetMethod, Pointer ip, int flags) {
+            Log.print(prefix);
             if (targetMethod != null) {
                 if (!isAdapter(flags)) {
                     final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
@@ -81,19 +85,13 @@ public final class Throw {
                 Log.print(" [");
                 Log.print(codeStart);
                 Log.print("+");
-                Log.print(instructionPointer.minus(codeStart).toInt());
+                Log.print(ip.minus(codeStart).toInt());
                 Log.print("]");
             } else {
                 Log.print("unknown:");
-                Log.print(instructionPointer);
+                Log.print(ip);
             }
             Log.println();
-            if (maximum > 0 && count-- < 0) {
-                Log.unlock(lockDisabledSafepoints);
-                return false;
-            }
-            Log.unlock(lockDisabledSafepoints);
-            return true;
         }
     }
 
@@ -235,26 +233,6 @@ public final class Throw {
             final Pointer framePointer = JavaFrameAnchor.FP.get(anchor);
             vmThread.stackDumpStackFrameWalker().inspect(instructionPointer, stackPointer, framePointer, stackFrameDumper);
         }
-    }
-
-    /**
-     * Dumps the stack of the current thread. This method is equivalent to
-     * {@link #stackDump(String, Pointer, Pointer, Pointer)} except that it takes an extra parameter ({@code depth})
-     * that specifies the maximum number of stack frames to be walked.
-     *
-     * @param message if not {@code null}, this message is printed on a separate line prior to the stack trace
-     * @param instructionPointer the instruction pointer at which to begin the stack trace
-     * @param cpuStackPointer the stack pointer at which to begin the stack trace
-     * @param cpuFramePointer the frame pointer at which to begin the stack trace
-     * @param depth the maximum number of stack frames to be walked
-     */
-    public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer, int depth) {
-        if (message != null) {
-            Log.println(message);
-        }
-        stackFrameDumper.maximum = depth;
-        VmThread.current().stackDumpStackFrameWalker().inspect(instructionPointer, cpuStackPointer, cpuFramePointer, stackFrameDumper);
-        stackFrameDumper.maximum = 0;
     }
 
     /**
