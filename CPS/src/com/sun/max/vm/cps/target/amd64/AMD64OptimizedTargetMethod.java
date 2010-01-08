@@ -31,8 +31,11 @@ import com.sun.max.vm.stack.StackFrameVisitor;
 import com.sun.max.vm.stack.amd64.AMD64OptStackWalking;
 import com.sun.max.vm.stack.amd64.AMD64AdapterStackWalking;
 import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.TrapStateAccess;
+import com.sun.max.vm.runtime.Trap;
 import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
-import com.sun.max.program.ProgramError;
+import com.sun.max.vm.Log;
+
 import com.sun.max.lang.Bytes;
 
 /**
@@ -72,6 +75,7 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
         }
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
         Pointer registerState = Pointer.zero();
+        Pointer resumptionIp = current.ip();
         switch (calleeKind) {
             case TRAMPOLINE:
                 // compute the register reference map from the call at this site
@@ -80,6 +84,17 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
             case TRAP_STUB:  // fall through
                 // get the register state from the callee's frame
                 registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                int trapNum = TrapStateAccess.instance().getTrapNumber(registerState);
+                Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNum);
+                if (throwableClass != null) {
+                    // this trap will cause an exception to be thrown
+                    resumptionIp = throwAddressToCatchAddress(true, resumptionIp, throwableClass).asPointer();
+                    if (resumptionIp.isZero()) {
+                        // there is no handler for this exception in this method
+                        // so don't bother scanning the references
+                        return;
+                    }
+                }
                 break;
             case NATIVE:
                 // no register state.
@@ -95,14 +110,30 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
         if (!registerState.isZero()) {
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
-            throw ProgramError.unexpected();
+            final int safepointIndex = this.findSafepointIndex(resumptionIp);
+            if (safepointIndex < 0) {
+                Log.print("Could not find safepoint index for instruction at position ");
+                Log.print(resumptionIp.minus(codeStart()).toInt());
+                Log.print(" in ");
+                Log.printMethod(classMethodActor(), true);
+                FatalError.unexpected("Could not find safepoint index");
+            }
+
+            int byteIndex = frameReferenceMapsSize() + (registerReferenceMapSize() * safepointIndex);
+            Pointer slotPointer = registerState;
+            preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "CPS register state");
+            for (int i = 0; i < frameReferenceMapSize; i++) {
+                preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
+                slotPointer = slotPointer.plusWords(Bytes.WIDTH);
+                byteIndex++;
+            }
         }
 
         // prepare the map for this stack frame
         Pointer slotPointer = current.sp();
         preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "CPS frame");
-        int framReferenceMapSize = frameReferenceMapSize();
-        int byteIndex = stopIndex * framReferenceMapSize;
+        int frameReferenceMapSize = frameReferenceMapSize();
+        int byteIndex = stopIndex * frameReferenceMapSize;
         for (int i = 0; i < frameReferenceMapSize; i++) {
             preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
             slotPointer = slotPointer.plusWords(Bytes.WIDTH);
