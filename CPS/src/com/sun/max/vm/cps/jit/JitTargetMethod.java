@@ -52,7 +52,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     private int optimizedCallerAdapterFrameCodeSize;
     @INSPECTED
     private BytecodeInfo[] bytecodeInfos;
-    private int frameReferenceMapOffset;
+    protected int frameReferenceMapOffset;
     @INSPECTED
     private final AtomicReference referenceMapEditor = new AtomicReference();
 

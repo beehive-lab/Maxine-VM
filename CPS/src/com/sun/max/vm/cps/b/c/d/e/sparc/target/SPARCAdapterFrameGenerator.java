@@ -295,8 +295,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                     }
                     break;
                 case FLOATING_POINT_REGISTER:
-                    assert parameterLocation instanceof SPARCEirRegister.FloatingPoint;
-                    FloatingPoint fpParameterRegister = (SPARCEirRegister.FloatingPoint) parameterLocation;
+                    assert parameterLocation instanceof SinglePrecision;
+                    SinglePrecision fpParameterRegister = (SinglePrecision) parameterLocation;
                     switch (kind.asEnum) {
                         case FLOAT:
                             assembler().ld(optimizedCodeStackPointer, offset, fpParameterRegister.asSinglePrecision());
@@ -447,8 +447,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                     }
                     break;
                 case FLOATING_POINT_REGISTER:
-                    assert parameterLocation instanceof SPARCEirRegister.FloatingPoint;
-                    FloatingPoint fpParameterRegister = (SPARCEirRegister.FloatingPoint) parameterLocation;
+                    assert parameterLocation instanceof SinglePrecision;
+                    SinglePrecision fpParameterRegister = (SinglePrecision) parameterLocation;
                     if (kind == Kind.FLOAT) {
                         assembler().st(fpParameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset32 + JitStackFrameLayout.CATEGORY1_OFFSET_WITHIN_WORD);
                     } else {  // Kind.DOUBLE

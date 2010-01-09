@@ -862,10 +862,10 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      */
     public void setReferenceMapBits(StackFrameWalker.Cursor cursor, Pointer slotPointer, int refMap, int numBits) {
         if (Heap.traceRootScanning()) {
-            Log.print("    setReferenceMapBits: fp = ");
-            Log.print(cursor.fp());
-            Log.print(" sp = ");
+            Log.print("    setReferenceMapBits: sp = ");
             Log.print(cursor.sp());
+            Log.print(" fp = ");
+            Log.print(cursor.fp());
             Log.print(", slots @ ");
             Log.print(slotPointer);
             Log.print(", bits = ");
@@ -881,6 +881,10 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         if (!inThisStack(slotPointer)) {
             throw FatalError.unexpected("slots not in this stack");
         }
+        if (refMap == 0) {
+            // nothing to do.
+            return;
+        }
         if ((refMap & (-1 << numBits)) != 0) {
             throw FatalError.unexpected("reference map has extraneous high order bits set");
         }
@@ -889,16 +893,12 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             for (int i = 0; i < numBits; i++) {
                 if (((refMap >> i) & 1) == 1) {
                     Grip grip = slotPointer.getGrip(i);
-                    boolean valid = Heap.isValidGrip(grip);
-                    if (!valid || Heap.traceRootScanning()) {
-                        Log.print("    grip @ ");
-                        Log.print(slotPointer.plusWords(i));
-                        Log.print(" = ");
-                        Log.print(grip);
-                        Log.print(valid ? " ok" : " (invalid)");
-                        if (!valid) {
-                            throw FatalError.unexpected("invalid grip");
+                    if (Heap.isValidGrip(grip)) {
+                        if (Heap.traceRootScanning()) {
+                            printGrip(grip, cursor, slotPointer, i, true);
                         }
+                    } else {
+                        invalidGrip(grip, cursor, slotPointer, i);
                     }
                 }
             }
@@ -923,6 +923,23 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             }
         }
 
+    }
+
+    private void printGrip(Grip grip, StackFrameWalker.Cursor cursor, Pointer slotPointer, int slotIndex, boolean valid) {
+        Log.print("    grip @ ");
+        Log.print(slotPointer.plusWords(slotIndex));
+        Log.print(" [sp + ");
+        Log.print(slotPointer.plusWords(slotIndex).minus(cursor.sp()).toInt());
+        Log.print("] = ");
+        Log.print(grip.toOrigin());
+        Log.print(valid ? " ok\n" : " (invalid)\n");
+    }
+
+    @NEVER_INLINE
+    private void invalidGrip(Grip grip, StackFrameWalker.Cursor cursor, Pointer slotPointer, int slotIndex) {
+        printGrip(grip, cursor, slotPointer, slotIndex, false);
+        Throw.StackFrameDumper.dumpFrame("invalid grip ### ", cursor.targetMethod(), cursor.ip(), 0);
+        throw FatalError.unexpected("invalid grip");
     }
 
     private boolean inThisStack(Pointer pointer) {

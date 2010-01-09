@@ -27,7 +27,6 @@ import junit.framework.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.c1x.*;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes
@@ -197,7 +196,8 @@ public class MaxineTesterConfiguration {
         imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
         imageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x");
 
-        String c1xClass = C1XCompilerScheme.class.getName();
+        String c1xPackage = "com.sun.max.vm.compiler.c1x";
+        String c1xClass = c1xPackage + ".C1XCompilerScheme";
 
         jtLoadConfig("cpscps", "-caller=cps", "-callee=cps");
         jtLoadConfig("cpsjit", "-caller=cps", "-callee=jit");
@@ -219,14 +219,14 @@ public class MaxineTesterConfiguration {
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
         maxvmConfig("GC", "-Xmx3g");
 
-        imageConfig("jit-c1x0",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=0");
-        imageConfig("jit-c1x0x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=0 -C1X:+UseXIR");
-        imageConfig("jit-c1x1",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=1");
-        imageConfig("jit-c1x1x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=1 -C1X:+UseXIR");
-        imageConfig("jit-c1x2",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=2");
-        imageConfig("jit-c1x2x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=2 -C1X:+UseXIR");
-        imageConfig("jit-c1x3",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=3");
-        imageConfig("jit-c1x3x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=3 -C1X:+UseXIR");
+        imageConfig("jit-c1x0",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0");
+        imageConfig("jit-c1x0x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0 -C1X:+UseXIR");
+        imageConfig("jit-c1x1",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=1");
+        imageConfig("jit-c1x1x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=1 -C1X:+UseXIR");
+        imageConfig("jit-c1x2",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=2");
+        imageConfig("jit-c1x2x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=2 -C1X:+UseXIR");
+        imageConfig("jit-c1x3",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=3");
+        imageConfig("jit-c1x3x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=3 -C1X:+UseXIR");
 
         imageConfig("opt-c1x0",  "-opt=c1x", "-vmargs=-C1X:OptLevel=0");
         imageConfig("opt-c1x0x", "-opt=c1x", "-vmargs=-C1X:OptLevel=0 -C1X:+UseXIR");

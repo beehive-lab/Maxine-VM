@@ -1208,7 +1208,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SinglePrecision destinationRegister, SinglePrecision sourceRegister1, SinglePrecision sourceRegister2) {
             emitter.assembler().fadds(sourceRegister1.asSinglePrecision(), sourceRegister2.asSinglePrecision(), destinationRegister.asSinglePrecision());
         }
         @Override
@@ -1227,7 +1227,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SinglePrecision destinationRegister, SinglePrecision sourceRegister1, SinglePrecision sourceRegister2) {
             emitter.assembler().faddd(sourceRegister1.asDoublePrecision(), sourceRegister2.asDoublePrecision(), destinationRegister.asDoublePrecision());
         }
         @Override
@@ -1242,7 +1242,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint leftRegister, SPARCEirRegister.FloatingPoint rightRegister) {
+        protected void emit_F_F(SPARCEirTargetEmitter emitter, SinglePrecision leftRegister, SinglePrecision rightRegister) {
             emitter.assembler().fcmps(selectedConditionCode(), leftRegister.asSinglePrecision(), rightRegister.asSinglePrecision());
         }
 
@@ -1258,7 +1258,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint leftRegister, SPARCEirRegister.FloatingPoint rightRegister) {
+        protected void emit_F_F(SPARCEirTargetEmitter emitter, SinglePrecision leftRegister, SinglePrecision rightRegister) {
             emitter.assembler().fcmpd(selectedConditionCode(), leftRegister.asDoublePrecision(), rightRegister.asDoublePrecision());
         }
 
@@ -1277,7 +1277,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SinglePrecision destinationRegister, SinglePrecision sourceRegister1, SinglePrecision sourceRegister2) {
             emitter.assembler().fdivs(sourceRegister1.asSinglePrecision(), sourceRegister2.asSinglePrecision(), destinationRegister.asSinglePrecision());
         }
         @Override
@@ -1296,7 +1296,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SinglePrecision destinationRegister, SinglePrecision sourceRegister1, SinglePrecision sourceRegister2) {
             emitter.assembler().fdivd(sourceRegister1.asDoublePrecision(), sourceRegister2.asDoublePrecision(), destinationRegister.asDoublePrecision());
         }
         @Override
@@ -1314,7 +1314,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SinglePrecision destinationRegister, SinglePrecision sourceRegister1, SinglePrecision sourceRegister2) {
             emitter.assembler().fmuls(sourceRegister1.asSinglePrecision(), sourceRegister2.asSinglePrecision(), destinationRegister.asSinglePrecision());
         }
         @Override
@@ -1333,7 +1333,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SinglePrecision destinationRegister, SinglePrecision sourceRegister1, SinglePrecision sourceRegister2) {
             emitter.assembler().fmuld(sourceRegister1.asDoublePrecision(), sourceRegister2.asDoublePrecision(), destinationRegister.asDoublePrecision());
         }
         @Override
@@ -1351,7 +1351,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SinglePrecision destinationRegister, SinglePrecision sourceRegister1, SinglePrecision sourceRegister2) {
             emitter.assembler().fsubs(sourceRegister1.asSinglePrecision(), sourceRegister2.asSinglePrecision(), destinationRegister.asSinglePrecision());
         }
         @Override
@@ -1369,7 +1369,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SinglePrecision destinationRegister, SinglePrecision sourceRegister1, SinglePrecision sourceRegister2) {
             emitter.assembler().fsubd(sourceRegister1.asDoublePrecision(), sourceRegister2.asDoublePrecision(), destinationRegister.asDoublePrecision());
         }
         @Override
