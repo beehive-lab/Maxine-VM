@@ -137,7 +137,7 @@ public class VmThread {
 
     private final VmStackFrameWalker stackDumpStackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
-    private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(false, true);
+    private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(true, true);
 
     private final StackReferenceMapPreparer stackReferenceMapVerifier = new StackReferenceMapPreparer(true, false);
 
