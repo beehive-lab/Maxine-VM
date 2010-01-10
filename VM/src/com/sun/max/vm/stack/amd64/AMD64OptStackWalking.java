@@ -313,6 +313,10 @@ public class AMD64OptStackWalking {
         Pointer sp = current.sp();
         Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), ip, throwable.getClass());
         if (!catchAddress.isZero()) {
+            if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
+                // adapter frame cannot handle exceptions.
+                return;
+            }
             if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(ip.minus(targetMethod.codeStart()).toInt());

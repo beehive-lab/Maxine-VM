@@ -66,15 +66,15 @@ public final class SPARCEirStore extends SPARCEirPointerOperation {
         return destinationOperand();
     }
 
-    public SPARCEirRegister.GeneralPurpose valueGeneralRegister() {
+    public SPARCEirRegisters.GeneralPurpose valueGeneralRegister() {
         return destinationGeneralRegister();
     }
 
-    public SPARCEirRegister.SinglePrecision valueFloatingPointRegister() {
+    public SPARCEirRegisters.SinglePrecision valueFloatingPointRegister() {
         return destinationFloatingPointRegister();
     }
 
-    static void emit(SPARCEirTargetEmitter emitter, Kind kind, EirRegister value,  SPARCEirRegister.GeneralPurpose pointerRegister,  SPARCEirRegister.GeneralPurpose offsetRegister) {
+    static void emit(SPARCEirTargetEmitter emitter, Kind kind, EirRegister value,  SPARCEirRegisters.GeneralPurpose pointerRegister,  SPARCEirRegisters.GeneralPurpose offsetRegister) {
         switch (kind.asEnum) {
             case BYTE:
             case BOOLEAN:
@@ -104,7 +104,7 @@ public final class SPARCEirStore extends SPARCEirPointerOperation {
         }
     }
 
-    static void emit(SPARCEirTargetEmitter emitter, Kind kind, EirRegister value,  SPARCEirRegister.GeneralPurpose pointerRegister, int simm13) {
+    static void emit(SPARCEirTargetEmitter emitter, Kind kind, EirRegister value,  SPARCEirRegisters.GeneralPurpose pointerRegister, int simm13) {
         assert isSimm13(simm13);
         switch (kind.asEnum) {
             case BYTE:
@@ -136,12 +136,12 @@ public final class SPARCEirStore extends SPARCEirPointerOperation {
     }
 
     @Override
-    protected void emit(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister,  SPARCEirRegister.GeneralPurpose offsetRegister) {
+    protected void emit(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister,  SPARCEirRegisters.GeneralPurpose offsetRegister) {
         emit(emitter, kind, (EirRegister) destinationLocation(), pointerRegister, offsetRegister);
     }
 
     @Override
-    protected void emit(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int simm13) {
+    protected void emit(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister, int simm13) {
         emit(emitter, kind, (EirRegister) destinationLocation(), pointerRegister, simm13);
     }
 
