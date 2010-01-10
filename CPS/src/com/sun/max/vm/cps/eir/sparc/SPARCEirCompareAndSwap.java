@@ -71,16 +71,16 @@ public class SPARCEirCompareAndSwap extends SPARCEirUnaryOperation {
         visitor.run(addressOperand);
     }
 
-    public SPARCEirRegister.GeneralPurpose newValueRegister() {
+    public SPARCEirRegisters.GeneralPurpose newValueRegister() {
         return operandGeneralRegister();
     }
 
-    public SPARCEirRegister.GeneralPurpose oldValueRegister() {
-        return (SPARCEirRegister.GeneralPurpose) comparedLocation();
+    public SPARCEirRegisters.GeneralPurpose oldValueRegister() {
+        return (SPARCEirRegisters.GeneralPurpose) comparedLocation();
     }
 
-    public SPARCEirRegister.GeneralPurpose addressRegister() {
-        return (SPARCEirRegister.GeneralPurpose) addressLocation();
+    public SPARCEirRegisters.GeneralPurpose addressRegister() {
+        return (SPARCEirRegisters.GeneralPurpose) addressLocation();
     }
 
     @Override

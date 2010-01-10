@@ -320,8 +320,8 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         Pointer ripPointer = adapterReturnInstructionPointer(instructionPointer, stackPointer, entryPoint);
         Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
 
-        Pointer callerStackPointer = ripPointer.plus(Word.size()); // skip RIP word
-        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerStackPointer);
+        Pointer callerSP = ripPointer.plus(Word.size()); // skip RIP word
+        stackFrameWalker.advance(callerInstructionPointer, callerSP, callerSP);
     }
 
     private Pointer adapterReturnInstructionPointer(Pointer ip, Pointer sp, Pointer entryPoint) {

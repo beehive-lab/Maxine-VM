@@ -54,7 +54,7 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
     private void emitTrapStubEpilogue(SPARCEirTargetEmitter emitter) {
         final SPARCAssembler asm = emitter.assembler();
         final GPR latchRegister = SPARCSafepoint.LATCH_REGISTER;
-        final GPR stackPointer = ((SPARCEirRegister.GeneralPurpose) emitter.abi().stackPointer()).as();
+        final GPR stackPointer = ((SPARCEirRegisters.GeneralPurpose) emitter.abi().stackPointer()).as();
         final GPR returnAddressRegister = GPR.L0;
         final GPR scratchRegister1 = GPR.L1;
         final GPR scratchRegister2 = GPR.L2;
@@ -65,7 +65,7 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
         asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, returnAddressRegister);
 
         // restore all the general purpose registers not in the register windows
-        for (SPARCEirRegister.GeneralPurpose eirRegister : SPARCEirABI.integerNonSystemReservedGlobalRegisters) {
+        for (SPARCEirRegisters.GeneralPurpose eirRegister : SPARCEirABI.integerNonSystemReservedGlobalRegisters) {
             final GPR gpr = eirRegister.as();
             asm.ldx(stackPointer, offset, gpr);
             offset += wordSize;

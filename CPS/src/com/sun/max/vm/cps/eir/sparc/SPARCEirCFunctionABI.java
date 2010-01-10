@@ -54,11 +54,11 @@ public class SPARCEirCFunctionABI extends SPARCEirJavaABI {
      */
     public SPARCEirCFunctionABI(VMConfiguration vmConfiguration, boolean onlyCalledFromC) {
         super(vmConfiguration);
-        calleeSavedRegisters = PoolSet.of(SPARCEirRegister.GeneralPurpose.pool(), SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+        calleeSavedRegisters = PoolSet.of(SPARCEirRegisters.pool(), SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
         callerSavedRegisters =  super.callerSavedRegisters();
         if (!onlyCalledFromC) {
             // Have to save the SAFEPOINT latch global register.
-            callerSavedRegisters.add(SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+            callerSavedRegisters.add(SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
         }
         // Native target ABI uses different entry point.
         final TargetABI<GPR, FPR> originalTargetABI = targetABI();
