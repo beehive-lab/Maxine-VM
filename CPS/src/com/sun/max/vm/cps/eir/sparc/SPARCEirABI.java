@@ -21,6 +21,7 @@
 package com.sun.max.vm.cps.eir.sparc;
 
 import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.GeneralPurpose.*;
+import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.*;
 
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
@@ -56,7 +57,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
 
     @Override
     public Pool<SPARCEirRegister> registerPool() {
-        return SPARCEirRegisters.pool();
+        return pool();
     }
 
     @Override
@@ -65,7 +66,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         if (r == null) {
             return null;
         }
-        return SPARCEirRegisters.GeneralPurpose.from(r);
+        return GeneralPurpose.from(r);
     }
 
     @Override
@@ -75,7 +76,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
             return null;
         }
         // Only double precision floating-point register can be assigned a role.
-        return SPARCEirRegisters.SinglePrecision.doublePrecisionFrom(r);
+        return SinglePrecision.doublePrecisionFrom(r);
     }
 
     /**
@@ -146,16 +147,16 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     // to two consecutive single-precision registers (e.g., D0 == F0 + F1, D2 = F2 + F3, etc...) for the first 32 registers. Subsequent
     // registers (D32 and up) are actual double precision registers.
     protected static final IndexedSequence<SPARCEirRegister> floatingPointOutRegisters =
-        new ArraySequence<SPARCEirRegister>(SPARCEirRegisters.F0, SPARCEirRegisters.F1, SPARCEirRegisters.F2, SPARCEirRegisters.F3, SPARCEirRegisters.F4, SPARCEirRegisters.F5, SPARCEirRegisters.F6, SPARCEirRegisters.F7, SPARCEirRegisters.F8, SPARCEirRegisters.F9, SPARCEirRegisters.F10, SPARCEirRegisters.F11, SPARCEirRegisters.F12, SPARCEirRegisters.F13, SPARCEirRegisters.F14, SPARCEirRegisters.F15,
-                                            SPARCEirRegisters.F16, SPARCEirRegisters.F17, SPARCEirRegisters.F18, SPARCEirRegisters.F19, SPARCEirRegisters.F20, SPARCEirRegisters.F21, SPARCEirRegisters.F22, SPARCEirRegisters.F23, SPARCEirRegisters.F24, SPARCEirRegisters.F25, SPARCEirRegisters.F26, SPARCEirRegisters.F27, SPARCEirRegisters.F28, SPARCEirRegisters.F29, SPARCEirRegisters.F30, SPARCEirRegisters.F31);
+        new ArraySequence<SPARCEirRegister>(F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
+                                            F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
 
     protected static final IndexedSequence<SPARCEirRegister> floatingPointInRegisters = new ArraySequence<SPARCEirRegister>(floatingPointOutRegisters);
 
     protected static final IndexedSequence<SPARCEirRegister> singlePrecisionParameterRegisters =
-        new ArraySequence<SPARCEirRegister>(SPARCEirRegisters.F1, SPARCEirRegisters.F3, SPARCEirRegisters.F5, SPARCEirRegisters.F7, SPARCEirRegisters.F9,  SPARCEirRegisters.F11, SPARCEirRegisters.F13, SPARCEirRegisters.F15, SPARCEirRegisters.F17, SPARCEirRegisters.F19, SPARCEirRegisters.F21, SPARCEirRegisters.F23, SPARCEirRegisters.F25, SPARCEirRegisters.F27, SPARCEirRegisters.F29, SPARCEirRegisters.F31);
+        new ArraySequence<SPARCEirRegister>(F1, F3, F5, F7, F9,  F11, F13, F15, F17, F19, F21, F23, F25, F27, F29, F31);
 
     protected static final IndexedSequence<SPARCEirRegister> doublePrecisionParameterRegisters =
-        new ArraySequence<SPARCEirRegister>(SPARCEirRegisters.F0, SPARCEirRegisters.F2, SPARCEirRegisters.F4, SPARCEirRegisters.F6, SPARCEirRegisters.F8, SPARCEirRegisters.F10, SPARCEirRegisters.F12, SPARCEirRegisters.F14, SPARCEirRegisters.F16, SPARCEirRegisters.F18, SPARCEirRegisters.F20, SPARCEirRegisters.F22, SPARCEirRegisters.F24, SPARCEirRegisters.F26, SPARCEirRegisters.F28, SPARCEirRegisters.F30);
+        new ArraySequence<SPARCEirRegister>(F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28, F30);
 
     private static final IndexedSequence<SPARCEirRegister> emptyRegisterSet = new ArraySequence<SPARCEirRegister>();
 
@@ -214,7 +215,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     }
 
     private PoolSet<SPARCEirRegister> createUnallocatableRegisterPoolSet() {
-        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(SPARCEirRegisters.pool());
+        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(pool());
         for (SPARCEirRegister reserved : integerSystemReservedGlobalRegisters) {
             result.add(reserved);
         }
@@ -222,8 +223,8 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         result.add(framePointer());
         result.add(integerRegisterActingAs(VMRegister.Role.SAFEPOINT_LATCH));
         result.add(integerRegisterActingAs(VMRegister.Role.LITERAL_BASE_POINTER));
-        result.add(SPARCEirRegisters.GeneralPurpose.I7);   // return address register. TODO: add an optional Role for this ?
-        result.add(SPARCEirRegisters.GeneralPurpose.O7); // Used to saved the return address in the callee. May only be used as temporary scratch.
+        result.add(GeneralPurpose.I7);   // return address register. TODO: add an optional Role for this ?
+        result.add(GeneralPurpose.O7); // Used to saved the return address in the callee. May only be used as temporary scratch.
         for (Kind kind : Kind.PRIMITIVE_VALUES) {
             result.add(getScratchRegister(kind));
         }
@@ -238,7 +239,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     }
 
     private PoolSet<SPARCEirRegister> createAllocatableRegisterPoolSet() {
-        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(SPARCEirRegisters.pool());
+        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(pool());
         result.addAll();
         for (SPARCEirRegister register : unallocatableRegisters) {
             result.remove(register);
@@ -254,7 +255,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     }
 
     private PoolSet<SPARCEirRegister> createCallerSavedRegisterPoolSet() {
-        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(SPARCEirRegisters.pool());
+        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(pool());
         result.or(allocatableRegisters());
         // Local register don't need to be saved.
         for (SPARCEirRegister register : integerLocalRegisters) {
@@ -277,7 +278,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     /**
      * No callee saved registers.
      */
-    private final PoolSet<SPARCEirRegister> calleeSavedRegisters = PoolSet.noneOf(SPARCEirRegisters.pool());
+    private final PoolSet<SPARCEirRegister> calleeSavedRegisters = PoolSet.noneOf(pool());
 
     @Override
     public PoolSet<SPARCEirRegister> calleeSavedRegisters() {
@@ -323,7 +324,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         targetABI = targetABI(vmConfiguration);
         unallocatableRegisters = createUnallocatableRegisterPoolSet();
         allocatableRegisters = createAllocatableRegisterPoolSet();
-        resultRegisters = PoolSet.noneOf(SPARCEirRegisters.pool());
+        resultRegisters = PoolSet.noneOf(pool());
         resultRegisters.add((SPARCEirRegister) getResultLocation(Kind.LONG));
         resultRegisters.add((SPARCEirRegister) getResultLocation(Kind.DOUBLE));
         callerSavedRegisters = createCallerSavedRegisterPoolSet();
