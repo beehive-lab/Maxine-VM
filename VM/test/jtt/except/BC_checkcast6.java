@@ -22,12 +22,12 @@ package jtt.except;
 
 /*
  * @Harness: java
- * @Runs: 0 = -1; 1 = -1; 2 = !java.lang.ClassCastException; 3 = !java.lang.ClassCastException; 4 = 4
+ * @Runs: 0 = -1; 1 = -1; 2 = -5; 3 = -5; 4 = 4
  */
-public class BC_checkcast2 {
+public final class BC_checkcast6 {
     static Object object2 = new Object();
     static Object object3 = "";
-    static Object object4 = new jtt.except.BC_checkcast2();
+    static Object object4 = new BC_checkcast6();
 
     public static int test(int arg) {
         Object obj;
@@ -40,9 +40,13 @@ public class BC_checkcast2 {
         } else {
             obj = null;
         }
-        final BC_checkcast2 bc = (BC_checkcast2) obj;
-        if (bc != null) {
-            return arg;
+        try {
+            final BC_checkcast6 bc = (BC_checkcast6) obj;
+            if (bc != null) {
+                return arg;
+            }
+        } catch (ClassCastException e) {
+            return -5;
         }
         return -1;
     }
