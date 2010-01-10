@@ -757,10 +757,15 @@ public final class X86LIRGenerator extends LIRGenerator {
         obj.loadItem();
 
         // info for exceptions
-        LIRDebugInfo infoForException = stateFor(x, x.stateBefore());
-        ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowClassCastException), infoForException, obj.result());
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
+        LocalStub stub = null;
+        if (x.directCompare()) {
+            // this is a direct check, make a slow path
+            stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowClassCastException), info, obj.result());
+            info = null;
+        }
         LIROperand reg = rlockResult(x);
-        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), ILLEGAL, ILLEGAL, x.directCompare(), null, stub);
+        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), ILLEGAL, ILLEGAL, x.directCompare(), info, stub);
     }
 
     @Override
