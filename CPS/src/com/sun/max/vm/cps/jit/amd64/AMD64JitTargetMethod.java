@@ -33,9 +33,15 @@ import com.sun.max.vm.stack.amd64.AMD64JavaStackFrame;
 import com.sun.max.vm.stack.amd64.AMD64OptStackWalking;
 import com.sun.max.vm.stack.amd64.AMD64OptimizedToJitAdapterFrame;
 import com.sun.max.vm.Log;
+import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.type.TypeDescriptor;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.bytecode.Bytecode;
+import com.sun.max.vm.classfile.CodeAttribute;
+import com.sun.max.vm.classfile.constant.ConstantPool;
+import com.sun.max.vm.classfile.constant.MethodRefConstant;
 import com.sun.max.vm.runtime.Safepoint;
 import com.sun.max.lang.Bytes;
-import com.sun.max.program.ProgramError;
 
 /**
  * @author Bernd Mathiske
@@ -199,14 +205,14 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             return;
         }
         finalizeReferenceMaps();
+
         Pointer startOfPrologue = JIT_ENTRY_POINT.in(this);
         Pointer lastPrologueInstruction = startOfPrologue.plus(AMD64JitCompiler.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
         FramePointerState framePointerState = computeFramePointerState(current, current.stackFrameWalker(), lastPrologueInstruction);
         Pointer localVariablesBase = framePointerState.localVariablesBase(current);
 
         if (callee.calleeKind() == StackFrameWalker.CalleeKind.TRAMPOLINE) {
-            // TODO: handle call of trampoline!
-            ProgramError.unexpected();
+            prepareTrampolineRefMap(current, callee, preparer);
         }
 
         int stopIndex = findClosestStopIndex(current.ip());
@@ -312,6 +318,45 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         stackFrameWalker.advance(callerIP, callerSP, framePointerState.callerFP(current));
     }
 
+    protected void prepareTrampolineRefMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        // prepare the reference map for the parameters passed by the current (caller) frame.
+        // the call was unresolved and hit a trampoline, so compute the refmap from the signature of
+        // the called method by looking at the bytecode of the caller method--how ugly...
+        final int bytecodePosition = bytecodePositionForCallSite(current.ip());
+        final CodeAttribute codeAttribute = classMethodActor().codeAttribute();
+        final ConstantPool constantPool = codeAttribute.constantPool;
+        final byte[] code = codeAttribute.code();
+        final MethodRefConstant methodConstant = constantPool.methodAt(getInvokeConstantPoolIndexOperand(code, bytecodePosition));
+        final boolean isInvokestatic = (code[bytecodePosition] & 0xFF) == Bytecode.INVOKESTATIC.ordinal();
+        final SignatureDescriptor signature = methodConstant.signature(constantPool);
+
+        int slotSize = JitStackFrameLayout.JIT_SLOT_SIZE;
+        int refOffsetInSlot = Word.size() - slotSize; // for multi-word slots, get the offset into the slot
+        final int numberOfSlots = signature.computeNumberOfSlots() + (isInvokestatic ? 0 : 1);
+
+        if (numberOfSlots != 0) {
+            // point at first slot (highest address)
+            final Pointer slotPointer = current.sp().plus((numberOfSlots - 1) * slotSize).plus(refOffsetInSlot);
+            int parameterSlotIndex = 0;
+            // First deal with the receiver (if any)
+            if (!isInvokestatic) {
+                // Mark the slot for the receiver as it is not covered by the method signature:
+                preparer.setReferenceMapBits(current, slotPointer, 1, 1);
+                parameterSlotIndex++;
+            }
+
+            // Now process the other parameters
+            for (int i = 0; i < signature.numberOfParameters(); ++i) {
+                final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
+                final Kind parameterKind = parameter.toKind();
+                if (parameterKind == Kind.REFERENCE) {
+                    preparer.setReferenceMapBits(current, slotPointer.minus(parameterSlotIndex * slotSize), 1, 1);
+                }
+                parameterSlotIndex += parameterKind.isCategory2() ? 2 : 1;
+            }
+        }
+    }
+
     private void advanceAdapterFrame(StackFrameWalker.Cursor current) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         Pointer instructionPointer = current.ip();
@@ -371,4 +416,9 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         }
         return false;
     }
+
+    private static int getInvokeConstantPoolIndexOperand(byte[] code, int invokeOpcodePosition) {
+        return ((code[invokeOpcodePosition + 1] & 0xff) << 8) | (code[invokeOpcodePosition + 2] & 0xff);
+    }
+
 }

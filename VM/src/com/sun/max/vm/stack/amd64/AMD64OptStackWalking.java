@@ -49,6 +49,7 @@ import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.memory.VirtualMemory;
 import com.sun.max.program.ProgramError;
 import com.sun.max.asm.amd64.AMD64GeneralRegister64;
+import com.sun.max.collect.IndexedSequence;
 
 /**
  * This class collects together stack-walking related functionality that is (somewhat) compiler-independent.
@@ -436,6 +437,42 @@ public class AMD64OptStackWalking {
                     // and covered by the reference map for the stack at this call point
                     return;
                 }
+            }
+        }
+    }
+
+    public static void prepareAdapterOverflowRefMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+        // prepare the reference map for the overflow argument area allocated by an adapter frame
+        TargetMethod adaptedMethod = callee.targetMethod();
+        TargetABI abi = adaptedMethod.abi();
+        ClassMethodActor method = adaptedMethod.classMethodActor();
+        SignatureDescriptor descriptor = method.descriptor();
+        int integerRegisterParams = 0;
+        int floatRegisterParams = 0;
+        if (!method.isStatic()) {
+            // consume a register for the receiver object
+            integerRegisterParams = 1;
+        }
+        IndexedSequence integerParamRegs = abi.integerIncomingParameterRegisters();
+        IndexedSequence floatParamRegs = abi.floatingPointParameterRegisters();
+        int parameterSlotIndex = 0;
+        for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
+            final TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
+            final Kind parameterKind = parameter.toKind();
+            boolean onStack = false;
+            if (abi.putIntoIntegerRegister(parameterKind)) {
+                if (integerRegisterParams++ >= integerParamRegs.length()) {
+                    onStack = true;
+                }
+            } else {
+                if (floatRegisterParams++ >= floatParamRegs.length()) {
+                    onStack = true;
+                }
+            }
+            if (parameterKind == Kind.REFERENCE && onStack) {
+                // set a bit for this parameter if it is an overflow argument
+                preparer.setReferenceMapBits(current, current.sp().plusWords(parameterSlotIndex), 1, 1);
+                parameterSlotIndex++;
             }
         }
     }
