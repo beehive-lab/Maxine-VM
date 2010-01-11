@@ -697,6 +697,9 @@ public class InvocationStubGenerator<T> {
     static final Map<KindEnum, Integer> VALUE_BOX;
     static final Map<KindEnum, Integer> VALUE_UNBOX;
 
+    @HOSTED_ONLY
+    static final Map<KindEnum, Method> VALUE_UNBOX_METHOD = new EnumMap<KindEnum, Method>(KindEnum.class);
+
     static final Map<Class<? extends Word>, Integer> CAST_WORD;
 
     static final int VoidValue_VOID;
@@ -707,12 +710,18 @@ public class InvocationStubGenerator<T> {
 
     @HOSTED_ONLY
     public static Method findValueUnboxMethod(Kind kind) {
-        final String kindName = kind.name.toString();
-        if (kind == Kind.REFERENCE) {
-            return Classes.getDeclaredMethod(Value.class, "unboxObject");
+        Method method = VALUE_UNBOX_METHOD.get(kind.asEnum);
+        if (method == null) {
+            final String kindName = kind.name.toString();
+            if (kind == Kind.REFERENCE) {
+                method = Classes.getDeclaredMethod(Value.class, "unboxObject");
+            } else {
+                final String camelCaseName = Character.toUpperCase(kindName.charAt(0)) + kindName.substring(1);
+                method = Classes.getDeclaredMethod(Value.class, "unbox" + camelCaseName);
+            }
+            VALUE_UNBOX_METHOD.put(kind.asEnum, method);
         }
-        final String camelCaseName = Character.toUpperCase(kindName.charAt(0)) + kindName.substring(1);
-        return Classes.getDeclaredMethod(Value.class, "unbox" + camelCaseName);
+        return method;
     }
 
     static {

@@ -251,9 +251,7 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
             final Builtin builtin = Builtin.builtins().get(i);
             assert builtin.serial() == i;
             if (builtins[i] == null) {
-                if (builtin instanceof JavaBuiltin) {
-                    register(builtins, new CirJavaBuiltin((JavaBuiltin) builtin));
-                } else if (builtin instanceof PointerLoadBuiltin) {
+                if (builtin instanceof PointerLoadBuiltin) {
                     register(builtins, new CirPointerLoadBuiltin((PointerLoadBuiltin) builtin));
                 } else {
                     register(builtins, new CirBuiltin(builtin));
@@ -295,8 +293,22 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         return builtin.executable;
     }
 
+    /**
+     * A call to a CIR builtin is foldable if all of its non-continuation arguments
+     * are {@linkplain CirValue#isConstant() constant} and none of them are of type
+     * {@link Kind#REFERENCE}.
+     */
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        return !nonFoldable && CirValue.areConstant(arguments);
+        if (nonFoldable) {
+            return false;
+        }
+        for (int i = 0; i < arguments.length - 2; i++) {
+            CirValue argument = arguments[i];
+            if (!argument.isConstant() || argument.kind() == Kind.REFERENCE) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
