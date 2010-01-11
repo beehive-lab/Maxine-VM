@@ -407,7 +407,7 @@ public class CompiledPrototype extends Prototype {
         if (c1xCompiler == null) {
             try {
                 // TODO: remove reflective dependency here!
-                Class type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
+                Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
                 Constructor constructor = type.getConstructor(VMConfiguration.class);
                 c1xCompiler = (RuntimeCompilerScheme) constructor.newInstance(VMConfiguration.hostOrTarget());
             } catch (Exception e) {

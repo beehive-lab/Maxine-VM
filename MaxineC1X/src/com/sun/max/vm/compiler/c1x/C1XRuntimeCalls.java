@@ -190,7 +190,7 @@ public class C1XRuntimeCalls {
 
     @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedNewArray)
     public static Object runtimeUnresolvedNewArray(int index, ConstantPool constantPool, int length) {
-        ArrayClassActor arrayClass = ArrayClassActor.forComponentClassActor(constantPool.classAt(index).resolve(constantPool, index));
+        ArrayClassActor<?> arrayClass = ArrayClassActor.forComponentClassActor(constantPool.classAt(index).resolve(constantPool, index));
         return createArray(arrayClass.dynamicHub(), length);
     }
 
