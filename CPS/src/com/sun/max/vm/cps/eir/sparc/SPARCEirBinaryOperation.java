@@ -65,11 +65,11 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         return operandLocation();
     }
 
-    public SPARCEirRegister.GeneralPurpose destinationGeneralRegister() {
+    public SPARCEirRegisters.GeneralPurpose destinationGeneralRegister() {
         return operandGeneralRegister();
     }
 
-    public SPARCEirRegister.FloatingPoint destinationFloatingPointRegister() {
+    public SPARCEirRegisters.SinglePrecision destinationFloatingPointRegister() {
         return operandFloatingPointRegister();
     }
 
@@ -101,19 +101,19 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         return registerOrImmediateOperand.location();
     }
 
-    public SPARCEirRegister.GeneralPurpose rightGeneralRegister() {
+    public SPARCEirRegisters.GeneralPurpose rightGeneralRegister() {
         return sourceGeneralRegister();
     }
-    public SPARCEirRegister.FloatingPoint rightFloatingPointRegister() {
-        return (SPARCEirRegister.FloatingPoint) rightLocation();
+    public SPARCEirRegisters.SinglePrecision rightFloatingPointRegister() {
+        return (SPARCEirRegisters.SinglePrecision) rightLocation();
     }
 
-    public SPARCEirRegister.GeneralPurpose sourceGeneralRegister() {
-        return (SPARCEirRegister.GeneralPurpose) sourceLocation();
+    public SPARCEirRegisters.GeneralPurpose sourceGeneralRegister() {
+        return (SPARCEirRegisters.GeneralPurpose) sourceLocation();
     }
 
-    public SPARCEirRegister.FloatingPoint sourceFloatingPointRegister() {
-        return (SPARCEirRegister.FloatingPoint) sourceLocation();
+    public SPARCEirRegisters.SinglePrecision sourceFloatingPointRegister() {
+        return (SPARCEirRegisters.SinglePrecision) sourceLocation();
     }
 
     /**
@@ -137,12 +137,12 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         return registerOperand.location();
     }
 
-    public SPARCEirRegister.GeneralPurpose leftGeneralRegister() {
-        return (SPARCEirRegister.GeneralPurpose) leftLocation();
+    public SPARCEirRegisters.GeneralPurpose leftGeneralRegister() {
+        return (SPARCEirRegisters.GeneralPurpose) leftLocation();
     }
 
-    public SPARCEirRegister.FloatingPoint leftFloatingPointRegister() {
-        return (SPARCEirRegister.FloatingPoint) leftLocation();
+    public SPARCEirRegisters.SinglePrecision leftFloatingPointRegister() {
+        return (SPARCEirRegisters.SinglePrecision) leftLocation();
     }
 
     @Override
@@ -205,8 +205,8 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
      * @author Laurent Daynes
      */
     protected interface GeneralBinaryOperationEmitter {
-        void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister);
-        void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int simm);
+        void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister);
+        void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int simm);
         boolean canUseImmediate(int simm);
     }
 
@@ -216,11 +216,11 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
      * @param generalBinOpEmitter
      * @param value
      */
-    protected void emit_G_I32(SPARCEirTargetEmitter emitter, GeneralBinaryOperationEmitter generalBinOpEmitter, SPARCEirRegister.GeneralPurpose destinationRegister, int value) {
+    protected void emit_G_I32(SPARCEirTargetEmitter emitter, GeneralBinaryOperationEmitter generalBinOpEmitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int value) {
         if (generalBinOpEmitter.canUseImmediate(value)) {
             generalBinOpEmitter.emit_G_I(emitter, destinationRegister, value);
         } else {
-            final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+            final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
             emitter.assembler().setsw(value, scratchRegister.as());
             generalBinOpEmitter.emit_G_G(emitter, destinationRegister, scratchRegister);
         }
@@ -238,7 +238,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
         }
     }
 
-    protected void emit_G_GI(SPARCEirTargetEmitter emitter, GeneralBinaryOperationEmitter generalBinOpEmitter, SPARCEirRegister.GeneralPurpose destinationRegister) {
+    protected void emit_G_GI(SPARCEirTargetEmitter emitter, GeneralBinaryOperationEmitter generalBinOpEmitter, SPARCEirRegisters.GeneralPurpose destinationRegister) {
         assert destinationRegister.category().equals(INTEGER_REGISTER);
         switch(sourceLocation().category()) {
             case INTEGER_REGISTER:
@@ -249,7 +249,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 if (Longs.numberOfEffectiveSignedBits(value) < Kind.INT.width.numberOfBits) {
                     emit_G_I32(emitter, generalBinOpEmitter, destinationRegister, (int) value);
                 } else {
-                    final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+                    final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
                     // O7 is a secondary scratch register we can use if NOT in a leaf function.
                     emitter.assembler().setx(value, GPR.O7, scratchRegister.as());
                     generalBinOpEmitter.emit_G_G(emitter, destinationGeneralRegister(), scratchRegister);
@@ -334,8 +334,8 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 super(block, destination, destinationEffect, G, leftSource, leftSourceEffect, G, rightSource, rightSourceEffect, G_I8_I32);
             }
 
-            protected abstract void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister);
-            protected abstract void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister,  SPARCEirRegister.GeneralPurpose leftRegister, int simm13);
+            protected abstract void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister);
+            protected abstract void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister,  SPARCEirRegisters.GeneralPurpose leftRegister, int simm13);
 
             @Override
             public void emit(SPARCEirTargetEmitter emitter) {
@@ -352,7 +352,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                             if (isSimm13(simm13)) {
                                 emit_G_G_I(emitter, destinationGeneralRegister(), leftGeneralRegister(), simm13);
                             } else {
-                                final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+                                final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
                                 emitter.assembler().setsw(simm13, scratchRegister.as());
                                 emit_G_G_G(emitter, destinationGeneralRegister(), leftGeneralRegister(), scratchRegister);
                             }
@@ -376,8 +376,8 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 super(block, destination, destinationEffect, F, leftSource, leftSourceEffect, F);
             }
 
-            protected abstract void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint leftRegister, SPARCEirRegister.FloatingPoint rightRegister);
-            protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint rightRegister) {
+            protected abstract void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision leftRegister, SPARCEirRegisters.SinglePrecision rightRegister);
+            protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision rightRegister) {
                 emit_F_F_F(emitter, destinationRegister, destinationRegister, rightRegister);
             }
 
@@ -423,7 +423,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 selectedConditionCode = FCCOperand.FCC0;
             }
 
-            protected abstract void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint operand1Register, SPARCEirRegister.FloatingPoint operand2Register);
+            protected abstract void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision operand1Register, SPARCEirRegisters.SinglePrecision operand2Register);
 
             @Override
             public void emit(SPARCEirTargetEmitter emitter) {
@@ -462,7 +462,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                     case IMMEDIATE_64:
                         final long value = sourceLocation().asImmediate().value().toLong();
                         if (Longs.numberOfEffectiveSignedBits(value) >= Kind.INT.width.numberOfBits) {
-                            final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+                            final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
                             // O7 is a secondary scratch register we can use if NOT in a leaf function.
                             emitter.assembler().setx(value, GPR.O7, scratchRegister.as());
                             emitter.assembler().cmp(leftGeneralRegister().as(), scratchRegister.as());
@@ -476,7 +476,7 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                             emitter.assembler().cmp(leftGeneralRegister().as(), rightLocation().asImmediate().value().toInt());
                         } else {
                             final Kind kind = rightLocation().asImmediate().value().kind();
-                            final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(kind);
+                            final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(kind);
                             emitter.assembler().setsw(simm13, scratchRegister.as());
                             emitter.assembler().cmp(leftGeneralRegister().as(), scratchRegister.as());
                         }
@@ -527,8 +527,8 @@ public abstract class SPARCEirBinaryOperation extends SPARCEirUnaryOperation {
                 super(block, destination, effectOnDestination, G, source, G_I);
             }
 
-            public abstract void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister);
-            public abstract void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int simm);
+            public abstract void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister);
+            public abstract void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int simm);
             public boolean canUseImmediate(int simm) {
                 return isSimm13(simm);
             }

@@ -254,11 +254,7 @@ public class MaxRiType implements RiType {
      */
     public RiType arrayOf() {
         if (classActor != null) {
-            ArrayClassActor arrayClassActor = MaxineVM.usingTarget(new Function<ArrayClassActor>() {
-                public ArrayClassActor call() {
-                    return ArrayClassActor.forComponentClassActor(classActor);
-                }
-            });
+            ArrayClassActor arrayClassActor = ArrayClassActor.forComponentClassActor(classActor);
             return constantPool.runtime.canonicalRiType(arrayClassActor, constantPool, -1);
         }
         // TODO: what cpi to use for an unresolved constant?

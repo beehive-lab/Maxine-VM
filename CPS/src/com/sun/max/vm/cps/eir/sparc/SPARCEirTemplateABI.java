@@ -51,7 +51,7 @@ public class SPARCEirTemplateABI extends SPARCEirJavaABI {
                         VMRegister.Role.ABI_FRAME_POINTER, framePointer), VMRegister.Role.ABI_RETURN, GPR.O0);
         final TargetABI<GPR, FPR> templateTargetABI = new TargetABI<GPR, FPR>(originalTargetABI, registerRoleAssignement, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         initTargetABI(templateTargetABI);
-        makeUnallocatable(SPARCEirRegister.GeneralPurpose.from(framePointer));
+        makeUnallocatable(SPARCEirRegisters.GeneralPurpose.from(framePointer));
     }
 
     @Override

@@ -39,7 +39,6 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jdk.*;
@@ -391,7 +390,7 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    public static boolean donotCPSCompiler(ClassMethodActor classMethodActor) {
+    public static boolean forbidCPSCompile(ClassMethodActor classMethodActor) {
         // check whether the method has been recommended to be compiled with another compiler
         return recommendedCompiler.get(classMethodActor) != null;
     }
@@ -406,7 +405,15 @@ public class CompiledPrototype extends Prototype {
 
     private static synchronized RuntimeCompilerScheme c1xCompilerScheme() {
         if (c1xCompiler == null) {
-            c1xCompiler = new C1XCompilerScheme(VMConfiguration.target());
+            try {
+                // TODO: remove reflective dependency here!
+                Class<?> type = Class.forName("com.sun.max.vm.compiler.c1x.C1XCompilerScheme");
+                Constructor constructor = type.getConstructor(VMConfiguration.class);
+                c1xCompiler = (RuntimeCompilerScheme) constructor.newInstance(VMConfiguration.hostOrTarget());
+            } catch (Exception e) {
+                throw ProgramError.unexpected(e);
+            }
+
             c1xCompiler.initialize(Phase.BOOTSTRAPPING);
         }
         return c1xCompiler;

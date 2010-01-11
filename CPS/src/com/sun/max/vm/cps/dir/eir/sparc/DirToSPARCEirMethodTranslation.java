@@ -35,7 +35,7 @@ import com.sun.max.vm.value.*;
  * @author Laurent Daynes
  */
 public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslation {
-    public static final SPARCEirRegister.GeneralPurpose SAVED_SAFEPOINT_LATCH_LOCAL = SPARCEirRegister.GeneralPurpose.L5;
+    public static final SPARCEirRegisters.GeneralPurpose SAVED_SAFEPOINT_LATCH_LOCAL = SPARCEirRegisters.GeneralPurpose.L5;
 
     boolean saveSafetpoinLatchInLocal = false;
 

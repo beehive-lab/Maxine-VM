@@ -26,7 +26,6 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.c0x.*;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
@@ -41,6 +40,8 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.c1x.*;
+import com.sun.max.vm.compiler.RuntimeCompilerScheme;
+import com.sun.max.vm.compiler.target.TargetMethod;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
@@ -73,8 +74,10 @@ public class C1XTest {
         "Compile class initializer (<clinit>) methods");
     private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", true,
         "Stop compilation upon the first bailout.");
-    private static final Option<Boolean> c1xOption = options.newBooleanOption("c1x", true,
-        "Select the C1X compiler if true, C0X if false.");
+    private static final Option<String> compilerOption = options.newStringOption("compiler-name", "c1x",
+        "Select the compiler; boot,jit,opt,c1x");
+    private static final Option<Boolean> compileTargetMethod = options.newBooleanOption("compile-target-method", false,
+        "Use the C1X compiler to compile all the way to a TargetMethod instance.");
     private static final Option<Integer> timingOption = options.newIntegerOption("timing", 0,
         "Perform the specified number of timing runs.");
     private static final Option<Boolean> c1xOptionsOption = options.newBooleanOption("c1x-options", false,
@@ -166,27 +169,32 @@ public class C1XTest {
         }
 
         // create MaxineRuntime
-        final CiTarget target = createTarget();
-        final MaxRiRuntime runtime = new MaxRiRuntime();
-        final RiXirGenerator xirGenerator = new MaxXirGenerator(VMConfiguration.target(), target, runtime);
-        final List<MethodActor> methods = findMethodsToCompile(arguments);
-        final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
-        CiCompiler compiler = null;
+        VMConfiguration configuration = VMConfiguration.target();
+        final RuntimeCompilerScheme compilerScheme;
 
-        if (c1xOption.getValue()) {
-            C1XCompiler c1xCompiler = new C1XCompiler(runtime, target, xirGenerator);
-            c1xCompiler.init();
-            compiler = c1xCompiler;
+        String compilerName = compilerOption.getValue();
+        if (compilerName.equals("c1x")) {
+            compilerScheme = C1XCompilerScheme.create(configuration);
+        } else if (compilerName.equals("boot")) {
+            configuration.initializeSchemes(MaxineVM.Phase.COMPILING);
+            compilerScheme = configuration.bootCompilerScheme();
+        } else if (compilerName.equals("jit")) {
+            configuration.initializeSchemes(MaxineVM.Phase.COMPILING);
+            compilerScheme = configuration.jitCompilerScheme();
+        } else if (compilerName.equals("opt")) {
+            configuration.initializeSchemes(MaxineVM.Phase.COMPILING);
+            compilerScheme = configuration.optCompilerScheme();
         } else {
-            compiler = new C0XCompiler(runtime, target);
+            throw ProgramError.unexpected("Unknown compiler: " + compilerName);
         }
 
-        final CiCompiler finalCompiler = compiler;
+        final List<MethodActor> methods = findMethodsToCompile(arguments);
+        final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
         MaxineVM.usingTarget(new Runnable() {
             public void run() {
-                doWarmup(finalCompiler, runtime, xirGenerator, methods);
-                doCompile(finalCompiler, runtime, xirGenerator, methods, progress);
+                doWarmup(compilerScheme, methods);
+                doCompile(compilerScheme, methods, progress);
             }
         });
 
@@ -197,7 +205,7 @@ public class C1XTest {
         reportMetrics();
     }
 
-    private static void doCompile(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, List<MethodActor> methods, ProgressPrinter progress) {
+    private static void doCompile(RuntimeCompilerScheme compilerScheme, List<MethodActor> methods, ProgressPrinter progress) {
         if (timingOption.getValue() > 0) {
             // do a timing run
             int max = timingOption.getValue();
@@ -206,7 +214,7 @@ public class C1XTest {
                 if (i > 0 && resetMetricsOption.getValue()) {
                     resetMetrics();
                 }
-                doTimingRun(compiler, runtime, xirGenerator, methods);
+                doTimingRun(compilerScheme, methods);
                 // only aggressively resolve on the first run
                 C1XOptions.AggressivelyResolveCPEs = false;
             }
@@ -214,7 +222,13 @@ public class C1XTest {
             // compile all the methods and report progress
             for (MethodActor methodActor : methods) {
                 progress.begin(methodActor.toString());
-                final boolean result = compile(compiler, runtime, xirGenerator, methodActor, printBailoutOption.getValue(), false);
+                boolean result;
+                if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
+                    C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
+                    result = compile(c1x.getCompiler(), c1x.getRuntime(), c1x.getXirGenerator(), methodActor, printBailoutOption.getValue(), false);
+                } else {
+                    result = compile(compilerScheme, methodActor, printBailoutOption.getValue(), false);
+                }
                 if (result) {
                     progress.pass();
                 } else {
@@ -240,7 +254,7 @@ public class C1XTest {
         }
     }
 
-    private static void doTimingRun(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, List<MethodActor> methods) {
+    private static void doTimingRun(RuntimeCompilerScheme compilerScheme, List<MethodActor> methods) {
         C1XTimers.reset();
         long start = System.nanoTime();
         totalBytes = 0;
@@ -248,9 +262,18 @@ public class C1XTest {
         totalNs = 0;
         totalInstrs = 0;
         totalFailures = 0;
-        for (MethodActor methodActor : methods) {
-            if (!compile(compiler, runtime, xirGenerator, methodActor, false, true)) {
-                totalFailures++;
+        if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
+            C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
+            for (MethodActor methodActor : methods) {
+                if (!compile(c1x.getCompiler(), c1x.getRuntime(), c1x.getXirGenerator(), methodActor, false, true)) {
+                    totalFailures++;
+                }
+            }
+        } else {
+            for (MethodActor methodActor : methods) {
+                if (!compile(compilerScheme, methodActor, false, true)) {
+                    totalFailures++;
+                }
             }
         }
         cumulNs += totalNs;
@@ -262,7 +285,7 @@ public class C1XTest {
         }
     }
 
-    private static void doWarmup(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, List<MethodActor> methods) {
+    private static void doWarmup(RuntimeCompilerScheme compilerScheme, List<MethodActor> methods) {
         // compile all the methods in the list some number of times first to warmup the host VM
         int max = warmupOption.getValue();
         if (max > 0) {
@@ -270,17 +293,51 @@ public class C1XTest {
             for (int i = 0; i < max; i++) {
                 out.print(".");
                 out.flush();
-                for (MethodActor actor : methods) {
-                    compile(compiler, runtime, xirGenerator, actor, false, false);
+                if (compilerScheme instanceof C1XCompilerScheme && !compileTargetMethod.getValue()) {
+                    C1XCompilerScheme c1x = (C1XCompilerScheme) compilerScheme;
+                    for (MethodActor actor : methods) {
+                        compile(c1x.getCompiler(), c1x.getRuntime(), c1x.getXirGenerator(), actor, false, false);
+                    }
+                } else {
+                    for (MethodActor actor : methods) {
+                        compile(compilerScheme, actor, false, false);
+                    }
                 }
             }
             out.println();
         }
     }
 
+    private static boolean compile(RuntimeCompilerScheme compilerScheme, MethodActor method, boolean printBailout, boolean timing) {
+        // compile a single method
+        ClassMethodActor classMethodActor = (ClassMethodActor) method;
+        boolean passed = true;
+        Throwable thrown = null;
+        final long startNs = System.nanoTime();
+        final int byteCount = classMethodActor.codeAttribute().code().length;
+        try {
+            TargetMethod targetMethod = compilerScheme.compile(classMethodActor);
+        } catch (Throwable t) {
+            thrown = t;
+        }
+        if (timing && thrown == null) {
+            long timeNs = System.nanoTime() - startNs;
+            recordTime(method, byteCount, 0, timeNs);
+        }
+        if (printBailout && thrown != null) {
+            out.println("");
+            out.println(method);
+            if (printBailoutSizeOption.getValue()) {
+                out.println(byteCount + " bytes");
+            }
+            thrown.printStackTrace();
+        }
+
+        return thrown == null;
+    }
+
     private static boolean compile(CiCompiler compiler, MaxRiRuntime runtime, RiXirGenerator xirGenerator, MethodActor method, boolean printBailout, boolean timing) {
         // compile a single method
-
         RiMethod riMethod = runtime.getRiMethod((ClassMethodActor) method);
         final long startNs = System.nanoTime();
         CiResult result = compiler.compileMethod(riMethod, xirGenerator);
@@ -709,9 +766,5 @@ public class C1XTest {
         public double instructionsPerSecond() {
             return ONE_BILLION * (instructions / (double) nanoSeconds);
         }
-    }
-
-    private static CiTarget createTarget() {
-        return C1XCompilerScheme.createTarget(VMConfiguration.hostOrTarget());
     }
 }

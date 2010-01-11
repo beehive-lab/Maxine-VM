@@ -402,6 +402,10 @@ public abstract class StackFrameWalker {
                 Log.print(cursor.ip.minus(cursor.targetMethod.codeStart()).toInt());
                 Log.print("], isTopFrame=");
                 Log.print(cursor.isTopFrame);
+                Log.print(", sp=");
+                Log.print(cursor.sp);
+                Log.print(", fp=");
+                Log.print(cursor.fp);
                 Log.println("");
             } else {
                 Log.print("StackFrameWalk: Frame for native function [IP=");

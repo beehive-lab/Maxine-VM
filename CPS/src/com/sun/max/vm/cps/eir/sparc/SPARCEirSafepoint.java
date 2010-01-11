@@ -54,8 +54,8 @@ public final class SPARCEirSafepoint extends EirSafepoint<EirInstructionVisitor,
         for (EirVariable variable : liveVariables()) {
             if (variable.kind() == Kind.REFERENCE) {
                 EirLocation location = variable.location();
-                if (location instanceof SPARCEirRegister.GeneralPurpose) {
-                    final SPARCEirRegister.GeneralPurpose gpr = (SPARCEirRegister.GeneralPurpose) location;
+                if (location instanceof SPARCEirRegisters.GeneralPurpose) {
+                    final SPARCEirRegisters.GeneralPurpose gpr = (SPARCEirRegisters.GeneralPurpose) location;
                     final int trapStateIndex = gpr.trapStateIndex();
                     if (trapStateIndex >= 0) {
                         map.set(trapStateIndex);

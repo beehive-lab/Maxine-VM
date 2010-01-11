@@ -69,8 +69,8 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         final Value [] ins;
 
         RegisterWindow() {
-            locals = new Value[SPARCEirRegister.GeneralPurpose.LOCAL_REGISTERS.length()];
-            ins = new Value[SPARCEirRegister.GeneralPurpose.IN_REGISTERS.length()];
+            locals = new Value[SPARCEirRegisters.GeneralPurpose.LOCAL_REGISTERS.length()];
+            ins = new Value[SPARCEirRegisters.GeneralPurpose.IN_REGISTERS.length()];
         }
 
         private RegisterWindow(RegisterWindow registerWindow) {
@@ -84,16 +84,16 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         }
 
         public void save(SPARCEirCPU cpu) {
-            final int l0 = SPARCEirRegister.GeneralPurpose.L0.ordinal;
-            for (SPARCEirRegister.GeneralPurpose r : SPARCEirRegister.GeneralPurpose.LOCAL_REGISTERS) {
+            final int l0 = SPARCEirRegisters.GeneralPurpose.L0.ordinal;
+            for (SPARCEirRegisters.GeneralPurpose r : SPARCEirRegisters.GeneralPurpose.LOCAL_REGISTERS) {
                 locals[r.ordinal - l0] = cpu.generalRegisterContents[r.ordinal];
                 cpu.generalRegisterContents[r.ordinal] = null;
                 // zap local registers in the new window for ease of debugging
             }
-            final int o0 = SPARCEirRegister.GeneralPurpose.O0.ordinal;
-            final int i0 = SPARCEirRegister.GeneralPurpose.I0.ordinal;
+            final int o0 = SPARCEirRegisters.GeneralPurpose.O0.ordinal;
+            final int i0 = SPARCEirRegisters.GeneralPurpose.I0.ordinal;
 
-            for (SPARCEirRegister.GeneralPurpose register : SPARCEirRegister.GeneralPurpose.IN_REGISTERS) {
+            for (SPARCEirRegisters.GeneralPurpose register : SPARCEirRegisters.GeneralPurpose.IN_REGISTERS) {
                 final int r = register.ordinal;
                 final int n = r - i0;
                 ins[n] = cpu.generalRegisterContents[r];
@@ -104,15 +104,15 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         }
 
         public void restore(SPARCEirCPU cpu) {
-            final int l0 = SPARCEirRegister.GeneralPurpose.L0.ordinal;
-            for (SPARCEirRegister.GeneralPurpose r : SPARCEirRegister.GeneralPurpose.LOCAL_REGISTERS) {
+            final int l0 = SPARCEirRegisters.GeneralPurpose.L0.ordinal;
+            for (SPARCEirRegisters.GeneralPurpose r : SPARCEirRegisters.GeneralPurpose.LOCAL_REGISTERS) {
                 cpu.generalRegisterContents[r.ordinal] = locals[r.ordinal - l0];
             }
 
-            final int o0 = SPARCEirRegister.GeneralPurpose.O0.ordinal;
-            final int i0 = SPARCEirRegister.GeneralPurpose.I0.ordinal;
+            final int o0 = SPARCEirRegisters.GeneralPurpose.O0.ordinal;
+            final int i0 = SPARCEirRegisters.GeneralPurpose.I0.ordinal;
 
-            for (SPARCEirRegister.GeneralPurpose register : SPARCEirRegister.GeneralPurpose.IN_REGISTERS) {
+            for (SPARCEirRegisters.GeneralPurpose register : SPARCEirRegisters.GeneralPurpose.IN_REGISTERS) {
                 final int r = register.ordinal;
                 final int n = r - i0;
                 cpu.generalRegisterContents[o0 + n] =  cpu.generalRegisterContents[r];
@@ -137,12 +137,12 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
 
     public SPARCEirCPU(EirInterpreter interpreter) {
         super(interpreter);
-        generalRegisterContents = new Value[SPARCEirRegister.GeneralPurpose.VALUES.length()];
+        generalRegisterContents = new Value[SPARCEirRegisters.GeneralPurpose.VALUES.length()];
 
         java.util.Arrays.fill(generalRegisterContents, WordValue.ZERO);
 
-        sFPRegisterContents = new Value[SPARCEirRegister.FloatingPoint.SINGLE_PRECISION_VALUES.length()];
-        final int numberOfNonOverlappingDoubleRegister = SPARCEirRegister.FloatingPoint.DOUBLE_PRECISION_VALUES.length() - SPARCEirRegister.FloatingPoint.SINGLE_PRECISION_VALUES.length()  / 2;
+        sFPRegisterContents = new Value[SPARCEirRegisters.SinglePrecision.SINGLE_PRECISION_VALUES.length()];
+        final int numberOfNonOverlappingDoubleRegister = SPARCEirRegisters.SinglePrecision.DOUBLE_PRECISION_VALUES.length() - SPARCEirRegisters.SinglePrecision.SINGLE_PRECISION_VALUES.length()  / 2;
         dFPRegisterContents = new Value[numberOfNonOverlappingDoubleRegister];
 
         icc = new boolean[IntegerConditionFlag.VALUES.length()];
@@ -194,12 +194,12 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
     @Override
     public void dump(PrintStream stream) {
         final TextTableColumn generalRegisters = new TextTableColumn("General Registers");
-        for (SPARCEirRegister register : SPARCEirRegister.GeneralPurpose.VALUES) {
+        for (SPARCEirRegister register : SPARCEirRegisters.GeneralPurpose.VALUES) {
             final Value value = generalRegisterContents[register.ordinal];
             generalRegisters.add(Strings.padLengthWithSpaces(register.toString(), 5) + ": " + valueToString(value));
         }
         final TextTableColumn floatingPointRegisters = new TextTableColumn("Floating Point Registers:");
-        for (SPARCEirRegister register : SPARCEirRegister.FloatingPoint.SINGLE_PRECISION_VALUES) {
+        for (SPARCEirRegister register : SPARCEirRegisters.SinglePrecision.SINGLE_PRECISION_VALUES) {
             final Value value =    sFPRegisterContents[register.ordinal];
             floatingPointRegisters.add(Strings.padLengthWithSpaces(register.toString(), 5) + ": " + valueToString(value));
         }
@@ -291,15 +291,15 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
     public Value read(EirLocation location) {
         switch (location.category()) {
             case INTEGER_REGISTER:
-                return generalRegisterContents[((SPARCEirRegister.GeneralPurpose) location).ordinal];
+                return generalRegisterContents[((SPARCEirRegisters.GeneralPurpose) location).ordinal];
             case FLOATING_POINT_REGISTER:
-                return sFPRegisterContents[((SPARCEirRegister.FloatingPoint) location).ordinal];
+                return sFPRegisterContents[((SPARCEirRegisters.SinglePrecision) location).ordinal];
             default:
                 return super.read(location);
         }
     }
 
-    private void write(SPARCEirRegister.GeneralPurpose register, Value value) {
+    private void write(SPARCEirRegisters.GeneralPurpose register, Value value) {
         ProgramError.check(value != null);
         generalRegisterContents[register.ordinal] = value;
         if (register == stackPointer()) {
@@ -311,7 +311,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
     protected void writeRegister(EirRegister register, Value value) {
         switch (register.category()) {
             case INTEGER_REGISTER:
-                write((SPARCEirRegister.GeneralPurpose) register, value);
+                write((SPARCEirRegisters.GeneralPurpose) register, value);
                 break;
             case FLOATING_POINT_REGISTER:
                 sFPRegisterContents[register.ordinal] = value;
@@ -335,7 +335,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
 
     private void partiallyOverwrite(EirRegister register, int n, int mask) {
         final Address word = getGeneralRegisterContents(register);
-        if (register != SPARCEirRegister.GeneralPurpose.G0) {
+        if (register != SPARCEirRegisters.GeneralPurpose.G0) {
             write(register, new WordValue(word.and(Address.fromInt(mask).not()).or(n & mask)));
         }
     }

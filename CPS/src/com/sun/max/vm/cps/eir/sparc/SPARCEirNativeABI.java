@@ -35,7 +35,7 @@ public class SPARCEirNativeABI extends SPARCEirCFunctionABI {
     public SPARCEirNativeABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration, false);
         callerSavedRegisters =  allocatableRegisters();
-        callerSavedRegisters.add(SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+        callerSavedRegisters.add(SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
     }
 
     @Override
