@@ -77,7 +77,7 @@ public class Compilation implements Future<TargetMethod> {
     }
 
     /**
-     * Checks whether this compilation was canceled. This method always returns {@code false}
+     * Checks whether this compilation was canceled. This method always returns {@code false}.
      */
     public boolean isCancelled() {
         return false;

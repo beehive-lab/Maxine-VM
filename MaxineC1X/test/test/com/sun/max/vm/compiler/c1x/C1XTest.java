@@ -166,27 +166,21 @@ public class C1XTest {
         }
 
         // create MaxineRuntime
-        final CiTarget target = createTarget();
-        final MaxRiRuntime runtime = new MaxRiRuntime();
-        final RiXirGenerator xirGenerator = new MaxXirGenerator(VMConfiguration.target(), target, runtime);
+        final C1XCompilerScheme compilerScheme = C1XCompilerScheme.create(VMConfiguration.target());
         final List<MethodActor> methods = findMethodsToCompile(arguments);
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
-        CiCompiler compiler = null;
+        final CiCompiler compiler;
 
         if (c1xOption.getValue()) {
-            C1XCompiler c1xCompiler = new C1XCompiler(runtime, target, xirGenerator);
-            c1xCompiler.init();
-            compiler = c1xCompiler;
+            compiler = compilerScheme.getCompiler();
         } else {
-            compiler = new C0XCompiler(runtime, target);
+            compiler = new C0XCompiler(compilerScheme.getRuntime(), compilerScheme.getTarget());
         }
-
-        final CiCompiler finalCompiler = compiler;
 
         MaxineVM.usingTarget(new Runnable() {
             public void run() {
-                doWarmup(finalCompiler, runtime, xirGenerator, methods);
-                doCompile(finalCompiler, runtime, xirGenerator, methods, progress);
+                doWarmup(compiler, compilerScheme.getRuntime(), compilerScheme.getXirGenerator(), methods);
+                doCompile(compiler, compilerScheme.getRuntime(), compilerScheme.getXirGenerator(), methods, progress);
             }
         });
 
@@ -709,9 +703,5 @@ public class C1XTest {
         public double instructionsPerSecond() {
             return ONE_BILLION * (instructions / (double) nanoSeconds);
         }
-    }
-
-    private static CiTarget createTarget() {
-        return C1XCompilerScheme.createTarget(VMConfiguration.hostOrTarget());
     }
 }

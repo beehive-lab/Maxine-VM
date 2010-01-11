@@ -41,8 +41,9 @@ import com.sun.max.lang.Function;
 public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompilerScheme {
 
     private MaxRiRuntime c1xRuntime;
-    private C1XCompiler compiler;
-    private RiXirGenerator xirGenerator;
+    private C1XCompiler c1xCompiler;
+    private RiXirGenerator c1xXirGenerator;
+    private CiTarget c1xTarget;
 
     public static final VMIntOption c1xOptLevel;
 
@@ -77,10 +78,18 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
             }
             // create the RiRuntime object passed to C1X
             c1xRuntime = MaxRiRuntime.globalRuntime;
-            CiTarget c1xTarget = createTarget(vmConfiguration());
-            xirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
-            compiler = new C1XCompiler(c1xRuntime, c1xTarget, xirGenerator);
-            compiler.init();
+            VMConfiguration configuration = vmConfiguration();
+            // create the CiTarget object passed to C1X
+            MaxRiRegisterConfig config = new MaxRiRegisterConfig(configuration);
+            InstructionSet isa = configuration.platform().processorKind.instructionSet;
+            CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
+            TargetABI<?, ?> targetABI = configuration.targetABIsScheme().optimizedJavaABI();
+
+            c1xTarget = new CiTarget(arch, config, configuration.platform.pageSize, true);
+            c1xTarget.stackAlignment = targetABI.stackFrameAlignment();
+            c1xXirGenerator = new MaxXirGenerator(vmConfiguration(), c1xTarget, c1xRuntime);
+            c1xCompiler = new C1XCompiler(c1xRuntime, c1xTarget, c1xXirGenerator);
+            c1xCompiler.init();
         }
         if (phase == MaxineVM.Phase.COMPILING) {
             if (MaxineVM.isHosted()) {
@@ -90,23 +99,11 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         }
     }
 
-    public static CiTarget createTarget(VMConfiguration configuration) {
-        // create the Target object passed to C1X
-        MaxRiRegisterConfig config = new MaxRiRegisterConfig(configuration);
-        InstructionSet isa = configuration.platform().processorKind.instructionSet;
-        CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
-        TargetABI<?, ?> targetABI = configuration.targetABIsScheme().optimizedJavaABI();
-
-        CiTarget target = new CiTarget(arch, config, configuration.platform.pageSize, true);
-        target.stackAlignment = targetABI.stackFrameAlignment();
-        return target;
-    }
-
     public final TargetMethod compile(final ClassMethodActor classMethodActor) {
         return MaxineVM.usingTarget(new Function<TargetMethod>() {
             public TargetMethod call() {
                 RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
-                CiTargetMethod compiledMethod = compiler.compileMethod(method, xirGenerator).targetMethod();
+                CiTargetMethod compiledMethod = c1xCompiler.compileMethod(method, c1xXirGenerator).targetMethod();
                 if (compiledMethod != null) {
                     C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(C1XCompilerScheme.this, classMethodActor, compiledMethod);
                     CompilationScheme.Static.notifyCompilationComplete(c1xTargetMethod);
@@ -119,5 +116,27 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
 
     public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context) {
         return AMD64OptStackWalking.WalkFrameHelper.instance.walkFrame(current, callee, purpose, context);
+    }
+
+    public static C1XCompilerScheme create(VMConfiguration configuration) {
+        C1XCompilerScheme compilerScheme = new C1XCompilerScheme(configuration);
+        compilerScheme.initialize(MaxineVM.Phase.BOOTSTRAPPING);
+        return compilerScheme;
+    }
+
+    public final MaxRiRuntime getRuntime() {
+        return c1xRuntime;
+    }
+
+    public final C1XCompiler getCompiler() {
+        return c1xCompiler;
+    }
+
+    public final RiXirGenerator getXirGenerator() {
+        return c1xXirGenerator;
+    }
+
+    public final CiTarget getTarget() {
+        return c1xTarget;
     }
 }
