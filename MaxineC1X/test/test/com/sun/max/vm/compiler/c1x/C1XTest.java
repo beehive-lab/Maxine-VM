@@ -311,10 +311,8 @@ public class C1XTest {
     private static boolean compile(RuntimeCompilerScheme compilerScheme, MethodActor method, boolean printBailout, boolean timing) {
         // compile a single method
         ClassMethodActor classMethodActor = (ClassMethodActor) method;
-        boolean passed = true;
         Throwable thrown = null;
         final long startNs = System.nanoTime();
-        final int byteCount = classMethodActor.codeAttribute().code().length;
         try {
             TargetMethod targetMethod = compilerScheme.compile(classMethodActor);
         } catch (Throwable t) {
@@ -322,13 +320,13 @@ public class C1XTest {
         }
         if (timing && thrown == null) {
             long timeNs = System.nanoTime() - startNs;
-            recordTime(method, byteCount, 0, timeNs);
+            recordTime(method, 0, 0, timeNs);
         }
         if (printBailout && thrown != null) {
             out.println("");
             out.println(method);
             if (printBailoutSizeOption.getValue()) {
-                out.println(byteCount + " bytes");
+                out.println(classMethodActor.codeAttribute().code().length + " bytes");
             }
             thrown.printStackTrace();
         }
@@ -629,19 +627,25 @@ public class C1XTest {
         if (!spreadsheetOption.getValue()) {
             out.print("Time: " + secs + " seconds   ");
             out.print(bcps + " bytes/s   ");
-            out.print(ibcps + " bytes/s   ");
-            out.print(ips + " insts/s");
-            if (totalFailures > 0) {
-                out.print("  (" + totalFailures + " failures)");
+            if (totalIBcps > 0) {
+                out.print(ibcps + " bytes/s   ");
             }
+            if (totalIps > 0) {
+                out.print(ips + " insts/s");
+            }
+            if (totalFailures > 0) {
+                out.print("  (" + totalFailures + " failures)   ");
+            }
+            out.print(totalBytes + " total bytes   ");
             out.println();
         } else {
             out.print(seconds + "\t");
             out.print(totalBcps + "\t");
             out.print(totalIBcps + "\t");
             out.print(totalIps + "\t");
+            out.print(totalBytes + "\t");
             if (totalFailures > 0) {
-                out.print("\t" + totalFailures + " failures)");
+                out.print("\t(" + totalFailures + " failures)");
             }
             out.println();
         }
