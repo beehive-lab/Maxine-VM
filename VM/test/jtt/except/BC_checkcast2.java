@@ -40,7 +40,7 @@ public class BC_checkcast2 {
         } else {
             obj = null;
         }
-        final jtt.except.BC_checkcast2 bc = (jtt.except.BC_checkcast2) obj;
+        final BC_checkcast2 bc = (BC_checkcast2) obj;
         if (bc != null) {
             return arg;
         }

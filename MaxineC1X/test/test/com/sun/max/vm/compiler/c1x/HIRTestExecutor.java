@@ -49,16 +49,10 @@ public class HIRTestExecutor implements Executor {
 
         new PrototypeGenerator(new OptionSet()).createJavaPrototype(false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
-        final CiTarget target = createTarget();
-        final C1XCompiler compiler = new C1XCompiler(runtime, target, null);
-        compiler.init();
+        C1XCompilerScheme compilerScheme = C1XCompilerScheme.create(VMConfiguration.hostOrTarget());
 
         // create MaxineRuntime
-        generator = new HIRGenerator(runtime, target, compiler);
-    }
-
-    private static CiTarget createTarget() {
-        return C1XCompilerScheme.createTarget(VMConfiguration.hostOrTarget());
+        generator = new HIRGenerator(runtime, compilerScheme.getTarget(), compilerScheme.getCompiler());
     }
 
     public void initialize(JavaExecHarness.JavaTestCase c, boolean loadingPackages) {

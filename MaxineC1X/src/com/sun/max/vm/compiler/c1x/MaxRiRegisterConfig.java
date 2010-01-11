@@ -233,6 +233,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
             }
 
             if (result[i] == null) {
+                // TODO: this is probably not 32-bit safe.
                 result[i] = new CiStackLocation(kind, currentStackSlot, wordSize, !outgoing);
                 currentStackSlot += wordSize;
             }

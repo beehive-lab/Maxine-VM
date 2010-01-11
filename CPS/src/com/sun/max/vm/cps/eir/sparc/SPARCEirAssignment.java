@@ -95,15 +95,15 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         return isSimm13(simm);
     }
 
-    private static SPARCEirRegister.GeneralPurpose offsetRegister(SPARCEirTargetEmitter emitter) {
-        return  (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+    private static SPARCEirRegisters.GeneralPurpose offsetRegister(SPARCEirTargetEmitter emitter) {
+        return  (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
     }
 
-    public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+    public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
         emitter.assembler().or(sourceRegister.as(), G0, destinationRegister.as());
     }
 
-    public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+    public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
         emitter.assembler().setsw(sourceImmediate, destinationRegister.as());
     }
 
@@ -117,11 +117,11 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         final int offset = stackAddress.offset + JitStackFrameLayout.offsetInStackSlot(kind());
 
         if (canUseImmediate(offset)) {
-            SPARCEirLoad.emit(emitter, kind(), SPARCEirRegister.GeneralPurpose.from(stackAddress.base), offset, destinationRegister);
+            SPARCEirLoad.emit(emitter, kind(), SPARCEirRegisters.GeneralPurpose.from(stackAddress.base), offset, destinationRegister);
         } else {
-            final SPARCEirRegister.GeneralPurpose offsetRegister = offsetRegister(emitter);
+            final SPARCEirRegisters.GeneralPurpose offsetRegister = offsetRegister(emitter);
             emitter.assembler().setsw(offset, offsetRegister.as());
-            SPARCEirLoad.emit(emitter, kind(), SPARCEirRegister.GeneralPurpose.from(stackAddress.base), offsetRegister, destinationRegister);
+            SPARCEirLoad.emit(emitter, kind(), SPARCEirRegisters.GeneralPurpose.from(stackAddress.base), offsetRegister, destinationRegister);
         }
     }
 
@@ -138,11 +138,11 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
         final SPARCEirTargetEmitter.StackAddress stackAddress = emitter.stackAddress(destinationLocation().asStackSlot());
         final int offset = stackAddress.offset + JitStackFrameLayout.offsetInStackSlot(kind());
         if (canUseImmediate(offset)) {
-            SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegister.GeneralPurpose.from(stackAddress.base), offset);
+            SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegisters.GeneralPurpose.from(stackAddress.base), offset);
         } else {
-            final SPARCEirRegister.GeneralPurpose offsetRegister = offsetRegister(emitter);
+            final SPARCEirRegisters.GeneralPurpose offsetRegister = offsetRegister(emitter);
             emitter.assembler().setsw(offset, offsetRegister.as());
-            SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegister.GeneralPurpose.from(stackAddress.base), offsetRegister);
+            SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegisters.GeneralPurpose.from(stackAddress.base), offsetRegister);
         }
     }
 
@@ -151,7 +151,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
     }
 
     private void emit_L_GF(SPARCEirTargetEmitter emitter) {
-        final SPARCEirRegister.GeneralPurpose literalBase =  ((SPARCEirABI) emitter.abi()).literalBaseRegister();
+        final SPARCEirRegisters.GeneralPurpose literalBase =  ((SPARCEirABI) emitter.abi()).literalBaseRegister();
         switch(kind().asEnum) {
             case LONG:
             case WORD:
@@ -170,24 +170,24 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
     }
 
     private void emit_L_S(SPARCEirTargetEmitter emitter) {
-        final SPARCEirRegister.GeneralPurpose literalBase = ((SPARCEirABI) emitter.abi()).literalBaseRegister();
+        final SPARCEirRegisters.GeneralPurpose literalBase = ((SPARCEirABI) emitter.abi()).literalBaseRegister();
         switch(kind().asEnum) {
             case LONG:
             case WORD:
             case REFERENCE: {
-                final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.LONG);
+                final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.LONG);
                 emitter.assembler().ldx(literalBase.as(), emitter.literalBaseLabel(), sourceLocation().asLiteral().asLabel(), scratchRegister.as());
                 emit_GF_S(emitter, scratchRegister);
                 break;
             }
             case FLOAT: {
-                final SPARCEirRegister.FloatingPoint scratchRegister = (SPARCEirRegister.FloatingPoint) emitter.abi().getScratchRegister(Kind.FLOAT);
+                final SPARCEirRegisters.SinglePrecision scratchRegister = (SPARCEirRegisters.SinglePrecision) emitter.abi().getScratchRegister(Kind.FLOAT);
                 emitter.assembler().ld(literalBase.as(), emitter.literalBaseLabel(), sourceLocation().asLiteral().asLabel(), scratchRegister.asSinglePrecision());
                 emit_GF_S(emitter, scratchRegister);
                 break;
             }
             case DOUBLE: {
-                final SPARCEirRegister.FloatingPoint scratchRegister = (SPARCEirRegister.FloatingPoint) emitter.abi().getScratchRegister(Kind.DOUBLE);
+                final SPARCEirRegisters.SinglePrecision scratchRegister = (SPARCEirRegisters.SinglePrecision) emitter.abi().getScratchRegister(Kind.DOUBLE);
                 emitter.assembler().ldd(literalBase.as(), emitter.literalBaseLabel(), sourceLocation().asLiteral().asLabel(), scratchRegister.asDoublePrecision());
                 emit_GF_S(emitter, scratchRegister);
                 break;
@@ -215,7 +215,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
             case LONG:
             case WORD:
             case REFERENCE:
-                return SPARCEirRegister.GeneralPurpose.from(O7);
+                return SPARCEirRegisters.GeneralPurpose.from(O7);
             case FLOAT:
                 return  emitter.abi().getScratchRegister(Kind.FLOAT);
             case DOUBLE:
@@ -249,11 +249,11 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
     private void emit_I_S(SPARCEirTargetEmitter emitter)  {
         final Value value = sourceLocation().asImmediate().value();
         if (value.isZero()) {
-            emit_GF_S(emitter, SPARCEirRegister.GeneralPurpose.G0);
+            emit_GF_S(emitter, SPARCEirRegisters.GeneralPurpose.G0);
             return;
         }
         // load immediate in template, then store in stack
-        final SPARCEirRegister.GeneralPurpose temp = (SPARCEirRegister.GeneralPurpose) stackSlotScratch(emitter, kind());
+        final SPARCEirRegisters.GeneralPurpose temp = (SPARCEirRegisters.GeneralPurpose) stackSlotScratch(emitter, kind());
         emit_G_GI(emitter, this,  temp); // load immediate in temp
         emit_GF_S(emitter, temp); // store temp in stack
     }

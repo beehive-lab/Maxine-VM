@@ -45,12 +45,12 @@ public abstract class SPARCEirOperation extends EirInstruction<SPARCEirInstructi
         return Longs.numberOfEffectiveSignedBits(value) <= 11;
     }
 
-    public static SPARCEirRegister.GeneralPurpose toGeneralRegister(EirLocation location) {
-        return (SPARCEirRegister.GeneralPurpose) location;
+    public static SPARCEirRegisters.GeneralPurpose toGeneralRegister(EirLocation location) {
+        return (SPARCEirRegisters.GeneralPurpose) location;
     }
 
-    public static SPARCEirRegister.FloatingPoint toFloatingPointRegister(EirLocation location) {
-        return (SPARCEirRegister.FloatingPoint) location;
+    public static SPARCEirRegisters.SinglePrecision toFloatingPointRegister(EirLocation location) {
+        return (SPARCEirRegisters.SinglePrecision) location;
     }
 
     protected SPARCEirOperation(EirBlock block) {

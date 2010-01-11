@@ -69,12 +69,12 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
     public void emit(SPARCEirTargetEmitter emitter) {
         if (!eirMethod().isTemplate()) {
             final SPARCAssembler asm = emitter.assembler();
-            final SPARCEirRegister.GeneralPurpose stackPointer = (SPARCEirRegister.GeneralPurpose) emitter.abi().stackPointer();
+            final SPARCEirRegisters.GeneralPurpose stackPointer = (SPARCEirRegisters.GeneralPurpose) emitter.abi().stackPointer();
             if (eirMethod().classMethodActor().isTrapStub()) {
                // emit a special prologue that saves all the registers
                 trapStateOffsetFromFramePointer = emitTrapStubPrologue(asm, stackPointer.as());
             } else {
-                final GPR scratchRegister = ((SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT)).as();
+                final GPR scratchRegister = ((SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT)).as();
                 emitFrameBuilder(asm, eirMethod().frameSize(), stackPointer.as(), scratchRegister, eirMethod().classMethodActor().isVmEntryPoint());
             }
             if (eirMethod().literalPool().hasLiterals()) {
@@ -166,7 +166,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // We want to copy into the trap state the value of the latch register at the instruction that causes the trap.
         asm.ldx(latchRegister, VmThreadLocal.TRAP_LATCH_REGISTER.offset, scratchRegister0);
 
-        for (SPARCEirRegister.GeneralPurpose eirRegister : SPARCEirABI.integerNonSystemReservedGlobalRegisters) {
+        for (SPARCEirRegisters.GeneralPurpose eirRegister : SPARCEirABI.integerNonSystemReservedGlobalRegisters) {
             final GPR gpr = eirRegister.as();
             if (gpr == latchRegister) {
                 asm.stx(scratchRegister0, stackPointer, offset);

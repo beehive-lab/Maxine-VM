@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.cps.eir.sparc;
 
-import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegister.FloatingPoint.*;
-import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegister.GeneralPurpose.*;
+import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.GeneralPurpose.*;
+import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.*;
 
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
@@ -57,32 +57,32 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
 
     @Override
     public Pool<SPARCEirRegister> registerPool() {
-        return SPARCEirRegister.pool();
+        return pool();
     }
 
     @Override
-    public SPARCEirRegister.GeneralPurpose integerRegisterActingAs(VMRegister.Role role) {
+    public SPARCEirRegisters.GeneralPurpose integerRegisterActingAs(VMRegister.Role role) {
         final GPR r = targetABI.registerRoleAssignment().integerRegisterActingAs(role);
         if (r == null) {
             return null;
         }
-        return SPARCEirRegister.GeneralPurpose.from(r);
+        return GeneralPurpose.from(r);
     }
 
     @Override
-    public SPARCEirRegister.FloatingPoint floatingPointRegisterActingAs(VMRegister.Role role) {
+    public SPARCEirRegisters.SinglePrecision floatingPointRegisterActingAs(VMRegister.Role role) {
         final FPR r = targetABI.registerRoleAssignment().floatingPointRegisterActingAs(role);
         if (r == null) {
             return null;
         }
         // Only double precision floating-point register can be assigned a role.
-        return SPARCEirRegister.FloatingPoint.doublePrecisionFrom(r);
+        return SinglePrecision.doublePrecisionFrom(r);
     }
 
     /**
      * Register used as a location-independent base for a method's literals.
      */
-    public SPARCEirRegister.GeneralPurpose literalBaseRegister() {
+    public SPARCEirRegisters.GeneralPurpose literalBaseRegister() {
         return integerRegisterActingAs(VMRegister.Role.LITERAL_BASE_POINTER);
     }
 
@@ -101,8 +101,8 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
      * Local registers available for allocation. These do not need to be caller saved.
      * Note: L7 is reserved as literal base pointer.
      */
-    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerLocalRegisters =
-        new ArraySequence<SPARCEirRegister.GeneralPurpose>(L0, L1, L2, L3, L4, L5, L6);
+    protected static final IndexedSequence<SPARCEirRegisters.GeneralPurpose> integerLocalRegisters =
+        new ArraySequence<SPARCEirRegisters.GeneralPurpose>(L0, L1, L2, L3, L4, L5, L6);
 
     /**
      * Global registers available for allocation.
@@ -114,29 +114,29 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
      * The remaining must be consider register-saved.
      *
      */
-    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> applicationGlobalRegisters =
-        new ArraySequence<SPARCEirRegister.GeneralPurpose>(G3, G4, G5);
+    protected static final IndexedSequence<SPARCEirRegisters.GeneralPurpose> applicationGlobalRegisters =
+        new ArraySequence<SPARCEirRegisters.GeneralPurpose>(G3, G4, G5);
 
     /**
      * Global registers reserved for system software and must not be used by the application (here both the VM and the program it runs).
      * Register %g0 is included here, though it can be used anywhere.
      * These must be made unallocatable, no matter what.
      */
-    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerSystemReservedGlobalRegisters =
-        new ArraySequence<SPARCEirRegister.GeneralPurpose>(G0, G6, G7);
+    protected static final IndexedSequence<SPARCEirRegisters.GeneralPurpose> integerSystemReservedGlobalRegisters =
+        new ArraySequence<SPARCEirRegisters.GeneralPurpose>(G0, G6, G7);
 
     /**
      * Global registers not reserved for system software and may be used by the application (either the VM or the program it runs).
      * Register %g0 is not included here, though it can be used anywhere.
      */
-    public static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerNonSystemReservedGlobalRegisters =
-        new ArraySequence<SPARCEirRegister.GeneralPurpose>(G1, G2, G3, G4, G5);
+    public static final IndexedSequence<SPARCEirRegisters.GeneralPurpose> integerNonSystemReservedGlobalRegisters =
+        new ArraySequence<SPARCEirRegisters.GeneralPurpose>(G1, G2, G3, G4, G5);
 
-    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerOutRegisters =
-        new ArraySequence<SPARCEirRegister.GeneralPurpose>(O0, O1, O2, O3, O4, O5);
+    protected static final IndexedSequence<SPARCEirRegisters.GeneralPurpose> integerOutRegisters =
+        new ArraySequence<SPARCEirRegisters.GeneralPurpose>(O0, O1, O2, O3, O4, O5);
 
-    protected static final IndexedSequence<SPARCEirRegister.GeneralPurpose> integerInRegisters =
-        new ArraySequence<SPARCEirRegister.GeneralPurpose>(I0, I1, I2, I3, I4, I5);
+    protected static final IndexedSequence<SPARCEirRegisters.GeneralPurpose> integerInRegisters =
+        new ArraySequence<SPARCEirRegisters.GeneralPurpose>(I0, I1, I2, I3, I4, I5);
 
     // The SPARC / Solaris ABI distinguishes 3 categories of floating point registers
     // that overlaps over the entire set of floating point registers: single, double and quad precisions.
@@ -215,7 +215,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     }
 
     private PoolSet<SPARCEirRegister> createUnallocatableRegisterPoolSet() {
-        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(SPARCEirRegister.pool());
+        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(pool());
         for (SPARCEirRegister reserved : integerSystemReservedGlobalRegisters) {
             result.add(reserved);
         }
@@ -223,8 +223,8 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         result.add(framePointer());
         result.add(integerRegisterActingAs(VMRegister.Role.SAFEPOINT_LATCH));
         result.add(integerRegisterActingAs(VMRegister.Role.LITERAL_BASE_POINTER));
-        result.add(SPARCEirRegister.GeneralPurpose.I7);   // return address register. TODO: add an optional Role for this ?
-        result.add(SPARCEirRegister.GeneralPurpose.O7); // Used to saved the return address in the callee. May only be used as temporary scratch.
+        result.add(GeneralPurpose.I7);   // return address register. TODO: add an optional Role for this ?
+        result.add(GeneralPurpose.O7); // Used to saved the return address in the callee. May only be used as temporary scratch.
         for (Kind kind : Kind.PRIMITIVE_VALUES) {
             result.add(getScratchRegister(kind));
         }
@@ -239,7 +239,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     }
 
     private PoolSet<SPARCEirRegister> createAllocatableRegisterPoolSet() {
-        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(SPARCEirRegister.pool());
+        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(pool());
         result.addAll();
         for (SPARCEirRegister register : unallocatableRegisters) {
             result.remove(register);
@@ -255,7 +255,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     }
 
     private PoolSet<SPARCEirRegister> createCallerSavedRegisterPoolSet() {
-        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(SPARCEirRegister.pool());
+        final PoolSet<SPARCEirRegister> result = PoolSet.noneOf(pool());
         result.or(allocatableRegisters());
         // Local register don't need to be saved.
         for (SPARCEirRegister register : integerLocalRegisters) {
@@ -278,7 +278,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     /**
      * No callee saved registers.
      */
-    private final PoolSet<SPARCEirRegister> calleeSavedRegisters = PoolSet.noneOf(SPARCEirRegister.GeneralPurpose.pool());
+    private final PoolSet<SPARCEirRegister> calleeSavedRegisters = PoolSet.noneOf(pool());
 
     @Override
     public PoolSet<SPARCEirRegister> calleeSavedRegisters() {
@@ -324,7 +324,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         targetABI = targetABI(vmConfiguration);
         unallocatableRegisters = createUnallocatableRegisterPoolSet();
         allocatableRegisters = createAllocatableRegisterPoolSet();
-        resultRegisters = PoolSet.noneOf(SPARCEirRegister.pool());
+        resultRegisters = PoolSet.noneOf(pool());
         resultRegisters.add((SPARCEirRegister) getResultLocation(Kind.LONG));
         resultRegisters.add((SPARCEirRegister) getResultLocation(Kind.DOUBLE));
         callerSavedRegisters = createCallerSavedRegisterPoolSet();
