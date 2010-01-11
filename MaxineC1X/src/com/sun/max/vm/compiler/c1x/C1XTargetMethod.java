@@ -695,7 +695,8 @@ public class C1XTargetMethod extends TargetMethod {
     @Override
     public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
         if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
-            // TODO: deal with adapter frame overflow arguments
+            // if this is an adapter frame, the only references it can contain would be in the overflow arguments
+            AMD64OptStackWalking.prepareAdapterOverflowRefMap(current, callee, preparer);
             return;
         }
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();

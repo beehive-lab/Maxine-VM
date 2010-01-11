@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.target.amd64;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.compiler.RuntimeCompilerScheme;
@@ -71,7 +70,8 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
     @Override
     public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
         if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
-            // TODO: deal with adapter frame overflow arguments
+            // if this is an adapter frame, the only references it can contain would be in the overflow arguments
+            AMD64OptStackWalking.prepareAdapterOverflowRefMap(current, callee, preparer);
             return;
         }
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
