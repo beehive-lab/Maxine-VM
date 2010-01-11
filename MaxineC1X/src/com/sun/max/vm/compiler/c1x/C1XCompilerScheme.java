@@ -95,7 +95,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
         MaxRiRegisterConfig config = new MaxRiRegisterConfig(configuration);
         InstructionSet isa = configuration.platform().processorKind.instructionSet;
         CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
-        TargetABI targetABI = configuration.targetABIsScheme().optimizedJavaABI();
+        TargetABI<?, ?> targetABI = configuration.targetABIsScheme().optimizedJavaABI();
 
         CiTarget target = new CiTarget(arch, config, configuration.platform.pageSize, true);
         target.stackAlignment = targetABI.stackFrameAlignment();
