@@ -22,6 +22,8 @@ package com.sun.max.vm.cps.eir.sparc;
 
 import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.GeneralPurpose.*;
 import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.*;
+import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.SinglePrecision.F0;
+import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.SinglePrecision.*;
 
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
@@ -76,7 +78,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
             return null;
         }
         // Only double precision floating-point register can be assigned a role.
-        return SinglePrecision.doublePrecisionFrom(r);
+        return doublePrecisionFrom(r);
     }
 
     /**
