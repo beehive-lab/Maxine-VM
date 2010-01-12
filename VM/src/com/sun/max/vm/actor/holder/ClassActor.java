@@ -123,6 +123,9 @@ public abstract class ClassActor extends Actor {
     @INSPECTED
     private final ClassActor componentClassActor;
 
+    @CONSTANT
+    private int[] iToV;
+
     /**
      * A lazily initialized value holding the type representing an 1-dimensional array of this type.
      */
@@ -998,9 +1001,6 @@ public abstract class ClassActor extends Actor {
         return null;
     }
 
-    @CONSTANT
-    private int[] iToV;
-
     private Sequence<VirtualMethodActor> gatherVirtualMethodActors(IdentityHashSet<InterfaceActor> allInterfaceActors, GrowableMapping<MethodActor, VirtualMethodActor> lookup) {
         if (!isReferenceClassActor()) {
             return Sequence.Static.empty(VirtualMethodActor.class);
@@ -1588,4 +1588,8 @@ public abstract class ClassActor extends Actor {
     // Inspector support for generated stubs:
     @INSPECTED
     public byte[] classfile;
+
+    public int[] iToV() {
+        return iToV;
+    }
 }
