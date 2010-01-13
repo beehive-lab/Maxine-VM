@@ -29,6 +29,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.stack.StackReferenceMapPreparer;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -46,6 +47,12 @@ import com.sun.max.vm.type.*;
  */
 public class C1XRuntimeCalls {
 
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface C1X_RUNTIME_ENTRYPOINT {
+        CiRuntimeCall runtimeCall();
+    }
+
     public static ClassMethodActor getClassMethodActor(CiRuntimeCall call) {
         final ClassMethodActor result = runtimeCallMethods[call.ordinal()];
         assert result != null;
@@ -54,15 +61,11 @@ public class C1XRuntimeCalls {
 
     private static ClassMethodActor[] runtimeCallMethods = new ClassMethodActor[CiRuntimeCall.values().length];
 
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    public @interface RUNTIME_ENTRY {
-        CiRuntimeCall runtimeCall();
-    }
+    private static VMBooleanXXOption verifyRefMaps = VMOptions.register(new VMBooleanXXOption("-C1X:-", "VerifyRefMaps", "Verify reference maps for all C1X runtime calls."), MaxineVM.Phase.PRISTINE);
 
     static {
         for (Method method : C1XRuntimeCalls.class.getMethods()) {
-            RUNTIME_ENTRY entry = method.getAnnotation(RUNTIME_ENTRY.class);
+            C1X_RUNTIME_ENTRYPOINT entry = method.getAnnotation(C1X_RUNTIME_ENTRYPOINT.class);
             if (entry != null && entry.runtimeCall() != null) {
                 registerMethod(method, entry.runtimeCall());
             } else {
@@ -76,7 +79,7 @@ public class C1XRuntimeCalls {
         }
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnwindException)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.UnwindException)
     public static void runtimeUnwindException(Throwable throwable) throws Throwable {
         throw throwable;
     }
@@ -123,38 +126,51 @@ public class C1XRuntimeCalls {
         return false;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowArrayIndexOutOfBoundsException)
+    private static void verifyRefMaps() {
+        if (verifyRefMaps.getValue()) {
+            StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
+        }
+    }
+
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ThrowArrayIndexOutOfBoundsException)
     public static void runtimeThrowRangeCheckFailed(int index) throws ArrayIndexOutOfBoundsException {
+        verifyRefMaps();
         throw new ArrayIndexOutOfBoundsException(index);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowArithmeticException)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ThrowArithmeticException)
     public static void runtimeThrowDiv0Exception() throws ArithmeticException {
+        verifyRefMaps();
         throw new ArithmeticException("division by zero");
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowNullPointerException)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ThrowNullPointerException)
     public static void runtimeThrowNullPointerException() throws NullPointerException {
+        verifyRefMaps();
         throw new NullPointerException();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.RegisterFinalizer)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RegisterFinalizer)
     public static void runtimeRegisterFinalizer() {
+        verifyRefMaps();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.NewInstance)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.NewInstance)
     public static Object runtimeNewInstance(Hub hub) {
+        verifyRefMaps();
         return createObject(hub.classActor);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedNewInstance)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.UnresolvedNewInstance)
     public static Object runtimeUnresolvedNewInstance(int index, ConstantPool constantPool) {
+        verifyRefMaps();
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         return createObject(classActor);
     }
 
     @INLINE
     private static Object createObject(ClassActor classActor) {
+        verifyRefMaps();
         if (MaxineVM.isHosted()) {
             try {
                 return Objects.allocateInstance(classActor.toJava());
@@ -174,6 +190,7 @@ public class C1XRuntimeCalls {
 
     @INLINE
     private static Object createArray(DynamicHub hub, int length) {
+        verifyRefMaps();
         if (length < 0) {
             Throw.negativeArraySizeException(length);
         }
@@ -183,20 +200,23 @@ public class C1XRuntimeCalls {
         return Heap.createArray(hub, length);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.NewArray)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.NewArray)
     public static Object runtimeNewArray(DynamicHub arrayClassActor, int length) {
+        verifyRefMaps();
         return createArray(arrayClassActor, length);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedNewArray)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.UnresolvedNewArray)
     public static Object runtimeUnresolvedNewArray(int index, ConstantPool constantPool, int length) {
+        verifyRefMaps();
         ArrayClassActor<?> arrayClass = ArrayClassActor.forComponentClassActor(constantPool.classAt(index).resolve(constantPool, index));
         return createArray(arrayClass.dynamicHub(), length);
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.RetrieveInterfaceIndex)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RetrieveInterfaceIndex)
     public static int retrieveInterfaceIndex(Object receiver, int interfaceId) {
+        verifyRefMaps();
         if (receiver == null) {
             return 0;
         }
@@ -210,14 +230,16 @@ public class C1XRuntimeCalls {
     @UNSAFE
     @INLINE
     private static Object createNonNegativeSizeArray(ClassActor arrayClassActor, int length) {
+        verifyRefMaps();
         if (MaxineVM.isHosted()) {
             return Array.newInstance(arrayClassActor.componentClassActor().toJava(), length);
         }
         return Heap.createArray(arrayClassActor.dynamicHub(), length);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.NewMultiArray)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.NewMultiArray)
     public static Object runtimeNewMultiArray(Hub arrayClassHub, int[] lengths) {
+        verifyRefMaps();
         for (int length : lengths) {
             if (length < 0) {
                 Throw.negativeArraySizeException(length);
@@ -226,8 +248,9 @@ public class C1XRuntimeCalls {
         return runtimeNewMultiArrayHelper(0, arrayClassHub.classActor, lengths);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.UnresolvedNewMultiArray)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.UnresolvedNewMultiArray)
     public static Object runtimeUnresolvedNewMultiArray(int index, ConstantPool constantPool, int[] lengths) {
+        verifyRefMaps();
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         for (int length : lengths) {
             if (length < 0) {
@@ -238,6 +261,7 @@ public class C1XRuntimeCalls {
     }
 
     private static Object runtimeNewMultiArrayHelper(int index, ClassActor arrayClassActor, int[] lengths) {
+        verifyRefMaps();
         final int length = lengths[index];
         final Object result = createNonNegativeSizeArray(arrayClassActor, length);
         if (length > 0) {
@@ -258,100 +282,118 @@ public class C1XRuntimeCalls {
         return result;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.HandleException)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.HandleException)
     public static void runtimeHandleException(Throwable throwable) throws Throwable {
+        verifyRefMaps();
         throw throwable;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowArrayStoreException)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ThrowArrayStoreException)
     public static void runtimeThrowArrayStoreException() {
+        verifyRefMaps();
         throw new ArrayStoreException();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowClassCastException)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ThrowClassCastException)
     public static void runtimeThrowClassCastException(Object o) {
+        verifyRefMaps();
         throw new ClassCastException();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ThrowIncompatibleClassChangeError)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ThrowIncompatibleClassChangeError)
     public static void runtimeThrowIncompatibleClassChangeError() {
+        verifyRefMaps();
         throw new IncompatibleClassChangeError();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.SlowSubtypeCheck)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.SlowSubtypeCheck)
     public static boolean runtimeSlowSubtypeCheck(Hub a, Hub b) {
+        verifyRefMaps();
         return b.isSubClassHub(a.classActor);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.SlowCheckCast)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.SlowCheckCast)
     public static Object runtimeSlowCheckCast(Object object, Hub expected) {
+        verifyRefMaps();
         if (!ObjectAccess.readHub(object).isSubClassHub(expected.classActor)) {
             throw new ClassCastException();
         }
         return object;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.SlowStoreCheck)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.SlowStoreCheck)
     public static void runtimeSlowStoreCheck(Hub a, Hub b) {
+        verifyRefMaps();
         if (!b.isSubClassHub(a.classActor)) {
             throw new ArrayStoreException();
         }
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Monitorenter)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Monitorenter)
     public static void runtimeMonitorenter(Object obj) {
+        verifyRefMaps();
         VMConfiguration.target().monitorScheme().monitorEnter(obj);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Monitorexit)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Monitorexit)
     public static void runtimeMonitorexit(Object obj) {
+        verifyRefMaps();
         VMConfiguration.target().monitorScheme().monitorExit(obj);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.TraceBlockEntry)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.TraceBlockEntry)
     public static void runtimeTraceBlockEntry() {
+        verifyRefMaps();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
     public static void runtimeOSRMigrationEnd() {
+        verifyRefMaps();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.JavaTimeMillis)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.JavaTimeMillis)
     public static long runtimeJavaTimeMillis() {
+        verifyRefMaps();
         return MaxineVM.native_currentTimeMillis();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.JavaTimeNanos)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.JavaTimeNanos)
     public static long runtimeJavaTimeNanos() {
+        verifyRefMaps();
         return MaxineVM.native_nanoTime();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.OopArrayCopy)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.OopArrayCopy)
     public static void runtimeOopArrayCopy() {
+        verifyRefMaps();
         // TODO: Implement correctly!
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.PrimitiveArrayCopy)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.PrimitiveArrayCopy)
     public static void runtimePrimitiveArrayCopy() {
+        verifyRefMaps();
         // TODO: Implement correctly!
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArrayCopy)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArrayCopy)
     public static void runtimeArrayCopy() {
+        verifyRefMaps();
         // TODO: Implement correctly!
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInvokeStatic)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ResolveInvokeStatic)
     public static long runtimeUnresolvedInvokeStatic(int index, ConstantPool constantPool) {
+        verifyRefMaps();
         final StaticMethodActor staticMethodActor = constantPool.classMethodAt(index).resolveStatic(constantPool, index);
         MakeHolderInitialized.makeHolderInitialized(staticMethodActor);
         return CompilationScheme.Static.compile(staticMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInvokeSpecial)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ResolveInvokeSpecial)
     public static long runtimeUnresolvedInvokeSpecial(Object receiver, int index, ConstantPool constantPool) {
+        verifyRefMaps();
         final ClassMethodActor classMethodActor = (ClassMethodActor) constantPool.classMethodAt(index).resolve(constantPool, index);
         long dest = CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT).toLong();
         if (receiver == null) {
@@ -361,92 +403,108 @@ public class C1XRuntimeCalls {
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInvokeVirtual)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ResolveInvokeVirtual)
     public static long runtimeUnresolvedInvokeVirtual(Object receiver, int index, ConstantPool constantPool) {
+        verifyRefMaps();
         final VirtualMethodActor virtualMethodActor = constantPool.classMethodAt(index).resolveVirtual(constantPool, index);
         return MethodSelectionSnippet.SelectVirtualMethod.selectVirtualMethod(receiver, virtualMethodActor).asAddress().toLong();
     }
 
     @UNSAFE
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveInvokeInterface)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ResolveInvokeInterface)
     public static long runtimeUnresolvedInvokeInterface(Object receiver, int index, ConstantPool constantPool) {
+        verifyRefMaps();
         final InterfaceMethodActor virtualMethodActor = (InterfaceMethodActor) constantPool.methodAt(index).resolve(constantPool, index);
         return MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, virtualMethodActor).asAddress().toLong();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.Debug)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Debug)
     public static void runtimeDebug() {
+        verifyRefMaps();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmethicLrem)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmethicLrem)
     public static long runtimeArithmethicLrem(long a, long b) {
+        verifyRefMaps();
         return a % b;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLdiv)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLdiv)
     public static long runtimeArithmeticLdiv(long a, long b) {
+        verifyRefMaps();
         return a / b;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticFrem)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticFrem)
     public static float runtimeArithmeticFrem(float v1, float v2) {
+        verifyRefMaps();
         return v1 % v2;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticDrem)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticDrem)
     public static double runtimeArithmeticDrem(double v1, double v2) {
+        verifyRefMaps();
         return v1 % v2;
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticCos)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticCos)
     public static double runtimeArithmeticCos(double v) {
+        verifyRefMaps();
         return Math.cos(v);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticTan)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticTan)
     public static double runtimeArithmeticTan(double v) {
+        verifyRefMaps();
         return Math.tan(v);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLog)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLog)
     public static double runtimeArithmeticLog(double v) {
+        verifyRefMaps();
         return Math.log(v);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticLog10)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticLog10)
     public static double runtimeArithmeticLog10(double v) {
+        verifyRefMaps();
         return Math.log10(v);
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveClass)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ResolveClass)
     public static Object resolveClass(int index, ConstantPool constantPool) {
+        verifyRefMaps();
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         MakeClassInitialized.makeClassInitialized(classActor);
         return classActor.dynamicHub();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveStaticFields)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ResolveStaticFields)
     public static Object resolveStaticFields(int index, ConstantPool constantPool) {
+        verifyRefMaps();
         // Here the reference to the field cp entry is given
         final ClassActor classActor = constantPool.fieldAt(index).resolve(constantPool, index).holder();
         MakeClassInitialized.makeClassInitialized(classActor);
         return classActor.staticTuple();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveJavaClass)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ResolveJavaClass)
     public static Object resolveJavaClass(int index, ConstantPool constantPool) {
+        verifyRefMaps();
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
         return classActor.toJava();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ResolveFieldOffset)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ResolveFieldOffset)
     public static int resolveFieldOffset(int index, ConstantPool constantPool) {
+        verifyRefMaps();
         final FieldActor fieldActor = constantPool.fieldAt(index).resolve(constantPool, index);
         return fieldActor.offset();
     }
 
-    @RUNTIME_ENTRY(runtimeCall = CiRuntimeCall.ArithmeticSin)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.ArithmeticSin)
     public static double runtimeArithmeticSin(double v) {
+        verifyRefMaps();
         return Math.sin(v);
     }
 

@@ -336,14 +336,15 @@ public class C1XTargetMethod extends TargetMethod {
         int numberOfSafepoints = ciTargetMethod.safepoints.size();
         int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints;
 
-        referenceMaps = new byte[totalReferenceMapSize() * totalStopPositions];
+        int totalRefMapSize = totalReferenceMapSize();
+        referenceMaps = new byte[totalRefMapSize * totalStopPositions];
 
         int index = 0;
         int[] stopPositions = new int[totalStopPositions];
         Object[] directCallees = new Object[ciTargetMethod.directCalls.size()];
 
         for (Call site : ciTargetMethod.directCalls) {
-            initStopPosition(index, stopPositions, site.codePos, site.registerMap, site.stackMap);
+            initStopPosition(index, index * totalRefMapSize, stopPositions, site.codePos, site.registerMap, site.stackMap);
 
             if (site.method != null) {
                 final MaxRiMethod maxMethod = (MaxRiMethod) site.method;
@@ -363,51 +364,32 @@ public class C1XTargetMethod extends TargetMethod {
         }
 
         for (Call site : ciTargetMethod.indirectCalls) {
-            initStopPosition(index, stopPositions, site.codePos, site.registerMap, site.stackMap);
+            initStopPosition(index, index * totalRefMapSize, stopPositions, site.codePos, site.registerMap, site.stackMap);
             index++;
         }
 
         for (CiTargetMethod.Safepoint safepoint : ciTargetMethod.safepoints) {
-            initStopPosition(index, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
+            initStopPosition(index, index * totalRefMapSize, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
             index++;
         }
 
         this.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
     }
 
-    private void initStopPosition(int index, int[] stopPositions, int codePos, byte[] registerMap, byte[] stackMap) {
+    private void initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, byte[] registerMap, byte[] stackMap) {
         stopPositions[index] = codePos;
 
-        if (registerMap != null) {
-            initRegisterMap(index, registerMap);
-        }
-
+        int stackMapLength;
+        // copy the stack map
         if (stackMap != null) {
-            initStackMap(index, stackMap);
+            stackMapLength = stackMap.length;
+            System.arraycopy(stackMap, 0, referenceMaps, refmapIndex, stackMapLength);
+        } else {
+            stackMapLength = 0;
         }
-    }
-
-    private void initRegisterMap(int index, byte[] registerMap) {
-        assert registerMap.length * 8 >= referenceRegisterCount;
-        for (int i = 0; i < registerMap.length; i++) {
-            // TODO: use a byte copy, not a bit by bit copy
-            for (int j = 0; j < 8; j++) {
-                if (0 != (registerMap[i] >> j & 1)) {
-                    setRegisterReferenceMapBit(index, i * 8 + j);
-                }
-            }
-        }
-    }
-
-    private void initStackMap(int index, byte[] stackMap) {
-        assert stackMap.length * 8 >= frameWords();
-        for (int i = 0; i < stackMap.length; i++) {
-            // TODO: use a byte copy, not a bit by bit copy
-            for (int j = 0; j < 8; j++) {
-                if (0 != (stackMap[i] >> j & 1)) {
-                    setFrameReferenceMapBit(index, i);
-                }
-            }
+        // copy the register map
+        if (registerMap != null) {
+            System.arraycopy(registerMap, 0, referenceMaps, refmapIndex + stackMapLength, registerMap.length);
         }
     }
 
