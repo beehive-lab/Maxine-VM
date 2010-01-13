@@ -389,7 +389,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     }
 
     public boolean isCalleeSaved() {
-        return false;
+        return registerRestoreEpilogueOffset >= 0;
     }
 
     public byte[] encodedInlineDataDescriptors() {

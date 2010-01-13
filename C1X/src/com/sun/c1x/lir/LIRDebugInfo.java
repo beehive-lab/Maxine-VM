@@ -77,12 +77,12 @@ public class LIRDebugInfo {
         return new LIRDebugInfo(this);
     }
 
-    public void allocateRefMaps(int registerSize, int frameSize) {
+    public void allocateRefMaps(int registerSize, int frameSize, CiTarget target) {
         if (registerSize > 0) {
             registerRefMap = newRefMap(registerSize);
         }
         if (frameSize > 0) {
-            stackRefMap = newRefMap(frameSize);
+            stackRefMap = newRefMap(frameSize / target.spillSlotSize);
         }
     }
 

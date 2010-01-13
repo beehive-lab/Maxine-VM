@@ -318,9 +318,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     public long prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean ignoreTopFrame) {
         timer.start();
         ignoreCurrentFrame = ignoreTopFrame;
-        triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        referenceMap = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
-        lowestStackSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+        initRefMapFields(vmThreadLocals);
         Pointer highestStackSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
 
         // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
@@ -369,6 +367,12 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         timer.stop();
         preparationTime = timer.getLastElapsedTime();
         return preparationTime;
+    }
+
+    private void initRefMapFields(Pointer vmThreadLocals) {
+        triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        referenceMap = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
+        lowestStackSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
     }
 
     /**
@@ -523,16 +527,21 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             if (targetMethod.isJitCompiled()) {
                 Log.print("JitTargetMethod ");
             }
-            Log.printMethod(targetMethod.classMethodActor(), false);
+            ClassMethodActor classMethodActor = targetMethod.classMethodActor();
+            if (classMethodActor != null) {
+                Log.printMethod(classMethodActor, false);
+            } else {
+                Log.print(targetMethod.description());
+            }
             Log.print(" +");
             Log.println(targetMethod.stopPosition(stopIndex));
             Log.print("    Stop index: ");
-            Log.println(stopIndex);
+            Log.print(stopIndex);
             if (!refmapFramePointer.isZero()) {
-                Log.print("    Frame pointer: ");
+                Log.print(", frame pointer: ");
                 printSlot(referenceMapBitIndex(refmapFramePointer), Pointer.zero());
-                Log.println();
             }
+            Log.println();
         }
     }
 
@@ -861,6 +870,16 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * @param numBits the number of bits in the reference map
      */
     public void setReferenceMapBits(StackFrameWalker.Cursor cursor, Pointer slotPointer, int refMap, int numBits) {
+        if (!inThisStack(cursor.sp())) {
+            throw FatalError.unexpected("sp not in this stack");
+        }
+        if (!inThisStack(slotPointer)) {
+            throw FatalError.unexpected("slots not in this stack");
+        }
+        if (refMap == 0) {
+            // nothing to do.
+            return;
+        }
         if (Heap.traceRootScanning()) {
             Log.print("    setReferenceMapBits: sp = ");
             Log.print(cursor.sp());
@@ -874,16 +893,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             }
             Log.print(", description = ");
             Log.println(cursor.targetMethod().description());
-        }
-        if (!inThisStack(cursor.sp())) {
-            throw FatalError.unexpected("sp not in this stack");
-        }
-        if (!inThisStack(slotPointer)) {
-            throw FatalError.unexpected("slots not in this stack");
-        }
-        if (refMap == 0) {
-            // nothing to do.
-            return;
         }
         if ((refMap & (-1 << numBits)) != 0) {
             throw FatalError.unexpected("reference map has extraneous high order bits set");
@@ -926,7 +935,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     }
 
     private void printGrip(Grip grip, StackFrameWalker.Cursor cursor, Pointer slotPointer, int slotIndex, boolean valid) {
-        Log.print("    grip @ ");
+        Log.print("        grip @ ");
         Log.print(slotPointer.plusWords(slotIndex));
         Log.print(" [sp + ");
         Log.print(slotPointer.plusWords(slotIndex).minus(cursor.sp()).toInt());
@@ -954,7 +963,12 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      */
     public static void verifyReferenceMapsForThisThread() {
         VmThread current = VmThread.current();
-        current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), current.stackReferenceMapVerifier());
+        current.stackReferenceMapVerifier().verifyReferenceMaps(current);
+    }
+
+    private void verifyReferenceMaps(VmThread current) {
+        initRefMapFields(current.vmThreadLocals());
+        current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), this);
     }
 
 }
