@@ -2757,13 +2757,10 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         CallingConvention cc = map.javaCallingConvention(Util.signatureToKinds(compilation.method.signatureType(), !compilation.method.isStatic()), true, false);
 
         // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
-        final int adapterFrameSize = cc.overflowArgumentSize;
+        final int adapterFrameSize = target.alignFrameSize(cc.overflowArgumentSize + target.arch.wordSize) - wordSize;
 
         // Allocate space on the stack (adapted parameters + caller's frame pointer)
-        masm.push(X86.rbp);
-        if (adapterFrameSize != 0) {
-            masm.decrement(X86.rsp, adapterFrameSize);
-        }
+        masm.enter((short) adapterFrameSize, (byte) 0);
 
          // Prefix of a frame is RIP + saved RBP.
         final int framePrefixSize = 2 * this.wordSize;

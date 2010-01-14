@@ -87,7 +87,7 @@ public class LIRDebugInfo {
     }
 
     public void setOop(CiLocation location, CiTarget target) {
-        if (location.isStack()) {
+        if (location.isStack() && !location.isCallerFrame()) {
             int offset = location.stackOffset();
             assert offset % target.arch.wordSize == 0 : "must be aligned";
             int stackMapIndex = offset / target.arch.wordSize;

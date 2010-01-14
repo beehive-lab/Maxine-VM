@@ -706,7 +706,7 @@ public class C1XTargetMethod extends TargetMethod {
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = registerState;
-            int byteIndex = stopIndex * totalReferenceMapSize();
+            int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize;
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
             for (int i = frameReferenceMapSize; i < registerReferenceMapSize() + frameReferenceMapSize; i++) {
                 preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
