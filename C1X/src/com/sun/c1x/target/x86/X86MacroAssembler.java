@@ -1241,4 +1241,13 @@ public class X86MacroAssembler extends X86Assembler {
         this.recordSafepoint(codeBuffer.position(), info.registerRefMap(), info.stackRefMap());
         movq(safepointRegister, new Address(safepointRegister));
     }
+
+    public void enter(short imm16, byte imm8) {
+        emitByte(0xC8);
+        // appended:
+        emitByte(imm16 & 0xff);
+        imm16 >>= 8;
+        emitByte(imm16 & 0xff);
+        emitByte(imm8);
+    }
 }

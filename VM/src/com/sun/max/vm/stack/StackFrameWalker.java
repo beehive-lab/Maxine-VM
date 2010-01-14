@@ -48,7 +48,7 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class StackFrameWalker {
 
-    private static final boolean USE_NEW_API = false;
+    private static final boolean USE_NEW_API = true;
     private static final boolean USE_NEW_API_HOSTED = false;
 
     public enum CalleeKind {
