@@ -598,7 +598,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     public void emitEntrypointInstrumentation() {
         if (methodProfileBuilder != null) {
-            methodProfileBuilder.addEntryCounter(MethodInstrumentation.DEFAULT_ENTRY_INITIAL_COUNT);
+            methodProfileBuilder.addEntryCounter(MethodInstrumentation.initialEntryCount);
             final CompiledBytecodeTemplate template = getExactTemplate(NOP, TemplateChooser.Selector.INSTRUMENTED);
             assignReferenceLiteralTemplateArgument(0, methodProfileBuilder.methodProfileObject());
             emitAndRecordStops(template);
