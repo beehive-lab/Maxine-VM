@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap;
 
+import java.lang.management.*;
 import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
@@ -263,5 +264,11 @@ public interface HeapScheme extends VMScheme {
      * heap.
      */
     void disableImmortalMemoryAllocation();
+
+    /**
+     * Returns the garbage collection management bean for this heap scheme.
+     * @return the @see GarbageCollectorMXBean instance
+     */
+    GarbageCollectorMXBean getGarbageCollectorMXBean();
 
 }

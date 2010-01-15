@@ -20,6 +20,8 @@
  */
 package com.sun.max.memory;
 
+import java.lang.management.*;
+
 import com.sun.max.unsafe.*;
 
 /**
@@ -84,5 +86,9 @@ public class FixedMemoryRegion implements MemoryRegion {
 
     public boolean sameAs(MemoryRegion otherMemoryRegion) {
         return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
+    }
+
+    public MemoryUsage getUsage() {
+        return null;
     }
 }

@@ -2125,8 +2125,8 @@ enum {
  */
 jintArray
 JVM_GetThreadStateValues(JNIEnv* env, jint javaThreadState) {
-    c_UNIMPLEMENTED();
-    return 0;
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetThreadStateValues", "(I)[I");
+    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, javaThreadState);
 }
 
 /*
@@ -2139,8 +2139,8 @@ JVM_GetThreadStateValues(JNIEnv* env, jint javaThreadState) {
  */
 jobjectArray
 JVM_GetThreadStateNames(JNIEnv* env, jint javaThreadState, jintArray values) {
-  c_UNIMPLEMENTED();
-  return 0;
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetThreadStateNames", "(I[I)[Ljava/lang/String;");
+    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, javaThreadState, values);
 }
 
 /* =========================================================================

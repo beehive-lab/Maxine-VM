@@ -23,6 +23,10 @@ package com.sun.max.vm.heap.sequential.semiSpace;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import java.lang.management.*;
+
+import com.sun.management.GarbageCollectorMXBean;
+import com.sun.management.GcInfo;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
@@ -37,6 +41,7 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.management.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -51,6 +56,7 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  * @author Hannes Payer
  * @author Laurent Daynes
+ * @Author Mick Jordan
  */
 public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements HeapScheme, CellVisitor {
 
@@ -166,6 +172,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     private final TimerMetric copyTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
     private final TimerMetric weakRefTimer = new TimerMetric(new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK));
 
+    private long collectionCount;
+    private long accumulatedGCTime;
     private long lastGCTime;
 
     /**
@@ -342,6 +350,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
+                final long startGCTime = System.currentTimeMillis();
+                collectionCount++;
                 startTimer(gcTimer);
 
                 startTimer(clearTimer);
@@ -397,6 +407,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 toSpace.mark.set(allocationMark()); // for debugging
 
                 lastGCTime = System.currentTimeMillis();
+                accumulatedGCTime += lastGCTime - startGCTime;
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
@@ -1175,6 +1186,41 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     @Override
     public long maxObjectInspectionAge() {
         return System.currentTimeMillis() - lastGCTime;
+    }
+
+    @Override
+    public GarbageCollectorMXBean getGarbageCollectorMXBean() {
+        return new SemiSpaceGarbageCollectorMXBean();
+    }
+
+    private final class SemiSpaceGarbageCollectorMXBean extends HeapSchemeAdaptor.GarbageCollectorMXBeanAdaptor {
+        private SemiSpaceGarbageCollectorMXBean() {
+            super("SemiSpace");
+            add(new SemiSpaceMemoryPoolMXBean(fromSpace, this));
+            add(new SemiSpaceMemoryPoolMXBean(toSpace, this));
+        }
+
+        @Override
+        public GcInfo getLastGcInfo() {
+            return null;
+        }
+
+        @Override
+        public long getCollectionCount() {
+            return collectionCount;
+        }
+
+        @Override
+        public long getCollectionTime() {
+            return accumulatedGCTime;
+        }
+
+    }
+
+    private final class SemiSpaceMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
+        SemiSpaceMemoryPoolMXBean(RuntimeMemoryRegion region, MemoryManagerMXBean manager) {
+            super(MemoryType.HEAP, region, manager);
+        }
     }
 
 }

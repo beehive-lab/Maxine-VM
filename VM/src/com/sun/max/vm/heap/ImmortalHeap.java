@@ -25,11 +25,15 @@ package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.VMOptions.*;
 
+import java.lang.management.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.management.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -149,4 +153,23 @@ public final class ImmortalHeap {
             cell = cellVisitor.visitCell(cell);
         }
     }
+
+    public static MemoryManagerMXBean getMemoryManagerMXBean() {
+        return new ImmortalHeapMemoryManagerMXBean("Immortal");
+    }
+
+    private static class ImmortalHeapMemoryManagerMXBean extends MemoryManagerMXBeanAdaptor {
+        ImmortalHeapMemoryManagerMXBean(String name) {
+            super(name);
+            add(new ImmortalMemoryPoolMXBean(immortalHeap, this));
+        }
+    }
+
+    private static class ImmortalMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
+        ImmortalMemoryPoolMXBean(RuntimeMemoryRegion region, MemoryManagerMXBean manager) {
+            super(MemoryType.HEAP, region, manager);
+        }
+
+    }
+
 }

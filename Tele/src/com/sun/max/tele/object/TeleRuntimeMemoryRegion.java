@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.object;
 
+import java.lang.management.*;
+
 import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
@@ -118,5 +120,9 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
 
     public boolean sameAs(MemoryRegion otherMemoryRegion) {
         return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
+    }
+
+    public MemoryUsage getUsage() {
+        return null;
     }
 }
