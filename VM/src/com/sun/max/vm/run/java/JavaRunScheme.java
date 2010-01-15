@@ -161,25 +161,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         // ClassLoader.getSystemClassLoader calls sun.misc.Launcher.getLauncher()
         // We may need to reinitialize the class loaders in Launcher for the target environment
         resetLauncher(ClassActor.fromJava(sun.misc.Launcher.class));
-        if (false) {
-            /* (Doug) It appears as though this hack is no longer necessary. In fact, re-enabling it will
-             * cause the test.output.CLDelegation test to fail. */
-
-            /* (Mick) TODO It is not clear that the following should be necessary as ClassLoader.loadClass has an
-             * explicit check for a null parent and calls findBootStrapClass in that case. However, class loading
-             * is rather complicated and, experimentally, if this code commented out, the VM (re)loads Object.class
-             * from rt.jar, which is bad news. The consequence of making VMClassLoader an explicit parent
-             * is that the classloader depth differs from Hotspot and we effectively have a non-null boot class loader.
-             */
-            final ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-            // The parent of the system (app) class loader is the extension class loader and
-            // we need to set the private "parent" field of it to our VMClassLoader in order to
-            // be able to  find classes compiled into the image.
-            final FieldActor parentFieldActor = ClassActor.fromJava(ClassLoader.class).findFieldActor(SymbolTable.makeSymbol("parent"));
-            // ClassLoader.getParent() has checks we don't want
-            final ClassLoader parent = (ClassLoader) TupleAccess.readObject(systemClassLoader, parentFieldActor.offset());
-            TupleAccess.writeObject(parent, parentFieldActor.offset(), BootClassLoader.BOOT_CLASS_LOADER);
-        }
     }
 
     /**

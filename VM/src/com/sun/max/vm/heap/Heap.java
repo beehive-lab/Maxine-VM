@@ -133,6 +133,13 @@ public final class Heap {
         return verboseOption.verboseGC || traceGC || traceRootScanningOption.getValue() || Heap.traceGCTime() || traceGC;
     }
 
+    /**
+     * Set the verboseGC option (java.lang.management support).
+     */
+    public static void setVerbose(boolean value) {
+        verboseOption.verboseGC = value;
+    }
+
     private static boolean traceAllocation;
 
     /**

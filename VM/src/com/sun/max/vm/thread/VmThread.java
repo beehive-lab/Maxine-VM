@@ -572,16 +572,6 @@ public class VmThread {
 
     private static native void nativeYield();
 
-    public static StackTraceElement[][] dumpThreads(Thread[] threads) {
-        FatalError.unimplemented();
-        return null;
-    }
-
-    public static Thread[] getThreads() {
-        FatalError.unimplemented();
-        return null;
-    }
-
     private static native void nativeSetPriority(Word nativeThread, int newPriority);
 
     /**

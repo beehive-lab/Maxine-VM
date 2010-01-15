@@ -196,7 +196,7 @@ public final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private static StackTraceElement[][] dumpThreads(Thread[] threads) {
-        return VmThread.dumpThreads(threads);
+        return VmThreadMap.dumpThreads(threads);
     }
 
     /**
@@ -206,7 +206,7 @@ public final class JDK_java_lang_Thread {
      */
     @SUBSTITUTE
     private static Thread[] getThreads() {
-        return VmThread.getThreads();
+        return VmThreadMap.getThreads();
     }
 
     /**

@@ -20,12 +20,15 @@
  */
 package com.sun.max.vm.jni;
 
+import java.lang.management.*;
+
 import static com.sun.max.vm.jni.JniFunctions.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.management.*;
 import com.sun.max.vm.thread.*;
-
+import com.sun.max.vm.runtime.*;
 
 /**
  * Upcalls from C that implement the JMM Interface Functions.
@@ -127,26 +130,26 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static native void reserved1();
-        // Source: JmmFunctionsSource.java:47
-
-    @VM_ENTRY_POINT
-    private static native void reserved2();
-        // Source: JmmFunctionsSource.java:50
-
-    @VM_ENTRY_POINT
-    private static native int GetVersion(Pointer env);
         // Source: JmmFunctionsSource.java:53
 
     @VM_ENTRY_POINT
-    private static native int GetOptionalSupport(Pointer env, Pointer support_ptr);
+    private static native void reserved2();
         // Source: JmmFunctionsSource.java:56
 
     @VM_ENTRY_POINT
-    private static JniHandle GetInputArguments(Pointer env) {
+    private static native int GetVersion(Pointer env);
         // Source: JmmFunctionsSource.java:59
+
+    @VM_ENTRY_POINT
+    private static native int GetOptionalSupport(Pointer env, Pointer support_ptr);
+        // Source: JmmFunctionsSource.java:62
+
+    @VM_ENTRY_POINT
+    private static JniHandle GetInputArguments(Pointer env) {
+        // Source: JmmFunctionsSource.java:65
         Pointer anchor = prologue(env, "GetInputArguments");
         try {
-            return JniHandle.zero();
+            return JniHandles.createLocalHandle(RuntimeManagement.getVmArguments());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
             return asJniHandle(0);
@@ -157,9 +160,12 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static int GetThreadInfo(Pointer env, JniHandle ids, int maxDepth, JniHandle infoArray) {
-        // Source: JmmFunctionsSource.java:64
+        // Source: JmmFunctionsSource.java:70
         Pointer anchor = prologue(env, "GetThreadInfo");
         try {
+            final ThreadInfo[] threadInfoArray = (ThreadInfo[]) infoArray.unhand();
+            final long[] threadIds = (long[]) ids.unhand();
+            ThreadManagement.getThreadInfo(threadIds, maxDepth, threadInfoArray);
             return 0;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
@@ -171,7 +177,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetInputArgumentArray(Pointer env) {
-        // Source: JmmFunctionsSource.java:69
+        // Source: JmmFunctionsSource.java:78
         Pointer anchor = prologue(env, "GetInputArgumentArray");
         try {
             return JniHandle.zero();
@@ -185,10 +191,12 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryPools(Pointer env, JniHandle mgr) {
-        // Source: JmmFunctionsSource.java:74
+        // Source: JmmFunctionsSource.java:83
         Pointer anchor = prologue(env, "GetMemoryPools");
         try {
-            return JniHandle.zero();
+            final Object p = mgr.unhand();
+            assert p ==null; // see sun/management/MemoryImpl.c
+            return JniHandles.createLocalHandle(MemoryManagement.getMemoryPools());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
             return asJniHandle(0);
@@ -199,10 +207,12 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryManagers(Pointer env, JniHandle pool) {
-        // Source: JmmFunctionsSource.java:79
+        // Source: JmmFunctionsSource.java:90
         Pointer anchor = prologue(env, "GetMemoryManagers");
         try {
-            return JniHandle.zero();
+            final Object p = pool.unhand();
+            assert p ==null; // see sun/management/MemoryImpl.c
+            return JniHandles.createLocalHandle(MemoryManagement.getMemoryManagers());
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
             return asJniHandle(0);
@@ -213,7 +223,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryPoolUsage(Pointer env, JniHandle pool) {
-        // Source: JmmFunctionsSource.java:84
+        // Source: JmmFunctionsSource.java:97
         Pointer anchor = prologue(env, "GetMemoryPoolUsage");
         try {
             return JniHandle.zero();
@@ -227,7 +237,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetPeakMemoryPoolUsage(Pointer env, JniHandle pool) {
-        // Source: JmmFunctionsSource.java:89
+        // Source: JmmFunctionsSource.java:102
         Pointer anchor = prologue(env, "GetPeakMemoryPoolUsage");
         try {
             return JniHandle.zero();
@@ -241,14 +251,14 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static native Pointer reserved4();
-        // Source: JmmFunctionsSource.java:94
+        // Source: JmmFunctionsSource.java:107
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryUsage(Pointer env, boolean heap) {
-        // Source: JmmFunctionsSource.java:97
+        // Source: JmmFunctionsSource.java:110
         Pointer anchor = prologue(env, "GetMemoryUsage");
         try {
-            return JniHandle.zero();
+            return JniHandles.createLocalHandle(MemoryManagement.getMemoryUsage(heap));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
             return asJniHandle(0);
@@ -259,7 +269,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static long GetLongAttribute(Pointer env, JniHandle obj, int att) {
-        // Source: JmmFunctionsSource.java:102
+        // Source: JmmFunctionsSource.java:115
         Pointer anchor = prologue(env, "GetLongAttribute");
         try {
             return 0;
@@ -273,7 +283,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static boolean GetBoolAttribute(Pointer env, int att) {
-        // Source: JmmFunctionsSource.java:107
+        // Source: JmmFunctionsSource.java:120
         Pointer anchor = prologue(env, "GetBoolAttribute");
         try {
             return false;
@@ -287,9 +297,21 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static boolean SetBoolAttribute(Pointer env, int att, boolean flag) {
-        // Source: JmmFunctionsSource.java:112
+        // Source: JmmFunctionsSource.java:125
         Pointer anchor = prologue(env, "SetBoolAttribute");
         try {
+            switch (att) {
+                case JMM_VERBOSE_GC:
+                    return MemoryManagement.setVerboseGC(flag);
+                case JMM_VERBOSE_CLASS:
+                    return ClassLoadingManagement.setVerboseClass(flag);
+                case JMM_THREAD_CONTENTION_MONITORING:
+                    return ThreadManagement.setThreadCpuTimeEnabled(flag);
+                case JMM_THREAD_CPU_TIME:
+                    return ThreadManagement.setThreadCpuTimeEnabled(flag);
+                default:
+                        FatalError.unexpected("unknown attribute value " + att +  "to JmmFunctions.SetBoolAttribute");
+            }
             return false;
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
@@ -301,7 +323,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static int GetLongAttributes(Pointer env, JniHandle obj, JniHandle atts, int count, JniHandle result) {
-        // Source: JmmFunctionsSource.java:117
+        // Source: JmmFunctionsSource.java:142
         Pointer anchor = prologue(env, "GetLongAttributes");
         try {
             return 0;
@@ -315,7 +337,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle FindCircularBlockedThreads(Pointer env) {
-        // Source: JmmFunctionsSource.java:122
+        // Source: JmmFunctionsSource.java:147
         Pointer anchor = prologue(env, "FindCircularBlockedThreads");
         try {
             return JniHandle.zero();
@@ -329,7 +351,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static long GetThreadCpuTime(Pointer env, long thread_id) {
-        // Source: JmmFunctionsSource.java:127
+        // Source: JmmFunctionsSource.java:152
         Pointer anchor = prologue(env, "GetThreadCpuTime");
         try {
             return 0;
@@ -343,7 +365,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetVMGlobalNames(Pointer env) {
-        // Source: JmmFunctionsSource.java:132
+        // Source: JmmFunctionsSource.java:157
         Pointer anchor = prologue(env, "GetVMGlobalNames");
         try {
             return JniHandle.zero();
@@ -357,7 +379,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static int GetVMGlobals(Pointer env, JniHandle names, Pointer globals, int count) {
-        // Source: JmmFunctionsSource.java:137
+        // Source: JmmFunctionsSource.java:162
         Pointer anchor = prologue(env, "GetVMGlobals");
         try {
             return 0;
@@ -371,7 +393,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static int GetInternalThreadTimes(Pointer env, JniHandle names, JniHandle times) {
-        // Source: JmmFunctionsSource.java:142
+        // Source: JmmFunctionsSource.java:167
         Pointer anchor = prologue(env, "GetInternalThreadTimes");
         try {
             return 0;
@@ -385,7 +407,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static boolean ResetStatistic(Pointer env, Word obj, int type) {
-        // Source: JmmFunctionsSource.java:147
+        // Source: JmmFunctionsSource.java:172
         Pointer anchor = prologue(env, "ResetStatistic");
         try {
             return false;
@@ -399,7 +421,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static void SetPoolSensor(Pointer env, JniHandle pool, int type, JniHandle sensor) {
-        // Source: JmmFunctionsSource.java:152
+        // Source: JmmFunctionsSource.java:177
         Pointer anchor = prologue(env, "SetPoolSensor");
         try {
         } catch (Throwable t) {
@@ -411,7 +433,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static long SetPoolThreshold(Pointer env, JniHandle pool, int type, long threshold) {
-        // Source: JmmFunctionsSource.java:156
+        // Source: JmmFunctionsSource.java:181
         Pointer anchor = prologue(env, "SetPoolThreshold");
         try {
             return 0;
@@ -425,7 +447,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetPoolCollectionUsage(Pointer env, JniHandle pool) {
-        // Source: JmmFunctionsSource.java:161
+        // Source: JmmFunctionsSource.java:186
         Pointer anchor = prologue(env, "GetPoolCollectionUsage");
         try {
             return JniHandle.zero();
@@ -439,7 +461,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static int GetGCExtAttributeInfo(Pointer env, JniHandle mgr, Pointer ext_info, int count) {
-        // Source: JmmFunctionsSource.java:166
+        // Source: JmmFunctionsSource.java:191
         Pointer anchor = prologue(env, "GetGCExtAttributeInfo");
         try {
             return 0;
@@ -453,7 +475,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static void GetLastGCStat(Pointer env, JniHandle mgr, Pointer gc_stat) {
-        // Source: JmmFunctionsSource.java:171
+        // Source: JmmFunctionsSource.java:196
         Pointer anchor = prologue(env, "GetLastGCStat");
         try {
         } catch (Throwable t) {
@@ -465,7 +487,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static long GetThreadCpuTimeWithKind(Pointer env, long thread_id, boolean user_sys_cpu_time) {
-        // Source: JmmFunctionsSource.java:175
+        // Source: JmmFunctionsSource.java:200
         Pointer anchor = prologue(env, "GetThreadCpuTimeWithKind");
         try {
             return 0;
@@ -479,11 +501,11 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static native Pointer reserved5();
-        // Source: JmmFunctionsSource.java:180
+        // Source: JmmFunctionsSource.java:205
 
     @VM_ENTRY_POINT
     private static int DumpHeap0(Pointer env, JniHandle outputfile, boolean live) {
-        // Source: JmmFunctionsSource.java:183
+        // Source: JmmFunctionsSource.java:208
         Pointer anchor = prologue(env, "DumpHeap0");
         try {
             return 0;
@@ -497,7 +519,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle FindDeadlocks(Pointer env, boolean object_monitors_only) {
-        // Source: JmmFunctionsSource.java:188
+        // Source: JmmFunctionsSource.java:213
         Pointer anchor = prologue(env, "FindDeadlocks");
         try {
             return JniHandle.zero();
@@ -511,7 +533,7 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static void SetVMGlobal(Pointer env, JniHandle flag_name, Word new_value) {
-        // Source: JmmFunctionsSource.java:193
+        // Source: JmmFunctionsSource.java:218
         Pointer anchor = prologue(env, "SetVMGlobal");
         try {
         } catch (Throwable t) {
@@ -523,11 +545,11 @@ public final class JmmFunctions {
 
     @VM_ENTRY_POINT
     private static native Word reserved6();
-        // Source: JmmFunctionsSource.java:197
+        // Source: JmmFunctionsSource.java:222
 
     @VM_ENTRY_POINT
     private static JniHandle DumpThreads(Pointer env, JniHandle ids, boolean lockedMonitors, boolean lockedSynchronizers) {
-        // Source: JmmFunctionsSource.java:200
+        // Source: JmmFunctionsSource.java:225
         Pointer anchor = prologue(env, "DumpThreads");
         try {
             return JniHandle.zero();
