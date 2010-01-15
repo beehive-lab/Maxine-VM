@@ -76,6 +76,12 @@ import com.sun.max.vm.type.*;
  */
 public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
+    public static final VMBooleanXXOption verifyRefMaps = VMOptions.register(new VMBooleanXXOption("-XX:-",
+            "VerifyRefMaps",
+            "Verify reference maps by performing a stack walk and checking plausibility of reference roots in " +
+            "the stack--as often as possible."),
+            MaxineVM.Phase.PRISTINE);
+
     private final Timer timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer triggeredVmThreadLocals;
     private Pointer referenceMap;
@@ -96,6 +102,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
     private TargetMethod trampolineTargetMethod;
     private Pointer trampolineRefmapPointer;
+
 
     public StackReferenceMapPreparer(boolean verify, boolean prepare) {
         this.verify = verify;

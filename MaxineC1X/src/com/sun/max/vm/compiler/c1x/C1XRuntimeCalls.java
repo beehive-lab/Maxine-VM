@@ -61,8 +61,6 @@ public class C1XRuntimeCalls {
 
     private static ClassMethodActor[] runtimeCallMethods = new ClassMethodActor[CiRuntimeCall.values().length];
 
-    private static VMBooleanXXOption verifyRefMaps = VMOptions.register(new VMBooleanXXOption("-C1X:-", "VerifyRefMaps", "Verify reference maps for all C1X runtime calls."), MaxineVM.Phase.PRISTINE);
-
     static {
         for (Method method : C1XRuntimeCalls.class.getMethods()) {
             C1X_RUNTIME_ENTRYPOINT entry = method.getAnnotation(C1X_RUNTIME_ENTRYPOINT.class);
@@ -127,7 +125,7 @@ public class C1XRuntimeCalls {
     }
 
     private static void verifyRefMaps() {
-        if (verifyRefMaps.getValue()) {
+        if (StackReferenceMapPreparer.verifyRefMaps.getValue()) {
             StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
         }
     }
