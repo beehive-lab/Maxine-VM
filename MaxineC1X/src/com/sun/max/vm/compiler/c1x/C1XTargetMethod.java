@@ -668,6 +668,13 @@ public class C1XTargetMethod extends TargetMethod {
                 AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
+                // get the register state from the callee's frame
+                registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                if (Trap.Number.isStackOverflow(registerState)) {
+                    // annoying corner case: a method can never catch stack overflow for itself
+                    return;
+                }
+                break;
             case CALLEE_SAVED:
                 // get the register state from the callee's frame
                 registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
@@ -680,6 +687,11 @@ public class C1XTargetMethod extends TargetMethod {
                 break;
         }
         int stopIndex = findClosestStopIndex(current.ip());
+        if (stopIndex < 0) {
+            // this is very bad.
+            throw FatalError.unexpected("could not find stop index");
+        }
+
         int frameReferenceMapSize = frameReferenceMapSize();
         if (!registerState.isZero()) {
             // the callee contains register state from this frame;

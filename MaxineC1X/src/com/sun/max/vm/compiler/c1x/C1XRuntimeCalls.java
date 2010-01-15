@@ -42,10 +42,16 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * This class contains the implementation of runtime calls that are called by
+ * code emitted by the C1X compiler.
  *
  * @author Thomas Wuerthinger
+ * @author Ben L. Titzer
  */
 public class C1XRuntimeCalls {
+
+    // a local flag to enable calls to verify the reference map for each runtime call
+    private static final boolean ENABLE_REFMAP_VERIFICATION = true;
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
@@ -125,7 +131,7 @@ public class C1XRuntimeCalls {
     }
 
     private static void verifyRefMaps() {
-        if (StackReferenceMapPreparer.verifyRefMaps.getValue()) {
+        if (ENABLE_REFMAP_VERIFICATION) {
             StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
         }
     }

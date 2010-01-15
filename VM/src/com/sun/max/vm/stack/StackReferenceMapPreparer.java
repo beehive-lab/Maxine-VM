@@ -969,8 +969,10 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * heuristic.
      */
     public static void verifyReferenceMapsForThisThread() {
-        VmThread current = VmThread.current();
-        current.stackReferenceMapVerifier().verifyReferenceMaps(current);
+        if (verifyRefMaps.getValue()) {
+            VmThread current = VmThread.current();
+            current.stackReferenceMapVerifier().verifyReferenceMaps(current);
+        }
     }
 
     private void verifyReferenceMaps(VmThread current) {

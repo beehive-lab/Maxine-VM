@@ -29,6 +29,7 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.stack.StackReferenceMapPreparer;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
@@ -105,6 +106,10 @@ public abstract class Trap {
         }
 
         private Number() {
+        }
+
+        public static boolean isStackOverflow(Pointer trapState) {
+            return TrapStateAccess.instance().getTrapNumber(trapState) == STACK_FAULT;
         }
     }
 
@@ -366,16 +371,17 @@ public abstract class Trap {
      * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, Pointer) standard mechanism} for throwing an
      * exception is used.
      *
-     * @param trapState
-     * @param targetMethod
-     * @param throwable
-     * @param stackPointer
-     * @param framePointer
-     * @param throwAddress
+     * @param trapState a pointer to the buffer on the stack containing the trap state
+     * @param targetMethod the target method containing the trap address
+     * @param throwable the throwable to raise
+     * @param sp the stack pointer at the time of the trap
+     * @param fp the frame pointer at the time of the trap
+     * @param ip the instruction pointer which caused the trap
      */
-    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer throwAddress) {
+    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
+        StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
         if (!targetMethod.isJitCompiled()) {
-            final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, throwAddress, throwable.getClass());
+            final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, ip, throwable.getClass());
             if (!catchAddress.isZero()) {
                 final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
                 trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
@@ -390,6 +396,6 @@ public abstract class Trap {
                 return;
             }
         }
-        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
+        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(ip, sp, fp, throwable);
     }
 }
