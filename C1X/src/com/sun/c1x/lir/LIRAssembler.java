@@ -291,7 +291,7 @@ public abstract class LIRAssembler {
                 emitLeal(((LIRAddress) op.operand()), ((LIRLocation) op.result()));
                 break;
             case NullCheck:
-                asm.recordExceptionHandlers(codePos(), op.info);
+                asm.recordImplicitException(codePos(), op.info);
                 assert op.operand().isSingleCpu();
                 asm.nullCheck(op.operand().asRegister());
                 break;
@@ -334,7 +334,7 @@ public abstract class LIRAssembler {
                     assert isAddress(op.opr1()) || isAddress(op.opr2()) : "shouldn't be codeemitinfo for non-address operands";
                     //NullPointerExceptionStub stub = new NullPointerExceptionStub(pcOffset, cinfo);
                     //emitCodeStub(stub);
-                    asm.recordExceptionHandlers(codePos(), op.info);
+                    asm.recordImplicitException(codePos(), op.info);
                 }
                 emitCompare(op.condition(), op.opr1(), op.opr2(), op);
                 break;

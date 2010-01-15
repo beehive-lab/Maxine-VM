@@ -294,9 +294,11 @@ public final class BootImageGenerator {
     private void writeStats(GraphPrototype graphPrototype, File file) throws IOException {
         Trace.begin(1, "writing boot image statistics file: " + file);
         final FileOutputStream fileOutputStream = new FileOutputStream(file);
-        new GraphStats(graphPrototype).dumpStats(new PrintStream(fileOutputStream));
+        GraphStats stats = new GraphStats(graphPrototype);
+        stats.dumpStats(new PrintStream(fileOutputStream));
         fileOutputStream.close();
         Trace.end(1, "end boot image statistics file: " + file + " (" + Longs.toUnitsString(file.length(), false) + ")");
+        new SavingsEstimator(stats).report(Trace.stream());
     }
 
     /**
@@ -354,6 +356,6 @@ public final class BootImageGenerator {
         Trace.line(1, "# type descriptors: " + TypeDescriptor.numberOfDescriptors());
         Trace.line(1, "# signature descriptors: " + SignatureDescriptor.totalNumberOfDescriptors());
 
-        GlobalMetrics.report(Trace.stream());
+        GlobalMetrics.report(out);
     }
 }

@@ -145,7 +145,9 @@ public final class FrameMap {
     public CiLocation toLocation(LIROperand opr) {
         if (opr.isStack()) {
             // create a stack location
-            return new CiStackLocation(opr.kind, opr.stackIndex() * compiler.target.spillSlotSize, compiler.target.sizeInBytes(opr.kind), false);
+            int size = compiler.target.sizeInBytes(opr.kind);
+            int offset = spOffsetForSlot(opr.stackIndex(), size);
+            return new CiStackLocation(opr.kind, offset, size, false);
         } else if (opr.isSingleCpu() || opr.isSingleXmm()) {
             // create a single register location
             return new CiRegisterLocation(opr.kind, opr.asRegister());

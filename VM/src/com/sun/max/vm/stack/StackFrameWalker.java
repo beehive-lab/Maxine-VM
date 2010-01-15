@@ -636,7 +636,6 @@ public abstract class StackFrameWalker {
     /**
      * Terminates the current stack walk.
      */
-    @INLINE
     public final void reset() {
         if (TRACE_STACK_WALK.getValue()) {
             Log.print("StackFrameWalk: Finish stack frame walk for purpose ");

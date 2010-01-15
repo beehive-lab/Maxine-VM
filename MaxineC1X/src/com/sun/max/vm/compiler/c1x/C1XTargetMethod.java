@@ -157,7 +157,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     /**
-     * Gets size of an activation frame for this target method in words.
+     * @return the size of an activation frame for this target method in words.
      */
     @UNSAFE
     private int frameWords() {
@@ -165,29 +165,17 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     /**
-     * Gets the size (in bytes) of a reference map covering an activation frame for this target method.
+     * @return the size (in bytes) of a reference map covering an activation frame for this target method.
      */
     private int frameReferenceMapSize() {
         return ByteArrayBitMap.computeBitMapSize(frameWords());
     }
 
     /**
-     * Gets the number of bytes in {@link #referenceMaps} corresponding to one stop position.
+     * @return the number of bytes in {@link #referenceMaps} corresponding to one stop position.
      */
     private int totalReferenceMapSize() {
         return registerReferenceMapSize() + frameReferenceMapSize();
-    }
-
-    private void setRegisterReferenceMapBit(int stopIndex, int registerIndex) {
-        assert registerIndex >= 0 && registerIndex < referenceRegisterCount;
-        int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize();
-        ByteArrayBitMap.set(referenceMaps, byteIndex, registerReferenceMapSize(), registerIndex);
-    }
-
-    private void setFrameReferenceMapBit(int stopIndex, int slotIndex) {
-        assert slotIndex >= 0 && slotIndex < frameSize();
-        int byteIndex = stopIndex * totalReferenceMapSize();
-        ByteArrayBitMap.set(referenceMaps, byteIndex, frameReferenceMapSize(), slotIndex);
     }
 
     private boolean isRegisterReferenceMapBitSet(int stopIndex, int registerIndex) {
@@ -196,14 +184,7 @@ public class C1XTargetMethod extends TargetMethod {
         return ByteArrayBitMap.isSet(referenceMaps, byteIndex, registerReferenceMapSize(), registerIndex);
     }
 
-    private boolean isFrameReferenceMapBitSet(int stopIndex, int slotIndex) {
-        assert slotIndex >= 0 && slotIndex < frameSize();
-        int byteIndex = stopIndex * totalReferenceMapSize();
-        return ByteArrayBitMap.isSet(referenceMaps, byteIndex, frameReferenceMapSize(), slotIndex);
-    }
-
     private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
-
         // Create the arrays for the scalar and the object reference literals
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         List<Object> objectReferences = new ArrayList<Object>();
@@ -226,13 +207,11 @@ public class C1XTargetMethod extends TargetMethod {
         int z = 0;
         int currentPos = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
-
             final CiConstant data = site.data;
             relativeDataPos[z] = currentPos;
 
             try {
                 switch (data.kind) {
-
                     case Double:
                         endianness.writeLong(output, Double.doubleToLongBits(data.asDouble()));
                         currentPos += Long.SIZE / Byte.SIZE;
@@ -336,14 +315,15 @@ public class C1XTargetMethod extends TargetMethod {
         int numberOfSafepoints = ciTargetMethod.safepoints.size();
         int totalStopPositions = ciTargetMethod.directCalls.size() + numberOfIndirectCalls + numberOfSafepoints;
 
-        referenceMaps = new byte[totalReferenceMapSize() * totalStopPositions];
+        int totalRefMapSize = totalReferenceMapSize();
+        referenceMaps = new byte[totalRefMapSize * totalStopPositions];
 
         int index = 0;
         int[] stopPositions = new int[totalStopPositions];
         Object[] directCallees = new Object[ciTargetMethod.directCalls.size()];
 
         for (Call site : ciTargetMethod.directCalls) {
-            initStopPosition(index, stopPositions, site.codePos, site.registerMap, site.stackMap);
+            initStopPosition(index, index * totalRefMapSize, stopPositions, site.codePos, site.registerMap, site.stackMap);
 
             if (site.method != null) {
                 final MaxRiMethod maxMethod = (MaxRiMethod) site.method;
@@ -363,51 +343,32 @@ public class C1XTargetMethod extends TargetMethod {
         }
 
         for (Call site : ciTargetMethod.indirectCalls) {
-            initStopPosition(index, stopPositions, site.codePos, site.registerMap, site.stackMap);
+            initStopPosition(index, index * totalRefMapSize, stopPositions, site.codePos, site.registerMap, site.stackMap);
             index++;
         }
 
         for (CiTargetMethod.Safepoint safepoint : ciTargetMethod.safepoints) {
-            initStopPosition(index, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
+            initStopPosition(index, index * totalRefMapSize, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
             index++;
         }
 
         this.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
     }
 
-    private void initStopPosition(int index, int[] stopPositions, int codePos, byte[] registerMap, byte[] stackMap) {
+    private void initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, byte[] registerMap, byte[] stackMap) {
         stopPositions[index] = codePos;
 
-        if (registerMap != null) {
-            initRegisterMap(index, registerMap);
-        }
-
+        int stackMapLength;
+        // copy the stack map
         if (stackMap != null) {
-            initStackMap(index, stackMap);
+            stackMapLength = stackMap.length;
+            System.arraycopy(stackMap, 0, referenceMaps, refmapIndex, stackMapLength);
+        } else {
+            stackMapLength = 0;
         }
-    }
-
-    private void initRegisterMap(int index, byte[] registerMap) {
-        assert registerMap.length * 8 >= referenceRegisterCount;
-        for (int i = 0; i < registerMap.length; i++) {
-            // TODO: use a byte copy, not a bit by bit copy
-            for (int j = 0; j < 8; j++) {
-                if (0 != (registerMap[i] >> j & 1)) {
-                    setRegisterReferenceMapBit(index, i * 8 + j);
-                }
-            }
-        }
-    }
-
-    private void initStackMap(int index, byte[] stackMap) {
-        assert stackMap.length * 8 >= frameWords();
-        for (int i = 0; i < stackMap.length; i++) {
-            // TODO: use a byte copy, not a bit by bit copy
-            for (int j = 0; j < 8; j++) {
-                if (0 != (stackMap[i] >> j & 1)) {
-                    setFrameReferenceMapBit(index, i);
-                }
-            }
+        // copy the register map
+        if (registerMap != null) {
+            System.arraycopy(registerMap, 0, referenceMaps, refmapIndex + stackMapLength, registerMap.length);
         }
     }
 
@@ -707,6 +668,13 @@ public class C1XTargetMethod extends TargetMethod {
                 AMD64OptStackWalking.prepareTrampolineRefMap(current, callee, preparer);
                 break;
             case TRAP_STUB:  // fall through
+                // get the register state from the callee's frame
+                registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
+                if (Trap.Number.isStackOverflow(registerState)) {
+                    // annoying corner case: a method can never catch stack overflow for itself
+                    return;
+                }
+                break;
             case CALLEE_SAVED:
                 // get the register state from the callee's frame
                 registerState = callee.sp().plus(callee.targetMethod().frameSize()).minus(AMD64TrapStateAccess.TRAP_STATE_SIZE_WITHOUT_RIP);
@@ -719,12 +687,17 @@ public class C1XTargetMethod extends TargetMethod {
                 break;
         }
         int stopIndex = findClosestStopIndex(current.ip());
+        if (stopIndex < 0) {
+            // this is very bad.
+            throw FatalError.unexpected("could not find stop index");
+        }
+
         int frameReferenceMapSize = frameReferenceMapSize();
         if (!registerState.isZero()) {
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
             Pointer slotPointer = registerState;
-            int byteIndex = stopIndex * totalReferenceMapSize();
+            int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize;
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "C1X registers frame");
             for (int i = frameReferenceMapSize; i < registerReferenceMapSize() + frameReferenceMapSize; i++) {
                 preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);

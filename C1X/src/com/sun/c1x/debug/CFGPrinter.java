@@ -352,7 +352,7 @@ public class CFGPrinter {
 
     public void printIntervals(LinearScan allocator, Interval[] intervals, String name) {
         begin("intervals");
-        out.print(String.format("name \"%s\"", name));
+        out.println(String.format("name \"%s\"", name));
 
         for (Interval i : intervals) {
             if (i != null) {

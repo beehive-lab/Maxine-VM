@@ -78,8 +78,8 @@ public class GraphStats {
         }
     }
 
-    private final GraphPrototype graphPrototype;
-    private final Map<MethodActor, MethodStats> methodStats = new HashMap<MethodActor, MethodStats>();
+    final GraphPrototype graphPrototype;
+    final Map<MethodActor, MethodStats> methodStats = new HashMap<MethodActor, MethodStats>();
 
     public GraphStats(GraphPrototype graphPrototype) {
         this.graphPrototype = graphPrototype;
@@ -92,7 +92,8 @@ public class GraphStats {
     }
 
     private void printObjectStats(PrintStream printStream, final int total) {
-        final ClassInfo[] classInfos = graphPrototype.classInfos.values().toArray(new ClassInfo[0]);
+        Collection<ClassInfo> cstats = graphPrototype.classInfos.values();
+        final ClassInfo[] classInfos = cstats.toArray(new ClassInfo[cstats.size()]);
         Arrays.sort(classInfos, BY_OBJECT_SIZE);
         printStream.println("Object Histogram End");
         printStream.println("Cumul     Size                      Objects      Avg        Class");
@@ -122,7 +123,7 @@ public class GraphStats {
         return total;
     }
 
-    private static ClassStats getClassStats(final ClassInfo classInfo) {
+    static ClassStats getClassStats(final ClassInfo classInfo) {
         ClassStats classStats = classInfo.stats;
         if (classStats == null) {
             classStats = new ClassStats(classInfo);
@@ -131,8 +132,9 @@ public class GraphStats {
         return classStats;
     }
 
-    private void printClassStats(PrintStream printStream, int total) {
-        final ClassInfo[] classInfos = graphPrototype.classInfos.values().toArray(new ClassInfo[0]);
+    void printClassStats(PrintStream printStream, int total) {
+        Collection<ClassInfo> cstats = graphPrototype.classInfos.values();
+        final ClassInfo[] classInfos = cstats.toArray(new ClassInfo[cstats.size()]);
         Arrays.sort(classInfos, BY_CLASS_SIZE);
         printStream.println("Class Histogram Start");
         printStream.println("Total      Hub        Actor      StHub      Static     MethSize   TargSize   Count            Class");
@@ -145,8 +147,9 @@ public class GraphStats {
         printStream.println("Class Histogram End\n");
     }
 
-    private void printMethodStats(PrintStream printStream) {
-        final MethodStats[] methodStats = this.methodStats.values().toArray(new MethodStats[0]);
+    void printMethodStats(PrintStream printStream) {
+        Collection<MethodStats> mstats = this.methodStats.values();
+        MethodStats[] methodStats = mstats.toArray(new MethodStats[mstats.size()]);
         Arrays.sort(methodStats, BY_METHOD_SIZE);
         printStream.println("Method Histogram Start");
         printStream.println("Total      Actor      Bytecode   TargMeth   TargCode   Ratio  Method");
@@ -182,7 +185,7 @@ public class GraphStats {
         total += nondefaultSize(classActor.localInterfaceMethodActors(), ClassActor.NO_INTERFACE_METHODS);
         total += nondefaultSize(classActor.localStaticMethodActors(), ClassActor.NO_STATIC_METHODS);
         total += nondefaultSize(classActor.localVirtualMethodActors(), ClassActor.NO_VIRTUAL_METHODS);
-        // total += classActor.iToV(); TODO: cannot get access to this field
+        total += sizeOf(classActor.iToV());
         return total;
     }
 

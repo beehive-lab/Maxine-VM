@@ -77,17 +77,17 @@ public class LIRDebugInfo {
         return new LIRDebugInfo(this);
     }
 
-    public void allocateRefMaps(int registerSize, int frameSize) {
+    public void allocateRefMaps(int registerSize, int frameSize, CiTarget target) {
         if (registerSize > 0) {
             registerRefMap = newRefMap(registerSize);
         }
         if (frameSize > 0) {
-            stackRefMap = newRefMap(frameSize);
+            stackRefMap = newRefMap(frameSize / target.spillSlotSize);
         }
     }
 
     public void setOop(CiLocation location, CiTarget target) {
-        if (location.isStack()) {
+        if (location.isStack() && !location.isCallerFrame()) {
             int offset = location.stackOffset();
             assert offset % target.arch.wordSize == 0 : "must be aligned";
             int stackMapIndex = offset / target.arch.wordSize;

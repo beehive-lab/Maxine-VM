@@ -137,8 +137,18 @@ public abstract class AbstractAssembler {
     }
 
     public void recordExceptionHandlers(int pcOffset, LIRDebugInfo info) {
-        if (info != null && info.exceptionHandlers != null) {
-            exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers));
+        if (info != null) {
+            if (info.exceptionHandlers != null) {
+                exceptionInfoList.add(new ExceptionInfo(pcOffset, info.exceptionHandlers));
+            }
+        }
+    }
+
+    public void recordImplicitException(int pcOffset, LIRDebugInfo info) {
+        // record an implicit exception point
+        if (info != null) {
+            targetMethod.recordSafepoint(pcOffset, info.registerRefMap(), info.stackRefMap());
+            recordExceptionHandlers(pcOffset, info);
         }
     }
 
