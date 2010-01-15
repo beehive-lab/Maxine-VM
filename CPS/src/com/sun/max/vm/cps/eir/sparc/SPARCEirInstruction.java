@@ -37,7 +37,6 @@ import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.cps.dir.eir.sparc.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.EirStackSlot.*;
-import com.sun.max.vm.cps.eir.sparc.SPARCEirRegister.*;
 import com.sun.max.vm.cps.eir.sparc.SPARCEirTargetEmitter.*;
 import com.sun.max.vm.type.*;
 
@@ -328,8 +327,8 @@ public interface SPARCEirInstruction {
             testedOperand.setEirValue(testedValue);
         }
 
-        public SPARCEirRegister.GeneralPurpose testedOperandGeneralRegister() {
-            return (SPARCEirRegister.GeneralPurpose) testedOperandLocation();
+        public SPARCEirRegisters.GeneralPurpose testedOperandGeneralRegister() {
+            return (SPARCEirRegisters.GeneralPurpose) testedOperandLocation();
         }
 
         @Override
@@ -537,10 +536,10 @@ public interface SPARCEirInstruction {
      *  Moving the register windows is the callee's decision. See EirPrologue and return instructions.
      */
     public static class CALL extends EirCall<EirInstructionVisitor, SPARCEirTargetEmitter> implements SPARCEirInstruction  {
-        final SPARCEirRegister.GeneralPurpose savedSafepointLatch;
-        final SPARCEirRegister.GeneralPurpose safepointLatch;
+        final SPARCEirRegisters.GeneralPurpose savedSafepointLatch;
+        final SPARCEirRegisters.GeneralPurpose safepointLatch;
 
-        public SPARCEirRegister.GeneralPurpose savedSafepointLatch() {
+        public SPARCEirRegisters.GeneralPurpose savedSafepointLatch() {
             return savedSafepointLatch;
         }
 
@@ -549,7 +548,7 @@ public interface SPARCEirInstruction {
                         boolean isNativeFunctionCall, EirMethodGeneration methodGeneration) {
             super(block, abi, result, resultLocation, function, M_G, arguments, argumentLocations, isNativeFunctionCall, methodGeneration);
             final SPARCEirABI sparcAbi = (SPARCEirABI) abi;
-            safepointLatch = (SPARCEirRegister.GeneralPurpose) sparcAbi.safepointLatchRegister();
+            safepointLatch = (SPARCEirRegisters.GeneralPurpose) sparcAbi.safepointLatchRegister();
             final DirToSPARCEirMethodTranslation sparcMethodGeneration = (DirToSPARCEirMethodTranslation) methodGeneration;
             if (sparcAbi.callerSavedRegisters().contains(safepointLatch) && sparcMethodGeneration.callerMustSaveLatchRegister()) {
                 savedSafepointLatch = DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL;
@@ -576,7 +575,7 @@ public interface SPARCEirInstruction {
                 }
                 case INTEGER_REGISTER: {
                     emitter.addIndirectCall(this);
-                    final SPARCEirRegister.GeneralPurpose operandRegister = (SPARCEirRegister.GeneralPurpose) location;
+                    final SPARCEirRegisters.GeneralPurpose operandRegister = (SPARCEirRegisters.GeneralPurpose) location;
                     emitter.assembler().call(operandRegister.as(), G0);
                     break;
                 }
@@ -855,11 +854,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().add(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().add(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -877,11 +876,11 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().addcc(leftRegister.as(), rightRegister.as(), destinationGeneralRegister().as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().addcc(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -900,11 +899,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().andcc(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().andcc(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -924,11 +923,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().andcc(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().andcc(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -947,11 +946,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().orcc(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().orcc(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -971,11 +970,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().orcc(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().orcc(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -995,11 +994,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().xorcc(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().xorcc(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1019,11 +1018,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().xorcc(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().xorcc(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1043,11 +1042,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().sll(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().sll(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1067,11 +1066,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().sllx(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().sllx(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1091,11 +1090,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().srl(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().srl(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1115,11 +1114,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().srlx(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().srlx(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1139,11 +1138,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().sra(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().sra(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1163,11 +1162,11 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().srax(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().srax(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1208,7 +1207,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision sourceRegister1, SPARCEirRegisters.SinglePrecision sourceRegister2) {
             emitter.assembler().fadds(sourceRegister1.asSinglePrecision(), sourceRegister2.asSinglePrecision(), destinationRegister.asSinglePrecision());
         }
         @Override
@@ -1227,7 +1226,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision sourceRegister1, SPARCEirRegisters.SinglePrecision sourceRegister2) {
             emitter.assembler().faddd(sourceRegister1.asDoublePrecision(), sourceRegister2.asDoublePrecision(), destinationRegister.asDoublePrecision());
         }
         @Override
@@ -1242,7 +1241,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint leftRegister, SPARCEirRegister.FloatingPoint rightRegister) {
+        protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision leftRegister, SPARCEirRegisters.SinglePrecision rightRegister) {
             emitter.assembler().fcmps(selectedConditionCode(), leftRegister.asSinglePrecision(), rightRegister.asSinglePrecision());
         }
 
@@ -1258,7 +1257,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint leftRegister, SPARCEirRegister.FloatingPoint rightRegister) {
+        protected void emit_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision leftRegister, SPARCEirRegisters.SinglePrecision rightRegister) {
             emitter.assembler().fcmpd(selectedConditionCode(), leftRegister.asDoublePrecision(), rightRegister.asDoublePrecision());
         }
 
@@ -1277,7 +1276,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision sourceRegister1, SPARCEirRegisters.SinglePrecision sourceRegister2) {
             emitter.assembler().fdivs(sourceRegister1.asSinglePrecision(), sourceRegister2.asSinglePrecision(), destinationRegister.asSinglePrecision());
         }
         @Override
@@ -1296,7 +1295,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision sourceRegister1, SPARCEirRegisters.SinglePrecision sourceRegister2) {
             emitter.assembler().fdivd(sourceRegister1.asDoublePrecision(), sourceRegister2.asDoublePrecision(), destinationRegister.asDoublePrecision());
         }
         @Override
@@ -1314,7 +1313,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision sourceRegister1, SPARCEirRegisters.SinglePrecision sourceRegister2) {
             emitter.assembler().fmuls(sourceRegister1.asSinglePrecision(), sourceRegister2.asSinglePrecision(), destinationRegister.asSinglePrecision());
         }
         @Override
@@ -1333,7 +1332,7 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision sourceRegister1, SPARCEirRegisters.SinglePrecision sourceRegister2) {
             emitter.assembler().fmuld(sourceRegister1.asDoublePrecision(), sourceRegister2.asDoublePrecision(), destinationRegister.asDoublePrecision());
         }
         @Override
@@ -1351,7 +1350,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision sourceRegister1, SPARCEirRegisters.SinglePrecision sourceRegister2) {
             emitter.assembler().fsubs(sourceRegister1.asSinglePrecision(), sourceRegister2.asSinglePrecision(), destinationRegister.asSinglePrecision());
         }
         @Override
@@ -1369,7 +1368,7 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegister.FloatingPoint destinationRegister, SPARCEirRegister.FloatingPoint sourceRegister1, SPARCEirRegister.FloatingPoint sourceRegister2) {
+        protected void emit_F_F_F(SPARCEirTargetEmitter emitter, SPARCEirRegisters.SinglePrecision destinationRegister, SPARCEirRegisters.SinglePrecision sourceRegister1, SPARCEirRegisters.SinglePrecision sourceRegister2) {
             emitter.assembler().fsubd(sourceRegister1.asDoublePrecision(), sourceRegister2.asDoublePrecision(), destinationRegister.asDoublePrecision());
         }
         @Override
@@ -1618,13 +1617,13 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().mulx(leftRegister.as(), rightRegister.as(), destinationRegister.as());
             // make sure we set the sign for 32-bit
             emitter.assembler().sra(destinationRegister.as(), G0, destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().mulx(leftRegister.as(), rightImmediate, destinationRegister.as());
             // make sure we set the sign for 32-bit
             emitter.assembler().sra(destinationRegister.as(), G0, destinationRegister.as());
@@ -1645,11 +1644,11 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().mulx(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().mulx(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1669,13 +1668,13 @@ public interface SPARCEirInstruction {
         }
 
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().sdivx(leftRegister.as(), rightRegister.as(), destinationRegister.as());
             // make sure we set the sign for 32-bit
             emitter.assembler().sra(destinationRegister.as(), G0, destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().sdivx(leftRegister.as(), rightImmediate, destinationRegister.as());
             // make sure we set the sign for 32-bit
             emitter.assembler().sra(destinationRegister.as(), G0, destinationRegister.as());
@@ -1696,11 +1695,11 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().sdivx(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().sdivx(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1719,11 +1718,11 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().subcc(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().subcc(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1742,11 +1741,11 @@ public interface SPARCEirInstruction {
             super(block, destination, EirOperand.Effect.DEFINITION, leftSource, EirOperand.Effect.USE, rightSource, EirOperand.Effect.USE);
         }
         @Override
-        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, SPARCEirRegister.GeneralPurpose rightRegister) {
+        protected  void emit_G_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, SPARCEirRegisters.GeneralPurpose rightRegister) {
             emitter.assembler().subcc(leftRegister.as(), rightRegister.as(), destinationRegister.as());
         }
         @Override
-        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose leftRegister, int rightImmediate) {
+        protected  void emit_G_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose leftRegister, int rightImmediate) {
             emitter.assembler().subcc(leftRegister.as(), rightImmediate, destinationRegister.as());
         }
 
@@ -1800,11 +1799,11 @@ public interface SPARCEirInstruction {
             super(block, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().or(sourceRegister.as(), G0, destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().set(sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -1818,12 +1817,12 @@ public interface SPARCEirInstruction {
             super(block, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().or(sourceRegister.as(), G0, destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
-            final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
+            final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
             emitter.assembler().setx(sourceImmediate, scratchRegister.as(), destinationRegister.as());
         }
         @Override
@@ -1844,7 +1843,7 @@ public interface SPARCEirInstruction {
         public void emit(SPARCEirTargetEmitter emitter) {
             EirStackSlot stackSlot = new EirStackSlot(Purpose.BLOCK, offset);
             final StackAddress source = emitter.stackAddress(stackSlot);
-            final GeneralPurpose destination = operandGeneralRegister();
+            final SPARCEirRegisters.GeneralPurpose destination = operandGeneralRegister();
             if (isSimm13(source.offset)) {
                 emitter.assembler().add(source.base, source.offset, destination.as());
             } else {
@@ -1894,11 +1893,11 @@ public interface SPARCEirInstruction {
             super(block, iccConditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().movne((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().movne((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -1919,11 +1918,11 @@ public interface SPARCEirInstruction {
             super(block, fccConditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().movne((FCCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().movne((FCCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -1944,11 +1943,11 @@ public interface SPARCEirInstruction {
             super(block, iccConditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().move((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().move((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -1969,11 +1968,11 @@ public interface SPARCEirInstruction {
             super(block, fccConditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().move((FCCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().move((FCCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -1994,11 +1993,11 @@ public interface SPARCEirInstruction {
             super(block, iccConditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().movg((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().movg((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -2018,11 +2017,11 @@ public interface SPARCEirInstruction {
         public MOVGU(EirBlock block, ICCOperand iccConditionCode, EirValue destination, EirValue source) {
             super(block, iccConditionCode, destination, source);
         }       @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().movg((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().movg((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -2045,11 +2044,11 @@ public interface SPARCEirInstruction {
             super(block, conditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().movcc((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().movcc((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -2070,11 +2069,11 @@ public interface SPARCEirInstruction {
             super(block, iccConditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().movl((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().movl((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -2095,13 +2094,13 @@ public interface SPARCEirInstruction {
             super(block, fccConditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             if (conditionCode instanceof FCCOperand) {
                 emitter.assembler().movl((FCCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
             }
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             if (conditionCode instanceof FCCOperand) {
                 emitter.assembler().movl((FCCOperand) conditionCode, sourceImmediate, destinationRegister.as());
             }
@@ -2124,13 +2123,13 @@ public interface SPARCEirInstruction {
             super(block, fccConditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             if (conditionCode instanceof FCCOperand) {
                 emitter.assembler().movg((FCCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
             }
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             if (conditionCode instanceof FCCOperand) {
                 emitter.assembler().movg((FCCOperand) conditionCode, sourceImmediate, destinationRegister.as());
             }
@@ -2153,11 +2152,11 @@ public interface SPARCEirInstruction {
             super(block, conditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().movl((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().movl((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -2178,11 +2177,11 @@ public interface SPARCEirInstruction {
             super(block, conditionCode, destination, source);
         }
         @Override
-        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, SPARCEirRegister.GeneralPurpose sourceRegister) {
+        public void emit_G_G(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, SPARCEirRegisters.GeneralPurpose sourceRegister) {
             emitter.assembler().movle((ICCOperand) conditionCode, sourceRegister.as(), destinationRegister.as());
         }
         @Override
-        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose destinationRegister, int sourceImmediate) {
+        public void emit_G_I(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose destinationRegister, int sourceImmediate) {
             emitter.assembler().movle((ICCOperand) conditionCode, sourceImmediate, destinationRegister.as());
         }
         @Override
@@ -2260,8 +2259,8 @@ public interface SPARCEirInstruction {
             return indexRegister;
         }
 
-        public SPARCEirRegister.GeneralPurpose indexGeneralRegister() {
-            return (SPARCEirRegister.GeneralPurpose) indexRegister().location();
+        public SPARCEirRegisters.GeneralPurpose indexGeneralRegister() {
+            return (SPARCEirRegisters.GeneralPurpose) indexRegister().location();
         }
 
         public SWITCH_I32(EirBlock block, EirValue tag, EirValue[] matches, EirBlock[] targets, EirBlock defaultTarget, EirVariable indexRegister) {
@@ -2292,7 +2291,7 @@ public interface SPARCEirInstruction {
                     emitter.assembler().nop(); // empty delay slot
                 }
             } else {
-                final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+                final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
                 final GPR matchRegister = scratchRegister.as();
                 final int last = matches().length - 1;
                 int i = 0;
@@ -2353,7 +2352,7 @@ public interface SPARCEirInstruction {
             final GPR tagRegister = tagGeneralRegister().as();
             final int numElements = numberOfTableElements();
             assert numElements <= 0xFFFFFFFFL;
-            final SPARCEirRegister.GeneralPurpose scratchEirRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+            final SPARCEirRegisters.GeneralPurpose scratchEirRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
 
             final int imm = minMatchValue();
             if (imm != 0) {
@@ -2401,7 +2400,7 @@ public interface SPARCEirInstruction {
         }
 
         private void translateLookupBinarySearch(SPARCEirTargetEmitter emitter, int bottomIndex, int topIndex) {
-            final SPARCEirRegister.GeneralPurpose scratchEirRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+            final SPARCEirRegisters.GeneralPurpose scratchEirRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
             final GPR tagRegister = tagGeneralRegister().as();
             final int middleIndex = (bottomIndex + topIndex) >> 1;
             final int match = matches()[middleIndex].value().asInt();

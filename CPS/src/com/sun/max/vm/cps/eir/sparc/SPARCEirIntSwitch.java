@@ -32,8 +32,8 @@ public abstract class SPARCEirIntSwitch extends EirIntSwitch<SPARCEirInstruction
         super(block, tag, matches, targets, defaultTarget);
     }
 
-    public SPARCEirRegister.GeneralPurpose tagGeneralRegister() {
-        return (SPARCEirRegister.GeneralPurpose) tag().location();
+    public SPARCEirRegisters.GeneralPurpose tagGeneralRegister() {
+        return (SPARCEirRegisters.GeneralPurpose) tag().location();
     }
 
 }

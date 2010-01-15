@@ -169,8 +169,8 @@ public class AMD64AdapterStackWalking {
         } else if (jumpInstruction == NEAR_JMP) {
             distance = NEAR_JMP_SIZE + stackFrameWalker.readInt(jitEntryPoint, 1);
         } else {
-            // (tw) Did not find a jump here => return max
-            return Pointer.zero();
+            // Did not find a jump here => return maximum pointer value
+            return Pointer.allOnes().asPointer();
         }
         return jitEntryPoint.plus(distance);
     }

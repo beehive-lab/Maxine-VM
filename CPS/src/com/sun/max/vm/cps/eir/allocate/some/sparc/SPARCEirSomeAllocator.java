@@ -35,7 +35,7 @@ import com.sun.max.vm.type.*;
  */
 public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegister> {
 
-    private final PoolSet<SPARCEirRegister> noRegisters = PoolSet.noneOf(SPARCEirRegister.pool());
+    private final PoolSet<SPARCEirRegister> noRegisters = PoolSet.noneOf(SPARCEirRegisters.pool());
 
     @Override
     protected PoolSet<SPARCEirRegister> noRegisters() {
@@ -60,16 +60,16 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
         super(methodGeneration);
         final SPARCEirABI abi = (SPARCEirABI) methodGeneration.abi;
 
-        allocatableIntegerRegisters = PoolSet.allOf(SPARCEirRegister.pool());
-        allocatableIntegerRegisters.and(SPARCEirRegister.GeneralPurpose.poolSet());
+        allocatableIntegerRegisters = PoolSet.allOf(SPARCEirRegisters.pool());
+        allocatableIntegerRegisters.and(SPARCEirRegisters.GeneralPurpose.poolSet());
         allocatableIntegerRegisters.and(abi.allocatableRegisters());
         if (((DirToSPARCEirMethodTranslation) methodGeneration).saveSafetpoinLatchInLocal()) {
             // Reserve L5
             allocatableIntegerRegisters.remove(DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL);
         }
 
-        allocatableFloatingPointRegisters = PoolSet.allOf(SPARCEirRegister.pool());
-        allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.poolSet());
+        allocatableFloatingPointRegisters = PoolSet.allOf(SPARCEirRegisters.pool());
+        allocatableFloatingPointRegisters.and(SPARCEirRegisters.SinglePrecision.poolSet());
         allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
     }
 
@@ -87,8 +87,8 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
         // Iterate over the pool to search the first free double precision register
         final Iterator<SPARCEirRegister> i = registers.iterator();
         while (i.hasNext()) {
-            final SPARCEirRegister.FloatingPoint register = (SPARCEirRegister.FloatingPoint) i.next();
-            final SPARCEirRegister.FloatingPoint overlappingRegister = register.overlappingSinglePrecision();
+            final SPARCEirRegisters.SinglePrecision register = (SPARCEirRegisters.SinglePrecision) i.next();
+            final SPARCEirRegisters.SinglePrecision overlappingRegister = register.overlappingSinglePrecision();
             if (overlappingRegister == null) {
                 assert register.isDoublePrecision();
                 registers.remove(register);
@@ -110,8 +110,8 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
         final SPARCEirRegister register = (SPARCEirRegister) variable.location();
         availableRegisters.remove(register);
         if (variable.kind() == Kind.DOUBLE) {
-            final SPARCEirRegister.FloatingPoint fpRegister = (SPARCEirRegister.FloatingPoint) register;
-            final SPARCEirRegister.FloatingPoint overlappingRegister = fpRegister.overlappingSinglePrecision();
+            final SPARCEirRegisters.SinglePrecision fpRegister = (SPARCEirRegisters.SinglePrecision) register;
+            final SPARCEirRegisters.SinglePrecision overlappingRegister = fpRegister.overlappingSinglePrecision();
             if (overlappingRegister != null) {
                 availableRegisters.remove(overlappingRegister);
             }

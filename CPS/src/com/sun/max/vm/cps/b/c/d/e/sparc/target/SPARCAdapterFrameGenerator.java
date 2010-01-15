@@ -34,7 +34,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.EirStackSlot.*;
 import com.sun.max.vm.cps.eir.sparc.*;
-import com.sun.max.vm.cps.eir.sparc.SPARCEirRegister.*;
 import com.sun.max.vm.cps.jit.sparc.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -159,10 +158,10 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
 
     protected SPARCAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizedAbi) {
         super(classMethodActor, optimizedAbi);
-        intScratchRegister = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.INT)).as();
-        longScratchRegister = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.LONG)).as();
-        optimizedCodeStackPointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.stackPointer()).as();
-        optimizedCodeFramePointer = ((SPARCEirRegister.GeneralPurpose) optimizedAbi.framePointer()).as();
+        intScratchRegister = ((SPARCEirRegisters.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.INT)).as();
+        longScratchRegister = ((SPARCEirRegisters.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.LONG)).as();
+        optimizedCodeStackPointer = ((SPARCEirRegisters.GeneralPurpose) optimizedAbi.stackPointer()).as();
+        optimizedCodeFramePointer = ((SPARCEirRegisters.GeneralPurpose) optimizedAbi.framePointer()).as();
         final TargetABI jitABI = VMConfiguration.target().targetABIsScheme().jitABI();
         jitedCodeFramePointer = (GPR) jitABI.framePointer();
         literalBaseRegister = (GPR) jitABI.literalBaseRegister();
@@ -270,8 +269,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             final int offset = offset32 + JitStackFrameLayout.offsetWithinWord(kind);
             switch (parameterLocation.category()) {
                 case INTEGER_REGISTER:
-                    assert parameterLocation instanceof SPARCEirRegister.GeneralPurpose;
-                    GPR gprParameterRegister = ((SPARCEirRegister.GeneralPurpose) parameterLocation).as();
+                    assert parameterLocation instanceof SPARCEirRegisters.GeneralPurpose;
+                    GPR gprParameterRegister = ((SPARCEirRegisters.GeneralPurpose) parameterLocation).as();
                     switch (kind.asEnum) {
                         case BYTE:
                         case BOOLEAN:
@@ -295,8 +294,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                     }
                     break;
                 case FLOATING_POINT_REGISTER:
-                    assert parameterLocation instanceof SPARCEirRegister.FloatingPoint;
-                    FloatingPoint fpParameterRegister = (SPARCEirRegister.FloatingPoint) parameterLocation;
+                    assert parameterLocation instanceof SPARCEirRegisters.SinglePrecision;
+                    SPARCEirRegisters.SinglePrecision fpParameterRegister = (SPARCEirRegisters.SinglePrecision) parameterLocation;
                     switch (kind.asEnum) {
                         case FLOAT:
                             assembler().ld(optimizedCodeStackPointer, offset, fpParameterRegister.asSinglePrecision());
@@ -438,8 +437,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         private void adaptParameter(Kind kind, EirLocation parameterLocation, int offset32) {
             switch (parameterLocation.category()) {
                 case INTEGER_REGISTER:
-                    assert parameterLocation instanceof SPARCEirRegister.GeneralPurpose;
-                    GPR gprParameterRegister = ((SPARCEirRegister.GeneralPurpose) parameterLocation).as();
+                    assert parameterLocation instanceof SPARCEirRegisters.GeneralPurpose;
+                    GPR gprParameterRegister = ((SPARCEirRegisters.GeneralPurpose) parameterLocation).as();
                     if (kind == Kind.LONG || kind == Kind.WORD || kind == Kind.REFERENCE) {
                         assembler().stx(gprParameterRegister, optimizedCodeStackPointer, offset32);
                     } else {
@@ -447,8 +446,8 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                     }
                     break;
                 case FLOATING_POINT_REGISTER:
-                    assert parameterLocation instanceof SPARCEirRegister.FloatingPoint;
-                    FloatingPoint fpParameterRegister = (SPARCEirRegister.FloatingPoint) parameterLocation;
+                    assert parameterLocation instanceof SPARCEirRegisters.SinglePrecision;
+                    SPARCEirRegisters.SinglePrecision fpParameterRegister = (SPARCEirRegisters.SinglePrecision) parameterLocation;
                     if (kind == Kind.FLOAT) {
                         assembler().st(fpParameterRegister.asSinglePrecision(), optimizedCodeStackPointer, offset32 + JitStackFrameLayout.CATEGORY1_OFFSET_WITHIN_WORD);
                     } else {  // Kind.DOUBLE

@@ -69,7 +69,7 @@ public final class SPARCEirLoad extends SPARCEirPointerOperation {
         visitor.visit(this);
     }
 
-    static void emit(SPARCEirTargetEmitter emitter, Kind kind, SPARCEirRegister.GeneralPurpose pointerRegister, SPARCEirRegister.GeneralPurpose offsetRegister, EirLocation destinationLocation) {
+    static void emit(SPARCEirTargetEmitter emitter, Kind kind, SPARCEirRegisters.GeneralPurpose pointerRegister, SPARCEirRegisters.GeneralPurpose offsetRegister, EirLocation destinationLocation) {
         switch (kind.asEnum) {
             case BYTE:
                 emitter.assembler().ldsb(pointerRegister.as(), offsetRegister.as(), toGeneralRegister(destinationLocation).as());
@@ -103,7 +103,7 @@ public final class SPARCEirLoad extends SPARCEirPointerOperation {
         }
     }
 
-    static void emit(SPARCEirTargetEmitter emitter, Kind kind, SPARCEirRegister.GeneralPurpose pointerRegister, int simm13, EirLocation destinationLocation) {
+    static void emit(SPARCEirTargetEmitter emitter, Kind kind, SPARCEirRegisters.GeneralPurpose pointerRegister, int simm13, EirLocation destinationLocation) {
         assert isSimm13(simm13);
         switch (kind.asEnum) {
             case BYTE:
@@ -139,12 +139,12 @@ public final class SPARCEirLoad extends SPARCEirPointerOperation {
     }
 
     @Override
-    protected void emit(SPARCEirTargetEmitter emitter,  SPARCEirRegister.GeneralPurpose pointerRegister,  SPARCEirRegister.GeneralPurpose offsetRegister) {
+    protected void emit(SPARCEirTargetEmitter emitter,  SPARCEirRegisters.GeneralPurpose pointerRegister,  SPARCEirRegisters.GeneralPurpose offsetRegister) {
         emit(emitter, kind, pointerRegister, offsetRegister, destinationLocation());
     }
 
     @Override
-    protected void emit(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int simm13) {
+    protected void emit(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister, int simm13) {
         emit(emitter, kind, pointerRegister, simm13, destinationLocation());
     }
 

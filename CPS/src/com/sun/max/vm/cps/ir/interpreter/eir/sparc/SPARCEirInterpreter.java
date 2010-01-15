@@ -91,12 +91,12 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         }
 
         final EirLocation [] argumentLocations = new EirLocation[eirMethod.parameterLocations().length];
-        final int i0 = SPARCEirRegister.GeneralPurpose.I0.ordinal;
+        final int i0 = SPARCEirRegisters.GeneralPurpose.I0.ordinal;
         int index = 0;
         for (EirLocation location : eirMethod.parameterLocations()) {
-            if (location instanceof SPARCEirRegister.GeneralPurpose) {
-                final SPARCEirRegister.GeneralPurpose inRegister = (SPARCEirRegister.GeneralPurpose) location;
-                argumentLocations[index] = SPARCEirRegister.GeneralPurpose.OUT_REGISTERS.get(inRegister.ordinal - i0);
+            if (location instanceof SPARCEirRegisters.GeneralPurpose) {
+                final SPARCEirRegisters.GeneralPurpose inRegister = (SPARCEirRegisters.GeneralPurpose) location;
+                argumentLocations[index] = SPARCEirRegisters.GeneralPurpose.OUT_REGISTERS.get(inRegister.ordinal - i0);
             } else {
                 argumentLocations[index] = location;
             }
@@ -115,13 +115,13 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
      */
     @Override
     protected EirLocation receiverLocation(EirMethod eirMethod) {
-        return SPARCEirRegister.GeneralPurpose.O0;
+        return SPARCEirRegisters.GeneralPurpose.O0;
     }
 
     @Override
     protected EirLocation returnedResultLocation(EirMethod eirMethod) {
-        if (eirMethod.resultLocation() == SPARCEirRegister.GeneralPurpose.I0) {
-            return SPARCEirRegister.GeneralPurpose.O0;
+        if (eirMethod.resultLocation() == SPARCEirRegisters.GeneralPurpose.I0) {
+            return SPARCEirRegisters.GeneralPurpose.O0;
         }
         return eirMethod.resultLocation();
     }
@@ -129,7 +129,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     @Override
     protected InstructionAddress callAndLink(EirMethod eirMethod) {
         final InstructionAddress returnAddress = cpu().nextInstructionAddress();
-        cpu().writeRegister(SPARCEirRegister.GeneralPurpose.O7, ReferenceValue.from(returnAddress));
+        cpu().writeRegister(SPARCEirRegisters.GeneralPurpose.O7, ReferenceValue.from(returnAddress));
         return returnAddress;
     }
 
@@ -929,7 +929,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
     public void visit(RET instruction) {
         if (cpu().usesRegisterWindow()) {
-            ret((InstructionAddress) cpu().read(SPARCEirRegister.GeneralPurpose.I7).asObject());
+            ret((InstructionAddress) cpu().read(SPARCEirRegisters.GeneralPurpose.I7).asObject());
             popFrame();
             final SPARCEirFrame currentFrame = (SPARCEirFrame) frame();
             currentFrame.registerWindow().restore(cpu());

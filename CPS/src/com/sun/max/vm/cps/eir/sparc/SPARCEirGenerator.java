@@ -43,8 +43,8 @@ public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorSc
                         final int stackSlotBitIndex = (stackSlot.offset + SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE) / stackSlotWidth.numberOfBytes;
                         map.set(stackSlotBitIndex);
                     }
-                } else if (location instanceof SPARCEirRegister.GeneralPurpose) {
-                    final SPARCEirRegister.GeneralPurpose gpr = (SPARCEirRegister.GeneralPurpose) location;
+                } else if (location instanceof SPARCEirRegisters.GeneralPurpose) {
+                    final SPARCEirRegisters.GeneralPurpose gpr = (SPARCEirRegisters.GeneralPurpose) location;
                     final int spillIndex = gpr.registerSpillIndex();
                     if (spillIndex >= 0) {
                         map.set(spillIndex);

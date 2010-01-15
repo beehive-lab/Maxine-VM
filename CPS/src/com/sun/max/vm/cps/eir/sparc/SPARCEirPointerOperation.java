@@ -68,16 +68,16 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
         }
     }
 
-    public SPARCEirRegister.GeneralPurpose pointerGeneralRegister() {
-        return (SPARCEirRegister.GeneralPurpose) pointerOperand().location();
+    public SPARCEirRegisters.GeneralPurpose pointerGeneralRegister() {
+        return (SPARCEirRegisters.GeneralPurpose) pointerOperand().location();
     }
 
-    public SPARCEirRegister.GeneralPurpose indexGeneralRegister() {
-        return (SPARCEirRegister.GeneralPurpose) indexOperand().location();
+    public SPARCEirRegisters.GeneralPurpose indexGeneralRegister() {
+        return (SPARCEirRegisters.GeneralPurpose) indexOperand().location();
     }
 
-    public SPARCEirRegister.GeneralPurpose offsetGeneralRegister() {
-        return (SPARCEirRegister.GeneralPurpose) offsetOperand().location();
+    public SPARCEirRegisters.GeneralPurpose offsetGeneralRegister() {
+        return (SPARCEirRegisters.GeneralPurpose) offsetOperand().location();
     }
 
     protected SPARCEirPointerOperation(EirBlock block, Kind kind, EirValue operand, Effect event,
@@ -119,12 +119,12 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
     /**
      * Emit memory operation of the form {@code   ld [Rp + simm13], R}, {@code  st R, [Rp + + simm13]} .
      */
-    protected abstract void emit(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int simm13);
+    protected abstract void emit(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister, int simm13);
 
     /**
      * Emit memory operation of the form {@code  ld [Rp + Ro], R}, {@code  st R, [Rp + Ro]}.
      */
-    protected abstract void emit(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, SPARCEirRegister.GeneralPurpose offsetRegister);
+    protected abstract void emit(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister, SPARCEirRegisters.GeneralPurpose offsetRegister);
 
     /**
      * Emit memory operation of the form  {@code ld [Rp], R}, {@code  st R, [Rp]}.
@@ -132,19 +132,19 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
      * @param emitter
      * @param pointerRegister
      */
-    private void emit(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister) {
-        emit(emitter, pointerRegister, SPARCEirRegister.GeneralPurpose.G0);
+    private void emit(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister) {
+        emit(emitter, pointerRegister, SPARCEirRegisters.GeneralPurpose.G0);
     }
 
     /**
      * Emit synthetic memory operation of the form  {@code  ld [ Rp + Ri * scale], R}.
      * This translates into a pair of real instructions  {@code srl Ri, scale, Ro; ld [Rp + Ro], R}..
      */
-    private void emitWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, SPARCEirRegister.GeneralPurpose indexRegister) {
+    private void emitWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister, SPARCEirRegisters.GeneralPurpose indexRegister) {
         final int scale = indexShiftScale(kind);
-        SPARCEirRegister.GeneralPurpose offsetRegister = indexRegister;
+        SPARCEirRegisters.GeneralPurpose offsetRegister = indexRegister;
         if (scale > 0) {
-            offsetRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+            offsetRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
             emitter.assembler().srl(indexRegister.as(), scale, offsetRegister.as());
         }
         emit(emitter, pointerRegister, offsetRegister);
@@ -154,16 +154,16 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
      * Emit synthetic memory operation of the form  {@code  ld [ Rp + offset32], R}.
      * This translates into a pair of real instructions  {@code sethi, Ro; ld [Rp + Ro], R}..
      */
-    private void emitWithOffset(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int offset32) {
-        final SPARCEirRegister.GeneralPurpose offsetRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+    private void emitWithOffset(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister, int offset32) {
+        final SPARCEirRegisters.GeneralPurpose offsetRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
         emitter.assembler().setsw(offset32, offsetRegister.as());
         emit(emitter, pointerRegister, offsetRegister);
     }
 
-    private void emitWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, int offset13, SPARCEirRegister.GeneralPurpose indexRegister) {
+    private void emitWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister, int offset13, SPARCEirRegisters.GeneralPurpose indexRegister) {
         final int scale = indexShiftScale(kind);
-        final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
-        SPARCEirRegister.GeneralPurpose scaledIndexRegister =  indexRegister;
+        final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+        SPARCEirRegisters.GeneralPurpose scaledIndexRegister =  indexRegister;
         assert !scratchRegister.equals(indexRegister);
         if (scale > 0) {
             scaledIndexRegister = scratchRegister;
@@ -173,10 +173,10 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
         emit(emitter, pointerRegister, scratchRegister);
     }
 
-    private void emitWithOffsetWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegister.GeneralPurpose pointerRegister, SPARCEirRegister.GeneralPurpose offsetRegister, SPARCEirRegister.GeneralPurpose indexRegister) {
+    private void emitWithOffsetWithIndex(SPARCEirTargetEmitter emitter, SPARCEirRegisters.GeneralPurpose pointerRegister, SPARCEirRegisters.GeneralPurpose offsetRegister, SPARCEirRegisters.GeneralPurpose indexRegister) {
         final int scale = indexShiftScale(kind);
-        final SPARCEirRegister.GeneralPurpose scratchRegister = (SPARCEirRegister.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
-        SPARCEirRegister.GeneralPurpose scaledIndexRegister =  indexRegister;
+        final SPARCEirRegisters.GeneralPurpose scratchRegister = (SPARCEirRegisters.GeneralPurpose) emitter.abi().getScratchRegister(Kind.INT);
+        SPARCEirRegisters.GeneralPurpose scaledIndexRegister =  indexRegister;
         assert !(scratchRegister.equals(indexRegister) || scratchRegister.equals(offsetRegister));
         if (scale > 0) {
             scaledIndexRegister = scratchRegister;
@@ -188,7 +188,7 @@ public abstract class SPARCEirPointerOperation extends SPARCEirBinaryOperation {
 
     @Override
     public void emit(SPARCEirTargetEmitter emitter) {
-        final SPARCEirRegister.GeneralPurpose pointerRegister = pointerGeneralRegister();
+        final SPARCEirRegisters.GeneralPurpose pointerRegister = pointerGeneralRegister();
         if (offsetOperand() == null) {
             if (indexOperand() == null) {
                 emit(emitter, pointerRegister);

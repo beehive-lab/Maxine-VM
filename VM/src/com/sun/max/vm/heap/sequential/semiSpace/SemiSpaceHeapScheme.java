@@ -954,7 +954,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     public boolean contains(Address address) {
-        return fromSpace.contains(address);
+        return toSpace.contains(address);
     }
 
     public void runFinalization() {

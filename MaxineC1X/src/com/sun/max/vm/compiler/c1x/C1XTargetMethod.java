@@ -475,7 +475,8 @@ public class C1XTargetMethod extends TargetMethod {
     @Override
     public Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass) {
         final int exceptionPos = throwAddress.minus(codeStart).toInt();
-        for (int i = 0; i < getExceptionHandlerCount(); i++) {
+        int count = getExceptionHandlerCount();
+        for (int i = 0; i < count; i++) {
             int codePos = getExceptionPosAt(i);
             int catchPos = getCatchPosAt(i);
             ClassActor catchType = getCatchTypeAt(i);
@@ -694,7 +695,8 @@ public class C1XTargetMethod extends TargetMethod {
     @Override
     public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
         if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
-            // TODO: deal with adapter frame overflow arguments
+            // if this is an adapter frame, the only references it can contain would be in the overflow arguments
+            AMD64OptStackWalking.prepareAdapterOverflowRefMap(current, callee, preparer);
             return;
         }
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();

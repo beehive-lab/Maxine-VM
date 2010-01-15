@@ -45,7 +45,7 @@ public abstract class SPARCEirABIsScheme extends EirABIsScheme<SPARCEirRegister>
 
     @Override
     public Pool <SPARCEirRegister> registerPool() {
-        return SPARCEirRegister.pool();
+        return SPARCEirRegisters.pool();
     }
 
     @Override
