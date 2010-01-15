@@ -157,7 +157,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     /**
-     * Gets size of an activation frame for this target method in words.
+     * @return the size of an activation frame for this target method in words.
      */
     @UNSAFE
     private int frameWords() {
@@ -165,29 +165,17 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     /**
-     * Gets the size (in bytes) of a reference map covering an activation frame for this target method.
+     * @return the size (in bytes) of a reference map covering an activation frame for this target method.
      */
     private int frameReferenceMapSize() {
         return ByteArrayBitMap.computeBitMapSize(frameWords());
     }
 
     /**
-     * Gets the number of bytes in {@link #referenceMaps} corresponding to one stop position.
+     * @return the number of bytes in {@link #referenceMaps} corresponding to one stop position.
      */
     private int totalReferenceMapSize() {
         return registerReferenceMapSize() + frameReferenceMapSize();
-    }
-
-    private void setRegisterReferenceMapBit(int stopIndex, int registerIndex) {
-        assert registerIndex >= 0 && registerIndex < referenceRegisterCount;
-        int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize();
-        ByteArrayBitMap.set(referenceMaps, byteIndex, registerReferenceMapSize(), registerIndex);
-    }
-
-    private void setFrameReferenceMapBit(int stopIndex, int slotIndex) {
-        assert slotIndex >= 0 && slotIndex < frameSize();
-        int byteIndex = stopIndex * totalReferenceMapSize();
-        ByteArrayBitMap.set(referenceMaps, byteIndex, frameReferenceMapSize(), slotIndex);
     }
 
     private boolean isRegisterReferenceMapBitSet(int stopIndex, int registerIndex) {
@@ -196,14 +184,7 @@ public class C1XTargetMethod extends TargetMethod {
         return ByteArrayBitMap.isSet(referenceMaps, byteIndex, registerReferenceMapSize(), registerIndex);
     }
 
-    private boolean isFrameReferenceMapBitSet(int stopIndex, int slotIndex) {
-        assert slotIndex >= 0 && slotIndex < frameSize();
-        int byteIndex = stopIndex * totalReferenceMapSize();
-        return ByteArrayBitMap.isSet(referenceMaps, byteIndex, frameReferenceMapSize(), slotIndex);
-    }
-
     private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
-
         // Create the arrays for the scalar and the object reference literals
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         List<Object> objectReferences = new ArrayList<Object>();
@@ -226,13 +207,11 @@ public class C1XTargetMethod extends TargetMethod {
         int z = 0;
         int currentPos = 0;
         for (DataPatch site : ciTargetMethod.dataReferences) {
-
             final CiConstant data = site.data;
             relativeDataPos[z] = currentPos;
 
             try {
                 switch (data.kind) {
-
                     case Double:
                         endianness.writeLong(output, Double.doubleToLongBits(data.asDouble()));
                         currentPos += Long.SIZE / Byte.SIZE;
