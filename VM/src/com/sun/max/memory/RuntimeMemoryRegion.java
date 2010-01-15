@@ -20,6 +20,7 @@
  */
 package com.sun.max.memory;
 
+import java.lang.management.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.unsafe.*;
@@ -136,5 +137,9 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     @INLINE
     public final Address getAllocationMark() {
         return mark.get().asAddress();
+    }
+
+    public MemoryUsage getUsage() {
+        return new MemoryUsage(size.toLong(), getAllocationMark().minus(start).toLong(), size.toLong(), size.toLong());
     }
 }

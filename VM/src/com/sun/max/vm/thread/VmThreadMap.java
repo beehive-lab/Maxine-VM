@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.thread;
 
+import java.util.ArrayList;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -383,6 +385,7 @@ public final class VmThreadMap {
 
     /**
      * Iterates over all the VM threads in this thread map and run the specified procedure.
+     * <b>NOTE: This method is not synchronized. It is recommended that the caller synchronizes on ACTIVE.</b>
      *
      * @param predicate a predicate to apply on each thread
      * @param procedure the procedure to apply to each VM thread
@@ -400,6 +403,7 @@ public final class VmThreadMap {
 
     /**
      * Iterates over all the VM thread locals in this thread map and run the specified procedure.
+     * <b>NOTE: This method is not synchronized. It is recommended that the caller synchronizes on ACTIVE.</b>
      *
      * @param predicate a predicate to check on the VM thread locals
      * @param procedure the procedure to apply to each VM thread locals
@@ -430,4 +434,25 @@ public final class VmThreadMap {
     public VmThread getVmThreadForID(int id) {
         return idMap.get(id);
     }
+
+    public static Thread[] getThreads() {
+        final ArrayList<Thread> threads = new ArrayList<Thread>();
+        Procedure<VmThread> proc = new Procedure<VmThread>() {
+            public void run(VmThread vmThread) {
+                if (vmThread.javaThread() != null) {
+                    threads.add(vmThread.javaThread());
+                }
+            }
+        };
+        synchronized (VmThreadMap.ACTIVE) {
+            VmThreadMap.ACTIVE.forAllThreads(null, proc);
+        }
+        return threads.toArray(new Thread[threads.size()]);
+    }
+
+    public static StackTraceElement[][] dumpThreads(Thread[] threads) {
+        FatalError.unimplemented();
+        return null;
+    }
+
 }

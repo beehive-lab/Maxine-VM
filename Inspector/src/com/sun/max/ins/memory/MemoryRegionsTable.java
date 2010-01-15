@@ -23,6 +23,8 @@ package com.sun.max.ins.memory;
 import java.awt.*;
 import java.awt.event.*;
 
+import java.lang.management.*;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
@@ -427,6 +429,10 @@ public final class MemoryRegionsTable extends InspectorTable {
             if (endLabel != null) {
                 endLabel.redisplay();
             }
+        }
+
+        public MemoryUsage getUsage() {
+            return null;
         }
 
     }

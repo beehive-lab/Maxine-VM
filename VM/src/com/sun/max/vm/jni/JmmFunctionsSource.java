@@ -20,8 +20,14 @@
  */
 package com.sun.max.vm.jni;
 
+import java.lang.management.*;
+
+import static com.sun.max.vm.jni.JmmFunctions.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.management.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Template from which (parts of) {@link JmmFunctions} is generated. The static initializer of
@@ -57,11 +63,14 @@ public final class JmmFunctionsSource {
 
     @VM_ENTRY_POINT
     private static JniHandle GetInputArguments(Pointer env) {
-        return JniHandle.zero();
+        return JniHandles.createLocalHandle(RuntimeManagement.getVmArguments());
     }
 
     @VM_ENTRY_POINT
     private static int GetThreadInfo(Pointer env, JniHandle ids, int maxDepth, JniHandle infoArray) {
+        final ThreadInfo[] threadInfoArray = (ThreadInfo[]) infoArray.unhand();
+        final long[] threadIds = (long[]) ids.unhand();
+        ThreadManagement.getThreadInfo(threadIds, maxDepth, threadInfoArray);
         return 0;
     }
 
@@ -72,12 +81,16 @@ public final class JmmFunctionsSource {
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryPools(Pointer env, JniHandle mgr) {
-        return JniHandle.zero();
+        final Object p = mgr.unhand();
+        assert p ==null; // see sun/management/MemoryImpl.c
+        return JniHandles.createLocalHandle(MemoryManagement.getMemoryPools());
     }
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryManagers(Pointer env, JniHandle pool) {
-        return JniHandle.zero();
+        final Object p = pool.unhand();
+        assert p ==null; // see sun/management/MemoryImpl.c
+        return JniHandles.createLocalHandle(MemoryManagement.getMemoryManagers());
     }
 
     @VM_ENTRY_POINT
@@ -95,7 +108,7 @@ public final class JmmFunctionsSource {
 
     @VM_ENTRY_POINT
     private static JniHandle GetMemoryUsage(Pointer env, boolean heap) {
-        return JniHandle.zero();
+        return JniHandles.createLocalHandle(MemoryManagement.getMemoryUsage(heap));
     }
 
     @VM_ENTRY_POINT
@@ -110,6 +123,18 @@ public final class JmmFunctionsSource {
 
     @VM_ENTRY_POINT
     private static boolean SetBoolAttribute(Pointer env, int att, boolean flag) {
+        switch (att) {
+            case JMM_VERBOSE_GC:
+                return MemoryManagement.setVerboseGC(flag);
+            case JMM_VERBOSE_CLASS:
+                return ClassLoadingManagement.setVerboseClass(flag);
+            case JMM_THREAD_CONTENTION_MONITORING:
+                return ThreadManagement.setThreadCpuTimeEnabled(flag);
+            case JMM_THREAD_CPU_TIME:
+                return ThreadManagement.setThreadCpuTimeEnabled(flag);
+            default:
+                    FatalError.unexpected("unknown attribute value " + att +  "to JmmFunctions.SetBoolAttribute");
+        }
         return false;
     }
 
