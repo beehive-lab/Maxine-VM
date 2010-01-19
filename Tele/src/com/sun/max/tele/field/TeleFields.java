@@ -129,15 +129,18 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticIntFieldAccess Inspectable_flags = new TeleStaticIntFieldAccess(Inspectable.class, "flags");
     public final TeleStaticIntFieldAccess InspectableClassInfo_classActorCount = new TeleStaticIntFieldAccess(InspectableClassInfo.class, "classActorCount");
     public final TeleStaticReferenceFieldAccess InspectableClassInfo_classActors = new TeleStaticReferenceFieldAccess(InspectableClassInfo.class, "classActors", ClassActor[].class);
+    @Deprecated
     public final TeleStaticWordFieldAccess InspectableHeapInfo_cardTablePointer = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "cardTablePointer");
-    public final TeleStaticIntFieldAccess InspectableHeapInfo_cardTableRatio = new TeleStaticIntFieldAccess(InspectableHeapInfo.class, "cardTableRatio");
     public final TeleStaticLongFieldAccess InspectableHeapInfo_collectionEpoch = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "collectionEpoch");
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "memoryRegions", MemoryRegion[].class);
+    @Deprecated
     public final TeleStaticWordFieldAccess InspectableHeapInfo_newAddress = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "newAddress");
+    @Deprecated
     public final TeleStaticWordFieldAccess InspectableHeapInfo_oldAddress = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "oldAddress");
     public final TeleStaticLongFieldAccess InspectableHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "rootEpoch");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_rootsPointer = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "rootsPointer");
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_rootsRegion = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "rootsRegion", RuntimeMemoryRegion.class);
+    @Deprecated
     public final TeleStaticIntFieldAccess InspectableHeapInfo_totalCardTableEntries = new TeleStaticIntFieldAccess(InspectableHeapInfo.class, "totalCardTableEntries");
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeInfos = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeInfos", BytecodeInfo[].class);
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeToTargetCodePositionMap = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeToTargetCodePositionMap", int[].class);
