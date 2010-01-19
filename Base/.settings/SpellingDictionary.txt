@@ -62,6 +62,8 @@ compaction
 deactivate
 deactivated
 deactivates
+deactivating
+deactivation
 debugee
 deoptimization
 deoptimize
