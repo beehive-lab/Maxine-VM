@@ -55,12 +55,12 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    public ObjectKind getObjectKind() {
+    public ObjectKind kind() {
         return ObjectKind.ARRAY;
     }
 
     @Override
-    public HeaderField[] getHeaderFields() {
+    public HeaderField[] headerFields() {
         return Layout.arrayHeaderLayout().headerFields();
     }
 
@@ -83,7 +83,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    protected Size objectSize() {
+    public Size objectSize() {
         return teleVM().layoutScheme().arrayHeaderLayout.getArraySize(componentKind(), length);
     }
 
@@ -101,12 +101,12 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     @Override
-    public  Address getFieldAddress(FieldActor fieldActor) {
+    public  Address fieldAddress(FieldActor fieldActor) {
         throw FatalError.unexpected("Maxine Array objects don't contain fields");
     }
 
     @Override
-    protected Size getFieldSize(FieldActor fieldActor) {
+    public Size fieldSize(FieldActor fieldActor) {
         throw FatalError.unexpected("Maxine Array objects don't contain fields");
     }
 

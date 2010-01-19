@@ -38,6 +38,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.MaxWatchpoint.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
@@ -787,6 +788,17 @@ public abstract class TeleVM implements MaxVM {
         return teleHeapManager.teleRootsPointer();
     }
 
+    public Pointer getForwardedObject(Pointer origin) {
+        return teleHeapManager.getForwardedObject(origin);
+    }
+
+    /**
+     * @return offset in heap objects of the word used by GC to assign forwarding pointer
+     */
+    public final Offset gcForwardingPointerOffset() {
+        return teleHeapManager.gcForwardingPointerOffset();
+    }
+
     /**
      * Address of the field incremented each time a GC begins.
      * @return memory location of the field holding the collection epoch
@@ -803,30 +815,6 @@ public abstract class TeleVM implements MaxVM {
      */
     public final Address rootEpochAddress() {
         return teleHeapManager.rootEpochAddress();
-    }
-
-    public int readCardTableEntry(int index) {
-        return teleHeapManager.readCardTableEntry(index);
-    }
-
-    public void writeCardTableEntry(int index, int value) {
-        teleHeapManager.writeCardTableEntry(index, value);
-    }
-
-    public Address getCardTableAddress(int index) {
-        return teleHeapManager.getCardTableAddress(index);
-    }
-
-    public Address getObjectOldAddress() {
-        return teleHeapManager.getObjectOldAddress();
-    }
-
-    public Address getObjectNewAddress() {
-        return teleHeapManager.getObjectNewAddress();
-    }
-
-    public boolean isCardTableAddress(Address address) {
-        return teleHeapManager.isCardTableAddress(address);
     }
 
     /**
@@ -1472,47 +1460,47 @@ public abstract class TeleVM implements MaxVM {
         teleProcess.watchpointFactory().addObserver(observer);
     }
 
-    public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, WatchpointSettings settings)
         throws TooManyWatchpointsException, DuplicateWatchpointException, UnsupportedOperationException {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createRegionWatchpoint(description, memoryRegion, settings);
     }
 
-    public final MaxWatchpoint setWordWatchpoint(String description, Address address, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    public final MaxWatchpoint setWordWatchpoint(String description, Address address, WatchpointSettings settings)
         throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         final MemoryRegion memoryRegion = new FixedMemoryRegion(address, wordSize(), "");
-        return setRegionWatchpoint(description, memoryRegion, after, read, write, exec, gc);
+        return setRegionWatchpoint(description, memoryRegion, settings);
     }
 
-    public final MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    public final MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, WatchpointSettings settings)
         throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createObjectWatchpoint(description, teleObject, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createObjectWatchpoint(description, teleObject, settings);
     }
 
-    public final MaxWatchpoint setFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    public final MaxWatchpoint setFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
         throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createFieldWatchpoint(description, teleObject, fieldActor, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createFieldWatchpoint(description, teleObject, fieldActor, settings);
     }
 
-    public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
         throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, after, read, after, exec, gc);
+        return teleProcess.watchpointFactory().createArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, settings);
     }
 
-    public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
         throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createHeaderWatchpoint(description, teleObject, headerField, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createHeaderWatchpoint(description, teleObject, headerField, settings);
     }
 
-    public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, boolean after, boolean read, boolean write, boolean exec, boolean gc)
+    public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, WatchpointSettings settings)
         throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, after, read, write, exec, gc);
+        return teleProcess.watchpointFactory().createVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, settings);
     }
 
     public final Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) throws ProgramError {

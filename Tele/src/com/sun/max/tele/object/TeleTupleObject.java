@@ -49,12 +49,12 @@ public class TeleTupleObject extends TeleObject {
     }
 
     @Override
-    public ObjectKind getObjectKind() {
+    public ObjectKind kind() {
         return ObjectKind.TUPLE;
     }
 
     @Override
-    public HeaderField[] getHeaderFields() {
+    public HeaderField[] headerFields() {
         return Layout.tupleLayout().headerFields();
     }
 
@@ -64,12 +64,12 @@ public class TeleTupleObject extends TeleObject {
     }
 
     @Override
-    public Address getFieldAddress(FieldActor fieldActor) {
-        return getCurrentOrigin().plus(fieldActor.offset());
+    public Address fieldAddress(FieldActor fieldActor) {
+        return origin().plus(fieldActor.offset());
     }
 
     @Override
-    protected Size getFieldSize(FieldActor fieldActor) {
+    public Size fieldSize(FieldActor fieldActor) {
         return Size.fromInt(fieldActor.kind.width.numberOfBytes);
     }
 

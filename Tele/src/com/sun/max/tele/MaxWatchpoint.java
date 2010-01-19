@@ -33,6 +33,31 @@ import com.sun.max.tele.object.*;
 public interface MaxWatchpoint extends MemoryRegion {
 
     /**
+     * A collection of configuration settings for watchpoints.
+     */
+    public final class WatchpointSettings {
+        public final boolean trapOnRead;
+        public final boolean trapOnWrite;
+        public final boolean trapOnExec;
+        public final boolean enabledDuringGC;
+
+        /**
+         * Creates an immutable collection of configuration settings for watchpoints.
+         *
+         * @param trapOnRead should the watchpoint trigger after a memory read?
+         * @param trapOnWrite should the watchpoint trigger after a memory write?
+         * @param trapOnExec should the watchpoint trigger after execution from memory?
+         * @param enabledDuringGC should the watchpoint be active during GC?
+         */
+        public WatchpointSettings(boolean trapOnRead, boolean trapOnWrite, boolean trapOnExec, boolean enabledDuringGC) {
+            this.trapOnRead = trapOnRead;
+            this.trapOnWrite = trapOnWrite;
+            this.trapOnExec = trapOnExec;
+            this.enabledDuringGC = enabledDuringGC;
+        }
+    }
+
+    /**
      * @return the optional human-readable string associated with the watchpoint, for debugging.
      */
     String getDescription();
@@ -42,29 +67,51 @@ public interface MaxWatchpoint extends MemoryRegion {
      */
     void setDescription(String description);
 
-     /**
-     * Checks if watchpoint is set for reading.
-     * @return true while the watchpoint is activated for read access,
+    /**
+     * @return the current settings of the watchpoint
      */
-    boolean isTrapOnRead();
+    WatchpointSettings getSettings();
 
     /**
-     * Checks if watchpoint is set for writing.
-     * @return true while the watchpoint is activated for write access,
+     * Set read flag for this watchpoint.
+     *
+     * @param read whether the watchpoint should trap when watched memory is read from
+     * @return whether set succeeded
+     * @throws ProgramError if watchpoint has been disposed
      */
-    boolean isTrapOnWrite();
+    boolean setTrapOnRead(boolean read);
 
     /**
-     * Checks if watchpoint is set for executing.
-     * @return true while the watchpoint is activated for executing,
+     * Set write flag for this watchpoint.
+     *
+     * @param write whether the watchpoint should trap when watched memory is written to
+     * @return whether set succeeded.
+     * @throws ProgramError if watchpoint has been disposed
      */
-    boolean isTrapOnExec();
+    boolean setTrapOnWrite(boolean write);
 
     /**
-     * Checks if this watchpoint is set during garbage collection.
-     * @return true if this watchpoint is active during GC
+     * Set execute flag for this watchpoint.
+     *
+     * @param exec whether the watchpoint should trap when watched memory is executed from
+     * @return whether set succeeded.
+     * @throws ProgramError if watchpoint has been disposed
      */
-    boolean isEnabledDuringGC();
+    boolean setTrapOnExec(boolean exec);
+
+    /**
+     * Set GC flag for this watchpoint.
+     *
+     * @param gc whether the watchpoint is active during garbage collection
+     * @return whether set succeeded.
+     * @throws ProgramError if watchpoint has been disposed
+     */
+    void setEnabledDuringGC(boolean gc);
+
+    /**
+     * @return whether the watchpoint is on an object that might be relocated by GC.
+     */
+    boolean isRelocatable();
 
     /**
      * @return true if any of the possible activations are true.
@@ -76,54 +123,14 @@ public interface MaxWatchpoint extends MemoryRegion {
      * becomes permanently inactive.
      *
      * @return whether the removal succeeded.
-     * @throws ProgramError when not active (already deleted)
+     * @throws ProgramError if watchpoint has already been disposed
      */
     boolean dispose();
 
     /**
-     * Set read flag for this watchpoint.
-     * @param read whether the watchpoint should trap when watched memory is read from
-     * @return whether set succeeded
-     */
-    boolean setTrapOnRead(boolean read);
-
-    /**
-     * Set write flag for this watchpoint.
-     * @param write whether the watchpoint should trap when watched memory is written to
-     * @return whether set succeeded.
-     */
-    boolean setTrapOnWrite(boolean write);
-
-    /**
-     * Set execute flag for this watchpoint.
-     * @param exec whether the watchpoint should trap when watched memory is executed from
-     * @return whether set succeeded.
-     */
-    boolean setTrapOnExec(boolean exec);
-
-    /**
-     * Set gc flag for this watchpoint.
-     * @param gc whether the watchpoint is active during garbage collection
-     * @return whether set succeeded.
-     */
-    void setEnabledDuringGC(boolean gc);
-
-    /**
      * @return a heap object in the VM with which the watchpoint is associated, null if none.
+     * @see #isRelocatable()
      */
     TeleObject getTeleObject();
-
-    /**
-     * Sets the update mechanism of relocatable watchpoints.
-     * true == eager, false == lazy
-     * @param correspondingObjectGotCollected
-     */
-    void setEagerRelocationUpdate(boolean refObjectCollected);
-
-    /**
-     * Checks if eager relocation update mechanism is turned on for a given watchpoint.
-     * @return true if eager relocation update activated
-     */
-    boolean isEagerRelocationUpdateSet();
 
 }

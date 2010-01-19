@@ -107,7 +107,6 @@ public final class WatchpointsTable extends InspectorTable {
             addColumn(WatchpointsColumnKind.WRITE, null, new DefaultCellEditor(new JCheckBox()));
             addColumn(WatchpointsColumnKind.EXEC, null, new DefaultCellEditor(new JCheckBox()));
             addColumn(WatchpointsColumnKind.GC, null, new DefaultCellEditor(new JCheckBox()));
-            addColumn(WatchpointsColumnKind.EAGER, null, new DefaultCellEditor(new JCheckBox()));
             addColumn(WatchpointsColumnKind.TRIGGERED_THREAD, new TriggerThreadCellRenderer(inspection()), null);
             addColumn(WatchpointsColumnKind.ADDRESS_TRIGGERED, new TriggerAddressCellRenderer(inspection()), null);
             addColumn(WatchpointsColumnKind.CODE_TRIGGERED, new TriggerCodeCellRenderer(inspection()), null);
@@ -143,15 +142,13 @@ public final class WatchpointsTable extends InspectorTable {
                 case CODE_TRIGGERED:
                     return watchpoint;
                 case READ:
-                    return watchpoint.isTrapOnRead();
+                    return watchpoint.getSettings().trapOnRead;
                 case WRITE:
-                    return watchpoint.isTrapOnWrite();
+                    return watchpoint.getSettings().trapOnWrite;
                 case EXEC:
-                    return watchpoint.isTrapOnExec();
+                    return watchpoint.getSettings().trapOnExec;
                 case GC:
-                    return watchpoint.isEnabledDuringGC();
-                case EAGER:
-                    return watchpoint.isEagerRelocationUpdateSet();
+                    return watchpoint.getSettings().enabledDuringGC;
                 default:
                     throw FatalError.unexpected("Unexpected Watchpoint Data column");
             }
@@ -186,11 +183,6 @@ public final class WatchpointsTable extends InspectorTable {
                     watchpoint.setEnabledDuringGC(newState);
                     inspection().settings().save();
                     break;
-                case EAGER:
-                    newState = (Boolean) value;
-                    watchpoint.setEagerRelocationUpdate(newState);
-                    inspection().settings().save();
-                    break;
                 default:
             }
         }
@@ -202,7 +194,6 @@ public final class WatchpointsTable extends InspectorTable {
                 case WRITE:
                 case EXEC:
                 case GC:
-                case EAGER:
                     return true;
                 default:
                     return false;
@@ -219,8 +210,6 @@ public final class WatchpointsTable extends InspectorTable {
                 case EXEC:
                     return Boolean.class;
                 case GC:
-                    return Boolean.class;
-                case EAGER:
                     return Boolean.class;
                 default:
                     return MaxWatchpoint.class;
