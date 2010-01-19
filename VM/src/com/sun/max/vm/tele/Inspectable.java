@@ -40,6 +40,7 @@ public final class Inspectable {
     /**
      * Constant denoting that there is at least one relocatable watchpoint currently active.
      */
+    @Deprecated
     public static final int ACTIVE_RELOCATABLE_WATCHPOINTS = 0x0000002;
 
     /**
