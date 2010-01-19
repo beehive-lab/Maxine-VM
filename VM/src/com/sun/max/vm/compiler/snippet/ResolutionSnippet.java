@@ -21,9 +21,9 @@
 package com.sun.max.vm.compiler.snippet;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
@@ -31,7 +31,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -59,31 +58,6 @@ public abstract class ResolutionSnippet extends Snippet {
      */
     public final ResolutionGuard createGuard(ConstantPool constantPool, int constantPoolIndex) {
         return new ResolutionGuard(constantPool, constantPoolIndex);
-    }
-
-    @Override
-    public final boolean isFoldable(IrValue[] arguments) {
-        assert arguments.length == 1;
-        if (!super.isFoldable(arguments)) {
-            // This occurs when compiling the stub for folding a snippet
-            return false;
-        }
-        final ResolutionGuard guard = (ResolutionGuard) arguments[0].value().asObject();
-        if (!(guard.value == null)) {
-            return true;
-        }
-        final ConstantPool constantPool = guard.constantPool;
-        final ResolvableConstant resolvableConstant = constantPool.resolvableAt(guard.constantPoolIndex);
-        if (resolvableConstant.isResolvableWithoutClassLoading(constantPool)) {
-            try {
-                resolvableConstant.resolve(constantPool, guard.constantPoolIndex);
-                return true;
-            } catch (LinkageError linkageError) {
-                // Whatever went wrong here is supposed to show up at runtime, too.
-                // So we just don't fold here and move on.
-            }
-        }
-        return false;
     }
 
     /**

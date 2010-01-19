@@ -120,11 +120,11 @@ public interface RiMethod {
     boolean isNative();
 
     /**
-     * Checks whether this method is final.
+     * Checks whether this method is a leaf method.
      * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method is final
+     * @return {@code true} if the method is a leaf method (i.e. is final or private)
      */
-    boolean isFinalMethod();
+    boolean isLeafMethod();
 
     /**
      * Checks whether this method is synchronized.
@@ -146,7 +146,7 @@ public interface RiMethod {
      * @return {@code true} if the method is static
      */
     boolean isStatic();
-    
+
     /**
      * Checks whether this method is an initializer.
      * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.

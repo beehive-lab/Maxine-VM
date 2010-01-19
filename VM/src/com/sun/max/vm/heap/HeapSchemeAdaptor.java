@@ -22,10 +22,15 @@ package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import java.lang.management.*;
+import java.util.*;
+import com.sun.management.GarbageCollectorMXBean;
+import com.sun.management.GcInfo;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.management.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
@@ -36,6 +41,29 @@ import com.sun.max.vm.thread.*;
  * @author Mick Jordan
  */
 public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements HeapScheme {
+
+
+    public static class GarbageCollectorMXBeanAdaptor extends MemoryManagerMXBeanAdaptor implements GarbageCollectorMXBean  {
+        public GarbageCollectorMXBeanAdaptor(String name) {
+            super(name);
+        }
+
+        @Override
+        public GcInfo getLastGcInfo() {
+            return null;
+        }
+
+        @Override
+        public long getCollectionCount() {
+            return 0;
+        }
+
+        @Override
+        public long getCollectionTime() {
+            return 0;
+        }
+
+    }
 
     /**
      * Switch to turn off allocation globally.
@@ -104,4 +132,15 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     public boolean isInitialized() {
         return MaxineVM.isRunning();
     }
+
+    public GarbageCollectorMXBean getGarbageCollectorMXBean() {
+        return new GarbageCollectorMXBeanAdaptor("Invalid") {
+            @Override
+            public boolean isValid() {
+                return false;
+            }
+        };
+    }
+
+
 }

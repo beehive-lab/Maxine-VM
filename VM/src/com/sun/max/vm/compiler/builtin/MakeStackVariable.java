@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -37,11 +36,6 @@ public class MakeStackVariable extends SpecialBuiltin {
 
     protected MakeStackVariable() {
         super(null);
-    }
-
-    @Override
-    public boolean isFoldable(IrValue[] arguments) {
-        return false;
     }
 
     @Override

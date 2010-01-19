@@ -133,6 +133,13 @@ public final class Heap {
         return verboseOption.verboseGC || traceGC || traceRootScanningOption.getValue() || Heap.traceGCTime() || traceGC;
     }
 
+    /**
+     * Set the verboseGC option (java.lang.management support).
+     */
+    public static void setVerbose(boolean value) {
+        verboseOption.verboseGC = value;
+    }
+
     private static boolean traceAllocation;
 
     /**
@@ -384,11 +391,6 @@ public final class Heap {
         Log.unlock(lockDisabledSafepoints);
     }
 
-    @INLINE
-    public static boolean contains(Address address) {
-        return heapScheme().contains(address);
-    }
-
     public static boolean collectGarbage(Size requestedFreeSpace) {
         if (Heap.gcDisabled()) {
             Throw.stackDump("Out of memory and GC is disabled");
@@ -503,7 +505,7 @@ public final class Heap {
             return true;
         }
         Pointer origin = grip.toOrigin();
-        if (!bootHeapRegion.contains(origin) && !contains(origin) && !Code.contains(origin) && !ImmortalHeap.getImmortalHeap().contains(origin)) {
+        if (!bootHeapRegion.contains(origin) && !heapScheme().contains(origin) && !Code.contains(origin) && !ImmortalHeap.getImmortalHeap().contains(origin)) {
             return false;
         }
         if (MaxineVM.isDebug()) {

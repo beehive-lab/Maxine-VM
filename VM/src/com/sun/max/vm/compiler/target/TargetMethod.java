@@ -34,10 +34,9 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
@@ -54,7 +53,7 @@ import com.sun.max.vm.template.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  */
-public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMethod {
+public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     public static final VMStringOption printTargetMethods = VMOptions.register(new VMStringOption("-XX:PrintTargetMethods=", false, null,
         "Print compiled target methods whose fully qualified name matches <value>."), MaxineVM.Phase.STARTING);
@@ -66,7 +65,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final RuntimeCompilerScheme compilerScheme;
 
     @INSPECTED
-    private final ClassMethodActor classMethodActor;
+    public final ClassMethodActor classMethodActor;
 
     /**
      * The stop positions are encoded in the lower 31 bits of each element.
@@ -130,6 +129,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final ClassMethodActor classMethodActor() {
         return classMethodActor;
     }
+
+    public abstract byte[] referenceMaps();
 
     /**
      * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
@@ -307,15 +308,9 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
-    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
-
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
         return callEntryPoint.in(this);
     }
-
-    public abstract void patchCallSite(int callOffset, Word callEntryPoint);
-
-    public abstract void forwardTo(TargetMethod newTargetMethod);
 
     /**
      * Links all the calls from this target method to other methods for which the exact method actor is known. Linking a
@@ -394,10 +389,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     public boolean isCalleeSaved() {
-        return false;
+        return registerRestoreEpilogueOffset >= 0;
     }
-
-    public abstract void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer, TargetMethod callee);
 
     public byte[] encodedInlineDataDescriptors() {
         return null;
@@ -457,6 +450,20 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         }
         return -1;
     }
+
+    /**
+     * Gets the position of the next call (direct or indirect) in this target method after a given position.
+     *
+     * @param targetCodePosition the position from which to start searching
+     * @param nativeFunctionCall if {@code true}, then the search is refined to only consider
+     *            {@linkplain #isNativeFunctionCall(int) native function calls}.
+     *
+     * @return -1 if the search fails
+     */
+    public int findNextCall(int targetCodePosition, boolean nativeFunctionCall) {
+        return -1;
+    }
+
 
     /**
      * Gets the index of a stop position within this target method derived from a given instruction pointer. If the
@@ -521,24 +528,12 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return stopIndexWithClosestPosition;
     }
 
-    /**
-     * Analyzes the target method that this compiler produced to build a call graph. This method appends the direct
-     * calls (i.e. static and special calls), the virtual calls, and the interface calls to the appendable sequences
-     * supplied.
-     *
-     * @param directCalls a sequence of the direct calls to which this method should append
-     * @param virtualCalls a sequence of virtual calls to which this method should append
-     * @param interfaceCalls a sequence of interface calls to which this method should append
-     */
-    @HOSTED_ONLY
-    public abstract void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
-
     @Override
     public final String toString() {
         return (classMethodActor == null) ? description() : classMethodActor.format("%H.%n(%p)");
     }
 
-    public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer, StackReferenceMapPreparer preparer) {
+    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
 
     }
 
@@ -555,10 +550,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     public int count(Builtin builtin, int defaultResult) {
         return 0;
-    }
-
-    public Class<? extends IrTraceObserver> irTraceObserverType() {
-        return null;
     }
 
     public boolean isGenerated() {
@@ -606,13 +597,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         traceReferenceMaps(writer);
         writer.println("Code cell: " + targetBundleLayout.cell(start(), ArrayField.code).toString());
     }
-
-    /**
-     * Traces the exception handlers of the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public abstract void traceExceptionHandlers(IndentWriter writer);
 
     /**
      * Traces the {@linkplain #directCallees() direct callees} of the compiled code represented by this object.
@@ -666,13 +650,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     /**
-     * Traces the debug info for the compiled code represented by this object.
-     *
-     * @param writer where the trace is written
-     */
-    public abstract void traceDebugInfo(IndentWriter writer);
-
-    /**
      * Traces the {@linkplain #referenceMaps() reference maps} for the stops in the compiled code represented by this object.
      *
      * @param writer where the trace is written
@@ -685,8 +662,126 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         }
     }
 
+    public boolean isTrapStub() {
+        return classMethodActor != null && classMethodActor.isTrapStub();
+    }
+
+    public final boolean isTrampoline() {
+        return classMethodActor != null && classMethodActor.isTrampoline();
+    }
+
+    /**
+     * Analyzes the target method that this compiler produced to build a call graph. This method appends the direct
+     * calls (i.e. static and special calls), the virtual calls, and the interface calls to the appendable sequences
+     * supplied.
+     *
+     * @param directCalls a sequence of the direct calls to which this method should append
+     * @param virtualCalls a sequence of virtual calls to which this method should append
+     * @param interfaceCalls a sequence of interface calls to which this method should append
+     */
+    @HOSTED_ONLY
+    public abstract void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
+
+    public abstract void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer);
+
+    public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
+
+    public abstract void patchCallSite(int callOffset, Word callEntryPoint);
+
+    public abstract void forwardTo(TargetMethod newTargetMethod);
+
+    /**
+     * Traces the debug info for the compiled code represented by this object.
+     * @param writer where the trace is written
+     */
+    public abstract void traceDebugInfo(IndentWriter writer);
+
+    /**
+     * @param writer where the trace is written
+     */
+    public abstract void traceExceptionHandlers(IndentWriter writer);
+
     /**
      * Gets a string representation of the reference map for each stop in this target method.
+     * @return a string representation of the reference map
      */
     public abstract String referenceMapsToString();
+
+    public ByteArrayBitMap registerReferenceMapFor(int index) {
+        throw FatalError.unimplemented();
+    }
+
+    public ByteArrayBitMap frameReferenceMapFor(StopType type, int index) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * Determines if this method was compiled with the template JIT compiler.
+     */
+    public boolean isJitCompiled() {
+        return false;
+    }
+
+    /**
+     * Gets an object describing the layout of an activation frame created on the stack for a call to this target method.
+     * @return an object that represents the layout of this stack frame
+     */
+    public CompiledStackFrameLayout stackFrameLayout() {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * Gets the bytecode position for a machine code call site address.
+     *
+     * @param returnInstructionPointer an instruction pointer that denotes a call site in this target method. The pointer
+     *        is passed as was written to the platform-specific link register.  E.g. on SPARC, the instructionPointer is
+     *        the PC of the call itself.  On AMD64, the instructionPointer is the PC of the instruction following the call.
+     * @return the start position of the bytecode instruction that is implemented at the instruction pointer or -1 if
+     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode. This will be
+     *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
+     *         code, prologue or epilogue.
+     */
+    public int bytecodePositionForCallSite(Pointer returnInstructionPointer) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * Creates an duplicate of this target method.
+     * @return a new instance of this target method
+     */
+    public TargetMethod duplicate() {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * Prepares the reference map for the current frame (and potentially for registers stored in a callee frame).
+     * @param current the current stack frame
+     * @param callee the callee stack frame, which may contain saved registers
+     * @param preparer the reference map preparer which receives the reference map
+     */
+    public abstract void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer);
+
+    /**
+     * Attempts to catch an exception thrown by this method or a callee method. This method should not return
+     * if this method catches the exception, but instead should unwind the stack and resume execution at the handler.
+     * @param current the current stack frame
+     * @param callee the callee stack frame, which may contain saved registers
+     * @param throwable the exception thrown
+     */
+    public abstract void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable);
+
+    /**
+     * Accepts a visitor for this stack frame.
+     * @param current the current stack frame
+     * @param callee the callee stack frame
+     * @param visitor the visitor which will visit the frame
+     * @return {@code true} if the visitor indicates the stack walk should continue
+     */
+    public abstract boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor);
+
+    /**
+     * Advances the stack frame cursor from this frame to the next frame.
+     * @param current the current stack frame cursor
+     */
+    public abstract void advance(StackFrameWalker.Cursor current);
 }

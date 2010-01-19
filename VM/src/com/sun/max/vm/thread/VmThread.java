@@ -137,9 +137,9 @@ public class VmThread {
 
     private final VmStackFrameWalker stackDumpStackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
-    private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(this, false);
+    private final StackReferenceMapPreparer stackReferenceMapPreparer = new StackReferenceMapPreparer(true, true);
 
-    private final StackReferenceMapPreparer stackReferenceMapVerifier = new StackReferenceMapPreparer(this, true);
+    private final StackReferenceMapPreparer stackReferenceMapVerifier = new StackReferenceMapPreparer(true, false);
 
     private final CompactReferenceMapInterpreter compactReferenceMapInterpreter = new CompactReferenceMapInterpreter();
 
@@ -571,16 +571,6 @@ public class VmThread {
     }
 
     private static native void nativeYield();
-
-    public static StackTraceElement[][] dumpThreads(Thread[] threads) {
-        FatalError.unimplemented();
-        return null;
-    }
-
-    public static Thread[] getThreads() {
-        FatalError.unimplemented();
-        return null;
-    }
 
     private static native void nativeSetPriority(Word nativeThread, int newPriority);
 

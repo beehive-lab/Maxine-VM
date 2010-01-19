@@ -29,11 +29,11 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.stack.StackReferenceMapPreparer;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -101,12 +101,15 @@ public abstract class Trap {
                 return NullPointerException.class;
             } else if (trapNumber == STACK_FAULT || trapNumber == STACK_FATAL) {
                 return StackOverflowError.class;
-            } else {
-                throw FatalError.unexpected("Should not be called, when there is no implicit exception that throws an exception object!");
             }
+            return null;
         }
 
         private Number() {
+        }
+
+        public static boolean isStackOverflow(Pointer trapState) {
+            return TrapStateAccess.instance().getTrapNumber(trapState) == STACK_FAULT;
         }
     }
 
@@ -368,33 +371,31 @@ public abstract class Trap {
      * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, Pointer) standard mechanism} for throwing an
      * exception is used.
      *
-     * @param trapState
-     * @param targetMethod
-     * @param throwable
-     * @param stackPointer
-     * @param framePointer
-     * @param throwAddress
+     * @param trapState a pointer to the buffer on the stack containing the trap state
+     * @param targetMethod the target method containing the trap address
+     * @param throwable the throwable to raise
+     * @param sp the stack pointer at the time of the trap
+     * @param fp the frame pointer at the time of the trap
+     * @param ip the instruction pointer which caused the trap
      */
-    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer throwAddress) {
+    private static void raiseImplicitException(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer sp, Pointer fp, Pointer ip) {
+        StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
+        if (!targetMethod.isJitCompiled()) {
+            final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, ip, throwable.getClass());
+            if (!catchAddress.isZero()) {
+                final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+                trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
+                VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
 
-        if (targetMethod instanceof JitTargetMethod) {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
-        }
-
-        final Address catchAddress = targetMethod.throwAddressToCatchAddress(true, throwAddress, throwable.getClass());
-        if (!catchAddress.isZero()) {
-            final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-            trapStateAccess.setInstructionPointer(trapState, catchAddress.asPointer());
-            VmThreadLocal.EXCEPTION_OBJECT.setConstantReference(Reference.fromJava(throwable));
-
-            if (throwable instanceof StackOverflowError) {
-                // This complete call-chain must be inlined down to the native call
-                // so that no further stack banging instructions
-                // are executed before execution jumps to the catch handler.
-                VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
+                if (throwable instanceof StackOverflowError) {
+                    // This complete call-chain must be inlined down to the native call
+                    // so that no further stack banging instructions
+                    // are executed before execution jumps to the catch handler.
+                    VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
+                }
+                return;
             }
-        } else {
-            VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(throwAddress, stackPointer, framePointer, throwable);
         }
+        VmThread.current().unwindingOrReferenceMapPreparingStackFrameWalker().unwind(ip, sp, fp, throwable);
     }
 }

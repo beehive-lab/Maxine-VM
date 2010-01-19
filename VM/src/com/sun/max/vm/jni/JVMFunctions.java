@@ -29,7 +29,6 @@ import sun.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -118,17 +117,23 @@ public class JVMFunctions {
     }
 
     public static Thread[] GetAllThreads() {
-        final List<Thread> allThreads = new ArrayList<Thread>();
-        VmThreadMap.ACTIVE.forAllThreads(null, new Procedure<VmThread>() {
-            @Override
-            public void run(VmThread argument) {
-                Thread javaThread = argument.javaThread();
-                if (javaThread != null) {
-                    allThreads.add(javaThread);
-                }
-            }
-        });
-        return allThreads.toArray(new Thread[allThreads.size()]);
+        return VmThreadMap.getThreads();
+    }
+
+    public static int[] GetThreadStateValues(int javaThreadState) {
+        // 1-1
+        final int[] result = new int[1];
+        result[0] = javaThreadState;
+        return result;
+    }
+
+    public static String[] GetThreadStateNames(int javaThreadState, int[] threadStateValues) {
+        assert threadStateValues.length == 1;
+        // 1-1
+        final String[] result = new String[1];
+        final Thread.State[] ts = Thread.State.values();
+        result[0] = ts[javaThreadState].name();
+        return result;
     }
 
     // Checkstyle: resume method name check

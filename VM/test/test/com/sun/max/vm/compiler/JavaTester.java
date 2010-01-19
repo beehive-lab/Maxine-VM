@@ -23,7 +23,6 @@ package test.com.sun.max.vm.compiler;
 import java.io.*;
 import java.util.*;
 
-import test.com.sun.max.vm.compiler.c1x.*;
 import test.com.sun.max.vm.jtrun.*;
 
 import com.sun.max.io.*;
@@ -104,10 +103,10 @@ public final class JavaTester {
         }
 
         executors.registerClass("reflect", ReflectiveExecutor.class);
-        executors.registerClass("cir", CIRTestExecutor.class);
-        executors.registerClass("dir", DIRTestExecutor.class);
-        executors.registerClass("eir", EIRTestExecutor.class);
-        executors.registerClass("hir", HIRTestExecutor.class);
+        executors.registerClass("cir", "test.com.sun.max.vm.cps.CIRTestExecutor");
+        executors.registerClass("dir", "test.com.sun.max.vm.cps.DIRTestExecutor");
+        executors.registerClass("eir", "test.com.sun.max.vm.cps.EIRTestExecutor");
+        executors.registerClass("hir", "test.com.sun.max.vm.c1x.HIRTestExecutor");
 
         // run each executor.
         for (String alias : EXECS.getValue()) {
@@ -140,7 +139,7 @@ public final class JavaTester {
             // generate an image if necessary
             Trace.line(0, "Generating target image...");
             final String[] generatorArgs = {"-trace=1", "-run=" + JTAbstractRunScheme.class.getPackage().getName() + "." + RUNSCHEME_PACKAGE.getValue()};
-            final String[] systemProperties = {"sun.misc.ProxyGenerator.saveGeneratedFiles=true", "sun.reflect.noInflation=false", "sun.reflect.inflationThreshold=1000000"};
+            final String[] systemProperties = {};
             final String[] javaArgs = buildJavaArgs(BootImageGenerator.class,
                             appendArgs(systemProperties, GEN_IMAGE_PROPS.getValue()),
                             appendArgs(generatorArgs, GEN_IMAGE_ARGS.getValue()));

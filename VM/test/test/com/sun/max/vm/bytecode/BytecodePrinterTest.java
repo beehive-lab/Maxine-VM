@@ -21,9 +21,8 @@
 package test.com.sun.max.vm.bytecode;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.cir.generate.*;
+import test.com.sun.max.vm.*;
 
-import com.sun.max.ide.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -33,7 +32,7 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public class BytecodePrinterTest extends MaxTestCase {
+public class BytecodePrinterTest extends VmTestCase {
 
     public BytecodePrinterTest(String name) {
         super(name);
@@ -42,7 +41,7 @@ public class BytecodePrinterTest extends MaxTestCase {
     public static Test suite() {
         final TestSuite suite = new TestSuite(BytecodePrinterTest.class.getName());
         suite.addTestSuite(BytecodePrinterTest.class);
-        return new CirTranslatorTestSetup(suite);
+        return new VmTestSetup(suite);
     }
 
     public static void main(String[] args) {

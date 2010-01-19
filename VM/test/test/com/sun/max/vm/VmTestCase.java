@@ -20,17 +20,30 @@
  */
 package test.com.sun.max.vm;
 
+import java.io.*;
+
+import junit.framework.*;
+
 import com.sun.max.ide.*;
-import com.sun.max.platform.*;
+import com.sun.max.io.*;
+import com.sun.max.program.*;
 
 /**
- * This class should be subclassed by any test case that uses types in the VM project.
- * It takes care of boot strapping the environment correctly. In particular, it ensures
- * that class initialization happens in the right order.
  *
  * @author Doug Simon
  */
 public abstract class VmTestCase extends MaxTestCase {
+
+    /**
+     * An indent writer that sends its output to the standard {@linkplain Trace#stream() trace stream}.
+     */
+    public static final IndentWriter INDENT_WRITER = new IndentWriter(new PrintWriter(Trace.stream(), true));
+    /**
+     * A handle to the result of a running test is maintained so that individual method compilation failures can be
+     * reported without short-circuiting compilation of other methods in the enclosing class/package being tested.
+     * Of course this will not apply to test cases that only compile one method and execute it.
+     */
+    public TestResult testResult;
 
     public VmTestCase() {
     }
@@ -39,11 +52,17 @@ public abstract class VmTestCase extends MaxTestCase {
         super(name);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        // This seems to work in terms of triggering class initialization
-        // in the right order...
-        Platform.host();
+    protected void addTestError(Throwable error) {
+        testResult.addError(this, error);
     }
 
+    @Override
+    public void run(TestResult result) {
+        testResult = result;
+        try {
+            super.run(result);
+        } finally {
+            testResult = null;
+        }
+    }
 }

@@ -23,17 +23,17 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Every thus annotated method or class should not have static inlining heuristics applied.
- * The only inlining that should occur in methods or classes with this annotation should
+ * Every thus annotated class should not have static inlining heuristics applied.
+ * The only inlining that should occur in classes with this annotation should
  * be methods explicitly marked {@linked INLINE}.
  *
- * This annotation exists primarily for annotating method or classes that call other methods
+ * This annotation exists primarily for annotating classes that call other methods
  * that <b>should not</b> be inlined for testing reasons (e.g. a test() method should not
  * be inlined into the testing framework that calls test()).
  *
  * @author Ben L. Titzer
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.TYPE})
 public @interface NO_INLINING {
 }

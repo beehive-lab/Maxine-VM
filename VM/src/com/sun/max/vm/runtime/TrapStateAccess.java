@@ -109,8 +109,7 @@ public abstract class TrapStateAccess {
     /**
      * Gets the address of a contiguous memory area holding the register state saved at a trap.
      * If the trap was at a safepoint, then this is the area to which the
-     * {@linkplain CPSTargetMethod#registerReferenceMapFor(int) register reference map}
-     * for the safepoint applies.
+     * register reference map for the safepoint applies.
      *
      * @param trapState the block of memory holding the trap state
      * @return the address of the saved register state within {@code trapState}

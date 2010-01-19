@@ -25,6 +25,7 @@ import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -141,7 +142,7 @@ public class GraphPrototype extends Prototype {
 
         @Override
         Object getValue(Object object) {
-            if (fieldActor().isReset()) {
+            if (fieldActor().getAnnotation(RESET.class) != null) {
                 return fieldActor.kind.zeroValue();
             }
             try {

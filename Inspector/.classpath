@@ -11,5 +11,6 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Tele"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JDWP"/>
 	<classpathentry kind="lib" path="jlfgr-1_0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/CPS"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

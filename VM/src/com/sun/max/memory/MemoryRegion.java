@@ -20,6 +20,7 @@
  */
 package com.sun.max.memory;
 
+import java.lang.management.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
@@ -74,6 +75,11 @@ public interface MemoryRegion {
      * @return an optional, short string that describes the role being played by the region, useful for debugging.
      */
     String description();
+
+    /**
+     * @return an @see MemoryUsage object for this region or null if not available.
+     */
+    MemoryUsage getUsage();
 
     public static class Util {
         /**

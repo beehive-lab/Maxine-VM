@@ -768,7 +768,6 @@ public final class Interval {
     }
 
     public void print(LogStream out, LinearScan allocator) {
-
         LIROperand opr = LIROperand.IllegalLocation;
         if (registerNumber() < CiRegister.MaxPhysicalRegisterNumber) {
             // need a temporary operand for fixed intervals because type() cannot be called
@@ -794,7 +793,7 @@ public final class Interval {
         // print ranges
         Range cur = first;
         while (cur != Range.EndMarker) {
-            out.printf("[%d, %d]", cur.from, cur.to);
+            out.printf("[%d, %d[", cur.from, cur.to);
             cur = cur.next;
             assert cur != null : "range list not closed with range sentinel";
         }

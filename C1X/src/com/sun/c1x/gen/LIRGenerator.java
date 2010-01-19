@@ -645,7 +645,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         } else {
             // emit invoke code
-            boolean optimized = target.isLoaded() && target.isFinalMethod();
+            boolean optimized = target.isLoaded() && target.isLeafMethod();
 
             switch (opcode) {
                 case Bytecodes.INVOKESTATIC:

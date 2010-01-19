@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.InstructionSet.*;
 import com.sun.max.platform.*;
@@ -41,9 +42,9 @@ public final class VMConfigurations {
     public static VMPackage defaultCompilerScheme(Platform platform) {
         switch (platform.processorKind.instructionSet) {
             case AMD64:
-                return new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package();
+                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.amd64.target");
             case SPARC:
-                return new com.sun.max.vm.compiler.b.c.d.e.sparc.target.Package();
+                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.b.c.d.e.sparc.target");
             default:
                 throw FatalError.unimplemented();
         }
@@ -52,9 +53,9 @@ public final class VMConfigurations {
     public static VMPackage defaultJitCompilerScheme(Platform platform) {
         switch (platform.processorKind.instructionSet) {
             case AMD64:
-                return new com.sun.max.vm.jit.amd64.Package();
+                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.amd64");
             case SPARC:
-                return new com.sun.max.vm.jit.sparc.Package();
+                return (VMPackage) MaxPackage.fromName("com.sun.max.vm.cps.jit.sparc");
             default:
                 throw FatalError.unimplemented();
         }
@@ -117,7 +118,8 @@ public final class VMConfigurations {
             defaultMonitorScheme(),
             defaultCompilerScheme(platform),
             defaultJitCompilerScheme(platform),
-                null, defaultTrampolineScheme(),
+            null,
+            defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }
@@ -131,7 +133,8 @@ public final class VMConfigurations {
             defaultMonitorScheme(),
             defaultCompilerScheme(platform),
             jitPackage,
-                null, defaultTrampolineScheme(),
+            null,
+            defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }
@@ -149,7 +152,8 @@ public final class VMConfigurations {
             defaultMonitorScheme(),
             defaultCompilerScheme(platform),
             defaultJitCompilerScheme(platform),
-                null, defaultTrampolineScheme(),
+            null,
+            defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }
@@ -168,7 +172,8 @@ public final class VMConfigurations {
             defaultMonitorScheme(),
             compilerPackage,
             null,
-                null, defaultTrampolineScheme(),
+            null,
+            defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }
@@ -182,7 +187,8 @@ public final class VMConfigurations {
             new com.sun.max.vm.monitor.prototype.Package(),
             new com.sun.max.vm.compiler.prototype.Package(),
             null,
-                null, defaultTrampolineScheme(),
+            null,
+            defaultTrampolineScheme(),
             defaultTargetABIsScheme(platform),
             defaultRunScheme());
     }

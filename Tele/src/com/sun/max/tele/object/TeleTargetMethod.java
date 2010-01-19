@@ -35,11 +35,13 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.c1x.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
+
+import java.lang.reflect.Constructor;
 
 /**
  * Canonical surrogate for several possible kinds of compilation of a Java {@link ClassMethod} in the {@link TeleVM}.
@@ -478,7 +480,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         private final FieldActor abi;
         private final FieldActor compilerScheme;
 
-        private C1XCompilerScheme c1xCompilerScheme;
+        private Object otherCompilerScheme;
 
         @Override
         protected Object makeDeepCopy(FieldActor fieldActor, TeleObject teleObject) {
@@ -486,17 +488,21 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
                 Class<?> type = teleObject.classActorForType().toJava();
                 if (VMConfiguration.hostOrTarget().bootCompilerScheme().getClass() == type) {
                     return VMConfiguration.hostOrTarget().bootCompilerScheme();
-                } else if (VMConfiguration.hostOrTarget().interpreterStubCompiler.getClass() == type) {
-                    return VMConfiguration.hostOrTarget().interpreterStubCompiler;
                 } else if (VMConfiguration.hostOrTarget().jitCompilerScheme().getClass() == type) {
                     return VMConfiguration.hostOrTarget().jitCompilerScheme();
-                } else if (C1XCompilerScheme.class == type) {
-                    if (c1xCompilerScheme == null) {
-                        c1xCompilerScheme = new C1XCompilerScheme(VMConfiguration.hostOrTarget());
+                } else if (VMConfiguration.hostOrTarget().optCompilerScheme().getClass() == type) {
+                    return VMConfiguration.hostOrTarget().optCompilerScheme();
+                } else {
+                    if (otherCompilerScheme == null) {
+                        try {
+                            Constructor constructor = type.getConstructor(VMConfiguration.class);
+                            otherCompilerScheme = constructor.newInstance(VMConfiguration.hostOrTarget());
+                        } catch (Exception e) {
+                            throw ProgramError.unexpected(e);
+                        }
                     }
-                    return c1xCompilerScheme;
+                    return otherCompilerScheme;
                 }
-                throw ProgramError.unexpected();
             } else if (fieldActor.equals(abi)) {
                 return getAbi();
             } else {

@@ -20,35 +20,52 @@
  */
 package com.sun.max.vm.compiler.prototype;
 
-import com.sun.max.collect.*;
+import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 
 /**
  * @author Bernd Mathiske
  */
-public class PrototypeCompilerScheme extends CPSAbstractCompiler {
+public class PrototypeCompilerScheme extends AbstractVMScheme implements BootstrapCompilerScheme {
 
     public PrototypeCompilerScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
 
-    @Override
-    public IrGenerator irGenerator() {
+    public boolean compilesToTargetMethod() {
+        return false;
+    }
+
+    public void createBuiltins(PackageLoader packageLoader) {
+    }
+
+    public void createSnippets(PackageLoader packageLoader) {
+    }
+
+    public boolean isBuiltinImplemented(Builtin builtin) {
+        return true;
+    }
+
+    public void staticTrampoline() {
+        throw new UnsupportedOperationException();
+    }
+
+    public TargetMethod compile(ClassMethodActor classMethodActor) {
         return null;
     }
 
-    @Override
-    public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.empty(IrGenerator.class);
+    public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
+        return false;
     }
 
-    @Override
     public void compileSnippets() {
     }
 
-    @Override
     public boolean areSnippetsCompiled() {
         return true;
     }

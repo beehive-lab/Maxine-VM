@@ -28,7 +28,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.runtime.*;
@@ -42,7 +41,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Bernd Mathiske
  */
-public abstract class Snippet extends IrRoutine {
+public abstract class Snippet extends Routine {
 
     private static final AppendableIndexedSequence<Snippet> snippets = new ArrayListSequence<Snippet>();
 
@@ -60,18 +59,18 @@ public abstract class Snippet extends IrRoutine {
         super(null);
         serial = snippets.length();
         snippets.append(this);
-        foldingMethodActor().beUnsafe();
+        executable.beUnsafe();
     }
 
     @Override
     public String toString() {
-        return "<snippet: " + name() + ">";
+        return "<snippet: " + name + ">";
     }
 
     @HOSTED_ONLY
     public static void register() {
         for (Snippet snippet : snippets) {
-            final MethodActor  foldingMethodActor = snippet.foldingMethodActor();
+            final MethodActor  foldingMethodActor = snippet.executable;
             if (foldingMethodActor != null) {
                 MaxineVM.registerImageInvocationStub(foldingMethodActor);
             }
@@ -84,7 +83,7 @@ public abstract class Snippet extends IrRoutine {
      * Ensures that the class in which a given static method or field is declared is initialized, performing class
      * initialization if necessary.
      */
-    public static final class MakeHolderInitialized extends NonFoldableSnippet {
+    public static final class MakeHolderInitialized extends Snippet {
         @SNIPPET
         @INLINE
         public static void makeHolderInitialized(MemberActor memberActor) {
@@ -96,7 +95,7 @@ public abstract class Snippet extends IrRoutine {
     /**
      * Ensures that a given class is initialized, performing class initialization if necessary.
      */
-    public static final class MakeClassInitialized extends NonFoldableSnippet {
+    public static final class MakeClassInitialized extends Snippet {
         @SNIPPET
         @INLINE
         public static void makeClassInitialized(ClassActor classActor) {
@@ -397,4 +396,26 @@ public abstract class Snippet extends IrRoutine {
         public static final CheckArrayDimension SNIPPET = new CheckArrayDimension();
     }
 
+    public static final class CreateArithmeticException extends Snippet {
+        @SNIPPET
+        public static ArithmeticException createArithmeticException() {
+            return new ArithmeticException();
+        }
+
+        public static final CreateArithmeticException SNIPPET = new CreateArithmeticException();
+    }
+
+    /**
+     * Implements 'throw'.
+     */
+    public static final class RaiseThrowable extends Snippet {
+        @SNIPPET
+        public static void raiseThrowable(Throwable throwable) throws Throwable {
+            if (MaxineVM.isHosted()) {
+                throw throwable;
+            }
+            Throw.raise(throwable);
+        }
+        public static final RaiseThrowable SNIPPET = new RaiseThrowable();
+    }
 }

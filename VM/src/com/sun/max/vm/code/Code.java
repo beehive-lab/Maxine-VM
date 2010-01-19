@@ -22,12 +22,15 @@ package com.sun.max.vm.code;
 
 import static com.sun.max.vm.VMOptions.*;
 
+import java.lang.management.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.management.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -157,6 +160,25 @@ public final class Code {
 
     public static Size getRuntimeCodeRegionSize() {
         return codeManager.getRuntimeCodeRegionSize();
+    }
+
+    public static MemoryManagerMXBean getMemoryManagerMXBean() {
+        return new CodeMemoryManagerMXBean("Code");
+    }
+
+    private static class CodeMemoryManagerMXBean extends MemoryManagerMXBeanAdaptor {
+        CodeMemoryManagerMXBean(String name) {
+            super(name);
+            add(new CodeMemoryPoolMXBean(bootCodeRegion, this));
+            add(new CodeMemoryPoolMXBean(codeManager.getRuntimeCodeRegion(), this));
+
+        }
+    }
+
+    private static class CodeMemoryPoolMXBean extends MemoryPoolMXBeanAdaptor {
+        CodeMemoryPoolMXBean(CodeRegion codeRegion, MemoryManagerMXBean manager) {
+            super(MemoryType.NON_HEAP, codeRegion, manager);
+        }
     }
 
 }

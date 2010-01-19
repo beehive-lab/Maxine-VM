@@ -48,6 +48,16 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class StackFrameWalker {
 
+    private static final boolean USE_NEW_API = false;
+    private static final boolean USE_NEW_API_HOSTED = false;
+
+    public enum CalleeKind {
+        NATIVE,
+        JAVA,
+        TRAP_STUB,
+        TRAMPOLINE,
+        CALLEE_SAVED
+    }
     /**
      * A VM option for enabling stack frame walk tracing.
      */
@@ -145,6 +155,27 @@ public abstract class StackFrameWalker {
          */
         public boolean isTopFrame() {
             return isTopFrame;
+        }
+
+        /**
+         * Get the callee kind of this method, which determines if there is register state in this frame
+         * and where it is stored.
+         * @return the callee kind of this method
+         */
+        public CalleeKind calleeKind() {
+            if (targetMethod == null) {
+                return CalleeKind.NATIVE;
+            }
+            if (targetMethod.isTrapStub()) {
+                return CalleeKind.TRAP_STUB;
+            }
+            if (targetMethod.isTrampoline()) {
+                return CalleeKind.TRAMPOLINE;
+            }
+            if (targetMethod.isCalleeSaved()) {
+                return CalleeKind.CALLEE_SAVED;
+            }
+            return CalleeKind.JAVA;
         }
     }
 
@@ -247,7 +278,7 @@ public abstract class StackFrameWalker {
                 checkVmEntrypointCaller(calleeMethod, targetMethod);
 
                 // walk the frame
-                if (!targetMethod.compilerScheme.walkFrame(current, callee, purpose, context)) {
+                if (!walkFrame(current, callee, targetMethod, purpose, context)) {
                     break;
                 }
 
@@ -308,6 +339,45 @@ public abstract class StackFrameWalker {
         }
     }
 
+    private boolean walkFrame(Cursor current, Cursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
+        if (!useNewAPI()) {
+            // use old API until new API is fully functional
+            return targetMethod.compilerScheme.walkFrame(current, callee, purpose, context);
+        }
+        boolean proceed = true;
+        if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
+            // walk the frame for reference map preparation
+            StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
+            if (preparer.checkIgnoreCurrentFrame()) {
+                return proceed;
+            }
+            targetMethod.prepareReferenceMap(current, callee, preparer);
+        } else if (purpose == Purpose.EXCEPTION_HANDLING) {
+            // walk the frame for exception handling
+            Throwable throwable = ((StackUnwindingContext) context).throwable;
+            targetMethod.catchException(current, callee, throwable);
+        } else if (purpose == Purpose.INSPECTING) {
+            // walk the frame for inspecting (Java frames)
+            StackFrameVisitor visitor = (StackFrameVisitor) context;
+            proceed = targetMethod.acceptStackFrameVisitor(current, callee, visitor);
+        } else if (purpose == Purpose.RAW_INSPECTING) {
+            // walk the frame for inspect (compiled frames)
+            RawStackFrameVisitor visitor = (RawStackFrameVisitor) context;
+            int flags = RawStackFrameVisitor.Util.makeFlags(current.isTopFrame(), false);
+            proceed = visitor.visitFrame(current.targetMethod(), current.ip(), current.sp(), current.sp(), flags);
+        }
+        // in any case, advance to the next frame
+        targetMethod.advance(current);
+        return proceed;
+    }
+
+    private boolean useNewAPI() {
+        if (MaxineVM.isHosted()) {
+            return USE_NEW_API_HOSTED;
+        }
+        return USE_NEW_API;
+    }
+
     private void traceWalkPurpose(Purpose purpose) {
         if (TRACE_STACK_WALK.getValue()) {
             Log.print("StackFrameWalk: Start stack frame walk for purpose ");
@@ -332,6 +402,10 @@ public abstract class StackFrameWalker {
                 Log.print(cursor.ip.minus(cursor.targetMethod.codeStart()).toInt());
                 Log.print("], isTopFrame=");
                 Log.print(cursor.isTopFrame);
+                Log.print(", sp=");
+                Log.print(cursor.sp);
+                Log.print(", fp=");
+                Log.print(cursor.fp);
                 Log.println("");
             } else {
                 Log.print("StackFrameWalk: Frame for native function [IP=");
@@ -460,7 +534,7 @@ public abstract class StackFrameWalker {
      * @return the address of the second byte of the native function call after {@code instructionPointer} or zero if no such call exists
      */
     private Pointer getNativeFunctionCallInstructionPointerInNativeStub(Pointer ip, boolean fatalIfNotFound) {
-        final CPSTargetMethod nativeStubTargetMethod = (CPSTargetMethod) targetMethodFor(ip);
+        final TargetMethod nativeStubTargetMethod = targetMethodFor(ip);
         if (nativeStubTargetMethod != null) {
             final int targetCodePosition = nativeStubTargetMethod.targetCodePositionFor(ip);
             final int nativeFunctionCallPosition = nativeStubTargetMethod.findNextCall(targetCodePosition, true);
@@ -562,7 +636,6 @@ public abstract class StackFrameWalker {
     /**
      * Terminates the current stack walk.
      */
-    @INLINE
     public final void reset() {
         if (TRACE_STACK_WALK.getValue()) {
             Log.print("StackFrameWalk: Finish stack frame walk for purpose ");
@@ -761,5 +834,4 @@ public abstract class StackFrameWalker {
      * @param targetABI
      */
     public abstract void useABI(TargetABI targetABI);
-
 }

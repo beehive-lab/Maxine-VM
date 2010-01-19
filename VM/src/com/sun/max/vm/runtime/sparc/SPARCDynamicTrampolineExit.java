@@ -28,7 +28,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.trampoline.*;
@@ -58,7 +57,7 @@ public class SPARCDynamicTrampolineExit extends DynamicTrampolineExit {
         SpecialBuiltin.flushRegisterWindows();
         final Pointer trampolineCallerPC = SPARCStackFrameLayout.getRegisterInSavedWindow(stackPointer, GPR.I7).asPointer();
         final TargetMethod caller = Code.codePointerToTargetMethod(trampolineCallerPC);
-        final CallEntryPoint calleeEntryPoint =  (caller instanceof JitTargetMethod)  ? JIT_ENTRY_POINT : OPTIMIZED_ENTRY_POINT;
+        final CallEntryPoint calleeEntryPoint = caller.isJitCompiled() ? JIT_ENTRY_POINT : OPTIMIZED_ENTRY_POINT;
         return  vtableEntryPoint.plus(calleeEntryPoint.offsetFromCodeStart() - VTABLE_ENTRY_POINT.offsetFromCodeStart());
     }
 }

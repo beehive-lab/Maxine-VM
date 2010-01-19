@@ -24,12 +24,9 @@ import java.io.*;
 import java.util.*;
 
 import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
-import test.com.sun.max.vm.compiler.bytecode.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.c1x.C1XCompilerScheme;
 
 /**
  * This class encapsulates the configuration of the Maxine tester, which includes
@@ -105,6 +102,8 @@ public class MaxineTesterConfiguration {
         output(test.output.MegaThreads.class, RAND_SPARC);
 
         jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
+        jtt(jtt.except.BC_invokespecial01.class, RAND_ALL);      // may fail due to incorrect invokevirtual / invokespecial optimization
+        jtt(jtt.except.BC_invokevirtual02.class, RAND_ALL);      // may fail due to incorrect invokevirtual / invokespecial optimization
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.jdk.EnumMap01.class,                      RAND_ALL);
         jtt(jtt.jdk.EnumMap02.class,                      RAND_ALL);
@@ -180,15 +179,15 @@ public class MaxineTesterConfiguration {
         shootout("wc",              new File("wc.stdin"));
         shootout("wordfreq",        new File("wordfreq.stdin"));
 
-        auto("test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",   FAIL_ALL);
-        auto("test_arrayCopyForKinds(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)",  FAIL_ALL);
-        auto("test_catchNull(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_throw)",               FAIL_ALL);
-        auto("test_manyParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",         FAIL_ALL);
-        auto("test_nop(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",                    FAIL_ALL);
-        auto("test_nop_cfunction(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",          FAIL_ALL);
-        auto("test_reference_identity(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",     FAIL_ALL);
-        auto("test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
-        auto("test_c1xAutoTest(test.com.sun.max.vm.compiler.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
+        auto("test_manyObjectParameters(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",   FAIL_ALL);
+        auto("test_arrayCopyForKinds(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)",  FAIL_ALL);
+        auto("test_catchNull(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_throw)",               FAIL_ALL);
+        auto("test_manyParameters(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",         FAIL_ALL);
+        auto("test_nop(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",                    FAIL_ALL);
+        auto("test_nop_cfunction(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",          FAIL_ALL);
+        auto("test_reference_identity(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_native)",     FAIL_ALL);
+        auto("test_sameNullsArrayCopy(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
+        auto("test_c1xAutoTest(test.com.sun.max.vm.cps.c1x.amd64.C1XTranslatorTest_coreJava",                FAIL_ALL);
 
         imageConfig("java", "-run=java");
         imageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
@@ -197,7 +196,8 @@ public class MaxineTesterConfiguration {
         imageConfig("jitjit", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit");
         imageConfig("cpsc1x", PASS_SOLARIS_AMD64, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", "-test-callee-c1x");
 
-        String c1xClass = C1XCompilerScheme.class.getName();
+        String c1xPackage = "com.sun.max.vm.compiler.c1x";
+        String c1xClass = c1xPackage + ".C1XCompilerScheme";
 
         jtLoadConfig("cpscps", "-caller=cps", "-callee=cps");
         jtLoadConfig("cpsjit", "-caller=cps", "-callee=jit");
@@ -219,14 +219,14 @@ public class MaxineTesterConfiguration {
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
         maxvmConfig("GC", "-Xmx3g");
 
-        imageConfig("jit-c1x0",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=0");
-        imageConfig("jit-c1x0x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=0 -C1X:+UseXIR");
-        imageConfig("jit-c1x1",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=1");
-        imageConfig("jit-c1x1x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=1 -C1X:+UseXIR");
-        imageConfig("jit-c1x2",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=2");
-        imageConfig("jit-c1x2x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=2 -C1X:+UseXIR");
-        imageConfig("jit-c1x3",  "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=3");
-        imageConfig("jit-c1x3x", "-prototype-jit", "-jit=com.sun.max.vm.compiler.c1x", "-vmargs=-C1X:OptLevel=3 -C1X:+UseXIR");
+        imageConfig("jit-c1x0",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0");
+        imageConfig("jit-c1x0x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0 -C1X:+UseXIR");
+        imageConfig("jit-c1x1",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=1");
+        imageConfig("jit-c1x1x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=1 -C1X:+UseXIR");
+        imageConfig("jit-c1x2",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=2");
+        imageConfig("jit-c1x2x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=2 -C1X:+UseXIR");
+        imageConfig("jit-c1x3",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=3");
+        imageConfig("jit-c1x3x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=3 -C1X:+UseXIR");
 
         imageConfig("opt-c1x0",  "-opt=c1x", "-vmargs=-C1X:OptLevel=0");
         imageConfig("opt-c1x0x", "-opt=c1x", "-vmargs=-C1X:OptLevel=0 -C1X:+UseXIR");
@@ -379,12 +379,24 @@ public class MaxineTesterConfiguration {
         return ExpectedResult.PASS;
     }
 
-    static final Set<Class> slowAutoTestClasses = new HashSet<Class>(Arrays.asList((Class)
-                    CompilerTest_max.class,
-                    CompilerTest_coreJava.class,
-                    CompilerTest_large.class,
-                    JitCompilerTestCase.class,
-                    BytecodeTest_subtype.class));
+
+
+    static final Set<Class> slowAutoTestClasses = new HashSet<Class>();
+
+    private static void addIfExists(Set<Class> classes, String className) {
+        try {
+            classes.add(Class.forName(className));
+        } catch (ClassNotFoundException e) {
+        }
+    }
+
+    static {
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_max");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_coreJava");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.CompilerTest_large");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.JitCompilerTestCase");
+        addIfExists(slowAutoTestClasses, "test.com.sun.max.vm.cps.bytecode.BytecodeTest_subtype");
+    }
 
     /**
      * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.

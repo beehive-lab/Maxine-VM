@@ -25,7 +25,6 @@ import java.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
-import com.sun.max.vm.hotpath.state.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 

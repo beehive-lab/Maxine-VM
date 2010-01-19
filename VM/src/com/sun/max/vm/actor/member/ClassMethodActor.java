@@ -222,6 +222,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     if (MaxineVM.isHosted()) {
                         try {
                             codeAttribute = verifier.verify(compilee, codeAttribute);
+                        } catch (HostOnlyMethodError e) {
                         } catch (OmittedClassError e) {
                             // Ignore: assume all classes being loaded during boot imaging are verifiable.
                         }

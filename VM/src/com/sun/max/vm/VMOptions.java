@@ -27,7 +27,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
-import com.sun.max.profile.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
@@ -60,6 +60,7 @@ public final class VMOptions {
      */
     private static VMOption[] startingPhaseOptions = {};
 
+    private static Pointer savedArgv;
     private static Pointer argv;
     private static int argc;
     private static int argumentStart;
@@ -94,27 +95,6 @@ public final class VMOptions {
      */
     private static final VMStringOption logFileOption = register(new VMStringOption("-XX:LogFile=", false, null,
         "Redirect VM log output to the specified file. By default, VM log output goes to the standard output stream."), MaxineVM.Phase.STARTING);
-
-    /**
-     * An option to {@linkplain GlobalMetrics#report(java.io.PrintStream) report} on all global metrics gathered during execution.
-     * TODO: If this option is not enabled, then global metrics should not be gathered.
-     */
-    private static final VMBooleanXXOption printRuntimeMetrics = register(new VMBooleanXXOption("-XX:-PrintRuntimeMetrics", "Report random metrics gathered during execution.") {
-        @Override
-        public boolean parseValue(Pointer optionValue) {
-            if (getValue()) {
-                GlobalMetrics.reset();
-            }
-            return true;
-        }
-
-        @Override
-        protected void beforeExit() {
-            if (getValue()) {
-                GlobalMetrics.report(Log.out);
-            }
-        }
-    }, MaxineVM.Phase.STARTING);
 
     /**
      * The '-verbose' option and all its variants (e.g. '-verbose:gc', '-verbose:class' etc).
@@ -543,8 +523,24 @@ public final class VMOptions {
         return Iterables.join(Arrays.iterable(pristinePhaseOptions), Arrays.iterable(startingPhaseOptions));
     }
 
+    /**
+     * Copy the initial argv array.
+     * Currently, argument parsing is destructive and we may access to the original VM arguments
+     * for the runtime management interface (@see getVmArguments)
+     * @param initialArgc
+     * @param initialArgv
+     * @return
+     */
+    private static Pointer copy(int initialArgc, Pointer initialArgv) {
+        final Size copySize = Size.fromInt(Pointer.size() * initialArgc);
+        Pointer p = Memory.allocate(copySize);
+        Memory.copyBytes(initialArgv, p, copySize);
+        return p;
+    }
+
     public static boolean parsePristine(int initialArgc, Pointer initialArgv) {
-        argv = initialArgv;
+        savedArgv = initialArgv;
+        argv = copy(initialArgc, initialArgv);
         argc = initialArgc;
         argumentStart = initialArgc;
 
@@ -594,6 +590,33 @@ public final class VMOptions {
             }
         }
         return true;
+    }
+
+    /**
+     * Support for java.lang.management.RuntimeMXBean.
+     * @return space-separated string of VM arguments, not including class name or user arguments
+     */
+    public static String getVmArguments() {
+        final StringBuilder sb = new StringBuilder();
+        int index = 1;
+        final Pointer p = argv;
+        argv = savedArgv;
+        while (index < argumentStart) {
+            String argument = null;
+            try {
+                argument = getArgumentString(index);
+            } catch (Utf8Exception ex) {
+            }
+            if (argument != null) {
+                sb.append(argument);
+                if (index != argumentStart - 1) {
+                    sb.append(' ');
+                }
+            }
+            index++;
+        }
+        argv = p;
+        return sb.toString();
     }
 
     public static boolean parseStarting() {

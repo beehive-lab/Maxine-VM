@@ -27,13 +27,12 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
  */
-public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, Stoppable {
+public abstract class Builtin extends Routine implements Comparable<Builtin>, Stoppable {
 
     @CONSTANT
     private static IndexedSequence<Builtin> builtins = new ArrayListSequence<Builtin>();
@@ -82,27 +81,20 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
         return serial;
     }
 
-    private final MethodActor hostFoldingMethodActor;
-
     /**
-     * @return an alternate folding method to be used exclusively on the host VM
+     * The executable to be used when running hosted.
      */
-    public MethodActor hostFoldingMethodActor() {
-        return hostFoldingMethodActor;
-    }
+    @HOSTED_ONLY
+    public final MethodActor hostedExecutable;
 
-    public boolean isHostFoldable(IrValue[] arguments) {
-        return false;
-    }
-
-    public Builtin(Class foldingMethodHolder) {
-        super(foldingMethodHolder);
+    public Builtin(Class executableHolder) {
+        super(executableHolder);
         this.serial = builtins.length();
         final Class<AppendableIndexedSequence<Builtin>> type = null;
         final AppendableIndexedSequence<Builtin> builtinList = StaticLoophole.cast(type, builtins);
         builtinList.append(this);
-        this.hostFoldingMethodActor = getFoldingMethodActor(getClass(), name(), false);
-        assert hostFoldingMethodActor == null || foldingMethodHolder == null || hostFoldingMethodActor.holder() != ClassActor.fromJava(foldingMethodHolder);
+        this.hostedExecutable = getExecutable(getClass(), name, false);
+        assert hostedExecutable == null || executableHolder == null || hostedExecutable.holder() != ClassActor.fromJava(executableHolder);
     }
 
     /**
@@ -131,18 +123,18 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
         }
         for (Builtin builtin : builtins) {
             if (!builtin.hasSideEffects() && compilerScheme.isBuiltinImplemented(builtin)) {
-                MaxineVM.registerImageInvocationStub(builtin.foldingMethodActor());
+                MaxineVM.registerImageInvocationStub(builtin.executable);
             }
         }
     }
 
     public int compareTo(Builtin other) {
-        return name().compareTo(other.name());
+        return name.compareTo(other.name);
     }
 
     @Override
     public String toString() {
-        return "<" + foldingMethodActor().name + ">";
+        return "<" + executable.name + ">";
     }
 
     /**

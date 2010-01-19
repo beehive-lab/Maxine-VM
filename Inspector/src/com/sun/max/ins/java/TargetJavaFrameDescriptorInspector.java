@@ -30,6 +30,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.value.*;
 
