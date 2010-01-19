@@ -90,33 +90,35 @@ public final class InspectableHeapInfo {
     /**
      * How many words of the heap refer to one Word in the card table.
      */
-    @INSPECTED
+    @Deprecated
     private static int cardTableRatio = 100;
 
     /**
      * Number of entries in the card table.
      */
     @INSPECTED
+    @Deprecated
     private static int totalCardTableEntries = 0;
 
     /**
      * Card table memory.
      */
     @INSPECTED
+    @Deprecated
     private static Pointer cardTablePointer = Pointer.zero();
 
     /**
-     * Address of object before compaction.
+     * Old address of the object most recently relocated.
      */
     @INSPECTED
     public static Address oldAddress;
 
     /**
-     * Address of object after compaction.
-     * TODO: remove, not used
+     * New address of the object most recently relocated.
      */
     @INSPECTED
-    public static Address newAddress;
+    @Deprecated
+    private static Address newAddress;
 
     /**
      * Stores descriptions of memory allocated by the heap in a location that can
@@ -177,6 +179,7 @@ public final class InspectableHeapInfo {
      * @param memoryRegion the memory region
      * @return number of card table slots
      */
+    @Deprecated
     private static int calculateNumberOfCardTableEntries(MemoryRegion memoryRegion) {
         int nrOfWords = memoryRegion.size().dividedBy(Word.size()).toInt();
         int cardTableEntries = nrOfWords / cardTableRatio;
@@ -201,6 +204,7 @@ public final class InspectableHeapInfo {
      * @param memoryRegions
      * @return field
      */
+    @Deprecated
     public static Word touchCardTableField(Address address, MemoryRegion... memoryRegions) {
         int index;
         index = getCardTableIndex(address, memoryRegions);
@@ -217,6 +221,7 @@ public final class InspectableHeapInfo {
      * @param memoryRegions
      * @return card table index
      */
+    @Deprecated
     public static int getCardTableIndex(Address address, MemoryRegion... memoryRegions) {
         int cardTableEntry = 0;
 

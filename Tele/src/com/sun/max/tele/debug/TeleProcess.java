@@ -170,12 +170,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                             case WATCHPOINT:
                                 eventCauseFound = true;
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
-                                final TeleWatchpoint teleWatchpoint = watchpointFactory().findClientWatchpoint(triggeredWatchpointAddress);
-                                if (teleWatchpoint != null && teleWatchpoint.handleTriggerEvent(thread)) {
-                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering watchpoint");
+                                final TeleWatchpoint systemTeleWatchpoint = watchpointFactory().findSystemWatchpoint(triggeredWatchpointAddress);
+                                if (systemTeleWatchpoint != null && systemTeleWatchpoint.handleTriggerEvent(thread)) {
+                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering system watchpoint");
+                                    // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
+                                    resumeExecution = false;
+                                }
+                                final TeleWatchpoint clientTeleWatchpoint = watchpointFactory().findClientWatchpoint(triggeredWatchpointAddress);
+                                if (clientTeleWatchpoint != null && clientTeleWatchpoint.handleTriggerEvent(thread)) {
+                                    Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering client watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
                                     final int triggeredWatchpointCode = readWatchpointAccessCode();
-                                    teleWatchpointEvent = new TeleWatchpointEvent(teleWatchpoint, thread, triggeredWatchpointAddress, triggeredWatchpointCode);
+                                    teleWatchpointEvent = new TeleWatchpointEvent(clientTeleWatchpoint, thread, triggeredWatchpointAddress, triggeredWatchpointCode);
                                     resumeExecution = false;
                                 }
                                 break;
@@ -994,10 +1000,27 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      */
     protected abstract int write0(ByteBuffer buffer, int offset, int length, Address address);
 
+    /**
+     * Activates a watchpoint in the native process, according to the specified
+     * watchpoint configuration.  All watchpoints are by default <strong>after</strong>
+     * watchpoints; they are intended to trigger after the specified event has taken place.
+     *
+     * @param teleWatchpoint specifications for a watchpoint, assumed to be currently inactive.
+     * @return whether the activation succeeded.
+     */
     protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
         return false;
     }
 
+    /**
+     * Deactivate a watchpoint in the native process.
+     * <br>
+     * Deactivation depends on the location specified in the watchpoint;
+     *
+     * @param teleWatchpoint a watchpoint that is currently activated, and which still
+     * specifies the same address.
+     * @return whether the deactivation succeeded.
+     */
     protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
         return false;
     }

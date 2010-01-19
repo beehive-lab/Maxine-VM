@@ -42,6 +42,11 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
         return null;
     }
 
+    public Offset gcForwardingPointerOffset() {
+        // Don't know anything about how this GC works.
+        return null;
+    }
+
     public boolean isInLiveMemory(Address address) {
         if (teleVM().isInGC()) {
             return true;
@@ -62,7 +67,7 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
         return pointer;
     }
 
-    public Pointer getForwardedObject(Pointer pointer, DataAccess dataAccess) {
+    public Pointer getForwardedObject(Pointer pointer) {
         return pointer;
     }
 

@@ -102,15 +102,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
 
     private Pointer teleRuntimeMemoryRegionRegistrationPointer = Pointer.zero();
 
-    private Pointer cardTablePointer = Pointer.zero();
-
-    private int cardTableSize;
-
     private Pointer teleRootsPointer = Pointer.zero();
-
-    private Pointer objectOldAddressPointer = Pointer.zero();
-
-    private Pointer objectNewAddressPointer = Pointer.zero();
 
     private TeleRuntimeMemoryRegion teleRootsRegion = null;
 
@@ -143,17 +135,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         final Reference bootHeapRegionReference = teleVM().teleFields().Heap_bootHeapRegion.readReference(teleVM());
         teleBootHeapRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
         final int teleRootsOffset = teleVM().teleFields().InspectableHeapInfo_rootsPointer.fieldActor().offset();
-        final int teleCardTableOffset = teleVM().teleFields().InspectableHeapInfo_cardTablePointer.fieldActor().offset();
-        final int teleObjectOldOffset = teleVM().teleFields().InspectableHeapInfo_oldAddress.fieldActor().offset();
-        final int teleObjectNewOffset = teleVM().teleFields().InspectableHeapInfo_newAddress.fieldActor().offset();
 
         // The address of the tele roots field must be accessible before any {@link TeleObject}s can be created,
         // which means that it must be accessible before calling {@link #refresh()} here.
         teleRootsPointer = teleVM().teleFields().InspectableHeapInfo_rootsPointer.staticTupleReference(teleVM()).toOrigin().plus(teleRootsOffset);
-
-        cardTablePointer = teleVM().teleFields().InspectableHeapInfo_cardTablePointer.staticTupleReference(teleVM()).toOrigin().plus(teleCardTableOffset);
-        objectOldAddressPointer = teleVM().teleFields().InspectableHeapInfo_oldAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectOldOffset);
-        objectNewAddressPointer = teleVM().teleFields().InspectableHeapInfo_newAddress.staticTupleReference(teleVM()).toOrigin().plus(teleObjectNewOffset);
 
         refresh(processEpoch);
         Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
@@ -211,9 +196,6 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
                     }
                 }
             }
-
-            cardTableSize = teleVM().teleFields().InspectableHeapInfo_totalCardTableEntries.readInt(teleVM()) * Word.size();
-
             Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
         }
     }
@@ -360,6 +342,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         return teleHeapScheme.heapSchemeClass();
     }
 
+    public Offset gcForwardingPointerOffset() {
+        return teleHeapScheme.gcForwardingPointerOffset();
+    }
+
     public boolean isInLiveMemory(Address address) {
         return teleHeapScheme.isInLiveMemory(address);
     }
@@ -372,8 +358,8 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         return teleHeapScheme.getTrueLocationFromPointer(pointer);
     }
 
-    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
-        return teleHeapScheme.getForwardedObject(objectPointer, dataAccess);
+    public Pointer getForwardedObject(Pointer origin) {
+        return teleHeapScheme.getForwardedObject(origin);
     }
 
     /**
@@ -395,60 +381,4 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         final int offset = teleVM().teleFields().InspectableHeapInfo_rootEpoch.fieldActor().offset();
         return teleVM().teleFields().InspectableHeapInfo_rootEpoch.staticTupleReference(teleVM()).toOrigin().plus(offset);
     }
-
-    /**
-     * Returns the old address of an object before compaction (from-space).
-     * @return old object address
-     */
-    public Address getObjectOldAddress() {
-        return teleVM().dataAccess().readWord(objectOldAddressPointer).asAddress();
-    }
-
-    /**
-     * Returns the new address of an object after compaction (to-space).
-     * @return new object address
-     */
-    public Address getObjectNewAddress() {
-        return teleVM().dataAccess().readWord(objectNewAddressPointer).asAddress();
-    }
-
-    /**
-     * Get card table address to a given index.
-     * @param index
-     * @return card table address
-     */
-    public Address getCardTableAddress(int index) {
-        return teleVM().dataAccess().readWord(cardTablePointer).asAddress().plus(index * Word.size());
-    }
-
-    /**
-     * Get value of card table field.
-     * @param index
-     * @return value of card table field
-     */
-    public int readCardTableEntry(int index) {
-        return teleVM().dataAccess().readInt(teleVM().dataAccess().readWord(cardTablePointer).asAddress(), index * Word.size());
-    }
-
-    /**
-     * Write to card table field.
-     * @param index
-     * @param value
-     */
-    public void writeCardTableEntry(int index, int value) {
-        teleVM().dataAccess().writeInt(teleVM().dataAccess().readWord(cardTablePointer).asAddress(), index * Word.size(), value);
-    }
-
-    /**
-     * Checks if given address is a card table address.
-     * @param address
-     * @return true if address is a card table address
-     */
-    public boolean isCardTableAddress(Address address) {
-        if (address.greaterEqual(getCardTableAddress(0)) && getCardTableAddress(0).plus(cardTableSize).greaterEqual(address)) {
-            return true;
-        }
-        return false;
-    }
-
 }

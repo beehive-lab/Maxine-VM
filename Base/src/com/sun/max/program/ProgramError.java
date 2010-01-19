@@ -28,7 +28,9 @@ package com.sun.max.program;
  * @author Bernd Mathiske
  * @author Paul Caprioli
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
+
 public final class ProgramError extends Error {
 
     /**
@@ -83,6 +85,19 @@ public final class ProgramError extends Error {
     public static void check(boolean condition, String message) {
         if (!condition) {
             unexpected(message, null);
+        }
+    }
+
+    /**
+     * Checks a given condition and if it's {@code false}, the appropriate error handling action is taken.
+     *
+     * @param condition a condition to test
+     * @param message a message describing the error condition being tested
+     * @param object an object whose string description is to be appended to the message
+     */
+    public static void check(boolean condition, String message, Object object) {
+        if (!condition) {
+            unexpected(message + object.toString(), null);
         }
     }
 

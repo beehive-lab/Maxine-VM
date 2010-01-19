@@ -18,35 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
+package test.inspector;
 
-import com.sun.max.vm.thread.*;
 
 /**
- * Access to a {@link VmThread} in the Maxine VM..
+ * Simple Inspector demonstration class, with focus on interaction of watchpoints and GC.
  *
  * @author Michael Van De Vanter
- *
  */
-public interface MaxVMThread {
+public class Demo1 {
 
     /**
-     * @return the name assigned to the thread in the {@link TeleVM}; may change dynamically.
+     * @param args
      */
-    String name();
+    public static void main(String[] args) {
+        SimpleObject aSimpleObject;
 
-    /**
-     * Find the thread, if any, associated with the VM thread.
-     * <br>
-     * Thread-safe.
-     *
-     * @return the thread in the VM with which this VM thread is associated.
-     */
-    MaxThread maxThread();
+        aSimpleObject = makeObject1();
+        aSimpleObject = makeObject2();
+        System.gc();
+        System.out.println("Object=" + aSimpleObject);
+        System.out.println("Demo1 end");
+    }
 
-    /**
-     * @return the VM object that implements this thread.f
-     */
-    TeleVmThread teleVmThread();
+    private static SimpleObject makeObject1() {
+        return new SimpleObject("this object will be collected");
+    }
 
+    private static SimpleObject makeObject2() {
+        return new SimpleObject("this object will not be collected");
+    }
+    private static class SimpleObject {
+
+        public SimpleObject(String text) {
+            this.string = text;
+        }
+
+        public String string;
+    }
 }

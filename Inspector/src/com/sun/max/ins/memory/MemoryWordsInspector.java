@@ -361,7 +361,7 @@ public final class MemoryWordsInspector extends Inspector {
      * mode set to {@link ViewMode#OBJECT}.
      */
     public MemoryWordsInspector(Inspection inspection, TeleObject teleObject) {
-        this(inspection, teleObject.getCurrentMemoryRegion(), null, teleObject.getCurrentOrigin(), teleObject.isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
+        this(inspection, teleObject.memoryRegion(), null, teleObject.origin(), teleObject.isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
     }
 
     /**
@@ -649,12 +649,12 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToCurrentObject() {
         TeleObject teleObject = maxVM().findObjectAt(origin);
         if (teleObject != null) {
-            MemoryRegion objectMemoryRegion = teleObject.getCurrentMemoryRegion();
+            MemoryRegion objectMemoryRegion = teleObject.memoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final int newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.wordCount);
             setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
-            setOrigin(teleObject.getCurrentOrigin());
+            setOrigin(teleObject.origin());
             table.scrollToOrigin();
             setTitle();
         } else {
@@ -665,12 +665,12 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToPreviousObject() {
         final TeleObject teleObject = maxVM().findObjectPreceding(origin, 1000000);
         if (teleObject != null) {
-            MemoryRegion objectMemoryRegion = teleObject.getCurrentMemoryRegion();
+            MemoryRegion objectMemoryRegion = teleObject.memoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final int newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.wordCount);
             setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
-            setOrigin(teleObject.getCurrentOrigin());
+            setOrigin(teleObject.origin());
             table.scrollToOrigin();
             setTitle();
         }
@@ -679,7 +679,7 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToNextObject() {
         final TeleObject teleObject = maxVM().findObjectFollowing(origin, 1000000);
         if (teleObject != null) {
-            final MemoryRegion objectMemoryRegion = teleObject.getCurrentMemoryRegion();
+            final MemoryRegion objectMemoryRegion = teleObject.memoryRegion();
             // Start stays the same
             final Address start = memoryWordRegion.start();
             // Default is to leave the viewed size the same
@@ -689,7 +689,7 @@ public final class MemoryWordsInspector extends Inspector {
                 newWordCount = objectMemoryRegion.end().minus(start).dividedBy(wordSize).toInt();
             }
             setMemoryRegion(new MemoryWordRegion(start, newWordCount, wordSize));
-            setOrigin(teleObject.getCurrentOrigin());
+            setOrigin(teleObject.origin());
             // Scroll so that whole object is visible if possible
             table.scrollToRange(origin, objectMemoryRegion.end().minus(wordSize));
             setTitle();
