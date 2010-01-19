@@ -106,7 +106,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
     private void makeObjectInspector(Inspection inspection, TeleObject teleObject) {
         ObjectInspector objectInspector =  teleObjectToInspector.get(teleObject);
         if (objectInspector == null) {
-            switch (teleObject.getObjectKind()) {
+            switch (teleObject.kind()) {
                 case HYBRID: {
                     objectInspector = new HubInspector(inspection, this, teleObject);
                     break;

@@ -303,7 +303,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                     final TeleObject teleObject = inspection().focus().heapObject();
                     Address address = Address.zero();
                     if (teleObject != null) {
-                        address = teleObject.getCurrentOrigin();
+                        address = teleObject.origin();
                     }
                     return new WordValue(address);
                 }

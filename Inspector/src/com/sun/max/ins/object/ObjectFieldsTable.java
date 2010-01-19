@@ -93,7 +93,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             startOffset = 0;
             endOffset = 0;
         }
-        this.tableModel = new ObjectFieldsTableModel(inspection, teleObject.getCurrentOrigin());
+        this.tableModel = new ObjectFieldsTableModel(inspection, teleObject.origin());
         this.columnModel = new ObjectFieldsTableColumnModel(instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
         updateFocusSelection();
@@ -220,7 +220,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         @Override
         public MemoryRegion getMemoryRegion(int row) {
-            return teleObject.getCurrentMemoryRegion(fieldActors[row]);
+            return teleObject.fieldMemoryRegion(fieldActors[row]);
         }
 
         @Override
@@ -260,7 +260,7 @@ public final class ObjectFieldsTable extends InspectorTable {
 
         @Override
         public void refresh() {
-            setOrigin(teleObject.getCurrentOrigin());
+            setOrigin(teleObject.origin());
             super.refresh();
         }
     }

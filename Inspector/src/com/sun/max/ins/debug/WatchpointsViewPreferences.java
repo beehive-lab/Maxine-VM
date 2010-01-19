@@ -29,6 +29,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.MaxWatchpoint.*;
 
 /**
  * Persistent preferences for managing and viewing watchpoints in the VM.
@@ -56,9 +57,9 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
     private static final String WATCHPOINT_INSPECTOR_PREFERENCE = "watchpointInspectorPrefs";
 
     // Names of other preferences in view
-    private static final String WATCHPOINT_READ_PREFERENCE = "read";
-    private static final String WATCHPOINT_WRITE_PREFERENCE = "write";
-    private static final String WATCHPOINT_EXEC_PREFERENCE = "exec";
+    private static final String WATCHPOINT_READ_PREFERENCE = "trapOnRead";
+    private static final String WATCHPOINT_WRITE_PREFERENCE = "trapOnWrite";
+    private static final String WATCHPOINT_EXEC_PREFERENCE = "trapOnExec";
     private static final String WATCHPOINT_GC_PREFERENCE = "enableDuringGC";
 
     /**
@@ -68,9 +69,9 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
         return globalPreferences(inspection).getPanel();
     }
 
-    private boolean read = true;
-    private boolean write = true;
-    private boolean exec = false;
+    private boolean trapOnRead = true;
+    private boolean trapOnWrite = true;
+    private boolean trapOnExec = false;
     private boolean enableDuringGC = false;
 
     /**
@@ -82,47 +83,23 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
         final InspectionSettings settings = inspection.settings();
         final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener(WATCHPOINT_INSPECTOR_PREFERENCE) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-                saveSettingsEvent.save(WATCHPOINT_READ_PREFERENCE, read);
-                saveSettingsEvent.save(WATCHPOINT_WRITE_PREFERENCE, write);
-                saveSettingsEvent.save(WATCHPOINT_EXEC_PREFERENCE, exec);
+                saveSettingsEvent.save(WATCHPOINT_READ_PREFERENCE, trapOnRead);
+                saveSettingsEvent.save(WATCHPOINT_WRITE_PREFERENCE, trapOnWrite);
+                saveSettingsEvent.save(WATCHPOINT_EXEC_PREFERENCE, trapOnExec);
                 saveSettingsEvent.save(WATCHPOINT_GC_PREFERENCE,  enableDuringGC);
             }
         };
         settings.addSaveSettingsListener(saveSettingsListener);
 
-        read = settings.get(saveSettingsListener, WATCHPOINT_READ_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
-        write = settings.get(saveSettingsListener, WATCHPOINT_WRITE_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
-        exec = settings.get(saveSettingsListener, WATCHPOINT_EXEC_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
+        trapOnRead = settings.get(saveSettingsListener, WATCHPOINT_READ_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+        trapOnWrite = settings.get(saveSettingsListener, WATCHPOINT_WRITE_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+        trapOnExec = settings.get(saveSettingsListener, WATCHPOINT_EXEC_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
         enableDuringGC = settings.get(saveSettingsListener, WATCHPOINT_GC_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
 
     }
 
-    /**
-     * @return whether new watchpoints by default trap on read
-     */
-    public boolean read() {
-        return read;
-    }
-
-    /**
-     * @return whether new watchpoints by default trap on write
-     */
-    public boolean write() {
-        return write;
-    }
-
-    /**
-     * @return whether new watchpoints by default trap on exec
-     */
-    public boolean exec() {
-        return exec;
-    }
-
-    /**
-     * @return whether new watchpoints by default are enabledDuringGC
-     */
-    public boolean enableDuringGC() {
-        return enableDuringGC;
+    public WatchpointSettings settings() {
+        return new WatchpointSettings(trapOnRead, trapOnWrite, trapOnExec, enableDuringGC);
     }
 
     private static class WatchpointsPreferencesPanel extends InspectorPanel {
@@ -135,25 +112,25 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
     @Override
     public JPanel getPanel() {
 
-        final JCheckBox readCheckBox = new InspectorCheckBox(inspection(), "Read", "New watchpoints by default trap on read", read);
+        final JCheckBox readCheckBox = new InspectorCheckBox(inspection(), "Read", "New watchpoints by default trap on trapOnRead", trapOnRead);
         readCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBox checkBox = (JCheckBox) e.getSource();
-                read = checkBox.isSelected();
+                trapOnRead = checkBox.isSelected();
             }
         });
-        final JCheckBox writeCheckBox = new InspectorCheckBox(inspection(), "Write", "New watchpoints by default trap on write", write);
+        final JCheckBox writeCheckBox = new InspectorCheckBox(inspection(), "Write", "New watchpoints by default trap on trapOnWrite", trapOnWrite);
         writeCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBox checkBox = (JCheckBox) e.getSource();
-                write = checkBox.isSelected();
+                trapOnWrite = checkBox.isSelected();
             }
         });
-        final JCheckBox execCheckBox = new InspectorCheckBox(inspection(), "Exec", "New watchpoints by default trap on exec", exec);
+        final JCheckBox execCheckBox = new InspectorCheckBox(inspection(), "Exec", "New watchpoints by default trap on trapOnExec", trapOnExec);
         execCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBox checkBox = (JCheckBox) e.getSource();
-                exec = checkBox.isSelected();
+                trapOnExec = checkBox.isSelected();
             }
         });
         final JCheckBox gcCheckBox = new InspectorCheckBox(inspection(), "Enable During GC", "New watchpoints by default area enabled during GC", enableDuringGC);

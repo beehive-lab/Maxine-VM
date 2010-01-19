@@ -99,7 +99,7 @@ public final class ArrayElementsTable extends InspectorTable {
         this.wordValueMode = wordValueMode;
         this.instanceViewPreferences = instanceViewPreferences;
 
-        this.tableModel = new ArrayElementsTableModel(inspection, teleObject.getCurrentOrigin());
+        this.tableModel = new ArrayElementsTableModel(inspection, teleObject.origin());
         this.columnModel = new ArrayElementsTableColumnModel(instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
         setFillsViewportHeight(true);
@@ -276,7 +276,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         @Override
         public void refresh() {
-            setOrigin(teleObject.getCurrentOrigin());
+            setOrigin(teleObject.origin());
             // Update the mapping between array elements and displayed rows.
             if (teleObject.isLive()) {
                 if (instanceViewPreferences.hideNullArrayElements()) {

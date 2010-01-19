@@ -35,6 +35,13 @@ public interface TeleHeapScheme {
     Class heapSchemeClass();
 
     /**
+     * Location, relative to object origin, of the word used by GC to store a forwarding pointer.
+     *
+     * @return offset from object origin to word that might contain a forwarding pointer.
+     */
+    Offset gcForwardingPointerOffset();
+
+    /**
      * Checks whether a location is in a live area of the VM's heap.
      *
      * @param address a memory location in the VM
@@ -60,12 +67,11 @@ public interface TeleHeapScheme {
 
     /**
      * Returns the true location of an object that might have been forwarded, either
-     * the new location (if forwarded) or the same location (if not forwarded).
+     * the current location (if forwarded) or the same location (if not forwarded).
      *
-     * @param objectPointer an object pointer
-     * @param dataAccess data access
-     * @return the current, possibly forwarded, location of the object
+     * @param objectPointer the origin of an object in VM memory
+     * @return the current, possibly forwarded, origin of the object
      */
-    Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess);
+    Pointer getForwardedObject(Pointer origin);
 
 }
