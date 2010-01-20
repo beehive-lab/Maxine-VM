@@ -2453,6 +2453,33 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return new CopyTargetMethodCodeToClipboardAction(teleTargetMethod, actionTitle);
     }
 
+
+    /**
+     * Menu: display a sub-menu of commands to make visible
+     * existing object inspectors.  It includes a command
+     * that closes all of them.
+     */
+    final class BuiltinBreakpointsMenu extends InspectorMenu {
+        public BuiltinBreakpointsMenu(String title) {
+            super(title == null ? "Break at" : title);
+            addMenuListener(new MenuListener() {
+
+                public void menuCanceled(MenuEvent e) {
+                }
+
+                public void menuDeselected(MenuEvent e) {
+                }
+
+                public void menuSelected(MenuEvent e) {
+                    removeAll();
+                    for (MaxInspectableMethod method : maxVM().inspectableMethods()) {
+                        add(actions().setBytecodeBreakpointAtMethodEntry(method.teleClassMethodActor(), method.description()));
+                    }
+                }
+            });
+        }
+    }
+
    /**
      * Action:  removes the currently selected breakpoint from the VM.
      */
@@ -4717,6 +4744,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public InspectorMenuItems genericBreakpointMenuItems() {
         return new AbstractInspectorMenuItems(inspection()) {
             public void addTo(InspectorMenu menu) {
+
+                final InspectorMenu builtinBreakpointsMenu = new BuiltinBreakpointsMenu("Break at builtin");
+                menu.add(builtinBreakpointsMenu);
 
                 final InspectorMenu methodEntryBreakpoints = new InspectorMenu("Break at method entry");
                 methodEntryBreakpoints.add(actions().setTargetCodeBreakpointAtMethodEntriesByName());
