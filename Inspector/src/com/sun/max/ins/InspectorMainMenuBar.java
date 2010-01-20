@@ -25,7 +25,6 @@ import java.awt.*;
 import javax.swing.*;
 
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.object.*;
 
 /**
  * MenuBar for the Inspection; shows VM state with background color.
@@ -177,12 +176,6 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         if (maxVM().watchpointsEnabled()) {
             menu.add(actions.listWatchpoints());
         }
-
-        final InspectorMenu testBreakMenu = new InspectorMenu("Break at");
-        final TeleClassMethodActor teleClassMethodActor = actions.inspection().maxVM().teleMethods().InspectableCodeInfo_inspectableCompilationComplete.teleClassMethodActor();
-        final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getJavaTargetMethod(0);
-        testBreakMenu.add(actions.setTargetCodeBreakpointAtMethodEntry(javaTargetMethod, inspection().nameDisplay().shortName(javaTargetMethod)));
-        menu.add(testBreakMenu);
         return menu;
     }
 
