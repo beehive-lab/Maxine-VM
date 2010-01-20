@@ -272,13 +272,19 @@ public interface HeapScheme extends VMScheme {
      */
     GarbageCollectorMXBean getGarbageCollectorMXBean();
 
+    /**
+     * Methods to be called by all implementations when specified events occur, necessary
+     * for certain Inspector services to work.
+     *
+     * @author Michael Van De Vanter
+     */
     public final class Static {
         private Static() {
         }
 
         /**
          * Announces that a GC is about to begin; must be called by GC implementations
-         * for certain inspection services to work.
+         * for certain Inspector services to work.
          */
         public static void notifyGCStarting() {
             InspectableHeapInfo.notifyGCStarting();
@@ -289,8 +295,8 @@ public interface HeapScheme extends VMScheme {
          * An empty method whose purpose is to be interrupted by the Inspector
          * at the beginning of a GC.
          * <br>
-         * This particular method is intended for  use by users of the inspector, and
-         * is separate from a method used by the Inspector for internal use.
+         * This particular method is intended for  use by users of the Inspector, and
+         * is distinct from a method used by the Inspector for internal use.
          */
         @INSPECTED
         @NEVER_INLINE
@@ -299,7 +305,7 @@ public interface HeapScheme extends VMScheme {
 
         /**
          * Announces that a GC has concluded; must be called by GC implementations
-         * for certain inspection services to work.
+         * for certain Inspector services to work.
          */
         public static void notifyGCComplete() {
             InspectableHeapInfo.notifyGCComplete();
@@ -310,8 +316,8 @@ public interface HeapScheme extends VMScheme {
          * An empty method whose purpose is to be interrupted by the Inspector
          * at the conclusions of a GC.
          * <br>
-         * This particular method is intended for  use by users of the inspector, and
-         * is separate from a method used by the Inspector for internal use.
+         * This particular method is intended for  use by users of the Inspector, and
+         * is distinct from a method used by the Inspector for internal use.
          */
         @INSPECTED
         @NEVER_INLINE
@@ -320,7 +326,7 @@ public interface HeapScheme extends VMScheme {
 
         /**
          * Announces that an object has just been relocated; must be called for
-         * certain inspection services to work.
+         * certain Inspector services to work.
          * <br>
          * Should be called as late as possible, but before a forwarding pointer
          * gets written; this is so that some implementations can set a watchpoint
@@ -331,6 +337,19 @@ public interface HeapScheme extends VMScheme {
          */
         public static void notifyObjectRelocated(Address oldCellLocation, Address newCellLocation) {
             InspectableHeapInfo.notifyObjectRelocated(oldCellLocation,  newCellLocation);
+            objectRelocated(oldCellLocation, newCellLocation);
+        }
+
+        /**
+         * An empty method whose purpose is to be interrupted by the Inspector
+         * at the conclusions of an object relocation..
+         * <br>
+         * This particular method is intended for  use by users of the Inspector, and
+         * is distinct from a method used by the Inspector for internal use.
+         */
+        @INSPECTED
+        @NEVER_INLINE
+        private static void objectRelocated(Address oldCellLocation, Address newCellLocation) {
         }
     }
 
