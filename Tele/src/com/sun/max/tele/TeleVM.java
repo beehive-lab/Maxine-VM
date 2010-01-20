@@ -1298,6 +1298,20 @@ public abstract class TeleVM implements MaxVM {
         return teleCodeRegistry;
     }
 
+    private Sequence<MaxInspectableMethod> inspectableMethods;
+
+    public final Sequence<MaxInspectableMethod> inspectableMethods() {
+        if (inspectableMethods == null) {
+            final VariableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>();
+            methods.append(new InspectableMethod(teleMethods.HeapScheme$Static_inspectableGCStarting, "Start of GC"));
+            methods.append(new InspectableMethod(teleMethods.HeapScheme$Static_inspectableGCComplete, "End of GC"));
+            methods.append(new InspectableMethod(teleMethods.CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
+            methods.append(new InspectableMethod(teleMethods.HeapScheme$Static_objectRelocated, "Object relocated"));
+            inspectableMethods = methods;
+        }
+        return inspectableMethods;
+    }
+
     /**
      * Registers the description of a newly discovered block of target code so that it can be located later by address.
      *

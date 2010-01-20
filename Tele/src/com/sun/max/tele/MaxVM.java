@@ -51,6 +51,11 @@ import com.sun.max.vm.value.*;
 /**
  * Access to an instance of the Maxine VM.
  * <br>
+ * This interface is a work in progress, created originally by splitting what had
+ * been very intertwined code into two layers.  The eventual goal is for all VM types
+ * to be expressed behind interfaces such as these, a transformation that is only
+ * partially complete.
+ * <br>
  * This could in the future be merged with the JDWP interface.
  *
  * @author Michael Van De Vanter
@@ -397,6 +402,8 @@ public interface MaxVM {
      * @return a canonical local surrogate for the object, null for the distinguished zero {@link Reference}.
      */
     TeleObject makeTeleObject(Reference reference);
+
+    Sequence<MaxInspectableMethod> inspectableMethods();
 
     /**
      * @param id an id assigned to each heap object in the VM as needed, unique for the duration of a VM execution.
