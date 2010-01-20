@@ -86,14 +86,14 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
     private enum WatchpointKind {
 
         /**
-         * A breakpoint created on behalf of a client external to the {@link TeleVM}.  Such
+         * A watchpoint created on behalf of a client external to the {@link TeleVM}.  Such
          * a watchpoint is presumed to be managed completely by the client:  creation/deletion,
          * enable/disable etc.  Only client watchpoints are visible to the client in ordinary use.
          */
         CLIENT,
 
         /**
-         * A breakpoint created by one of the services int he {@link TeleVM}, generally in order
+         * A watchpoint created by one of the services int he {@link TeleVM}, generally in order
          * to catch certain events in the VM so that state can be synchronized for
          * some purpose.  Presumed to be managed completely by the service using it.  These
          * are generally not visible to clients.
@@ -665,6 +665,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          */
         public void initFactory() {
             // TODO (mlvdv)  Make this lazy; remove the need to call this.
+            // TODO (mlvdv) use a breakpoint instead of a watchpoint; delegate to the teleVM for this.
             try {
                 final FixedMemoryRegion memoryRegion = new FixedMemoryRegion(teleProcess.teleVM().rootEpochAddress(), Size.fromInt(Pointer.size()), "Root epoch counter address");
                 afterGCWatchpoint = createSystemWatchpoint("After GC", memoryRegion, afterGCWatchpointSettings);
