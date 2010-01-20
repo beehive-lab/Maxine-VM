@@ -1335,7 +1335,7 @@ public final class ClassfileReader {
                 }
             }
 
-            InspectableClassInfo.registerClassLoaded(classActor);
+            InspectableClassInfo.notifyClassLoaded(classActor);
 
             return classActor;
         } finally {

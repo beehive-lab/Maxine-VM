@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Makes critical state information about the object heap
@@ -60,7 +59,7 @@ public final class InspectableHeapInfo {
      * Inspectable description the memory allocated for the Inspector's root table.
      */
     @INSPECTED
-    public static RuntimeMemoryRegion rootsRegion;
+    private static RuntimeMemoryRegion rootsRegion;
 
     /**
      * Inspectable location of the memory allocated for the Inspector's root table.
@@ -68,7 +67,7 @@ public final class InspectableHeapInfo {
      * readable by the Inspector using only low level operations during startup.
      */
     @INSPECTED
-    public static Pointer rootsPointer = Pointer.zero();
+    private static Pointer rootsPointer = Pointer.zero();
 
     /**
      * Inspectable counter of the number of Garbage Collections that have <strong>begun</strong>.
@@ -88,37 +87,16 @@ public final class InspectableHeapInfo {
     private static long rootEpoch;
 
     /**
-     * How many words of the heap refer to one Word in the card table.
-     */
-    @Deprecated
-    private static int cardTableRatio = 100;
-
-    /**
-     * Number of entries in the card table.
+     * Old memory cell location of the object most recently relocated.
      */
     @INSPECTED
-    @Deprecated
-    private static int totalCardTableEntries = 0;
+    private static Address recentRelocationOldCell;
 
     /**
-     * Card table memory.
+     * New memory cell location of the object most recently relocated.
      */
     @INSPECTED
-    @Deprecated
-    private static Pointer cardTablePointer = Pointer.zero();
-
-    /**
-     * Old address of the object most recently relocated.
-     */
-    @INSPECTED
-    public static Address oldAddress;
-
-    /**
-     * New address of the object most recently relocated.
-     */
-    @INSPECTED
-    @Deprecated
-    private static Address newAddress;
+    private static Address recentRelocationNewCell;
 
     /**
      * Stores descriptions of memory allocated by the heap in a location that can
@@ -145,7 +123,6 @@ public final class InspectableHeapInfo {
             }
 
             initRootsRegion();
-            initCardTable(memoryRegions);
         }
     }
 
@@ -162,168 +139,6 @@ public final class InspectableHeapInfo {
     }
 
     /**
-     * Initialize the card table.
-     * @param memoryRegions
-     */
-    private static void initCardTable(MemoryRegion[] memoryRegions) {
-        if (cardTablePointer.equals(Pointer.zero())) {
-            for (MemoryRegion memoryRegion : memoryRegions) {
-                totalCardTableEntries += calculateNumberOfCardTableEntries(memoryRegion);
-            }
-            cardTablePointer = Memory.allocate(Size.fromInt(totalCardTableEntries * Word.size()));
-        }
-    }
-
-    /**
-     * Calculates the number of slots in the card table for a given memory region.
-     * @param memoryRegion the memory region
-     * @return number of card table slots
-     */
-    @Deprecated
-    private static int calculateNumberOfCardTableEntries(MemoryRegion memoryRegion) {
-        int nrOfWords = memoryRegion.size().dividedBy(Word.size()).toInt();
-        int cardTableEntries = nrOfWords / cardTableRatio;
-        if (nrOfWords % cardTableRatio != 0) {
-            cardTableEntries++;
-        }
-        return cardTableEntries;
-    }
-
-    /**
-     * Touches as field in the card table at the corresponding address.
-     * @param address
-     * @return field
-     */
-    public static Word touchCardTableField(Address address) {
-        return touchCardTableField(address, InspectableHeapInfo.memoryRegions);
-    }
-
-    /**
-     * Touches as field in the card table at the corresponding address.
-     * @param address
-     * @param memoryRegions
-     * @return field
-     */
-    @Deprecated
-    public static Word touchCardTableField(Address address, MemoryRegion... memoryRegions) {
-        int index;
-        index = getCardTableIndex(address, memoryRegions);
-        if (index == -1) {
-            FatalError.unexpected("Card table index invalid");
-        }
-
-        return cardTablePointer.getWord(index);
-    }
-
-    /**
-     * Returns the card table slot number (index) to a corresponding address.
-     * @param address
-     * @param memoryRegions
-     * @return card table index
-     */
-    @Deprecated
-    public static int getCardTableIndex(Address address, MemoryRegion... memoryRegions) {
-        int cardTableEntry = 0;
-
-        // used for sorting algorithm
-        Address last = Address.zero();
-        Address current = Address.zero();
-        int i = 0;
-        int pos = 0;
-
-        //sort memory regions without allocation
-        for (int j = 0; j < memoryRegions.length; j++) {
-            for (MemoryRegion memoryRegion : memoryRegions) {
-                if (memoryRegion.start().greaterThan(last) && (current.greaterThan(memoryRegion.start()) || current.equals(Address.zero()))) {
-                    current = memoryRegion.start();
-                    pos = i;
-                }
-                i++;
-            }
-
-            // do work
-            if (memoryRegions[pos].contains(address)) {
-                final int offset = address.minus(memoryRegions[pos].start()).toInt();
-                return cardTableEntry + calculateCardTableIndexInMemoryRegion(offset);
-            }
-            cardTableEntry += calculateNumberOfCardTableEntries(memoryRegions[pos]);
-
-            // reset sorting algorithm
-            i = 0;
-            last = current;
-            current = Address.zero();
-        }
-        return -1;
-    }
-
-    /**
-     * Get start of memory region covered by index.
-     * @param index
-     * @param memoryRegions
-     * @return Memory region start address
-     */
-    public static Address getStartAddressOfMemoryRange(int index, MemoryRegion... memoryRegions) {
-        int cardTableEntries = 0;
-        int tmpCardTableEntries = 0;
-
-        // used for sorting algorithm
-        Address last = Address.zero();
-        Address current = Address.zero();
-        int i = 0;
-        int pos = 0;
-
-        //sort memory regions without allocation
-        for (int j = 0; j < memoryRegions.length; j++) {
-            for (MemoryRegion memoryRegion : memoryRegions) {
-                if (memoryRegion.start().greaterThan(last) && (current.greaterThan(memoryRegion.start()) || current.equals(Address.zero()))) {
-                    current = memoryRegion.start();
-                    pos = i;
-                }
-                i++;
-            }
-
-            // do work
-            cardTableEntries += calculateNumberOfCardTableEntries(memoryRegions[pos]);
-            if (cardTableEntries >= index + 1) {
-                int offset;
-                if (tmpCardTableEntries == 0) {
-                    offset = index;
-                } else {
-                    offset = index - tmpCardTableEntries;
-                }
-                return memoryRegions[pos].start().plus(offset * cardTableRatio * Word.size());
-            }
-            tmpCardTableEntries = cardTableEntries;
-
-            // reset sorting algorithm
-            i = 0;
-            last = current;
-            current = Address.zero();
-        }
-        return Address.zero();
-    }
-
-    /**
-     * Get end of memory region covered by index.
-     * @param index
-     * @param memoryRegions
-     * @return Memory region start address
-     */
-    public static Address getEndAddressOfMemoryRange(int index, MemoryRegion... memoryRegions) {
-        Address address = getStartAddressOfMemoryRange(index, memoryRegions);
-        return address.plus(cardTableRatio * Word.size() - 1);
-    }
-
-    /**
-     * Calculates the card table index to an offset.
-     * @param offset
-     * @return index
-     */
-    private static int calculateCardTableIndexInMemoryRegion(int offset) {
-        return Unsigned.idiv(offset / cardTableRatio, Word.size());
-    }
-
-    /**
      * @return base of the specially allocated memory region containing inspectable root pointers
      */
     public static Pointer rootsPointer() {
@@ -331,16 +146,61 @@ public final class InspectableHeapInfo {
     }
 
     /**
+     * Records the old and new locations of a just-completed object relocation.
+     *
+     * @param oldCellLocation
+     * @param newCellLocation
+     */
+    public static void notifyObjectRelocated(Address oldCellLocation,  Address newCellLocation) {
+        recentRelocationOldCell = oldCellLocation;
+        recentRelocationNewCell = newCellLocation;
+    }
+
+    /**
      * Records that a GC has begun, using an inspectable counter.
      */
-    public static void beforeGarbageCollection() {
+    public static void notifyGCStarting() {
         collectionEpoch++;
+        inspectableGCStarting(collectionEpoch);
+    }
+
+    /**
+     * An empty method whose purpose is to be interrupted by the Inspector
+     * when it needs to observe the VM at the beginning of a GC.
+     * <br>
+     * This particular method is intended for internal use by the inspector.
+     * Should a user wish to break at the beginning of GC, another, more
+     * convenient inspectable method is provided
+     *
+     * @param collectionEpoch the GC epoch that is starting.
+     * @see HeapScheme.Static#inspectableGCStarting()
+     */
+    @INSPECTED
+    @NEVER_INLINE
+    private static void inspectableGCStarting(long collectionEpoch) {
     }
 
     /**
      * Records that a GC has concluded, using an inspectable counter.
      */
-    public static void afterGarbageCollection() {
+    public static void notifyGCComplete() {
         rootEpoch = collectionEpoch;
+        inspectableGCComplete(collectionEpoch);
+    }
+
+    /**
+     * An empty method whose purpose is to be interrupted by the Inspector
+     * when it needs to observe the VM at the conclusion of a GC.
+     * <br>
+     * This particular method is intended for internal use by the inspector.
+     * Should a user wish to break at the conclusion of GC, another, more
+     * convenient inspectable method is provided
+     *
+     * @param collectionEpoch the GC epoch that is ending.
+     * @see HeapScheme.Static#inspectableGCComplete()
+     */
+    @INSPECTED
+    @NEVER_INLINE
+    private static void inspectableGCComplete(long collectionEpoch) {
     }
 }
