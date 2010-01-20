@@ -22,17 +22,13 @@ package com.sun.max.vm.heap;
 
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.lang.management.*;
-import java.util.*;
-import com.sun.management.GarbageCollectorMXBean;
-import com.sun.management.GcInfo;
+import com.sun.management.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -93,21 +89,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     @INLINE(override = true)
     public boolean usesTLAB() {
         return false;
-    }
-
-    /**
-     * Tells the inspector that a watchpoint on this object has to be relocated.
-     * @param oldAddress
-     * @param newAddress
-     */
-    public void relocateWatchpoint(Pointer oldAddress, Pointer newAddress) {
-        if (Inspectable.areRelocatableWatchpointsActive()) {
-            //final Pointer enabledVmThreadLocals = VmThread.currentVmThreadLocals().getWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index).asPointer();
-            //enabledVmThreadLocals.setWord(OLD_OBJECT_ADDRESS.index, oldAddress);
-            //enabledVmThreadLocals.setWord(NEW_OBJECT_ADDRESS.index, newAddress);
-            InspectableHeapInfo.oldAddress = oldAddress;
-            InspectableHeapInfo.touchCardTableField(InspectableHeapInfo.oldAddress);
-        }
     }
 
     public void zapRegion(MemoryRegion region) {

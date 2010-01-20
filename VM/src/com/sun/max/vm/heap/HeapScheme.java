@@ -29,6 +29,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.thread.*;
 
 public interface HeapScheme extends VMScheme {
@@ -270,5 +271,67 @@ public interface HeapScheme extends VMScheme {
      * @return the @see GarbageCollectorMXBean instance
      */
     GarbageCollectorMXBean getGarbageCollectorMXBean();
+
+    public final class Static {
+        private Static() {
+        }
+
+        /**
+         * Announces that a GC is about to begin; must be called by GC implementations
+         * for certain inspection services to work.
+         */
+        public static void notifyGCStarting() {
+            InspectableHeapInfo.notifyGCStarting();
+            inspectableGCStarting();
+        }
+
+        /**
+         * An empty method whose purpose is to be interrupted by the Inspector
+         * at the beginning of a GC.
+         * <br>
+         * This particular method is intended for  use by users of the inspector, and
+         * is separate from a method used by the Inspector for internal use.
+         */
+        @INSPECTED
+        @NEVER_INLINE
+        private static void inspectableGCStarting() {
+        }
+
+        /**
+         * Announces that a GC has concluded; must be called by GC implementations
+         * for certain inspection services to work.
+         */
+        public static void notifyGCComplete() {
+            InspectableHeapInfo.notifyGCComplete();
+            inspectableGCComplete();
+        }
+
+        /**
+         * An empty method whose purpose is to be interrupted by the Inspector
+         * at the conclusions of a GC.
+         * <br>
+         * This particular method is intended for  use by users of the inspector, and
+         * is separate from a method used by the Inspector for internal use.
+         */
+        @INSPECTED
+        @NEVER_INLINE
+        private static void inspectableGCComplete() {
+        }
+
+        /**
+         * Announces that an object has just been relocated; must be called for
+         * certain inspection services to work.
+         * <br>
+         * Should be called as late as possible, but before a forwarding pointer
+         * gets written; this is so that some implementations can set a watchpoint
+         * on the forwarding pointer location to trigger on a specific object relocation.
+         *
+         * @param oldCellLocation the former memory cell of the object
+         * @param newCellLocation the new memory cell of the object
+         */
+        public static void notifyObjectRelocated(Address oldCellLocation, Address newCellLocation) {
+            InspectableHeapInfo.notifyObjectRelocated(oldCellLocation,  newCellLocation);
+        }
+    }
 
 }

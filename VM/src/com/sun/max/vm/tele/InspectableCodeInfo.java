@@ -47,7 +47,7 @@ public class InspectableCodeInfo {
      */
     public static void notifyCompilationComplete(TargetMethod targetMethod) {
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-        compilationFinished(classMethodActor.holder().typeDescriptor.string,
+        inspectableCompilationComplete(classMethodActor.holder().typeDescriptor.string,
             classMethodActor.name.string,
             classMethodActor.descriptor.string,
             targetMethod);
@@ -66,7 +66,7 @@ public class InspectableCodeInfo {
      */
     @NEVER_INLINE
     @INSPECTED
-    public static void compilationFinished(String holderType, String methodName, String signature, TargetMethod targetMethod) {
+    private static void inspectableCompilationComplete(String holderType, String methodName, String signature, TargetMethod targetMethod) {
     }
 
 }

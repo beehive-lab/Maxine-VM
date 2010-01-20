@@ -29,6 +29,7 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.field.TeleFields.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 
@@ -55,7 +56,11 @@ public class TeleMethods extends AbstractTeleVMHolder {
 
     // START GENERATED CONTENT
     public final TeleStaticMethodAccess Code_codePointerToTargetMethod = new TeleStaticMethodAccess(teleVM(), Code.class, "codePointerToTargetMethod", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;)Lcom/sun/max/vm/compiler/target/TargetMethod;"));
-    public final TeleStaticMethodAccess InspectableCodeInfo_compilationFinished = new TeleStaticMethodAccess(teleVM(), InspectableCodeInfo.class, "compilationFinished", SignatureDescriptor.create("(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/max/vm/compiler/target/TargetMethod;)V"));
+    public final TeleStaticMethodAccess InspectableCodeInfo_inspectableCompilationComplete = new TeleStaticMethodAccess(teleVM(), InspectableCodeInfo.class, "inspectableCompilationComplete", SignatureDescriptor.create("(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/max/vm/compiler/target/TargetMethod;)V"));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCComplete = new TeleStaticMethodAccess(teleVM(), InspectableHeapInfo.class, "inspectableGCComplete", SignatureDescriptor.create("(J)V"));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCStarting = new TeleStaticMethodAccess(teleVM(), InspectableHeapInfo.class, "inspectableGCStarting", SignatureDescriptor.create("(J)V"));
+    public final TeleStaticMethodAccess HeapScheme$Static_inspectableGCComplete = new TeleStaticMethodAccess(teleVM(), HeapScheme.Static.class, "inspectableGCComplete", SignatureDescriptor.create("()V"));
+    public final TeleStaticMethodAccess HeapScheme$Static_inspectableGCStarting = new TeleStaticMethodAccess(teleVM(), HeapScheme.Static.class, "inspectableGCStarting", SignatureDescriptor.create("()V"));
     public final TeleStaticMethodAccess TargetBreakpoint_findOriginalCode = new TeleStaticMethodAccess(teleVM(), TargetBreakpoint.class, "findOriginalCode", SignatureDescriptor.create("(J)[B"));
     // END GENERATED CONTENT
 

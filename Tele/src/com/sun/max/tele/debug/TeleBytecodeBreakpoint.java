@@ -399,11 +399,11 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * of arguments processed here must match those of the compiler method where the
          * breakpoint is set.
          *
-         * @see InspectableCodeInfo#compilationFinished(String, String, String, com.sun.max.vm.compiler.target.TargetMethod)
+         * @see InspectableCodeInfo#compilationComplete(String, String, String, com.sun.max.vm.compiler.target.TargetMethod)
          */
         private void createCompilerBreakpoint() {
             assert compilerTargetCodeBreakpoint == null;
-            final TeleClassMethodActor teleClassMethodActor = teleVM.teleMethods().InspectableCodeInfo_compilationFinished.teleClassMethodActor();
+            final TeleClassMethodActor teleClassMethodActor = teleVM.teleMethods().InspectableCodeInfo_inspectableCompilationComplete.teleClassMethodActor();
             // TODO (mlvdv) set the breakpoint on all present and future compilations of the compiler!  Not just the first, as is done here.
             final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getJavaTargetMethod(0);
             final Address callEntryPoint = javaTargetMethod.callEntryPoint();

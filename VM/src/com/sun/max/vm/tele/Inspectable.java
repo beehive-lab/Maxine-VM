@@ -23,7 +23,8 @@ package com.sun.max.vm.tele;
 import com.sun.max.annotate.*;
 
 /**
- * Holder for magic word that communicates whether this VM is being inspected.
+ * Holder for magic word that communicates whether this VM is being inspected and possibly
+ * other flags.
  *
  * @author Michael Van De Vanter
  */
@@ -36,12 +37,6 @@ public final class Inspectable {
      * Constant denoting that the VM process is being inspected.
      */
     public static final int INSPECTED = 0x0000001;
-
-    /**
-     * Constant denoting that there is at least one relocatable watchpoint currently active.
-     */
-    @Deprecated
-    public static final int ACTIVE_RELOCATABLE_WATCHPOINTS = 0x0000002;
 
     /**
      * If a non-zero value is put here remotely, then the
@@ -57,10 +52,4 @@ public final class Inspectable {
         return (flags & INSPECTED) != 0;
     }
 
-    /**
-     * Determines if there are any relocatable watchpoints currently active.
-     */
-    public static boolean areRelocatableWatchpointsActive() {
-        return (flags & ACTIVE_RELOCATABLE_WATCHPOINTS) != 0;
-    }
 }
