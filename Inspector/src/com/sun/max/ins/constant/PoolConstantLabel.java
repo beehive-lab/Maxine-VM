@@ -28,6 +28,7 @@ import com.sun.max.ins.method.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.FieldRefConstant.*;
@@ -156,6 +157,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 try {
                     telePoolConstant = teleConstantPool.readTelePoolConstant(index);
                 } catch (DataIOError dataIOError) {
+                    telePoolConstant = null;
+                } catch (InvalidReferenceException invalidReferenceException) {
                     telePoolConstant = null;
                 }
                 updateText();
