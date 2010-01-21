@@ -23,30 +23,29 @@ package com.sun.max.tele;
 import com.sun.max.unsafe.*;
 
 /**
- * An immutable (thread-safe) record of a thread in the VM triggering a watchpoint.
+ * An immutable (thread-safe) record of a thread in the VM triggering a  breakpoint.
  *
  * @author Michael Van De Vanter
   */
-public interface MaxWatchpointEvent {
+public interface MaxBreakpointEvent {
 
     /**
-     * @return the watchpoint that triggered the event.
+     * Note that only client-visible breakpoints are reported, so for example, when
+     * a target code breakpoint created for a bytecode breakpoint is triggered, what
+     * gets reported is the bytecode breakpoint.
+     *
+     * @return the breakpoint that triggered the event.
      */
-    MaxWatchpoint maxWatchpoint();
+    MaxBreakpoint breakpoint();
 
     /**
      * @return the thread that triggered the watchpoint.
      */
-    MaxThread maxThread();
+    MaxThread thread();
 
     /**
-     * @return the memory location where the watchpoint was triggered.
+     * @return the memory location where the breakpoint was triggered.
      */
     Address address();
-
-    /**
-     * @return code that identifies the kind of memory action that triggered the watchpoint.
-     */
-    int eventCode();
 
 }

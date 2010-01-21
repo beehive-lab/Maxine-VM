@@ -516,9 +516,9 @@ public final class BreakpointsTable extends InspectorTable {
          * @return the thread in the VM, if any, that is currently stopped at this breakpoint.
          */
         final MaxThread triggerThread() {
-            for (MaxThread thread : maxVMState().threads()) {
-                if (thread.breakpoint() == breakpoint) {
-                    return thread;
+            for (MaxBreakpointEvent breakpointEvent : maxVMState().breakpointEvents()) {
+                if (breakpointEvent.breakpoint() == breakpoint) {
+                    return breakpointEvent.thread();
                 }
             }
             return null;
