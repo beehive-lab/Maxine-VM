@@ -30,13 +30,13 @@ import com.sun.max.tele.object.*;
  *
  * @author Michael Van De Vanter
  */
-public final class InspectableMethod implements MaxInspectableMethod {
+public final class TeleInspectableMethod implements MaxInspectableMethod {
 
     private final TeleMethodAccess teleMethodAccess;
     private final String description;
     private TeleClassMethodActor teleClassMethodActor;
 
-    public InspectableMethod(TeleMethodAccess teleMethodAccess, String description) {
+    public TeleInspectableMethod(TeleMethodAccess teleMethodAccess, String description) {
         this.teleMethodAccess = teleMethodAccess;
         this.description = description;
     }
