@@ -39,22 +39,19 @@ public class MemoryManagerMXBeanAdaptor implements MemoryManagerMXBean, MemoryMa
     public MemoryManagerMXBeanAdaptor(String name) {
         this.name = name;
     }
-    @Override
+
     public void add(MemoryPoolMXBean bean) {
         pool.add(bean);
     }
 
-    @Override
     public void remove(MemoryPoolMXBean bean) {
         pool.remove(bean);
     }
 
-    @Override
     public List<MemoryPoolMXBean> getAll() {
         return pool;
     }
 
-    @Override
     public String[] getMemoryPoolNames() {
         final String[] result = new String[pool.size()];
         for (int i = 0; i < pool.size(); i++) {
@@ -64,12 +61,10 @@ public class MemoryManagerMXBeanAdaptor implements MemoryManagerMXBean, MemoryMa
         return result;
     }
 
-    @Override
     public String getName() {
         return name;
     }
 
-    @Override
     public boolean isValid() {
         return true;
     }
