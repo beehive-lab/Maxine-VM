@@ -27,12 +27,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface TeleHeapScheme {
-
-    /**
-     * @return the implementation class for which details are being provided.
-     */
-    Class heapSchemeClass();
+public interface TeleHeapScheme extends TeleScheme {
 
     /**
      * Location, relative to object origin, of the word used by GC to store a forwarding pointer.
