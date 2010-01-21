@@ -125,16 +125,15 @@ public interface MaxVMState  {
     Sequence<MaxThread> threadsDied();
 
     /**
-     * When the VM stops, the threads, if any, that are currently at a breakpoint.
+     * When the VM stops, describes threads that are currently at breakpoints.
      * <br>
-     * <b>Note</b>: the internal state of a thread identified here is not necessarily immutable,
-     * for example a thread reported here (which is live at this state transition)
-     * may have died by the time a reader examines this state transition.
+     * Note that only client-visible breakpoints are reported, so for example, when
+     * a target code breakpoint created for a bytecode breakpoint is triggered, what
+     * gets reported is the bytecode breakpoint.
      *
-     * @return threads currently stopped at a breakpoint, empty if none.
-     * @see #threads()
+     * @return descriptions of threads currently stopped at breakpoints, empty if none.
      */
-    Sequence<MaxThread> breakpointThreads();
+    Sequence<MaxBreakpointEvent> breakpointEvents();
 
     /**
      * When the VM has stopped because a thread hit a memory watchpoint,

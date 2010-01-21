@@ -605,14 +605,15 @@ public abstract class TeleVM implements MaxVM {
                     Collection<TeleNativeThread> threads,
                     Sequence<TeleNativeThread> threadsStarted,
                     Sequence<TeleNativeThread> threadsDied,
-                    Sequence<TeleNativeThread> breakpointThreads, TeleWatchpointEvent teleWatchpointEvent) {
+                    Sequence<TeleBreakpointEvent> breakpointEvents,
+                    TeleWatchpointEvent teleWatchpointEvent) {
         this.teleVMState = new TeleVMState(processState,
             epoch,
             threads,
             singleStepThread,
             threadsStarted,
             threadsDied,
-            breakpointThreads,
+            breakpointEvents,
             teleWatchpointEvent,
             isInGC,
             teleVMState);
@@ -1759,9 +1760,8 @@ public abstract class TeleVM implements MaxVM {
                     break;
                 case STOPPED:
                     if (!jdwpListeners.isEmpty()) {
-                        final Sequence<MaxThread> breakpointThreads = maxVMState.breakpointThreads();
-                        for (MaxThread maxThread : breakpointThreads) {
-                            final TeleNativeThread teleNativeThread = (TeleNativeThread) maxThread;
+                        for (MaxBreakpointEvent maxBreakpointEvent : maxVMState.breakpointEvents()) {
+                            final TeleNativeThread teleNativeThread = (TeleNativeThread) maxBreakpointEvent.thread();
                             fireJDWPBreakpointEvent(teleNativeThread, teleNativeThread.getFrames()[0].getLocation());
                         }
                         final MaxThread singleStepThread = maxVMState.singleStepThread();

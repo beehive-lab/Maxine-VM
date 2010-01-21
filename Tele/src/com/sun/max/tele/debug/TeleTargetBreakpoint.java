@@ -166,6 +166,11 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             this.condition = new BreakpointCondition(teleVM(), conditionDescriptor);
             setTriggerEventHandler(this.condition);
         }
+
+        @Override
+        public TeleBreakpoint getAssociatedClientBreakpoint() {
+            return this;
+        }
     }
 
     /**
@@ -178,6 +183,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         private boolean enabled = true;
         private BreakpointCondition condition;
+        private final TeleBreakpoint associatedTeleBreakpoint;
 
         /**
         * A system-created breakpoint for a given target code address, enabled by default.
@@ -188,8 +194,9 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
         *            instruction. If this value is null, then the code will be read from {@code address}.
         */
-        SystemTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode) {
+        SystemTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, TeleBreakpoint associatedTeleBreakpoint) {
             super(teleVM, factory, address, originalCode, BreakpointKind.SYSTEM);
+            this.associatedTeleBreakpoint = associatedTeleBreakpoint;
         }
 
         @Override
@@ -216,6 +223,11 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         public void setCondition(String conditionDescriptor) throws ExpressionException {
             condition = new BreakpointCondition(teleVM(), conditionDescriptor);
             setTriggerEventHandler(condition);
+        }
+
+        @Override
+        public TeleBreakpoint getAssociatedClientBreakpoint() {
+            return associatedTeleBreakpoint;
         }
     }
 
@@ -259,6 +271,11 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         @Override
         public void setCondition(String conditionDescriptor) throws ExpressionException {
             ProgramError.unexpected("Transient breakpoints do not have conditions");
+        }
+
+        @Override
+        public TeleBreakpoint getAssociatedClientBreakpoint() {
+            return null;
         }
     }
 
@@ -345,7 +362,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * Gets the client breakpoint at a specified target code address in the tele VM, creating a new one first if needed.
+         * Gets the client breakpoint at a specified target code address in the VM, creating a new one first if needed.
          *
          * @param address the address at which the breakpoint is to be created
          */
@@ -363,15 +380,17 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * Gets the system breakpoint at a specified target code address in the tele VM, creating a new one first if needed.
+         * Gets the system breakpoint at a specified target code address in the VM, creating a new one first if needed.
          *
          * @param address the address at which the breakpoint is to be created
-          */
-        public synchronized TeleTargetBreakpoint makeSystemBreakpoint(Address address) {
+         * @param associatedTeleBreakpoint a client visible breakpoint for which this system breakpoint was created, null if none.
+         * @return a system breakpoint at the specified target code address in the VM
+         */
+        public synchronized TeleTargetBreakpoint makeSystemBreakpoint(Address address, TeleBreakpoint associatedTeleBreakpoint) {
             SystemTargetBreakpoint systemBreakpoint = systemBreakpoints.get(address.toLong());
             // TODO (mlvdv) handle case where there is already a client breakpoint at this address.
             if (systemBreakpoint == null) {
-                systemBreakpoint = new SystemTargetBreakpoint(teleVM, this, address, null);
+                systemBreakpoint = new SystemTargetBreakpoint(teleVM, this, address, null, associatedTeleBreakpoint);
                 final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(address.toLong(), systemBreakpoint);
                 assert oldBreakpoint == null;
                 setChanged();
@@ -380,7 +399,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * Gets the transient breakpoint at a specified target code address in the tele VM, creating a new one first if needed.
+         * Gets the transient breakpoint at a specified target code address in the VM, creating a new one first if needed.
          *
          * @param address the address at which the breakpoint is to be created
          */
