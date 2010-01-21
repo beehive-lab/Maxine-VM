@@ -1072,11 +1072,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     @Override
+    @INSPECTED
     public boolean decreaseMemory(Size amount) {
         return shrink(amount);
     }
 
     @Override
+    @INSPECTED
     public synchronized boolean increaseMemory(Size amount) {
         /* The conservative assumption is that "amount" is the total amount that we could
          * allocate. Since we can't deallocate our existing spaces until we know we can allocate

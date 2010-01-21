@@ -1308,6 +1308,9 @@ public abstract class TeleVM implements MaxVM {
             methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCComplete, "End of GC"));
             methods.append(new TeleInspectableMethod(teleMethods.CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
             methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_objectRelocated, "Object relocated"));
+            for (MaxInspectableMethod inspectableMethod : teleHeapManager.inspectableMethods()) {
+                methods.append(inspectableMethod);
+            }
             inspectableMethods = methods;
         }
         return inspectableMethods;

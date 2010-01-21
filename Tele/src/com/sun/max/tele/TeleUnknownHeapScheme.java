@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.collect.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -40,6 +41,10 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
 
     public Class heapSchemeClass() {
         return null;
+    }
+
+    public Sequence<MaxInspectableMethod> inspectableMethods() {
+        return Sequence.Static.empty(MaxInspectableMethod.class);
     }
 
     public Offset gcForwardingPointerOffset() {
