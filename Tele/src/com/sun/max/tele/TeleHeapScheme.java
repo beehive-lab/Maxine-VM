@@ -27,12 +27,14 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface TeleHeapScheme {
+public interface TeleHeapScheme extends TeleScheme {
 
     /**
-     * @return the implementation class for which details are being provided.
+     * Location, relative to object origin, of the word used by GC to store a forwarding pointer.
+     *
+     * @return offset from object origin to word that might contain a forwarding pointer.
      */
-    Class heapSchemeClass();
+    Offset gcForwardingPointerOffset();
 
     /**
      * Checks whether a location is in a live area of the VM's heap.
@@ -60,12 +62,11 @@ public interface TeleHeapScheme {
 
     /**
      * Returns the true location of an object that might have been forwarded, either
-     * the new location (if forwarded) or the same location (if not forwarded).
+     * the current location (if forwarded) or the same location (if not forwarded).
      *
-     * @param objectPointer an object pointer
-     * @param dataAccess data access
-     * @return the current, possibly forwarded, location of the object
+     * @param objectPointer the origin of an object in VM memory
+     * @return the current, possibly forwarded, origin of the object
      */
-    Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess);
+    Pointer getForwardedObject(Pointer origin);
 
 }

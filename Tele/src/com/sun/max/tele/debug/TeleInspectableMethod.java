@@ -18,38 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.tele;
+package com.sun.max.tele.debug;
 
-import com.sun.max.annotate.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.method.*;
+import com.sun.max.tele.object.*;
 
 /**
- * Holder for magic word that communicates whether this VM is being inspected and possibly
- * other flags.
+ * Wrapper for a remote method in the VM that is intended to be accessed
+ * by clients, for example by setting breakpoints at predefined locations.
  *
  * @author Michael Van De Vanter
  */
-public final class Inspectable {
+public final class TeleInspectableMethod implements MaxInspectableMethod {
 
-    private Inspectable() {
+    private final TeleMethodAccess teleMethodAccess;
+    private final String description;
+    private TeleClassMethodActor teleClassMethodActor;
+
+    public TeleInspectableMethod(TeleMethodAccess teleMethodAccess, String description) {
+        this.teleMethodAccess = teleMethodAccess;
+        this.description = description;
     }
 
-    /**
-     * Constant denoting that the VM process is being inspected.
-     */
-    public static final int INSPECTED = 0x0000001;
+    public TeleClassMethodActor teleClassMethodActor() {
+        // Initialize this lazily; requires that some other Inspector machinery be in operation.
+        if (teleClassMethodActor == null) {
+            teleClassMethodActor = teleMethodAccess.teleClassMethodActor();
+        }
+        return teleClassMethodActor;
+    }
 
-    /**
-     * If a non-zero value is put here remotely, then the
-     * additional steps to facilitate inspection should be activated.
-     */
-    @INSPECTED
-    private static int flags;
-
-    /**
-     * Determines if the VM process is being inspected.
-     */
-    public static boolean isVmInspected() {
-        return (flags & INSPECTED) != 0;
+    public String description() {
+        return description;
     }
 
 }

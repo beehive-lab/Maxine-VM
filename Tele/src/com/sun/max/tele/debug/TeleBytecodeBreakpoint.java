@@ -108,7 +108,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     private void createTargetBreakpointForMethod(TeleTargetMethod teleTargetMethod) {
         assert enabled;
         // Delegate creation of the target breakpoint to the factory.
-        final TeleTargetBreakpoint teleTargetBreakpoint = factory.createTeleTargetBreakpoint(teleTargetMethod, key);
+        final TeleTargetBreakpoint teleTargetBreakpoint = factory.createTeleTargetBreakpoint(this, teleTargetMethod, key);
         if (teleTargetBreakpoint != null) {
             teleTargetBreakpoint.setTriggerEventHandler(condition);
             teleTargetBreakpoints.append(teleTargetBreakpoint);
@@ -205,7 +205,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         return sb.toString();
     }
 
-
+    @Override
+    public TeleBreakpoint getAssociatedClientBreakpoint() {
+        return this;
+    }
     /**
      * @return description of the bytecode location of this breakpoint.
      */
@@ -399,16 +402,16 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * of arguments processed here must match those of the compiler method where the
          * breakpoint is set.
          *
-         * @see InspectableCodeInfo#compilationFinished(String, String, String, com.sun.max.vm.compiler.target.TargetMethod)
+         * @see InspectableCodeInfo#compilationComplete(String, String, String, com.sun.max.vm.compiler.target.TargetMethod)
          */
         private void createCompilerBreakpoint() {
             assert compilerTargetCodeBreakpoint == null;
-            final TeleClassMethodActor teleClassMethodActor = teleVM.teleMethods().InspectableCodeInfo_compilationFinished.teleClassMethodActor();
+            final TeleClassMethodActor teleClassMethodActor = teleVM.teleMethods().InspectableCodeInfo_inspectableCompilationComplete.teleClassMethodActor();
             // TODO (mlvdv) set the breakpoint on all present and future compilations of the compiler!  Not just the first, as is done here.
             final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getJavaTargetMethod(0);
             final Address callEntryPoint = javaTargetMethod.callEntryPoint();
             ProgramError.check(!callEntryPoint.isZero());
-            compilerTargetCodeBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(callEntryPoint);
+            compilerTargetCodeBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(callEntryPoint, null);
             compilerTargetCodeBreakpoint.setDescription("System trap for VM compiler");
             compilerTargetCodeBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -459,12 +462,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * May fail when it is not possible to map the bytecode location into a target code location,
          * for example in optimized code where deoptimization is not supported.
          *
+         *@param teleBreakpoint the breakpoint on whose behalf this breakpoint is being created.
          * @param teleTargetMethod a compilation in the VM of the method specified in the key
          * @param key an abstract description of a method and bytecode offset
          * @return a target code breakpoint at a location in the compiled method corresponding
          * to the bytecode location specified in the key; null if unable to create.
          */
-        private TeleTargetBreakpoint createTeleTargetBreakpoint(TeleTargetMethod teleTargetMethod, Key key) {
+        private TeleTargetBreakpoint createTeleTargetBreakpoint(TeleBreakpoint teleBreakpoint, TeleTargetMethod teleTargetMethod, Key key) {
             Address address = Address.zero();
             if (teleTargetMethod instanceof TeleJitTargetMethod) {
                 final TeleJitTargetMethod teleJitTargetMethod = (TeleJitTargetMethod) teleTargetMethod;
@@ -485,7 +489,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 Trace.line(TRACE_VALUE, tracePrefix + "Target breakpoint already exists at 0x" + address.toHexString() + " in " + teleTargetMethod);
                 return null;
             }
-            final TeleTargetBreakpoint teleTargetBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(address);
+            final TeleTargetBreakpoint teleTargetBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(address, teleBreakpoint);
             teleTargetBreakpoint.setDescription("For bytecode key=" + key);
             return teleTargetBreakpoint;
         }

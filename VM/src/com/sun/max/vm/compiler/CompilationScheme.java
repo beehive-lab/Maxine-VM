@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.jni.*;
@@ -123,8 +124,11 @@ public interface CompilationScheme extends VMScheme {
     /**
      * This class provides a facade for the {@code CompilationScheme} interface, simplifying usage. It provides a number
      * of utilities to, for example, compile a method, get a method's current entrypoint, reset its method state, etc.
+     * <br>
+     * It also contains methods to be called when certain events occur, needed for some Inspector functions to work.
      *
      * @author Ben L. Titzer
+     * @author Michael Van De Vanter
      */
     public final class Static {
         private Static() {
@@ -212,12 +216,28 @@ public interface CompilationScheme extends VMScheme {
 
         /**
          * Announces that a compilation has just been completed; must be called for
-         * certain inspection services to work.
+         * certain Inspector services to work.
          *
          * @param targetMethod a compilation that was just completed.
          */
         public static void notifyCompilationComplete(TargetMethod targetMethod) {
             InspectableCodeInfo.notifyCompilationComplete(targetMethod);
+            inspectableCompilationComplete(targetMethod);
         }
+
+        /**
+         * An empty method whose purpose is to be interrupted by the Inspector
+         * at the conclusion of a method compilation.
+         * <br>
+         * This particular method is intended for use by users of the Inspector, and
+         * is separate from a method used by the Inspector for internal use.
+         *
+         * @param targetMethod
+         */
+        @INSPECTED
+        @NEVER_INLINE
+        private static void inspectableCompilationComplete(TargetMethod targetMethod) {
+        }
+
     }
 }

@@ -28,6 +28,7 @@ import com.sun.max.ins.method.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.FieldRefConstant.*;
@@ -157,6 +158,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     telePoolConstant = teleConstantPool.readTelePoolConstant(index);
                 } catch (DataIOError dataIOError) {
                     telePoolConstant = null;
+                } catch (InvalidReferenceException invalidReferenceException) {
+                    telePoolConstant = null;
                 }
                 updateText();
             }
@@ -198,7 +201,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
     private InspectorPopupMenu createPopupMenu() {
         final InspectorPopupMenu menu = new InspectorPopupMenu();
         if (telePoolConstant != null) {
-            menu.add(inspection().actions().copyWord(telePoolConstant.getCurrentOrigin(), "Copy PoolConstant address toclipboard"));
+            menu.add(inspection().actions().copyWord(telePoolConstant.origin(), "Copy PoolConstant address toclipboard"));
             menu.add(inspection().actions().inspectObjectMemoryWords(telePoolConstant, "Inspect PoolConstant memory words"));
             menu.add(inspection().actions().inspectObject(telePoolConstant, "Inspect PoolConstant #" + Integer.toString(index)));
             menu.add(inspection().actions().inspectObject(teleConstantPool, "Inspect ConstantPool"));

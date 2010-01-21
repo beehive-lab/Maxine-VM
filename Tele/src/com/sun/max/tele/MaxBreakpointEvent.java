@@ -18,38 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.tele;
+package com.sun.max.tele;
 
-import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 
 /**
- * Holder for magic word that communicates whether this VM is being inspected and possibly
- * other flags.
+ * An immutable (thread-safe) record of a thread in the VM triggering a  breakpoint.
  *
  * @author Michael Van De Vanter
- */
-public final class Inspectable {
-
-    private Inspectable() {
-    }
+  */
+public interface MaxBreakpointEvent {
 
     /**
-     * Constant denoting that the VM process is being inspected.
+     * Note that only client-visible breakpoints are reported, so for example, when
+     * a target code breakpoint created for a bytecode breakpoint is triggered, what
+     * gets reported is the bytecode breakpoint.
+     *
+     * @return the breakpoint that triggered the event.
      */
-    public static final int INSPECTED = 0x0000001;
+    MaxBreakpoint breakpoint();
 
     /**
-     * If a non-zero value is put here remotely, then the
-     * additional steps to facilitate inspection should be activated.
+     * @return the thread that triggered the watchpoint.
      */
-    @INSPECTED
-    private static int flags;
+    MaxThread thread();
 
     /**
-     * Determines if the VM process is being inspected.
+     * @return the memory location where the breakpoint was triggered.
      */
-    public static boolean isVmInspected() {
-        return (flags & INSPECTED) != 0;
-    }
+    Address address();
 
 }

@@ -25,7 +25,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
-import com.sun.max.vm.tele.*;
 
 /**
  * An Appel-style generational collector. The heap is divided in two generations, each implemented using a belt.
@@ -158,7 +157,7 @@ public abstract class BeltwayBA2Collector extends BeltwayCollector {
                 if (Heap.verbose()) {
                     Log.println("Reset Nursery Space Allocation Mark");
                 }
-                InspectableHeapInfo.afterGarbageCollection();
+                HeapScheme.Static.notifyGCComplete();
                 monitorScheme.afterGarbageCollection();
 
                 if (Heap.verbose()) {
@@ -225,7 +224,7 @@ public abstract class BeltwayBA2Collector extends BeltwayCollector {
                 verifyHeap("After minor GC");
             }
 
-            InspectableHeapInfo.afterGarbageCollection();
+            HeapScheme.Static.notifyGCComplete();
 
             if (Heap.verbose()) {
                 printBeltInfo("Nursery Space", nurserySpace);

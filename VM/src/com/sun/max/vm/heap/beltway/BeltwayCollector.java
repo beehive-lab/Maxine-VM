@@ -26,7 +26,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.tele.*;
 
 /**
  *
@@ -89,7 +88,7 @@ public abstract class BeltwayCollector extends Collector {
     protected void prologue() {
         numCollections++;
         heapScheme.resetTLABs();
-        InspectableHeapInfo.beforeGarbageCollection();
+        HeapScheme.Static.notifyGCStarting();
 
         if (Heap.verbose()) {
             Log.print(collectorName);
@@ -105,7 +104,7 @@ public abstract class BeltwayCollector extends Collector {
             Log.print(" Collection: ");
             Log.println(numCollections);
         }
-        InspectableHeapInfo.afterGarbageCollection();
+        HeapScheme.Static.notifyGCComplete();
     }
 
     /**

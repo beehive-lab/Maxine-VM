@@ -125,6 +125,14 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
     public abstract void remove();
 
     /**
+     * Return the breakpoint set by the client that caused this breakpoint to be create; returns
+     * this breakpoint for client breakpoints.
+     *
+     * @return this breakpoint, unless it is a system breakpint created to implement another breakpoint.
+     */
+    public abstract TeleBreakpoint getAssociatedClientBreakpoint();
+
+    /**
      * Assigns to this breakpoint a  handler for events triggered by this breakpoint.  A null handler
      * is equivalent to there being no handling action and a return of true (VM execution should halt).
      *

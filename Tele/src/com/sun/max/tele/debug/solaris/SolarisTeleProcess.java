@@ -26,6 +26,7 @@ import java.nio.*;
 import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.MaxWatchpoint.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
@@ -194,7 +195,8 @@ public final class SolarisTeleProcess extends TeleProcess {
 
     @Override
     protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        return nativeActivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, teleWatchpoint.isTrapOnRead(), teleWatchpoint.isTrapOnWrite(), teleWatchpoint.isTrapOnExec());
+        final WatchpointSettings settings = teleWatchpoint.getSettings();
+        return nativeActivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
     }
 
     @Override

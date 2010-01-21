@@ -18,38 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.tele;
+package com.sun.max.tele;
 
-import com.sun.max.annotate.*;
+import com.sun.max.tele.object.*;
 
 /**
- * Holder for magic word that communicates whether this VM is being inspected and possibly
- * other flags.
+ * Access to a remote method in the VM that is predefined for convenient access
+ * by clients, for example by setting breakpoints at generally useful locations.
  *
  * @author Michael Van De Vanter
  */
-public final class Inspectable {
-
-    private Inspectable() {
-    }
+public interface MaxInspectableMethod {
 
     /**
-     * Constant denoting that the VM process is being inspected.
+     * @return the canonical surrogate in the VM for the method
      */
-    public static final int INSPECTED = 0x0000001;
+    TeleClassMethodActor teleClassMethodActor();
 
     /**
-     * If a non-zero value is put here remotely, then the
-     * additional steps to facilitate inspection should be activated.
+     * A textual description of the role played by the method.
+     *
+     * @return a human readable description of the method, intended to describe
+     * the function of the method on a menu.
      */
-    @INSPECTED
-    private static int flags;
-
-    /**
-     * Determines if the VM process is being inspected.
-     */
-    public static boolean isVmInspected() {
-        return (flags & INSPECTED) != 0;
-    }
+    String description();
 
 }

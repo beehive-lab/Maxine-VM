@@ -160,7 +160,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * @return to which of the Maxine heap object representations does this surrogate refer?
      */
-    public abstract ObjectKind getObjectKind();
+    public abstract ObjectKind kind();
 
     /**
      * @return a number that uniquely identifies this object in the {@link TeleVM} for the duration of the inspection
@@ -206,9 +206,38 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
+     * The current "origin" of the object in VM memory, which
+     * may change through GC as long as the object remains live.
+     * When the object is no longer live, the last live location is
+     * returned.
+     * <br>
+     * Note that the origin is not necessarily beginning of the object's
+     * memory allocation, depending on the particular object layout
+     * used.
+     * @return current absolute location of the object's origin, subject to change by GC
+     * @see GeneralLayout
+     *
+     */
+    public Pointer origin() {
+        if (isObsolete() || isDead()) {
+            return lastValidPointer;
+        }
+        Pointer pointer = reference.toOrigin();
+        lastValidPointer = pointer;
+        return pointer;
+    }
+
+    /**
+     * @return the size of the memory occupied by this object in the VM, including header.
+     */
+    public abstract Size objectSize();
+
+    /**
+     * Gets the current area of memory in which the object is stored.
+     *
      * @return current memory region occupied by this object in the VM, subject to relocation by GC.
      */
-    public final MemoryRegion getCurrentMemoryRegion() {
+    public final MemoryRegion memoryRegion() {
         if (isObsolete() || isDead()) {
             //Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
             return new FixedMemoryRegion(specificLayout.originToCell(lastValidPointer), objectSize(), "");
@@ -224,52 +253,19 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * @return the size of the memory occupied by this object in the VM, including header.
-     */
-    protected abstract Size objectSize();
-
-    /**
-     * The current location of the object in VM memory, which
-     * may change through GC as long as the object remains live.
-     * When the object is no longer live, the last live location is
-     * returned.
-     * <br>
-     * Note that the origin is not necessarily beginning of the object's
-     * memory allocation, depending on the particular object layout
-     * used.
-     * @return current absolute location of the object's origin
-     * @see GeneralLayout
+     * The fields in the object's header.
      *
-     */
-    public Pointer getCurrentOrigin() {
-        if (isObsolete() || isDead()) {
-            return lastValidPointer;
-        }
-        Pointer pointer = reference.toOrigin();
-        lastValidPointer = pointer;
-        return pointer;
-    }
-
-    /**
      * @return enumeration of the fields in the header of this object
      */
-    public abstract HeaderField[] getHeaderFields();
+    public abstract HeaderField[] headerFields();
 
     /**
-     * @param headerField
-     * @return current memory region occupied by a header field in this object in the VM, subject to change by GC
-     */
-    public final MemoryRegion getCurrentMemoryRegion(Layout.HeaderField headerField) {
-        final Pointer start = getCurrentOrigin().plus(getHeaderOffset(headerField));
-        final Size size = Size.fromInt(getHeaderType(headerField).toKind().width.numberOfBytes);
-        return new FixedMemoryRegion(start, size, "");
-    }
-
-    /**
+     * The type of a field in the obejct's header.
+     *
      * @param headerField identifies a header field in the object layout
      * @return the type of the header field
      */
-    public final TypeDescriptor getHeaderType(Layout.HeaderField headerField) {
+    public final TypeDescriptor headerType(HeaderField headerField) {
         if (headerField == HeaderField.HUB) {
             return getTeleHub() == null ? null : JavaTypeDescriptor.forJavaClass(getTeleHub().hub().getClass());
         } else if (headerField == HeaderField.LENGTH) {
@@ -279,10 +275,22 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
+     * The size of a field in the object's header.
+     *
+     * @param headerField identifies a header field in the object layout
+     * @return the size of the header field
+     */
+    public final Size headerSize(HeaderField headerField) {
+        return Size.fromInt(headerType(headerField).toKind().width.numberOfBytes);
+    }
+
+    /**
+     * Offset from the object's origin of a field in the object's header.
+     *
      * @param headerField identifies a header field in the object layout
      * @return the location of the header field relative to object origin
      */
-    public final Offset getHeaderOffset(Layout.HeaderField headerField) {
+    public final Offset headerOffset(HeaderField headerField) {
         if (headerField != HeaderField.LENGTH) {
             return layoutScheme.generalLayout.getOffsetFromOrigin(headerField);
         } else {
@@ -291,6 +299,20 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
+     * The memory region in which an object header field is stored, subject to change by GC relocation.
+     *
+     * @param headerField a field in the object's header
+     * @return current memory region occupied by a header field in this object in the VM
+     */
+    public final MemoryRegion headerMemoryRegion(HeaderField headerField) {
+        final Pointer start = origin().plus(headerOffset(headerField));
+        final Size size = headerSize(headerField);
+        return new FixedMemoryRegion(start, size, "Current memory for header field " + headerField.name);
+    }
+
+    /**
+     * Gets the "hub" object pointed to in the object's header.
+     *
      * @return the local surrogate for the Hub of this object
      */
     public TeleHub getTeleHub() {
@@ -302,6 +324,8 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
+     * Gets the contents of the misc" word in the object's header.
+     *
      * @return the "misc" word from the header of this object in the teleVM
      */
     public Word getMiscWord() {
@@ -319,16 +343,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * @param fieldActor
-     * @return current memory region occupied by a field in this object in the VM
-     */
-    public final MemoryRegion getCurrentMemoryRegion(FieldActor fieldActor) {
-        final Pointer start = getCurrentOrigin().plus(fieldActor.offset());
-        final Size size = getFieldSize(fieldActor);
-        return new FixedMemoryRegion(start, size, "");
-    }
-
-    /**
      * Gathers all instance fields for a class, including inherited fields.
      * @param classActor description of a class
      * @param instanceFieldActors the set to which collected {@link FieldActor}s will be added.
@@ -343,18 +357,32 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
-     * Gets the current memory address of a field in the object.
+     * Gets the current memory address of a field in the object, subject to relocation by GC.
      *
      * @param fieldActor descriptor for a field in this class
      * @return the current location in memory of the field in this object
      */
-    public abstract Address getFieldAddress(FieldActor fieldActor);
+    public abstract Address fieldAddress(FieldActor fieldActor);
 
     /**
+     * The size of a field in the object.
+     *
      * @param fieldActor descriptor for a field in this class
      * @return the memory size of the field
      */
-    protected abstract Size getFieldSize(FieldActor fieldActor);
+    public abstract Size fieldSize(FieldActor fieldActor);
+
+    /**
+     *  The memory region in which field in the object is stored, subject to change by GC relocation.
+     *
+     * @param fieldActor a field in the object
+     * @return current memory region occupied by the field in this object in the VM, subject to relocation by GC.
+     */
+    public final MemoryRegion fieldMemoryRegion(FieldActor fieldActor) {
+        final Pointer start = origin().plus(fieldActor.offset());
+        final Size size = fieldSize(fieldActor);
+        return new FixedMemoryRegion(start, size, "");
+    }
 
     /**
      * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that

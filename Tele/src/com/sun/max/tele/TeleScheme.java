@@ -18,38 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.tele;
+package com.sun.max.tele;
 
-import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
 
 /**
- * Holder for magic word that communicates whether this VM is being inspected and possibly
- * other flags.
+ * Inspector support for a specific implementation of a {@link Scheme} in the VM.
  *
  * @author Michael Van De Vanter
  */
-public final class Inspectable {
-
-    private Inspectable() {
-    }
+public interface TeleScheme {
 
     /**
-     * Constant denoting that the VM process is being inspected.
+     * @return the implementation class for which details are being provided.
      */
-    public static final int INSPECTED = 0x0000001;
+    Class heapSchemeClass();
 
     /**
-     * If a non-zero value is put here remotely, then the
-     * additional steps to facilitate inspection should be activated.
+     * Identifies methods specific to a particular scheme implementation in the VM, which
+     * can be presented to the user, for example to set predefined breakpoints.
+     *
+     * @return descriptions of methods unique to a specific scheme implementation.
      */
-    @INSPECTED
-    private static int flags;
-
-    /**
-     * Determines if the VM process is being inspected.
-     */
-    public static boolean isVmInspected() {
-        return (flags & INSPECTED) != 0;
-    }
+    Sequence<MaxInspectableMethod> inspectableMethods();
 
 }

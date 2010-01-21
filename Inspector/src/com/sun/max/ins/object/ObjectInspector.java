@@ -87,7 +87,7 @@ public abstract class ObjectInspector extends Inspector {
         super(inspection);
         this.factory = factory;
         this.teleObject = teleObject;
-        this.currentObjectOrigin = teleObject().getCurrentOrigin();
+        this.currentObjectOrigin = teleObject().origin();
         this.title = "";
         instanceViewPreferences = new ObjectViewPreferences(ObjectViewPreferences.globalPreferences(inspection)) {
             @Override
@@ -160,7 +160,7 @@ public abstract class ObjectInspector extends Inspector {
     public final String getTextForTitle() {
         switch (teleObject.getTeleObjectMemoryState()) {
             case LIVE:
-                Pointer pointer = teleObject.getCurrentOrigin();
+                Pointer pointer = teleObject.origin();
                 title = "Object: " + pointer.toHexString() + inspection().nameDisplay().referenceLabelText(teleObject);
                 return title;
             case OBSOLETE:
@@ -245,14 +245,14 @@ public abstract class ObjectInspector extends Inspector {
             }
             factory.resetObjectToInspectorMapEntry(teleObject, forwardedTeleObject, this);
             teleObject = forwardedTeleObject;
-            currentObjectOrigin = teleObject.getCurrentOrigin();
+            currentObjectOrigin = teleObject.origin();
             reconstructView();
             if (objectHeaderTable != null) {
                 objectHeaderTable.refresh(force);
             }
         }
 
-        final Pointer newOrigin = teleObject.getCurrentOrigin();
+        final Pointer newOrigin = teleObject.origin();
         if (!newOrigin.equals(currentObjectOrigin)) {
             // The object has been relocated in memory
             currentObjectOrigin = newOrigin;

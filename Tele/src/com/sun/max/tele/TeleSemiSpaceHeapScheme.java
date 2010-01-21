@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -32,6 +33,8 @@ import com.sun.max.vm.runtime.*;
 /**
  * Implementation details about the heap in the VM, specialized
  * for the semi-space implementation.
+ * <br>
+ * Forwarding pointer stored in the "Hub" field of objects.
  *
  * @author Hannes Payer
  * @author Michael Van De Vanter
@@ -45,6 +48,17 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
 
     public Class heapSchemeClass() {
         return SemiSpaceHeapScheme.class;
+    }
+
+    public Sequence<MaxInspectableMethod> inspectableMethods() {
+        final AppendableSequence<MaxInspectableMethod> inspectableMethods = new LinkSequence<MaxInspectableMethod>();
+        inspectableMethods.append(new TeleInspectableMethod(teleVM().teleMethods().SemiSpaceHeapScheme_increaseMemory, heapSchemeClass().getSimpleName() + ": increase memory"));
+        inspectableMethods.append(new TeleInspectableMethod(teleVM().teleMethods().SemiSpaceHeapScheme_decreaseMemory, heapSchemeClass().getSimpleName() + ": decrease memory"));
+        return inspectableMethods;
+    }
+
+    public Offset gcForwardingPointerOffset() {
+        return Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB);
     }
 
     public boolean isInLiveMemory(Address address) {
@@ -84,16 +98,16 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
         return isForwardingPointer(pointer) ? pointer.minus(1) : pointer;
     }
 
-    public Pointer getForwardedObject(Pointer objectPointer, DataAccess dataAccess) {
-        if (!objectPointer.isZero()) {
-            Pointer pointer = dataAccess.readWord(objectPointer.plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer();
-            if (isForwardingPointer(pointer)) {
-                final Pointer newPointer = getTrueLocationFromPointer(pointer);
-                if (!newPointer.isZero()) {
-                    return newPointer;
+    public Pointer getForwardedObject(Pointer origin) {
+        if (!origin.isZero()) {
+            Pointer possibleForwardingPointer = teleVM().dataAccess().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
+            if (isForwardingPointer(possibleForwardingPointer)) {
+                final Pointer newCell = getTrueLocationFromPointer(possibleForwardingPointer);
+                if (!newCell.isZero()) {
+                    return Layout.generalLayout().cellToOrigin(newCell);
                 }
             }
         }
-        return objectPointer;
+        return origin;
     }
 }

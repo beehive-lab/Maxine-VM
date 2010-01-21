@@ -346,7 +346,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 // Pre-verification of the heap.
                 verifyObjectSpaces("before GC");
 
-                InspectableHeapInfo.beforeGarbageCollection();
+                HeapScheme.Static.notifyGCStarting();
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
@@ -414,7 +414,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 // Post-verification of the heap.
                 verifyObjectSpaces("after GC");
 
-                InspectableHeapInfo.afterGarbageCollection();
+                HeapScheme.Static.notifyGCComplete();
 
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();
@@ -571,11 +571,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             }
 
             Memory.copyBytes(fromCell, toCell, size);
-            relocateWatchpoint(fromCell, toCell);
+
+            HeapScheme.Static.notifyObjectRelocated(fromCell, toCell);
 
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);
             Layout.writeForwardGrip(fromOrigin, toGrip);
+
 
             return toGrip;
         }
@@ -1070,11 +1072,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
     }
 
     @Override
+    @INSPECTED
     public boolean decreaseMemory(Size amount) {
         return shrink(amount);
     }
 
     @Override
+    @INSPECTED
     public synchronized boolean increaseMemory(Size amount) {
         /* The conservative assumption is that "amount" is the total amount that we could
          * allocate. Since we can't deallocate our existing spaces until we know we can allocate

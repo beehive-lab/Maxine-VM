@@ -62,7 +62,7 @@ public final class MemoryBytesInspector extends Inspector {
      * Displays a new inspector for the currently allocated memory of a heap object in the VM.
      */
     public static MemoryBytesInspector create(Inspection inspection, TeleObject teleObject) {
-        final MemoryRegion region = teleObject.getCurrentMemoryRegion();
+        final MemoryRegion region = teleObject.memoryRegion();
         return create(inspection, region.start(), region.size().toInt(), 1, 16);
     }
 

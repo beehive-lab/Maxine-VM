@@ -23,7 +23,6 @@ package com.sun.max.vm.heap.beltway.bss;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
-import com.sun.max.vm.tele.*;
 
 /**
  * Semi-space Collector based on Beltways.
@@ -85,7 +84,7 @@ public class BeltwaySSCollector extends BeltwayCollector {
             verifyHeap("After GC", ssHeapScheme, fromSpace);
         }
 
-        InspectableHeapInfo.afterGarbageCollection();
+        HeapScheme.Static.notifyGCComplete();
 
         if (Heap.verbose()) {
             Log.print("Finished Collection: ");
