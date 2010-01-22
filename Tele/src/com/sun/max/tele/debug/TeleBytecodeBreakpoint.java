@@ -22,6 +22,7 @@ package com.sun.max.tele.debug;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -169,7 +170,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             } else {
                 clearAllTargetBreakpoints();
             }
-            factory.announceStateChange();
+            factory.fireBreakpointsChanged();
             return true;
         }
         return false;
@@ -280,9 +281,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      *
      * @author Michael Van De Vanter
      */
-    public static class Factory extends Observable {
+    public static class Factory extends AbstractTeleVMHolder {
 
-        private final TeleVM teleVM;
         private final TeleTargetBreakpoint.Factory teleTargetBreakpointFactory;
         private final String tracePrefix;
 
@@ -292,23 +292,6 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private final Symbol parameter2;
         private final Symbol parameter3;
 
-        /**
-         * A breakpoint that interrupts the compiler just as it finishes compiling a method.  Non-null and active
-         * iff there are one or more bytecode breakpoints in existence.
-         */
-        private TeleTargetBreakpoint compilerTargetCodeBreakpoint = null;
-
-        public Factory(TeleVM teleVM) {
-            this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
-            Trace.line(TRACE_VALUE, tracePrefix + "creating");
-            this.teleVM = teleVM;
-            this.teleTargetBreakpointFactory = teleVM.teleProcess().targetBreakpointFactory();
-            parameter0 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(0);
-            parameter1 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(1);
-            parameter2 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(2);
-            parameter3 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(3);
-        }
-
 
         /**
          * Map:  method Key -> existing bytecode breakpoint (whether enabled or not).
@@ -316,11 +299,42 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private final VariableMapping<Key, TeleBytecodeBreakpoint> breakpoints = HashMapping.createVariableEqualityMapping();
 
         /**
-         * Notify all observers that there has been a state change concerning these breakpoints.
+         * A breakpoint that interrupts the compiler just as it finishes compiling a method.  Non-null and active
+         * iff there are one or more bytecode breakpoints in existence.
          */
-        private void announceStateChange() {
-            setChanged();
-            notifyObservers();
+        private TeleTargetBreakpoint compilerTargetCodeBreakpoint = null;
+
+        private List<MaxBreakpointListener> breakpointListeners = new CopyOnWriteArrayList<MaxBreakpointListener>();
+
+        public Factory(TeleVM teleVM) {
+            super(teleVM);
+            this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
+            Trace.line(TRACE_VALUE, tracePrefix + "creating");
+            this.teleTargetBreakpointFactory = teleVM.teleProcess().targetBreakpointFactory();
+            parameter0 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(0);
+            parameter1 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(1);
+            parameter2 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(2);
+            parameter3 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(3);
+        }
+
+        /**
+         * Adds a listener for breakpoint changes.
+         *
+         * @param listener a breakpoint listener
+         */
+        public final void addBreakpointListener(MaxBreakpointListener listener) {
+            assert listener != null;
+            breakpointListeners.add(listener);
+        }
+
+        /**
+         * Removes a listener for breakpoint changes.
+         *
+         * @param listener a breakpoint listener
+         */
+        public final void removeBreakpointListener(MaxBreakpointListener listener) {
+            assert listener != null;
+            breakpointListeners.remove(listener);
         }
 
         /**
@@ -358,10 +372,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             if (breakpoints.length() == 0) {
                 createCompilerBreakpoint();
             }
-            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(teleVM, this, key);
+            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(teleVM(), this, key);
             breakpoints.put(key, breakpoint);
             Trace.line(TRACE_VALUE, tracePrefix + "new=" + breakpoint);
-            announceStateChange();
+            fireBreakpointsChanged();
             return breakpoint;
         }
 
@@ -391,7 +405,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 removeCompilerBreakpoint();
             }
             Trace.line(TRACE_VALUE, tracePrefix + "removed " + teleBytecodeBreakpoint);
-            announceStateChange();
+            fireBreakpointsChanged();
         }
 
         /**
@@ -406,7 +420,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private void createCompilerBreakpoint() {
             assert compilerTargetCodeBreakpoint == null;
-            final TeleClassMethodActor teleClassMethodActor = teleVM.teleMethods().InspectableCodeInfo_inspectableCompilationComplete.teleClassMethodActor();
+            final TeleClassMethodActor teleClassMethodActor = teleVM().teleMethods().InspectableCodeInfo_inspectableCompilationComplete.teleClassMethodActor();
             // TODO (mlvdv) set the breakpoint on all present and future compilations of the compiler!  Not just the first, as is done here.
             final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getJavaTargetMethod(0);
             final Address callEntryPoint = javaTargetMethod.callEntryPoint();
@@ -415,14 +429,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             compilerTargetCodeBreakpoint.setDescription("System trap for VM compiler");
             compilerTargetCodeBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-                    final TeleVM teleVM = Factory.this.teleVM;
 
                     // The new compilation; don't bother to construct a representation of it unless there's a match and it's needed.
                     TeleTargetMethod teleTargetMethod = null;
 
-                    final String holderTypeDescriptorString = teleVM.getStringUnsafe(teleVM.wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter0)));
-                    final String methodName = teleVM.getStringUnsafe(teleVM.wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter1)));
-                    final String signatureDescriptorString = teleVM.getStringUnsafe(teleVM.wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter2)));
+                    final String holderTypeDescriptorString = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter0)));
+                    final String methodName = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter1)));
+                    final String signatureDescriptorString = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter2)));
                     Trace.line(COMPILATION_TRACE_VALUE, "VM just compiled: " + holderTypeDescriptorString + " " + methodName + " " + signatureDescriptorString);
                     for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : Factory.this.breakpoints.values()) {
                         // Streamlined comparison using as little Inspector machinery as possible, since we take this break at every VM compilation
@@ -431,8 +444,8 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                                         signatureDescriptorString.equals(teleBytecodeBreakpoint.signatureDescriptorString)) {
                             // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
                             if (teleTargetMethod == null) {
-                                final Reference targetMethodReference = teleVM.wordToReference(teleNativeThread.integerRegisters().get(parameter3));
-                                teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);
+                                final Reference targetMethodReference = teleVM().wordToReference(teleNativeThread.integerRegisters().get(parameter3));
+                                teleTargetMethod = (TeleTargetMethod) teleVM().makeTeleObject(targetMethodReference);
                             }
                             teleBytecodeBreakpoint.handleNewCompilation(teleTargetMethod);
                         }
@@ -492,6 +505,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             final TeleTargetBreakpoint teleTargetBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(address, teleBreakpoint);
             teleTargetBreakpoint.setDescription("For bytecode key=" + key);
             return teleTargetBreakpoint;
+        }
+
+
+        private void fireBreakpointsChanged() {
+            for (final MaxBreakpointListener listener : breakpointListeners) {
+                listener.breakpointsChanged();
+            }
         }
 
         public void writeSummaryToStream(PrintStream printStream) {

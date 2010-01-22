@@ -1408,9 +1408,9 @@ public abstract class TeleVM implements MaxVM {
         return new TeleCodeLocation(this, getCodeAddress(stackFrame));
     }
 
-    public final void addBreakpointObserver(Observer observer) {
-        teleProcess.targetBreakpointFactory().addObserver(observer);
-        bytecodeBreakpointFactory.addObserver(observer);
+    public final void addBreakpointListener(MaxBreakpointListener listener) {
+        teleProcess.targetBreakpointFactory().addBreakpointListener(listener);
+        bytecodeBreakpointFactory.addBreakpointListener(listener);
     }
 
     public final Iterable<MaxBreakpoint> targetBreakpoints() {

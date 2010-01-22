@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins;
 
-import java.util.*;
-
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -39,7 +37,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Michael Van De Vanter
  */
-public final class BreakpointPersistenceManager extends AbstractSaveSettingsListener implements Observer  {
+public final class BreakpointPersistenceManager extends AbstractSaveSettingsListener implements MaxBreakpointListener  {
 
     private static BreakpointPersistenceManager breakpointPersistenceManager;
 
@@ -74,12 +72,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         }
 
         // Once load-in is finished, register for notification of subsequent breakpoint changes in the VM.
-        inspection.maxVM().addBreakpointObserver(this);
-    }
-
-    public void update(Observable o, Object arg) {
-        // Breakpoints in the VM have changed.
-        inspection.settings().save();
+        inspection.maxVM().addBreakpointListener(this);
     }
 
     // Keys used for making data persistent
@@ -94,6 +87,11 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     private static final String METHOD_NAME_KEY = "method.name";
     private static final String METHOD_SIGNATURE_KEY = "method.signature";
     private static final String POSITION_KEY = "position";
+
+    public void breakpointsChanged() {
+        // Breakpoints in the VM have changed.
+        inspection.settings().save();
+    }
 
     public void saveSettings(SaveSettingsEvent settings) {
         saveTargetCodeBreakpoints(settings);
