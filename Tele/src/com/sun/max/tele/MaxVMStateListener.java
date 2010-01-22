@@ -28,7 +28,7 @@ package com.sun.max.tele;
 public interface MaxVMStateListener {
 
     /**
-     * Notifies observers that the VM has changed state.
+     * Notifies listeners that the VM has changed state.
      *
      * @param maxVMState the new VM state
      */
