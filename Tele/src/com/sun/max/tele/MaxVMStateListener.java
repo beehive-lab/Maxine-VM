@@ -21,7 +21,7 @@
 package com.sun.max.tele;
 
 /**
- * Interface for listening to state changes in the Maxine VM.
+ * Listener interface for state changes in the VM.
  *
  * @author Michael Van De Vanter
  */
