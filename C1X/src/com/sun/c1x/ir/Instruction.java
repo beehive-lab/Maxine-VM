@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
+import com.sun.c1x.lir.LIROperand;
 
 /**
  * This class represents an instruction node in the IR, which is a {@link Value} that
@@ -54,7 +55,7 @@ public abstract class Instruction extends Value {
     public Instruction(CiKind type) {
         super(type);
         bci = BCI_NOT_APPENDED;
-        clearOperand();
+        lirOperand = LIROperand.IllegalLocation;
     }
 
     /**

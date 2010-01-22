@@ -69,7 +69,7 @@ public class CallingConvention {
 
     @Override
     public String toString() {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         result.append("CallingConvention[");
         for (LIROperand op : operands) {
             result.append(op.toString()).append(" ");
