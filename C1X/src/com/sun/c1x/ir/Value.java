@@ -76,7 +76,7 @@ public abstract class Value {
 
     private int id;
     private int flags;
-    private LIROperand lirOperand;
+    protected LIROperand lirOperand;
 
     public Object optInfo; // a cache field for analysis information
     public Value subst;    // managed by InstructionSubstituter

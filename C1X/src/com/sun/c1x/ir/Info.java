@@ -21,14 +21,14 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.CiCodePos;
-import com.sun.c1x.value.FrameState;
+import com.sun.c1x.value.JavaFrameState;
 
 import java.util.List;
 
 /**
  * This class collects a number of debugging and exception-related information about
  * an HIR node. Instances of this class can be attached to HIR nodes and contain
- * the {@link com.sun.c1x.ci.CiCodePos code position}, the {@link com.sun.c1x.value.FrameState frame state}
+ * the {@link com.sun.c1x.ci.CiCodePos code position}, the {@link com.sun.c1x.value.JavaFrameState frame state}
  * potential exceptions, and exception handlers.
  *
  * @author Ben L. Titzer
@@ -95,18 +95,18 @@ public class Info {
     public final CiCodePos pos;
     public final int id;
     private int exceptionFlags;
-    private FrameState frameState;
+    private JavaFrameState javaFrameState;
     private List<ExceptionHandler> exceptionHandlers;
 
-    public Info(CiCodePos pos, int id, FrameState frameState) {
+    public Info(CiCodePos pos, int id, JavaFrameState javaFrameState) {
         this.pos = pos;
         this.id = id;
-        this.frameState = frameState;
-        assert frameState == null || pos.matches(frameState.pos) : "position mismatch";
+        this.javaFrameState = javaFrameState;
+        assert javaFrameState == null || pos.matches(javaFrameState.pos) : "position mismatch";
     }
 
-    public FrameState frameState() {
-        return frameState;
+    public JavaFrameState frameState() {
+        return javaFrameState;
     }
 
     public boolean mayStop() {

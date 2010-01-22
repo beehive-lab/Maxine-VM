@@ -110,7 +110,7 @@ public final class LIRAddress extends LIROperand {
 
     @Override
     public String toString() {
-        final StringBuffer out = new StringBuffer();
+        final StringBuilder out = new StringBuilder();
         out.append("Base:").append(base);
         if (LIROperand.isLegal(index)) {
             out.append(" Index:").append(index);
