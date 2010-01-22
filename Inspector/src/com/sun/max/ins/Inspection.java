@@ -134,7 +134,7 @@ public final class Inspection {
         inspectionActions.refresh(true);
 
         maxVM().addVMStateListener(new VMStateListener());
-        maxVM().addBreakpointObserver(new BreakpointObserver());
+        maxVM().addBreakpointListener(new BreakpointListener());
         if (maxVM().watchpointsEnabled()) {
             maxVM().addWatchpointListener(new WatchpointListener());
         }
@@ -413,9 +413,9 @@ public final class Inspection {
      * Ensures that notification is handled only on the
      * AWT event thread.
      */
-    private final class BreakpointObserver implements Observer {
+    private final class BreakpointListener implements MaxBreakpointListener {
 
-        public void update(Observable o, Object arg) {
+        public void breakpointsChanged() {
             if (java.awt.EventQueue.isDispatchThread()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                 for (InspectionListener listener : inspectionListeners.clone()) {

@@ -634,11 +634,11 @@ public interface MaxVM {
     TeleCodeLocation createCodeLocation(StackFrame stackFrame);
 
     /**
-     * Adds a observer for breakpoint changes in the VM.
+     * Adds a listener for breakpoint changes in the VM.
      *
      * @param listener will be notified whenever breakpoints in VM change.
      */
-    void addBreakpointObserver(Observer observer);
+    void addBreakpointListener(MaxBreakpointListener listener);
 
     /**
      * All existing target code breakpoints.
