@@ -531,20 +531,20 @@ public interface MaxVM {
     MaxVMState maxVMState();
 
     /**
-     * Adds a VM state observer.
+     * Adds a VM state listener.
      * <br>
      * Thread-safe.
      *
-     * @param observer will be notified of changes to {@link #maxVMState()}.
+     * @param listener will be notified of changes to {@link #maxVMState()}.
      */
-    void addVMStateObserver(TeleVMStateObserver observer);
+    void addVMStateListener(MaxVMStateListener listener);
 
     /**
-     * Removes a VM state observer.
+     * Removes a VM state listener.
      * <br>
      * Thread-safe.
      */
-    void removeVMStateObserver(TeleVMStateObserver observer);
+    void removeVMStateListener(MaxVMStateListener listener);
 
     /**
      * Writes a textual summary describing the current {@link #maxVMState()}, including all predecessor states.

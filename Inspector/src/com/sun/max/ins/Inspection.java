@@ -133,7 +133,7 @@ public final class Inspection {
         BreakpointPersistenceManager.initialize(this);
         inspectionActions.refresh(true);
 
-        maxVM().addVMStateObserver(new VMStateObserver());
+        maxVM().addVMStateListener(new VMStateListener());
         maxVM().addBreakpointObserver(new BreakpointObserver());
         if (maxVM().watchpointsEnabled()) {
             maxVM().addWatchpointObserver(new WatchpointObserver());
@@ -379,9 +379,9 @@ public final class Inspection {
      * Handles reported changes in the {@linkplain MaxVM#maxVMState() VM state}.
      * Updates state synchronously, then posts an event for follow-up on the AST event thread
      */
-    private final class VMStateObserver implements TeleVMStateObserver {
+    private final class VMStateListener implements MaxVMStateListener {
 
-        public void upate(final MaxVMState maxVMState) {
+        public void stateChanged(final MaxVMState maxVMState) {
             Trace.line(TRACE_VALUE, tracePrefix() + "notified MaxVMState=" + maxVMState);
             for (MaxThread thread : maxVMState.threadsStarted()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "started: " + thread);

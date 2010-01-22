@@ -646,9 +646,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         public Factory(TeleProcess teleProcess) {
             this.teleProcess = teleProcess;
             updateCaches();
-            teleProcess.teleVM().addVMStateObserver(new TeleVMStateObserver() {
+            teleProcess.teleVM().addVMStateListener(new MaxVMStateListener() {
 
-                public void upate(MaxVMState maxVMState) {
+                public void stateChanged(MaxVMState maxVMState) {
                     if (maxVMState.processState() == ProcessState.TERMINATED) {
                         clientWatchpoints.clear();
                         systemWatchpoints.clear();

@@ -25,6 +25,7 @@ import static com.sun.max.tele.debug.ProcessState.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.logging.*;
 
 import com.sun.max.*;
@@ -437,7 +438,7 @@ public abstract class TeleVM implements MaxVM {
         return teleVMState;
     }
 
-    private VariableSequence<TeleVMStateObserver> observers = new ArrayListSequence<TeleVMStateObserver>();
+    private List<MaxVMStateListener> vmStateListeners = new CopyOnWriteArrayList<MaxVMStateListener>();
 
     private boolean isInGC = false;
 
@@ -510,7 +511,7 @@ public abstract class TeleVM implements MaxVM {
 
         // Provide access to JDWP server
         this.jdwpAccess = new VMAccessImpl();
-        addVMStateObserver(jdwpStateModel);
+        addVMStateListener(jdwpStateModel);
         this.javaThreadGroupProvider = new ThreadGroupProviderImpl(this, true);
         this.nativeThreadGroupProvider = new ThreadGroupProviderImpl(this, false);
 
@@ -584,19 +585,12 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    public final void addVMStateObserver(TeleVMStateObserver observer) {
-        synchronized (observers) {
-            observers.append(observer);
-        }
+    public final void addVMStateListener(MaxVMStateListener listener) {
+        vmStateListeners.add(listener);
     }
 
-    public final void removeVMStateObserver(TeleVMStateObserver observer) {
-        synchronized (observers) {
-            final int index = Sequence.Static.indexOfIdentical(observers, observer);
-            if (index != -1) {
-                observers.remove(index);
-            }
-        }
+    public final void removeVMStateListener(MaxVMStateListener listener) {
+        vmStateListeners.remove(listener);
     }
 
     public void notifyStateChange(ProcessState processState,
@@ -617,12 +611,8 @@ public abstract class TeleVM implements MaxVM {
             teleWatchpointEvent,
             isInGC,
             teleVMState);
-        final Sequence<TeleVMStateObserver> observers;
-        synchronized (this.observers) {
-            observers = this.observers.clone();
-        }
-        for (final TeleVMStateObserver observer : observers) {
-            observer.upate(teleVMState);
+        for (final MaxVMStateListener observer : vmStateListeners) {
+            observer.stateChanged(teleVMState);
         }
     }
 
@@ -1752,9 +1742,9 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    private final TeleVMStateObserver jdwpStateModel = new TeleVMStateObserver() {
+    private final MaxVMStateListener jdwpStateModel = new MaxVMStateListener() {
 
-        public void upate(MaxVMState maxVMState) {
+        public void stateChanged(MaxVMState maxVMState) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "handling " + maxVMState);
             fireJDWPThreadEvents();
             switch(maxVMState.processState()) {
