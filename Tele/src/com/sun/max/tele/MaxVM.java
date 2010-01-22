@@ -641,6 +641,13 @@ public interface MaxVM {
     void addBreakpointListener(MaxBreakpointListener listener);
 
     /**
+     * Removes a listener for breakpoint changes in the VM.
+     *
+     * @param listener will be notified whenever breakpoints in VM change.
+     */
+    void removeBreakpointListener(MaxBreakpointListener listener);
+
+    /**
      * All existing target code breakpoints.
      *
      * @return all existing target code breakpoints in the VM, ignoring those set by the system..
@@ -719,6 +726,16 @@ public interface MaxVM {
      * @see #watchpointsEnabled()
      */
     void addWatchpointListener(MaxWatchpointListener listener) throws ProgramError;
+
+
+    /**
+     * Removes a listener for watchpoint changes in the VM.
+     * @param listener a watchpoint listener
+     *
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
+     */
+    void removeWatchpointListener(MaxWatchpointListener listener) throws ProgramError;
 
     /**
      * Creates a new watchpoint in the VM.
