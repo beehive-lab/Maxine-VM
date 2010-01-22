@@ -104,13 +104,7 @@ public final class JDK_java_lang_Throwable {
                 atImplicitExceptionThrow = true;
                 inFiller = false;
                 continue;
-            } /*else if (atImplicitExceptionThrow) {
-                // if it is an implicit exception, do not look for a java frame descriptor
-                addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.ip.minus(targetMethod.codeStart()).toInt());
-                atImplicitExceptionThrow = false;
-                inFiller = false;
-                continue;
-            } */else if (inFiller) {
+            } else if (inFiller) {
                 final ClassMethodActor methodActor = targetMethod.classMethodActor();
                 if (methodActor.holder() == throwableActor && methodActor.isInstanceInitializer()) {
                     // This will initiate filling the stack trace.
@@ -130,11 +124,7 @@ public final class JDK_java_lang_Throwable {
     }
 
     private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame, boolean atImplicitExceptionThrow) {
-        Pointer instructionPointer = stackFrame.ip;
-        if (Platform.target().instructionSet().offsetToReturnPC == 0 && !stackFrame.isTopFrame()) {
-            instructionPointer = instructionPointer.minus(1);
-        }
-        Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, atImplicitExceptionThrow);
+        Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.ip, atImplicitExceptionThrow);
         if (bytecodeLocations == null) {
             addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.ip.minus(targetMethod.codeStart()).toInt());
         } else {

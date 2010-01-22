@@ -455,7 +455,8 @@ public class C1XTargetMethod extends TargetMethod {
 
             this.sourceInfo = sourceInfoData;
             this.sourceMethods = inlinedMethodList.toArray(new ClassMethodActor[inlinedMethodList.size()]);
-        } else if (debugInfos.length > 0){
+
+        } else if (debugInfos.length > 0) {
             // use a more compact format if there are no inlined methods;
             // only store the bytecode index in the originating method for each stop
             char[] bciInfo = new char[debugInfos.length];
@@ -471,7 +472,16 @@ public class C1XTargetMethod extends TargetMethod {
         }
     }
 
-    private void encodeSourcePos(int index, int[] sourceInfoData, CiCodePos curPos, IdentityHashMap<ClassMethodActor, Integer> inlinedMethodMap, IdentityHashMap<CiCodePos, Integer> codePosMap, int stopCount, List<ClassMethodActor> inlinedMethodList) {
+    private void encodeSourcePos(int index,
+                                 int[] sourceInfoData,
+                                 CiCodePos curPos,
+                                 IdentityHashMap<ClassMethodActor, Integer> inlinedMethodMap,
+                                 IdentityHashMap<CiCodePos, Integer> codePosMap,
+                                 int stopCount,
+                                 List<ClassMethodActor> inlinedMethodList) {
+        // encodes three integers into the sourceInfoData array:
+        // the index into the sourceMethods array, the bytecode index, and the index of the caller method
+        // (if this entry is an inlined method)
         int start = index * 3;
 
         ClassMethodActor cma = getClassMethodActor(curPos.method);
@@ -855,6 +865,10 @@ public class C1XTargetMethod extends TargetMethod {
 
     @Override
     public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer ip, boolean implicitExceptionPoint) {
+        if (!implicitExceptionPoint && Platform.target().instructionSet().offsetToReturnPC == 0) {
+            ip = ip.minus(1);
+        }
+
         int stopIndex = findClosestStopIndex(ip);
         if (stopIndex < 0) {
             return null;

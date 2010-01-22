@@ -494,7 +494,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         }
 
         // Since this is not a safepoint, it must be a call.
-
         final int adjustedTargetCodePosition;
         if (compilerScheme.vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC == 0) {
             // targetCodePostion is the instruction after the call (which might be another call).

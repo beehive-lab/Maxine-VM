@@ -44,6 +44,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 import com.sun.max.program.ProgramError;
+import com.sun.max.platform.Platform;
 
 /**
  * Target method that saves for each catch block the ranges in the code that can
@@ -526,7 +527,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      * {@code instructionPointer}.
      *
      * @param instructionPointer a pointer to an instruction within this method
-     * @param implicitExceptionPoint
+     * @param implicitExceptionPoint {@code true} if this instruction pointer corresponds to an implicit exception point
      * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
@@ -535,6 +536,10 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         if (implicitExceptionPoint) {
             // CPS target methods don't have Java frame descriptors at implicit throw points. dumb.
             return null;
+        } else {
+            if (Platform.target().instructionSet().offsetToReturnPC == 0) {
+                instructionPointer = instructionPointer.minus(1);
+            }
         }
         final TargetJavaFrameDescriptor targetFrameDescriptor = getJavaFrameDescriptorFor(instructionPointer);
         if (targetFrameDescriptor != null) {
