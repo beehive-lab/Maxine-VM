@@ -1413,6 +1413,11 @@ public abstract class TeleVM implements MaxVM {
         bytecodeBreakpointFactory.addBreakpointListener(listener);
     }
 
+    public final void removeBreakpointListener(MaxBreakpointListener listener) {
+        teleProcess.targetBreakpointFactory().removeBreakpointListener(listener);
+        bytecodeBreakpointFactory.removeBreakpointListener(listener);
+    }
+
     public final Iterable<MaxBreakpoint> targetBreakpoints() {
         return teleProcess.targetBreakpointFactory().clientBreakpoints();
     }
@@ -1466,6 +1471,11 @@ public abstract class TeleVM implements MaxVM {
     public final void addWatchpointListener(MaxWatchpointListener listener) throws UnsupportedOperationException {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         teleProcess.watchpointFactory().addWatchpointListener(listener);
+    }
+
+    public final void removeWatchpointListener(MaxWatchpointListener listener) throws UnsupportedOperationException {
+        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
+        teleProcess.watchpointFactory().removeWatchpointListener(listener);
     }
 
     public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, WatchpointSettings settings)
