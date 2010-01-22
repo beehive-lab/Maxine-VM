@@ -52,7 +52,7 @@ final class JDK_sun_reflect_Reflection {
      * position in the stack.
      */
     static class Context implements RawStackFrameVisitor {
-        TargetMethod targetMethodResult;
+        MethodActor methodActorResult;
         Pointer framePointerResult;
         int realFramesToSkip;
 
@@ -67,7 +67,6 @@ final class JDK_sun_reflect_Reflection {
             if (isAdapter(flags)) {
                 return true;
             }
-            //final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer());
             if (targetMethod == null) {
                 // native frame
                 realFramesToSkip--; // TODO: find out whether this is according to getCallerClass' intended "spec"
@@ -81,7 +80,7 @@ final class JDK_sun_reflect_Reflection {
             final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
             if (bytecodeLocations == null) {
                 if (realFramesToSkip == 0) {
-                    targetMethodResult = targetMethod;
+                    methodActorResult = targetMethod.classMethodActor();
                     framePointerResult = framePointer;
                     return false;
                 }
@@ -92,7 +91,7 @@ final class JDK_sun_reflect_Reflection {
                     final MethodActor classMethodActor = bytecodeLocation.classMethodActor.original();
                     if (!classMethodActor.holder().isGenerated()) {
                         if (realFramesToSkip == 0) {
-                            targetMethodResult = targetMethod;
+                            methodActorResult = classMethodActor;
                             framePointerResult = framePointer;
                             return false;
                         }
@@ -117,7 +116,7 @@ final class JDK_sun_reflect_Reflection {
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer(),
                                                        context);
-        return context.targetMethodResult.classMethodActor;
+        return context.methodActorResult;
     }
 
     /**

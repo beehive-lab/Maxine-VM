@@ -88,7 +88,7 @@ final class JDK_java_security_AccessController {
     public static <T> T doPrivileged(PrivilegedAction<T> action) {
         final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
         final VmThread current = VmThread.current();
-        current.pushPrivilegedElement(context.targetMethodResult.classMethodActor.holder(), context.framePointerResult, null);
+        current.pushPrivilegedElement(context.methodActorResult.holder(), context.framePointerResult, null);
         try {
             return action.run();
         } finally {
@@ -109,7 +109,7 @@ final class JDK_java_security_AccessController {
     public static <T> T doPrivileged(PrivilegedAction<T> action, AccessControlContext accessControlContext) {
         final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
         final VmThread current = VmThread.current();
-        current.pushPrivilegedElement(context.targetMethodResult.classMethodActor.holder(), context.framePointerResult, accessControlContext);
+        current.pushPrivilegedElement(context.methodActorResult.holder(), context.framePointerResult, accessControlContext);
         try {
             return action.run();
         } finally {
@@ -130,7 +130,7 @@ final class JDK_java_security_AccessController {
     public static <T> T doPrivileged(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
         final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
         final VmThread current = VmThread.current();
-        current.pushPrivilegedElement(context.targetMethodResult.classMethodActor.holder(), context.framePointerResult, null);
+        current.pushPrivilegedElement(context.methodActorResult.holder(), context.framePointerResult, null);
         try {
             return action.run();
         } catch (Exception exception) {
@@ -154,7 +154,7 @@ final class JDK_java_security_AccessController {
     public static <T> T doPrivileged(PrivilegedExceptionAction<T> action, AccessControlContext accessControlContext) throws PrivilegedActionException {
         final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
         final VmThread current = VmThread.current();
-        current.pushPrivilegedElement(context.targetMethodResult.classMethodActor.holder(), context.framePointerResult, accessControlContext);
+        current.pushPrivilegedElement(context.methodActorResult.holder(), context.framePointerResult, accessControlContext);
         try {
             return action.run();
         } catch (Exception exception) {
