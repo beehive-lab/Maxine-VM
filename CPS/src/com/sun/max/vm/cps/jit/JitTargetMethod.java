@@ -128,7 +128,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     }
 
     @Override
-    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
+    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
         final BytecodeLocation bytecodeLocation = new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
         return Iterators.iterator(new BytecodeLocation[]{bytecodeLocation});
     }

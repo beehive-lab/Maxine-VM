@@ -526,11 +526,16 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      * {@code instructionPointer}.
      *
      * @param instructionPointer a pointer to an instruction within this method
+     * @param implicitExceptionPoint
      * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
     @Override
-    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
+    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
+        if (implicitExceptionPoint) {
+            // CPS target methods don't have Java frame descriptors at implicit throw points. dumb.
+            return null;
+        }
         final TargetJavaFrameDescriptor targetFrameDescriptor = getJavaFrameDescriptorFor(instructionPointer);
         if (targetFrameDescriptor != null) {
             return targetFrameDescriptor.inlinedFrames();

@@ -111,7 +111,7 @@ public final class Disassemble {
                 if (string.startsWith("call ")) {
 
                     final Pointer instructionPointer = startAddress.plus(disassembledObject.startPosition());
-                    final Iterator<? extends BytecodeLocation> bytecodeLocationsFor = targetMethod.getBytecodeLocationsFor(instructionPointer);
+                    final Iterator<? extends BytecodeLocation> bytecodeLocationsFor = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
                     BytecodeLocation bytecodeLocation = null;
                     if (bytecodeLocationsFor != null && bytecodeLocationsFor.hasNext()) {
                         bytecodeLocation = bytecodeLocationsFor.next();
