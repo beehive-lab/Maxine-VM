@@ -64,6 +64,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     private static final String STEP_OVER = "stepOver";
 
     private static final Sequence<TeleNativeThread> EMPTY_THREAD_SEQUENCE = Sequence.Static.empty(TeleNativeThread.class);
+    private static final Sequence<TeleBreakpointEvent> EMPTY_BREAKPOINTEVENT_SEQUENCE = Sequence.Static.empty(TeleBreakpointEvent.class);
+
 
     public static final String[] EMPTY_COMMAND_LINE_ARGUMENTS = {};
 
@@ -112,12 +114,14 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             assert requestHandlingThread == Thread.currentThread();
             Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request);
             try {
-                final AppendableSequence<TeleNativeThread> threadsAtBreakpoint = new LinkSequence<TeleNativeThread>();
+                final AppendableSequence<TeleBreakpointEvent> teleBreakpointEvents = new LinkSequence<TeleBreakpointEvent>();
                 TeleWatchpointEvent teleWatchpointEvent = null;
 
                 // Keep resuming the process, after dealing with event handlers, as long as this is true.
                 boolean resumeExecution = true;
                 do {  // while resumeExecution = true
+                    assert teleBreakpointEvents.isEmpty();
+                    assert teleWatchpointEvent == null;
 
                     // There are five legitimate cases where execution should halt (i.e. not be resumed),
                     // although there may be more than one simultaneously .
@@ -163,7 +167,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering breakpoint");
                                     // Case 3. At least one thread is at a breakpoint that specifies that execution should halt; record it and do not continue.
                                     // At a breakpoint where we should really stop; create a record
-                                    threadsAtBreakpoint.append(thread);
+                                    teleBreakpointEvents.append(new TeleBreakpointEvent(breakpoint.getAssociatedClientBreakpoint(), thread));
                                     resumeExecution = false;
                                 }
                                 break;
@@ -209,7 +213,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.begin(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
                 Trace.end(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
-                updateState(STOPPED, threadsAtBreakpoint, teleWatchpointEvent);
+                updateState(STOPPED, teleBreakpointEvents, teleWatchpointEvent);
 
             } catch (ProcessTerminatedException processTerminatedException) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "VM process terminated: " + processTerminatedException.getMessage());
@@ -743,10 +747,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * Gathers information about this process and posts a thread-safe record of the state change.
      *
      * @param newState the current state of this process
-     * @param breakpointThreads threads currently at a breakpoint in the VM
      * @param teleWatchpointEvent description of watchpoint trigger, if just happened.
      */
-    private void updateState(ProcessState newState, Sequence<TeleNativeThread> breakpointThreads, TeleWatchpointEvent teleWatchpointEvent) {
+    private void updateState(ProcessState newState, Sequence<TeleBreakpointEvent> breakpointEvents, TeleWatchpointEvent teleWatchpointEvent) {
         processState = newState;
         if (newState == TERMINATED) {
             this.threadsDied.addAll(handleToThreadMap.values());
@@ -762,11 +765,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             this.threadsDied.isEmpty() ? EMPTY_THREAD_SEQUENCE : new ArrayListSequence<TeleNativeThread>(this.threadsDied);
         this.threadsStarted.clear();
         this.threadsDied.clear();
-        teleVM().notifyStateChange(processState, epoch, lastSingleStepThread, handleToThreadMap.values(), threadsStarted, threadsDied, breakpointThreads, teleWatchpointEvent);
+        teleVM().notifyStateChange(processState, epoch, lastSingleStepThread, handleToThreadMap.values(), threadsStarted, threadsDied, breakpointEvents, teleWatchpointEvent);
     }
 
     private void updateState(ProcessState newState) {
-        updateState(newState, EMPTY_THREAD_SEQUENCE, null);
+        updateState(newState, EMPTY_BREAKPOINTEVENT_SEQUENCE, null);
     }
 
     /**

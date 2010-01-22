@@ -18,56 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.management;
+package com.sun.max.tele;
 
-import java.lang.management.*;
-import java.util.*;
+import com.sun.max.collect.*;
 
 /**
- * Adaptor class for the Maxine implementations of MemoryManagerMXBean.
+ * Inspector support for a specific implementation of a {@link Scheme} in the VM.
  *
- * @author Mick Jordan
+ * @author Michael Van De Vanter
  */
+public interface TeleScheme {
 
-public class MemoryManagerMXBeanAdaptor implements MemoryManagerMXBean, MemoryManagerMXBeanPools {
-    private List<MemoryPoolMXBean> pool = new ArrayList<MemoryPoolMXBean>();
-    private String name;
+    /**
+     * @return the implementation class for which details are being provided.
+     */
+    Class heapSchemeClass();
 
-    private MemoryManagerMXBeanAdaptor() {
-    }
-
-    public MemoryManagerMXBeanAdaptor(String name) {
-        this.name = name;
-    }
-
-    public void add(MemoryPoolMXBean bean) {
-        pool.add(bean);
-    }
-
-    public void remove(MemoryPoolMXBean bean) {
-        pool.remove(bean);
-    }
-
-    public List<MemoryPoolMXBean> getAll() {
-        return pool;
-    }
-
-    public String[] getMemoryPoolNames() {
-        final String[] result = new String[pool.size()];
-        for (int i = 0; i < pool.size(); i++) {
-            final MemoryPoolMXBean bean = pool.get(i);
-            result[i] = bean.getName();
-        }
-        return result;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public boolean isValid() {
-        return true;
-    }
-
+    /**
+     * Identifies methods specific to a particular scheme implementation in the VM, which
+     * can be presented to the user, for example to set predefined breakpoints.
+     *
+     * @return descriptions of methods unique to a specific scheme implementation.
+     */
+    Sequence<MaxInspectableMethod> inspectableMethods();
 
 }

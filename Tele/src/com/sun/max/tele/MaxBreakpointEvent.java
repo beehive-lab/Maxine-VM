@@ -18,39 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.tele;
 
-import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
-import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 
 /**
- * Wrapper for a remote method in the VM that is intended to be accessed
- * by clients, for example by setting breakpoints at predefined locations.
+ * An immutable (thread-safe) record of a thread in the VM triggering a  breakpoint.
  *
  * @author Michael Van De Vanter
- */
-public final class InspectableMethod implements MaxInspectableMethod {
+  */
+public interface MaxBreakpointEvent {
 
-    private final TeleMethodAccess teleMethodAccess;
-    private final String description;
-    private TeleClassMethodActor teleClassMethodActor;
+    /**
+     * Note that only client-visible breakpoints are reported, so for example, when
+     * a target code breakpoint created for a bytecode breakpoint is triggered, what
+     * gets reported is the bytecode breakpoint.
+     *
+     * @return the breakpoint that triggered the event.
+     */
+    MaxBreakpoint breakpoint();
 
-    public InspectableMethod(TeleMethodAccess teleMethodAccess, String description) {
-        this.teleMethodAccess = teleMethodAccess;
-        this.description = description;
-    }
+    /**
+     * @return the thread that triggered the watchpoint.
+     */
+    MaxThread thread();
 
-    public TeleClassMethodActor teleClassMethodActor() {
-        // Initialize this lazily; requires that some other Inspector machinery be in operation.
-        if (teleClassMethodActor == null) {
-            teleClassMethodActor = teleMethodAccess.teleClassMethodActor();
-        }
-        return teleClassMethodActor;
-    }
-
-    public String description() {
-        return description;
-    }
+    /**
+     * @return the memory location where the breakpoint was triggered.
+     */
+    Address address();
 
 }

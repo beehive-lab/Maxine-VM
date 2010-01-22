@@ -76,6 +76,7 @@ enum
 epilogue
 floatable
 generational
+growable
 hashcode
 hexadecimal
 hotspot
@@ -113,6 +114,7 @@ mutex
 namespace
 nop
 nops
+op
 outbound
 payload
 polymorphic

@@ -335,7 +335,12 @@ public class ComputeLinearScanOrder {
     void computeDominator(BlockBegin cur, BlockBegin parent) {
         if (cur.dominator() == null) {
             // Util.traceLinearScan(4, "DOM: initializing dominator of B%d to B%d", cur.blockID, parent.blockID);
-            cur.setDominator(parent);
+            if (cur.isExceptionEntry()) {
+                assert parent.dominator() != null;
+                cur.setDominator(parent.dominator());
+            } else {
+                cur.setDominator(parent);
+            }
 
         } else if (!(cur.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopHeader) && parent.checkBlockFlag(BlockBegin.BlockFlag.LinearScanLoopEnd))) {
             // Util.traceLinearScan(4, "DOM: computing dominator of B%d: common dominator of B%d and B%d is B%d", cur.blockID, parent.blockID, cur.dominator().blockID, commonDominator(cur.dominator(), parent).blockID);
@@ -540,9 +545,17 @@ public class ComputeLinearScanOrder {
 
             assert block.numberOfPreds() > 0;
             BlockBegin dominator = block.predAt(0);
+            if (block.isExceptionEntry()) {
+                dominator = dominator.dominator();
+            }
+
             int numPreds = block.numberOfPreds();
             for (int j = 1; j < numPreds; j++) {
-                dominator = commonDominator(dominator, block.predAt(j));
+                BlockBegin curPred = block.predAt(j);
+                if (block.isExceptionEntry()) {
+                    curPred = curPred.dominator();
+                }
+                dominator = commonDominator(dominator, curPred);
             }
 
             if (dominator != block.dominator()) {
@@ -670,7 +683,7 @@ public class ComputeLinearScanOrder {
             } else {
                 assert cur.dominator() != null : "all but first block must have dominator";
             }
-            assert cur.numberOfPreds() != 1 || cur.dominator() == cur.predAt(0) : "Single predecessor must also be dominator";
+            assert cur.numberOfPreds() != 1 || cur.dominator() == cur.predAt(0) || cur.isExceptionEntry() : "Single predecessor must also be dominator";
         }
 
         // check that all loops are continuous

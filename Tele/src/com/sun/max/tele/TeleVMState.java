@@ -35,6 +35,9 @@ public final class TeleVMState implements MaxVMState {
 
     private static final Sequence<TeleNativeThread> EMPTY_THREAD_SEQUENCE = Sequence.Static.empty(TeleNativeThread.class);
     private static final Collection<TeleNativeThread> EMPTY_THREAD_COLLECTION = Collections.emptyList();
+    private static final Sequence<MaxThread> EMPTY_MAXTHREAD_SEQUENCE  = Sequence.Static.empty(MaxThread.class);
+    private static final Sequence<MaxBreakpointEvent>   EMPTY_MAXBREAKPOINTEVENT_SEQUENCE = Sequence.Static.empty(MaxBreakpointEvent.class);
+
 
     public static final TeleVMState NONE = new TeleVMState(ProcessState.UNKNOWN,
         -1L,
@@ -42,7 +45,7 @@ public final class TeleVMState implements MaxVMState {
         (TeleNativeThread) null,
         EMPTY_THREAD_SEQUENCE,
         EMPTY_THREAD_SEQUENCE,
-        EMPTY_THREAD_SEQUENCE,
+        Sequence.Static.empty(TeleBreakpointEvent.class),
         (TeleWatchpointEvent) null,
         false,
         (TeleVMState) null);
@@ -54,7 +57,7 @@ public final class TeleVMState implements MaxVMState {
     private final MaxThread singleStepThread;
     private final Sequence<MaxThread> threadsStarted;
     private final Sequence<MaxThread> threadsDied;
-    private final Sequence<MaxThread> breakpointThreads;
+    private final Sequence<MaxBreakpointEvent> breakpointEvents;
     private final MaxWatchpointEvent maxWatchpointEvent;
     private final boolean isInGC;
     private final TeleVMState previous;
@@ -66,8 +69,8 @@ public final class TeleVMState implements MaxVMState {
      * @param singleStepThread thread just single-stepped, null if none
      * @param threadsStarted threads created since the previous state
      * @param threadsDied threads died since the previous state
-     * @param breakpointThreads threads currently at a breakpoint, empty if none
-     * @param teleWatchpointEvent information about a thread currently at a memory watchpoint, null if none
+     * @param breakpointEvents information about threads currently at breakpoints, empty if none
+     * @param teleWatchpointEvent information about a thread currently at a watchpoint, null if none
      * @param isInGC is the VM, when paused, in a GC
      * @param previous previous state
      */
@@ -77,16 +80,17 @@ public final class TeleVMState implements MaxVMState {
                     TeleNativeThread singleStepThread,
                     Sequence<TeleNativeThread> threadsStarted,
                     Sequence<TeleNativeThread> threadsDied,
-                    Sequence<TeleNativeThread> breakpointThreads,
-                    TeleWatchpointEvent teleWatchpointEvent, boolean isInGC, TeleVMState previous) {
-        final Sequence<MaxThread> emptyMaxThreadSequence = Sequence.Static.empty(MaxThread.class);
+                    Sequence<TeleBreakpointEvent> breakpointEvents,
+                    TeleWatchpointEvent teleWatchpointEvent,
+                    boolean isInGC,
+                    TeleVMState previous) {
         this.processState = processState;
         this.serialID = previous == null ? 0 : previous.serialID() + 1;
         this.epoch = epoch;
         this.singleStepThread = singleStepThread;
-        this.threadsStarted = threadsStarted.length() == 0 ? emptyMaxThreadSequence : new VectorSequence<MaxThread>(threadsStarted);
-        this.threadsDied = threadsDied.length() == 0 ? emptyMaxThreadSequence : new VectorSequence<MaxThread>(threadsDied);
-        this.breakpointThreads = breakpointThreads.length() == 0 ? emptyMaxThreadSequence : new VectorSequence<MaxThread>(breakpointThreads);
+        this.threadsStarted = threadsStarted.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsStarted);
+        this.threadsDied = threadsDied.length() == 0 ? EMPTY_MAXTHREAD_SEQUENCE : new VectorSequence<MaxThread>(threadsDied);
+        this.breakpointEvents = breakpointEvents.isEmpty() ? EMPTY_MAXBREAKPOINTEVENT_SEQUENCE : new VectorSequence<MaxBreakpointEvent>(breakpointEvents);
         this.maxWatchpointEvent = teleWatchpointEvent;
         this.isInGC = isInGC;
         this.previous = previous;
@@ -132,8 +136,8 @@ public final class TeleVMState implements MaxVMState {
         return threadsDied;
     }
 
-    public Sequence<MaxThread> breakpointThreads() {
-        return breakpointThreads;
+    public  Sequence<MaxBreakpointEvent> breakpointEvents() {
+        return breakpointEvents;
     }
 
     public MaxWatchpointEvent watchpointEvent() {
@@ -203,10 +207,10 @@ public final class TeleVMState implements MaxVMState {
                     printStream.println("\t\t" + thread.toShortString());
                 }
             }
-            if (state.breakpointThreads().length() > 0) {
-                printStream.println("\tthreads at breakpoint");
-                for (MaxThread thread : state.breakpointThreads()) {
-                    printStream.println("\t\t" + thread.toShortString());
+            if (state.breakpointEvents().length() > 0) {
+                printStream.println("\tbreakpoint events");
+                for (MaxBreakpointEvent breakpointEvent : state.breakpointEvents()) {
+                    printStream.println("\t\t" + breakpointEvent.toString());
                 }
             }
             if (state.watchpointEvent() != null) {

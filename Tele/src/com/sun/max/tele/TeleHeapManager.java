@@ -342,6 +342,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         return teleHeapScheme.heapSchemeClass();
     }
 
+    public Sequence<MaxInspectableMethod> inspectableMethods() {
+        return teleHeapScheme.inspectableMethods();
+    }
+
     public Offset gcForwardingPointerOffset() {
         return teleHeapScheme.gcForwardingPointerOffset();
     }

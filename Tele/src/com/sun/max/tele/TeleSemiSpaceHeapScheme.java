@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -47,6 +48,13 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
 
     public Class heapSchemeClass() {
         return SemiSpaceHeapScheme.class;
+    }
+
+    public Sequence<MaxInspectableMethod> inspectableMethods() {
+        final AppendableSequence<MaxInspectableMethod> inspectableMethods = new LinkSequence<MaxInspectableMethod>();
+        inspectableMethods.append(new TeleInspectableMethod(teleVM().teleMethods().SemiSpaceHeapScheme_increaseMemory, heapSchemeClass().getSimpleName() + ": increase memory"));
+        inspectableMethods.append(new TeleInspectableMethod(teleVM().teleMethods().SemiSpaceHeapScheme_decreaseMemory, heapSchemeClass().getSimpleName() + ": decrease memory"));
+        return inspectableMethods;
     }
 
     public Offset gcForwardingPointerOffset() {

@@ -18,56 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.management;
+package com.sun.max.tele.debug;
 
-import java.lang.management.*;
-import java.util.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.method.*;
+import com.sun.max.tele.object.*;
 
 /**
- * Adaptor class for the Maxine implementations of MemoryManagerMXBean.
+ * Wrapper for a remote method in the VM that is intended to be accessed
+ * by clients, for example by setting breakpoints at predefined locations.
  *
- * @author Mick Jordan
+ * @author Michael Van De Vanter
  */
+public final class TeleInspectableMethod implements MaxInspectableMethod {
 
-public class MemoryManagerMXBeanAdaptor implements MemoryManagerMXBean, MemoryManagerMXBeanPools {
-    private List<MemoryPoolMXBean> pool = new ArrayList<MemoryPoolMXBean>();
-    private String name;
+    private final TeleMethodAccess teleMethodAccess;
+    private final String description;
+    private TeleClassMethodActor teleClassMethodActor;
 
-    private MemoryManagerMXBeanAdaptor() {
+    public TeleInspectableMethod(TeleMethodAccess teleMethodAccess, String description) {
+        this.teleMethodAccess = teleMethodAccess;
+        this.description = description;
     }
 
-    public MemoryManagerMXBeanAdaptor(String name) {
-        this.name = name;
-    }
-
-    public void add(MemoryPoolMXBean bean) {
-        pool.add(bean);
-    }
-
-    public void remove(MemoryPoolMXBean bean) {
-        pool.remove(bean);
-    }
-
-    public List<MemoryPoolMXBean> getAll() {
-        return pool;
-    }
-
-    public String[] getMemoryPoolNames() {
-        final String[] result = new String[pool.size()];
-        for (int i = 0; i < pool.size(); i++) {
-            final MemoryPoolMXBean bean = pool.get(i);
-            result[i] = bean.getName();
+    public TeleClassMethodActor teleClassMethodActor() {
+        // Initialize this lazily; requires that some other Inspector machinery be in operation.
+        if (teleClassMethodActor == null) {
+            teleClassMethodActor = teleMethodAccess.teleClassMethodActor();
         }
-        return result;
+        return teleClassMethodActor;
     }
 
-    public String getName() {
-        return name;
+    public String description() {
+        return description;
     }
-
-    public boolean isValid() {
-        return true;
-    }
-
 
 }
