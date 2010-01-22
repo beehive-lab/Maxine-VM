@@ -106,7 +106,7 @@ public interface MaxWatchpoint extends MemoryRegion {
      * @return whether set succeeded.
      * @throws ProgramError if watchpoint has been disposed
      */
-    void setEnabledDuringGC(boolean gc);
+    boolean setEnabledDuringGC(boolean gc);
 
     /**
      * @return whether the watchpoint is on an object that might be relocated by GC.

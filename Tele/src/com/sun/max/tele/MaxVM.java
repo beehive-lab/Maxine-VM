@@ -712,13 +712,13 @@ public interface MaxVM {
     boolean watchpointsEnabled();
 
     /**
-     * Adds a observer for watchpoint changes in the VM.
+     * Adds a listener for watchpoint changes in the VM.
+     * @param listener a watchpoint listener
      *
-     * @param observer will be notified whenever watchpoints in VM change.
      * @throws ProgramError if watchpoints not enabled on platform.
      * @see #watchpointsEnabled()
      */
-    void addWatchpointObserver(Observer observer) throws ProgramError;
+    void addWatchpointListener(MaxWatchpointListener listener) throws ProgramError;
 
     /**
      * Creates a new watchpoint in the VM.
