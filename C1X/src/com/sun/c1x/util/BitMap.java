@@ -314,7 +314,6 @@ public class BitMap {
                 for (resOffset = bitIndex(index); (res & 1) == 0; resOffset++) {
                     res = res >> 1;
                 }
-                assert (res & 1) == 1 : "tautology; see loop condition";
                 assert resOffset >= lOffset : "just checking";
                 return Math.min(resOffset, rOffset);
             }
@@ -335,7 +334,7 @@ public class BitMap {
 
     @Override
     public String toString() {
-        StringBuffer res = new StringBuffer();
+        StringBuilder res = new StringBuilder();
         res.append("[");
         for (int i = 0; i < this.length; i++) {
             if (this.get(i)) {
