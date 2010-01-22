@@ -611,8 +611,8 @@ public abstract class TeleVM implements MaxVM {
             teleWatchpointEvent,
             isInGC,
             teleVMState);
-        for (final MaxVMStateListener observer : vmStateListeners) {
-            observer.stateChanged(teleVMState);
+        for (final MaxVMStateListener listener : vmStateListeners) {
+            listener.stateChanged(teleVMState);
         }
     }
 
@@ -1463,9 +1463,9 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.watchpointsEnabled();
     }
 
-    public final void addWatchpointObserver(Observer observer) throws UnsupportedOperationException {
+    public final void addWatchpointListener(MaxWatchpointListener listener) throws UnsupportedOperationException {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        teleProcess.watchpointFactory().addObserver(observer);
+        teleProcess.watchpointFactory().addWatchpointListener(listener);
     }
 
     public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, WatchpointSettings settings)

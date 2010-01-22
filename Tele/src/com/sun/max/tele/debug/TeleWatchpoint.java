@@ -22,6 +22,7 @@ package com.sun.max.tele.debug;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
@@ -190,14 +191,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         return reset();
     }
 
-    public final void setEnabledDuringGC(boolean enabledDuringGC) {
+    public final boolean setEnabledDuringGC(boolean enabledDuringGC) {
         assert alive;
-        if (settings.enabledDuringGC != enabledDuringGC) {
-            this.settings = new WatchpointSettings(settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec, enabledDuringGC);
-            if (factory.isInGC()) {
-                setActive(enabledDuringGC);
-            }
-        }
+        this.settings = new WatchpointSettings(settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec, enabledDuringGC);
+        return reset();
     }
 
     public final WatchpointSettings getSettings() {
@@ -223,7 +220,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
     public final boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
         assert alive;
         assert teleNativeThread.state() == TeleNativeThread.ThreadState.WATCHPOINT;
-        if (factory.teleProcess.teleVM().isInGC()) {
+        if (factory.teleVM().isInGC()) {
             factory.setInGC(true);
             if (!settings.enabledDuringGC) {
                 return false;
@@ -277,7 +274,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             memoryCache = new byte[size.toInt()];
         }
         try {
-            memoryCache = factory.teleProcess.dataAccess().readFully(start, size.toInt());
+            memoryCache = factory.teleVM().dataAccess().readFully(start, size.toInt());
         } catch (DataIOError e) {
             // Must be a watchpoint in an address space that doesn't (yet?) exist in the VM process.
             memoryCache = null;
@@ -334,7 +331,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             }
         }
         Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint reset " + this);
-        factory.notifyWatchpointChanged();
+        factory.fireWatchpointsChanged();
         return true;
     }
 
@@ -367,7 +364,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             setStart(newAddress);
         }
         Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint reset " + start().toHexString());
-        factory.notifyWatchpointChanged();
+        factory.fireWatchpointsChanged();
         return true;
     }
 
@@ -430,6 +427,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
     private abstract static class TeleObjectWatchpoint extends TeleWatchpoint {
 
         private static final WatchpointSettings relocationWatchpointSettings = new WatchpointSettings(false, true, false, true);
+
         /**
          * The VM heap object on which this watchpoint is set.
          */
@@ -462,7 +460,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          * @throws TooManyWatchpointsException
          */
         private void setRelocationWatchpoint(final Pointer origin) throws TooManyWatchpointsException {
-            final TeleVM teleVM = factory.teleProcess.teleVM();
+            final TeleVM teleVM = factory.teleVM();
             final Pointer forwardPointerLocation = origin.plus(teleVM.gcForwardingPointerOffset());
             final MemoryRegion forwardPointerRegion = new FixedMemoryRegion(forwardPointerLocation, teleVM.wordSize(), "Forwarding pointer for object relocation watchpoint");
             relocationWatchpoint = factory.createSystemWatchpoint("Object relocation watchpoint", forwardPointerRegion, relocationWatchpointSettings);
@@ -603,7 +601,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
      *
      * @author Michael Van De Vanter
      */
-    public static final class Factory extends Observable {
+    public static class Factory extends AbstractTeleVMHolder {
 
         private static final WatchpointSettings afterGCWatchpointSettings = new WatchpointSettings(false, true, false, true);
 
@@ -643,18 +641,20 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         // A watchpoint that triggers at the conclusion of each GC, initially inactive
         private TeleWatchpoint afterGCWatchpoint;
 
-        public Factory(TeleProcess teleProcess) {
+        private List<MaxWatchpointListener> watchpointListeners = new CopyOnWriteArrayList<MaxWatchpointListener>();
+
+        public Factory(TeleVM teleVM, TeleProcess teleProcess) {
+            super(teleVM);
             this.teleProcess = teleProcess;
             updateCaches();
-            teleProcess.teleVM().addVMStateListener(new MaxVMStateListener() {
+            teleVM().addVMStateListener(new MaxVMStateListener() {
 
                 public void stateChanged(MaxVMState maxVMState) {
                     if (maxVMState.processState() == ProcessState.TERMINATED) {
                         clientWatchpoints.clear();
                         systemWatchpoints.clear();
                         updateCaches();
-                        setChanged();
-                        notifyObservers();
+                        fireWatchpointsChanged();
                     }
                 }
             });
@@ -665,9 +665,9 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
          */
         public void initFactory() {
             // TODO (mlvdv)  Make this lazy; remove the need to call this.
-            // TODO (mlvdv) use a breakpoint instead of a watchpoint; delegate to the teleVM for this.
+            // TODO (mlvdv) use a breakpoint instead of a watchpoint; delegate to the VM for this.
             try {
-                final FixedMemoryRegion memoryRegion = new FixedMemoryRegion(teleProcess.teleVM().rootEpochAddress(), Size.fromInt(Pointer.size()), "Root epoch counter address");
+                final FixedMemoryRegion memoryRegion = new FixedMemoryRegion(teleVM().rootEpochAddress(), Size.fromInt(Pointer.size()), "Root epoch counter address");
                 afterGCWatchpoint = createSystemWatchpoint("After GC", memoryRegion, afterGCWatchpointSettings);
                 afterGCWatchpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
 
@@ -685,6 +685,24 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             } catch (TooManyWatchpointsException e) {
                 ProgramError.unexpected("Can't create GC (system) watchpoint");
             }
+        }
+
+        /**
+         * Adds a listener for watchpoint changes.
+         *
+         * @param listener a watchpoint listener
+         */
+        public final void addWatchpointListener(MaxWatchpointListener listener) {
+            watchpointListeners.add(listener);
+        }
+
+        /**
+         * Removes a listener for watchpoint changes.
+         *
+         * @param listener a watchpoint listener
+         */
+        public final void removeWatchpointListener(MaxWatchpointListener listener) {
+            watchpointListeners.remove(listener);
         }
 
         /**
@@ -879,6 +897,12 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             }
         }
 
+        private void fireWatchpointsChanged() {
+            for (final MaxWatchpointListener listener : watchpointListeners) {
+                listener.watchpointsChanged();
+            }
+        }
+
         /**
          * @return total number of existing watchpoints of all kinds.[
          */
@@ -948,8 +972,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             }
 
             updateCaches();
-            setChanged();
-            notifyObservers();
+            fireWatchpointsChanged();
             return teleWatchpoint;
         }
 
@@ -998,8 +1021,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                         }
                     }
                     updateCaches();
-                    setChanged();
-                    notifyObservers();
+                    fireWatchpointsChanged();
                     return true;
                 }
                 case SYSTEM: {
@@ -1013,11 +1035,6 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                     ProgramError.unknownCase();
                     return false;
             }
-        }
-
-        private void notifyWatchpointChanged() {
-            setChanged();
-            notifyObservers();
         }
 
         /**
