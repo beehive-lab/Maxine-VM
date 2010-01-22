@@ -854,7 +854,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer ip) {
+    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer ip, boolean implicitExceptionPoint) {
         int stopIndex = findClosestStopIndex(ip);
         if (stopIndex < 0) {
             return null;

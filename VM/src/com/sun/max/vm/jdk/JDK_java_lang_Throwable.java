@@ -102,14 +102,15 @@ public final class JDK_java_lang_Throwable {
                 // Reset the stack trace. We want the trace to start from the actual exception throw.
                 result.clear();
                 atImplicitExceptionThrow = true;
+                inFiller = false;
                 continue;
-            } else if (atImplicitExceptionThrow) {
+            } /*else if (atImplicitExceptionThrow) {
                 // if it is an implicit exception, do not look for a java frame descriptor
                 addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.ip.minus(targetMethod.codeStart()).toInt());
                 atImplicitExceptionThrow = false;
                 inFiller = false;
                 continue;
-            } else if (inFiller) {
+            } */else if (inFiller) {
                 final ClassMethodActor methodActor = targetMethod.classMethodActor();
                 if (methodActor.holder() == throwableActor && methodActor.isInstanceInitializer()) {
                     // This will initiate filling the stack trace.
@@ -117,19 +118,23 @@ public final class JDK_java_lang_Throwable {
                 }
                 continue;
             }
-            addStackTraceElements(result, targetMethod, stackFrame);
+            addStackTraceElements(result, targetMethod, stackFrame, atImplicitExceptionThrow);
+            if (atImplicitExceptionThrow) {
+                atImplicitExceptionThrow = false;
+                inFiller = false;
+            }
         }
         final Object value = result.toArray(new StackTraceElement[result.size()]);
         TupleAccess.writeObject(thisThrowable, stackTrace.offset(), value);
         return thisThrowable;
     }
 
-    private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame) {
+    private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame, boolean atImplicitExceptionThrow) {
         Pointer instructionPointer = stackFrame.ip;
         if (Platform.target().instructionSet().offsetToReturnPC == 0 && !stackFrame.isTopFrame()) {
             instructionPointer = instructionPointer.minus(1);
         }
-        final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer);
+        Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, atImplicitExceptionThrow);
         if (bytecodeLocations == null) {
             addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.ip.minus(targetMethod.codeStart()).toInt());
         } else {

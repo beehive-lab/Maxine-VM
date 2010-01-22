@@ -78,7 +78,7 @@ final class JDK_sun_reflect_Reflection {
                 return true;
             }
 
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer);
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
             if (bytecodeLocations == null) {
                 if (realFramesToSkip == 0) {
                     targetMethodResult = targetMethod;

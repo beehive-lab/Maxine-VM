@@ -200,7 +200,7 @@ final class JDK_java_security_AccessController {
                 privilegedContext = privilegedElement.context;
                 protectionDomain = privilegedElement.classActor.protectionDomain();
             } else {
-                final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer);
+                final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
                 if (bytecodeLocations == null) {
                     protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
                 } else {
