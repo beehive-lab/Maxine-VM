@@ -28,7 +28,7 @@ package com.sun.c1x.ci;
  */
 public class CiDebugInfo {
     /**
-     * The code position (including inlined all inlined methods) of this debug info.
+     * The code position (including all inlined methods) of this debug info.
      */
     public final CiCodePos codePos;
 
@@ -47,13 +47,13 @@ public class CiDebugInfo {
      * The reference map for the stack frame at this point. The reference map is <i>packed</i> in that
      * for bit {@code k} in byte {@code n}, it refers to stack slot number {@code k + n * 8}.
      */
-    public final byte[] stackRefMap;
+    public final byte[] frameRefMap;
 
-    public CiDebugInfo(CiCodePos codePos, Frame frame, byte[] registerRefMap, byte[] stackRefMap) {
+    public CiDebugInfo(CiCodePos codePos, Frame frame, byte[] registerRefMap, byte[] frameRefMap) {
         this.codePos = codePos;
         this.frame = frame;
         this.registerRefMap = registerRefMap;
-        this.stackRefMap = stackRefMap;
+        this.frameRefMap = frameRefMap;
         assert frame == null || frame.codePos == codePos : "code positions do not match";
     }
 
@@ -75,7 +75,7 @@ public class CiDebugInfo {
      * @return {@code true} if this debug info has a reference map for the stack
      */
     public boolean hasStackRefMap() {
-        return stackRefMap != null && stackRefMap.length > 0;
+        return frameRefMap != null && frameRefMap.length > 0;
     }
 
     /**

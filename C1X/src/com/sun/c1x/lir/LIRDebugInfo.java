@@ -36,7 +36,7 @@ import com.sun.c1x.ci.*;
 public class LIRDebugInfo {
 
     public abstract static class ValueLocator {
-        public abstract CiValue locate(Value value);
+        public abstract CiValue getLocation(Value value);
     }
 
     public final ValueStack stack;
@@ -45,10 +45,8 @@ public class LIRDebugInfo {
 
     public IRScopeDebugInfo scopeDebugInfo;
 
-    private CiCodePos codePos;
+    private CiDebugInfo debugInfo;
     private CiDebugInfo.Frame debugFrame;
-    private byte[] registerRefMap;
-    private byte[] stackRefMap;
 
     public LIRDebugInfo(ValueStack state, int bci, List<ExceptionHandler> exceptionHandlers) {
         this.bci = bci;
@@ -77,26 +75,24 @@ public class LIRDebugInfo {
         return new LIRDebugInfo(this);
     }
 
-    public void allocateRefMaps(int registerSize, int frameSize, CiTarget target) {
-        if (registerSize > 0) {
-            registerRefMap = newRefMap(registerSize);
-        }
-        if (frameSize > 0) {
-            stackRefMap = newRefMap(frameSize / target.spillSlotSize);
-        }
+    public void allocateDebugInfo(int registerSize, int frameSize, CiTarget target) {
+        byte[] registerRefMap = registerSize > 0 ? newRefMap(registerSize) : null;
+        byte[] stackRefMap = frameSize > 0 ? newRefMap(frameSize / target.spillSlotSize) : null;
+        debugInfo = new CiDebugInfo(stack.scope().toCodeSite(bci), null, registerRefMap, stackRefMap);
     }
 
     public void setOop(CiLocation location, CiTarget target) {
+        assert debugInfo != null : "debug info not allocated yet";
         if (location.isStack() && !location.isCallerFrame()) {
             int offset = location.stackOffset();
             assert offset % target.arch.wordSize == 0 : "must be aligned";
             int stackMapIndex = offset / target.arch.wordSize;
-            setBit(stackRefMap, stackMapIndex);
+            setBit(debugInfo.frameRefMap, stackMapIndex);
         } else {
             int index = target.allocatableRegs.referenceMapIndex[location.first().number];
             assert index >= 0 : "object cannot be in non-object register " + location.first();
             assert location.isSingleRegister() : "objects can only be in a single register";
-            setBit(registerRefMap, index);
+            setBit(debugInfo.registerRefMap, index);
         }
     }
 
@@ -105,15 +101,20 @@ public class LIRDebugInfo {
     }
 
     public byte[] registerRefMap() {
-        return registerRefMap;
+        return debugInfo.registerRefMap;
     }
 
     public byte[] stackRefMap() {
-        return stackRefMap;
+        return debugInfo.frameRefMap;
     }
 
-    public CiDebugInfo.Frame debugFrame() {
-        return debugFrame;
+    public CiDebugInfo debugInfo() {
+        assert debugInfo != null : "debug info not allocated yet";
+        return debugInfo;
+    }
+
+    public boolean hasDebugInfo() {
+        return debugInfo != null;
     }
 
     private CiDebugInfo.Frame makeFrame(ValueStack stack, int bci, ValueLocator locator) {
@@ -154,19 +155,19 @@ public class LIRDebugInfo {
         for (int i = 0; i < stack.localsSize(); i++, pos++) {
             Value v = stack.localAt(i);
             if (v != null) {
-                values[pos] = locator.locate(v);
+                values[pos] = locator.getLocation(v);
             }
         }
         for (int i = stackBegin; i < stack.stackSize(); i++, pos++) {
             Value v = stack.stackAt(i);
             if (v != null) {
-                values[pos] = locator.locate(v);
+                values[pos] = locator.getLocation(v);
             }
         }
         for (int i = 0; i < stack.locksSize(); i++, pos++) {
             Value v = stack.lockAt(i);
             assert v != null;
-            values[pos] = locator.locate(v);
+            values[pos] = locator.getLocation(v);
         }
 
         ValueStack caller = stack.scope().callerState();

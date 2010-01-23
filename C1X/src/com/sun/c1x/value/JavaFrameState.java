@@ -32,12 +32,12 @@ import com.sun.c1x.ci.CiCodePos;
  *
  * @author Ben L. Titzer
  */
-public class FrameState {
+public class JavaFrameState {
 
     /**
      * The frame state of the caller method, if any.
      */
-    public final FrameState caller;
+    public final JavaFrameState caller;
 
     /**
      * The code position of this frame state.
@@ -55,7 +55,7 @@ public class FrameState {
      * @param pos the code position for this frame state
      * @param state the value stack containing the values
      */
-    public FrameState(FrameState caller, CiCodePos pos, ValueStack state) {
+    public JavaFrameState(JavaFrameState caller, CiCodePos pos, ValueStack state) {
         this.pos = pos;
         this.caller = caller;
         this.localsSize = (char) state.localsSize();

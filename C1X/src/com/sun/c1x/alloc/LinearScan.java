@@ -2146,7 +2146,7 @@ public class LinearScan {
         // included in the oop map
         iw.walkBefore(op.id);
 
-        info.allocateRefMaps(compilation.target.allocatableRegs.registerRefMapSize, compilation.frameMap().frameSize(), compilation.target);
+        info.allocateDebugInfo(compilation.target.allocatableRegs.registerRefMapSize, compilation.frameMap().frameSize(), compilation.target);
 
         // Iterate through active intervals
         for (Interval interval = iw.activeFirst(IntervalKind.FixedKind); interval != Interval.EndMarker; interval = interval.next) {
@@ -2190,7 +2190,7 @@ public class LinearScan {
 
         for (int i = 0; i < op.infoCount(); i++) {
             LIRDebugInfo info = op.infoAt(i);
-            assert info.registerRefMap() == null && info.stackRefMap() == null : "oop map already computed for info";
+            assert !info.hasDebugInfo() : "oop map already computed for info";
             computeOopMap(iw, op, info, op.hasCall());
         }
     }
