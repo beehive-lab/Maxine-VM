@@ -517,7 +517,8 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void watchpointSetChanged() {
-        if (maxVMState().processState() != ProcessState.TERMINATED) {
+        if (maxVMState().processState() == ProcessState.STOPPED) {
+            // TODO (mlvdv) workaround - not completely thread safe
             refreshView(true);
         }
     }
