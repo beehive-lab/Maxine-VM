@@ -176,9 +176,8 @@ public final class BreakpointsTable extends InspectorTable {
             switch (BreakpointsColumnKind.VALUES.get(column)) {
                 case ENABLED:
                     final Boolean newState = (Boolean) value;
-                    if (breakpointData.setEnabled(newState)) {
-                        inspection().settings().save();
-                    }
+                    breakpointData.setEnabled(newState);
+                    inspection().settings().save();
                     break;
 
                 case CONDITION:
@@ -499,10 +498,9 @@ public final class BreakpointsTable extends InspectorTable {
          * Updates the enabled state of this breakpoint.
          *
          * @param enabled new state for this breakpoint
-         * @return true if the state was actually changed
          */
-        final boolean setEnabled(boolean enabled) {
-            return breakpoint.setEnabled(enabled);
+        final void setEnabled(boolean enabled) {
+            breakpoint.setEnabled(enabled);
         }
 
         /**
