@@ -58,6 +58,14 @@ public class VMStringOption extends VMOption {
     }
 
     /**
+     * Package private constructor for @see AgentVMOption to use at runtime.
+     */
+    VMStringOption() {
+        super("", "");
+        space = false;
+    }
+
+    /**
      * Parses the value of the string parameter from the command line. Note that this method will be called directly
      * with the next argument when the option expects to consume the next argument; otherwise it will be called
      * indirectly through {@code parse()} as normal.
