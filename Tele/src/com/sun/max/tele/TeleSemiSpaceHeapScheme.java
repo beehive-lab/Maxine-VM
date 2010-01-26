@@ -90,6 +90,17 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
         return true;
     }
 
+    @Override
+    public boolean isObjectForwarded(Pointer origin) {
+        if (!origin.isZero()) {
+            Pointer possibleForwardingPointer = teleVM().dataAccess().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
+            if (isForwardingPointer(possibleForwardingPointer)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean isForwardingPointer(Pointer pointer) {
         return (!pointer.isZero()) && pointer.and(1).toLong() == 1;
     }
@@ -98,7 +109,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
         return isForwardingPointer(pointer) ? pointer.minus(1) : pointer;
     }
 
-    public Pointer getForwardedObject(Pointer origin) {
+    public Pointer getForwardedOrigin(Pointer origin) {
         if (!origin.isZero()) {
             Pointer possibleForwardingPointer = teleVM().dataAccess().readWord(origin.plus(gcForwardingPointerOffset())).asPointer();
             if (isForwardingPointer(possibleForwardingPointer)) {

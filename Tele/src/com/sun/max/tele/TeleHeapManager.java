@@ -354,6 +354,10 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         return teleHeapScheme.isInLiveMemory(address);
     }
 
+    public  boolean isObjectForwarded(Pointer origin) {
+        return teleHeapScheme.isObjectForwarded(origin);
+    }
+
     public boolean isForwardingPointer(Pointer pointer) {
         return teleHeapScheme.isForwardingPointer(pointer);
     }
@@ -362,8 +366,8 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         return teleHeapScheme.getTrueLocationFromPointer(pointer);
     }
 
-    public Pointer getForwardedObject(Pointer origin) {
-        return teleHeapScheme.getForwardedObject(origin);
+    public Pointer getForwardedOrigin(Pointer origin) {
+        return teleHeapScheme.getForwardedOrigin(origin);
     }
 
     /**
