@@ -45,6 +45,15 @@ public interface TeleHeapScheme extends TeleScheme {
     boolean isInLiveMemory(Address address);
 
     /**
+     * Determines whether an object formerly at a particular location
+     * has been relocated.
+     *
+     * @param origin an object location in the VM
+     * @return whether the object at the location has been relocated.
+     */
+    boolean isObjectForwarded(Pointer origin);
+
+    /**
      * Determines if a pointer is a GC forwarding pointer.
      *
      * @param pointer a pointer to VM memory
@@ -67,6 +76,6 @@ public interface TeleHeapScheme extends TeleScheme {
      * @param objectPointer the origin of an object in VM memory
      * @return the current, possibly forwarded, origin of the object
      */
-    Pointer getForwardedObject(Pointer origin);
+    Pointer getForwardedOrigin(Pointer origin);
 
 }
