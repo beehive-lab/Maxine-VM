@@ -91,7 +91,7 @@ import com.sun.max.vm.value.*;
  */
 public abstract class TeleVM implements MaxVM {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
 
     private static final String PROGRAM_NAME = "maxvm";
 
@@ -438,8 +438,6 @@ public abstract class TeleVM implements MaxVM {
         return teleVMState;
     }
 
-    private List<MaxVMStateListener> vmStateListeners = new CopyOnWriteArrayList<MaxVMStateListener>();
-
     private boolean isInGC = false;
 
     /**
@@ -448,6 +446,20 @@ public abstract class TeleVM implements MaxVM {
     public final boolean isInGC() {
         return isInGC;
     }
+
+    private List<MaxVMStateListener> vmStateListeners = new CopyOnWriteArrayList<MaxVMStateListener>();
+
+    private List<MaxGCStartedListener> gcStartedListeners = new CopyOnWriteArrayList<MaxGCStartedListener>();
+    /**
+     * Active breakpoint that triggers at start of GC if {@link gcStartedListeners} is non-empty; null if no listeners.
+     */
+    private MaxBreakpoint gcStartedBreakpoint = null;
+
+    private List<MaxGCCompletedListener> gcCompletedListeners = new CopyOnWriteArrayList<MaxGCCompletedListener>();
+    /**
+     * Active breakpoint that triggers at end of GC if {@link gcCompletedListeners} is non-empty; null if no listeners.
+     */
+    private MaxBreakpoint gcCompletedBreakpoint = null;
 
     /**
      * Creates a tele VM instance by creating or attaching to a Maxine VM process.
@@ -779,8 +791,27 @@ public abstract class TeleVM implements MaxVM {
         return teleHeapManager.teleRootsPointer();
     }
 
-    public Pointer getForwardedObject(Pointer origin) {
-        return teleHeapManager.getForwardedObject(origin);
+    /**
+     * Determines whether an object formerly at a particular location
+     * has been relocated.
+     *
+     * @param origin an object location in the VM
+     * @return whether the object at the location has been relocated.
+     */
+    public boolean isObjectForwarded(Pointer origin) {
+        return teleHeapManager.isObjectForwarded(origin);
+    }
+
+    /**
+     * Finds an object in the VM that has been located at a particular place in memory, but which
+     * may have been relocated.
+     *
+     * @param origin an object origin in the VM
+     * @return the object originally at the origin, possibly relocated
+     */
+    public TeleObject getForwardedObject(Pointer origin) {
+        final Reference forwardedObjectReference = originToReference(teleHeapManager.getForwardedOrigin(origin));
+        return teleObjectFactory.make(forwardedObjectReference);
     }
 
     /**
@@ -967,12 +998,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final boolean isValidReference(Reference reference) {
         return isValidGrip(reference.toGrip());
-    }
-
-    public void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
-        if (watchpointsEnabled()) {
-            teleProcess.watchpointFactory().initFactory();
-        }
     }
 
     /**
@@ -1294,8 +1319,8 @@ public abstract class TeleVM implements MaxVM {
     public final Sequence<MaxInspectableMethod> inspectableMethods() {
         if (inspectableMethods == null) {
             final VariableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>();
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCStarting, "Start of GC"));
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCComplete, "End of GC"));
+            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCStarted, "Start of GC"));
+            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCCompleted, "End of GC"));
             methods.append(new TeleInspectableMethod(teleMethods.CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
             methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_objectRelocated, "Object relocated"));
             for (MaxInspectableMethod inspectableMethod : teleHeapManager.inspectableMethods()) {
@@ -1444,7 +1469,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final Iterable<MaxBreakpoint> bytecodeBreakpoints() {
-        return bytecodeBreakpointFactory.breakpoints();
+        return bytecodeBreakpointFactory.clientBreakpoints();
     }
 
     public final int bytecodeBreakpointCount() {
@@ -1452,11 +1477,15 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final MaxBreakpoint makeBreakpointAt(Key key) {
-        return bytecodeBreakpointFactory.makeBreakpoint(key);
+        return bytecodeBreakpointFactory.makeClientBreakpoint(key);
+    }
+
+    public final MaxBreakpoint makeBreakpointAt(MaxInspectableMethod maxInspectableMethod) {
+        return bytecodeBreakpointFactory.makeClientBreakpoint(maxInspectableMethod);
     }
 
     public final MaxBreakpoint getBreakpointAt(Key key) {
-        return bytecodeBreakpointFactory.getBreakpoint(key);
+        return bytecodeBreakpointFactory.getClientBreakpoint(key);
     }
 
     public void describeBreakpoints(PrintStream printStream) {
@@ -1534,6 +1563,62 @@ public abstract class TeleVM implements MaxVM {
     public void describeWatchpoints(PrintStream printStream) throws ProgramError {
         ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
         teleProcess.watchpointFactory().writeSummaryToStream(printStream);
+    }
+
+    public void addGCStartedListener(MaxGCStartedListener listener) {
+        assert listener != null;
+        gcStartedListeners.add(listener);
+        if (!gcStartedListeners.isEmpty() && gcStartedBreakpoint == null) {
+            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCStarted, "GC start for VM listeners");
+            final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
+
+                public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+                    Trace.line(TRACE_VALUE, tracePrefix() + " updating GCStartedListeners");
+                    for (MaxGCStartedListener listener : gcStartedListeners) {
+                        listener.gcStarted();
+                    }
+                    return false;
+                }
+            };
+            gcStartedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(inspectableMethod, triggerEventHandler);
+        }
+    }
+
+    public void removeGCStartedListener(MaxGCStartedListener listener) {
+        assert listener != null;
+        gcStartedListeners.remove(listener);
+        if (gcStartedListeners.isEmpty() && gcStartedBreakpoint != null) {
+            gcStartedBreakpoint.remove();
+            gcStartedBreakpoint = null;
+        }
+    }
+
+    public void addGCCompletedListener(MaxGCCompletedListener listener) {
+        assert listener != null;
+        gcCompletedListeners.add(listener);
+        if (!gcCompletedListeners.isEmpty() && gcCompletedBreakpoint == null) {
+            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCCompleted, "GC complete for VM listeners");
+            final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
+
+                public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+                    Trace.line(TRACE_VALUE, tracePrefix() + " updating GCCompletedListeners");
+                    for (MaxGCCompletedListener listener : gcCompletedListeners) {
+                        listener.gcCompleted();
+                    }
+                    return false;
+                }
+            };
+            gcCompletedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(inspectableMethod, triggerEventHandler);
+        }
+    }
+
+    public void removeGCCompletedListener(MaxGCCompletedListener listener) {
+        assert listener != null;
+        gcCompletedListeners.remove(listener);
+        if (gcCompletedListeners.isEmpty() && gcCompletedBreakpoint != null) {
+            gcCompletedBreakpoint.remove();
+            gcCompletedBreakpoint = null;
+        }
     }
 
     public final void setTransportDebugLevel(int level) {
