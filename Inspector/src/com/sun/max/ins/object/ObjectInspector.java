@@ -46,6 +46,8 @@ import com.sun.max.vm.actor.member.*;
  */
 public abstract class ObjectInspector extends Inspector {
 
+    private static final int TRACE_VALUE = 1;
+
     private final ObjectInspectorFactory factory;
 
     private TeleObject teleObject;
@@ -106,7 +108,7 @@ public abstract class ObjectInspector extends Inspector {
                 reconstructView();
             }
         });
-        Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
+        Trace.line(TRACE_VALUE, tracePrefix() + " creating for " + getTextForTitle());
     }
 
     @Override
@@ -212,7 +214,7 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
-        Trace.line(1, tracePrefix() + " closing for " + getTitle());
+        Trace.line(TRACE_VALUE, tracePrefix() + " closing for " + getTitle());
         if (teleObject == inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(null);
         }
@@ -222,7 +224,8 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public void watchpointSetChanged() {
-        if (maxVMState().processState() != ProcessState.TERMINATED) {
+        // TODO (mlvdv)  patch for concurrency issue; not completely safe
+        if (maxVMState().processState() == ProcessState.STOPPED) {
             refreshView(true);
         }
     }
@@ -235,7 +238,7 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     protected void refreshView(boolean force) {
         if (teleObject.isObsolete() && followingTeleObject) {
-            Log.println("FORWARDED: " + teleObject.reference().grip().getForwardedTeleGrip().toOrigin());
+            Trace.line(TRACE_VALUE, tracePrefix() + "Following relocated object to 0x" + teleObject.reference().grip().getForwardedTeleGrip().toOrigin().toHexString());
             TeleObject forwardedTeleObject = teleObject.getForwardedTeleObject();
             if (factory.isObjectInspectorObservingObject(forwardedTeleObject.reference().grip().makeOID())) {
                 followingTeleObject = false;
