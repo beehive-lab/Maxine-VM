@@ -90,11 +90,12 @@ public class Info {
         Unknown;
 
         public final int mask = 1 << ordinal();
+
     }
 
     public final CiCodePos pos;
     public final int id;
-    private int exceptionFlags;
+    private int stopFlags;
     private JavaFrameState javaFrameState;
     private List<ExceptionHandler> exceptionHandlers;
 
@@ -110,10 +111,19 @@ public class Info {
     }
 
     public boolean mayStop() {
-        return exceptionFlags != 0;
+        return stopFlags != 0;
     }
 
     public boolean mayCauseException() {
-        return (exceptionFlags & ~StopType.Safepoint.mask) != 0;
+        return (stopFlags & ~StopType.Safepoint.mask) != 0;
     }
+
+    public void clearStop(StopType stopType) {
+        stopFlags &= ~stopType.mask;
+    }
+
+    public void setStop(StopType stopType) {
+        stopFlags |= stopType.mask;
+    }
+
 }
