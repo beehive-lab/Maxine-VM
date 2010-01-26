@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.thread;
 
+import java.security.AccessControlContext;
+
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -164,6 +166,11 @@ public class VmThread {
      * @see StandardJavaMonitor#monitorNotify(boolean)
      */
     private VmThread nextWaitingThread = this;
+
+    /**
+     * A stack of elements that support  @see AccessController.doPrivileged calls.
+     */
+    private PrivilegedElement privilegedStackTop;
 
     /**
      * This happens during bootstrapping. Then, 'Thread.currentThread()' refers to the "main" thread of the host VM. Since
@@ -1088,5 +1095,32 @@ public class VmThread {
             parkState = 1;
             notifyAll();
         }
+    }
+
+    public void pushPrivilegedElement(ClassActor classActor, Pointer frameId, AccessControlContext context) {
+        privilegedStackTop = new PrivilegedElement(classActor, frameId, context, privilegedStackTop);
+    }
+
+    public void popPrivilegedElement() {
+        privilegedStackTop = privilegedStackTop.next;
+    }
+
+    public PrivilegedElement getTopPrivilegedElement() {
+        return privilegedStackTop;
+    }
+
+    public static class PrivilegedElement {
+        private PrivilegedElement next;
+        public ClassActor classActor;
+        public Pointer frameId;
+        public AccessControlContext context;
+
+        PrivilegedElement(ClassActor classActor, Pointer frameId, AccessControlContext context, PrivilegedElement next) {
+            this.classActor = classActor;
+            this.frameId = frameId;
+            this.context = context;
+            this.next = next;
+        }
+
     }
 }

@@ -395,6 +395,7 @@ public class JTConfig {
         jtt.lang.Class_forName04.class,
         jtt.lang.Class_forName05.class,
         jtt.lang.Class_getComponentType01.class,
+        jtt.lang.Class_getInterfaces01.class,
         jtt.lang.Class_getName01.class,
         jtt.lang.Class_getName02.class,
         jtt.lang.Class_getSimpleName01.class,

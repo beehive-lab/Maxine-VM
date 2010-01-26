@@ -18,56 +18,56 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.management;
+package com.sun.max.vm;
 
-import java.lang.management.*;
 import java.util.*;
 
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+
 /**
- * Adaptor class for the Maxine implementations of MemoryManagerMXBean.
+ * Support for the (repeatable) agent command line options.
+ * Implemented using delegation to a list of @see VMStringOption
+ * This could be genericized if necessary.
  *
  * @author Mick Jordan
  */
 
-public class MemoryManagerMXBeanAdaptor implements MemoryManagerMXBean, MemoryManagerMXBeanPools {
-    private List<MemoryPoolMXBean> pool = new ArrayList<MemoryPoolMXBean>();
-    private String name;
+public class AgentVMOption extends VMOption {
+    private List<VMStringOption> optionList = new ArrayList<VMStringOption>();
 
-    private MemoryManagerMXBeanAdaptor() {
+    @HOSTED_ONLY
+    public AgentVMOption(String prefix, String help) {
+        super(prefix, help);
     }
 
-    public MemoryManagerMXBeanAdaptor(String name) {
-        this.name = name;
+    /**
+     * Return the number of instances of this option.
+     * @return the number of instances of this option.
+     */
+    public int count() {
+        return optionList.size();
     }
 
-    public void add(MemoryPoolMXBean bean) {
-        pool.add(bean);
+    /**
+     * Returns the ith option value.
+     * @param index into list of option values
+     * @return the ith option value
+     */
+    public String getValue(int i) {
+        return optionList.get(i).getValue();
     }
 
-    public void remove(MemoryPoolMXBean bean) {
-        pool.remove(bean);
+    @Override
+    public boolean parseValue(Pointer optionValue) {
+        VMStringOption option = new VMStringOption();
+        optionList.add(option);
+        return option.parseValue(optionValue);
     }
 
-    public List<MemoryPoolMXBean> getAll() {
-        return pool;
+    @Override
+    public void printHelp() {
+        VMOptions.printHelpForOption(category(), prefix, ":<jarpath>[=<options>]", help);
     }
-
-    public String[] getMemoryPoolNames() {
-        final String[] result = new String[pool.size()];
-        for (int i = 0; i < pool.size(); i++) {
-            final MemoryPoolMXBean bean = pool.get(i);
-            result[i] = bean.getName();
-        }
-        return result;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public boolean isValid() {
-        return true;
-    }
-
 
 }
