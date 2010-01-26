@@ -2472,8 +2472,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
                 public void menuSelected(MenuEvent e) {
                     removeAll();
-                    for (MaxInspectableMethod method : maxVM().inspectableMethods()) {
-                        add(actions().setBytecodeBreakpointAtMethodEntry(method.teleClassMethodActor(), method.description()));
+                    for (MaxInspectableMethod inspectableMethod : maxVM().inspectableMethods()) {
+                        add(actions().setBytecodeBreakpointAtMethodEntry(inspectableMethod));
                     }
                 }
             });
@@ -3185,7 +3185,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @return an Action  that will set a target code breakpoint at  a method entrye.
+     * @return an Action  that will set a target code breakpoint at  a method entry.
      */
     public final InspectorAction setBytecodeBreakpointAtMethodEntry(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
         return new SetBytecodeBreakpointAtMethodEntryAction(teleClassMethodActor, actionTitle);
@@ -3196,6 +3196,36 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction setBytecodeBreakpointAtMethodEntry(TeleClassMethodActor teleClassMethodActor) {
         return new SetBytecodeBreakpointAtMethodEntryAction(teleClassMethodActor, null);
+    }
+
+    /**
+     * Action: sets a bytecode breakpoint at a method entry.
+     */
+    final class SetBytecodeBreakpointAtMethodAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Method on classpath";
+        private final MaxInspectableMethod inspectableMethod;
+
+        SetBytecodeBreakpointAtMethodAction(MaxInspectableMethod inspectableMethod) {
+            super(inspection(), inspectableMethod.description() == null ? DEFAULT_TITLE : inspectableMethod.description());
+            this.inspectableMethod = inspectableMethod;
+            refreshableActions.append(this);
+            refresh(true);
+        }
+
+        @Override
+        protected void procedure() {
+            maxVM().makeBreakpointAt(inspectableMethod);
+        }
+
+        @Override
+        public void refresh(boolean force) {
+            setEnabled(inspection().hasProcess() && inspectableMethod.teleClassMethodActor().hasCodeAttribute());
+        }
+    }
+
+    public final InspectorAction setBytecodeBreakpointAtMethodEntry(MaxInspectableMethod inspectableMethod) {
+        return new SetBytecodeBreakpointAtMethodEntryAction(inspectableMethod.teleClassMethodActor(), inspectableMethod.description());
     }
 
      /**
@@ -3492,7 +3522,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
-                final String description = "Object " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final String description = "Whole object";
                 final MaxWatchpoint watchpoint = maxVM().setObjectWatchpoint(description, teleObject, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
@@ -3547,7 +3577,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
-                final String description = "Field \"" + fieldActor.name.toString() + "\" in " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final String description = "Field \"" + fieldActor.name.toString() + "\"";
                 final MaxWatchpoint watchpoint = maxVM().setFieldWatchpoint(description, teleObject, fieldActor, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
@@ -3610,7 +3640,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
-                final String description = "Element " + indexPrefix + "[" + Integer.toString(index) + "] in " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final String description = "Element " + indexPrefix + "[" + Integer.toString(index) + "]";
                 final MaxWatchpoint watchpoint
                     = maxVM().setArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, prefs.settings());
                 if (watchpoint == null) {
@@ -3670,7 +3700,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
-                final String description = "Field \"" + headerField.name + "\" in header of " + inspection().nameDisplay().referenceLabelText(teleObject);
+                final String description = "Field \"" + headerField.name + "\"";
                 final MaxWatchpoint watchpoint = maxVM().setHeaderWatchpoint(description, teleObject, headerField, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");

@@ -65,9 +65,8 @@ public interface MaxBreakpoint {
      * continue to exist, but have no effect on VM execution.
      *
      * @param enabled new state for this breakpoint
-     * @return true if the state was actually changed.
      */
-    boolean setEnabled(boolean enabled);
+    void setEnabled(boolean enabled);
 
     /**
      * @return optional conditional specification for breakpoint, null if none
