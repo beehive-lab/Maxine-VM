@@ -700,6 +700,14 @@ public interface MaxVM {
     MaxBreakpoint makeBreakpointAt(Key key);
 
     /**
+     * Gets a bytecode breakpoint at a method entry in the VM, newly created if needed.
+     *
+     * @param inspectableMethod a method in the VM
+     * @return a possibly new, non-transient bytecode breakpoint
+     */
+    MaxBreakpoint makeBreakpointAt(MaxInspectableMethod inspectableMethod);
+
+    /**
      * Finds a bytecode breakpoint in the VM.
      *
      * @param key description of a bytecode position in a method
@@ -726,7 +734,6 @@ public interface MaxVM {
      * @see #watchpointsEnabled()
      */
     void addWatchpointListener(MaxWatchpointListener listener) throws ProgramError;
-
 
     /**
      * Removes a listener for watchpoint changes in the VM.
@@ -844,7 +851,7 @@ public interface MaxVM {
     /**
      * All existing watchpoints set in the VM.
      * <br>
-     * Immutable collection; membership is thread-safe; likely implemented as a copy.
+     * Immutable collection; membership is thread-safe.
      *
      * @return all existing watchpoints; empty if none.
      * @throws ProgramError if watchpoints not enabled on platform.
@@ -860,6 +867,34 @@ public interface MaxVM {
      * @see #watchpointsEnabled()
      */
     void describeWatchpoints(PrintStream printStream) throws ProgramError;
+
+    /**
+     * Adds a listener for GC starts in the VM.
+     *
+     * @param listener a listener for GC starts
+     */
+    void addGCStartedListener(MaxGCStartedListener listener);
+
+    /**
+     * Removes a listener for GC starts in the VM.
+     *
+     * @param listener a listener for GC starts
+     */
+    void removeGCStartedListener(MaxGCStartedListener listener);
+
+    /**
+     * Adds a listener for GC completions in the VM.
+     *
+     * @param listener a listener for GC completions
+     */
+    void addGCCompletedListener(MaxGCCompletedListener listener);
+
+    /**
+     * Removes a listener for GC completions in the VM.
+     *
+     * @param listener a listener for GC completions
+     */
+    void removeGCCompletedListener(MaxGCCompletedListener listener);
 
     /**
      * Sets debugging trace level for the transport
@@ -964,15 +999,6 @@ public interface MaxVM {
      * @param fileName name of a file containing commands.
      */
     void executeCommandsFromFile(String fileName);
-
-    /**
-     * Initialize debugging mode for garbage collection.
-     *
-     * @throws TooManyWatchpointsException
-     * @throws DuplicateWatchpointException
-     * @throws ProgramError if watchpoints not enabled on this platform
-     */
-    void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError;
 
 }
 

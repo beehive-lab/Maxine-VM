@@ -53,7 +53,7 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
 
     // Standard names for process control actions.
     private static final String RUN_TO_INSTRUCTION = "runToInstruction";
@@ -167,7 +167,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering breakpoint");
                                     // Case 3. At least one thread is at a breakpoint that specifies that execution should halt; record it and do not continue.
                                     // At a breakpoint where we should really stop; create a record
-                                    teleBreakpointEvents.append(new TeleBreakpointEvent(breakpoint.getAssociatedClientBreakpoint(), thread));
+                                    teleBreakpointEvents.append(new TeleBreakpointEvent(breakpoint, thread));
                                     resumeExecution = false;
                                 }
                                 break;
@@ -204,6 +204,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     }
                     ProgramError.check(eventCauseFound, "Process halted for no apparent cause");
                     if (resumeExecution) {
+                        Trace.line(TRACE_VALUE, tracePrefix() + "Resuming execution after handling event triggers: " + request);
                         restoreBreakpointsAndResume(request.withClientBreakpoints);
                     }
                 } while (resumeExecution);

@@ -177,9 +177,6 @@ public final class Inspection {
                 StackInspector.make(this);
                 BreakpointsInspector.make(this);
                 focus.setCodeLocation(maxVM.createCodeLocation(focus.thread().instructionPointer()), false);
-                if (maxVM().watchpointsEnabled()) {
-                    maxVM().initGarbageCollectorDebugging();
-                }
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
                 throwable.printStackTrace();
@@ -417,18 +414,20 @@ public final class Inspection {
 
         public void breakpointsChanged() {
             if (java.awt.EventQueue.isDispatchThread()) {
-                Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                 for (InspectionListener listener : inspectionListeners.clone()) {
                     listener.breakpointStateChanged();
                 }
+                Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
 
                     public void run() {
-                        Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                        Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                         for (InspectionListener listener : inspectionListeners.clone()) {
                             listener.breakpointStateChanged();
                         }
+                        Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                     }
                 });
             }
@@ -444,18 +443,20 @@ public final class Inspection {
 
         public void watchpointsChanged() {
             if (java.awt.EventQueue.isDispatchThread()) {
-                Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
                 for (InspectionListener listener : inspectionListeners.clone()) {
                     listener.watchpointSetChanged();
                 }
+                Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
 
                     public void run() {
-                        Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                        Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
                         for (InspectionListener listener : inspectionListeners.clone()) {
                             listener.watchpointSetChanged();
                         }
+                        Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
                     }
                 });
             }
