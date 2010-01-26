@@ -168,9 +168,10 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final MethodKey methodKey = new DefaultMethodKey(holder, name, signature);
             final int bytecodePosition = settings.get(this, prefix + "." + POSITION_KEY, OptionTypes.INT_TYPE, 0);
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
-
             final MaxBreakpoint bytecodeBreakpoint = inspection.maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition));
-            bytecodeBreakpoint.setEnabled(enabled);
+            if (bytecodeBreakpoint.isEnabled() != enabled) {
+                bytecodeBreakpoint.setEnabled(enabled);
+            }
         }
     }
 
