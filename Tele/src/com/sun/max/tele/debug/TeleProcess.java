@@ -53,7 +53,7 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO {
 
-    private static final int TRACE_VALUE = 1;
+    private static final int TRACE_VALUE = 2;
 
     // Standard names for process control actions.
     private static final String RUN_TO_INSTRUCTION = "runToInstruction";
