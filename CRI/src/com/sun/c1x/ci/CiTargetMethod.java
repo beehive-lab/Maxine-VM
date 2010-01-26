@@ -40,10 +40,10 @@ public class CiTargetMethod {
      * Represents a code position with associated additional information.
      */
     public abstract static class Site {
-        public final int codePos;
+        public final int pcOffset;
 
-        public Site(int codePos) {
-            this.codePos = codePos;
+        public Site(int pcOffset) {
+            this.pcOffset = pcOffset;
         }
     }
 
@@ -51,22 +51,20 @@ public class CiTargetMethod {
      * Represents a safepoint and stores the register and stack reference map.
      */
     public static final class Safepoint extends Site {
-        public final byte[] registerMap;
-        public final byte[] stackMap;
+        public final CiDebugInfo debugInfo;
 
-        private Safepoint(int codePos, byte[] registerMap, byte[] stackMap) {
-            super(codePos);
-            this.registerMap = registerMap;
-            this.stackMap = stackMap;
+        private Safepoint(int pcOffset, CiDebugInfo debugInfo) {
+            super(pcOffset);
+            this.debugInfo = debugInfo;
         }
 
         @Override
         public String toString() {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("Safepoint at ");
-            sb.append(codePos);
-            sb.append(mapToString("registerMap", registerMap));
-            sb.append(mapToString("stackMap", stackMap));
+            sb.append(pcOffset);
+            appendRefMap(sb, "registerMap", debugInfo.registerRefMap);
+            appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
             return sb.toString();
         }
     }
@@ -76,27 +74,27 @@ public class CiTargetMethod {
      * call can either be a runtime call, a global stub call or a call to a normal method.
      */
     public static final class Call extends Site {
-
         public final CiRuntimeCall runtimeCall;
         public final RiMethod method;
         public final Object globalStubID;
 
+        public final CiDebugInfo debugInfo;
         public final byte[] stackMap;
         public final byte[] registerMap;
 
-        private Call(int codePos, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, byte[] registerMap, byte[] stackMap) {
-            super(codePos);
+        private Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
+            super(pcOffset);
             this.runtimeCall = runtimeCall;
             this.method = method;
             this.stackMap = stackMap;
             this.globalStubID = globalStubID;
             this.registerMap = registerMap;
+            this.debugInfo = debugInfo;
         }
 
         @Override
         public String toString() {
-
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             if (runtimeCall != null) {
                 sb.append("Runtime call to ");
                 sb.append(runtimeCall.name());
@@ -110,14 +108,11 @@ public class CiTargetMethod {
             }
 
             sb.append(" at pos ");
-            sb.append(codePos);
+            sb.append(pcOffset);
 
-            if (stackMap != null) {
-                sb.append(mapToString("stackMap", stackMap));
-            }
-
-            if (registerMap != null) {
-                sb.append(mapToString("registerMap", registerMap));
+            if (debugInfo != null) {
+                appendRefMap(sb, "stackMap", debugInfo.frameRefMap);
+                appendRefMap(sb, "registerMap", debugInfo.registerRefMap);
             }
 
             return sb.toString();
@@ -130,14 +125,14 @@ public class CiTargetMethod {
     public static final class DataPatch extends Site {
         public final CiConstant data;
 
-        private DataPatch(int codePos, CiConstant data) {
-            super(codePos);
+        private DataPatch(int pcOffset, CiConstant data) {
+            super(pcOffset);
             this.data = data;
         }
 
         @Override
         public String toString() {
-            return String.format("Data patch site at pos %d referring to data %s", codePos, data);
+            return String.format("Data patch site at pos %d referring to data %s", pcOffset, data);
         }
     }
 
@@ -149,15 +144,15 @@ public class CiTargetMethod {
         public final int handlerPos;
         public final RiType exceptionType;
 
-        private ExceptionHandler(int codePos, int handlerPos, RiType exceptionType) {
-            super(codePos);
+        private ExceptionHandler(int pcOffset, int handlerPos, RiType exceptionType) {
+            super(pcOffset);
             this.handlerPos = handlerPos;
             this.exceptionType = exceptionType;
         }
 
         @Override
         public String toString() {
-            return String.format("Exception edge from pos %d to %d with type %s", codePos, handlerPos, (exceptionType == null) ? "null" : exceptionType.javaClass().getName());
+            return String.format("Exception edge from pos %d to %d with type %s", pcOffset, handlerPos, (exceptionType == null) ? "null" : exceptionType.javaClass().getName());
         }
     }
 
@@ -225,26 +220,27 @@ public class CiTargetMethod {
     /**
      * Records a reference to the data section in the code section (e.g. to load an integer or floating point constant).
      *
-     * @param codePosition the position in the code where the data reference occurs
+     * @param codePos the position in the code where the data reference occurs
      * @param data the data that is referenced
      */
-    public void recordDataReference(int codePosition, CiConstant data) {
-        assert codePosition >= 0 && data != null;
-        dataReferences.add(new DataPatch(codePosition, data));
+    public void recordDataReference(int codePos, CiConstant data) {
+        assert codePos >= 0 && data != null;
+        dataReferences.add(new DataPatch(codePos, data));
     }
 
     /**
      * Records a direct method call to the specified method in the code.
      *
-     * @param codePosition the position in the code array
+     * @param codePos the position in the code array
      * @param target the method or runtime call or stub being called
+     * @param debugInfo the debug info for the call site
      * @param stackMap the bitmap that indicates which stack locations
      * @param direct true if this is a direct call, false otherwise
      */
-    public void recordCall(int codePosition, Object target, byte[] stackMap, boolean direct) {
+    public void recordCall(int codePos, Object target, CiDebugInfo debugInfo, byte[] stackMap, boolean direct) {
         CiRuntimeCall rt = target instanceof CiRuntimeCall ? (CiRuntimeCall) target : null;
         RiMethod meth = target instanceof RiMethod ? (RiMethod) target : null;
-        final Call callSite = new Call(codePosition, rt, meth, target, null, stackMap);
+        final Call callSite = new Call(codePos, rt, meth, target, null, stackMap, debugInfo);
         if (direct) {
             directCalls.add(callSite);
         } else {
@@ -266,13 +262,13 @@ public class CiTargetMethod {
     /**
      * Records the reference maps at a safepoint location in the code array.
      *
-     * @param codePosition the position in the code array
+     * @param codePos the position in the code array
      * @param registerMap  the bitmap that indicates which registers are references
      * @param stackMap     the bitmap that indicates which stack locations
-     *                     are references
+     * @param debugInfo    the debug info for the safepoint site
      */
-    public void recordSafepoint(int codePosition, byte[] registerMap, byte[] stackMap) {
-        safepoints.add(new Safepoint(codePosition, registerMap, stackMap));
+    public void recordSafepoint(int codePos, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
+        safepoints.add(new Safepoint(codePos, debugInfo));
         assert referenceRegisterCount <= registerMap.length * 8 : "compiler produced register maps of different sizes";
     }
 
@@ -327,18 +323,18 @@ public class CiTargetMethod {
         return targetCodeSize;
     }
 
-    private static String mapToString(String name, byte[] map) {
-        StringBuffer sb = new StringBuffer();
-        sb.append(' ');
-        sb.append(name);
-        sb.append('[');
-        for (byte b : map) {
-            for (int j = 0; j < 8; j++) {
-                int z = (b >> j) & 1;
-                sb.append(z);
+    private static void appendRefMap(StringBuilder sb, String name, byte[] map) {
+        if (map != null) {
+            sb.append(' ');
+            sb.append(name);
+            sb.append('[');
+            for (byte b : map) {
+                for (int j = 0; j < 8; j++) {
+                    int z = (b >> j) & 1;
+                    sb.append(z);
+                }
             }
+            sb.append(']');
         }
-        sb.append(']');
-        return sb.toString();
     }
 }

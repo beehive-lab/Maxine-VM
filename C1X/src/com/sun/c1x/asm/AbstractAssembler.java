@@ -147,23 +147,25 @@ public abstract class AbstractAssembler {
     public void recordImplicitException(int pcOffset, LIRDebugInfo info) {
         // record an implicit exception point
         if (info != null) {
-            targetMethod.recordSafepoint(pcOffset, info.registerRefMap(), info.stackRefMap());
+            targetMethod.recordSafepoint(pcOffset, info.registerRefMap(), info.stackRefMap(), info.debugInfo());
             recordExceptionHandlers(pcOffset, info);
         }
     }
 
     protected void recordDirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
         byte[] stackMap = info != null ? info.stackRefMap() : null;
-        targetMethod.recordCall(posBefore, target, stackMap, true);
+        CiDebugInfo debugInfo = info != null ? info.debugInfo() : null;
+        targetMethod.recordCall(posBefore, target, debugInfo, stackMap, true);
     }
 
     protected void recordIndirectCall(int posBefore, int posAfter, Object target, LIRDebugInfo info) {
         byte[] stackMap = info != null ? info.stackRefMap() : null;
-        targetMethod.recordCall(posBefore, target, stackMap, false);
+        CiDebugInfo debugInfo = info != null ? info.debugInfo() : null;
+        targetMethod.recordCall(posBefore, target, debugInfo, stackMap, false);
     }
 
-    protected void recordSafepoint(int pos, byte[] registerMap, byte[] stackMap) {
-        targetMethod.recordSafepoint(pos, registerMap, stackMap);
+    protected void recordSafepoint(int pos, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
+        targetMethod.recordSafepoint(pos, registerMap, stackMap, debugInfo);
     }
 
     public Address recordDataReferenceInCode(CiConstant data) {

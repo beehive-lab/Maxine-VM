@@ -51,8 +51,9 @@ final class JDK_sun_reflect_Reflection {
      * This class implements a closure that records the method actor at a particular
      * position in the stack.
      */
-    private static class Context implements RawStackFrameVisitor {
-        MethodActor result;
+    static class Context implements RawStackFrameVisitor {
+        MethodActor methodActorResult;
+        Pointer framePointerResult;
         int realFramesToSkip;
 
         Context(int realFramesToSkip) {
@@ -66,7 +67,6 @@ final class JDK_sun_reflect_Reflection {
             if (isAdapter(flags)) {
                 return true;
             }
-            //final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer());
             if (targetMethod == null) {
                 // native frame
                 realFramesToSkip--; // TODO: find out whether this is according to getCallerClass' intended "spec"
@@ -77,10 +77,11 @@ final class JDK_sun_reflect_Reflection {
                 return true;
             }
 
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer);
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
             if (bytecodeLocations == null) {
                 if (realFramesToSkip == 0) {
-                    result = targetMethod.classMethodActor();
+                    methodActorResult = targetMethod.classMethodActor();
+                    framePointerResult = framePointer;
                     return false;
                 }
                 realFramesToSkip--;
@@ -90,7 +91,8 @@ final class JDK_sun_reflect_Reflection {
                     final MethodActor classMethodActor = bytecodeLocation.classMethodActor.original();
                     if (!classMethodActor.holder().isGenerated()) {
                         if (realFramesToSkip == 0) {
-                            result = classMethodActor;
+                            methodActorResult = classMethodActor;
+                            framePointerResult = framePointer;
                             return false;
                         }
                         realFramesToSkip--;
@@ -114,7 +116,23 @@ final class JDK_sun_reflect_Reflection {
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer(),
                                                        context);
-        return context.result;
+        return context.methodActorResult;
+    }
+
+    /**
+     * Get the caller Context at a specified place in the stack.
+     * This is used by @see JDK_java_security_AccessController for @See AccessCOntroller.doiPrivileged
+     *
+     * @param realFramesToSkip the number of frames to skip
+     * @return the Context object corresponding to the specified place in the stack
+     */
+    static Context getCallerContext(int realFramesToSkip) {
+        final Context context = new Context(realFramesToSkip);
+        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
+                                                       VMRegister.getCpuStackPointer(),
+                                                       VMRegister.getCpuFramePointer(),
+                                                       context);
+        return context;
     }
 
     /**

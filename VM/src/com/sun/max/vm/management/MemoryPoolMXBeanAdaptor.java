@@ -44,91 +44,72 @@ public class MemoryPoolMXBeanAdaptor implements MemoryPoolMXBean {
         this.region = region;
     }
 
-    @Override
     public MemoryUsage getCollectionUsage() {
         return null;
     }
 
-    @Override
     public long getCollectionUsageThreshold() {
         return 0;
     }
 
-    @Override
     public long getCollectionUsageThresholdCount() {
         return 0;
     }
 
-    @Override
     public String[] getMemoryManagerNames() {
         return new String[] {manager.getName()};
     }
 
-    @Override
     public String getName() {
         return region.description();
     }
 
-    @Override
     public MemoryUsage getPeakUsage() {
         return null;
     }
 
-    @Override
     public MemoryType getType() {
         return type;
     }
 
-    @Override
     public MemoryUsage getUsage() {
         return region.getUsage();
     }
 
-    @Override
     public long getUsageThreshold() {
         return 0;
     }
 
-    @Override
     public long getUsageThresholdCount() {
         return 0;
     }
 
-    @Override
     public boolean isCollectionUsageThresholdExceeded() {
         return false;
     }
 
-    @Override
     public boolean isCollectionUsageThresholdSupported() {
         return false;
     }
 
-    @Override
     public boolean isUsageThresholdExceeded() {
         return false;
     }
 
-    @Override
     public boolean isUsageThresholdSupported() {
         return false;
     }
 
-    @Override
     public boolean isValid() {
         return true;
     }
 
-    @Override
     public void resetPeakUsage() {
     }
 
-    @Override
     public void setCollectionUsageThreshold(long threhsold) {
     }
 
-    @Override
     public void setUsageThreshold(long threshold) {
     }
-
 }
