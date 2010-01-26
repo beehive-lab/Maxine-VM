@@ -29,7 +29,7 @@ import com.sun.c1x.debug.*;
  *
  * @author Thomas Wuerthinger
  */
-class IntervalWalker {
+public class IntervalWalker {
 
     private static final IntervalKind[] INTERVAL_KINDS = IntervalKind.values();
 
