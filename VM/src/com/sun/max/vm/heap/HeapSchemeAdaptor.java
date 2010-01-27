@@ -44,17 +44,14 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             super(name);
         }
 
-        @Override
         public GcInfo getLastGcInfo() {
             return null;
         }
 
-        @Override
         public long getCollectionCount() {
             return 0;
         }
 
-        @Override
         public long getCollectionTime() {
             return 0;
         }

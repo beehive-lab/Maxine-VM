@@ -138,10 +138,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * {@code instructionPointer}.
      *
      * @param instructionPointer a pointer to an instruction within this method
+     * @param implicitExceptionPoint {@code true} if the instruction pointer corresponds to an implicit exception point
      * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
-    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
+    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
         return null;
     }
 
@@ -493,7 +494,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         }
 
         // Since this is not a safepoint, it must be a call.
-
         final int adjustedTargetCodePosition;
         if (compilerScheme.vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC == 0) {
             // targetCodePostion is the instruction after the call (which might be another call).

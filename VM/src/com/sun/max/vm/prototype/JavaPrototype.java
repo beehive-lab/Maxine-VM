@@ -248,12 +248,13 @@ public class JavaPrototype extends Prototype {
         loadClass(sun.misc.VM.class);
 
         // These classes need to be compiled and in the boot image in order to be able to
-        // run the optimizing compiler at run time.
+        // run the optimizing compiler at run time (amongst other reasons)
         loadClass(sun.misc.SharedSecrets.class);
         loadClass(sun.reflect.annotation.AnnotationParser.class);
         loadClass(sun.reflect.Reflection.class);
         loadClass(java.util.concurrent.atomic.AtomicLong.class);
         loadClass(java.security.ProtectionDomain.class);
+        loadClass(java.security.DomainCombiner.class);
         loadClass(java.security.PrivilegedAction.class);
 
         // Necessary for Java Run Scheme to initialize the System class:

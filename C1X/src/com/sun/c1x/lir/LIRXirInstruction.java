@@ -81,7 +81,7 @@ public class LIRXirInstruction extends LIRInstruction {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("LIRXIR ");
 
         sb.append(snippet.toString());

@@ -752,7 +752,7 @@ public abstract class StackFrameWalker {
                 }
                 continue;
             }
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.ip);
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.ip, false);
             if (bytecodeLocations == null) {
                 if (targetMethod.classMethodActor() != null) {
                     appendClassMethodActor(result, targetMethod.classMethodActor(), invisibleFrames);
@@ -776,7 +776,7 @@ public abstract class StackFrameWalker {
                 // ignore native frame
                 continue;
             }
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.ip);
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.ip, false);
             if (bytecodeLocations == null) {
                 if (targetMethod.classMethodActor() != null) {
                     return targetMethod.classMethodActor();

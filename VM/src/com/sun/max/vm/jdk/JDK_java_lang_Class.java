@@ -187,27 +187,20 @@ final class JDK_java_lang_Class {
         return superClassActor == null ? null : superClassActor.mirror();
     }
 
-    private static void getInterfaces(ClassActor classActor, AppendableSequence<Class> javaInterfaces) {
-        if (classActor == null) {
-            return;
-        }
-        for (InterfaceActor interfaceActor : classActor.localInterfaceActors()) {
-            javaInterfaces.append(interfaceActor.mirror());
-        }
-        for (InterfaceActor interfaceActor : classActor.localInterfaceActors()) {
-            getInterfaces(interfaceActor, javaInterfaces);
-        }
-    }
-
     /**
-     * Get the interfaces implemented by this class.
+     * Get the interfaces (directly) implemented or extended by this class.
      * @see java.lang.Class#getInterfaces()
-     * @return the interfaces implemented by this class
+     * @return the interfaces (directly) implemented or extended by this class
      */
     @SUBSTITUTE
     public Class[] getInterfaces() {
         final AppendableSequence<Class> javaInterfaces = new LinkSequence<Class>();
-        getInterfaces(thisClassActor(), javaInterfaces);
+        final ClassActor thisClassActor = thisClassActor();
+        if (thisClassActor != null) {
+            for (InterfaceActor interfaceActor : thisClassActor.localInterfaceActors()) {
+                javaInterfaces.append(interfaceActor.mirror());
+            }
+        }
         return Sequence.Static.toArray(javaInterfaces, new Class[javaInterfaces.length()]);
     }
 
