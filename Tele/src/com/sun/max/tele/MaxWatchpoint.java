@@ -58,11 +58,6 @@ public interface MaxWatchpoint extends MemoryRegion {
     }
 
     /**
-     * @return the optional human-readable string associated with the watchpoint, for debugging.
-     */
-    String getDescription();
-
-    /**
      * Associates an optional human-readable string with the watchpoint for debugging.
      */
     void setDescription(String description);
