@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug;
 
 import java.io.*;
+import java.lang.management.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -72,7 +73,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTriggerEventHandler, MaxWatchpoint {
+public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMTriggerEventHandler, MaxWatchpoint {
 
     // TODO (mlvdv) Consider a response when user tries to set a watchpoint on first header word.  May mean that
     // TODO (mlvdv) there can be multiple watchpoints at a location.  Work through the use cases.
@@ -103,9 +104,10 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
     }
 
     private static final int TRACE_VALUE = 1;
-    private final String tracePrefix;
 
     private final WatchpointKind kind;
+
+    private final RuntimeMemoryRegion memoryRegion;
 
     /**
      * Watchpoints factory.
@@ -141,24 +143,56 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
     private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
 
     private TeleWatchpoint(WatchpointKind kind, Factory factory, String description, Address start, Size size, WatchpointSettings settings) {
-        super(start, size);
-        setDescription(description);
+        super(factory.teleVM());
         this.kind = kind;
         this.factory = factory;
         this.settings = settings;
-        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
+        this.memoryRegion = new RuntimeMemoryRegion(start, size);
+        this.memoryRegion.setDescription(description);
     }
 
     private TeleWatchpoint(WatchpointKind kind, Factory factory, String description, MemoryRegion memoryRegion, WatchpointSettings settings) {
         this(kind, factory, description, memoryRegion.start(), memoryRegion.size(), settings);
     }
 
-    protected final String tracePrefix() {
-        return tracePrefix;
+    public final Address start() {
+        return memoryRegion.start();
     }
 
-    public String getDescription() {
-        return description();
+    public final Size size() {
+        return memoryRegion.size();
+    }
+
+    public final Address end() {
+        return memoryRegion.end();
+    }
+
+    public final Address mark() {
+        return memoryRegion.mark();
+    }
+
+    public final  boolean contains(Address address) {
+        return memoryRegion.contains(address);
+    }
+
+    public final  boolean overlaps(MemoryRegion memoryRegion) {
+        return this.memoryRegion.overlaps(memoryRegion);
+    }
+
+    public final boolean sameAs(MemoryRegion memoryRegion) {
+        return this.memoryRegion.sameAs(memoryRegion);
+    }
+
+    public final String description() {
+        return memoryRegion.description();
+    }
+
+    public final  MemoryUsage getUsage() {
+        return memoryRegion.getUsage();
+    }
+
+    public final void setDescription(String description) {
+        memoryRegion.setDescription(description);
     }
 
     @Override
@@ -248,7 +282,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
         sb.append(", ").append(isActive() ? "active" : "inactive");
         sb.append(", 0x").append(start().toHexString());
         sb.append(", size=").append(size().toString());
-        sb.append(", \"").append(getDescription()).append("\"");
+        sb.append(", \"").append(description()).append("\"");
         sb.append("}");
         return sb.toString();
     }
@@ -278,15 +312,19 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
      * Future usage: e.g. for conditional Watchpoints
      */
     private void updateMemoryCache() {
-        if (memoryCache == null || memoryCache.length != size.toInt()) {
-            memoryCache = new byte[size.toInt()];
+        if (memoryCache == null || memoryCache.length != size().toInt()) {
+            memoryCache = new byte[size().toInt()];
         }
         try {
-            memoryCache = factory.teleVM().dataAccess().readFully(start, size.toInt());
+            memoryCache = factory.teleVM().dataAccess().readFully(start(), size().toInt());
         } catch (DataIOError e) {
             // Must be a watchpoint in an address space that doesn't (yet?) exist in the VM process.
             memoryCache = null;
         }
+    }
+
+    private void setStart(Address start) {
+        memoryRegion.setStart(start);
     }
 
     /**
@@ -495,7 +533,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                         } else {
                             TeleObjectWatchpoint.this.teleObject = newTeleObject;
                             final Pointer newWatchpointStart = newTeleObject.origin().plus(thisWatchpoint.offset);
-                            Trace.line(TRACE_VALUE, thisWatchpoint.tracePrefix() + " relocating watchpoint " + thisWatchpoint.start.toHexString() + "-->" + newWatchpointStart.toHexString());
+                            Trace.line(TRACE_VALUE, thisWatchpoint.tracePrefix() + " relocating watchpoint " + thisWatchpoint.start().toHexString() + "-->" + newWatchpointStart.toHexString());
                             thisWatchpoint.relocate(newWatchpointStart);
                             // Now replace this relocation watchpoint for the next time the objects gets moved.
                             thisWatchpoint.clearRelocationWatchpoint();
@@ -506,7 +544,7 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
                             }
                         }
                     } else {
-                        Trace.line(TRACE_VALUE, thisWatchpoint.tracePrefix() + " relocating watchpoint (IGNORED) 0x" + thisWatchpoint.start.toHexString());
+                        Trace.line(TRACE_VALUE, thisWatchpoint.tracePrefix() + " relocating watchpoint (IGNORED) 0x" + thisWatchpoint.start().toHexString());
                     }
 
                     return false;
@@ -1008,17 +1046,17 @@ public abstract class TeleWatchpoint extends RuntimeMemoryRegion implements VMTr
             switch(teleWatchpoint.kind) {
                 case CLIENT: {
                     if (!clientWatchpoints.remove(teleWatchpoint)) {
-                        ProgramError.unexpected(teleWatchpoint.tracePrefix + " Failed to remove watchpoint: " + teleWatchpoint);
+                        ProgramError.unexpected(tracePrefix() + " Failed to remove watchpoint: " + teleWatchpoint);
                     }
-                    Trace.line(TRACE_VALUE, teleWatchpoint.tracePrefix + "Removed watchpoint: " + teleWatchpoint);
+                    Trace.line(TRACE_VALUE, tracePrefix() + "Removed watchpoint: " + teleWatchpoint);
                     updateAfterWatchpointChanges();
                     return true;
                 }
                 case SYSTEM: {
                     if (!systemWatchpoints.remove(teleWatchpoint)) {
-                        ProgramError.unexpected(teleWatchpoint.tracePrefix + " Failed to remove watchpoint: " + teleWatchpoint);
+                        ProgramError.unexpected(teleWatchpoint.tracePrefix() + " Failed to remove watchpoint: " + teleWatchpoint);
                     }
-                    Trace.line(TRACE_VALUE, teleWatchpoint.tracePrefix + "Removed watchpoint: " + teleWatchpoint);
+                    Trace.line(TRACE_VALUE, teleWatchpoint.tracePrefix() + "Removed watchpoint: " + teleWatchpoint);
                     return true;
                 }
                 default:
