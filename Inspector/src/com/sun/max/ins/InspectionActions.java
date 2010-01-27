@@ -3808,7 +3808,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            if (watchpoint.dispose()) {
+            if (watchpoint.remove()) {
                 inspection().focus().setWatchpoint(null);
             }  else {
                 gui().errorMessage("Watchpoint removal failed");
@@ -3850,7 +3850,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxWatchpoint watchpoint = focus().watchpoint();
             if (watchpoint != null) {
-                if (watchpoint.dispose()) {
+                if (watchpoint.remove()) {
                     focus().setWatchpoint(null);
                 } else {
                     gui().errorMessage("Watchpoint removal failed");
@@ -3895,7 +3895,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 if (focusWatchpoint == watchpoint) {
                     focus().setWatchpoint(null);
                 }
-                if (!watchpoint.dispose()) {
+                if (!watchpoint.remove()) {
                     gui().errorMessage("Failed to remove watchpoint" + watchpoint);
                 }
             }
@@ -3936,7 +3936,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             focus().setWatchpoint(null);
             for (MaxWatchpoint watchpoint : maxVM().watchpoints()) {
-                if (!watchpoint.dispose()) {
+                if (!watchpoint.remove()) {
                     gui().errorMessage("Failed to remove watchpoint" + watchpoint);
                 }
             }
