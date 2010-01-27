@@ -45,8 +45,8 @@ import com.sun.max.vm.type.*;
  * Watchpoint creation may fail for platform-specific reasons, for example if watchpoints are not supported at all, or are
  * only supported in limited numbers, or only permitted in certain sizes or locations.
  * <br>
- * A new watchpoint is "alive" and remains so until disposed (deleted), at which time it become permanently inert.  Any attempt
- * to enable or otherwise manipulate a disposed watchpoint will cause a ProgramError to be thrown.
+ * A new watchpoint is "alive" and remains so until removed (deleted), at which time it become permanently inert.  Any attempt
+ * to enable or otherwise manipulate a removed watchpoint will cause a ProgramError to be thrown.
  * <br>
  * A watchpoint is by definition "enabled" (client concept) if it is alive and one or more of the three trigger settings
  * is true:  <strong>trapOnRead</strong>, <strong>trapOnWrite</strong>, or <strong>trapOnExec</strong>.
@@ -68,7 +68,7 @@ import com.sun.max.vm.type.*;
  * A watchpoint may only be created on an object known to the inspector as live (neither collected/dead nor forwarded/obsolete).
  * Attempting to set a watchpoint on an object known to the inspector to be not live will cause a ProgramError to be thrown.
  * <br>
- * A relocatable watchpoint associated with an object that is eventually determined to have been collected will be disposed and
+ * A relocatable watchpoint associated with an object that is eventually determined to have been collected will be removed and
  * replaced with a non-relocatable watchpoint covering the same memory region.
  *
  * @author Michael Van De Vanter
@@ -115,8 +115,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
     protected final Factory factory;
 
     /**
-     * Is this watchpoint still alive (not yet disposed) and available for activation/deactivation?
-     * This is true from the creation of the watchpoint until it is disposed, at which event
+     * Is this watchpoint still alive (not yet removed) and available for activation/deactivation?
+     * This is true from the creation of the watchpoint until it is removed, at which event
      * it becomes permanently false and it cannot be used.
      */
     private boolean alive = true;
@@ -240,16 +240,16 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         return alive && (settings.trapOnRead || settings.trapOnWrite || settings.trapOnExec);
     }
 
-    public boolean dispose() {
+    public boolean remove() {
         assert alive;
         if (active) {
             setActive(false);
         }
-        final boolean isDisposed =  factory.removeWatchpoint(this);
-        if (isDisposed) {
+        final boolean isRemoved =  factory.removeWatchpoint(this);
+        if (isRemoved) {
             alive = false;
         }
-        return isDisposed;
+        return isRemoved;
     }
 
     public final boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -558,15 +558,15 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         private void clearRelocationWatchpoint() {
             if (relocationWatchpoint != null) {
-                relocationWatchpoint.dispose();
+                relocationWatchpoint.remove();
                 relocationWatchpoint = null;
             }
         }
 
         @Override
-        public boolean dispose() {
+        public boolean remove() {
             clearRelocationWatchpoint();
-            return super.dispose();
+            return super.remove();
         }
 
         public final boolean isRelocatable() {
@@ -598,7 +598,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     break;
                 case DEAD:
                     // The watchpoint's object has been collected; convert it to a fixed memory region watchpoint
-                    dispose();
+                    remove();
                     final FixedMemoryRegion watchpointRegion = new FixedMemoryRegion(start(), size(), "Old memory location of watched object");
                     try {
                         final TeleWatchpoint newRegionWatchpoint =

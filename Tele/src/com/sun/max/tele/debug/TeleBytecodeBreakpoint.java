@@ -438,7 +438,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * Removes a breakpoint at the described position, if one exists.
          * <br>
          * Assumes that all state related to the breakpoint has already
-         * been disposed.
+         * been removed.
          *
          * @param teleBytecodeBreakpoint the breakpoint being removed.
          */
