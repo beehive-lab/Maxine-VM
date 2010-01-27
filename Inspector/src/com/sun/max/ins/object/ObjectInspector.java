@@ -34,7 +34,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
