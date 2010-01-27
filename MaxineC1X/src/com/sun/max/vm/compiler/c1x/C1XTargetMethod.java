@@ -33,6 +33,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
@@ -95,6 +96,10 @@ public class C1XTargetMethod extends TargetMethod {
      * </pre>
      */
     private byte[] referenceMaps;
+
+    private Object sourceInfo;
+
+    private ClassMethodActor[] sourceMethods;
 
     /**
      * The number of registers that may be used to store a reference value.
@@ -284,11 +289,11 @@ public class C1XTargetMethod extends TargetMethod {
                 case Float: // fall through
                 case Int: // fall through
                 case Long:
-                    patchRelativeInstruction(site.codePos, dataDiff.plus(relativeDataPositions[z] - site.codePos).toInt());
+                    patchRelativeInstruction(site.pcOffset, dataDiff.plus(relativeDataPositions[z] - site.pcOffset).toInt());
                     break;
 
                 case Object:
-                    patchRelativeInstruction(site.codePos, referenceDiff.plus(objectReferenceIndex * refSize - site.codePos).toInt());
+                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(objectReferenceIndex * refSize - site.pcOffset).toInt());
                     objectReferenceIndex++;
                     break;
 
@@ -322,12 +327,15 @@ public class C1XTargetMethod extends TargetMethod {
         int[] stopPositions = new int[totalStopPositions];
         Object[] directCallees = new Object[ciTargetMethod.directCalls.size()];
 
-        for (Call site : ciTargetMethod.directCalls) {
-            initStopPosition(index, index * totalRefMapSize, stopPositions, site.codePos, site.registerMap, site.stackMap);
+        CiDebugInfo[] stopInfo = new CiDebugInfo[totalStopPositions];
+        boolean hasInlinedMethods = false;
 
-            if (site.method != null) {
-                final MaxRiMethod maxMethod = (MaxRiMethod) site.method;
-                final ClassMethodActor cma = maxMethod.asClassMethodActor("directCall()");
+        for (CiTargetMethod.Call site : ciTargetMethod.directCalls) {
+            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, stopInfo);
+
+            RiMethod riMethod = site.method;
+            if (riMethod != null) {
+                final ClassMethodActor cma = getClassMethodActor(riMethod);
                 assert cma != null : "unresolved direct call!";
                 directCallees[index] = cma;
             } else if (site.runtimeCall != null) {
@@ -342,34 +350,47 @@ public class C1XTargetMethod extends TargetMethod {
             index++;
         }
 
-        for (Call site : ciTargetMethod.indirectCalls) {
-            initStopPosition(index, index * totalRefMapSize, stopPositions, site.codePos, site.registerMap, site.stackMap);
+        for (CiTargetMethod.Call site : ciTargetMethod.indirectCalls) {
+            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, stopInfo);
             index++;
         }
 
-        for (CiTargetMethod.Safepoint safepoint : ciTargetMethod.safepoints) {
-            initStopPosition(index, index * totalRefMapSize, stopPositions, safepoint.codePos, safepoint.registerMap, safepoint.stackMap);
+        for (CiTargetMethod.Safepoint site : ciTargetMethod.safepoints) {
+            hasInlinedMethods |= initStopPosition(index, index * totalRefMapSize, stopPositions, site.pcOffset, site.debugInfo, stopInfo);
             index++;
         }
 
-        this.setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
+        setStopPositions(stopPositions, directCallees, numberOfIndirectCalls, numberOfSafepoints);
+        initSourceInfo(stopInfo, hasInlinedMethods);
     }
 
-    private void initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, byte[] registerMap, byte[] stackMap) {
-        stopPositions[index] = codePos;
+    private ClassMethodActor getClassMethodActor(RiMethod riMethod) {
+        return ((MaxRiMethod) riMethod).asClassMethodActor("getClassMethodActor()");
+    }
 
-        int stackMapLength;
-        // copy the stack map
-        if (stackMap != null) {
-            stackMapLength = stackMap.length;
-            System.arraycopy(stackMap, 0, referenceMaps, refmapIndex, stackMapLength);
-        } else {
-            stackMapLength = 0;
+    private boolean initStopPosition(int index, int refmapIndex, int[] stopPositions, int codePos, CiDebugInfo debugInfo, CiDebugInfo[] stopInfo) {
+        stopPositions[index] = codePos;
+        if (debugInfo != null) {
+            // remember the code position
+            stopInfo[index] = debugInfo;
+            // copy the stack map
+            int stackMapLength;
+            byte[] stackMap = debugInfo.frameRefMap;
+            if (stackMap != null) {
+                stackMapLength = stackMap.length;
+                System.arraycopy(stackMap, 0, referenceMaps, refmapIndex, stackMapLength);
+            } else {
+                stackMapLength = 0;
+            }
+            // copy the register map
+            byte[] registerMap = debugInfo.registerRefMap;
+            if (registerMap != null) {
+                System.arraycopy(registerMap, 0, referenceMaps, refmapIndex + stackMapLength, registerMap.length);
+            }
+
+            return debugInfo.codePos != null && debugInfo.codePos.caller != null;
         }
-        // copy the register map
-        if (registerMap != null) {
-            System.arraycopy(registerMap, 0, referenceMaps, refmapIndex + stackMapLength, registerMap.length);
-        }
+        return false;
     }
 
     private void initExceptionTable(CiTargetMethod ciTargetMethod) {
@@ -379,12 +400,108 @@ public class C1XTargetMethod extends TargetMethod {
 
             int z = 0;
             for (ExceptionHandler handler : ciTargetMethod.exceptionHandlers) {
-                exceptionPositionsToCatchPositions[z * 2] = handler.codePos;
+                exceptionPositionsToCatchPositions[z * 2] = handler.pcOffset;
                 exceptionPositionsToCatchPositions[z * 2 + 1] = handler.handlerPos;
                 exceptionClassActors[z] = (handler.exceptionType == null) ? null : ((MaxRiType) handler.exceptionType).classActor;
                 z++;
             }
         }
+    }
+
+    private void initSourceInfo(CiDebugInfo[] debugInfos, boolean hasInlinedMethods) {
+        if (hasInlinedMethods) {
+            // the stop information is stored less compactly if there are inlined methods;
+            // store the class method actor, the bytecode index, and the inlining parent
+            IdentityHashMap<CiCodePos, Integer> codePosMap = new IdentityHashMap<CiCodePos, Integer>();
+            IdentityHashMap<ClassMethodActor, Integer> inlinedMethodMap = new IdentityHashMap<ClassMethodActor, Integer>();
+            ArrayList<ClassMethodActor> inlinedMethodList = new ArrayList<ClassMethodActor>(5);
+            ArrayList<CiCodePos> extraList = new ArrayList<CiCodePos>(5);
+
+            // build the list of extra source info entries
+            for (int i = 0; i < debugInfos.length; i++) {
+                CiDebugInfo debugInfo = debugInfos[i];
+                if (debugInfo != null) {
+                    CiCodePos curPos = debugInfo.codePos;
+                    if (curPos != null) {
+                        // there is source information here
+                        codePosMap.put(curPos, i);
+                        CiCodePos pos = curPos.caller;
+                        while (pos != null) {
+                            // add entries for the caller positions
+                            if (codePosMap.get(pos) == null) {
+                                codePosMap.put(pos, -extraList.size() - 1);
+                                extraList.add(pos);
+                            }
+                            pos = pos.caller;
+                        }
+                    }
+                }
+            }
+
+            int[] sourceInfoData = new int[(extraList.size() + debugInfos.length) * 3];
+            int index = 0;
+            for (; index < debugInfos.length; index++) {
+                // there is source information here
+                CiDebugInfo debugInfo = debugInfos[index];
+                if (debugInfo != null && debugInfo.codePos != null) {
+                    encodeSourcePos(index, sourceInfoData, debugInfo.codePos, inlinedMethodMap, codePosMap, debugInfos.length, inlinedMethodList);
+                }
+            }
+
+            for (CiCodePos codePos : extraList) {
+                // there is source information here
+                encodeSourcePos(index++, sourceInfoData, codePos, inlinedMethodMap, codePosMap, debugInfos.length, inlinedMethodList);
+            }
+
+            this.sourceInfo = sourceInfoData;
+            this.sourceMethods = inlinedMethodList.toArray(new ClassMethodActor[inlinedMethodList.size()]);
+
+        } else if (debugInfos.length > 0) {
+            // use a more compact format if there are no inlined methods;
+            // only store the bytecode index in the originating method for each stop
+            char[] bciInfo = new char[debugInfos.length];
+            this.sourceInfo = bciInfo;
+            for (int i = 0; i < debugInfos.length; i++) {
+                CiDebugInfo debugInfo = debugInfos[i];
+                if (debugInfo != null && debugInfo.codePos != null) {
+                    bciInfo[i] = (char) debugInfo.codePos.bci;
+                } else {
+                    bciInfo[i] = (char) -1;
+                }
+            }
+        }
+    }
+
+    private void encodeSourcePos(int index,
+                                 int[] sourceInfoData,
+                                 CiCodePos curPos,
+                                 IdentityHashMap<ClassMethodActor, Integer> inlinedMethodMap,
+                                 IdentityHashMap<CiCodePos, Integer> codePosMap,
+                                 int stopCount,
+                                 List<ClassMethodActor> inlinedMethodList) {
+        // encodes three integers into the sourceInfoData array:
+        // the index into the sourceMethods array, the bytecode index, and the index of the caller method
+        // (if this entry is an inlined method)
+        int start = index * 3;
+
+        ClassMethodActor cma = getClassMethodActor(curPos.method);
+        Integer methodIndex = inlinedMethodMap.get(cma);
+        if (methodIndex == null) {
+            methodIndex = inlinedMethodList.size();
+            inlinedMethodMap.put(cma, methodIndex);
+            inlinedMethodList.add(cma);
+        }
+        int bytecodeIndex = curPos.bci;
+        int callerIndex;
+        if (curPos.caller == null) {
+            callerIndex = -1;
+        } else {
+            Integer sourceInfoIndex = codePosMap.get(curPos.caller);
+            callerIndex = sourceInfoIndex < 0 ? (-sourceInfoIndex - 1) + stopCount : sourceInfoIndex;
+        }
+        sourceInfoData[start] = methodIndex;
+        sourceInfoData[start + 1] = bytecodeIndex;
+        sourceInfoData[start + 2] = callerIndex;
     }
 
     @UNSAFE
@@ -404,8 +521,8 @@ public class C1XTargetMethod extends TargetMethod {
         assert oldTargetMethod != newTargetMethod;
         assert oldTargetMethod.abi().callEntryPoint() != CallEntryPoint.C_ENTRY_POINT;
 
-        final long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
-        final long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
+        long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
+        long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
 
         patchCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart(), newOptEntry, RJMP);
         patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry, RJMP);
@@ -423,11 +540,12 @@ public class C1XTargetMethod extends TargetMethod {
             code[offset + 3] = (byte) (displacement >> 16);
             code[offset + 4] = (byte) (displacement >> 24);
         } else {
-            // TODO: Patching code is probably not thread safe!
-            //       Patch location must not straddle a cache-line (32-byte) boundary.
-            FatalError.check(true | callSite.isWordAligned(), "Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.");
+            if (!(true | callSite.isWordAligned())) {
+                // TODO: Patch location must not straddle a cache-line (32-byte) boundary.
+                FatalError.unexpected("Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.", false, null, Pointer.zero());
+            }
             // The read, modify, write below should be changed to simply a write once we have the method entry point alignment fixed.
-            final Word patch = callSite.readWord(0).asAddress().and(0xFFFFFF0000000000L).or((displacement << 8) | controlTransferOpcode);
+            Word patch = callSite.readWord(0).asAddress().and(0xFFFFFF0000000000L).or((displacement << 8) | controlTransferOpcode);
             callSite.writeWord(0, patch);
         }
     }
@@ -449,12 +567,8 @@ public class C1XTargetMethod extends TargetMethod {
         return Address.zero();
     }
 
-    private boolean isCatchAll(ClassActor type) {
-        return type == null;
-    }
-
     private boolean checkType(Class<? extends Throwable> throwableClass, ClassActor catchType) {
-        return isCatchAll(catchType) || catchType.isAssignableFrom(ClassActor.fromJava(throwableClass));
+        return catchType == null || catchType.isAssignableFrom(ClassActor.fromJava(throwableClass));
     }
 
     /**
@@ -747,5 +861,39 @@ public class C1XTargetMethod extends TargetMethod {
     @Override
     public void advance(StackFrameWalker.Cursor current) {
         AMD64OptStackWalking.advance(current);
+    }
+
+    @Override
+    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer ip, boolean implicitExceptionPoint) {
+        if (!implicitExceptionPoint && Platform.target().instructionSet().offsetToReturnPC == 0) {
+            ip = ip.minus(1);
+        }
+
+        int stopIndex = findClosestStopIndex(ip);
+        if (stopIndex < 0) {
+            return null;
+        }
+        if (sourceInfo instanceof char[]) {
+            // no inlined methods; just recover the bytecode index
+            char[] array = (char[]) sourceInfo;
+            ArrayList<BytecodeLocation> locations = new ArrayList<BytecodeLocation>(1);
+            locations.add(new BytecodeLocation(classMethodActor, array[stopIndex]));
+            return locations.iterator();
+        }
+        if (sourceInfo instanceof int[]) {
+            // iterate over all inlined methods
+            int[] array = (int[]) sourceInfo;
+            ArrayList<BytecodeLocation> locations = new ArrayList<BytecodeLocation>();
+            while (stopIndex >= 0) {
+                int start = stopIndex * 3;
+                ClassMethodActor sourceMethod = sourceMethods[array[start]];
+                int bci = array[start + 1];
+                locations.add(new BytecodeLocation(sourceMethod, bci));
+                stopIndex = array[start + 2];
+            }
+
+            return locations.iterator();
+        }
+        return null;
     }
 }

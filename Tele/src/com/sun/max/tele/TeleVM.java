@@ -1473,7 +1473,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final int bytecodeBreakpointCount() {
-        return bytecodeBreakpointFactory.size();
+        return bytecodeBreakpointFactory.clientBreakpointCount();
     }
 
     public final MaxBreakpoint makeBreakpointAt(Key key) {

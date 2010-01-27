@@ -22,14 +22,18 @@ package com.sun.max.vm.jdk;
 
 import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
 
+import java.lang.reflect.Constructor;
 import java.security.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -39,11 +43,37 @@ import com.sun.max.vm.type.*;
 
 /**
  * Method substitutions for the {@link java.security.AccessController} class.
+ * We leverage some common code in the substitutions for @see sun.reflect.Reflection.
  */
 @METHOD_SUBSTITUTIONS(AccessController.class)
 final class JDK_java_security_AccessController {
 
+    private static Constructor<?> accessControlContextConstructor;
+    private static FieldActor privilegedContextActor;
+
     private JDK_java_security_AccessController() {
+    }
+
+    private static Constructor<?> getAccessControlContextConstructor() {
+        if (accessControlContextConstructor == null) {
+            // N.B. This is called very early in the VM startup, when creating the first VM thread,
+            // Experimentally, recursive entry while creating the constructor does not happen.
+            try {
+                accessControlContextConstructor = AccessControlContext.class.getDeclaredConstructor(ProtectionDomain[].class, boolean.class);
+                accessControlContextConstructor.setAccessible(true);
+            } catch (Exception ex) {
+                ProgramError.unexpected("failed to get AccessControlContext constructor ", ex);
+                return null;
+            }
+        }
+        return accessControlContextConstructor;
+    }
+
+    private static FieldActor getPrivilegedContextActor() {
+        if (privilegedContextActor == null) {
+            privilegedContextActor = ClassActor.fromJava(AccessControlContext.class).findFieldActor(SymbolTable.makeSymbol("privilegedContext"));
+        }
+        return privilegedContextActor;
     }
 
     /**
@@ -56,8 +86,14 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static <T> T doPrivileged(PrivilegedAction<T> action) {
-        // TODO implement this properly!
-        return action.run();
+        final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
+        final VmThread current = VmThread.current();
+        current.pushPrivilegedElement(context.methodActorResult.holder(), context.framePointerResult, null);
+        try {
+            return action.run();
+        } finally {
+            current.popPrivilegedElement();
+        }
     }
 
     /**
@@ -70,9 +106,15 @@ final class JDK_java_security_AccessController {
      * @return the result of performing the action
      */
     @SUBSTITUTE
-    public static <T> T doPrivileged(PrivilegedAction<T> action, AccessControlContext context) {
-        // TODO implement this properly!
-        return action.run();
+    public static <T> T doPrivileged(PrivilegedAction<T> action, AccessControlContext accessControlContext) {
+        final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
+        final VmThread current = VmThread.current();
+        current.pushPrivilegedElement(context.methodActorResult.holder(), context.framePointerResult, accessControlContext);
+        try {
+            return action.run();
+        } finally {
+            current.popPrivilegedElement();
+        }
     }
 
     /**
@@ -86,11 +128,15 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static <T> T doPrivileged(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
-        // TODO implement this properly!
+        final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
+        final VmThread current = VmThread.current();
+        current.pushPrivilegedElement(context.methodActorResult.holder(), context.framePointerResult, null);
         try {
             return action.run();
         } catch (Exception exception) {
             throw new PrivilegedActionException(exception);
+        } finally {
+            current.popPrivilegedElement();
         }
     }
 
@@ -105,28 +151,37 @@ final class JDK_java_security_AccessController {
      * @throws PrivilegedActionException if the privileged action caused an exception
      */
     @SUBSTITUTE
-    public static <T> T doPrivileged(PrivilegedExceptionAction<T> action, AccessControlContext context) throws PrivilegedActionException {
-        // TODO implement this properly!
+    public static <T> T doPrivileged(PrivilegedExceptionAction<T> action, AccessControlContext accessControlContext) throws PrivilegedActionException {
+        final JDK_sun_reflect_Reflection.Context context =  JDK_sun_reflect_Reflection.getCallerContext(1);
+        final VmThread current = VmThread.current();
+        current.pushPrivilegedElement(context.methodActorResult.holder(), context.framePointerResult, accessControlContext);
         try {
             return action.run();
         } catch (Exception exception) {
             throw new PrivilegedActionException(exception);
+        } finally {
+            current.popPrivilegedElement();
         }
     }
 
-    /**
-     * This class implements a closure that gathers stack frames during a stack walk. TODO: this should be removed and
-     * replaced with utilities in StackFrameWalker.
+   /**
+     * This class implements a closure that analayses protection domains on the call stack. It is based on the HotSpot
+     * implementation.
      */
     private static class Context implements RawStackFrameVisitor {
-        final AppendableSequence<ProtectionDomain> result = new LinkSequence<ProtectionDomain>();
+
+        final AppendableSequence<ProtectionDomain> protectionDomains = new LinkSequence<ProtectionDomain>();
+        final VmThread.PrivilegedElement privilegedElement = VmThread.current().getTopPrivilegedElement();
+        AccessControlContext privilegedContext;
+        ProtectionDomain prevProtectionDomain;
+        boolean isPrivileged;
 
         Context() {
         }
 
         public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
             if (isTopFrame(flags)) {
-                // skip 'getCallerMethod()'
+                // skip caller, i.e., 'getAccessControlContext()'
                 return true;
             }
             if (isAdapter(flags)) {
@@ -136,25 +191,36 @@ final class JDK_java_security_AccessController {
                 // native frame
                 return true;
             }
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer);
-            if (bytecodeLocations == null) {
-                final ProtectionDomain protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
-                if (protectionDomain != null) {
-                    result.append(protectionDomain);
-                }
+
+            isPrivileged = false;
+            ProtectionDomain protectionDomain = null;
+            // check the privileged frames for a match
+            if (privilegedElement != null && privilegedElement.frameId == framePointer) {
+                isPrivileged = true;
+                privilegedContext = privilegedElement.context;
+                protectionDomain = privilegedElement.classActor.protectionDomain();
             } else {
-                while (bytecodeLocations.hasNext()) {
-                    final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
-                    final MethodActor classMethodActor = bytecodeLocation.classMethodActor;
-                    if (classMethodActor.isApplicationVisible()) {
-                        final ProtectionDomain protectionDomain = bytecodeLocation.classMethodActor.holder().protectionDomain();
-                        if (protectionDomain != null) {
-                            result.append(protectionDomain);
+                final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
+                if (bytecodeLocations == null) {
+                    protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
+                } else {
+                    while (bytecodeLocations.hasNext()) {
+                        final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
+                        final MethodActor classMethodActor = bytecodeLocation.classMethodActor;
+                        if (classMethodActor.isApplicationVisible()) {
+                            protectionDomain = bytecodeLocation.classMethodActor.holder().protectionDomain();
                         }
                     }
                 }
             }
-            return true;
+
+            if (prevProtectionDomain != protectionDomain && protectionDomain != null) {
+                protectionDomains.append(protectionDomain);
+                prevProtectionDomain = protectionDomain;
+            }
+
+            // terminate if we found a privileged domain
+            return !isPrivileged;
         }
     }
 
@@ -164,13 +230,13 @@ final class JDK_java_security_AccessController {
      * @return a sequence of protection domains for the current stack
      */
     @NEVER_INLINE
-    private static Sequence<ProtectionDomain> getProtectionDomains() {
+    private static Context getContext() {
         final Context context = new Context();
         new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
                                                        VMRegister.getCpuStackPointer(),
                                                        VMRegister.getCpuFramePointer(),
                                                        context);
-        return context.result;
+        return context;
     }
 
     /**
@@ -181,7 +247,30 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static AccessControlContext getStackAccessControlContext() {
-        return new AccessControlContext(Sequence.Static.toArray(getProtectionDomains(), new ProtectionDomain[getProtectionDomains().length()]));
+        final Context context = getContext();
+        ProtectionDomain[] protectionDomains = null;
+        if (context.protectionDomains.isEmpty()) {
+            if (context.isPrivileged && context.privilegedContext == null) {
+                return null;
+            }
+        } else {
+            protectionDomains = Sequence.Static.toArray(context.protectionDomains, new ProtectionDomain[context.protectionDomains.length()]);
+        }
+
+        try {
+            final AccessControlContext result = (AccessControlContext) getAccessControlContextConstructor().newInstance(protectionDomains, context.isPrivileged);
+            if (context.isPrivileged) {
+                // need to manually set privilegedContext as no constructor for that
+                TupleAccess.writeObject(result, getPrivilegedContextActor().offset(), context.privilegedContext);
+            }
+            return result;
+        } catch (OutOfMemoryError ex) {
+            // the only exception that could happen if were using "new"
+            throw ex;
+        } catch (Exception ex) {
+            ProgramError.unexpected("failed to instantiate AccessControlContext", ex);
+            return null;
+        }
     }
 
     /**

@@ -46,7 +46,7 @@ public class LIROperand {
             return "illegal";
         }
 
-        final StringBuffer out = new StringBuffer();
+        final StringBuilder out = new StringBuilder();
         out.append("[");
         if (isSingleStack()) {
             out.append("stack:").append(singleStackIndex());
