@@ -767,12 +767,24 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         public synchronized TeleWatchpoint createObjectWatchpoint(String description, TeleObject teleObject, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
-            final TeleWatchpoint teleWatchpoint = new TeleWholeObjectWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, settings);
+            TeleWatchpoint teleWatchpoint;
+            if (teleObject.isLive()) {
+                teleWatchpoint  = new TeleWholeObjectWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, settings);
+            } else {
+                String amendedDescription = (description == null) ? "" : description;
+                amendedDescription = amendedDescription + " (non-live object))";
+                final MemoryRegion region = teleObject.memoryRegion();
+                teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+            }
             return addClientWatchpoint(teleWatchpoint);
         }
 
         /**
-         * Creates a new, active watchpoint that covers a heap object's field in the VM.
+         * Creates a new, active watchpoint that covers a heap object's field in the VM. If the object is live,
+         * than this watchpoint will track the object's location during GC.
+         * <br>
+         * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
+         *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
          * @param teleObject a heap object in the VM
          * @param fieldActor description of a field in object of that type
@@ -783,7 +795,15 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         public synchronized TeleWatchpoint createFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
-            final TeleWatchpoint teleWatchpoint = new TeleFieldWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, fieldActor, settings);
+            TeleWatchpoint teleWatchpoint;
+            if (teleObject.isLive()) {
+                teleWatchpoint  = new TeleFieldWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, fieldActor, settings);
+            } else {
+                String amendedDescription = (description == null) ? "" : description;
+                amendedDescription = amendedDescription + " (non-live object))";
+                final MemoryRegion region = teleObject.fieldMemoryRegion(fieldActor);
+                teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+            }
             return addClientWatchpoint(teleWatchpoint);
         }
 
@@ -802,12 +822,24 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         public synchronized TeleWatchpoint createArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
-            final TeleWatchpoint teleWatchpoint = new TeleArrayElementWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, settings);
+            TeleWatchpoint teleWatchpoint;
+            if (teleObject.isLive()) {
+                teleWatchpoint = new TeleArrayElementWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, settings);
+            } else {
+                String amendedDescription = (description == null) ? "" : description;
+                amendedDescription = amendedDescription + " (non-live object))";
+                final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
+                final MemoryRegion region = new FixedMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
+                teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+            }
             return addClientWatchpoint(teleWatchpoint);
         }
 
         /**
-         * Creates a new, active watchpoint that covers a field in an object's header in the VM.
+         * Creates a new, active watchpoint that covers a field in an object's header in the VM.  If the object is live,
+         * than this watchpoint will track the object's location during GC.
+         * <br>
+         * If the object is not live, a plain memory region watchpoint is returned, one that does not relocate.
          *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
          * @param teleObject a heap object in the VM
@@ -819,7 +851,15 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         public synchronized TeleWatchpoint createHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
-            final TeleWatchpoint teleWatchpoint = new TeleHeaderWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, headerField, settings);
+            TeleWatchpoint teleWatchpoint;
+            if (teleObject.isLive()) {
+                teleWatchpoint = new TeleHeaderWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, headerField, settings);
+            } else {
+                String amendedDescription = (description == null) ? "" : description;
+                amendedDescription = amendedDescription + " (non-live object)";
+                final MemoryRegion region = teleObject.headerMemoryRegion(headerField);
+                teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+            }
             return addClientWatchpoint(teleWatchpoint);
         }
 
