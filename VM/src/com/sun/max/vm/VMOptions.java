@@ -594,11 +594,13 @@ public final class VMOptions {
 
     /**
      * Support for java.lang.management.RuntimeMXBean.
-     * @return space-separated string of VM arguments, not including class name or user arguments
+     *
+     * @return space-separated string of VM arguments, not including class name, -jar, or user arguments
      */
     public static String getVmArguments() {
         final StringBuilder sb = new StringBuilder();
         int index = 1;
+        boolean needSpace = false;
         final Pointer p = argv;
         argv = savedArgv;
         while (index < argumentStart) {
@@ -608,14 +610,34 @@ public final class VMOptions {
             } catch (Utf8Exception ex) {
             }
             if (argument != null) {
-                sb.append(argument);
-                if (index != argumentStart - 1) {
-                    sb.append(' ');
+                if (argument.equals("-jar")) {
+                    // skip this and jarfile
+                    index++;
+                } else {
+                    if (needSpace) {
+                        sb.append(' ');
+
+                    }
+                    sb.append(argument);
+                    needSpace = true;
                 }
             }
             index++;
         }
         argv = p;
+        return sb.toString();
+    }
+
+    /**
+     * Support for @see sun.misc.VMSupport.initAgentProperties.
+     * @return space separated string of main class and arguments.
+     */
+    public static String mainClassAndArguments() {
+        final StringBuilder sb = new StringBuilder(jarFile() == null ? mainClassName : jarFile());
+        for (int i = 0; i < mainClassArguments.length; i++) {
+            sb.append(' ');
+            sb.append(mainClassArguments[i]);
+        }
         return sb.toString();
     }
 

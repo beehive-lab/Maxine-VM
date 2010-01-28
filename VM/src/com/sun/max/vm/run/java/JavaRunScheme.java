@@ -270,7 +270,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     }
 
     private void lookupAndInvokeMain(Class<?> mainClass) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        final Method mainMethod = lookupMainOrPremainClass(mainClass, "main", String[].class);
+        final Method mainMethod = lookupMainOrAgentClass(mainClass, "main", String[].class);
         AccessController.doPrivileged(new PrivilegedAction<Object>() {
             public Object run() {
                 mainMethod.setAccessible(true);
@@ -280,7 +280,15 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         mainMethod.invoke(null, new Object[] {VMOptions.mainClassArguments()});
     }
 
-    private Method lookupMainOrPremainClass(Class<?> mainClass, String methodName, Class<?> ...params) throws NoSuchMethodException {
+    /**
+     * Try to locate a given method name and signature that is also public static void in given class.
+     * @param mainClass class to search
+     * @param methodName name of method
+     * @param params parameter types
+     * @return the method instance
+     * @throws NoSuchMethodException if the method cannot be found
+     */
+    public static Method lookupMainOrAgentClass(Class<?> mainClass, String methodName, Class<?> ...params) throws NoSuchMethodException {
         final Method mainMethod = mainClass.getDeclaredMethod(methodName, params);
         final int modifiers = mainMethod.getModifiers();
         if ((!Modifier.isPublic(modifiers)) || (!Modifier.isStatic(modifiers)) || (mainMethod.getReturnType() != void.class)) {
@@ -299,7 +307,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         } else {
             // the main class is in the jar file
             final JarFile jarFile = new JarFile(jarFileName);
-            mainClassName = findMainClassNameInJarFile(jarFile, "Main-Class");
+            mainClassName = findClassAttributeInJarFile(jarFile, "Main-Class");
             if (mainClassName == null) {
                 Log.println("could not find main class in jarfile: " + jarFileName);
                 return null;
@@ -308,7 +316,14 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         return appClassLoader.loadClass(mainClassName);
     }
 
-    private String findMainClassNameInJarFile(JarFile jarFile, String classAttribute) throws IOException {
+    /**
+     * Searches the manifest in given jar file for given attribute.
+     * @param jarFile jar file to search
+     * @param classAttribute attribute to search for
+     * @return the value of the attribute of null if not found
+     * @throws IOException if error reading jar file
+     */
+    public static String findClassAttributeInJarFile(JarFile jarFile, String classAttribute) throws IOException {
         final Manifest manifest =  jarFile.getManifest();
         if (manifest == null) {
             return null;
@@ -316,12 +331,38 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         return manifest.getMainAttributes().getValue(classAttribute);
     }
 
+    /**
+     * Invoke the given agent method in the given agent class with the given args.
+     * @param agentClassName agent class name
+     * @param agentMethodName agent method name
+     * @param agentArgs agent args
+     * @throws ClassNotFoundException if agent class not found
+     * @throws NoSuchMethodException if agent method not found
+     * @throws InvocationTargetException if invocation failed
+     * @throws IllegalAccessException if access is denied
+     */
+    public static void invokeAgentMethod(String agentClassName, String agentMethodName, String agentArgs) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        final ClassLoader appClassLoader = Launcher.getLauncher().getClassLoader();
+        final Class<?> preMainClass = appClassLoader.loadClass(agentClassName);
+        Method premainMethod = null;
+        Object[] agentInvokeArgs = null;
+        try {
+            premainMethod = lookupMainOrAgentClass(preMainClass, agentMethodName, new Class<?>[] {String.class, Instrumentation.class});
+            agentInvokeArgs = new Object[2];
+            agentInvokeArgs[1] = null; // TODO create a java.lang.Instrumentation instance
+        } catch (NoSuchMethodException ex) {
+            premainMethod = lookupMainOrAgentClass(preMainClass, agentMethodName, new Class<?>[] {String.class});
+            agentInvokeArgs = new Object[1];
+        }
+        agentInvokeArgs[0] = agentArgs;
+        premainMethod.invoke(null, agentInvokeArgs);
+    }
+
     private void loadAgents() throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         for (int i = 0; i < javaagentOption.count(); i++) {
             final String javaagentOptionString = javaagentOption.getValue(i);
             String jarPath = null;
             String agentArgs = "";
-            Object[] agentInvokeArgs = null;
             final int cIndex = javaagentOptionString.indexOf(':');
             if (javaagentOptionString.length() > 1 && cIndex >= 0) {
                 final int eIndex = javaagentOptionString.indexOf('=', cIndex);
@@ -331,24 +372,20 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 } else {
                     jarPath = javaagentOptionString.substring(cIndex + 1);
                 }
-                final JarFile jarFile = new JarFile(jarPath);
-                final String preMainClassName = findMainClassNameInJarFile(jarFile, "Premain-Class");
-                if (preMainClassName == null) {
-                    Log.println("could not find premain class in jarfile: " + jarPath);
-                }
-                final ClassLoader appClassLoader = Launcher.getLauncher().getClassLoader();
-                final Class<?> preMainClass = appClassLoader.loadClass(preMainClassName);
-                Method premainMethod = null;
+                JarFile jarFile = null;
                 try {
-                    premainMethod = lookupMainOrPremainClass(preMainClass, "premain", new Class<?>[] {String.class, Instrumentation.class});
-                    agentInvokeArgs = new Object[2];
-                    agentInvokeArgs[1] = null; // TODO create a java.lang.Instrumentation instance
-                } catch (NoSuchMethodException ex) {
-                    premainMethod = lookupMainOrPremainClass(preMainClass, "premain", new Class<?>[] {String.class});
-                    agentInvokeArgs = new Object[1];
+                    jarFile = new JarFile(jarPath);
+                    final String preMainClassName = findClassAttributeInJarFile(jarFile, "Premain-Class");
+                    jarFile.close();
+                    if (preMainClassName == null) {
+                        Log.println("could not find premain class in jarfile: " + jarPath);
+                    }
+                    invokeAgentMethod(preMainClassName, "premain", agentArgs);
+                } finally {
+                    if (jarFile != null) {
+                        jarFile.close();
+                    }
                 }
-                agentInvokeArgs[0] = agentArgs;
-                premainMethod.invoke(null, agentInvokeArgs);
             } else {
                 throw new IOException("syntax error in -javaagent" + javaagentOptionString);
             }
