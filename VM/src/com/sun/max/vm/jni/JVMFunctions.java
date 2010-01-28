@@ -32,6 +32,7 @@ import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -134,6 +135,14 @@ public class JVMFunctions {
         final Thread.State[] ts = Thread.State.values();
         result[0] = ts[javaThreadState].name();
         return result;
+    }
+
+    public static Properties InitAgentProperties(Properties props) {
+        // sun.jvm.args, sun.jvm.flags, sun.java.command
+        props.put("sun.jvm.args", VMOptions.getVmArguments());
+        props.put("sun.jvm.flags", "");
+        props.put("sun.java.command", VMOptions.mainClassAndArguments());
+        return props;
     }
 
     // Checkstyle: resume method name check
