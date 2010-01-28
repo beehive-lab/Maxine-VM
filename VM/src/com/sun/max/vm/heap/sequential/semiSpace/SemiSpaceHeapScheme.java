@@ -346,7 +346,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 // Pre-verification of the heap.
                 verifyObjectSpaces("before GC");
 
-                HeapScheme.Static.notifyGCStarting();
+                HeapScheme.Static.notifyGCStarted();
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
@@ -414,7 +414,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 // Post-verification of the heap.
                 verifyObjectSpaces("after GC");
 
-                HeapScheme.Static.notifyGCComplete();
+                HeapScheme.Static.notifyGCCompleted();
 
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();

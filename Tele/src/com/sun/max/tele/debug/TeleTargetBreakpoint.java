@@ -22,6 +22,7 @@ package com.sun.max.tele.debug;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -56,19 +57,28 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
      */
     private boolean isActive;
 
+
+    /**
+     * A bytecode breakpoint for which this target breakpoint was created, null if none.
+     */
+    private final TeleBytecodeBreakpoint owner;
+
+
     /**
      * Creates a target code breakpoint for a given address in the VM.
      *
-     * @param teleProcess the tele process context of the breakpoint
+     * @param teleVM the VM
      * @param factory the factory responsible for managing these breakpoints
      * @param address the address at which the breakpoint is to be created
      * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
      *            instruction. If this value is null, then the code will be read from {@code address}.
+     * @param owner the bytecode breakpoint for which this is being created, null if none.
      * @param the kind of breakpoint
      */
-    private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, BreakpointKind kind) {
+    private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, BreakpointKind kind, TeleBytecodeBreakpoint owner) {
         super(teleVM, new TeleCodeLocation(teleVM, address), kind);
         this.factory = factory;
+        this.owner = owner;
         this.originalCodeAtBreakpoint = originalCode == null ? teleVM.dataAccess().readFully(address, factory.codeSize()) : originalCode;
     }
 
@@ -79,12 +89,24 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         return getCodeLocation().targetCodeInstructionAddress();
     }
 
+    /**
+     * Returns the bytecode breakpoint set by the client on whose behalf this breakpoint was created, if there is one.
+     *
+     * @return
+     */
+    public TeleBytecodeBreakpoint owner() {
+        return owner;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("Target breakpoint");
         sb.append("{0x").append(address().toHexString()).append(", ");
         sb.append(kind().toString()).append(", ");
         sb.append(isEnabled() ? "enabled" : "disabled");
+        if (getDescription() != null) {
+            sb.append(", \"").append(getDescription()).append("\"");
+        }
         sb.append("}");
         return sb.toString();
     }
@@ -133,12 +155,14 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         /**
         * A client-created breakpoint for a given target code address, enabled by default.
         *
+        * @param teleVM the VM
+        * @param factory the factory that manages these breakpoints.
         * @param address the address at which the breakpoint is to be created
         * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
         *            instruction. If this value is null, then the code will be read from {@code address}.
-        */
+         */
         ClientTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode) {
-            super(teleVM, factory, address, originalCode, BreakpointKind.CLIENT);
+            super(teleVM, factory, address, originalCode, BreakpointKind.CLIENT, null);
         }
 
         @Override
@@ -147,13 +171,9 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         @Override
-        public boolean setEnabled(boolean enabled) {
-            if (enabled != this.enabled) {
-                this.enabled = enabled;
-                factory.announceStateChange();
-                return true;
-            }
-            return false;
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+            factory.fireBreakpointsChanged();
         }
 
         @Override
@@ -167,10 +187,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             setTriggerEventHandler(this.condition);
         }
 
-        @Override
-        public TeleBreakpoint getAssociatedClientBreakpoint() {
-            return this;
-        }
     }
 
     /**
@@ -183,7 +199,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         private boolean enabled = true;
         private BreakpointCondition condition;
-        private final TeleBreakpoint associatedTeleBreakpoint;
 
         /**
         * A system-created breakpoint for a given target code address, enabled by default.
@@ -194,9 +209,8 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
         *            instruction. If this value is null, then the code will be read from {@code address}.
         */
-        SystemTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, TeleBreakpoint associatedTeleBreakpoint) {
-            super(teleVM, factory, address, originalCode, BreakpointKind.SYSTEM);
-            this.associatedTeleBreakpoint = associatedTeleBreakpoint;
+        SystemTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, TeleBytecodeBreakpoint owner) {
+            super(teleVM, factory, address, originalCode, BreakpointKind.SYSTEM, owner);
         }
 
         @Override
@@ -205,13 +219,9 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         @Override
-        public boolean setEnabled(boolean enabled) {
-            if (enabled != this.enabled) {
-                this.enabled = enabled;
-                factory.announceStateChange();
-                return true;
-            }
-            return false;
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+            factory.fireBreakpointsChanged();
         }
 
         @Override
@@ -225,10 +235,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             setTriggerEventHandler(condition);
         }
 
-        @Override
-        public TeleBreakpoint getAssociatedClientBreakpoint() {
-            return associatedTeleBreakpoint;
-        }
     }
 
     /**
@@ -242,12 +248,14 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         /**
          * A transient breakpoint for a given target code address.
          *
+         * @param teleVM the VM
+         * @param factory the factory that manages these breakpoints
          * @param address the address at which the breakpoint is to be created
          * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
          *            instruction. If this value is null, then the code will be read from {@code address}.
          */
         TransientTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode) {
-            super(teleVM, factory, address, originalCode, BreakpointKind.TRANSIENT);
+            super(teleVM, factory, address, originalCode, BreakpointKind.TRANSIENT, null);
         }
 
         @Override
@@ -257,9 +265,8 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         @Override
-        public boolean setEnabled(boolean enabled) {
+        public void setEnabled(boolean enabled) {
             ProgramError.unexpected("Can't enable/disable transient breakpoints");
-            return false;
         }
 
         @Override
@@ -273,15 +280,10 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             ProgramError.unexpected("Transient breakpoints do not have conditions");
         }
 
-        @Override
-        public TeleBreakpoint getAssociatedClientBreakpoint() {
-            return null;
-        }
     }
 
-    public static class Factory extends Observable {
+    public static class Factory extends AbstractTeleVMHolder {
 
-        private final TeleVM teleVM;
         private final byte[] code;
 
         // The map implementations are not thread-safe; the factory must take care of that.
@@ -289,17 +291,31 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         private final Map<Long, SystemTargetBreakpoint> systemBreakpoints = new HashMap<Long, SystemTargetBreakpoint>();
         private final Map<Long, TransientTargetBreakpoint> transientBreakpoints = new HashMap<Long, TransientTargetBreakpoint>();
 
+        private List<MaxBreakpointListener> breakpointListeners = new CopyOnWriteArrayList<MaxBreakpointListener>();
+
         public Factory(TeleVM teleVM) {
-            this.teleVM = teleVM;
+            super(teleVM);
             this.code = TargetBreakpoint.createBreakpointCode(teleVM.vmConfiguration().platform().processorKind.instructionSet);
         }
 
         /**
-         * Notify all observers that there has been a state change concerning these breakpoints.
+         * Adds a listener for breakpoint changes.
+         *
+         * @param listener a breakpoint listener
          */
-        private void announceStateChange() {
-            setChanged();
-            notifyObservers();
+        public final void addBreakpointListener(MaxBreakpointListener listener) {
+            assert listener != null;
+            breakpointListeners.add(listener);
+        }
+
+        /**
+         * Removes a listener for breakpoint changes.
+         *
+         * @param listener a breakpoint listener
+         */
+        public final void removeBreakpointListener(MaxBreakpointListener listener) {
+            assert listener != null;
+            breakpointListeners.remove(listener);
         }
 
         /**
@@ -369,13 +385,12 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         public synchronized TeleTargetBreakpoint makeClientBreakpointAt(Address address) {
             TeleTargetBreakpoint breakpoint = getTargetBreakpointAt(address);
             if (breakpoint == null || breakpoint.isTransient()) {
-                final ClientTargetBreakpoint clientBreakpoint = new ClientTargetBreakpoint(teleVM, this, address, null);
+                final ClientTargetBreakpoint clientBreakpoint = new ClientTargetBreakpoint(teleVM(), this, address, null);
                 final TeleTargetBreakpoint oldBreakpoint = clientBreakpoints.put(address.toLong(), clientBreakpoint);
                 assert oldBreakpoint == null;
-                setChanged();
                 breakpoint = clientBreakpoint;
             }
-            notifyObservers();
+            fireBreakpointsChanged();
             return breakpoint;
         }
 
@@ -383,17 +398,17 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          * Gets the system breakpoint at a specified target code address in the VM, creating a new one first if needed.
          *
          * @param address the address at which the breakpoint is to be created
-         * @param associatedTeleBreakpoint a client visible breakpoint for which this system breakpoint was created, null if none.
+         * @param owner a client-visible breakpoint for which this system breakpoint was created, null if none.
          * @return a system breakpoint at the specified target code address in the VM
          */
-        public synchronized TeleTargetBreakpoint makeSystemBreakpoint(Address address, TeleBreakpoint associatedTeleBreakpoint) {
+        public synchronized TeleTargetBreakpoint makeSystemBreakpoint(Address address, TeleBytecodeBreakpoint owner) {
             SystemTargetBreakpoint systemBreakpoint = systemBreakpoints.get(address.toLong());
             // TODO (mlvdv) handle case where there is already a client breakpoint at this address.
             if (systemBreakpoint == null) {
-                systemBreakpoint = new SystemTargetBreakpoint(teleVM, this, address, null, associatedTeleBreakpoint);
+                systemBreakpoint = new SystemTargetBreakpoint(teleVM(), this, address, null, owner);
                 final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(address.toLong(), systemBreakpoint);
                 assert oldBreakpoint == null;
-                setChanged();
+                fireBreakpointsChanged();
             }
             return systemBreakpoint;
         }
@@ -406,7 +421,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         public synchronized TeleTargetBreakpoint makeTransientBreakpoint(Address address) {
             TeleTargetBreakpoint breakpoint = getTargetBreakpointAt(address);
             if (breakpoint == null || !breakpoint.isTransient()) {
-                final TransientTargetBreakpoint transientBreakpoint = new TransientTargetBreakpoint(teleVM, this, address, null);
+                final TransientTargetBreakpoint transientBreakpoint = new TransientTargetBreakpoint(teleVM(), this, address, null);
                 final TeleTargetBreakpoint oldBreakpoint = transientBreakpoints.put(address.toLong(), transientBreakpoint);
                 assert oldBreakpoint == null;
                 breakpoint = transientBreakpoint;
@@ -416,7 +431,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         private byte[] recoverOriginalCodeForBreakpoint(Address instructionPointer) {
             try {
-                final Value result = teleVM.teleMethods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
+                final Value result = teleVM().teleMethods().TargetBreakpoint_findOriginalCode.interpret(LongValue.from(instructionPointer.toLong()));
                 final Reference reference = result.asReference();
                 if (reference.isZero()) {
                     return null;
@@ -433,9 +448,8 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         private synchronized void removeNonTransientBreakpointAt(Address address) {
             final long addressLong = address.toLong();
             if (clientBreakpoints.remove(addressLong) != null || systemBreakpoints.remove(addressLong) != null) {
-                setChanged();
+                fireBreakpointsChanged();
             }
-            notifyObservers();
         }
 
         /**
@@ -484,6 +498,12 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             transientBreakpoints.clear();
         }
 
+        private void fireBreakpointsChanged() {
+            for (final MaxBreakpointListener listener : breakpointListeners) {
+                listener.breakpointsChanged();
+            }
+        }
+
         public void writeSummaryToStream(PrintStream printStream) {
             printStream.println("Target breakpoints :");
             for (ClientTargetBreakpoint targetBreakpoint : clientBreakpoints.values()) {
@@ -498,7 +518,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         }
 
         private String describeLocation(TeleTargetBreakpoint teleTargetBreakpoint) {
-            final TeleTargetRoutine teleTargetRoutine = teleVM.findTeleTargetRoutine(TeleTargetRoutine.class, teleTargetBreakpoint.address());
+            final TeleTargetRoutine teleTargetRoutine = teleVM().findTeleTargetRoutine(TeleTargetRoutine.class, teleTargetBreakpoint.address());
             if (teleTargetRoutine != null) {
                 return " in " + teleTargetRoutine.getName();
             }

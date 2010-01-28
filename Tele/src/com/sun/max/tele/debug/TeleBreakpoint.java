@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.*;
 import com.sun.max.tele.method.*;
@@ -30,6 +31,8 @@ import com.sun.max.tele.method.*;
  * @author Michael Van De Vanter
  */
 public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMTriggerEventHandler, MaxBreakpoint {
+
+    private static final int TRACE_VALUE = 1;
 
     /**
      * Distinguishes among various specialized uses for breakpoints,
@@ -116,21 +119,13 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
 
     public abstract boolean isEnabled();
 
-    public abstract boolean setEnabled(boolean enabled);
+    public abstract void setEnabled(boolean enabled);
 
     public abstract BreakpointCondition getCondition();
 
     public abstract void setCondition(String conditionDescriptor) throws ExpressionException;
 
     public abstract void remove();
-
-    /**
-     * Return the breakpoint set by the client that caused this breakpoint to be create; returns
-     * this breakpoint for client breakpoints.
-     *
-     * @return this breakpoint, unless it is a system breakpint created to implement another breakpoint.
-     */
-    public abstract TeleBreakpoint getAssociatedClientBreakpoint();
 
     /**
      * Assigns to this breakpoint a  handler for events triggered by this breakpoint.  A null handler
@@ -145,6 +140,10 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
 
     public final boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
         assert teleNativeThread.state() == TeleNativeThread.ThreadState.BREAKPOINT;
-        return triggerEventHandler.handleTriggerEvent(teleNativeThread);
+        Trace.begin(TRACE_VALUE, tracePrefix() + "handling trigger event for " + this);
+        final boolean handleTriggerEvent = triggerEventHandler.handleTriggerEvent(teleNativeThread);
+        Trace.end(TRACE_VALUE, tracePrefix() + "handling trigger event for " + this);
+        return handleTriggerEvent;
     }
+
 }

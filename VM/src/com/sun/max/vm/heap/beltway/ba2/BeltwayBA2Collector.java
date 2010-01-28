@@ -157,7 +157,7 @@ public abstract class BeltwayBA2Collector extends BeltwayCollector {
                 if (Heap.verbose()) {
                     Log.println("Reset Nursery Space Allocation Mark");
                 }
-                HeapScheme.Static.notifyGCComplete();
+                HeapScheme.Static.notifyGCCompleted();
                 monitorScheme.afterGarbageCollection();
 
                 if (Heap.verbose()) {
@@ -224,7 +224,7 @@ public abstract class BeltwayBA2Collector extends BeltwayCollector {
                 verifyHeap("After minor GC");
             }
 
-            HeapScheme.Static.notifyGCComplete();
+            HeapScheme.Static.notifyGCCompleted();
 
             if (Heap.verbose()) {
                 printBeltInfo("Nursery Space", nurserySpace);

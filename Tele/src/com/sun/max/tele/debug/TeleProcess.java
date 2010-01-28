@@ -167,7 +167,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering breakpoint");
                                     // Case 3. At least one thread is at a breakpoint that specifies that execution should halt; record it and do not continue.
                                     // At a breakpoint where we should really stop; create a record
-                                    teleBreakpointEvents.append(new TeleBreakpointEvent(breakpoint.getAssociatedClientBreakpoint(), thread));
+                                    teleBreakpointEvents.append(new TeleBreakpointEvent(breakpoint, thread));
                                     resumeExecution = false;
                                 }
                                 break;
@@ -204,6 +204,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     }
                     ProgramError.check(eventCauseFound, "Process halted for no apparent cause");
                     if (resumeExecution) {
+                        Trace.line(TRACE_VALUE, tracePrefix() + "Resuming execution after handling event triggers: " + request);
                         restoreBreakpointsAndResume(request.withClientBreakpoints);
                     }
                 } while (resumeExecution);
@@ -371,7 +372,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         this.processState = initialState;
         epoch = 0;
         this.targetBreakpointFactory = new TeleTargetBreakpoint.Factory(teleVM);
-        this.watchpointFactory = watchpointsEnabled() ? new TeleWatchpoint.Factory(this) : null;
+        this.watchpointFactory = watchpointsEnabled() ? new TeleWatchpoint.Factory(teleVM, this) : null;
 
         //Initiate the thread that continuously waits on the running process.
         this.requestHandlingThread = new RequestHandlingThread();

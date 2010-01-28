@@ -531,20 +531,20 @@ public interface MaxVM {
     MaxVMState maxVMState();
 
     /**
-     * Adds a VM state observer.
+     * Adds a VM state listener.
      * <br>
      * Thread-safe.
      *
-     * @param observer will be notified of changes to {@link #maxVMState()}.
+     * @param listener will be notified of changes to {@link #maxVMState()}.
      */
-    void addVMStateObserver(TeleVMStateObserver observer);
+    void addVMStateListener(MaxVMStateListener listener);
 
     /**
-     * Removes a VM state observer.
+     * Removes a VM state listener.
      * <br>
      * Thread-safe.
      */
-    void removeVMStateObserver(TeleVMStateObserver observer);
+    void removeVMStateListener(MaxVMStateListener listener);
 
     /**
      * Writes a textual summary describing the current {@link #maxVMState()}, including all predecessor states.
@@ -634,11 +634,18 @@ public interface MaxVM {
     TeleCodeLocation createCodeLocation(StackFrame stackFrame);
 
     /**
-     * Adds a observer for breakpoint changes in the VM.
+     * Adds a listener for breakpoint changes in the VM.
      *
      * @param listener will be notified whenever breakpoints in VM change.
      */
-    void addBreakpointObserver(Observer observer);
+    void addBreakpointListener(MaxBreakpointListener listener);
+
+    /**
+     * Removes a listener for breakpoint changes in the VM.
+     *
+     * @param listener will be notified whenever breakpoints in VM change.
+     */
+    void removeBreakpointListener(MaxBreakpointListener listener);
 
     /**
      * All existing target code breakpoints.
@@ -693,6 +700,14 @@ public interface MaxVM {
     MaxBreakpoint makeBreakpointAt(Key key);
 
     /**
+     * Gets a bytecode breakpoint at a method entry in the VM, newly created if needed.
+     *
+     * @param inspectableMethod a method in the VM
+     * @return a possibly new, non-transient bytecode breakpoint
+     */
+    MaxBreakpoint makeBreakpointAt(MaxInspectableMethod inspectableMethod);
+
+    /**
      * Finds a bytecode breakpoint in the VM.
      *
      * @param key description of a bytecode position in a method
@@ -712,13 +727,22 @@ public interface MaxVM {
     boolean watchpointsEnabled();
 
     /**
-     * Adds a observer for watchpoint changes in the VM.
+     * Adds a listener for watchpoint changes in the VM.
+     * @param listener a watchpoint listener
      *
-     * @param observer will be notified whenever watchpoints in VM change.
      * @throws ProgramError if watchpoints not enabled on platform.
      * @see #watchpointsEnabled()
      */
-    void addWatchpointObserver(Observer observer) throws ProgramError;
+    void addWatchpointListener(MaxWatchpointListener listener) throws ProgramError;
+
+    /**
+     * Removes a listener for watchpoint changes in the VM.
+     * @param listener a watchpoint listener
+     *
+     * @throws ProgramError if watchpoints not enabled on platform.
+     * @see #watchpointsEnabled()
+     */
+    void removeWatchpointListener(MaxWatchpointListener listener) throws ProgramError;
 
     /**
      * Creates a new watchpoint in the VM.
@@ -827,7 +851,7 @@ public interface MaxVM {
     /**
      * All existing watchpoints set in the VM.
      * <br>
-     * Immutable collection; membership is thread-safe; likely implemented as a copy.
+     * Immutable collection; membership is thread-safe.
      *
      * @return all existing watchpoints; empty if none.
      * @throws ProgramError if watchpoints not enabled on platform.
@@ -843,6 +867,34 @@ public interface MaxVM {
      * @see #watchpointsEnabled()
      */
     void describeWatchpoints(PrintStream printStream) throws ProgramError;
+
+    /**
+     * Adds a listener for GC starts in the VM.
+     *
+     * @param listener a listener for GC starts
+     */
+    void addGCStartedListener(MaxGCStartedListener listener);
+
+    /**
+     * Removes a listener for GC starts in the VM.
+     *
+     * @param listener a listener for GC starts
+     */
+    void removeGCStartedListener(MaxGCStartedListener listener);
+
+    /**
+     * Adds a listener for GC completions in the VM.
+     *
+     * @param listener a listener for GC completions
+     */
+    void addGCCompletedListener(MaxGCCompletedListener listener);
+
+    /**
+     * Removes a listener for GC completions in the VM.
+     *
+     * @param listener a listener for GC completions
+     */
+    void removeGCCompletedListener(MaxGCCompletedListener listener);
 
     /**
      * Sets debugging trace level for the transport
@@ -947,15 +999,6 @@ public interface MaxVM {
      * @param fileName name of a file containing commands.
      */
     void executeCommandsFromFile(String fileName);
-
-    /**
-     * Initialize debugging mode for garbage collection.
-     *
-     * @throws TooManyWatchpointsException
-     * @throws DuplicateWatchpointException
-     * @throws ProgramError if watchpoints not enabled on this platform
-     */
-    void initGarbageCollectorDebugging() throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError;
 
 }
 

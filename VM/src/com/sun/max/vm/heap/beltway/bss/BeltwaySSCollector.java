@@ -84,7 +84,7 @@ public class BeltwaySSCollector extends BeltwayCollector {
             verifyHeap("After GC", ssHeapScheme, fromSpace);
         }
 
-        HeapScheme.Static.notifyGCComplete();
+        HeapScheme.Static.notifyGCCompleted();
 
         if (Heap.verbose()) {
             Log.print("Finished Collection: ");

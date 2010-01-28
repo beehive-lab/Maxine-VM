@@ -58,11 +58,6 @@ public interface MaxWatchpoint extends MemoryRegion {
     }
 
     /**
-     * @return the optional human-readable string associated with the watchpoint, for debugging.
-     */
-    String getDescription();
-
-    /**
      * Associates an optional human-readable string with the watchpoint for debugging.
      */
     void setDescription(String description);
@@ -77,7 +72,7 @@ public interface MaxWatchpoint extends MemoryRegion {
      *
      * @param read whether the watchpoint should trap when watched memory is read from
      * @return whether set succeeded
-     * @throws ProgramError if watchpoint has been disposed
+     * @throws ProgramError if watchpoint has been removed
      */
     boolean setTrapOnRead(boolean read);
 
@@ -86,7 +81,7 @@ public interface MaxWatchpoint extends MemoryRegion {
      *
      * @param write whether the watchpoint should trap when watched memory is written to
      * @return whether set succeeded.
-     * @throws ProgramError if watchpoint has been disposed
+     * @throws ProgramError if watchpoint has been removed
      */
     boolean setTrapOnWrite(boolean write);
 
@@ -95,7 +90,7 @@ public interface MaxWatchpoint extends MemoryRegion {
      *
      * @param exec whether the watchpoint should trap when watched memory is executed from
      * @return whether set succeeded.
-     * @throws ProgramError if watchpoint has been disposed
+     * @throws ProgramError if watchpoint has been removed
      */
     boolean setTrapOnExec(boolean exec);
 
@@ -104,9 +99,9 @@ public interface MaxWatchpoint extends MemoryRegion {
      *
      * @param gc whether the watchpoint is active during garbage collection
      * @return whether set succeeded.
-     * @throws ProgramError if watchpoint has been disposed
+     * @throws ProgramError if watchpoint has been removed
      */
-    void setEnabledDuringGC(boolean gc);
+    boolean setEnabledDuringGC(boolean gc);
 
     /**
      * @return whether the watchpoint is on an object that might be relocated by GC.
@@ -123,9 +118,9 @@ public interface MaxWatchpoint extends MemoryRegion {
      * becomes permanently inactive.
      *
      * @return whether the removal succeeded.
-     * @throws ProgramError if watchpoint has already been disposed
+     * @throws ProgramError if watchpoint has already been removed
      */
-    boolean dispose();
+    boolean remove();
 
     /**
      * @return a heap object in the VM with which the watchpoint is associated, null if none.

@@ -59,13 +59,13 @@ public class TeleMethods extends AbstractTeleVMHolder {
     // START GENERATED CONTENT
     public final TeleStaticMethodAccess Code_codePointerToTargetMethod = new TeleStaticMethodAccess(teleVM(), Code.class, "codePointerToTargetMethod", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;)Lcom/sun/max/vm/compiler/target/TargetMethod;"));
     public final TeleStaticMethodAccess InspectableCodeInfo_inspectableCompilationComplete = new TeleStaticMethodAccess(teleVM(), InspectableCodeInfo.class, "inspectableCompilationComplete", SignatureDescriptor.create("(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/max/vm/compiler/target/TargetMethod;)V"));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCComplete = new TeleStaticMethodAccess(teleVM(), InspectableHeapInfo.class, "inspectableGCComplete", SignatureDescriptor.create("(J)V"));
-    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCStarting = new TeleStaticMethodAccess(teleVM(), InspectableHeapInfo.class, "inspectableGCStarting", SignatureDescriptor.create("(J)V"));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCCompleted = new TeleStaticMethodAccess(teleVM(), InspectableHeapInfo.class, "inspectableGCCompleted", SignatureDescriptor.create("(J)V"));
+    public final TeleStaticMethodAccess InspectableHeapInfo_inspectableGCStarted = new TeleStaticMethodAccess(teleVM(), InspectableHeapInfo.class, "inspectableGCStarted", SignatureDescriptor.create("(J)V"));
     public final TeleVirtualMethodAccess SemiSpaceHeapScheme_decreaseMemory = new TeleVirtualMethodAccess(teleVM(), SemiSpaceHeapScheme.class, "decreaseMemory", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Size;)Z"));
     public final TeleVirtualMethodAccess SemiSpaceHeapScheme_increaseMemory = new TeleVirtualMethodAccess(teleVM(), SemiSpaceHeapScheme.class, "increaseMemory", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Size;)Z"));
     public final TeleStaticMethodAccess CompilationScheme$Static_inspectableCompilationComplete = new TeleStaticMethodAccess(teleVM(), CompilationScheme.Static.class, "inspectableCompilationComplete", SignatureDescriptor.create("(Lcom/sun/max/vm/compiler/target/TargetMethod;)V"));
-    public final TeleStaticMethodAccess HeapScheme$Static_inspectableGCComplete = new TeleStaticMethodAccess(teleVM(), HeapScheme.Static.class, "inspectableGCComplete", SignatureDescriptor.create("()V"));
-    public final TeleStaticMethodAccess HeapScheme$Static_inspectableGCStarting = new TeleStaticMethodAccess(teleVM(), HeapScheme.Static.class, "inspectableGCStarting", SignatureDescriptor.create("()V"));
+    public final TeleStaticMethodAccess HeapScheme$Static_inspectableGCCompleted = new TeleStaticMethodAccess(teleVM(), HeapScheme.Static.class, "inspectableGCCompleted", SignatureDescriptor.create("()V"));
+    public final TeleStaticMethodAccess HeapScheme$Static_inspectableGCStarted = new TeleStaticMethodAccess(teleVM(), HeapScheme.Static.class, "inspectableGCStarted", SignatureDescriptor.create("()V"));
     public final TeleStaticMethodAccess HeapScheme$Static_objectRelocated = new TeleStaticMethodAccess(teleVM(), HeapScheme.Static.class, "objectRelocated", SignatureDescriptor.create("(Lcom/sun/max/unsafe/Address;Lcom/sun/max/unsafe/Address;)V"));
     public final TeleStaticMethodAccess TargetBreakpoint_findOriginalCode = new TeleStaticMethodAccess(teleVM(), TargetBreakpoint.class, "findOriginalCode", SignatureDescriptor.create("(J)[B"));
     // END GENERATED CONTENT

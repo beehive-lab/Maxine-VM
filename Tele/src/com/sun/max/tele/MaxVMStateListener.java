@@ -21,17 +21,17 @@
 package com.sun.max.tele;
 
 /**
- * Interface for listening to state changes in the Maxine VM.
+ * Listener interface for state changes in the VM.
  *
  * @author Michael Van De Vanter
  */
-public interface TeleVMStateObserver {
+public interface MaxVMStateListener {
 
     /**
-     * Notifies observers that the VM has changed state.
+     * Notifies listeners that the VM has changed state.
      *
      * @param maxVMState the new VM state
      */
-    void upate(MaxVMState maxVMState);
+    void stateChanged(MaxVMState maxVMState);
 
 }

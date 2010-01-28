@@ -157,11 +157,16 @@ public final class InspectableHeapInfo {
     }
 
     /**
-     * Records that a GC has begun, using an inspectable counter.
+     * Records that a GC has just begun, using an inspectable counter.
      */
-    public static void notifyGCStarting() {
+    public static void notifyGCStarted() {
         collectionEpoch++;
-        inspectableGCStarting(collectionEpoch);
+        // From the Inspector's perspective, a GC begins when
+        // the epoch counter gets incremented.  So the following
+        // method call makes iit possible
+        // for the inspector to take an interrupt, if needed, just
+        // as the GC begins.
+        inspectableGCStarted(collectionEpoch);
     }
 
     /**
@@ -177,15 +182,20 @@ public final class InspectableHeapInfo {
      */
     @INSPECTED
     @NEVER_INLINE
-    private static void inspectableGCStarting(long collectionEpoch) {
+    private static void inspectableGCStarted(long collectionEpoch) {
     }
 
     /**
      * Records that a GC has concluded, using an inspectable counter.
      */
-    public static void notifyGCComplete() {
+    public static void notifyGCCompleted() {
         rootEpoch = collectionEpoch;
-        inspectableGCComplete(collectionEpoch);
+        // From the Inspector's perspective, a GC is complete when
+        // the two epoch counters become equal.  The following
+        // method call makes it possible
+        // for the inspector to take an interrupt, if needed, just
+        // after the GC has concluded.
+        inspectableGCCompleted(collectionEpoch);
     }
 
     /**
@@ -201,6 +211,6 @@ public final class InspectableHeapInfo {
      */
     @INSPECTED
     @NEVER_INLINE
-    private static void inspectableGCComplete(long collectionEpoch) {
+    private static void inspectableGCCompleted(long collectionEpoch) {
     }
 }

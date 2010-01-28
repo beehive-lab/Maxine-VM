@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
+import com.sun.max.program.*;
+
 /**
  * Handler for an event that triggers the VM to stop execution per
  * some request, for example a breakpoint or watchpoint.
@@ -40,6 +42,11 @@ public interface VMTriggerEventHandler {
     boolean handleTriggerEvent(TeleNativeThread teleNativeThread);
 
     public static final class Static {
+
+        private static final int TRACE_VALUE = 1;
+
+        private static final String tracePrefix = "[VMTriggerEventHandler] ";
+
         private Static() {
         }
 
@@ -48,6 +55,7 @@ public interface VMTriggerEventHandler {
          */
         public static VMTriggerEventHandler ALWAYS_TRUE = new VMTriggerEventHandler()      {
             public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+                Trace.line(TRACE_VALUE, tracePrefix + "default handler, TRUE");
                 return true;
             }
         };

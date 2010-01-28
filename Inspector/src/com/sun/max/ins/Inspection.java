@@ -133,10 +133,10 @@ public final class Inspection {
         BreakpointPersistenceManager.initialize(this);
         inspectionActions.refresh(true);
 
-        maxVM().addVMStateObserver(new VMStateObserver());
-        maxVM().addBreakpointObserver(new BreakpointObserver());
+        maxVM().addVMStateListener(new VMStateListener());
+        maxVM().addBreakpointListener(new BreakpointListener());
         if (maxVM().watchpointsEnabled()) {
-            maxVM().addWatchpointObserver(new WatchpointObserver());
+            maxVM().addWatchpointListener(new WatchpointListener());
         }
 
         inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
@@ -177,9 +177,6 @@ public final class Inspection {
                 StackInspector.make(this);
                 BreakpointsInspector.make(this);
                 focus.setCodeLocation(maxVM.createCodeLocation(focus.thread().instructionPointer()), false);
-                if (maxVM().watchpointsEnabled()) {
-                    maxVM().initGarbageCollectorDebugging();
-                }
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
                 throwable.printStackTrace();
@@ -379,9 +376,9 @@ public final class Inspection {
      * Handles reported changes in the {@linkplain MaxVM#maxVMState() VM state}.
      * Updates state synchronously, then posts an event for follow-up on the AST event thread
      */
-    private final class VMStateObserver implements TeleVMStateObserver {
+    private final class VMStateListener implements MaxVMStateListener {
 
-        public void upate(final MaxVMState maxVMState) {
+        public void stateChanged(final MaxVMState maxVMState) {
             Trace.line(TRACE_VALUE, tracePrefix() + "notified MaxVMState=" + maxVMState);
             for (MaxThread thread : maxVMState.threadsStarted()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "started: " + thread);
@@ -413,22 +410,24 @@ public final class Inspection {
      * Ensures that notification is handled only on the
      * AWT event thread.
      */
-    private final class BreakpointObserver implements Observer {
+    private final class BreakpointListener implements MaxBreakpointListener {
 
-        public void update(Observable o, Object arg) {
+        public void breakpointsChanged() {
             if (java.awt.EventQueue.isDispatchThread()) {
-                Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                 for (InspectionListener listener : inspectionListeners.clone()) {
                     listener.breakpointStateChanged();
                 }
+                Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
 
                     public void run() {
-                        Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                        Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                         for (InspectionListener listener : inspectionListeners.clone()) {
                             listener.breakpointStateChanged();
                         }
+                        Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
                     }
                 });
             }
@@ -440,22 +439,24 @@ public final class Inspection {
      * Ensures that notification is handled only on the
      * AWT event thread.
      */
-    private final class WatchpointObserver implements Observer {
+    private final class WatchpointListener implements MaxWatchpointListener {
 
-        public void update(Observable o, Object arg) {
+        public void watchpointsChanged() {
             if (java.awt.EventQueue.isDispatchThread()) {
-                Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
                 for (InspectionListener listener : inspectionListeners.clone()) {
                     listener.watchpointSetChanged();
                 }
+                Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
 
                     public void run() {
-                        Trace.line(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                        Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
                         for (InspectionListener listener : inspectionListeners.clone()) {
                             listener.watchpointSetChanged();
                         }
+                        Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
                     }
                 });
             }

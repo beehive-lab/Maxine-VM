@@ -450,7 +450,13 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = (MaxWatchpoint) value;
-            final String description = watchpoint.description();
+            final TeleObject teleObject = watchpoint.getTeleObject();
+            final StringBuilder sb = new StringBuilder();
+            sb.append(watchpoint.description());
+            if (teleObject != null) {
+                sb.append(": ").append(inspection().nameDisplay().referenceLabelText(teleObject));
+            }
+            final String description = sb.toString();
             setText(description);
             setToolTipText(description);
             // TODO (mlvdv)  Abstract this string, or come up with a method/predicate instead

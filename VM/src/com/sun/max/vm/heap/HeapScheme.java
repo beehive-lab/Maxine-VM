@@ -286,9 +286,9 @@ public interface HeapScheme extends VMScheme {
          * Announces that a GC is about to begin; must be called by GC implementations
          * for certain Inspector services to work.
          */
-        public static void notifyGCStarting() {
-            InspectableHeapInfo.notifyGCStarting();
-            inspectableGCStarting();
+        public static void notifyGCStarted() {
+            InspectableHeapInfo.notifyGCStarted();
+            inspectableGCStarted();
         }
 
         /**
@@ -300,16 +300,16 @@ public interface HeapScheme extends VMScheme {
          */
         @INSPECTED
         @NEVER_INLINE
-        private static void inspectableGCStarting() {
+        private static void inspectableGCStarted() {
         }
 
         /**
          * Announces that a GC has concluded; must be called by GC implementations
          * for certain Inspector services to work.
          */
-        public static void notifyGCComplete() {
-            InspectableHeapInfo.notifyGCComplete();
-            inspectableGCComplete();
+        public static void notifyGCCompleted() {
+            InspectableHeapInfo.notifyGCCompleted();
+            inspectableGCCompleted();
         }
 
         /**
@@ -321,7 +321,7 @@ public interface HeapScheme extends VMScheme {
          */
         @INSPECTED
         @NEVER_INLINE
-        private static void inspectableGCComplete() {
+        private static void inspectableGCCompleted() {
         }
 
         /**
