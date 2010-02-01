@@ -221,7 +221,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         @Override
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
-            factory.fireBreakpointsChanged();
         }
 
         @Override
@@ -408,7 +407,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
                 systemBreakpoint = new SystemTargetBreakpoint(teleVM(), this, address, null, owner);
                 final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(address.toLong(), systemBreakpoint);
                 assert oldBreakpoint == null;
-                fireBreakpointsChanged();
             }
             return systemBreakpoint;
         }
@@ -447,8 +445,10 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         private synchronized void removeNonTransientBreakpointAt(Address address) {
             final long addressLong = address.toLong();
-            if (clientBreakpoints.remove(addressLong) != null || systemBreakpoints.remove(addressLong) != null) {
+            if (clientBreakpoints.remove(addressLong) != null) {
                 fireBreakpointsChanged();
+            } else {
+                systemBreakpoints.remove(addressLong);
             }
         }
 

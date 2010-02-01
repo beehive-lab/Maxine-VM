@@ -160,7 +160,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             teleTargetBreakpoints = null;
             Trace.line(TRACE_VALUE, tracePrefix() + "clearing all target breakpoints for " + this);
         }
-        factory.fireBreakpointsChanged();
+        if (kind() == BreakpointKind.CLIENT) {
+            factory.fireBreakpointsChanged();
+        }
     }
 
     @Override
@@ -468,7 +470,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             breakpoints.put(key, breakpoint);
             updateBreakpointCache();
             Trace.line(TRACE_VALUE, tracePrefix + "new=" + breakpoint);
-            fireBreakpointsChanged();
+            if (kind == BreakpointKind.CLIENT) {
+                fireBreakpointsChanged();
+            }
             return breakpoint;
         }
 
@@ -488,7 +492,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             }
             updateBreakpointCache();
             Trace.line(TRACE_VALUE, tracePrefix + "removed " + teleBytecodeBreakpoint);
-            fireBreakpointsChanged();
+            if (teleBytecodeBreakpoint.kind() == BreakpointKind.CLIENT) {
+                fireBreakpointsChanged();
+            }
         }
 
         /**
