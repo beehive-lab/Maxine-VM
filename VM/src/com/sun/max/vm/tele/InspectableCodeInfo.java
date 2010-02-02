@@ -58,6 +58,9 @@ public class InspectableCodeInfo {
      * it needs to monitor method compilations in the VM.  The arguments
      * are deliberately made simple so that they can be read with low-level
      * mechanisms in the Inspector.
+     * <br>
+     * <strong>Important:</strong> The Inspector assumes that this method is loaded
+     * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param holderType type description for class holding the method
      * @param methodName name of the the method
