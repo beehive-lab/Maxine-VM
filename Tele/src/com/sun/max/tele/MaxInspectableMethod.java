@@ -25,6 +25,9 @@ import com.sun.max.tele.object.*;
 /**
  * Access to a remote method in the VM that is predefined for convenient access
  * by clients, for example by setting breakpoints at generally useful locations.
+ * <br>
+ * These are intended to be methods loaded and compiled into the boot image,
+ * and which will never be dynamically recompiled.
  *
  * @author Michael Van De Vanter
  */

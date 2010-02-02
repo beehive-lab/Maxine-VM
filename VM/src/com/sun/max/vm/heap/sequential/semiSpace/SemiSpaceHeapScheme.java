@@ -1073,13 +1073,23 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     @Override
     @INSPECTED
+    @NEVER_INLINE
     public boolean decreaseMemory(Size amount) {
+        /*
+         * Important: The Inspector assumes that this method is loaded
+         * and compiled in the boot image and that it will never be dynamically recompiled.
+         */
         return shrink(amount);
     }
 
     @Override
     @INSPECTED
+    @NEVER_INLINE
     public synchronized boolean increaseMemory(Size amount) {
+        /*
+         * Important: The Inspector assumes that this method is loaded
+         * and compiled in the boot image and that it will never be dynamically recompiled.
+         */
         /* The conservative assumption is that "amount" is the total amount that we could
          * allocate. Since we can't deallocate our existing spaces until we know we can allocate
          * the new ones, our new spaces cannot be greater than amount/2 in size.
