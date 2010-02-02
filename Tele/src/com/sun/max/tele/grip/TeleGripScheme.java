@@ -29,17 +29,33 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.grip.*;
 
 /**
+ * A variation of VM grips for use by the Inspector to refer to an object location in the VM.
+ * <br>
+ * A  <strong>raw grip</strong> is an {@link Address} in VM memory where the object is currently
+ * located.  However, the location may be subject to change by GC, so the raw grip may change over time.
+ * <br>
+ * Each grip is represented as a unique index into a root table, a mirror of such a table, in the VM.  The
+ * table holds the current raw grip (address), and it is updated by the GC at the end of each collection.
+ * <br>
+ * Grips are intended to be cannonical, i.e. refer to only one object.  However, in the course of inspection
+ * duplicates may appear.  These are resolved at the conclusion of each GC.
+ *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
 public abstract class TeleGripScheme extends AbstractVMScheme implements GripScheme, TeleVMHolder {
 
+    private static final int TRACE_VALUE = 1;
+
+    private final String tracePrefix;
+
     private TeleVM teleVM;
     private TeleRoots teleRoots;
 
     protected TeleGripScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
     public void setTeleVM(TeleVM teleVM) {
@@ -51,6 +67,19 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
         return teleVM;
     }
 
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
+
+    /**
+     * Memory location in VM -> an inspector {@link Grip} that refers to the object that is (or once was) at that location.
+     * Note that the location to which the {@link Grip} refers may actually change in the VM, something that only becomes
+     * apparent at the conclusion of a GC when the root table gets refreshed.  At that point, this map, which is intended
+     * keep Grips canonical, is unreliable and must be rebuilt.  Duplicates may be discovered, which must then be resolved.
+     */
     private VariableMapping<Long, WeakReference<RemoteTeleGrip>> rawGripToRemoteTeleGrip = HashMapping.createVariableEqualityMapping();
 
     /**
@@ -88,6 +117,56 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
             }
         }
         rawGripToRemoteTeleGrip = newMapping;
+    }
+
+    // TODO (mlvdv) Debug this and replace the above
+//    private void refreshTeleGripCanonicalization() {
+//        // Save a copy of the old collection of grips
+//        final Iterable<WeakReference<RemoteTeleGrip>> oldGripRefs = rawGripToRemoteTeleGrip.values();
+//        // Clear out the canonicalization table
+//        rawGripToRemoteTeleGrip = HashMapping.createVariableEqualityMapping();
+//        // Populate the new canonicalization table, resolving duplicates (grips whose current memory locations have become identical)
+//        for (WeakReference<RemoteTeleGrip> gripRef : oldGripRefs) {
+//            final RemoteTeleGrip grip = gripRef.get();
+//            if (grip != null && !grip.raw().isZero()) {
+//                final long gripRaw = grip.raw().toLong();
+//                final WeakReference<RemoteTeleGrip> duplicateGripRef = rawGripToRemoteTeleGrip.get(gripRaw);
+//                if (duplicateGripRef == null) {
+//                    // No entry in the table at this location; add it.
+//                    rawGripToRemoteTeleGrip.put(gripRaw, gripRef);
+//                } else {
+//                    // We've located a duplicate grip, already in the new table, whose VM memory location is the same
+//                    // as the one we're considering now.  This should only ever happen with mutable grips
+//                    final MutableTeleGrip duplicateMutableGrip = (MutableTeleGrip) duplicateGripRef.get();
+//                    final MutableTeleGrip mutableGrip = (MutableTeleGrip) grip;
+//
+//                    final long duplicateGripOID = duplicateMutableGrip.makeOID();
+//                    final long gripOID = mutableGrip.makeOID();
+//
+//                    if (duplicateGripOID > gripOID) {
+//                        // The one already in the table is newer, based on the generated OIDs.  Leave it in the table and forward this one to the duplicate.
+//                        teleRoots.unregister(mutableGrip.index());
+//                        mutableGrip.setForwardedTeleGrip(duplicateMutableGrip);
+//                        Trace.line(TRACE_VALUE, traceForwardMessage(mutableGrip, duplicateMutableGrip));
+//                    } else {
+//                        // the one in the table is older, based on the generated OID.  Replace it in the table with this one and forward the duplicate to this one.
+//                        teleRoots.unregister(duplicateMutableGrip.index());
+//                        duplicateMutableGrip.setForwardedTeleGrip(grip);
+//                        rawGripToRemoteTeleGrip.put(gripRaw, gripRef);
+//                        Trace.line(TRACE_VALUE, traceForwardMessage(duplicateMutableGrip, mutableGrip));
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+    private String traceForwardMessage(MutableTeleGrip fromGrip, MutableTeleGrip toGrip) {
+        final StringBuilder sb = new StringBuilder(tracePrefix());
+        sb.append("Duplicate grips: ");
+        sb.append("(").append(fromGrip.index()).append(",<").append(fromGrip.makeOID()).append("> 0x").append(fromGrip.raw().toHexString()).append(")");
+        sb.append(" forwarded to ");
+        sb.append("(").append(toGrip.index()).append(",<").append(toGrip.makeOID()).append("> 0x").append(toGrip.raw().toHexString()).append(")");
+        return sb.toString();
     }
 
     /**
