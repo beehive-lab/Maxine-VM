@@ -1570,7 +1570,8 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcStartedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
+            gcStartedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
+            gcStartedBreakpoint.setDescription("Internal breakpoint, just after start of GC, to notify listeners");
         }
     }
 
@@ -1597,7 +1598,8 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcCompletedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
+            gcCompletedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
+            gcCompletedBreakpoint.setDescription("Internal breakpoint, just after end of GC, to notify listeners");
         }
     }
 

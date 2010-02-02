@@ -411,6 +411,21 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             return systemBreakpoint;
         }
 
+        public synchronized TeleTargetBreakpoint makeSystemBreakpoint(MaxInspectableMethod maxInspectableMethod, VMTriggerEventHandler handler) {
+            final Address callEntryPoint = maxInspectableMethod.methodEntry();
+            ProgramError.check(!callEntryPoint.isZero());
+            SystemTargetBreakpoint systemBreakpoint = systemBreakpoints.get(callEntryPoint.toLong());
+            // TODO (mlvdv) handle case where there is already a client breakpoint at this address.
+            if (systemBreakpoint == null) {
+                systemBreakpoint = new SystemTargetBreakpoint(teleVM(), this, callEntryPoint, null, null);
+                systemBreakpoint.setTriggerEventHandler(handler);
+                final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(callEntryPoint.toLong(), systemBreakpoint);
+                assert oldBreakpoint == null;
+            }
+            return systemBreakpoint;
+        }
+
+
         /**
          * Gets the transient breakpoint at a specified target code address in the VM, creating a new one first if needed.
          *
