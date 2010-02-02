@@ -1314,21 +1314,12 @@ public abstract class TeleVM implements MaxVM {
         return teleCodeRegistry;
     }
 
-    private Sequence<MaxInspectableMethod> inspectableMethods;
-
     public final Sequence<MaxInspectableMethod> inspectableMethods() {
-        if (inspectableMethods == null) {
-            final VariableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>();
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCStarted, "Start of GC"));
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCCompleted, "End of GC"));
-            methods.append(new TeleInspectableMethod(teleMethods.CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_objectRelocated, "Object relocated"));
-            for (MaxInspectableMethod inspectableMethod : teleHeapManager.inspectableMethods()) {
-                methods.append(inspectableMethod);
-            }
-            inspectableMethods = methods;
+        final AppendableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>(teleMethods.clientInspectableMethods());
+        for (MaxInspectableMethod method : teleHeapManager.inspectableMethods()) {
+            methods.append(method);
         }
-        return inspectableMethods;
+        return methods;
     }
 
     /**
