@@ -69,6 +69,10 @@ public class TeleMethods extends AbstractTeleVMHolder {
 
     // Checkstyle: resume field name check
 
+    // CAUTION:  order-dependent declarations; must follow the auto-generated fields.
+    private TeleInspectableMethod compilationComplete = new TeleInspectableMethod(InspectableCodeInfo_inspectableCompilationComplete, "Compilation complete (internal)");
+    private TeleInspectableMethod gcCompleted = new TeleInspectableMethod(InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
+    private TeleInspectableMethod gcStarted = new TeleInspectableMethod(InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
 
     private final Sequence<MaxInspectableMethod> clientInspectableMethods;
 
@@ -83,7 +87,6 @@ public class TeleMethods extends AbstractTeleVMHolder {
         methods.append(new TeleInspectableMethod(CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
         methods.append(new TeleInspectableMethod(HeapScheme$Static_objectRelocated, "Object relocated"));
         clientInspectableMethods = methods;
-
     }
 
     /**
@@ -97,6 +100,27 @@ public class TeleMethods extends AbstractTeleVMHolder {
      */
     public final Sequence<MaxInspectableMethod> clientInspectableMethods() {
         return clientInspectableMethods;
+    }
+
+    /**
+     * @return a VM method for internal (non-client) use that is called when each method compilation completes.
+     */
+    public TeleInspectableMethod compilationComplete() {
+        return compilationComplete;
+    }
+
+    /**
+     * @return a VM method for internal (non-client) use that is called just after each GC starts.
+     */
+    public TeleInspectableMethod gcStarted() {
+        return gcStarted;
+    }
+
+    /**
+     * @return a VM method for internal (non-client) use that is called just after each GC end.
+     */
+    public TeleInspectableMethod gcCompleted() {
+        return gcCompleted;
     }
 
     public static void main(String[] args) {

@@ -21,6 +21,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 
 /**
  * Access to a remote method in the VM that is predefined for convenient access
@@ -37,6 +38,11 @@ public interface MaxInspectableMethod {
      * @return the canonical surrogate in the VM for the method
      */
     TeleClassMethodActor teleClassMethodActor();
+
+    /**
+     * @return target code location in the VM of the method's entry point (first compilation); zero if not available.
+     */
+    Address methodEntry();
 
     /**
      * A textual description of the role played by the method.

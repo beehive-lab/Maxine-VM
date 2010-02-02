@@ -509,10 +509,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private void createCompilerBreakpoint() {
             assert compilerTargetCodeBreakpoint == null;
-            final TeleClassMethodActor teleClassMethodActor = teleVM().teleMethods().InspectableCodeInfo_inspectableCompilationComplete.teleClassMethodActor();
-            // Assume that the method is loaded and compiled in boot image, and that it will never be dynamically recompiled.
-            final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getJavaTargetMethod(0);
-            final Address callEntryPoint = javaTargetMethod.callEntryPoint();
+            final Address callEntryPoint = teleVM().teleMethods().compilationComplete().methodEntry();
             ProgramError.check(!callEntryPoint.isZero());
             compilerTargetCodeBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(callEntryPoint, null);
             compilerTargetCodeBreakpoint.setDescription("System trap for VM compiler");

@@ -1560,7 +1560,6 @@ public abstract class TeleVM implements MaxVM {
         assert listener != null;
         gcStartedListeners.add(listener);
         if (!gcStartedListeners.isEmpty() && gcStartedBreakpoint == null) {
-            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCStarted, "GC start for VM listeners");
             final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -1571,7 +1570,7 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcStartedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(inspectableMethod, triggerEventHandler);
+            gcStartedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
         }
     }
 
@@ -1588,7 +1587,6 @@ public abstract class TeleVM implements MaxVM {
         assert listener != null;
         gcCompletedListeners.add(listener);
         if (!gcCompletedListeners.isEmpty() && gcCompletedBreakpoint == null) {
-            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCCompleted, "GCCompletedListener notifier");
             final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -1599,7 +1597,7 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcCompletedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(inspectableMethod, triggerEventHandler);
+            gcCompletedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
         }
     }
 
