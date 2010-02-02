@@ -23,9 +23,11 @@ package com.sun.max.tele.method;
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.field.TeleFields.*;
 import com.sun.max.vm.code.*;
@@ -48,11 +50,6 @@ import com.sun.max.vm.type.*;
  */
 public class TeleMethods extends AbstractTeleVMHolder {
 
-    public TeleMethods(TeleVM teleVM) {
-        super(teleVM);
-        // Uncomment to enable verifying that the generated content in this class is up to date when running the inspector
-        // updateSource(true);
-    }
 
     // Checkstyle: stop field name check
 
@@ -71,6 +68,36 @@ public class TeleMethods extends AbstractTeleVMHolder {
     // END GENERATED CONTENT
 
     // Checkstyle: resume field name check
+
+
+    private final Sequence<MaxInspectableMethod> clientInspectableMethods;
+
+    public TeleMethods(TeleVM teleVM) {
+        super(teleVM);
+        // Uncomment to enable verifying that the generated content in this class is up to date when running the inspector
+        // updateSource(true);
+
+        final VariableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>();
+        methods.append(new TeleInspectableMethod(HeapScheme$Static_inspectableGCStarted, "Start of GC"));
+        methods.append(new TeleInspectableMethod(HeapScheme$Static_inspectableGCCompleted, "End of GC"));
+        methods.append(new TeleInspectableMethod(CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
+        methods.append(new TeleInspectableMethod(HeapScheme$Static_objectRelocated, "Object relocated"));
+        clientInspectableMethods = methods;
+
+    }
+
+    /**
+     * Identifies methods in the VM that can be offered to clients as convenient
+     * stopping places.
+     * <br>
+     * <strong>Note</strong>: a clear separation is made between methods that are only
+     * to be used by clients and those used by internal mechanisms.
+     *
+     * @return methods suitable for setting client-requested breakpoints.
+     */
+    public final Sequence<MaxInspectableMethod> clientInspectableMethods() {
+        return clientInspectableMethods;
+    }
 
     public static void main(String[] args) {
         Trace.begin(1, "TeleMethods updating GENERATED CONTENT");
