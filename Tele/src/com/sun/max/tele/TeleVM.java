@@ -1597,7 +1597,7 @@ public abstract class TeleVM implements MaxVM {
         assert listener != null;
         gcCompletedListeners.add(listener);
         if (!gcCompletedListeners.isEmpty() && gcCompletedBreakpoint == null) {
-            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCCompleted, "GC complete for VM listeners");
+            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCCompleted, "GCCompletedListener notifier");
             final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -1697,6 +1697,16 @@ public abstract class TeleVM implements MaxVM {
         } catch (Exception exception) {
             throw new IOException(exception);
         }
+        addGCCompletedListener(new MaxGCCompletedListener() {
+            // The purpose of this listener, which doesn't do anything explicitly,
+            // is to force a VM stop at the end of each GC cycle, even if there are
+            // no other listeners.  This presents an opportunity for the Reference/Grip/Object
+            // code to update heap-related information that may have been changed as
+            // a result of the GC.
+            public void gcCompleted() {
+                Trace.line(TRACE_VALUE, tracePrefix() + "GC complete");
+            }
+        });
     }
 
     public final Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
