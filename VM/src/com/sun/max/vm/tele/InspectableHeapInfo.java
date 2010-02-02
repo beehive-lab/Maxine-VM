@@ -176,6 +176,9 @@ public final class InspectableHeapInfo {
      * This particular method is intended for internal use by the inspector.
      * Should a user wish to break at the beginning of GC, another, more
      * convenient inspectable method is provided
+     * <br>
+     * <strong>Important:</strong> The Inspector assumes that this method is loaded
+     * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param collectionEpoch the GC epoch that is starting.
      * @see HeapScheme.Static#inspectableGCStarting()
@@ -205,6 +208,9 @@ public final class InspectableHeapInfo {
      * This particular method is intended for internal use by the inspector.
      * Should a user wish to break at the conclusion of GC, another, more
      * convenient inspectable method is provided
+     * <br>
+     * <strong>Important:</strong> The Inspector assumes that this method is loaded
+     * and compiled in the boot image and that it will never be dynamically recompiled.
      *
      * @param collectionEpoch the GC epoch that is ending.
      * @see HeapScheme.Static#inspectableGCComplete()
