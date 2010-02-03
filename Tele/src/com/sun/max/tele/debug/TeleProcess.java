@@ -293,9 +293,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             while (true) {
                 try {
                     final TeleEventRequest request = requests.takeLast();
+                    processAccess.acquire();
                     Trace.begin(TRACE_VALUE, tracePrefix() + "handling execution request: " + request);
                     execute(request, false);
                     Trace.end(TRACE_VALUE, tracePrefix() + "handling execution request: " + request);
+                    processAccess.release();
                 } catch (InterruptedException interruptedException) {
                     ProgramWarning.message(tracePrefix() + "Could not take request from sceduling queue: " + interruptedException);
                 }
@@ -321,6 +323,15 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     private final TeleWatchpoint.Factory watchpointFactory;
 
     private final RequestHandlingThread requestHandlingThread;
+
+    /**
+     * Mutual exclusion to the activities of the
+     * {@link RequestHandlingThread} while setting up before each
+     * request is executed, while waiting for the VM execution to
+     * complete, and refreshing state caches after each
+     * request.
+     */
+    private final Semaphore processAccess = new Semaphore(1);
 
     /**
      *  The number of times that the VM's process has been run.
