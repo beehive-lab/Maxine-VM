@@ -69,6 +69,10 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
     private final TeleCodeLocation teleCodeLocation;
     private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
     private String description = null;
+    /**
+     * A bytecode breakpoint for which this target breakpoint was created, null if none.
+     */
+    protected final TeleBreakpoint owner;
 
     /**
      * A VM breakpoint.
@@ -78,11 +82,13 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
      * @param teleVM
      * @param teleCodeLocation location in the VM's code where the breakpoint should be set
      * @param kind  the kind of breakpoint
+     * @param owner another breakpoint, the implementation of which caused this breakpoint to be created; null if none
      */
-    protected TeleBreakpoint(TeleVM teleVM, TeleCodeLocation teleCodeLocation, BreakpointKind kind) {
+    protected TeleBreakpoint(TeleVM teleVM, TeleCodeLocation teleCodeLocation, BreakpointKind kind, TeleBreakpoint owner) {
         super(teleVM);
         this.teleCodeLocation = teleCodeLocation;
         this.kind = kind;
+        this.owner = owner;
     }
 
     /**
@@ -144,6 +150,10 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
         final boolean handleTriggerEvent = triggerEventHandler.handleTriggerEvent(teleNativeThread);
         Trace.end(TRACE_VALUE, tracePrefix() + "handling trigger event for " + this);
         return handleTriggerEvent;
+    }
+
+    public TeleBreakpoint owner() {
+        return owner;
     }
 
 }

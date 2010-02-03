@@ -515,7 +515,8 @@ public final class BreakpointsTable extends InspectorTable {
          */
         final MaxThread triggerThread() {
             for (MaxBreakpointEvent breakpointEvent : maxVMState().breakpointEvents()) {
-                if (breakpointEvent.breakpoint() == breakpoint) {
+                final MaxBreakpoint triggeredBreakpoint = breakpointEvent.breakpoint();
+                if (triggeredBreakpoint == breakpoint || triggeredBreakpoint.owner() == breakpoint) {
                     return breakpointEvent.thread();
                 }
             }

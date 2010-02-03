@@ -93,7 +93,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * @param kind the kind of breakpoint to create
      */
     private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, Key key, BreakpointKind kind) {
-        super(teleVM, new TeleCodeLocation(teleVM, key), kind);
+        super(teleVM, new TeleCodeLocation(teleVM, key), kind, null);
         this.factory = factory;
         this.key = key;
         this.holderTypeDescriptorString = key.holder().string;
