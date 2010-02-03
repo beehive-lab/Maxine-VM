@@ -59,12 +59,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
 
     /**
-     * A bytecode breakpoint for which this target breakpoint was created, null if none.
-     */
-    private final TeleBytecodeBreakpoint owner;
-
-
-    /**
      * Creates a target code breakpoint for a given address in the VM.
      *
      * @param teleVM the VM
@@ -76,9 +70,8 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
      * @param the kind of breakpoint
      */
     private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, BreakpointKind kind, TeleBytecodeBreakpoint owner) {
-        super(teleVM, new TeleCodeLocation(teleVM, address), kind);
+        super(teleVM, new TeleCodeLocation(teleVM, address), kind, owner);
         this.factory = factory;
-        this.owner = owner;
         this.originalCodeAtBreakpoint = originalCode == null ? teleVM.dataAccess().readFully(address, factory.codeSize()) : originalCode;
     }
 
@@ -87,15 +80,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
      */
     private Address address() {
         return getCodeLocation().targetCodeInstructionAddress();
-    }
-
-    /**
-     * Returns the bytecode breakpoint set by the client on whose behalf this breakpoint was created, if there is one.
-     *
-     * @return
-     */
-    public TeleBytecodeBreakpoint owner() {
-        return owner;
     }
 
     @Override
