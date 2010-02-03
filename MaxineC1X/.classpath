@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Assembler"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Base"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/C1X"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/CRI"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/VM"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/C0X"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
