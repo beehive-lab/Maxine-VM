@@ -21,6 +21,7 @@
 package com.sun.max.vm.management;
 
 import com.sun.max.vm.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class provides the entry point to all the class loading management functions in Maxine.
@@ -33,5 +34,13 @@ public class ClassLoadingManagement {
         final boolean previous = VMOptions.verboseOption.verboseClass;
         VMOptions.verboseOption.verboseClass = enable;
         return previous;
+    }
+
+    public static int getTotalClassCount() {
+        return ClassRegistry.getTotalLoadedClassCount();
+    }
+
+    public static int getUnloadedClassCount() {
+        return ClassRegistry.getUnloadedClassCount();
     }
 }

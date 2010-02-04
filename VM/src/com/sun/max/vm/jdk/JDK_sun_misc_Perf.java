@@ -20,15 +20,24 @@
  */
 package com.sun.max.vm.jdk;
 
+import java.lang.reflect.*;
 import java.nio.*;
+import java.util.*;
 
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.memory.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Method sustitutions for the {@link sun.misc.Perf} class.
+ * @author Mick Jordan
  *
  */
 @METHOD_SUBSTITUTIONS(Perf.class)
@@ -37,11 +46,51 @@ final class JDK_sun_misc_Perf {
     private JDK_sun_misc_Perf() {
     }
 
+    private static final int VARIABILITY_CONSTANT = 1;
+    private static final int VARIABILITY_MONOTONIC= 2;
+    private static final int VARIABILITY_VARIABLE = 3;
+
+    private static final int UNITS_NONE = 1;
+    private static final int UNITS_BYTES = 2;
+    private static final int UNITS_TICKS = 3;
+    private static final int UNITS_EVENTS = 4;
+    private static final int UNITS_STRING = 5;
+    private static final int UNITS_HERTZ = 6;
+
+    static class PerfData {
+        String name;
+        int units;
+        int variability;
+        PerfData(String name, int units, int variability) {
+            this.name= name;
+            this.units = units;
+            this.variability = variability;
+        }
+    }
+
+    static class PerfString extends PerfData {
+        Pointer address;
+        PerfString(String name, int units, int variability, Pointer address) {
+            super(name, units, variability);
+            this.address = address;
+        }
+    }
+
+    private static Map<String, PerfData> perfDataMap;
+    private static Constructor<?> directByteBufferConstructor;
     /**
      * Register any native methods.
      */
     @SUBSTITUTE
     private static void registerNatives() {
+        // This is called from the static initializer and is a hook for this implementation's initialization
+        perfDataMap = new HashMap<String, PerfData>();
+        try {
+            directByteBufferConstructor = Class.forName("java.nio.DirectByteBuffer").getDeclaredConstructor(long.class, int.class);
+            directByteBufferConstructor.setAccessible(true);
+        } catch (Exception ex) {
+            ProgramError.unexpected("failed to find java.nio.DirectByteBuffer constructor");
+        }
     }
 
     /**
@@ -95,7 +144,31 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     public ByteBuffer createByteArray(String name, int variability, int units, byte[] value, int maxLength) {
-        FatalError.unimplemented();
+        if (name == null || value == null) {
+            throw new NullPointerException();
+        }
+        if (!(variability == VARIABILITY_CONSTANT || variability == VARIABILITY_VARIABLE)) {
+            throw new IllegalArgumentException("invalid variability: " + variability);
+        }
+        if (units != UNITS_STRING) {
+            throw new IllegalArgumentException("invalid units: " + units);
+        }
+        PerfData perfData = perfDataMap.get(name);
+        if (perfData != null) {
+            throw new IllegalArgumentException("name: " + name + " already exists");
+        }
+
+        final Pointer address = Memory.mustAllocate(maxLength);
+        Memory.writeBytes(value, address);
+        final PerfString perfString = new PerfString(name, variability, units, address);
+        perfDataMap.put(name, perfString);
+        try {
+            return (ByteBuffer) directByteBufferConstructor.newInstance(new Object[] {address.toLong(), maxLength});
+        } catch (IllegalAccessException ex) {
+        } catch (InvocationTargetException ex) {
+        } catch (InstantiationException ex) {
+        }
+        ProgramError.unexpected("failed to create DirectByteBuffer");
         return null;
     }
 

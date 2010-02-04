@@ -180,6 +180,23 @@ public final class VmThreadMap {
 
     private final IDMap idMap = new IDMap(64);
 
+    // The main thread is not counted by the normal mechanisms so we start accounting from 1
+
+    /**
+     * The number of live daemon and non-daemon threads.
+     */
+    private volatile int liveThreads = 1;
+
+    /**
+     * Total number of threads started since VM began.
+     */
+    private volatile int totalStarted = 1;
+
+    /**
+     * Peak live thread count.
+     */
+    private volatile int peakThreadCount = 1;
+
     /**
      * The number of currently running non-daemon threads running, excluding
      * the {@linkplain VmThread#MAIN_VM_THREAD main} thread.
@@ -318,6 +335,7 @@ public final class VmThreadMap {
         if (!thread.daemon && thread != VmThread.MAIN_VM_THREAD) {
             decrementNonDaemonThreads();
         }
+        liveThreads--;
     }
 
     private VmThreadMap() {
@@ -351,6 +369,12 @@ public final class VmThreadMap {
                  */
                 throw new OutOfMemoryError("Unable to create new native thread");
             }
+            totalStarted++;
+            liveThreads++;
+            if (liveThreads > peakThreadCount) {
+                peakThreadCount = liveThreads;
+            }
+
         }
     }
 
@@ -453,6 +477,37 @@ public final class VmThreadMap {
     public static StackTraceElement[][] dumpThreads(Thread[] threads) {
         FatalError.unimplemented();
         return null;
+    }
+
+    public static int getTotalStartedThreadCount() {
+        synchronized (ACTIVE) {
+            return ACTIVE.totalStarted;
+        }
+    }
+
+    public static int getPeakThreadCount() {
+        synchronized (ACTIVE) {
+            return ACTIVE.peakThreadCount;
+        }
+    }
+
+    public static void resetPeakThreadCount() {
+        synchronized (ACTIVE) {
+            ACTIVE.peakThreadCount = ACTIVE.liveThreads;
+        }
+    }
+
+    public static int getLiveTheadCount() {
+        synchronized (ACTIVE) {
+            return ACTIVE.liveThreads;
+        }
+    }
+
+    public static int getDaemonThreadCount() {
+        synchronized (ACTIVE) {
+            // nonDaemonThreads does not include main but liveThreads does
+            return ACTIVE.liveThreads - (ACTIVE.nonDaemonThreads + 1);
+        }
     }
 
 }
