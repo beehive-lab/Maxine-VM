@@ -46,6 +46,26 @@ public class ThreadManagement {
         return VmThreadMap.getThreads();
     }
 
+    public static int getDaemonThreadCount() {
+        return VmThreadMap.getDaemonThreadCount();
+    }
+
+    public static int getPeakThreadCount() {
+        return VmThreadMap.getPeakThreadCount();
+    }
+
+    public static void resetPeakThreadCount() {
+        VmThreadMap.resetPeakThreadCount();
+    }
+
+    public static int getTotalStartedThreadCount() {
+        return VmThreadMap.getTotalStartedThreadCount();
+    }
+
+    public static int getTotalThreadCount() {
+        return VmThreadMap.getLiveTheadCount();
+    }
+
     public static boolean setThreadCpuTimeEnabled(boolean enable) {
         // TODO
         return false;
@@ -82,6 +102,27 @@ public class ThreadManagement {
                 }
             }
         }
+    }
+
+    /**
+     * Return info on all or a subset of threads, with optional info on locking.
+     * @param ids thread ids or null if all threads
+     * @param lockedMonitors
+     * @param lockedSynchronizers
+     * @return
+     */
+    public static ThreadInfo[] dumpThreads(long[] ids, boolean lockedMonitors, boolean lockedSynchronizers) {
+        if (ids == null) {
+            final Thread[] threads = VmThreadMap.getThreads();
+            ids = new long[threads.length];
+            for (int i = 0; i < threads.length; i++) {
+                Thread t = threads[i];
+                ids[i] = t.getId();
+            }
+        }
+        ThreadInfo[] threadInfoArray = new ThreadInfo[ids.length];
+        getThreadInfo(ids, 0, threadInfoArray);
+        return threadInfoArray;
     }
 
     private static Thread findThread(long id) {
