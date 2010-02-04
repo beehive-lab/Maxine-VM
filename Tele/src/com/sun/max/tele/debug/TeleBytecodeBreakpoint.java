@@ -160,7 +160,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             teleTargetBreakpoints = null;
             Trace.line(TRACE_VALUE, tracePrefix() + "clearing all target breakpoints for " + this);
         }
-        factory.fireBreakpointsChanged();
+        if (kind() == BreakpointKind.CLIENT) {
+            factory.fireBreakpointsChanged();
+        }
     }
 
     @Override
@@ -468,7 +470,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             breakpoints.put(key, breakpoint);
             updateBreakpointCache();
             Trace.line(TRACE_VALUE, tracePrefix + "new=" + breakpoint);
-            fireBreakpointsChanged();
+            if (kind == BreakpointKind.CLIENT) {
+                fireBreakpointsChanged();
+            }
             return breakpoint;
         }
 
@@ -488,7 +492,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             }
             updateBreakpointCache();
             Trace.line(TRACE_VALUE, tracePrefix + "removed " + teleBytecodeBreakpoint);
-            fireBreakpointsChanged();
+            if (teleBytecodeBreakpoint.kind() == BreakpointKind.CLIENT) {
+                fireBreakpointsChanged();
+            }
         }
 
         /**
@@ -503,10 +509,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private void createCompilerBreakpoint() {
             assert compilerTargetCodeBreakpoint == null;
-            final TeleClassMethodActor teleClassMethodActor = teleVM().teleMethods().InspectableCodeInfo_inspectableCompilationComplete.teleClassMethodActor();
-            // TODO (mlvdv) set the breakpoint on all present and future compilations of the compiler!  Not just the first, as is done here.
-            final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getJavaTargetMethod(0);
-            final Address callEntryPoint = javaTargetMethod.callEntryPoint();
+            final Address callEntryPoint = teleVM().teleMethods().compilationComplete().methodEntry();
             ProgramError.check(!callEntryPoint.isZero());
             compilerTargetCodeBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(callEntryPoint, null);
             compilerTargetCodeBreakpoint.setDescription("System trap for VM compiler");

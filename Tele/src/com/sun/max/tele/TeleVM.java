@@ -1314,21 +1314,12 @@ public abstract class TeleVM implements MaxVM {
         return teleCodeRegistry;
     }
 
-    private Sequence<MaxInspectableMethod> inspectableMethods;
-
     public final Sequence<MaxInspectableMethod> inspectableMethods() {
-        if (inspectableMethods == null) {
-            final VariableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>();
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCStarted, "Start of GC"));
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCCompleted, "End of GC"));
-            methods.append(new TeleInspectableMethod(teleMethods.CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_objectRelocated, "Object relocated"));
-            for (MaxInspectableMethod inspectableMethod : teleHeapManager.inspectableMethods()) {
-                methods.append(inspectableMethod);
-            }
-            inspectableMethods = methods;
+        final AppendableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>(teleMethods.clientInspectableMethods());
+        for (MaxInspectableMethod method : teleHeapManager.inspectableMethods()) {
+            methods.append(method);
         }
-        return inspectableMethods;
+        return methods;
     }
 
     /**
@@ -1569,7 +1560,6 @@ public abstract class TeleVM implements MaxVM {
         assert listener != null;
         gcStartedListeners.add(listener);
         if (!gcStartedListeners.isEmpty() && gcStartedBreakpoint == null) {
-            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCStarted, "GC start for VM listeners");
             final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -1580,7 +1570,8 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcStartedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(inspectableMethod, triggerEventHandler);
+            gcStartedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
+            gcStartedBreakpoint.setDescription("Internal breakpoint, just after start of GC, to notify listeners");
         }
     }
 
@@ -1597,7 +1588,6 @@ public abstract class TeleVM implements MaxVM {
         assert listener != null;
         gcCompletedListeners.add(listener);
         if (!gcCompletedListeners.isEmpty() && gcCompletedBreakpoint == null) {
-            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCCompleted, "GC complete for VM listeners");
             final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -1608,7 +1598,8 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcCompletedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(inspectableMethod, triggerEventHandler);
+            gcCompletedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
+            gcCompletedBreakpoint.setDescription("Internal breakpoint, just after end of GC, to notify listeners");
         }
     }
 
@@ -1697,6 +1688,16 @@ public abstract class TeleVM implements MaxVM {
         } catch (Exception exception) {
             throw new IOException(exception);
         }
+        addGCCompletedListener(new MaxGCCompletedListener() {
+            // The purpose of this listener, which doesn't do anything explicitly,
+            // is to force a VM stop at the end of each GC cycle, even if there are
+            // no other listeners.  This presents an opportunity for the Reference/Grip/Object
+            // code to update heap-related information that may have been changed as
+            // a result of the GC.
+            public void gcCompleted() {
+                Trace.line(TRACE_VALUE, tracePrefix() + "GC complete");
+            }
+        });
     }
 
     public final Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {

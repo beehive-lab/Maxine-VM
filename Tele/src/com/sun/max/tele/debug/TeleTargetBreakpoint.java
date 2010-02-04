@@ -221,7 +221,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         @Override
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
-            factory.fireBreakpointsChanged();
         }
 
         @Override
@@ -408,10 +407,24 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
                 systemBreakpoint = new SystemTargetBreakpoint(teleVM(), this, address, null, owner);
                 final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(address.toLong(), systemBreakpoint);
                 assert oldBreakpoint == null;
-                fireBreakpointsChanged();
             }
             return systemBreakpoint;
         }
+
+        public synchronized TeleTargetBreakpoint makeSystemBreakpoint(MaxInspectableMethod maxInspectableMethod, VMTriggerEventHandler handler) {
+            final Address callEntryPoint = maxInspectableMethod.methodEntry();
+            ProgramError.check(!callEntryPoint.isZero());
+            SystemTargetBreakpoint systemBreakpoint = systemBreakpoints.get(callEntryPoint.toLong());
+            // TODO (mlvdv) handle case where there is already a client breakpoint at this address.
+            if (systemBreakpoint == null) {
+                systemBreakpoint = new SystemTargetBreakpoint(teleVM(), this, callEntryPoint, null, null);
+                systemBreakpoint.setTriggerEventHandler(handler);
+                final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(callEntryPoint.toLong(), systemBreakpoint);
+                assert oldBreakpoint == null;
+            }
+            return systemBreakpoint;
+        }
+
 
         /**
          * Gets the transient breakpoint at a specified target code address in the VM, creating a new one first if needed.
@@ -447,8 +460,10 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         private synchronized void removeNonTransientBreakpointAt(Address address) {
             final long addressLong = address.toLong();
-            if (clientBreakpoints.remove(addressLong) != null || systemBreakpoints.remove(addressLong) != null) {
+            if (clientBreakpoints.remove(addressLong) != null) {
                 fireBreakpointsChanged();
+            } else {
+                systemBreakpoints.remove(addressLong);
             }
         }
 
