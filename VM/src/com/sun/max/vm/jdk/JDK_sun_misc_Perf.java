@@ -30,10 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.memory.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Method sustitutions for the {@link sun.misc.Perf} class.
@@ -47,7 +44,7 @@ final class JDK_sun_misc_Perf {
     }
 
     private static final int VARIABILITY_CONSTANT = 1;
-    private static final int VARIABILITY_MONOTONIC= 2;
+    private static final int VARIABILITY_MONOTONIC = 2;
     private static final int VARIABILITY_VARIABLE = 3;
 
     private static final int UNITS_NONE = 1;
@@ -62,7 +59,7 @@ final class JDK_sun_misc_Perf {
         int units;
         int variability;
         PerfData(String name, int units, int variability) {
-            this.name= name;
+            this.name = name;
             this.units = units;
             this.variability = variability;
         }
