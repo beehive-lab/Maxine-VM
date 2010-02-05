@@ -135,7 +135,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    public int maximumWatchpointCount() {
+    public int platformWatchpointCount() {
         // not sure how many are supported; we'll try this
         return Integer.MAX_VALUE;
     }

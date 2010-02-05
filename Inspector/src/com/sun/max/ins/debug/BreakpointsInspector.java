@@ -73,10 +73,10 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
 
         final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
-        editMenu.add(inspection().actions().removeSelectedBreakpoint());
-        editMenu.add(inspection().actions().removeAllTargetCodeBreakpoints());
-        editMenu.add(inspection().actions().removeAllBytecodeBreakpoints());
-        editMenu.add(inspection().actions().removeAllBreakpoints());
+        editMenu.add(actions().removeSelectedBreakpoint());
+        editMenu.add(actions().removeAllTargetCodeBreakpoints());
+        editMenu.add(actions().removeAllBytecodeBreakpoints());
+        editMenu.add(actions().removeAllBreakpoints());
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
@@ -87,7 +87,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
         debugMenu.addSeparator();
         debugMenu.add(actions().genericBreakpointMenuItems());
-        if (maxVM().watchpointsEnabled()) {
+        if (watchpointFactory() != null) {
             debugMenu.add(actions().genericWatchpointMenuItems());
             final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
             viewWatchpointsMenuItem.setText("View Watchpoints");

@@ -84,7 +84,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
     @Override
     protected void createView() {
-        thread = inspection().focus().thread();
+        thread = focus().thread();
         if (thread == null) {
             table = null;
             setContentPane(new InspectorPanel(inspection(), new BorderLayout()));

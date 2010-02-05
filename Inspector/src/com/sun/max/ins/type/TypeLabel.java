@@ -55,7 +55,7 @@ public class TypeLabel extends InspectorLabel {
                         if (mouseEvent.isControlDown()) {
                             actions().inspectObjectMemoryWords(teleClassActor).perform();
                         } else {
-                            inspection().focus().setHeapObject(teleClassActor);
+                            focus().setHeapObject(teleClassActor);
                         }
                         break;
                     }
@@ -64,11 +64,11 @@ public class TypeLabel extends InspectorLabel {
                     final InspectorPopupMenu menu = new InspectorPopupMenu();
                     final boolean enabled = teleClassActor != null;
 
-                    final InspectorAction inspectActorAction = inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor (Left-Button)");
+                    final InspectorAction inspectActorAction = actions().inspectObject(teleClassActor, "Inspect ClassActor (Left-Button)");
                     inspectActorAction.setEnabled(enabled);
                     menu.add(inspectActorAction);
 
-                    final InspectorAction inspectMemoryWordsAction = inspection().actions().inspectObjectMemoryWords(teleClassActor, "Inspect ClassActor memory words");
+                    final InspectorAction inspectMemoryWordsAction = actions().inspectObjectMemoryWords(teleClassActor, "Inspect ClassActor memory words");
                     inspectMemoryWordsAction.setEnabled(enabled);
                     menu.add(inspectMemoryWordsAction);
 

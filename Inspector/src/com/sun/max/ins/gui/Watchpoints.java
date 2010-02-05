@@ -113,7 +113,7 @@ public final class Watchpoints {
             menu.setEnabled(false);
         } else if (watchpoints.length() == 1) {
             final MaxWatchpoint watchpoint = watchpoints.first();
-            buildWatchpointMenu(menu, watchpoint);
+            buildWatchpointMenu(inspection, menu, watchpoint);
             final String description = watchpoint.description();
             final String title = description == null ? "Modify watchpont" : "Modify watchpoint: " + description;
             menu.setText(title);
@@ -121,7 +121,7 @@ public final class Watchpoints {
             menu.setText("Modify watchpoints");
             for (MaxWatchpoint watchpoint : watchpoints) {
                 final JMenu subMenu = new JMenu(watchpoint.description());
-                buildWatchpointMenu(subMenu, watchpoint);
+                buildWatchpointMenu(inspection, subMenu, watchpoint);
                 menu.add(subMenu);
             }
         }
@@ -131,38 +131,114 @@ public final class Watchpoints {
     /**
      * Populates a menu for editing settings of a single watchpoint.
      */
-    private static void buildWatchpointMenu(JMenu menu, final MaxWatchpoint watchpoint) {
+    private static void buildWatchpointMenu(final Inspection inspection, JMenu menu, final MaxWatchpoint watchpoint) {
         assert watchpoint != null;
         final WatchpointSettings settings = watchpoint.getSettings();
         final JCheckBoxMenuItem readItem = new JCheckBoxMenuItem("Trap on read", settings.trapOnRead);
         readItem.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                watchpoint.setTrapOnRead(item.getState());
+
+            private boolean undoing = false;
+
+            public void itemStateChanged(ItemEvent itemEvent) {
+                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) itemEvent.getItem();
+                if (undoing) {
+                    // This is recursive notification that the state has changed when we reverse a user action; ignore it.
+                } else {
+                    // This is a real user-initiated change to the item.
+                    final boolean newState = item.getState();
+                    try {
+                        watchpoint.setTrapOnRead(newState);
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        // Can't carry out the change; revert the state of the item.
+                        undoing = true;
+                        // Record the fact that we're deliberately reversing the user's action so that we can
+                        // ignore the recursive notification of this change.
+                        item.setSelected(!newState);
+                        undoing = false;
+                        inspection.vmBusyFailure("Watchpoint READ setting");
+                    }
+                }
             }
         });
         menu.add(readItem);
         final JCheckBoxMenuItem writeItem = new JCheckBoxMenuItem("Trap on write", settings.trapOnWrite);
         writeItem.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                watchpoint.setTrapOnWrite(item.getState());
+
+            private boolean undoing = false;
+
+            public void itemStateChanged(ItemEvent itemEvent) {
+                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) itemEvent.getItem();
+                if (undoing) {
+                    // This is recursive notification that the state has changed when we reverse a user action; ignore it.
+                } else {
+                    // This is a real user-initiated change to the item.
+                    final boolean newState = item.getState();
+                    try {
+                        watchpoint.setTrapOnWrite(newState);
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        // Can't carry out the change; revert the state of the item.
+                        undoing = true;
+                        // Record the fact that we're deliberately reversing the user's action so that we can
+                        // ignore the recursive notification of this change.
+                        item.setSelected(!newState);
+                        undoing = false;
+                        inspection.vmBusyFailure("Watchpoint WRITE setting");
+                    }
+                }
             }
         });
         menu.add(writeItem);
         final JCheckBoxMenuItem execItem = new JCheckBoxMenuItem("Trap on exec", settings.trapOnExec);
         execItem.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                watchpoint.setTrapOnExec(item.getState());
+
+            private boolean undoing = false;
+
+            public void itemStateChanged(ItemEvent itemEvent) {
+                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) itemEvent.getItem();
+                if (undoing) {
+                    // This is recursive notification that the state has changed when we reverse a user action; ignore it.
+                } else {
+                    // This is a real user-initiated change to the item.
+                    final boolean newState = item.getState();
+                    try {
+                        watchpoint.setTrapOnExec(newState);
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        // Can't carry out the change; revert the state of the item.
+                        undoing = true;
+                        // Record the fact that we're deliberately reversing the user's action so that we can
+                        // ignore the recursive notification of this change.
+                        item.setSelected(!newState);
+                        undoing = false;
+                        inspection.vmBusyFailure("Watchpoint EXEC setting");
+                    }
+                }
             }
         });
         menu.add(execItem);
         final JCheckBoxMenuItem enabledDuringGCItem = new JCheckBoxMenuItem("Enabled during GC", settings.enabledDuringGC);
         enabledDuringGCItem.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getItem();
-                watchpoint.setEnabledDuringGC(item.getState());
+
+            private boolean undoing = false;
+
+            public void itemStateChanged(ItemEvent itemEvent) {
+                final JCheckBoxMenuItem item = (JCheckBoxMenuItem) itemEvent.getItem();
+                if (undoing) {
+                    // This is recursive notification that the state has changed when we reverse a user action; ignore it.
+                } else {
+                    // This is a real user-initiated change to the item.
+                    final boolean newState = item.getState();
+                    try {
+                        watchpoint.setEnabledDuringGC(newState);
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        // Can't carry out the change; revert the state of the item.
+                        undoing = true;
+                        // Record the fact that we're deliberately reversing the user's action so that we can
+                        // ignore the recursive notification of this change.
+                        item.setSelected(!newState);
+                        undoing = false;
+                        inspection.vmBusyFailure("Watchpoint GC setting");
+                    }
+                }
             }
         });
         menu.add(enabledDuringGCItem);

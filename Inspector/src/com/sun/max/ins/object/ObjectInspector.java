@@ -123,7 +123,7 @@ public abstract class ObjectInspector extends Inspector {
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().inspectObjectMemoryWords(teleObject, "Inspect this object's memory"));
-        if (maxVM().watchpointsEnabled()) {
+        if (watchpointsEnabled()) {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
@@ -196,16 +196,16 @@ public abstract class ObjectInspector extends Inspector {
 
     @Override
     public void inspectorGetsWindowFocus() {
-        if (teleObject != inspection().focus().heapObject()) {
-            inspection().focus().setHeapObject(teleObject);
+        if (teleObject != focus().heapObject()) {
+            focus().setHeapObject(teleObject);
         }
         super.inspectorGetsWindowFocus();
     }
 
     @Override
     public void inspectorLosesWindowFocus() {
-        if (teleObject == inspection().focus().heapObject()) {
-            inspection().focus().setHeapObject(null);
+        if (teleObject == focus().heapObject()) {
+            focus().setHeapObject(null);
         }
         super.inspectorLosesWindowFocus();
     }
@@ -214,8 +214,8 @@ public abstract class ObjectInspector extends Inspector {
     public void inspectorClosing() {
         // don't try to recompute the title, just get the one that's been in use
         Trace.line(TRACE_VALUE, tracePrefix() + " closing for " + getTitle());
-        if (teleObject == inspection().focus().heapObject()) {
-            inspection().focus().setHeapObject(null);
+        if (teleObject == focus().heapObject()) {
+            focus().setHeapObject(null);
         }
         factory.objectInspectorClosing(this);
         super.inspectorClosing();
