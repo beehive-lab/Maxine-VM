@@ -110,6 +110,8 @@ public final class MaxineVM {
 
     private static int exitCode = 0;
 
+    private static long startupTime;
+
     static {
         MAXINE_CODE_BASE_LIST.add(MAXINE_CLASS_PACKAGE_PREFIX);
         MAXINE_CODE_BASE_LIST.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
@@ -436,6 +438,10 @@ public final class MaxineVM {
         return host().phase == Phase.RUNNING;
     }
 
+    public static long getStartupTime() {
+        return startupTime;
+    }
+
     /**
      * Determines if a given type descriptor denotes a class that is part of the Maxine code base.
      */
@@ -506,6 +512,9 @@ public final class MaxineVM {
         ImmortalHeap.initialize();
 
         NativeInterfaces.initialize(jniEnv, jmmInterface);
+
+        // Perhaps this should be later, after VM has initialized
+        startupTime = System.currentTimeMillis();
 
         VMConfiguration.target().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 

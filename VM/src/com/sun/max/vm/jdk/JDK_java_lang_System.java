@@ -729,7 +729,10 @@ public final class JDK_java_lang_System {
         // 10. initialize the file system with current runtime values as opposed to bootstrapping values
         ClassActor.fromJava(File.class).callInitializer();
 
-        // 11. load the character encoding class
+        // 11. initialize the management performance class with current runtime values
+        ClassActor.fromJava(sun.misc.Perf.class).callInitializer();
+
+        // 12. load the character encoding class
         final String sunJnuEncodingValue = properties.getProperty("sun.jnu.encoding");
         properties.remove("sun.jnu.encoding"); // Avoids endless recursion in the next statement
         Charset.isSupported(sunJnuEncodingValue); // We are only interested in the side effect: loading the char set if supported and initializing related JNU variables
