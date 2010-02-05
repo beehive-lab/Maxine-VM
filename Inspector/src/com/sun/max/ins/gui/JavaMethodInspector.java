@@ -133,8 +133,6 @@ public class JavaMethodInspector extends MethodInspector {
             codeViewCheckBoxes[codeKind.ordinal()] = checkBox;
         }
 
-        final InspectionActions actions = inspection.actions();
-
         final InspectorFrame frame = createTabFrame(parent);
         final InspectorMenu editMenu = frame.makeMenu(MenuKind.EDIT_MENU);
         final InspectorMenu objectMenu = frame.makeMenu(MenuKind.OBJECT_MENU);
@@ -144,51 +142,51 @@ public class JavaMethodInspector extends MethodInspector {
         final InspectorMenu breakAtLabelsMenu = new InspectorMenu("Break at this method labels");
 
         if (teleTargetMethod != null) {
-            final InspectorAction copyAction = actions.copyTargetMethodCodeToClipboard(teleTargetMethod, null);
+            final InspectorAction copyAction = actions().copyTargetMethodCodeToClipboard(teleTargetMethod, null);
             copyAction.setEnabled(true);
             editMenu.add(copyAction);
-            objectMenu.add(actions.inspectObject(teleTargetMethod, "Target method: " + teleTargetMethod.classActorForType().simpleName()));
+            objectMenu.add(actions().inspectObject(teleTargetMethod, "Target method: " + teleTargetMethod.classActorForType().simpleName()));
         }
 
         if (teleClassMethodActor != null) {
-            objectMenu.add(actions.inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
+            objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
             final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-            objectMenu.add(actions.inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
-            objectMenu.add(actions.inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-            objectMenu.add(actions.inspectTargetMethodCompilationsMenu(teleClassMethodActor, "Method compilations:"));
+            objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
+            objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
+            objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor, "Method compilations:"));
             objectMenu.add(defaultMenuItems(MenuKind.OBJECT_MENU));
         }
         for (final MethodCodeKind codeKind : MethodCodeKind.VALUES) {
             codeMenu.add(codeViewCheckBoxes[codeKind.ordinal()]);
         }
         if (teleClassMethodActor != null) {
-            codeMenu.add(actions.viewTargetMethodCodeMenu(teleClassMethodActor, "View method's compilations"));
+            codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor, "View method's compilations"));
         }
         codeMenu.add(defaultMenuItems(MenuKind.CODE_MENU));
 
         if (teleTargetMethod != null) {
-            breakOnEntryMenu.add(actions.setTargetCodeBreakpointAtMethodEntry(teleTargetMethod, "Target code"));
+            breakOnEntryMenu.add(actions().setTargetCodeBreakpointAtMethodEntry(teleTargetMethod, "Target code"));
         }
         if (teleClassMethodActor != null) {
-            breakOnEntryMenu.add(actions.setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecode"));
+            breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecode"));
         }
         debugMenu.add(breakOnEntryMenu);
         if (teleTargetMethod != null) {
-            breakAtLabelsMenu.add(actions.setTargetCodeLabelBreakpoints(teleTargetMethod, "Add target code breakpoints"));
-            breakAtLabelsMenu.add(actions.removeTargetCodeLabelBreakpoints(teleTargetMethod, "Remove target code breakpoints"));
+            breakAtLabelsMenu.add(actions().setTargetCodeLabelBreakpoints(teleTargetMethod, "Add target code breakpoints"));
+            breakAtLabelsMenu.add(actions().removeTargetCodeLabelBreakpoints(teleTargetMethod, "Remove target code breakpoints"));
         }
         debugMenu.add(breakAtLabelsMenu);
         if (teleClassMethodActor != null) {
-            debugMenu.add(actions.debugInvokeMethod(teleClassMethodActor, "Invoke this method"));
+            debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor, "Invoke this method"));
         }
         debugMenu.addSeparator();
-        debugMenu.add(actions.genericBreakpointMenuItems());
+        debugMenu.add(actions().genericBreakpointMenuItems());
         final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
         viewBreakpointsMenuItem.setText("View Breakpoints");
         debugMenu.add(viewBreakpointsMenuItem);
-        if (maxVM().watchpointsEnabled()) {
-            debugMenu.add(actions.genericWatchpointMenuItems());
-            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions.viewWatchpoints());
+        if (watchpointsEnabled()) {
+            debugMenu.add(actions().genericWatchpointMenuItems());
+            final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
             viewWatchpointsMenuItem.setText("View Watchpoints");
             debugMenu.add(viewWatchpointsMenuItem);
         }

@@ -356,7 +356,15 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
+        return inspection.maxVMState();
+    }
+
+    public final MaxWatchpointFactory watchpointFactory() {
+        return inspection.watchpointFactory();
+    }
+
+    public final boolean watchpointsEnabled() {
+        return inspection.watchpointsEnabled();
     }
 
     public final InspectorGUI gui() {
@@ -371,7 +379,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return inspection.focus();
     }
 
-    public InspectionActions actions() {
+    public final InspectionActions actions() {
         return inspection.actions();
     }
 

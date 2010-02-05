@@ -83,7 +83,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     @Override
-    public int maximumWatchpointCount() {
+    public int platformWatchpointCount() {
         return 0;
     }
 

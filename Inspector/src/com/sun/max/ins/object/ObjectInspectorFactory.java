@@ -91,7 +91,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
         teleTupleObjectClassToObjectInspectorConstructor.put(TeleStringConstant.class, getConstructor(StringConstantInspector.class));
         teleTupleObjectClassToObjectInspectorConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantInspector.class));
 
-        inspection.focus().addListener(new InspectionFocusAdapter() {
+        focus().addListener(new InspectionFocusAdapter() {
 
             @Override
             public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {

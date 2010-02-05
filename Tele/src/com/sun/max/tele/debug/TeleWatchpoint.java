@@ -70,14 +70,17 @@ import com.sun.max.vm.type.*;
  * <br>
  * A relocatable watchpoint associated with an object that is eventually determined to have been collected will be removed and
  * replaced with a non-relocatable watchpoint covering the same memory region.
+ * <br>
+ * <strong>Concurrency:</strong> operations that modify a watchpoint must necessarily be implemented by directly affecting
+ * the VM processes.  Such operations fail if they are unable to acquire the VM lock held during the execution of VM commands.
  *
  * @author Michael Van De Vanter
  */
 public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMTriggerEventHandler, MaxWatchpoint {
 
     // TODO (mlvdv) Consider a response when user tries to set a watchpoint on first header word.  May mean that
-    // TODO (mlvdv) there can be multiple watchpoints at a location.  Work through the use cases.
-    // TODO (mlvdv) Note that system watchpoint code does not check for too many or for overlap.
+    //  there can be multiple watchpoints at a location.  Work through the use cases.
+    // Note that system watchpoint code does not check for too many or for overlap.
 
     /**
      * Distinguishes among uses for watchpoints,
@@ -107,7 +110,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
     private final WatchpointKind kind;
 
-    private final RuntimeMemoryRegion memoryRegion;
+    private volatile RuntimeMemoryRegion memoryRegion;
 
     /**
      * Watchpoints factory.
@@ -119,7 +122,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      * This is true from the creation of the watchpoint until it is removed, at which event
      * it becomes permanently false and it cannot be used.
      */
-    private boolean alive = true;
+    private volatile boolean alive = true;
 
     /**
      * Is this watchpoint currently active in the process?
@@ -133,7 +136,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
     /**
      * Watchpoint configuration.
      */
-    private WatchpointSettings settings;
+    private volatile WatchpointSettings settings;
 
     /**
      * Stores data read from the memory covered by watchpoint.
@@ -191,10 +194,6 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         return memoryRegion.getUsage();
     }
 
-    public final void setDescription(String description) {
-        memoryRegion.setDescription(description);
-    }
-
     @Override
     public final boolean equals(Object o) {
         // For the purposes of the collection, define ordering and equality in terms of start location only.
@@ -205,51 +204,112 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         return false;
     }
 
-    public final boolean setTrapOnRead(boolean trapOnRead) {
-        assert alive;
-        this.settings = new WatchpointSettings(trapOnRead, settings.trapOnWrite, settings.trapOnExec, settings.enabledDuringGC);
-        return reset();
-    }
-
-    public final boolean setTrapOnWrite(boolean trapOnWrite) {
-        assert alive;
-        this.settings = new WatchpointSettings(settings.trapOnRead, trapOnWrite, settings.trapOnExec, settings.enabledDuringGC);
-        return reset();
-    }
-
-    public final boolean setTrapOnExec(boolean trapOnExec) {
-        assert alive;
-        this.settings = new WatchpointSettings(settings.trapOnRead, settings.trapOnWrite, trapOnExec, settings.enabledDuringGC);
-        return reset();
-    }
-
-    public final boolean setEnabledDuringGC(boolean enabledDuringGC) {
-        assert alive;
-        this.settings = new WatchpointSettings(settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec, enabledDuringGC);
-        if (enabledDuringGC && factory.teleVM().isInGC() && !active) {
-            setActive(true);
-        }
-        return reset();
-    }
-
     public final WatchpointSettings getSettings() {
         return settings;
     }
 
+    public final boolean setTrapOnRead(boolean trapOnRead) throws MaxVMBusyException, ProgramError {
+        ProgramError.check(alive, "Attempt to modify settings on a removed watchpoint");
+        if (!teleVM().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        boolean success = false;
+        final WatchpointSettings oldSettings = settings;
+        try {
+            this.settings = new WatchpointSettings(trapOnRead, oldSettings.trapOnWrite, oldSettings.trapOnExec, oldSettings.enabledDuringGC);
+            success = reset();
+        }  finally {
+            if (!success) {
+                this.settings = oldSettings;
+            }
+            teleVM().unlock();
+        }
+        return success;
+    }
+
+    public final boolean setTrapOnWrite(boolean trapOnWrite) throws MaxVMBusyException, ProgramError {
+        ProgramError.check(alive, "Attempt to modify settings on a removed watchpoint");
+        if (!teleVM().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        boolean success = false;
+        final WatchpointSettings oldSettings = settings;
+        try {
+            this.settings = new WatchpointSettings(settings.trapOnRead, trapOnWrite, settings.trapOnExec, settings.enabledDuringGC);
+            success = reset();
+        }  finally {
+            if (!success) {
+                this.settings = oldSettings;
+            }
+            teleVM().unlock();
+        }
+        return success;
+    }
+
+    public final boolean setTrapOnExec(boolean trapOnExec) throws MaxVMBusyException, ProgramError {
+        ProgramError.check(alive, "Attempt to modify settings on a removed watchpoint");
+        if (!teleVM().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        boolean success = false;
+        final WatchpointSettings oldSettings = settings;
+        try {
+            this.settings = new WatchpointSettings(settings.trapOnRead, settings.trapOnWrite, trapOnExec, settings.enabledDuringGC);
+            success = reset();
+        }  finally {
+            if (!success) {
+                this.settings = oldSettings;
+            }
+            teleVM().unlock();
+        }
+        return success;
+    }
+
+    public final boolean setEnabledDuringGC(boolean enabledDuringGC) throws MaxVMBusyException, ProgramError {
+        ProgramError.check(alive, "Attempt to modify settings on a removed watchpoint");
+        if (!teleVM().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        boolean success = false;
+        final WatchpointSettings oldSettings = settings;
+        try {
+            this.settings = new WatchpointSettings(settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec, enabledDuringGC);
+            if (enabledDuringGC && factory.teleVM().isInGC() && !active) {
+                setActive(true);
+            }
+            success = reset();
+        }  finally {
+            if (!success) {
+                this.settings = oldSettings;
+            }
+            teleVM().unlock();
+        }
+        return success;
+    }
+
     public final boolean isEnabled() {
+        final WatchpointSettings settings = this.settings;
         return alive && (settings.trapOnRead || settings.trapOnWrite || settings.trapOnExec);
     }
 
-    public boolean remove() {
-        assert alive;
-        if (active) {
-            setActive(false);
+    public boolean remove() throws MaxVMBusyException, ProgramError {
+        ProgramError.check(alive, "Attempt to remove a removed watchpoint");
+        if (!teleVM().tryLock()) {
+            throw new MaxVMBusyException();
         }
-        final boolean isRemoved =  factory.removeWatchpoint(this);
-        if (isRemoved) {
-            alive = false;
+        boolean success = false;
+        try {
+            if (active) {
+                setActive(false);
+            }
+            success =  factory.removeWatchpoint(this);
+            if (success) {
+                alive = false;
+            }
+        } finally {
+            teleVM().unlock();
         }
-        return isRemoved;
+        return success;
     }
 
     public final boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -324,7 +384,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
     }
 
     private void setStart(Address start) {
-        memoryRegion.setStart(start);
+        final RuntimeMemoryRegion newMemoryRegion = new RuntimeMemoryRegion(memoryRegion);
+        newMemoryRegion.setStart(start);
+        memoryRegion = newMemoryRegion;
     }
 
     /**
@@ -430,7 +492,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleRegionWatchpoint extends TeleWatchpoint {
 
-        public TeleRegionWatchpoint(WatchpointKind kind, Factory factory, String description, MemoryRegion memoryRegion, WatchpointSettings settings) {
+        private TeleRegionWatchpoint(WatchpointKind kind, Factory factory, String description, MemoryRegion memoryRegion, WatchpointSettings settings) {
             super(kind, factory, description, memoryRegion.start(), memoryRegion.size(), settings);
         }
 
@@ -453,7 +515,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
         private final TeleThreadLocalValues teleThreadLocalValues;
 
-        public TeleVmThreadLocalWatchpoint(WatchpointKind kind, Factory factory, String description, TeleThreadLocalValues teleThreadLocalValues, int index, WatchpointSettings settings) {
+        private TeleVmThreadLocalWatchpoint(WatchpointKind kind, Factory factory, String description, TeleThreadLocalValues teleThreadLocalValues, int index, WatchpointSettings settings) {
             super(kind, factory,  description, teleThreadLocalValues.getMemoryRegion(index), settings);
             this.teleThreadLocalValues = teleThreadLocalValues;
         }
@@ -500,7 +562,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         private TeleWatchpoint relocationWatchpoint = null;
 
-        public TeleObjectWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, Offset offset, Size size, WatchpointSettings settings)
+        private TeleObjectWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, Offset offset, Size size, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException  {
             super(kind, factory, description, teleObject.origin().plus(offset), size, settings);
             ProgramError.check(teleObject.isLive(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
@@ -558,15 +620,30 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         private void clearRelocationWatchpoint() {
             if (relocationWatchpoint != null) {
-                relocationWatchpoint.remove();
+                try {
+                    relocationWatchpoint.remove();
+                } catch (MaxVMBusyException maxVMBusyException) {
+                    ProgramError.unexpected("Should only be called with lock held");
+                } catch (ProgramError programError) {
+                    ProgramError.unexpected("Attempt to remove an already removed object relocation watchpoint");
+                }
                 relocationWatchpoint = null;
             }
         }
 
         @Override
-        public boolean remove() {
-            clearRelocationWatchpoint();
-            return super.remove();
+        public boolean remove() throws MaxVMBusyException, ProgramError {
+            if (!teleVM().tryLock()) {
+                throw new MaxVMBusyException();
+            }
+            boolean success = false;
+            try {
+                clearRelocationWatchpoint();
+                success = super.remove();
+            } finally {
+                teleVM().unlock();
+            }
+            return success;
         }
 
         public final boolean isRelocatable() {
@@ -598,9 +675,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     break;
                 case DEAD:
                     // The watchpoint's object has been collected; convert it to a fixed memory region watchpoint
-                    remove();
-                    final FixedMemoryRegion watchpointRegion = new FixedMemoryRegion(start(), size(), "Old memory location of watched object");
                     try {
+                        remove();
+                        final FixedMemoryRegion watchpointRegion = new FixedMemoryRegion(start(), size(), "Old memory location of watched object");
                         final TeleWatchpoint newRegionWatchpoint =
                             factory.createRegionWatchpoint("Replacement for watchpoint on GC'd object", watchpointRegion, getSettings());
                         Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint on collected object replaced: " + newRegionWatchpoint);
@@ -608,6 +685,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                         ProgramWarning.message("Failed to replace object watchpoint with region watchpoint: " + tooManyWatchpointsException);
                     } catch (DuplicateWatchpointException duplicateWatchpointException) {
                         ProgramWarning.message("Failed to replace object watchpoint with region watchpoint: " + duplicateWatchpointException);
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        ProgramError.unexpected("Should only be called on request handling thread, where lock acquision should not fail");
                     }
             }
         }
@@ -618,7 +697,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleWholeObjectWatchpoint extends TeleObjectWatchpoint {
 
-        public TeleWholeObjectWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, WatchpointSettings settings)
+        private TeleWholeObjectWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             super(kind, factory, description, teleObject, Offset.zero(), teleObject.objectSize(), settings);
         }
@@ -629,7 +708,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleFieldWatchpoint extends TeleObjectWatchpoint {
 
-        public TeleFieldWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
+        private TeleFieldWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             super(kind, factory, description, teleObject, Offset.fromInt(fieldActor.offset()), teleObject.fieldSize(fieldActor), settings);
         }
@@ -640,7 +719,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleArrayElementWatchpoint extends TeleObjectWatchpoint {
 
-        public TeleArrayElementWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+        private TeleArrayElementWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             super(kind, factory, description, teleObject, arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes), Size.fromInt(elementKind.width.numberOfBytes), settings);
         }
@@ -651,7 +730,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleHeaderWatchpoint extends TeleObjectWatchpoint {
 
-        public TeleHeaderWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
+        private TeleHeaderWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
             super(kind, factory, description, teleObject, teleObject.headerOffset(headerField), teleObject.headerSize(headerField), settings);
         }
@@ -664,7 +743,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      *
      * @author Michael Van De Vanter
      */
-    public static class Factory extends AbstractTeleVMHolder {
+    static final class Factory extends AbstractTeleVMHolder implements MaxWatchpointFactory {
 
         private final TeleProcess teleProcess;
 
@@ -696,13 +775,13 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         private MaxGCCompletedListener gcCompletedListener = null;
 
-        private List<MaxWatchpointListener> watchpointListeners = new CopyOnWriteArrayList<MaxWatchpointListener>();
+        private volatile List<MaxWatchpointListener> watchpointListeners = new CopyOnWriteArrayList<MaxWatchpointListener>();
 
         /**
          * Creates a factory for creating and managing watchpoints in the vm.
          *
          */
-        public Factory(TeleVM teleVM, TeleProcess teleProcess) {
+        Factory(TeleVM teleVM, TeleProcess teleProcess) {
             super(teleVM);
             this.teleProcess = teleProcess;
             teleVM().addVMStateListener(new MaxVMStateListener() {
@@ -719,20 +798,24 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
         /**
          * Adds a listener for watchpoint changes.
+         * <br>
+         * Thread-safe
          *
          * @param listener a watchpoint listener
          */
-        public final void addWatchpointListener(MaxWatchpointListener listener) {
+        public void addListener(MaxWatchpointListener listener) {
             assert listener != null;
             watchpointListeners.add(listener);
         }
 
         /**
          * Removes a listener for watchpoint changes.
+         * <br>
+         * Thread-safe
          *
          * @param listener a watchpoint listener
          */
-        public final void removeWatchpointListener(MaxWatchpointListener listener) {
+        public void removeListener(MaxWatchpointListener listener) {
             assert listener != null;
             watchpointListeners.remove(listener);
         }
@@ -749,11 +832,21 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public synchronized TeleWatchpoint createRegionWatchpoint(String description, MemoryRegion memoryRegion, WatchpointSettings settings)
-            throws TooManyWatchpointsException, DuplicateWatchpointException {
-            final TeleWatchpoint teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, description, memoryRegion, settings);
-            return addClientWatchpoint(teleWatchpoint);
+        public TeleWatchpoint createRegionWatchpoint(String description, MemoryRegion memoryRegion, WatchpointSettings settings)
+            throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
+            if (!teleVM().tryLock()) {
+                throw new MaxVMBusyException();
+            }
+            TeleWatchpoint teleWatchpoint;
+            try {
+                teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, description, memoryRegion, settings);
+                teleWatchpoint = addClientWatchpoint(teleWatchpoint);
+            } finally {
+                teleVM().unlock();
+            }
+            return teleWatchpoint;
         }
 
         /**
@@ -764,19 +857,28 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public synchronized TeleWatchpoint createObjectWatchpoint(String description, TeleObject teleObject, WatchpointSettings settings)
-            throws TooManyWatchpointsException, DuplicateWatchpointException {
-            TeleWatchpoint teleWatchpoint;
-            if (teleObject.isLive()) {
-                teleWatchpoint  = new TeleWholeObjectWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, settings);
-            } else {
-                String amendedDescription = (description == null) ? "" : description;
-                amendedDescription = amendedDescription + " (non-live object))";
-                final MemoryRegion region = teleObject.memoryRegion();
-                teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+        public TeleWatchpoint createObjectWatchpoint(String description, TeleObject teleObject, WatchpointSettings settings)
+            throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
+            if (!teleVM().tryLock()) {
+                throw new MaxVMBusyException();
             }
-            return addClientWatchpoint(teleWatchpoint);
+            TeleWatchpoint teleWatchpoint;
+            try {
+                if (teleObject.isLive()) {
+                    teleWatchpoint  = new TeleWholeObjectWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, settings);
+                } else {
+                    String amendedDescription = (description == null) ? "" : description;
+                    amendedDescription = amendedDescription + " (non-live object))";
+                    final MemoryRegion region = teleObject.memoryRegion();
+                    teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+                }
+                teleWatchpoint = addClientWatchpoint(teleWatchpoint);
+            } finally {
+                teleVM().unlock();
+            }
+            return teleWatchpoint;
         }
 
         /**
@@ -792,19 +894,28 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public synchronized TeleWatchpoint createFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
-            throws TooManyWatchpointsException, DuplicateWatchpointException {
-            TeleWatchpoint teleWatchpoint;
-            if (teleObject.isLive()) {
-                teleWatchpoint  = new TeleFieldWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, fieldActor, settings);
-            } else {
-                String amendedDescription = (description == null) ? "" : description;
-                amendedDescription = amendedDescription + " (non-live object))";
-                final MemoryRegion region = teleObject.fieldMemoryRegion(fieldActor);
-                teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+        public TeleWatchpoint createFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
+            throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
+            if (!teleVM().tryLock()) {
+                throw new MaxVMBusyException();
             }
-            return addClientWatchpoint(teleWatchpoint);
+            TeleWatchpoint teleWatchpoint;
+            try {
+                if (teleObject.isLive()) {
+                    teleWatchpoint  = new TeleFieldWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, fieldActor, settings);
+                } else {
+                    String amendedDescription = (description == null) ? "" : description;
+                    amendedDescription = amendedDescription + " (non-live object))";
+                    final MemoryRegion region = teleObject.fieldMemoryRegion(fieldActor);
+                    teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+                }
+                teleWatchpoint = addClientWatchpoint(teleWatchpoint);
+            } finally {
+                teleVM().unlock();
+            }
+            return teleWatchpoint;
         }
 
         /**
@@ -819,20 +930,29 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public synchronized TeleWatchpoint createArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
-            throws TooManyWatchpointsException, DuplicateWatchpointException {
-            TeleWatchpoint teleWatchpoint;
-            if (teleObject.isLive()) {
-                teleWatchpoint = new TeleArrayElementWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, settings);
-            } else {
-                String amendedDescription = (description == null) ? "" : description;
-                amendedDescription = amendedDescription + " (non-live object))";
-                final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
-                final MemoryRegion region = new FixedMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
-                teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+        public TeleWatchpoint createArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+            throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
+            if (!teleVM().tryLock()) {
+                throw new MaxVMBusyException();
             }
-            return addClientWatchpoint(teleWatchpoint);
+            TeleWatchpoint teleWatchpoint;
+            try {
+                if (teleObject.isLive()) {
+                    teleWatchpoint = new TeleArrayElementWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, elementKind, arrayOffsetFromOrigin, index, settings);
+                } else {
+                    String amendedDescription = (description == null) ? "" : description;
+                    amendedDescription = amendedDescription + " (non-live object))";
+                    final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
+                    final MemoryRegion region = new FixedMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
+                    teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+                }
+                teleWatchpoint =  addClientWatchpoint(teleWatchpoint);
+            } finally {
+                teleVM().unlock();
+            }
+            return teleWatchpoint;
         }
 
         /**
@@ -848,19 +968,28 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public synchronized TeleWatchpoint createHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
-            throws TooManyWatchpointsException, DuplicateWatchpointException {
-            TeleWatchpoint teleWatchpoint;
-            if (teleObject.isLive()) {
-                teleWatchpoint = new TeleHeaderWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, headerField, settings);
-            } else {
-                String amendedDescription = (description == null) ? "" : description;
-                amendedDescription = amendedDescription + " (non-live object)";
-                final MemoryRegion region = teleObject.headerMemoryRegion(headerField);
-                teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+        public TeleWatchpoint createHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
+            throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
+            if (!teleVM().tryLock()) {
+                throw new MaxVMBusyException();
             }
-            return addClientWatchpoint(teleWatchpoint);
+            TeleWatchpoint teleWatchpoint;
+            try {
+                if (teleObject.isLive()) {
+                    teleWatchpoint = new TeleHeaderWatchpoint(WatchpointKind.CLIENT, this, description, teleObject, headerField, settings);
+                } else {
+                    String amendedDescription = (description == null) ? "" : description;
+                    amendedDescription = amendedDescription + " (non-live object)";
+                    final MemoryRegion region = teleObject.headerMemoryRegion(headerField);
+                    teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
+                }
+                teleWatchpoint =  addClientWatchpoint(teleWatchpoint);
+            } finally {
+                teleVM().unlock();
+            }
+            return teleWatchpoint;
         }
 
         /**
@@ -873,37 +1002,32 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
+         * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public synchronized TeleWatchpoint createVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, WatchpointSettings settings)
-            throws TooManyWatchpointsException, DuplicateWatchpointException {
-            final TeleWatchpoint teleWatchpoint = new TeleVmThreadLocalWatchpoint(WatchpointKind.CLIENT, this, description, teleThreadLocalValues, index, settings);
-            return addClientWatchpoint(teleWatchpoint);
-        }
-
-        /**
-         * Find an existing client watchpoint set in the VM.
-         *
-         * @param address a memory address in the VM
-         * @return the watchpoint whose memory region includes the address, null if none.
-         */
-        synchronized TeleWatchpoint findClientWatchpoint(Address address) {
-            for (TeleWatchpoint teleWatchpoint : clientWatchpoints) {
-                if (teleWatchpoint.contains(address)) {
-                    return teleWatchpoint;
-                }
+        public TeleWatchpoint createVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, WatchpointSettings settings)
+            throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
+            if (!teleVM().tryLock()) {
+                throw new MaxVMBusyException();
             }
-            return null;
+            TeleWatchpoint teleWatchpoint;
+            try {
+                teleWatchpoint = new TeleVmThreadLocalWatchpoint(WatchpointKind.CLIENT, this, description, teleThreadLocalValues, index, settings);
+                teleWatchpoint = addClientWatchpoint(teleWatchpoint);
+            } finally {
+                teleVM().unlock();
+            }
+            return teleWatchpoint;
         }
 
         /**
-         * Find existing client memory watchpoints in the VM by location.
+         * Find existing <strong>client</strong> watchpoints in the VM by location.
          * <br>
-         * thread-safe
+         * Returns an immutable collection; membership is thread-safe
          *
          * @param memoryRegion a memory region in the VM
          * @return all watchpoints whose memory regions overlap the specified region, empty sequence if none.
          */
-        public Sequence<MaxWatchpoint> findClientWatchpoints(MemoryRegion memoryRegion) {
+        public Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) {
             DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
             for (MaxWatchpoint maxWatchpoint : clientWatchpointsCache) {
                 if (maxWatchpoint.overlaps(memoryRegion)) {
@@ -923,9 +1047,30 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         }
 
         /**
+         * Find an existing client watchpoint set in the VM.
+         * <br>
+         * Thread-safe
+         *
+         * @param address a memory address in the VM
+         * @return the watchpoint whose memory region includes the address, null if none.
+         */
+        TeleWatchpoint findClientWatchpointContaining(Address address) {
+            for (MaxWatchpoint maxWatchpoint : clientWatchpointsCache) {
+                if (maxWatchpoint.contains(address)) {
+                    return (TeleWatchpoint) maxWatchpoint;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * All watchpoints that currently exist.
+         * <br>
+         * Returns an immutable collection; membership is thread-safe
+         *
          * @return all watchpoints currently set in the VM; thread-safe.
          */
-        public IterableWithLength<MaxWatchpoint> clientWatchpoints() {
+        public IterableWithLength<MaxWatchpoint> watchpoints() {
             // Hand out the cached, thread-safe summary
             return clientWatchpointsCache;
         }
@@ -941,21 +1086,23 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * .
          * @throws TooManyWatchpointsException
          */
-        private synchronized TeleWatchpoint createSystemWatchpoint(String description, MemoryRegion memoryRegion, WatchpointSettings settings) throws TooManyWatchpointsException {
+        private TeleWatchpoint createSystemWatchpoint(String description, MemoryRegion memoryRegion, WatchpointSettings settings) throws TooManyWatchpointsException {
             final TeleWatchpoint teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.SYSTEM, this, description, memoryRegion, settings);
             return addSystemWatchpoint(teleWatchpoint);
         }
 
         /**
          * Find an system watchpoint set at a particular location.
+         * <br>
+         * Thread-safe
          *
          * @param address a location in VM memory
          * @return a system watchpoint, null if none exists at the address.
          */
-        public TeleWatchpoint findSystemWatchpoint(Address address) {
-            for (TeleWatchpoint teleWatchpoint : systemWatchpoints) {
-                if (teleWatchpoint.contains(address)) {
-                    return teleWatchpoint;
+        TeleWatchpoint findSystemWatchpoint(Address address) {
+            for (MaxWatchpoint maxWatchpoint : systemWatchpointsCache) {
+                if (maxWatchpoint.contains(address)) {
+                    return (TeleWatchpoint) maxWatchpoint;
                 }
             }
             return null;
@@ -1023,9 +1170,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             assert teleWatchpoint.isAlive();
             assert !teleWatchpoint.isActive();
 
-            if (watchpointCount() >= teleProcess.maximumWatchpointCount()) {
+            if (watchpointCount() >= teleProcess.platformWatchpointCount()) {
                 throw new TooManyWatchpointsException("Number of watchpoints supported by platform (" +
-                    teleProcess.maximumWatchpointCount() + ") exceeded");
+                    teleProcess.platformWatchpointCount() + ") exceeded");
             }
             if (!clientWatchpoints.add(teleWatchpoint)) {
                 // TODO (mlvdv) call out special case where there's a hidden system watchpoint at the same location as this.
@@ -1062,9 +1209,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @throws TooManyWatchpointsException
          */
         private TeleWatchpoint addSystemWatchpoint(TeleWatchpoint teleWatchpoint) throws TooManyWatchpointsException {
-            if (watchpointCount() >= teleProcess.maximumWatchpointCount()) {
+            if (watchpointCount() >= teleProcess.platformWatchpointCount()) {
                 throw new TooManyWatchpointsException("Number of watchpoints supported by platform (" +
-                    teleProcess.maximumWatchpointCount() + ") exceeded");
+                    teleProcess.platformWatchpointCount() + ") exceeded");
             }
             systemWatchpoints.add(teleWatchpoint);
             updateAfterWatchpointChanges();
@@ -1079,7 +1226,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @param teleWatchpoint an existing, inactive watchpoint in the VM
          * @return true if successful
          */
-        private synchronized boolean removeWatchpoint(TeleWatchpoint teleWatchpoint) {
+        private boolean removeWatchpoint(TeleWatchpoint teleWatchpoint) {
             assert teleWatchpoint.isAlive();
             assert !teleWatchpoint.isActive();
 
@@ -1105,14 +1252,21 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             }
         }
 
+        /**
+         * Writes a textual description of each existing watchpoint.
+         * <br>
+         * Thread-safe
+         *
+         * @param printStream
+         */
         public void writeSummaryToStream(PrintStream printStream) {
             printStream.println("Watchpoints :");
-            for (TeleWatchpoint teleWatchpoint : clientWatchpoints) {
-                printStream.println("  " + teleWatchpoint.toString());
+            for (MaxWatchpoint maxWatchpoint : clientWatchpointsCache) {
+                printStream.println("  " + maxWatchpoint.toString());
 
             }
-            for (TeleWatchpoint teleWatchpoint : systemWatchpoints) {
-                printStream.println("  " + teleWatchpoint.toString());
+            for (MaxWatchpoint maxWatchpoint : systemWatchpoints) {
+                printStream.println("  " + maxWatchpoint.toString());
             }
         }
     }

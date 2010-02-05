@@ -341,7 +341,7 @@ public abstract class CodeViewer extends InspectorPanel {
     private MaxVMState lastRefreshedState = null;
 
     private void updateCaches(boolean force) {
-        final MaxThread thread = inspection().focus().thread();
+        final MaxThread thread = focus().thread();
         if (thread != threadForCache || maxVMState().newerThan(lastRefreshedState) || force) {
             lastRefreshedState = maxVMState();
             updateStackCache();

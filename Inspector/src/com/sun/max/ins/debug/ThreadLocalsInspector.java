@@ -96,7 +96,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     protected void createView() {
-        thread = inspection().focus().thread();
+        thread = focus().thread();
         tabbedPane = new JTabbedPane();
         if (thread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {

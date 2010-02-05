@@ -67,7 +67,7 @@ public final class MemoryWordsTable extends InspectorTable {
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1 && col == MemoryWordsColumnKind.OFFSET.ordinal()) {
             setOriginToSelectionAction.perform();
-        } else if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
+        } else if (mouseEvent.getClickCount() > 1 && watchpointFactory() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -87,7 +87,7 @@ public final class MemoryWordsTable extends InspectorTable {
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         final InspectorPopupMenu menu = new InspectorPopupMenu();
-        if (maxVM().watchpointsEnabled()) {
+        if (watchpointFactory() != null) {
             final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
@@ -112,7 +112,7 @@ public final class MemoryWordsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         // Sets table selection to the memory word, if any, that is the current user focus.
-        final Address address = inspection().focus().address();
+        final Address address = focus().address();
         updateSelection(tableModel.findRow(address));
     }
 
@@ -124,7 +124,7 @@ public final class MemoryWordsTable extends InspectorTable {
         if (!e.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0 && row < tableModel.getRowCount()) {
-                inspection().focus().setAddress(tableModel.getAddress(row));
+                focus().setAddress(tableModel.getAddress(row));
             }
         }
     }

@@ -732,7 +732,7 @@ public class WordValueLabel extends ValueLabel {
             case UNCHECKED_REFERENCE:
             case OBJECT_REFERENCE_TEXT: {
                 final TeleObject teleObject = maxVM().makeTeleObject(maxVM().wordToReference(value.toWord()));
-                action = inspection().actions().inspectObject(teleObject, null);
+                action = actions().inspectObject(teleObject, null);
                 break;
             }
             case CALL_ENTRY_POINT:
@@ -744,7 +744,7 @@ public class WordValueLabel extends ValueLabel {
                 action = new InspectorAction(inspection(), "View Code at address") {
                     @Override
                     public void procedure() {
-                        inspection().focus().setCodeLocation(maxVM().createCodeLocation(address), true);
+                        focus().setCodeLocation(maxVM().createCodeLocation(address), true);
                     }
                 };
                 break;
@@ -753,7 +753,7 @@ public class WordValueLabel extends ValueLabel {
             case CLASS_ACTOR: {
                 final TeleClassActor teleClassActor = maxVM().findTeleClassActor(value.asWord().asAddress().toInt());
                 if (teleClassActor != null) {
-                    action = inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor");
+                    action = actions().inspectObject(teleClassActor, "Inspect ClassActor");
                 }
                 break;
             }
@@ -793,15 +793,15 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
-                    action = inspection().actions().inspectMemoryWords(address);
+                    action = actions().inspectMemoryWords(address);
                     break;
                 }
                 case OBJECT_REFERENCE:
                 case OBJECT_REFERENCE_TEXT: {
                     if (teleObject != null) {
-                        action = inspection().actions().inspectObjectMemoryWords(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
+                        action = actions().inspectObjectMemoryWords(teleObject, "Inspect memory for " + inspection().nameDisplay().referenceLabelText(teleObject));
                     } else {
-                        action = inspection().actions().inspectMemoryWords(address);
+                        action = actions().inspectMemoryWords(address);
                     }
                     break;
                 }
@@ -816,7 +816,7 @@ public class WordValueLabel extends ValueLabel {
                 case UNCHECKED_WORD:
                 case INVALID: {
                     if (maxVM().contains(address)) {
-                        action = inspection().actions().inspectMemoryWords(address);
+                        action = actions().inspectMemoryWords(address);
                     }
                     break;
                 }
@@ -831,7 +831,7 @@ public class WordValueLabel extends ValueLabel {
             final Address address = value.toWord().asAddress();
             final MemoryRegion memoryRegion = maxVM().memoryRegionContaining(address);
             if (memoryRegion != null) {
-                action = inspection().actions().selectMemoryRegion(memoryRegion);
+                action = actions().selectMemoryRegion(memoryRegion);
             }
         }
         return action;
@@ -968,7 +968,7 @@ public class WordValueLabel extends ValueLabel {
         }
 
         public WordValueMenuItems(Inspection inspection, Value value) {
-            add(inspection.actions().copyValue(value, "Copy value to clipboard"));
+            add(actions().copyValue(value, "Copy value to clipboard"));
             add(new MenuInspectObjectAction(value));
             add(new MenuToggleDisplayAction());
             add(new MenuInspectMemoryWordsAction(value));

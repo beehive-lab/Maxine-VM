@@ -158,7 +158,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 }
                 if (javaStackFrame instanceof AdapterStackFrame) {
                     name = "frame adapter [" + name + "]";
-                    if (javaStackFrame.targetMethod().compilerScheme.equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitCompilerScheme())) {
+                    if (javaStackFrame.targetMethod().compilerScheme.equals(maxVM().vmConfiguration().jitCompilerScheme())) {
                         toolTip = "optimized-to-JIT frame adapter [ " + toolTip + "]";
                     } else {
                         toolTip = "JIT-to-optimized frame adapter [ " + toolTip + "]";
@@ -220,7 +220,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             if (index >= 0 && index < stackFrameListModel.getSize()) {
                 final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
                 // New stack frame selection; set the global focus.
-                inspection().focus().setStackFrame(thread, stackFrame, false);
+                focus().setStackFrame(thread, stackFrame, false);
                 if (stackFrame instanceof CompiledStackFrame) {
                     if (stackFrame instanceof AdapterStackFrame) {
                         final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
@@ -288,7 +288,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void createView() {
-        thread = inspection().focus().thread();
+        thread = focus().thread();
         contentPane = new InspectorPanel(inspection(), new BorderLayout());
         if (thread != null) {
             stackFrameListModel = new DefaultListModel();
@@ -355,7 +355,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         setContentPane(contentPane);
         refreshView(true);
         // TODO (mlvdv) try to set frame selection to match global focus; doesn't work.
-        updateFocusSelection(inspection().focus().stackFrame());
+        updateFocusSelection(focus().stackFrame());
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -410,7 +410,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         menu.add(new InspectorAction(inspection(), "Select frame (Left-Button)") {
             @Override
             protected void procedure() {
-                inspection().focus().setStackFrame(thread, stackFrame, false);
+                focus().setStackFrame(thread, stackFrame, false);
             }
         });
         if (stackFrame instanceof CompiledStackFrame) {
@@ -428,7 +428,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 menu.add(new InspectorAction(inspection(), "Open native code dialog...") {
                     @Override
                     protected void procedure() {
-                        inspection().focus().setCodeLocation(maxVM().createCodeLocation(stackFrame), true);
+                        focus().setCodeLocation(maxVM().createCodeLocation(stackFrame), true);
                     }
                 });
             }
@@ -537,7 +537,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         for (StackFrame stackFrame : frames) {
             if (stackFrameListModel.size()  >= maxFramesDisplay) {
                 stackFrameListModel.addElement(new TruncatedStackFrame(parentStackFrame, stackFrame));
-                inspection().gui().informationMessage("stack depth of " + stackFrameListModel.size() + " exceeds " + maxFramesDisplay + ": truncated", "Stack Inspector");
+                gui().informationMessage("stack depth of " + stackFrameListModel.size() + " exceeds " + maxFramesDisplay + ": truncated", "Stack Inspector");
                 break;
             }
             stackFrameListModel.addElement(stackFrame);

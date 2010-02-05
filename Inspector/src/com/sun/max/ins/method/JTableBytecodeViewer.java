@@ -62,7 +62,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     public JTableBytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, TeleTargetMethod teleTargetMethod) {
         super(inspection, parent, teleClassMethodActor, teleTargetMethod);
         this.inspection = inspection;
-        tableModel = new BytecodeTableModel(bytecodeInstructions());
+        tableModel = new BytecodeTableModel(inspection, bytecodeInstructions());
         instanceViewPreferences = new BytecodeViewPreferences(BytecodeViewPreferences.globalPreferences(inspection())) {
             @Override
             public void setIsVisible(BytecodeColumnKind columnKind, boolean visible) {
@@ -89,48 +89,48 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         // Set up toolbar
         // TODO (mlvdv) implement remaining debugging controls in Bytecode view
         // the disabled ones haven't been adapted for bytecode-based debugging
-        JButton button = new InspectorButton(inspection, inspection.actions().toggleBytecodeBreakpoint());
+        JButton button = new InspectorButton(inspection, actions().toggleBytecodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugToggleBreakpointbuttonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugStepOver());
+        button = new InspectorButton(inspection, actions().debugStepOver());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOverButtonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugSingleStep());
+        button = new InspectorButton(inspection, actions().debugSingleStep());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepInButtonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugReturnFromFrame());
+        button = new InspectorButton(inspection, actions().debugReturnFromFrame());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOutButtonIcon());
         button.setEnabled(haveTargetCodeAddresses());
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugRunToSelectedInstruction());
+        button = new InspectorButton(inspection, actions().debugRunToSelectedInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
         button.setEnabled(haveTargetCodeAddresses());
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugResume());
+        button = new InspectorButton(inspection, actions().debugResume());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugContinueButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugPause());
+        button = new InspectorButton(inspection, actions().debugPause());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugPauseButtonIcon());
@@ -180,7 +180,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     @Override
     protected void setFocusAtRow(int row) {
         final int position = tableModel.rowToInstruction(row).position();
-        inspection.focus().setCodeLocation(maxVM().createCodeLocation(teleClassMethodActor(), position), false);
+        focus().setCodeLocation(maxVM().createCodeLocation(teleClassMethodActor(), position), false);
     }
 
     @Override
@@ -240,7 +240,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.rowToInstruction(selectedRow);
                     final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
                     final int position = bytecodeInstruction.position();
-                    inspection().focus().setCodeLocation(maxVM().createCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position), true);
+                    focus().setCodeLocation(maxVM().createCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position), true);
                 }
             }
         }
@@ -299,7 +299,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         private AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions;
 
-        public BytecodeTableModel(AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions) {
+        public BytecodeTableModel(Inspection inspection, AppendableIndexedSequence<BytecodeInstruction> bytecodeInstructions) {
+            super(inspection);
             this.bytecodeInstructions = bytecodeInstructions;
         }
 

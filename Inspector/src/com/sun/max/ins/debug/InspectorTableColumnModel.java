@@ -72,6 +72,16 @@ public abstract class InspectorTableColumnModel<ColumnKind_Type extends  ColumnK
     }
 
     /**
+     * Gets a column from the model per model index.
+     *
+     * @param col a column model index
+     * @return the column
+     */
+    public TableColumn columnAt(int col) {
+        return columns[col];
+    }
+
+    /**
      * Sets the visibility of a column already added to this model.
      *
      * @param col index of a column already added to this model

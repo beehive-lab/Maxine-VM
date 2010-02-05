@@ -86,7 +86,7 @@ public final class MemoryRegionsTable extends InspectorTable {
      */
     @Override
     public void updateFocusSelection() {
-        final MemoryRegion memoryRegion = inspection().focus().memoryRegion();
+        final MemoryRegion memoryRegion = focus().memoryRegion();
         final int row = tableModel.findRow(memoryRegion);
         updateSelection(row);
     }

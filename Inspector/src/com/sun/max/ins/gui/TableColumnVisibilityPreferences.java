@@ -148,10 +148,18 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
     }
 
     public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
+        return inspection.maxVMState();
     }
 
-    public InspectorGUI gui() {
+    public final MaxWatchpointFactory watchpointFactory() {
+        return inspection.watchpointFactory();
+    }
+
+    public final boolean watchpointsEnabled() {
+        return inspection.watchpointsEnabled();
+    }
+
+    public final InspectorGUI gui() {
         return inspection.gui();
     }
 
@@ -170,14 +178,14 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
     /**
      * Adds a listener for view update when a preference changes.
      */
-    public void addListener(TableColumnViewPreferenceListener listener) {
+    public final void addListener(TableColumnViewPreferenceListener listener) {
         tableColumnViewPreferenceListeners.add(listener);
     }
 
     /**
      * Removes a listener for view update when a preference changes.
      */
-    public void removeListener(TableColumnViewPreferenceListener listener) {
+    public final void removeListener(TableColumnViewPreferenceListener listener) {
         tableColumnViewPreferenceListeners.remove(listener);
     }
 

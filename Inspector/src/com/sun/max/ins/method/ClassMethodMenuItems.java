@@ -43,48 +43,46 @@ public final class ClassMethodMenuItems extends AbstractInspectorMenuItems {
     }
 
     public void addTo(InspectorMenu menu) {
-        final InspectionActions actions = inspection().actions();
         final InspectorMenu objectMenu = new InspectorMenu("Object");
-        objectMenu.add(actions.inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
+        objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
         final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-        objectMenu.add(actions.inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
-        objectMenu.add(actions.inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-        objectMenu.add(actions.inspectTargetMethodCompilationsMenu(teleClassMethodActor));
+        objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
+        objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
+        objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor));
         menu.add(objectMenu);
 
         final InspectorMenu codeMenu = new InspectorMenu("Code");
-        codeMenu.add(actions.viewJavaSource(teleClassMethodActor));
-        codeMenu.add(actions.viewMethodBytecode(teleClassMethodActor));
-        codeMenu.add(actions.viewTargetMethodCodeMenu(teleClassMethodActor));
+        codeMenu.add(actions().viewJavaSource(teleClassMethodActor));
+        codeMenu.add(actions().viewMethodBytecode(teleClassMethodActor));
+        codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor));
         menu.add(codeMenu);
 
         final InspectorMenu debugMenu = new InspectorMenu("Debug");
-        debugMenu.add(actions.setBytecodeBreakpointAtMethodEntry(teleClassMethodActor));
-        debugMenu.add(actions.debugInvokeMethod(teleClassMethodActor));
+        debugMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor));
+        debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
         menu.add(debugMenu);
     }
 
     public void addTo(InspectorPopupMenu menu) {
-        final InspectionActions actions = inspection().actions();
         final InspectorMenu objectMenu = new InspectorMenu("Object");
-        objectMenu.add(actions.inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
+        objectMenu.add(actions().inspectObject(teleClassMethodActor, "Method: " + teleClassMethodActor.classActorForType().simpleName()));
         final TeleClassActor teleClassActor = teleClassMethodActor.getTeleHolder();
-        objectMenu.add(actions.inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
-        objectMenu.add(actions.inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
-        objectMenu.add(actions.inspectTargetMethodCompilationsMenu(teleClassMethodActor));
+        objectMenu.add(actions().inspectObject(teleClassActor, "Holder: " + teleClassActor.classActorForType().simpleName()));
+        objectMenu.add(actions().inspectSubstitutionSourceClassActorAction(teleClassMethodActor));
+        objectMenu.add(actions().inspectTargetMethodCompilationsMenu(teleClassMethodActor));
         menu.add(objectMenu);
 
         final InspectorMenu codeMenu = new InspectorMenu("Code");
-        codeMenu.add(actions.viewJavaSource(teleClassMethodActor));
-        codeMenu.add(actions.viewMethodBytecode(teleClassMethodActor));
-        codeMenu.add(actions.viewTargetMethodCodeMenu(teleClassMethodActor));
+        codeMenu.add(actions().viewJavaSource(teleClassMethodActor));
+        codeMenu.add(actions().viewMethodBytecode(teleClassMethodActor));
+        codeMenu.add(actions().viewTargetMethodCodeMenu(teleClassMethodActor));
         menu.add(codeMenu);
 
         final InspectorMenu debugMenu = new InspectorMenu("Debug");
         final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at method entry");
-        breakOnEntryMenu.add(actions.setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecode"));
+        breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecode"));
         debugMenu.add(breakOnEntryMenu);
-        debugMenu.add(actions.debugInvokeMethod(teleClassMethodActor));
+        debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
         menu.add(debugMenu);
     }
 
