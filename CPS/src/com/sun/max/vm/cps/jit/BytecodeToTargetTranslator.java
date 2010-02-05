@@ -215,12 +215,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     }
 
     /**
-     * Only call this after emitting all code.
-     * @return the code position to which the JIT method returns in its optimized-to-JIT adapter
-     */
-    public abstract int adapterReturnPosition();
-
-    /**
      * Indicates whether hotpath counters should be inserted at backward branch targets. We only insert these
      * if the Hotpath Compiler is enabled and we're not trace instrumenting.
      * @return {@code true} if hotpath instrumentation should be inserted
@@ -431,8 +425,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             byte[] scalarLiteralBytes,
             Object[] referenceLiterals,
             Object codeOrCodeBuffer,
-            int optimizedCallerAdapterFrameCodeSize,
-            int adapterReturnPosition,
             TargetABI abi) {
 
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
@@ -449,8 +441,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             scalarLiteralBytes,
             referenceLiterals,
             codeOrCodeBuffer,
-            optimizedCallerAdapterFrameCodeSize,
-            adapterReturnPosition,
             inlineDataRecorder.encodedDescriptors(),
             stops.isDirectCallToRuntime,
             bytecodeToTargetCodePositionMap,
@@ -543,7 +533,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      *         {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT entry point} for a call from a method compiled with the
      *         optimizing compiler
      */
-    public abstract int emitPrologue();
+    public abstract Adapter emitPrologue();
 
     /**
      * Does any fix up of branches and emit the epilogue (if any).

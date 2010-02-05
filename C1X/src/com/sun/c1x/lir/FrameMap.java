@@ -75,7 +75,7 @@ public final class FrameMap {
      * @return a {@link CallingConvention} instance describing the location of parameters and the return value
      */
     public CallingConvention runtimeCallingConvention(CiKind[] signature) {
-        CiLocation[] locations = compiler.target.config.getRuntimeParameterLocations(signature);
+        CiLocation[] locations = compiler.target.registerConfig.getRuntimeParameterLocations(signature);
         return createCallingConvention(locations, false);
     }
 
@@ -85,7 +85,7 @@ public final class FrameMap {
      * @return a {@link CallingConvention} instance describing the location of parameters and the return value
      */
     public CallingConvention javaCallingConvention(CiKind[] signature, boolean outgoing, boolean reserveOutgoingArgumentsArea) {
-        CiLocation[] locations = compiler.target.config.getJavaParameterLocations(signature, outgoing);
+        CiLocation[] locations = compiler.target.registerConfig.getJavaParameterLocations(signature, outgoing);
         return createCallingConvention(locations, reserveOutgoingArgumentsArea);
     }
 

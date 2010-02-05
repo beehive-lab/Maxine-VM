@@ -27,7 +27,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
-@TEMPLATE(initialized = TemplateChooser.Initialized.YES)
+@TEMPLATE(initialized = TemplateChooser.Initialized.YES, resolved = TemplateChooser.Resolved.YES)
 public class InitializedStaticFieldAccessTemplateSource {
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.BYTE)

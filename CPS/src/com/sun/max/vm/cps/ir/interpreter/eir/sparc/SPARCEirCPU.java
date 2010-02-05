@@ -150,7 +150,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         fcc = new FCCValue[FCCOperand.all().length];
 
         final EirABI abi = interpreter.abi();
-        usesRegisterWindow = abi.targetABI().usesRegisterWindows();
+        usesRegisterWindow = abi.targetABI().useRegisterWindows;
 
         final EirStack stack = stack();
         final Address topSP = stack.ceiling.minus(VmThreadLocal.threadLocalsAreaSize().plus(Word.size()));

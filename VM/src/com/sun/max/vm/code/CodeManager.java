@@ -143,7 +143,7 @@ public abstract class CodeManager {
             Heap.enableAllocationForCurrentThread();
         }
 
-        currentCodeRegion.addToSortedMemoryRegions(targetMethod);
+        currentCodeRegion.add(targetMethod);
     }
 
     private void traceAllocation(TargetBundleLayout targetBundleLayout, Size bundleSize, int scalarLiteralsLength, int referenceLiteralsLength, Pointer start, Pointer codeCell) {
@@ -222,7 +222,7 @@ public abstract class CodeManager {
     TargetMethod codePointerToTargetMethod(Address codePointer) {
         final CodeRegion codeRegion = codePointerToCodeRegion(codePointer);
         if (codeRegion != null) {
-            return codeRegion.findTargetMethod(codePointer);
+            return codeRegion.find(codePointer);
         }
         return null;
     }

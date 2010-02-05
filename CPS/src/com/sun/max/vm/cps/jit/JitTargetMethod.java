@@ -49,8 +49,6 @@ import com.sun.max.platform.Platform;
  */
 public abstract class JitTargetMethod extends CPSTargetMethod {
 
-    private int adapterReturnPosition;
-    private int optimizedCallerAdapterFrameCodeSize;
     @INSPECTED
     private BytecodeInfo[] bytecodeInfos;
     protected int frameReferenceMapOffset;
@@ -66,7 +64,7 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     /**
      * A bit map denoting which {@linkplain #directCallees() direct calls} in this target method correspond to calls
      * into the runtime derived from the constituent templates. These calls are
-     * {@linkplain #linkDirectCalls() linked} using the entry point associated with the compiler
+     * {@linkplain #linkDirectCalls(Adapter) linked} using the entry point associated with the compiler
      * used to compile the runtime (i.e the opto compiler). All other direct calls are linked using the call entry point
      * associated with the JIT compiler.
      */
@@ -82,20 +80,17 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     @INSPECTED
     private int[] bytecodeToTargetCodePositionMap;
 
-    protected JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
+    protected JitTargetMethod(ClassMethodActor classMethodActor) {
+        super(classMethodActor);
+    }
+
+    @Override
+    public RuntimeCompilerScheme compilerScheme() {
+        return VMConfiguration.target().jitCompilerScheme();
     }
 
     public int[] bytecodeToTargetCodePositionMap() {
         return bytecodeToTargetCodePositionMap;
-    }
-
-    /**
-     * The size of the adapter frame code found at the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT entry point} for
-     * a call from a method compiled with the optimizing compiler.
-     */
-    public int optimizedCallerAdapterFrameCodeSize() {
-        return optimizedCallerAdapterFrameCodeSize;
     }
 
     @Override
@@ -103,11 +98,12 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         return true;
     }
 
-    /**
-     * @return the code position to which the JIT method returns in its optimized-to-JIT adapter code or -1 if there is no adapter.
-     */
-    public int adapterReturnPosition() {
-        return adapterReturnPosition;
+    public int sizeOfNonParameterLocals() {
+        return JitStackFrameLayout.JIT_SLOT_SIZE * (classMethodActor.codeAttribute().maxLocals - classMethodActor.numberOfParameterSlots());
+    }
+
+    public int sizeOfParameters() {
+        return classMethodActor.numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE;
     }
 
     @Override
@@ -213,15 +209,14 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             byte[] scalarLiteralBytes,
             Object[] referenceLiterals,
             Object codeOrCodeBuffer,
-            int optimizedCallerAdapterFrameCodeSize,
-            int adapterReturnPosition,
             byte[] encodedInlineDataDescriptors,
             ByteArrayBitMap isDirectRuntimeCall,
             int[] bytecodeToTargetCodePositionMap,
             BytecodeInfo[] bytecodeInfos,
             int numberOfBlocks,
             boolean[] blockStarts,
-            JitStackFrameLayout jitStackFrameLayout, TargetABI abi) {
+            JitStackFrameLayout jitStackFrameLayout,
+            TargetABI abi) {
         setGenerated(
                 catchRangePositions,
                 catchBlockPositions,
@@ -242,8 +237,6 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
         this.bytecodeInfos = bytecodeInfos;
         this.frameReferenceMapOffset = jitStackFrameLayout.frameReferenceMapOffset();
-        this.optimizedCallerAdapterFrameCodeSize = optimizedCallerAdapterFrameCodeSize;
-        this.adapterReturnPosition = adapterReturnPosition;
         this.stackFrameLayout = jitStackFrameLayout;
         if (stopPositions != null) {
             final JitReferenceMapEditor referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);

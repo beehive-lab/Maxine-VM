@@ -205,7 +205,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 // this method has already been compiled once
                 RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, recommendedCompiler, prohibitedCompiler);
                 TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-                if (targetMethod != null && targetMethod.compilerScheme == compiler) {
+                if (targetMethod != null && targetMethod.compilerScheme() == compiler) {
                     return targetMethod;
                 }
                 compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
@@ -297,11 +297,11 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             return optCompiler;
         }
 
-        // in optimized mode, default to the optimzing compiler
+        // in optimized mode, default to the optimizing compiler
         if (mode == Mode.OPTIMIZED) {
             if (classMethodActor.isSynthetic() && firstCompile) {
                 // we must at first use the JIT for reflective invocation stubs,
-                // otherwise stupid CPS compiler may not terminate
+                // otherwise the CPS compiler may not terminate
                 return jitCompiler;
             }
             return optCompiler;

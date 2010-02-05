@@ -83,7 +83,7 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
         this.c2jFunctionABI = c2jFunctionABI;
         this.nativeABI = nativeABI;
         this.treeABI = treeABI;
-        assert nativeABI.calleeSavedRegisters().contains(safepointLatchRegister());
+        assert Sequence.Static.containsIdentical(nativeABI.calleeSavedRegisters(), safepointLatchRegister());
     }
 
     /**

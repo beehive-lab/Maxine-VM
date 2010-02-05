@@ -21,9 +21,10 @@
 package com.sun.max.vm.cps.jit.amd64;
 
 import com.sun.max.asm.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.b.c.d.e.amd64.target.*;
-import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.template.*;
 
@@ -37,12 +38,12 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
 
     public AMD64TemplateBasedTargetGenerator(JitCompiler jitCompiler) {
         super(jitCompiler, InstructionSet.AMD64);
-        needsAdapterFrame = compilerScheme().vmConfiguration().bootCompilerScheme() instanceof AMD64CPSCompiler;
+        needsAdapterFrame = VMConfiguration.target().needsAdapters();
     }
 
     @Override
     public AMD64JitTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final AMD64JitTargetMethod targetMethod = new AMD64JitTargetMethod(classMethodActor, compilerScheme());
+        final AMD64JitTargetMethod targetMethod = new AMD64JitTargetMethod(classMethodActor);
         notifyAllocation(targetMethod);
         return targetMethod;
     }
@@ -54,11 +55,13 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
         // allocate a buffer that is likely to be large enough, based on a linear expansion
         final int estimatedSize = classMethodActor.codeAttribute().code().length * NUMBER_OF_BYTES_PER_BYTECODE;
         final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
-        EirABI optimizingCompilerAbi = null;
+
+        AdapterGenerator adapterGenerator;
         if (needsAdapterFrame) {
-            final EirGenerator eirGenerator = ((AMD64CPSCompiler) compilerScheme().vmConfiguration().bootCompilerScheme()).eirGenerator();
-            optimizingCompilerAbi = eirGenerator.eirABIsScheme().getABIFor(classMethodActor);
+            adapterGenerator = AdapterGenerator.forCallee(classMethodActor, VMConfiguration.target().targetABIsScheme().jitABI);
+        } else {
+            adapterGenerator = null;
         }
-        return new BytecodeToAMD64TargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, false);
+        return new BytecodeToAMD64TargetTranslator(classMethodActor, codeBuffer, templateTable(), adapterGenerator, false);
     }
 }

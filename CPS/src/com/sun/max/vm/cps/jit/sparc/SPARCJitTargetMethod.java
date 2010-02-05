@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.jit.sparc;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.sparc.*;
@@ -36,8 +35,8 @@ import com.sun.max.vm.runtime.sparc.*;
  */
 public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTargetMethod {
 
-    public SPARCJitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
+    public SPARCJitTargetMethod(ClassMethodActor classMethodActor) {
+        super(classMethodActor);
     }
 
     @Override

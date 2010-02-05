@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm;
 
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+
 import java.io.*;
 
 import com.sun.max.*;
@@ -64,8 +66,6 @@ public final class VMConfiguration {
     public final VMPackage runPackage;
     public final Safepoint safepoint;
     public final TrapStateAccess trapStateAccess;
-    private final int[] offsetsToCallEntryPoints;
-    private final int[] offsetsToCalleeEntryPoints;
 
     private AppendableIndexedSequence<VMScheme> vmSchemes = new ArrayListSequence<VMScheme>();
     private boolean areSchemesLoadedAndInstantiated = false;
@@ -123,21 +123,6 @@ public final class VMConfiguration {
         this.runPackage = runPackage;
         this.safepoint = Safepoint.create(this);
         this.trapStateAccess = TrapStateAccess.create(this);
-        // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
-        if (this.jitCompilerPackage == null || this.jitCompilerPackage.equals(this.bootCompilerPackage)) {
-            // zero-fill array -- all entry points are at code start (for now -- may change with inline caches).
-            this.offsetsToCallEntryPoints = new int[CallEntryPoint.VALUES.length()];
-            this.offsetsToCalleeEntryPoints = new int[CallEntryPoint.VALUES.length()];
-        } else {
-            final int offsetToOptimizedEntryPoint = WordWidth.BITS_8.numberOfBytes * 8;
-            final int offsetToJitEntryPoint = 0;
-            final int offsetToVtableEntryPoint = offsetToOptimizedEntryPoint;
-            final int offsetToCEntryPoint = 0;
-            final int offsetToInterpreterEntryPoint = 0;
-            this.offsetsToCallEntryPoints = new int[]{offsetToVtableEntryPoint,  offsetToJitEntryPoint, offsetToOptimizedEntryPoint, offsetToCEntryPoint, offsetToInterpreterEntryPoint};
-            // Callees have the same entry point as their caller, except for C_ENTRY_POINT, which has the C_OPTIMIZED_ENTRY_POINT
-            this.offsetsToCalleeEntryPoints = new int[]{offsetToVtableEntryPoint,  offsetToJitEntryPoint, offsetToOptimizedEntryPoint, offsetToOptimizedEntryPoint, offsetToInterpreterEntryPoint};
-        }
     }
 
     @INLINE
@@ -223,24 +208,6 @@ public final class VMConfiguration {
                         runPackage);
     }
 
-    /**
-     * Configuration information for method entry points.
-     * @see CallEntryPoint
-     * @return an array of the offsets to call entry points
-     */
-    public int[] offsetToCallEntryPoints() {
-        return offsetsToCallEntryPoints;
-    }
-
-    /**
-     * Configuration information for method's callees entry points.
-     * @see CallEntryPoint
-     * @return an array of the offsets to callee entry points
-     */
-    public int[] offsetsToCalleeEntryPoints() {
-        return offsetsToCalleeEntryPoints;
-    }
-
     public Sequence<VMScheme> vmSchemes() {
         return vmSchemes;
     }
@@ -254,7 +221,8 @@ public final class VMConfiguration {
         return vmScheme;
     }
 
-    public void loadAndInstantiateSchemes() {
+    @HOSTED_ONLY
+    public void loadAndInstantiateSchemes(boolean isTarget) {
         if (areSchemesLoadedAndInstantiated) {
             return;
         }
@@ -266,15 +234,16 @@ public final class VMConfiguration {
         targetABIsScheme = loadAndInstantiateScheme(targetABIsPackage, TargetABIsScheme.class, this);
         bootCompilerScheme = loadAndInstantiateScheme(bootCompilerPackage, BootstrapCompilerScheme.class, this);
         trampolineScheme = loadAndInstantiateScheme(trampolinePackage, DynamicTrampolineScheme.class, this);
+
         if (jitCompilerPackage != null) {
             jitCompilerScheme = loadAndInstantiateScheme(jitCompilerPackage, RuntimeCompilerScheme.class, this);
         } else {
             // no JIT, always using the optimizing compiler
             jitCompilerScheme = bootCompilerScheme;
         }
-        if (optCompilerPackage == jitCompilerPackage) {
+        if (MaxPackage.equal(optCompilerPackage, jitCompilerPackage)) {
             optCompilerScheme = jitCompilerScheme;
-        } else if (optCompilerPackage == bootCompilerPackage) {
+        } else if (MaxPackage.equal(optCompilerPackage, bootCompilerPackage)) {
             optCompilerScheme = bootCompilerScheme;
         } else if (optCompilerPackage == null) {
             optCompilerScheme = bootCompilerScheme;
@@ -282,11 +251,35 @@ public final class VMConfiguration {
             optCompilerScheme = loadAndInstantiateScheme(optCompilerPackage, RuntimeCompilerScheme.class, this);
         }
 
+        if (isTarget) {
+            // FIXME: This is a hack to avoid adding an "AdapterFrameScheme".
+            if (needsAdapters()) {
+                OPTIMIZED_ENTRY_POINT.init(8, 8);
+                JIT_ENTRY_POINT.init(0, 0);
+                VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
+                // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
+                C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
+            } else {
+                CallEntryPoint.initAllToZero();
+            }
+        }
+
         compilationScheme = new AdaptiveCompilationScheme(this);
         vmSchemes.append(compilationScheme);
 
         runScheme = loadAndInstantiateScheme(runPackage, RunScheme.class, this);
         areSchemesLoadedAndInstantiated = true;
+    }
+
+    /**
+     * Determines if any pair of compilers in this configuration use different
+     * calling conventions and thus mandate the use of {@linkplain Adapter adapters}
+     * to adapt the arguments when a call crosses a calling convention boundary.
+     */
+    public boolean needsAdapters() {
+        return optCompilerScheme.calleeEntryPoint() != bootCompilerScheme.calleeEntryPoint() ||
+               optCompilerScheme.calleeEntryPoint() != jitCompilerScheme.calleeEntryPoint() ||
+               bootCompilerScheme.calleeEntryPoint() != jitCompilerScheme.calleeEntryPoint();
     }
 
     public void initializeSchemes(MaxineVM.Phase phase) {

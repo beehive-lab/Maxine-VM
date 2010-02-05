@@ -35,10 +35,13 @@ public class SPARCEirTrampolineABI extends SPARCEirJavaABI {
         super(vmConfiguration);
         // Remove from the set of caller saved registers all output registers as well.
         // These are already empty as a register window is allocated in the trampoline frame.
-        final PoolSet<SPARCEirRegister> callerSavedRegister = callerSavedRegisters();
         for (SPARCEirRegister register : integerOutRegisters) {
-            callerSavedRegister.remove(register);
+            callerSavedRegisters.remove(register);
         }
+
+        // Make all potential parameters of the trampoline's compilee callee-saved
+        PoolSet.addAll(calleeSavedRegisters, integerParameterRegisters());
+        PoolSet.addAll(calleeSavedRegisters, floatingPointParameterRegisters());
     }
 
 }

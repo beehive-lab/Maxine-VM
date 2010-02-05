@@ -154,8 +154,8 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
          * to better factor this out.
          */
         final Class<TargetABI<GPR, FPR>> type = null;
-        TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
-        CPU_FRAME_POINTER = TARGET_ABI.registerRoleAssignment().integerRegisterActingAs(Role.CPU_FRAME_POINTER);
+        TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI);
+        CPU_FRAME_POINTER = TARGET_ABI.registerRoleAssignment.integerRegisterActingAs(Role.CPU_FRAME_POINTER);
         PROLOGUE_SCRATCH_REGISTER = TARGET_ABI.scratchRegister();
 
         SAFEPOINT_TEMPLATE = VMConfiguration.target().safepoint.code;
@@ -306,24 +306,12 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         return TARGET_ABI;
     }
 
-    @Override
-    public int adapterReturnPosition() {
-        try {
-            if (adapterFrameGenerator.adapterReturnPoint().state() == Label.State.BOUND) {
-                return adapterFrameGenerator.adapterReturnPoint().position();
-            }
-            return -1;
-        } catch (AssemblyException assemblyException) {
-            throw ProgramError.unexpected();
-        }
-    }
-
     private DFPR doublePrecisionParameterRegister(int parameterIndex) {
-        return (DFPR) TARGET_ABI.floatingPointParameterRegisters().get(2 * parameterIndex);
+        return (DFPR) TARGET_ABI.floatingPointParameterRegisters.get(2 * parameterIndex);
     }
 
     private SFPR singlePrecisionParameterRegister(int parameterIndex) {
-        return (SFPR) TARGET_ABI.floatingPointParameterRegisters().get((2 * parameterIndex) + 1);
+        return (SFPR) TARGET_ABI.floatingPointParameterRegisters.get((2 * parameterIndex) + 1);
     }
 
     @Override
@@ -359,7 +347,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void assignIntTemplateArgument(int parameterIndex, int argument) {
-        final GPR register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
+        final GPR register = TARGET_ABI.integerIncomingParameterRegisters.get(parameterIndex);
         asm.reset();
         if (argument == 0) {
             asm.clr(register);
@@ -371,7 +359,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void assignLongTemplateArgument(int parameterIndex, long argument) {
-        final GPR register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
+        final GPR register = TARGET_ABI.integerIncomingParameterRegisters.get(parameterIndex);
         asm.reset();
         asm.setx(argument, GPR.O7, register);
         codeBuffer.emitCodeFrom(asm);
@@ -385,7 +373,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         final int stackAmountInBytes = jitStackFrameLayout.sizeOfParameters() + CALL_SAVE_AREA_OFFSET_TO_STACK;
         assert SPARCAssembler.isSimm13(stackAmountInBytes) : "must be imm13";
 
-        final int offsetToCallSaveArea = VMConfiguration.target().targetABIsScheme().jitABI().alignFrameSize(SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE + jitStackFrameLayout.sizeOfTemplateSlots()) -
+        final int offsetToCallSaveArea = VMConfiguration.target().targetABIsScheme().jitABI.alignFrameSize(SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE + jitStackFrameLayout.sizeOfTemplateSlots()) -
                         SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE;
 
         asm.reset();
@@ -602,7 +590,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             case LONG:
             case WORD:
             case REFERENCE:
-                final GPR destinationRegister = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
+                final GPR destinationRegister = TARGET_ABI.integerIncomingParameterRegisters.get(parameterIndex);
                 if (SPARCAssembler.isSimm13(offsetFromLiteralBase)) {
                     asm.ldx(literalBaseRegister, offsetFromLiteralBase, destinationRegister);
                 } else {
@@ -656,7 +644,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     }
 
     @Override
-    public int emitPrologue() {
+    public Adapter emitPrologue() {
         if (adapterFrameGenerator != null) {
             final GPR stackPointerRegister = TARGET_ABI.stackPointer();
             final GPR framePointerRegister = TARGET_ABI.framePointer();

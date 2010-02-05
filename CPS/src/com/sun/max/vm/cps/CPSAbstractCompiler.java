@@ -34,8 +34,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
 import com.sun.max.vm.hotpath.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.trampoline.*;
 
 /**
@@ -53,6 +51,11 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
      * @return the last IR generator of this compiler
      */
     public abstract IrGenerator irGenerator();
+
+    @Override
+    public CallEntryPoint calleeEntryPoint() {
+        return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+    }
 
     protected abstract Sequence<IrGenerator> irGenerators();
 
@@ -134,10 +137,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
 
     @HOSTED_ONLY
     public void initializeForJitCompilations() {
-    }
-
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
-        throw new UnsupportedOperationException();
     }
 
     public boolean isBuiltinImplemented(Builtin builtin) {

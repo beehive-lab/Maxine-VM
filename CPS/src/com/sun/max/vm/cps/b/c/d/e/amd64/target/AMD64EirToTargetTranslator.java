@@ -20,10 +20,9 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64.target;
 
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
-
 import com.sun.max.asm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.target.*;
@@ -42,23 +41,15 @@ public final class AMD64EirToTargetTranslator extends EirToTargetTranslator {
 
     @Override
     public CPSTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final AMD64OptimizedTargetMethod targetMethod = new AMD64OptimizedTargetMethod(classMethodActor, compilerScheme());
+        final AMD64OptimizedTargetMethod targetMethod = new AMD64OptimizedTargetMethod(classMethodActor);
         notifyAllocation(targetMethod);
         return targetMethod;
     }
 
     @Override
     protected EirTargetEmitter createEirTargetEmitter(EirMethod eirMethod) {
-        AMD64AdapterFrameGenerator adapterFrameGenerator = null;
-        if (eirMethod.isTemplate() ||
-            eirMethod.abi.targetABI().callEntryPoint().equals(C_ENTRY_POINT)) {
-            // No adapter frames required for these methods
-        } else {
-            if (compilerScheme().vmConfiguration().jitCompilerScheme() != compilerScheme()) {
-                adapterFrameGenerator = AMD64AdapterFrameGenerator.jitToOptimizingCompilerAdapterFrameGenerator(eirMethod.classMethodActor(), eirMethod.abi);
-            }
-        }
-        return new AMD64EirTargetEmitter((AMD64EirABI) eirMethod.abi, eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint, adapterFrameGenerator);
+        AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(eirMethod.classMethodActor(), eirMethod.abi.targetABI());
+        return new AMD64EirTargetEmitter((AMD64EirABI) eirMethod.abi, eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint, adapterGenerator);
     }
 
 }

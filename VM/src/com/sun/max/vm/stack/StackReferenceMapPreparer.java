@@ -39,6 +39,7 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.trampoline.*;
 import com.sun.max.vm.type.*;
@@ -74,13 +75,7 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  * @author Paul Caprioli
  */
-public final class StackReferenceMapPreparer implements ReferenceMapCallback {
-
-    public static final VMBooleanXXOption verifyRefMaps = VMOptions.register(new VMBooleanXXOption("-XX:-",
-            "VerifyRefMaps",
-            "Verify reference maps by performing a stack walk and checking plausibility of reference roots in " +
-            "the stack--as often as possible."),
-            MaxineVM.Phase.PRISTINE);
+public final class StackReferenceMapPreparer {
 
     private final Timer timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer triggeredVmThreadLocals;
@@ -102,7 +97,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
     private TargetMethod trampolineTargetMethod;
     private Pointer trampolineRefmapPointer;
-
 
     public StackReferenceMapPreparer(boolean verify, boolean prepare) {
         this.verify = verify;
@@ -325,7 +319,9 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     public long prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean ignoreTopFrame) {
         timer.start();
         ignoreCurrentFrame = ignoreTopFrame;
-        initRefMapFields(vmThreadLocals);
+        triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        referenceMap = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
+        lowestStackSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         Pointer highestStackSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
 
         // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
@@ -374,12 +370,6 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
         timer.stop();
         preparationTime = timer.getLastElapsedTime();
         return preparationTime;
-    }
-
-    private void initRefMapFields(Pointer vmThreadLocals) {
-        triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        referenceMap = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
-        lowestStackSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
     }
 
     /**
@@ -534,21 +524,16 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             if (targetMethod.isJitCompiled()) {
                 Log.print("JitTargetMethod ");
             }
-            ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-            if (classMethodActor != null) {
-                Log.printMethod(classMethodActor, false);
-            } else {
-                Log.print(targetMethod.description());
-            }
+            Log.printMethod(targetMethod, false);
             Log.print(" +");
             Log.println(targetMethod.stopPosition(stopIndex));
             Log.print("    Stop index: ");
-            Log.print(stopIndex);
+            Log.println(stopIndex);
             if (!refmapFramePointer.isZero()) {
-                Log.print(", frame pointer: ");
+                Log.print("    Frame pointer: ");
                 printSlot(referenceMapBitIndex(refmapFramePointer), Pointer.zero());
+                Log.println();
             }
-            Log.println();
         }
     }
 
@@ -759,9 +744,9 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             assert trampolineTargetMethod.referenceLiterals().length == 1;
             final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
             if (trampolineMethodActor.isVirtualTrampoline()) {
-                callee = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex());
+                callee = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex);
             } else {
-                callee = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex());
+                callee = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex);
             }
         }
 
@@ -788,7 +773,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             }
             if (trampolineTargetMethod.abi().putIntoIntegerRegister(parameterKind)) {
                 parameterRegisterIndex++;
-                if (parameterRegisterIndex >= trampolineTargetMethod.abi().integerIncomingParameterRegisters().length()) {
+                if (parameterRegisterIndex >= trampolineTargetMethod.abi().integerIncomingParameterRegisters.length()) {
                     // done since all subsequent parameters are known to be passed on the stack
                     return;
                 }
@@ -835,7 +820,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                 Log.print("Could not find stop position for instruction at position ");
                 Log.print(ip.minus(targetMethod.codeStart()).toInt());
                 Log.print(" in ");
-                Log.printMethod(targetMethod.classMethodActor(), true);
+                Log.printMethod(targetMethod, true);
                 throw FatalError.unexpected("Could not find stop position in target method");
             }
 
@@ -844,7 +829,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
                     Log.print("  Preparing reference map for trampoline frame called by ");
                     Log.print((targetMethod.isJitCompiled()) ? "JIT'ed" : "optimized");
                     Log.print(" caller ");
-                    Log.printMethod(targetMethod.classMethodActor(), true);
+                    Log.printMethod(targetMethod, true);
                 }
                 if (targetMethod.isJitCompiled()) {
                     // This is a call from a JIT target method to a trampoline.
@@ -876,17 +861,7 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * @param refMap an integer containing up to 32 reference map bits for up to 32 successive slots in the frame
      * @param numBits the number of bits in the reference map
      */
-    public void setReferenceMapBits(StackFrameWalker.Cursor cursor, Pointer slotPointer, int refMap, int numBits) {
-        if (!inThisStack(cursor.sp())) {
-            throw FatalError.unexpected("sp not in this stack");
-        }
-        if (!inThisStack(slotPointer)) {
-            throw FatalError.unexpected("slots not in this stack");
-        }
-        if (refMap == 0) {
-            // nothing to do.
-            return;
-        }
+    public void setReferenceMapBits(Cursor cursor, Pointer slotPointer, int refMap, int numBits) {
         if (Heap.traceRootScanning()) {
             Log.print("    setReferenceMapBits: sp = ");
             Log.print(cursor.sp());
@@ -900,6 +875,16 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
             }
             Log.print(", description = ");
             Log.println(cursor.targetMethod().description());
+        }
+        if (!inThisStack(cursor.sp())) {
+            throw FatalError.unexpected("sp not in this stack");
+        }
+        if (!inThisStack(slotPointer)) {
+            throw FatalError.unexpected("slots not in this stack");
+        }
+        if (refMap == 0) {
+            // nothing to do.
+            return;
         }
         if ((refMap & (-1 << numBits)) != 0) {
             throw FatalError.unexpected("reference map has extraneous high order bits set");
@@ -941,8 +926,8 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
 
     }
 
-    private void printGrip(Grip grip, StackFrameWalker.Cursor cursor, Pointer slotPointer, int slotIndex, boolean valid) {
-        Log.print("        grip @ ");
+    private void printGrip(Grip grip, Cursor cursor, Pointer slotPointer, int slotIndex, boolean valid) {
+        Log.print("    grip @ ");
         Log.print(slotPointer.plusWords(slotIndex));
         Log.print(" [sp + ");
         Log.print(slotPointer.plusWords(slotIndex).minus(cursor.sp()).toInt());
@@ -952,9 +937,9 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
     }
 
     @NEVER_INLINE
-    private void invalidGrip(Grip grip, StackFrameWalker.Cursor cursor, Pointer slotPointer, int slotIndex) {
+    private void invalidGrip(Grip grip, Cursor cursor, Pointer slotPointer, int slotIndex) {
         printGrip(grip, cursor, slotPointer, slotIndex, false);
-        Throw.StackFrameDumper.dumpFrame("invalid grip ### ", cursor.targetMethod(), cursor.ip(), 0);
+        Throw.StackFrameDumper.dumpFrame("invalid grip ### ", cursor.targetMethod(), cursor.ip(), false);
         throw FatalError.unexpected("invalid grip");
     }
 
@@ -969,15 +954,8 @@ public final class StackReferenceMapPreparer implements ReferenceMapCallback {
      * heuristic.
      */
     public static void verifyReferenceMapsForThisThread() {
-        if (verifyRefMaps.getValue()) {
-            VmThread current = VmThread.current();
-            current.stackReferenceMapVerifier().verifyReferenceMaps(current);
-        }
-    }
-
-    private void verifyReferenceMaps(VmThread current) {
-        initRefMapFields(current.vmThreadLocals());
-        current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), this);
+        VmThread current = VmThread.current();
+        current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), current.stackReferenceMapVerifier());
     }
 
 }

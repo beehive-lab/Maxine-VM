@@ -70,9 +70,6 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
         return AMD64GeneralRegister64.RAX;
     }
 
-    private static final byte SUB_IMM8 = (byte) 0x83;
-    private static final byte SUB_IMM32 = (byte) 0x81;
-
     public static AMD64AdapterFrameGenerator jitToOptimizingCompilerAdapterFrameGenerator(MethodActor classMethodActor, EirABI optimizingCompilerAbi) {
         return new JitToOptimizingFrameAdapterGenerator(classMethodActor, optimizingCompilerAbi);
     }
@@ -182,7 +179,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
             // where "oarg" is an overflow argument and "jarg" is an argument from the caller's java stack.
             // save the caller's RBP
             final int wordSize =  Word.size();
-            // Adapter frame includes space for save the JITed-callee's frame pointer (RBP)
+            // Adapter frame includes space for saving the JITed-caller's frame pointer (RBP)
             int overflowArgumentsSize = optimizedABI().overflowArgumentsSize(parameterLocations);
             final int adapterFrameSize = (short) optimizedABI().frameSize(0, overflowArgumentsSize + wordSize) - wordSize;
 

@@ -532,7 +532,7 @@ public interface AMD64EirInstruction {
             // for a runtime call, the frame pointer (RBP) is caller-saved by pushing it onto the stack
             final int rbpSize = Word.size();
             // because of the word needed for RBP, we may need to align the stack by including a "mini frame"
-            final int delta = emitter.abi().targetABI().stackFrameAlignment() - rbpSize;
+            final int delta = emitter.abi().targetABI().stackFrameAlignment - rbpSize;
             final AMD64Assembler asm = emitter.assembler();
             if (delta > 0) {
                 asm.subq(stackPointerRegister, (byte) delta);

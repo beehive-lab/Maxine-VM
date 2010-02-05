@@ -32,7 +32,7 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  * @author Bernd Mathiske
  */
-@TEMPLATE(initialized = TemplateChooser.Initialized.YES)
+@TEMPLATE(initialized = TemplateChooser.Initialized.YES, resolved = TemplateChooser.Resolved.YES)
 public final class InitializedBytecodeTemplateSource {
 
     /**

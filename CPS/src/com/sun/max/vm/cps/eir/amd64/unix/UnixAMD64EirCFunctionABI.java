@@ -47,13 +47,6 @@ public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
         return callerSavedRegisters;
     }
 
-    private final PoolSet<AMD64EirRegister> calleeSavedRegisters = PoolSet.of(AMD64EirRegister.General.pool(), RBX, RBP, R12, R13, R14, R15);
-
-    @Override
-    public PoolSet<AMD64EirRegister> calleeSavedRegisters() {
-        return calleeSavedRegisters;
-    }
-
     /**
      * Creates an ABI for a VM entry point or VM exit point.
      *
@@ -64,10 +57,11 @@ public class UnixAMD64EirCFunctionABI extends UnixAMD64EirJavaABI {
      */
     public UnixAMD64EirCFunctionABI(VMConfiguration vmConfiguration, boolean isVmEntryPoint) {
         super(vmConfiguration);
+        calleeSavedRegisters = new ArraySequence<AMD64EirRegister>(RBX, RBP, R12, R13, R14, R15);
         // Native target ABI uses different entry point.
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = targetABI();
         final CallEntryPoint callEntryPoint = isVmEntryPoint ? CallEntryPoint.C_ENTRY_POINT : CallEntryPoint.OPTIMIZED_ENTRY_POINT;
-        initTargetABI(new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI, originalTargetABI.registerRoleAssignment(), callEntryPoint));
+        initTargetABI(new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI, originalTargetABI.registerRoleAssignment, callEntryPoint));
     }
 
 }

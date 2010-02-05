@@ -38,7 +38,6 @@ import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.thread.*;
 
@@ -46,6 +45,37 @@ import com.sun.max.vm.thread.*;
  * @author Bernd Mathiske
  */
 public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetGeneratorScheme {
+
+    static class StaticTrampolineContext implements RawStackFrameVisitor {
+
+        @Override
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
+            if (isTopFrame) {
+                return true;
+            }
+            Pointer callSite = instructionPointer.minus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
+            if (callSite.readByte(0) == CALL) {
+                Pointer target = instructionPointer.plus(callSite.readInt(1));
+                if (StaticTrampoline.isEntryPoint(target)) {
+                    final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
+
+                    final ClassMethodActor callee = caller.callSiteToCallee(callSite);
+
+                    // Use the caller's abi to get the correct entry point.
+                    final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
+                    patchRipCallSite(callSite, calleeEntryPoint);
+
+                    // Make the trampoline's caller re-execute the now modified CALL instruction after we return from the trampoline:
+                    Pointer trampolineCallerRipPointer = stackPointer.minus(Word.size());
+                    trampolineCallerRipPointer.setWord(callSite); // patch return address
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    private final StaticTrampolineContext staticTrampolineContext = new StaticTrampolineContext();
 
     private final AMD64EirToTargetTranslator eirToTargetTranslator;
 
@@ -69,10 +99,13 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     @INLINE
-    private static void patchRipCallSite(Pointer callSite, Address calleeEntryPoint) {
+    static void patchRipCallSite(Pointer callSite, Address calleeEntryPoint) {
         final int calleeOffset = calleeEntryPoint.minus(callSite.plus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE)).toInt();
         callSite.writeInt(1, calleeOffset);
     }
+
+    public static final byte CALL = (byte) 0xE8;
+
 
     /**
      * @see StaticTrampoline
@@ -80,23 +113,10 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     @Override
     @NEVER_INLINE
     public void staticTrampoline() {
-        final StaticTrampolineContext context = new StaticTrampolineContext();
         new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
                 VMRegister.getCpuStackPointer(),
                 VMRegister.getCpuFramePointer(),
-                context);
-        final Pointer callSite = context.ip.minus(AMD64OptStackWalking.RIP_CALL_INSTRUCTION_SIZE);
-        final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
-
-        final ClassMethodActor callee = caller.callSiteToCallee(callSite);
-
-        // Use the caller's abi to get the correct entry point.
-        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint());
-        patchRipCallSite(callSite, calleeEntryPoint);
-
-        // Make the trampoline's caller re-execute the now modified CALL instruction after we return from the trampoline:
-        final Pointer stackPointer = context.sp.minus(Word.size());
-        stackPointer.setWord(callSite); // patch return address
+                staticTrampolineContext);
     }
 
     public void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
@@ -114,24 +134,10 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
-        return AMD64OptStackWalking.walkOptimizedFrame(current, callee, purpose, context);
-    }
-
-    @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isHosted()) {
             AMD64OptStackWalking.initialize();
         }
-    }
-
-    static {
-        AMD64OptStackWalking.WalkFrameHelper.instance = new AMD64OptStackWalking.WalkFrameHelper() {
-            @Override
-            public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
-                return AMD64OptStackWalking.walkOptimizedFrame(current, callee, purpose, context);
-            }
-        };
     }
 }

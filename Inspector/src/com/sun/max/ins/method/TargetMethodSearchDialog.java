@@ -33,7 +33,9 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
- * A dialog to let the user select a method actor that has target code in the tele VM defined by a given class actor.
+ * A dialog to let the user select a target method. The dialog has two flavors; one that shows all the
+ * target methods currently in the VM and one that shows all the target methods pertaining to the
+ * declared methods of a specified class actor.
  *
  * @author Doug Simon
  * @author Michael Van De Vanter
@@ -50,41 +52,66 @@ public final class TargetMethodSearchDialog extends TeleObjectSearchDialog {
         final String filterLowerCase = filterText.toLowerCase();
         final List<NamedTeleObject> namedTeleTargetMethods = new ArrayList<NamedTeleObject>();
 
-        for (TeleClassMethodActor teleClassMethodActor : localTeleClassMethodActors) {
-            final MethodActor methodActor = teleClassMethodActor.methodActor();
-            final String methodNameLowerCase = methodActor.name.toString().toLowerCase();
-            if (filterLowerCase.isEmpty() ||
-                (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
-                methodNameLowerCase.contains(filterLowerCase)) {
-                for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
-                    final String name = inspection().nameDisplay().shortName(teleTargetMethod, ReturnTypeSpecification.AS_SUFFIX);
-                    namedTeleTargetMethods.add(new NamedTeleObject(name, teleTargetMethod));
+        if (teleClassActor != null) {
+            for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
+                if (teleClassMethodActor.getCurrentJavaTargetMethod() != null) {
+                    final MethodActor methodActor = teleClassMethodActor.methodActor();
+                    final String methodNameLowerCase = methodActor.name.toString().toLowerCase();
+                    if (filterLowerCase.isEmpty() ||
+                                    (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
+                                    methodNameLowerCase.contains(filterLowerCase)) {
+                        for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
+                            final String name = inspection().nameDisplay().shortName(teleTargetMethod, ReturnTypeSpecification.AS_SUFFIX);
+                            namedTeleTargetMethods.add(new NamedTeleObject(name, teleTargetMethod));
+                        }
+                    }
+                }
+            }
+        } else {
+            for (TeleCodeRegion teleCodeRegion : inspection().maxVM().teleCodeRegions()) {
+                for (TeleTargetMethod m : teleCodeRegion.teleTargetMethods()) {
+                    ClassMethodActor methodActor = m.classMethodActor();
+                    if (methodActor != null) {
+                        final String methodNameLowerCase = methodActor.format("%h.%n").toLowerCase();
+                        if (filterLowerCase.isEmpty() ||
+                            (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
+                             methodNameLowerCase.contains(filterLowerCase)) {
+                            final String name = methodActor.format("%h.%n(%p)");
+                            namedTeleTargetMethods.add(new NamedTeleObject(name, m));
+                        }
+                    } else {
+                        String description = m.description();
+                        if (filterLowerCase.isEmpty() || description.toLowerCase().contains(filterLowerCase)) {
+                            namedTeleTargetMethods.add(new NamedTeleObject(description, m));
+                        }
+                    }
                 }
             }
         }
+
         Collections.sort(namedTeleTargetMethods);
         for (NamedTeleObject namedTeleObject : namedTeleTargetMethods) {
             listModel.addElement(namedTeleObject);
         }
     }
 
-    private final AppendableSequence<TeleClassMethodActor> localTeleClassMethodActors = new LinkSequence<TeleClassMethodActor>();
+    private final TeleClassActor teleClassActor;
 
-    // TODO (mlvdv)  Include all compilations
+    @Override
+    protected String filterFieldLabelTooltip() {
+        return "Enter target method name substring which can include a class name prefix. To filter only by method name, prefix filter text with '.'";
+    }
+
     private TargetMethodSearchDialog(Inspection inspection, TeleClassActor teleClassActor, String title, String actionName, boolean multiSelection) {
-        super(inspection, title == null ? "Select Target Method" : title, "Method Name", actionName, multiSelection);
-        for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
-            if (teleClassMethodActor.getCurrentJavaTargetMethod() != null) {
-                localTeleClassMethodActors.append(teleClassMethodActor);
-            }
-        }
+        super(inspection, title == null ? "Select Target Method" : title, "Filter text", actionName, multiSelection);
+        this.teleClassActor = teleClassActor;
         rebuildList();
     }
 
     /**
      * Displays a dialog to let the use select one or more compiled methods in the tele VM.
      *
-     * @param teleClassActor a {@link ClassActor} in the tele VM.
+     * @param teleClassActor a {@link ClassActor} in the tele VM. If null, then all target methods in the VM are presented for selection.
      * @param title for dialog window
      * @param actionName name to appear on button
      * @param multi allow multiple selections if true

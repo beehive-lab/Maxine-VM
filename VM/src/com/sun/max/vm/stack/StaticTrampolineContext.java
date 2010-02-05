@@ -23,18 +23,26 @@ package com.sun.max.vm.stack;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  *
   * @author Laurent Daynes
   */
-public final class StaticTrampolineContext implements StackFrameVisitor {
+public abstract class StaticTrampolineContext implements RawStackFrameVisitor {
+
 
     private static Pointer trampolineInstructionPointer;
 
     boolean foundFirstTrampolineFrame;
     public Pointer ip;
     public Pointer sp;
+
+    @Override
+    public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
     public boolean visitFrame(StackFrame stackFrame) {
         if (stackFrame.isTopFrame() || stackFrame instanceof AdapterStackFrame) {

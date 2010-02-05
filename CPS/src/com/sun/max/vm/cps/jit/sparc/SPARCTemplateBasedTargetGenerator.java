@@ -46,7 +46,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
 
     @Override
     public CPSTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final SPARCJitTargetMethod targetMethod = new SPARCJitTargetMethod(classMethodActor, compilerScheme());
+        final SPARCJitTargetMethod targetMethod = new SPARCJitTargetMethod(classMethodActor);
         notifyAllocation(targetMethod);
         return targetMethod;
     }

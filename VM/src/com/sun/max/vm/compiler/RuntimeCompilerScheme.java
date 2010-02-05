@@ -23,8 +23,7 @@ package com.sun.max.vm.compiler;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
+
 /**
  * This interface specifies the interface between a dynamic compiler
  * and the rest of the virtual machine, including methods to create
@@ -44,14 +43,5 @@ public interface RuntimeCompilerScheme extends VMScheme {
      */
     TargetMethod compile(ClassMethodActor classMethodActor);
 
-    /**
-     * Walks a frame for a target method that was produced by this compiler.
-     *
-     * @param current the cursor for the current frame
-     * @param callee the cursor for the callee frame (i.e. current called callee directly or through a series of native methods)
-     * @param purpose the purpose of this stack walk
-     * @param context the context for the stack walk
-     * @return whether stack walking may continue after executing this method
-     */
-    boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context);
+    CallEntryPoint calleeEntryPoint();
 }

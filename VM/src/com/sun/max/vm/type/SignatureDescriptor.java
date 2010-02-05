@@ -213,7 +213,7 @@ public abstract class SignatureDescriptor extends Descriptor {
      * Copies the kinds of the parameters in this signature object into a given array.
      *
      * @param dst the array into which the parameter kinds are to be copied. If {@code null}, then a new array of length
-     *            {@code getNumberOfParameters() + dstOffset} allocated and used as the destination of the copy instead.
+     *            {@code getNumberOfParameters() + dstOffset} is allocated and used as the destination of the copy instead.
      * @param dstOffset the offset in the returned array at which to start writing
      * @return the array into which the parameter kinds were copied
      */

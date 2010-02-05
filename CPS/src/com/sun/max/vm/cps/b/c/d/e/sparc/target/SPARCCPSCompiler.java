@@ -75,7 +75,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
 
     public SPARCCPSCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        jitFramePointer = (GPR) vmConfiguration.targetABIsScheme().jitABI().framePointer();
+        jitFramePointer = (GPR) vmConfiguration.targetABIsScheme().jitABI.framePointer();
         eirToTargetTranslator = new SPARCEirToTargetTranslator(this);
     }
 
@@ -122,7 +122,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
         // We can now search the caller for the ClassMethodActor corresponding to the direct call.
         final ClassMethodActor callee = caller.callSiteToCallee(callSite);
         // Compile the callee, and use the caller's abi to get the correct entry point.
-        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint());
+        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
         // Compute offset to the callee from the caller
         final int calleeOffset = calleeEntryPoint.minus(callSite).toInt();
         final int instr = CALL_INSTRUCTION | (calleeOffset >>> 2);
@@ -183,7 +183,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
         VMRegister.setAbiFramePointer(stackPointer);
     }
 
-    private boolean walkAdapterFrame(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
+    private boolean walkAdapterFrame(Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
         final Pointer instructionPointer = current.ip();
         final int adapterFrameSize = SPARCAdapterFrameGenerator.jitToOptimizedAdapterFrameSize(stackFrameWalker, startOfAdapter);
         final Pointer stackPointer = current.sp();
@@ -208,8 +208,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
             }
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
-                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, current.fp(), stackPointer, flags)) {
+                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, current.fp(), stackPointer, isTopFrame)) {
                     return false;
                 }
                 break;
@@ -259,13 +258,13 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
     }
 
     @Override
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
+    public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         TargetMethod targetMethod = current.targetMethod();
         boolean isTopFrame = current.isTopFrame();
         final Pointer instructionPointer = current.ip();
         final Pointer entryPoint;
-        if (targetMethod.abi().callEntryPoint().equals(C_ENTRY_POINT)) {
+        if (targetMethod.abi().callEntryPoint.equals(C_ENTRY_POINT)) {
             // Simple case (no adapter)
             entryPoint = C_ENTRY_POINT.in(targetMethod);
         } else {
@@ -409,8 +408,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
             }
             case RAW_INSPECTING: {
                 final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
-                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, framePointer, stackPointer, flags)) {
+                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, framePointer, stackPointer, isTopFrame)) {
                     return false;
                 }
                 break;

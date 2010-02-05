@@ -2243,12 +2243,33 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param actionTitle name of the action to appear in menu or button
-     * @return an interactive Action that displays target code in the {@link MethodInspector}
+     * Action:  displays in the {@MethodInspector} the target code for an interactively specified method.
+     */
+    final class ViewMethodTargetCodeAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View target code...";
+
+        public ViewMethodTargetCodeAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), null, "View Target Code for Method...", "View Code", false);
+            if (teleTargetMethods != null) {
+                focus().setCodeLocation(maxVM().createCodeLocation(teleTargetMethods.first().callEntryPoint()), false);
+            }
+        }
+    }
+
+    private final InspectorAction viewMethodTargetCodeAction = new ViewMethodTargetCodeAction(null);
+
+    /**
+     * @return Singleton interactive Action that displays target code in the {@link MethodInspector}
      * for a selected method.
      */
-    public final InspectorAction viewMethodTargetCodeByName(String actionTitle) {
-        return new ViewMethodTargetCodeByNameAction(actionTitle);
+    public final InspectorAction viewMethodTargetCode() {
+        return viewMethodTargetCodeAction;
     }
 
     /**
@@ -3175,7 +3196,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final MethodActorKey methodKey = new MethodActorKey(teleClassMethodActor.methodActor());
-            maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+            maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, -1));
         }
 
         @Override
@@ -3246,7 +3267,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (typeDescriptor != null) {
                 final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
-                    maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+                    maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, -1));
                 }
             }
         }
@@ -3283,7 +3304,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
-                maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+                maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, -1));
             }
         }
 
@@ -4752,6 +4773,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             public void addTo(InspectorMenu menu) {
                 menu.add(actions().viewMethodCodeAtSelection());
                 menu.add(actions().viewMethodCodeAtIP());
+                menu.add(actions().viewMethodTargetCode());
                 final JMenu methodSub = new JMenu("View method code by name");
                 methodSub.add(actions().viewMethodBytecodeByName());
                 methodSub.add(actions().viewMethodTargetCodeByName());

@@ -61,6 +61,11 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
         }
     }
 
+    @Override
+    public CallEntryPoint calleeEntryPoint() {
+        return CallEntryPoint.JIT_ENTRY_POINT;
+    }
+
     protected abstract TemplateBasedTargetGenerator targetGenerator();
 
     public JitTargetMethod compile(ClassMethodActor classMethodActor) {

@@ -25,7 +25,7 @@ import com.sun.max.vm.compiler.target.*;
 
 /**
  * A visitor for traversing the frames on a thread's stack. The details of each frame traversed in the
- * stack walk are passed as individual parameters to {@link #visitFrame(TargetMethod, Pointer, Pointer, Pointer, int)}
+ * stack walk are passed as individual parameters to {@link #visitFrame(TargetMethod, Pointer, Pointer, Pointer, boolean)}
  * to avoid the allocation required to box them in an allocated {@link StackFrame} object.
  *
  * @see StackFrameVisitor
@@ -41,35 +41,5 @@ public interface RawStackFrameVisitor {
      *
      * @return true if the walk should continue to the caller of {@code stackFrame}, false if it should terminate now
      */
-    boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags);
-
-    public static final class Util {
-
-        /**
-         * Creates a mask of the flags defined in {@link RawStackFrameVisitor} that is accepted by
-         * {@link RawStackFrameVisitor#visitFrame(TargetMethod, Pointer, Pointer, Pointer, int)}.
-         *
-         * @param isTopFrame specifies if {@link RawStackFrameVisitor#IS_TOP_FRAME} should be set in the returned value
-         * @param isAdapter specifies if {@link RawStackFrameVisitor#IS_ADAPTER} should be set in the returned value
-         * @return a mask of flags
-         */
-        public static int makeFlags(boolean isTopFrame, boolean isAdapter) {
-            int flags = 0;
-            if (isTopFrame) {
-                flags |= IS_TOP_FRAME;
-            }
-            if (isAdapter) {
-                flags |= IS_ADAPTER;
-            }
-            return flags;
-        }
-
-        public static boolean isTopFrame(int flags) {
-            return (flags & IS_TOP_FRAME) != 0;
-        }
-
-        public static boolean isAdapter(int flags) {
-            return (flags & IS_ADAPTER) != 0;
-        }
-    }
+    boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame);
 }

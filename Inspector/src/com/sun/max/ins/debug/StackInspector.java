@@ -140,29 +140,14 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             String toolTip = null;
             Component component;
             if (stackFrame instanceof CompiledStackFrame) {
-                final CompiledStackFrame javaStackFrame = (CompiledStackFrame) stackFrame;
-                final Address address = javaStackFrame.ip;
-                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
-                if (teleTargetMethod != null) {
-                    name = inspection().nameDisplay().veryShortName(teleTargetMethod);
-                    toolTip = inspection().nameDisplay().longName(teleTargetMethod, address);
-                    final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
-                    if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
-                        name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
-                        toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
-                    }
-                } else {
-                    final MethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
-                    name = classMethodActor.format("%h.%n");
-                    toolTip = classMethodActor.format("%r %H.%n(%p)");
-                }
-                if (javaStackFrame instanceof AdapterStackFrame) {
-                    name = "frame adapter [" + name + "]";
-                    if (javaStackFrame.targetMethod().compilerScheme.equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitCompilerScheme())) {
-                        toolTip = "optimized-to-JIT frame adapter [ " + toolTip + "]";
-                    } else {
-                        toolTip = "JIT-to-optimized frame adapter [ " + toolTip + "]";
-                    }
+                final CompiledStackFrame compiledStackFrame = (CompiledStackFrame) stackFrame;
+                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(compiledStackFrame.targetMethod().codeStart());
+                name = inspection().nameDisplay().veryShortName(teleTargetMethod);
+                toolTip = inspection().nameDisplay().longName(teleTargetMethod, compiledStackFrame.ip);
+                final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+                if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
+                    name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+                    toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
                 }
             } else if (stackFrame instanceof TruncatedStackFrame) {
                 name = "*select here to extend the display*";
@@ -222,13 +207,8 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 // New stack frame selection; set the global focus.
                 inspection().focus().setStackFrame(thread, stackFrame, false);
                 if (stackFrame instanceof CompiledStackFrame) {
-                    if (stackFrame instanceof AdapterStackFrame) {
-                        final AdapterStackFrame adapterStackFrame = (AdapterStackFrame) stackFrame;
-                        selectedFramePanel = new AdapterStackFramePanel(inspection(), adapterStackFrame);
-                    } else {
-                        final CompiledStackFrame javaStackFrame = (CompiledStackFrame) stackFrame;
-                        selectedFramePanel = new DefaultJavaStackFramePanel(inspection(), javaStackFrame, thread, viewPreferences);
-                    }
+                    final CompiledStackFrame compiledStackFrame = (CompiledStackFrame) stackFrame;
+                    selectedFramePanel = new DefaultCompiledStackFramePanel(inspection(), compiledStackFrame, thread, viewPreferences);
                     newRightComponent = selectedFramePanel;
                 } else if (stackFrame instanceof TruncatedStackFrame) {
                     maxFramesDisplay *= 2;

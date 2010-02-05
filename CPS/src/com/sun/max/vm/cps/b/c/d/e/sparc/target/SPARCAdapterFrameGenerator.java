@@ -162,7 +162,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         longScratchRegister = ((SPARCEirRegisters.GeneralPurpose) optimizedAbi.getScratchRegister(Kind.LONG)).as();
         optimizedCodeStackPointer = ((SPARCEirRegisters.GeneralPurpose) optimizedAbi.stackPointer()).as();
         optimizedCodeFramePointer = ((SPARCEirRegisters.GeneralPurpose) optimizedAbi.framePointer()).as();
-        final TargetABI jitABI = VMConfiguration.target().targetABIsScheme().jitABI();
+        final TargetABI jitABI = VMConfiguration.target().targetABIsScheme().jitABI;
         jitedCodeFramePointer = (GPR) jitABI.framePointer();
         literalBaseRegister = (GPR) jitABI.literalBaseRegister();
     }

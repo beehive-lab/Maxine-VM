@@ -21,6 +21,7 @@
 package com.sun.max.memory;
 
 import java.lang.management.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.unsafe.*;
@@ -122,7 +123,7 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     }
 
     public final boolean sameAs(MemoryRegion otherMemoryRegion) {
-        return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
+        return Util.equal(this, otherMemoryRegion);
     }
 
     public final void clear() {

@@ -101,7 +101,7 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
                 final ClassMethodActor classMethodActor = m.classMethodActor;
                 final TargetMethod targetMethod = compiler.compile(classMethodActor);
                 final Pointer entryPoint = targetMethod.getEntryPoint(CallEntryPoint.C_ENTRY_POINT).asPointer();
-                assert targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT);
+                assert targetMethod.abi().callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT);
                 assert entryPoint.equals(targetMethod.codeStart());
             }
         }

@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.target.sparc;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.runtime.sparc.*;
@@ -32,8 +31,8 @@ import com.sun.max.vm.runtime.sparc.*;
  */
 public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements SPARCTargetMethod {
 
-    public SPARCOptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
+    public SPARCOptimizedTargetMethod(ClassMethodActor classMethodActor) {
+        super(classMethodActor);
     }
 
     @Override

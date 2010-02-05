@@ -66,7 +66,7 @@ public abstract class TemplateChooser {
 
         public static final Selector RESOLVED = new Selector(Resolved.YES, Initialized.NO_ASSUMPTION, Instrumented.NO, Traced.NO);
         public static final Selector RESOLVED_INSTRUMENTED = new Selector(Resolved.YES, Initialized.NO_ASSUMPTION, Instrumented.YES, Traced.NO);
-        public static final Selector INITIALIZED = new Selector(Resolved.NO_ASSUMPTION, Initialized.YES, Instrumented.NO, Traced.NO);
+        public static final Selector INITIALIZED = new Selector(Resolved.YES, Initialized.YES, Instrumented.NO, Traced.NO);
         public static final Selector NO_ASSUMPTION = new Selector(Resolved.NO_ASSUMPTION, Initialized.NO_ASSUMPTION, Instrumented.NO, Traced.NO);
         public static final Selector INSTRUMENTED = new Selector(Resolved.NO_ASSUMPTION, Initialized.NO_ASSUMPTION, Instrumented.YES, Traced.NO);
         public static final Selector TRACED = new Selector(Resolved.NO_ASSUMPTION, Initialized.NO_ASSUMPTION, Instrumented.NO, Traced.YES);

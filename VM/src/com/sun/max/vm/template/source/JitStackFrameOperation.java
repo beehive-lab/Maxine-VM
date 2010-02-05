@@ -273,64 +273,64 @@ public final class JitStackFrameOperation {
 
     @INLINE
     public static void indirectCallVoid(Address address, CallEntryPoint callEntryPoint) {
-        SpecialBuiltin.call(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()));
+        SpecialBuiltin.call(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
     }
 
     @INLINE
     public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint) {
-        final float result = SpecialBuiltin.callFloat(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()));
+        final float result = SpecialBuiltin.callFloat(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
         SpecialBuiltin.mark();
         pushFloat(result);
     }
 
     @INLINE
     public static void indirectCallLong(Address address, CallEntryPoint callEntryPoint) {
-        final long result = SpecialBuiltin.callLong(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()));
+        final long result = SpecialBuiltin.callLong(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
         SpecialBuiltin.mark();
         pushLong(result);
     }
 
     @INLINE
     public static void indirectCallDouble(Address address, CallEntryPoint callEntryPoint) {
-        final double result = SpecialBuiltin.callDouble(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()));
+        final double result = SpecialBuiltin.callDouble(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
         SpecialBuiltin.mark();
         pushDouble(result);
     }
 
     @INLINE
     public static void indirectCallWord(Address address, CallEntryPoint callEntryPoint) {
-        final Word result = SpecialBuiltin.callWord(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()));
+        final Word result = SpecialBuiltin.callWord(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()));
         SpecialBuiltin.mark();
         pushWord(result);
     }
 
     @INLINE
     public static void indirectCallVoid(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        SpecialBuiltin.call(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()), receiver);
+        SpecialBuiltin.call(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
     }
 
     @INLINE
     public static void indirectCallFloat(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final float result = SpecialBuiltin.callFloat(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()), receiver);
+        final float result = SpecialBuiltin.callFloat(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
         SpecialBuiltin.mark();
         pushFloat(result);
     }
 
     @INLINE
     public static void indirectCallLong(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final long result = SpecialBuiltin.callLong(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()), receiver);
+        final long result = SpecialBuiltin.callLong(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
         pushLong(result);
     }
 
     @INLINE
     public static void indirectCallDouble(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final double result = SpecialBuiltin.callDouble(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()), receiver);
+        final double result = SpecialBuiltin.callDouble(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
         pushDouble(result);
     }
 
     @INLINE
     public static void indirectCallWord(Address address, CallEntryPoint callEntryPoint, Object receiver) {
-        final Word result = SpecialBuiltin.callWord(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart() - callEntryPoint.offsetFromCodeStart()), receiver);
+        final Word result = SpecialBuiltin.callWord(address.plus(CallEntryPoint.JIT_ENTRY_POINT.offset() - callEntryPoint.offset()), receiver);
         pushWord(result);
     }
 }

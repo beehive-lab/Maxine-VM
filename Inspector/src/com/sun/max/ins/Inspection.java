@@ -395,9 +395,12 @@ public final class Inspection {
                 }
                 Trace.begin(TRACE_VALUE, tracer);
                 SwingUtilities.invokeLater(new Runnable() {
-
                     public void run() {
                         processVMStateChange();
+                    }
+                    @Override
+                    public String toString() {
+                        return "processVMStateChange";
                     }
                 });
                 Trace.end(TRACE_VALUE, tracer);
@@ -413,23 +416,19 @@ public final class Inspection {
     private final class BreakpointListener implements MaxBreakpointListener {
 
         public void breakpointsChanged() {
-            if (java.awt.EventQueue.isDispatchThread()) {
-                Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
-                for (InspectionListener listener : inspectionListeners.clone()) {
-                    listener.breakpointStateChanged();
-                }
-                Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
-            } else {
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    public void run() {
-                        Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
-                        for (InspectionListener listener : inspectionListeners.clone()) {
-                            listener.breakpointStateChanged();
-                        }
-                        Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+            Runnable runnable = new Runnable() {
+                public void run() {
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                    for (InspectionListener listener : inspectionListeners.clone()) {
+                        listener.breakpointStateChanged();
                     }
-                });
+                    Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                }
+            };
+            if (java.awt.EventQueue.isDispatchThread()) {
+                runnable.run();
+            } else {
+                SwingUtilities.invokeLater(runnable);
             }
         }
     }
@@ -442,23 +441,19 @@ public final class Inspection {
     private final class WatchpointListener implements MaxWatchpointListener {
 
         public void watchpointsChanged() {
-            if (java.awt.EventQueue.isDispatchThread()) {
-                Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
-                for (InspectionListener listener : inspectionListeners.clone()) {
-                    listener.watchpointSetChanged();
-                }
-                Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
-            } else {
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    public void run() {
-                        Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
-                        for (InspectionListener listener : inspectionListeners.clone()) {
-                            listener.watchpointSetChanged();
-                        }
-                        Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+            Runnable runnable = new Runnable() {
+                public void run() {
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                    for (InspectionListener listener : inspectionListeners.clone()) {
+                        listener.watchpointSetChanged();
                     }
-                });
+                    Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                }
+            };
+            if (java.awt.EventQueue.isDispatchThread()) {
+                runnable.run();
+            } else {
+                SwingUtilities.invokeLater(runnable);
             }
         }
     }

@@ -27,13 +27,14 @@ import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.b.c.*;
@@ -43,8 +44,7 @@ import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
-import com.sun.max.program.ProgramError;
-import com.sun.max.platform.Platform;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 
 /**
  * Target method that saves for each catch block the ranges in the code that can
@@ -87,8 +87,8 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     @INSPECTED
     protected int frameReferenceMapSize;
 
-    public CPSTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme, null);
+    public CPSTargetMethod(ClassMethodActor classMethodActor) {
+        super(classMethodActor, null);
     }
 
     @Override
@@ -214,7 +214,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     @Override
     public final TargetMethod duplicate() {
-        final TargetGeneratorScheme targetGeneratorScheme = (TargetGeneratorScheme) compilerScheme;
+        final TargetGeneratorScheme targetGeneratorScheme = (TargetGeneratorScheme) compilerScheme();
         final CPSTargetMethod duplicate = targetGeneratorScheme.targetGenerator().createIrMethod(classMethodActor());
         final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
         Code.allocate(targetBundleLayout, duplicate);
@@ -341,7 +341,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
                 Log.print("Could not find safepoint index for instruction at position ");
                 Log.print(resumptionIp.minus(codeStart()).toInt());
                 Log.print(" in ");
-                Log.printMethod(classMethodActor(), true);
+                Log.printMethod(this, true);
                 FatalError.unexpected("Could not find safepoint index");
             }
 
@@ -536,11 +536,11 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         if (implicitExceptionPoint) {
             // CPS target methods don't have Java frame descriptors at implicit throw points. dumb.
             return null;
-        } else {
-            if (Platform.target().instructionSet().offsetToReturnPC == 0) {
-                instructionPointer = instructionPointer.minus(1);
-            }
         }
+        if (Platform.target().instructionSet().offsetToReturnPC == 0) {
+            instructionPointer = instructionPointer.minus(1);
+        }
+
         final TargetJavaFrameDescriptor targetFrameDescriptor = getJavaFrameDescriptorFor(instructionPointer);
         if (targetFrameDescriptor != null) {
             return targetFrameDescriptor.inlinedFrames();
@@ -572,10 +572,10 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
 
     @Override
     public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
-        if (compilerScheme instanceof BcCompiler) {
-            ((BcCompiler) compilerScheme).gatherCalls(this, directCalls, virtualCalls, interfaceCalls);
-        } else if (compilerScheme instanceof JitCompiler) {
-            ((JitCompiler) compilerScheme).gatherCalls(this, directCalls, virtualCalls, interfaceCalls);
+        if (compilerScheme() instanceof BcCompiler) {
+            ((BcCompiler) compilerScheme()).gatherCalls(this, directCalls, virtualCalls, interfaceCalls);
+        } else if (compilerScheme() instanceof JitCompiler) {
+            ((JitCompiler) compilerScheme()).gatherCalls(this, directCalls, virtualCalls, interfaceCalls);
         }
     }
 
@@ -660,22 +660,22 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
     }
 
     @Override
-    public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         throw ProgramError.unexpected();
     }
 
     @Override
-    public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
         throw ProgramError.unexpected();
     }
 
     @Override
-    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+    public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
         throw ProgramError.unexpected();
     }
 
     @Override
-    public void advance(StackFrameWalker.Cursor current) {
+    public void advance(Cursor current) {
         throw ProgramError.unexpected();
     }
 

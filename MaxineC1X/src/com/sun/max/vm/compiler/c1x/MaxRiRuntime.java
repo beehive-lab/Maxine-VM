@@ -20,30 +20,46 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import java.io.*;
-import java.util.*;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+import java.util.HashMap;
 
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.target.x86.*;
-import com.sun.c1x.util.*;
-import com.sun.max.annotate.*;
-import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.io.*;
-import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.debug.*;
-import com.sun.max.vm.layout.Layout.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
+import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ci.CiRegister;
+import com.sun.c1x.ci.CiTargetMethod;
+import com.sun.c1x.ri.RiConstantPool;
+import com.sun.c1x.ri.RiMethod;
+import com.sun.c1x.ri.RiOsrFrame;
+import com.sun.c1x.ri.RiRuntime;
+import com.sun.c1x.ri.RiType;
+import com.sun.c1x.target.x86.X86;
+import com.sun.c1x.util.Util;
+import com.sun.max.annotate.UNSAFE;
+import com.sun.max.asm.InlineDataDecoder;
+import com.sun.max.asm.dis.DisassembledObject;
+import com.sun.max.asm.dis.Disassembler;
+import com.sun.max.asm.dis.DisassemblyPrinter;
+import com.sun.max.io.IndentWriter;
+import com.sun.max.platform.ProcessorKind;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMConfiguration;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.Hub;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.FieldActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.bytecode.BytecodeLocation;
+import com.sun.max.vm.classfile.constant.ConstantPool;
+import com.sun.max.vm.classfile.constant.MethodRefConstant;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.debug.Disassemble;
+import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.stack.JitStackFrameLayout;
+import com.sun.max.vm.thread.VmThreadLocal;
+import com.sun.max.vm.type.ClassRegistry;
+import com.sun.max.vm.type.JavaTypeDescriptor;
 
 /**
  * The {@code MaxRiRuntime} class implements the runtime interface needed by C1X.
@@ -54,10 +70,14 @@ import com.sun.max.vm.type.*;
  */
 public class MaxRiRuntime implements RiRuntime {
 
+    private final C1XCompilerScheme compilerScheme;
+
+    public MaxRiRuntime(C1XCompilerScheme compilerScheme) {
+        this.compilerScheme = compilerScheme;
+    }
+
     private static final CiRegister[] generalParameterRegisters = new CiRegister[]{X86.rdi, X86.rsi, X86.rdx, X86.rcx, X86.r8, X86.r9};
     private static final CiRegister[] xmmParameterRegisters = new CiRegister[]{X86.xmm0, X86.xmm1, X86.xmm2, X86.xmm3, X86.xmm4, X86.xmm5, X86.xmm6, X86.xmm7};
-
-    public static final MaxRiRuntime globalRuntime = new MaxRiRuntime();
 
     final MaxRiConstantPool globalConstantPool = new MaxRiConstantPool(this, null);
 
@@ -228,9 +248,7 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public int codeOffset() {
-        // TODO: get rid of this!
-        // Offset because this is optimized code:
-        return 8;
+        return CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset();
     }
 
     public String disassemble(byte[] code) {
@@ -265,7 +283,7 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
-        return new C1XTargetMethod(new C1XCompilerScheme(VMConfiguration.target()), name, ciTargetMethod);
+        return new C1XTargetMethod(compilerScheme, name, ciTargetMethod);
     }
 
     public RiType primitiveArrayType(CiKind elemType) {

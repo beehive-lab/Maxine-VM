@@ -69,4 +69,9 @@ public class PrototypeCompilerScheme extends AbstractVMScheme implements Bootstr
     public boolean areSnippetsCompiled() {
         return true;
     }
+
+    @Override
+    public CallEntryPoint calleeEntryPoint() {
+        return CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+    }
 }

@@ -20,36 +20,26 @@
  */
 package com.sun.max.vm.stack.amd64;
 
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.compiler.target.TargetABI;
-import com.sun.max.vm.compiler.CompilationScheme;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.classfile.constant.SymbolTable;
-import com.sun.max.vm.reference.Reference;
-import com.sun.max.vm.thread.VmThreadLocal;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.code.Code;
+import com.sun.max.annotate.*;
+import com.sun.max.asm.amd64.*;
+import com.sun.max.memory.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.trampoline.DynamicTrampoline;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.type.SignatureDescriptor;
-import com.sun.max.vm.type.TypeDescriptor;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Word;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.UnsafeCast;
-import com.sun.max.annotate.NEVER_INLINE;
-import com.sun.max.memory.VirtualMemory;
-import com.sun.max.program.ProgramError;
-import com.sun.max.asm.amd64.AMD64GeneralRegister64;
-import com.sun.max.collect.IndexedSequence;
+import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.trampoline.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class collects together stack-walking related functionality that is (somewhat) compiler-independent.
@@ -65,174 +55,6 @@ public class AMD64OptStackWalking {
 
     private static int unwindFrameSize = -1;
     private static ClassMethodActor unwindMethod;
-
-    public static boolean walkOptimizedFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context) {
-        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        TargetMethod targetMethod = current.targetMethod();
-        TargetMethod calleeMethod = callee.targetMethod();
-        Pointer ip = current.ip();
-        Pointer sp = current.sp();
-        Pointer entryPoint;
-        if (targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT)) {
-            // Simple case (no adapter)
-            entryPoint = com.sun.max.vm.compiler.CallEntryPoint.C_ENTRY_POINT.in(targetMethod);
-        } else {
-            // we may be in an adapter
-            Pointer jitEntryPoint = com.sun.max.vm.compiler.CallEntryPoint.JIT_ENTRY_POINT.in(targetMethod);
-            Pointer optimizedEntryPoint = com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
-            boolean hasAdapterFrame = !(jitEntryPoint.equals(optimizedEntryPoint));
-
-            if (hasAdapterFrame) {
-                final Pointer startOfAdapter = AMD64AdapterStackWalking.jitOptAdapterCodeStart(stackFrameWalker, targetMethod);
-                if (AMD64AdapterStackWalking.inJitOptAdapterFrameCode(current.isTopFrame(), ip, optimizedEntryPoint, startOfAdapter)) {
-                    return AMD64AdapterStackWalking.walkJitOptAdapterFrame(current, stackFrameWalker, targetMethod, purpose, context, startOfAdapter, current.isTopFrame());
-                }
-            }
-            entryPoint = optimizedEntryPoint;
-        }
-
-        Pointer ripPointer; // stack pointer at call entry point (where the RIP is).
-        if (ip.equals(entryPoint) || stackFrameWalker.readByte(ip, 0) == RET) {
-            // We are at the very first or the very last instruction to be executed.
-            // In either case the stack pointer is unmodified wrt. the CALL that got us here.
-            ripPointer = sp;
-        } else {
-            // We are somewhere in the middle of this method.
-            // The stack pointer has been bumped already to access locals and it has not been reset yet.
-            ripPointer = sp.plus(targetMethod.frameSize());
-        }
-
-        switch (purpose) {
-            case REFERENCE_MAP_PREPARING: {
-                if (!prepareReferenceMap(ripPointer, current, callee, (StackReferenceMapPreparer) context)) {
-                    return false;
-                }
-                break;
-            }
-            case EXCEPTION_HANDLING: {
-                StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
-                Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), ip, stackUnwindingContext.throwable.getClass());
-                if (!catchAddress.isZero()) {
-                    if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
-                        Log.print("StackFrameWalk: Handler position for exception at position ");
-                        Log.print(ip.minus(targetMethod.codeStart()).toInt());
-                        Log.print(" is ");
-                        Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
-                    }
-
-                    final Throwable throwable = stackUnwindingContext.throwable;
-                    // Reset the stack walker
-                    stackFrameWalker.reset();
-                    // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
-                    Safepoint.enable();
-
-                    if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
-                        unwindToCalleeEpilogue(throwable, catchAddress, sp, calleeMethod);
-                    } else {
-                        unwindOptimized(throwable, catchAddress, sp);
-                    }
-                    ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
-                }
-                break;
-            }
-            case RAW_INSPECTING: {
-                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                final int flags = RawStackFrameVisitor.Util.makeFlags(current.isTopFrame(), false);
-                if (!stackFrameVisitor.visitFrame(targetMethod, ip, sp, sp, flags)) {
-                    return false;
-                }
-                break;
-            }
-            case INSPECTING: {
-                final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                if (!stackFrameVisitor.visitFrame(new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, ip, sp, sp))) {
-                    return false;
-                }
-                break;
-            }
-        }
-
-        Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
-        Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
-        Pointer callerFP;
-        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor().isTrapStub()) {
-            // framePointer is whatever was in the frame pointer register at the time of the trap
-            Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
-            callerFP = stackFrameWalker.readWord(trapState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
-        } else {
-            // framePointer == stackPointer for this scheme.
-            callerFP = callerSP;
-        }
-        stackFrameWalker.advance(callerIP, callerSP, callerFP);
-        return true;
-    }
-
-
-    private static boolean prepareReferenceMap(Pointer ripPointer, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
-        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        TargetMethod targetMethod = current.targetMethod();
-        Pointer trapState = stackFrameWalker.trapState();
-        if (!trapState.isZero()) {
-            FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
-            final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-            if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
-                Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), trapStateAccess.getInstructionPointer(trapState), throwableClass);
-                if (catchAddress.isZero()) {
-                    // An implicit exception occurred but not in the scope of a local exception handler.
-                    // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
-                    return true;
-                }
-                // TODO: Get address of safepoint instruction at exception dispatcher site and scan
-                // the frame references based on its Java frame descriptor.
-                FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
-            }
-        } else {
-            if (targetMethod.classMethodActor().isTrapStub()) {
-                TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-                trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
-                stackFrameWalker.setTrapState(trapState);
-                if (Trap.Number.isImplicitException(trapStateAccess.getTrapNumber(trapState))) {
-                    Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapStateAccess.getTrapNumber(trapState));
-                    final Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), trapStateAccess.getInstructionPointer(trapState), throwableClass);
-                    if (catchAddress.isZero()) {
-                        // An implicit exception occurred but not in the scope of a local exception handler.
-                        // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
-                    } else {
-                        // TODO: Get address of safepoint instruction at exception dispatcher site and scan
-                        // the register references based on its Java frame descriptor.
-                        FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
-
-                        Pointer callerCatchAddress = catchAddress.asPointer();
-                        final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
-                        if (callerTargetMethod != null) {
-                            callerTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapStateAccess.getRegisterState(trapState), StackFrameWalker.CalleeKind.TRAP_STUB);
-                        }
-                    }
-                } else {
-                    // Only scan with references in registers for a caller that did not trap due to an implicit exception.
-                    // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
-                    final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
-
-                    final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
-                    if (callerTargetMethod != null) {
-                        callerTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapStateAccess.getRegisterState(trapState), StackFrameWalker.CalleeKind.TRAP_STUB);
-                    }
-                }
-            }
-        }
-        Pointer ignoredOperandStackPointer = Pointer.zero();
-
-        if (preparer.checkIgnoreCurrentFrame()) {
-            return true;
-        }
-
-        if (!preparer.prepareFrameReferenceMap(targetMethod, current.ip(), current.sp(), ignoredOperandStackPointer, 0, callee.targetMethod())) {
-            return false;
-        }
-
-        return true;
-    }
 
     private static int getUnwindFrameSize() {
         if (unwindFrameSize == -1) {
@@ -251,7 +73,7 @@ public class AMD64OptStackWalking {
         Address epilogueAddress = lastJavaCallee.codeStart().plus(lastJavaCallee.registerRestoreEpilogueOffset());
 
         final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
-        unwindOptimized(throwable, epilogueAddress, calleeStackPointer);
+        unwindOptimized(throwable, epilogueAddress, calleeStackPointer, Pointer.zero());
     }
 
     /**
@@ -271,9 +93,10 @@ public class AMD64OptStackWalking {
      * @param catchAddress the address of the exception handler code
      * @param stackPointer the stack pointer denoting the frame of the handler to which the stack is unwound upon
      *                     returning from this method
+     * @param framePointer TODO
      */
     @NEVER_INLINE
-    public static void unwindOptimized(Throwable throwable, Address catchAddress, Pointer stackPointer) {
+    public static void unwindOptimized(Throwable throwable, Address catchAddress, Pointer stackPointer, Pointer framePointer) {
         final int unwindFrameSize = getUnwindFrameSize();
 
         // Put the exception where the exception handler expects to find it
@@ -284,6 +107,10 @@ public class AMD64OptStackWalking {
             // so that no further stack banging instructions
             // are executed before execution jumps to the catch handler.
             VirtualMemory.protectPages(VmThread.current().stackYellowZone(), VmThread.STACK_YELLOW_ZONE_PAGES);
+        }
+
+        if (!framePointer.isZero()) {
+            VMRegister.setCpuFramePointer(framePointer);
         }
 
         // Push 'catchAddress' to the handler's stack frame and update RSP to point to the pushed value.
@@ -299,25 +126,12 @@ public class AMD64OptStackWalking {
         assert AMD64OptStackWalking.unwindMethod != null;
     }
 
-    /**
-     * Size in bytes of parameters on a stack frame.
-     *
-     * @return size in bytes
-     */
-    public static int adapterFrameSize(ClassMethodActor classMethodActor) {
-        int paramSize = JitStackFrameLayout.JIT_SLOT_SIZE * classMethodActor.numberOfParameterSlots();
-        return VMConfiguration.target().targetABIsScheme().jitABI().alignFrameSize(paramSize);
-    }
-
-    public static void catchException(TargetMethod targetMethod, StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+    public static void catchException(TargetMethod targetMethod, Cursor current, Cursor callee, Throwable throwable) {
         Pointer ip = current.ip();
         Pointer sp = current.sp();
+        Pointer fp = current.fp();
         Address catchAddress = targetMethod.throwAddressToCatchAddress(current.isTopFrame(), ip, throwable.getClass());
         if (!catchAddress.isZero()) {
-            if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
-                // adapter frame cannot handle exceptions.
-                return;
-            }
             if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(ip.minus(targetMethod.codeStart()).toInt());
@@ -334,71 +148,81 @@ public class AMD64OptStackWalking {
             if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
                 unwindToCalleeEpilogue(throwable, catchAddress, sp, calleeMethod);
             } else {
-                unwindOptimized(throwable, catchAddress, sp);
+                unwindOptimized(throwable, catchAddress, sp, fp);
             }
             ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
         }
     }
 
-    public static boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
-        StackFrame stackFrame;
-        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
-            final Pointer startOfAdapter = AMD64AdapterStackWalking.jitOptAdapterCodeStart(stackFrameWalker, current.targetMethod());
-            final int adapterFrameSize = AMD64AdapterStackWalking.jitToOptimizingAdapterFrameSize(stackFrameWalker, startOfAdapter);
-            stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, true), current.targetMethod(), current.ip(), current.fp(), current.sp());
-        } else {
-            stackFrame = new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), current.sp(), current.sp());
+    public static boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
+        AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
+        Pointer sp = current.sp();
+        if (MaxineVM.isHosted()) {
+            // Only during a stack walk in the context of the Inspector can execution
+            // be anywhere other than at a recorded stop (i.e. call or safepoint).
+            if (atFirstOrLastInstruction(current) || (generator != null && generator.inPrologue(current.ip(), current.targetMethod()))) {
+                sp = sp.minus(current.targetMethod().frameSize());
+            }
         }
+        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+        StackFrame stackFrame = new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), sp, sp);
         return visitor.visitFrame(stackFrame);
     }
 
-    public static void advance(StackFrameWalker.Cursor current) {
-        if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
-            AMD64AdapterStackWalking.advanceJitOptAdapterFrame(current);
-            return;
+    public static void advance(Cursor current) {
+        TargetMethod targetMethod = current.targetMethod();
+        Pointer sp = current.sp();
+        Pointer ripPointer = sp.plus(targetMethod.frameSize());
+        if (MaxineVM.isHosted()) {
+            // Only during a stack walk in the context of the Inspector can execution
+            // be anywhere other than at a recorded stop (i.e. call or safepoint).
+            AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
+            if (generator != null && generator.advanceIfInPrologue(current)) {
+                return;
+            }
+            if (atFirstOrLastInstruction(current)) {
+                ripPointer = sp;
+            }
         }
 
-        TargetMethod targetMethod = current.targetMethod();
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        Pointer sp = current.sp();
-        Pointer ripPointer = atFirstOrLastInstruction(current) ? sp : sp.plus(targetMethod.frameSize());
         Pointer callerIP = stackFrameWalker.readWord(ripPointer, 0).asPointer();
         Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
         Pointer callerFP;
-        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor().isTrapStub()) {
-            // framePointer is whatever was in the frame pointer register at the time of the trap
+        if (Trap.isTrapStub(targetMethod.classMethodActor)) {
+            // RBP is whatever was in the frame pointer register at the time of the trap
             Pointer trapState = AMD64TrapStateAccess.getTrapStateFromRipPointer(ripPointer);
             callerFP = stackFrameWalker.readWord(trapState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
         } else {
-            // framePointer == stackPointer for this scheme.
-            callerFP = callerSP;
+            // Propagate RBP unchanged as OPT methods do not touch this register.
+            callerFP = current.fp();
         }
         stackFrameWalker.advance(callerIP, callerSP, callerFP);
     }
 
-    private static boolean atFirstOrLastInstruction(StackFrameWalker.Cursor current) {
+    @HOSTED_ONLY
+    private static boolean atFirstOrLastInstruction(Cursor current) {
         // check whether the current ip is at the first instruction or a return
         // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
         TargetMethod targetMethod = current.targetMethod();
-        Pointer entryPoint = targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT) ?
+        Pointer entryPoint = targetMethod.abi().callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
                 CallEntryPoint.C_ENTRY_POINT.in(targetMethod) :
                 CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(targetMethod);
 
         return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == RET;
     }
 
-    public static void prepareTrampolineRefMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+    public static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         TargetMethod trampolineTargetMethod = callee.targetMethod();
         ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
-        ClassMethodActor calleeMethod;
+        ClassMethodActor callerMethod;
         TargetMethod targetMethod = current.targetMethod();
         Pointer trampolineRegisters = callee.sp();
 
         // figure out what method the caller is trying to call
         if (trampolineMethodActor.isStaticTrampoline()) {
             int stopIndex = targetMethod.findClosestStopIndex(current.ip());
-            calleeMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
+            callerMethod = (ClassMethodActor) targetMethod.directCallees()[stopIndex];
         } else {
             // this is an virtual or interface call; figure out the receiver method based on the
             // virtual or interface index
@@ -407,21 +231,21 @@ public class AMD64OptStackWalking {
             assert trampolineTargetMethod.referenceLiterals().length == 1;
             final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
             if (trampolineMethodActor.isVirtualTrampoline()) {
-                calleeMethod = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex());
+                callerMethod = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex);
             } else {
-                calleeMethod = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex());
+                callerMethod = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex);
             }
         }
 
-        // use the callee method to fill out the reference map for the saved parameters in the trampoline frame
+        // use the caller method to fill out the reference map for the saved parameters in the trampoline frame
         int parameterRegisterIndex = 0;
-        if (!calleeMethod.isStatic()) {
+        if (!callerMethod.isStatic()) {
             // set a bit for the receiver object
             preparer.setReferenceMapBits(current, trampolineRegisters, 1, 1);
             parameterRegisterIndex = 1;
         }
 
-        SignatureDescriptor descriptor = calleeMethod.descriptor();
+        SignatureDescriptor descriptor = callerMethod.descriptor();
         TargetABI abi = trampolineTargetMethod.abi();
         for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
             final TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
@@ -432,54 +256,12 @@ public class AMD64OptStackWalking {
             }
             if (abi.putIntoIntegerRegister(parameterKind)) {
                 parameterRegisterIndex++;
-                if (parameterRegisterIndex >= abi.integerIncomingParameterRegisters().length()) {
+                if (parameterRegisterIndex >= abi.integerIncomingParameterRegisters.length()) {
                     // done since all subsequent parameters are known to be passed on the stack
                     // and covered by the reference map for the stack at this call point
                     return;
                 }
             }
         }
-    }
-
-    public static void prepareAdapterOverflowRefMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
-        // prepare the reference map for the overflow argument area allocated by an adapter frame
-        TargetMethod adaptedMethod = callee.targetMethod();
-        TargetABI abi = adaptedMethod.abi();
-        ClassMethodActor method = adaptedMethod.classMethodActor();
-        SignatureDescriptor descriptor = method.descriptor();
-        int integerRegisterParams = 0;
-        int floatRegisterParams = 0;
-        if (!method.isStatic()) {
-            // consume a register for the receiver object
-            integerRegisterParams = 1;
-        }
-        IndexedSequence integerParamRegs = abi.integerIncomingParameterRegisters();
-        IndexedSequence floatParamRegs = abi.floatingPointParameterRegisters();
-        int parameterSlotIndex = 0;
-        for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
-            final TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
-            final Kind parameterKind = parameter.toKind();
-            boolean onStack = false;
-            if (abi.putIntoIntegerRegister(parameterKind)) {
-                if (integerRegisterParams++ >= integerParamRegs.length()) {
-                    onStack = true;
-                }
-            } else {
-                if (floatRegisterParams++ >= floatParamRegs.length()) {
-                    onStack = true;
-                }
-            }
-            if (parameterKind == Kind.REFERENCE && onStack) {
-                // set a bit for this parameter if it is an overflow argument
-                preparer.setReferenceMapBits(current, current.sp().plusWords(parameterSlotIndex), 1, 1);
-                parameterSlotIndex++;
-            }
-        }
-    }
-
-    public abstract static class WalkFrameHelper {
-        public static WalkFrameHelper instance;
-
-        public abstract boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameWalker.Purpose purpose, Object context);
     }
 }

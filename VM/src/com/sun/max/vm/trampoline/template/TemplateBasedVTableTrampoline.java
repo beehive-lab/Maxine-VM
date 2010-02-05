@@ -52,7 +52,6 @@ public final class TemplateBasedVTableTrampoline extends Snippet {
     private CriticalMethod classMethodActor = new CriticalMethod(executable, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
     private TemplateBasedVTableTrampoline() {
-        super();
     }
 
     private static final TemplateBasedVTableTrampoline snippet = new TemplateBasedVTableTrampoline();
@@ -61,11 +60,11 @@ public final class TemplateBasedVTableTrampoline extends Snippet {
      */
     private static final TrampolineGenerator trampolineGenerator = new TemplateBasedTrampolineGenerator.VtableTrampolineGenerator(snippet.executable);
 
-    /*
-     * Template for a dynamic trampoline.
-     * Only need a place holder here.
+    /**
+     * Place holder that will become a reference literal in a compilation of {@link #templateBasedVTableTrampoline(Object)}
+     * that can be subsequently patched.
      */
-    private static final DynamicTrampoline DYNAMIC_TRAMPOLINE = new VTableTrampoline(0, null);
+    private static final DynamicTrampoline DYNAMIC_TRAMPOLINE = new DynamicTrampoline(0, null);
 
     @SNIPPET
     @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.VIRTUAL)

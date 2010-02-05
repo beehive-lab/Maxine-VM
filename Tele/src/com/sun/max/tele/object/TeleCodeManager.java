@@ -77,6 +77,9 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
         final Reference runtimeCodeRegionReference = teleVM().teleFields().CodeManager_runtimeCodeRegion.readReference(teleVM());
         teleRuntimeCodeRegion = (TeleCodeRegion) teleVM().makeTeleObject(runtimeCodeRegionReference);
 
+        teleBootCodeRegion.refresh(0);
+        teleRuntimeCodeRegion.refresh(0);
+
         Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
     }
 

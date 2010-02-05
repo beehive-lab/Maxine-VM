@@ -208,7 +208,7 @@ public final class VMRegister {
 
     @FOLD
     private static boolean callAddressRegisterExists() {
-        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI().registerRoleAssignment().integerRegisterActingAs(Role.CALL_INSTRUCTION_ADDRESS) != null;
+        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.CALL_INSTRUCTION_ADDRESS) != null;
     }
 
     @INLINE
@@ -230,7 +230,7 @@ public final class VMRegister {
 
     @FOLD
     private static boolean framelessCallAddressRegisterExists() {
-        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI().registerRoleAssignment().integerRegisterActingAs(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS) != null;
+        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS) != null;
     }
 
     @INLINE

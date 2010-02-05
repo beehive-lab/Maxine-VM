@@ -22,15 +22,40 @@ package com.sun.max.ins.debug;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 import com.sun.max.vm.stack.*;
 
-final class AdapterStackFramePanel extends CompiledStackFramePanel<AdapterStackFrame> {
+/**
+ * Display panel specialized for displaying VM stack frames for VM compiled methods.
+ *
+ * @author Michael Van De Vanter
+ */
+public final class DefaultCompiledStackFramePanel extends CompiledStackFramePanel<CompiledStackFrame> {
 
-    public AdapterStackFramePanel(Inspection inspection, AdapterStackFrame adapterStackFrame) {
-        super(inspection, adapterStackFrame);
-        add(new InspectorPanel(inspection()), BorderLayout.CENTER);
+    private final CompiledStackFrameTable compiledStackFrameTable;
+
+    public DefaultCompiledStackFramePanel(Inspection inspection, CompiledStackFrame javaStackFrame, MaxThread thread, CompiledStackFrameViewPreferences preferences) {
+        super(inspection, javaStackFrame);
+        compiledStackFrameTable = new CompiledStackFrameTable(inspection, javaStackFrame, thread, preferences);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), compiledStackFrameTable);
+        add(scrollPane, BorderLayout.CENTER);
+        refresh(true);
+    }
+
+    @Override
+    public void refresh(boolean force) {
+        compiledStackFrameTable.refresh(force);
+        super.refresh(force);
+    }
+
+    @Override
+    public void redisplay() {
+        compiledStackFrameTable.redisplay();
+        super.redisplay();
     }
 
 }

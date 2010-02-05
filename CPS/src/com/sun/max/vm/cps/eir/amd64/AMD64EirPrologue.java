@@ -118,8 +118,8 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         asm.mov(originalFrameSize + AMD64TrapStateAccess.TRAP_NUMBER_OFFSET, framePointer.indirect(), scratchRegister);
 
         // now load the trap parameter information into registers from the VM thread locals
-        final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();
-        final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
+        final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI;
+        final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters;
         // load the trap number into the first parameter register
         asm.mov((AMD64GeneralRegister64) parameterRegisters.get(0), VmThreadLocal.TRAP_NUMBER.offset, latchRegister.indirect());
         // load the trap state pointer into the second parameter register

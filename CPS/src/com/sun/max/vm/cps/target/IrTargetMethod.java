@@ -26,6 +26,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 
 /**
  * This class exists solely as a work around when running the IR tests where compilation stops at some IR level
@@ -48,7 +49,7 @@ public class IrTargetMethod extends CPSTargetMethod {
     final IrMethod irMethod;
 
     IrTargetMethod(IrMethod irMethod) {
-        super(irMethod.classMethodActor(), null);
+        super(irMethod.classMethodActor());
         this.irMethod = irMethod;
     }
 
@@ -78,22 +79,17 @@ public class IrTargetMethod extends CPSTargetMethod {
     }
 
     @Override
-    public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
         throw ProgramError.unexpected();
     }
 
     @Override
-    public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+    public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
         throw ProgramError.unexpected();
     }
 
     @Override
-    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
-    public void advance(StackFrameWalker.Cursor current) {
+    public void advance(Cursor current) {
         throw ProgramError.unexpected();
     }
 }

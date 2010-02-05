@@ -59,7 +59,7 @@ public final class TemplateBasedITableTrampoline extends Snippet {
     /*
      * Template for a dynamic trampoline.
      */
-    private static final DynamicTrampoline DYNAMIC_TRAMPOLINE = new ITableTrampoline(0, null);
+    private static final DynamicTrampoline DYNAMIC_TRAMPOLINE = new DynamicTrampoline(0, null);
 
     @SNIPPET
     @TRAMPOLINE(invocation = TRAMPOLINE.Invocation.INTERFACE)

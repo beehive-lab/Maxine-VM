@@ -113,8 +113,8 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
 
     private PoolSet<AMD64EirRegister> createUnallocatableRegisterPoolSet() {
         final PoolSet<AMD64EirRegister> result = PoolSet.noneOf(AMD64EirRegister.pool());
-        result.add(stackPointer());
-        result.add(framePointer());
+        result.add(AMD64EirRegister.General.RSP);
+        result.add(AMD64EirRegister.General.RBP);
         result.add(integerRegisterActingAs(VMRegister.Role.SAFEPOINT_LATCH));
         for (Kind kind : Kind.PRIMITIVE_VALUES) {
             result.add(getScratchRegister(kind));
@@ -177,7 +177,7 @@ public abstract class UnixAMD64EirABI extends AMD64EirABI {
 
     private static TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> targetABI(VMConfiguration vmConfiguration) {
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        return StaticLoophole.cast(type, vmConfiguration.targetABIsScheme().optimizedJavaABI());
+        return StaticLoophole.cast(type, vmConfiguration.targetABIsScheme().optimizedJavaABI);
     }
 
     protected UnixAMD64EirABI(VMConfiguration vmConfiguration) {

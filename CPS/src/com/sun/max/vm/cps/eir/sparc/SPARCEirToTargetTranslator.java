@@ -43,14 +43,14 @@ public final class SPARCEirToTargetTranslator extends EirToTargetTranslator {
 
     @Override
     public CPSTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final SPARCOptimizedTargetMethod targetMethod = new SPARCOptimizedTargetMethod(classMethodActor, compilerScheme());
+        final SPARCOptimizedTargetMethod targetMethod = new SPARCOptimizedTargetMethod(classMethodActor);
         notifyAllocation(targetMethod);
         return targetMethod;
     }
 
     @Override
     protected EirTargetEmitter createEirTargetEmitter(EirMethod eirMethod) {
-        final boolean requiresAdapter = (!(eirMethod.isTemplate() || eirMethod.abi.targetABI().callEntryPoint().equals(C_ENTRY_POINT))) && compilerScheme().vmConfiguration().jitCompilerScheme() != compilerScheme();
+        final boolean requiresAdapter = (!(eirMethod.isTemplate() || eirMethod.abi.targetABI().callEntryPoint.equals(C_ENTRY_POINT))) && compilerScheme().vmConfiguration().jitCompilerScheme() != compilerScheme();
         SPARCAdapterFrameGenerator adapterFrameGenerator = null;
         if (requiresAdapter) {
             adapterFrameGenerator = SPARCAdapterFrameGenerator.jitToOptimizedCompilerAdapterFrameGenerator(eirMethod.classMethodActor(), eirMethod.abi);

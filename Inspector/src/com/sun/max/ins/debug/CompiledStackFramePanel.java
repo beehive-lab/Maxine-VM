@@ -120,7 +120,7 @@ abstract class CompiledStackFramePanel<StackFrame_Type extends CompiledStackFram
             addInspectorLabel(new DataLabel.BiasedStackAddressAsHex(inspection(), bias) {
                 @Override
                 public void refresh(boolean force) {
-                    setValue(CompiledStackFramePanel.this.stackFrame.fp);
+                    setValue(CompiledStackFramePanel.this.stackFrame.sp);
                 }
             });
 

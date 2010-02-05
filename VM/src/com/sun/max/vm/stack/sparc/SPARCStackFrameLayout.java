@@ -24,6 +24,7 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 
 /**
  * Utility class that provides functionality common to all SPARC stack frame layout.
@@ -163,11 +164,11 @@ public final class SPARCStackFrameLayout {
      * @param current
      *@param stackFrameWalker  @return an instruction pointer.
      */
-    public static Pointer getCallerPC(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker) {
+    public static Pointer getCallerPC(Cursor current, StackFrameWalker stackFrameWalker) {
         return getRegisterInSavedWindow(current, stackFrameWalker, GPR.I7).asPointer();
     }
 
-    public static Word getRegisterInSavedWindow(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, GPR register) {
+    public static Word getRegisterInSavedWindow(Cursor current, StackFrameWalker stackFrameWalker, GPR register) {
         final Pointer unbiasedFramePointer = unbias(current.sp());
         return getRegisterInSavedWindow(stackFrameWalker, unbiasedFramePointer, register);
     }
@@ -176,11 +177,11 @@ public final class SPARCStackFrameLayout {
         return stackFrameWalker.readWord(savedRegisterWindow, offset_in_saved_window(register));
     }
 
-    public static Pointer getReturnAddress(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker) {
+    public static Pointer getReturnAddress(Cursor current, StackFrameWalker stackFrameWalker) {
         return getCallerPC(current, stackFrameWalker).plus(InstructionSet.SPARC.offsetToReturnPC);
     }
 
-    public static Pointer getCallerFramePointer(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker) {
+    public static Pointer getCallerFramePointer(Cursor current, StackFrameWalker stackFrameWalker) {
         return getCallerFramePointer(stackFrameWalker, unbias(current.fp()));
     }
 

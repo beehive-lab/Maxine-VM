@@ -2647,7 +2647,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         // (tw) remove this hack!
                         CiKind kind = CiKind.Long;
-                        CiRegister register = this.compilation.target.config.getReturnRegister(inst.result.kind);
+                        CiRegister register = this.compilation.target.registerConfig.getReturnRegister(inst.result.kind);
                         LIROperand resultLocation = forRegisters(kind, register, register);
                         moveOp(resultLocation, ops[inst.result.index], kind, null, false);
                     }

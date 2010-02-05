@@ -265,7 +265,7 @@ public class CompiledPrototype extends Prototype {
         }
     }
 
-    private void processNewTargetMethod(RuntimeCompilerScheme dynamicCompilerScheme, TargetMethod targetMethod) {
+    private void processNewTargetMethod(TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         // if this method contains anonymous classes, add them:
@@ -361,9 +361,8 @@ public class CompiledPrototype extends Prototype {
     }
 
     private void addMethodsReferencedByExistingTargetCode() {
-        final RuntimeCompilerScheme dynamicCompilerScheme = compilerScheme();
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
-            processNewTargetMethod(dynamicCompilerScheme, targetMethod);
+            processNewTargetMethod(targetMethod);
         }
     }
 
@@ -526,7 +525,7 @@ public class CompiledPrototype extends Prototype {
             try {
                 final TargetMethod targetMethod = compilationCompletionService.take().get();
                 assert targetMethod != null;
-                processNewTargetMethod(targetMethod.compilerScheme, targetMethod);
+                processNewTargetMethod(targetMethod);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException executionException) {
@@ -618,8 +617,13 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "linkNonVirtualCalls");
         for (TargetMethod targetMethod : Code.bootCodeRegion.targetMethods()) {
             if (targetMethod.classMethodActor() != null) {
-                if (!targetMethod.linkDirectCalls()) {
-                    ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
+                if (!(targetMethod instanceof Adapter)) {
+                    ClassMethodActor classMethodActor = targetMethod.classMethodActor;
+                    AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.abi());
+                    Adapter adapter = gen != null ? gen.make(classMethodActor) : null;
+                    if (!targetMethod.linkDirectCalls(adapter)) {
+                        ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
+                    }
                 }
             } else {
                 // Link at least direct calls in method prologue

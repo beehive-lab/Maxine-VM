@@ -58,7 +58,7 @@ public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
 
     public static final int JIT_STACK_BIAS = getJitStackBias();
 
-    public static final TargetABI JIT_ABI = VMConfiguration.target().targetABIsScheme().jitABI();
+    public static final TargetABI JIT_ABI = VMConfiguration.target().targetABIsScheme().jitABI;
 
     private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind.dataModel.endianness;
 
@@ -86,12 +86,12 @@ public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
     }
 
     private static int getJitSlotSize() {
-        final int stackFrameAlignment = VMConfiguration.target().targetABIsScheme().jitABI().stackFrameAlignment();
+        final int stackFrameAlignment = VMConfiguration.target().targetABIsScheme().jitABI.stackFrameAlignment;
         return Ints.roundUnsignedUpByPowerOfTwo(stackFrameAlignment, Word.size());
     }
 
     private static int getJitStackBias() {
-        return VMConfiguration.target().targetABIsScheme().jitABI().stackBias();
+        return VMConfiguration.target().targetABIsScheme().jitABI.stackBias;
     }
 
     protected JitStackFrameLayout(ClassMethodActor classMethodActor) {
@@ -229,6 +229,18 @@ public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
         return frameSize;
     }
 
+    public static boolean isFillerSlot(int jitSlotOffset, int offset) {
+        if (JIT_SLOT_SIZE == STACK_SLOT_SIZE) {
+            return false;
+        }
+        for (int fillerOffset = jitSlotOffset + STACK_SLOT_SIZE; fillerOffset < jitSlotOffset + JIT_SLOT_SIZE; fillerOffset += STACK_SLOT_SIZE) {
+            if (offset == fillerOffset) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public class JitSlots extends Slots {
 
         protected String nameOfLocal(int localVariableIndex) {
@@ -236,18 +248,6 @@ public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
                 return "local " + localVariableIndex + " [parameter " + localVariableIndex + "]";
             }
             return "local " + localVariableIndex + " [non-parameter " + (localVariableIndex - numberOfParameterSlots) + "]";
-        }
-
-        protected boolean isFillerSlot(int jitSlotOffset, int offset) {
-            if (JIT_SLOT_SIZE == STACK_SLOT_SIZE) {
-                return false;
-            }
-            for (int fillerOffset = jitSlotOffset + STACK_SLOT_SIZE; fillerOffset < jitSlotOffset + JIT_SLOT_SIZE; fillerOffset += STACK_SLOT_SIZE) {
-                if (offset == fillerOffset) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         @Override

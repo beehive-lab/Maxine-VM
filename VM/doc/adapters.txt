@@ -42,19 +42,31 @@ OPT target method (no-args):
 
 opt2jit adapter:
 
-mov  r11, [rsp]        ;save JIT callee in scratch
+mov  rax, [rsp]        ;save address of JIT body (immediately follows call in JIT prologue) 
 subq rsp, N + E        ;create frame - N bytes for args + E bytes for stack alignment (if necessary)
 mov  [rsp + 0], rdi    ;copy arg 0 to stack
-mov  [rsp + 0], rsi    ;copy arg 1 to stack
+mov  [rsp + S], rsi    ;copy arg 1 to stack (S == JIT stack slot size)
 ...
-call r11               ;call JIT callee
+call rax               ;call JIT body
 // return value (if any) is already in rax or xmm0
-addq rsp, E            ;only if E != 0
+addq rsp, E            ;unpad
+ret
 
 jit2opt:
 
-enter 0, 0             ;
+enter N, 0             ;create frame - space for args + caller's RBP + pad
+mov 
 
+
+opt  |
+     +---------------
+     | opt returnIP  
+     +---------------
+     | JIT method body  
+     +---------------
+     | padding
+     +---------------
+     | adapter returnIP
 
 
 

@@ -45,9 +45,9 @@ public class SPARCEirTemplateABI extends SPARCEirJavaABI {
         super(vmConfiguration);
         // Customize the ABI. We need to change the ABI frame pointer for that of the JIT, and remove it from the allocatable set of register.
 
-        final GPR framePointer = StaticLoophole.cast(vmConfiguration.targetABIsScheme().jitABI().framePointer());
+        final GPR framePointer = StaticLoophole.cast(vmConfiguration.targetABIsScheme().jitABI.framePointer());
         final TargetABI<GPR, FPR> originalTargetABI = super.targetABI();
-        final RegisterRoleAssignment<GPR, FPR> registerRoleAssignement = new RegisterRoleAssignment<GPR,  FPR>(new RegisterRoleAssignment<GPR,  FPR>(originalTargetABI.registerRoleAssignment(),
+        final RegisterRoleAssignment<GPR, FPR> registerRoleAssignement = new RegisterRoleAssignment<GPR,  FPR>(new RegisterRoleAssignment<GPR,  FPR>(originalTargetABI.registerRoleAssignment,
                         VMRegister.Role.ABI_FRAME_POINTER, framePointer), VMRegister.Role.ABI_RETURN, GPR.O0);
         final TargetABI<GPR, FPR> templateTargetABI = new TargetABI<GPR, FPR>(originalTargetABI, registerRoleAssignement, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         initTargetABI(templateTargetABI);

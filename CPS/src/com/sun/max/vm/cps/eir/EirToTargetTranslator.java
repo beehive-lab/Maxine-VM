@@ -219,9 +219,10 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
 
     private void generateTarget(CPSTargetMethod targetMethod, final EirMethod eirMethod) throws ProgramError {
         final EirTargetEmitter<?> emitter = createEirTargetEmitter(eirMethod);
-        emitter.emitFrameAdapterPrologue();
+
+        Adapter adapter = emitter.adapt(targetMethod.classMethodActor);
+
         eirMethod.emit(emitter);
-        emitter.emitFrameAdapterEpilogue();
 
         final DataModel dataModel = compilerScheme().vmConfiguration().platform().processorKind.dataModel;
 
@@ -293,7 +294,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
             // the compiled prototype links all methods in a separate phase
         } else {
             // at target runtime, each method gets linked individually right after generating it:
-            targetMethod.linkDirectCalls();
+            targetMethod.linkDirectCalls(adapter);
         }
         CompilationScheme.Static.notifyCompilationComplete(targetMethod);
 

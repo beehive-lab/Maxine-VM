@@ -192,12 +192,12 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         offset += wordSize;
         // offset now points to the location where the trap number will be stored in the trap state.
 
-        final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();
+        final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI;
 
         // Setup return address -- to enable stack walker
         asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset, GPR.I7);
         // Setup arguments for the trapStub
-        final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
+        final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters;
         asm.ldx(latchRegister, VmThreadLocal.TRAP_NUMBER.offset, (GPR) parameterRegisters.get(0));
         asm.add(stackPointer, trapStateOffset, (GPR) parameterRegisters.get(1));
         asm.ldx(latchRegister, VmThreadLocal.TRAP_FAULT_ADDRESS.offset, (GPR) parameterRegisters.get(2));
