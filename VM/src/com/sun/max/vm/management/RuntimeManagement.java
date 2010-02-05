@@ -33,4 +33,12 @@ public class RuntimeManagement {
     public static String getVmArguments() {
         return VMOptions.getVmArguments();
     }
+
+    public static long getStartupTime() {
+        return MaxineVM.getStartupTime();
+    }
+
+    public static long getUptime() {
+        return System.currentTimeMillis() - MaxineVM.getStartupTime();
+    }
 }

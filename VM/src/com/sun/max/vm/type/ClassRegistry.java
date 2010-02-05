@@ -120,6 +120,9 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final MethodActor VmThread_attach = findMethod("attach", VmThread.class);
     public static final MethodActor VmThread_detach = findMethod("detach", VmThread.class);
 
+    private static int loadCount;        // total loaded
+    private static int unloadCount;    // total unloaded
+
     static {
         new CriticalNativeMethod(Log.class, "log_lock");
         new CriticalNativeMethod(Log.class, "log_unlock");
@@ -358,6 +361,8 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         if (existingClassActor != null) {
             throw new NoClassDefFoundError("Cannot redefine " + classActor.name);
         }
+
+        loadCount++;
     }
 
     /**
@@ -542,5 +547,17 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             out.println("    " + classActor.name);
         }
         out.println("END ClassRegistry");
+    }
+
+    public static synchronized int getLoadedClassCount() {
+        return loadCount - unloadCount;
+    }
+
+    public static synchronized int getTotalLoadedClassCount() {
+        return loadCount;
+    }
+
+    public static synchronized int getUnloadedClassCount() {
+        return unloadCount;
     }
 }
