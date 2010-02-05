@@ -326,10 +326,12 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     protected Transferable getTransferable(int row, int col) {
         final TableCellRenderer cellRenderer = getColumnModel().getColumn(col).getCellRenderer();
         Object value = getValueAt(row, col);
-        final Component renderer = cellRenderer.getTableCellRendererComponent(this, value, false, false, row, col);
-        if (renderer instanceof InspectorLabel) {
-            final InspectorLabel inspectorLabel = (InspectorLabel) renderer;
-            return inspectorLabel.getTransferable();
+        if (cellRenderer != null) {
+            final Component renderer = cellRenderer.getTableCellRendererComponent(this, value, false, false, row, col);
+            if (renderer instanceof InspectorLabel) {
+                final InspectorLabel inspectorLabel = (InspectorLabel) renderer;
+                return inspectorLabel.getTransferable();
+            }
         }
         return null;
     }
