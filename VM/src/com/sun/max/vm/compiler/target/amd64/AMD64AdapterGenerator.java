@@ -452,16 +452,16 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 case LONG:
                 case WORD:
                 case REFERENCE: asm.mov(reg, offset32, AMD64IndirectRegister64.RSP_INDIRECT);    break;
-                default:        ProgramError.unexpected();
+                default:        throw ProgramError.unexpected();
             }
         }
 
         @Override
         protected void adapt(AMD64Assembler asm, Kind kind, AMD64XMMRegister reg, int offset32) {
             switch (kind.asEnum) {
-                case FLOAT:  asm.movss(offset32, AMD64IndirectRegister64.RSP_INDIRECT, reg); break;
-                case DOUBLE: asm.movsd(offset32, AMD64IndirectRegister64.RSP_INDIRECT, reg); break;
-                default:     ProgramError.unexpected();
+                case FLOAT:  asm.movss(reg, offset32, AMD64IndirectRegister64.RSP_INDIRECT); break;
+                case DOUBLE: asm.movsd(reg, offset32, AMD64IndirectRegister64.RSP_INDIRECT); break;
+                default:     throw ProgramError.unexpected();
             }
         }
         // Checkstyle: resume
@@ -718,6 +718,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             return new Opt2JitAdapter(this, description, adapterFrameSize, code, callPosition);
         }
 
+        // Checkstyle: stop
         @Override
         protected void adapt(AMD64Assembler asm, Kind kind, AMD64GeneralRegister64 reg, int offset32) {
             switch (kind.asEnum) {
@@ -725,35 +726,23 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
                 case BOOLEAN:
                 case SHORT:
                 case CHAR:
-                case INT: {
-                    asm.mov(offset32, AMD64IndirectRegister64.RSP_INDIRECT, AMD64GeneralRegister32.from(reg));
-                    break;
-                }
+                case INT:       asm.mov(offset32, AMD64IndirectRegister64.RSP_INDIRECT, AMD64GeneralRegister32.from(reg));  break;
                 case LONG:
                 case WORD:
-                case REFERENCE: {
-                    asm.mov(offset32, AMD64IndirectRegister64.RSP_INDIRECT, reg);
-                    break;
-                }
-                default: {
-                    ProgramError.unexpected();
-                }
+                case REFERENCE: asm.mov(offset32, AMD64IndirectRegister64.RSP_INDIRECT, reg); break;
+                default:        throw ProgramError.unexpected();
             }
         }
 
         @Override
         protected void adapt(AMD64Assembler asm, Kind kind, AMD64XMMRegister reg, int offset32) {
             switch (kind.asEnum) {
-                case FLOAT:
-                    asm.movss(offset32, AMD64IndirectRegister64.RSP_INDIRECT, reg);
-                    break;
-                case DOUBLE:
-                    asm.movsd(offset32, AMD64IndirectRegister64.RSP_INDIRECT, reg);
-                    break;
-                default:
-                    ProgramError.unexpected();
+                case FLOAT:  asm.movss(offset32, AMD64IndirectRegister64.RSP_INDIRECT, reg); break;
+                case DOUBLE: asm.movsd(offset32, AMD64IndirectRegister64.RSP_INDIRECT, reg); break;
+                default:     throw ProgramError.unexpected();
             }
         }
+        // Checkstyle: resume
 
         @Override
         public void adapt(AMD64Assembler asm, Kind kind, int optStackOffset32, int jitStackOffset32, int adapterFrameSize) {
