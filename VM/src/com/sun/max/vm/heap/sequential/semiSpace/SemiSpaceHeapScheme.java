@@ -25,12 +25,11 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.management.*;
 
+import com.sun.management.*;
 import com.sun.management.GarbageCollectorMXBean;
-import com.sun.management.GcInfo;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
@@ -843,7 +842,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
         if (refillPolicy == null) {
             // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
-            ProgramError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
+            FatalError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
 
             if (!usesTLAB()) {
                 // We're not using TLAB. So let's assign the never refill tlab policy.
@@ -885,6 +884,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      *
      * @param size the requested cell size to be allocated
      * @param adjustForDebugTag specifies if an extra word is to be reserved before the cell for the debug tag word
+     * @return the allocated and zeroed chunk
      */
     @NEVER_INLINE
     private Pointer retryAllocate(Size size, boolean adjustForDebugTag) {
@@ -929,6 +929,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
                 end = cell.plus(size);
             }
         } while (toSpace.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
+
+        // Zero the allocated chunk before returning
+        Memory.clearWords(cell, size.dividedBy(Word.size()).toInt());
+
         return cell;
     }
 
@@ -1029,7 +1033,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             Log.print(' ');
             Log.println(when);
         }
-        zapRegion(region);
+        Memory.zapRegion(region);
     }
 
     private void logSpaces() {

@@ -126,10 +126,6 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         return Util.equal(this, otherMemoryRegion);
     }
 
-    public final void clear() {
-        Memory.clearBytes(start().asPointer(), size());
-    }
-
     @Override
     public String toString() {
         return "[" + start.toHexString() + " - " + end().minus(1).toHexString() + "]";

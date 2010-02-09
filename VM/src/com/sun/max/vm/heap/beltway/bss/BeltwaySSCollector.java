@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.heap.beltway.bss;
 
+import com.sun.max.memory.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
@@ -79,7 +80,7 @@ public class BeltwaySSCollector extends BeltwayCollector {
 
         if (ssHeapScheme.verifyAfterGC()) {
             if (MaxineVM.isDebug()) {
-                heapScheme.zapRegion(toSpace);
+                Memory.zapRegion(toSpace);
             }
             verifyHeap("After GC", ssHeapScheme, fromSpace);
         }

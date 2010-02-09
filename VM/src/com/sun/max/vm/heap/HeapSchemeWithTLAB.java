@@ -127,7 +127,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     private static void plantDeadObject(Pointer cell) {
         DebugHeap.writeCellTag(cell);
         final Pointer origin = Layout.tupleCellToOrigin(cell);
-        Memory.clearBytes(cell, MIN_OBJECT_SIZE);
+        Memory.clearWords(cell, MIN_OBJECT_SIZE.dividedBy(Word.size()).toInt());
         Layout.writeHubReference(origin, Reference.fromJava(OBJECT_HUB));
     }
 
@@ -138,7 +138,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         DebugHeap.writeCellTag(cell);
         final int length = size.minus(BYTE_ARRAY_HEADER_SIZE).toInt();
         final Pointer origin = Layout.arrayCellToOrigin(cell);
-        Memory.clearBytes(cell, BYTE_ARRAY_HEADER_SIZE);
+        Memory.clearWords(cell, BYTE_ARRAY_HEADER_SIZE.dividedBy(Word.size()).toInt());
         Layout.writeArrayLength(origin, length);
         Layout.writeHubReference(origin, Reference.fromJava(BYTE_ARRAY_HUB));
     }
@@ -349,15 +349,15 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     /**
-     * Method that extension of {@link HeapSchemeWithTLAB} must implement to handle TLAB allocation failure.
+     * Handles TLAB allocation failure.
      * The handler is specified the size of the failed allocation and the allocation mark of the TLAB and must return
      * a pointer to a cell of the specified cell. The handling of the TLAB allocation failure may result in refilling the TLAB.
      *
-     * @param size the allocation size requested to the TLAB
+     * @param size the failed allocation size
      * @param enabledVmThreadLocals
      * @param tlabMark allocation mark of the TLAB
-     * @param tlabEnd soft limit in the TLAB to trigger overflow (may equals the actual end of the TLAB, depending on implementation).
-     * @return a pointer to a cell resulting from a successful allocation of space of the specified size.
+     * @param tlabEnd soft limit in the TLAB to trigger overflow (may equal the actual end of the TLAB, depending on implementation)
+     * @return a pointer to a new allocated cell of size {@code size}
      * @throws OutOfMemoryError if the allocation request cannot be satisfied.
      */
     protected abstract Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd);
@@ -372,7 +372,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * The fast, inline path for allocation.
      *
      * @param size the size of memory chunk to be allocated
-     * @return an allocated chunk of memory {@code size} bytes in size
+     * @return an allocated and zeroed chunk of memory {@code size} bytes in size
      * @throws OutOfMemoryError if the allocation request cannot be satisfied
      */
     @INLINE

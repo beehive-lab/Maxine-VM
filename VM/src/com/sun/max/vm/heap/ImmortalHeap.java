@@ -110,6 +110,9 @@ public final class ImmortalHeap {
             }
         } while (immortalHeap.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
 
+        // Zero the allocated chunk
+        Memory.clearWords(cell, size.dividedBy(Word.size()).toInt());
+
         if (traceAllocation()) {
             traceAllocation(size, cell);
         }
