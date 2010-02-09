@@ -70,7 +70,7 @@ public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTarget
     }
 
     /**
-     * TODO: Implement based on obsolete and unused code in {@link SPARCJitCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     * TODO: Implement based on obsolete and unused code in {@link SPARCJitCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}.
      */
     @Override
     public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
@@ -78,7 +78,7 @@ public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTarget
     }
 
     /**
-     * TODO: Implement based on obsolete and unused code in {@link SPARCJitCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     * TODO: Implement based on obsolete and unused code in {@link SPARCJitCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}.
      */
     @Override
     public void advance(Cursor current) {
@@ -86,7 +86,7 @@ public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTarget
     }
 
     /**
-     * TODO: Implement based on obsolete and unused code in {@link SPARCJitCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     * TODO: Implement based on obsolete and unused code in {@link SPARCJitCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}.
      */
     @Override
     public void catchException(Cursor current, Cursor callee, Throwable throwable) {
@@ -94,7 +94,7 @@ public class SPARCJitTargetMethod extends JitTargetMethod implements SPARCTarget
     }
 
     /**
-     * TODO: Implement based on obsolete and unused code in {@link SPARCJitCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     * TODO: Implement based on obsolete and unused code in {@link SPARCJitCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}.
      */
     @Override
     public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {

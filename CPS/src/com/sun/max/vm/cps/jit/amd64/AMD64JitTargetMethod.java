@@ -206,7 +206,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         finalizeReferenceMaps();
 
         if (callee.calleeKind() == StackFrameWalker.CalleeKind.TRAMPOLINE) {
-            prepareTrampolineRefMap(current, callee, preparer);
+            prepareTrampolineRefMap(current, preparer);
         }
 
         int stopIndex = findClosestStopIndex(current.ip());
@@ -318,11 +318,25 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         stackFrameWalker.advance(callerIP, callerSP, callerFP);
     }
 
-    protected void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+    /**
+     * Prepares the reference map to cover the reference parameters on the stack at a call from a JIT compiled method
+     * into a trampoline. These slots are normally ignored when computing the reference maps for a JIT'ed method as they
+     * are covered by a reference map in the callee if necessary. They <b>cannot</b> be covered by a reference map in
+     * the JIT'ed method as these slots are seen as local variables in a JIT callee and as such can be overwritten with
+     * non-reference values.
+     *
+     * However, in the case where a JIT'ed method calls into a trampoline, the reference parameters of the call are not
+     * covered by any reference map. In this situation, we need to analyze the invokeXXX bytecode at the call site to
+     * derive the signature of the call which in turn allows us to mark the parameter stack slots that contain
+     * references.
+     *
+     * @param caller the JIT compiled method's frame cursor
+     */
+    private void prepareTrampolineRefMap(Cursor caller, StackReferenceMapPreparer preparer) {
         // prepare the reference map for the parameters passed by the current (caller) frame.
         // the call was unresolved and hit a trampoline, so compute the refmap from the signature of
         // the called method by looking at the bytecode of the caller method--how ugly...
-        final int bytecodePosition = bytecodePositionForCallSite(current.ip());
+        final int bytecodePosition = bytecodePositionForCallSite(caller.ip());
         final CodeAttribute codeAttribute = classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool;
         final byte[] code = codeAttribute.code();
@@ -331,28 +345,26 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         final SignatureDescriptor signature = methodConstant.signature(constantPool);
 
         int slotSize = JitStackFrameLayout.JIT_SLOT_SIZE;
-        int refOffsetInSlot = Word.size() - slotSize; // for multi-word slots, get the offset into the slot
         final int numberOfSlots = signature.computeNumberOfSlots() + (isInvokestatic ? 0 : 1);
 
         if (numberOfSlots != 0) {
-            // point at first slot (highest address)
-            final Pointer slotPointer = current.sp().plus((numberOfSlots - 1) * slotSize).plus(refOffsetInSlot);
-            int parameterSlotIndex = 0;
-            // First deal with the receiver (if any)
-            if (!isInvokestatic) {
-                // Mark the slot for the receiver as it is not covered by the method signature:
-                preparer.setReferenceMapBits(current, slotPointer, 1, 1);
-                parameterSlotIndex++;
-            }
-
-            // Now process the other parameters
-            for (int i = 0; i < signature.numberOfParameters(); ++i) {
+            // Handle the parameters in reverse order as caller.sp() is currently
+            // pointing at the last parameter.
+            Pointer slotPointer = caller.sp();
+            for (int i = signature.numberOfParameters() - 1; i >= 0; --i) {
                 final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
                 final Kind parameterKind = parameter.toKind();
                 if (parameterKind == Kind.REFERENCE) {
-                    preparer.setReferenceMapBits(current, slotPointer.minus(parameterSlotIndex * slotSize), 1, 1);
+                    preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
                 }
-                parameterSlotIndex += parameterKind.isCategory2() ? 2 : 1;
+                int parameterSlots = parameterKind.isCategory2() ? 2 : 1;
+                slotPointer = slotPointer.plus(slotSize * parameterSlots);
+            }
+
+            // Finally deal with the receiver (if any)
+            if (!isInvokestatic) {
+                // Mark the slot for the receiver as it is not covered by the method signature:
+                preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
             }
         }
     }
