@@ -59,12 +59,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
 
     /**
-     * A bytecode breakpoint for which this target breakpoint was created, null if none.
-     */
-    private final TeleBytecodeBreakpoint owner;
-
-
-    /**
      * Creates a target code breakpoint for a given address in the VM.
      *
      * @param teleVM the VM
@@ -76,9 +70,8 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
      * @param the kind of breakpoint
      */
     private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, Address address, byte[] originalCode, BreakpointKind kind, TeleBytecodeBreakpoint owner) {
-        super(teleVM, new TeleCodeLocation(teleVM, address), kind);
+        super(teleVM, new TeleCodeLocation(teleVM, address), kind, owner);
         this.factory = factory;
-        this.owner = owner;
         this.originalCodeAtBreakpoint = originalCode == null ? teleVM.dataAccess().readFully(address, factory.codeSize()) : originalCode;
     }
 
@@ -87,15 +80,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
      */
     private Address address() {
         return getCodeLocation().targetCodeInstructionAddress();
-    }
-
-    /**
-     * Returns the bytecode breakpoint set by the client on whose behalf this breakpoint was created, if there is one.
-     *
-     * @return
-     */
-    public TeleBytecodeBreakpoint owner() {
-        return owner;
     }
 
     @Override
@@ -221,7 +205,6 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         @Override
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
-            factory.fireBreakpointsChanged();
         }
 
         @Override
@@ -408,10 +391,24 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
                 systemBreakpoint = new SystemTargetBreakpoint(teleVM(), this, address, null, owner);
                 final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(address.toLong(), systemBreakpoint);
                 assert oldBreakpoint == null;
-                fireBreakpointsChanged();
             }
             return systemBreakpoint;
         }
+
+        public synchronized TeleTargetBreakpoint makeSystemBreakpoint(MaxInspectableMethod maxInspectableMethod, VMTriggerEventHandler handler) {
+            final Address callEntryPoint = maxInspectableMethod.methodEntry();
+            ProgramError.check(!callEntryPoint.isZero());
+            SystemTargetBreakpoint systemBreakpoint = systemBreakpoints.get(callEntryPoint.toLong());
+            // TODO (mlvdv) handle case where there is already a client breakpoint at this address.
+            if (systemBreakpoint == null) {
+                systemBreakpoint = new SystemTargetBreakpoint(teleVM(), this, callEntryPoint, null, null);
+                systemBreakpoint.setTriggerEventHandler(handler);
+                final SystemTargetBreakpoint oldBreakpoint = systemBreakpoints.put(callEntryPoint.toLong(), systemBreakpoint);
+                assert oldBreakpoint == null;
+            }
+            return systemBreakpoint;
+        }
+
 
         /**
          * Gets the transient breakpoint at a specified target code address in the VM, creating a new one first if needed.
@@ -447,8 +444,10 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         private synchronized void removeNonTransientBreakpointAt(Address address) {
             final long addressLong = address.toLong();
-            if (clientBreakpoints.remove(addressLong) != null || systemBreakpoints.remove(addressLong) != null) {
+            if (clientBreakpoints.remove(addressLong) != null) {
                 fireBreakpointsChanged();
+            } else {
+                systemBreakpoints.remove(addressLong);
             }
         }
 

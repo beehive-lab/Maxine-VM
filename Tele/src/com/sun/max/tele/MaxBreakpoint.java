@@ -84,6 +84,13 @@ public interface MaxBreakpoint {
     void setCondition(String conditionDescriptor) throws ExpressionException;
 
     /**
+     * Returns a different breakpoint, set by the client on whose behalf this breakpoint was created, if there is one.
+     *
+     * @return a breakpoint that "owns" this one; null if none.
+     */
+    TeleBreakpoint owner();
+
+    /**
      * Removes this breakpoint from the VM.
      */
     void remove();

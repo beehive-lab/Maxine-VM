@@ -297,6 +297,9 @@ public interface HeapScheme extends VMScheme {
          * <br>
          * This particular method is intended for  use by users of the Inspector, and
          * is distinct from a method used by the Inspector for internal use.
+         * <br>
+         * <strong>Important:</strong> The Inspector assumes that this method is loaded
+         * and compiled in the boot image and that it will never be dynamically recompiled.
          */
         @INSPECTED
         @NEVER_INLINE
@@ -318,6 +321,9 @@ public interface HeapScheme extends VMScheme {
          * <br>
          * This particular method is intended for  use by users of the Inspector, and
          * is distinct from a method used by the Inspector for internal use.
+         * <br>
+         * <strong>Important:</strong> The Inspector assumes that this method is loaded
+         * and compiled in the boot image and that it will never be dynamically recompiled.
          */
         @INSPECTED
         @NEVER_INLINE
@@ -346,6 +352,9 @@ public interface HeapScheme extends VMScheme {
          * <br>
          * This particular method is intended for  use by users of the Inspector, and
          * is distinct from a method used by the Inspector for internal use.
+         * <br>
+         * <strong>Important:</strong> The Inspector assumes that this method is loaded
+         * and compiled in the boot image and that it will never be dynamically recompiled.
          */
         @INSPECTED
         @NEVER_INLINE

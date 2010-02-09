@@ -132,7 +132,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                         final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
                         viewBreakpointsMenuItem.setText("View Breakpoints");
                         menu.add(viewBreakpointsMenuItem);
-                        if (maxVM().watchpointsEnabled()) {
+                        if (watchpointsEnabled()) {
                             menu.add(actions().genericWatchpointMenuItems());
                             final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
                             viewWatchpointsMenuItem.setText("View Watchpoints");
@@ -264,7 +264,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         frame.pack();
         gui().addInspector(this);
         inspection().addInspectionListener(this);
-        inspection().focus().addListener(this);
+        focus().addListener(this);
         final SaveSettingsListener saveSettingsListener = saveSettingsListener();
         if (saveSettingsListener != null) {
             inspection().settings().addSaveSettingsListener(saveSettingsListener);
@@ -281,7 +281,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         frame.pack();
         gui().addInspector(this);
         inspection().addInspectionListener(this);
-        inspection().focus().addListener(this);
+        focus().addListener(this);
         final SaveSettingsListener saveSettingsListener = saveSettingsListener();
         if (saveSettingsListener != null) {
             inspection().settings().addSaveSettingsListener(saveSettingsListener);
@@ -419,7 +419,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      */
     protected void inspectorClosing() {
         inspection().removeInspectionListener(this);
-        inspection().focus().removeListener(this);
+        focus().removeListener(this);
         final SaveSettingsListener saveSettingsListener = saveSettingsListener();
         if (saveSettingsListener != null) {
             inspection().settings().removeSaveSettingsListener(saveSettingsListener);

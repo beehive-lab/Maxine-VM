@@ -276,7 +276,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      */
     @Override
     protected void updateStackCache() {
-        final MaxThread thread = inspection().focus().thread();
+        final MaxThread thread = focus().thread();
         if (thread == null) {
             return;
         }

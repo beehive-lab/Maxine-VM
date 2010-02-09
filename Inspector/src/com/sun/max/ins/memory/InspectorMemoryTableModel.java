@@ -34,14 +34,13 @@ import com.sun.max.unsafe.*;
  */
 public abstract class InspectorMemoryTableModel extends InspectorTableModel {
 
-    private final Inspection inspection;
     private final Size wordSize;
 
     // Memory location from which to compute offsets
     private Address origin = Address.zero();
 
     public InspectorMemoryTableModel(Inspection inspection, Address origin) {
-        this.inspection = inspection;
+        super(inspection);
         this.origin = origin;
         wordSize = inspection.maxVM().wordSize();
     }
@@ -73,8 +72,8 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      */
     public Sequence<MaxWatchpoint> getWatchpoints(int row) {
         DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
-        if (inspection.maxVM().watchpointsEnabled()) {
-            for (MaxWatchpoint watchpoint : inspection.maxVM().watchpoints()) {
+        if (watchpointsEnabled()) {
+            for (MaxWatchpoint watchpoint : watchpointFactory().watchpoints()) {
                 if (watchpoint.overlaps(getMemoryRegion(row))) {
                     if (watchpoints.isEmpty()) {
                         watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);

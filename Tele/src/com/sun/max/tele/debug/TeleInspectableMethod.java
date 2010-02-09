@@ -23,6 +23,7 @@ package com.sun.max.tele.debug;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 
 /**
  * Wrapper for a remote method in the VM that is intended to be accessed
@@ -47,6 +48,17 @@ public final class TeleInspectableMethod implements MaxInspectableMethod {
             teleClassMethodActor = teleMethodAccess.teleClassMethodActor();
         }
         return teleClassMethodActor;
+    }
+
+    public Address methodEntry() {
+        if (teleClassMethodActor() == null) {
+            return Address.zero();
+        }
+        final TeleTargetMethod javaTargetMethod = teleClassMethodActor().getJavaTargetMethod(0);
+        if (javaTargetMethod == null) {
+            return Address.zero();
+        }
+        return javaTargetMethod.callEntryPoint();
     }
 
     public String description() {
