@@ -212,6 +212,17 @@ public class AMD64OptStackWalking {
         return entryPoint.equals(current.ip()) || current.stackFrameWalker().readByte(current.ip(), 0) == RET;
     }
 
+    /**
+     * Prepares the reference map for the frame of a call to a trampoline from an OPT compiled method.
+     *
+     * An opto-compiled caller may pass some arguments in registers.  The trampoline is polymorphic, i.e. it does not have any
+     * helpful maps regarding the actual callee.  It does store all potential parameter registers on its stack, though,
+     * and recovers them before returning.  We mark those that contain references.
+     *
+     * @param current
+     * @param callee
+     * @param preparer
+     */
     public static void prepareTrampolineRefMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         TargetMethod trampolineTargetMethod = callee.targetMethod();
         ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();

@@ -34,5 +34,12 @@ public class Printf {
         System.out.printf("%b\n", true);
         System.out.printf("%c\n", 'c');
         System.out.printf("%f\n", -12.3f);
+        System.out.printf("%s\n", Blah.foo(Long.MAX_VALUE, Integer.MIN_VALUE, "blah"));
+    }
+
+    static class Blah {
+        static Object foo(long p1, int p2, Object p3) {
+            return p3;
+        }
     }
 }

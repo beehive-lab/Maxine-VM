@@ -280,16 +280,4 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             }
         }
     }
-
-    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer preparer, Pointer ip, Pointer fp, Pointer operandStackPointer, int offsetToFirstParameter) {
-        finalizeReferenceMaps();
-
-        if (preparer.checkIgnoreCurrentFrame()) {
-            return true;
-        }
-
-        return preparer.prepareFrameReferenceMap(this, ip, fp.plus(frameReferenceMapOffset), operandStackPointer, offsetToFirstParameter, null);
-    }
-
-
 }

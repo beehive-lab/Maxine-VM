@@ -27,22 +27,14 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.refmaps.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.trampoline.*;
-import com.sun.max.vm.type.*;
 
 /**
  * GC support: prepares the object reference map of a thread's stack.
@@ -94,9 +86,6 @@ public final class StackReferenceMapPreparer {
      * @see VmThreadLocal#prepareCurrentStackReferenceMap()
      */
     private boolean ignoreCurrentFrame;
-
-    private TargetMethod trampolineTargetMethod;
-    private Pointer trampolineRefmapPointer;
 
     public StackReferenceMapPreparer(boolean verify, boolean prepare) {
         this.verify = verify;
@@ -559,35 +548,6 @@ public final class StackReferenceMapPreparer {
     }
 
     /**
-     * If {@linkplain Heap#traceRootScanning() GC tracing} is enabled, then this method traces one byte's worth
-     * of a frame/register reference map.
-     *
-     * @param internalFramePointer the index of the reference map byte
-     * @param referenceMapByte the value of the reference map byte
-     * @param referenceMapLabel a label indicating whether this reference map is for a frame or for the registers
-     */
-    public void traceReferenceMapByte(Pointer framePointer, Pointer internalFramePointer, byte referenceMapByte, String referenceMapLabel) {
-        if (Heap.traceRootScanning()) {
-            Log.print("    ");
-            Log.print(referenceMapLabel);
-            Log.print(" internal frame pointer: ");
-            Log.println(internalFramePointer);
-            Log.print("    ");
-            Log.print(referenceMapLabel);
-            Log.print(" map byte:       ");
-            Log.println(Address.fromInt(referenceMapByte & 0xff));
-            for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
-                if (((referenceMapByte >>> bitIndex) & 1) != 0) {
-                    final int slotIndex = referenceMapBitIndex(internalFramePointer) + bitIndex;
-                    Log.print("      Slot: ");
-                    printSlot(slotIndex, framePointer);
-                    Log.println();
-                }
-            }
-        }
-    }
-
-    /**
      * If {@linkplain Heap#traceRootScanning() GC tracing} is enabled, then this method traces the stack slots corresponding to a
      * frame or set of set of saved registers that are determined to contain references by a reference map.
      *
@@ -609,178 +569,6 @@ public final class StackReferenceMapPreparer {
         }
     }
 
-    /**
-     * Prepares the reference map to cover the reference parameters on the stack at a call from a JIT compiled method
-     * into a trampoline. These slots are normally ignored when computing the reference maps for a JIT'ed method as they
-     * are covered by a reference map in the callee if necessary. They <b>cannot</b> be covered by a reference map in
-     * the JIT'ed method as these slots are seen as local variables in a JIT callee and as such can be overwritten with
-     * non-reference values.
-     *
-     * However, in the case where a JIT'ed method calls into a trampoline, the reference parameters of the call are not
-     * covered by any reference map. In this situation, we need to analyze the invokeXXX bytecode at the call site to
-     * derive the signature of the callee which in turn allows us to mark the parameter stack slots that contain
-     * references.
-     *
-     * @param caller the JIT compiled method that that made the call into the trampoline frame
-     * @param instructionPointer the execution address in {@code caller}. This will be at the site of the call to the trampoline.
-     * @param refmapFramePointer the address in the frame of {@code caller} to which the reference map for {@code caller} is relative
-     * @param operandStackPointer pointer to the top value on the operand stack in the frame of {@code caller}
-     */
-    private void prepareTrampolineFrameForJITCaller(TargetMethod caller, Pointer instructionPointer, Pointer refmapFramePointer, Pointer operandStackPointer) {
-        final int bytecodePosition = caller.bytecodePositionForCallSite(instructionPointer);
-        final CodeAttribute codeAttribute = caller.classMethodActor().codeAttribute();
-        final ConstantPool constantPool = codeAttribute.constantPool;
-        final byte[] code = codeAttribute.code();
-        final MethodRefConstant methodConstant = constantPool.methodAt(getInvokeConstantPoolIndexOperand(code, bytecodePosition));
-        final boolean isInvokestatic = (code[bytecodePosition] & 0xFF) == Bytecode.INVOKESTATIC.ordinal();
-        final SignatureDescriptor signature = methodConstant.signature(constantPool);
-
-        final int numberOfSlots = signature.computeNumberOfSlots() + (isInvokestatic ? 0 : 1);
-
-        if (Heap.traceRootScanning()) {
-            Log.print("        Frame pointer: ");
-            printSlot(referenceMapBitIndex(refmapFramePointer), Pointer.zero());
-            Log.println();
-            Log.print("    Bytecode position: ");
-            Log.println(bytecodePosition);
-            Log.print("               Callee: ");
-            Log.print(methodConstant.name(constantPool).string);
-            Log.print(methodConstant.signature(constantPool).string);
-            Log.print(" in ");
-            Log.println(methodConstant.holder(constantPool).string);
-            Log.print("     Is invokestatic?: ");
-            Log.println(isInvokestatic);
-        }
-
-        if (numberOfSlots != 0) {
-            final int fpSlotIndex = referenceMapBitIndex(refmapFramePointer);
-            final JitStackFrameLayout stackFrameLayout = (JitStackFrameLayout) caller.stackFrameLayout();
-            final Pointer operandStackSlot0Pointer = refmapFramePointer.plus(stackFrameLayout.sizeOfOperandStack());
-            final Pointer lastParameterPointer = operandStackPointer;
-            final Pointer firstParameterPointer = lastParameterPointer.plus(numberOfSlots * JitStackFrameLayout.JIT_SLOT_SIZE);
-            int parameterWordIndex = operandStackSlot0Pointer.minus(firstParameterPointer).dividedBy(JitStackFrameLayout.JIT_SLOT_SIZE).toInt();
-
-            // First deal with the receiver (if any)
-            if (!isInvokestatic) {
-                final int fpRelativeIndex = stackFrameLayout.operandStackReferenceMapIndex(parameterWordIndex);
-                final int slotIndex = fpSlotIndex + fpRelativeIndex;
-                traceReceiver(refmapFramePointer, slotIndex);
-                // Mark the slot for the receiver as it is not covered by the method signature:
-                referenceMap.setBit(slotIndex);
-                parameterWordIndex++;
-            }
-
-            // Now process the other parameters
-            for (int i = 0; i < signature.numberOfParameters(); ++i) {
-                final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
-                final Kind parameterKind = parameter.toKind();
-                final int fpRelativeIndex = stackFrameLayout.operandStackReferenceMapIndex(parameterKind.isCategory2() ? parameterWordIndex + 1 : parameterWordIndex);
-                final int slotIndex = fpSlotIndex + fpRelativeIndex;
-                if (parameterKind == Kind.REFERENCE) {
-                    traceTypeDescriptor(parameter, slotIndex, parameterWordIndex);
-                    referenceMap.setBit(slotIndex);
-                } else {
-                    traceTypeDescriptor(parameter);
-                }
-                parameterWordIndex += parameterKind.isCategory2() ? 2 : 1;
-            }
-        }
-    }
-
-    private void traceReceiver(Pointer stackPointer, final int slotIndex) {
-        if (Heap.traceRootScanning()) {
-            Log.print("    Parameter: param index=");
-            Log.print(0);
-            Log.print(", ");
-            printSlot(slotIndex, Pointer.zero());
-            Log.println(", receiver");
-        }
-    }
-
-    private void traceTypeDescriptor(TypeDescriptor parameterTypeDescriptor) {
-        if (Heap.traceRootScanning()) {
-            Log.print("    Parameter: type=");
-            Log.println(parameterTypeDescriptor.string);
-        }
-    }
-
-    private void traceTypeDescriptor(TypeDescriptor parameterTypeDescriptor, int slotIndex, int paramIndex) {
-        if (Heap.traceRootScanning()) {
-            Log.print("    Parameter: param index=");
-            Log.print(paramIndex);
-            Log.print(", ");
-            printSlot(slotIndex, Pointer.zero());
-            Log.print(", type=");
-            Log.println(parameterTypeDescriptor.string);
-        }
-    }
-
-    private void setTrampolineStackSlotBitForRegister(int framePointerSlotIndex, int parameterRegisterIndex) {
-        referenceMap.setBit(framePointerSlotIndex + parameterRegisterIndex);
-        if (Heap.traceRootScanning()) {
-            Log.print("    Parameter: register index=");
-            Log.print(parameterRegisterIndex);
-            Log.print(", ");
-            printSlot(framePointerSlotIndex + parameterRegisterIndex, slotAddress(framePointerSlotIndex));
-            Log.println();
-        }
-    }
-
-    /**
-     * Prepares the reference map for the frame of a call to a trampoline from an opto compiled method.
-     *
-     * An opto-compiled caller may pass some arguments in registers.  The trampoline is polymorphic, i.e. it does not have any
-     * helpful maps regarding the actual callee.  It does store all potential parameter registers on its stack, though,
-     * and recovers them before returning.  We mark those that contain references.
-     */
-    private void prepareTrampolineFrameForOptimizedCaller(TargetMethod caller, int callerStopIndex, int offsetToFirstParameter) {
-        final ClassMethodActor callee;
-        final ClassMethodActor trampolineMethodActor = trampolineTargetMethod.classMethodActor();
-        if (trampolineMethodActor.isStaticTrampoline()) {
-            callee = (ClassMethodActor) caller.directCallees()[callerStopIndex];
-        } else {
-            final Object receiver = trampolineRefmapPointer.plus(offsetToFirstParameter).getReference().toJava();
-            final ClassActor classActor = ObjectAccess.readClassActor(receiver);
-            assert trampolineTargetMethod.referenceLiterals().length == 1;
-            final DynamicTrampoline dynamicTrampoline = (DynamicTrampoline) trampolineTargetMethod.referenceLiterals()[0];
-            if (trampolineMethodActor.isVirtualTrampoline()) {
-                callee = classActor.getVirtualMethodActorByVTableIndex(dynamicTrampoline.dispatchTableIndex);
-            } else {
-                callee = classActor.getVirtualMethodActorByIIndex(dynamicTrampoline.dispatchTableIndex);
-            }
-        }
-
-        if (Heap.traceRootScanning()) {
-            Log.print("    Frame pointer: ");
-            printSlot(referenceMapBitIndex(trampolineRefmapPointer), Pointer.zero());
-            Log.println();
-            Log.print("    Callee: ");
-            Log.printMethod(callee, true);
-        }
-
-        final int framePointerSlotIndex = referenceMapBitIndex(trampolineRefmapPointer.plus(offsetToFirstParameter));
-        int parameterRegisterIndex = 0;
-        if (!callee.isStatic()) {
-            setTrampolineStackSlotBitForRegister(framePointerSlotIndex, 0);
-            parameterRegisterIndex = 1;
-        }
-
-        for (int i = 0; i < callee.descriptor().numberOfParameters(); ++i) {
-            final TypeDescriptor parameter = callee.descriptor().parameterDescriptorAt(i);
-            final Kind parameterKind = parameter.toKind();
-            if (parameterKind == Kind.REFERENCE) {
-                setTrampolineStackSlotBitForRegister(framePointerSlotIndex, parameterRegisterIndex);
-            }
-            if (trampolineTargetMethod.abi().putIntoIntegerRegister(parameterKind)) {
-                parameterRegisterIndex++;
-                if (parameterRegisterIndex >= trampolineTargetMethod.abi().integerIncomingParameterRegisters.length()) {
-                    // done since all subsequent parameters are known to be passed on the stack
-                    return;
-                }
-            }
-        }
-    }
-
     public boolean checkIgnoreCurrentFrame() {
         if (ignoreCurrentFrame) {
             // Skipping the top frame
@@ -788,65 +576,6 @@ public final class StackReferenceMapPreparer {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Prepares the part of the reference map corresponding to a single stack frame of a VM thread.
-     *
-     * @param targetMethod the method being executed in the frame
-     * @param ip the current execution point in {@code targetMethod}
-     * @param refmapFramePointer the frame pointer of the frame. The reference map entries for the frame are relative to this address.
-     * @param operandStackPointer the CPU defined stack pointer (e.g. RSP on AMD64)
-     * @param callee the target method whose frame is below this frame being walked (i.e. the frame of {@code
-     *            targetMethod}'s callee). This will be null if {@code targetMethod} called a native function.
-     * @return false to communicate to the enclosing stack walker that this is the last frame to be walked; true if the
-     *         stack walker should continue to the next frame
-     */
-    public boolean prepareFrameReferenceMap(TargetMethod targetMethod, Pointer ip, Pointer refmapFramePointer, Pointer operandStackPointer, int offsetToFirstParameter, TargetMethod callee) {
-
-        if (targetMethod.classMethodActor() != null && targetMethod.classMethodActor().isTrampoline()) {
-            // Since trampolines are reused for different callees with different parameter signatures,
-            // they do not carry enough reference map information for incoming parameters.
-            // We need to find out what the actual callee is before preparing the trampoline frame reference map.
-            // Rather than starting a stack walk from here,
-            // we simply delay processing of the trampoline frame (see below)
-            // until we meet the caller frame during the stack walk we are already in.
-            // For this purpose, we remember this information about the trampoline frame:
-            trampolineTargetMethod = targetMethod;
-            trampolineRefmapPointer = refmapFramePointer;
-        } else {
-            final int stopIndex = targetMethod.findClosestStopIndex(ip);
-            if (stopIndex < 0) {
-                Log.print("Could not find stop position for instruction at position ");
-                Log.print(ip.minus(targetMethod.codeStart()).toInt());
-                Log.print(" in ");
-                Log.printMethod(targetMethod, true);
-                throw FatalError.unexpected("Could not find stop position in target method");
-            }
-
-            if (trampolineTargetMethod != null) {
-                if (Heap.traceRootScanning()) {
-                    Log.print("  Preparing reference map for trampoline frame called by ");
-                    Log.print((targetMethod.isJitCompiled()) ? "JIT'ed" : "optimized");
-                    Log.print(" caller ");
-                    Log.printMethod(targetMethod, true);
-                }
-                if (targetMethod.isJitCompiled()) {
-                    // This is a call from a JIT target method to a trampoline.
-                    prepareTrampolineFrameForJITCaller(targetMethod, ip, refmapFramePointer, operandStackPointer);
-                } else {
-                    // This is a call from an optimized target method to a trampoline.
-                    prepareTrampolineFrameForOptimizedCaller(targetMethod, stopIndex, offsetToFirstParameter);
-                }
-                // Done processing this trampoline frame:
-                trampolineTargetMethod = null;
-                trampolineRefmapPointer = Pointer.zero();
-            }
-            targetMethod.prepareFrameReferenceMap(stopIndex, refmapFramePointer, this);
-        }
-
-        // If the stack reference map is being completed, then the stack walk stops after the first trap stub
-        return !(completingReferenceMap && targetMethod.classMethodActor().isTrapStub());
     }
 
     public void setBits(int baseSlotIndex, byte referenceMapByte) {
@@ -857,7 +586,7 @@ public final class StackReferenceMapPreparer {
      * Updates the reference map bits for a range of slots within a frame.
      *
      * @param cursor the cursor corresponding to the frame for which the bits are being filled in
-     * @param slotPointer the pointer to the first slot that corresponds to bit 0 in the reference map
+     * @param slotPointer the pointer to the slot that corresponds to bit 0 in the reference map
      * @param refMap an integer containing up to 32 reference map bits for up to 32 successive slots in the frame
      * @param numBits the number of bits in the reference map
      */

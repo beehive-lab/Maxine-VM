@@ -60,7 +60,7 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
     }
 
     /**
-     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}.
      */
     @Override
     public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
@@ -68,7 +68,7 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
     }
 
     /**
-     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}.
      */
     @Override
     public void advance(Cursor current) {
@@ -76,7 +76,7 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
     }
 
     /**
-     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}.
      */
     @Override
     public void catchException(Cursor current, Cursor callee, Throwable throwable) {
@@ -84,7 +84,7 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
     }
 
     /**
-     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}.
      */
     @Override
     public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
