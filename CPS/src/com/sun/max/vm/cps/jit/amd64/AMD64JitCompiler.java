@@ -21,6 +21,7 @@
 package com.sun.max.vm.cps.jit.amd64;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -28,6 +29,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -56,6 +58,12 @@ public class AMD64JitCompiler extends JitCompiler {
     public AMD64JitCompiler(VMConfiguration vmConfiguration, TemplateTable templateTable) {
         this(vmConfiguration);
         targetGenerator.initializeTemplateTable(templateTable);
+    }
+
+    @Override
+    public <Type extends TargetMethod> Class<Type> compiledType() {
+        Class<Class<Type>> type = null;
+        return StaticLoophole.cast(type, AMD64JitTargetMethod.class);
     }
 
     @Override

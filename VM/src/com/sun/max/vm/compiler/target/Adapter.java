@@ -22,8 +22,9 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -122,17 +123,12 @@ public abstract class Adapter extends TargetMethod {
     public static final Object[] NO_DIRECT_CALLEES = {};
 
     @Override
-    public RuntimeCompilerScheme compilerScheme() {
-        return null;
-    }
-
-    @Override
     public void forwardTo(TargetMethod newTargetMethod) {
         FatalError.unimplemented();
     }
 
     @Override
-    public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
     }
 
     @Override

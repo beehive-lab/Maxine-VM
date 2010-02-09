@@ -73,7 +73,7 @@ public final class StaticTrampoline extends Snippet {
     }
 
     public static boolean isEntryPoint(Pointer instructionPointer) {
-        codeStart(); // Ensures static fiels are (re)initialized
+        codeStart(); // Ensures static fields are (re)initialized
         return instructionPointer.equals(optEntryPoint) || instructionPointer.equals(jitEntryPoint);
     }
 }

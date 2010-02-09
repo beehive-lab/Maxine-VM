@@ -96,9 +96,9 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<CPSTa
         }
 
         System.out.println("Virtual and Interface calls: ");
-        final AppendableSequence<MethodActor> directCalls = new LinkSequence<MethodActor>();
-        final AppendableSequence<MethodActor> virtualCalls = new LinkSequence<MethodActor>();
-        final AppendableSequence<MethodActor> interfaceCalls = new LinkSequence<MethodActor>();
+        final Set<MethodActor> directCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> virtualCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> interfaceCalls = new HashSet<MethodActor>();
         targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
         for (MethodActor methodActor : virtualCalls) {
             listMethodActor(methodActor, methodActors);

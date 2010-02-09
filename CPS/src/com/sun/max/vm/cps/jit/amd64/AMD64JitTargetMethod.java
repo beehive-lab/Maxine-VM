@@ -30,6 +30,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.cps.target.amd64.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -55,6 +56,11 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
 
     public AMD64JitTargetMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor);
+    }
+
+    @Override
+    protected CPSTargetMethod createDuplicate() {
+        return new AMD64JitTargetMethod(classMethodActor);
     }
 
     @Override

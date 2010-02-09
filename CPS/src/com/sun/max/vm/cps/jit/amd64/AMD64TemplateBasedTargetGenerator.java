@@ -21,10 +21,7 @@
 package com.sun.max.vm.cps.jit.amd64;
 
 import com.sun.max.asm.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.template.*;
 
@@ -34,11 +31,9 @@ import com.sun.max.vm.template.*;
  * @author Laurent Daynes
  */
 public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenerator {
-    private final boolean needsAdapterFrame;
 
     public AMD64TemplateBasedTargetGenerator(JitCompiler jitCompiler) {
         super(jitCompiler, InstructionSet.AMD64);
-        needsAdapterFrame = VMConfiguration.target().needsAdapters();
     }
 
     @Override
@@ -55,13 +50,6 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
         // allocate a buffer that is likely to be large enough, based on a linear expansion
         final int estimatedSize = classMethodActor.codeAttribute().code().length * NUMBER_OF_BYTES_PER_BYTECODE;
         final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
-
-        AdapterGenerator adapterGenerator;
-        if (needsAdapterFrame) {
-            adapterGenerator = AdapterGenerator.forCallee(classMethodActor, VMConfiguration.target().targetABIsScheme().jitABI);
-        } else {
-            adapterGenerator = null;
-        }
-        return new BytecodeToAMD64TargetTranslator(classMethodActor, codeBuffer, templateTable(), adapterGenerator, false);
+        return new BytecodeToAMD64TargetTranslator(classMethodActor, codeBuffer, templateTable(), false);
     }
 }

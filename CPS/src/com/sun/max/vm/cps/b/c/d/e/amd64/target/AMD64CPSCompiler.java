@@ -46,6 +46,9 @@ import com.sun.max.vm.thread.*;
  */
 public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetGeneratorScheme {
 
+    /**
+     * Utility class used to find and patch a call to a {@linkplain StaticTrampoline static trampoline}.
+     */
     static class StaticTrampolineContext implements RawStackFrameVisitor {
 
         @Override
@@ -65,7 +68,7 @@ public final class AMD64CPSCompiler extends BcdeAMD64Compiler implements TargetG
                     final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
                     patchRipCallSite(callSite, calleeEntryPoint);
 
-                    // Make the trampoline's caller re-execute the now modified CALL instruction after we return from the trampoline:
+                    // Make the trampoline's caller re-executes the now modified CALL instruction after we return from the trampoline:
                     Pointer trampolineCallerRipPointer = stackPointer.minus(Word.size());
                     trampolineCallerRipPointer.setWord(callSite); // patch return address
                     return false;

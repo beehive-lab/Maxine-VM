@@ -150,7 +150,7 @@ public interface CompilationScheme extends VMScheme {
                 // fast path: method is already compiled just once
                 current = (TargetMethod) targetState;
             } else {
-                if (MaxineVM.isHosted() && !VMConfiguration.target().bootCompilerScheme().compilesToTargetMethod()) {
+                if (MaxineVM.isHosted() && VMConfiguration.target().bootCompilerScheme().compiledType() == null) {
                     return MethodID.fromMethodActor(classMethodActor).asAddress();
                 }
                 // slower path: method has not been compiled, or been compiled more than once

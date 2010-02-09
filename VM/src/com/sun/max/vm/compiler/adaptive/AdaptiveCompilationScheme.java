@@ -205,7 +205,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 // this method has already been compiled once
                 RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, recommendedCompiler, prohibitedCompiler);
                 TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-                if (targetMethod != null && targetMethod.compilerScheme() == compiler) {
+                if (targetMethod != null && compiler.compiledType() == targetMethod.getClass()) {
                     return targetMethod;
                 }
                 compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());

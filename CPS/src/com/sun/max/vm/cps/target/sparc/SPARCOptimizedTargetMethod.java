@@ -23,8 +23,12 @@ package com.sun.max.vm.cps.target.sparc;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.b.c.d.e.sparc.target.*;
 import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.sparc.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 
 /**
  * @author Bernd Mathiske
@@ -33,6 +37,11 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
 
     public SPARCOptimizedTargetMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor);
+    }
+
+    @Override
+    protected CPSTargetMethod createDuplicate() {
+        return new SPARCOptimizedTargetMethod(classMethodActor);
     }
 
     @Override
@@ -50,4 +59,35 @@ public class SPARCOptimizedTargetMethod extends OptimizedTargetMethod implements
         SPARCTargetMethod.Static.forwardTo(this, newTargetMethod);
     }
 
+    /**
+     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     */
+    @Override
+    public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     */
+    @Override
+    public void advance(Cursor current) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     */
+    @Override
+    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * TODO: Implement based on obsolete and unused code in {@link SPARCCPSCompiler#walkFrame(Cursor, Cursor, Purpose, Object)}
+     */
+    @Override
+    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
+        throw FatalError.unimplemented();
+    }
 }

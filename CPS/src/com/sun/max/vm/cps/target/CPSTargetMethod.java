@@ -28,7 +28,6 @@ import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -37,14 +36,11 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.b.c.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.observer.*;
-import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
-import com.sun.max.vm.stack.StackFrameWalker.*;
 
 /**
  * Target method that saves for each catch block the ranges in the code that can
@@ -212,10 +208,14 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         super.setData(scalarLiterals, referenceLiterals, codeOrCodeBuffer);
     }
 
+    /**
+     * Creates a copy of this target method.
+     */
+    protected abstract CPSTargetMethod createDuplicate();
+
     @Override
     public final TargetMethod duplicate() {
-        final TargetGeneratorScheme targetGeneratorScheme = (TargetGeneratorScheme) compilerScheme();
-        final CPSTargetMethod duplicate = targetGeneratorScheme.targetGenerator().createIrMethod(classMethodActor());
+        final CPSTargetMethod duplicate = createDuplicate();
         final TargetBundleLayout targetBundleLayout = TargetBundleLayout.from(this);
         Code.allocate(targetBundleLayout, duplicate);
         duplicate.setGenerated(
@@ -570,12 +570,31 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         }
     }
 
+    @HOSTED_ONLY
     @Override
-    public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
-        if (compilerScheme() instanceof BcCompiler) {
-            ((BcCompiler) compilerScheme()).gatherCalls(this, directCalls, virtualCalls, interfaceCalls);
-        } else if (compilerScheme() instanceof JitCompiler) {
-            ((JitCompiler) compilerScheme()).gatherCalls(this, directCalls, virtualCalls, interfaceCalls);
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
+        if (directCallees != null) {
+            for (Object o : directCallees) {
+                if (o instanceof MethodActor) {
+                    directCalls.add((MethodActor) o);
+                }
+            }
+        }
+
+        if (!classMethodActor.isTemplate()) {
+            final IndexedSequence<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(compressedJavaFrameDescriptors);
+            final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
+            for (int stopIndex = numberOfDirectCalls(); stopIndex < numberOfCalls; ++stopIndex) {
+                final BytecodeLocation location = frameDescriptors.get(stopIndex);
+                if (location != null) {
+                    final InvokedMethodRecorder invokedMethodRecorder = new InvokedMethodRecorder(location.classMethodActor, directCalls, virtualCalls, interfaceCalls);
+                    final BytecodeScanner bytecodeScanner = new BytecodeScanner(invokedMethodRecorder);
+                    final byte[] bytecode = location.classMethodActor.codeAttribute().code();
+                    if (bytecode != null && location.bytecodePosition < bytecode.length) {
+                        bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition);
+                    }
+                }
+            }
         }
     }
 
@@ -658,25 +677,4 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             writer.outdent();
         }
     }
-
-    @Override
-    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
-    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
-    public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
-        throw ProgramError.unexpected();
-    }
-
-    @Override
-    public void advance(Cursor current) {
-        throw ProgramError.unexpected();
-    }
-
 }

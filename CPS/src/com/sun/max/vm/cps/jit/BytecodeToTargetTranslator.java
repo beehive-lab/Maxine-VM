@@ -133,6 +133,11 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      */
     private AppendableSequence<Switch> switches = new LinkSequence<Switch>();
 
+    /**
+     * Adapter generator when using both an optimizing and jit compiler.
+     */
+    protected final AdapterGenerator adapterGenerator;
+
     public BytecodeToTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, JitStackFrameLayout jitStackFrameLayout, boolean trace) {
         if (classMethodActor.holder().kind == Kind.WORD || SignatureDescriptor.containsWord(classMethodActor.descriptor())) {
             FatalError.unexpected("Cannot JIT compile method that uses Word types: " + classMethodActor.format("%H.%n(%p)"));
@@ -164,7 +169,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         } else {
             this.branchTargets = null;
         }
-
+        adapterGenerator = AdapterGenerator.forCallee(classMethodActor, CallEntryPoint.JIT_ENTRY_POINT);
     }
 
     public abstract TargetABI targetABI();

@@ -43,5 +43,12 @@ public interface RuntimeCompilerScheme extends VMScheme {
      */
     TargetMethod compile(ClassMethodActor classMethodActor);
 
+    /**
+     * Gets the exact subtype of {@link TargetMethod} produces by this compiler.
+     *
+     * @param <Type> the exact type of the object returned by {@link #compile(ClassMethodActor)}
+     */
+    <Type extends TargetMethod> Class<Type> compiledType();
+
     CallEntryPoint calleeEntryPoint();
 }

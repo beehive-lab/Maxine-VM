@@ -28,7 +28,6 @@ import com.sun.c1x.ci.CiTargetMethod.*;
 import com.sun.c1x.ci.CiTargetMethod.ExceptionHandler;
 import com.sun.c1x.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -109,7 +108,7 @@ public class C1XTargetMethod extends TargetMethod {
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
-    public C1XTargetMethod(RuntimeCompilerScheme compilerScheme, ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
+    public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
         super(classMethodActor, VMConfiguration.target().targetABIsScheme().optimizedJavaABI);
         init(ciTargetMethod);
 
@@ -120,7 +119,7 @@ public class C1XTargetMethod extends TargetMethod {
         }
     }
 
-    public C1XTargetMethod(C1XCompilerScheme compilerScheme, String stubName, CiTargetMethod ciTargetMethod) {
+    public C1XTargetMethod(String stubName, CiTargetMethod ciTargetMethod) {
         super(stubName, VMConfiguration.target().targetABIsScheme().optimizedJavaABI);
         init(ciTargetMethod);
 
@@ -129,18 +128,6 @@ public class C1XTargetMethod extends TargetMethod {
                 Log.println(traceToString());
             }
         }
-        if (globalCompilerScheme == null) {
-            globalCompilerScheme = compilerScheme;
-        } else {
-            assert globalCompilerScheme == compilerScheme;
-        }
-    }
-
-    private static C1XCompilerScheme globalCompilerScheme;
-
-    @Override
-    public RuntimeCompilerScheme compilerScheme() {
-        return globalCompilerScheme;
     }
 
     private void init(CiTargetMethod ciTargetMethod) {
@@ -156,7 +143,12 @@ public class C1XTargetMethod extends TargetMethod {
         initExceptionTable(ciTargetMethod);
 
         if (!MaxineVM.isHosted()) {
-            linkDirectCalls(null);
+            Adapter adapter = null;
+            AdapterGenerator generator = AdapterGenerator.forCallee(this);
+            if (generator != null) {
+                adapter = generator.make(classMethodActor);
+            }
+            linkDirectCalls(adapter);
         }
     }
 
@@ -662,12 +654,12 @@ public class C1XTargetMethod extends TargetMethod {
 
     @Override
     @HOSTED_ONLY
-    public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
         // first gather methods in the directCallees array
         if (directCallees != null) {
             for (Object o : directCallees) {
                 if (o instanceof MethodActor) {
-                    directCalls.append((MethodActor) o);
+                    directCalls.add((MethodActor) o);
                 }
             }
         }
@@ -675,10 +667,10 @@ public class C1XTargetMethod extends TargetMethod {
         // iterate over direct calls
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.directCalls) {
             if (site.runtimeCall != null) {
-                directCalls.append(getClassMethodActor(site.runtimeCall, site.method));
+                directCalls.add(getClassMethodActor(site.runtimeCall, site.method));
             } else if (site.method != null) {
                 MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
-                directCalls.append(methodActor);
+                directCalls.add(methodActor);
             }
         }
 
@@ -688,9 +680,9 @@ public class C1XTargetMethod extends TargetMethod {
             if (site.method.isLoaded()) {
                 MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
                 if (site.method.holder().isInterface()) {
-                    interfaceCalls.append(methodActor);
+                    interfaceCalls.add(methodActor);
                 } else {
-                    virtualCalls.append(methodActor);
+                    virtualCalls.add(methodActor);
                 }
             }
         }

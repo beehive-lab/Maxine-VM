@@ -69,20 +69,21 @@ public final class TargetMethodSearchDialog extends TeleObjectSearchDialog {
             }
         } else {
             for (TeleCodeRegion teleCodeRegion : inspection().maxVM().teleCodeRegions()) {
-                for (TeleTargetMethod m : teleCodeRegion.teleTargetMethods()) {
-                    ClassMethodActor methodActor = m.classMethodActor();
+                for (TeleTargetMethod teleTargetMethod : teleCodeRegion.teleTargetMethods()) {
+                    ClassMethodActor methodActor = teleTargetMethod.classMethodActor();
+                    String targetMethodType = Classes.getSimpleName(teleTargetMethod.getTeleHub().getTeleClassActor().getName());
                     if (methodActor != null) {
-                        final String methodNameLowerCase = methodActor.format("%h.%n").toLowerCase();
+                        final String textToMatch = methodActor.format("%h.%n " + targetMethodType).toLowerCase();
                         if (filterLowerCase.isEmpty() ||
-                            (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
-                             methodNameLowerCase.contains(filterLowerCase)) {
-                            final String name = methodActor.format("%h.%n(%p)");
-                            namedTeleTargetMethods.add(new NamedTeleObject(name, m));
+                            (filterLowerCase.endsWith(" ") && textToMatch.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
+                             textToMatch.contains(filterLowerCase)) {
+                            final String name = methodActor.format("%h.%n(%p) [" + targetMethodType + "]");
+                            namedTeleTargetMethods.add(new NamedTeleObject(name, teleTargetMethod));
                         }
                     } else {
-                        String description = m.description();
-                        if (filterLowerCase.isEmpty() || description.toLowerCase().contains(filterLowerCase)) {
-                            namedTeleTargetMethods.add(new NamedTeleObject(description, m));
+                        String description = teleTargetMethod.description();
+                        if (filterLowerCase.isEmpty() || (description + " " + targetMethodType).toLowerCase().contains(filterLowerCase)) {
+                            namedTeleTargetMethods.add(new NamedTeleObject(description + " [" + targetMethodType + "]", teleTargetMethod));
                         }
                     }
                 }

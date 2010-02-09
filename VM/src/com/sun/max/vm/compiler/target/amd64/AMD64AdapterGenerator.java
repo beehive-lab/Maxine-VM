@@ -22,6 +22,8 @@ package com.sun.max.vm.compiler.target.amd64;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
+import java.io.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
@@ -41,7 +43,7 @@ import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Adapter generators for the AMD64 platform.
+ * Adapter generators for AMD64.
  *
  * @author Doug Simon
  */
@@ -301,10 +303,9 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          * </pre>
          */
         @Override
-        protected void emitPrologue(Assembler asm, Adapter adapter) {
-            AMD64Assembler asm64 = (AMD64Assembler) asm;
-
+        protected int emitPrologue(Object out, Adapter adapter) {
             assert adapter != null : "JIT2OPT calls need adapter to save & restore RBP";
+            AMD64Assembler asm64 = out instanceof OutputStream ? new AMD64Assembler() : (AMD64Assembler) out;
 
             // This instruction is 5 bytes long
             int placeholder = 0;
@@ -314,7 +315,10 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             asm64.nop();
             asm64.nop();
             asm64.nop();
-            assert asm64.currentPosition() == PROLOGUE_SIZE;
+            int size = asm64.currentPosition();
+            assert size == PROLOGUE_SIZE;
+            copyIfOutputStream(asm64, out);
+            return size;
         }
 
         @Override
@@ -619,25 +623,30 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          * to the method body.
          */
         @Override
-        protected void emitPrologue(Assembler asm, Adapter adapter) {
-            AMD64Assembler asm64 = (AMD64Assembler) asm;
+        protected int emitPrologue(Object out, Adapter adapter) {
+            AMD64Assembler asm64 = out instanceof OutputStream ? new AMD64Assembler() : (AMD64Assembler) out;
 
             if (adapter == null) {
                 asm64.nop();
                 asm64.directives().align(OPTIMIZED_ENTRY_POINT.offset());
                 assert asm64.currentPosition() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
-            } else {
-                // A JIT caller jumps over the call to the OPT2JIT adapter
-                final int offsetToCall = 6;
-                asm64.jmp((byte) (DIRECT_CALL_SIZE + offsetToCall));
-
-                // Pad with nops up to the OPT entry point
-                asm64.directives().align(OPTIMIZED_ENTRY_POINT.offset());
-
-                int placeholder = 0;
-                asm64.call(placeholder);
-                assert asm64.currentPosition() == PROLOGUE_SIZE;
+                return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
+
+            // A JIT caller jumps over the call to the OPT2JIT adapter
+            final int offsetToCall = 6;
+            asm64.jmp((byte) (DIRECT_CALL_SIZE + offsetToCall));
+
+            // Pad with nops up to the OPT entry point
+            asm64.directives().align(OPTIMIZED_ENTRY_POINT.offset());
+
+            int placeholder = 0;
+            asm64.call(placeholder);
+
+            int size = asm64.currentPosition();
+            assert size == PROLOGUE_SIZE;
+            copyIfOutputStream(asm64, out);
+            return size;
         }
 
         @Override
