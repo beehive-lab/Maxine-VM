@@ -56,7 +56,7 @@ import com.sun.max.vm.stack.*;
  *
  * The memory for each TLA is within a thread locals block allocated by the native code that starts a thread
  * (see the function 'thread_run' in Native/substrate/threads.c). A thread locals block contains not only
- * the three TLAs but other thread local data such as the entry Java frame anchor and the stack
+ * the three TLAs but other thread local data such as the stack
  * reference map. The format of the thread locals block is:
  *
  * <pre>
@@ -73,8 +73,6 @@ import com.sun.max.vm.stack.*;
  *                    |        thread locals area (disabled)        |
  *                    +---------------------------------------------+
  *                    |           NativeThreadLocalsStruct          |
- *                    +---------------------------------------------+
- *                    |               Java frame anchor             |
  *                    +---------------------------------------------+
  *                    |                                             |
  *                    |               reference map                 |
@@ -495,7 +493,7 @@ public class VmThreadLocal {
 
         Pointer anchor = JavaFrameAnchor.from(vmThreadLocals);
         if (!anchor.isZero()) {
-            final Pointer lastJavaCallerStackPointer = anchor.isZero() ? Pointer.zero() : JavaFrameAnchor.SP.get(anchor);
+            final Pointer lastJavaCallerStackPointer = JavaFrameAnchor.SP.get(anchor);
             final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
             final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
             final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
