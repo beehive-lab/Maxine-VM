@@ -24,7 +24,7 @@ function max_cp() {
 }
 
 
-C1X_CP="$(max_cp VM):${MAXINE_HOME}/VM/classes:$(max_cp Base):$(max_cp CRI):$(max_cp C0X):$(max_cp C1X):$(max_cp Assembler):${JUNIT4_CP}:$SPECJVM_NOINPUT_CLASSPATH:${SCIMARK_CP}"
+C1X_CP="$(max_cp VM):${MAXINE_HOME}/VM/classes:$(max_cp Base):$(max_cp CRI):$(max_cp C0X):$(max_cp C1X):$(max_cp MaxineC1X):$(max_cp Assembler):$(max_cp VM):$(max_cp CPS):${JUNIT4_CP}:$SPECJVM_NOINPUT_CLASSPATH:${SCIMARK_CP}"
 
 C1X_TUNING='-XX:MaxPermSize=250m -Xms2g -Xmx2g'
 
@@ -41,11 +41,12 @@ function c1x-opt() {
     
     file=$RESULTS_DIR/static-${benchmark}-${optlevel}.txt
     echo '-->' $file
-    java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -warmup=${warmup} -timing=${timing} -c1x-optlevel=${optlevel} ${classes} > ${file}
+    echo java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -warmup=${warmup} -timing=${timing} -C1X:OptLevel=${optlevel} ${classes} > ${file}
+    java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -warmup=${warmup} -timing=${timing} -C1X:OptLevel=${optlevel} ${classes} >> ${file}
 
     file=$RESULTS_DIR/static-${benchmark}-${optlevel}x.txt
     echo '-->' $file
-    java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS $C1X_XIR -warmup=${warmup} -timing=${timing} -c1x-optlevel=${optlevel} ${classes} > ${file}
+    java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS $C1X_XIR -warmup=${warmup} -timing=${timing} -C1X:OptLevel=${optlevel} ${classes} > ${file}
 }
 
 function c1x() {
