@@ -24,7 +24,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.management.*;
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.management.*;
@@ -86,10 +85,6 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
     @INLINE(override = true)
     public boolean usesTLAB() {
         return false;
-    }
-
-    public void zapRegion(MemoryRegion region) {
-        Memory.setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
     }
 
     public void disableImmortalMemoryAllocation() {

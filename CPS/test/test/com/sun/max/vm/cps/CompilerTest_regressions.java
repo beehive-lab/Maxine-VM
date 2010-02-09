@@ -28,7 +28,6 @@ import jtt.micro.*;
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -314,11 +313,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
 
     public void test_BytecodePrinter_epilog1() {
         final ClassMethodActor methodActor = getClassMethodActor(BytecodePrinter.class, "epilog", SignatureDescriptor.create(void.class));
-        compileMethod(methodActor);
-    }
-
-    public void test_Memory_clear() {
-        final ClassMethodActor methodActor = getClassMethodActor(Memory.class, "clearBytes", SignatureDescriptor.create(void.class, Pointer.class, Size.class));
         compileMethod(methodActor);
     }
 
