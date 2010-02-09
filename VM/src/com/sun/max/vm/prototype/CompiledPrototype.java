@@ -283,9 +283,9 @@ public class CompiledPrototype extends Prototype {
                 }
             }
         }
-        final AppendableSequence<MethodActor> directCalls = new LinkSequence<MethodActor>();
-        final AppendableSequence<MethodActor> virtualCalls = new LinkSequence<MethodActor>();
-        final AppendableSequence<MethodActor> interfaceCalls = new LinkSequence<MethodActor>();
+        final Set<MethodActor> directCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> virtualCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> interfaceCalls = new HashSet<MethodActor>();
         // gather all direct, virtual, and interface calls and add them
         targetMethod.gatherCalls(directCalls, virtualCalls, interfaceCalls);
         addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
@@ -619,7 +619,7 @@ public class CompiledPrototype extends Prototype {
             if (targetMethod.classMethodActor() != null) {
                 if (!(targetMethod instanceof Adapter)) {
                     ClassMethodActor classMethodActor = targetMethod.classMethodActor;
-                    AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.abi());
+                    AdapterGenerator gen = AdapterGenerator.forCallee(classMethodActor, targetMethod.abi().callEntryPoint);
                     Adapter adapter = gen != null ? gen.make(classMethodActor) : null;
                     if (!targetMethod.linkDirectCalls(adapter)) {
                         ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);

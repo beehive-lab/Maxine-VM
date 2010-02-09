@@ -23,6 +23,7 @@ package com.sun.max.vm.cps;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
@@ -114,6 +115,16 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public final <Type extends TargetMethod> Class<Type> compiledType() {
+        Class irMethodType = irGenerator().irMethodType;
+        if (TargetMethod.class.isAssignableFrom(irMethodType)) {
+            Class<Class<Type>> type = null;
+            return StaticLoophole.cast(type, irMethodType);
+        }
+        return null;
+    }
+
     public boolean compilesToTargetMethod() {
         return TargetMethod.class.isAssignableFrom(irGenerator().irMethodType);
     }
@@ -128,11 +139,6 @@ public abstract class CPSAbstractCompiler extends AbstractVMScheme implements Bo
 
     public final IrMethod compileIR(ClassMethodActor classMethodActor) {
         return irGenerator().makeIrMethod(classMethodActor);
-    }
-
-    @HOSTED_ONLY
-    public void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
-        throw new UnsupportedOperationException();
     }
 
     @HOSTED_ONLY

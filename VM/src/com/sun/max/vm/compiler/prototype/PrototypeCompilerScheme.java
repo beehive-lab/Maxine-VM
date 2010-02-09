@@ -37,10 +37,6 @@ public class PrototypeCompilerScheme extends AbstractVMScheme implements Bootstr
         super(vmConfiguration);
     }
 
-    public boolean compilesToTargetMethod() {
-        return false;
-    }
-
     public void createBuiltins(PackageLoader packageLoader) {
     }
 
@@ -49,6 +45,11 @@ public class PrototypeCompilerScheme extends AbstractVMScheme implements Bootstr
 
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
+    }
+
+    @Override
+    public <Type extends TargetMethod> Class<Type> compiledType() {
+        return null;
     }
 
     public void staticTrampoline() {

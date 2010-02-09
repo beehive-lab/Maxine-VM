@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -680,7 +679,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * @param interfaceCalls a sequence of interface calls to which this method should append
      */
     @HOSTED_ONLY
-    public abstract void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
+    public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls);
 
     public abstract void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer);
 
@@ -784,13 +783,4 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * @param current the current stack frame cursor
      */
     public abstract void advance(Cursor current);
-
-    /**
-     * Gets the compiler scheme that produced this target method.
-     *
-     * @return {@code null} if this target method was manually assembled (e.g. code stub, adapter)
-     */
-    public RuntimeCompilerScheme compilerScheme() {
-        return null;
-    }
 }

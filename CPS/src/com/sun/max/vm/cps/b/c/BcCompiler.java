@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.cps.b.c;
 
+import java.util.*;
+
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -27,7 +29,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
@@ -36,7 +37,6 @@ import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.CirTraceObserver.*;
 import com.sun.max.vm.cps.cir.optimize.*;
 import com.sun.max.vm.cps.cir.snippet.*;
-import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.type.*;
@@ -77,7 +77,6 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
     @Override
     public void createSnippets(PackageLoader packageLoader) {
         super.createSnippets(packageLoader);
-//        packageLoader.loadAndInitializeAllAndInstantiateLeaves(CirSnippet.class);
     }
 
     @HOSTED_ONLY
@@ -176,53 +175,9 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         }
     }
 
-    private void traceAfterFindMethodActors(TargetMethod targetMethod, AppendableSequence<MethodActor> result) {
+    private void traceAfterFindMethodActors(TargetMethod targetMethod, Set<MethodActor> result) {
         if (Trace.hasLevel(5)) {
-            Trace.end(5, result.length() + " methodActorsReferencedByCalls: " + targetMethod.classMethodActor().format("%R %n(%P)"));
+            Trace.end(5, result.size() + " methodActorsReferencedByCalls: " + targetMethod.classMethodActor().format("%R %n(%P)"));
         }
-    }
-
-    @HOSTED_ONLY
-    @Override
-    public void gatherCalls(final TargetMethod targetMethod,
-                    final AppendableSequence<MethodActor> directCalls,
-                    final AppendableSequence<MethodActor> virtualCalls,
-                    final AppendableSequence<MethodActor> interfaceCalls) {
-        traceBeforeFindMethodActors(targetMethod);
-        final Object[] directCallees = targetMethod.directCallees();
-        if (directCallees != null) {
-            for (Object o : directCallees) {
-                if (o instanceof MethodActor) {
-                    directCalls.append((MethodActor) o);
-                }
-            }
-        }
-        final CirMethod cirMethod = cirGenerator().getCirMethod(targetMethod.classMethodActor());
-        if (cirMethod == null || !cirMethod.isGenerated()) {
-            // do nothing.
-            return;
-        }
-        // collect all virtual and interface calls by visiting the optimized CIR code,
-        // relating CIR call nodes back to their bytecode source.
-        final CirVisitor collector = new CirVisitor() {
-            @Override
-            public void visitCall(CirCall call) {
-                final BytecodeLocation location = call.javaFrameDescriptor();
-                if (location != null) {
-                    final InvokedMethodRecorder invokedMethodRecorder = new InvokedMethodRecorder(location.classMethodActor, directCalls, virtualCalls, interfaceCalls);
-                    final BytecodeScanner bytecodeScanner = new BytecodeScanner(invokedMethodRecorder);
-                    try {
-                        final byte[] bytecode = location.classMethodActor.codeAttribute().code();
-                        if (bytecode != null && location.bytecodePosition < bytecode.length) {
-                            bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition);
-                        }
-                    } catch (Throwable throwable) {
-                        ProgramError.unexpected("could not scan byte code in " + targetMethod.classMethodActor().holder().name + "." + targetMethod.classMethodActor().name, throwable);
-                    }
-                }
-            }
-        };
-        CirVisitingTraversal.apply(cirMethod.closure(), collector);
-        traceAfterFindMethodActors(targetMethod, directCalls);
     }
 }

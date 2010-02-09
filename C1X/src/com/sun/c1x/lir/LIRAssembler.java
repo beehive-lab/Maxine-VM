@@ -49,7 +49,6 @@ public abstract class LIRAssembler {
     public final boolean is32;
     public final boolean is64;
 
-    protected LocalStub adapterFrameStub;
     protected final List<LocalStub> localStubs;
     protected final List<SlowPath> xirSlowPath;
     protected final List<BlockBegin> branchTargetBlocks;
@@ -98,11 +97,6 @@ public abstract class LIRAssembler {
 
         for (SlowPath sp : xirSlowPath) {
             emitSlowPath(sp);
-        }
-
-        // Adapter frame stub must come last!
-        if (adapterFrameStub != null) {
-            emitCode(adapterFrameStub);
         }
 
         // No more code may be emitted after this point

@@ -61,11 +61,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
         // allocate a buffer that is likely to be large enough, based on a linear expansion
         final  int estimatedSize = classMethodActor.codeAttribute().code().length * NUMBER_OF_BYTES_PER_BYTECODE;
         final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
-        SPARCEirABI optimizingCompilerAbi = null;
-        if (needsAdapterFrame) {
-            optimizingCompilerAbi = getABI(classMethodActor);
-        }
-        return new BytecodeToSPARCTargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, false);
+        return new BytecodeToSPARCTargetTranslator(classMethodActor, codeBuffer, templateTable(), false);
     }
 
 }

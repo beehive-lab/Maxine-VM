@@ -28,7 +28,5 @@ package com.sun.c1x.stub;
  */
 public interface LocalStubVisitor {
 
-    void visitAdapterFrameStub(AdapterFrameStub adapterFrameStub);
-
     void visitThrowStub(ThrowStub throwStub);
 }

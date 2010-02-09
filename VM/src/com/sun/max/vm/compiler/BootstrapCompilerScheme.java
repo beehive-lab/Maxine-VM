@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
  * This compiler interface extends the {@link RuntimeCompilerScheme} to denote the extra operations
@@ -80,13 +79,4 @@ public interface BootstrapCompilerScheme extends RuntimeCompilerScheme {
      * this method in order to resolve and/or compile their targets.
      */
     void staticTrampoline();
-
-    /**
-     * Determines if the {@link #compile(com.sun.max.vm.actor.member.ClassMethodActor)} method actually
-     * returns a {@link TargetMethod} instance.
-     *
-     * This is only required while the CPS compiler exists and is composed of intermediate compilers
-     * that produce IR methods that are not TargetMethods.
-     */
-    boolean compilesToTargetMethod();
 }

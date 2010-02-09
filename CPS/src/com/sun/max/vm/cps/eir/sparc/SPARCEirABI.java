@@ -20,12 +20,11 @@
  */
 package com.sun.max.vm.cps.eir.sparc;
 
-import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.GeneralPurpose.*;
 import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.*;
+import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.GeneralPurpose.*;
 import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.SinglePrecision.*;
 
 import com.sun.max.asm.sparc.*;
-import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -314,10 +313,6 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     @Override
     public Sequence<SPARCEirRegister> floatingPointParameterRegisters() {
         return floatingPointOutRegisters;
-    }
-
-    public SPARCAssembler createAssembler() {
-        return SPARCAssembler.createAssembler(vmConfiguration().platform().processorKind.dataModel.wordWidth);
     }
 
     protected SPARCEirABI(VMConfiguration vmConfiguration) {

@@ -48,7 +48,7 @@ public final class AMD64EirToTargetTranslator extends EirToTargetTranslator {
 
     @Override
     protected EirTargetEmitter createEirTargetEmitter(EirMethod eirMethod) {
-        AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(eirMethod.classMethodActor(), eirMethod.abi.targetABI());
+        AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(eirMethod.classMethodActor(), eirMethod.abi.targetABI().callEntryPoint);
         return new AMD64EirTargetEmitter((AMD64EirABI) eirMethod.abi, eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint, adapterGenerator);
     }
 

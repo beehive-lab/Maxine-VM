@@ -54,6 +54,11 @@ public class IrTargetMethod extends CPSTargetMethod {
     }
 
     @Override
+    protected CPSTargetMethod createDuplicate() {
+        throw ProgramError.unexpected();
+    }
+
+    @Override
     public Word getEntryPoint(CallEntryPoint callEntryPoint) {
         return irMethod.getEntryPoint(callEntryPoint);
     }
@@ -90,6 +95,11 @@ public class IrTargetMethod extends CPSTargetMethod {
 
     @Override
     public void advance(Cursor current) {
+        throw ProgramError.unexpected();
+    }
+
+    @Override
+    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         throw ProgramError.unexpected();
     }
 }

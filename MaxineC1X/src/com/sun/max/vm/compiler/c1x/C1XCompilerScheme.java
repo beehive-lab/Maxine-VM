@@ -72,6 +72,12 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
     }
 
     @Override
+    public <Type extends TargetMethod> Class<Type> compiledType() {
+        Class<Class<Type>> type = null;
+        return StaticLoophole.cast(type, C1XTargetMethod.class);
+    }
+
+    @Override
     public void initialize(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.BOOTSTRAPPING) {
             if (MaxineVM.isHosted()) {
@@ -106,7 +112,7 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                 RiMethod method = c1xRuntime.getRiMethod(classMethodActor);
                 CiTargetMethod compiledMethod = c1xCompiler.compileMethod(method, c1xXirGenerator).targetMethod();
                 if (compiledMethod != null) {
-                    C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(C1XCompilerScheme.this, classMethodActor, compiledMethod);
+                    C1XTargetMethod c1xTargetMethod = new C1XTargetMethod(classMethodActor, compiledMethod);
                     CompilationScheme.Static.notifyCompilationComplete(c1xTargetMethod);
                     return c1xTargetMethod;
                 }

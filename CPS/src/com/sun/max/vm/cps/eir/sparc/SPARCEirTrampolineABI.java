@@ -40,8 +40,6 @@ public class SPARCEirTrampolineABI extends SPARCEirJavaABI {
         }
 
         // Make all potential parameters of the trampoline's compilee callee-saved
-        PoolSet.addAll(calleeSavedRegisters, integerParameterRegisters());
-        PoolSet.addAll(calleeSavedRegisters, floatingPointParameterRegisters());
+        calleeSavedRegisters = Sequence.Static.concatenated(integerParameterRegisters(), floatingPointParameterRegisters());
     }
-
 }

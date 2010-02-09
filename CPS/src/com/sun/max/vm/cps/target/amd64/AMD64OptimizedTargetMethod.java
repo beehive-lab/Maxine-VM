@@ -42,6 +42,11 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
     }
 
     @Override
+    protected CPSTargetMethod createDuplicate() {
+        return new AMD64OptimizedTargetMethod(classMethodActor);
+    }
+
+    @Override
     public int callerInstructionPointerAdjustment() {
         return -1;
     }

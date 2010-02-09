@@ -178,12 +178,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
      */
     private final BranchConditionMap<AMD64InstructionEditor> rel32BranchEditors;
 
-    /**
-     * Adapter Frame Generator when using both an optimizing and jit compiler.
-     */
-    private final AdapterGenerator adapterGenerator;
-
-    public BytecodeToAMD64TargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, AdapterGenerator adapterGenerator, boolean trace) {
+    public BytecodeToAMD64TargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, boolean trace) {
         super(classMethodActor, codeBuffer, templateTable, new AMD64JitStackFrameLayout(classMethodActor, templateTable.maxFrameSlots), trace);
         rel8BranchEditors = new BranchConditionMap<AMD64InstructionEditor>();
         rel32BranchEditors = new BranchConditionMap<AMD64InstructionEditor>();
@@ -195,7 +190,6 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             rel8BranchEditors.put(cond, new AMD64InstructionEditor(rel8BranchTemplates.get(cond).clone()));
             rel32BranchEditors.put(cond, new AMD64InstructionEditor(rel32BranchTemplates.get(cond).clone()));
         }
-        this.adapterGenerator = adapterGenerator;
     }
 
     @Override
@@ -411,19 +405,19 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     public Adapter emitPrologue() {
+        Adapter adapter = null;
         if (adapterGenerator != null) {
-            Adapter adapter = adapterGenerator.adapt(classMethodActor, asm);
-
-            // method entry point: setup a regular frame
-            asm.enter((short) (jitStackFrameLayout.frameSize() - Word.size()), (byte) 0);
-            asm.subq(TARGET_ABI.framePointer(), framePointerAdjustment());
-            if (Trap.STACK_BANGING) {
-                asm.mov(TARGET_ABI.scratchRegister(), -Trap.stackGuardSize, TARGET_ABI.stackPointer().indirect());
-            }
-            codeBuffer.emitCodeFrom(asm);
-            return adapter;
+            adapter = adapterGenerator.adapt(classMethodActor, asm);
         }
-        return null;
+
+        // method entry point: setup a regular frame
+        asm.enter((short) (jitStackFrameLayout.frameSize() - Word.size()), (byte) 0);
+        asm.subq(TARGET_ABI.framePointer(), framePointerAdjustment());
+        if (Trap.STACK_BANGING) {
+            asm.mov(TARGET_ABI.scratchRegister(), -Trap.stackGuardSize, TARGET_ABI.stackPointer().indirect());
+        }
+        codeBuffer.emitCodeFrom(asm);
+        return adapter;
     }
 
     private int framePointerAdjustment() {
