@@ -242,7 +242,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopMenu.add(actions.viewStack());
         desktopMenu.add(actions.viewThreads());
         desktopMenu.add(actions.viewVmThreadLocals());
-        if (inspection.maxVM().watchpointsEnabled()) {
+        if (inspection.watchpointsEnabled()) {
             desktopMenu.add(actions.viewWatchpoints());
         }
 

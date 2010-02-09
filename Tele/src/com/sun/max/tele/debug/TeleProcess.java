@@ -174,13 +174,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                             case WATCHPOINT:
                                 eventCauseFound = true;
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
-                                final TeleWatchpoint systemTeleWatchpoint = watchpointFactory().findSystemWatchpoint(triggeredWatchpointAddress);
+                                final TeleWatchpoint systemTeleWatchpoint = watchpointFactory.findSystemWatchpoint(triggeredWatchpointAddress);
                                 if (systemTeleWatchpoint != null && systemTeleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering system watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
                                     resumeExecution = false;
                                 }
-                                final TeleWatchpoint clientTeleWatchpoint = watchpointFactory().findClientWatchpoint(triggeredWatchpointAddress);
+                                final TeleWatchpoint clientTeleWatchpoint = watchpointFactory.findClientWatchpointContaining(triggeredWatchpointAddress);
                                 if (clientTeleWatchpoint != null && clientTeleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering client watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
@@ -234,10 +234,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
 
         /**
-         * Schedule a request.
-         * @param request the request
-         * @param isSynchronous true if the request should be performed synchronously
-         * @see TeleProcess#scheduleRequest(TeleEventRequest, boolean)
+         * Accepts a tele process execution request and schedules it for execution on the
+         * {@linkplain #requestHandlingThread() request handling thread}. The request is executed immediately if the
+         * {@linkplain Thread#currentThread() current} thread is the request handling thread. Otherwise, it will be executed
+         * once any pending request has completed.
+         *
+         * @param request an execution request to schedule
+         * @param synchronous if this value is true or the {@linkplain Thread#currentThread() current thread} is the
+         *            {@linkplain #requestHandlingThread() request handling thread}, this method will block until the
+         *            request's post execution action has
+         *            completed. Otherwise, this method returns after scheduling the request and notifying the request
+         *            handling thread.
          */
         void scheduleRequest(TeleEventRequest request, boolean isSynchronous) {
             final Thread currentThread = Thread.currentThread();
@@ -256,14 +263,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 }
 
                 if (isSynchronous) {
-                    waitForSynchronousRequestToComplete(request);
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
+                    request.waitUntilComplete();
+                    Trace.end(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
                 }
             }
-        }
-        private void waitForSynchronousRequestToComplete(TeleEventRequest request) {
-            Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
-            request.waitUntilComplete();
-            Trace.end(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
         }
 
         private void execute(TeleEventRequest request, boolean isNested) {
@@ -289,11 +293,14 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             while (true) {
                 try {
                     final TeleEventRequest request = requests.takeLast();
+                    teleVM().lock();
                     Trace.begin(TRACE_VALUE, tracePrefix() + "handling execution request: " + request);
                     execute(request, false);
                     Trace.end(TRACE_VALUE, tracePrefix() + "handling execution request: " + request);
                 } catch (InterruptedException interruptedException) {
                     ProgramWarning.message(tracePrefix() + "Could not take request from sceduling queue: " + interruptedException);
+                } finally {
+                    teleVM().unlock();
                 }
             }
         }
@@ -307,6 +314,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     private final Platform platform;
 
     private final TeleTargetBreakpoint.Factory targetBreakpointFactory;
+
+    private final int maximumWatchpointCount;
 
     /**
      * A factory for creating and managing memory watchpoints in the VM;
@@ -372,6 +381,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         this.processState = initialState;
         epoch = 0;
         this.targetBreakpointFactory = new TeleTargetBreakpoint.Factory(teleVM);
+        this.maximumWatchpointCount = platformWatchpointCount();
         this.watchpointFactory = watchpointsEnabled() ? new TeleWatchpoint.Factory(teleVM, this) : null;
 
         //Initiate the thread that continuously waits on the running process.
@@ -388,6 +398,16 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     public final void initializeState() {
         teleVM().refresh(epoch);
         updateState(processState);
+    }
+
+    /**
+     * Gets the singleton for creating and managing VM watchpoints; null if not enabled
+     * on this platform.
+     *
+     * @return the creator/manager of watchpoints; null watchpoints not supported on platform.
+     */
+    public final TeleWatchpoint.Factory watchpointFactory() {
+        return watchpointFactory;
     }
 
     /**
@@ -409,7 +429,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.end(TRACE_VALUE, tracePrefix() + SINGLE_STEP + " perform");
             }
         };
-        scheduleRequest(request, isSynchronous);
+        requestHandlingThread.scheduleRequest(request, isSynchronous);
         Trace.end(TRACE_VALUE, tracePrefix() + SINGLE_STEP + " schedule");
     }
 
@@ -458,7 +478,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 }
             }
         };
-        scheduleRequest(request, synchronous);
+        requestHandlingThread.scheduleRequest(request, synchronous);
         Trace.end(TRACE_VALUE, STEP_OVER + " schedule");
     }
 
@@ -490,7 +510,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.end(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " perform");
             }
         };
-        scheduleRequest(request, synchronous);
+        requestHandlingThread.scheduleRequest(request, synchronous);
         Trace.end(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " schedule");
     }
 
@@ -513,7 +533,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.end(TRACE_VALUE, tracePrefix() + RESUME + " perform");
             }
         };
-        scheduleRequest(request, synchronous);
+        requestHandlingThread.scheduleRequest(request, synchronous);
         Trace.end(TRACE_VALUE, tracePrefix() + RESUME + " schedule");
     }
 
@@ -550,12 +570,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         Trace.end(TRACE_VALUE, tracePrefix() + TERMINATE + " perform");
     }
 
-
-
     /**
-     * Gets the current epoch: the number of requested execution steps of the process since it was created.
+     * Gets the current process epoch: the number of requested execution steps of the process since it was created.
+     * <br>
+     * Note that this is different from the number of execution requests made by clients, since the process
+     * may be run several times in the execution of such a request.
      *
-     * @return the current epoch
+     * @return the current process epoch
      */
     public final long epoch() {
         return epoch;
@@ -606,13 +627,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
-     * @return true if the tele is ready to execute a command that puts it in the {@link ProcessState#RUNNING} state.
-     */
-    public final boolean isReadyToRun() {
-        return processState == STOPPED;
-    }
-
-    /**
      * Gets the set of all the threads in this process the last time it stopped.
      * The returned threads are sorted in ascending order of their {@linkplain TeleNativeThread#id() identifiers}.
      *
@@ -623,61 +637,26 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
-     * Determines whether an address corresponds to a current instruction pointer.
+     * Thread-safe.
      *
-     * @param address a memory address in the process
-     * @return whether one of the process threads is currently at the address.
-     */
-    public final boolean isInstructionPointer(Address address) {
-        return instructionPointers.contains(address.toLong());
-    }
-
-    /**
      * @return whether watchpoints are supported on this platform.
      */
     public boolean watchpointsEnabled() {
-        return maximumWatchpointCount() > 0;
+        return maximumWatchpointCount > 0;
     }
 
     /**
      * @return factory for creation and management of target breakpoints in the process,
-     * null if watchpoints not enabled.
-     * @see #watchpointsEnabled()
      */
     public final TeleTargetBreakpoint.Factory targetBreakpointFactory() {
         return targetBreakpointFactory;
     }
 
     /**
-     * @return factory for creation and management of memory watchpoints in the process.
-     */
-    public final TeleWatchpoint.Factory watchpointFactory() {
-        return watchpointFactory;
-    }
-
-    /**
      * @return platform-specific limit on how many memory watchpoints can be
      * simultaneously active; 0 if memory watchpoints are not supported on the platform.
      */
-    public abstract int maximumWatchpointCount();
-
-    /**
-     * Accepts a tele process execution request and schedules it for execution on the
-     * {@linkplain #requestHandlingThread() request handling thread}. The request is executed immediately if the
-     * {@linkplain Thread#currentThread() current} thread is the request handling thread. Otherwise, it will be executed
-     * once any pending request has completed.
-     *
-     * @param request an execution request to schedule
-     * @param synchronous if this value is true or the {@linkplain Thread#currentThread() current thread} is the
-     *            {@linkplain #requestHandlingThread() request handling thread}, this method will block until the
-     *            request's post execution action has
-     *            completed. Otherwise, this method returns after scheduling the request and notifying the request
-     *            handling thread.
-     */
-    public final void scheduleRequest(TeleEventRequest request, boolean synchronous) {
-        requestHandlingThread.scheduleRequest(request, synchronous);
-    }
-
+    protected abstract int platformWatchpointCount();
 
     /**
      * @return tracing level of the underlying transportation

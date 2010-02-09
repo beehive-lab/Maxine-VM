@@ -18,27 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.management;
+package com.sun.max.tele;
 
-import com.sun.max.vm.*;
 
 /**
- * This class provides the entry point to all the runtime management functions in Maxine.
- * TODO: complete
+ * Signifies that non thread-safe data about the state of the VM is currently
+ * unavailable.
  *
- * @author Mick Jordan
+ * @author Michael Van De Vanter
  */
+public class MaxVMBusyException extends MaxException {
 
-public class RuntimeManagement {
-    public static String getVmArguments() {
-        return VMOptions.getVmArguments();
+    /**
+     * Creates an exception signifying that non thread-safe data about the state
+     * of the VM is currently unavailable.
+     */
+    public MaxVMBusyException(String message) {
+        super(message);
     }
 
-    public static long getStartupTime() {
-        return MaxineVM.getStartupTime();
+    /**
+     * Creates an exception signifying that non thread-safe data about the state
+     * of the VM is currently unavailable.
+     */
+    public MaxVMBusyException() {
+        this("");
     }
 
-    public static long getUptime() {
-        return System.currentTimeMillis() - MaxineVM.getStartupTime();
-    }
 }

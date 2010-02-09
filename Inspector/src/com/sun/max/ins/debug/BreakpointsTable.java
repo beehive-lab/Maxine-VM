@@ -49,7 +49,7 @@ public final class BreakpointsTable extends InspectorTable {
 
     public BreakpointsTable(Inspection inspection, BreakpointsViewPreferences viewPreferences) {
         super(inspection);
-        tableModel = new BreakpointsTableModel();
+        tableModel = new BreakpointsTableModel(inspection);
         columnModel = new BreakpointsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
     }
@@ -59,31 +59,31 @@ public final class BreakpointsTable extends InspectorTable {
         final BreakpointData breakpointData = tableModel.get(row);
         final InspectorPopupMenu menu = new InspectorPopupMenu("Breakpoints");
         final String shortName = breakpointData.shortName();
-        menu.add(inspection().actions().removeBreakpoint(breakpointData.breakpoint(), "Remove: " + shortName));
+        menu.add(actions().removeBreakpoint(breakpointData.breakpoint(), "Remove: " + shortName));
         if (breakpointData.isEnabled()) {
-            menu.add(inspection().actions().disableBreakpoint(breakpointData.breakpoint(), "Disable: " + shortName));
+            menu.add(actions().disableBreakpoint(breakpointData.breakpoint(), "Disable: " + shortName));
         } else {
-            menu.add(inspection().actions().enableBreakpoint(breakpointData.breakpoint(), "Enable: " + shortName));
+            menu.add(actions().enableBreakpoint(breakpointData.breakpoint(), "Enable: " + shortName));
         }
         menu.addSeparator();
         final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
-        methodEntryBreakpoints.add(inspection().actions().setTargetCodeBreakpointAtMethodEntriesByName());
-        methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByName());
-        methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByKey());
+        methodEntryBreakpoints.add(actions().setTargetCodeBreakpointAtMethodEntriesByName());
+        methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByName());
+        methodEntryBreakpoints.add(actions().setBytecodeBreakpointAtMethodEntryByKey());
         menu.add(methodEntryBreakpoints);
-        menu.add(inspection().actions().setTargetCodeBreakpointAtObjectInitializer());
-        menu.add(inspection().actions().removeAllBreakpoints());
+        menu.add(actions().setTargetCodeBreakpointAtObjectInitializer());
+        menu.add(actions().removeAllBreakpoints());
         menu.addSeparator();
-        menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
+        menu.add(actions().removeAllTargetCodeBreakpoints());
         menu.addSeparator();
-        menu.add(inspection().actions().removeAllBytecodeBreakpoints());
+        menu.add(actions().removeAllBytecodeBreakpoints());
         return menu;
     }
 
     @Override
     public void updateFocusSelection() {
         // Sets table selection to breakpoint, if any, that is the current user focus.
-        final MaxBreakpoint breakpoint = inspection().focus().breakpoint();
+        final MaxBreakpoint breakpoint = focus().breakpoint();
         final int row = tableModel.findRow(breakpoint);
         updateSelection(row);
     }
@@ -134,6 +134,10 @@ public final class BreakpointsTable extends InspectorTable {
      * @author Michael Van De Vanter
      */
     private final class BreakpointsTableModel extends InspectorTableModel {
+
+        public BreakpointsTableModel(Inspection inspection) {
+            super(inspection);
+        }
 
         // Cache of information objects for each known breakpoint
         private final Set<BreakpointData> breakpoints = new TreeSet<BreakpointData>();
@@ -326,7 +330,7 @@ public final class BreakpointsTable extends InspectorTable {
      * @return color the text specially in the row where a triggered breakpoint is displayed
      */
     private Color getRowTextColor(int row) {
-        return (tableModel.get(row).triggerThread() == null) ? null : inspection().style().debugIPTagColor();
+        return (tableModel.get(row).triggerThread() == null) ? null : style().debugIPTagColor();
     }
 
     private final class TagCellRenderer extends PlainLabel implements TableCellRenderer {
@@ -338,7 +342,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = tableModel.get(row);
-            setIcon((breakpointData.triggerThread() == null) ? null : inspection().style().debugIPTagIcon());
+            setIcon((breakpointData.triggerThread() == null) ? null : style().debugIPTagIcon());
             setText(breakpointData.kindTag());
             setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.isEnabled() ? "true" : "false"));
             setForeground(getRowTextColor(row));
@@ -383,7 +387,7 @@ public final class BreakpointsTable extends InspectorTable {
     private final class ConditionCellRenderer extends DefaultTableCellRenderer implements Prober {
 
         ConditionCellRenderer() {
-            setFont(inspection().style().defaultFont());
+            setFont(style().defaultFont());
             setOpaque(true);
         }
 
@@ -397,7 +401,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
 
         public void redisplay() {
-            setFont(inspection().style().defaultFont());
+            setFont(style().defaultFont());
         }
 
         public void refresh(boolean force) {
@@ -515,7 +519,8 @@ public final class BreakpointsTable extends InspectorTable {
          */
         final MaxThread triggerThread() {
             for (MaxBreakpointEvent breakpointEvent : maxVMState().breakpointEvents()) {
-                if (breakpointEvent.breakpoint() == breakpoint) {
+                final MaxBreakpoint triggeredBreakpoint = breakpointEvent.breakpoint();
+                if (triggeredBreakpoint == breakpoint || triggeredBreakpoint.owner() == breakpoint) {
                     return breakpointEvent.thread();
                 }
             }

@@ -22,12 +22,66 @@ package com.sun.max.ins.gui;
 
 import javax.swing.table.*;
 
+import com.sun.max.ins.*;
+import com.sun.max.tele.*;
+
 /**
  * A table model specialized for Inspector's table-based views.
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorTableModel extends AbstractTableModel {
+public abstract class InspectorTableModel extends AbstractTableModel implements InspectionHolder {
+
+    private final Inspection inspection;
+    private final String tracePrefix;
+
+    public InspectorTableModel(Inspection inspection) {
+        this.inspection = inspection;
+        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
+    }
+
+    public final Inspection inspection() {
+        return inspection;
+    }
+
+    public final MaxVM maxVM() {
+        return inspection.maxVM();
+    }
+
+    public final MaxVMState maxVMState() {
+        return inspection.maxVMState();
+    }
+
+    public final MaxWatchpointFactory watchpointFactory() {
+        return inspection.watchpointFactory();
+    }
+
+    public final boolean watchpointsEnabled() {
+        return inspection.watchpointsEnabled();
+    }
+
+    public InspectorGUI gui() {
+        return inspection.gui();
+    }
+
+    public final InspectorStyle style() {
+        return inspection.style();
+    }
+
+    public final InspectionFocus focus() {
+        return inspection.focus();
+    }
+
+    public final InspectionActions actions() {
+        return inspection.actions();
+    }
+
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return tracePrefix;
+    }
 
     public void refresh() {
         fireTableDataChanged();

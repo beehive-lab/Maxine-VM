@@ -53,13 +53,13 @@ public class MemoryRegionValueLabel extends ValueLabel {
             if (memoryRegion != null) {
                 switch (Inspection.mouseButtonWithModifiers(mouseEvent)) {
                     case MouseEvent.BUTTON1: {
-                        inspection().focus().setMemoryRegion(memoryRegion);
+                        focus().setMemoryRegion(memoryRegion);
                         break;
                     }
                     case MouseEvent.BUTTON3: {
                         final InspectorPopupMenu menu = new InspectorPopupMenu();
-                        menu.add(inspection().actions().inspectRegionMemoryWords(memoryRegion, regionName));
-                        menu.add(inspection().actions().selectMemoryRegion(memoryRegion));
+                        menu.add(actions().inspectRegionMemoryWords(memoryRegion, regionName));
+                        menu.add(actions().selectMemoryRegion(memoryRegion));
                         menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                         break;
                     }

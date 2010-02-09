@@ -2083,7 +2083,7 @@ void *JVM_GetManagement(jint version) {
  */
 jobject
 JVM_InitAgentProperties(JNIEnv *env, jobject agent_props) {
-    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "InitAgentProperties", "(Ljava/util/Properties;)Ljava/util/properties;");
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "InitAgentProperties", "(Ljava/util/Properties;)Ljava/util/Properties;");
     return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, agent_props);
 }
 

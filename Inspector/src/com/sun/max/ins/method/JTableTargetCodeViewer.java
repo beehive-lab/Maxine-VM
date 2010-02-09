@@ -76,7 +76,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         this.inspection = inspection;
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
-        this.tableModel = new TargetCodeTableModel(teleTargetRoutine.getInstructions());
+        this.tableModel = new TargetCodeTableModel(inspection, teleTargetRoutine.getInstructions());
         this.columns = new TableColumn[TargetCodeColumnKind.VALUES.length()];
         instanceViewPreferences = new TargetCodeViewPreferences(TargetCodeViewPreferences.globalPreferences(inspection())) {
             @Override
@@ -99,43 +99,43 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         super.createView();
 
         // Set up toolbar
-        JButton button = new InspectorButton(inspection, inspection.actions().toggleTargetCodeBreakpoint());
+        JButton button = new InspectorButton(inspection, actions().toggleTargetCodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugToggleBreakpointbuttonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugStepOver());
+        button = new InspectorButton(inspection, actions().debugStepOver());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOverButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugSingleStep());
+        button = new InspectorButton(inspection, actions().debugSingleStep());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepInButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugReturnFromFrame());
+        button = new InspectorButton(inspection, actions().debugReturnFromFrame());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOutButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugRunToSelectedInstruction());
+        button = new InspectorButton(inspection, actions().debugRunToSelectedInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugResume());
+        button = new InspectorButton(inspection, actions().debugResume());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugContinueButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(inspection, inspection.actions().debugPause());
+        button = new InspectorButton(inspection, actions().debugPause());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugPauseButtonIcon());
@@ -184,7 +184,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        inspection.focus().setCodeLocation(maxVM().createCodeLocation(tableModel.rowToInstruction(row).address), false);
+        focus().setCodeLocation(maxVM().createCodeLocation(tableModel.rowToInstruction(row).address), false);
     }
 
     @Override
@@ -243,7 +243,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             if (mouseEvent.getClickCount() > 1) {
                 // Depends on the first click selecting the row, and that changing the current
                 // code location focus to the location under the mouse event.7
-                inspection.actions().toggleTargetCodeBreakpoint().perform();
+                actions().toggleTargetCodeBreakpoint().perform();
             }
         }
 
@@ -271,7 +271,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 final int selectedRow = getSelectedRow();
                 final TargetCodeTableModel targetCodeTableModel = (TargetCodeTableModel) getModel();
                 if (selectedRow >= 0 && selectedRow < targetCodeTableModel.getRowCount()) {
-                    inspection().focus().setCodeLocation(maxVM().createCodeLocation(targetCodeTableModel.rowToInstruction(selectedRow).address), true);
+                    focus().setCodeLocation(maxVM().createCodeLocation(targetCodeTableModel.rowToInstruction(selectedRow).address), true);
                 }
             }
         }
@@ -284,7 +284,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
             final int oldSelectedRow = getSelectedRow();
             if (teleCodeLocation.hasTargetCodeLocation()) {
-                final Address targetCodeInstructionAddress = inspection().focus().codeLocation().targetCodeInstructionAddress();
+                final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddress();
                 if (teleTargetRoutine().targetCodeRegion().contains(targetCodeInstructionAddress)) {
                     final TargetCodeTableModel model = (TargetCodeTableModel) getModel();
                     final int row = model.findRow(targetCodeInstructionAddress);
@@ -331,7 +331,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         private final IndexedSequence<TargetCodeInstruction> instructions;
 
-        public TargetCodeTableModel(IndexedSequence<TargetCodeInstruction> instructions) {
+        public TargetCodeTableModel(Inspection inspection, IndexedSequence<TargetCodeInstruction> instructions) {
+            super(inspection);
             this.instructions = instructions;
         }
 

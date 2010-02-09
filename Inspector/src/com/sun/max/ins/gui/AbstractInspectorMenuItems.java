@@ -21,7 +21,6 @@
 package com.sun.max.ins.gui;
 
 import com.sun.max.ins.*;
-import com.sun.max.tele.*;
 
 /**
  * A default implementation of menu items that makes unnecessary some of the methods
@@ -29,43 +28,10 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class AbstractInspectorMenuItems implements InspectorMenuItems, InspectionHolder {
-
-    private Inspection inspection;
-
-    private final String tracePrefix;
+public abstract class AbstractInspectorMenuItems extends AbstractInspectionHolder implements InspectorMenuItems {
 
     protected AbstractInspectorMenuItems(Inspection inspection) {
-        this.inspection = inspection;
-        this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
-    }
-
-    public final Inspection inspection() {
-        return inspection;
-    }
-
-    public final MaxVM maxVM() {
-        return inspection.maxVM();
-    }
-
-    public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
-    }
-
-    public InspectorGUI gui() {
-        return inspection.gui();
-    }
-
-    public final InspectorStyle style() {
-        return inspection.style();
-    }
-
-    public final InspectionFocus focus() {
-        return inspection.focus();
-    }
-
-    public final InspectionActions actions() {
-        return inspection.actions();
+        super(inspection);
     }
 
     public void redisplay() {
@@ -74,10 +40,4 @@ public abstract class AbstractInspectorMenuItems implements InspectorMenuItems, 
     public void refresh(boolean force) {
     }
 
-    /**
-     * @return default prefix text for trace messages; identifies the class being traced.
-     */
-    protected String tracePrefix() {
-        return tracePrefix;
-    }
 }

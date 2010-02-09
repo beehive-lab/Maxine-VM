@@ -58,57 +58,77 @@ public interface MaxWatchpoint extends MemoryRegion {
     }
 
     /**
-     * Associates an optional human-readable string with the watchpoint for debugging.
-     */
-    void setDescription(String description);
-
-    /**
+     * Gets current settings.
+     * <br>
+     * Thread-safe
+     *
      * @return the current settings of the watchpoint
      */
     WatchpointSettings getSettings();
 
     /**
      * Set read flag for this watchpoint.
+     * <br>
+     * Thread-safe
      *
      * @param read whether the watchpoint should trap when watched memory is read from
      * @return whether set succeeded
+     * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
      * @throws ProgramError if watchpoint has been removed
      */
-    boolean setTrapOnRead(boolean read);
+    boolean setTrapOnRead(boolean read) throws MaxVMBusyException, ProgramError;
 
     /**
      * Set write flag for this watchpoint.
+     * <br>
+     * Thread-safe
      *
      * @param write whether the watchpoint should trap when watched memory is written to
      * @return whether set succeeded.
+     * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
      * @throws ProgramError if watchpoint has been removed
      */
-    boolean setTrapOnWrite(boolean write);
+    boolean setTrapOnWrite(boolean write) throws MaxVMBusyException, ProgramError;
 
     /**
      * Set execute flag for this watchpoint.
+     * <br>
+     * Thread-safe
      *
      * @param exec whether the watchpoint should trap when watched memory is executed from
      * @return whether set succeeded.
+     * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
      * @throws ProgramError if watchpoint has been removed
      */
-    boolean setTrapOnExec(boolean exec);
+    boolean setTrapOnExec(boolean exec) throws MaxVMBusyException, ProgramError;
 
     /**
      * Set GC flag for this watchpoint.
+     * <br>
+     * Thread-safe
      *
      * @param gc whether the watchpoint is active during garbage collection
      * @return whether set succeeded.
+     * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
      * @throws ProgramError if watchpoint has been removed
      */
-    boolean setEnabledDuringGC(boolean gc);
+    boolean setEnabledDuringGC(boolean gc) throws MaxVMBusyException, ProgramError;
 
     /**
+     * Determines whether the watchpoint is subject to relocation in the VM.
+     * <br>
+     * Thread-safe
+     *
      * @return whether the watchpoint is on an object that might be relocated by GC.
      */
     boolean isRelocatable();
 
     /**
+     * Determines if the watchpoint is in effect, i.e. with one or more
+     * of the trigger specifications set to true.
+     * <br>
+     * Thread-safe
+     *
      * @return true if any of the possible activations are true.
      */
     boolean isEnabled();
@@ -118,11 +138,16 @@ public interface MaxWatchpoint extends MemoryRegion {
      * becomes permanently inactive.
      *
      * @return whether the removal succeeded.
+     * @throws MaxVMBusyException  if watchpoint cannot be modified at present, presumably because the VM is running.
      * @throws ProgramError if watchpoint has already been removed
      */
-    boolean remove();
+    boolean remove() throws MaxVMBusyException, ProgramError;
 
     /**
+     * For object-based watchpoints, returns the object with which the watchpoint is associated.
+     * <br>
+     * Thread-safe
+     *
      * @return a heap object in the VM with which the watchpoint is associated, null if none.
      * @see #isRelocatable()
      */

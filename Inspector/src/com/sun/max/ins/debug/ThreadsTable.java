@@ -45,7 +45,7 @@ public final class ThreadsTable extends InspectorTable {
 
     ThreadsTable(Inspection inspection, ThreadsViewPreferences viewPreferences) {
         super(inspection);
-        tableModel = new ThreadsTableModel();
+        tableModel = new ThreadsTableModel(inspection);
         columnModel = new ThreadsColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
     }
@@ -53,7 +53,7 @@ public final class ThreadsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         // Sets table selection to thread, if any, that is the current user focus.
-        final MaxThread thread = inspection().focus().thread();
+        final MaxThread thread = focus().thread();
         final int row = tableModel.findRow(thread);
         updateSelection(row);
     }
@@ -101,6 +101,11 @@ public final class ThreadsTable extends InspectorTable {
      * current state of the VM. The list goes empty with the process dies.
      */
     private final class ThreadsTableModel extends InspectorTableModel {
+
+        public ThreadsTableModel(Inspection inspection) {
+            super(inspection);
+            // TODO Auto-generated constructor stub
+        }
 
         public int getColumnCount() {
             return ThreadsColumnKind.VALUES.length();

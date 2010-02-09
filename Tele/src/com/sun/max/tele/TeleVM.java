@@ -26,6 +26,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.*;
 import java.util.logging.*;
 
 import com.sun.max.*;
@@ -39,10 +40,8 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.*;
 import com.sun.max.program.option.*;
-import com.sun.max.tele.MaxWatchpoint.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
-import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.debug.darwin.*;
 import com.sun.max.tele.debug.guestvm.xen.*;
 import com.sun.max.tele.debug.linux.*;
@@ -66,7 +65,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
@@ -81,6 +79,32 @@ import com.sun.max.vm.value.*;
  * Implementation of remote access to an instance of the Maxine VM.
  * Access from the Inspector or other clients of this implementation
  * gain access through the {@link MaxVM} interface.
+ * <br>
+ * <strong>Concurrency policy:</strong> VM access is protected
+ * by a reentrant lock that must be honored by all client-visible
+ * methods that are not thread-safe.  Consequences of failure to
+ * do so can result in either (a) undefined behavior of the VM
+ * process (when inappropriate process operations are made
+ * while the process is running), or (b) race conditions in the
+ * data caches being revised a the conclusion of each process
+ * execution.  The lock is managed differently by the process and
+ * by client methods.
+ * <ol>
+ * <li>the VM process (see {@link TeleProcess}) enqueues requests for VM
+ * execution; these requests may be made on client threads.  The requests
+ * are executed on a separate "request handling" thread, which acquires
+ * and holds the lock unconditionally during the entire cycle of request
+ * execution:  setup of state, VM execution, waiting for VM execution
+ * to conclude, refreshing caches of VM state.</li>
+ * <li>any method made available to clients (see {@link MaxVM} and
+ * related interfaces) must either be made thread-safe (and documented
+ * as such) or must be wrapped in a conditional attempt to acquire the
+ * lock.  Client attempts to acquire the lock that fail, must respond
+ * immediately by throwing an {@link MaxVMBusyException}.</li>
+ * <li>note that the lock is reentrant, so that nested attempts to
+ * acquire/release the lock will behave identically to standard
+ * Java synchronization semantics.</li>
+ * </ol>
  *
  * @author Bernd Mathiske
  * @author Athul Acharya
@@ -318,15 +342,15 @@ public abstract class TeleVM implements MaxVM {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
 
-    public String getName() {
+    public final String getName() {
         return MaxineVM.name();
     }
 
-    public String getVersion() {
+    public final String getVersion() {
         return MaxineVM.VERSION;
     }
 
-    public String getDescription() {
+    public final String getDescription() {
         return MaxineVM.description();
     }
 
@@ -371,7 +395,7 @@ public abstract class TeleVM implements MaxVM {
 
     private final TeleProcess teleProcess;
 
-    public TeleProcess teleProcess() {
+    public final TeleProcess teleProcess() {
         return teleProcess;
     }
 
@@ -423,6 +447,12 @@ public abstract class TeleVM implements MaxVM {
     private final TeleObjectFactory teleObjectFactory;
     private TeleClassRegistry teleClassRegistry;
     private TeleCodeRegistry teleCodeRegistry;
+
+    /**
+     * Watchpoint factory, if supported on platform, else null.
+     */
+    private final MaxWatchpointFactory teleWatchpointFactory;
+
     private final TeleBytecodeBreakpoint.Factory bytecodeBreakpointFactory;
 
     /**
@@ -456,10 +486,16 @@ public abstract class TeleVM implements MaxVM {
     private MaxBreakpoint gcStartedBreakpoint = null;
 
     private List<MaxGCCompletedListener> gcCompletedListeners = new CopyOnWriteArrayList<MaxGCCompletedListener>();
+
     /**
-     * Active breakpoint that triggers at end of GC if {@link gcCompletedListeners} is non-empty; null if no listeners.
+     * An always active breakpoint that triggers at end of GC if {@link gcCompletedListeners} is non-empty; null if no listeners.
      */
     private MaxBreakpoint gcCompletedBreakpoint = null;
+
+    /**
+     * A lock designed to keep all non-thread-safe client calls from being handled during the VM setup/execute/refresh cycle.
+     */
+    private Lock lock = new ReentrantLock();
 
     /**
      * Creates a tele VM instance by creating or attaching to a Maxine VM process.
@@ -529,8 +565,37 @@ public abstract class TeleVM implements MaxVM {
 
         final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfiguration.gripScheme();
         teleGripScheme.setTeleVM(this);
-
+        this.teleWatchpointFactory = teleProcess.watchpointFactory();
         this.bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(this);
+    }
+
+    /**
+     * Acquires a lock on the VM process and related cached state; blocks until lock
+     * can be acquired.  The lock is reentrant, so that nested lock acquisition behaves with
+     * standard Java synchronization semantics.
+     */
+    public final void lock() {
+        lock.lock();
+    }
+
+    /**
+     * Attempts to acquire a lock on the VM process and related cached state; returns
+     * immediately. The lock is reentrant, so that nested lock acquisition behaves with
+     * standard Java synchronization semantics.
+     *
+     * @return whether the lock was acquired
+     */
+    public final boolean tryLock() {
+        return lock.tryLock();
+    }
+
+    /**
+     * Releases the lock on the VM process and related cached state; returns
+     * immediately. The lock is reentrant, so that nested lock acquisition behaves with
+     * standard Java synchronization semantics.
+     */
+    public final void unlock() {
+        lock.unlock();
     }
 
     /**
@@ -546,7 +611,7 @@ public abstract class TeleVM implements MaxVM {
      * @param flags specifies which bits to set or clear
      * @param set if {@code true}, then the bits are set otherwise they are cleared
      */
-    public void modifyInspectableFlags(int flags, boolean set) {
+    public final void modifyInspectableFlags(int flags, boolean set) {
         int newFlags = teleFields.Inspectable_flags.readInt(this);
         if (set) {
             newFlags |= flags;
@@ -605,7 +670,7 @@ public abstract class TeleVM implements MaxVM {
         vmStateListeners.remove(listener);
     }
 
-    public void notifyStateChange(ProcessState processState,
+    public final void notifyStateChange(ProcessState processState,
                     long epoch,
                     TeleNativeThread singleStepThread,
                     Collection<TeleNativeThread> threads,
@@ -678,15 +743,15 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.dataAccess();
     }
 
-    public Word readWord(Address address) {
+    public final Word readWord(Address address) {
         return teleProcess.dataAccess().readWord(address);
     }
 
-    public Word readWord(Address address, int offset) {
+    public final Word readWord(Address address, int offset) {
         return teleProcess.dataAccess().readWord(address, offset);
     }
 
-    public void readFully(Address address, byte[] bytes) {
+    public final void readFully(Address address, byte[] bytes) {
         teleProcess.dataAccess().readFully(address, bytes);
     }
 
@@ -798,7 +863,7 @@ public abstract class TeleVM implements MaxVM {
      * @param origin an object location in the VM
      * @return whether the object at the location has been relocated.
      */
-    public boolean isObjectForwarded(Pointer origin) {
+    public final boolean isObjectForwarded(Pointer origin) {
         return teleHeapManager.isObjectForwarded(origin);
     }
 
@@ -809,7 +874,7 @@ public abstract class TeleVM implements MaxVM {
      * @param origin an object origin in the VM
      * @return the object originally at the origin, possibly relocated
      */
-    public TeleObject getForwardedObject(Pointer origin) {
+    public final TeleObject getForwardedObject(Pointer origin) {
         final Reference forwardedObjectReference = originToReference(teleHeapManager.getForwardedOrigin(origin));
         return teleObjectFactory.make(forwardedObjectReference);
     }
@@ -1318,21 +1383,12 @@ public abstract class TeleVM implements MaxVM {
         return teleCodeRegistry;
     }
 
-    private Sequence<MaxInspectableMethod> inspectableMethods;
-
     public final Sequence<MaxInspectableMethod> inspectableMethods() {
-        if (inspectableMethods == null) {
-            final VariableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>();
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCStarted, "Start of GC"));
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_inspectableGCCompleted, "End of GC"));
-            methods.append(new TeleInspectableMethod(teleMethods.CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
-            methods.append(new TeleInspectableMethod(teleMethods.HeapScheme$Static_objectRelocated, "Object relocated"));
-            for (MaxInspectableMethod inspectableMethod : teleHeapManager.inspectableMethods()) {
-                methods.append(inspectableMethod);
-            }
-            inspectableMethods = methods;
+        final AppendableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>(teleMethods.clientInspectableMethods());
+        for (MaxInspectableMethod method : teleHeapManager.inspectableMethods()) {
+            methods.append(method);
         }
-        return inspectableMethods;
+        return methods;
     }
 
     /**
@@ -1390,7 +1446,7 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
-    public MaxThread threadLocalsBlockContaining(Address address) {
+    public final MaxThread threadLocalsBlockContaining(Address address) {
         for (MaxThread thread : teleVMState.threads()) {
             if (thread.threadLocalsRegion().contains(address)) {
                 return thread;
@@ -1497,83 +1553,14 @@ public abstract class TeleVM implements MaxVM {
         bytecodeBreakpointFactory.writeSummaryToStream(printStream);
     }
 
-    public final boolean watchpointsEnabled() {
-        return teleProcess.watchpointsEnabled();
-    }
-
-    public final void addWatchpointListener(MaxWatchpointListener listener) throws UnsupportedOperationException {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        teleProcess.watchpointFactory().addWatchpointListener(listener);
-    }
-
-    public final void removeWatchpointListener(MaxWatchpointListener listener) throws UnsupportedOperationException {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        teleProcess.watchpointFactory().removeWatchpointListener(listener);
-    }
-
-    public final MaxWatchpoint setRegionWatchpoint(String description, MemoryRegion memoryRegion, WatchpointSettings settings)
-        throws TooManyWatchpointsException, DuplicateWatchpointException, UnsupportedOperationException {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createRegionWatchpoint(description, memoryRegion, settings);
-    }
-
-    public final MaxWatchpoint setWordWatchpoint(String description, Address address, WatchpointSettings settings)
-        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        final MemoryRegion memoryRegion = new FixedMemoryRegion(address, wordSize(), "");
-        return setRegionWatchpoint(description, memoryRegion, settings);
-    }
-
-    public final MaxWatchpoint setObjectWatchpoint(String description, TeleObject teleObject, WatchpointSettings settings)
-        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createObjectWatchpoint(description, teleObject, settings);
-    }
-
-    public final MaxWatchpoint setFieldWatchpoint(String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
-        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createFieldWatchpoint(description, teleObject, fieldActor, settings);
-    }
-
-    public final MaxWatchpoint setArrayElementWatchpoint(String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
-        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, settings);
-    }
-
-    public final MaxWatchpoint setHeaderWatchpoint(String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
-        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createHeaderWatchpoint(description, teleObject, headerField, settings);
-    }
-
-    public final MaxWatchpoint  setVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, WatchpointSettings settings)
-        throws TooManyWatchpointsException, DuplicateWatchpointException, ProgramError {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().createVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, settings);
-    }
-
-    public final Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) throws ProgramError {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().findClientWatchpoints(memoryRegion);
-    }
-
-    public final IterableWithLength<MaxWatchpoint> watchpoints() throws ProgramError {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        return teleProcess.watchpointFactory().clientWatchpoints();
-    }
-
-    public void describeWatchpoints(PrintStream printStream) throws ProgramError {
-        ProgramError.check(watchpointsEnabled(), "Watchpoints not supported on this platform");
-        teleProcess.watchpointFactory().writeSummaryToStream(printStream);
+    public final MaxWatchpointFactory watchpointFactory() {
+        return teleWatchpointFactory;
     }
 
     public void addGCStartedListener(MaxGCStartedListener listener) {
         assert listener != null;
         gcStartedListeners.add(listener);
         if (!gcStartedListeners.isEmpty() && gcStartedBreakpoint == null) {
-            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCStarted, "GC start for VM listeners");
             final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -1584,7 +1571,8 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcStartedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(inspectableMethod, triggerEventHandler);
+            gcStartedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
+            gcStartedBreakpoint.setDescription("Internal breakpoint, just after start of GC, to notify listeners");
         }
     }
 
@@ -1601,7 +1589,6 @@ public abstract class TeleVM implements MaxVM {
         assert listener != null;
         gcCompletedListeners.add(listener);
         if (!gcCompletedListeners.isEmpty() && gcCompletedBreakpoint == null) {
-            final MaxInspectableMethod inspectableMethod = new TeleInspectableMethod(teleMethods.InspectableHeapInfo_inspectableGCCompleted, "GC complete for VM listeners");
             final VMTriggerEventHandler triggerEventHandler = new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -1612,7 +1599,8 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcCompletedBreakpoint = bytecodeBreakpointFactory.makeSystemBreakpoint(inspectableMethod, triggerEventHandler);
+            gcCompletedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
+            gcCompletedBreakpoint.setDescription("Internal breakpoint, just after end of GC, to notify listeners");
         }
     }
 
@@ -1701,27 +1689,37 @@ public abstract class TeleVM implements MaxVM {
         } catch (Exception exception) {
             throw new IOException(exception);
         }
+        addGCCompletedListener(new MaxGCCompletedListener() {
+            // The purpose of this listener, which doesn't do anything explicitly,
+            // is to force a VM stop at the end of each GC cycle, even if there are
+            // no other listeners.  This presents an opportunity for the Reference/Grip/Object
+            // code to update heap-related information that may have been changed as
+            // a result of the GC.
+            public void gcCompleted() {
+                Trace.line(TRACE_VALUE, tracePrefix() + "GC complete");
+            }
+        });
     }
 
     public final Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
         return TeleInterpreter.execute(this, classMethodActor, arguments);
     }
 
-    public void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
+    public final void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
         teleProcess.resume(synchronous, withClientBreakpoints);
     }
 
-    public void singleStepThread(final MaxThread maxThread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException {
+    public final void singleStepThread(final MaxThread maxThread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException {
         final TeleNativeThread teleNativeThread = (TeleNativeThread) maxThread;
         teleProcess.singleStepThread(teleNativeThread, synchronous);
     }
 
-    public void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
+    public final void stepOver(final MaxThread maxThread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException {
         final TeleNativeThread teleNativeThread = (TeleNativeThread) maxThread;
         teleProcess.stepOver(teleNativeThread, synchronous, withClientBreakpoints);
     }
 
-    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
+    public final void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
         teleProcess.runToInstruction(instructionPointer, synchronous, withClientBreakpoints);
     }
 

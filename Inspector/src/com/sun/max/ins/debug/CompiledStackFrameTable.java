@@ -76,7 +76,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
     @Override
     protected void mouseButton1Clicked(final int row, final int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
+        if (mouseEvent.getClickCount() > 1 && watchpointFactory() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -97,7 +97,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, final int col, MouseEvent mouseEvent) {
-        if (maxVM().watchpointsEnabled() && col == CompiledStackFrameColumnKind.TAG.ordinal()) {
+        if (watchpointFactory() != null && col == CompiledStackFrameColumnKind.TAG.ordinal()) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             final Slot slot = (Slot) tableModel.getValueAt(row, col);
@@ -126,7 +126,7 @@ public class CompiledStackFrameTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         // Sets table selection to the memory word, if any, that is the current user focus.
-        final Address address = inspection().focus().address();
+        final Address address = focus().address();
         updateSelection(tableModel.findRow(address));
     }
 
@@ -138,7 +138,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         if (!e.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0 && row < tableModel.getRowCount()) {
-                inspection().focus().setAddress(tableModel.getAddress(row));
+                focus().setAddress(tableModel.getAddress(row));
             }
         }
     }
@@ -184,7 +184,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             regions = new MemoryRegion[slots.length()];
             int index = 0;
             for (Slot slot : slots) {
-                regions[index] = new FixedMemoryRegion(getOrigin().plus(slot.offset), inspection.maxVM().wordSize(), "");
+                regions[index] = new FixedMemoryRegion(getOrigin().plus(slot.offset), maxVM().wordSize(), "");
                 index++;
             }
         }

@@ -50,7 +50,7 @@ import com.sun.max.vm.classfile.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class Inspection {
+public final class Inspection implements InspectionHolder {
 
     private static final int TRACE_VALUE = 1;
 
@@ -135,8 +135,8 @@ public final class Inspection {
 
         maxVM().addVMStateListener(new VMStateListener());
         maxVM().addBreakpointListener(new BreakpointListener());
-        if (maxVM().watchpointsEnabled()) {
-            maxVM().addWatchpointListener(new WatchpointListener());
+        if (watchpointsEnabled()) {
+            maxVM().watchpointFactory().addListener(new WatchpointListener());
         }
 
         inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
@@ -190,6 +190,42 @@ public final class Inspection {
         Trace.end(TRACE_VALUE, tracePrefix() + "Initializing", startTimeMillis);
     }
 
+    public Inspection inspection() {
+        return this;
+    }
+
+    public MaxVM maxVM() {
+        return maxVM;
+    }
+
+    public  MaxVMState maxVMState() {
+        return maxVM.maxVMState();
+    }
+
+    public MaxWatchpointFactory watchpointFactory() {
+        return maxVM().watchpointFactory();
+    }
+
+    public boolean watchpointsEnabled() {
+        return watchpointFactory()  != null;
+    }
+
+    public InspectorGUI gui() {
+        return inspectorMainFrame;
+    }
+
+    public InspectorStyle style() {
+        return preferences.style();
+    }
+
+    public InspectionFocus focus() {
+        return focus;
+    }
+
+    public InspectionActions actions() {
+        return inspectionActions;
+    }
+
     /**
      * Updates the string appearing the outermost window frame: program name, process state, boot image filename.
      */
@@ -215,36 +251,6 @@ public final class Inspection {
 
     public InspectionSettings settings() {
         return settings;
-    }
-
-    public MaxVM maxVM() {
-        return maxVM;
-    }
-
-    /**
-     * @return The immutable history of Maxine VM state, updated immediately
-     * and synchronously; thread safe.
-     */
-    private MaxVMState maxVMState() {
-        return maxVM.maxVMState();
-    }
-
-    public InspectorGUI gui() {
-        return inspectorMainFrame;
-    }
-
-    /**
-     * @return the global collection of actions, many of which are singletons with state that gets refreshed.
-     */
-    public InspectionActions actions() {
-        return inspectionActions;
-    }
-
-    /**
-     * The current configuration for visual style.
-     */
-    public InspectorStyle style() {
-        return preferences.style();
     }
 
     /**
@@ -288,13 +294,6 @@ public final class Inspection {
      */
     public void registerAction(InspectorAction inspectorAction) {
         preferences.registerAction(inspectorAction);
-    }
-
-    /**
-     * User oriented focus on particular items in the environment; View state.
-     */
-    public InspectionFocus focus() {
-        return focus;
     }
 
     /**
@@ -606,6 +605,16 @@ public final class Inspection {
         } finally {
             gui().showInspectorBusy(false);
         }
+    }
+
+    /**
+     * Make a standard announcement that an action has failed because the Inspector
+     * was unable to acquire the lock on the VM.
+     *
+     * @param attemptedAction description of what was being attempted
+     */
+    public void vmBusyFailure(String attemptedAction) {
+        gui().errorMessage(attemptedAction + " failed: VM Busy");
     }
 
     /**
