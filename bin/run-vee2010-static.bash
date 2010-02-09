@@ -8,12 +8,11 @@ test -n "$RESULTS_DIR"       || export RESULTS_DIR=$MAXINE_HOME/vee2010-results
 
 mkdir -p $MAXINE_HOME/vee2010-results
 
-export SCIMARK_CP=/project/titzer/scimark2/bin
+# Class path for class files in http://math.nist.gov/scimark2/scimark2src.zip
+test -n "$SCIMARK_CP" || export SCIMARK_CP=/proj/maxwell/scimark-2.0
 
-if [ x"$SPECJVM_NOINPUT_CLASSPATH" = x ]; then
-	echo Please set SPECJVM_NOINPUT_CLASSPATH
-	exit
-fi
+# Class path for SPEC JVM 98 with the spec/benchmarks/_213_javac/input directory removed
+test -n "$SPECJVM_NOINPUT_CP" || export SPECJVM_NOINPUT_CP=/proj/maxwell/specjvm98-noinput
 
 function max_cp() {
 	if [ x"$MAXINE_IDE" = xINTELLIJ ]; then	
@@ -24,12 +23,12 @@ function max_cp() {
 }
 
 
-C1X_CP="$(max_cp VM):${MAXINE_HOME}/VM/classes:$(max_cp Base):$(max_cp CRI):$(max_cp C0X):$(max_cp C1X):$(max_cp MaxineC1X):$(max_cp Assembler):$(max_cp VM):$(max_cp CPS):${JUNIT4_CP}:$SPECJVM_NOINPUT_CLASSPATH:${SCIMARK_CP}"
+C1X_CP="$(max_cp VM):${MAXINE_HOME}/VM/classes:$(max_cp Base):$(max_cp CRI):$(max_cp C0X):$(max_cp C1X):$(max_cp MaxineC1X):$(max_cp Assembler):$(max_cp VM):$(max_cp CPS):${JUNIT4_CP}:$SPECJVM_NOINPUT_CP:${SCIMARK_CP}"
 
 C1X_TUNING='-XX:MaxPermSize=250m -Xms2g -Xmx2g'
 
 C1X_ASSERTS='-XX:+IRChecking'
-C1X_NO_ASSERTS='-XX:-IRChecking -XX:TraceLinearScanLevel=0 -XX:+PrintVEEMetrics -XX:+PrintMetrics'
+C1X_NO_ASSERTS='-XX:-IRChecking -XX:TraceLinearScanLevel=0 -XX:+PrintMetrics'
 C1X_XIR='-XX:+GenerateLIRXIR -XX:+GenerateUnresolvedLIRXIR'
 
 function c1x-opt() {
@@ -41,7 +40,6 @@ function c1x-opt() {
     
     file=$RESULTS_DIR/static-${benchmark}-${optlevel}.txt
     echo '-->' $file
-    echo java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -warmup=${warmup} -timing=${timing} -C1X:OptLevel=${optlevel} ${classes} > ${file}
     java -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -warmup=${warmup} -timing=${timing} -C1X:OptLevel=${optlevel} ${classes} >> ${file}
 
     file=$RESULTS_DIR/static-${benchmark}-${optlevel}x.txt
