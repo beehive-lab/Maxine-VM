@@ -23,7 +23,7 @@ function max_cp() {
 }
 
 
-C1X_CP="$(max_cp VM):${MAXINE_HOME}/VM/classes:$(max_cp Base):$(max_cp CRI):$(max_cp C0X):$(max_cp C1X):$(max_cp MaxineC1X):$(max_cp Assembler):$(max_cp VM):$(max_cp CPS):${JUNIT4_CP}:$SPECJVM_NOINPUT_CP:${SCIMARK_CP}"
+C1X_CP="$(max_cp VM):${MAXINE_HOME}/VM/classes:$(max_cp Base):$(max_cp CRI):$(max_cp C0X):$(max_cp C1X):$(max_cp MaxineC1X):$(max_cp Assembler):$(max_cp VM):$(max_cp CPS):${JUNIT4_CP}:$SPECJVM_NOINPUT_CP:${SCIMARK_CP}:${DACAPO_JAR}"
 
 C1X_TUNING='-XX:MaxPermSize=250m -Xms2g -Xmx2g'
 
@@ -40,11 +40,15 @@ function c1x-opt() {
     
     file=$RESULTS_DIR/static-${benchmark}-${optlevel}x.txt
     echo '-->' $file
-    java -da -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS $C1X_XIR -warmup=${warmup} -timing=${timing} -C1X:OptLevel=${optlevel} ${classes} > ${file}
+    cmd="java -da -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS $C1X_XIR -warmup=${warmup} -timing=${timing} -C1X:OptLevel=${optlevel} ${classes}"
+    echo $cmd > ${file}
+    $cmd >> ${file}
 
     file=$RESULTS_DIR/static-${benchmark}-${optlevel}.txt
     echo '-->' $file
-    java -da -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -warmup=${warmup} -timing=${timing} -C1X:OptLevel=${optlevel} ${classes} >> ${file}
+    cmd="java -da -d64 $C1X_TUNING -cp $C1X_CP test.com.sun.max.vm.compiler.c1x.C1XTest $C1X_NO_ASSERTS -warmup=${warmup} -timing=${timing} -C1X:OptLevel=${optlevel} ${classes}"
+    echo $cmd > ${file}
+    $cmd >> ${file}
 }
 
 function c1x() {
@@ -68,4 +72,4 @@ echo SpecJVM98
 c1x scimark 25 50 "^jnt."
 
 echo DaCapo
-c1x dacapo 10 25 "^dacapo ^org.eclipse ^EDU.purdue ^antlr ^net.sourceforge.pmd avalon batik ^org.apache.fop ^org.apache.xerces" $DACAPO_JAR 
+c1x dacapo 10 25 "^dacapo ^org.eclipse ^EDU.purdue ^antlr ^net.sourceforge.pmd avalon batik ^org.apache.fop ^org.apache.xerces"
