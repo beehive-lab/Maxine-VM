@@ -51,6 +51,7 @@ public class C1XMetrics {
     public static int BlocksDeleted;
     public static int DeadCodeEliminated;
     public static int ResolveCPEAttempts;
+    public static int BytecodesCompiled;
     public static int CodeBytesEmitted;
     public static int SafepointsEmitted;
     public static int ExceptionHandlersEmitted;

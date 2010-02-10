@@ -106,7 +106,7 @@ public class C1XTest {
 
     static {
         // add all the fields from C1XOptions as options
-        options.addFieldOptions(C1XOptions.class, "XX");
+        options.addFieldOptions(C1XOptions.class, "C1X");
     }
 
     private static final List<Timing> timings = new ArrayList<Timing>();

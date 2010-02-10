@@ -4,11 +4,11 @@ test -n "$JUNIT4_CP"     || export JUNIT4_CP=/proj/maxwell/bin/junit4.jar
 test -n "$MAXINE_HOME"   || export MAXINE_HOME=.
 test -n "$SPECJVM98_ZIP" || export SPECJVM98_ZIP=/proj/maxwell/specjvm98.zip
 test -n "$DACAPO_JAR"    || export DACAPO_JAR=/proj/maxwell/dacapo-2006-10-MR2.jar
-test -n "$RESULTS_DIR"   || export RESULTS_DIR=$MAXINE_HOME/vee2010-results
+test -n "$RESULTS_DIR"   || export RESULTS_DIR=$MAXINE_HOME/vee2010-results-dynamic
 
-MAX=$MAXINE_HOME/bin/max
+MAX="$MAXINE_HOME/bin/max -J/a-da"
 
-mkdir -p $MAXINE_HOME/vee2010-results
+mkdir -p $RESULTS_DIR
 
 export VEE_TEST_OPTIONS="-timing-runs=5 -fail-fast=f -tests=specjvm98,dacapo -specjvm98=$SPECJVM98_ZIP -dacapo=$DACAPO_JAR"
 
@@ -35,9 +35,7 @@ if [ x"$1" = xjit ]; then
     echo jit-c1x2x
     $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=${MAXVM_CONFIGS} -maxvm-config-alias=jit-c1x2x > $RESULTS_DIR/jit-c1x2x
 
-fi
-
-if [ x"$1" = xopt ]; then
+elif [ x"$1" = xopt ]; then
 
 #    echo opt-c1x0
 #    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=${MAXVM_CONFIGS} -maxvm-config-alias=opt-c1x0 > $RESULTS_DIR/opt-c1x0
@@ -56,5 +54,6 @@ if [ x"$1" = xopt ]; then
 
     echo opt-c1x2x
     $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=${MAXVM_CONFIGS} -maxvm-config-alias=opt-c1x2x > $RESULTS_DIR/opt-c1x2x
-
+else
+    echo "Usage: $0 jit|opt"
 fi
