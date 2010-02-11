@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
@@ -36,11 +35,9 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -399,7 +396,12 @@ public interface MaxVM {
      */
     TeleObject makeTeleObject(Reference reference);
 
-    Sequence<MaxInspectableMethod> inspectableMethods();
+    /**
+     * Interesting, predefined method entries that might be useful, for example, for setting breakpoints.
+     *
+     * @return possibly interesting, predefined methods.
+     */
+    Sequence<MaxCodeLocation> inspectableMethods();
 
     /**
      * @param id an id assigned to each heap object in the VM as needed, unique for the duration of a VM execution.
@@ -580,142 +582,22 @@ public interface MaxVM {
     MaxThread threadLocalsBlockContaining(Address address);
 
     /**
-     * Returns the target code execution address in a stack frame, either IP (top frame) or call return address.
+     * Gets the manager for locating and managing code related information in the VM.
      * <br>
-     * Note that a platform-specific offset is applied to the stored address in
-     * non-top frames (see SPARC), except at a trap, to produce the actual call return address.
+     * Thread-safe
      *
-     * @param stackFrame a VM stack frame
-     * @return target code location of current IP, if top frame, or next target instruction to be executed when control is returned to the frame.
+     * @return the singleton manager for information about code in the VM.
      */
-    Address getCodeAddress(StackFrame stackFrame);
+    MaxCodeManager codeManager();
 
     /**
-     * Creates a code location in the VM based on a memory address,
-     * and thus anchored at a specific compilation.
-     *
-     * @param address an address in the VM, presumably in a body of target code.
-     * @return a new location
-     */
-    TeleCodeLocation createCodeLocation(Address address);
-
-    /**
-     * Creates a code location in the VM based on method bytecode position, with
-     * compiled location unspecified.
-     *
-     * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param position offset into the method's bytecodes
-     * @return a new location
-     */
-    TeleCodeLocation createCodeLocation(TeleClassMethodActor teleClassMethodActor, int position);
-
-    /**
-     * Creates a code location in the VM based on both a bytecode position and a
-     * memory address that (presumably) points to the corresponding location in
-     * a compilation of the method.
-     *
-     * @param address an address in the VM, presumably in a body of target code.
-     * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param position offset into the method's bytecodes
-     * @return a new location
-     */
-    TeleCodeLocation createCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position);
-
-    /**
-     * Creates a code location in the VM corresponding to the address in a stack frame, either IP (top frame) or call return address.
-     *
-     * @param stackFrame a VM stack frame
-     * @return target code location of current IP, if top frame, or next target instruction to be executed when control is returned to the frame.
-     */
-    TeleCodeLocation createCodeLocation(StackFrame stackFrame);
-
-    /**
-     * Adds a listener for breakpoint changes in the VM.
-     *
-     * @param listener will be notified whenever breakpoints in VM change.
-     */
-    void addBreakpointListener(MaxBreakpointListener listener);
-
-    /**
-     * Removes a listener for breakpoint changes in the VM.
-     *
-     * @param listener will be notified whenever breakpoints in VM change.
-     */
-    void removeBreakpointListener(MaxBreakpointListener listener);
-
-    /**
-     * All existing target code breakpoints.
-     *
-     * @return all existing target code breakpoints in the VM, ignoring those set by the system..
-     * Modification safe against breakpoint removal.
-     */
-    Iterable<MaxBreakpoint> targetBreakpoints();
-
-    /**
-     * @return the number of target code breakpoints in the VM, ignoring transients
-     */
-    int targetBreakpointCount();
-
-    /**
-     * Gets a target code breakpoint in the VM, newly created if needed.
-     *
-     * @param address a code address in the VM.
-     * @return a possibly new, non-transient, target code breakpoint at the address.
-     * @throws MaxVMException when the VM fails to create the breakpoint.
-     */
-    MaxBreakpoint makeBreakpointAt(Address address) throws MaxVMException;
-
-    /**
-     * Finds a target code breakpoint in the VM.
-     *
-     * @param address an address in the VM.
-     * @return an ordinary, non-transient target code breakpoint at the address in VM, null if none exists.
-     */
-    MaxBreakpoint getBreakpointAt(Address address);
-
-    /**
-     * All existing bytecode breakpoints.
+     * Gets the factory for creating and managing VM breakpoints.
      * <br>
-     *  Modification safe against breakpoint removal.
+     * Thread-safe
      *
-     * @return all existing bytecode breakpoints in the VM.
-      */
-    Iterable<MaxBreakpoint> bytecodeBreakpoints();
-
-    /**
-     * @return the number of bytecode breakpoints in the VM.
+     * @return the singleton factory for creating and managing VM breakpoints
      */
-    int bytecodeBreakpointCount();
-
-    /**
-     * Gets a bytecode breakpoint in the VM, newly created if needed.
-     *
-     * @param key description of a bytecode position in a method
-     * @return a possibly new, non-transient, enabled bytecode breakpoint at the location.
-     */
-    MaxBreakpoint makeBreakpointAt(Key key);
-
-    /**
-     * Gets a bytecode breakpoint at a method entry in the VM, newly created if needed.
-     *
-     * @param inspectableMethod a method in the VM
-     * @return a possibly new, non-transient bytecode breakpoint
-     */
-    MaxBreakpoint makeBreakpointAt(MaxInspectableMethod inspectableMethod);
-
-    /**
-     * Finds a bytecode breakpoint in the VM.
-     *
-     * @param key description of a bytecode position in a method
-     * @return an ordinary, non-transient bytecode breakpoint, null if doesn't exist
-     */
-    MaxBreakpoint getBreakpointAt(Key key);
-
-    /**
-     * Writes a textual summary describing the current breakpoints set in the VM, with
-     * more internal detail than is typically displayed.
-     */
-    void describeBreakpoints(PrintStream printStream);
+    MaxBreakpointFactory breakpointFactory();
 
     /**
      * Gets the factory for creating and managing VM watchpoints; null
@@ -732,29 +614,33 @@ public interface MaxVM {
      * Adds a listener for GC starts in the VM.
      *
      * @param listener a listener for GC starts
+     * @throws MaxVMBusyException
      */
-    void addGCStartedListener(MaxGCStartedListener listener);
+    void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException;
 
     /**
      * Removes a listener for GC starts in the VM.
      *
      * @param listener a listener for GC starts
+     * @throws MaxVMBusyException
      */
-    void removeGCStartedListener(MaxGCStartedListener listener);
+    void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException;
 
     /**
      * Adds a listener for GC completions in the VM.
      *
      * @param listener a listener for GC completions
+     * @throws MaxVMBusyException
      */
-    void addGCCompletedListener(MaxGCCompletedListener listener);
+    void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException;
 
     /**
      * Removes a listener for GC completions in the VM.
      *
      * @param listener a listener for GC completions
+     * @throws MaxVMBusyException
      */
-    void removeGCCompletedListener(MaxGCCompletedListener listener);
+    void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException;
 
     /**
      * Sets debugging trace level for the transport
@@ -824,13 +710,13 @@ public interface MaxVM {
     /**
      * Resumes execution of the VM with a temporary breakpoint set.
      *
-     * @param instructionPointer location where temporary breakpoint should be set.
+     * @param codeLocation location where temporary breakpoint should be set.
      * @param synchronous should the call wait for the execution to complete?
      * @param withClientBreakpoints should client breakpoints be enabled duration of the execution?
      * @throws OSExecutionRequestException execution failed in OS.
      * @throws InvalidVMRequestException execution not permissible in current VM state.
      */
-    void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
+    void runToInstruction(final MaxCodeLocation codeLocation, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
 
     /**
      * Pauses the running VM.

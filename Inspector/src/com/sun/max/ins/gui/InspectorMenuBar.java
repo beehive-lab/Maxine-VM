@@ -97,6 +97,14 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         return inspection.maxVMState();
     }
 
+    public final MaxCodeManager codeManager() {
+        return inspection.codeManager();
+    }
+
+    public final MaxBreakpointFactory breakpointFactory() {
+        return inspection.breakpointFactory();
+    }
+
     public final MaxWatchpointFactory watchpointFactory() {
         return inspection.watchpointFactory();
     }

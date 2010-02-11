@@ -22,30 +22,31 @@ package com.sun.max.tele.method;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.bytecode.*;
 
 /**
- * Describes a bytecode location in the {@link TeleVM}.
+ * Describes a bytecode location in the VM in terms of a bytecode
+ * position in the method's description in the VM.
  *
  * @author Michael Van De Vanter
  */
-public class TeleBytecodeLocation {
+public class TeleBytecodeLocation implements MaxBytecodeLocation {
 
     private final TeleClassMethodActor teleClassMethodActor;
+    private final int position;
+
+    public TeleBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int position) {
+        assert teleClassMethodActor != null;
+        assert position >= 0;
+        this.teleClassMethodActor = teleClassMethodActor;
+        this.position = position;
+    }
 
     public TeleClassMethodActor teleClassMethodActor() {
         return teleClassMethodActor;
     }
 
-    private final BytecodeLocation bytecodeLocation;
-
-    public BytecodeLocation bytecodeLocation() {
-        return bytecodeLocation;
-    }
-
-    public TeleBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int position) {
-        this.teleClassMethodActor = teleClassMethodActor;
-        this.bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), position);
+    public int position() {
+        return position;
     }
 
 }

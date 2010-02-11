@@ -37,7 +37,6 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -428,7 +427,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 menu.add(new InspectorAction(inspection(), "Open native code dialog...") {
                     @Override
                     protected void procedure() {
-                        focus().setCodeLocation(maxVM().createCodeLocation(stackFrame), true);
+                        focus().setCodeLocation(codeManager().createCompiledLocation(stackFrame), true);
                     }
                 });
             }
@@ -503,10 +502,10 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     }
 
     @Override
-    public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
+    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
         if (selectedFramePanel != null) {
             // TODO (mlvdv)  This call is a no-op at present.  What should happen?
-            selectedFramePanel.instructionPointerFocusChanged(teleCodeLocation.targetCodeInstructionAddress().asPointer());
+            selectedFramePanel.instructionPointerFocusChanged(codeLocation.address().asPointer());
         }
     }
 

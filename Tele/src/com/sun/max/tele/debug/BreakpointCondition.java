@@ -52,7 +52,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
     }
 
     public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-        return evaluate(teleVM.teleProcess(), teleNativeThread);
+        return evaluate(teleVM().teleProcess(), teleNativeThread);
     }
 
     public boolean evaluate(TeleProcess teleProcess, TeleNativeThread teleNativeThread) {

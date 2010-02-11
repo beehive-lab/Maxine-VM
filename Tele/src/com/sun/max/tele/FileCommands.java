@@ -113,7 +113,7 @@ public class FileCommands {
         for (TeleClassMethodActor teleClassMethodActor : teleClassActor.getTeleClassMethodActors()) {
             if (teleClassMethodActor.classMethodActor().format("%n(%p)").equals(methodSignature)) {
                 found = true;
-                teleClassMethodActor.setTargetBreakpointAtEntry();
+                teleClassMethodActor.entryLocation();
                 break;
             }
         }

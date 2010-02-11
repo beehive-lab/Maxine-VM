@@ -29,7 +29,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -64,8 +63,8 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                 inspection.focus().addListener(new InspectionFocusAdapter() {
 
                     @Override
-                    public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-                        final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), teleCodeLocation, interactiveForNative);
+                    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
+                        final MethodInspector methodInspector = MethodInspector.make(manager.inspection(), codeLocation, interactiveForNative);
                         if (methodInspector != null) {
                             methodInspector.setCodeLocationFocus();
                             methodInspector.highlightIfNotVisible();
@@ -136,16 +135,16 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      * Makes an inspector displaying code for specified code location. Should always work for
      * Java methods. For native methods, only works if the code block is already known.
      *
-     * @param teleCodeLocation a code location
+     * @param codeLocation a code location
      * @return A possibly new inspector, null if unable to view.
      */
-    private static MethodInspector make(Inspection inspection, TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-        if (teleCodeLocation.hasTargetCodeLocation()) {
-            return make(inspection, teleCodeLocation.targetCodeInstructionAddress(), interactiveForNative);
+    private static MethodInspector make(Inspection inspection, MaxCodeLocation codeLocation, boolean interactiveForNative) {
+        if (codeLocation.hasAddress()) {
+            return make(inspection, codeLocation.address(), interactiveForNative);
         }
-        if (teleCodeLocation.hasBytecodeLocation()) {
+        if (codeLocation.hasBytecodeLocation()) {
             // TODO (mlvdv)  Select the specified bytecode position
-            return make(inspection, teleCodeLocation.teleBytecodeLocation().teleClassMethodActor(), MethodCodeKind.BYTECODES);
+            return make(inspection, codeLocation.bytecodeLocation().teleClassMethodActor(), MethodCodeKind.BYTECODES);
         }
         // Has neither target nor bytecode location specified.
         return null;

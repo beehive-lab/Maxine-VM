@@ -24,8 +24,8 @@ import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
@@ -114,6 +114,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     private IndexedSequence<TargetCodeInstruction> instructions;
+    private IndexedSequence<CompiledCodeLocation> instructionLocations;
 
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (instructions == null) {
@@ -123,30 +124,32 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         return instructions;
     }
 
-    public TeleTargetBreakpoint setTargetBreakpointAtEntry() {
-        final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(callEntryPoint());
-        teleTargetBreakpoint.setDescription("entry for native routine " + getName());
-        return teleTargetBreakpoint;
+    public IndexedSequence<CompiledCodeLocation> getInstructionLocations() {
+        if (instructionLocations == null) {
+            getInstructions();
+            final int length = instructions.length();
+            final MutableSequence<CompiledCodeLocation> locations = new VectorSequence<CompiledCodeLocation>(length);
+            for (int i = 0; i < length; i++) {
+                locations.set(i, codeManager().createCompiledLocation(instructions.get(i).address, "native target code instruction"));
+            }
+            instructionLocations = locations;
+        }
+        return instructionLocations;
     }
 
-    public void setTargetCodeLabelBreakpoints() {
-        for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
-            if (targetCodeInstruction.label != null) {
-                final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(targetCodeInstruction.address);
-                teleTargetBreakpoint.setDescription("Label " + targetCodeInstruction.label.toString() + " in " + getName());
-            }
-        }
+    public CodeLocation entryLocation() {
+        return codeManager().createCompiledLocation(callEntryPoint(), "entry for native routine " + getName());
     }
 
-    public void removeTargetCodeLabelBreakpoints() {
+    public Sequence<MaxCodeLocation> labelLocations() {
+        final AppendableSequence<MaxCodeLocation> locations = new ArrayListSequence<MaxCodeLocation>();
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label != null) {
-                final MaxBreakpoint breakpoint = teleVM().getBreakpointAt(targetCodeInstruction.address);
-                if (breakpoint != null) {
-                    breakpoint.remove();
-                }
+                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + getName();
+                locations.append(codeManager().createCompiledLocation(targetCodeInstruction.address, description));
             }
         }
+        return locations;
     }
 
     public TeleClassMethodActor getTeleClassMethodActor() {

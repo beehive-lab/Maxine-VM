@@ -32,9 +32,9 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -73,10 +73,6 @@ public final class BreakpointsTable extends InspectorTable {
         menu.add(methodEntryBreakpoints);
         menu.add(actions().setTargetCodeBreakpointAtObjectInitializer());
         menu.add(actions().removeAllBreakpoints());
-        menu.addSeparator();
-        menu.add(actions().removeAllTargetCodeBreakpoints());
-        menu.addSeparator();
-        menu.add(actions().removeAllBytecodeBreakpoints());
         return menu;
     }
 
@@ -180,14 +176,27 @@ public final class BreakpointsTable extends InspectorTable {
             switch (BreakpointsColumnKind.VALUES.get(column)) {
                 case ENABLED:
                     final Boolean newState = (Boolean) value;
-                    breakpointData.setEnabled(newState);
-                    inspection().settings().save();
+                    try {
+                        breakpointData.setEnabled(newState);
+                        inspection().settings().save();
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
+                        final JCheckBox checkBox = (JCheckBox) editor.getComponent();
+                        System.out.println("Reset enabled checkbox at row=" + row + ", col=" + column);
+                        checkBox.setSelected(!newState);
+                        inspection().announceVMBusyFailure("Breakpont ENABLED setting");
+                    }
                     break;
 
                 case CONDITION:
                     final String conditionText = (String) value;
-                    breakpointData.setCondition(conditionText);
-                    inspection().settings().save();
+                    try {
+                        breakpointData.setCondition(conditionText);
+                        inspection().settings().save();
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        inspection().announceVMBusyFailure("Breakpont condition setting");
+                    }
+
                     break;
 
                 default:
@@ -235,27 +244,29 @@ public final class BreakpointsTable extends InspectorTable {
             for (BreakpointData breakpointData : breakpoints) {
                 breakpointData.markDeleted(true);
             }
-            // add new and mark previous as not deleted
-            for (MaxBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
-                final BreakpointData breakpointData = findTargetBreakpoint(targetBreakpoint.getCodeLocation().targetCodeInstructionAddress());
-                if (breakpointData == null) {
-                    // new breakpoint in VM since last refresh
-                    breakpoints.add(new TargetBreakpointData(targetBreakpoint));
-                    //fireTableDataChanged();
+            for (MaxBreakpoint breakpoint : breakpointFactory().breakpoints()) {
+                if (breakpoint.isMethodBreakpoint()) {
+                    // Bytecode breakpoint
+                    final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.codeLocation());
+                    if (breakpointData == null) {
+                        // new breakpoint since last refresh
+                        breakpoints.add(new BytecodeBreakpointData(breakpoint));
+                        //fireTableDataChanged();
+                    } else {
+                        // mark as not deleted
+                        breakpointData.markDeleted(false);
+                    }
                 } else {
-                    // mark as not deleted
-                    breakpointData.markDeleted(false);
-                }
-            }
-            for (MaxBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
-                final BreakpointData breakpointData = findBytecodeBreakpoint(bytecodeBreakpoint.getCodeLocation().key());
-                if (breakpointData == null) {
-                    // new breakpoint since last refresh
-                    breakpoints.add(new BytecodeBreakpointData(bytecodeBreakpoint));
-                    //fireTableDataChanged();
-                } else {
-                    // mark as not deleted
-                    breakpointData.markDeleted(false);
+                    // Target code breakpoint
+                    final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.codeLocation().address());
+                    if (breakpointData == null) {
+                        // new breakpoint in VM since last refresh
+                        breakpoints.add(new TargetBreakpointData(breakpoint));
+                        //fireTableDataChanged();
+                    } else {
+                        // mark as not deleted
+                        breakpointData.markDeleted(false);
+                    }
                 }
             }
             // now remove the breakpoints that are still marked as deleted
@@ -312,12 +323,11 @@ public final class BreakpointsTable extends InspectorTable {
         /**
          * Locates a bytecode breakpoint already known to the inspector.
          */
-        BytecodeBreakpointData findBytecodeBreakpoint(TeleBytecodeBreakpoint.Key key) {
+        BytecodeBreakpointData findBytecodeBreakpoint(MaxCodeLocation codeLocation) {
             for (BreakpointData breakpointData : breakpoints) {
                 if (breakpointData instanceof BytecodeBreakpointData) {
-                    final BytecodeBreakpointData bytecodeBreakpointData = (BytecodeBreakpointData) breakpointData;
-                    if (bytecodeBreakpointData.key() == key) {
-                        return bytecodeBreakpointData;
+                    if (breakpointData.codeLocation().isSameAs(codeLocation)) {
+                        return (BytecodeBreakpointData) breakpointData;
                     }
                 }
             }
@@ -459,8 +469,8 @@ public final class BreakpointsTable extends InspectorTable {
         /**
          * @return the location of the breakpoint in the VM in a standard format.
          */
-        final TeleCodeLocation getCodeLocation() {
-            return breakpoint.getCodeLocation();
+        final MaxCodeLocation codeLocation() {
+            return breakpoint.codeLocation();
         }
 
         /**
@@ -470,7 +480,7 @@ public final class BreakpointsTable extends InspectorTable {
             return breakpoint.getCondition() == null ? "" : breakpoint.getCondition().toString();
         }
 
-        final void setCondition(String condition) {
+        final void setCondition(String condition) throws MaxVMBusyException {
             try {
                 breakpoint.setCondition(condition);
                 inspection().settings().save();
@@ -502,8 +512,9 @@ public final class BreakpointsTable extends InspectorTable {
          * Updates the enabled state of this breakpoint.
          *
          * @param enabled new state for this breakpoint
+         * @throws MaxVMBusyException
          */
-        final void setEnabled(boolean enabled) {
+        final void setEnabled(boolean enabled) throws MaxVMBusyException {
             breakpoint.setEnabled(enabled);
         }
 
@@ -606,7 +617,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         TargetBreakpointData(MaxBreakpoint targetBreakpoint) {
             super(targetBreakpoint);
-            final Address address = getCodeLocation().targetCodeInstructionAddress();
+            final Address address = codeLocation().address();
             final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 shortName = inspection().nameDisplay().shortName(teleTargetMethod);
@@ -666,28 +677,31 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String locationDescription() {
-            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + getCodeLocation().targetCodeInstructionAddress().toHexString();
+            return "Offset=" + (location > 0 ? "+" : "") + location + ", Address=" + codeLocation().address().toHexString();
         }
 
         Address address() {
-            return getCodeLocation().targetCodeInstructionAddress();
+            return codeLocation().address();
         }
     }
 
     private final class BytecodeBreakpointData extends BreakpointData {
 
-        private final TeleBytecodeBreakpoint.Key key;
+        final MaxCodeLocation codeLocation;
+        final int location;
         String shortName;
         String longName;
 
         BytecodeBreakpointData(MaxBreakpoint bytecodeBreakpoint) {
             super(bytecodeBreakpoint);
-            key = bytecodeBreakpoint.getCodeLocation().key();
+            codeLocation = bytecodeBreakpoint.codeLocation();
+            location = codeLocation.hasBytecodeLocation() ? codeLocation.bytecodeLocation().position() : 0;
+            final MethodKey key = codeLocation.methodKey();
+            final int position = codeLocation.hasBytecodeLocation() ? codeLocation.bytecodeLocation().position() : 0;
             shortName = key.holder().toJavaString(false) + "." + key.name().toString() + key.signature().toJavaString(false,  false);
-
             longName = "Method: " + key.signature().resultDescriptor().toJavaString(false) + " " + key.name().toString() + key.signature().toJavaString(false,  false);
-            if (key.position() > 0) {
-                longName += " + " + key.position();
+            if (position > 0) {
+                longName += " + " + position;
             }
             longName = longName + " in " + key.holder().toJavaString();
         }
@@ -714,17 +728,14 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         int location() {
-            return key.position();
+            return location;
         }
 
         @Override
         String locationDescription() {
-            return "Bytecode position=" + key.position();
+            return "Bytecode position=" + location();
         }
 
-        TeleBytecodeBreakpoint.Key key() {
-            return key;
-        }
     }
 
 }

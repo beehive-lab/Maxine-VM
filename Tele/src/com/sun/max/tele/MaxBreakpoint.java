@@ -22,7 +22,6 @@ package com.sun.max.tele;
 
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.BreakpointCondition.*;
-import com.sun.max.tele.method.*;
 
 /**
  * Access to a breakpoint created in the VM.
@@ -32,6 +31,18 @@ import com.sun.max.tele.method.*;
 public interface MaxBreakpoint {
 
     /**
+     * Discriminates between "method" (abstract, apply to all compilations) and "compilation" (apply to
+     * a single compilation) breakpoints.
+     * <br>
+     * Thread-safe
+     *
+     * @return true if the breakpoint is set abstractly for a method location (a.k.a. "bytecode breakpoint);
+     * false if set in target code (a.k.a. "target code breakpoint")
+     * of a single compilation
+     */
+    boolean isMethodBreakpoint();
+
+    /**
      * @return whether this breakpoint is to be deleted when a process execution stops or an inspection session finishes.
      */
     boolean isTransient();
@@ -39,7 +50,7 @@ public interface MaxBreakpoint {
     /**
      * @return the location of the breakpoint in the VM, expressed in a standard, polymorphic format.
      */
-    TeleCodeLocation getCodeLocation();
+    MaxCodeLocation codeLocation();
 
     /**
      * @return the optional human-readable string associated with the breakpoint, for debugging.
@@ -65,8 +76,9 @@ public interface MaxBreakpoint {
      * continue to exist, but have no effect on VM execution.
      *
      * @param enabled new state for this breakpoint
+     * @throws MaxVMBusyException
      */
-    void setEnabled(boolean enabled);
+    void setEnabled(boolean enabled) throws MaxVMBusyException;
 
     /**
      * @return optional conditional specification for breakpoint, null if none
@@ -80,8 +92,9 @@ public interface MaxBreakpoint {
      *
      * @param conditionDescriptor a string that describes the condition
      * @throws ExpressionException if the conditional expression cannot be evaluated.
+     * @throws MaxVMBusyException
      */
-    void setCondition(String conditionDescriptor) throws ExpressionException;
+    void setCondition(String conditionDescriptor) throws ExpressionException, MaxVMBusyException;
 
     /**
      * Returns a different breakpoint, set by the client on whose behalf this breakpoint was created, if there is one.
@@ -92,7 +105,9 @@ public interface MaxBreakpoint {
 
     /**
      * Removes this breakpoint from the VM.
+     *
+     * @throws MaxVMBusyException
      */
-    void remove();
+    void remove() throws MaxVMBusyException;
 
 }
