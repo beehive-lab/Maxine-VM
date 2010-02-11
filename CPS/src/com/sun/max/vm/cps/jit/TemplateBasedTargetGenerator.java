@@ -81,6 +81,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
         final BytecodeToTargetTranslator codeGenerator = makeTargetTranslator(classMethodActor);
+        final BytecodeScanner bytecodeScanner = new BytecodeScanner(codeGenerator);
 
         // emit prologue
         Adapter adapter = codeGenerator.emitPrologue();
@@ -89,7 +90,6 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         codeGenerator.emitEntrypointInstrumentation();
 
         // Translate bytecode into native code
-        final BytecodeScanner bytecodeScanner = new BytecodeScanner(codeGenerator);
         try {
             bytecodeScanner.scan(classMethodActor);
         } catch (RuntimeException runtimeException) {
