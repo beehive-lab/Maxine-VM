@@ -121,10 +121,10 @@ public final class Inspection implements InspectionHolder {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
         this.maxVM = maxVM;
-        this.bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
+        this.bootImageFileName = maxVM.bootImageFile().getAbsolutePath().toString();
         this.nameDisplay = new InspectorNameDisplay(this);
         this.focus = new InspectionFocus(this);
-        this.settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), SETTINGS_FILE_NAME));
+        this.settings = new InspectionSettings(this, new File(maxVM.programFile().getParentFile(), SETTINGS_FILE_NAME));
         this.preferences = new InspectionPreferences(this, settings);
         this.inspectionActions = new InspectionActions(this);
 
@@ -133,10 +133,10 @@ public final class Inspection implements InspectionHolder {
         BreakpointPersistenceManager.initialize(this);
         inspectionActions.refresh(true);
 
-        maxVM().addVMStateListener(new VMStateListener());
-        maxVM().addBreakpointListener(new BreakpointListener());
+        maxVM.addVMStateListener(new VMStateListener());
+        maxVM.breakpointFactory().addListener(new BreakpointListener());
         if (watchpointsEnabled()) {
-            maxVM().watchpointFactory().addListener(new WatchpointListener());
+            maxVM.watchpointFactory().addListener(new WatchpointListener());
         }
 
         inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
@@ -176,7 +176,7 @@ public final class Inspection implements InspectionHolder {
                 ThreadLocalsInspector.make(this);
                 StackInspector.make(this);
                 BreakpointsInspector.make(this);
-                focus.setCodeLocation(maxVM.createCodeLocation(focus.thread().instructionPointer()), false);
+                focus.setCodeLocation(focus.thread().instructionLocation());
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
                 throwable.printStackTrace();
@@ -200,6 +200,14 @@ public final class Inspection implements InspectionHolder {
 
     public  MaxVMState maxVMState() {
         return maxVM.maxVMState();
+    }
+
+    public MaxBreakpointFactory breakpointFactory() {
+        return maxVM().breakpointFactory();
+    }
+
+    public  MaxCodeManager codeManager() {
+        return maxVM().codeManager();
     }
 
     public MaxWatchpointFactory watchpointFactory() {
@@ -618,7 +626,7 @@ public final class Inspection implements InspectionHolder {
      *
      * @param attemptedAction description of what was being attempted
      */
-    public void vmBusyFailure(String attemptedAction) {
+    public void announceVMBusyFailure(String attemptedAction) {
         gui().errorMessage(attemptedAction + " failed: VM Busy");
     }
 

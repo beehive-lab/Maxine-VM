@@ -26,7 +26,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
@@ -371,8 +370,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         protected void handleLeftButtonEvent() {
             checkResolved();
             if (teleClassMethodActor != null && teleClassMethodActor.hasCodeAttribute()) {
-                final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(teleClassMethodActor, 0);
-                focus().setCodeLocation(teleCodeLocation, false);
+                focus().setCodeLocation(teleClassMethodActor.entryLocation());
             }
         }
     }

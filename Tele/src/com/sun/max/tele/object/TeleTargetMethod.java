@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.object;
 
+import java.lang.reflect.*;
+
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
@@ -27,10 +29,10 @@ import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -40,8 +42,6 @@ import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
-
-import java.lang.reflect.Constructor;
 
 /**
  * Canonical surrogate for several possible kinds of compilation of a Java {@link ClassMethod} in the {@link TeleVM}.
@@ -63,7 +63,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      *         instructionPointer} or null if there is no {@code TargetMethod} containing {@code instructionPointer}
      */
     public static TeleTargetMethod make(TeleVM teleVM, Address address) {
-        assert address != Address.zero();
+        ProgramError.check(!address.isZero());
         if (!teleVM.isBootImageRelocated()) {
             return null;
         }
@@ -136,6 +136,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     private Pointer codeStart = Pointer.zero();
+    private CodeLocation codeStartLocation = null;
 
     /**
      * @see TargetMethod#codeStart()
@@ -145,6 +146,16 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
             codeStart = teleVM().teleFields().TargetMethod_codeStart.readWord(reference()).asPointer();
         }
         return codeStart;
+    }
+
+    /**
+     * @see TargetMethod#codeStart()
+     */
+    public CodeLocation getCodeStartLocation() {
+        if (codeStartLocation == null && getCodeStart() != null) {
+            codeStartLocation = codeManager().createCompiledLocation(getCodeStart(), "code start location in method");
+        }
+        return codeStartLocation;
     }
 
     public String getName() {
@@ -201,6 +212,26 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     /**
+     * Gets the compiled entry point location for this method as specified by the ABI in use when this target method was compiled.
+     *
+     * @return {@link Address#zero()} if this target method has not yet been compiled
+     */
+    public final CodeLocation callEntryLocation() {
+        final Pointer codeStart = getCodeStart();
+        if (codeStart.isZero()) {
+            return null;
+        }
+        final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), teleVM().teleFields().TargetMethod_abi, teleVM().teleFields().TargetABI_callEntryPoint);
+        final TeleObject teleCallEntryPoint = teleVM().makeTeleObject(callEntryPointReference);
+        if (teleCallEntryPoint == null) {
+            return getCodeStartLocation();
+        }
+        final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
+        final Pointer callEntryPointer = codeStart.plus(callEntryPoint.offsetFromCodeStart());
+        return codeManager().createCompiledLocation(callEntryPointer, "call entry");
+    }
+
+    /**
      * Gets the byte array containing the target-specific machine code of this target method in the {@link TeleVM}.
      * @see TargetMethod#code()
      */
@@ -227,6 +258,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     private IndexedSequence<TargetCodeInstruction> instructions;
+    private IndexedSequence<CompiledCodeLocation> instructionLocations;
 
     public final  IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (instructions == null) {
@@ -236,6 +268,20 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
             }
         }
         return instructions;
+    }
+
+    public IndexedSequence<CompiledCodeLocation> getInstructionLocations() {
+        if (instructionLocations == null) {
+            getInstructions();
+            final int length = instructions.length();
+            final CodeManager codeManager = codeManager();
+            final VariableSequence<CompiledCodeLocation> locations = new VectorSequence<CompiledCodeLocation>(length);
+            for (int i = 0; i < length; i++) {
+                locations.append(codeManager.createCompiledLocation(instructions.get(i).address, "native target code instruction"));
+            }
+            instructionLocations = locations;
+        }
+        return instructionLocations;
     }
 
     /**
@@ -302,13 +348,14 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return nextCallPosition;
     }
 
-    public Address getNextCallAddress(Address address) {
-        final int targetCodePosition = address.minus(getCodeStart()).toInt();
+    public MaxCodeLocation getNextCallLocation(MaxCodeLocation maxCodeLocation) {
+        assert maxCodeLocation.hasAddress();
+        final int targetCodePosition = maxCodeLocation.address().minus(getCodeStart()).toInt();
         final int nextCallPosition = getNextCallPosition(targetCodePosition);
         if (nextCallPosition > 0) {
-            return getCodeStart().plus(nextCallPosition);
+            return codeManager().createCompiledLocation(getCodeStart().plus(nextCallPosition), "next call location");
         }
-        return Address.zero();
+        return null;
     }
 
     /**
@@ -397,53 +444,23 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return this.teleClassMethodActor;
     }
 
-    /**
-     * Sets a target breakpoint at the {@linkplain #callEntryPoint() entry point} of this target method.
-     *
-     * @return the breakpoint that was set or null if this target method has not yet been compiled
-     */
-    public TeleTargetBreakpoint setTargetBreakpointAtEntry() {
+    public CodeLocation entryLocation() {
         final Address callEntryPoint = callEntryPoint();
         if (callEntryPoint.isZero()) {
             return null;
         }
-        final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(callEntryPoint);
-        teleTargetBreakpoint.setDescription("Method entry");
-        return teleTargetBreakpoint;
+        return codeManager().createCompiledLocation(callEntryPoint, "Method entry");
     }
 
-    /**
-     * Sets a target breakpoint at each labeled instruction in this target method.
-     * No breakpoints will be set if this target method has not yet been compiled
-     */
-    public void setTargetCodeLabelBreakpoints() {
-        final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
-        if (instructions != null) {
-            for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                if (targetCodeInstruction.label != null) {
-                    final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpointAt(targetCodeInstruction.address);
-                    teleTargetBreakpoint.setDescription("Label " + targetCodeInstruction.label.toString());
-                }
+    public Sequence<MaxCodeLocation> labelLocations() {
+        final AppendableSequence<MaxCodeLocation> locations = new ArrayListSequence<MaxCodeLocation>();
+        for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
+            if (targetCodeInstruction.label != null) {
+                final String description = "Label " + targetCodeInstruction.label.toString() + " in " + getName();
+                locations.append(codeManager().createCompiledLocation(targetCodeInstruction.address, description));
             }
         }
-    }
-
-    /**
-     * Removed the target breakpoint (if any) at each labeled instruction in this target method.
-     * No action is taken if this target method has not yet been compiled
-     */
-    public void removeTargetCodeLabelBreakpoints() {
-        final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
-        if (instructions != null) {
-            for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                if (targetCodeInstruction.label != null) {
-                    final MaxBreakpoint breakpoint = teleVM().getBreakpointAt(targetCodeInstruction.address);
-                    if (breakpoint != null) {
-                        breakpoint.remove();
-                    }
-                }
-            }
-        }
+        return locations;
     }
 
     /**

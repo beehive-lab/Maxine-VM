@@ -25,7 +25,6 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
@@ -44,6 +43,7 @@ import com.sun.max.vm.stack.*;
 public class InspectionFocus extends AbstractInspectionHolder {
 
     private static final int TRACE_VALUE = 2;
+    private boolean settingCodeLocation = false;
 
     public InspectionFocus(Inspection inspection) {
         super(inspection);
@@ -61,7 +61,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         listeners.remove(listener);
     }
 
-    private TeleCodeLocation codeLocation = maxVM().createCodeLocation(Address.zero());
+    private MaxCodeLocation codeLocation = null;
 
     private final Object codeLocationTracer = new Object() {
         @Override
@@ -81,7 +81,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     /**
      * The current location of user interest in the code being inspected (view state).
      */
-    public TeleCodeLocation codeLocation() {
+    public MaxCodeLocation codeLocation() {
         return codeLocation;
     }
 
@@ -95,24 +95,45 @@ public class InspectionFocus extends AbstractInspectionHolder {
     /**
      * Selects a code location that is of immediate visual interest to the user.
      * This is view state only, not necessarily related to VM execution.
+     *
+     * @param codeLocation a location in code in the VM
+     * @param interactiveForNative should user be prompted interactively if in native code without
+     * any meta information?
      */
-    public void setCodeLocation(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-        codeLocation = teleCodeLocation;
-        Trace.line(TRACE_VALUE, codeLocationTracer);
-        for (ViewFocusListener listener : listeners.clone()) {
-            listener.codeLocationFocusSet(teleCodeLocation, interactiveForNative);
-        }
-        // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
-        if (thread != null && codeLocation.hasTargetCodeLocation()) {
-            final Address address = codeLocation.targetCodeInstructionAddress();
-            final Sequence<StackFrame> frames = thread.frames();
-            for (StackFrame stackFrame : frames) {
-                if (maxVM().getCodeAddress(stackFrame).equals(address)) {
-                    setStackFrame(thread, stackFrame, false);
-                    break;
+    public void setCodeLocation(MaxCodeLocation codeLocation, boolean interactiveForNative) {
+        // Terminate any loops in focus setting.
+        if (!settingCodeLocation) {
+            settingCodeLocation = true;
+            try {
+                this.codeLocation = codeLocation;
+                Trace.line(TRACE_VALUE, codeLocationTracer);
+                for (ViewFocusListener listener : listeners.clone()) {
+                    listener.codeLocationFocusSet(codeLocation, interactiveForNative);
                 }
+                // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
+                if (thread != null && codeLocation.hasAddress()) {
+                    final Sequence<StackFrame> frames = thread.frames();
+                    for (StackFrame stackFrame : frames) {
+                        if (codeManager().createCompiledLocation(stackFrame).equals(codeLocation)) {
+                            setStackFrame(thread, stackFrame, false);
+                            break;
+                        }
+                    }
+                }
+            } finally {
+                settingCodeLocation = false;
             }
         }
+    }
+
+    /**
+     * Selects a code location that is of immediate visual interest to the user.
+     * This is view state only, not necessarily related to VM execution.
+     *
+     * @param codeLocation a location in code in the VM
+     */
+    public void setCodeLocation(MaxCodeLocation codeLocation) {
+        setCodeLocation(codeLocation, false);
     }
 
     private MaxThread thread;
@@ -234,8 +255,8 @@ public class InspectionFocus extends AbstractInspectionHolder {
         // or call return location.
         // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
-        final TeleCodeLocation newCodeLocation = maxVM().createCodeLocation(stackFrame);
-        if (!newCodeLocation.equals(codeLocation)) {
+        final MaxCodeLocation newCodeLocation = codeManager().createCompiledLocation(stackFrame);
+        if (!newCodeLocation.isSameAs(codeLocation)) {
             setCodeLocation(newCodeLocation, interactiveForNative);
         }
     }
@@ -339,7 +360,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     private final Object breakpointFocusTracer = new Object() {
         @Override
         public String toString() {
-            return tracePrefix() + "Focus(Breakpoint):  " + (breakpoint == null ? "null" : inspection().nameDisplay().longName(breakpoint.getCodeLocation()));
+            return tracePrefix() + "Focus(Breakpoint):  " + (breakpoint == null ? "null" : inspection().nameDisplay().longName(breakpoint.codeLocation()));
         }
     };
 
@@ -385,7 +406,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             if (threadAtBreakpoint != null) {
                 setStackFrame(threadAtBreakpoint, threadAtBreakpoint.frames().first(), false);
             } else {
-                setCodeLocation(maxBreakpoint.getCodeLocation(), false);
+                setCodeLocation(maxBreakpoint.codeLocation());
             }
         }
     }

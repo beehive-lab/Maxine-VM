@@ -22,8 +22,8 @@ package com.sun.max.tele;
 
 import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
@@ -66,19 +66,22 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
     IndexedSequence<TargetCodeInstruction> getInstructions();
 
     /**
-     * Sets a target code breakpoint at the method entry.
+     * @return compiled code location for each instruction.
+     * @see #getInstructions()
      */
-    TeleTargetBreakpoint setTargetBreakpointAtEntry();
+    IndexedSequence<CompiledCodeLocation> getInstructionLocations();
 
     /**
-     * Sets a target code breakpoint at every label synthesized by disassembly of this method.
+     * Gets a location that specifies the entry.
      */
-    void setTargetCodeLabelBreakpoints();
+    CodeLocation entryLocation();
 
     /**
-     * Removes a target code breakpoint at every label synthesized by disassembly of this method.
+     * Gets the locations of all labels synthesized by disassembly of this method.
+     *
+     * @return the locations, empty sequence if none.
      */
-    void removeTargetCodeLabelBreakpoints();
+    Sequence<MaxCodeLocation> labelLocations();
 
     /**
      * @return Local {@link TeleClassMethodActor} for the target routine in the {@link TeleVM}, if it was

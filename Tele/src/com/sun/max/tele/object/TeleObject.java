@@ -134,7 +134,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public TeleObject getForwardedTeleObject() {
         if (isObsolete()) {
             TeleGrip forwardedTeleGrip = reference.grip().getForwardedTeleGrip();
-            TeleObject teleObject = teleVM.findObjectByOID(forwardedTeleGrip.makeOID());
+            TeleObject teleObject = teleVM().findObjectByOID(forwardedTeleGrip.makeOID());
             if (teleObject == null) {
                 reference = (TeleReference) forwardedTeleGrip.toReference();
                 return this;

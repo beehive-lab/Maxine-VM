@@ -28,7 +28,7 @@ import com.sun.max.jdwp.vm.core.*;
  * @author Thomas Wuerthinger
  *
  */
-public interface CodeLocation {
+public interface JdwpCodeLocation {
 
     /**
      * Method provider for the compiled method.

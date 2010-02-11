@@ -743,7 +743,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      *
      * @author Michael Van De Vanter
      */
-    static final class Factory extends AbstractTeleVMHolder implements MaxWatchpointFactory {
+    public static final class Factory extends AbstractTeleVMHolder implements MaxWatchpointFactory {
 
         private final TeleProcess teleProcess;
 
@@ -1142,11 +1142,21 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                             }
                         }
                     };
-                    teleVM().addGCCompletedListener(gcCompletedListener);
+                    try {
+                        teleVM().addGCCompletedListener(gcCompletedListener);
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        ProgramWarning.message("update after watchpoint changes failed to set GC completed listener");
+                        gcCompletedListener = null;
+                    }
                 }
             } else { // no watchpoints
                 if (gcCompletedListener != null) {
-                    teleVM().removeGCCompletedListener(gcCompletedListener);
+                    try {
+                        teleVM().removeGCCompletedListener(gcCompletedListener);
+                    } catch (MaxVMBusyException maxVMBusyException) {
+                        ProgramWarning.message("update after watchpoint changes failed to remove GC completed listener");
+                        gcCompletedListener = null;
+                    }
                     gcCompletedListener = null;
                 }
             }

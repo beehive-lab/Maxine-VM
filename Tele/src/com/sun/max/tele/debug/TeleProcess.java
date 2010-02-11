@@ -34,6 +34,8 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
@@ -406,7 +408,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      *
      * @return the creator/manager of watchpoints; null watchpoints not supported on platform.
      */
-    public final TeleWatchpoint.Factory watchpointFactory() {
+    public final TeleWatchpoint.Factory getWatchpointFactory() {
         return watchpointFactory;
     }
 
@@ -459,17 +461,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.begin(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
                 updateWatchpointCaches();
                 oldInstructionPointer = thread.instructionPointer();
-                oldReturnAddress = thread.getReturnAddress();
+                oldReturnAddress = thread.getReturnLocation().address().asPointer();
                 singleStep(thread, false);
                 Trace.end(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
             }
 
             @Override
             public void notifyProcessStopped() {
-                final Pointer stepOutAddress = getStepoutAddress(thread, oldReturnAddress, oldInstructionPointer, thread.instructionPointer());
-                if (stepOutAddress != null) {
+                final CodeLocation stepOutLocation = getStepoutLocation(thread, oldReturnAddress, oldInstructionPointer, thread.instructionPointer());
+                if (stepOutLocation != null) {
                     try {
-                        runToInstruction(stepOutAddress, true, withClientBreakpoints);
+                        runToInstruction(stepOutLocation, true, withClientBreakpoints);
                     } catch (OSExecutionRequestException e) {
                         e.printStackTrace();
                     } catch (InvalidVMRequestException e) {
@@ -487,13 +489,15 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * <br>
      * This is effected by creating a transient breakpoint and then performing an ordinary resume.
      *
-     * @param instructionPointer the destination instruction
+     * @param codeLocation the destination instruction in compiled code
      * @param synchronous wait for completion before returning?
      * @param withClientBreakpoints enable client breakpoints during execution?
      * @throws OSExecutionRequestException
      * @throws InvalidVMRequestException
      */
-    public final void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
+    public final void runToInstruction(final CodeLocation codeLocation, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
+        assert codeLocation instanceof CompiledCodeLocation;
+        final CompiledCodeLocation compiledCodeLocation = (CompiledCodeLocation) codeLocation;
         Trace.begin(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " schedule");
         final TeleEventRequest request = new TeleEventRequest(RUN_TO_INSTRUCTION, null, withClientBreakpoints) {
             @Override
@@ -501,9 +505,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.begin(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " perform");
                 updateWatchpointCaches();
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
-                TeleTargetBreakpoint breakpoint = targetBreakpointFactory.getClientTargetBreakpointAt(instructionPointer);
+                TeleTargetBreakpoint breakpoint = targetBreakpointFactory.findClientBreakpoint(compiledCodeLocation);
                 if (breakpoint == null || !breakpoint.isEnabled()) {
-                    breakpoint = targetBreakpointFactory.makeTransientBreakpoint(instructionPointer);
+                    try {
+                        breakpoint = breakpointFactory().makeTransientTargetBreakpoint(compiledCodeLocation);
+                    } catch (MaxVMBusyException e) {
+                        ProgramError.unexpected("run to instruction should alwasy be executed inside VM lock on request handling thread");
+                    }
                     breakpoint.setDescription("transient breakpoint for low-level run-to-instruction operation");
                 }
                 restoreBreakpointsAndResume(withClientBreakpoints);
@@ -753,7 +761,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
-     * Given the instruction pointer before and after a single step, this method determines if the step represents a call
+     * Given the code location before and after a single step, this method determines if the step represents a call
      * from one target method to another (or a recursive call from a target method to itself) and, if so, returns the
      * address of the next instruction that will be executed in the target method that is the origin of the step (i.e.
      * the return address of the call).
@@ -763,10 +771,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @param oldInstructionPointer the instruction pointer of the thread just before the single step
      * @param newInstructionPointer the instruction pointer of the thread just after the single step
      * @return if {@code oldInstructionPointer} and {@code newInstructionPointer} indicate two different target methods
-     *         or a recursive call to the same target method, then the return address of the call is returned.
+     *         or a recursive call to the same target method, then the return location of the call is returned.
      *         Otherwise, null is returned, indicating that the step over is really just a single step.
      */
-    private Pointer getStepoutAddress(TeleNativeThread thread, Pointer oldReturnAddress, Pointer oldInstructionPointer, Pointer newInstructionPointer) {
+    private CodeLocation getStepoutLocation(TeleNativeThread thread, Pointer oldReturnAddress, Pointer oldInstructionPointer, Pointer newInstructionPointer) {
         if (newInstructionPointer.equals(oldReturnAddress)) {
             // Executed a return
             return null;
@@ -783,7 +791,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
         if (oldTeleTargetMethod != newTeleTargetMethod || newTeleTargetMethod.callEntryPoint().equals(newInstructionPointer)) {
             // Stepped into a different target method or back into the entry of the same target method (i.e. a recursive call):
-            return thread.getReturnAddress();
+            return thread.getReturnLocation();
         }
         // Stepped over a normal, non-call instruction:
         return null;

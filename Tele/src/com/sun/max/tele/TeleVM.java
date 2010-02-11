@@ -41,7 +41,6 @@ import com.sun.max.program.*;
 import com.sun.max.program.Classpath.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.debug.darwin.*;
 import com.sun.max.tele.debug.guestvm.xen.*;
 import com.sun.max.tele.debug.linux.*;
@@ -52,6 +51,7 @@ import com.sun.max.tele.grip.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.jdwputil.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.type.*;
@@ -61,7 +61,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.layout.*;
@@ -70,7 +69,6 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reference.prototype.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -372,9 +370,6 @@ public abstract class TeleVM implements MaxVM {
         return pageSize;
     }
 
-    // Location of the caller return address relative to the saved location in a stack frame, usually 0 but see SPARC.
-    private final int  offsetToReturnPC;
-
     private final BootImage bootImage;
 
     public final BootImage bootImage() {
@@ -448,12 +443,16 @@ public abstract class TeleVM implements MaxVM {
     private TeleClassRegistry teleClassRegistry;
     private TeleCodeRegistry teleCodeRegistry;
 
+    private final CodeManager codeManager;
+
     /**
-     * Watchpoint factory, if supported on platform, else null.
+     * Breakpoint factory, for both target and bytecode breakpoints.
      */
-    private final MaxWatchpointFactory teleWatchpointFactory;
+    private final TeleBreakpointFactory teleBreakpointFactory;
 
     private final TeleBytecodeBreakpoint.Factory bytecodeBreakpointFactory;
+
+    private final TeleWatchpoint.Factory watchpointFactory;
 
     /**
      * The immutable history of all VM states, as of the last state transition; thread safe
@@ -495,7 +494,7 @@ public abstract class TeleVM implements MaxVM {
     /**
      * A lock designed to keep all non-thread-safe client calls from being handled during the VM setup/execute/refresh cycle.
      */
-    private Lock lock = new ReentrantLock();
+    private ReentrantLock lock = new ReentrantLock();
 
     /**
      * Creates a tele VM instance by creating or attaching to a Maxine VM process.
@@ -525,7 +524,6 @@ public abstract class TeleVM implements MaxVM {
 
         this.wordSize = Size.fromInt(vmConfiguration.platform().processorKind.dataModel.wordWidth.numberOfBytes);
         this.pageSize = Size.fromInt(vmConfiguration.platform.pageSize);
-        this.offsetToReturnPC = vmConfiguration.platform.processorKind.instructionSet.offsetToReturnPC;
         this.programFile = new File(bootImageFile.getParent(), PROGRAM_NAME);
 
         if (commandLineArguments == null) {
@@ -565,8 +563,14 @@ public abstract class TeleVM implements MaxVM {
 
         final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfiguration.gripScheme();
         teleGripScheme.setTeleVM(this);
-        this.teleWatchpointFactory = teleProcess.watchpointFactory();
+
+        this.codeManager = new CodeManager(this);
+
         this.bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(this);
+
+        this.teleBreakpointFactory = new TeleBreakpointFactory(this, this.bytecodeBreakpointFactory);
+
+        this.watchpointFactory = teleProcess.getWatchpointFactory();
     }
 
     /**
@@ -587,6 +591,10 @@ public abstract class TeleVM implements MaxVM {
      */
     public final boolean tryLock() {
         return lock.tryLock();
+    }
+
+    public final boolean lockHeldByCurrentThread() {
+        return lock.isHeldByCurrentThread();
     }
 
     /**
@@ -1379,9 +1387,9 @@ public abstract class TeleVM implements MaxVM {
         return teleCodeRegistry;
     }
 
-    public final Sequence<MaxInspectableMethod> inspectableMethods() {
-        final AppendableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>(teleMethods.clientInspectableMethods());
-        for (MaxInspectableMethod method : teleHeapManager.inspectableMethods()) {
+    public final Sequence<MaxCodeLocation> inspectableMethods() {
+        final AppendableSequence<MaxCodeLocation> methods = new ArrayListSequence<MaxCodeLocation>(teleMethods.clientInspectableMethods());
+        for (MaxCodeLocation method : teleHeapManager.inspectableMethods()) {
             methods.append(method);
         }
         return methods;
@@ -1451,109 +1459,19 @@ public abstract class TeleVM implements MaxVM {
         return null;
     }
 
-    public Address getCodeAddress(StackFrame stackFrame) {
-        Pointer instructionPointer = stackFrame.ip;
-        final StackFrame callee = stackFrame.calleeFrame();
-        if (callee == null) {
-            // Top frame, not a call return so no adjustment.
-            return instructionPointer;
-        }
-        // Add a platform-specific offset from the stored code address to the actual call return site.
-        final TargetMethod calleeTargetMethod = callee.targetMethod();
-        if (calleeTargetMethod != null) {
-            final ClassMethodActor calleeClassMethodActor = calleeTargetMethod.classMethodActor();
-            if (calleeClassMethodActor != null) {
-                if (calleeClassMethodActor.isTrapStub()) {
-                    // Special case, where the IP caused a trap; no adjustment.
-                    return  instructionPointer;
-                }
-            }
-        }
-        // An ordinary call; apply a platform-specific adjustment to get the real return address.
-        return  instructionPointer.plus(offsetToReturnPC);
+    public final CodeManager codeManager() {
+        return codeManager;
     }
 
-    public final TeleCodeLocation createCodeLocation(Address address) {
-        return new TeleCodeLocation(this, address);
+    public final TeleBreakpointFactory breakpointFactory() {
+        return teleBreakpointFactory;
     }
 
-    public final TeleCodeLocation createCodeLocation(TeleClassMethodActor teleClassMethodActor, int position) {
-        return new TeleCodeLocation(this, teleClassMethodActor, position);
+    public final TeleWatchpoint.Factory watchpointFactory() {
+        return watchpointFactory;
     }
 
-    public final TeleCodeLocation createCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position) {
-        return new TeleCodeLocation(this, address, teleClassMethodActor, position);
-    }
-
-    public TeleCodeLocation createCodeLocation(StackFrame stackFrame) {
-        return new TeleCodeLocation(this, getCodeAddress(stackFrame));
-    }
-
-    public final void addBreakpointListener(MaxBreakpointListener listener) {
-        teleProcess.targetBreakpointFactory().addBreakpointListener(listener);
-        bytecodeBreakpointFactory.addBreakpointListener(listener);
-    }
-
-    public final void removeBreakpointListener(MaxBreakpointListener listener) {
-        teleProcess.targetBreakpointFactory().removeBreakpointListener(listener);
-        bytecodeBreakpointFactory.removeBreakpointListener(listener);
-    }
-
-    public final Iterable<MaxBreakpoint> targetBreakpoints() {
-        return teleProcess.targetBreakpointFactory().clientBreakpoints();
-    }
-
-    public final int targetBreakpointCount() {
-        return teleProcess.targetBreakpointFactory().clientBreakpointCount();
-    }
-
-    public final MaxBreakpoint makeBreakpointAt(Address address) throws MaxVMException {
-        try {
-            return makeTargetBreakpointAt(address);
-        } catch (DataIOError dataIOError) {
-            final String message = "Cannot create breakpoint at 0x" + address.toHexString() + ":  " + dataIOError.getMessage();
-            throw new MaxVMException(message);
-        }
-    }
-
-    public final TeleTargetBreakpoint makeTargetBreakpointAt(Address address) {
-        return teleProcess.targetBreakpointFactory().makeClientBreakpointAt(address);
-    }
-
-    public final MaxBreakpoint getBreakpointAt(Address address) {
-        return teleProcess.targetBreakpointFactory().getClientTargetBreakpointAt(address);
-    }
-
-    public final Iterable<MaxBreakpoint> bytecodeBreakpoints() {
-        return bytecodeBreakpointFactory.clientBreakpoints();
-    }
-
-    public final int bytecodeBreakpointCount() {
-        return bytecodeBreakpointFactory.clientBreakpointCount();
-    }
-
-    public final MaxBreakpoint makeBreakpointAt(Key key) {
-        return bytecodeBreakpointFactory.makeClientBreakpoint(key);
-    }
-
-    public final MaxBreakpoint makeBreakpointAt(MaxInspectableMethod maxInspectableMethod) {
-        return bytecodeBreakpointFactory.makeClientBreakpoint(maxInspectableMethod);
-    }
-
-    public final MaxBreakpoint getBreakpointAt(Key key) {
-        return bytecodeBreakpointFactory.getClientBreakpoint(key);
-    }
-
-    public void describeBreakpoints(PrintStream printStream) {
-        teleProcess.targetBreakpointFactory().writeSummaryToStream(printStream);
-        bytecodeBreakpointFactory.writeSummaryToStream(printStream);
-    }
-
-    public final MaxWatchpointFactory watchpointFactory() {
-        return teleWatchpointFactory;
-    }
-
-    public void addGCStartedListener(MaxGCStartedListener listener) {
+    public void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
         assert listener != null;
         gcStartedListeners.add(listener);
         if (!gcStartedListeners.isEmpty() && gcStartedBreakpoint == null) {
@@ -1567,21 +1485,31 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcStartedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
-            gcStartedBreakpoint.setDescription("Internal breakpoint, just after start of GC, to notify listeners");
+            try {
+                gcStartedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
+                gcStartedBreakpoint.setDescription("Internal breakpoint, just after start of GC, to notify listeners");
+            } catch (MaxVMBusyException maxVMBusyException) {
+                gcStartedListeners.remove(listener);
+                throw maxVMBusyException;
+            }
         }
     }
 
-    public void removeGCStartedListener(MaxGCStartedListener listener) {
+    public void removeGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
         assert listener != null;
         gcStartedListeners.remove(listener);
         if (gcStartedListeners.isEmpty() && gcStartedBreakpoint != null) {
-            gcStartedBreakpoint.remove();
+            try {
+                gcStartedBreakpoint.remove();
+            } catch (MaxVMBusyException maxVMBusyException) {
+                gcStartedListeners.add(listener);
+                throw maxVMBusyException;
+            }
             gcStartedBreakpoint = null;
         }
     }
 
-    public void addGCCompletedListener(MaxGCCompletedListener listener) {
+    public void addGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
         assert listener != null;
         gcCompletedListeners.add(listener);
         if (!gcCompletedListeners.isEmpty() && gcCompletedBreakpoint == null) {
@@ -1595,16 +1523,26 @@ public abstract class TeleVM implements MaxVM {
                     return false;
                 }
             };
-            gcCompletedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
-            gcCompletedBreakpoint.setDescription("Internal breakpoint, just after end of GC, to notify listeners");
+            try {
+                gcCompletedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
+                gcCompletedBreakpoint.setDescription("Internal breakpoint, just after end of GC, to notify listeners");
+            } catch (MaxVMBusyException maxVMBusyException) {
+                gcCompletedListeners.remove(listener);
+                throw maxVMBusyException;
+            }
         }
     }
 
-    public void removeGCCompletedListener(MaxGCCompletedListener listener) {
+    public void removeGCCompletedListener(MaxGCCompletedListener listener) throws MaxVMBusyException {
         assert listener != null;
         gcCompletedListeners.remove(listener);
         if (gcCompletedListeners.isEmpty() && gcCompletedBreakpoint != null) {
-            gcCompletedBreakpoint.remove();
+            try {
+                gcCompletedBreakpoint.remove();
+            } catch (MaxVMBusyException maxVMBusyException) {
+                gcCompletedListeners.add(listener);
+                throw maxVMBusyException;
+            }
             gcCompletedBreakpoint = null;
         }
     }
@@ -1679,22 +1617,27 @@ public abstract class TeleVM implements MaxVM {
 
     public void advanceToJavaEntryPoint() throws IOException {
         setVMInspectable();
-        final Address startEntryPoint = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
+        final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
+        final CompiledCodeLocation entryLocation = codeManager().createCompiledLocation(startEntryAddress, "vm start address");
         try {
-            runToInstruction(startEntryPoint, true, false);
+            runToInstruction(entryLocation, true, false);
         } catch (Exception exception) {
             throw new IOException(exception);
         }
-        addGCCompletedListener(new MaxGCCompletedListener() {
-            // The purpose of this listener, which doesn't do anything explicitly,
-            // is to force a VM stop at the end of each GC cycle, even if there are
-            // no other listeners.  This presents an opportunity for the Reference/Grip/Object
-            // code to update heap-related information that may have been changed as
-            // a result of the GC.
-            public void gcCompleted() {
-                Trace.line(TRACE_VALUE, tracePrefix() + "GC complete");
-            }
-        });
+        try {
+            addGCCompletedListener(new MaxGCCompletedListener() {
+                // The purpose of this listener, which doesn't do anything explicitly,
+                // is to force a VM stop at the end of each GC cycle, even if there are
+                // no other listeners.  This presents an opportunity for the Reference/Grip/Object
+                // code to update heap-related information that may have been changed as
+                // a result of the GC.
+                public void gcCompleted() {
+                    Trace.line(TRACE_VALUE, tracePrefix() + "GC complete");
+                }
+            });
+        } catch (MaxVMBusyException maxVMBusyException) {
+            ProgramError.unexpected("Unable to set initial GC completed listener");
+        }
     }
 
     public final Value interpretMethod(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
@@ -1715,8 +1658,9 @@ public abstract class TeleVM implements MaxVM {
         teleProcess.stepOver(teleNativeThread, synchronous, withClientBreakpoints);
     }
 
-    public final void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
-        teleProcess.runToInstruction(instructionPointer, synchronous, withClientBreakpoints);
+    public final void runToInstruction(final MaxCodeLocation maxCodeLocation, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
+        final CodeLocation codeLocation = (CodeLocation) maxCodeLocation;
+        teleProcess.runToInstruction(codeLocation, synchronous, withClientBreakpoints);
     }
 
     public final  void pauseVM() throws InvalidVMRequestException, OSExecutionRequestException {
@@ -1789,7 +1733,7 @@ public abstract class TeleVM implements MaxVM {
      * @param thread the thread that did the single step
      * @param location the code location onto which the thread just stepped
      */
-    private void fireJDWPSingleStepEvent(ThreadProvider thread, CodeLocation location) {
+    private void fireJDWPSingleStepEvent(ThreadProvider thread, JdwpCodeLocation location) {
         LOGGER.info("VM EVENT: Single step was made at thread " + thread
                 + " to location " + location);
         for (VMListener listener : jdwpListeners) {
@@ -1803,7 +1747,7 @@ public abstract class TeleVM implements MaxVM {
      * @param thread the thread that hit the breakpoint
      * @param location the code location at which the breakpoint was hit
      */
-    private void fireJDWPBreakpointEvent(ThreadProvider thread, CodeLocation location) {
+    private void fireJDWPBreakpointEvent(ThreadProvider thread, JdwpCodeLocation location) {
         LOGGER.info("VM EVENT: Breakpoint hit at thread " + thread
                 + " at location " + location);
         for (VMListener listener : jdwpListeners) {
@@ -2083,7 +2027,7 @@ public abstract class TeleVM implements MaxVM {
         // living in the JDWP server.
         private final JavaProviderFactory javaProviderFactory;
 
-        private final Set<CodeLocation> breakpointLocations = new HashSet<CodeLocation>();
+        private final Set<JdwpCodeLocation> breakpointLocations = new HashSet<JdwpCodeLocation>();
 
         public VMAccessImpl() {
             javaProviderFactory = new JavaProviderFactory(this, null);
@@ -2151,14 +2095,14 @@ public abstract class TeleVM implements MaxVM {
                     registeredSingleStepThread = null;
 
                 } else if (registeredStepOutThread != null
-                        && registeredStepOutThread.getReturnAddress() != null) {
+                        && registeredStepOutThread.getReturnLocation().address() != null) {
 
                     // There has been a thread registered for performing a step out
                     // => perform a step out instead of resume.
-                    final Address returnAddress = registeredStepOutThread.getReturnAddress();
-                    assert returnAddress != null;
+                    final CodeLocation returnLocation = registeredStepOutThread.getReturnLocation();
+                    assert returnLocation != null;
                     try {
-                        TeleVM.this.runToInstruction(returnAddress, false, true);
+                        TeleVM.this.runToInstruction(returnLocation, false, true);
                     } catch (OSExecutionRequestException osExecutionRequestException) {
                         LOGGER.log(
                                         Level.SEVERE,
@@ -2219,7 +2163,7 @@ public abstract class TeleVM implements MaxVM {
          * @param codeLocation specifies the code location at which the breakpoint should be set
          * @param suspendAll if true, all threads should be suspended when the breakpoint is hit
          */
-        public void addBreakpoint(CodeLocation codeLocation, boolean suspendAll) {
+        public void addBreakpoint(JdwpCodeLocation codeLocation, boolean suspendAll) {
 
             // For now ignore duplicates
             if (breakpointLocations.contains(codeLocation)) {
@@ -2232,15 +2176,24 @@ public abstract class TeleVM implements MaxVM {
             breakpointLocations.add(codeLocation);
             assert breakpointLocations.contains(codeLocation);
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            TeleVM.this.makeTargetBreakpointAt(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
-            Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
+            final MethodCodeLocation methodCodeLocation = codeManager().createMethodLocation(teleClassMethodActor, 0, "");
+            try {
+                TeleVM.this.breakpointFactory().makeBreakpoint(methodCodeLocation);
+            } catch (MaxVMBusyException maxVMBusyException) {
+                ProgramError.unexpected("breakpoint creation failed");
+            }
+            Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + methodCodeLocation);
         }
 
-        public void removeBreakpoint(CodeLocation codeLocation) {
+        public void removeBreakpoint(JdwpCodeLocation codeLocation) {
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final MaxBreakpoint breakpoint = TeleVM.this.getBreakpointAt(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
+            final MaxBreakpoint breakpoint = TeleVM.this.breakpointFactory().findBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryLocation());
             if (breakpoint != null) {
-                breakpoint.remove();
+                try {
+                    breakpoint.remove();
+                } catch (MaxVMBusyException maxVMBusyException) {
+                    ProgramError.unexpected("breakpoint removal failed");
+                }
             }
             assert breakpointLocations.contains(codeLocation);
             breakpointLocations.remove(codeLocation);
@@ -2265,8 +2218,8 @@ public abstract class TeleVM implements MaxVM {
             return createJavaObjectValue(c, Character.TYPE);
         }
 
-        public CodeLocation createCodeLocation(MethodProvider method, long position, boolean isMachineCode) {
-            return new CodeLocationImpl(method, position, isMachineCode);
+        public JdwpCodeLocation createCodeLocation(MethodProvider method, long position, boolean isMachineCode) {
+            return new JdwpCodeLocationImpl(method, position, isMachineCode);
         }
 
         public VMValue createDoubleValue(double d) {

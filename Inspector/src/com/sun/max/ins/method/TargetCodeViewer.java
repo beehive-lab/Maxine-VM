@@ -27,6 +27,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -64,12 +65,17 @@ public abstract class TargetCodeViewer extends CodeViewer {
     }
 
     private final IndexedSequence<TargetCodeInstruction> instructions;
+    private IndexedSequence<CompiledCodeLocation> instructionLocations;
 
     /**
      * @return disassembled target code instructions for the method being viewed.
      */
     public IndexedSequence<TargetCodeInstruction> instructions() {
         return instructions;
+    }
+
+    public IndexedSequence<CompiledCodeLocation> instructionLocations() {
+        return instructionLocations;
     }
 
     private final TeleConstantPool teleConstantPool;
@@ -122,6 +128,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         super(inspection, parent);
         this.teleTargetRoutine = teleTargetRoutine;
         instructions = teleTargetRoutine.getInstructions();
+        instructionLocations = teleTargetRoutine.getInstructionLocations();
         final TeleClassMethodActor teleClassMethodActor = teleTargetRoutine.getTeleClassMethodActor();
         if (teleClassMethodActor != null) {
             final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
@@ -290,17 +297,21 @@ public abstract class TargetCodeViewer extends CodeViewer {
         int stackPosition = 0;
         for (StackFrame frame : frames) {
             final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
-            final boolean isFrameForThisCode = frame instanceof CompiledStackFrame ?
-                            targetCodeRegion.overlaps(frame.targetMethod()) :
-                            targetCodeRegion.contains(maxVM().getCodeAddress(frame));
-            if (isFrameForThisCode) {
-                int row = 0;
-                for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                    if (targetCodeInstruction.address.equals(maxVM().getCodeAddress(frame))) {
-                        rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition);
-                        break;
+            final MaxCodeLocation frameCodeLocation = codeManager().createCompiledLocation(frame);
+            if (frameCodeLocation != null) {
+                final boolean isFrameForThisCode =
+                    frame instanceof CompiledStackFrame ?
+                                    targetCodeRegion.overlaps(frame.targetMethod()) :
+                                        targetCodeRegion.contains(frameCodeLocation);
+                if (isFrameForThisCode) {
+                    int row = 0;
+                    for (TargetCodeInstruction targetCodeInstruction : instructions) {
+                        if (targetCodeInstruction.address.equals(frameCodeLocation.address())) {
+                            rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition, frameCodeLocation);
+                            break;
+                        }
+                        row++;
                     }
-                    row++;
                 }
             }
             stackPosition++;
@@ -311,7 +322,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * Does the instruction address have a target code breakpoint set in the VM.
      */
     protected MaxBreakpoint getTargetBreakpointAtRow(int row) {
-        return maxVM().getBreakpointAt(instructions.get(row).address);
+        return breakpointFactory().findBreakpoint(instructionLocations.get(row));
     }
 
     protected final String rowToTagText(int row) {

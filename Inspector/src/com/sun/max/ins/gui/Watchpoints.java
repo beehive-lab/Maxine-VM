@@ -155,7 +155,7 @@ public final class Watchpoints {
                         // ignore the recursive notification of this change.
                         item.setSelected(!newState);
                         undoing = false;
-                        inspection.vmBusyFailure("Watchpoint READ setting");
+                        inspection.announceVMBusyFailure("Watchpoint READ setting");
                     }
                 }
             }
@@ -182,7 +182,7 @@ public final class Watchpoints {
                         // ignore the recursive notification of this change.
                         item.setSelected(!newState);
                         undoing = false;
-                        inspection.vmBusyFailure("Watchpoint WRITE setting");
+                        inspection.announceVMBusyFailure("Watchpoint WRITE setting");
                     }
                 }
             }
@@ -209,7 +209,7 @@ public final class Watchpoints {
                         // ignore the recursive notification of this change.
                         item.setSelected(!newState);
                         undoing = false;
-                        inspection.vmBusyFailure("Watchpoint EXEC setting");
+                        inspection.announceVMBusyFailure("Watchpoint EXEC setting");
                     }
                 }
             }
@@ -236,7 +236,7 @@ public final class Watchpoints {
                         // ignore the recursive notification of this change.
                         item.setSelected(!newState);
                         undoing = false;
-                        inspection.vmBusyFailure("Watchpoint GC setting");
+                        inspection.announceVMBusyFailure("Watchpoint GC setting");
                     }
                 }
             }

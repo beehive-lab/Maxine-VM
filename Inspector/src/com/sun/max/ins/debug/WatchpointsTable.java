@@ -173,9 +173,9 @@ public final class WatchpointsTable extends InspectorTable {
                     } catch (MaxVMBusyException maxVMBusyException) {
                         final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
-                        System.out.println("Reset READ checkbox at row=" + row + ", col=" + column);
+                        // System.out.println("Reset READ checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
-                        inspection().vmBusyFailure("Watchpoint READ setting");
+                        inspection().announceVMBusyFailure("Watchpoint READ setting");
                     }
                     break;
                 }
@@ -190,7 +190,7 @@ public final class WatchpointsTable extends InspectorTable {
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
                         System.out.println("Reset WRITE checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
-                        inspection().vmBusyFailure("Watchpoint WRITE setting");
+                        inspection().announceVMBusyFailure("Watchpoint WRITE setting");
                     }
                     break;
                 }
@@ -205,7 +205,7 @@ public final class WatchpointsTable extends InspectorTable {
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
                         System.out.println("Reset EXEC checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
-                        inspection().vmBusyFailure("Watchpoint EXEC setting");
+                        inspection().announceVMBusyFailure("Watchpoint EXEC setting");
                     }
                     break;
                 }
@@ -219,7 +219,7 @@ public final class WatchpointsTable extends InspectorTable {
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
                         System.out.println("Reset GC checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
-                        inspection().vmBusyFailure("Watchpoint GC setting");
+                        inspection().announceVMBusyFailure("Watchpoint GC setting");
                     }
                     break;
                 }
