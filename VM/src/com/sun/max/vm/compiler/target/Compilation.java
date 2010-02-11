@@ -42,6 +42,22 @@ public class Compilation implements Future<TargetMethod> {
     private static final VMBooleanXXOption GC_ON_COMPILE_OPTION = register(new VMBooleanXXOption("-XX:-GCOnCompilation",
         "When specified, the compiler will request GC before every compilation operation."), MaxineVM.Phase.STARTING);
 
+    public static final VMBooleanXXOption TIME_COMPILATION = register(new VMBooleanXXOption("-XX:-TimeCompilation",
+        "Report time spent in compilation.") {
+        @Override
+        protected void beforeExit() {
+            if (getValue()) {
+                Log.print("Time spent in compilation: ");
+                Log.print(compilationTime);
+                Log.println("ms");
+            }
+
+        }
+    }, MaxineVM.Phase.STARTING);
+
+    @RESET
+    private static long compilationTime;
+
     public final CompilationScheme compilationScheme;
     public final RuntimeCompilerScheme compilerScheme;
     public final ClassMethodActor classMethodActor;
@@ -146,6 +162,10 @@ public class Compilation implements Future<TargetMethod> {
             if (GC_ON_COMPILE_OPTION.getValue() && Heap.isInitialized()) {
                 System.gc();
             }
+            long startCompile = 0;
+            if (TIME_COMPILATION.getValue()) {
+                startCompile = System.currentTimeMillis();
+            }
 
             // attempt the compilation
             methodString = logBeforeCompilation(compiler);
@@ -153,6 +173,9 @@ public class Compilation implements Future<TargetMethod> {
 
             if (targetMethod == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
+            }
+            if (startCompile != 0) {
+                compilationTime += System.currentTimeMillis() - startCompile;
             }
 
             logAfterCompilation(compiler, targetMethod, methodString);
