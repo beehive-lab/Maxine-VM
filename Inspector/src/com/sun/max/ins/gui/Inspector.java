@@ -34,7 +34,6 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
@@ -442,7 +441,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void vmProcessTerminated() {
     }
 
-    public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
+    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
     }
 
     public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxeThread) {

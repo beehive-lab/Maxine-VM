@@ -27,7 +27,6 @@ import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.field.*;
 import com.sun.max.tele.field.TeleFields.*;
 import com.sun.max.vm.code.*;
@@ -70,22 +69,22 @@ public class TeleMethods extends AbstractTeleVMHolder {
     // Checkstyle: resume field name check
 
     // CAUTION:  order-dependent declarations; must follow the auto-generated fields.
-    private TeleInspectableMethod compilationComplete = new TeleInspectableMethod(InspectableCodeInfo_inspectableCompilationComplete, "Compilation complete (internal)");
-    private TeleInspectableMethod gcCompleted = new TeleInspectableMethod(InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
-    private TeleInspectableMethod gcStarted = new TeleInspectableMethod(InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
+    private CodeLocation compilationComplete = CodeLocation.create(teleVM(), InspectableCodeInfo_inspectableCompilationComplete, "Compilation complete (internal)");
+    private CodeLocation gcCompleted = CodeLocation.create(teleVM(), InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
+    private CodeLocation gcStarted = CodeLocation.create(teleVM(), InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
 
-    private final Sequence<MaxInspectableMethod> clientInspectableMethods;
+    private final Sequence<CodeLocation> clientInspectableMethods;
 
     public TeleMethods(TeleVM teleVM) {
         super(teleVM);
         // Uncomment to enable verifying that the generated content in this class is up to date when running the inspector
         // updateSource(true);
 
-        final VariableSequence<MaxInspectableMethod> methods = new ArrayListSequence<MaxInspectableMethod>();
-        methods.append(new TeleInspectableMethod(HeapScheme$Static_inspectableGCStarted, "Start of GC"));
-        methods.append(new TeleInspectableMethod(HeapScheme$Static_inspectableGCCompleted, "End of GC"));
-        methods.append(new TeleInspectableMethod(CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
-        methods.append(new TeleInspectableMethod(HeapScheme$Static_objectRelocated, "Object relocated"));
+        final VariableSequence<CodeLocation> methods = new ArrayListSequence<CodeLocation>();
+        methods.append(CodeLocation.create(teleVM(), HeapScheme$Static_inspectableGCStarted, "Start of GC"));
+        methods.append(CodeLocation.create(teleVM(), HeapScheme$Static_inspectableGCCompleted, "End of GC"));
+        methods.append(CodeLocation.create(teleVM(), CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
+        methods.append(CodeLocation.create(teleVM(), HeapScheme$Static_objectRelocated, "Object relocated"));
         clientInspectableMethods = methods;
     }
 
@@ -98,28 +97,28 @@ public class TeleMethods extends AbstractTeleVMHolder {
      *
      * @return methods suitable for setting client-requested breakpoints.
      */
-    public final Sequence<MaxInspectableMethod> clientInspectableMethods() {
+    public final Sequence<CodeLocation> clientInspectableMethods() {
         return clientInspectableMethods;
     }
 
     /**
      * @return a VM method for internal (non-client) use that is called when each method compilation completes.
      */
-    public TeleInspectableMethod compilationComplete() {
+    public CodeLocation compilationComplete() {
         return compilationComplete;
     }
 
     /**
      * @return a VM method for internal (non-client) use that is called just after each GC starts.
      */
-    public TeleInspectableMethod gcStarted() {
+    public CodeLocation gcStarted() {
         return gcStarted;
     }
 
     /**
      * @return a VM method for internal (non-client) use that is called just after each GC end.
      */
-    public TeleInspectableMethod gcCompleted() {
+    public CodeLocation gcCompleted() {
         return gcCompleted;
     }
 

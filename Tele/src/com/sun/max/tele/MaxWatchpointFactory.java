@@ -164,7 +164,8 @@ public interface MaxWatchpointFactory {
     /**
      * All existing watchpoints set in the VM.
      * <br>
-     * Immutable collection; membership is thread-safe.
+     * The collection is immutable and thus thread-safe,
+     * but the state of the members is not immutable.
      *
      * @return all existing watchpoints; empty if none.
      */

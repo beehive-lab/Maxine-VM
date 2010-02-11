@@ -24,13 +24,12 @@ import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LineNumberTable.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.compiler.target.Compilation;
 
 /**
  *  Canonical surrogate for an object of type {@link ClassMethodActor} in the {@link TeleVM}.
@@ -193,10 +192,10 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
      /**
      * Sets a target breakpoint in the current compilation in the {@link TeleVM}, null if no compilation.
      */
-    public TeleTargetBreakpoint setTargetBreakpointAtEntry() {
+    public MaxCodeLocation entryLocation() {
         // TODO (mlvdv)  Deprecate, support only for specified compilations, not the "current" one.
         if (hasTargetMethod()) {
-            return getCurrentJavaTargetMethod().setTargetBreakpointAtEntry();
+            return getCurrentJavaTargetMethod().entryLocation();
         }
         return null;
     }

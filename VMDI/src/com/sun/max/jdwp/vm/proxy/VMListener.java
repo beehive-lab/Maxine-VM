@@ -74,7 +74,7 @@ public interface VMListener {
      * @param thread the thread that hit the breakpoint
      * @param location the code location identifying the breakpoint
      */
-    void breakpointHit(ThreadProvider thread, CodeLocation location);
+    void breakpointHit(ThreadProvider thread, JdwpCodeLocation location);
 
     /**
      * This method is called from the VM whenever a single step is made.
@@ -82,5 +82,5 @@ public interface VMListener {
      * @param thread the thread that performed the single step
      * @param location the code location specifying the current instruction pointer of the thread, i.e. the code location after the single step was made
      */
-    void singleStepMade(ThreadProvider thread, CodeLocation location);
+    void singleStepMade(ThreadProvider thread, JdwpCodeLocation location);
 }

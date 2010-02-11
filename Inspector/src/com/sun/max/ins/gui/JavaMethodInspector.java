@@ -33,7 +33,6 @@ import com.sun.max.ins.InspectorNameDisplay.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -396,7 +395,7 @@ public class JavaMethodInspector extends MethodInspector {
      * Global code selection has been set, though possibly unchanged; update all viewers.
      */
     @Override
-    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
+    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
         boolean haveSelection = false;
         for (CodeViewer codeViewer : codeViewers.values()) {
             if (codeViewer.updateCodeFocus(codeLocation)) {
