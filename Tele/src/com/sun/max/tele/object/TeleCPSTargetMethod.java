@@ -26,7 +26,6 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.type.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
@@ -35,10 +34,6 @@ public class TeleCPSTargetMethod extends TeleTargetMethod {
 
     public TeleCPSTargetMethod(TeleVM teleVM, Reference targetMethodReference) {
         super(teleVM, targetMethodReference);
-    }
-
-    public BytecodeInfo[] bytecodeInfos() {
-        return null;
     }
 
     public int[] bytecodeToTargetCodePositionMap() {

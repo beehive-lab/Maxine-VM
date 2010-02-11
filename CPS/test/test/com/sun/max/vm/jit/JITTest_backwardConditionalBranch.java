@@ -24,7 +24,6 @@ import test.com.sun.max.vm.bytecode.*;
 import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -205,13 +204,5 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
 
     private void traceCompiledMethod(final CPSTargetMethod targetMethod) {
         traceBundleAndDisassemble(targetMethod);
-    }
-
-    /**
-     * Testing with unresolved and branch bytecode sources.
-     */
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{UnoptimizedBytecodeTemplateSource.class, BranchBytecodeSource.class, InstrumentedBytecodeSource.class};
     }
 }

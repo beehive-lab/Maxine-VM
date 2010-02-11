@@ -55,6 +55,6 @@ public abstract class TirCall extends TirInstruction {
 
     @Override
     public Kind kind() {
-        return resultKind().toStackKind();
+        return resultKind().stackKind;
     }
 }

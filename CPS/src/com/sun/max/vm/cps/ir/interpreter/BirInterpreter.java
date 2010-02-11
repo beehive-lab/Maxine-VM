@@ -102,8 +102,8 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
     }
 
     private Value toStackValue(Value value) {
-        if (value.kind().toStackKind() != value.kind()) {
-            return value.kind().toStackKind().convert(value);
+        if (value.kind().stackKind != value.kind()) {
+            return value.kind().stackKind.convert(value);
         }
         return value;
     }

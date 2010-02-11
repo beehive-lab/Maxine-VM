@@ -230,7 +230,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
     }
 
     public EirConstant makeEirConstant(Value value) {
-        value = value.kind().toStackKind().convert(value); // we make no EIR constants smaller than INT
+        value = value.kind().stackKind.convert(value); // we make no EIR constants smaller than INT
 
         EirConstant eirConstant = valueToEirConstant.get(value);
         if (eirConstant == null) {

@@ -38,7 +38,6 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
@@ -139,7 +138,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleStaticLongFieldAccess InspectableHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(InspectableHeapInfo.class, "rootEpoch");
     public final TeleStaticWordFieldAccess InspectableHeapInfo_rootsPointer = new TeleStaticWordFieldAccess(InspectableHeapInfo.class, "rootsPointer");
     public final TeleStaticReferenceFieldAccess InspectableHeapInfo_rootsRegion = new TeleStaticReferenceFieldAccess(InspectableHeapInfo.class, "rootsRegion", RuntimeMemoryRegion.class);
-    public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeInfos = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeInfos", BytecodeInfo[].class);
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_bytecodeToTargetCodePositionMap = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "bytecodeToTargetCodePositionMap", int[].class);
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_referenceMapEditor = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "referenceMapEditor", AtomicReference.class);
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_stackFrameLayout = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "stackFrameLayout", JitStackFrameLayout.class);

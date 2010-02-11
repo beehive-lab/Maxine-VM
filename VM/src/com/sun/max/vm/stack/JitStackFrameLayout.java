@@ -104,7 +104,7 @@ public abstract class JitStackFrameLayout extends CompiledStackFrameLayout {
     }
 
     public static int stackSlotSize(Kind kind) {
-        return kind.isCategory1() ? JIT_SLOT_SIZE : 2 * JIT_SLOT_SIZE;
+        return kind.isCategory1 ? JIT_SLOT_SIZE : 2 * JIT_SLOT_SIZE;
     }
 
     public static int offsetInStackSlot(Kind kind) {

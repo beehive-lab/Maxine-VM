@@ -20,12 +20,10 @@
  */
 package com.sun.max.vm.template.generate;
 
-import static com.sun.max.annotate.BYTECODE_TEMPLATE.Static.*;
-
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -58,26 +56,23 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
         return maxTemplateFrameSize;
     }
 
-    @Override
-    protected boolean qualifiesAsTemplate(Method m) {
-        return super.qualifiesAsTemplate(m) && bytecodeImplementedBy(m) != null;
-    }
-
-    public void generateBytecodeTemplates(Class templateSourceClass, VariableSequence<CompiledBytecodeTemplate> templates) {
+    public void generateBytecodeTemplates(Class templateSourceClass, EnumMap<BytecodeTemplate, TargetMethod> templates) {
         // Before all, make sure the template source class is initialized in the target.
         // This will enable some compiler optimization that we want the templates to benefit from.
         final Class templateHolderClassInTarget = initializeClassInTarget(templateSourceClass);
         final Method[] templateMethods = templateHolderClassInTarget.getDeclaredMethods();
         for (Method m : templateMethods) {
-            if (qualifiesAsTemplate(m)) {
-                templates.append(generateBytecodeTemplate(m));
+            BYTECODE_TEMPLATE bct = m.getAnnotation(BYTECODE_TEMPLATE.class);
+            if (bct != null) {
+                BytecodeTemplate bt = bct.value();
+                templates.put(bt, generateBytecodeTemplate(m));
             }
         }
     }
 
-    private CompiledBytecodeTemplate generateBytecodeTemplate(final ClassMethodActor bytecodeSourceTemplate) {
-        return MaxineVM.usingTarget(new Function<CompiledBytecodeTemplate>() {
-            public CompiledBytecodeTemplate call() {
+    private TargetMethod generateBytecodeTemplate(final ClassMethodActor bytecodeSourceTemplate) {
+        return MaxineVM.usingTarget(new Function<TargetMethod>() {
+            public TargetMethod call() {
                 ProgramError.check(!hasStackParameters(bytecodeSourceTemplate), "Template must not have *any* stack parameters: " + bytecodeSourceTemplate);
                 final TargetMethod targetMethod = targetGenerator().compile(bytecodeSourceTemplate);
                 if (!(targetMethod.referenceLiterals() == null)) {
@@ -92,14 +87,14 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
                 if (targetMethod.frameSize() > maxTemplateFrameSize) {
                     maxTemplateFrameSize = targetMethod.frameSize();
                 }
-                return new CompiledBytecodeTemplate(targetMethod);
+                return targetMethod;
             }
         });
     }
 
-    private CompiledBytecodeTemplate generateBytecodeTemplate(Method bytecodeSourceTemplate) {
-        final ClassMethodActor classMethodActor = (ClassMethodActor) MethodActor.fromJava(bytecodeSourceTemplate);
-        final CompiledBytecodeTemplate template = generateBytecodeTemplate(classMethodActor);
+    private TargetMethod generateBytecodeTemplate(Method bytecodeSourceTemplate) {
+        final ClassMethodActor classMethodActor = ClassMethodActor.fromJava(bytecodeSourceTemplate);
+        final TargetMethod template = generateBytecodeTemplate(classMethodActor);
         return template;
     }
 

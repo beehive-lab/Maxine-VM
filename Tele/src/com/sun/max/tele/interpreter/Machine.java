@@ -144,7 +144,7 @@ public final class Machine extends AbstractTeleVMHolder{
     }
 
     public Value widenIfNecessary(Value value) {
-        if (value.kind().toStackKind() == Kind.INT) {
+        if (value.kind().stackKind == Kind.INT) {
             return IntValue.from(value.toInt());
         }
 

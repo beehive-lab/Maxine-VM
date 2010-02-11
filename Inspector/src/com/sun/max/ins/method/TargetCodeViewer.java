@@ -145,7 +145,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
         isStopRow = new boolean[targetInstructionCount];
         Arrays.fill(isStopRow, false);
 
-        final BytecodeInfo[] bytecodeInfos = teleTargetRoutine instanceof TeleJitTargetMethod ? ((TeleJitTargetMethod) teleTargetRoutine).bytecodeInfos() : null;
         final int targetCodeLength = teleTargetRoutine.targetCodeRegion().size().toInt();
         final int[] positionToStopIndex = new int[targetCodeLength];
         Arrays.fill(positionToStopIndex, -1);
@@ -156,8 +155,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
             }
         }
 
-        if (bytecodeInfos != null) { // JIT method
-            final int[] bytecodeToTargetCodePositionMap = teleTargetRoutine instanceof TeleJitTargetMethod ? ((TeleJitTargetMethod) teleTargetRoutine).bytecodeToTargetCodePositionMap() : null;
+        if (teleTargetRoutine instanceof TeleJitTargetMethod) { // JIT method
+            final int[] bytecodeToTargetCodePositionMap = ((TeleJitTargetMethod) teleTargetRoutine).bytecodeToTargetCodePositionMap();
             boolean alternate = false;
             int bytecodeIndex = 0; // position in the original bytecode stream.
             for (int row = 0; row < targetInstructionCount; row++) {
@@ -168,14 +167,15 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 if (bytecodePosition < bytecodeToTargetCodePositionMap.length && instructionPosition == bytecodeToTargetCodePositionMap[bytecodePosition]) {
                     isBoundaryRow[row] = true;
                     alternate = !alternate;
-                    final BytecodeInfo bytecodeInfo = bytecodeInfos[bytecodePosition];
-                    if (bytecodeInfo == null) {
-                        tagTextForRow[row] = ""; // presumably in the prolog
-                    } else {
-                        tagTextForRow[row] = bytecodePosition + ": " + bytecodeInfo.bytecode().name();
-                        final BytecodeLocation bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
-                        rowToBytecodeLocation[row] = bytecodeLocation;
+
+                    int opcode = bytecodes[bytecodeIndex];
+                    if (opcode == Bytecode.WIDE.ordinal()) {
+                        opcode = bytecodes[bytecodeIndex + 1];
                     }
+
+                    tagTextForRow[row] = bytecodePosition + ": " + Bytecode.from(opcode).name();
+                    final BytecodeLocation bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
+                    rowToBytecodeLocation[row] = bytecodeLocation;
                     do {
                         ++bytecodeIndex;
                     } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length && bytecodeToTargetCodePositionMap[bytecodeIndex] == 0);

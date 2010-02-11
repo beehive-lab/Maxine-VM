@@ -84,21 +84,11 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
         return jitTestSetup().disassemblerFor(targetMethod);
     }
 
-    /**
-     * Gets the default sources for the implementation of bytecode templates. Test programs should override this method
-     * to test with a different set.
-     *
-     * @return
-     */
-    protected Class[] templateSources() {
-        return new Class[]{UnoptimizedBytecodeTemplateSource.class};
-    }
-
     private static JitCompiler compiler = null;
 
     private JitCompiler compiler() {
         if (compiler == null) {
-            final TemplateTable templateTable = new TemplateTable(templateSources());
+            final TemplateTable templateTable = new TemplateTable(BytecodeTemplateSource.class);
             compiler = newJitCompiler(templateTable);
         }
         return compiler;

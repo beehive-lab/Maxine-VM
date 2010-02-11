@@ -783,7 +783,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
     protected void stackCopy(AMD64Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         // First, load into a scratch register of appropriate size for the kind, then write to memory location
-        if (kind.isCategory2() || kind == Kind.WORD || kind == Kind.REFERENCE) {
+        if ((!kind.isCategory1) || kind == Kind.WORD || kind == Kind.REFERENCE) {
             asm.mov(scratch64, sourceStackOffset, AMD64IndirectRegister64.RSP_INDIRECT);
             asm.mov(destStackOffset, AMD64IndirectRegister64.RSP_INDIRECT, scratch64);
         } else {

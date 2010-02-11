@@ -138,7 +138,7 @@ public final class LocalVariableTable {
             }
             if (!forLVTT) {
                 final TypeDescriptor descriptor = descriptor(constantPool);
-                final int index = descriptor.toKind().isCategory2() ? slot + 1 : slot;
+                final int index = (!descriptor.toKind().isCategory1) ? slot + 1 : slot;
                 if (index >= maxLocals) {
                     throw classFormatError("Invalid local variable index (" + slot + ") in LocalVariableTable");
                 }

@@ -70,7 +70,7 @@ public enum Boxing {
                     if (returnKind == Kind.WORD) {
                         throw new IllegalArgumentException("cannot reflectively invoke method with a Word return type");
                     }
-                    asm.invokestatic(JAVA_BOX_PRIMITIVE.get(returnKind.asEnum), returnKind.stackSlots(), 1);
+                    asm.invokestatic(JAVA_BOX_PRIMITIVE.get(returnKind.asEnum), returnKind.stackSlots, 1);
                 }
             }
         }
@@ -84,7 +84,7 @@ public enum Boxing {
                 if (parameterKind == Kind.WORD) {
                     throw new IllegalArgumentException("cannot reflectively invoke method with Word type parameter");
                 }
-                asm.invokestatic(JAVA_UNBOX_PRIMITIVE.get(parameterKind.asEnum), 1, parameterKind.stackSlots());
+                asm.invokestatic(JAVA_UNBOX_PRIMITIVE.get(parameterKind.asEnum), 1, parameterKind.stackSlots);
             }
         }
 
@@ -157,7 +157,7 @@ public enum Boxing {
                 if (returnKind == Kind.VOID) {
                     asm.getstatic(VoidValue_VOID);
                 } else {
-                    asm.invokestatic(VALUE_BOX.get(returnKind.asEnum), returnKind.stackSlots(), 1);
+                    asm.invokestatic(VALUE_BOX.get(returnKind.asEnum), returnKind.stackSlots, 1);
                 }
             } else {
                 asm.invokestatic(VALUE_BOX.get(Kind.REFERENCE.asEnum), 1, 1);
@@ -167,7 +167,7 @@ public enum Boxing {
         @Override
         void unbox(BytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex) {
             final Kind parameterKind = Kind.fromJava(parameterType);
-            asm.invokevirtual(VALUE_UNBOX.get(parameterKind.asEnum), 1, parameterKind.stackSlots());
+            asm.invokevirtual(VALUE_UNBOX.get(parameterKind.asEnum), 1, parameterKind.stackSlots);
             if (parameterKind == Kind.REFERENCE) {
                 // cast against Object is unnecessary AND causes problems with values that are StaticTuples
                 if (parameterType != Object.class) {

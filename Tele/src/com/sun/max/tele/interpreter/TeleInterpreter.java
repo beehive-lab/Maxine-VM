@@ -232,7 +232,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
         }
 
         final Kind resultKind = classMethodActor.resultKind();
-        if (resultKind.toStackKind() == Kind.INT) {
+        if (resultKind.stackKind == Kind.INT) {
             returnValue = resultKind.convert(returnValue);
         }
         return returnValue;

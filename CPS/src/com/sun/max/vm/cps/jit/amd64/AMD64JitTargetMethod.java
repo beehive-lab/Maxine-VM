@@ -357,7 +357,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
                 if (parameterKind == Kind.REFERENCE) {
                     preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
                 }
-                int parameterSlots = parameterKind.isCategory2() ? 2 : 1;
+                int parameterSlots = (!parameterKind.isCategory1) ? 2 : 1;
                 slotPointer = slotPointer.plus(slotSize * parameterSlots);
             }
 

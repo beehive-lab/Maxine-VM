@@ -49,8 +49,6 @@ import com.sun.max.vm.stack.*;
  */
 public abstract class JitTargetMethod extends CPSTargetMethod {
 
-    @INSPECTED
-    private BytecodeInfo[] bytecodeInfos;
     protected int frameReferenceMapOffset;
     @INSPECTED
     private final AtomicReference referenceMapEditor = new AtomicReference();
@@ -215,7 +213,6 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
             byte[] encodedInlineDataDescriptors,
             ByteArrayBitMap isDirectRuntimeCall,
             int[] bytecodeToTargetCodePositionMap,
-            BytecodeInfo[] bytecodeInfos,
             int numberOfBlocks,
             boolean[] blockStarts,
             JitStackFrameLayout jitStackFrameLayout,
@@ -238,7 +235,6 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         );
         this.isDirectCallToRuntime = isDirectRuntimeCall == null ? null : isDirectRuntimeCall.bytes();
         this.bytecodeToTargetCodePositionMap = bytecodeToTargetCodePositionMap;
-        this.bytecodeInfos = bytecodeInfos;
         this.frameReferenceMapOffset = jitStackFrameLayout.frameReferenceMapOffset();
         this.stackFrameLayout = jitStackFrameLayout;
         if (stopPositions != null) {

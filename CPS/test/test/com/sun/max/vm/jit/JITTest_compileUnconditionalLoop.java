@@ -24,7 +24,6 @@ import test.com.sun.max.vm.cps.*;
 import test.com.sun.max.vm.cps.bytecode.*;
 
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -51,10 +50,5 @@ public class JITTest_compileUnconditionalLoop extends JitCompilerTestCase {
                 assert offset <= 0;
             }
         };
-    }
-
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{InstrumentedBytecodeSource.class, UnoptimizedBytecodeTemplateSource.class};
     }
 }

@@ -54,11 +54,11 @@ public abstract class Value<Value_Type extends Value<Value_Type>> implements Cla
     }
 
     public boolean isCategory1() {
-        return kind().isCategory1();
+        return kind().isCategory1;
     }
 
     public boolean isCategory2() {
-        return kind().isCategory2();
+        return !kind().isCategory1;
     }
 
     public abstract Kind<Value_Type> kind();

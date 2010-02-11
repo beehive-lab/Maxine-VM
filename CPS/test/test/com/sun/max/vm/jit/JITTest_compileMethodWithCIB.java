@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.template.source.*;
 
 /**
  * Testing the JIT-compiler with methods including reference to resolved or unresolved class and bytecode instruction requiring
@@ -66,13 +65,4 @@ public class JITTest_compileMethodWithCIB extends JitCompilerTestCase {
     public void test_unresolved_new_op() {
         compileMethod("perform_unresolved_new_op");
     }
-
-    /**
-     * Testing with unresolved, resolved, and initialized class constant.
-     */
-    @Override
-    protected Class[] templateSources() {
-        return TemplateTableConfiguration.OPTIMIZED_TEMPLATE_SOURCES;
-    }
-
 }

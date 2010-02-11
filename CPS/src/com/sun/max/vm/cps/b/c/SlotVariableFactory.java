@@ -47,7 +47,7 @@ abstract class SlotVariableFactory {
     }
 
     private boolean isValidIndex(Kind kind, int index) {
-        return kind.isCategory2() ? index < maxSlotCount : index <= maxSlotCount;
+        return (!kind.isCategory1) ? index < maxSlotCount : index <= maxSlotCount;
     }
 
     void setVariable(int index, CirVariable cirVariable) {

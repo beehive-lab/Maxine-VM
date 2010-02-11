@@ -229,7 +229,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
                 } else {
                     parameters[index] = allocator.allocate(Kind.VOID, VariableType.DIRTY);
                 }
-                if (local.kind().isCategory2()) {
+                if (!local.kind().isCategory1) {
                     parameters[index + 1] = allocator.allocate(Kind.VOID, VariableType.DIRTY);
                 }
             }

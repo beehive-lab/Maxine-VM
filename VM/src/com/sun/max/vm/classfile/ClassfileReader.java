@@ -47,6 +47,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.tele.*;
+import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -1234,9 +1235,7 @@ public final class ClassfileReader {
         if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
             final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
             for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
-                if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(TEMPLATE.class))) {
-                    classFlags |= TEMPLATE;
-                } else if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(HOSTED_ONLY.class))) {
+                if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(HOSTED_ONLY.class))) {
                     ProgramError.unexpected("Trying to load a prototype only class " + name);
                 }
             }

@@ -24,7 +24,6 @@ import test.com.sun.max.vm.cps.*;
 import test.com.sun.max.vm.jtrun.all.*;
 
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.template.source.*;
 
 /**
  * @author Bernd Mathiske
@@ -42,7 +41,7 @@ public class JITTest_compile_BC_putfield  extends JitCompilerTestCase {
     }
 */
     public void test_compileMethod() {
-        final CPSTargetMethod targetMethod = compileMethod(JTRuns.class, "test_bytecode_BC_athrow");
+        final CPSTargetMethod targetMethod = compileMethod(JTRuns.class, "jtt_bytecode_BC_athrow");
         traceBundleAndDisassemble(targetMethod);
     }
 
@@ -52,10 +51,4 @@ public class JITTest_compile_BC_putfield  extends JitCompilerTestCase {
         }
         return "";
     }
-
-    @Override
-    protected Class[] templateSources() {
-        return TemplateTableConfiguration.OPTIMIZED_TEMPLATE_SOURCES;
-    }
-
 }

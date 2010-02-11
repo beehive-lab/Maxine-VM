@@ -159,7 +159,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
             final TypeDescriptor jniEnvDescriptor = currentJniEnvironmentPointer.signature(constantPool()).resultDescriptor();
             nativeFunctionDescriptor.append(jniEnvDescriptor);
-            nativeFunctionArgSlots += jniEnvDescriptor.toKind().stackSlots();
+            nativeFunctionArgSlots += jniEnvDescriptor.toKind().stackSlots;
 
             final TypeDescriptor stackHandleDescriptor = createStackHandle.signature(constantPool()).resultDescriptor();
             if (isStatic) {
@@ -171,7 +171,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             }
             invokestatic(createStackHandle, 1, 1);
             nativeFunctionDescriptor.append(stackHandleDescriptor);
-            nativeFunctionArgSlots += stackHandleDescriptor.toKind().stackSlots();
+            nativeFunctionArgSlots += stackHandleDescriptor.toKind().stackSlots;
         } else {
             assert isStatic;
         }
@@ -230,12 +230,12 @@ public final class NativeStubGenerator extends BytecodeAssembler {
                 }
             }
             nativeFunctionDescriptor.append(nativeParameterDescriptor);
-            nativeFunctionArgSlots += nativeParameterDescriptor.toKind().stackSlots();
+            nativeFunctionArgSlots += nativeParameterDescriptor.toKind().stackSlots;
             ++parameterLocalIndex;
         }
 
         // Invoke the native function
-        callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots());
+        callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots);
 
         if (!isCFunction) {
             // Unwrap a reference result from its enclosing JNI handle. This must be done

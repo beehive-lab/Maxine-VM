@@ -141,7 +141,7 @@ public abstract class State<Element_Type extends Classifiable> {
         final Element_Type [] arguments = createArray(kinds.length);
         for (int i = kinds.length - 1; i >= 0; i--) {
             arguments[i] = peek(kinds[i], depth);
-            depth += kinds[i].stackSlots();
+            depth += kinds[i].stackSlots;
         }
         return arguments;
     }
@@ -172,7 +172,7 @@ public abstract class State<Element_Type extends Classifiable> {
         for (int i = 0; i < count; i++) {
             final Element_Type local = getSlot(slot + i);
             slotArrays[localIndex++] = local;
-            if (local.kind().isCategory2()) {
+            if (!local.kind().isCategory1) {
                 i++;
             }
         }
@@ -197,23 +197,23 @@ public abstract class State<Element_Type extends Classifiable> {
 
     public final void push(Element_Type element) {
         pushOne(element);
-        if (element.kind().isCategory2()) {
+        if (!element.kind().isCategory1) {
             pushOne(filler());
         }
     }
 
     public final Element_Type peek(Kind kind) {
-        return getOne(length() - kind.stackSlots());
+        return getOne(length() - kind.stackSlots);
     }
 
     public final Element_Type peek(Kind kind, int stackDepth) {
-        return getOne(length() - kind.stackSlots() - stackDepth);
+        return getOne(length() - kind.stackSlots - stackDepth);
     }
 
     public final Element_Type pop(Kind kind) {
         final Element_Type element = pop();
         // Treat boolean, byte, short, char and int the same.
-        assert element.kind().toStackKind() == kind.toStackKind();
+        assert element.kind().stackKind == kind.stackKind;
         return element;
     }
 
@@ -221,7 +221,7 @@ public abstract class State<Element_Type extends Classifiable> {
         Element_Type element = popOne();
         if (element == filler()) {
             element = popOne();
-            assert element.kind().isCategory2();
+            assert !element.kind().isCategory1;
         }
         return element;
     }
@@ -254,11 +254,11 @@ public abstract class State<Element_Type extends Classifiable> {
             setOne(index - 1, undefined());
         }
         setOne(index, newElement);
-        if (newElement.kind().isCategory2()) {
+        if (!newElement.kind().isCategory1) {
             setOne(index + 1, filler());
         }
         int nextIndex = index + 1;
-        if (newElement.kind().isCategory2()) {
+        if (!newElement.kind().isCategory1) {
             nextIndex++;
         }
         if (getOne(nextIndex) == filler()) {
@@ -378,7 +378,7 @@ public abstract class State<Element_Type extends Classifiable> {
             final Other_Element_Type otherElement = i < other.length() ? other.getOne(i) : other.undefined();
             visitor.setIndex(i);
             visitor.visit(elment, otherElement);
-            if (elment.kind().isCategory2()) {
+            if (!elment.kind().isCategory1) {
                 i++;
             }
         }
@@ -391,7 +391,7 @@ public abstract class State<Element_Type extends Classifiable> {
                 visitor.setIndex(i);
                 visitor.visit(elment);
             }
-            if (elment.kind().isCategory2()) {
+            if (!elment.kind().isCategory1) {
                 i++;
             }
         }
@@ -402,7 +402,7 @@ public abstract class State<Element_Type extends Classifiable> {
             final Element_Type elment = getOne(i);
             visitor.setIndex(i);
             visitor.visit(elment);
-            if (elment.kind().isCategory2()) {
+            if (!elment.kind().isCategory1) {
                 i++;
             }
         }

@@ -430,7 +430,7 @@ public class InvocationStubGenerator<T> {
         for (int i = 0; i < runtimeParameterTypes.length; i++) {
             final Class parameterType = runtimeParameterTypes[i];
             final Kind parameterKind = Kind.fromJava(parameterType);
-            argSlots += parameterKind.stackSlots();
+            argSlots += parameterKind.stackSlots;
             // aload args
             // sipush <index>
             // aaload
@@ -449,7 +449,7 @@ public class InvocationStubGenerator<T> {
         if (isConstructor) {
             asm.invokespecial(targetCPI, argSlots, 0);
         } else {
-            final int returnValueSlots = returnKind.stackSlots();
+            final int returnValueSlots = returnKind.stackSlots;
             if (isStatic) {
                 asm.invokestatic(targetCPI, argSlots, returnValueSlots);
             } else {

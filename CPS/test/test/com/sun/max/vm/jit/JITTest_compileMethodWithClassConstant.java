@@ -25,7 +25,6 @@ import test.com.sun.max.vm.cps.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 /**
  * Testing the JIT-compiler with methods including reference to resolved and unresolved class.
@@ -123,13 +122,4 @@ public class JITTest_compileMethodWithClassConstant extends JitCompilerTestCase 
         assert classIsUnresolved("test.com.sun.max.vm.jit.UnresolvedAtTestTime");
         compileMethod("perform_ldc_unresolved_class");
     }
-
-    /**
-     * Testing with unresolved, resolved, and initialised class constant.
-     */
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{UnoptimizedBytecodeTemplateSource.class, ResolvedBytecodeTemplateSource.class, InitializedBytecodeTemplateSource.class, InstrumentedBytecodeSource.class };
-    }
-
 }

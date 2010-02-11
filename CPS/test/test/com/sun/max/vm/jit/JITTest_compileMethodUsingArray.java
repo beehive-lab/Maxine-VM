@@ -22,7 +22,6 @@ package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -122,13 +121,4 @@ public class JITTest_compileMethodUsingArray extends JitCompilerTestCase {
     public void test_useDoubleArray() {
         compileMethod(Kind.DOUBLE);
     }
-
-    /**
-     * Testing with unresolved, resolved, and initialized class constant.
-     */
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{UnoptimizedBytecodeTemplateSource.class, ResolvedFieldAccessTemplateSource.class, InitializedStaticFieldAccessTemplateSource.class, InstrumentedBytecodeSource.class};
-    }
-
 }

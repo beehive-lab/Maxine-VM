@@ -49,7 +49,7 @@ public class AMD64TemplateBasedTargetGenerator extends TemplateBasedTargetGenera
     protected BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor) {
         // allocate a buffer that is likely to be large enough, based on a linear expansion
         final int estimatedSize = classMethodActor.codeAttribute().code().length * NUMBER_OF_BYTES_PER_BYTECODE;
-        final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
+        final CodeBuffer codeBuffer = new CodeBuffer(estimatedSize);
         return new BytecodeToAMD64TargetTranslator(classMethodActor, codeBuffer, templateTable(), false);
     }
 }

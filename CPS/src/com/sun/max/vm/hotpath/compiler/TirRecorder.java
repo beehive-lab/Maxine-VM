@@ -160,7 +160,7 @@ public class TirRecorder {
                 Console.printThinDivider();
             }
             final TirInstruction tirResult = DirTracer.trace(snippet, trace, arguments, this);
-            if (tirResult != null && method.resultKind().toStackKind() == tirResult.kind()) {
+            if (tirResult != null && method.resultKind().stackKind == tirResult.kind()) {
                 push(tirResult);
             } else if (tirResult == null && method.resultKind() == Kind.VOID) {
                 // Snippet has no result.

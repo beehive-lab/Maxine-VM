@@ -326,11 +326,6 @@ public abstract class ClassActor extends Actor {
         return isInterface(flags());
     }
 
-    @INLINE
-    public final boolean isTemplate() {
-        return isTemplate(flags());
-    }
-
     public final boolean isGenerated() {
         return isGenerated(flags());
     }

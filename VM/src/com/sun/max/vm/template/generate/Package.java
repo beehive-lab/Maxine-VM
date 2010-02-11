@@ -24,8 +24,7 @@ import com.sun.max.*;
 
 /**
  * @see MaxPackage
- * 
- * TODO: need to turn this back into a MaxPackage: don't want to include it in the final image
+ *
  * @author Laurent Daynes
  */
 public class Package extends MaxPackage {

@@ -44,7 +44,7 @@ public final class CirConstant extends CirValue {
      * @return the constant converted to a kind that the Java expression stack uses
      */
     public Value toStackValue() {
-        return value().kind().toStackKind().convert(value());
+        return value().kind().stackKind.convert(value());
     }
 
     @Override
