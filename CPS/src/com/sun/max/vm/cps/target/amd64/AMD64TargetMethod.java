@@ -65,13 +65,13 @@ public abstract class AMD64TargetMethod {
 
     public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
         assert oldTargetMethod != newTargetMethod;
-        assert oldTargetMethod.abi().callEntryPoint() != CallEntryPoint.C_ENTRY_POINT;
+        assert oldTargetMethod.abi().callEntryPoint != CallEntryPoint.C_ENTRY_POINT;
 
         final long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
         final long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
 
-        patchCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart(), newOptEntry, RJMP);
-        patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry, RJMP);
+        patchCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset(), newOptEntry, RJMP);
+        patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offset(), newJitEntry, RJMP);
     }
 
     private static void patchCode(TargetMethod targetMethod, int offset, long target, int controlTransferOpcode) {

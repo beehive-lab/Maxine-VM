@@ -92,7 +92,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(codeGenerator);
 
         // emit prologue
-        final int optimizedCallerAdapterFrameCodeSize = codeGenerator.emitPrologue();
+        Adapter adapter = codeGenerator.emitPrologue();
 
         // emit instrumentation for the method entry
         codeGenerator.emitEntrypointInstrumentation();
@@ -127,13 +127,11 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         null, // no scalar literals ever
                         referenceLiterals,
                         codeGenerator.codeBuffer,
-                        optimizedCallerAdapterFrameCodeSize,
-                        codeGenerator.adapterReturnPosition(),
                         codeGenerator.targetABI());
 
         if (!MaxineVM.isHosted()) {
             // at target runtime, each method gets linked individually right after generating it:
-            targetMethod.linkDirectCalls();
+            targetMethod.linkDirectCalls(adapter);
         }
 
         CompilationScheme.Static.notifyCompilationComplete(targetMethod);

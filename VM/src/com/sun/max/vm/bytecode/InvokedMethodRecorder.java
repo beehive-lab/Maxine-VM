@@ -20,7 +20,8 @@
  */
 package com.sun.max.vm.bytecode;
 
-import com.sun.max.collect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -34,16 +35,16 @@ import com.sun.max.vm.type.*;
  * @author Doug Simon
  */
 public class InvokedMethodRecorder extends BytecodeAdapter {
-    protected final AppendableSequence<MethodActor> directCalls;
-    protected final AppendableSequence<MethodActor> virtualCalls;
-    protected final AppendableSequence<MethodActor> interfaceCalls;
+    protected final Set<MethodActor> directCalls;
+    protected final Set<MethodActor> virtualCalls;
+    protected final Set<MethodActor> interfaceCalls;
     protected final ClassMethodActor classMethodActor;
     protected final ConstantPool constantPool;
 
     public InvokedMethodRecorder(ClassMethodActor classMethodActor,
-                    AppendableSequence<MethodActor> directCalls,
-                    AppendableSequence<MethodActor> virtualCalls,
-                    AppendableSequence<MethodActor> interfaceCalls) {
+                    Set<MethodActor> directCalls,
+                    Set<MethodActor> virtualCalls,
+                    Set<MethodActor> interfaceCalls) {
         this.classMethodActor = classMethodActor;
         this.constantPool = classMethodActor.codeAttribute().constantPool;
         this.directCalls = directCalls;
@@ -53,12 +54,12 @@ public class InvokedMethodRecorder extends BytecodeAdapter {
 
     private static final String maxPackagePrefix = new com.sun.max.Package().name();
 
-    protected void addMethodCall(int index, AppendableSequence<MethodActor> sequence) {
+    protected void addMethodCall(int index, Set<MethodActor> sequence) {
         final MethodRefConstant methodRefConstant = constantPool.methodAt(index);
         if (methodRefConstant.isResolvableWithoutClassLoading(constantPool)) {
             try {
                 final MethodActor methodActor = methodRefConstant.resolve(constantPool, index);
-                sequence.append(methodActor);
+                sequence.add(methodActor);
             } catch (HostOnlyMethodError prototypeOnlyMethodError) {
                 ProgramError.unexpected(classMethodActor.format("%H.%n(%p) calls prototype-only method " + methodRefConstant.valueString(constantPool)));
             }

@@ -1,22 +1,5 @@
+// Checkstyle: stop
 package com.sun.c1x;
-
-import com.sun.c1x.ir.*;
-import com.sun.c1x.value.*;
-import com.sun.c1x.alloc.LinearScan;
-import com.sun.c1x.alloc.IntervalWalker;
-import com.sun.c1x.lir.LIRDebugInfo;
-import com.sun.c1x.lir.LIRInstruction;
-import com.sun.c1x.ci.CiDebugInfo;
-import com.sun.c1x.ci.CiTargetMethod;
-import com.sun.c1x.ci.CiRuntimeCall;
-import com.sun.c1x.ci.CiRegister;
-import com.sun.c1x.target.x86.X86;
-import com.sun.c1x.target.x86.X86MacroAssembler;
-import com.sun.c1x.target.x86.X86GlobalStubEmitter;
-import com.sun.c1x.target.AMD64;
-import com.sun.c1x.graph.GraphBuilder;
-import com.sun.c1x.opt.LoopPeeler;
-import com.sun.c1x.ri.RiMethod;
 
 /**
  * This is a collection of notes about the C1X compiler, including future directions, refactorings,
@@ -70,7 +53,7 @@ import com.sun.c1x.ri.RiMethod;
  * are known to the register allocator, and there vestigial logic to compute them still there
  * in the {@link LinearScan#computeDebugInfo(IntervalWalker, LIRInstruction)} method.
  * To complete this metadata, the {@link LinearScan} class must implement the
- * {@link LIRDebugInfo.ValueLocator} interface and pass it to the
+ * {@link ValueLocator} interface and pass it to the
  * {@link LIRDebugInfo#createFrame(ValueStack, int, LIRDebugInfo.ValueLocator)}
  * method after register allocation. The resulting debug info will be fed back to the runtime system by the existing logic that calls
  * {@link CiTargetMethod#recordCall(int, Object, CiDebugInfo, byte[], boolean)} and other
@@ -108,9 +91,9 @@ import com.sun.c1x.ri.RiMethod;
  * SPARC and other architecture support. There pretty well-delineated separation between the
  * architecture-independent part of LIR backend and the architecture-dependent, but the only
  * implementation that current exists is the X86 backend
- * ({@link com.sun.c1x.target.x86.X86Backend},
- * {@link com.sun.c1x.target.x86.X86LIRGenerator},
- * {@link com.sun.c1x.target.x86.X86LIRAssembler}, etc).
+ * ({@link X86Backend},
+ * {@link X86LIRGenerator},
+ * {@link X86LIRAssembler}, etc).
  * </li>
  *
  * <li>
@@ -142,7 +125,7 @@ import com.sun.c1x.ri.RiMethod;
  * </li>
  *
  * <li>
- * {@link C1XIntrinsic Intrisification} is the mechanism by which the compiler recognizes calls
+ * {@link C1XIntrinsic Intrinsification} is the mechanism by which the compiler recognizes calls
  * to special JDK or runtime methods and replaces them with custom code. It is enabled by the
  * {@link C1XOptions#OptIntrinsify} compiler option. The C1X backend has never been tested
  * with intrinsified arithmetic or floating point operations. For best performance, it should generate

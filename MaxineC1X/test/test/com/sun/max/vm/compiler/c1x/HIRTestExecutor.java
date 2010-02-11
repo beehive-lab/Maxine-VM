@@ -42,7 +42,7 @@ import com.sun.max.vm.prototype.*;
 public class HIRTestExecutor implements Executor {
     private static HIRGenerator generator;
     public static Utf8Constant testMethod = SymbolTable.makeSymbol("test");
-    public static final MaxRiRuntime runtime = new MaxRiRuntime();
+    public static MaxRiRuntime runtime;
 
     private static void initialize(boolean loadingPackages) {
         C1XOptions.setOptimizationLevel(Integer.parseInt(JavaTester.options.getStringValue("c1x-optlevel")));
@@ -51,6 +51,7 @@ public class HIRTestExecutor implements Executor {
         ClassActor.prohibitPackagePrefix(null); // allow extra classes when testing, but not actually bootstrapping
         C1XCompilerScheme compilerScheme = C1XCompilerScheme.create(VMConfiguration.hostOrTarget());
 
+        runtime = C1XCompilerScheme.globalRuntime;
         // create MaxineRuntime
         generator = new HIRGenerator(runtime, compilerScheme.getTarget(), compilerScheme.getCompiler());
     }

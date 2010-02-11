@@ -29,7 +29,6 @@ import com.sun.max.asm.Assembler.*;
 import com.sun.max.asm.InlineDataDescriptor.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -38,8 +37,6 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.b.c.d.e.amd64.target.*;
-import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.amd64.*;
 import com.sun.max.vm.jit.*;
@@ -86,7 +83,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void assignIntTemplateArgument(int parameterIndex, int argument) {
-        final AMD64GeneralRegister64 register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
+        final AMD64GeneralRegister64 register = TARGET_ABI.integerIncomingParameterRegisters.get(parameterIndex);
         asm.reset();
         asm.mov(register, argument);
         codeBuffer.emitCodeFrom(asm);
@@ -97,14 +94,14 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         final AMD64GeneralRegister32 scratch = AMD64GeneralRegister32.from(TARGET_ABI.scratchRegister());
         asm.reset();
         asm.movl(scratch, SpecialBuiltin.floatToInt(argument));
-        asm.movdl(TARGET_ABI.floatingPointParameterRegisters().get(parameterIndex), scratch);
+        asm.movdl(TARGET_ABI.floatingPointParameterRegisters.get(parameterIndex), scratch);
         codeBuffer.emitCodeFrom(asm);
     }
 
     @Override
     protected void assignLongTemplateArgument(int parameterIndex, long argument) {
         asm.reset();
-        asm.mov(TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex), argument);
+        asm.mov(TARGET_ABI.integerIncomingParameterRegisters.get(parameterIndex), argument);
         codeBuffer.emitCodeFrom(asm);
     }
 
@@ -112,7 +109,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     protected void assignDoubleTemplateArgument(int parameterIndex, double argument) {
         asm.reset();
         asm.mov(TARGET_ABI.scratchRegister(), SpecialBuiltin.doubleToLong(argument));
-        asm.movdq(TARGET_ABI.floatingPointParameterRegisters().get(parameterIndex), TARGET_ABI.scratchRegister());
+        asm.movdq(TARGET_ABI.floatingPointParameterRegisters.get(parameterIndex), TARGET_ABI.scratchRegister());
         codeBuffer.emitCodeFrom(asm);
     }
 
@@ -125,7 +122,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 codeBuffer.emit((byte) 0x48); // rex prefix (without partial register encoding since we only use a couple of template parameters)
                 codeBuffer.emit((byte) 0x8B); // opcode for rpi_mov(AMD64GeneralRegister64, offset32)
 
-                final int register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex).ordinal();
+                final int register = TARGET_ABI.integerIncomingParameterRegisters.get(parameterIndex).ordinal();
                 codeBuffer.emit((byte) (5 | (register << 3))); // mod/rm byte encoding address mode and destination register
 
                 final int instructionSize = 7;
@@ -181,24 +178,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
      */
     private final BranchConditionMap<AMD64InstructionEditor> rel32BranchEditors;
 
-    /**
-     * Adapter Frame Generator when using both an optimizing and jit compiler.
-     */
-    private final AMD64AdapterFrameGenerator adapterFrameGenerator;
-
-    @Override
-    public int adapterReturnPosition() {
-        try {
-            if (adapterFrameGenerator.adapterReturnPoint().state() == Label.State.BOUND) {
-                return adapterFrameGenerator.adapterReturnPoint().position();
-            }
-            return -1;
-        } catch (AssemblyException assemblyException) {
-            throw ProgramError.unexpected();
-        }
-    }
-
-    public BytecodeToAMD64TargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, EirABI optimizingCompilerAbi, boolean trace) {
+    public BytecodeToAMD64TargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, boolean trace) {
         super(classMethodActor, codeBuffer, templateTable, new AMD64JitStackFrameLayout(classMethodActor, templateTable.maxFrameSlots), trace);
         rel8BranchEditors = new BranchConditionMap<AMD64InstructionEditor>();
         rel32BranchEditors = new BranchConditionMap<AMD64InstructionEditor>();
@@ -210,13 +190,6 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             rel8BranchEditors.put(cond, new AMD64InstructionEditor(rel8BranchTemplates.get(cond).clone()));
             rel32BranchEditors.put(cond, new AMD64InstructionEditor(rel32BranchTemplates.get(cond).clone()));
         }
-
-        if (optimizingCompilerAbi != null) {
-            this.adapterFrameGenerator = AMD64AdapterFrameGenerator.optimizingToJitCompilerAdapterFrameGenerator(classMethodActor, optimizingCompilerAbi);
-        } else {
-            this.adapterFrameGenerator = null;
-        }
-
     }
 
     @Override
@@ -420,9 +393,9 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
         asm.reset();
         asm.addq(TARGET_ABI.framePointer(), framePointerAdjustment());
         asm.leave();
-        // when returning, retract from the caller stack the space saved for parameters.
+        // when returning, retract from the caller stack by the space used for the arguments.
         final short stackAmountInBytes = (short) jitStackFrameLayout.sizeOfParameters();
-        if (stackAmountInBytes > 0) {
+        if (stackAmountInBytes != 0) {
             asm.ret(stackAmountInBytes);
         } else {
             asm.ret();
@@ -431,39 +404,20 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     }
 
     @Override
-    public int emitPrologue() {
-        if (adapterFrameGenerator != null) {
-            asm.reset();
-            final Directives dir = asm.directives();
-            final Label methodEntryPoint = new Label();
-            asm.jmp(methodEntryPoint);
-            asm.nop();
-            asm.nop();
-            asm.nop();
-            dir.align(Kind.BYTE.width.numberOfBytes * 4);  // forcing alignment to the next 4-bytes will always provide an 8-bytes long prologue.
-
-            // Entry point to the optimized code
-            final Label adapterCodeStart = new Label();
-            asm.bindLabel(adapterCodeStart);
-            adapterFrameGenerator.emitPrologue(asm);
-            adapterFrameGenerator.emitEpilogue(asm);
-            asm.bindLabel(methodEntryPoint);
-
-            // method entry point: setup a regular frame
-            asm.enter((short) (jitStackFrameLayout.frameSize() - Word.size()), (byte) 0);
-            asm.subq(TARGET_ABI.framePointer(), framePointerAdjustment());
-            if (Trap.STACK_BANGING) {
-                asm.mov(TARGET_ABI.scratchRegister(), -Trap.stackGuardSize, TARGET_ABI.stackPointer().indirect());
-            }
-            codeBuffer.emitCodeFrom(asm);
-
-            try {
-                return methodEntryPoint.position() - adapterCodeStart.position();
-            } catch (AssemblyException assemblyException) {
-                ProgramError.unexpected(assemblyException);
-            }
+    public Adapter emitPrologue() {
+        Adapter adapter = null;
+        if (adapterGenerator != null) {
+            adapter = adapterGenerator.adapt(classMethodActor, asm);
         }
-        return 0;
+
+        // method entry point: setup a regular frame
+        asm.enter((short) (jitStackFrameLayout.frameSize() - Word.size()), (byte) 0);
+        asm.subq(TARGET_ABI.framePointer(), framePointerAdjustment());
+        if (Trap.STACK_BANGING) {
+            asm.mov(TARGET_ABI.scratchRegister(), -Trap.stackGuardSize, TARGET_ABI.stackPointer().indirect());
+        }
+        codeBuffer.emitCodeFrom(asm);
+        return adapter;
     }
 
     private int framePointerAdjustment() {
@@ -477,7 +431,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
          * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
          */
         final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-        TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
+        TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI);
         // Initialization of the few hand-crafted templates
         final byte rel8 = 0;
         final int rel32 = 0;

@@ -385,6 +385,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         } catch (DataIOError dataIOError) {
             // This is a catch for problems getting accurate state for threads that are not at breakpoints
         }
+
         if (breakpoint != null) {
 
             Trace.line(TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") for " + this);

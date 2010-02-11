@@ -22,6 +22,7 @@ package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 
 /**
  * A {@code StackFrame} object abstracts an activation frame on a call stack.
@@ -32,8 +33,9 @@ import com.sun.max.vm.compiler.target.*;
 public abstract class StackFrame {
 
     /**
-     * The address of the current execution point in this frame (i.e. the address of the next instruction that will
-     * be executed in the frame).
+     * An address indicating (but not necessarily equal to) the next instruction to be executed in this frame.
+     *
+     * @see Cursor#ip()
      */
     public final Pointer ip;
     public final Pointer sp;

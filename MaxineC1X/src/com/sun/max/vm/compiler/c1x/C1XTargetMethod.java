@@ -25,28 +25,27 @@ import java.util.*;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ci.CiTargetMethod.*;
+import com.sun.c1x.ci.CiTargetMethod.ExceptionHandler;
 import com.sun.c1x.ri.*;
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.amd64.AMD64TrapStateAccess;
+import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.amd64.AMD64OptStackWalking;
-import com.sun.max.vm.stack.amd64.AMD64AdapterStackWalking;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.amd64.*;
 
 /**
  * This class implements a {@link TargetMethod target method} for
@@ -109,8 +108,8 @@ public class C1XTargetMethod extends TargetMethod {
     @HOSTED_ONLY
     private CiTargetMethod bootstrappingCiTargetMethod;
 
-    public C1XTargetMethod(RuntimeCompilerScheme compilerScheme, ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
-        super(classMethodActor, compilerScheme,  VMConfiguration.target().targetABIsScheme().optimizedJavaABI());
+    public C1XTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod) {
+        super(classMethodActor, VMConfiguration.target().targetABIsScheme().optimizedJavaABI);
         init(ciTargetMethod);
 
         if (printTargetMethods.getValue() != null) {
@@ -120,8 +119,8 @@ public class C1XTargetMethod extends TargetMethod {
         }
     }
 
-    public C1XTargetMethod(RuntimeCompilerScheme compilerScheme, String stubName, CiTargetMethod ciTargetMethod) {
-        super(stubName, compilerScheme,  VMConfiguration.target().targetABIsScheme().optimizedJavaABI());
+    public C1XTargetMethod(String stubName, CiTargetMethod ciTargetMethod) {
+        super(stubName, VMConfiguration.target().targetABIsScheme().optimizedJavaABI);
         init(ciTargetMethod);
 
         if (printTargetMethods.getValue() != null) {
@@ -144,7 +143,12 @@ public class C1XTargetMethod extends TargetMethod {
         initExceptionTable(ciTargetMethod);
 
         if (!MaxineVM.isHosted()) {
-            linkDirectCalls();
+            Adapter adapter = null;
+            AdapterGenerator generator = AdapterGenerator.forCallee(this);
+            if (generator != null) {
+                adapter = generator.make(classMethodActor);
+            }
+            linkDirectCalls(adapter);
         }
     }
 
@@ -519,13 +523,13 @@ public class C1XTargetMethod extends TargetMethod {
     @UNSAFE
     public static void forwardTo(TargetMethod oldTargetMethod, TargetMethod newTargetMethod) {
         assert oldTargetMethod != newTargetMethod;
-        assert oldTargetMethod.abi().callEntryPoint() != CallEntryPoint.C_ENTRY_POINT;
+        assert oldTargetMethod.abi().callEntryPoint != CallEntryPoint.C_ENTRY_POINT;
 
         long newOptEntry = CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
         long newJitEntry = CallEntryPoint.JIT_ENTRY_POINT.in(newTargetMethod).asAddress().toLong();
 
-        patchCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart(), newOptEntry, RJMP);
-        patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart(), newJitEntry, RJMP);
+        patchCode(oldTargetMethod, CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset(), newOptEntry, RJMP);
+        patchCode(oldTargetMethod, CallEntryPoint.JIT_ENTRY_POINT.offset(), newJitEntry, RJMP);
     }
 
     @UNSAFE
@@ -540,7 +544,7 @@ public class C1XTargetMethod extends TargetMethod {
             code[offset + 3] = (byte) (displacement >> 16);
             code[offset + 4] = (byte) (displacement >> 24);
         } else {
-            if (!(true | callSite.isWordAligned())) {
+            if (false && callSite.isWordAligned()) {
                 // TODO: Patch location must not straddle a cache-line (32-byte) boundary.
                 FatalError.unexpected("Method " + targetMethod.classMethodActor().format("%H.%n(%p)") + " entry point is not word aligned.", false, null, Pointer.zero());
             }
@@ -644,22 +648,18 @@ public class C1XTargetMethod extends TargetMethod {
         Log.print("Could not find stop position for instruction at position ");
         Log.print(instructionPointer.minus(codeStart()).toInt());
         Log.print(" in ");
-        Log.printMethod(classMethodActor(), true);
+        Log.printMethod(this, true);
         throw FatalError.unexpected("Could not find stop position in target method");
     }
 
     @Override
     @HOSTED_ONLY
-    public void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
+    public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
         // first gather methods in the directCallees array
         if (directCallees != null) {
-            ClassMethodActor ma = classMethodActor();
-            if (ma != null && ma.holder().name.equals("jtt.max.Unsigned_idiv01")) {
-                DebugBreak.here();
-            }
             for (Object o : directCallees) {
                 if (o instanceof MethodActor) {
-                    directCalls.append((MethodActor) o);
+                    directCalls.add((MethodActor) o);
                 }
             }
         }
@@ -667,10 +667,10 @@ public class C1XTargetMethod extends TargetMethod {
         // iterate over direct calls
         for (CiTargetMethod.Call site : bootstrappingCiTargetMethod.directCalls) {
             if (site.runtimeCall != null) {
-                directCalls.append(getClassMethodActor(site.runtimeCall, site.method));
+                directCalls.add(getClassMethodActor(site.runtimeCall, site.method));
             } else if (site.method != null) {
                 MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
-                directCalls.append(methodActor);
+                directCalls.add(methodActor);
             }
         }
 
@@ -680,9 +680,9 @@ public class C1XTargetMethod extends TargetMethod {
             if (site.method.isLoaded()) {
                 MethodActor methodActor = ((MaxRiMethod) site.method).asMethodActor("gatherCalls()");
                 if (site.method.holder().isInterface()) {
-                    interfaceCalls.append(methodActor);
+                    interfaceCalls.add(methodActor);
                 } else {
-                    virtualCalls.append(methodActor);
+                    virtualCalls.add(methodActor);
                 }
             }
         }
@@ -768,12 +768,7 @@ public class C1XTargetMethod extends TargetMethod {
      * @param preparer the reference map preparer
      */
     @Override
-    public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
-        if (AMD64AdapterStackWalking.isJitOptAdapterFrameCode(current)) {
-            // if this is an adapter frame, the only references it can contain would be in the overflow arguments
-            AMD64OptStackWalking.prepareAdapterOverflowRefMap(current, callee, preparer);
-            return;
-        }
+    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         StackFrameWalker.CalleeKind calleeKind = callee.calleeKind();
         Pointer registerState = Pointer.zero();
         switch (calleeKind) {
@@ -838,20 +833,19 @@ public class C1XTargetMethod extends TargetMethod {
      * @param throwable the exception being thrown
      */
     @Override
-    public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
         AMD64OptStackWalking.catchException(this, current, callee, throwable);
     }
 
     /**
      * Accept a visitor for this frame.
      * @param current the current stack frame
-     * @param callee the callee stack frame
      * @param visitor the visitor
      * @return {@code true} if the stack walker should continue walking, {@code false} if the visitor is finished visiting
      */
     @Override
-    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
-        return AMD64OptStackWalking.acceptStackFrameVisitor(current, callee, visitor);
+    public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
+        return AMD64OptStackWalking.acceptStackFrameVisitor(current, visitor);
     }
 
     /**
@@ -859,7 +853,7 @@ public class C1XTargetMethod extends TargetMethod {
      * @param current the current frame
      */
     @Override
-    public void advance(StackFrameWalker.Cursor current) {
+    public void advance(Cursor current) {
         AMD64OptStackWalking.advance(current);
     }
 

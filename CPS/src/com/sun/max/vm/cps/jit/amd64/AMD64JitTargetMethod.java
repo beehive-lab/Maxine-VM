@@ -20,28 +20,23 @@
  */
 package com.sun.max.vm.cps.jit.amd64;
 
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
-import static com.sun.max.vm.compiler.CallEntryPoint.JIT_ENTRY_POINT;
-import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
+import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.cps.target.amd64.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.amd64.AMD64JavaStackFrame;
-import com.sun.max.vm.stack.amd64.AMD64OptStackWalking;
-import com.sun.max.vm.stack.amd64.AMD64OptimizedToJitAdapterFrame;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.type.SignatureDescriptor;
-import com.sun.max.vm.type.TypeDescriptor;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.vm.bytecode.Bytecode;
-import com.sun.max.vm.classfile.CodeAttribute;
-import com.sun.max.vm.classfile.constant.ConstantPool;
-import com.sun.max.vm.classfile.constant.MethodRefConstant;
-import com.sun.max.vm.runtime.Safepoint;
-import com.sun.max.lang.Bytes;
+import com.sun.max.vm.stack.StackFrameWalker.*;
+import com.sun.max.vm.stack.amd64.*;
+import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -59,8 +54,13 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     private static final byte RET2 = (byte) 0xC2;
 
 
-    public AMD64JitTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
+    public AMD64JitTargetMethod(ClassMethodActor classMethodActor) {
+        super(classMethodActor);
+    }
+
+    @Override
+    protected CPSTargetMethod createDuplicate() {
+        return new AMD64JitTargetMethod(classMethodActor);
     }
 
     @Override
@@ -91,6 +91,13 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         AMD64TargetMethod.forwardTo(this, newTargetMethod);
     }
 
+    /**
+     * Various execution states in a JIT method that can only be observed in
+     * the context of the Inspector.
+     *
+     * @author Laurent Daynes
+     */
+    @HOSTED_ONLY
     enum FramePointerState {
         /**
          * RBP holds the frame pointer of the current method activation. caller's RIP is at [RBP + FrameSize], caller's
@@ -99,19 +106,19 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         IN_RBP {
 
             @Override
-            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
+            Pointer localVariablesBase(Cursor current) {
                 return current.fp();
             }
 
             @Override
-            Pointer returnIP(StackFrameWalker.Cursor current) {
-                TargetMethod targetMethod = current.targetMethod();
-                int dispToRip = targetMethod.frameSize() - sizeOfNonParameterLocals(targetMethod);
+            Pointer returnIP(Cursor current) {
+                JitTargetMethod targetMethod = (JitTargetMethod) current.targetMethod();
+                int dispToRip = targetMethod.frameSize() - targetMethod.sizeOfNonParameterLocals();
                 return current.fp().plus(dispToRip);
             }
 
             @Override
-            Pointer callerFP(StackFrameWalker.Cursor current) {
+            Pointer callerFP(Cursor current) {
                 return current.stackFrameWalker().readWord(returnIP(current), -Word.size()).asPointer();
             }
         },
@@ -123,18 +130,18 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         CALLER_FRAME_IN_RBP {
 
             @Override
-            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
+            Pointer localVariablesBase(Cursor current) {
                 int offsetToSaveArea = current.targetMethod().frameSize();
                 return current.sp().minus(offsetToSaveArea);
             }
 
             @Override
-            Pointer returnIP(StackFrameWalker.Cursor current) {
+            Pointer returnIP(Cursor current) {
                 return current.sp();
             }
 
             @Override
-            Pointer callerFP(StackFrameWalker.Cursor current) {
+            Pointer callerFP(Cursor current) {
                 return current.fp();
             }
         },
@@ -146,19 +153,19 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         CALLER_FRAME_AT_RBP {
 
             @Override
-            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
-                TargetMethod targetMethod = current.targetMethod();
-                int dispToFrameStart = targetMethod.frameSize() - (sizeOfNonParameterLocals(targetMethod) + Word.size());
+            Pointer localVariablesBase(Cursor current) {
+                JitTargetMethod targetMethod = (JitTargetMethod) current.targetMethod();
+                int dispToFrameStart = targetMethod.frameSize() - (targetMethod.sizeOfNonParameterLocals() + Word.size());
                 return current.fp().minus(dispToFrameStart);
             }
 
             @Override
-            Pointer returnIP(StackFrameWalker.Cursor current) {
+            Pointer returnIP(Cursor current) {
                 return current.fp().plus(Word.size());
             }
 
             @Override
-            Pointer callerFP(StackFrameWalker.Cursor current) {
+            Pointer callerFP(Cursor current) {
                 return current.stackFrameWalker().readWord(current.fp(), 0).asPointer();
             }
         },
@@ -170,56 +177,43 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         RETURNING_FROM_RUNTIME {
 
             @Override
-            Pointer localVariablesBase(StackFrameWalker.Cursor current) {
+            Pointer localVariablesBase(Cursor current) {
                 return current.stackFrameWalker().readWord(current.sp(), 0).asPointer();
             }
 
             @Override
-            Pointer returnIP(StackFrameWalker.Cursor current) {
-                TargetMethod targetMethod = current.targetMethod();
-                int dispToRip = targetMethod.frameSize() - sizeOfNonParameterLocals(targetMethod);
+            Pointer returnIP(Cursor current) {
+                JitTargetMethod targetMethod = (JitTargetMethod) current.targetMethod();
+                int dispToRip = targetMethod.frameSize() - targetMethod.sizeOfNonParameterLocals();
                 return localVariablesBase(current).plus(dispToRip);
             }
 
             @Override
-            Pointer callerFP(StackFrameWalker.Cursor current) {
+            Pointer callerFP(Cursor current) {
                 return current.stackFrameWalker().readWord(returnIP(current), -Word.size()).asPointer();
             }
         };
 
-        abstract Pointer localVariablesBase(StackFrameWalker.Cursor current);
+        abstract Pointer localVariablesBase(Cursor current);
 
-        abstract Pointer returnIP(StackFrameWalker.Cursor current);
+        abstract Pointer returnIP(Cursor current);
 
-        abstract Pointer callerFP(StackFrameWalker.Cursor current);
-
-        int sizeOfNonParameterLocals(TargetMethod targetMethod) {
-            return JitStackFrameLayout.JIT_SLOT_SIZE * (targetMethod.classMethodActor().codeAttribute().maxLocals - targetMethod.classMethodActor().numberOfParameterSlots());
-        }
+        abstract Pointer callerFP(Cursor current);
     }
 
     @Override
-    public void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
-        if (inAdapterCode(current)) {
-            // no references in adapter frame, because the parameters become locals in the JIT frame
-            return;
-        }
+    public void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer) {
         finalizeReferenceMaps();
 
-        Pointer startOfPrologue = JIT_ENTRY_POINT.in(this);
-        Pointer lastPrologueInstruction = startOfPrologue.plus(AMD64JitCompiler.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
-        FramePointerState framePointerState = computeFramePointerState(current, current.stackFrameWalker(), lastPrologueInstruction);
-        Pointer localVariablesBase = framePointerState.localVariablesBase(current);
-
         if (callee.calleeKind() == StackFrameWalker.CalleeKind.TRAMPOLINE) {
-            prepareTrampolineRefMap(current, callee, preparer);
+            prepareTrampolineRefMap(current, preparer);
         }
 
         int stopIndex = findClosestStopIndex(current.ip());
         int frameReferenceMapSize = frameReferenceMapSize();
 
         // prepare the map for this stack frame
-        Pointer slotPointer = localVariablesBase.plus(frameReferenceMapOffset);
+        Pointer slotPointer = current.fp().plus(frameReferenceMapOffset);
         preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "JIT frame");
         int byteIndex = stopIndex * frameReferenceMapSize;
         for (int i = 0; i < frameReferenceMapSize; i++) {
@@ -230,14 +224,9 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     }
 
     @Override
-    public void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable) {
+    public void catchException(Cursor current, Cursor callee, Throwable throwable) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
         Address throwAddress = current.ip();
-        if (inAdapterCode(current)) {
-            // adapter frames cannot catch exceptions
-            return;
-        }
-
         Address catchAddress = throwAddressToCatchAddress(current.isTopFrame(), throwAddress, throwable.getClass());
 
         if (!catchAddress.isZero()) {
@@ -248,10 +237,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            Pointer startOfPrologue = JIT_ENTRY_POINT.in(this);
-            Pointer lastPrologueInstruction = startOfPrologue.plus(AMD64JitCompiler.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
-            FramePointerState framePointerState = computeFramePointerState(current, stackFrameWalker, lastPrologueInstruction);
-            Pointer localVariablesBase = framePointerState.localVariablesBase(current);
+            Pointer localVariablesBase = current.fp();
             // The Java operand stack of the method that handles the exception is always cleared.
             // A null object is then pushed to ensure the depth of the stack is as expected upon
             // entry to an exception handler. However, the handler must have a prologue that loads
@@ -259,7 +245,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             // ExceptionDispatcher.
             // Compute the offset to the first stack slot of the Java Stack: frame size - (space for locals + saved RBP
             // + space of the first slot itself).
-            Pointer catcherStackPointer = localVariablesBase.minus(framePointerState.sizeOfNonParameterLocals(this) + JitStackFrameLayout.JIT_SLOT_SIZE);
+            Pointer catcherStackPointer = localVariablesBase.minus(sizeOfNonParameterLocals() + JitStackFrameLayout.JIT_SLOT_SIZE);
             // Push the null object on top of the stack first
             catcherStackPointer.writeReference(0, null);
 
@@ -276,53 +262,81 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
     }
 
     @Override
-    public boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor) {
+    public boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        StackFrame stackFrame;
-        if (inAdapterCode(current)) {
-            stackFrame = new AMD64OptimizedToJitAdapterFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), current.fp(), current.sp());
-        } else {
-            stackFrame = new AMD64JavaStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), current.fp(), current.sp());
+        Pointer localVariablesBase = current.fp();
+        if (MaxineVM.isHosted()) {
+            // Inspector context only
+            Pointer startOfPrologue;
+            AdapterGenerator generator = AdapterGenerator.forCallee(this);
+            if (generator != null) {
+                startOfPrologue = codeStart.plus(generator.prologueSizeForCallee(classMethodActor));
+            } else {
+                startOfPrologue = codeStart;
+            }
+            Pointer lastPrologueInstruction = startOfPrologue.plus(AMD64JitCompiler.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
+            FramePointerState framePointerState = computeFramePointerState(current, stackFrameWalker, lastPrologueInstruction);
+            localVariablesBase = framePointerState.localVariablesBase(current);
         }
+        StackFrame stackFrame = new AMD64JitStackFrame(stackFrameWalker.calleeStackFrame(), current.targetMethod(), current.ip(), current.sp(), localVariablesBase, localVariablesBase);
         return visitor.visitFrame(stackFrame);
     }
 
     @Override
-    public void advance(StackFrameWalker.Cursor current) {
+    public void advance(Cursor current) {
         StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        // FIXME: need to encapsulate adapter frame related code in an
-        // adapter frame scheme so that this code does not comprise any adapter related code.
-        Pointer jitEntryPoint = JIT_ENTRY_POINT.in(this);
-        Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(this);
-        boolean hasAdapterFrame = !jitEntryPoint.equals(optimizedEntryPoint);
-
-        // points to the first instruction following the prologue of the JIT-ed method, whether there is an adapter
-        // embedded in the code or not.
-        Pointer startOfPrologue;
-        if (hasAdapterFrame) {
-            Pointer endOfAdapter = optimizedEntryPoint.plus(this.optimizedCallerAdapterFrameCodeSize());
-            if (current.ip().greaterEqual(optimizedEntryPoint) && current.ip().lessThan(endOfAdapter)) {
-                advanceAdapterFrame(current);
-                return;
+        int dispToRip = frameSize() - sizeOfNonParameterLocals();
+        Pointer returnRIP = current.fp().plus(dispToRip);
+        Pointer callerFP = stackFrameWalker.readWord(returnRIP, -Word.size()).asPointer();
+        if (MaxineVM.isHosted()) {
+            // Inspector context only
+            Pointer startOfPrologue;
+            AdapterGenerator generator = AdapterGenerator.forCallee(this);
+            if (generator != null) {
+                if (generator.advanceIfInPrologue(current)) {
+                    return;
+                }
+                startOfPrologue = codeStart.plus(generator.prologueSizeForCallee(classMethodActor));
+            } else {
+                startOfPrologue = codeStart;
             }
-            startOfPrologue = endOfAdapter;
-        } else {
-            startOfPrologue = jitEntryPoint;
-        }
-        Pointer lastPrologueInstruction = startOfPrologue.plus(AMD64JitCompiler.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
-        FramePointerState framePointerState = computeFramePointerState(current, stackFrameWalker, lastPrologueInstruction);
 
-        Pointer returnIP = framePointerState.returnIP(current);
-        Pointer callerIP = stackFrameWalker.readWord(returnIP, 0).asPointer();
-        Pointer callerSP = returnIP.plus(Word.size()); // Skip the rip
-        stackFrameWalker.advance(callerIP, callerSP, framePointerState.callerFP(current));
+            Pointer lastPrologueInstruction = startOfPrologue.plus(AMD64JitCompiler.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
+            FramePointerState framePointerState = computeFramePointerState(current, stackFrameWalker, lastPrologueInstruction);
+            returnRIP = framePointerState.returnIP(current);
+            callerFP = framePointerState.callerFP(current);
+
+        }
+        Pointer callerIP = stackFrameWalker.readWord(returnRIP, 0).asPointer();
+        Pointer callerSP = returnRIP.plus(Word.size()); // Skip the rip
+
+        int stackAmountInBytes = classMethodActor.numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE;
+        if (stackAmountInBytes != 0) {
+            callerSP = callerSP.plus(stackAmountInBytes);
+        }
+
+        stackFrameWalker.advance(callerIP, callerSP, callerFP);
     }
 
-    protected void prepareTrampolineRefMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer) {
+    /**
+     * Prepares the reference map to cover the reference parameters on the stack at a call from a JIT compiled method
+     * into a trampoline. These slots are normally ignored when computing the reference maps for a JIT'ed method as they
+     * are covered by a reference map in the callee if necessary. They <b>cannot</b> be covered by a reference map in
+     * the JIT'ed method as these slots are seen as local variables in a JIT callee and as such can be overwritten with
+     * non-reference values.
+     *
+     * However, in the case where a JIT'ed method calls into a trampoline, the reference parameters of the call are not
+     * covered by any reference map. In this situation, we need to analyze the invokeXXX bytecode at the call site to
+     * derive the signature of the call which in turn allows us to mark the parameter stack slots that contain
+     * references.
+     *
+     * @param caller the JIT compiled method's frame cursor
+     */
+    private void prepareTrampolineRefMap(Cursor caller, StackReferenceMapPreparer preparer) {
         // prepare the reference map for the parameters passed by the current (caller) frame.
         // the call was unresolved and hit a trampoline, so compute the refmap from the signature of
         // the called method by looking at the bytecode of the caller method--how ugly...
-        final int bytecodePosition = bytecodePositionForCallSite(current.ip());
+        final int bytecodePosition = bytecodePositionForCallSite(caller.ip());
         final CodeAttribute codeAttribute = classMethodActor().codeAttribute();
         final ConstantPool constantPool = codeAttribute.constantPool;
         final byte[] code = codeAttribute.code();
@@ -331,63 +345,32 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         final SignatureDescriptor signature = methodConstant.signature(constantPool);
 
         int slotSize = JitStackFrameLayout.JIT_SLOT_SIZE;
-        int refOffsetInSlot = Word.size() - slotSize; // for multi-word slots, get the offset into the slot
         final int numberOfSlots = signature.computeNumberOfSlots() + (isInvokestatic ? 0 : 1);
 
         if (numberOfSlots != 0) {
-            // point at first slot (highest address)
-            final Pointer slotPointer = current.sp().plus((numberOfSlots - 1) * slotSize).plus(refOffsetInSlot);
-            int parameterSlotIndex = 0;
-            // First deal with the receiver (if any)
-            if (!isInvokestatic) {
-                // Mark the slot for the receiver as it is not covered by the method signature:
-                preparer.setReferenceMapBits(current, slotPointer, 1, 1);
-                parameterSlotIndex++;
-            }
-
-            // Now process the other parameters
-            for (int i = 0; i < signature.numberOfParameters(); ++i) {
+            // Handle the parameters in reverse order as caller.sp() is currently
+            // pointing at the last parameter.
+            Pointer slotPointer = caller.sp();
+            for (int i = signature.numberOfParameters() - 1; i >= 0; --i) {
                 final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
                 final Kind parameterKind = parameter.toKind();
                 if (parameterKind == Kind.REFERENCE) {
-                    preparer.setReferenceMapBits(current, slotPointer.minus(parameterSlotIndex * slotSize), 1, 1);
+                    preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
                 }
-                parameterSlotIndex += parameterKind.isCategory2() ? 2 : 1;
+                int parameterSlots = parameterKind.isCategory2() ? 2 : 1;
+                slotPointer = slotPointer.plus(slotSize * parameterSlots);
+            }
+
+            // Finally deal with the receiver (if any)
+            if (!isInvokestatic) {
+                // Mark the slot for the receiver as it is not covered by the method signature:
+                preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
             }
         }
     }
 
-    private void advanceAdapterFrame(StackFrameWalker.Cursor current) {
-        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        Pointer instructionPointer = current.ip();
-        Pointer stackPointer = current.sp();
-        Pointer entryPoint = OPTIMIZED_ENTRY_POINT.in(this);
-        Pointer ripPointer = adapterReturnInstructionPointer(instructionPointer, stackPointer, entryPoint);
-        Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
-
-        Pointer callerSP = ripPointer.plus(Word.size()); // skip RIP word
-        stackFrameWalker.advance(callerInstructionPointer, callerSP, callerSP);
-    }
-
-    private Pointer adapterReturnInstructionPointer(Pointer ip, Pointer sp, Pointer entryPoint) {
-        TargetMethod targetMethod = this;
-        ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-        // Currently, the opto-jit adapter frame always increases the stack by at least one slot, to make it looks like
-        // a call from a
-
-        boolean hasNoFrame = ip.equals(entryPoint) || classMethodActor.isStatic() && (classMethodActor.descriptor().numberOfParameters() == 0);
-
-        Pointer ripPointer; // stack pointer at call entry point (where the RIP is).
-        if (hasNoFrame) {
-            ripPointer = sp;
-        } else {
-            // The adapter frame was constructed. Add space taken by the parameters for the placeholder of RBP.
-            ripPointer = sp.plus(AMD64OptStackWalking.adapterFrameSize(classMethodActor));
-        }
-        return ripPointer;
-    }
-
-    private FramePointerState computeFramePointerState(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, Pointer lastPrologueInstr) {
+    @HOSTED_ONLY
+    private FramePointerState computeFramePointerState(Cursor current, StackFrameWalker stackFrameWalker, Pointer lastPrologueInstr) {
         Pointer instructionPointer = current.ip();
         byte byteAtInstructionPointer = stackFrameWalker.readByte(instructionPointer, 0);
         if (instructionPointer.lessThan(lastPrologueInstr) || byteAtInstructionPointer == ENTER || byteAtInstructionPointer == RET || byteAtInstructionPointer == RET2) {
@@ -400,21 +383,6 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             return FramePointerState.RETURNING_FROM_RUNTIME;
         }
         return FramePointerState.IN_RBP;
-    }
-
-    private boolean inAdapterCode(StackFrameWalker.Cursor current) {
-        Pointer jitEntryPoint = JIT_ENTRY_POINT.in(this);
-        Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(this);
-
-        // points to the first instruction following the prologue of the JIT-ed method, whether there is an adapter
-        // embedded in the code or not.
-        if (!jitEntryPoint.equals(optimizedEntryPoint)) {
-            Pointer endOfAdapter = optimizedEntryPoint.plus(this.optimizedCallerAdapterFrameCodeSize());
-            if (current.ip().greaterEqual(optimizedEntryPoint) && current.ip().lessThan(endOfAdapter)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static int getInvokeConstantPoolIndexOperand(byte[] code, int invokeOpcodePosition) {

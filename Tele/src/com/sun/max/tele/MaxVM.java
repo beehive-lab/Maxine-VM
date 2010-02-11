@@ -318,6 +318,14 @@ public interface MaxVM {
     TeleCodeRegion teleRuntimeCodeRegion();
 
     /**
+     * @return surrogates for all {@link CodeRegion}s in the VM.
+     *
+     * @see #teleBootCodeRegion()
+     * @see #teleRuntimeCodeRegion()
+     */
+    IndexedSequence<TeleCodeRegion> teleCodeRegions();
+
+    /**
      * @param address a memory address in the VM.
      * @return is the address within a {@link MemoryRegion} associated with a thread?
      * @see #allocatedMemoryRegions()

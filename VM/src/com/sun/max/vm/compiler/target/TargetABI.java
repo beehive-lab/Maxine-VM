@@ -35,43 +35,38 @@ import com.sun.max.vm.type.*;
  * @author Ben L. Titzer
  */
 public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointRegister_Type extends Symbol> {
-    private final boolean useRegisterWindows;
 
-    public boolean usesRegisterWindows() {
-        return useRegisterWindows;
-    }
+    public final boolean useRegisterWindows;
+    public final boolean callPushesReturnAddress;
+    public final int stackBias;
+    public final int stackFrameAlignment;
+    public final RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> registerRoleAssignment;
+    public final IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters;
+    public final IndexedSequence<IntegerRegister_Type> integerOutgoingParameterRegisters;
+    public final IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters;
 
-    private final boolean callPushesReturnAddress;
+    /**
+     * The call entry point of methods {@linkplain TargetMethod#abi() compiled with} with this ABI.
+     */
+    @INSPECTED
+    public final CallEntryPoint callEntryPoint;
 
-    public boolean callPushesReturnAddress() {
-        return callPushesReturnAddress;
-    }
-
-    private final int stackBias;
-
-    public int stackBias() {
-        return stackBias;
-    }
-
-    private final int stackFrameAlignment;
-
-    public int stackFrameAlignment() {
-        return stackFrameAlignment;
-    }
-
+    /**
+     * Returns a frame size aligned according to the platform's stack frame alignment requirement. For example, on
+     * Darwin, the stack pointer (i.e. %rsp) must be a 16-byte aligned value. The returned value will account an extra
+     * word in the frame for platforms where the caller's return address is pushed to the stack by a call instruction.
+     *
+     * @param frameSize the size of a stack frame which is not necessarily aligned. This value does not include the
+     *            extra word (if any) occupied by the caller's return address pushed by a call instruction
+     */
     public int alignFrameSize(int frameSize) {
         final int n = stackFrameAlignment - 1;
-        if (callPushesReturnAddress()) {
+        if (callPushesReturnAddress) {
             return ((frameSize + Word.size() + n) & ~n) - Word.size();
         }
         return (frameSize + n) & ~n;
     }
 
-    private final RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> registerRoleAssignment;
-
-    public RegisterRoleAssignment<IntegerRegister_Type, FloatingPointRegister_Type> registerRoleAssignment() {
-        return registerRoleAssignment;
-    }
 
     @FOLD
     public IntegerRegister_Type stackPointer() {
@@ -98,44 +93,16 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         return registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.LITERAL_BASE_POINTER);
     }
 
-    private final IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters;
-
-    public IndexedSequence<IntegerRegister_Type> integerIncomingParameterRegisters() {
-        return integerIncomingParameterRegisters;
-    }
-
-    private final IndexedSequence<IntegerRegister_Type> integerOutgoingParameterRegisters;
-
-    public IndexedSequence<IntegerRegister_Type> integerOutgoingParameterRegisters() {
-        return integerOutgoingParameterRegisters;
-    }
-
     @FOLD
     public FloatingPointRegister_Type floatingPointReturn() {
         return registerRoleAssignment.floatingPointRegisterActingAs(VMRegister.Role.ABI_RETURN);
-    }
-
-    private final IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters;
-
-    public IndexedSequence<FloatingPointRegister_Type> floatingPointParameterRegisters() {
-        return floatingPointParameterRegisters;
-    }
-
-    /**
-     * The call entry point dedicated to the compiler that compiled methods associated with this TargetABI object.
-     */
-    @INSPECTED
-    private final CallEntryPoint callEntryPoint;
-
-    @INLINE
-    public CallEntryPoint callEntryPoint() {
-        return callEntryPoint;
     }
 
     /**
      * A target ABI specifies a number of register roles assignment used by the compiler that produces the target code, as well as
      * the entry point {@linkplain CallEntryPoint call entry point} associated with its compiler. The latter can be used
      * to compute the offset to entry point of callees of the target methods associated with the TargetABI.
+     *
      * @param callPushesReturnAddress indicates whether call instructions push a callee's return address on to the stack.
      * @param stackFrameAlignment alignment requirement for stack frame.
      * @see Role
@@ -191,11 +158,11 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
             IndexedSequence<? extends Symbol> sequence = null;
             int index = 0;
             if (putIntoIntegerRegister(parameterKinds[i])) {
-                sequence = this.integerIncomingParameterRegisters();
+                sequence = this.integerIncomingParameterRegisters;
                 index = integerIndex;
                 integerIndex++;
             } else {
-                sequence = this.floatingPointParameterRegisters();
+                sequence = this.floatingPointParameterRegisters;
                 index = floatIndex;
                 floatIndex++;
             }
@@ -205,10 +172,10 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
                 result[i] = new TargetLocation.ParameterStackSlot(stackIndex);
                 stackIndex++;
             } else {
-                if (sequence == this.integerIncomingParameterRegisters()) {
-                    result[i] = new TargetLocation.IntegerRegister(sequence.get(i).value());
+                if (sequence == this.integerIncomingParameterRegisters) {
+                    result[i] = new TargetLocation.IntegerRegister(sequence.get(index).value());
                 } else {
-                    result[i] = new TargetLocation.FloatingPointRegister(sequence.get(i).value());
+                    result[i] = new TargetLocation.FloatingPointRegister(sequence.get(index).value());
                 }
             }
         }

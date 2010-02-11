@@ -30,12 +30,11 @@ import com.sun.max.vm.runtime.VMRegister.*;
  * @author Bernd Mathiske
  */
 public class SPARCEirNativeABI extends SPARCEirCFunctionABI {
-    private final PoolSet<SPARCEirRegister> callerSavedRegisters;
 
     public SPARCEirNativeABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration, false);
-        callerSavedRegisters =  allocatableRegisters();
-        callerSavedRegisters.add(SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+        callerSavedRegisters = allocatableRegisters();
+        callerSavedRegisters.add(SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment.integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
     }
 
     @Override

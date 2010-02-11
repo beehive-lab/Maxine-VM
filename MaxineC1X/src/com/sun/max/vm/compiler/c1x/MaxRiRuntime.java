@@ -38,6 +38,8 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.runtime.*;
@@ -54,10 +56,14 @@ import com.sun.max.vm.type.*;
  */
 public class MaxRiRuntime implements RiRuntime {
 
+    private final C1XCompilerScheme compilerScheme;
+
+    public MaxRiRuntime(C1XCompilerScheme compilerScheme) {
+        this.compilerScheme = compilerScheme;
+    }
+
     private static final CiRegister[] generalParameterRegisters = new CiRegister[]{X86.rdi, X86.rsi, X86.rdx, X86.rcx, X86.r8, X86.r9};
     private static final CiRegister[] xmmParameterRegisters = new CiRegister[]{X86.xmm0, X86.xmm1, X86.xmm2, X86.xmm3, X86.xmm4, X86.xmm5, X86.xmm6, X86.xmm7};
-
-    public static final MaxRiRuntime globalRuntime = new MaxRiRuntime();
 
     final MaxRiConstantPool globalConstantPool = new MaxRiConstantPool(this, null);
 
@@ -228,9 +234,16 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public int codeOffset() {
-        // TODO: get rid of this!
-        // Offset because this is optimized code:
-        return 8;
+        return CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset();
+    }
+
+    @Override
+    public void codePrologue(RiMethod method, OutputStream out) {
+        ClassMethodActor callee = asClassMethodActor(method, "codePrologue()");
+        AdapterGenerator generator = AdapterGenerator.forCallee(callee, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        if (generator != null) {
+            generator.adapt(callee, out);
+        }
     }
 
     public String disassemble(byte[] code) {
@@ -265,7 +278,7 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     public Object registerTargetMethod(CiTargetMethod ciTargetMethod, String name) {
-        return new C1XTargetMethod(new C1XCompilerScheme(VMConfiguration.target()), name, ciTargetMethod);
+        return new C1XTargetMethod(name, ciTargetMethod);
     }
 
     public RiType primitiveArrayType(CiKind elemType) {

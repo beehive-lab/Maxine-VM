@@ -20,9 +20,7 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
-
-import java.lang.reflect.Constructor;
+import java.lang.reflect.*;
 import java.security.*;
 import java.util.*;
 
@@ -179,16 +177,13 @@ final class JDK_java_security_AccessController {
         Context() {
         }
 
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
-            if (isTopFrame(flags)) {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
+            if (isTopFrame) {
                 // skip caller, i.e., 'getAccessControlContext()'
                 return true;
             }
-            if (isAdapter(flags)) {
-                return true;
-            }
-            if (targetMethod == null) {
-                // native frame
+            if (targetMethod == null || targetMethod instanceof Adapter) {
+                // native or adapter frame
                 return true;
             }
 

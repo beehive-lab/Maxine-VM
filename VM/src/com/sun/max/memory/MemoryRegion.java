@@ -68,6 +68,7 @@ public interface MemoryRegion {
 
     /**
      * @return does the region have the same bounds as another region.
+     * @see Util#equal(MemoryRegion, MemoryRegion)
      */
     boolean sameAs(MemoryRegion memoryRegion);
 
@@ -93,6 +94,17 @@ public interface MemoryRegion {
             }
             sb.append("[").append(memoryRegion.start().toHexString()).append(" - ").append(memoryRegion.end().minus(1).toHexString()).append("]");
             return sb.toString();
+        }
+
+        public static boolean equal(MemoryRegion left, MemoryRegion right) {
+            if (left == null) {
+                return right == null;
+            }
+            if (right == null) {
+                return false;
+            }
+            return left.start().equals(right.start()) && left.size().equals(right.size());
+
         }
     }
 }

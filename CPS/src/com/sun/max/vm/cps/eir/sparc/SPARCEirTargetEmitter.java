@@ -25,6 +25,7 @@ import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.EirStackSlot.*;
 import com.sun.max.vm.runtime.*;
@@ -91,8 +92,8 @@ public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler
 
     private final boolean is32Bit;
 
-    public SPARCEirTargetEmitter(SPARCEirABI abi, int frameSize, Safepoint safepoint, AdapterFrameGenerator<SPARCAssembler> adapterFrameGenerator) {
-        super(abi.createAssembler(), abi, frameSize, safepoint, abi.vmConfiguration().platform().processorKind.dataModel.wordWidth, adapterFrameGenerator);
+    public SPARCEirTargetEmitter(SPARCEirABI abi, int frameSize, Safepoint safepoint, AdapterGenerator adapterGenerator) {
+        super(SPARCAssembler.createAssembler(Word.widthValue()), abi, frameSize, safepoint, abi.vmConfiguration().platform().processorKind.dataModel.wordWidth, adapterGenerator);
         is32Bit = abi.vmConfiguration().platform().processorKind.dataModel.wordWidth == WordWidth.BITS_32;
         stackPointer = abi.targetABI().stackPointer();
         framePointer = abi.targetABI().framePointer();

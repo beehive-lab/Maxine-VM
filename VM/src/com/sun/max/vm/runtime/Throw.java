@@ -21,7 +21,6 @@
 package com.sun.max.vm.runtime;
 
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -56,30 +55,26 @@ public final class Throw {
         "Report a stack trace scan when a fatal VM occurs."), MaxineVM.Phase.PRISTINE);
 
     public static class StackFrameDumper implements RawStackFrameVisitor {
-        public boolean visitFrame(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, int flags) {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer ip, Pointer sp, Pointer fp, boolean isTopFrame) {
             final boolean lockDisabledSafepoints = Log.lock();
             // N.B. use "->" to make dumped stacks look slightly different than exception stack traces.
-            dumpFrame("        -> ", targetMethod, ip, flags);
+            dumpFrame("        -> ", targetMethod, ip, isTopFrame);
             Log.unlock(lockDisabledSafepoints);
             return true;
         }
 
-        public static void dumpFrame(String prefix, TargetMethod targetMethod, Pointer ip, int flags) {
+        public static void dumpFrame(String prefix, TargetMethod targetMethod, Pointer ip, boolean isTopFrame) {
             Log.print(prefix);
             if (targetMethod != null) {
-                if (!isAdapter(flags)) {
-                    final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
+                final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
-                    if (classMethodActor == null) {
-                        Log.print(targetMethod.description());
-                    } else {
-                        Log.print(classMethodActor.holder().name);
-                        Log.print(".");
-                        Log.print(classMethodActor.name);
-                        Log.print(classMethodActor.descriptor());
-                    }
+                if (classMethodActor == null) {
+                    Log.print(targetMethod.description());
                 } else {
-                    Log.print("<adapter>");
+                    Log.print(classMethodActor.holder().name);
+                    Log.print(".");
+                    Log.print(classMethodActor.name);
+                    Log.print(classMethodActor.descriptor());
                 }
                 final Pointer codeStart = targetMethod.codeStart();
                 Log.print(" [");
@@ -88,7 +83,7 @@ public final class Throw {
                 Log.print(ip.minus(codeStart).toInt());
                 Log.print("]");
             } else {
-                Log.print("unknown:");
+                Log.print("native:");
                 Log.print(ip);
             }
             Log.println();
@@ -135,7 +130,7 @@ public final class Throw {
      * atomic from the perspective of the garbage collector. To achieve this, safepoints are
      * {@linkplain Safepoint#disable() disabled} here and must be {@linkplain Safepoint#enable() re-enabled} just prior
      * jumping to the exception handler. The latter is the responsibility of every implementation of
-     * {@link RuntimeCompilerScheme#walkFrame(com.sun.max.vm.stack.StackFrameWalker.Cursor,com.sun.max.vm.stack.StackFrameWalker.Cursor,com.sun.max.vm.stack.StackFrameWalker.Purpose, Object)}
+     * {@link RuntimeCompilerScheme#walkFrame(com.sun.max.vm.stack.Cursor,com.sun.max.vm.stack.Cursor,com.sun.max.vm.stack.StackFrameWalker.Purpose, Object)}
      * .
      *
      * @param throwable throwable the object to be passed to the exception handler. If this value is null, then a
@@ -272,7 +267,7 @@ public final class Throw {
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);
             if (targetMethod != null) {
                 Log.print("        -> ");
-                Log.printMethod(targetMethod.classMethodActor(), false);
+                Log.printMethod(targetMethod, false);
                 final Pointer codeStart = targetMethod.codeStart();
                 Log.print(" [");
                 Log.print(codeStart);

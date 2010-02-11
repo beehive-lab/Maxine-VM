@@ -66,11 +66,11 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         calleeSaveOffset = new HashMap<CiRegister, Integer>();
 
         // set up well known registers
-        TargetABI abi = vmConfiguration.targetABIsScheme().optimizedJavaABI();
+        TargetABI abi = vmConfiguration.targetABIsScheme().optimizedJavaABI;
         Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
         TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> amd64Abi = StaticLoophole.cast(type, abi);
 
-        RegisterRoleAssignment roles = abi.registerRoleAssignment();
+        RegisterRoleAssignment roles = abi.registerRoleAssignment;
         safepointRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.SAFEPOINT_LATCH, roles);
         stackPointerRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.CPU_STACK_POINTER, roles);
         markUnallocatable(unallocatable, regMap, VMRegister.Role.CPU_FRAME_POINTER, roles);
@@ -116,11 +116,11 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         List<CiRegister> xmmList = new ArrayList<CiRegister>();
 
         // add the general parameters to the parameter list
-        for (AMD64GeneralRegister64 reg : amd64Abi.integerIncomingParameterRegisters()) {
+        for (AMD64GeneralRegister64 reg : amd64Abi.integerIncomingParameterRegisters) {
             generalList.add(regMap.get(reg.name().toLowerCase()));
         }
         // add the floating parameters to the parameter list
-        for (AMD64XMMRegister xmm : amd64Abi.floatingPointParameterRegisters()) {
+        for (AMD64XMMRegister xmm : amd64Abi.floatingPointParameterRegisters) {
             xmmList.add(regMap.get(xmm.name().toLowerCase()));
         }
 

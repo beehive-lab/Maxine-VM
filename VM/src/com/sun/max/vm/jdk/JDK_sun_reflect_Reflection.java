@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
-
 import java.util.*;
 
 import sun.reflect.*;
@@ -59,12 +57,13 @@ final class JDK_sun_reflect_Reflection {
         Context(int realFramesToSkip) {
             this.realFramesToSkip = realFramesToSkip;
         }
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
-            if (isTopFrame(flags)) {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
+            if (isTopFrame) {
                 // skip 'getCallerMethod()'
                 return true;
             }
-            if (isAdapter(flags)) {
+            if (targetMethod instanceof Adapter) {
+                // adapter frame
                 return true;
             }
             if (targetMethod == null) {

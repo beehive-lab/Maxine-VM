@@ -33,15 +33,12 @@ import com.sun.max.asm.InlineDataDescriptor.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.b.c.d.e.sparc.target.*;
-import com.sun.max.vm.cps.eir.sparc.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.Stop.*;
@@ -139,8 +136,6 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     private final SPARCAssembler asm;
 
-    private final SPARCAdapterFrameGenerator adapterFrameGenerator;
-
     /**
      * Offset in bytes, from the beginning of the emitted code, to the instruction in the prologue that set the literal
      * base. This must be added to the offset to literal passed in parameters to
@@ -154,8 +149,8 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
          * to better factor this out.
          */
         final Class<TargetABI<GPR, FPR>> type = null;
-        TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
-        CPU_FRAME_POINTER = TARGET_ABI.registerRoleAssignment().integerRegisterActingAs(Role.CPU_FRAME_POINTER);
+        TARGET_ABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI);
+        CPU_FRAME_POINTER = TARGET_ABI.registerRoleAssignment.integerRegisterActingAs(Role.CPU_FRAME_POINTER);
         PROLOGUE_SCRATCH_REGISTER = TARGET_ABI.scratchRegister();
 
         SAFEPOINT_TEMPLATE = VMConfiguration.target().safepoint.code;
@@ -291,14 +286,9 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         return toByteArrayAndReset(asm);
     }
 
-    public BytecodeToSPARCTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, SPARCEirABI optimizingCompilerAbi, boolean trace) {
+    public BytecodeToSPARCTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, boolean trace) {
         super(classMethodActor, codeBuffer, templateTable, new SPARCJitStackFrameLayout(classMethodActor, templateTable.maxFrameSlots), trace);
-        asm = optimizingCompilerAbi.createAssembler();
-        SPARCAdapterFrameGenerator adapterFrameGenerator = null;
-        if (optimizingCompilerAbi != null) {
-            adapterFrameGenerator = SPARCAdapterFrameGenerator.optimizedToJitCompilerAdapterFrameGenerator(classMethodActor, optimizingCompilerAbi);
-        }
-        this.adapterFrameGenerator = adapterFrameGenerator;
+        asm = SPARCAssembler.createAssembler(Word.widthValue());
     }
 
     @Override
@@ -306,24 +296,12 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         return TARGET_ABI;
     }
 
-    @Override
-    public int adapterReturnPosition() {
-        try {
-            if (adapterFrameGenerator.adapterReturnPoint().state() == Label.State.BOUND) {
-                return adapterFrameGenerator.adapterReturnPoint().position();
-            }
-            return -1;
-        } catch (AssemblyException assemblyException) {
-            throw ProgramError.unexpected();
-        }
-    }
-
     private DFPR doublePrecisionParameterRegister(int parameterIndex) {
-        return (DFPR) TARGET_ABI.floatingPointParameterRegisters().get(2 * parameterIndex);
+        return (DFPR) TARGET_ABI.floatingPointParameterRegisters.get(2 * parameterIndex);
     }
 
     private SFPR singlePrecisionParameterRegister(int parameterIndex) {
-        return (SFPR) TARGET_ABI.floatingPointParameterRegisters().get((2 * parameterIndex) + 1);
+        return (SFPR) TARGET_ABI.floatingPointParameterRegisters.get((2 * parameterIndex) + 1);
     }
 
     @Override
@@ -359,7 +337,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void assignIntTemplateArgument(int parameterIndex, int argument) {
-        final GPR register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
+        final GPR register = TARGET_ABI.integerIncomingParameterRegisters.get(parameterIndex);
         asm.reset();
         if (argument == 0) {
             asm.clr(register);
@@ -371,7 +349,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
     @Override
     protected void assignLongTemplateArgument(int parameterIndex, long argument) {
-        final GPR register = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
+        final GPR register = TARGET_ABI.integerIncomingParameterRegisters.get(parameterIndex);
         asm.reset();
         asm.setx(argument, GPR.O7, register);
         codeBuffer.emitCodeFrom(asm);
@@ -385,7 +363,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         final int stackAmountInBytes = jitStackFrameLayout.sizeOfParameters() + CALL_SAVE_AREA_OFFSET_TO_STACK;
         assert SPARCAssembler.isSimm13(stackAmountInBytes) : "must be imm13";
 
-        final int offsetToCallSaveArea = VMConfiguration.target().targetABIsScheme().jitABI().alignFrameSize(SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE + jitStackFrameLayout.sizeOfTemplateSlots()) -
+        final int offsetToCallSaveArea = VMConfiguration.target().targetABIsScheme().jitABI.alignFrameSize(SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE + jitStackFrameLayout.sizeOfTemplateSlots()) -
                         SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE;
 
         asm.reset();
@@ -602,7 +580,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             case LONG:
             case WORD:
             case REFERENCE:
-                final GPR destinationRegister = TARGET_ABI.integerIncomingParameterRegisters().get(parameterIndex);
+                final GPR destinationRegister = TARGET_ABI.integerIncomingParameterRegisters.get(parameterIndex);
                 if (SPARCAssembler.isSimm13(offsetFromLiteralBase)) {
                     asm.ldx(literalBaseRegister, offsetFromLiteralBase, destinationRegister);
                 } else {
@@ -656,101 +634,97 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     }
 
     @Override
-    public int emitPrologue() {
-        if (adapterFrameGenerator != null) {
-            final GPR stackPointerRegister = TARGET_ABI.stackPointer();
-            final GPR framePointerRegister = TARGET_ABI.framePointer();
-            final GPR linkRegister = GPR.O7;
-            final Label jitEntryPoint = new Label();
+    public Adapter emitPrologue() {
+        Adapter adapter = null;
+        if (adapterGenerator != null) {
+            adapter = adapterGenerator.adapt(classMethodActor, asm);
+        }
 
-            // |<-------------------- JIT frame size ----------------------->|
-            // | register window save area | non parameter locals | lb | template slots | call save area | parameters |
-            // |<------------- offset to saved literal base ------>|
-            // |<------------- offset to spill slots------------------->| ^
-            // ^ caller's stack pointer (unbiased)
-            // callee frame pointer
+        final GPR stackPointerRegister = TARGET_ABI.stackPointer();
+        final GPR framePointerRegister = TARGET_ABI.framePointer();
+        final GPR linkRegister = GPR.O7;
 
-            final int jitedCodeFrameSize = jitStackFrameLayout.frameSize();
-            final int offsetToCallSaveAreaFromFP = ((SPARCJitStackFrameLayout) jitStackFrameLayout).offsetToTopOfFrameFromFramePointer() - SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE;
+        // |<-------------------- JIT frame size ----------------------->|
+        // | register window save area | non parameter locals | lb | template slots | call save area | parameters |
+        // |<------------- offset to saved literal base ------>|
+        // |<------------- offset to spill slots------------------->| ^
+        // ^ caller's stack pointer (unbiased)
+        // callee frame pointer
 
-            // The following offsets are from the callee's stack pointer
-            final int offsetToSavedBaseLiteral = SPARCStackFrameLayout.STACK_BIAS + SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE + jitStackFrameLayout.sizeOfNonParameterLocals();
-            final int offsetToSpillSlots = offsetToSavedBaseLiteral + JIT_SLOT_SIZE;
-            final int offsetToCallSaveArea = offsetToSpillSlots + offsetToCallSaveAreaFromFP;
-            final boolean largeFrame = !SPARCAssembler.isSimm13(jitedCodeFrameSize);
-            final boolean largeOffsets = !SPARCAssembler.isSimm13(offsetToCallSaveArea + SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE);
-            adapterFrameGenerator.setJitedCodeFrameSize(jitedCodeFrameSize);
-            adapterFrameGenerator.setJitEntryPoint(jitEntryPoint);
-            try {
-                asm.reset();
-                // Skip over the frame adapter for calls from jit code
-                asm.ba(AnnulBit.NO_A, BranchPredictionBit.PT, ICCOperand.ICC, jitEntryPoint);
-                if (largeFrame) {
-                    asm.sethi(SPARCAssembler.hi(jitedCodeFrameSize), PROLOGUE_SCRATCH_REGISTER);
-                } else {
-                    asm.sub(stackPointerRegister, jitedCodeFrameSize, stackPointerRegister);
-                }
-                // Entry point to the optimized code
-                final Label adapterCodeStart = new Label();
-                asm.bindLabel(adapterCodeStart);
-                adapterFrameGenerator.emitPrologue(asm);
-                adapterFrameGenerator.emitEpilogue(asm);
+        final int offsetToCallSaveAreaFromFP = ((SPARCJitStackFrameLayout) jitStackFrameLayout).offsetToTopOfFrameFromFramePointer() - SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE;
 
-                assert jitEntryPoint.state().equals(Label.State.BOUND);
+        // The following offsets are from the callee's stack pointer
+        final int offsetToSavedBaseLiteral = SPARCStackFrameLayout.STACK_BIAS + SPARCStackFrameLayout.MIN_STACK_FRAME_SIZE + jitStackFrameLayout.sizeOfNonParameterLocals();
+        final int offsetToSpillSlots = offsetToSavedBaseLiteral + JIT_SLOT_SIZE;
+        final int offsetToCallSaveArea = offsetToSpillSlots + offsetToCallSaveAreaFromFP;
+        final boolean largeOffsets = !SPARCAssembler.isSimm13(offsetToCallSaveArea + SPARCJitStackFrameLayout.CALL_SAVE_AREA_SIZE);
 
-                if (largeFrame) {
-                    asm.or(PROLOGUE_SCRATCH_REGISTER, SPARCAssembler.lo(jitedCodeFrameSize), PROLOGUE_SCRATCH_REGISTER);
-                    asm.sub(stackPointerRegister, PROLOGUE_SCRATCH_REGISTER, stackPointerRegister);
-                }
-                if (Trap.STACK_BANGING) {
-                    final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias();
-                    if (SPARCAssembler.isSimm13(stackBangOffset)) {
-                        asm.ldub(stackPointerRegister, stackBangOffset, GPR.G0);
-                    } else {
-                        asm.setsw(stackBangOffset & ~0x3FF, PROLOGUE_SCRATCH_REGISTER); // Note: stackBangOffset is rounded off
-                        asm.ldub(stackPointerRegister, PROLOGUE_SCRATCH_REGISTER, GPR.G0);
-                    }
-                }
+// TODO: Move this to SPARCAdapterGenerator.Opt2Jit.emitPrologue()
+//                asm.reset();
+//                // Skip over the frame adapter for calls from jit code
+//                asm.ba(AnnulBit.NO_A, BranchPredictionBit.PT, ICCOperand.ICC, jitEntryPoint);
+//                if (largeFrame) {
+//                    asm.sethi(SPARCAssembler.hi(jitedCodeFrameSize), PROLOGUE_SCRATCH_REGISTER);
+//                } else {
+//                    asm.sub(stackPointerRegister, jitedCodeFrameSize, stackPointerRegister);
+//                }
+//                // Entry point to the optimized code
+//                final Label adapterCodeStart = new Label();
+//                asm.bindLabel(adapterCodeStart);
+//                adapterFrameGenerator.emitPrologue(asm);
+//                adapterFrameGenerator.emitEpilogue(asm);
+//
+//                assert jitEntryPoint.state().equals(Label.State.BOUND);
+//
+//                if (largeFrame) {
+//                    asm.or(PROLOGUE_SCRATCH_REGISTER, SPARCAssembler.lo(jitedCodeFrameSize), PROLOGUE_SCRATCH_REGISTER);
+//                    asm.sub(stackPointerRegister, PROLOGUE_SCRATCH_REGISTER, stackPointerRegister);
+//                }
 
-                // Frame for the JITed call already allocated. All that is left to do is
-                // save the caller's address, frame pointer, then set our own frame pointer.
-                if (largeOffsets) {
-                    assert SPARCAssembler.isSimm13(offsetToCallSaveAreaFromFP);
-                    // Offsets from stack pointer too large to be used as immediate.
-                    // Instead, we compute the new frame pointer into a temporary that we use as a base.
-                    final GPR newFramePointerRegister = PROLOGUE_SCRATCH_REGISTER;
-                    asm.setsw(offsetToSpillSlots, newFramePointerRegister);
-                    asm.add(stackPointerRegister, newFramePointerRegister, newFramePointerRegister);
-                    asm.stx(linkRegister, newFramePointerRegister, offsetToCallSaveAreaFromFP + STACK_SLOT_SIZE);
-                    asm.stx(framePointerRegister, newFramePointerRegister, offsetToCallSaveAreaFromFP);
-                    asm.mov(newFramePointerRegister, framePointerRegister);
-                } else {
-                    asm.stx(linkRegister, stackPointerRegister, offsetToCallSaveArea + STACK_SLOT_SIZE);
-                    asm.stx(framePointerRegister, stackPointerRegister, offsetToCallSaveArea);
-                    asm.add(stackPointerRegister, offsetToSpillSlots, framePointerRegister);
-                }
-                asm.rd(StateRegister.PC, TARGET_ABI.literalBaseRegister());
-                int numInstructions = 1;
-                if (classMethodActor.codeAttribute().exceptionHandlerTable() != null) {
-                    // Conservatively assume that the method may catch an implicit exception.
-                    // In that case, we must initialize the save area with the literal base pointer to make sure
-                    // stack unwind can set it correctly.
-                    asm.stx(TARGET_ABI.literalBaseRegister(), framePointerRegister, -STACK_SLOT_SIZE);
-                    numInstructions++;
-                }
-
-                codeBuffer.emitCodeFrom(asm);
-
-                // TODO: this can be removed if the method is leaf and if it doesn't have any runtime exception handler
-                final int offset = codeBuffer.currentPosition() - numInstructions * InstructionSet.SPARC.instructionWidth;
-                this.offsetToSetLiteralBaseInstruction = Layout.byteArrayLayout().getElementOffsetInCell(offset).toInt();
-
-                return jitEntryPoint.position() - adapterCodeStart.position();
-            } catch (AssemblyException assemblyException) {
-                ProgramError.unexpected(assemblyException);
+        if (Trap.STACK_BANGING) {
+            final int stackBangOffset = -Trap.stackGuardSize + StackBias.SPARC_V9.stackBias();
+            if (SPARCAssembler.isSimm13(stackBangOffset)) {
+                asm.ldub(stackPointerRegister, stackBangOffset, GPR.G0);
+            } else {
+                asm.setsw(stackBangOffset & ~0x3FF, PROLOGUE_SCRATCH_REGISTER); // Note: stackBangOffset is rounded off
+                asm.ldub(stackPointerRegister, PROLOGUE_SCRATCH_REGISTER, GPR.G0);
             }
         }
-        return 0;
+
+        // Frame for the JITed call already allocated. All that is left to do is
+        // save the caller's address, frame pointer, then set our own frame pointer.
+        if (largeOffsets) {
+            assert SPARCAssembler.isSimm13(offsetToCallSaveAreaFromFP);
+            // Offsets from stack pointer too large to be used as immediate.
+            // Instead, we compute the new frame pointer into a temporary that we use as a base.
+            final GPR newFramePointerRegister = PROLOGUE_SCRATCH_REGISTER;
+            asm.setsw(offsetToSpillSlots, newFramePointerRegister);
+            asm.add(stackPointerRegister, newFramePointerRegister, newFramePointerRegister);
+            asm.stx(linkRegister, newFramePointerRegister, offsetToCallSaveAreaFromFP + STACK_SLOT_SIZE);
+            asm.stx(framePointerRegister, newFramePointerRegister, offsetToCallSaveAreaFromFP);
+            asm.mov(newFramePointerRegister, framePointerRegister);
+        } else {
+            asm.stx(linkRegister, stackPointerRegister, offsetToCallSaveArea + STACK_SLOT_SIZE);
+            asm.stx(framePointerRegister, stackPointerRegister, offsetToCallSaveArea);
+            asm.add(stackPointerRegister, offsetToSpillSlots, framePointerRegister);
+        }
+        asm.rd(StateRegister.PC, TARGET_ABI.literalBaseRegister());
+        int numInstructions = 1;
+        if (classMethodActor.codeAttribute().exceptionHandlerTable() != null) {
+            // Conservatively assume that the method may catch an implicit exception.
+            // In that case, we must initialize the save area with the literal base pointer to make sure
+            // stack unwind can set it correctly.
+            asm.stx(TARGET_ABI.literalBaseRegister(), framePointerRegister, -STACK_SLOT_SIZE);
+            numInstructions++;
+        }
+
+        codeBuffer.emitCodeFrom(asm);
+
+        // TODO: this can be removed if the method is leaf and if it doesn't have any runtime exception handler
+        final int offset = codeBuffer.currentPosition() - numInstructions * InstructionSet.SPARC.instructionWidth;
+        this.offsetToSetLiteralBaseInstruction = Layout.byteArrayLayout().getElementOffsetInCell(offset).toInt();
+
+        return adapter;
     }
 
 }

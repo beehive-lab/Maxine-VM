@@ -48,7 +48,7 @@ import com.sun.max.vm.value.*;
 import com.sun.max.vm.cps.jit.JitTargetMethod;
 
 /**
- * A table that displays the contents of a Java method stack frame in the VM.
+ * A table that displays the contents of a VM compiled method stack frame in the VM.
  *
  * @author Michael Van De Vanter
  */

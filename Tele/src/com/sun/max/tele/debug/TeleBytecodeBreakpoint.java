@@ -36,6 +36,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
@@ -337,10 +338,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             Trace.line(TRACE_VALUE, tracePrefix + "creating");
             this.teleTargetBreakpointFactory = teleVM.teleProcess().targetBreakpointFactory();
             // Predefine parameter accessors for reading compilation details
-            parameter0 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(0);
-            parameter1 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(1);
-            parameter2 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(2);
-            parameter3 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().integerIncomingParameterRegisters().get(3);
+            parameter0 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(0);
+            parameter1 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(1);
+            parameter2 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(2);
+            parameter3 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(3);
         }
 
         /**
@@ -598,10 +599,17 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             assert owner != null;
             final int bytecodePosition = owner.methodPositionKey.bytecodePosition;
             Address address = Address.zero();
+// TODO (mlvdv) review
             if (teleTargetMethod instanceof TeleJitTargetMethod) {
                 final TeleJitTargetMethod teleJitTargetMethod = (TeleJitTargetMethod) teleTargetMethod;
-                final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
-                final int targetCodePosition = bytecodeToTargetCodePositionMap[bytecodePosition];
+                final int targetCodePosition;
+                if (key.bytecodePosition == -1) {
+                    TargetMethod targetMethod = teleTargetMethod.reducedDeepCopy();
+                    targetCodePosition = AdapterGenerator.prologueSizeForCallee(targetMethod);
+                } else {
+                    final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
+                    targetCodePosition = bytecodeToTargetCodePositionMap[key.bytecodePosition];
+                }
                 address = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                 Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint for offset " + targetCodePosition + " in " + teleTargetMethod);
             } else {

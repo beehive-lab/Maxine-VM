@@ -362,7 +362,10 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         this.localSize = reservedSize();
 
         // align to code size
-        asm.nop(runtime.codeOffset());
+        int entryCodeOffset = runtime.codeOffset();
+        if (entryCodeOffset != 0) {
+            asm.nop(entryCodeOffset);
+        }
         asm.subq(X86.rsp, frameSize());
 
         int index = 0;
@@ -376,15 +379,18 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     }
 
     private void completeSavePrologue() {
-        this.saveSize = target.config.getMinimumCalleeSaveFrameSize();
+        this.saveSize = target.registerConfig.getMinimumCalleeSaveFrameSize();
         this.localSize = reservedSize();
-        // align to code size
-        asm.nop(runtime.codeOffset());
+        int entryCodeOffset = runtime.codeOffset();
+        if (entryCodeOffset != 0) {
+            // align to code size
+            asm.nop(entryCodeOffset);
+        }
         asm.subq(X86.rsp, frameSize());
         asm.setFrameSize(frameSize());
         // save all registers
         for (CiRegister r : allRegisters) {
-            int offset = target.config.getCalleeSaveRegisterOffset(r);
+            int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
             if (r != X86.rsp && offset >= 0) {
                 asm.movq(new Address(X86.rsp, offset), r);
             }
@@ -407,7 +413,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         if (savedAllRegisters) {
             // saved all registers, restore all registers
             for (CiRegister r : allRegisters) {
-                int offset = target.config.getCalleeSaveRegisterOffset(r);
+                int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
                 if (r != X86.rsp && offset >= 0) {
                     asm.movq(r, new Address(X86.rsp, offset));
                 }
@@ -432,7 +438,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
     private void forwardRuntimeCall(CiRuntimeCall call) {
         // Load arguments
-        CiLocation[] result = target.config.getRuntimeParameterLocations(call.arguments);
+        CiLocation[] result = target.registerConfig.getRuntimeParameterLocations(call.arguments);
         for (int i = 0; i < call.arguments.length; i++) {
             loadArgument(i, result[i].first());
         }
@@ -441,7 +447,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         asm.directCall(call, null);
 
         if (call.resultKind != CiKind.Void) {
-            this.storeArgument(0, target.config.getReturnRegister(call.resultKind));
+            this.storeArgument(0, target.registerConfig.getReturnRegister(call.resultKind));
         }
     }
 }

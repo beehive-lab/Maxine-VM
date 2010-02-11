@@ -39,9 +39,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.c1x.*;
-import com.sun.max.vm.compiler.RuntimeCompilerScheme;
-import com.sun.max.vm.compiler.target.TargetMethod;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
@@ -314,7 +313,7 @@ public class C1XTest {
         Throwable thrown = null;
         final long startNs = System.nanoTime();
         try {
-            TargetMethod targetMethod = compilerScheme.compile(classMethodActor);
+            compilerScheme.compile(classMethodActor);
         } catch (Throwable t) {
             thrown = t;
         }
@@ -541,7 +540,7 @@ public class C1XTest {
             if (C1XOptions.CanonicalizeFoldableMethods && Actor.isDeclaredFoldable(methodActor.flags())) {
                 final Method method = methodActor.toJava();
                 assert method != null;
-                C1XIntrinsic.registerFoldableMethod(MaxRiRuntime.globalRuntime.getRiMethod((ClassMethodActor) methodActor), method);
+                C1XIntrinsic.registerFoldableMethod(C1XCompilerScheme.globalRuntime.getRiMethod((ClassMethodActor) methodActor), method);
             }
             methods.add(methodActor);
             if ((methods.size() % 1000) == 0 && verboseOption.getValue() >= 1) {

@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 
@@ -31,7 +30,7 @@ import com.sun.max.vm.jni.*;
  * A {@linkplain TargetMethod target method} may have multiple entry points, depending on the calling convention of the
  * compiler(s)/interpreter(s) used by the VM and the optimizations applied by the compilers.
  * {@code CallEntryPoint} enumerates the different possible entry points to a target method. Each entry point denotes an
- * {@linkplain #offsetFromCodeStart() offset} relative to a target method's
+ * {@linkplain #offset() offset} relative to a target method's
  * {@linkplain TargetMethod#codeStart() first instruction}.
  * <p>
  * Each {@linkplain TargetMethod target method} is associated with a {@linkplain TargetABI target ABI} which specifies a
@@ -65,48 +64,71 @@ public enum CallEntryPoint {
      * {@linkplain C_FUNCTION VM entry point}. These methods have no adapter frame and are always compiled with the
      * optimizing compiler.
      */
-    C_ENTRY_POINT,
-
-    /**
-     * Denotes the entry address used by the interpreter when making a call.
-     */
-    INTERPRETER_ENTRY_POINT;
+    C_ENTRY_POINT;
 
     public static final IndexedSequence<CallEntryPoint> VALUES = new ArraySequence<CallEntryPoint>(values());
 
     /**
-     * Gets the offset of this call entry point relative to the address of a target method's
-     * {@linkplain TargetMethod#codeStart() first instruction}. That is, given a target method {@code targetMethod} and
-     * a call entry point {@code callEntryPoint}, the address of the {@code callEntryPoint} in {@code targetMethod} is
-     * computed as {@code targetMethod.codeStart().plus(callEntryPoint.offsetFromCodeStart)}.
+     * The offset of this call entry point in a target method associated (via its
+     * {@linkplain TargetMethod#abi() ABI}) with this entry point.
+     */
+    private int offset = -1;
+
+    /**
+     * The offset of this call entry point in a callee of a target method associated (via its
+     * {@linkplain TargetMethod#abi() ABI}) with this entry point.
+     */
+    private int offsetInCallee = -1;
+
+    @HOSTED_ONLY
+    public void init(CallEntryPoint cep) {
+        init(cep.offset, cep.offsetInCallee);
+    }
+
+    @HOSTED_ONLY
+    public void init(int offset, int offsetInCallee) {
+        assert this.offset == -1 || this.offset == offset : "cannot re-initialize with different value";
+        assert this.offsetInCallee == -1 || this.offsetInCallee == offsetInCallee : "cannot re-initialize with different value";
+        this.offset = offset;
+        this.offsetInCallee = offsetInCallee;
+    }
+
+    @HOSTED_ONLY
+    public static void initAllToZero() {
+        for (CallEntryPoint e : VALUES) {
+            e.init(0, 0);
+        }
+    }
+
+    /**
+     * Gets the offset of this call entry point in a target method associated (via its
+     * {@linkplain TargetMethod#abi() ABI}) with this entry point.
      *
      * @return the number of bytes that must be added to the address of a target method's first instruction to obtain
      *         the address of this entry point
      */
     @FOLD
-    public int offsetFromCodeStart() {
-        return VMConfiguration.target().offsetToCallEntryPoints()[ordinal()];
+    public int offset() {
+        return offset;
     }
 
     /**
      * Gets the address of this call entry point in a given target method.
      */
     public Pointer in(TargetMethod targetMethod) {
-        return targetMethod.codeStart().plus(offsetFromCodeStart());
+        return targetMethod.codeStart().plus(offset());
     }
 
     /**
-     * Gets the offset of this call entry point relative to the address of a callee target method's
-     * {@linkplain TargetMethod#codeStart() first instruction}. That is, given a target method {@code targetMethod} and
-     * a call entry point {@code callEntryPoint}, the address of the {@code callEntryPoint} in {@code targetMethod} is
-     * computed as {@code targetMethod.codeStart().plus(callEntryPoint.offsetFromCalleeCodeStart)}.
+     * Gets the offset of this call entry point in a callee of a target method associated (via its
+     * {@linkplain TargetMethod#abi() ABI}) with this entry point.
      *
      * @return the number of bytes that must be added to the address of a target method's first instruction to obtain
      *         the address of this entry point
      */
     @FOLD
-    public int offsetFromCalleeCodeStart() {
-        return VMConfiguration.target().offsetsToCalleeEntryPoints()[ordinal()];
+    public int offsetInCallee() {
+        return offsetInCallee;
     }
 
 }

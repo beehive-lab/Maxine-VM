@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.sparc.target;
 
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
@@ -42,15 +40,12 @@ import com.sun.max.vm.cps.b.c.d.e.sparc.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.sparc.*;
 import com.sun.max.vm.cps.ir.*;
-import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.cps.target.*;
+import com.sun.max.vm.cps.target.sparc.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VMRegister.*;
-import com.sun.max.vm.runtime.sparc.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
-import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -75,7 +70,7 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
 
     public SPARCCPSCompiler(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        jitFramePointer = (GPR) vmConfiguration.targetABIsScheme().jitABI().framePointer();
+        jitFramePointer = (GPR) vmConfiguration.targetABIsScheme().jitABI.framePointer();
         eirToTargetTranslator = new SPARCEirToTargetTranslator(this);
     }
 
@@ -102,31 +97,52 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
     }
 
     /**
-     * This is a snippet implementation and we want to access the snippet's caller via our stack pointer.
-     * So we eliminate one call layer around the body of this method by making inlining into the snippet mandatory.
-     *
+     * Utility class used to find and patch a call to a {@linkplain StaticTrampoline static trampoline}.
+     */
+    static class StaticTrampolineContext implements RawStackFrameVisitor {
+
+        @Override
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
+            if (isTopFrame) {
+                return true;
+            }
+            Pointer callSite = instructionPointer;
+            int instruction = callSite.readInt(0);
+            if ((instruction & CALL_INSTRUCTION) == CALL_INSTRUCTION) {
+                int disp30 = instruction << 2;
+                Pointer target = instructionPointer.plus(disp30);
+                if (StaticTrampoline.isEntryPoint(target)) {
+                    final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
+
+                    final ClassMethodActor callee = caller.callSiteToCallee(callSite);
+
+                    // Use the caller's abi to get the correct entry point.
+                    final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint);
+
+                    // Compute offset to the callee from the caller
+                    final int calleeOffset = calleeEntryPoint.minus(callSite).toInt();
+                    final int instr = CALL_INSTRUCTION | (calleeOffset >>> 2);
+                    callSite.writeInt(0, instr);
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    private final StaticTrampolineContext staticTrampolineContext = new StaticTrampolineContext();
+
+    /**
      * @see StaticTrampoline
      */
     @NEVER_INLINE
     @Override
     public void staticTrampoline() {
         // Walk the stack frame to find the instruction calling the trampoline
-        final StaticTrampolineContext context = new StaticTrampolineContext();
         new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VMRegister.getInstructionPointer(),
                         VMRegister.getCpuStackPointer(),
                         VMRegister.getCpuFramePointer(),
-                        context);
-        final Pointer callSite = context.ip;
-        // Get the target method that calls the static trampoline
-        final TargetMethod caller = Code.codePointerToTargetMethod(callSite);
-        // We can now search the caller for the ClassMethodActor corresponding to the direct call.
-        final ClassMethodActor callee = caller.callSiteToCallee(callSite);
-        // Compile the callee, and use the caller's abi to get the correct entry point.
-        final Address calleeEntryPoint = CompilationScheme.Static.compile(callee, caller.abi().callEntryPoint());
-        // Compute offset to the callee from the caller
-        final int calleeOffset = calleeEntryPoint.minus(callSite).toInt();
-        final int instr = CALL_INSTRUCTION | (calleeOffset >>> 2);
-        callSite.writeInt(0, instr);
+                        staticTrampolineContext);
     }
 
     public void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {
@@ -183,297 +199,297 @@ public final class SPARCCPSCompiler extends BcdeSPARCCompiler implements TargetG
         VMRegister.setAbiFramePointer(stackPointer);
     }
 
-    private boolean walkAdapterFrame(StackFrameWalker.Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
-        final Pointer instructionPointer = current.ip();
-        final int adapterFrameSize = SPARCAdapterFrameGenerator.jitToOptimizedAdapterFrameSize(stackFrameWalker, startOfAdapter);
-        final Pointer stackPointer = current.sp();
+//    private boolean walkAdapterFrame(Cursor current, StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Purpose purpose, Object context, Pointer startOfAdapter, boolean isTopFrame) {
+//        final Pointer instructionPointer = current.ip();
+//        final int adapterFrameSize = SPARCAdapterFrameGenerator.jitToOptimizedAdapterFrameSize(stackFrameWalker, startOfAdapter);
+//        final Pointer stackPointer = current.sp();
+//
+//        final Pointer callerStackPointer;
+//        if (adapterFrameSize > 0 && instructionPointer.greaterThan(startOfAdapter)) {
+//            callerStackPointer = stackPointer.plus(adapterFrameSize);
+//        } else {
+//            callerStackPointer = stackPointer;
+//        }
+//
+//        switch(purpose) {
+//            case EXCEPTION_HANDLING: {
+//                assert !isTopFrame;
+//                // Record the JIT frame's CPU stack pointer as we walk through this JIT->Opt adapter
+//                final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
+//                stackUnwindingContext.setStackPointer(callerStackPointer);
+//                break;
+//            }
+//            case REFERENCE_MAP_PREPARING: {
+//                break;
+//            }
+//            case RAW_INSPECTING: {
+//                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+//                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, current.fp(), stackPointer, isTopFrame)) {
+//                    return false;
+//                }
+//                break;
+//            }
+//            case INSPECTING: {
+//                final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
+//                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, false), targetMethod, instructionPointer, current.fp(), stackPointer);
+//                if (!stackFrameVisitor.visitFrame(stackFrame)) {
+//                    return false;
+//                }
+//                break;
+//            }
+//        }
+//        // Jit to Opt adapter frame exploits the use of register windows by optimized code to leave the frame pointer
+//        // of the JITed caller in its local register and save the return address in another one (SAVED_CALLER_ADDRESS).
+//        // This avoids writing these to the stack then reloading them.
+//        // The saving of the return address register takes place at the JIT entry point, so that by the first instruction
+//        // of the adapter, the return address is in SAVED_CALLER_ADDRESS.
+//        // Thus, when in the entry point, the return address can be found in %o7, and when in the adapter it can be found
+//        // in SAVED_CALLER_ADDRESS. The caller frame pointer is always in the local register defined by the JIT abi (jitFramePointer).
+//        final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
+//        final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(current, stackFrameWalker, jitFramePointer).asPointer();
+//        final Pointer callerInstructionPointer;
+//        if (instructionPointer.greaterThan(optimizedEntryPoint)) {
+//            // We're past the jit entry point. The return address has been saved in the local register L1 which can be obtained in the register window's saved area.
+//            callerInstructionPointer = SPARCStackFrameLayout.getRegisterInSavedWindow(current, stackFrameWalker, SPARCAdapterFrameGenerator.SAVED_CALLER_ADDRESS).asPointer();
+//        } else {
+//            callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
+//        }
+//        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
+//        return true;
+//    }
 
-        final Pointer callerStackPointer;
-        if (adapterFrameSize > 0 && instructionPointer.greaterThan(startOfAdapter)) {
-            callerStackPointer = stackPointer.plus(adapterFrameSize);
-        } else {
-            callerStackPointer = stackPointer;
-        }
+//    private static boolean inAdapterFrameCode(boolean inTopFrame, final Pointer instructionPointer, final Pointer optimizedEntryPoint, final Pointer startOfAdapter) {
+//        if (instructionPointer.lessThan(optimizedEntryPoint)) {
+//            return true;
+//        }
+//        // Currently, when walking stack frame, the instruction pointer always points at the call instruction.
+//        // So whether we on the top frame or not, we have the precise location of the call instruction in the instruction pointer
+//        // (that's different from what's done for AMD64)
+//        return instructionPointer.greaterEqual(startOfAdapter);
+//    }
+//
+//    public static boolean inCallerRegisterWindow(Pointer instructionPointer, Pointer entryPoint, int frameSize, boolean isAdapterFrame) {
+//        final int frameBuilderSize = SPARCEirPrologue.sizeOfFrameBuilderInstructions(frameSize, isAdapterFrame);
+//        return instructionPointer.lessThan(entryPoint.plus(frameBuilderSize));
+//    }
 
-        switch(purpose) {
-            case EXCEPTION_HANDLING: {
-                assert !isTopFrame;
-                // Record the JIT frame's CPU stack pointer as we walk through this JIT->Opt adapter
-                final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
-                stackUnwindingContext.setStackPointer(callerStackPointer);
-                break;
-            }
-            case REFERENCE_MAP_PREPARING: {
-                break;
-            }
-            case RAW_INSPECTING: {
-                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, true);
-                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, current.fp(), stackPointer, flags)) {
-                    return false;
-                }
-                break;
-            }
-            case INSPECTING: {
-                final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                final StackFrame stackFrame = new AdapterStackFrame(stackFrameWalker.calleeStackFrame(), new AdapterStackFrameLayout(adapterFrameSize, false), targetMethod, instructionPointer, current.fp(), stackPointer);
-                if (!stackFrameVisitor.visitFrame(stackFrame)) {
-                    return false;
-                }
-                break;
-            }
-        }
-        // Jit to Opt adapter frame exploits the use of register windows by optimized code to leave the frame pointer
-        // of the JITed caller in its local register and save the return address in another one (SAVED_CALLER_ADDRESS).
-        // This avoids writing these to the stack then reloading them.
-        // The saving of the return address register takes place at the JIT entry point, so that by the first instruction
-        // of the adapter, the return address is in SAVED_CALLER_ADDRESS.
-        // Thus, when in the entry point, the return address can be found in %o7, and when in the adapter it can be found
-        // in SAVED_CALLER_ADDRESS. The caller frame pointer is always in the local register defined by the JIT abi (jitFramePointer).
-        final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
-        final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(current, stackFrameWalker, jitFramePointer).asPointer();
-        final Pointer callerInstructionPointer;
-        if (instructionPointer.greaterThan(optimizedEntryPoint)) {
-            // We're past the jit entry point. The return address has been saved in the local register L1 which can be obtained in the register window's saved area.
-            callerInstructionPointer = SPARCStackFrameLayout.getRegisterInSavedWindow(current, stackFrameWalker, SPARCAdapterFrameGenerator.SAVED_CALLER_ADDRESS).asPointer();
-        } else {
-            callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
-        }
-        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
-        return true;
-    }
-
-    private static boolean inAdapterFrameCode(boolean inTopFrame, final Pointer instructionPointer, final Pointer optimizedEntryPoint, final Pointer startOfAdapter) {
-        if (instructionPointer.lessThan(optimizedEntryPoint)) {
-            return true;
-        }
-        // Currently, when walking stack frame, the instruction pointer always points at the call instruction.
-        // So whether we on the top frame or not, we have the precise location of the call instruction in the instruction pointer
-        // (that's different from what's done for AMD64)
-        return instructionPointer.greaterEqual(startOfAdapter);
-    }
-
-    public static boolean inCallerRegisterWindow(Pointer instructionPointer, Pointer entryPoint, int frameSize, boolean isAdapterFrame) {
-        final int frameBuilderSize = SPARCEirPrologue.sizeOfFrameBuilderInstructions(frameSize, isAdapterFrame);
-        return instructionPointer.lessThan(entryPoint.plus(frameBuilderSize));
-    }
-
-    @Override
-    public boolean walkFrame(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Purpose purpose, Object context) {
-        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
-        TargetMethod targetMethod = current.targetMethod();
-        boolean isTopFrame = current.isTopFrame();
-        final Pointer instructionPointer = current.ip();
-        final Pointer entryPoint;
-        if (targetMethod.abi().callEntryPoint().equals(C_ENTRY_POINT)) {
-            // Simple case (no adapter)
-            entryPoint = C_ENTRY_POINT.in(targetMethod);
-        } else {
-            // we may be in an adapter
-            final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
-            final Pointer jitEntryPoint = JIT_ENTRY_POINT.in(targetMethod);
-            final boolean hasAdapterFrame = !(jitEntryPoint.equals(optimizedEntryPoint)) &&
-                SPARCAdapterFrameGenerator.jitToOptimizedCallNeedsAdapterFrame(targetMethod.classMethodActor());
-            if (hasAdapterFrame) {
-                final Pointer startOfAdapter = SPARCAdapterFrameGenerator.jitEntryPointBranchTarget(stackFrameWalker, targetMethod);
-                if (inAdapterFrameCode(isTopFrame, instructionPointer, optimizedEntryPoint, startOfAdapter)) {
-                    return walkAdapterFrame(current, stackFrameWalker, targetMethod, purpose, context, startOfAdapter, isTopFrame);
-                }
-            }
-            entryPoint = optimizedEntryPoint;
-        }
-
-        // Currently, all optimized stack frames are allocated a new register window in their prologue.
-        // The caller's window is restored in the delay slot of the return instruction.
-        // When on the first instructions of the prologue of a method, the callee is still operating with the caller's register window,
-        // i.e., both the stack and frame pointer are that of the caller.  Further, the instruction pointer
-        // is in %o7 (the "frame-less call instruction register"), not %i7, and therefore cannot be found on the stack.
-        // Because the restoring of the caller's window takes place in the last instruction of the method,
-        // this situation doesn't occur in the method's epilogue.
-
-        final Pointer framePointer;
-        final Pointer stackPointer;
-        // We use lessEqual here because the instruction pointer may be on one of the two nops preceding the optimized entry point if the
-        // method doesn't need an adapter frame.
-        final boolean inCallerRegisterWindow = inCallerRegisterWindow(instructionPointer, entryPoint, targetMethod.frameSize(), false);
-        if (inCallerRegisterWindow) {
-            // The save instruction hasn't been executed. The frame pointer is the same as the caller's stack pointer.
-            // We need to compute the stack pointer for this frame
-            framePointer =  current.sp();
-            stackPointer = framePointer.minus(targetMethod.frameSize());
-        } else {
-            framePointer = current.fp();
-            stackPointer =  current.sp();
-        }
-
-        final Pointer trapStateInPreviousFrame = stackFrameWalker.trapState();
-        final Pointer trapState;
-        if (targetMethod.classMethodActor().isTrapStub()) {
-            FatalError.check(trapStateInPreviousFrame == Pointer.zero(), "Cannot have a trap in the trapStub");
-            trapState = framePointer.plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
-            stackFrameWalker.setTrapState(trapState);
-        } else {
-            trapState = Pointer.zero();
-        }
-
-        switch (purpose) {
-            case REFERENCE_MAP_PREPARING: {
-
-                assert targetMethod instanceof CPSTargetMethod;
-                final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
-
-                final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
-                if (!trapStateInPreviousFrame.isZero()) {
-                    FatalError.check(trapState.isZero(), "Cannot have a trap in the trapStub");
-                    final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-                    final int trapNumber = trapStateAccess.getTrapNumber(trapStateInPreviousFrame);
-                    if (Trap.Number.isImplicitException(trapNumber)) {
-                        Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNumber);
-                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapStateInPreviousFrame), throwableClass);
-                        if (catchAddress.isZero()) {
-                            // An implicit exception occurred but not in the scope of a local exception handler.
-                            // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
-                            break;
-                        }
-                        // TODO: Get address of safepoint instruction at exception dispatcher site and scan
-                        // the frame references based on its Java frame descriptor.
-                        FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
-                    }
-                } else {
-                    if (!trapState.isZero()) {  // Frame is a trapStub
-                        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
-
-                        final int trapNumber = trapStateAccess.getTrapNumber(trapState);
-                        if (Trap.Number.isImplicitException(trapNumber)) {
-                            Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNumber);
-                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), throwableClass);
-                            if (catchAddress.isZero()) {
-                                // An implicit exception occurred but not in the scope of a local exception handler.
-                                // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
-                            } else {
-                                // TODO: Get address of safepoint instruction at exception dispatcher site and scan
-                                // the register references based on its Java frame descriptor.
-                                FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
-                                Pointer callerCatchAddress = catchAddress.asPointer();
-                                final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
-                                if (callerTargetMethod != null) {
-                                    cpsTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapState, StackFrameWalker.CalleeKind.TRAP_STUB);
-                                }
-                            }
-                        } else {
-                            // Only scan with references in registers for a caller that did not trap due to an implicit exception.
-                            // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
-                            final Pointer callerInstructionPointer = trapStateAccess.getInstructionPointer(trapState);
-                            final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
-                            if (callerTargetMethod != null) {
-                                cpsTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapState, StackFrameWalker.CalleeKind.TRAP_STUB);
-                            }
-                        }
-                    }
-                }
-
-                final Pointer ignoredOperandStackPointer = Pointer.zero();
-
-                if (preparer.checkIgnoreCurrentFrame()) {
-                    break;
-                }
-
-                if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, StackBias.SPARC_V9.unbias(stackPointer),
-                                                           ignoredOperandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE, null)) {
-                    return false;
-                }
-                break;
-            }
-            case EXCEPTION_HANDLING: {
-                final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
-                final Throwable throwable = stackUnwindingContext.throwable;
-                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, throwable.getClass());
-                if (!catchAddress.isZero()) {
-                    if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
-                        Log.print("StackFrameWalk: Handler position for exception at position ");
-                        Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
-                        Log.print(" is ");
-                        Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
-                    }
-                    // Reset the stack walker
-                    stackFrameWalker.reset();
-
-                    // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
-                    Safepoint.enable();
-
-                    unwind(throwable, catchAddress, stackPointer);
-                }
-                // Record the caller's stack pointer, which is our frame pointer:
-                stackUnwindingContext.setStackPointer(framePointer);
-                break;
-            }
-            case RAW_INSPECTING: {
-                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
-                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, framePointer, stackPointer, flags)) {
-                    return false;
-                }
-                break;
-            }
-            case INSPECTING: {
-                final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                if (!stackFrameVisitor.visitFrame(new SPARCJavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, framePointer, stackPointer))) {
-                    return false;
-                }
-                break;
-            }
-        }
-        final Pointer callerInstructionPointer;
-        // If this method is still using the caller's register window and stack frame, we need to find the return address from %o7.
-        // However, the stack frame at a trampoline call may look like it's in the caller's register window because
-        // the trampoline's return address is patched into the entry point of the method invoked via the trampoline.
-        // In that case, we still need to get the caller address from the stack.  Testing if we're in the top frame filters out these trampoline calls.
-        if (inCallerRegisterWindow && (isTopFrame || trapStateInPreviousFrame != Pointer.zero())) {
-            if (trapStateInPreviousFrame != Pointer.zero()) {
-                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousFrame);
-            } else if (purpose == Purpose.INSPECTING || purpose == Purpose.RAW_INSPECTING) {
-                // In that case, the return pointer can only be found in the FRAMELESS_CALL_INSTRUCTION_ADDRESS register.
-                callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
-            } else {
-                // When purpose is other than inspecting, this situation can only occur when we trapped in a prologue (e.g.,
-                // when banging the stack).
-                // We can fish for the caller's instruction pointer in the trap state.
-                final Pointer trapStateInPreviousUnwalkedFrame = current.sp().plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
-                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousUnwalkedFrame);
-            }
-        } else {
-            callerInstructionPointer = SPARCStackFrameLayout.getCallerPC(current, stackFrameWalker);
-        }
-
-        final Pointer callerStackPointer = framePointer;
-        final Pointer callerFramePointer;
-        final TargetMethod caller = stackFrameWalker.targetMethodFor(callerInstructionPointer);
-        if (caller instanceof JitTargetMethod) {
-            if (inCallerRegisterWindow) {
-                if (purpose == Purpose.INSPECTING || purpose == Purpose.RAW_INSPECTING) {
-                    // FIXME: this is a gross hack to read the caller's frame pointer (it isn't in the standard frame pointer register).
-                    // The stackFrameWalker doesn't provide an API to obtain the value of arbitrary register and we cannot use the
-                    // VMRegister class here for it wouldn't work when inspecting. So the hack here consists of forcing the walker
-                    // to use the caller's ABI, which will set the frame pointer to the appropriate
-                    // register. This works only because we're in the caller's register window.
-                    stackFrameWalker.useABI(caller.abi());
-                    callerFramePointer = current.fp();
-                } else {
-                    final Pointer savedRegisterWindow = StackBias.SPARC_V9.unbias(current.sp());
-                    callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, savedRegisterWindow, GPR.L6).asPointer();
-                }
-            } else {
-                final Pointer savedRegisterWindow = StackBias.SPARC_V9.unbias(callerStackPointer);
-                callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, savedRegisterWindow, GPR.L6).asPointer();
-            }
-        } else {
-            if (inCallerRegisterWindow) {
-                callerFramePointer = current.fp();
-            } else {
-                callerFramePointer = SPARCStackFrameLayout.getCallerFramePointer(current, stackFrameWalker);
-            }
-        }
-        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
+    /**
+     * TODO: Move all this logic into the relevant methods of {@link SPARCOptimizedTargetMethod}.
+     */
+    public boolean walkFrame(Cursor current, Cursor callee, Purpose purpose, Object context) {
+//        StackFrameWalker stackFrameWalker = current.stackFrameWalker();
+//        TargetMethod targetMethod = current.targetMethod();
+//        boolean isTopFrame = current.isTopFrame();
+//        final Pointer instructionPointer = current.ip();
+//        final Pointer entryPoint;
+//        if (targetMethod.abi().callEntryPoint.equals(C_ENTRY_POINT)) {
+//            // Simple case (no adapter)
+//            entryPoint = C_ENTRY_POINT.in(targetMethod);
+//        } else {
+//            // we may be in an adapter
+//            final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
+//            final Pointer jitEntryPoint = JIT_ENTRY_POINT.in(targetMethod);
+//            final boolean hasAdapterFrame = !(jitEntryPoint.equals(optimizedEntryPoint)) &&
+//                SPARCAdapterFrameGenerator.jitToOptimizedCallNeedsAdapterFrame(targetMethod.classMethodActor());
+//            if (hasAdapterFrame) {
+//                final Pointer startOfAdapter = SPARCAdapterFrameGenerator.jitEntryPointBranchTarget(stackFrameWalker, targetMethod);
+//                if (inAdapterFrameCode(isTopFrame, instructionPointer, optimizedEntryPoint, startOfAdapter)) {
+//                    return walkAdapterFrame(current, stackFrameWalker, targetMethod, purpose, context, startOfAdapter, isTopFrame);
+//                }
+//            }
+//            entryPoint = optimizedEntryPoint;
+//        }
+//
+//        // Currently, all optimized stack frames are allocated a new register window in their prologue.
+//        // The caller's window is restored in the delay slot of the return instruction.
+//        // When on the first instructions of the prologue of a method, the callee is still operating with the caller's register window,
+//        // i.e., both the stack and frame pointer are that of the caller.  Further, the instruction pointer
+//        // is in %o7 (the "frame-less call instruction register"), not %i7, and therefore cannot be found on the stack.
+//        // Because the restoring of the caller's window takes place in the last instruction of the method,
+//        // this situation doesn't occur in the method's epilogue.
+//
+//        final Pointer framePointer;
+//        final Pointer stackPointer;
+//        // We use lessEqual here because the instruction pointer may be on one of the two nops preceding the optimized entry point if the
+//        // method doesn't need an adapter frame.
+//        final boolean inCallerRegisterWindow = inCallerRegisterWindow(instructionPointer, entryPoint, targetMethod.frameSize(), false);
+//        if (inCallerRegisterWindow) {
+//            // The save instruction hasn't been executed. The frame pointer is the same as the caller's stack pointer.
+//            // We need to compute the stack pointer for this frame
+//            framePointer =  current.sp();
+//            stackPointer = framePointer.minus(targetMethod.frameSize());
+//        } else {
+//            framePointer = current.fp();
+//            stackPointer =  current.sp();
+//        }
+//
+//        final Pointer trapStateInPreviousFrame = stackFrameWalker.trapState();
+//        final Pointer trapState;
+//        if (targetMethod.classMethodActor().isTrapStub()) {
+//            FatalError.check(trapStateInPreviousFrame == Pointer.zero(), "Cannot have a trap in the trapStub");
+//            trapState = framePointer.plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
+//            stackFrameWalker.setTrapState(trapState);
+//        } else {
+//            trapState = Pointer.zero();
+//        }
+//
+//        switch (purpose) {
+//            case REFERENCE_MAP_PREPARING: {
+//
+//                assert targetMethod instanceof CPSTargetMethod;
+//                final CPSTargetMethod cpsTargetMethod = (CPSTargetMethod) targetMethod;
+//
+//                final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
+//                if (!trapStateInPreviousFrame.isZero()) {
+//                    FatalError.check(trapState.isZero(), "Cannot have a trap in the trapStub");
+//                    final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+//                    final int trapNumber = trapStateAccess.getTrapNumber(trapStateInPreviousFrame);
+//                    if (Trap.Number.isImplicitException(trapNumber)) {
+//                        Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNumber);
+//                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapStateInPreviousFrame), throwableClass);
+//                        if (catchAddress.isZero()) {
+//                            // An implicit exception occurred but not in the scope of a local exception handler.
+//                            // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
+//                            break;
+//                        }
+//                        // TODO: Get address of safepoint instruction at exception dispatcher site and scan
+//                        // the frame references based on its Java frame descriptor.
+//                        FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
+//                    }
+//                } else {
+//                    if (!trapState.isZero()) {  // Frame is a trapStub
+//                        final TrapStateAccess trapStateAccess = TrapStateAccess.instance();
+//
+//                        final int trapNumber = trapStateAccess.getTrapNumber(trapState);
+//                        if (Trap.Number.isImplicitException(trapNumber)) {
+//                            Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNumber);
+//                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, trapStateAccess.getInstructionPointer(trapState), throwableClass);
+//                            if (catchAddress.isZero()) {
+//                                // An implicit exception occurred but not in the scope of a local exception handler.
+//                                // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
+//                            } else {
+//                                // TODO: Get address of safepoint instruction at exception dispatcher site and scan
+//                                // the register references based on its Java frame descriptor.
+//                                FatalError.unexpected("Cannot reliably find safepoint at exception dispatcher site yet.");
+//                                Pointer callerCatchAddress = catchAddress.asPointer();
+//                                final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerCatchAddress);
+//                                if (callerTargetMethod != null) {
+//                                    cpsTargetMethod.prepareRegisterReferenceMap(preparer, callerCatchAddress, trapState, StackFrameWalker.CalleeKind.TRAP_STUB);
+//                                }
+//                            }
+//                        } else {
+//                            // Only scan with references in registers for a caller that did not trap due to an implicit exception.
+//                            // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
+//                            final Pointer callerInstructionPointer = trapStateAccess.getInstructionPointer(trapState);
+//                            final TargetMethod callerTargetMethod = Code.codePointerToTargetMethod(callerInstructionPointer);
+//                            if (callerTargetMethod != null) {
+//                                cpsTargetMethod.prepareRegisterReferenceMap(preparer, callerInstructionPointer, trapState, StackFrameWalker.CalleeKind.TRAP_STUB);
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                final Pointer ignoredOperandStackPointer = Pointer.zero();
+//
+//                if (preparer.checkIgnoreCurrentFrame()) {
+//                    break;
+//                }
+//
+//                if (!preparer.prepareFrameReferenceMap(cpsTargetMethod, instructionPointer, StackBias.SPARC_V9.unbias(stackPointer),
+//                                                           ignoredOperandStackPointer, SPARCStackFrameLayout.LOCAL_REGISTERS_SAVE_AREA_SIZE, null)) {
+//                    return false;
+//                }
+//                break;
+//            }
+//            case EXCEPTION_HANDLING: {
+//                final StackUnwindingContext stackUnwindingContext = UnsafeCast.asStackUnwindingContext(context);
+//                final Throwable throwable = stackUnwindingContext.throwable;
+//                final Address catchAddress = targetMethod.throwAddressToCatchAddress(isTopFrame, instructionPointer, throwable.getClass());
+//                if (!catchAddress.isZero()) {
+//                    if (StackFrameWalker.TRACE_STACK_WALK.getValue()) {
+//                        Log.print("StackFrameWalk: Handler position for exception at position ");
+//                        Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
+//                        Log.print(" is ");
+//                        Log.println(catchAddress.minus(targetMethod.codeStart()).toInt());
+//                    }
+//                    // Reset the stack walker
+//                    stackFrameWalker.reset();
+//
+//                    // Completes the exception handling protocol (with respect to the garbage collector) initiated in Throw.raise()
+//                    Safepoint.enable();
+//
+//                    unwind(throwable, catchAddress, stackPointer);
+//                }
+//                // Record the caller's stack pointer, which is our frame pointer:
+//                stackUnwindingContext.setStackPointer(framePointer);
+//                break;
+//            }
+//            case RAW_INSPECTING: {
+//                final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
+//                if (!stackFrameVisitor.visitFrame(targetMethod, instructionPointer, framePointer, stackPointer, isTopFrame)) {
+//                    return false;
+//                }
+//                break;
+//            }
+//            case INSPECTING: {
+//                final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
+//                if (!stackFrameVisitor.visitFrame(new SPARCJavaStackFrame(stackFrameWalker.calleeStackFrame(), targetMethod, instructionPointer, framePointer, stackPointer))) {
+//                    return false;
+//                }
+//                break;
+//            }
+//        }
+//        final Pointer callerInstructionPointer;
+//        // If this method is still using the caller's register window and stack frame, we need to find the return address from %o7.
+//        // However, the stack frame at a trampoline call may look like it's in the caller's register window because
+//        // the trampoline's return address is patched into the entry point of the method invoked via the trampoline.
+//        // In that case, we still need to get the caller address from the stack.  Testing if we're in the top frame filters out these trampoline calls.
+//        if (inCallerRegisterWindow && (isTopFrame || trapStateInPreviousFrame != Pointer.zero())) {
+//            if (trapStateInPreviousFrame != Pointer.zero()) {
+//                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousFrame);
+//            } else if (purpose == Purpose.INSPECTING || purpose == Purpose.RAW_INSPECTING) {
+//                // In that case, the return pointer can only be found in the FRAMELESS_CALL_INSTRUCTION_ADDRESS register.
+//                callerInstructionPointer = stackFrameWalker.readRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetMethod.abi()).asPointer();
+//            } else {
+//                // When purpose is other than inspecting, this situation can only occur when we trapped in a prologue (e.g.,
+//                // when banging the stack).
+//                // We can fish for the caller's instruction pointer in the trap state.
+//                final Pointer trapStateInPreviousUnwalkedFrame = current.sp().plus(SPARCEirPrologue.trapStateOffsetFromTrappedSP());
+//                callerInstructionPointer = SPARCTrapStateAccess.getCallAddressRegister(trapStateInPreviousUnwalkedFrame);
+//            }
+//        } else {
+//            callerInstructionPointer = SPARCStackFrameLayout.getCallerPC(current, stackFrameWalker);
+//        }
+//
+//        final Pointer callerStackPointer = framePointer;
+//        final Pointer callerFramePointer;
+//        final TargetMethod caller = stackFrameWalker.targetMethodFor(callerInstructionPointer);
+//        if (caller instanceof JitTargetMethod) {
+//            if (inCallerRegisterWindow) {
+//                if (purpose == Purpose.INSPECTING || purpose == Purpose.RAW_INSPECTING) {
+//                    // FIXME: this is a gross hack to read the caller's frame pointer (it isn't in the standard frame pointer register).
+//                    // The stackFrameWalker doesn't provide an API to obtain the value of arbitrary register and we cannot use the
+//                    // VMRegister class here for it wouldn't work when inspecting. So the hack here consists of forcing the walker
+//                    // to use the caller's ABI, which will set the frame pointer to the appropriate
+//                    // register. This works only because we're in the caller's register window.
+//                    stackFrameWalker.useABI(caller.abi());
+//                    callerFramePointer = current.fp();
+//                } else {
+//                    final Pointer savedRegisterWindow = StackBias.SPARC_V9.unbias(current.sp());
+//                    callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, savedRegisterWindow, GPR.L6).asPointer();
+//                }
+//            } else {
+//                final Pointer savedRegisterWindow = StackBias.SPARC_V9.unbias(callerStackPointer);
+//                callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, savedRegisterWindow, GPR.L6).asPointer();
+//            }
+//        } else {
+//            if (inCallerRegisterWindow) {
+//                callerFramePointer = current.fp();
+//            } else {
+//                callerFramePointer = SPARCStackFrameLayout.getCallerFramePointer(current, stackFrameWalker);
+//            }
+//        }
+//        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
         return true;
     }
 }

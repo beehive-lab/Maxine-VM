@@ -24,10 +24,10 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -43,6 +43,7 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.template.*;
 
 /**
@@ -57,12 +58,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     public static final VMStringOption printTargetMethods = VMOptions.register(new VMStringOption("-XX:PrintTargetMethods=", false, null,
         "Print compiled target methods whose fully qualified name matches <value>."), MaxineVM.Phase.STARTING);
-
-    /**
-     * The compiler scheme that produced this target method.
-     */
-    @INSPECTED
-    public final RuntimeCompilerScheme compilerScheme;
 
     @INSPECTED
     public final ClassMethodActor classMethodActor;
@@ -104,16 +99,14 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     @INSPECTED
     private TargetABI abi;
 
-    public TargetMethod(String description, RuntimeCompilerScheme compilerScheme, TargetABI abi) {
-        this.compilerScheme = compilerScheme;
+    public TargetMethod(String description, TargetABI abi) {
         this.classMethodActor = null;
         this.abi = abi;
         setDescription(description);
     }
 
-    public TargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme, TargetABI abi) {
+    public TargetMethod(ClassMethodActor classMethodActor, TargetABI abi) {
         this.classMethodActor = classMethodActor;
-        this.compilerScheme = compilerScheme;
         this.abi = abi;
         setDescription(classMethodActor.name.toString());
     }
@@ -165,7 +158,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * @param directCallIndex an index into the {@linkplain #directCallees() direct callees} of this target method
      */
     protected CallEntryPoint callEntryPointForDirectCall(int directCallIndex) {
-        return abi().callEntryPoint();
+        return abi().callEntryPoint;
     }
 
     public final int numberOfIndirectCalls() {
@@ -320,9 +313,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * been evicted from the code cache), the address of a {@linkplain StaticTrampoline static trampoline} is patched
      * into the call instruction.
      *
+     * @param adapter the adapter called by the prologue of this method. This will be {@code null} if this method does
+     *            not have an adapter prologue.
      * @return true if target code was available for all the direct callees
      */
-    public final boolean linkDirectCalls() {
+    public final boolean linkDirectCalls(Adapter adapter) {
         boolean linkedAll = true;
         if (directCallees != null) {
             for (int i = 0; i < directCallees.length; i++) {
@@ -336,6 +331,10 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
                     patchCallSite(stopPosition(i), callee.codeStart().plus(offset));
                 }
             }
+        }
+
+        if (adapter != null) {
+            adapter.generator.linkAdapterCallInPrologue(this, adapter);
         }
         return linkedAll;
     }
@@ -352,7 +351,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     private int getCallEntryOffset(Object callee, int index) {
         final CallEntryPoint callEntryPoint = callEntryPointForDirectCall(index);
-        return callEntryPoint.offsetFromCalleeCodeStart();
+        return callEntryPoint.offsetInCallee();
     }
 
     /**
@@ -495,7 +494,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
         // Since this is not a safepoint, it must be a call.
         final int adjustedTargetCodePosition;
-        if (compilerScheme.vmConfiguration().platform().processorKind.instructionSet.offsetToReturnPC == 0) {
+        if (Platform.target().processorKind.instructionSet.offsetToReturnPC == 0) {
             // targetCodePostion is the instruction after the call (which might be another call).
             // We need the find the call at which we actually stopped.
             adjustedTargetCodePosition = targetCodePosition - 1;
@@ -680,7 +679,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * @param interfaceCalls a sequence of interface calls to which this method should append
      */
     @HOSTED_ONLY
-    public abstract void gatherCalls(AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
+    public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls);
 
     public abstract void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer);
 
@@ -755,33 +754,33 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
 
     /**
      * Prepares the reference map for the current frame (and potentially for registers stored in a callee frame).
+     *
      * @param current the current stack frame
-     * @param callee the callee stack frame, which may contain saved registers
+     * @param callee the callee stack frame (ignoring any interposing {@linkplain Adapter adapter} frame)
      * @param preparer the reference map preparer which receives the reference map
      */
-    public abstract void prepareReferenceMap(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackReferenceMapPreparer preparer);
+    public abstract void prepareReferenceMap(Cursor current, Cursor callee, StackReferenceMapPreparer preparer);
 
     /**
      * Attempts to catch an exception thrown by this method or a callee method. This method should not return
      * if this method catches the exception, but instead should unwind the stack and resume execution at the handler.
      * @param current the current stack frame
-     * @param callee the callee stack frame, which may contain saved registers
+     * @param callee the callee stack frame (ignoring any interposing {@linkplain Adapter adapter} frame)
      * @param throwable the exception thrown
      */
-    public abstract void catchException(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, Throwable throwable);
+    public abstract void catchException(Cursor current, Cursor callee, Throwable throwable);
 
     /**
      * Accepts a visitor for this stack frame.
      * @param current the current stack frame
-     * @param callee the callee stack frame
      * @param visitor the visitor which will visit the frame
      * @return {@code true} if the visitor indicates the stack walk should continue
      */
-    public abstract boolean acceptStackFrameVisitor(StackFrameWalker.Cursor current, StackFrameWalker.Cursor callee, StackFrameVisitor visitor);
+    public abstract boolean acceptStackFrameVisitor(Cursor current, StackFrameVisitor visitor);
 
     /**
      * Advances the stack frame cursor from this frame to the next frame.
      * @param current the current stack frame cursor
      */
-    public abstract void advance(StackFrameWalker.Cursor current);
+    public abstract void advance(Cursor current);
 }

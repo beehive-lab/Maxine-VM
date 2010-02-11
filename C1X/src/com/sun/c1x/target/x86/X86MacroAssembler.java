@@ -1237,7 +1237,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     public void safepoint(LIRDebugInfo info) {
-        CiRegister safepointRegister = compiler.target.config.getSafepointRegister();
+        CiRegister safepointRegister = compiler.target.registerConfig.getSafepointRegister();
         this.recordSafepoint(codeBuffer.position(), info.registerRefMap(), info.stackRefMap(), info.debugInfo());
         movq(safepointRegister, new Address(safepointRegister));
     }

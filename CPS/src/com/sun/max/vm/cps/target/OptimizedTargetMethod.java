@@ -21,7 +21,6 @@
 package com.sun.max.vm.cps.target;
 
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -29,8 +28,8 @@ import com.sun.max.vm.stack.*;
  */
 public abstract class OptimizedTargetMethod extends CPSTargetMethod {
 
-    protected OptimizedTargetMethod(ClassMethodActor classMethodActor, RuntimeCompilerScheme compilerScheme) {
-        super(classMethodActor, compilerScheme);
+    protected OptimizedTargetMethod(ClassMethodActor classMethodActor) {
+        super(classMethodActor);
     }
 
     @Override

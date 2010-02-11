@@ -21,8 +21,11 @@
 package com.sun.max.memory;
 
 import java.util.*;
+import java.util.Arrays;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -32,21 +35,53 @@ import com.sun.max.unsafe.*;
  */
 public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion> implements IterableWithLength<MemoryRegion_Type> {
 
+    public static final Comparator<MemoryRegion> COMPARATOR = new Comparator<MemoryRegion>() {
+        @Override
+        public int compare(MemoryRegion o1, MemoryRegion o2) {
+            Address o1Start = o1.start();
+            Address o2Start = o2.start();
+            if (o1Start.lessThan(o2Start)) {
+                assert o1.end().lessEqual(o2Start) : "intersecting regions";
+                return -1;
+            }
+            if (o1Start.equals(o2Start)) {
+                assert o1.end().equals(o2.end()) : "intersecting regions";
+                return 0;
+            }
+            assert o2.end().lessEqual(o1Start) : "intersecting regions";
+            return 1;
+        }
+    };
+
     public SortedMemoryRegionList() {
+        this(10);
     }
 
-    private final List<MemoryRegion_Type> memoryRegions = new ArrayList<MemoryRegion_Type>();
+    public SortedMemoryRegionList(int initialCapacity) {
+        Class<MemoryRegion_Type[]> type = null;
+        memoryRegions = StaticLoophole.cast(type, new MemoryRegion[initialCapacity]);
+    }
 
-    public List<MemoryRegion_Type> memoryRegions() {
-        return memoryRegions;
+    @INSPECTED
+    private MemoryRegion_Type[] memoryRegions;
+
+    @INSPECTED
+    private int size;
+
+    public MemoryRegion_Type get(int index) {
+        if (index >= memoryRegions.length) {
+            return null;
+        }
+        return memoryRegions[index];
+
     }
 
     public MemoryRegion_Type find(Address address) {
         int left = 0;
-        int right = memoryRegions.size();
+        int right = size;
         while (right > left) {
             final int middle = left + ((right - left) >> 1);
-            final MemoryRegion_Type middleRegion = memoryRegions.get(middle);
+            final MemoryRegion_Type middleRegion = memoryRegions[middle];
             if (middleRegion.start().greaterThan(address)) {
                 right = middle;
             } else if (middleRegion.start().plus(middleRegion.size()).greaterThan(address)) {
@@ -59,7 +94,7 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
     }
 
     public int length() {
-        return memoryRegions.size();
+        return size;
     }
 
     /**
@@ -77,41 +112,39 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
      * @throws IllegalArgumentException if {@code memoryRegion} overlaps another memory region currently in this list
      */
     public MemoryRegion_Type add(MemoryRegion_Type memoryRegion) {
-        int left = 0;
-        int right = memoryRegions.size();
-        while (right > left) {
-            final int middle = left + ((right - left) >> 2);
-            final MemoryRegion_Type middleRegion = memoryRegions.get(middle);
-            if (middleRegion.start().greaterThan(memoryRegion.start())) {
-                right = middle;
-            } else {
-                left = middle + 1;
+        int index = Arrays.binarySearch(memoryRegions, 0, size, memoryRegion, COMPARATOR);
+        if (index < 0) {
+            int insertionPoint = -(index + 1);
+            if (size == memoryRegions.length) {
+                int newCapacity = (memoryRegions.length * 3) / 2 + 1;
+                memoryRegions = Arrays.copyOf(memoryRegions, newCapacity);
             }
+            System.arraycopy(memoryRegions, insertionPoint, memoryRegions, insertionPoint + 1, size - insertionPoint);
+            memoryRegions[insertionPoint] = memoryRegion;
+            size++;
         }
-        assert left == right;
-        if (left > 0) {
-            final MemoryRegion_Type leftRegion = memoryRegions.get(left - 1);
-            if (leftRegion.end().greaterThan(memoryRegion.start())) {
-                if (equals(leftRegion, memoryRegion)) {
-                    return leftRegion;
-                }
-                throw new IllegalArgumentException();
-            }
-        }
-        if (right < memoryRegions.size()) {
-            final MemoryRegion_Type rightRegion = memoryRegions.get(right);
-            if (memoryRegion.contains(rightRegion.start())) {
-                if (equals(rightRegion, memoryRegion)) {
-                    return rightRegion;
-                }
-                throw new IllegalArgumentException("mr=" + MemoryRegion.Util.asString(memoryRegion) + ", rightRegion=" + MemoryRegion.Util.asString(rightRegion));
-            }
-        }
-        memoryRegions.add(right, memoryRegion);
         return memoryRegion;
     }
 
     public Iterator<MemoryRegion_Type> iterator() {
-        return memoryRegions.iterator();
+        return new Iterator<MemoryRegion_Type>() {
+            int index;
+            @Override
+            public boolean hasNext() {
+                return index < size;
+            }
+            @Override
+            public MemoryRegion_Type next() {
+                try {
+                    return memoryRegions[index++];
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    throw new NoSuchElementException();
+                }
+            }
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

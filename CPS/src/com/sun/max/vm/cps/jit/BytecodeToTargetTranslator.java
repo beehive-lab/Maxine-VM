@@ -133,6 +133,11 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      */
     private AppendableSequence<Switch> switches = new LinkSequence<Switch>();
 
+    /**
+     * Adapter generator when using both an optimizing and jit compiler.
+     */
+    protected final AdapterGenerator adapterGenerator;
+
     public BytecodeToTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, JitStackFrameLayout jitStackFrameLayout, boolean trace) {
         if (classMethodActor.holder().kind == Kind.WORD || SignatureDescriptor.containsWord(classMethodActor.descriptor())) {
             FatalError.unexpected("Cannot JIT compile method that uses Word types: " + classMethodActor.format("%H.%n(%p)"));
@@ -164,7 +169,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         } else {
             this.branchTargets = null;
         }
-
+        adapterGenerator = AdapterGenerator.forCallee(classMethodActor, CallEntryPoint.JIT_ENTRY_POINT);
     }
 
     public abstract TargetABI targetABI();
@@ -213,12 +218,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         startBlock(aSwitch.defaultTargetBytecodePosition);
         startBlocks(aSwitch.targetBytecodePositions);
     }
-
-    /**
-     * Only call this after emitting all code.
-     * @return the code position to which the JIT method returns in its optimized-to-JIT adapter
-     */
-    public abstract int adapterReturnPosition();
 
     /**
      * Indicates whether hotpath counters should be inserted at backward branch targets. We only insert these
@@ -431,8 +430,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             byte[] scalarLiteralBytes,
             Object[] referenceLiterals,
             Object codeOrCodeBuffer,
-            int optimizedCallerAdapterFrameCodeSize,
-            int adapterReturnPosition,
             TargetABI abi) {
 
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
@@ -449,8 +446,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             scalarLiteralBytes,
             referenceLiterals,
             codeOrCodeBuffer,
-            optimizedCallerAdapterFrameCodeSize,
-            adapterReturnPosition,
             inlineDataRecorder.encodedDescriptors(),
             stops.isDirectCallToRuntime,
             bytecodeToTargetCodePositionMap,
@@ -543,7 +538,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      *         {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT entry point} for a call from a method compiled with the
      *         optimizing compiler
      */
-    public abstract int emitPrologue();
+    public abstract Adapter emitPrologue();
 
     /**
      * Does any fix up of branches and emit the epilogue (if any).

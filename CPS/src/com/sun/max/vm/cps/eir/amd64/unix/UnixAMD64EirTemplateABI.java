@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.eir.amd64.unix;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
-import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -43,18 +42,11 @@ public class UnixAMD64EirTemplateABI extends UnixAMD64EirJavaABI {
     public UnixAMD64EirTemplateABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = super.targetABI();
-        final AMD64GeneralRegister64 bp = originalTargetABI.registerRoleAssignment().integerRegisterActingAs(VMRegister.Role.CPU_FRAME_POINTER);
+        final AMD64GeneralRegister64 bp = originalTargetABI.registerRoleAssignment.integerRegisterActingAs(VMRegister.Role.CPU_FRAME_POINTER);
         final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment =
-            new RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI.registerRoleAssignment(),
+            new RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI.registerRoleAssignment,
                             VMRegister.Role.ABI_FRAME_POINTER, bp);
         initTargetABI(new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI, registerRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT));
         makeUnallocatable(AMD64EirRegister.General.RBP);
-    }
-
-    private final PoolSet<AMD64EirRegister> calleeSavedRegisters = PoolSet.noneOf(AMD64EirRegister.General.pool());
-
-    @Override
-    public PoolSet<AMD64EirRegister> calleeSavedRegisters() {
-        return calleeSavedRegisters;
     }
 }

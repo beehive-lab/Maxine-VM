@@ -22,7 +22,6 @@ package com.sun.max.ins.memory;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.lang.management.*;
 
 import javax.swing.*;
@@ -186,14 +185,7 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         @Override
         public MemoryRegion getMemoryRegion(int row) {
-            int count = 0;
-            for (MemoryRegionDisplay memoryRegionDisplay : sortedMemoryRegions.memoryRegions()) {
-                if (count == row) {
-                    return memoryRegionDisplay;
-                }
-                count++;
-            }
-            return null;
+            return sortedMemoryRegions.get(row);
         }
 
         @Override
@@ -204,8 +196,8 @@ public final class MemoryRegionsTable extends InspectorTable {
         @Override
         public int findRow(Address address) {
             int row = 0;
-            for (MemoryRegionDisplay memoryRegionData : sortedMemoryRegions.memoryRegions()) {
-                if (memoryRegionData.contains(address)) {
+            for (MemoryRegionDisplay region : sortedMemoryRegions) {
+                if (region.contains(address)) {
                     return row;
                 }
                 row++;
@@ -216,8 +208,8 @@ public final class MemoryRegionsTable extends InspectorTable {
         int findRow(MemoryRegion memoryRegion) {
             assert memoryRegion != null;
             int row = 0;
-            for (MemoryRegionDisplay memoryRegionData : sortedMemoryRegions.memoryRegions()) {
-                if (memoryRegion.sameAs(memoryRegionData)) {
+            for (MemoryRegionDisplay region : sortedMemoryRegions) {
+                if (memoryRegion.sameAs(region)) {
                     return row;
                 }
                 row++;
@@ -327,7 +319,7 @@ public final class MemoryRegionsTable extends InspectorTable {
     /**
      * Decorates a {@link MemoryRegion} with additional display-related behavior.
      */
-    private abstract class MemoryRegionDisplay implements MemoryRegion {
+    private abstract class MemoryRegionDisplay implements MemoryRegion, Comparable<MemoryRegionDisplay> {
 
         abstract MemoryRegion memoryRegion();
 
@@ -337,6 +329,10 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         public Size size() {
             return memoryRegion().size();
+        }
+
+        public int compareTo(MemoryRegionDisplay o) {
+            return start().lessThan(o.start()) ? -1 : start().equals(o.start()) ? 0 : 1;
         }
 
         /**
@@ -363,7 +359,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         }
 
         public boolean sameAs(MemoryRegion otherMemoryRegion) {
-            return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
+            return Util.equal(this, otherMemoryRegion);
         }
 
         public final String description() {

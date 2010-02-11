@@ -7,7 +7,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/Base"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/C1X"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/CRI"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/VM"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/VM"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/C0X"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

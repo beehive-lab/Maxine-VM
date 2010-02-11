@@ -25,6 +25,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.trampoline.*;
 
 /**
@@ -35,6 +36,20 @@ import com.sun.max.vm.trampoline.*;
  */
 public abstract class DynamicTrampolineExit {
 
+    /**
+     * Gets the return address to which the trampoline will return. This address is derived from
+     * {@code vtableEntryPoint} by adjusting it to account for the call entry point associated
+     * with the caller of the trampoline.
+     *
+     * The means by which the address is used to alter the return path of the trampoline is platform dependent.
+     * For example, on AMD64 the {@code stackPointer} value can be used to patch return addresses on the stack.
+     * On SPARC, the compiler used to compile the trampoline to use the return register (i.e. %o0) as the link
+     * register instead of the standard link register (i.e. %i7).
+     *
+     * @param dynamicTrampoline the trampoline being called
+     * @param vtableEntryPoint the {@link CallEntryPoint#VTABLE_ENTRY_POINT} for the method being trampolined to
+     * @param stackPointer the CPU stack pointer in the frame of the trampoline
+     */
     public abstract Address trampolineReturnAddress(DynamicTrampoline dynamicTrampoline, Address vtableEntryPoint, Pointer stackPointer);
 
     @HOSTED_ONLY

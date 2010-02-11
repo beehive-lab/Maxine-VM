@@ -27,7 +27,9 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.asm.*;
 import com.sun.max.collect.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -47,9 +49,6 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  */
 public abstract class StackFrameWalker {
-
-    private static final boolean USE_NEW_API = false;
-    private static final boolean USE_NEW_API_HOSTED = false;
 
     public enum CalleeKind {
         NATIVE,
@@ -94,7 +93,7 @@ public abstract class StackFrameWalker {
             setFields(null, ip, sp, fp, false);
         }
 
-        private void reset() {
+        void reset() {
             setFields(null, Pointer.zero(), Pointer.zero(), Pointer.zero(), false);
         }
 
@@ -130,6 +129,11 @@ public abstract class StackFrameWalker {
         }
 
         /**
+         * Gets the address of the next instruction that will be executed in this frame.
+         * If this is not the {@linkplain #isTopFrame() top frame}, then this is the
+         * return address saved by a call instruction. The exact interpretation of this
+         * return address depends on the {@linkplain InstructionSet#offsetToReturnPC platform}.
+         *
          * @return the current instruction pointer.
          */
         public Pointer ip() {
@@ -266,7 +270,19 @@ public abstract class StackFrameWalker {
         boolean inNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
 
         while (!current.sp.isZero()) {
-            TargetMethod targetMethod = targetMethodFor(current.ip);
+            Pointer adjustedIP;
+            if (!isTopFrame && Platform.target().processorKind.instructionSet.offsetToReturnPC == 0) {
+                // Adjust the current IP to ensure it is within the call instruction of the current frame.
+                // This ensures we will always get the correct method, even if the call instruction was the
+                // last instruction in a method and calls a method never expected to return (such as a call
+                // emitted by the compiler to implement a 'throw' statement at the end of a method).
+                adjustedIP = current.ip().minus(1);
+            } else {
+                adjustedIP = current.ip();
+            }
+
+
+            TargetMethod targetMethod = targetMethodFor(adjustedIP);
             TargetMethod calleeMethod = callee.targetMethod;
             current.targetMethod = targetMethod;
             traceCursor(current);
@@ -295,8 +311,7 @@ public abstract class StackFrameWalker {
                     }
                 } else if (purpose == RAW_INSPECTING) {
                     final RawStackFrameVisitor stackFrameVisitor = (RawStackFrameVisitor) context;
-                    final int flags = RawStackFrameVisitor.Util.makeFlags(isTopFrame, false);
-                    if (!stackFrameVisitor.visitFrame(null, current.ip, current.fp, current.sp, flags)) {
+                    if (!stackFrameVisitor.visitFrame(null, current.ip, current.fp, current.sp, isTopFrame)) {
                         break;
                     }
                 }
@@ -340,10 +355,6 @@ public abstract class StackFrameWalker {
     }
 
     private boolean walkFrame(Cursor current, Cursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
-        if (!useNewAPI()) {
-            // use old API until new API is fully functional
-            return targetMethod.compilerScheme.walkFrame(current, callee, purpose, context);
-        }
         boolean proceed = true;
         if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
             // walk the frame for reference map preparation
@@ -359,23 +370,15 @@ public abstract class StackFrameWalker {
         } else if (purpose == Purpose.INSPECTING) {
             // walk the frame for inspecting (Java frames)
             StackFrameVisitor visitor = (StackFrameVisitor) context;
-            proceed = targetMethod.acceptStackFrameVisitor(current, callee, visitor);
+            proceed = targetMethod.acceptStackFrameVisitor(current, visitor);
         } else if (purpose == Purpose.RAW_INSPECTING) {
             // walk the frame for inspect (compiled frames)
             RawStackFrameVisitor visitor = (RawStackFrameVisitor) context;
-            int flags = RawStackFrameVisitor.Util.makeFlags(current.isTopFrame(), false);
-            proceed = visitor.visitFrame(current.targetMethod(), current.ip(), current.sp(), current.sp(), flags);
+            proceed = visitor.visitFrame(current.targetMethod(), current.ip(), current.sp(), current.sp(), current.isTopFrame());
         }
         // in any case, advance to the next frame
         targetMethod.advance(current);
         return proceed;
-    }
-
-    private boolean useNewAPI() {
-        if (MaxineVM.isHosted()) {
-            return USE_NEW_API_HOSTED;
-        }
-        return USE_NEW_API;
     }
 
     private void traceWalkPurpose(Purpose purpose) {
@@ -392,7 +395,7 @@ public abstract class StackFrameWalker {
                 if (cursor.targetMethod.classMethodActor() == null) {
                     Log.print(cursor.targetMethod.description());
                 } else {
-                    Log.printMethod(cursor.targetMethod.classMethodActor(), false);
+                    Log.printMethod(cursor.targetMethod, false);
                 }
                 Log.print(", pc=");
                 Log.print(cursor.ip);
@@ -566,11 +569,7 @@ public abstract class StackFrameWalker {
                 Log.print("+");
                 Log.print(ip.minus(nativeStubTargetMethod.codeStart()).toLong());
                 Log.print(" in ");
-                if (nativeStubTargetMethod.classMethodActor() != null) {
-                    Log.printMethod(nativeStubTargetMethod.classMethodActor(), true);
-                } else {
-                    Log.println("<no method actor>");
-                }
+                Log.printMethod(nativeStubTargetMethod, true);
             }
             throw FatalError.unexpected("Could not find native function call in native stub");
         }
@@ -667,7 +666,10 @@ public abstract class StackFrameWalker {
     }
 
     public final void advance(Word ip, Word sp, Word fp) {
-        callee.copyFrom(current);
+        if (!(current.targetMethod instanceof Adapter)) {
+            // Adapter frames are never of interest when visiting the frame of a caller
+            callee.copyFrom(current);
+        }
         current.advance(ip.asPointer(), sp.asPointer(), fp.asPointer());
     }
 

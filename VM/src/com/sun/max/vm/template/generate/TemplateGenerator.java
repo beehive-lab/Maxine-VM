@@ -114,7 +114,7 @@ public class TemplateGenerator {
     }
 
     public static boolean hasStackParameters(ClassMethodActor classMethodActor) {
-        TargetABI abi = VMConfiguration.target().targetABIsScheme().optimizedJavaABI();
+        TargetABI abi = VMConfiguration.target().targetABIsScheme().optimizedJavaABI;
         TargetLocation[] locations = abi.getParameterTargetLocations(classMethodActor.getParameterKinds());
         for (TargetLocation location : locations) {
             if (!(location instanceof IntegerRegister) && !(location instanceof FloatingPointRegister)) {

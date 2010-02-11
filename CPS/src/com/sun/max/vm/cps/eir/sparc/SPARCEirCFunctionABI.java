@@ -34,15 +34,6 @@ import com.sun.max.vm.runtime.VMRegister.*;
  */
 public class SPARCEirCFunctionABI extends SPARCEirJavaABI {
 
-    private final PoolSet<SPARCEirRegister> calleeSavedRegisters;
-
-    @Override
-    public PoolSet<SPARCEirRegister> calleeSavedRegisters() {
-        return calleeSavedRegisters;
-    }
-
-    private final PoolSet<SPARCEirRegister> callerSavedRegisters;
-
     @Override
     public PoolSet<SPARCEirRegister> callerSavedRegisters() {
         return callerSavedRegisters;
@@ -54,15 +45,15 @@ public class SPARCEirCFunctionABI extends SPARCEirJavaABI {
      */
     public SPARCEirCFunctionABI(VMConfiguration vmConfiguration, boolean onlyCalledFromC) {
         super(vmConfiguration);
-        calleeSavedRegisters = PoolSet.of(SPARCEirRegisters.pool(), SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+        calleeSavedRegisters = new ArraySequence<SPARCEirRegister>(SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment.integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
         callerSavedRegisters =  super.callerSavedRegisters();
         if (!onlyCalledFromC) {
             // Have to save the SAFEPOINT latch global register.
-            callerSavedRegisters.add(SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+            callerSavedRegisters.add(SPARCEirRegisters.GeneralPurpose.from(targetABI().registerRoleAssignment.integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
         }
         // Native target ABI uses different entry point.
         final TargetABI<GPR, FPR> originalTargetABI = targetABI();
-        initTargetABI(new TargetABI<GPR, FPR>(originalTargetABI, originalTargetABI.registerRoleAssignment(), onlyCalledFromC ? CallEntryPoint.C_ENTRY_POINT : CallEntryPoint.OPTIMIZED_ENTRY_POINT));
+        initTargetABI(new TargetABI<GPR, FPR>(originalTargetABI, originalTargetABI.registerRoleAssignment, onlyCalledFromC ? CallEntryPoint.C_ENTRY_POINT : CallEntryPoint.OPTIMIZED_ENTRY_POINT));
     }
 
 }

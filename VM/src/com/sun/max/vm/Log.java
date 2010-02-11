@@ -32,6 +32,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.ProgramWarning.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -305,6 +306,20 @@ public final class Log {
             }
         } else {
             out.printMethod(methodActor, withNewline);
+        }
+    }
+
+    /**
+     * Equivalent to calling {@link LogPrintStream#printMethod(TargetMethod, boolean)} on {@link #out}.
+     */
+    public static void printMethod(TargetMethod targetMethod, boolean withNewline) {
+        if (targetMethod == null) {
+            out.print("<no target method>");
+            if (withNewline) {
+                out.println();
+            }
+        } else {
+            out.printMethod(targetMethod, withNewline);
         }
     }
 
@@ -748,6 +763,31 @@ public final class Log {
             print(methodActor.descriptor().string, withNewline);
             if (!MaxineVM.isHosted()) {
                 unlock(lockDisabledSafepoints);
+            }
+        }
+
+        /**
+         * Convenience routine for printing a {@link TargetMethod} to this stream. If the target method has a non-null
+         * {@linkplain TargetMethod#classMethodActor}, then the output is of the form:
+         *
+         * <pre>
+         *     &lt;holder&gt;.&lt;name&gt;&lt;descriptor&gt;
+         * </pre>
+         *
+         * Otherwise, it is of the form:
+         *
+         * <pre>
+         *     &lt;description&gt;
+         * </pre>
+         *
+         * @param targetMethod the target method to print
+         * @param withNewline specifies if a newline should be appended to the stream after the target method
+         */
+        public void printMethod(TargetMethod targetMethod, boolean withNewline) {
+            if (targetMethod.classMethodActor != null) {
+                printMethod(targetMethod.classMethodActor, withNewline);
+            } else {
+                print(targetMethod.description(), withNewline);
             }
         }
 

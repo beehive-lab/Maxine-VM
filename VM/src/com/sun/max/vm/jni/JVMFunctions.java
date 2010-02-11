@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.jni;
 
-import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
-
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -74,8 +72,8 @@ public class JVMFunctions {
 
     private static class LatestUserDefinedLoaderVisitor implements RawStackFrameVisitor {
         ClassLoader result;
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
-            if (isTopFrame(flags) || isAdapter(flags) || targetMethod == null || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
+            if (isTopFrame || targetMethod == null || targetMethod instanceof Adapter || targetMethod.classMethodActor() == javaLangReflectMethodInvoke.classMethodActor) {
                 return true;
             }
             final ClassLoader cl = targetMethod.classMethodActor().holder().classLoader;

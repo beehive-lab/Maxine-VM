@@ -26,22 +26,18 @@ import com.sun.max.vm.cps.eir.amd64.*;
 
 /**
  * Trampolines callee-save and restore all parameter registers.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class UnixAMD64EirTrampolineABI extends UnixAMD64EirJavaABI {
-    private final PoolSet<AMD64EirRegister> calleeSavedRegisters;
     public UnixAMD64EirTrampolineABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        calleeSavedRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
-        calleeSavedRegisters.or(allocatableRegisters());
 
-        // Do not save the integer return register. Trampolines do use it.
-        calleeSavedRegisters.remove(AMD64EirRegister.General.RAX);
-    }
+        // Make all potential parameters of the trampoline's compilee callee-saved
+        calleeSavedRegisters = Sequence.Static.concatenated(integerParameterRegisters(), floatingPointParameterRegisters());
 
-    @Override
-    public PoolSet<AMD64EirRegister> calleeSavedRegisters() {
-        return calleeSavedRegisters;
+        // Make the JIT frame pointer (RBP) callee-saved
+        calleeSavedRegisters = Sequence.Static.appended(calleeSavedRegisters, AMD64EirRegister.General.RBP);
     }
 }
+

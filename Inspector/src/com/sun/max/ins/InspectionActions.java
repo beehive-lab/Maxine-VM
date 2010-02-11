@@ -2238,12 +2238,34 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param actionTitle name of the action to appear in menu or button
-     * @return an interactive Action that displays target code in the {@link MethodInspector}
+     * Action:  displays in the {@MethodInspector} the target code for an interactively specified method.
+     */
+// TODO (mlvdv) review
+    final class ViewMethodTargetCodeAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View target code...";
+
+        public ViewMethodTargetCodeAction(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), null, "View Target Code for Method...", "View Code", false);
+            if (teleTargetMethods != null) {
+                focus().setCodeLocation(maxVM().createCodeLocation(teleTargetMethods.first().callEntryPoint()), false);
+            }
+        }
+    }
+
+    private final InspectorAction viewMethodTargetCodeAction = new ViewMethodTargetCodeAction(null);
+
+    /**
+     * @return Singleton interactive Action that displays target code in the {@link MethodInspector}
      * for a selected method.
      */
-    public final InspectorAction viewMethodTargetCodeByName(String actionTitle) {
-        return new ViewMethodTargetCodeByNameAction(actionTitle);
+    public final InspectorAction viewMethodTargetCode() {
+        return viewMethodTargetCodeAction;
     }
 
     /**
@@ -3224,7 +3246,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MaxCodeLocation location = codeManager().createMethodLocation(teleClassMethodActor, 0, "teleClassMethodActor entry");
+// TODO (mlvdv) this should include method prologue
+            final MaxCodeLocation location = codeManager().createMethodLocation(teleClassMethodActor, -1, "teleClassMethodActor entry");
             try {
                 breakpointFactory().makeBreakpoint(location);
             } catch (MaxVMBusyException maxVMBusyException) {
@@ -3271,6 +3294,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
                     try {
+// TODO (mlvdv) this should include method prologue
                         breakpointFactory().makeBreakpoint(codeManager().createMethodLocation(methodKey, "set bytecode breakpoint"));
                     } catch (MaxVMBusyException maxVMBusyException) {
                         inspection().announceVMBusyFailure(name());
@@ -3312,6 +3336,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
                 try {
+// TODO (mlvdv) this should include prologue
                     breakpointFactory().makeBreakpoint(codeManager().createMethodLocation(methodKey, "set bytecode breakpoint"));
                 } catch (MaxVMBusyException maxVMBusyException) {
                     inspection().announceVMBusyFailure(name());
@@ -4778,6 +4803,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             public void addTo(InspectorMenu menu) {
                 menu.add(actions().viewMethodCodeAtSelection());
                 menu.add(actions().viewMethodCodeAtIP());
+                menu.add(actions().viewMethodTargetCode());
                 final JMenu methodSub = new JMenu("View method code by name");
                 methodSub.add(actions().viewMethodBytecodeByName());
                 methodSub.add(actions().viewMethodTargetCodeByName());

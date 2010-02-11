@@ -48,7 +48,6 @@ public class Cell {
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantArray(Pointer cell, Size size, DynamicHub hub, int length) {
         DebugHeap.writeCellTag(cell);
-        Memory.clearBytes(cell, size);
         final Pointer origin = Layout.arrayCellToOrigin(cell);
         Layout.writeArrayLength(origin, length);
         Layout.writeHubReference(origin, Reference.fromJava(hub));
@@ -76,7 +75,6 @@ public class Cell {
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantTuple(Pointer cell, Hub hub) {
         DebugHeap.writeCellTag(cell);
-        Memory.clearBytes(cell, hub.tupleSize);
         final Pointer origin = Layout.tupleCellToOrigin(cell);
         Layout.writeHubReference(origin, Reference.fromJava(hub));
         return Reference.fromOrigin(origin).toJava();
@@ -89,7 +87,6 @@ public class Cell {
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantHybrid(Pointer cell, Size size, DynamicHub hub) {
         DebugHeap.writeCellTag(cell);
-        Memory.clearBytes(cell, size);
         final Pointer origin = Layout.hybridCellToOrigin(cell);
         Layout.writeHubReference(origin, Reference.fromJava(hub));
         Layout.writeArrayLength(origin, hub.firstWordIndex());
@@ -109,7 +106,6 @@ public class Cell {
         final Size oldSize = Layout.hybridLayout().getArraySize(hybrid.length());
 
         final Pointer newOrigin = Layout.hybridCellToOrigin(cell);
-        Memory.clearBytes(newOrigin, size);
         Memory.copyBytes(oldCell, cell, oldSize);
         Layout.writeArrayLength(newOrigin, length);
         return UnsafeCast.asHybrid(Reference.fromOrigin(newOrigin).toJava());

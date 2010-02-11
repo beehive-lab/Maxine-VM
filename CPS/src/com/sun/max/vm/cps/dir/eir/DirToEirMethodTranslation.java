@@ -74,9 +74,9 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         final EirEpilogue eirEpilogue = createEpilogue(eirBlock);
         eirBlock.appendInstruction(eirEpilogue);
         if (!isTemplate()) {
-            if (eirMethod.isTrampoline()) {
-                final boolean isStaticTrampoline = eirMethod.classMethodActor().isStaticTrampoline();
-                eirBlock.appendInstruction(createTrampolineExit(eirBlock, isStaticTrampoline));
+            ClassMethodActor classMethodActor = eirMethod.classMethodActor();
+            if (classMethodActor.isTrampoline()) {
+                eirBlock.appendInstruction(createTrampolineExit(eirBlock, classMethodActor.isStaticTrampoline()));
             } else if (eirMethod().classMethodActor().isTrapStub()) {
                 eirBlock.appendInstruction(createTrapStubExit(eirBlock));
             } else {
@@ -133,20 +133,8 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
             }
         }
 
-        if (eirMethod.isTrampoline()) {
-            // Make all potential parameters of the trampoline's compilees callee-saved by the trampoline:
-            calleeSavedEirRegisters = new EirRegister[abi.integerParameterRegisters().length() + abi.floatingPointParameterRegisters().length()];
-            int i = 0;
-            for (Object register : abi.integerParameterRegisters()) {
-                calleeSavedEirRegisters[i++] = (EirRegister) register;
-            }
-            for (Object register : abi.floatingPointParameterRegisters()) {
-                calleeSavedEirRegisters[i++] = (EirRegister) register;
-            }
-        } else {
-            final PoolSet<EirRegister> calleeSavedRegisters = StaticLoophole.cast(abi.calleeSavedRegisters());
-            calleeSavedEirRegisters = com.sun.max.lang.Arrays.from(EirRegister.class, calleeSavedRegisters);
-        }
+        final Sequence<EirRegister> calleeSavedRegisters = StaticLoophole.cast(abi.calleeSavedRegisters());
+        calleeSavedEirRegisters = com.sun.max.lang.Arrays.from(EirRegister.class, calleeSavedRegisters);
 
         calleeSavedEirVariables = new EirVariable[calleeSavedEirRegisters.length];
         calleeRepositoryEirVariables = new EirVariable[calleeSavedEirRegisters.length];
