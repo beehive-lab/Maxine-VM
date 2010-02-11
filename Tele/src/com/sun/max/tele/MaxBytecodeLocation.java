@@ -21,35 +21,30 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 
 /**
- * Access to a remote method in the VM that is predefined for convenient access
- * by clients, for example by setting breakpoints at generally useful locations.
- * <br>
- * These are intended to be methods loaded and compiled into the boot image,
- * and which will never be dynamically recompiled.
+ * Describes a bytecode location in the VM in terms of a bytecode
+ * position in the method's description in the VM.
  *
  * @author Michael Van De Vanter
  */
-public interface MaxInspectableMethod {
+public interface MaxBytecodeLocation {
 
     /**
-     * @return the canonical surrogate in the VM for the method
+     * @return surrogate for the {@link ClassMethodActor} loaded in the VM
+     * that describes the method.
+     * <br>
+     * Immutable
      */
     TeleClassMethodActor teleClassMethodActor();
 
     /**
-     * @return target code location in the VM of the method's entry point (first compilation); zero if not available.
+     * @return the location, expressed in bytes offset from the beginning
+     * of the specified bytecode instruction.
+     * <br>
+     * Immutable
      */
-    Address methodEntry();
-
-    /**
-     * A textual description of the role played by the method.
-     *
-     * @return a human readable description of the method, intended to describe
-     * the function of the method on a menu.
-     */
-    String description();
+    int position();
 
 }
