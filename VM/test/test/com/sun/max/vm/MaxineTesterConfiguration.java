@@ -99,7 +99,7 @@ public class MaxineTesterConfiguration {
         output(test.output.WeakReferenceTest02.class);
         output(test.output.WeakReferenceTest03.class);
         output(test.output.WeakReferenceTest04.class);
-        output(test.output.MegaThreads.class, RAND_SPARC);
+        output(test.output.MegaThreads.class, RAND_ALL);
 
         jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
         jtt(jtt.except.BC_invokespecial01.class, RAND_ALL);      // may fail due to incorrect invokevirtual / invokespecial optimization
@@ -217,7 +217,7 @@ public class MaxineTesterConfiguration {
 
         // VEE 2010 benchmarking configurations
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
-        maxvmConfig("GC", "-Xmx3g");
+        maxvmConfig("GC", "-Xmx2g");
 
         imageConfig("jit-c1x0",  "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0");
         imageConfig("jit-c1x0x", "-prototype-jit", "-jit=" + c1xPackage, "-vmargs=-C1X:OptLevel=0 -C1X:+UseXIR");
