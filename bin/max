@@ -694,7 +694,7 @@ options:
  -clean     removes existing generated javadoc first
  <any other javadoc option>
     
-    Use \"max image -help\" to see what other options this command accepts."
+    Use \"max javadoc -help\" to see what other options this command accepts."
 
 function run_javadoc() {
     javadoc=${JAVA_HOME}/bin/javadoc
