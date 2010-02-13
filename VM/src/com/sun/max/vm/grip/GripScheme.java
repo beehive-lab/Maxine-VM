@@ -188,4 +188,6 @@ public interface GripScheme extends VMScheme {
      * @return the bytes of a null reference to be written to the prototype, in cpu-specific ordering
      */
     byte[] createPrototypeNullGrip();
+
+    void copyElements(Grip src, int displacement, int srcIndex, Object dst, int dstIndex, int length);
 }

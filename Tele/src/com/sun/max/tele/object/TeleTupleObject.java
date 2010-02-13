@@ -136,7 +136,7 @@ public class TeleTupleObject extends TeleObject {
                 ProgramWarning.message("Deep copying instance of " + javaClass.getName());
             }
 
-            context.register(this, newTuple);
+            context.register(this, newTuple, true);
             ClassActor holderClassActor = classActor;
             do {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {

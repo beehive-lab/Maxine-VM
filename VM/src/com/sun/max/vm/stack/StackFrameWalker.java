@@ -24,8 +24,6 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.util.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
@@ -754,13 +752,13 @@ public abstract class StackFrameWalker {
                 }
                 continue;
             }
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.ip, false);
-            if (bytecodeLocations == null) {
+            BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(stackFrame.ip, false);
+            if (bytecodeLocation == null) {
                 if (targetMethod.classMethodActor() != null) {
                     appendClassMethodActor(result, targetMethod.classMethodActor(), invisibleFrames);
                 }
             } else {
-                appendCallers(result, bytecodeLocations, invisibleFrames);
+                appendCallers(result, bytecodeLocation, invisibleFrames);
             }
         }
         return result;
@@ -778,25 +776,24 @@ public abstract class StackFrameWalker {
                 // ignore native frame
                 continue;
             }
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.ip, false);
-            if (bytecodeLocations == null) {
+            BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(stackFrame.ip, false);
+            if (bytecodeLocation == null) {
                 if (targetMethod.classMethodActor() != null) {
                     return targetMethod.classMethodActor();
                 }
             } else {
-                return bytecodeLocations.next().classMethodActor;
+                return bytecodeLocation.classMethodActor;
             }
         }
         return null;
     }
 
-    private static void appendCallers(AppendableSequence<ClassMethodActor> result, Iterator<? extends BytecodeLocation> bytecodeLocations, boolean invisibleFrames) {
+    private static void appendCallers(AppendableSequence<ClassMethodActor> result, BytecodeLocation bytecodeLocation, boolean invisibleFrames) {
         // this recursive method appends inlined bytecode locations to the frame list (i.e. parent first)
-        if (bytecodeLocations.hasNext()) {
-            final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
-            appendCallers(result, bytecodeLocations, invisibleFrames);
-            appendClassMethodActor(result, bytecodeLocation.classMethodActor, invisibleFrames);
+        if (bytecodeLocation.parent() != null) {
+            appendCallers(result, bytecodeLocation.parent(), invisibleFrames);
         }
+        appendClassMethodActor(result, bytecodeLocation.classMethodActor, invisibleFrames);
     }
 
     private static void appendClassMethodActor(final AppendableSequence<ClassMethodActor> result, final ClassMethodActor classMethodActor, boolean invisibleFrames) {

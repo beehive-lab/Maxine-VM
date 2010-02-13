@@ -564,5 +564,16 @@ public interface Accessor {
      * @see #compareAndSwapInt(Offset, int, int)
      */
     Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue);
+
+    /**
+     * Copies elements from this array into a given array.
+     *
+     * @param displacement signed displacement in bytes
+     * @param srcIndex the index in this array from which to copy
+     * @param dst the array into which the elements will be read
+     * @param dstIndex the index in {@code dst} to which to copy
+     * @param length the number of elements to copy
+     */
+    void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length);
 }
 

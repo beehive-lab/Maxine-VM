@@ -403,4 +403,9 @@ public final class HeapReferenceScheme extends AbstractVMScheme implements Refer
         heapScheme().writeBarrier(reference, newValue);
         return gripScheme().fromReference(reference).compareAndSwapReference(offset, suspectedValue, newValue);
     }
+
+    @INLINE
+    public void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
+        gripScheme().fromReference(src).copyElements(displacement, srcIndex, dst, dstIndex, length);
+    }
 }

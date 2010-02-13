@@ -32,7 +32,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -199,14 +198,11 @@ public abstract class TargetCodeViewer extends CodeViewer {
                     isStopRow[row] = true;
                     if (teleTargetRoutine instanceof TeleTargetMethod) {
                         final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
-                        final TargetJavaFrameDescriptor javaFrameDescriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
-                        if (javaFrameDescriptor != null) {
-                            final BytecodeLocation bytecodeLocation = javaFrameDescriptor;
-                            rowToBytecodeLocation[row] = bytecodeLocation;
-                            // TODO (mlvdv) only works for non-inlined calls
-                            if (bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor())) {
-                                rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
-                            }
+                        final BytecodeLocation bytecodeLocation = teleTargetMethod.getBytecodeLocation(stopIndex);
+                        rowToBytecodeLocation[row] = bytecodeLocation;
+                        // TODO (mlvdv) only works for non-inlined calls
+                        if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor())) {
+                            rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
                         }
                     }
                 }

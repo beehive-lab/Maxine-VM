@@ -532,7 +532,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
     @Override
-    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
+    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
         if (implicitExceptionPoint) {
             // CPS target methods don't have Java frame descriptors at implicit throw points. dumb.
             return null;
@@ -541,11 +541,7 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
             instructionPointer = instructionPointer.minus(1);
         }
 
-        final TargetJavaFrameDescriptor targetFrameDescriptor = getJavaFrameDescriptorFor(instructionPointer);
-        if (targetFrameDescriptor != null) {
-            return targetFrameDescriptor.inlinedFrames();
-        }
-        return null;
+        return getJavaFrameDescriptorFor(instructionPointer);
     }
 
     /**

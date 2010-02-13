@@ -175,7 +175,8 @@ public abstract class AdapterGenerator {
      *         compiler configured for the VM.
      */
     public static AdapterGenerator forCallee(TargetMethod callee) {
-        if (callee instanceof Adapter) {
+        if (callee.classMethodActor == null) {
+            // Some kind of stub
             return null;
         }
         return forCallee(callee.classMethodActor, callee.abi().callEntryPoint);

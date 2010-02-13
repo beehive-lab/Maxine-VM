@@ -410,14 +410,52 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         }
 
         static int totalCopies;
+        static class Count implements Comparable<Count> {
+            Class type;
+            int value;
+            @Override
+            public int compareTo(Count o) {
+                return value - o.value;
+            }
+        }
+
+        static HashMap<Class, Count> copiesPerType = new HashMap<Class, Count>() {
+            @Override
+            public Count get(Object key) {
+                Count count = super.get(key);
+                if (count == null) {
+                    count = new Count();
+                    count.type = (Class) key;
+                    put((Class) key, count);
+                }
+                return count;
+            };
+        };
+
+        static {
+            if (Trace.hasLevel(1)) {
+                Runtime.getRuntime().addShutdownHook(new Thread("CopiesPerTypePrinter") {
+                    @Override
+                    public void run() {
+                        SortedSet<Count> set = new TreeSet<Count>(copiesPerType.values());
+                        System.out.println("Objects deep copied from VM (by type):");
+                        for (Count c : set) {
+                            System.out.println("    " + c.value + "\t" + c.type.getSimpleName());
+                        }
+                    }
+                });
+            }
+        }
 
         /**
          * Registers a newly copied object in the context to avoid duplication.
+         * @param newInstance specifies {@code object} was just instantiated (as opposed to being a local surrogate)
          */
-        protected void register(TeleObject teleObject, Object newObject) {
-            Object oldValue = teleObjectToObject.put(teleObject, newObject);
+        protected void register(TeleObject teleObject, Object object, boolean newInstance) {
+            Object oldValue = teleObjectToObject.put(teleObject, object);
             int numberOfCopies = numberOfCopies();
-            if (oldValue == null) {
+            if (oldValue == null && newInstance && Trace.hasLevel(1)) {
+                copiesPerType.get(object.getClass()).value++;
                 totalCopies++;
                 if ((numberOfCopies % 100) == 0) {
                     Trace.line(1, "Deep copied " + numberOfCopies + " objects [" + totalCopies + " in total]");
@@ -491,7 +529,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         if (newObject == null) {
             context.level++;
             newObject = createDeepCopy(context);
-            context.register(this, newObject);
+            context.register(this, newObject, false);
             context.level--;
         }
         return newObject;
@@ -507,25 +545,20 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     protected abstract Object createDeepCopy(DeepCopier context);
 
     /**
+     * Hook for subclasses to refine the extent of {@linkplain #deepCopy() deep copying}.
+     */
+    protected DeepCopier newDeepCopier() {
+        return new DeepCopier();
+    }
+
+    /**
      * @return a best effort deep copy - with certain substitutions
      */
     public final Object deepCopy() {
         Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
         long start = System.currentTimeMillis();
-        DeepCopier copier = new DeepCopier();
-        final Object objectCopy = makeDeepCopy(copier);
-        Trace.end(COPY_TRACE_VALUE, "Deep copying from VM: " + this + " [" + copier.numberOfCopies() + " objects]", start);
-        return objectCopy;
-    }
-
-    /**
-     * @return a best effort deep copy - with certain substitutions, and with
-     * certain specified field omissions.
-     */
-    public final Object deepCopy(DeepCopier copier) {
-        Trace.begin(COPY_TRACE_VALUE, "Deep copying from VM: " + this);
-        long start = System.currentTimeMillis();
-        final Object objectCopy = makeDeepCopy(copier);
+        DeepCopier copier = newDeepCopier();
+        Object objectCopy = makeDeepCopy(copier);
         Trace.end(COPY_TRACE_VALUE, "Deep copying from VM: " + this + " [" + copier.numberOfCopies() + " objects]", start);
         return objectCopy;
     }

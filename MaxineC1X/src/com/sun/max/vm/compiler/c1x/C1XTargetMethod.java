@@ -858,7 +858,7 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer ip, boolean implicitExceptionPoint) {
+    public BytecodeLocation getBytecodeLocationFor(Pointer ip, boolean implicitExceptionPoint) {
         if (!implicitExceptionPoint && Platform.target().instructionSet().offsetToReturnPC == 0) {
             ip = ip.minus(1);
         }
@@ -867,27 +867,33 @@ public class C1XTargetMethod extends TargetMethod {
         if (stopIndex < 0) {
             return null;
         }
-        if (sourceInfo instanceof char[]) {
-            // no inlined methods; just recover the bytecode index
-            char[] array = (char[]) sourceInfo;
-            ArrayList<BytecodeLocation> locations = new ArrayList<BytecodeLocation>(1);
-            locations.add(new BytecodeLocation(classMethodActor, array[stopIndex]));
-            return locations.iterator();
-        }
-        if (sourceInfo instanceof int[]) {
-            // iterate over all inlined methods
-            int[] array = (int[]) sourceInfo;
-            ArrayList<BytecodeLocation> locations = new ArrayList<BytecodeLocation>();
-            while (stopIndex >= 0) {
-                int start = stopIndex * 3;
-                ClassMethodActor sourceMethod = sourceMethods[array[start]];
-                int bci = array[start + 1];
-                locations.add(new BytecodeLocation(sourceMethod, bci));
-                stopIndex = array[start + 2];
-            }
+        return decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, stopIndex);
+    }
 
-            return locations.iterator();
+    public static BytecodeLocation decodeBytecodeLocation(ClassMethodActor classMethodActor, Object sourceInfoObject, ClassMethodActor[] sourceMethods, int index) {
+        if (sourceInfoObject instanceof int[]) {
+            int[] sourceInfo = (int[]) sourceInfoObject;
+            if (index < 0) {
+                return null;
+            }
+            int start = index * 3;
+            ClassMethodActor sourceMethod = sourceMethods[sourceInfo[start]];
+            int bci = sourceInfo[start + 1];
+            int parentIndex = sourceInfo[start + 2];
+            final BytecodeLocation parent = decodeBytecodeLocation(classMethodActor, sourceInfo, sourceMethods, parentIndex);
+            return new BytecodeLocation(sourceMethod, bci) {
+                @Override
+                public BytecodeLocation parent() {
+                    return parent;
+                }
+            };
+        } else if (sourceInfoObject instanceof char[]) {
+            // no inlined methods; just recover the bytecode index
+            char[] array = (char[]) sourceInfoObject;
+            return new BytecodeLocation(classMethodActor, array[index]);
+        } else {
+            return null;
         }
-        return null;
+
     }
 }
