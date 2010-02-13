@@ -482,7 +482,7 @@ public abstract class Reference implements Accessor {
     }
 
     @INLINE
-    public void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+    public final void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
         referenceScheme().copyElements(displacement, this, displacement, dst, dstIndex, length);
     }
 }
