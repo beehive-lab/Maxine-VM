@@ -1226,7 +1226,7 @@ public abstract class Pointer extends Address implements Accessor {
         }
     }
 
-    public void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+    public final void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
         Kind kind = Kind.fromJava(dst.getClass().getComponentType());
         switch (kind.asEnum) {
             case BOOLEAN: {

@@ -479,7 +479,7 @@ public class Grip implements Accessor {
     }
 
     @INLINE
-    public void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+    public final void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
         gripScheme().copyElements(this, displacement, srcIndex, dst, dstIndex, length);
     }
 }
