@@ -105,7 +105,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
         final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM, instructionPointer);
         if (teleTargetMethod != null) {
-            return teleTargetMethod.reducedDeepCopy();
+            return teleTargetMethod.targetMethod();
         }
         return null;
     }

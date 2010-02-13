@@ -400,4 +400,8 @@ public final class PlainTeleReferenceScheme extends TeleReferenceScheme {
 
     public void performWriteBarrier(Reference reference) {
     }
+
+    public void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
+        gripScheme().fromReference(src).copyElements(displacement, srcIndex, dst, dstIndex, length);
+    }
 }

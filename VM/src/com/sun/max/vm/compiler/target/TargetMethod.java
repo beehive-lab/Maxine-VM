@@ -135,7 +135,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
-    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
+    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
         return null;
     }
 

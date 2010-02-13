@@ -43,4 +43,15 @@ public interface ArrayLayout<Value_Type extends Value<Value_Type>> extends Array
     Offset getElementOffsetFromOrigin(int index);
 
     Offset getElementOffsetInCell(int index);
+
+    /**
+     * Copies elements from an array described by this layout.
+     *
+     * @param src an accessor to an array described by this layout
+     * @param srcIndex starting index in {@code src}
+     * @param dst the array into which the values are copied
+     * @param dstIndex the starting index in {@code dst}
+     * @param length the number of elements to copy
+     */
+    void copyElements(Accessor src, int srcIndex, Object dst, int dstIndex, int length);
 }

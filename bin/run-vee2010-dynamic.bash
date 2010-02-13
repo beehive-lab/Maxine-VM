@@ -12,7 +12,7 @@ mkdir -p $RESULTS_DIR
 
 export VEE_TEST_OPTIONS="-timing-runs=5 -fail-fast=f -tests=specjvm98,dacapo -specjvm98=$SPECJVM98_ZIP -dacapo=$DACAPO_JAR"
 
-MAXVM_CONFIGS=noGC
+MAXVM_CONFIGS=GC
 
 if [ x"$1" = xjit ]; then
     shift

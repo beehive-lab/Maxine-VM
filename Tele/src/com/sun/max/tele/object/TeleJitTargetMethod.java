@@ -34,7 +34,6 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
         super(teleVM, jitTargetMethodReference);
     }
 
-    @Override
     public int[] bytecodeToTargetCodePositionMap() {
         final Reference intArrayReference = teleVM().teleFields().JitTargetMethod_bytecodeToTargetCodePositionMap.readReference(reference());
         final TeleArrayObject teleIntArray = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
@@ -42,7 +41,7 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
     }
 
     @Override
-    protected DeepCopier reducedDeepCopier() {
+    protected DeepCopier newDeepCopier() {
         return new ReducedDeepCopier().omit(teleVM().teleFields().JitTargetMethod_referenceMapEditor.fieldActor());
     }
 }

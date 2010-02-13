@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.grip;
 
+import java.util.concurrent.atomic.*;
+
 import com.sun.max.tele.reference.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
@@ -55,16 +57,12 @@ public abstract class TeleGrip extends Grip implements TeleObjectMemory {
      */
     public synchronized long makeOID() {
         if (gripOID == 0) {
-            gripOID = getNextOID();
+            gripOID = nextOID.incrementAndGet();
         }
         return gripOID;
     }
 
-    private static long nextOID = 1;
-
-    private static synchronized long getNextOID() {
-        return nextOID++;
-    }
+    private static final AtomicLong nextOID = new AtomicLong(1);
 
     public boolean isLocal() {
         return false;

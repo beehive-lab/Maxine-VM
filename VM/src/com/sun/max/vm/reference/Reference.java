@@ -480,4 +480,9 @@ public abstract class Reference implements Accessor {
     public final Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue) {
         return referenceScheme().compareAndSwapReference(this, offset, suspectedValue, newValue);
     }
+
+    @INLINE
+    public void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+        referenceScheme().copyElements(displacement, this, displacement, dst, dstIndex, length);
+    }
 }

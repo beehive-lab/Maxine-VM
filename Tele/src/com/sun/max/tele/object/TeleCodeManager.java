@@ -80,6 +80,13 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
         teleBootCodeRegion.refresh(0);
         teleRuntimeCodeRegion.refresh(0);
 
+        // Pre-load the class method actors for all target methods in the boot heap.
+        // This just shifts the perceptible delay when bringing up the "View target code..." dialog
+        // into the general Inspector start up delay.
+        for (TeleTargetMethod teleTargetMethod : teleBootCodeRegion.teleTargetMethods()) {
+            teleTargetMethod.classMethodActor();
+        }
+
         Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains BootCodeRegion and RuntimeCodeRegion", startTimeMillis);
     }
 

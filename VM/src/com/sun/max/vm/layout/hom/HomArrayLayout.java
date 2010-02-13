@@ -151,4 +151,8 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
         final int index = offset / elementSize();
         mirror.writeElement(elementKind, index, value);
     }
+
+    public void copyElements(Accessor src, int srcIndex, Object dst, int dstIndex, int length) {
+        src.copyElements(originDisplacement(), srcIndex, dst, dstIndex, length);
+    }
 }

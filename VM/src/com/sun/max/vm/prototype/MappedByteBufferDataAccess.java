@@ -35,7 +35,7 @@ public final class MappedByteBufferDataAccess extends DataAccessAdapter {
     private final Address base;
 
     public MappedByteBufferDataAccess(MappedByteBuffer buffer, Address base, WordWidth wordWidth) {
-        super(wordWidth);
+        super(wordWidth, buffer.order());
         this.buffer = buffer;
         this.base = base;
     }

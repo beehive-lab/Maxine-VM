@@ -127,4 +127,6 @@ public interface DataAccess extends DataIO {
     void writeWord(Address address, Offset offset, Word value);
     void writeWord(Address address, int offset, Word value);
     void setWord(Address address, int displacement, int index, Word value);
+
+    void copyElements(Address address, int displacement, int srcIndex, Object dst, int dstIndex, int length);
 }

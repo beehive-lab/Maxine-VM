@@ -22,7 +22,6 @@ package com.sun.max.vm.jdk;
 
 import java.lang.reflect.*;
 import java.security.*;
-import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -195,16 +194,16 @@ final class JDK_java_security_AccessController {
                 privilegedContext = privilegedElement.context;
                 protectionDomain = privilegedElement.classActor.protectionDomain();
             } else {
-                final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
-                if (bytecodeLocations == null) {
+                BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(instructionPointer, false);
+                if (bytecodeLocation == null) {
                     protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
                 } else {
-                    while (bytecodeLocations.hasNext()) {
-                        final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
+                    while (bytecodeLocation != null) {
                         final MethodActor classMethodActor = bytecodeLocation.classMethodActor;
                         if (classMethodActor.isApplicationVisible()) {
                             protectionDomain = bytecodeLocation.classMethodActor.holder().protectionDomain();
                         }
+                        bytecodeLocation = bytecodeLocation.parent();
                     }
                 }
             }

@@ -51,7 +51,12 @@ import com.sun.max.vm.type.*;
 public class C1XRuntimeCalls {
 
     // a local flag to enable calls to verify the reference map for each runtime call
-    private static final boolean ENABLE_REFMAP_VERIFICATION = true;
+    private static boolean ENABLE_REFMAP_VERIFICATION = false;
+
+    static {
+        VMOptions.addFieldOption("-C1X:", "VerifyRuntimeCallRefMaps", Classes.getDeclaredField(C1XRuntimeCalls.class, "ENABLE_REFMAP_VERIFICATION"),
+            "Verify refmaps at each runtime call from C1X compiled code.");
+    }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)

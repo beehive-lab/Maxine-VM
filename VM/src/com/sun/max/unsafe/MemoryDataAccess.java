@@ -353,4 +353,8 @@ public final class MemoryDataAccess implements DataAccess {
         address.asPointer().setWord(displacement, index, value);
     }
 
+    @Override
+    public void copyElements(Address address, int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+        address.asPointer().copyElements(displacement, srcIndex, dst, dstIndex, length);
+    }
 }

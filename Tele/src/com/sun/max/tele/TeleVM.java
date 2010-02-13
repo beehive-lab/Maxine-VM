@@ -1277,6 +1277,40 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
+    public final void copyElements(Kind kind, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
+        switch (kind.asEnum) {
+            case BYTE:
+                layoutScheme().byteArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                break;
+            case BOOLEAN:
+                layoutScheme().booleanArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                break;
+            case SHORT:
+                layoutScheme().shortArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                break;
+            case CHAR:
+                layoutScheme().charArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                break;
+            case INT:
+                layoutScheme().intArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                break;
+            case FLOAT:
+                layoutScheme().floatArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                break;
+            case LONG:
+                layoutScheme().longArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                break;
+            case DOUBLE:
+                layoutScheme().doubleArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                break;
+            case WORD:
+                layoutScheme().wordArrayLayout.copyElements(src, srcIndex, dst, dstIndex, length);
+                break;
+            default:
+                throw ProgramError.unknownCase("unknown array kind");
+        }
+    }
+
     public final TeleObject makeTeleObject(Reference reference) {
         return teleObjectFactory.make(reference);
     }

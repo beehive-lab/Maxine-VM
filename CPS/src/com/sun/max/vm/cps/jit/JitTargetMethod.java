@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
-import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -126,13 +125,11 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
     }
 
     @Override
-    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
+    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer, boolean implicitExceptionPoint) {
         if (!implicitExceptionPoint && Platform.target().instructionSet().offsetToReturnPC == 0) {
             instructionPointer = instructionPointer.minus(1);
         }
-
-        final BytecodeLocation bytecodeLocation = new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
-        return Iterators.iterator(new BytecodeLocation[]{bytecodeLocation});
+        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
     }
 
     /**
