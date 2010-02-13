@@ -69,6 +69,12 @@ import com.sun.max.vm.thread.*;
  */
 public final class StackReferenceMapPreparer {
 
+    public static final VMBooleanXXOption verifyRefMaps = VMOptions.register(new VMBooleanXXOption("-XX:-",
+            "VerifyRefMaps",
+            "Verify reference maps by performing a stack walk and checking plausibility of reference roots in " +
+            "the stack--as often as possible."),
+            MaxineVM.Phase.PRISTINE);
+
     private final Timer timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer triggeredVmThreadLocals;
     private Pointer referenceMap;
@@ -94,17 +100,6 @@ public final class StackReferenceMapPreparer {
 
     private static Pointer slotAddress(int slotIndex, Pointer vmThreadLocals) {
         return LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer().plusWords(slotIndex);
-    }
-
-    /**
-     * Gets the constant pool index that is the operand of an invoke bytecode.
-     *
-     * @param code a method's bytecode
-     * @param invokeOpcodePosition the bytecode position of an invokeXXX instruction in the method
-     * @return the constant pool index operand directly following the opcode (in 2 bytes, big endian, unsigned, see JVM spec)
-     */
-    private static int getInvokeConstantPoolIndexOperand(byte[] code, int invokeOpcodePosition) {
-        return ((code[invokeOpcodePosition + 1] & 0xff) << 8) | (code[invokeOpcodePosition + 2] & 0xff);
     }
 
     /**
@@ -308,9 +303,7 @@ public final class StackReferenceMapPreparer {
     public long prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean ignoreTopFrame) {
         timer.start();
         ignoreCurrentFrame = ignoreTopFrame;
-        triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-        referenceMap = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
-        lowestStackSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+        initRefMapFields(vmThreadLocals);
         Pointer highestStackSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
 
         // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
@@ -327,7 +320,8 @@ public final class StackReferenceMapPreparer {
         boolean lockDisabledSafepoints = false;
         if (Heap.traceRootScanning()) {
             lockDisabledSafepoints = Log.lock(); // Note: This lock serializes stack reference map preparation
-            Log.print("Preparing stack reference map for thread ");
+            Log.print(prepare ? "Preparing" : "Verifying");
+            Log.print(" stack reference map for thread ");
             Log.printThread(vmThread, false);
             Log.println(":");
             Log.print("  Highest slot: ");
@@ -359,6 +353,12 @@ public final class StackReferenceMapPreparer {
         timer.stop();
         preparationTime = timer.getLastElapsedTime();
         return preparationTime;
+    }
+
+    private void initRefMapFields(Pointer vmThreadLocals) {
+        triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+        referenceMap = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
+        lowestStackSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
     }
 
     /**
@@ -507,7 +507,8 @@ public final class StackReferenceMapPreparer {
 
     public void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex, Pointer refmapFramePointer, String label) {
         if (Heap.traceRootScanning()) {
-            Log.print("  Preparing reference map for ");
+            Log.print(prepare ? "  Preparing" : "  Verifying");
+            Log.print(" reference map for ");
             Log.print(label);
             Log.print(" of ");
             if (targetMethod.isJitCompiled()) {
@@ -683,8 +684,15 @@ public final class StackReferenceMapPreparer {
      * heuristic.
      */
     public static void verifyReferenceMapsForThisThread() {
-        VmThread current = VmThread.current();
-        current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer(), current.stackReferenceMapVerifier());
+        if (verifyRefMaps.getValue()) {
+            VmThread current = VmThread.current();
+            current.stackReferenceMapVerifier().verifyReferenceMaps(current);
+        }
+    }
+
+    private void verifyReferenceMaps(VmThread current) {
+        initRefMapFields(current.vmThreadLocals());
+        current.stackDumpStackFrameWalker().verifyReferenceMap(VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), this);
     }
 
 }
