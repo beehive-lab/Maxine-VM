@@ -42,7 +42,9 @@ public final class MappedByteBufferDataAccess extends DataAccessAdapter {
 
     public int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError {
         final int toRead = Math.min(length, dst.limit() - dstOffset);
-        final ByteBuffer srcView = (ByteBuffer) buffer.duplicate().position(src.toInt()).limit(toRead);
+        int srcViewPos = asOffset(src);
+        int srcViewLimit = srcViewPos + toRead;
+        final ByteBuffer srcView = (ByteBuffer) buffer.duplicate().position(srcViewPos).limit(srcViewLimit);
         dst.put(srcView);
         return toRead;
     }
