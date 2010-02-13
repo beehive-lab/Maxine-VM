@@ -357,6 +357,7 @@ public abstract class DataAccessAdapter implements DataAccess {
         ByteBuffer byteBuffer = ByteBuffer.allocate(size);
         Static.readFully(this, address.plus(displacement), byteBuffer);
         byteBuffer.order(byteOrder);
+        byteBuffer.position(0);
         switch (kind.asEnum) {
             case BOOLEAN: {
                 boolean[] arr = (boolean[]) dst;
