@@ -39,7 +39,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Doug Simon
  */
-public enum Bytecode implements BytecodeInfo {
+public enum Bytecode {
 
     // Standard opcodes
 

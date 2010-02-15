@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.jdk;
 
-import java.util.*;
-
 import sun.reflect.*;
 
 import com.sun.max.annotate.*;
@@ -76,8 +74,8 @@ final class JDK_sun_reflect_Reflection {
                 return true;
             }
 
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
-            if (bytecodeLocations == null) {
+            BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(instructionPointer, false);
+            if (bytecodeLocation == null) {
                 if (realFramesToSkip == 0) {
                     methodActorResult = targetMethod.classMethodActor();
                     framePointerResult = framePointer;
@@ -85,8 +83,7 @@ final class JDK_sun_reflect_Reflection {
                 }
                 realFramesToSkip--;
             } else {
-                while (bytecodeLocations.hasNext()) {
-                    final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
+                while (bytecodeLocation != null) {
                     final MethodActor classMethodActor = bytecodeLocation.classMethodActor.original();
                     if (!classMethodActor.holder().isGenerated()) {
                         if (realFramesToSkip == 0) {
@@ -96,6 +93,7 @@ final class JDK_sun_reflect_Reflection {
                         }
                         realFramesToSkip--;
                     }
+                    bytecodeLocation = bytecodeLocation.parent();
                 }
             }
             return true;

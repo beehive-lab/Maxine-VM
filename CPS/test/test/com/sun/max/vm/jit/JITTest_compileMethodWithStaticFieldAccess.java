@@ -22,7 +22,6 @@ package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -188,13 +187,4 @@ public class JITTest_compileMethodWithStaticFieldAccess extends JitCompilerTestC
     public void test_useUnresolvedStaticObjectField() {
         compileMethod(methodNameFor("Object", false));
     }
-
-    /**
-     * Testing with unresolved, resolved, and initialized class constant.
-     */
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{UnoptimizedBytecodeTemplateSource.class, ResolvedFieldAccessTemplateSource.class, InitializedStaticFieldAccessTemplateSource.class, InstrumentedBytecodeSource.class};
-    }
-
 }

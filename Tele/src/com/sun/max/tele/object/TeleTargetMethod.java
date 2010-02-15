@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.asm.*;
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.jdwp.vm.data.*;
@@ -33,11 +34,10 @@ import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -132,17 +132,12 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         teleVM.registerTeleTargetRoutine(this);
     }
 
-    private Pointer codeStart = Pointer.zero();
     private CodeLocation codeStartLocation = null;
-
     /**
      * @see TargetMethod#codeStart()
      */
     public Pointer getCodeStart() {
-        if (codeStart.isZero()) {
-            codeStart = teleVM().teleFields().TargetMethod_codeStart.readWord(reference()).asPointer();
-        }
-        return codeStart;
+        return targetMethod().codeStart();
     }
 
     /**
@@ -233,12 +228,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      * @see TargetMethod#code()
      */
     public final byte[] getCode() {
-        final Reference codeReference = teleVM().teleFields().TargetMethod_code.readReference(reference());
-        if (codeReference.isZero()) {
-            return null;
-        }
-        final TeleArrayObject teleCode = (TeleArrayObject) teleVM().makeTeleObject(codeReference);
-        return (byte[]) teleCode.shallowCopy();
+        return targetMethod().code();
     }
 
     /**
@@ -261,7 +251,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         if (instructions == null) {
             final byte[] code = getCode();
             if (code != null) {
-                instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind, getCodeStart(), code, getEncodedInlineDataDescriptors());
+                instructions = TeleDisassembler.decode(teleVM().vmConfiguration().platform().processorKind, getCodeStart(), code, targetMethod().encodedInlineDataDescriptors());
             }
         }
         return instructions;
@@ -292,12 +282,9 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      */
     public StopPositions getStopPositions() {
         if (stopPositions == null) {
-            final Reference intArrayReference = teleVM().teleFields().TargetMethod_stopPositions.readReference(reference());
-            final TeleArrayObject teleIntArrayObject = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
-            if (teleIntArrayObject == null) {
-                return null;
+            if (targetMethod().stopPositions() != null) {
+                stopPositions = new StopPositions(targetMethod().stopPositions());
             }
-            stopPositions = new StopPositions((int[]) teleIntArrayObject.shallowCopy());
         }
         return stopPositions;
     }
@@ -306,8 +293,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      * @see TargetMethod#numberOfStopPositions()
      */
     public int getNumberOfStopPositions() {
-        final StopPositions stopPositions = getStopPositions();
-        return stopPositions == null ? 0 : stopPositions.length();
+        return targetMethod().numberOfStopPositions();
     }
 
     public int getJavaStopIndex(Address address) {
@@ -334,7 +320,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         int nextCallPosition = -1;
         final StopPositions stopPositions = getStopPositions();
         if (stopPositions != null) {
-            final int numberOfCalls = getNumberOfDirectCalls() + getNumberOfIndirectCalls();
+            final int numberOfCalls = targetMethod().numberOfDirectCalls() + targetMethod().numberOfIndirectCalls();
             for (int i = 0; i < numberOfCalls; i++) {
                 final int stopPosition = stopPositions.get(i);
                 if (stopPosition > position && (nextCallPosition == -1 || stopPosition < nextCallPosition)) {
@@ -356,71 +342,33 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     /**
-     * @see TargetMethod#directCallees()
-     */
-    public Reference[] getDirectCallees() {
-        final Reference refArrayReference = teleVM().teleFields().TargetMethod_directCallees.readReference(reference());
-        final TeleArrayObject teleRefArrayObject = (TeleArrayObject) teleVM().makeTeleObject(refArrayReference);
-        if (teleRefArrayObject == null) {
-            return null;
-        }
-        final Reference[] classMethodActorReferenceArray = (Reference[]) teleRefArrayObject.shallowCopy();
-        assert classMethodActorReferenceArray.length == getNumberOfDirectCalls();
-        return classMethodActorReferenceArray;
-    }
-
-    public int getNumberOfDirectCalls() {
-        final StopPositions stopPositions = getStopPositions();
-        if (stopPositions == null) {
-            return 0;
-        }
-        return stopPositions.length() - (getNumberOfIndirectCalls() + getNumberOfSafepoints());
-    }
-
-    /**
-     * @see TargetMethod#numberOfIndirectCalls()
-     */
-    public int getNumberOfIndirectCalls() {
-        return teleVM().teleFields().TargetMethod_numberOfIndirectCalls.readInt(reference());
-    }
-
-    /**
-     * @see TargetMethod#numberOfSafepoints()
-     */
-    public int getNumberOfSafepoints() {
-        return teleVM().teleFields().TargetMethod_numberOfSafepoints.readInt(reference());
-    }
-
-     /**
-     * Gets the {@linkplain InlineDataDescriptor inline data descriptors} associated with this target method's code in the {@link TeleVM}
-     * encoded as a byte array in the format described {@linkplain InlineDataDescriptor here}.
-     *
-     * @return null if there are no inline data descriptors associated with this target method's code
-     * @see TargetMethod#encodedInlineDataDescriptors()
-     */
-    public byte[] getEncodedInlineDataDescriptors() {
-        return null;
-    }
-
-    /**
      * Gets the Java frame descriptor corresponding to a given stop index.
      *
      * @param stopIndex a stop index
      * @return the Java frame descriptor corresponding to {@code stopIndex} or null if there is no Java frame descriptor
      *         for {@code stopIndex}
      */
-    public TargetJavaFrameDescriptor getJavaFrameDescriptor(int stopIndex) {
-        return null;
+    public BytecodeLocation getBytecodeLocation(int stopIndex) {
+        TargetMethod targetMethod = targetMethod();
+        return targetMethod.getBytecodeLocationFor(targetMethod.codeStart().plus(stopPositions.get(stopIndex)), false);
     }
 
     private TargetABI abi;
+
+    private static final Map<TeleObject, TargetABI> abiCache = new HashMap<TeleObject, TargetABI>();
 
     public TargetABI getAbi() {
         if (abi == null) {
             final Reference abiReference = teleVM().teleFields().TargetMethod_abi.readReference(reference());
             final TeleObject teleTargetABI = teleVM().makeTeleObject(abiReference);
             if (teleTargetABI != null) {
-                abi = (TargetABI) teleTargetABI.deepCopy();
+                synchronized (abiCache) {
+                    abi = abiCache.get(teleTargetABI);
+                    if (abi == null) {
+                        abi = (TargetABI) teleTargetABI.deepCopy();
+                        abiCache.put(teleTargetABI, abi);
+                    }
+                }
             }
         }
         return abi;
@@ -461,27 +409,24 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     /**
-     * Cache for {@link #reducedDeepCopy()}.
+     * Cache for {@link #targetMethod()}.
      */
     private TargetMethod targetMethod;
 
-    /**
-     * Gets a special, reduced deep copy, (newly created if not in cache) that is suitable for use by
-     * {@link StackFrameWalker#targetMethodFor(Pointer)}.
-     */
-    public TargetMethod reducedDeepCopy() {
+    public TargetMethod targetMethod() {
         if (targetMethod == null) {
-            targetMethod = (TargetMethod) deepCopy(reducedDeepCopier());
+            targetMethod = (TargetMethod) deepCopy();
         }
         return targetMethod;
     }
 
-    protected DeepCopier reducedDeepCopier() {
+    @Override
+    protected DeepCopier newDeepCopier() {
         return new ReducedDeepCopier();
     }
 
     /**
-     * A copier to be used for implementing {@link TeleTargetMethod#reducedDeepCopy()}.
+     * A copier to be used for implementing {@link TeleTargetMethod#targetMethod()}.
      */
     class ReducedDeepCopier extends DeepCopier {
         public ReducedDeepCopier() {
@@ -493,8 +438,6 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         }
         private final FieldActor abi;
         private final FieldActor generator;
-
-        private Object otherCompilerScheme;
 
         @Override
         protected Object makeDeepCopy(FieldActor fieldActor, TeleObject teleObject) {

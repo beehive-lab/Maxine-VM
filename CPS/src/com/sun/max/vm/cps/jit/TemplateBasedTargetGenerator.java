@@ -57,17 +57,14 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
     }
 
     @HOSTED_ONLY
-    public void initializeTemplateTable(Class[] templateSources) {
+    public void initializeTemplateTable(Class... templateSources) {
         initializeTemplateTable(new TemplateTable(templateSources));
     }
 
     @HOSTED_ONLY
     public void initialize() {
         try {
-            // Don't want any hardcoded symbolic references to template source classes, so we use reflection to obtain the list of templates.
-            // Need to find a better way to do this.
-            final Class[] templateSources = (Class[]) TemplateTableConfiguration.class.getField("OPTIMIZED_TEMPLATE_SOURCES").get(null);
-            initializeTemplateTable(templateSources);
+            initializeTemplateTable(BytecodeTemplateSource.class);
         } catch (Throwable throwable) {
             ProgramError.unexpected("FAILED TO INITIALIZE TEMPLATE TABLE", throwable);
         }
@@ -75,11 +72,6 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
 
     protected TemplateBasedTargetGenerator(RuntimeCompilerScheme dynamicCompilerScheme, InstructionSet instructionSet) {
         super(dynamicCompilerScheme, instructionSet);
-    }
-
-    protected TemplateBasedTargetGenerator(TargetGeneratorScheme targetGeneratorScheme, InstructionSet instructionSet, TemplateTable templateTable) {
-        super(targetGeneratorScheme, instructionSet);
-        this.templateTable = templateTable;
     }
 
     protected abstract BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor);

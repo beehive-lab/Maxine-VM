@@ -150,7 +150,7 @@ public abstract class MethodActor extends MemberActor {
 
     @INLINE
     public final boolean isTemplate() {
-        return isTemplate(flags()) || holder().isTemplate();
+        return isTemplate(flags());
     }
 
     @INLINE

@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.jit;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.template.generate.*;
 
 /**
  * The purpose of this class is solely for testing cases JIT-compilation of bytecode with operands to class that aren't resolved

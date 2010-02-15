@@ -36,7 +36,7 @@ class SlotPosition {
     private final int slotIndex;
 
     SlotPosition(Kind kind, int slotIndex) {
-        this.kind = kind.toStackKind();
+        this.kind = kind.stackKind;
         this.slotIndex = slotIndex;
     }
 

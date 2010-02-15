@@ -25,7 +25,6 @@ import test.com.sun.max.vm.cps.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -185,10 +184,4 @@ public class JITTest_exceptions  extends JitCompilerTestCase {
     public void test_compile4() {
         compileMethodWithExceptionHandlers("nestedExceptions");
     }
-
-    @Override
-    protected Class[] templateSources() {
-        return TemplateTableConfiguration.OPTIMIZED_TEMPLATE_SOURCES;
-    }
-
 }

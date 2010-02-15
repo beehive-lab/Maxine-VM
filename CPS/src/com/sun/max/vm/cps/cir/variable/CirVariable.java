@@ -37,7 +37,7 @@ public abstract class CirVariable extends CirValue {
     }
 
     protected CirVariable(int serial, Kind kind) {
-        super(kind.toStackKind());
+        super(kind.stackKind);
         this.serial = serial;
     }
 

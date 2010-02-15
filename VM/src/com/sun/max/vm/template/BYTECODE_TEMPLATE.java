@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,26 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.jit.amd64;
+package com.sun.max.vm.template;
 
-import junit.framework.*;
-import test.com.sun.max.vm.jit.*;
+import java.lang.annotation.*;
 
 /**
- * Runs unit test JITTest_tableWithInitializedTemplate for AMD64.
- * @see JITTest_tableWithInitializedTemplate
- * @author Laurent Daynes
+ * Denotes a method that provides the implementation for a {@linkplain BytecodeTemplate bytecode template}.
+ *
+ * @author Doug Simon
  */
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public class AMD64JITTest_tableWithInitializedTemplate extends JITTest_tableWithInitializedTemplate {
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AMD64JITTest_tableWithInitializedTemplate.suite());
-    }
-
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(AMD64JITTest_tableWithInitializedTemplate.class.getSimpleName());
-        suite.addTestSuite(AMD64JITTest_tableWithInitializedTemplate.class);
-        return new AMD64JITTestSetup(suite);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface BYTECODE_TEMPLATE {
+    /**
+     * The template implemented by the annotated method.
+     */
+    BytecodeTemplate value();
 }

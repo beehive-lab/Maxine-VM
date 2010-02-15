@@ -608,7 +608,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 final int targetCodePosition;
                 if (bytecodePosition == -1) {
                     // Specifies the code start, at the beginning of the method prologue
-                    TargetMethod targetMethod = teleTargetMethod.reducedDeepCopy();
+                    TargetMethod targetMethod = teleTargetMethod.targetMethod();
                     targetCodePosition = AdapterGenerator.prologueSizeForCallee(targetMethod);
                 } else {
                     final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();

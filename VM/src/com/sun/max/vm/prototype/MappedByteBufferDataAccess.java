@@ -35,14 +35,16 @@ public final class MappedByteBufferDataAccess extends DataAccessAdapter {
     private final Address base;
 
     public MappedByteBufferDataAccess(MappedByteBuffer buffer, Address base, WordWidth wordWidth) {
-        super(wordWidth);
+        super(wordWidth, buffer.order());
         this.buffer = buffer;
         this.base = base;
     }
 
     public int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError {
         final int toRead = Math.min(length, dst.limit() - dstOffset);
-        final ByteBuffer srcView = (ByteBuffer) buffer.duplicate().position(src.toInt()).limit(toRead);
+        int srcViewPos = asOffset(src);
+        int srcViewLimit = srcViewPos + toRead;
+        final ByteBuffer srcView = (ByteBuffer) buffer.duplicate().position(srcViewPos).limit(srcViewLimit);
         dst.put(srcView);
         return toRead;
     }

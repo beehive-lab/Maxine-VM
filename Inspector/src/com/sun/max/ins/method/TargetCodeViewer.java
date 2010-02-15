@@ -32,7 +32,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -151,7 +150,6 @@ public abstract class TargetCodeViewer extends CodeViewer {
         isStopRow = new boolean[targetInstructionCount];
         Arrays.fill(isStopRow, false);
 
-        final BytecodeInfo[] bytecodeInfos = teleTargetRoutine instanceof TeleJitTargetMethod ? ((TeleJitTargetMethod) teleTargetRoutine).bytecodeInfos() : null;
         final int targetCodeLength = teleTargetRoutine.targetCodeRegion().size().toInt();
         final int[] positionToStopIndex = new int[targetCodeLength];
         Arrays.fill(positionToStopIndex, -1);
@@ -162,8 +160,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
             }
         }
 
-        if (bytecodeInfos != null) { // JIT method
-            final int[] bytecodeToTargetCodePositionMap = teleTargetRoutine instanceof TeleJitTargetMethod ? ((TeleJitTargetMethod) teleTargetRoutine).bytecodeToTargetCodePositionMap() : null;
+        if (teleTargetRoutine instanceof TeleJitTargetMethod) { // JIT method
+            final int[] bytecodeToTargetCodePositionMap = ((TeleJitTargetMethod) teleTargetRoutine).bytecodeToTargetCodePositionMap();
             boolean alternate = false;
             int bytecodeIndex = 0; // position in the original bytecode stream.
             for (int row = 0; row < targetInstructionCount; row++) {
@@ -174,13 +172,15 @@ public abstract class TargetCodeViewer extends CodeViewer {
                 if (bytecodePosition < bytecodeToTargetCodePositionMap.length && instructionPosition == bytecodeToTargetCodePositionMap[bytecodePosition]) {
                     isBoundaryRow[row] = true;
                     alternate = !alternate;
-                    final BytecodeInfo bytecodeInfo = bytecodeInfos[bytecodePosition];
-                    if (bytecodeInfo == null) {
-                        tagTextForRow[row] = ""; // presumably in the prolog
-                    } else {
-                        tagTextForRow[row] = bytecodePosition + ": " + bytecodeInfo.bytecode().name();
-                        rowToBytecodeLocation[row] = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
+
+                    int opcode = bytecodes[bytecodeIndex];
+                    if (opcode == Bytecode.WIDE.ordinal()) {
+                        opcode = bytecodes[bytecodeIndex + 1];
                     }
+
+                    tagTextForRow[row] = bytecodePosition + ": " + Bytecode.from(opcode).name();
+                    final BytecodeLocation bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
+                    rowToBytecodeLocation[row] = bytecodeLocation;
                     do {
                         ++bytecodeIndex;
                     } while (bytecodeIndex < bytecodeToTargetCodePositionMap.length && bytecodeToTargetCodePositionMap[bytecodeIndex] == 0);
@@ -205,16 +205,11 @@ public abstract class TargetCodeViewer extends CodeViewer {
                     isStopRow[row] = true;
                     if (teleTargetRoutine instanceof TeleTargetMethod) {
                         final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
-                        final TargetJavaFrameDescriptor javaFrameDescriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
-                        if (javaFrameDescriptor != null) {
-                            // This is a call
-                            //javaFrameDescriptor.classMethodActor;
-                            final BytecodeLocation bytecodeLocation = javaFrameDescriptor;
-                            rowToBytecodeLocation[row] = bytecodeLocation;
-                            // TODO (mlvdv) only works for non-inlined calls
-                            if (bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor())) {
-                                rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
-                            }
+                        final BytecodeLocation bytecodeLocation = teleTargetMethod.getBytecodeLocation(stopIndex);
+                        rowToBytecodeLocation[row] = bytecodeLocation;
+                        // TODO (mlvdv) only works for non-inlined calls
+                        if (bytecodeLocation != null && bytecodeLocation.classMethodActor.equals(teleTargetMethod.classMethodActor())) {
+                            rowToCalleeIndex[row] = findCalleeIndex(bytecodes, bytecodeLocation.bytecodePosition);
                         }
                     }
                 }

@@ -89,4 +89,8 @@ public abstract class PrototypeArrayLayout<Value_Type extends Value<Value_Type>>
         assert kind == value.kind();
         ProgramError.unexpected();
     }
+
+    public void copyElements(Accessor src, int srcIndex, Object dst, int dstIndex, int length) {
+        ProgramError.unexpected();
+    }
 }

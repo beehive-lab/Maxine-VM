@@ -21,7 +21,6 @@
 package com.sun.max.tele.object;
 
 import com.sun.max.tele.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -35,7 +34,6 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
         super(teleVM, jitTargetMethodReference);
     }
 
-    @Override
     public int[] bytecodeToTargetCodePositionMap() {
         final Reference intArrayReference = teleVM().teleFields().JitTargetMethod_bytecodeToTargetCodePositionMap.readReference(reference());
         final TeleArrayObject teleIntArray = (TeleArrayObject) teleVM().makeTeleObject(intArrayReference);
@@ -43,14 +41,7 @@ public class TeleJitTargetMethod extends TeleCPSTargetMethod {
     }
 
     @Override
-    public BytecodeInfo[] bytecodeInfos() {
-        final Reference infoArrayReference = teleVM().teleFields().JitTargetMethod_bytecodeInfos.readReference(reference());
-        final TeleArrayObject teleBytecodeInfoArray = (TeleArrayObject) teleVM().makeTeleObject(infoArrayReference);
-        return teleBytecodeInfoArray == null ? null : (BytecodeInfo[]) teleBytecodeInfoArray.deepCopy();
-    }
-
-    @Override
-    protected DeepCopier reducedDeepCopier() {
+    protected DeepCopier newDeepCopier() {
         return new ReducedDeepCopier().omit(teleVM().teleFields().JitTargetMethod_referenceMapEditor.fieldActor());
     }
 }

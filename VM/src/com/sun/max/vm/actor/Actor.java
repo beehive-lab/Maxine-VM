@@ -63,7 +63,6 @@ public abstract class Actor {
 
     // VM-internal flags for classes:
     public static final int INNER_CLASS =       0x00100000;
-    public static final int TEMPLATE =          0x00200000;
     public static final int GENERATED =         0x00400000;
     public static final int FINALIZER =         0x00800000;
     public static final int SPECIAL_REFERENCE = 0x01000000;
@@ -94,7 +93,7 @@ public abstract class Actor {
     public static final int VIRTUAL_TRAMPOLINE =   0x00040000;
     public static final int INTERFACE_TRAMPOLINE = 0x00080000;
     public static final int UNSAFE_CAST =          0x00100000;
-    // see above            TEMPLATE     =         0x00200000;
+    public static final int TEMPLATE =             0x00200000;
     public static final int INITIALIZER       =    0x00400000;
     public static final int C_FUNCTION =           0x01000000;
     public static final int VM_ENTRY_POINT =       0x02000000;

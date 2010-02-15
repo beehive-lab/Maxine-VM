@@ -22,7 +22,6 @@ package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -42,10 +41,4 @@ public class JITTest_compileJDKTest  extends JitCompilerTestCase {
         }
         return "";
     }
-
-    @Override
-    protected Class[] templateSources() {
-        return TemplateTableConfiguration.OPTIMIZED_TEMPLATE_SOURCES;
-    }
-
 }

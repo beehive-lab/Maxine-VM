@@ -20,10 +20,16 @@
  */
 package test.com.sun.max.vm.jit;
 
-import com.sun.max.vm.template.source.*;
+import com.sun.max.annotate.*;
 
-public class JITTest_tableWithResolvedTemplate extends TemplateTableTestCase {
-    public void test_generate() {
-        generateOptimizedTable(ResolvedBytecodeTemplateSource.class);
-    }
+/**
+ * The UnresolvedInterfaceAtCompileTime interface is used for generating template that makes no assumption about the initialization/loading state of a classes.
+ * The interface is placed in a package that escapes the package loader when building a VM prototype, so that when templates are
+ * generated, the UnresolvedAtCompileTime class is seen as not loaded nor initialized by the prototype's optimizing compiler.
+ * 
+ * @author Laurent Daynes
+ */
+@HOSTED_ONLY
+public interface UnresolvedAtCompileTimeInterface {
+    void parameterlessUnresolvedInterfaceMethod();
 }

@@ -68,7 +68,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
                     heapValue = heapValue.substring(2);
                 }
                 // Use BigInteger to handle unsigned 64-bit values that are greater than Long.MAX_VALUE
-                BigInteger bi = new BigInteger(heapValue.substring(2), radix);
+                BigInteger bi = new BigInteger(heapValue, radix);
                 heap = bi.longValue();
             } catch (NumberFormatException e) {
                 throw new BootImageException("Error parsing value of " + HEAP_PROPERTY + " system property: " + heapValue, e);

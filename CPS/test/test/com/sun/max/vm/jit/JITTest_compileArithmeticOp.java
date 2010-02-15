@@ -22,7 +22,6 @@ package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -95,11 +94,6 @@ public class JITTest_compileArithmeticOp extends JitCompilerTestCase {
 
     public void test_double_op() {
         compileMethod("perform_double_op", SignatureDescriptor.VOID);
-    }
-
-    @Override
-    protected Class[] templateSources() {
-        return TemplateTableConfiguration.OPTIMIZED_TEMPLATE_SOURCES;
     }
 
     public JITTest_compileArithmeticOp(String name) {

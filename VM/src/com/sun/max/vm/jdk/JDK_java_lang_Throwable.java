@@ -123,16 +123,16 @@ public final class JDK_java_lang_Throwable {
     }
 
     private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame, boolean atImplicitExceptionThrow) {
-        Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.ip, atImplicitExceptionThrow);
-        if (bytecodeLocations == null) {
+        BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(stackFrame.ip, atImplicitExceptionThrow);
+        if (bytecodeLocation == null) {
             addStackTraceElement(result, targetMethod.classMethodActor(), -1, stackFrame.ip.minus(targetMethod.codeStart()).toInt());
         } else {
-            while (bytecodeLocations.hasNext()) {
-                final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
+            while (bytecodeLocation != null) {
                 final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor;
                 if (classMethodActor.isApplicationVisible() || classMethodActor.isNative()) {
                     addStackTraceElement(result, classMethodActor, bytecodeLocation.sourceLineNumber(), -1);
                 }
+                bytecodeLocation = bytecodeLocation.parent();
             }
         }
     }

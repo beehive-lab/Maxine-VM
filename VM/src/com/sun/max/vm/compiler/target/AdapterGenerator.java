@@ -146,7 +146,7 @@ public abstract class AdapterGenerator {
      * @param slotSize the adapter frame slot size of a {@linkplain Kind#isCategory1() category 1} kind
      */
     public static int frameSizeFor(Kind kind, int slotSize) {
-        return kind.isCategory1() ? slotSize : 2 * slotSize;
+        return kind.isCategory1 ? slotSize : 2 * slotSize;
     }
 
     /**
@@ -175,7 +175,8 @@ public abstract class AdapterGenerator {
      *         compiler configured for the VM.
      */
     public static AdapterGenerator forCallee(TargetMethod callee) {
-        if (callee instanceof Adapter) {
+        if (callee.classMethodActor == null) {
+            // Some kind of stub
             return null;
         }
         return forCallee(callee.classMethodActor, callee.abi().callEntryPoint);

@@ -47,7 +47,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     }
 
    /**
-    * @return local {@link ClassMethodActor} corresponding the the {@link TeleVM}'s {@link ClassMethodActor} for this method.
+    * @return local {@link ClassMethodActor} corresponding the {@link TeleVM}'s {@link ClassMethodActor} for this method.
     */
     public ClassMethodActor classMethodActor() {
         return (ClassMethodActor) methodActor();

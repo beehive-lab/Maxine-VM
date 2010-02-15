@@ -22,7 +22,6 @@ package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -31,10 +30,6 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  */
 public class JITTest_compileConstantOperandPush extends JitCompilerTestCase {
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{UnoptimizedBytecodeTemplateSource.class, InstrumentedBytecodeSource.class};
-    }
 
     void perform_bipush(int a) {
         @SuppressWarnings("unused")

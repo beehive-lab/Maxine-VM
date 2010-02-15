@@ -48,7 +48,7 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
         trackingStack = true;
 
         final Kind resultKind = classMethodActor.resultKind();
-        setStack(resultKind.stackSlots());
+        setStack(resultKind.stackSlots);
         Label returnBlockLabel = synchronizedMethodTransformer.returnBlockLabel;
         if (returnBlockLabel != null) {
             returnBlockLabel.bind();

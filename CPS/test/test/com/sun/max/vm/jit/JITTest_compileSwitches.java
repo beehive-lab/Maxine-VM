@@ -24,7 +24,6 @@ import test.com.sun.max.vm.cps.*;
 import test.com.sun.max.vm.cps.bytecode.*;
 
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -63,11 +62,6 @@ public class JITTest_compileSwitches extends JitCompilerTestCase {
                 confirmPresence();
             }
         };
-    }
-
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{InstrumentedBytecodeSource.class, UnoptimizedBytecodeTemplateSource.class, ResolvedFieldAccessTemplateSource.class};
     }
 
     public void perform_tableswitch(int i) {

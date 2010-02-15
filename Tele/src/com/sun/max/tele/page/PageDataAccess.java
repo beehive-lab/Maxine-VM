@@ -46,12 +46,12 @@ public class PageDataAccess extends DataAccessAdapter {
     private final ByteBuffer writeBuffer;
 
     public PageDataAccess(TeleIO teleProcess, DataModel dataModel) {
-        super(dataModel.wordWidth);
+        super(dataModel.wordWidth, dataModel.endianness.asByteOrder());
         teleIO = teleProcess;
         ProgramError.check(Ints.isPowerOfTwoOrZero(teleIO.pageSize()), "Page size is not a power of 2: " + teleIO.pageSize());
         indexShift = Integer.numberOfTrailingZeros(teleProcess.pageSize());
         offsetMask = teleProcess.pageSize() - 1;
-        writeBuffer = ByteBuffer.wrap(new byte[Longs.SIZE]).order(dataModel.endianness.asByteOrder());
+        writeBuffer = ByteBuffer.wrap(new byte[Longs.SIZE]).order(byteOrder);
     }
 
     public int pageSize() {
@@ -100,7 +100,7 @@ public class PageDataAccess extends DataAccessAdapter {
     private Page getPage(long index) {
         Page page = indexToPage.get(index);
         if (page == null) {
-            page = new Page(teleIO, index, writeBuffer.order());
+            page = new Page(teleIO, index, byteOrder);
             indexToPage.put(index, page);
             if ((indexToPage.length() % 1000) == 0) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "Memory cache: " + indexToPage.length() + " pages");

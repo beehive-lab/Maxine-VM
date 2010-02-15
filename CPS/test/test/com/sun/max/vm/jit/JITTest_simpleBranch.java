@@ -27,8 +27,6 @@ import test.com.sun.max.vm.cps.bytecode.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
-import com.sun.max.vm.template.*;
-import com.sun.max.vm.template.generate.*;
 import com.sun.max.vm.type.*;
 
 /**

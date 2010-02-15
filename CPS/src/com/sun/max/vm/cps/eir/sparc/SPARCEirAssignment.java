@@ -322,7 +322,7 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
             case FLOATING_POINT_REGISTER: {
                 switch (sourceLocation().category()) {
                     case FLOATING_POINT_REGISTER:
-                        if (kind().isCategory1()) {
+                        if (kind().isCategory1) {
                             emitter.assembler().fmovs(sourceFloatingPointRegister().asSinglePrecision(), destinationFloatingPointRegister().asSinglePrecision());
                         } else {
                             emitter.assembler().fmovd(sourceFloatingPointRegister().asDoublePrecision(), destinationFloatingPointRegister().asDoublePrecision());

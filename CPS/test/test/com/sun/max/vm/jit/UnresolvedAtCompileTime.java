@@ -18,17 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.template.generate;
+package test.com.sun.max.vm.jit;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.template.*;
 
 /**
  * The UnresolvedAtCompileTime class is used for generating a template that makes no assumption about the
  * initialization/loading state of a classes. The class is placed in a package that escapes the package loader when
  * building a VM prototype, so that when templates are generated, the UnresolvedAtCompileTime class is seen as not
  * loaded nor initialized by the prototype's optimizing compiler.
- * 
+ *
  * @author Laurent Daynes
  */
 @HOSTED_ONLY

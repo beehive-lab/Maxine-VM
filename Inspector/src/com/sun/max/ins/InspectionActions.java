@@ -2439,7 +2439,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             teleTargetMethod.disassemble(writer);
             writer.flush();
             final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind;
-            final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
+            final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(teleTargetMethod.targetMethod().encodedInlineDataDescriptors());
             final Pointer startAddress = teleTargetMethod.getCodeStart();
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
                 @Override
@@ -4575,7 +4575,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     if (teleTargetMethod != null) {
                         final int stopIndex = teleTargetMethod.getJavaStopIndex(instructionAddress);
                         if (stopIndex >= 0) {
-                            targetJavaFrameDescriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
+                            BytecodeLocation bytecodeLocation = teleTargetMethod.getBytecodeLocation(stopIndex);
+                            if (!(bytecodeLocation instanceof TargetJavaFrameDescriptor)) {
+                                return false;
+                            }
+                            targetJavaFrameDescriptor = (TargetJavaFrameDescriptor) bytecodeLocation;
                             if (targetJavaFrameDescriptor == null) {
                                 return false;
                             }
@@ -4583,10 +4587,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                             return true;
                         }
                     }
-                    targetJavaFrameDescriptor = null;
-                    abi = null;
                 }
             }
+            targetJavaFrameDescriptor = null;
+            abi = null;
             return false;
         }
 

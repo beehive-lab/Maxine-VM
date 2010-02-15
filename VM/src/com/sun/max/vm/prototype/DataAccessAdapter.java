@@ -26,6 +26,8 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * An adapter for reading/writing bytes and other primitive data kinds from/to a source/destination
@@ -42,9 +44,11 @@ public abstract class DataAccessAdapter implements DataAccess {
     private static final int DOUBLE_SIZE = 8;
 
     private final WordWidth wordWidth;
+    public final ByteOrder byteOrder;
 
-    protected DataAccessAdapter(WordWidth wordWidth) {
+    protected DataAccessAdapter(WordWidth wordWidth, ByteOrder byteOrder) {
         this.wordWidth = wordWidth;
+        this.byteOrder = byteOrder;
     }
 
     public void readFully(Address address, ByteBuffer buffer) {
@@ -345,5 +349,53 @@ public abstract class DataAccessAdapter implements DataAccess {
     public void setWord(Address address, int displacement, int index, Word value) {
         writeWord(address.plus(displacement).plus(index * wordWidth.numberOfBytes), value);
     }
+
+    // Checkstyle: stop
+    public synchronized void copyElements(Address address, int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+        Kind kind = Kind.fromJava(dst.getClass().getComponentType());
+        int size = length * kind.width.numberOfBytes;
+        ByteBuffer byteBuffer = ByteBuffer.allocate(size);
+        Static.readFully(this, address.plus(displacement), byteBuffer);
+        byteBuffer.order(byteOrder);
+        byteBuffer.position(0);
+        switch (kind.asEnum) {
+            case BOOLEAN: {
+                boolean[] arr = (boolean[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = byteBuffer.get(i) != 0;
+                }
+                break;
+            }
+            case BYTE:     byteBuffer.get((byte[]) dst, dstIndex, length);  break;
+            case CHAR:     byteBuffer.asCharBuffer().get((char[]) dst, dstIndex, length);  break;
+            case SHORT:    byteBuffer.asShortBuffer().get((short[]) dst, dstIndex, length); break;
+            case INT:      byteBuffer.asIntBuffer().get((int[]) dst, dstIndex, length); break;
+            case FLOAT:    byteBuffer.asFloatBuffer().get((float[]) dst, dstIndex, length); break;
+            case LONG:     byteBuffer.asLongBuffer().get((long[]) dst, dstIndex, length); break;
+            case DOUBLE:   byteBuffer.asDoubleBuffer().get((double[]) dst, dstIndex, length); break;
+            case WORD: {
+                if (wordWidth == WordWidth.BITS_32) {
+                    IntBuffer intBuffer = byteBuffer.asIntBuffer();
+                    Word[] arr = (Word[]) dst;
+                    for (int i = 0; i < length; ++i) {
+                        WordArray.set(arr, dstIndex + i, Offset.fromInt(intBuffer.get()));
+                    }
+                } else if (wordWidth == WordWidth.BITS_64) {
+                    LongBuffer longBuffer = byteBuffer.asLongBuffer();
+                    Word[] arr = (Word[]) dst;
+                    for (int i = 0; i < length; ++i) {
+                        WordArray.set(arr, dstIndex + i, Offset.fromLong(longBuffer.get()));
+                    }
+                } else {
+                    throw ProgramError.unexpected();
+                }
+                break;
+            }
+            default:
+                throw FatalError.unexpected("invalid type");
+        }
+    }
+    // Checkstyle: resume
+
 }
 

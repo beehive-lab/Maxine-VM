@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.bytecode;
 
+import java.util.*;
+
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 
@@ -28,7 +30,7 @@ import com.sun.max.vm.classfile.constant.*;
  *
  * @author Doug Simon
  */
-public class BytecodeLocation {
+public class BytecodeLocation implements Iterable<BytecodeLocation> {
 
     public final ClassMethodActor classMethodActor;
     public final int bytecodePosition;
@@ -92,6 +94,31 @@ public class BytecodeLocation {
      */
     public BytecodeLocation parent() {
         return null;
+    }
+
+    public Iterator<BytecodeLocation> iterator() {
+        return new Iterator<BytecodeLocation>() {
+            BytecodeLocation current = BytecodeLocation.this;
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public BytecodeLocation next() {
+                if (current == null) {
+                    throw new NoSuchElementException();
+                }
+                BytecodeLocation cur = current;
+                current = current.parent();
+                return cur;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return current != null;
+            }
+        };
     }
 
     /**

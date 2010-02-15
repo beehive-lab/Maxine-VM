@@ -42,7 +42,7 @@ public abstract class DirValue implements IrValue {
     }
 
     public Value toStackValue() {
-        return value().kind().toStackKind().convert(value());
+        return value().kind().stackKind.convert(value());
     }
 
     public int hashCodeForBlock() {

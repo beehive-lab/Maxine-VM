@@ -26,7 +26,6 @@ import test.com.sun.max.vm.cps.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 public class JITTest_referenceMapInterpreter extends JitCompilerTestCase {
@@ -44,18 +43,4 @@ public class JITTest_referenceMapInterpreter extends JitCompilerTestCase {
         final JitTargetMethod method = compileMethod("perform_call_main", SignatureDescriptor.fromJava(Void.TYPE, PrintStream.class));
         traceBundleAndDisassemble(method);
     }
-
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{
-            UnoptimizedBytecodeTemplateSource.class,
-            BranchBytecodeSource.class,
-            ResolvedBytecodeTemplateSource.class,
-            InitializedBytecodeTemplateSource.class,
-            InstrumentedBytecodeSource.class,
-            ResolvedFieldAccessTemplateSource.class,
-            ResolvedInvokeTemplateSource.class,
-            InitializedStaticFieldAccessTemplateSource.class};
-    }
-
 }

@@ -26,7 +26,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -227,13 +226,4 @@ public class JITTest_compileMethodWithFieldAccess extends JitCompilerTestCase {
     public void test_compileUnresolvedTwoLongFieldAccess() {
         compileMethod("performTwoLongFieldAccess", UNRESOLVED_CLASS_NAME);
     }
-
-    /**
-     * Testing with unresolved, resolved, and initialized class constant.
-     */
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{UnoptimizedBytecodeTemplateSource.class, ResolvedFieldAccessTemplateSource.class, InitializedStaticFieldAccessTemplateSource.class, InstrumentedBytecodeSource.class};
-    }
-
 }

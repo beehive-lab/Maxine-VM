@@ -41,6 +41,7 @@ import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.compiler.target.*;
@@ -699,7 +700,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      */
     private class FrameProviderImpl implements FrameProvider {
 
-        private TargetJavaFrameDescriptor frameDescriptor;
+        private BytecodeLocation bytecodeLocation;
         private ClassMethodActor classMethodActor;
         private int position;
         private StackFrame stackFrame;
@@ -708,13 +709,13 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         private VMValue[] vmValues;
         private boolean isTopFrame;
 
-        public FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, TargetJavaFrameDescriptor descriptor) {
-            this(isTopFrame, targetMethod, stackFrame, descriptor, descriptor.classMethodActor, 0); //descriptor.bytecodeLocation().());
+        public FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, BytecodeLocation bytecodeLocation) {
+            this(isTopFrame, targetMethod, stackFrame, bytecodeLocation, bytecodeLocation.classMethodActor, 0); //descriptor.bytecodeLocation().());
         }
 
-        public FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, TargetJavaFrameDescriptor descriptor, ClassMethodActor classMethodActor, int position) {
+        public FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, BytecodeLocation bytecodeLocation, ClassMethodActor classMethodActor, int position) {
             this.stackFrame = stackFrame;
-            this.frameDescriptor = descriptor;
+            this.bytecodeLocation = bytecodeLocation;
             this.classMethodActor = classMethodActor;
             this.position = position;
             this.targetMethod = targetMethod;
@@ -751,18 +752,18 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         private Value getValueImpl(int slot) {
             TargetLocation l = null;
 
-            if (frameDescriptor == null) {
+            if (!(bytecodeLocation instanceof TargetJavaFrameDescriptor)) {
                 final TargetLocation[] targetLocations = stackFrame.targetMethod().abi().getParameterTargetLocations(stackFrame.targetMethod().classMethodActor().getParameterKinds());
                 if (slot >= targetLocations.length) {
                     return IntValue.from(0xbadbabe);
                 }
                 l = targetLocations[slot];
             } else {
-
-                if (slot >= frameDescriptor.locals.length) {
+                TargetJavaFrameDescriptor descriptor = (TargetJavaFrameDescriptor) bytecodeLocation;
+                if (slot >= descriptor.locals.length) {
                     return IntValue.from(0xbadbabe);
                 }
-                l = frameDescriptor.locals[slot];
+                l = descriptor.locals[slot];
             }
 
             System.out.println("STACKFRAME ACCESS at " + slot + ", target=" + l);
@@ -848,7 +849,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         }
 
         public void setValue(int slot, VMValue value) {
-            final TargetLocation targetLocation = frameDescriptor.locals[slot];
+            final TargetLocation targetLocation = bytecodeLocation instanceof TargetJavaFrameDescriptor ? ((TargetJavaFrameDescriptor) bytecodeLocation).locals[slot] : null;
 
             // TODO: Implement writing to stack frames.
             LOGGER.warning("Stackframe write at " + slot + ", targetLocation=" + targetLocation + ", doing nothing");
@@ -918,7 +919,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                 }
                 if (index != -1) {
                     final int stopIndex = index;
-                    TargetJavaFrameDescriptor descriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
+                    BytecodeLocation descriptor = teleTargetMethod.getBytecodeLocation(stopIndex);
 
                     if (descriptor == null) {
                         LOGGER.info("WARNING: No Java frame descriptor found for Java stop " + stopIndex);

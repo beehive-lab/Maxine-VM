@@ -25,7 +25,6 @@ import test.com.sun.max.vm.cps.bytecode.*;
 
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -139,17 +138,4 @@ public class JITTest_compileDynamicMethodInvocation extends JitCompilerTestCase 
     public void test_compileUnresolvedInterfaceCallWithParams() {
         compileMethod("performUnresolvedInterfaceCallWithParams", Bytecode.INVOKEINTERFACE, UnresolvedInterface.class);
     }
-
-    /**
-     * Testing with unresolved and resolved dynamic method invocation.
-     */
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{
-            UnoptimizedBytecodeTemplateSource.class,
-            ResolvedInvokeTemplateSource.class,
-            ResolvedFieldAccessTemplateSource.class,
-            InstrumentedBytecodeSource.class};
-    }
-
 }
