@@ -108,7 +108,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     @Override
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
+        if (mouseEvent.getClickCount() > 1 && watchpointsEnabled()) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -127,7 +127,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
-        if (maxVM().watchpointsEnabled()) {
+        if (watchpointsEnabled()) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
@@ -153,7 +153,7 @@ public final class ArrayElementsTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         // Sets table selection to the memory word, if any, that is the current user focus.
-        final Address address = inspection().focus().address();
+        final Address address = focus().address();
         updateSelection(tableModel.findRow(address));
     }
 
@@ -165,7 +165,7 @@ public final class ArrayElementsTable extends InspectorTable {
         if (!e.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0 && row < tableModel.getRowCount()) {
-                inspection().focus().setAddress(tableModel.getAddress(row));
+                focus().setAddress(tableModel.getAddress(row));
             }
         }
     }

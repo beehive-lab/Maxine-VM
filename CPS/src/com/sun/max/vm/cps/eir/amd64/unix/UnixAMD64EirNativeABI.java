@@ -44,9 +44,9 @@ public class UnixAMD64EirNativeABI extends UnixAMD64EirCFunctionABI {
         final TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> originalTargetABI = super.targetABI();
         final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> registerRoleAssignment =
             new RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister>(
-                            originalTargetABI.registerRoleAssignment(),
+                            originalTargetABI.registerRoleAssignment,
                             ABI_FRAME_POINTER,
-                            originalTargetABI.registerRoleAssignment().integerRegisterActingAs(CPU_FRAME_POINTER));
+                            originalTargetABI.registerRoleAssignment.integerRegisterActingAs(CPU_FRAME_POINTER));
         initTargetABI(new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI, registerRoleAssignment, CallEntryPoint.C_ENTRY_POINT));
     }
 

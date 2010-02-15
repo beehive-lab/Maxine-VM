@@ -59,7 +59,7 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
         JLabel label = this;
         String labelText = "";
         String toolTipText = "";
-        setFont(inspection().style().defaultFont());
+        setFont(style().defaultFont());
         // See if any registers point here
         if (thread != null) {
             final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
@@ -69,18 +69,18 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
             } else {
                 final String registerNameList = teleIntegerRegisters.findAsNameList(memoryRegion);
                 if (registerNameList.isEmpty()) {
-                    label.setForeground(inspection().style().memoryDefaultTagTextColor());
+                    label.setForeground(style().memoryDefaultTagTextColor());
                 } else {
                     labelText += registerNameList + "-->";
                     toolTipText += "Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location";
-                    setForeground(inspection().style().memoryRegisterTagTextColor());
+                    setForeground(style().memoryRegisterTagTextColor());
                 }
             }
         }
         // If a watchpoint is currently triggered here, add a pointer icon.
-        if (inspection().maxVM().maxVMState().watchpointEvent() != null && memoryRegion.contains(inspection().maxVM().maxVMState().watchpointEvent().address())) {
-            label.setIcon(inspection().style().debugIPTagIcon());
-            label.setForeground(inspection().style().debugIPTagColor());
+        if (maxVM().maxVMState().watchpointEvent() != null && memoryRegion.contains(inspection().maxVM().maxVMState().watchpointEvent().address())) {
+            label.setIcon(style().debugIPTagIcon());
+            label.setForeground(style().debugIPTagColor());
         } else {
             label.setIcon(null);
             label.setForeground(null);
@@ -89,10 +89,10 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
             toolTipText += "  " + (watchpoints.length() == 1 ? watchpoints.first().toString() : "multiple watchpoints");
             label.setText(labelText);
             label.setToolTipText(toolTipText);
-            label.setBorder(inspection().style().debugDisabledTargetBreakpointTagBorder());
+            label.setBorder(style().debugDisabledTargetBreakpointTagBorder());
             for (MaxWatchpoint watchpoint : watchpoints) {
                 if (watchpoint.isEnabled()) {
-                    label.setBorder(inspection().style().debugEnabledTargetBreakpointTagBorder());
+                    label.setBorder(style().debugEnabledTargetBreakpointTagBorder());
                     break;
                 }
             }

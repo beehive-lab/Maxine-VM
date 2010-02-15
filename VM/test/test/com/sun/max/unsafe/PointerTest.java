@@ -42,7 +42,7 @@ public class PointerTest extends WordTestCase {
         super.setUp();
         final Size size = Size.fromInt(4 * 8192);
         base = Memory.mustAllocate(size);
-        Memory.clearBytes(base, size);
+        Memory.clearWords(base, size.dividedBy(Word.size()).toInt());
 
         // We will test a bunch of differently aligned pointers:
         final int nPointers = 25;

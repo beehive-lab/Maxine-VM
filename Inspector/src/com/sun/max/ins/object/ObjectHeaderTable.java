@@ -93,13 +93,13 @@ public final class ObjectHeaderTable extends InspectorTable {
         this.tableModel = new ObjectHeaderTableModel(inspection, teleObject.origin());
         this.columnModel = new ObjectHeaderColumnModel(instanceViewPreferences);
         configureMemoryTable(tableModel, columnModel);
-        setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, inspection.style().defaultBorderColor()));
+        setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
         updateFocusSelection();
     }
 
     @Override
     protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && maxVM().watchpointsEnabled()) {
+        if (mouseEvent.getClickCount() > 1 && watchpointsEnabled()) {
             final InspectorAction action = new ToggleObjectHeaderWatchpointAction(inspection(), null, row);
             action.perform();
         }
@@ -107,7 +107,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
-        if (maxVM().watchpointsEnabled()) {
+        if (watchpointsEnabled()) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new ToggleObjectHeaderWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             final HeaderField headerField = headerFields[row];
@@ -123,7 +123,7 @@ public final class ObjectHeaderTable extends InspectorTable {
     @Override
     public void updateFocusSelection() {
         // Sets table selection to the memory word, if any, that is the current user focus.
-        final Address address = inspection().focus().address();
+        final Address address = focus().address();
         updateSelection(tableModel.findRow(address));
     }
 
@@ -135,7 +135,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         if (!e.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0 && row < tableModel.getRowCount()) {
-                inspection().focus().setAddress(tableModel.getAddress(row));
+                focus().setAddress(tableModel.getAddress(row));
             }
         }
     }
@@ -340,7 +340,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                         @Override
                         public Value fetchValue() {
                             final TeleHub teleHub = tableModel.teleHub();
-                            return teleHub == null ? WordValue.ZERO : WordValue.from(inspection().maxVM().readWord(teleObject.origin().plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer());
+                            return teleHub == null ? WordValue.ZERO : WordValue.from(maxVM().readWord(teleObject.origin().plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer());
                         }
                     };
                 } else if (headerField == HeaderField.MISC) {

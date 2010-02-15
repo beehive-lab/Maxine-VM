@@ -61,7 +61,7 @@ public class Object_new {
 
     public static void main(String[] args) {
         if (args.length != 3) {
-            System.out.println("ERROR: call java Simple <nr threads> <size> <nr allocs>");
+            System.out.println("Usage: " + Object_new.class.getName() + " <nr threads> <bytes per allocation> <nr allocations>");
             System.exit(1);
         }
 
@@ -73,7 +73,7 @@ public class Object_new {
         barrier2 = new Barrier(nrThreads + 1);
 
         for (int i = 0; i < nrThreads; i++) {
-            new Thread(new AllocationThread(allocSize, nrAllocs, i)).start();
+            new Thread(new AllocationThread(allocSize, nrAllocs / nrThreads, i)).start();
         }
         long start = 0;
         try {

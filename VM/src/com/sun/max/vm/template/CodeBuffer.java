@@ -24,21 +24,27 @@ import java.io.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
- * Code buffer abstraction used by template-based code generator. It provides the illusion of an append-only, linear byte buffer
+ * Code buffer used by template-based code generator. It provides the illusion of an append-only, linear byte buffer
  * to template-based code generators. A code buffer is assumed to be private to a code generator and does not synchronize any
  * operations. Code generators can only emit templates, patch arbitrary positions in the emitted code and obtain the current
  * end of the buffer.
  *
  * @author Laurent Daynes
  */
-public abstract class CodeBuffer {
+public final class CodeBuffer {
     protected int currentPosition;
+    private byte[] buffer;
 
-    public CodeBuffer() {
-        currentPosition = 0;
+    public CodeBuffer(int capacityInBytes) {
+        if (capacityInBytes < 0) {
+            throw new IllegalArgumentException("Negative buffer size: " + capacityInBytes);
+        }
+        buffer = new byte[capacityInBytes];
     }
 
     /**
@@ -46,7 +52,7 @@ public abstract class CodeBuffer {
      * @return the current position
      */
     @INLINE
-    public final int currentPosition() {
+    public int currentPosition() {
         return currentPosition;
     }
 
@@ -56,16 +62,9 @@ public abstract class CodeBuffer {
      *
      * @param template to emit in the code buffer
      */
-    public void emit(CompiledBytecodeTemplate template) {
-        emit(template.targetMethod.code());
+    public void emit(TargetMethod template) {
+        emit(template.code());
     }
-
-    /**
-     * Copy the bytes emitted in the code buffer to the byte array provided.
-     *
-     * @param toArray the array into which to copy the bytes
-     */
-    public abstract void copyTo(byte[] toArray);
 
     private OutputStream outputStream;
 
@@ -96,11 +95,57 @@ public abstract class CodeBuffer {
         }
     }
 
-    public abstract void emit(byte b);
-    public abstract void emit(byte[] bytes);
-    public abstract void reserve(int numBytes);
+    private void expand(int minSize) {
+        int newBufferCapacity = buffer.length << 1;
+        if (newBufferCapacity < minSize) {
+            newBufferCapacity += minSize;
+        }
+        final byte[] newBuffer = new byte[newBufferCapacity];
+        Bytes.copy(buffer, newBuffer, currentPosition);
+        buffer = newBuffer;
+    }
 
-    public abstract void fix(int startPosition, BranchTargetModifier modifier, int disp32) throws AssemblyException;
+    /**
+     * Copy the bytes emitted in the code buffer to the byte array provided.
+     *
+     * @param toArray the array into which to copy the bytes
+     */
+    public void copyTo(byte[] toArray) {
+        final int length = toArray.length;
+        assert length <= currentPosition;  // trusted client
+        Bytes.copy(buffer, toArray, length);
+    }
+
+    public void emit(byte b) {
+        final int nextCurrentOffset = currentPosition + 1;
+        if (nextCurrentOffset > buffer.length) {
+            expand(nextCurrentOffset);
+        }
+        buffer[currentPosition] = b;
+        currentPosition = nextCurrentOffset;
+    }
+
+    public void emit(byte[] bytes) {
+        final int len = bytes.length;
+        final int nextCurrentOffset = currentPosition + len;
+        if (nextCurrentOffset > buffer.length) {
+            expand(nextCurrentOffset);
+        }
+        Bytes.copy(bytes, 0, buffer, currentPosition, len);
+        currentPosition = nextCurrentOffset;
+    }
+
+    public void reserve(int numBytes) {
+        final int nextCurrentOffset = currentPosition + numBytes;
+        if (nextCurrentOffset > buffer.length) {
+            expand(nextCurrentOffset);
+        }
+        currentPosition = nextCurrentOffset;
+    }
+
+    public void fix(int startPosition, BranchTargetModifier modifier, int disp32)  throws AssemblyException {
+        modifier.fix(buffer, startPosition, disp32);
+    }
 
     /**
      * Replaces code at a specified position.
@@ -111,9 +156,20 @@ public abstract class CodeBuffer {
      * @param size the size of the replacement code
      * @throws AssemblyException
      */
-    public abstract void fix(int startPosition, byte[] code, int position, int size) throws AssemblyException;
+    public void fix(int startPosition, byte[] code, int position, int size) throws AssemblyException {
+        if (startPosition + size > buffer.length) {
+            throw new AssemblyException("CodeBuffer overflow. Incorrect fix specification");
+        }
+        Bytes.copy(code, position, buffer, startPosition, size);
+    }
 
-    public abstract void fix(int position, byte b) throws AssemblyException;
+    public void fix(int position, byte b) throws AssemblyException {
+        if (position >= buffer.length) {
+            throw new AssemblyException("CodeBuffer overflow. Incorrect fix specification");
+        }
+        buffer[position] = b;
+    }
+
 
     /**
      * Replaces code at a specified position.

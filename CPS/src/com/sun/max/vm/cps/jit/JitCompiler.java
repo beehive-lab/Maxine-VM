@@ -21,13 +21,9 @@
 package com.sun.max.vm.cps.jit;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
  * Template based JIT compiler.
@@ -61,6 +57,11 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
         }
     }
 
+    @Override
+    public CallEntryPoint calleeEntryPoint() {
+        return CallEntryPoint.JIT_ENTRY_POINT;
+    }
+
     protected abstract TemplateBasedTargetGenerator targetGenerator();
 
     public JitTargetMethod compile(ClassMethodActor classMethodActor) {
@@ -68,16 +69,5 @@ public abstract class JitCompiler extends AbstractVMScheme implements RuntimeCom
             init();
         }
         return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor);
-    }
-
-    @HOSTED_ONLY
-    public void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
-        try {
-            final BytecodeVisitor bytecodeVisitor = new InvokedMethodRecorder(targetMethod.classMethodActor(), directCalls, virtualCalls, interfaceCalls);
-            final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodeVisitor);
-            bytecodeScanner.scan(targetMethod.classMethodActor());
-        } catch (Throwable throwable) {
-            ProgramError.unexpected("could not scan byte code", throwable);
-        }
     }
 }

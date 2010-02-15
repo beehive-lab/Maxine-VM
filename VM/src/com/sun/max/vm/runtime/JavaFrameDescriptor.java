@@ -21,7 +21,6 @@
 package com.sun.max.vm.runtime;
 
 import java.security.*;
-import java.util.*;
 import java.util.Arrays;
 
 import com.sun.max.lang.*;
@@ -104,31 +103,6 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
             j = j.parent;
         }
         return result;
-    }
-
-    /**
-     * Gets an iterator over all the frames in the sequence of frames resulting from inlining that are terminated by
-     * this frame. That is, this frame is the inner most call in the inlined sequence. The first element produced by the
-     * return iterator is this frame, the next is this frame's {@linkplain #parent() parent} and so on.
-     */
-    public Iterator<JavaFrameDescriptor<Slot_Type>> inlinedFrames() {
-        return new Iterator<JavaFrameDescriptor<Slot_Type>>() {
-            JavaFrameDescriptor<Slot_Type> next = JavaFrameDescriptor.this;
-            public boolean hasNext() {
-                return next != null;
-            }
-            public JavaFrameDescriptor<Slot_Type> next() {
-                if (!hasNext()) {
-                    throw new NoSuchElementException();
-                }
-                final JavaFrameDescriptor<Slot_Type> next = this.next;
-                this.next = this.next.parent;
-                return next;
-            }
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
     }
 
     public final int maxSlots() {

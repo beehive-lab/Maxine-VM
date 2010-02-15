@@ -21,7 +21,6 @@
 package com.sun.max.vm.debug;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -101,7 +100,7 @@ public final class Disassemble {
      * @param targetMethod the target method whose code is to be disassembled
      */
     public static void disassemble(OutputStream out, final TargetMethod targetMethod) {
-        final ProcessorKind processorKind = targetMethod.compilerScheme.vmConfiguration().platform().processorKind;
+        final ProcessorKind processorKind = Platform.target().processorKind;
         final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
         final Pointer startAddress = targetMethod.codeStart();
         final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
@@ -111,12 +110,7 @@ public final class Disassemble {
                 if (string.startsWith("call ")) {
 
                     final Pointer instructionPointer = startAddress.plus(disassembledObject.startPosition());
-                    final Iterator<? extends BytecodeLocation> bytecodeLocationsFor = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
-                    BytecodeLocation bytecodeLocation = null;
-                    if (bytecodeLocationsFor != null && bytecodeLocationsFor.hasNext()) {
-                        bytecodeLocation = bytecodeLocationsFor.next();
-                    }
-
+                    BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(instructionPointer, false);
                     if (bytecodeLocation != null) {
                         final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
                         if (methodRef != null) {

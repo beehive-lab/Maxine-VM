@@ -27,6 +27,7 @@ import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.asm.amd64.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.VMRegister.*;
@@ -111,8 +112,8 @@ public final class AMD64EirTargetEmitter extends EirTargetEmitter<AMD64Assembler
         return framePointer;
     }
 
-    public AMD64EirTargetEmitter(AMD64EirABI abi, int frameSize, Safepoint safepoint, AdapterFrameGenerator<AMD64Assembler> adapterFrameGenerator) {
-        super(new AMD64Assembler(), abi, frameSize, safepoint, WordWidth.BITS_64, adapterFrameGenerator);
+    public AMD64EirTargetEmitter(AMD64EirABI abi, int frameSize, Safepoint safepoint, AdapterGenerator adapterGenerator) {
+        super(new AMD64Assembler(), abi, frameSize, safepoint, WordWidth.BITS_64, adapterGenerator);
         stackPointer = abi.targetABI().stackPointer();
         framePointer = abi.targetABI().framePointer();
     }

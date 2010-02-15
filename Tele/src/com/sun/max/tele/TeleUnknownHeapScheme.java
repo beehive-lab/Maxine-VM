@@ -43,8 +43,8 @@ public final class TeleUnknownHeapScheme extends AbstractTeleVMHolder implements
         return null;
     }
 
-    public Sequence<MaxInspectableMethod> inspectableMethods() {
-        return Sequence.Static.empty(MaxInspectableMethod.class);
+    public Sequence<MaxCodeLocation> inspectableMethods() {
+        return Sequence.Static.empty(MaxCodeLocation.class);
     }
 
     public Offset gcForwardingPointerOffset() {

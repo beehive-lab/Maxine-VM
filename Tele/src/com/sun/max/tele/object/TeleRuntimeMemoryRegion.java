@@ -119,7 +119,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
     }
 
     public boolean sameAs(MemoryRegion otherMemoryRegion) {
-        return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
+        return Util.equal(this, otherMemoryRegion);
     }
 
     public MemoryUsage getUsage() {

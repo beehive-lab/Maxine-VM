@@ -257,90 +257,94 @@ public final class VMOptions {
      * @param help the help text for the option
      */
     @HOSTED_ONLY
-    public static void addFieldOption(String prefix, String name, Field field, String help) throws IllegalArgumentException, IllegalAccessException {
-        MaxineVM.Phase phase = MaxineVM.Phase.STARTING;
-        assert Modifier.isStatic(field.getModifiers());
-        assert !Modifier.isFinal(field.getModifiers());
-        final Class<?> fieldType = field.getType();
-        final ClassActor holder = ClassActor.fromJava(field.getDeclaringClass());
-        final FieldActor fieldActor = FieldActor.fromJava(field);
-        if (MaxineVM.isHosted()) {
-            field.setAccessible(true);
-        }
-        if (fieldType == boolean.class) {
-            boolean defaultValue = field.getBoolean(null);
-            VMBooleanXXOption option = new VMBooleanXXOption(prefix + (defaultValue ? '+' : '-'), name, help) {
-                @Override
-                public boolean parseValue(Pointer optionValue) {
-                    boolean result = super.parseValue(optionValue);
-                    if (result) {
-                        if (MaxineVM.isHosted()) {
-                            setFieldValue(fieldActor, getValue());
-                        } else {
-                            Reference.fromJava(holder.staticTuple()).writeBoolean(fieldActor.offset(), getValue());
+    public static void addFieldOption(String prefix, String name, Field field, String help) {
+        try {
+            MaxineVM.Phase phase = MaxineVM.Phase.STARTING;
+            assert Modifier.isStatic(field.getModifiers());
+            assert !Modifier.isFinal(field.getModifiers());
+            final Class<?> fieldType = field.getType();
+            final ClassActor holder = ClassActor.fromJava(field.getDeclaringClass());
+            final FieldActor fieldActor = FieldActor.fromJava(field);
+            if (MaxineVM.isHosted()) {
+                field.setAccessible(true);
+            }
+            if (fieldType == boolean.class) {
+                boolean defaultValue = field.getBoolean(null);
+                VMBooleanXXOption option = new VMBooleanXXOption(prefix + (defaultValue ? '+' : '-'), name, help) {
+                    @Override
+                    public boolean parseValue(Pointer optionValue) {
+                        boolean result = super.parseValue(optionValue);
+                        if (result) {
+                            if (MaxineVM.isHosted()) {
+                                setFieldValue(fieldActor, getValue());
+                            } else {
+                                Reference.fromJava(holder.staticTuple()).writeBoolean(fieldActor.offset(), getValue());
+                            }
+                            return true;
                         }
-                        return true;
+                        return false;
                     }
-                    return false;
-                }
-            };
-            register(option, phase);
-        } else if (fieldType == int.class) {
-            int defaultValue = field.getInt(null);
-            VMIntOption option = new VMIntOption(prefix + name + "=", defaultValue, help) {
-                @Override
-                public boolean parseValue(Pointer optionValue) {
-                    boolean result = super.parseValue(optionValue);
-                    if (result) {
-                        if (MaxineVM.isHosted()) {
-                            setFieldValue(fieldActor, getValue());
-                        } else {
-                            Reference.fromJava(holder.staticTuple()).writeInt(fieldActor.offset(), getValue());
+                };
+                register(option, phase);
+            } else if (fieldType == int.class) {
+                int defaultValue = field.getInt(null);
+                VMIntOption option = new VMIntOption(prefix + name + "=", defaultValue, help) {
+                    @Override
+                    public boolean parseValue(Pointer optionValue) {
+                        boolean result = super.parseValue(optionValue);
+                        if (result) {
+                            if (MaxineVM.isHosted()) {
+                                setFieldValue(fieldActor, getValue());
+                            } else {
+                                Reference.fromJava(holder.staticTuple()).writeInt(fieldActor.offset(), getValue());
+                            }
+                            return true;
                         }
-                        return true;
+                        return result;
                     }
-                    return result;
-                }
-            };
-            register(option, phase);
-        } else if (fieldType == float.class) {
-            float defaultValue = field.getFloat(null);
-            VMFloatOption option = new VMFloatOption(prefix + name + "=", defaultValue, help) {
-                @Override
-                public boolean parseValue(Pointer optionValue) {
-                    boolean result = super.parseValue(optionValue);
-                    if (result) {
-                        if (MaxineVM.isHosted()) {
-                            setFieldValue(fieldActor, getValue());
-                        } else {
-                            Reference.fromJava(holder.staticTuple()).writeFloat(fieldActor.offset(), getValue());
+                };
+                register(option, phase);
+            } else if (fieldType == float.class) {
+                float defaultValue = field.getFloat(null);
+                VMFloatOption option = new VMFloatOption(prefix + name + "=", defaultValue, help) {
+                    @Override
+                    public boolean parseValue(Pointer optionValue) {
+                        boolean result = super.parseValue(optionValue);
+                        if (result) {
+                            if (MaxineVM.isHosted()) {
+                                setFieldValue(fieldActor, getValue());
+                            } else {
+                                Reference.fromJava(holder.staticTuple()).writeFloat(fieldActor.offset(), getValue());
+                            }
+                            return true;
                         }
-                        return true;
+                        return result;
                     }
-                    return result;
-                }
-            };
-            register(option, phase);
-        } else if (fieldType == String.class) {
-            String defaultValue = (String) field.get(null);
-            VMStringOption option = new VMStringOption(prefix + name + "=", false, defaultValue, help) {
-                @Override
-                public boolean parseValue(Pointer optionValue) {
-                    boolean result = super.parseValue(optionValue);
-                    if (result) {
-                        if (MaxineVM.isHosted()) {
-                            setFieldValue(fieldActor, getValue());
-                        } else {
-                            Reference.fromJava(holder.staticTuple()).writeReference(fieldActor.offset(), Reference.fromJava(getValue()));
+                };
+                register(option, phase);
+            } else if (fieldType == String.class) {
+                String defaultValue = (String) field.get(null);
+                VMStringOption option = new VMStringOption(prefix + name + "=", false, defaultValue, help) {
+                    @Override
+                    public boolean parseValue(Pointer optionValue) {
+                        boolean result = super.parseValue(optionValue);
+                        if (result) {
+                            if (MaxineVM.isHosted()) {
+                                setFieldValue(fieldActor, getValue());
+                            } else {
+                                Reference.fromJava(holder.staticTuple()).writeReference(fieldActor.offset(), Reference.fromJava(getValue()));
+                            }
+                            return true;
                         }
-                        return true;
+                        return result;
                     }
-                    return result;
-                }
-            };
-            register(option, phase);
-        } else {
-            throw new RuntimeException("Field type unsupported by VM options");
+                };
+                register(option, phase);
+            } else {
+                throw new RuntimeException("Field type unsupported by VM options");
+            }
+        } catch (Exception e) {
+            throw ProgramError.unexpected("Error creating VM option for " + field, e);
         }
     }
 

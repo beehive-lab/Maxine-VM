@@ -89,15 +89,31 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         return inspection;
     }
 
-    public MaxVM maxVM() {
+    public final MaxVM maxVM() {
         return inspection.maxVM();
     }
 
     public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
+        return inspection.maxVMState();
     }
 
-    public InspectorGUI gui() {
+    public final MaxCodeManager codeManager() {
+        return inspection.codeManager();
+    }
+
+    public final MaxBreakpointFactory breakpointFactory() {
+        return inspection.breakpointFactory();
+    }
+
+    public final MaxWatchpointFactory watchpointFactory() {
+        return inspection.watchpointFactory();
+    }
+
+    public final boolean watchpointsEnabled() {
+        return inspection.watchpointsEnabled();
+    }
+
+    public final InspectorGUI gui() {
         return inspection.gui();
     }
 
@@ -109,7 +125,7 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         return inspection.focus();
     }
 
-    public InspectionActions actions() {
+    public final InspectionActions actions() {
         return inspection.actions();
     }
 

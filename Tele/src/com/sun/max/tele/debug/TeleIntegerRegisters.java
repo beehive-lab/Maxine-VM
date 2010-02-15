@@ -101,8 +101,8 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      * @return the value of the register denoted by {@code role} and {@code targetABI}
      */
     public Pointer get(VMRegister.Role role, TargetABI targetABI) {
-        final TargetABI abi = targetABI == null ? vmConfiguration.targetABIsScheme().nativeABI() : targetABI;
-        final Symbol register = abi.registerRoleAssignment().integerRegisterActingAs(role);
+        final TargetABI abi = targetABI == null ? vmConfiguration.targetABIsScheme().nativeABI : targetABI;
+        final Symbol register = abi.registerRoleAssignment.integerRegisterActingAs(role);
         return get(register).asPointer();
     }
 }

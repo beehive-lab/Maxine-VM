@@ -34,7 +34,6 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
@@ -132,7 +131,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                         final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
                         viewBreakpointsMenuItem.setText("View Breakpoints");
                         menu.add(viewBreakpointsMenuItem);
-                        if (maxVM().watchpointsEnabled()) {
+                        if (watchpointsEnabled()) {
                             menu.add(actions().genericWatchpointMenuItems());
                             final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
                             viewWatchpointsMenuItem.setText("View Watchpoints");
@@ -264,7 +263,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         frame.pack();
         gui().addInspector(this);
         inspection().addInspectionListener(this);
-        inspection().focus().addListener(this);
+        focus().addListener(this);
         final SaveSettingsListener saveSettingsListener = saveSettingsListener();
         if (saveSettingsListener != null) {
             inspection().settings().addSaveSettingsListener(saveSettingsListener);
@@ -281,7 +280,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         frame.pack();
         gui().addInspector(this);
         inspection().addInspectionListener(this);
-        inspection().focus().addListener(this);
+        focus().addListener(this);
         final SaveSettingsListener saveSettingsListener = saveSettingsListener();
         if (saveSettingsListener != null) {
             inspection().settings().addSaveSettingsListener(saveSettingsListener);
@@ -419,7 +418,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
      */
     protected void inspectorClosing() {
         inspection().removeInspectionListener(this);
-        inspection().focus().removeListener(this);
+        focus().removeListener(this);
         final SaveSettingsListener saveSettingsListener = saveSettingsListener();
         if (saveSettingsListener != null) {
             inspection().settings().removeSaveSettingsListener(saveSettingsListener);
@@ -442,7 +441,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void vmProcessTerminated() {
     }
 
-    public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
+    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
     }
 
     public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxeThread) {

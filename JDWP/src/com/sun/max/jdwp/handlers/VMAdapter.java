@@ -24,7 +24,7 @@ import com.sun.max.jdwp.vm.proxy.*;
 
 public class VMAdapter implements VMListener {
 
-    public void breakpointHit(ThreadProvider thread, CodeLocation location) {
+    public void breakpointHit(ThreadProvider thread, JdwpCodeLocation location) {
     }
 
     public void classPrepared(ThreadProvider thread, ClassProvider klass) {
@@ -45,6 +45,6 @@ public class VMAdapter implements VMListener {
     public void vmStarted() {
     }
 
-    public void singleStepMade(ThreadProvider thread, CodeLocation location) {
+    public void singleStepMade(ThreadProvider thread, JdwpCodeLocation location) {
     }
 }

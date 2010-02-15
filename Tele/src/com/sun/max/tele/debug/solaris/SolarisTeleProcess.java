@@ -188,7 +188,7 @@ public final class SolarisTeleProcess extends TeleProcess {
     private native boolean nativeDeactivateWatchpoint(long processHandle, long start, long size);
 
     @Override
-    public int maximumWatchpointCount() {
+    public int platformWatchpointCount() {
         // not sure how many are supported; we'll try this
         return Integer.MAX_VALUE;
     }

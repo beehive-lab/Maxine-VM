@@ -150,4 +150,7 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
         mirror.writeElement(kind, index, value);
     }
 
+    public void copyElements(Accessor src, int srcIndex, Object dst, int dstIndex, int length) {
+        src.copyElements(originDisplacement(), srcIndex, dst, dstIndex, length);
+    }
 }

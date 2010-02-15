@@ -147,7 +147,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private void assign(CirVariable variable, CirValue value) {
-        assert variable.kind().toStackKind() == value.kind().toStackKind() : incompatibleTypesErrorMessage(variable.kind().toStackKind(), value.kind().toStackKind());
+        assert variable.kind().stackKind == value.kind().stackKind : incompatibleTypesErrorMessage(variable.kind().stackKind, value.kind().stackKind);
         final CirClosure closure = new CirClosure();
         currentCall.setProcedure(closure);
         currentCall.setArguments(value);
@@ -177,7 +177,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected CirVariable pop(Kind kind) {
         final CirVariable stackVariable = stack.pop();
-        assert stackVariable.kind() == kind.toStackKind() : incompatibleTypesErrorMessage(stackVariable.kind(), kind.toStackKind());
+        assert stackVariable.kind() == kind.stackKind : incompatibleTypesErrorMessage(stackVariable.kind(), kind.stackKind);
         return stackVariable;
     }
 
@@ -196,7 +196,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected CirVariable getTop(Kind kind) {
         final CirVariable stackVariable = stack.getTop();
-        assert stackVariable.kind() == kind.toStackKind() : incompatibleTypesErrorMessage(stackVariable.kind(), kind.toStackKind());
+        assert stackVariable.kind() == kind.stackKind : incompatibleTypesErrorMessage(stackVariable.kind(), kind.stackKind);
         return stackVariable;
     }
 
@@ -359,7 +359,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         int argumentIndex = nonContinuationArgumentsLength - numberOfParameters;
         for (int parameterIndex = 0; parameterIndex < numberOfParameters; parameterIndex++) {
             final Kind argumentKind = arguments[argumentIndex].kind();
-            final Kind parameterKind = signatureDescriptor.parameterDescriptorAt(parameterIndex).toKind().toStackKind();
+            final Kind parameterKind = signatureDescriptor.parameterDescriptorAt(parameterIndex).toKind().stackKind;
             assertArgumentMatchesParameter(argumentIndex, argumentKind, parameterKind, signatureDescriptor.parameterDescriptorAt(parameterIndex));
             argumentIndex++;
         }

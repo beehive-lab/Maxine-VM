@@ -31,7 +31,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
@@ -169,7 +168,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
 
     FocusTable(Inspection inspection, FocusViewPreferences viewPreferences) {
         super(inspection);
-        tableModel = new FocusTableModel();
+        tableModel = new FocusTableModel(inspection);
         columnModel = new FocusColumnModel(viewPreferences);
         configureDefaultTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
@@ -185,6 +184,10 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
     }
 
     private final class FocusTableModel extends InspectorTableModel {
+
+        public FocusTableModel(Inspection inspection) {
+            super(inspection);
+        }
 
         public int getColumnCount() {
             return FocusColumnKind.VALUES.length();
@@ -225,15 +228,15 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         // A "value" label per row, each suitable for the particular kind of value.
         private InspectorLabel[] labels = new InspectorLabel[FocusRowKind.VALUES.length()];
 
-        public ValueCellRenderer(Inspection inspection) {
+        public ValueCellRenderer(final Inspection inspection) {
             labels[FocusRowKind.THREAD.ordinal()] = new JavaNameLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final MaxThread thread = inspection().focus().thread();
+                    final MaxThread thread = focus().thread();
                     if (thread == null) {
                         setValue(null, "No thread focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longNameWithState(thread);
+                        final String longName = inspection.nameDisplay().longNameWithState(thread);
                         setValue(longName, "Thread focus = " + longName);
                     }
                 }
@@ -241,12 +244,12 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.FRAME.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final StackFrame stackFrame = inspection().focus().stackFrame();
+                    final StackFrame stackFrame = focus().stackFrame();
                     if (stackFrame == null) {
                         setValue(null, "No stack frame focus");
                     } else {
                         final TargetMethod targetMethod = stackFrame.targetMethod();
-                        final String name = targetMethod == null ? "nativeMethod: 0x" + maxVM().getCodeAddress(stackFrame).toHexString() : targetMethod.toString();
+                        final String name = targetMethod == null ? "nativeMethod: 0x" + codeManager().createMachineCodeLocation(stackFrame).address().toHexString() : targetMethod.toString();
                         setValue(name, "Stack frame focus = " + name);
                     }
                 }
@@ -254,11 +257,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.CODE.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final TeleCodeLocation teleCodeLocation = inspection().focus().codeLocation();
-                    if (teleCodeLocation == null) {
+                    final MaxCodeLocation codeLocation = focus().codeLocation();
+                    if (codeLocation == null) {
                         setValue(null, "No code location focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longName(teleCodeLocation);
+                        final String longName = inspection().nameDisplay().longName(codeLocation);
                         setValue(longName, "Code location focus = " + longName);
                     }
                 }
@@ -266,11 +269,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.BREAKPOINT.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final MaxBreakpoint breakpoint = inspection().focus().breakpoint();
+                    final MaxBreakpoint breakpoint = focus().breakpoint();
                     if (breakpoint == null) {
                         setValue(null, "No breakpoint focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longName(breakpoint.getCodeLocation());
+                        final String longName = inspection().nameDisplay().longName(breakpoint.codeLocation());
                         setValue(longName, "Breakpoint focus = " + longName);
                     }
                 }
@@ -278,7 +281,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.WATCHPOINT.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final MaxWatchpoint watchpoint = inspection().focus().watchpoint();
+                    final MaxWatchpoint watchpoint = focus().watchpoint();
                     if (watchpoint == null) {
                         setValue(null, "No watchpoint focus");
                     } else {
@@ -290,7 +293,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.ADDRESS.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD, FocusTable.this) {
                 @Override
                 public Value fetchValue() {
-                    Address address = inspection().focus().address();
+                    Address address = focus().address();
                     if (address == null) {
                         address = Address.zero();
                     }
@@ -300,7 +303,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.OBJECT.ordinal()] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, FocusTable.this) {
                 @Override
                 public Value fetchValue() {
-                    final TeleObject teleObject = inspection().focus().heapObject();
+                    final TeleObject teleObject = focus().heapObject();
                     Address address = Address.zero();
                     if (teleObject != null) {
                         address = teleObject.origin();
@@ -311,7 +314,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.REGION.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final MemoryRegion memoryRegion = inspection().focus().memoryRegion();
+                    final MemoryRegion memoryRegion = focus().memoryRegion();
                     if (memoryRegion == null) {
                         setValue(null, "No memory region focus");
                     } else {
@@ -345,7 +348,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         }
     }
 
-    public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
+    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
         refresh(true);
     }
 

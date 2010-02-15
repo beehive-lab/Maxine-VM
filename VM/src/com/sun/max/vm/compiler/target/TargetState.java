@@ -22,9 +22,10 @@ package com.sun.max.vm.compiler.target;
 
 import com.sun.max.lang.Arrays;
 import com.sun.max.program.ProgramError;
+import com.sun.max.vm.actor.member.*;
 
 /**
- * This class implements utility functions for transitioning a {@link com.sun.max.vm.actor.member.ClassMethodActor}
+ * This class implements utility functions for transitioning a {@link ClassMethodActor}
  * from one target state to another as a result of compilation.
  *
  * @author Ben L. Titzer

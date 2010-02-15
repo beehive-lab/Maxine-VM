@@ -52,7 +52,7 @@ public final class HubLabel extends InspectorLabel {
                     if (mouseEvent.isControlDown()) {
                         actions().inspectObjectMemoryWords(teleHub).perform();
                     } else {
-                        inspection().focus().setHeapObject(teleHub);
+                        focus().setHeapObject(teleHub);
                     }
                 }
             }

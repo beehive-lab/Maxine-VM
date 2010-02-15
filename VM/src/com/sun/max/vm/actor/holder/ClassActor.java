@@ -326,11 +326,6 @@ public abstract class ClassActor extends Actor {
         return isInterface(flags());
     }
 
-    @INLINE
-    public final boolean isTemplate() {
-        return isTemplate(flags());
-    }
-
     public final boolean isGenerated() {
         return isGenerated(flags());
     }
@@ -1489,7 +1484,7 @@ public abstract class ClassActor extends Actor {
     }
 
     /**
-     * Determines if this the class represented by this class actor is initialized.
+     * Determines if the class represented by this class actor is initialized.
      *
      * This test must be fast and so it is not synchronized. This means that a return value of {@code false}
      * is conservative. That is, the caller should operate on the assumption that the class is not initialized,

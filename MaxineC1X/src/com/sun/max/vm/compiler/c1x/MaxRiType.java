@@ -20,16 +20,22 @@
  */
 package com.sun.max.vm.compiler.c1x;
 
-import com.sun.c1x.*;
-import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
-import com.sun.max.lang.*;
-import com.sun.max.program.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.type.*;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ci.CiConstant;
+import com.sun.c1x.ci.CiKind;
+import com.sun.c1x.ri.RiMethod;
+import com.sun.c1x.ri.RiType;
+import com.sun.max.program.ProgramError;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.actor.holder.ArrayClassActor;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.member.InterfaceMethodActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.actor.member.VirtualMethodActor;
+import com.sun.max.vm.classfile.constant.ClassConstant;
+import com.sun.max.vm.type.JavaTypeDescriptor;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.TypeDescriptor;
 
 /**
  * The {@code MaxRiType} class represents a compiler interface type,

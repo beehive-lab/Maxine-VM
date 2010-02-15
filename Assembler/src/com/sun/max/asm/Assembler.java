@@ -93,7 +93,7 @@ public abstract class Assembler {
             this.isValidCode = isValidCode;
         }
         /**
-         * Inserts as many {@linkplain #padByte() pad byte} as necessary to ensure that the next assembled object starts
+         * Inserts as many {@linkplain #padByte pad bytes} as necessary to ensure that the next assembled object starts
          * at an address aligned by a given number.
          *
          * @param alignment

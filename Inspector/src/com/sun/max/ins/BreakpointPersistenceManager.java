@@ -20,6 +20,7 @@
  */
 package com.sun.max.ins;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -72,7 +73,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         }
 
         // Once load-in is finished, register for notification of subsequent breakpoint changes in the VM.
-        inspection.maxVM().addBreakpointListener(this);
+        inspection.maxVM().breakpointFactory().addListener(this);
     }
 
     // Keys used for making data persistent
@@ -94,16 +95,25 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     }
 
     public void saveSettings(SaveSettingsEvent settings) {
-        saveTargetCodeBreakpoints(settings);
-        saveBytecodeBreakpoints(settings);
+        final AppendableSequence<MaxBreakpoint> targetBreakpoints = new LinkSequence<MaxBreakpoint>();
+        final AppendableSequence<MaxBreakpoint> bytecodeBreakpoints = new LinkSequence<MaxBreakpoint>();
+        for (MaxBreakpoint breakpoint : inspection.breakpointFactory().breakpoints()) {
+            if (breakpoint.isBytecodeBreakpoint()) {
+                bytecodeBreakpoints.append(breakpoint);
+            } else {
+                targetBreakpoints.append(breakpoint);
+            }
+        }
+        saveTargetCodeBreakpoints(settings, targetBreakpoints);
+        saveBytecodeBreakpoints(settings, bytecodeBreakpoints);
     }
 
-    private void saveTargetCodeBreakpoints(SaveSettingsEvent settings) {
-        settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, inspection.maxVM().targetBreakpointCount());
+    private void saveTargetCodeBreakpoints(SaveSettingsEvent settings, IterableWithLength<MaxBreakpoint> targetBreakpoints) {
+        settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, targetBreakpoints.length());
         int index = 0;
-        for (MaxBreakpoint breakpoint : inspection.maxVM().targetBreakpoints()) {
+        for (MaxBreakpoint breakpoint : targetBreakpoints) {
             final String prefix = TARGET_BREAKPOINT_KEY + index++;
-            final Address bootImageOffset = breakpoint.getCodeLocation().targetCodeInstructionAddress().minus(inspection.maxVM().bootImageStart());
+            final Address bootImageOffset = breakpoint.codeLocation().address().minus(inspection.maxVM().bootImageStart());
             settings.save(prefix + "." + ADDRESS_KEY, bootImageOffset.toLong());
             settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             final BreakpointCondition condition = breakpoint.getCondition();
@@ -126,7 +136,8 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final String description = settings.get(this, prefix + "." + DESCRIPTION_KEY, OptionTypes.STRING_TYPE, null);
             if (inspection.maxVM().containsInCode(address)) {
                 try {
-                    final MaxBreakpoint breakpoint = inspection.maxVM().makeBreakpointAt(address);
+                    final MaxCodeLocation codeLocation = inspection.maxVM().codeManager().createMachineCodeLocation(address, "loaded by breakpoint persistence manager");
+                    final MaxBreakpoint breakpoint = inspection.maxVM().breakpointFactory().makeBreakpoint(codeLocation);
                     if (condition != null) {
                         breakpoint.setCondition(condition);
                     }
@@ -134,8 +145,8 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                     breakpoint.setEnabled(enabled);
                 } catch (BreakpointCondition.ExpressionException expressionException) {
                     inspection.gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
-                } catch (MaxVMException maxVMException) {
-                    ProgramWarning.message(maxVMException.getMessage());
+                } catch (MaxVMBusyException maxVMBusyException) {
+                    ProgramWarning.message("Unable to recreate target breakpoint from saved settings at: " + address);
                 }
             } else {
                 ProgramWarning.message("dropped former breakpoint in runtime-generated code at address: " + address);
@@ -143,18 +154,23 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         }
     }
 
-    private void saveBytecodeBreakpoints(SaveSettingsEvent settings) {
+    private void saveBytecodeBreakpoints(SaveSettingsEvent settings, IterableWithLength<MaxBreakpoint> bytecodeBreakpoints) {
         int index;
-        settings.save(BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, inspection.maxVM().bytecodeBreakpointCount());
+        settings.save(BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, bytecodeBreakpoints.length());
         index = 0;
-        for (MaxBreakpoint breakpoint : inspection.maxVM().bytecodeBreakpoints()) {
+        for (MaxBreakpoint breakpoint : bytecodeBreakpoints) {
             final String prefix = BYTECODE_BREAKPOINT_KEY + index++;
-            final TeleBytecodeBreakpoint.Key key = breakpoint.getCodeLocation().key();
-            settings.save(prefix + "." + METHOD_HOLDER_KEY, key.holder().string);
-            settings.save(prefix + "." + METHOD_NAME_KEY, key.name().string);
-            settings.save(prefix + "." + METHOD_SIGNATURE_KEY, key.signature().string);
-            settings.save(prefix + "." + POSITION_KEY, key.position());
-            settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
+            final MaxCodeLocation codeLocation = breakpoint.codeLocation();
+            final MethodKey methodKey = codeLocation.methodKey();
+            if (methodKey != null) {
+                settings.save(prefix + "." + METHOD_HOLDER_KEY, methodKey.holder().string);
+                settings.save(prefix + "." + METHOD_NAME_KEY, methodKey.name().string);
+                settings.save(prefix + "." + METHOD_SIGNATURE_KEY, methodKey.signature().string);
+                settings.save(prefix + "." + POSITION_KEY, codeLocation.bytecodePosition());
+                settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
+            } else {
+                ProgramWarning.message("Unable to save bytecode breakpoint, no key in " + breakpoint);
+            }
         }
     }
 
@@ -167,10 +183,19 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final SignatureDescriptor signature = SignatureDescriptor.create(settings.get(this, prefix + "." + METHOD_SIGNATURE_KEY, OptionTypes.STRING_TYPE, null));
             final MethodKey methodKey = new DefaultMethodKey(holder, name, signature);
             final int bytecodePosition = settings.get(this, prefix + "." + POSITION_KEY, OptionTypes.INT_TYPE, 0);
+            if (bytecodePosition > 0) {
+                ProgramWarning.message("Ignoring non-zero bytecode position for saved breakpoint in " + methodKey);
+            }
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
-            final MaxBreakpoint bytecodeBreakpoint = inspection.maxVM().makeBreakpointAt(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition));
-            if (bytecodeBreakpoint.isEnabled() != enabled) {
-                bytecodeBreakpoint.setEnabled(enabled);
+            final MaxCodeLocation location = inspection.maxVM().codeManager().createBytecodeLocation(methodKey, "loaded by breakpoint persistence manager");
+            MaxBreakpoint bytecodeBreakpoint;
+            try {
+                bytecodeBreakpoint = inspection.maxVM().breakpointFactory().makeBreakpoint(location);
+                if (bytecodeBreakpoint.isEnabled() != enabled) {
+                    bytecodeBreakpoint.setEnabled(enabled);
+                }
+            } catch (MaxVMBusyException e) {
+                ProgramWarning.message("Unable to recreate bytecode breakpoint from saved settings at: " + methodKey);
             }
         }
     }

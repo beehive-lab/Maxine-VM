@@ -758,4 +758,12 @@ public final class DirectInspectorGripScheme extends TeleGripScheme {
         FatalError.unimplemented();
         return null;
     }
+
+    public void copyElements(Grip src, int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+        if (src instanceof LocalTeleGrip) {
+            System.arraycopy(toJava(src), srcIndex, dst, dstIndex, length);
+        } else {
+            teleVM().dataAccess().copyElements(toOrigin(src), displacement, srcIndex, dst, dstIndex, length);
+        }
+    }
 }

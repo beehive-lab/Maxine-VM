@@ -472,4 +472,8 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
         toOrigin(grip).setLong(displacement, index, value);
     }
 
+    @INLINE
+    public void copyElements(Grip src, int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+        toOrigin(src).copyElements(displacement, srcIndex, dst, dstIndex, length);
+    }
 }

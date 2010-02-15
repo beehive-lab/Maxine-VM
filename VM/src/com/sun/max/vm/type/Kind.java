@@ -47,11 +47,14 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     public final Class javaClass;
     public final Class javaArrayClass;
     public final Class<Value_Type> valueClass;
+    public final Kind stackKind;
     @INSPECTED
     public final char character;
     public final Class boxedClass;
     public final TypeDescriptor typeDescriptor;
     public final WordWidth width;
+    public final boolean isCategory1;
+    public final int stackSlots;
 
     protected Kind(KindEnum kindEnum, String name, Class javaClass, Class javaArrayClass, Class<Value_Type> valueClass, char character,
                    final Class boxedClass, TypeDescriptor typeDescriptor, WordWidth width) {
@@ -64,6 +67,9 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         this.boxedClass = boxedClass;
         this.typeDescriptor = typeDescriptor;
         this.width = width;
+        this.stackKind = "ZBCS".indexOf(character) != -1 ? INT : this;
+        this.isCategory1 = "JD".indexOf(character) == -1;
+        this.stackSlots = !isCategory1 ? 2 : (character == 'V' ? 0 : 1);
     }
 
     @Override
@@ -72,7 +78,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
         return name.toString();
     }
 
@@ -108,21 +114,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
             return Kind.REFERENCE;
         }
         return ClassActor.fromJava(type).kind;
-    }
-
-    public boolean isCategory1() {
-        return true;
-    }
-
-    public boolean isCategory2() {
-        return false;
-    }
-
-    /**
-     * Gets the number of VM stack slots used by a value of this kind.
-     */
-    public int stackSlots() {
-        return 1;
     }
 
     /**
@@ -200,15 +191,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
     }
 
-    /**
-     * Gets the kind used to store a value of this kind on the operand stack.
-     * Kinds of smaller size than INT are mapped to INT.
-     * All others stay the same.
-     */
-    public Kind toStackKind() {
-        return this;
-    }
-
     public abstract Value_Type zeroValue();
 
     public static final Kind<VoidValue> VOID = new Kind<VoidValue>(KindEnum.VOID, "void", void.class, null, VoidValue.class, 'V', Void.class, JavaTypeDescriptor.VOID, null) {
@@ -238,13 +220,71 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         public VoidValue zeroValue() {
             return VoidValue.VOID;
         }
-
-        @Override
-        public int stackSlots() {
-            return 0;
-        }
     };
 
+    public static final Kind<IntValue> INT = new Kind<IntValue>(KindEnum.INT, "int", int.class, int[].class,
+                                                                IntValue.class, 'I', Integer.class, JavaTypeDescriptor.INT,
+                                                                WordWidth.BITS_32) {
+        @Override
+        public ArrayClassActor arrayClassActor() {
+            return ClassRegistry.INT_ARRAY;
+        }
+
+        @Override
+        public IntValue readValue(Reference reference, Offset offset) {
+            return IntValue.from(reference.readInt(offset));
+        }
+
+        @Override
+        public IntValue readValue(Reference reference, int offset) {
+            return IntValue.from(reference.readInt(offset));
+        }
+
+        @Override
+        public void writeValue(Object object, Offset offset, IntValue value) {
+            TupleAccess.writeInt(object, offset, value.asInt());
+        }
+
+        @Override
+        public void writeValue(Object object, int offset, IntValue value) {
+            TupleAccess.writeInt(object, offset, value.asInt());
+        }
+
+        @Override
+        public IntValue getValue(Object array, int index) {
+            return IntValue.from(ArrayAccess.getInt(array, index));
+        }
+
+        @Override
+        public void setValue(Object array, int index, IntValue value) {
+            ArrayAccess.setInt(array, index, value.asInt());
+        }
+
+        @Override
+        public IntValue convert(Value value) {
+            return IntValue.from(value.toInt());
+        }
+
+        @Override
+        public IntValue asValue(Object boxedJavaValue) {
+            try {
+                final Integer specificBox = (Integer) boxedJavaValue;
+                return IntValue.from(specificBox.intValue());
+            } catch (ClassCastException e) {
+                throw new IllegalArgumentException();
+            }
+        }
+
+        @Override
+        public IntValue zeroValue() {
+            return IntValue.ZERO;
+        }
+
+        @Override
+        public final IntArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+            return layoutScheme.intArrayLayout;
+        }
+    };
     public static final Kind<ByteValue> BYTE = new Kind<ByteValue>(KindEnum.BYTE, "byte", byte.class, byte[].class,
                                                                    ByteValue.class, 'B', Byte.class, JavaTypeDescriptor.BYTE,
                                                                    WordWidth.BITS_8) {
@@ -301,11 +341,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public ByteValue zeroValue() {
             return ByteValue.ZERO;
-        }
-
-        @Override
-        public Kind toStackKind() {
-            return Kind.INT;
         }
 
         @Override
@@ -373,11 +408,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public Kind toStackKind() {
-            return Kind.INT;
-        }
-
-        @Override
         public final BooleanArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.booleanArrayLayout;
         }
@@ -439,11 +469,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public ShortValue zeroValue() {
             return ShortValue.ZERO;
-        }
-
-        @Override
-        public Kind toStackKind() {
-            return Kind.INT;
         }
 
         @Override
@@ -511,77 +536,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public Kind toStackKind() {
-            return Kind.INT;
-        }
-
-        @Override
         public final CharArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.charArrayLayout;
-        }
-    };
-
-    public static final Kind<IntValue> INT = new Kind<IntValue>(KindEnum.INT, "int", int.class, int[].class,
-                                                                IntValue.class, 'I', Integer.class, JavaTypeDescriptor.INT,
-                                                                WordWidth.BITS_32) {
-        @Override
-        public ArrayClassActor arrayClassActor() {
-            return ClassRegistry.INT_ARRAY;
-        }
-
-        @Override
-        public IntValue readValue(Reference reference, Offset offset) {
-            return IntValue.from(reference.readInt(offset));
-        }
-
-        @Override
-        public IntValue readValue(Reference reference, int offset) {
-            return IntValue.from(reference.readInt(offset));
-        }
-
-        @Override
-        public void writeValue(Object object, Offset offset, IntValue value) {
-            TupleAccess.writeInt(object, offset, value.asInt());
-        }
-
-        @Override
-        public void writeValue(Object object, int offset, IntValue value) {
-            TupleAccess.writeInt(object, offset, value.asInt());
-        }
-
-        @Override
-        public IntValue getValue(Object array, int index) {
-            return IntValue.from(ArrayAccess.getInt(array, index));
-        }
-
-        @Override
-        public void setValue(Object array, int index, IntValue value) {
-            ArrayAccess.setInt(array, index, value.asInt());
-        }
-
-        @Override
-        public IntValue convert(Value value) {
-            return IntValue.from(value.toInt());
-        }
-
-        @Override
-        public IntValue asValue(Object boxedJavaValue) {
-            try {
-                final Integer specificBox = (Integer) boxedJavaValue;
-                return IntValue.from(specificBox.intValue());
-            } catch (ClassCastException e) {
-                throw new IllegalArgumentException();
-            }
-        }
-
-        @Override
-        public IntValue zeroValue() {
-            return IntValue.ZERO;
-        }
-
-        @Override
-        public final IntArrayLayout arrayLayout(LayoutScheme layoutScheme) {
-            return layoutScheme.intArrayLayout;
         }
     };
 
@@ -653,16 +609,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                                                                    LongValue.class, 'J', Long.class, JavaTypeDescriptor.LONG,
                                                                    WordWidth.BITS_64) {
         @Override
-        public boolean isCategory1() {
-            return false;
-        }
-
-        @Override
-        public boolean isCategory2() {
-            return true;
-        }
-
-        @Override
         public ArrayClassActor arrayClassActor() {
             return ClassRegistry.LONG_ARRAY;
         }
@@ -703,11 +649,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public int stackSlots() {
-            return 2;
-        }
-
-        @Override
         public LongValue asValue(Object boxedJavaValue) {
             try {
                 final Long specificBox = (Long) boxedJavaValue;
@@ -731,16 +672,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     public static final Kind<DoubleValue> DOUBLE = new Kind<DoubleValue>(KindEnum.DOUBLE, "double", double.class, double[].class,
                                                                          DoubleValue.class, 'D', Double.class, JavaTypeDescriptor.DOUBLE,
                                                                          WordWidth.BITS_64) {
-        @Override
-        public boolean isCategory1() {
-            return false;
-        }
-
-        @Override
-        public boolean isCategory2() {
-            return true;
-        }
-
         @Override
         public ArrayClassActor arrayClassActor() {
             return ClassRegistry.DOUBLE_ARRAY;
@@ -779,11 +710,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public DoubleValue convert(Value value) {
             return DoubleValue.from(value.toDouble());
-        }
-
-        @Override
-        public int stackSlots() {
-            return 2;
         }
 
         @Override
@@ -1187,5 +1113,4 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
         throw new IllegalArgumentException("expected a boxed double, got " + boxedJavaValue.getClass().getName());
     }
-
 }

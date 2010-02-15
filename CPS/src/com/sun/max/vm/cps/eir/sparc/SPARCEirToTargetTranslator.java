@@ -20,11 +20,9 @@
  */
 package com.sun.max.vm.cps.eir.sparc;
 
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
-
 import com.sun.max.asm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.cps.b.c.d.e.sparc.target.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.cps.target.sparc.*;
@@ -42,20 +40,16 @@ public final class SPARCEirToTargetTranslator extends EirToTargetTranslator {
     }
 
     @Override
-    public CPSTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final SPARCOptimizedTargetMethod targetMethod = new SPARCOptimizedTargetMethod(classMethodActor, compilerScheme());
+    public SPARCOptimizedTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
+        final SPARCOptimizedTargetMethod targetMethod = new SPARCOptimizedTargetMethod(classMethodActor);
         notifyAllocation(targetMethod);
         return targetMethod;
     }
 
     @Override
     protected EirTargetEmitter createEirTargetEmitter(EirMethod eirMethod) {
-        final boolean requiresAdapter = (!(eirMethod.isTemplate() || eirMethod.abi.targetABI().callEntryPoint().equals(C_ENTRY_POINT))) && compilerScheme().vmConfiguration().jitCompilerScheme() != compilerScheme();
-        SPARCAdapterFrameGenerator adapterFrameGenerator = null;
-        if (requiresAdapter) {
-            adapterFrameGenerator = SPARCAdapterFrameGenerator.jitToOptimizedCompilerAdapterFrameGenerator(eirMethod.classMethodActor(), eirMethod.abi);
-        }
-        return new SPARCEirTargetEmitter((SPARCEirABI) eirMethod.abi, eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint, adapterFrameGenerator);
+        AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(eirMethod.classMethodActor(), eirMethod.abi.targetABI().callEntryPoint);
+        return new SPARCEirTargetEmitter((SPARCEirABI) eirMethod.abi, eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint, adapterGenerator);
     }
 
 }

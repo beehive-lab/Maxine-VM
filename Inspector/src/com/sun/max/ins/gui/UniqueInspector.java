@@ -272,13 +272,13 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
 
     /**
      * Creates an inspector for an entity representing some code in the tele VM. The key for the inspector is derived
-     * from {@code teleTargetMethod} if it is not null, otherwise it derived from {@code teleRoutine}.
+     * from {@code teleTargetRoutine} if it is not null, otherwise it derived from {@code teleRoutine}.
      *
      * @param inspection the inspection context
-     * @param teleTargetMethod the target method in the tele VM containing the code being inspected. This value may be
+     * @param teleTargetRoutine the target method in the tele VM containing the code being inspected. This value may be
      *            null if the code being inspected is bytecode and has no compiled form.
      * @param teleRoutine the {@linkplain TeleMethodActor method actor} or {@linkplain TeleNativeRoutine native routine}
-     *            containing the code. This value must not be null if {@code teleTargetMethod} is null.
+     *            containing the code. This value must not be null if {@code teleTargetRoutine} is null.
      */
     protected UniqueInspector(Inspection inspection, TeleTargetMethod teleTargetMethod, TeleRoutine teleRoutine) {
         super(inspection);

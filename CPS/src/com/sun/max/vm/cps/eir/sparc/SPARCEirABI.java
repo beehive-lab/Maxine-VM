@@ -20,13 +20,11 @@
  */
 package com.sun.max.vm.cps.eir.sparc;
 
-import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.GeneralPurpose.*;
 import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.*;
-import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.SinglePrecision.F0;
+import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.GeneralPurpose.*;
 import static com.sun.max.vm.cps.eir.sparc.SPARCEirRegisters.SinglePrecision.*;
 
 import com.sun.max.asm.sparc.*;
-import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -64,7 +62,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
 
     @Override
     public SPARCEirRegisters.GeneralPurpose integerRegisterActingAs(VMRegister.Role role) {
-        final GPR r = targetABI.registerRoleAssignment().integerRegisterActingAs(role);
+        final GPR r = targetABI.registerRoleAssignment.integerRegisterActingAs(role);
         if (r == null) {
             return null;
         }
@@ -73,7 +71,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
 
     @Override
     public SPARCEirRegisters.SinglePrecision floatingPointRegisterActingAs(VMRegister.Role role) {
-        final FPR r = targetABI.registerRoleAssignment().floatingPointRegisterActingAs(role);
+        final FPR r = targetABI.registerRoleAssignment.floatingPointRegisterActingAs(role);
         if (r == null) {
             return null;
         }
@@ -270,7 +268,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         return result;
     }
 
-    private final PoolSet<SPARCEirRegister> callerSavedRegisters;
+    PoolSet<SPARCEirRegister> callerSavedRegisters;
 
     @Override
     public PoolSet<SPARCEirRegister> callerSavedRegisters() {
@@ -280,10 +278,10 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     /**
      * No callee saved registers.
      */
-    private final PoolSet<SPARCEirRegister> calleeSavedRegisters = PoolSet.noneOf(pool());
+    Sequence<SPARCEirRegister> calleeSavedRegisters = Sequence.Static.empty(SPARCEirRegister.class);
 
     @Override
-    public PoolSet<SPARCEirRegister> calleeSavedRegisters() {
+    public Sequence<SPARCEirRegister> calleeSavedRegisters() {
         return calleeSavedRegisters;
     }
 
@@ -301,7 +299,7 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
 
     private static TargetABI<GPR, FPR> targetABI(VMConfiguration vmConfiguration) {
         final Class<TargetABI<GPR, FPR>> type = null;
-        return StaticLoophole.cast(type, vmConfiguration.targetABIsScheme().optimizedJavaABI());
+        return StaticLoophole.cast(type, vmConfiguration.targetABIsScheme().optimizedJavaABI);
     }
 
     @Override
@@ -315,10 +313,6 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     @Override
     public Sequence<SPARCEirRegister> floatingPointParameterRegisters() {
         return floatingPointOutRegisters;
-    }
-
-    public SPARCAssembler createAssembler() {
-        return SPARCAssembler.createAssembler(vmConfiguration().platform().processorKind.dataModel.wordWidth);
     }
 
     protected SPARCEirABI(VMConfiguration vmConfiguration) {

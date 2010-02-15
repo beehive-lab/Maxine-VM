@@ -327,4 +327,8 @@ public class PrototypeReferenceScheme extends AbstractVMScheme implements Refere
     public Reference compareAndSwapReference(Reference reference, int offset, Reference suspectedValue, Reference newValue) {
         return gripScheme().fromReference(reference).compareAndSwapReference(offset, suspectedValue, newValue);
     }
+
+    public void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length) {
+        gripScheme().fromReference(src).copyElements(displacement, srcIndex, dst, dstIndex, length);
+    }
 }

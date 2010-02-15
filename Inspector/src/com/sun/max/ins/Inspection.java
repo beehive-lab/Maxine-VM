@@ -50,7 +50,7 @@ import com.sun.max.vm.classfile.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class Inspection {
+public final class Inspection implements InspectionHolder {
 
     private static final int TRACE_VALUE = 1;
 
@@ -121,10 +121,10 @@ public final class Inspection {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
         this.maxVM = maxVM;
-        this.bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
+        this.bootImageFileName = maxVM.bootImageFile().getAbsolutePath().toString();
         this.nameDisplay = new InspectorNameDisplay(this);
         this.focus = new InspectionFocus(this);
-        this.settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), SETTINGS_FILE_NAME));
+        this.settings = new InspectionSettings(this, new File(maxVM.programFile().getParentFile(), SETTINGS_FILE_NAME));
         this.preferences = new InspectionPreferences(this, settings);
         this.inspectionActions = new InspectionActions(this);
 
@@ -133,10 +133,10 @@ public final class Inspection {
         BreakpointPersistenceManager.initialize(this);
         inspectionActions.refresh(true);
 
-        maxVM().addVMStateListener(new VMStateListener());
-        maxVM().addBreakpointListener(new BreakpointListener());
-        if (maxVM().watchpointsEnabled()) {
-            maxVM().addWatchpointListener(new WatchpointListener());
+        maxVM.addVMStateListener(new VMStateListener());
+        maxVM.breakpointFactory().addListener(new BreakpointListener());
+        if (watchpointsEnabled()) {
+            maxVM.watchpointFactory().addListener(new WatchpointListener());
         }
 
         inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
@@ -176,7 +176,7 @@ public final class Inspection {
                 ThreadLocalsInspector.make(this);
                 StackInspector.make(this);
                 BreakpointsInspector.make(this);
-                focus.setCodeLocation(maxVM.createCodeLocation(focus.thread().instructionPointer()), false);
+                focus.setCodeLocation(focus.thread().instructionLocation());
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
                 throwable.printStackTrace();
@@ -188,6 +188,50 @@ public final class Inspection {
         inspectorMainFrame.setVisible(true);
 
         Trace.end(TRACE_VALUE, tracePrefix() + "Initializing", startTimeMillis);
+    }
+
+    public Inspection inspection() {
+        return this;
+    }
+
+    public MaxVM maxVM() {
+        return maxVM;
+    }
+
+    public  MaxVMState maxVMState() {
+        return maxVM.maxVMState();
+    }
+
+    public MaxBreakpointFactory breakpointFactory() {
+        return maxVM().breakpointFactory();
+    }
+
+    public  MaxCodeManager codeManager() {
+        return maxVM().codeManager();
+    }
+
+    public MaxWatchpointFactory watchpointFactory() {
+        return maxVM().watchpointFactory();
+    }
+
+    public boolean watchpointsEnabled() {
+        return watchpointFactory()  != null;
+    }
+
+    public InspectorGUI gui() {
+        return inspectorMainFrame;
+    }
+
+    public InspectorStyle style() {
+        return preferences.style();
+    }
+
+    public InspectionFocus focus() {
+        return focus;
+    }
+
+    public InspectionActions actions() {
+        return inspectionActions;
     }
 
     /**
@@ -215,36 +259,6 @@ public final class Inspection {
 
     public InspectionSettings settings() {
         return settings;
-    }
-
-    public MaxVM maxVM() {
-        return maxVM;
-    }
-
-    /**
-     * @return The immutable history of Maxine VM state, updated immediately
-     * and synchronously; thread safe.
-     */
-    private MaxVMState maxVMState() {
-        return maxVM.maxVMState();
-    }
-
-    public InspectorGUI gui() {
-        return inspectorMainFrame;
-    }
-
-    /**
-     * @return the global collection of actions, many of which are singletons with state that gets refreshed.
-     */
-    public InspectionActions actions() {
-        return inspectionActions;
-    }
-
-    /**
-     * The current configuration for visual style.
-     */
-    public InspectorStyle style() {
-        return preferences.style();
     }
 
     /**
@@ -288,13 +302,6 @@ public final class Inspection {
      */
     public void registerAction(InspectorAction inspectorAction) {
         preferences.registerAction(inspectorAction);
-    }
-
-    /**
-     * User oriented focus on particular items in the environment; View state.
-     */
-    public InspectionFocus focus() {
-        return focus;
     }
 
     /**
@@ -395,9 +402,12 @@ public final class Inspection {
                 }
                 Trace.begin(TRACE_VALUE, tracer);
                 SwingUtilities.invokeLater(new Runnable() {
-
                     public void run() {
                         processVMStateChange();
+                    }
+                    @Override
+                    public String toString() {
+                        return "processVMStateChange";
                     }
                 });
                 Trace.end(TRACE_VALUE, tracer);
@@ -413,23 +423,19 @@ public final class Inspection {
     private final class BreakpointListener implements MaxBreakpointListener {
 
         public void breakpointsChanged() {
-            if (java.awt.EventQueue.isDispatchThread()) {
-                Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
-                for (InspectionListener listener : inspectionListeners.clone()) {
-                    listener.breakpointStateChanged();
-                }
-                Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
-            } else {
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    public void run() {
-                        Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
-                        for (InspectionListener listener : inspectionListeners.clone()) {
-                            listener.breakpointStateChanged();
-                        }
-                        Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+            Runnable runnable = new Runnable() {
+                public void run() {
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                    for (InspectionListener listener : inspectionListeners.clone()) {
+                        listener.breakpointStateChanged();
                     }
-                });
+                    Trace.end(TRACE_VALUE, tracePrefix() + "breakpoint state change notification");
+                }
+            };
+            if (java.awt.EventQueue.isDispatchThread()) {
+                runnable.run();
+            } else {
+                SwingUtilities.invokeLater(runnable);
             }
         }
     }
@@ -442,23 +448,19 @@ public final class Inspection {
     private final class WatchpointListener implements MaxWatchpointListener {
 
         public void watchpointsChanged() {
-            if (java.awt.EventQueue.isDispatchThread()) {
-                Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
-                for (InspectionListener listener : inspectionListeners.clone()) {
-                    listener.watchpointSetChanged();
-                }
-                Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
-            } else {
-                SwingUtilities.invokeLater(new Runnable() {
-
-                    public void run() {
-                        Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
-                        for (InspectionListener listener : inspectionListeners.clone()) {
-                            listener.watchpointSetChanged();
-                        }
-                        Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+            Runnable runnable = new Runnable() {
+                public void run() {
+                    Trace.begin(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                    for (InspectionListener listener : inspectionListeners.clone()) {
+                        listener.watchpointSetChanged();
                     }
-                });
+                    Trace.end(TRACE_VALUE, tracePrefix() + "watchpoint state change notification");
+                }
+            };
+            if (java.awt.EventQueue.isDispatchThread()) {
+                runnable.run();
+            } else {
+                SwingUtilities.invokeLater(runnable);
             }
         }
     }
@@ -611,6 +613,16 @@ public final class Inspection {
         } finally {
             gui().showInspectorBusy(false);
         }
+    }
+
+    /**
+     * Make a standard announcement that an action has failed because the Inspector
+     * was unable to acquire the lock on the VM.
+     *
+     * @param attemptedAction description of what was being attempted
+     */
+    public void announceVMBusyFailure(String attemptedAction) {
+        gui().errorMessage(attemptedAction + " failed: VM Busy");
     }
 
     /**

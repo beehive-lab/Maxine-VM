@@ -69,7 +69,7 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
     public abstract EirLocation catchParameterLocation();
 
     public Kind eirKind(Kind kind) {
-        final Kind k = kind.toStackKind();
+        final Kind k = kind.stackKind;
         if (k == Kind.WORD) {
             return (wordWidth == WordWidth.BITS_64) ? Kind.LONG : Kind.INT;
         }

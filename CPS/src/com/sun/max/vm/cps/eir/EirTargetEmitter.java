@@ -25,6 +25,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.debug.*;
@@ -60,32 +61,23 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return stackSlotWidth;
     }
 
-    /**
-     * Code generator for adapter frame, if any is needed. The generator emits code needed to adapt call from code compiled by other compiler to code
-     * produced by the EirTargetEmitter. The frame adapter is embedded in the target method's code. It's code is typically made of an prologue and epilogue.
-     */
-    private final AdapterFrameGenerator<Assembler_Type> adapterFrameGenerator;
+    private final AdapterGenerator adapterGenerator;
 
-    public void emitFrameAdapterPrologue() {
-        if (adapterFrameGenerator != null) {
-            adapterFrameGenerator.emitPrologue(assembler());
+    public Adapter adapt(ClassMethodActor callee) {
+        if (adapterGenerator != null) {
+            return adapterGenerator.adapt(callee, assembler());
         }
-    }
-
-    public void emitFrameAdapterEpilogue() {
-        if (adapterFrameGenerator != null) {
-            adapterFrameGenerator.emitEpilogue(assembler());
-        }
+        return null;
     }
 
     private final Safepoint safepoint;
 
-    protected EirTargetEmitter(Assembler_Type assembler, EirABI abi, int frameSize, Safepoint safepoint, WordWidth stackSlotWidth, AdapterFrameGenerator<Assembler_Type> adapterFrameGenerator) {
+    protected EirTargetEmitter(Assembler_Type assembler, EirABI abi, int frameSize, Safepoint safepoint, WordWidth stackSlotWidth, AdapterGenerator adapterGenerator) {
         this.assembler = assembler;
         this.abi = abi;
         this.frameSize = frameSize;
         this.safepoint = safepoint;
-        this.adapterFrameGenerator = adapterFrameGenerator;
+        this.adapterGenerator = adapterGenerator;
         this.stackSlotWidth = stackSlotWidth;
     }
 

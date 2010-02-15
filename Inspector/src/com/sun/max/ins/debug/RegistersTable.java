@@ -48,7 +48,7 @@ public final class RegistersTable extends InspectorTable {
 
     public RegistersTable(Inspection inspection, MaxThread thread, RegistersViewPreferences viewPreferences) {
         super(inspection);
-        tableModel = new RegistersTableModel(thread);
+        tableModel = new RegistersTableModel(inspection, thread);
         columnModel = new RegistersColumnModel(viewPreferences);
         configureMemoryTable(tableModel, columnModel);
         setRowSelectionAllowed(false);
@@ -79,7 +79,8 @@ public final class RegistersTable extends InspectorTable {
 
         private final RegisterInfo[] registerInfos;
 
-        RegistersTableModel(MaxThread thread) {
+        RegistersTableModel(Inspection inspection, MaxThread thread) {
+            super(inspection);
             this.thread = thread;
             final TeleIntegerRegisters integerRegisters = thread.integerRegisters();
             final TeleStateRegisters stateRegisters = thread.stateRegisters();

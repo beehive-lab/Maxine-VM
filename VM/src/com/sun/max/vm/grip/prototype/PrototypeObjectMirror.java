@@ -78,7 +78,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
         }
         final Object javaValue = Array.get(object, index);
         final ArrayClassActor arrayClassActor = (ArrayClassActor) classActor;
-        ProgramError.check(arrayClassActor.componentClassActor().kind.toStackKind() == kind.toStackKind());
+        ProgramError.check(arrayClassActor.componentClassActor().kind.stackKind == kind.stackKind);
         return arrayClassActor.componentClassActor().kind.asValue(javaValue);
     }
 
@@ -126,7 +126,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
         } else {
             final ArrayClassActor arrayClassActor = (ArrayClassActor) classActor;
             final ClassActor componentClassActor = arrayClassActor.componentClassActor();
-            if (componentClassActor.kind.toStackKind() != kind.toStackKind()) {
+            if (componentClassActor.kind.stackKind != kind.stackKind) {
                 throw new ArrayStoreException("cannot store a '" + kind + "' into an array of '" + componentClassActor.kind + "'");
             }
             if (object instanceof Object[]) {

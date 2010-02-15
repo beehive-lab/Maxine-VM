@@ -44,7 +44,7 @@ import com.sun.max.vm.grip.*;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public abstract class TeleGripScheme extends AbstractVMScheme implements GripScheme, TeleVMHolder {
+public abstract class TeleGripScheme extends AbstractVMScheme implements GripScheme {
 
     private static final int TRACE_VALUE = 1;
 
@@ -103,8 +103,12 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
                     Log.println("Drop Duplicate: " + remoteTeleGrip.toString() + " " + alreadyInstalledRemoteTeleGrip.makeOID() + " " + remoteTeleGrip.makeOID());
 
                     if (alreadyInstalledRemoteTeleGrip.makeOID() > remoteTeleGrip.makeOID()) {
-                        teleRoots.unregister(((MutableTeleGrip) remoteTeleGrip).index());
-                        ((MutableTeleGrip) remoteTeleGrip).setForwardedTeleGrip(alreadyInstalledRemoteTeleGrip);
+                        MutableTeleGrip mutableRemoteTeleGrip = (MutableTeleGrip) remoteTeleGrip;
+                        int index = mutableRemoteTeleGrip.index();
+                        if (index >= 0) {
+                            teleRoots.unregister(index);
+                        }
+                        mutableRemoteTeleGrip.setForwardedTeleGrip(alreadyInstalledRemoteTeleGrip);
                     } else {
                         teleRoots.unregister(((MutableTeleGrip) alreadyInstalledRemoteTeleGrip).index());
                         ((MutableTeleGrip) alreadyInstalledRemoteTeleGrip).setForwardedTeleGrip(remoteTeleGrip);

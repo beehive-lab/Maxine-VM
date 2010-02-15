@@ -68,7 +68,7 @@ public final class LinuxTeleProcess extends TeleProcess {
     }
 
     @Override
-    public int maximumWatchpointCount() {
+    public int platformWatchpointCount() {
         return 0;
     }
 

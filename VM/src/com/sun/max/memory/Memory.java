@@ -23,6 +23,7 @@ package com.sun.max.memory;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * This class provides methods to access raw memory through pointers.
@@ -118,11 +119,10 @@ public final class Memory {
     }
 
     @NO_SAFEPOINTS("speed")
-    public static void clearBytes(Pointer pointer, Size numberOfBytes) {
-        if (numberOfBytes.isWordAligned()) {
-            setWords(pointer, numberOfBytes.dividedBy(Word.size()).toInt(), Word.zero());
-        } else {
-            setBytes(pointer, numberOfBytes, (byte) 0);
+    public static void clearWords(Pointer start, int length) {
+        FatalError.check(start.isWordAligned(), "Can only zero word-aligned region");
+        for (int i = 0; i < length; i++) {
+            start.asPointer().setWord(i, Address.zero());
         }
     }
 
@@ -218,6 +218,13 @@ public final class Memory {
     @NO_SAFEPOINTS("speed")
     public static void writeBytes(byte[] fromArray, Pointer toPointer) {
         writeBytes(fromArray, fromArray.length, toPointer);
+    }
+
+    @NO_SAFEPOINTS("speed")
+    public static void zapRegion(MemoryRegion region) {
+        FatalError.check(region.start().isWordAligned(), "Can only zap word-aligned region");
+        FatalError.check(region.size().remainder(Word.size()) == 0, "Can only zap region of words");
+        setWords(region.start().asPointer(), region.size().dividedBy(Word.size()).toInt(), Address.fromLong(0xDEADBEEFCAFEBABEL));
     }
 
 }

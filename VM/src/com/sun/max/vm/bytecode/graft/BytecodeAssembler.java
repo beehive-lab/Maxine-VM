@@ -135,7 +135,7 @@ public abstract class BytecodeAssembler {
     public void allocateParameters(boolean isStatic, SignatureDescriptor signature) {
         for (int i = 0; i < signature.numberOfParameters(); i++) {
             final Kind parameterKind = signature.parameterDescriptorAt(i).toKind();
-            maxLocals += parameterKind.isCategory1() ? 1 : 2;
+            maxLocals += parameterKind.isCategory1 ? 1 : 2;
         }
         if (!isStatic) {
             ++maxLocals;
@@ -147,7 +147,7 @@ public abstract class BytecodeAssembler {
      */
     public int allocateLocal(Kind kind) {
         final int local = maxLocals;
-        if (kind.isCategory2()) {
+        if (!kind.isCategory1) {
             maxLocals += 2;
         } else {
             ++maxLocals;
@@ -234,13 +234,13 @@ public abstract class BytecodeAssembler {
         // Pop parameters
         int computedArgSlots = 0;
         for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
-            computedArgSlots += signatureDescriptor.parameterDescriptorAt(i).toKind().stackSlots();
+            computedArgSlots += signatureDescriptor.parameterDescriptorAt(i).toKind().stackSlots;
         }
         if (!isStatic) {
             ++computedArgSlots;
         }
 
-        final boolean result = numArgSlots == computedArgSlots && numReturnValueSlots == signatureDescriptor.resultKind().stackSlots();
+        final boolean result = numArgSlots == computedArgSlots && numReturnValueSlots == signatureDescriptor.resultKind().stackSlots;
         assert result;
         return result;
     }
@@ -409,11 +409,11 @@ public abstract class BytecodeAssembler {
     }
 
     public void push(Kind kind) {
-        setStack(stack + (kind.isCategory1() ? 1 : 2));
+        setStack(stack + (kind.isCategory1 ? 1 : 2));
     }
 
     public void pop(Kind kind) {
-        setStack(stack - (kind.isCategory1() ? 1 : 2));
+        setStack(stack - (kind.isCategory1 ? 1 : 2));
     }
 
     public void appendByte(int b) {
@@ -580,7 +580,7 @@ public abstract class BytecodeAssembler {
     }
 
     private int fieldSizeInSlots(int fieldRefIndex) {
-        return constantPool().fieldAt(fieldRefIndex).type(constantPool()).toKind().stackSlots();
+        return constantPool().fieldAt(fieldRefIndex).type(constantPool()).toKind().stackSlots;
     }
 
     public void getstatic(int fieldRefIndex) {

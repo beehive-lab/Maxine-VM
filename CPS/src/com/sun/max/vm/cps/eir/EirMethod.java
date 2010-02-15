@@ -75,8 +75,7 @@ public class EirMethod extends AbstractIrMethod {
     }
 
     protected EirMethod(ClassMethodActor classMethodActor, EirABIsScheme eirABIsScheme) {
-        super(classMethodActor);
-        abi = eirABIsScheme.getABIFor(classMethodActor);
+        this(classMethodActor, eirABIsScheme.getABIFor(classMethodActor));
     }
 
     public EirLocation[] parameterLocations() {

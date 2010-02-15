@@ -342,7 +342,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         return teleHeapScheme.heapSchemeClass();
     }
 
-    public Sequence<MaxInspectableMethod> inspectableMethods() {
+    public Sequence<MaxCodeLocation> inspectableMethods() {
         return teleHeapScheme.inspectableMethods();
     }
 

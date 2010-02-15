@@ -89,8 +89,8 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         }
     }
 
-    public Sequence<StackFrame> frames() {
-        final AppendableSequence<StackFrame> frames = new LinkSequence<StackFrame>();
+    public IndexedSequence<StackFrame> frames() {
+        final VariableSequence<StackFrame> frames = new VectorSequence<StackFrame>();
         try {
             frames(frames, cpuInstructionPointer, cpuStackPointer, cpuFramePointer);
         } catch (Throwable e) {
@@ -105,7 +105,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     public TargetMethod targetMethodFor(Pointer instructionPointer) {
         final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM, instructionPointer);
         if (teleTargetMethod != null) {
-            return teleTargetMethod.reducedDeepCopy();
+            return teleTargetMethod.targetMethod();
         }
         return null;
     }

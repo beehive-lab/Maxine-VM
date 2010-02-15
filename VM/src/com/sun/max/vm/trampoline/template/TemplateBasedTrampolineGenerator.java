@@ -29,7 +29,7 @@ import com.sun.max.vm.trampoline.*;
 
 /**
  * Generic trampoline generator for method dispatch.
- * Trampolines for both interface and method are just a small sequence of code
+ * Trampolines for both interface and method are composed of a small sequence of code
  * that calls a compiler's method with a receiver and a key that identifies the
  * method to dispatch to. Trampolines differ only by the value of that key (typically, an index in a table) and the method
  * of the compiler that is called to handle method resolution (and possibly, compilation).
@@ -64,12 +64,12 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
         if (MaxineVM.isHosted() && template == null) {
             // The template is created while bootstrapping only.
             template = CompilationScheme.Static.forceFreshCompile(trampolineClassMethodActor);
-            assert template.referenceLiterals().length == 1;
+            assert template.referenceLiterals().length == 1 && template.referenceLiterals()[0] instanceof DynamicTrampoline;
         }
         // Clone the template.
         final TargetMethod trampoline = template.duplicate();
         if (!MaxineVM.isHosted()) {
-            trampoline.linkDirectCalls();
+            trampoline.linkDirectCalls(null);
         }
         final DynamicTrampoline dynamicTrampoline = allocateTrampoline(tableIndex, trampoline);
         // Fix the clone's literal constant holding the index to the dispatch table
@@ -85,7 +85,7 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
         }
         @Override
         protected DynamicTrampoline allocateTrampoline(int dispatchTableIndex, TargetMethod trampoline) {
-            return new VTableTrampoline(dispatchTableIndex, trampoline);
+            return new DynamicTrampoline(dispatchTableIndex, trampoline);
         }
     }
 
@@ -95,7 +95,7 @@ public abstract class TemplateBasedTrampolineGenerator extends TrampolineGenerat
         }
         @Override
         protected DynamicTrampoline allocateTrampoline(int dispatchTableIndex, TargetMethod trampoline) {
-            return new ITableTrampoline(dispatchTableIndex, trampoline);
+            return new DynamicTrampoline(dispatchTableIndex, trampoline);
         }
     }
 }

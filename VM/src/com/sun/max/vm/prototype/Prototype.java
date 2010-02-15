@@ -245,6 +245,6 @@ public abstract class Prototype {
         }
         final VMConfiguration configuration = createHostVMConfiguration();
         MaxineVM.initialize(configuration, configuration);
-        configuration.loadAndInstantiateSchemes();
+        configuration.loadAndInstantiateSchemes(false);
     }
 }

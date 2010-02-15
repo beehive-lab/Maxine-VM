@@ -20,9 +20,13 @@
  */
 package com.sun.max.tele.object;
 
+import java.util.*;
+
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Canonical surrogate for a region of memory in the {@link TeleVM} used to allocate target code.
@@ -30,6 +34,10 @@ import com.sun.max.vm.reference.*;
  * @author Michael Van De Vanter
  */
 public final class TeleCodeRegion extends TeleRuntimeMemoryRegion {
+
+    private static final int TRACE_VALUE = 2;
+
+    private final List<TeleTargetMethod> teleTargetMethods = new ArrayList<TeleTargetMethod>();
 
     TeleCodeRegion(TeleVM teleVM, Reference codeRegionReference) {
         super(teleVM, codeRegionReference);
@@ -62,5 +70,28 @@ public final class TeleCodeRegion extends TeleRuntimeMemoryRegion {
             return mark().minus(start()).asSize();
         }
         return Size.zero();
+    }
+
+    public List<TeleTargetMethod> teleTargetMethods() {
+        return teleTargetMethods;
+    }
+
+    @Override
+    public void refresh(long processEpoch) {
+        Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
+        final long startTimeMillis = System.currentTimeMillis();
+        Reference targetMethods = teleVM().teleFields().CodeRegion_targetMethods.readReference(reference());
+        int size = teleVM().teleFields().SortedMemoryRegionList_size.readInt(targetMethods);
+        Reference regions = teleVM().teleFields().SortedMemoryRegionList_memoryRegions.readReference(targetMethods);
+        int index = teleTargetMethods.size();
+        final int delta = size - index;
+        while (index < size) {
+            Reference ref = teleVM().getElementValue(Kind.REFERENCE, regions, index).asReference();
+            TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleVM().makeTeleObject(ref);
+            assert teleTargetMethod != null;
+            teleTargetMethods.add(teleTargetMethod);
+            index++;
+        }
+        Trace.end(TRACE_VALUE, tracePrefix() + "refreshing: new target methods =" + delta, startTimeMillis);
     }
 }

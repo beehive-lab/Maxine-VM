@@ -263,7 +263,7 @@ public abstract class Trap {
             Log.printCurrentThread(false);
             if (targetMethod != null) {
                 Log.print(": Trapped in ");
-                Log.printMethod(targetMethod.classMethodActor(), true);
+                Log.printMethod(targetMethod, true);
             } else {
                 Log.println(": Trapped in <unknown>");
             }

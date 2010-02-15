@@ -22,21 +22,12 @@ package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.cps.*;
 
-import com.sun.max.vm.template.source.*;
-
 /**
  * Testing the JIT-compiler with methods performing multi-dimensional array allocations.
  *
  * @author Laurent Daynes
  */
 public class JITTest_compileMultianewarray extends JitCompilerTestCase {
-    /**
-     * Testing with unresolved, and resolved class constant.
-     */
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{UnoptimizedBytecodeTemplateSource.class, ResolvedBytecodeTemplateSource.class, InstrumentedBytecodeSource.class};
-    }
 
     void perform_unresolved_2_dimension() {
         @SuppressWarnings("unused")

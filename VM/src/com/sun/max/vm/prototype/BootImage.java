@@ -662,7 +662,7 @@ public class BootImage {
                         null, stringInfo.trampolinePackage(),
                                 stringInfo.targetABIsPackage(),
                                 stringInfo.runPackage());
-                vmConfiguration.loadAndInstantiateSchemes();
+                vmConfiguration.loadAndInstantiateSchemes(true);
 
                 fileInputStream.skip(header.heapSize + header.codeSize);
                 int trailerOffset = codeOffset() + header.codeSize;

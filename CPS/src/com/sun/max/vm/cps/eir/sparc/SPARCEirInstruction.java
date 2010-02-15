@@ -485,7 +485,7 @@ public interface SPARCEirInstruction {
                 emitter.assembler().call(arbitraryPlaceHolderBeforeLinkingTheBootCodeRegion);
             } else {
                 final Label label = new Label();
-                emitter.fixLabel(label, StaticTrampoline.codeStart().plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart()));
+                emitter.fixLabel(label, StaticTrampoline.codeStart().plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset()));
                 emitter.assembler().call(label);
             }
             emitter.assembler().stx(O7, O6, REGISTER_WINDOW_SIZE); // "SAVE" register O7
@@ -601,7 +601,7 @@ public interface SPARCEirInstruction {
     public static class RET extends SPARCEirOperation implements EirControlTransfer {
         public enum FROM {
             JAVA_METHOD,
-            TRAMPOLINE,
+            DYNAMIC_TRAMPOLINE,
             STATIC_TRAMPOLINE,
             TRAP_STUB
         }
@@ -618,7 +618,7 @@ public interface SPARCEirInstruction {
         @Override
         public void emit(SPARCEirTargetEmitter emitter) {
             switch(from) {
-                case TRAMPOLINE:
+                case DYNAMIC_TRAMPOLINE:
                     emitter.assembler().jmpl(O0, G0, G0);
                     emitter.assembler().restore(O1, G0, O0);   // Restore the receiver in %o0
                     break;

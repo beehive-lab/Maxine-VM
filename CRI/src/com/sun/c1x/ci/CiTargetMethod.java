@@ -53,7 +53,7 @@ public class CiTargetMethod {
     public static final class Safepoint extends Site {
         public final CiDebugInfo debugInfo;
 
-        private Safepoint(int pcOffset, CiDebugInfo debugInfo) {
+        Safepoint(int pcOffset, CiDebugInfo debugInfo) {
             super(pcOffset);
             this.debugInfo = debugInfo;
         }
@@ -82,7 +82,7 @@ public class CiTargetMethod {
         public final byte[] stackMap;
         public final byte[] registerMap;
 
-        private Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
+        Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
             super(pcOffset);
             this.runtimeCall = runtimeCall;
             this.method = method;
@@ -125,7 +125,7 @@ public class CiTargetMethod {
     public static final class DataPatch extends Site {
         public final CiConstant data;
 
-        private DataPatch(int pcOffset, CiConstant data) {
+        DataPatch(int pcOffset, CiConstant data) {
             super(pcOffset);
             this.data = data;
         }
@@ -144,7 +144,7 @@ public class CiTargetMethod {
         public final int handlerPos;
         public final RiType exceptionType;
 
-        private ExceptionHandler(int pcOffset, int handlerPos, RiType exceptionType) {
+        ExceptionHandler(int pcOffset, int handlerPos, RiType exceptionType) {
             super(pcOffset);
             this.handlerPos = handlerPos;
             this.exceptionType = exceptionType;
@@ -323,7 +323,7 @@ public class CiTargetMethod {
         return targetCodeSize;
     }
 
-    private static void appendRefMap(StringBuilder sb, String name, byte[] map) {
+    static void appendRefMap(StringBuilder sb, String name, byte[] map) {
         if (map != null) {
             sb.append(' ');
             sb.append(name);

@@ -225,9 +225,10 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
     }
 
     /**
-     * @return all registers that must be restored before returning from a call
+     * Gets the registers that must be restored before returning from a call. This is an ordered
+     * sequence that determines the order of the stack frame slots used to save the registers.
      */
-    public abstract PoolSet<EirRegister_Type> calleeSavedRegisters();
+    public abstract Sequence<EirRegister_Type> calleeSavedRegisters();
 
     public abstract TargetABI targetABI();
 

@@ -190,7 +190,7 @@ public abstract class ReferenceMapInterpreter {
                 if (parameterKind == Kind.REFERENCE) {
                     updateLocal(activeLocals, true);
                 }
-                activeLocals += parameterKind.isCategory1() ? 1 : 2;
+                activeLocals += parameterKind.isCategory1 ? 1 : 2;
             }
         }
 
@@ -461,7 +461,7 @@ public abstract class ReferenceMapInterpreter {
         if (kind == Kind.REFERENCE) {
             pushRef();
         } else {
-            if (kind.isCategory2()) {
+            if (!kind.isCategory1) {
                 pushCategory2();
             } else {
                 if (kind != Kind.VOID) {
@@ -486,7 +486,7 @@ public abstract class ReferenceMapInterpreter {
     }
 
     boolean pop(Kind kind) {
-        if (kind.isCategory1()) {
+        if (kind.isCategory1) {
             return popCategory1();
         }
         popCategory2();
@@ -1157,7 +1157,7 @@ public abstract class ReferenceMapInterpreter {
                     if (kind == Kind.REFERENCE) {
                         pushRef();
                     } else {
-                        if (kind.isCategory1()) {
+                        if (kind.isCategory1) {
                             pushCategory1();
                         } else {
                             pushCategory2();
@@ -1170,7 +1170,7 @@ public abstract class ReferenceMapInterpreter {
                     final FieldRefConstant fieldConstant = constantPool.fieldAt(index);
                     final TypeDescriptor type = fieldConstant.type(constantPool);
                     final Kind kind = type.toKind();
-                    if (kind.isCategory1()) {
+                    if (kind.isCategory1) {
                         popCategory1();
                     } else {
                         popCategory2();
@@ -1186,7 +1186,7 @@ public abstract class ReferenceMapInterpreter {
                     if (kind == Kind.REFERENCE) {
                         pushRef();
                     } else {
-                        if (kind.isCategory1()) {
+                        if (kind.isCategory1) {
                             pushCategory1();
                         } else {
                             pushCategory2();
@@ -1200,7 +1200,7 @@ public abstract class ReferenceMapInterpreter {
                     final FieldRefConstant fieldConstant = constantPool.fieldAt(index);
                     final TypeDescriptor type = fieldConstant.type(constantPool);
                     final Kind kind = type.toKind();
-                    if (kind.isCategory1()) {
+                    if (kind.isCategory1) {
                         popCategory1();
                     } else {
                         popCategory2();

@@ -21,13 +21,10 @@
 package com.sun.max.vm.code;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A code region that encapsulates a contiguous, fixed-sized memory area in the {@link TeleVM}
@@ -73,15 +70,10 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
     }
 
     /**
-     * A sorted list of the memory regions allocated within this code region.
+     * A sorted list of the target methods allocated within this code region.
      */
-    private final SortedMemoryRegionList<RuntimeMemoryRegion> sortedMemoryRegions = new SortedMemoryRegionList<RuntimeMemoryRegion>();
-
-    /**
-     * The byte array hub, which is necessary for allocating a byte array instance to encapsulate
-     * raw memory allocations.
-     */
-    private static final DynamicHub byteArrayHub = ClassRegistry.BYTE_ARRAY.dynamicHub();
+    @INSPECTED
+    private final SortedMemoryRegionList<TargetMethod> targetMethods = new SortedMemoryRegionList<TargetMethod>();
 
     /**
      * Accessor for the sorted list of target methods.
@@ -90,17 +82,11 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      */
     @HOSTED_ONLY
     public Iterable<TargetMethod> targetMethods() {
-        final AppendableSequence<TargetMethod> result = new ArrayListSequence<TargetMethod>(sortedMemoryRegions.length());
-        for (MemoryRegion memoryRegion : sortedMemoryRegions) {
-            if (memoryRegion instanceof TargetMethod) {
-                result.append((TargetMethod) memoryRegion);
-            }
-        }
-        return result;
+        return targetMethods;
     }
 
-    public void addToSortedMemoryRegions(RuntimeMemoryRegion region) {
-        sortedMemoryRegions.add(region);
+    public void add(TargetMethod targetMethod) {
+        targetMethods.add(targetMethod);
     }
 
     /**
@@ -109,12 +95,8 @@ public final class CodeRegion extends LinearAllocatorHeapRegion {
      * @param address the address to lookup in this region
      * @return a reference to the target method containing the specified address, if it exists; {@code null} otherwise
      */
-    public TargetMethod findTargetMethod(Address address) {
-        final MemoryRegion memoryRegion = sortedMemoryRegions.find(address);
-        if (memoryRegion instanceof TargetMethod) {
-            return (TargetMethod) memoryRegion;
-        }
-        return null;
+    public TargetMethod find(Address address) {
+        return targetMethods.find(address);
     }
 
 }

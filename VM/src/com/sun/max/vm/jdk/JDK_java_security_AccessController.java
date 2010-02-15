@@ -20,11 +20,8 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
-
-import java.lang.reflect.Constructor;
+import java.lang.reflect.*;
 import java.security.*;
-import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
@@ -179,16 +176,13 @@ final class JDK_java_security_AccessController {
         Context() {
         }
 
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
-            if (isTopFrame(flags)) {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
+            if (isTopFrame) {
                 // skip caller, i.e., 'getAccessControlContext()'
                 return true;
             }
-            if (isAdapter(flags)) {
-                return true;
-            }
-            if (targetMethod == null) {
-                // native frame
+            if (targetMethod == null || targetMethod instanceof Adapter) {
+                // native or adapter frame
                 return true;
             }
 
@@ -200,16 +194,16 @@ final class JDK_java_security_AccessController {
                 privilegedContext = privilegedElement.context;
                 protectionDomain = privilegedElement.classActor.protectionDomain();
             } else {
-                final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
-                if (bytecodeLocations == null) {
+                BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(instructionPointer, false);
+                if (bytecodeLocation == null) {
                     protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
                 } else {
-                    while (bytecodeLocations.hasNext()) {
-                        final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
+                    while (bytecodeLocation != null) {
                         final MethodActor classMethodActor = bytecodeLocation.classMethodActor;
                         if (classMethodActor.isApplicationVisible()) {
                             protectionDomain = bytecodeLocation.classMethodActor.holder().protectionDomain();
                         }
+                        bytecodeLocation = bytecodeLocation.parent();
                     }
                 }
             }

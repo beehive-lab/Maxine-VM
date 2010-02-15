@@ -76,6 +76,7 @@ public final class BootImageTable extends InspectorTable {
         private final InspectorLabel dummyLabel;
 
         BootImageTableModel(Inspection inspection) {
+            super(inspection);
             final BootImage bootImage = maxVM().bootImage();
             final BootImage.Header header = bootImage.header;
             final VMConfiguration vmConfiguration = bootImage.vmConfiguration;

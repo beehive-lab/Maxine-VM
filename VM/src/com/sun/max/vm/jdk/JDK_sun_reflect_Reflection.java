@@ -20,10 +20,6 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.vm.stack.RawStackFrameVisitor.Util.*;
-
-import java.util.*;
-
 import sun.reflect.*;
 
 import com.sun.max.annotate.*;
@@ -59,12 +55,13 @@ final class JDK_sun_reflect_Reflection {
         Context(int realFramesToSkip) {
             this.realFramesToSkip = realFramesToSkip;
         }
-        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, int flags) {
-            if (isTopFrame(flags)) {
+        public boolean visitFrame(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean isTopFrame) {
+            if (isTopFrame) {
                 // skip 'getCallerMethod()'
                 return true;
             }
-            if (isAdapter(flags)) {
+            if (targetMethod instanceof Adapter) {
+                // adapter frame
                 return true;
             }
             if (targetMethod == null) {
@@ -77,8 +74,8 @@ final class JDK_sun_reflect_Reflection {
                 return true;
             }
 
-            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(instructionPointer, false);
-            if (bytecodeLocations == null) {
+            BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(instructionPointer, false);
+            if (bytecodeLocation == null) {
                 if (realFramesToSkip == 0) {
                     methodActorResult = targetMethod.classMethodActor();
                     framePointerResult = framePointer;
@@ -86,8 +83,7 @@ final class JDK_sun_reflect_Reflection {
                 }
                 realFramesToSkip--;
             } else {
-                while (bytecodeLocations.hasNext()) {
-                    final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
+                while (bytecodeLocation != null) {
                     final MethodActor classMethodActor = bytecodeLocation.classMethodActor.original();
                     if (!classMethodActor.holder().isGenerated()) {
                         if (realFramesToSkip == 0) {
@@ -97,6 +93,7 @@ final class JDK_sun_reflect_Reflection {
                         }
                         realFramesToSkip--;
                     }
+                    bytecodeLocation = bytecodeLocation.parent();
                 }
             }
             return true;

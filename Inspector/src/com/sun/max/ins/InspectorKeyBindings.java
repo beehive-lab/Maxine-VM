@@ -47,6 +47,7 @@ public class InspectorKeyBindings {
         InspectClassActorByNameAction.class,
         InspectMethodActorByNameAction.class,
         ViewMethodBytecodeByNameAction.class,
+        ViewMethodTargetCodeAction.class,
         ViewMethodTargetCodeByNameAction.class,
         DebugSingleStepAction.class,
         DebugRunToInstructionAction.class,
@@ -143,6 +144,7 @@ public class InspectorKeyBindings {
         add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(InspectMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodBytecodeByNameAction.class, 'J', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ViewMethodTargetCodeAction.class, 'D', CTRL_DOWN_MASK).
         add(ViewMethodTargetCodeByNameAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugSingleStepAction.class, VK_F7).
         add(DebugStepOverWithBreakpointsAction.class, VK_F8).
@@ -169,6 +171,7 @@ public class InspectorKeyBindings {
         add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(InspectMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodBytecodeByNameAction.class, 'J', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ViewMethodTargetCodeAction.class, 'D', CTRL_DOWN_MASK).
         add(ViewMethodTargetCodeByNameAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(DebugSingleStepAction.class, VK_F5).
         add(DebugStepOverWithBreakpointsAction.class, VK_F6).

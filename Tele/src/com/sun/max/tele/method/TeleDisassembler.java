@@ -222,7 +222,7 @@ public final class TeleDisassembler {
         static {
             final Endianness endianness = VMConfiguration.target().platform().processorKind.dataModel.endianness;
             final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind.dataModel.wordWidth);
-            final GPR literalBaseRegister = (GPR) VMConfiguration.target().targetABIsScheme().optimizedJavaABI().literalBaseRegister();
+            final GPR literalBaseRegister = (GPR) VMConfiguration.target().targetABIsScheme().optimizedJavaABI.literalBaseRegister();
 
             asm.rd(StateRegister.PC, literalBaseRegister);
             int setLiteralBaseInstruction = 0;

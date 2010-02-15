@@ -138,7 +138,7 @@ public class JavaPrototype extends Prototype {
      */
     private void loadClass(Class javaClass) {
         assert !MaxineVM.isHostedOnly(javaClass);
-        Classes.load(HOSTED_BOOT_CLASS_LOADER, javaClass.getName());
+        loadClass(javaClass.getName());
     }
 
     /**
@@ -148,7 +148,8 @@ public class JavaPrototype extends Prototype {
      * @param name the name of the java class as a string
      */
     public void loadClass(String name) {
-        Classes.load(HOSTED_BOOT_CLASS_LOADER, name);
+        Class clazz = Classes.load(HOSTED_BOOT_CLASS_LOADER, name);
+        Classes.initialize(clazz);
     }
 
     private final PackageLoader packageLoader;
@@ -337,7 +338,7 @@ public class JavaPrototype extends Prototype {
         theJavaPrototype = this;
 
         MaxineVM.setTarget(new MaxineVM(vmConfiguration));
-        vmConfiguration.loadAndInstantiateSchemes();
+        vmConfiguration.loadAndInstantiateSchemes(true);
 
         Trace.line(1, "Host VM configuration:");
         Trace.line(1, MaxineVM.host().configuration);

@@ -151,7 +151,7 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
         }
     }
 
-    protected FilteredListDialog(Inspection inspection, String title, String filterFieldLabel, String actionName, boolean multiSelection) {
+    protected FilteredListDialog(Inspection inspection, String title, String filterFieldLabelText, String actionName, boolean multiSelection) {
         super(inspection, title, true);
         this.multiSelection = multiSelection;
         if (actionName == null) {
@@ -163,7 +163,9 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
         final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
         final JPanel textPanel = new InspectorPanel(inspection);
 
-        textPanel.add(new TextLabel(inspection, filterFieldLabel + ":"));
+        TextLabel filterFieldLabel = new TextLabel(inspection, filterFieldLabelText + ":");
+        textPanel.add(filterFieldLabel);
+        filterFieldLabel.setToolTipText(filterFieldLabelTooltip());
         textField.setPreferredSize(new Dimension(500, 30));
         textField.getDocument().addDocumentListener(new TextListener());
         textPanel.add(textField);
@@ -231,5 +233,9 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
         setContentPane(dialogPanel);
         pack();
         inspection.gui().moveToMiddle(this);
+    }
+
+    protected String filterFieldLabelTooltip() {
+        return null;
     }
 }

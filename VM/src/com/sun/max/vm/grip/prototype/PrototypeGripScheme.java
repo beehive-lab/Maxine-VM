@@ -450,4 +450,8 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     public Reference compareAndSwapReference(Grip grip, int offset, Reference suspectedValue, Reference newValue) {
         throw ProgramError.unexpected();
     }
+
+    public void copyElements(Grip src, int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+        throw ProgramError.unexpected();
+    }
 }

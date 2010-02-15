@@ -326,10 +326,12 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     protected Transferable getTransferable(int row, int col) {
         final TableCellRenderer cellRenderer = getColumnModel().getColumn(col).getCellRenderer();
         Object value = getValueAt(row, col);
-        final Component renderer = cellRenderer.getTableCellRendererComponent(this, value, false, false, row, col);
-        if (renderer instanceof InspectorLabel) {
-            final InspectorLabel inspectorLabel = (InspectorLabel) renderer;
-            return inspectorLabel.getTransferable();
+        if (cellRenderer != null) {
+            final Component renderer = cellRenderer.getTableCellRendererComponent(this, value, false, false, row, col);
+            if (renderer instanceof InspectorLabel) {
+                final InspectorLabel inspectorLabel = (InspectorLabel) renderer;
+                return inspectorLabel.getTransferable();
+            }
         }
         return null;
     }
@@ -356,7 +358,23 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
+        return inspection.maxVMState();
+    }
+
+    public final MaxCodeManager codeManager() {
+        return inspection.codeManager();
+    }
+
+    public final MaxBreakpointFactory breakpointFactory() {
+        return inspection.breakpointFactory();
+    }
+
+    public final MaxWatchpointFactory watchpointFactory() {
+        return inspection.watchpointFactory();
+    }
+
+    public final boolean watchpointsEnabled() {
+        return inspection.watchpointsEnabled();
     }
 
     public final InspectorGUI gui() {
@@ -371,7 +389,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return inspection.focus();
     }
 
-    public InspectionActions actions() {
+    public final InspectionActions actions() {
         return inspection.actions();
     }
 

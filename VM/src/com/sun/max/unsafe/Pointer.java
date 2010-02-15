@@ -27,6 +27,8 @@ import com.sun.max.platform.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Pointers are addresses with extra methods to access memory.
@@ -1224,4 +1226,81 @@ public abstract class Pointer extends Address implements Accessor {
         }
     }
 
+    public final void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
+        Kind kind = Kind.fromJava(dst.getClass().getComponentType());
+        switch (kind.asEnum) {
+            case BOOLEAN: {
+                boolean[] arr = (boolean[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = getBoolean(displacement, srcIndex);
+                }
+                break;
+            }
+            case BYTE: {
+                byte[] arr = (byte[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = getByte(displacement, srcIndex);
+                }
+                break;
+            }
+            case CHAR: {
+                char[] arr = (char[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = getChar(displacement, srcIndex);
+                }
+                break;
+            }
+            case SHORT: {
+                short[] arr = (short[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = getShort(displacement, srcIndex);
+                }
+                break;
+            }
+            case INT: {
+                int[] arr = (int[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = getInt(displacement, srcIndex);
+                }
+                break;
+            }
+            case FLOAT: {
+                float[] arr = (float[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = getFloat(displacement, srcIndex);
+                }
+                break;
+            }
+            case LONG: {
+                long[] arr = (long[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = getLong(displacement, srcIndex);
+                }
+                break;
+            }
+            case DOUBLE: {
+                double[] arr = (double[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = getDouble(displacement, srcIndex);
+                }
+                break;
+            }
+            case REFERENCE: {
+                Reference[] arr = (Reference[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    arr[dstIndex + i] = getReference(displacement, srcIndex);
+                }
+                break;
+            }
+            case WORD: {
+                Word[] arr = (Word[]) dst;
+                for (int i = 0; i < length; ++i) {
+                    WordArray.set(arr, dstIndex + i, getWord(displacement, srcIndex));
+                }
+                break;
+            }
+            default:
+                throw FatalError.unexpected("invalid type");
+        }
+    }
 }

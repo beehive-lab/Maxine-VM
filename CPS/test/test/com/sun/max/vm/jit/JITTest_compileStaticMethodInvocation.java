@@ -25,7 +25,6 @@ import test.com.sun.max.vm.cps.bytecode.*;
 
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -196,12 +195,4 @@ public class JITTest_compileStaticMethodInvocation extends JitCompilerTestCase {
     public JITTest_compileStaticMethodInvocation(String name) {
         super(name);
     }
-    /**
-     * Testing with unresolved, resolved, and initialized class constant.
-     */
-    @Override
-    protected Class[] templateSources() {
-        return TemplateTableConfiguration.OPTIMIZED_TEMPLATE_SOURCES;
-    }
-
 }

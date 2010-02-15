@@ -156,4 +156,6 @@ public interface ReferenceScheme extends VMScheme {
 
     Reference compareAndSwapReference(Reference reference, Offset offset, Reference suspectedValue, Reference newValue);
     Reference compareAndSwapReference(Reference reference, int offset, Reference suspectedValue, Reference newValue);
+
+    void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length);
 }

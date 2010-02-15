@@ -46,7 +46,7 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
 
     @Override
     public CPSTargetMethod createIrMethod(ClassMethodActor classMethodActor) {
-        final SPARCJitTargetMethod targetMethod = new SPARCJitTargetMethod(classMethodActor, compilerScheme());
+        final SPARCJitTargetMethod targetMethod = new SPARCJitTargetMethod(classMethodActor);
         notifyAllocation(targetMethod);
         return targetMethod;
     }
@@ -60,12 +60,8 @@ public class SPARCTemplateBasedTargetGenerator extends TemplateBasedTargetGenera
     protected BytecodeToTargetTranslator makeTargetTranslator(ClassMethodActor classMethodActor) {
         // allocate a buffer that is likely to be large enough, based on a linear expansion
         final  int estimatedSize = classMethodActor.codeAttribute().code().length * NUMBER_OF_BYTES_PER_BYTECODE;
-        final CodeBuffer codeBuffer = new ByteArrayCodeBuffer(estimatedSize);
-        SPARCEirABI optimizingCompilerAbi = null;
-        if (needsAdapterFrame) {
-            optimizingCompilerAbi = getABI(classMethodActor);
-        }
-        return new BytecodeToSPARCTargetTranslator(classMethodActor, codeBuffer, templateTable(), optimizingCompilerAbi, false);
+        final CodeBuffer codeBuffer = new CodeBuffer(estimatedSize);
+        return new BytecodeToSPARCTargetTranslator(classMethodActor, codeBuffer, templateTable(), false);
     }
 
 }

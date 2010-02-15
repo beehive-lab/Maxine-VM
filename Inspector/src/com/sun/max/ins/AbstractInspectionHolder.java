@@ -48,7 +48,23 @@ public abstract class AbstractInspectionHolder implements InspectionHolder {
     }
 
     public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
+        return inspection.maxVMState();
+    }
+
+    public final MaxCodeManager codeManager() {
+        return inspection.codeManager();
+    }
+
+    public final MaxBreakpointFactory breakpointFactory() {
+        return inspection.breakpointFactory();
+    }
+
+    public final MaxWatchpointFactory watchpointFactory() {
+        return inspection.watchpointFactory();
+    }
+
+    public final boolean watchpointsEnabled() {
+        return inspection.watchpointsEnabled();
     }
 
     public InspectorGUI gui() {

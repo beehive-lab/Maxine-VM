@@ -100,6 +100,10 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
         return teleVM().getElementValue(componentKind(), reference(), index);
     }
 
+    public void copyElements(int srcIndex, Object dst, int dstIndex, int length) {
+        teleVM().copyElements(componentKind(), reference(), srcIndex, dst, dstIndex, length);
+    }
+
     @Override
     public  Address fieldAddress(FieldActor fieldActor) {
         throw FatalError.unexpected("Maxine Array objects don't contain fields");
@@ -139,21 +143,20 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
         final int length = getLength();
         final Class<?> componentJavaClass = classActorForType().componentClassActor().toJava();
         final Object newArray = Array.newInstance(componentJavaClass, length);
-        context.register(this, newArray);
-        for (int index = 0; index < length; index++) {
-            final Value value = readElementValue(index);
-            final Object newJavaValue;
-            if (componentKind == Kind.REFERENCE) {
-                final TeleObject teleValueObject = teleVM().makeTeleObject(value.asReference());
-                if (teleValueObject == null) {
-                    newJavaValue = null;
-                } else {
-                    newJavaValue = teleValueObject.makeDeepCopy(context);
-                }
+        context.register(this, newArray, true);
+        if (length != 0) {
+            if (componentKind != Kind.REFERENCE) {
+                copyElements(0, newArray, 0, length);
             } else {
-                newJavaValue = value.asBoxedJavaValue();
+                Object[] referenceArray = (Object[]) newArray;
+                for (int index = 0; index < length; index++) {
+                    final Value value = readElementValue(index);
+                    final TeleObject teleValueObject = teleVM().makeTeleObject(value.asReference());
+                    if (teleValueObject != null) {
+                        referenceArray[index] = teleValueObject.makeDeepCopy(context);
+                    }
+                }
             }
-            Array.set(newArray, index, newJavaValue);
         }
         return newArray;
     }

@@ -58,11 +58,22 @@ public final class StaticTrampoline extends Snippet {
 
     @RESET
     private static Pointer codeStart = Pointer.zero();
+    @RESET
+    private static Pointer jitEntryPoint;
+    @RESET
+    private static Pointer optEntryPoint;
 
     public static Pointer codeStart() {
         if (codeStart.isZero()) {
             codeStart = CompilationScheme.Static.getCurrentTargetMethod(snippet.executable).codeStart();
+            optEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset());
+            jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offset());
         }
         return codeStart;
+    }
+
+    public static boolean isEntryPoint(Pointer instructionPointer) {
+        codeStart(); // Ensures static fields are (re)initialized
+        return instructionPointer.equals(optEntryPoint) || instructionPointer.equals(jitEntryPoint);
     }
 }

@@ -52,7 +52,19 @@ public abstract class InspectorTabbedPane extends JTabbedPane implements Inspect
     }
 
     public final MaxVMState maxVMState() {
-        return inspection.maxVM().maxVMState();
+        return inspection.maxVMState();
+    }
+
+    public final MaxBreakpointFactory breakpointFactory() {
+        return inspection.breakpointFactory();
+    }
+
+    public final MaxWatchpointFactory watchpointFactory() {
+        return inspection.watchpointFactory();
+    }
+
+    public final boolean watchpointsEnabled() {
+        return inspection.watchpointsEnabled();
     }
 
     public final InspectorStyle style() {
@@ -63,7 +75,7 @@ public abstract class InspectorTabbedPane extends JTabbedPane implements Inspect
         return inspection.focus();
     }
 
-    public InspectionActions actions() {
+    public final InspectionActions actions() {
         return inspection.actions();
     }
 

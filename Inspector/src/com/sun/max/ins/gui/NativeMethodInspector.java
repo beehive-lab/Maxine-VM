@@ -23,7 +23,6 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 
 /**
@@ -111,7 +110,7 @@ public final class NativeMethodInspector extends MethodInspector {
      * Global code selection has changed; update viewer.
      */
     @Override
-    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
+    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
         if (targetCodeViewer.updateCodeFocus(codeLocation) && !isSelected()) {
             highlight();
         }

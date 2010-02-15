@@ -30,7 +30,6 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.jit.Stop.*;
-import com.sun.max.vm.template.*;
 
 /**
  * Represents the {@link StopType stop} related information pertaining to a method compiled by a
@@ -119,28 +118,27 @@ public class Stops {
             addNoCheck(stop);
         }
 
-        public void add(CompiledBytecodeTemplate template, int targetCodePosition, int bytecodePosition) {
-            final TargetMethod targetMethod = template.targetMethod;
-            if (targetMethod.numberOfStopPositions() == 0) {
+        public void add(TargetMethod template, int targetCodePosition, int bytecodePosition) {
+            if (template.numberOfStopPositions() == 0) {
                 return;
             }
-            final int numberOfDirectCalls = targetMethod.numberOfDirectCalls();
-            final int numberOfIndirectCalls = targetMethod.numberOfIndirectCalls();
-            final int numberOfSafepoints = targetMethod.numberOfSafepoints();
+            final int numberOfDirectCalls = template.numberOfDirectCalls();
+            final int numberOfIndirectCalls = template.numberOfIndirectCalls();
+            final int numberOfSafepoints = template.numberOfSafepoints();
 
             ensureCapacity(count + numberOfDirectCalls + numberOfIndirectCalls + numberOfSafepoints);
 
             for (int i = 0; i < numberOfDirectCalls; i++) {
-                final int stopPosition = targetCodePosition + DIRECT_CALL.stopPosition(targetMethod, i);
-                addNoCheck(new TemplateDirectCall(stopPosition, bytecodePosition, targetMethod, i));
+                final int stopPosition = targetCodePosition + DIRECT_CALL.stopPosition(template, i);
+                addNoCheck(new TemplateDirectCall(stopPosition, bytecodePosition, template, i));
             }
             for (int i = 0; i < numberOfIndirectCalls; i++) {
-                final int stopPosition = targetCodePosition + INDIRECT_CALL.stopPosition(targetMethod, i);
-                addNoCheck(new TemplateIndirectCall(stopPosition, bytecodePosition, targetMethod, i));
+                final int stopPosition = targetCodePosition + INDIRECT_CALL.stopPosition(template, i);
+                addNoCheck(new TemplateIndirectCall(stopPosition, bytecodePosition, template, i));
             }
             for (int i = 0; i < numberOfSafepoints; i++) {
-                final int stopPosition = targetCodePosition + SAFEPOINT.stopPosition(targetMethod, i);
-                addNoCheck(new TemplateSafepoint(stopPosition, bytecodePosition, targetMethod, i));
+                final int stopPosition = targetCodePosition + SAFEPOINT.stopPosition(template, i);
+                addNoCheck(new TemplateSafepoint(stopPosition, bytecodePosition, template, i));
             }
         }
 

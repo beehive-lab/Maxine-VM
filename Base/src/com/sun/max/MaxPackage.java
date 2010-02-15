@@ -197,6 +197,13 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         return implementation.asSubclass(schemeType);
     }
 
+    public static boolean equal(MaxPackage p1, MaxPackage p2) {
+        if (p1 == null) {
+            return p2 == null;
+        }
+        return p1.equals(p2);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other == this) {

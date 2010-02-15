@@ -20,8 +20,11 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
+
 /**
- * Interface for Tele layer objects that refer to something in a {@link TeleVM}.
+ * Interface for Tele layer objects that refer to general resources about the VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -32,5 +35,34 @@ public interface TeleVMHolder {
      * @return the instance of {@link TeleVM} being managed by this code.
      */
     TeleVM teleVM();
+
+    /**
+     * Gets the manager for locating and managing code related information in the VM.
+     * <br>
+     * Thread-safe
+     *
+     * @return the singleton manager for information about code in the VM.
+     */
+    CodeManager codeManager();
+
+    /**
+     * Gets the factory for creating and managing VM breakpoints.
+     * <br>
+     * Thread-safe
+     *
+     * @return the singleton factory for creating and managing VM breakpoints
+     */
+    TeleBreakpointFactory breakpointFactory();
+
+    /**
+     * Gets the factory for creating and managing VM watchpoints; null
+     * if watchpoints are not supported on this platform.
+     * <br>
+     * Thread-safe
+     *
+     * @return the singleton factory for creating and managing VM watchpoints, or
+     * null if watchpoints not supported.
+     */
+    TeleWatchpoint.Factory watchpointFactory();
 
 }

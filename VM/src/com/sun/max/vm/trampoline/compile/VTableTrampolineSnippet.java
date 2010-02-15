@@ -42,7 +42,7 @@ public final class VTableTrampolineSnippet extends Snippet {
     }
 
     @CONSTANT
-    private static DynamicTrampoline vTableTrampoline = new VTableTrampoline(0, null);
+    private static DynamicTrampoline vTableTrampoline = new DynamicTrampoline(0, null);
 
     static void fixTrampoline(DynamicTrampoline vTableTrampoline) {
         VTableTrampolineSnippet.vTableTrampoline = vTableTrampoline;

@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.ri;
 
+import java.io.OutputStream;
+
 import com.sun.c1x.ci.CiKind;
 import com.sun.c1x.ci.CiTargetMethod;
 
@@ -196,6 +198,19 @@ public interface RiRuntime {
      */
     int codeOffset();
 
+    /**
+     * If the VM is using multiple compilers with different calling conventions, then each calling convention will have
+     * a designated offset in the compiled code of a callee. If necessary, there will be code at these special
+     * offsets that moves the outgoing arguments of the caller to the locations expected by the callee.
+     * This method emits the adapter code if it is required.
+     * 
+     * TODO: Parameterize this method will the calling convention in use by the code currently being compiled.
+     * 
+     * @param method the callee method being compiled that may need an adapter code prologue
+     * @param out where the prologue code (if any) will be emitted
+     */
+    void codePrologue(RiMethod method, OutputStream out);
+    
     /**
      * Returns the disassembly of the given code bytes. Used for debugging purposes only.
      *

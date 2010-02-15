@@ -48,6 +48,33 @@ public interface InspectionHolder {
     MaxVMState maxVMState();
 
     /**
+     * @return the manager for information about code in the VM.
+     */
+    MaxCodeManager codeManager();
+
+    /**
+     * Gets the singleton factory for creating and managing breakpoints.
+     *
+     * @return the singleton factory responsible for creating and managing VM watchpoints.
+     */
+    MaxBreakpointFactory breakpointFactory();
+
+    /**
+     * Gets the singleton factory for creating and managing watchpoints, if supported on the platform.
+     *
+     * @return the singleton factory responsible for creating and managing VM watchpoints, else
+     * null if not supported.
+     */
+    MaxWatchpointFactory watchpointFactory();
+
+    /**
+     * Are watchpoints supported on this platform?
+     *
+     * @return whether watchpoints are enabled on the platform.
+     */
+    boolean watchpointsEnabled();
+
+    /**
      * @return access to basic GUI services.
      */
     InspectorGUI gui();

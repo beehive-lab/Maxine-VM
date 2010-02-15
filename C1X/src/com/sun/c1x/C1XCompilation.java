@@ -246,6 +246,10 @@ public class C1XCompilation {
             hir.build();
             emitLIR();
             targetMethod = emitCode();
+
+            if (C1XOptions.PrintMetrics) {
+                C1XMetrics.BytecodesCompiled += method.codeSize();
+            }
         } catch (CiBailout b) {
             return new CiResult(null, b, stats);
         } catch (Throwable t) {

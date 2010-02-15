@@ -20,21 +20,29 @@
  */
 package com.sun.max.vm.trampoline;
 
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 
-public abstract class DynamicTrampoline {
+public final class DynamicTrampoline {
 
-    final int dispatchTableIndex;
+    public final int dispatchTableIndex;
 
     @CONSTANT_WHEN_NOT_ZERO
     private TargetMethod trampoline;
 
     public DynamicTrampoline(int dispatchTableIndex, TargetMethod trampoline) {
         this.dispatchTableIndex = dispatchTableIndex;
-        this.trampoline =  trampoline;
+        this.trampoline = trampoline;
+        assert trampoline == null || trampoline.classMethodActor.isVirtualTrampoline() || trampoline.classMethodActor.isInterfaceTrampoline();
     }
 
     public void initTrampoline(TargetMethod trampoline) {
@@ -45,14 +53,37 @@ public abstract class DynamicTrampoline {
         return trampoline;
     }
 
-    protected abstract Address getMethodEntryPoint(Object receiver);
-
-    public int dispatchTableIndex() {
-        return dispatchTableIndex;
+    /**
+     * Gets the {@link CallEntryPoint#VTABLE_ENTRY_POINT} in the virtual or interface method selected by
+     * a given receiver object and the {@link #dispatchTableIndex} of this trampoline. This will compile
+     * the selected method first if necessary. In addition, this method patches the relevant vtable or itable
+     * entry to contain the returned address.
+     *
+     * @param receiver the receiver of a virtual or interface invocation
+     */
+    private Address getMethodEntryPoint(Object receiver) {
+        final Hub hub = ObjectAccess.readHub(receiver);
+        if (trampoline.classMethodActor.isVirtualTrampoline()) {
+            final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByVTableIndex(dispatchTableIndex);
+            if (selectedCallee.isAbstract()) {
+                throw new AbstractMethodError();
+            }
+            final Address vtableEntryPoint = CompilationScheme.Static.compile(selectedCallee, VTABLE_ENTRY_POINT);
+            hub.setWord(dispatchTableIndex, vtableEntryPoint);
+            return vtableEntryPoint;
+        }
+        final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByIIndex(dispatchTableIndex);
+        if (selectedCallee.isAbstract()) {
+            throw new AbstractMethodError();
+        }
+        final Address itableEntryPoint = CompilationScheme.Static.compile(selectedCallee, VTABLE_ENTRY_POINT);
+        hub.setWord(hub.iTableStartIndex + dispatchTableIndex, itableEntryPoint);
+        return itableEntryPoint;
     }
 
+    @FOLD
     private DynamicTrampolineExit trampolineExit() {
-        return trampoline.compilerScheme.vmConfiguration().trampolineScheme().dynamicTrampolineExit();
+        return VMConfiguration.target().trampolineScheme().dynamicTrampolineExit();
     }
 
     /**

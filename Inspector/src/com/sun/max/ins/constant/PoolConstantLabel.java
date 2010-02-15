@@ -26,7 +26,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
@@ -201,10 +200,10 @@ public abstract class PoolConstantLabel extends InspectorLabel {
     private InspectorPopupMenu createPopupMenu() {
         final InspectorPopupMenu menu = new InspectorPopupMenu();
         if (telePoolConstant != null) {
-            menu.add(inspection().actions().copyWord(telePoolConstant.origin(), "Copy PoolConstant address toclipboard"));
-            menu.add(inspection().actions().inspectObjectMemoryWords(telePoolConstant, "Inspect PoolConstant memory words"));
-            menu.add(inspection().actions().inspectObject(telePoolConstant, "Inspect PoolConstant #" + Integer.toString(index)));
-            menu.add(inspection().actions().inspectObject(teleConstantPool, "Inspect ConstantPool"));
+            menu.add(actions().copyWord(telePoolConstant.origin(), "Copy PoolConstant address toclipboard"));
+            menu.add(actions().inspectObjectMemoryWords(telePoolConstant, "Inspect PoolConstant memory words"));
+            menu.add(actions().inspectObject(telePoolConstant, "Inspect PoolConstant #" + Integer.toString(index)));
+            menu.add(actions().inspectObject(teleConstantPool, "Inspect ConstantPool"));
             specializeMenu(menu);
         }
         return menu;
@@ -257,7 +256,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 menu.addSeparator();
                 final TeleClassConstant.Resolved teleResolvedClassConstant = (TeleClassConstant.Resolved) telePoolConstant();
                 final TeleClassActor teleClassActor = teleResolvedClassConstant.getTeleClassActor();
-                menu.add(inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor"));
+                menu.add(actions().inspectObject(teleClassActor, "Inspect ClassActor"));
             }
         }
     }
@@ -300,7 +299,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 menu.addSeparator();
                 final TeleFieldRefConstant.Resolved teleResolvedFieldRefConstant = (TeleFieldRefConstant.Resolved) telePoolConstant();
                 final TeleFieldActor teleFieldActor = teleResolvedFieldRefConstant.getTeleFieldActor();
-                menu.add(inspection().actions().inspectObject(teleFieldActor, "Inspect FieldActor"));
+                menu.add(actions().inspectObject(teleFieldActor, "Inspect FieldActor"));
             }
         }
 
@@ -371,8 +370,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         protected void handleLeftButtonEvent() {
             checkResolved();
             if (teleClassMethodActor != null && teleClassMethodActor.hasCodeAttribute()) {
-                final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(teleClassMethodActor, 0);
-                inspection().focus().setCodeLocation(teleCodeLocation, false);
+                focus().setCodeLocation(teleClassMethodActor.entryLocation());
             }
         }
     }
@@ -413,7 +411,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 menu.addSeparator();
                 final TeleInterfaceMethodRefConstant.Resolved teleResolvedInterfaceMethodRefConstant = (TeleInterfaceMethodRefConstant.Resolved) telePoolConstant();
                 final TeleInterfaceMethodActor teleInterfaceMethodActor = teleResolvedInterfaceMethodRefConstant.getTeleInterfaceMethodActor();
-                menu.add(inspection().actions().inspectObject(teleInterfaceMethodActor, "Inspect InterfaceMethodActor"));
+                menu.add(actions().inspectObject(teleInterfaceMethodActor, "Inspect InterfaceMethodActor"));
             }
         }
 
