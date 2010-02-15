@@ -127,13 +127,13 @@ public interface VMAccess {
      * @param codeLocation the code location at which the breakpoint should be added
      * @param suspendAll whether to suspend all threads when the breakpoint is hit or not
      */
-    void addBreakpoint(CodeLocation codeLocation, boolean suspendAll);
+    void addBreakpoint(JdwpCodeLocation codeLocation, boolean suspendAll);
 
     /**
      * Removes a formerly added breakpoint.
      * @param codeLocation the code location identifying the breakpoint
      */
-    void removeBreakpoint(CodeLocation codeLocation);
+    void removeBreakpoint(JdwpCodeLocation codeLocation);
 
     /**
      * @return the top level thread groups
@@ -216,7 +216,7 @@ public interface VMAccess {
      * @return a VMValue object that wraps the given Java object
      */
     VMValue createJavaObjectValue(Object object, Class expectedClass);
-    CodeLocation createCodeLocation(MethodProvider method, long position, boolean isMachineCode);
+    JdwpCodeLocation createCodeLocation(MethodProvider method, long position, boolean isMachineCode);
 
     /**
      * Accesses raw memory in the VM.

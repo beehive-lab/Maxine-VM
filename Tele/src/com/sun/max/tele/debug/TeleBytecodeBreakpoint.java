@@ -29,24 +29,22 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.BreakpointCondition.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A breakpoint located at the beginning of a bytecode instruction
  * in a method in the VM.
  * <br>
- * When enabled, a bytecode breakpoint creates a target code
+ * When enabled, a bytecode breakpoint creates a machine code
  * breakpoint in each compilation of the specified method.   This
  * is true for compilations that exist when the breakpoint is created,
  * as well as all subsequent compilations.  When
@@ -66,7 +64,6 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     private static final int COMPILATION_TRACE_VALUE = 2;
 
     private final Factory factory;
-    private final Key key;
 
     // Cached string representations of the three parts of a method key
     // for fast comparison when comparing with a method key in the VM.
@@ -78,6 +75,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     // Breakpoints are unconditional by default.
     private BreakpointCondition condition = null;
+
+    // Private key used by the factory
+    private MethodPositionKey methodPositionKey;
 
     /**
      * All target code breakpoints created in compilations of the method in the VM.
@@ -93,15 +93,21 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * @param key an abstract description of the location for this breakpoint, expressed in terms of the method and bytecode offset.
      * @param kind the kind of breakpoint to create
      */
-    private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, Key key, BreakpointKind kind) {
-        super(teleVM, new TeleCodeLocation(teleVM, key), kind, null);
+    private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, CodeLocation codeLocation, BreakpointKind kind, MethodPositionKey methodPositionKey) {
+        super(teleVM, codeLocation, kind, null);
         this.factory = factory;
-        this.key = key;
-        this.holderTypeDescriptorString = key.holder().string;
-        this.methodName = key.name().string;
-        this.signatureDescriptorString = key.signature().string;
+        this.methodPositionKey = methodPositionKey;
+        final MethodKey methodKey = codeLocation.methodKey();
+        this.holderTypeDescriptorString = methodKey.holder().string;
+        this.methodName = methodKey.name().string;
+        this.signatureDescriptorString = methodKey.signature().string;
         Trace.line(TRACE_VALUE, tracePrefix() + "new=" + this);
-        setEnabled(true);
+        try {
+            setEnabled(true);
+        } catch (MaxVMBusyException e) {
+            // Shouldn't happen; should only be called with VM lock already held.
+            ProgramError.unexpected("Failed to create bytecode breakpoint");
+        }
     }
 
     /**
@@ -109,17 +115,20 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * corresponding to the bytecode location for which this breakpoint was created.
      *
      * @param teleTargetMethod a compilation in the VM of the method for which this breakpoint was created.
+     * @throws MaxVMBusyException
      */
-    private void createTargetBreakpointForMethod(TeleTargetMethod teleTargetMethod) {
+    private void createTargetBreakpointForMethod(TeleTargetMethod teleTargetMethod) throws MaxVMBusyException {
         assert enabled;
-        // Delegate creation of the target breakpoint to the factory.
-        final TeleTargetBreakpoint teleTargetBreakpoint = factory.createTeleTargetBreakpoint(this, teleTargetMethod);
-        if (teleTargetBreakpoint != null) {
-            // TODO (mlvdv) If we support conditions, need to combine it with the trigger handler added by factory method.
-            teleTargetBreakpoints.append(teleTargetBreakpoint);
-            Trace.line(TRACE_VALUE, tracePrefix() + "created " + teleTargetBreakpoint + " for " + this);
-        } else {
+        // Delegate creation of the target breakpoints to the factory.
+        final Sequence<TeleTargetBreakpoint> newBreakpoints = factory.createTeleTargetBreakpoints(this, teleTargetMethod);
+        if (newBreakpoints.isEmpty()) {
             Trace.line(TRACE_VALUE, tracePrefix() + "failed to create teleTargetBreakpoint for " + this);
+        } else {
+            // TODO (mlvdv) If we support conditions, need to combine it with the trigger handler added by factory method.
+            for (TeleTargetBreakpoint newBreakpoint : newBreakpoints) {
+                teleTargetBreakpoints.append(newBreakpoint);
+                Trace.line(TRACE_VALUE, tracePrefix() + "created " + newBreakpoint + " for " + this);
+            }
         }
     }
 
@@ -128,11 +137,16 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * but not necessarily the first of several compilations.
      *
      * @param teleTargetMethod a just completed compilation in the VM of the method for which this breakpoint was created.
+     * @throws MaxVMBusyException
      */
-    private void handleNewCompilation(TeleTargetMethod teleTargetMethod) {
+    private void handleNewCompilation(TeleTargetMethod teleTargetMethod) throws MaxVMBusyException {
         if (enabled) {
             createTargetBreakpointForMethod(teleTargetMethod);
         }
+    }
+
+    public boolean isBytecodeBreakpoint() {
+        return true;
     }
 
     @Override
@@ -141,28 +155,35 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     @Override
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(boolean enabled) throws MaxVMBusyException {
         assert this.enabled != enabled;
-        this.enabled = enabled;
-        if (enabled) {
-            assert teleTargetBreakpoints == null;
-            // Create a target code breakpoint in every existing compilation at the location
-            // best corresponding to the bytecode location of this breakpoint.
-            teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
-            for (TeleTargetMethod teleTargetMethod : TeleTargetMethod.get(teleVM, key)) {
-                createTargetBreakpointForMethod(teleTargetMethod);
-            }
-        } else {
-            assert teleTargetBreakpoints != null;
-            // Remove all target code breakpoints that were created because of this breakpoint
-            for (TeleTargetBreakpoint teleTargetBreakpoint : teleTargetBreakpoints) {
-                teleTargetBreakpoint.remove();
-            }
-            teleTargetBreakpoints = null;
-            Trace.line(TRACE_VALUE, tracePrefix() + "clearing all target breakpoints for " + this);
+        if (!teleVM().tryLock()) {
+            throw new MaxVMBusyException();
         }
-        if (kind() == BreakpointKind.CLIENT) {
-            factory.fireBreakpointsChanged();
+        try {
+            this.enabled = enabled;
+            if (enabled) {
+                assert teleTargetBreakpoints == null;
+                // Create a target code breakpoint in every existing compilation at the location
+                // best corresponding to the bytecode location of this breakpoint.
+                teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
+                for (TeleTargetMethod teleTargetMethod : TeleTargetMethod.get(teleVM(), codeLocation().methodKey())) {
+                    createTargetBreakpointForMethod(teleTargetMethod);
+                }
+            } else {
+                assert teleTargetBreakpoints != null;
+                // Remove all target code breakpoints that were created because of this breakpoint
+                for (TeleTargetBreakpoint teleTargetBreakpoint : teleTargetBreakpoints) {
+                    teleTargetBreakpoint.remove();
+                }
+                teleTargetBreakpoints = null;
+                Trace.line(TRACE_VALUE, tracePrefix() + "clearing all target breakpoints for " + this);
+            }
+            if (kind() == BreakpointKind.CLIENT) {
+                factory.fireBreakpointsChanged();
+            }
+        } finally {
+            teleVM().unlock();
         }
     }
 
@@ -172,20 +193,34 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     @Override
-    public void setCondition(String conditionDescriptor) throws ExpressionException {
-        this.condition = new BreakpointCondition(teleVM(), conditionDescriptor);
-        for (TeleTargetBreakpoint teleTargetBreakpoint : teleTargetBreakpoints) {
-            teleTargetBreakpoint.setTriggerEventHandler(condition);
+    public void setCondition(String conditionDescriptor) throws ExpressionException, MaxVMBusyException {
+        if (!teleVM().tryLock()) {
+            throw new MaxVMBusyException();
+        }
+        try {
+            this.condition = new BreakpointCondition(teleVM(), conditionDescriptor);
+            for (TeleTargetBreakpoint teleTargetBreakpoint : teleTargetBreakpoints) {
+                teleTargetBreakpoint.setTriggerEventHandler(condition);
+            }
+        } finally {
+            teleVM().unlock();
         }
     }
 
     @Override
-    public void remove() {
-        Trace.line(TRACE_VALUE, tracePrefix() + "removing breakpoint=" + this);
-        if (enabled) {
-            setEnabled(false);
+    public void remove() throws MaxVMBusyException {
+        if (!teleVM().tryLock()) {
+            throw new MaxVMBusyException();
         }
-        factory.removeBreakpoint(this);
+        try {
+            Trace.line(TRACE_VALUE, tracePrefix() + "removing breakpoint=" + this);
+            if (enabled) {
+                setEnabled(false);
+            }
+            factory.removeBreakpoint(this);
+        } finally {
+            teleVM().unlock();
+        }
     }
 
     @Override
@@ -193,7 +228,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         final StringBuilder sb = new StringBuilder("Bytecode breakpoint");
         sb.append("{");
         sb.append(kind().toString()).append(", ");
-        sb.append(key().toString()).append(", ");
+        sb.append(codeLocation().methodKey().toString()).append(", ");
         sb.append(isEnabled() ? "enabled " : "disabled ");
         if (getDescription() != null) {
             sb.append(", \"").append(getDescription()).append("\"");
@@ -202,56 +237,38 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         return sb.toString();
     }
 
-    /**
-     * @return description of the bytecode location of this breakpoint.
-     */
-    public Key key() {
-        return getCodeLocation().key();
-    }
 
     /**
-     * Describes a bytecode position in the VM,
-     * i.e. indicates the exact method and byte code position.
-     * <br>
-     * The method does not have to be compiled, nor even loaded yet.
+     * A key for recording abstract bytecode instruction location in a method;
+     * defines equality to be same method descriptor, same offset.
+     *
+     * @author Michael Van De Vanter
      */
-    public static class Key extends DefaultMethodKey {
+    private static final class MethodPositionKey extends DefaultMethodKey {
+
+        /**
+         * Create a key that uniquely identifies a method and bytecode position.
+         * Equality defined in terms of equivalence of the method key and position.
+         *
+         * @param codeLocation a code location that must have a method key defined.
+         * @return a new key
+         */
+        public static MethodPositionKey make(CodeLocation codeLocation) {
+            assert codeLocation.hasMethodKey();
+            return new MethodPositionKey(codeLocation);
+        }
 
         protected final int bytecodePosition;
 
-        /**
-         * @return bytecode position in the method.
-         */
-        public int position() {
-            return bytecodePosition;
-        }
-
-        public Key(MethodKey methodKey) {
-            this(methodKey, 0);
-        }
-
-        public Key(BytecodeLocation bytecodeLocation) {
-            super(bytecodeLocation.classMethodActor);
-            this.bytecodePosition = bytecodeLocation.bytecodePosition;
-        }
-
-        public Key(MethodKey methodKey, int bytecodePosition) {
-            super(methodKey.holder(), methodKey.name(), methodKey.signature());
-            this.bytecodePosition = bytecodePosition;
-        }
-
-        public Key(SignatureDescriptor signature, TypeDescriptor holder, Utf8Constant name, int bytecodePosition) {
-            super(holder, name, signature);
-            this.bytecodePosition = bytecodePosition;
+        private MethodPositionKey(CodeLocation codeLocation) {
+            super(codeLocation.methodKey().holder(), codeLocation.methodKey().name(), codeLocation.methodKey().signature());
+            this.bytecodePosition = codeLocation.bytecodePosition();
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (!super.equals(obj)) {
-                return false;
-            }
-            if (obj instanceof Key) {
-                final Key otherKey = (Key) obj;
+            if (super.equals(obj) && obj instanceof MethodPositionKey) {
+                final MethodPositionKey otherKey = (MethodPositionKey) obj;
                 return bytecodePosition == otherKey.bytecodePosition;
             }
             return false;
@@ -265,7 +282,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder();
-            sb.append("Key{");
+            sb.append("MethodPositionKey{");
             sb.append(name()).append(signature().toJavaString(false, false));
             sb.append(", pos=").append(bytecodePosition);
             sb.append("}");
@@ -284,7 +301,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      *
      * @author Michael Van De Vanter
      */
-    public static class Factory extends AbstractTeleVMHolder {
+    public static final class Factory extends AbstractTeleVMHolder {
 
         private static final Sequence<TeleBytecodeBreakpoint> EMPTY_BREAKPOINT_SEQUENCE = Sequence.Static.empty(TeleBytecodeBreakpoint.class);
 
@@ -298,9 +315,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private final Symbol parameter3;
 
         /**
-         * Map:  method Key -> existing bytecode breakpoint (whether enabled or not).
+         * Map:  method {@link MethodPositionKey} -> existing bytecode breakpoint (whether enabled or not).
          */
-        private final VariableMapping<Key, TeleBytecodeBreakpoint> breakpoints = HashMapping.createVariableEqualityMapping();
+        private final VariableMapping<MethodPositionKey, TeleBytecodeBreakpoint> breakpoints = HashMapping.createVariableEqualityMapping();
 
         /**
          * A cache of the existing breakpoints for fast traversal without allocation.
@@ -320,6 +337,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
             Trace.line(TRACE_VALUE, tracePrefix + "creating");
             this.teleTargetBreakpointFactory = teleVM.teleProcess().targetBreakpointFactory();
+            // Predefine parameter accessors for reading compilation details
             parameter0 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(0);
             parameter1 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(1);
             parameter2 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(2);
@@ -328,20 +346,24 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
         /**
          * Adds a listener for breakpoint changes.
+         * <br>
+         * Thread-safe
          *
          * @param listener a breakpoint listener
          */
-        public final void addBreakpointListener(MaxBreakpointListener listener) {
+        void addListener(MaxBreakpointListener listener) {
             assert listener != null;
             breakpointListeners.add(listener);
         }
 
         /**
          * Removes a listener for breakpoint changes.
+         * <br>
+         * Thread-safe
          *
          * @param listener a breakpoint listener
          */
-        public final void removeBreakpointListener(MaxBreakpointListener listener) {
+        void removeListener(MaxBreakpointListener listener) {
             assert listener != null;
             breakpointListeners.remove(listener);
         }
@@ -350,11 +372,11 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @return all client bytecode breakpoints that currently exist in the VM.
          * Modification safe against breakpoint removal.
          */
-        public Sequence<MaxBreakpoint> clientBreakpoints() {
+        Sequence<TeleBytecodeBreakpoint> clientBreakpoints() {
             if (breakpointCache.isEmpty()) {
-                return Sequence.Static.empty(MaxBreakpoint.class);
+                return Sequence.Static.empty(TeleBytecodeBreakpoint.class);
             }
-            final AppendableSequence<MaxBreakpoint> clientBreakpoints = new ArrayListSequence<MaxBreakpoint>();
+            final AppendableSequence<TeleBytecodeBreakpoint> clientBreakpoints = new ArrayListSequence<TeleBytecodeBreakpoint>();
             for (TeleBytecodeBreakpoint breakpoint : breakpointCache) {
                 if (breakpoint.kind() == BreakpointKind.CLIENT) {
                     clientBreakpoints.append(breakpoint);
@@ -363,21 +385,12 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             return clientBreakpoints;
         }
 
-        public int clientBreakpointCount() {
-            int count = 0;
-            for (TeleBytecodeBreakpoint breakpoint : breakpointCache) {
-                if (breakpoint.kind() == BreakpointKind.CLIENT) {
-                    count++;
-                }
-            }
-            return count;
-        }
-
         /**
-         * @param key description of a bytecode position in a method
+         * @param methodCodeLocation description of a bytecode position in a method
          * @return a client breakpoint set at the position, null if no client breakpoint at the position
          */
-        public synchronized MaxBreakpoint getClientBreakpoint(Key key) {
+        public TeleBytecodeBreakpoint findClientBreakpoint(BytecodeLocation methodCodeLocation) {
+            final MethodPositionKey key = MethodPositionKey.make(methodCodeLocation);
             TeleBytecodeBreakpoint breakpoint = breakpoints.get(key);
             return (breakpoint.kind() == BreakpointKind.CLIENT) ? breakpoint : null;
         }
@@ -386,40 +399,31 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * Returns a clientBreakpoint matching a method location described
          * abstractly, newly created if one does not already exist for the location.
          * Fails if there is a system breakpoint already at that location.
+         * <br>
+         * Thread-safe; synchronizes on VM lock
          *
-         * @param key description of a bytecode position in a method
+         * @param codeLocation description of a bytecode position in a method
          * @return a possibly new, enabled bytecode breakpoint,
          * null if a system breakpoint is already at the location.
+         * @throws MaxVMBusyException
          */
-        public synchronized TeleBreakpoint makeClientBreakpoint(Key key) {
-            TeleBytecodeBreakpoint breakpoint = breakpoints.get(key);
-            if (breakpoint == null) {
-                breakpoint = createBreakpoint(key, BreakpointKind.CLIENT);
-                breakpoint.setDescription("Client-specified breakpoint");
-            } else if (breakpoint.kind() != BreakpointKind.CLIENT) {
-                return null;
+        public TeleBreakpoint makeClientBreakpoint(CodeLocation codeLocation) throws MaxVMBusyException {
+            assert codeLocation.hasMethodKey();
+            if (!teleVM().tryLock()) {
+                throw new MaxVMBusyException();
             }
-            return breakpoint;
-        }
-
-        /**
-         * Returns a client breakpoint at the entry of a method location described
-         * abstractly, newly created if one does not already exist for the location.
-         * Fails if there is a system breakpoint already at that location.
-         *
-         * @param maxInspectableMethod description of a method
-         * @return a possibly new, enabled bytecode breakpoint at method entry,
-         * null if a system breakpoint is already at the location.
-         */
-        public synchronized TeleBreakpoint makeClientBreakpoint(MaxInspectableMethod maxInspectableMethod) {
-            final MethodActor methodActor = maxInspectableMethod.teleClassMethodActor().methodActor();
-            final TeleBytecodeBreakpoint.Key key = new TeleBytecodeBreakpoint.Key(new MethodActorKey(methodActor), 0);
-            TeleBytecodeBreakpoint breakpoint = breakpoints.get(key);
-            if (breakpoint == null) {
-                breakpoint = createBreakpoint(key, BreakpointKind.CLIENT);
-                breakpoint.setDescription(maxInspectableMethod.description());
-            } else if (breakpoint.kind() != BreakpointKind.CLIENT) {
-                return null;
+            TeleBytecodeBreakpoint breakpoint;
+            try {
+                final MethodPositionKey key = MethodPositionKey.make(codeLocation);
+                breakpoint = breakpoints.get(key);
+                if (breakpoint == null) {
+                    breakpoint = createBreakpoint(codeLocation, key, BreakpointKind.CLIENT);
+                    breakpoint.setDescription("Client-specified breakpoint");
+                } else if (breakpoint.kind() != BreakpointKind.CLIENT) {
+                    breakpoint = null;
+                }
+            } finally {
+                teleVM().unlock();
             }
             return breakpoint;
         }
@@ -428,23 +432,34 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * Returns a system breakpoint at the entry of a method location described
          * abstractly, newly created if one does not already exist for the location.
          * Fails if there is a client breakpoint already at that location.
+         * <br>
+         * Thread-safe; synchronizes on VM lock
          *
-         * @param maxInspectableMethod description of a method
+         * @param codeLocation description of a bytecode position in a method
          * @param handler handler to be invoked when breakpoint triggers
          * @return a possibly new, enabled bytecode breakpoint at method entry,
          * null if a client breakpoint is already at the location.
+         * @throws MaxVMBusyException
          */
-        public synchronized TeleBreakpoint makeSystemBreakpoint(MaxInspectableMethod maxInspectableMethod, VMTriggerEventHandler handler) {
-            final MethodActor methodActor = maxInspectableMethod.teleClassMethodActor().methodActor();
-            final TeleBytecodeBreakpoint.Key key = new TeleBytecodeBreakpoint.Key(new MethodActorKey(methodActor), 0);
-            TeleBytecodeBreakpoint breakpoint = breakpoints.get(key);
-            if (breakpoint == null) {
-                breakpoint = createBreakpoint(key, BreakpointKind.SYSTEM);
-                breakpoint.setTriggerEventHandler(handler);
-                breakpoint.setDescription(maxInspectableMethod.description());
-            } else if (breakpoint.kind() != BreakpointKind.SYSTEM) {
-                ProgramWarning.message("Can't create system bytecode breakpoint - client breakpoint already exists: " + maxInspectableMethod);
-                return null;
+        public TeleBreakpoint makeSystemBreakpoint(CodeLocation codeLocation, VMTriggerEventHandler handler) throws MaxVMBusyException {
+            assert codeLocation.hasMethodKey();
+            if (!teleVM().tryLock()) {
+                throw new MaxVMBusyException();
+            }
+            TeleBytecodeBreakpoint breakpoint;
+            try {
+                final MethodPositionKey key = MethodPositionKey.make(codeLocation);
+                breakpoint = breakpoints.get(key);
+                if (breakpoint == null) {
+                    breakpoint = createBreakpoint(codeLocation, key, BreakpointKind.SYSTEM);
+                    breakpoint.setTriggerEventHandler(handler);
+                    breakpoint.setDescription(codeLocation.description());
+                } else if (breakpoint.kind() != BreakpointKind.SYSTEM) {
+                    ProgramWarning.message("Can't create system bytecode breakpoint - client breakpoint already exists: " + codeLocation);
+                    breakpoint = null;
+                }
+            } finally {
+                teleVM().unlock();
             }
             return breakpoint;
         }
@@ -459,15 +474,17 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * @param key  description of a bytecode position in a method
+         * @param codeLocation abstract description of a bytecode position in a method
          * @param kind he kind of breakpoint to be created
          * @return a new, enabled bytecode breakpoint
+         * @throws MaxVMBusyException
          */
-        private TeleBytecodeBreakpoint createBreakpoint(Key key, BreakpointKind kind) {
+        private TeleBytecodeBreakpoint createBreakpoint(CodeLocation codeLocation, MethodPositionKey key, BreakpointKind kind) throws MaxVMBusyException {
             if (breakpoints.length() == 0) {
                 createCompilerBreakpoint();
             }
-            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(teleVM(), this, key, kind);
+            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(teleVM(), this, codeLocation, kind, key);
+            breakpoint.setDescription(codeLocation.description());
             breakpoints.put(key, breakpoint);
             updateBreakpointCache();
             Trace.line(TRACE_VALUE, tracePrefix + "new=" + breakpoint);
@@ -485,11 +502,15 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          *
          * @param teleBytecodeBreakpoint the breakpoint being removed.
          */
-        private synchronized void removeBreakpoint(TeleBytecodeBreakpoint teleBytecodeBreakpoint) {
-            final TeleBytecodeBreakpoint removedBreakpoint = breakpoints.remove(teleBytecodeBreakpoint.key());
+        private void removeBreakpoint(TeleBytecodeBreakpoint teleBytecodeBreakpoint) {
+            final TeleBytecodeBreakpoint removedBreakpoint = breakpoints.remove(teleBytecodeBreakpoint.methodPositionKey);
             ProgramWarning.check(removedBreakpoint != null, "Failed to remove breakpoint" + teleBytecodeBreakpoint);
             if (breakpoints.length() == 0) {
-                removeCompilerBreakpoint();
+                try {
+                    removeCompilerBreakpoint();
+                } catch (MaxVMBusyException maxVMBusyException) {
+                    ProgramError.unexpected("Unable to remove compiler breakpont for " + teleBytecodeBreakpoint);
+                }
             }
             updateBreakpointCache();
             Trace.line(TRACE_VALUE, tracePrefix + "removed " + teleBytecodeBreakpoint);
@@ -505,14 +526,13 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * The arguments are read using low-level, type-unsafe techniques.  The order and types
          * of arguments processed here must match those of the compiler method where the
          * breakpoint is set.
+         * @throws MaxVMBusyException
          *
          * @see InspectableCodeInfo#compilationComplete(String, String, String, com.sun.max.vm.compiler.target.TargetMethod)
          */
-        private void createCompilerBreakpoint() {
+        private void createCompilerBreakpoint() throws MaxVMBusyException {
             assert compilerTargetCodeBreakpoint == null;
-            final Address callEntryPoint = teleVM().teleMethods().compilationComplete().methodEntry();
-            ProgramError.check(!callEntryPoint.isZero());
-            compilerTargetCodeBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(callEntryPoint, null);
+            compilerTargetCodeBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(teleVM().teleMethods().compilationComplete(), null);
             compilerTargetCodeBreakpoint.setDescription("System trap for VM compiler");
             compilerTargetCodeBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -534,7 +554,11 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                                 final Reference targetMethodReference = teleVM().wordToReference(teleNativeThread.integerRegisters().get(parameter3));
                                 teleTargetMethod = (TeleTargetMethod) teleVM().makeTeleObject(targetMethodReference);
                             }
-                            teleBytecodeBreakpoint.handleNewCompilation(teleTargetMethod);
+                            try {
+                                teleBytecodeBreakpoint.handleNewCompilation(teleTargetMethod);
+                            } catch (MaxVMBusyException maxVMBusyException) {
+                                ProgramError.unexpected("Unable to create target breakpoint for new compilation of " + teleBytecodeBreakpoint);
+                            }
                         }
                     }
                     // Handling done; now resume VM execution.
@@ -547,8 +571,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         /**
          * Removes the special target breakpoint set on a method called after each compilation in the VM.
          * Don't incur the overhead of a break if there are no bytecode breakpoints enabled.
+         * @throws MaxVMBusyException
          */
-        private void removeCompilerBreakpoint() {
+        private void removeCompilerBreakpoint() throws MaxVMBusyException {
             assert compilerTargetCodeBreakpoint != null;
             Trace.line(TRACE_VALUE, tracePrefix + "removing compiler breakpoint=" + compilerTargetCodeBreakpoint);
             compilerTargetCodeBreakpoint.remove();
@@ -556,8 +581,11 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         }
 
         /**
-         * Creates a special system target code breakpoint in a compiled method in the VM
-         * at a location specified abstractly by a key.
+         * Creates special system target code breakpoints in a compiled method in the VM
+         * at location specified abstractly by a key.  Normally there is exactly one such location,
+         * but in the special case where bytecodePosition is -1, which specifies the beginning
+         * of the compiled method's prologue, there may be more than one for different kinds
+         * of calls.
          * <br>
          * May fail when it is not possible to map the bytecode location into a target code location,
          * for example in optimized code where deoptimization is not supported.
@@ -568,47 +596,48 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @param teleTargetMethod a compilation in the VM of the method specified in the key
          * @return a target code breakpoint at a location in the compiled method corresponding
          * to the bytecode location specified in the key; null if unable to create.
+         * @throws MaxVMBusyException
          */
-        private TeleTargetBreakpoint createTeleTargetBreakpoint(final TeleBytecodeBreakpoint owner, TeleTargetMethod teleTargetMethod) {
+        private Sequence<TeleTargetBreakpoint> createTeleTargetBreakpoints(final TeleBytecodeBreakpoint owner, TeleTargetMethod teleTargetMethod) throws MaxVMBusyException {
             assert owner != null;
+            final AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
+            final int bytecodePosition = owner.methodPositionKey.bytecodePosition;
             Address address = Address.zero();
-            final Key key = owner.key();
             if (teleTargetMethod instanceof TeleJitTargetMethod) {
                 final TeleJitTargetMethod teleJitTargetMethod = (TeleJitTargetMethod) teleTargetMethod;
                 final int targetCodePosition;
-                if (key.bytecodePosition == -1) {
+                if (bytecodePosition == -1) {
+                    // Specifies the code start, at the beginning of the method prologue
                     TargetMethod targetMethod = teleTargetMethod.targetMethod();
                     targetCodePosition = AdapterGenerator.prologueSizeForCallee(targetMethod);
                 } else {
                     final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
-                    targetCodePosition = bytecodeToTargetCodePositionMap[key.bytecodePosition];
+                    targetCodePosition = bytecodeToTargetCodePositionMap[bytecodePosition];
                 }
                 address = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                 Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint for offset " + targetCodePosition + " in " + teleTargetMethod);
             } else {
-                if (key.bytecodePosition == 0) {
+                if (bytecodePosition == 0) {
                     address = teleTargetMethod.callEntryPoint();
                     Trace.line(TRACE_VALUE, tracePrefix + "creating target breakpoint at method entry in " + teleTargetMethod);
                 } else {
-                    ProgramWarning.message(tracePrefix + "Non-entry bytecode breakpoint unimplemented for target method=" + teleTargetMethod);
-                    return null;
+                    ProgramError.unexpected(tracePrefix + "Non-entry bytecode breakpoint unimplemented for target method=" + teleTargetMethod);
                 }
             }
-            if (teleTargetBreakpointFactory.getTargetBreakpointAt(address) != null) {
+            if (teleTargetBreakpointFactory.getTargetBreakpointAt(address) == null) {
+                final CodeLocation location = CodeLocation.createMachineCodeLocation(teleVM(), address, "For bytecode breapoint=" + owner.codeLocation());
+                final VMTriggerEventHandler vmTriggerEventHandler = new VMTriggerEventHandler() {
+
+                    public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
+                        return owner.handleTriggerEvent(teleNativeThread);
+                    }
+                };
+                teleTargetBreakpoints.append(teleTargetBreakpointFactory.makeSystemBreakpoint(location, vmTriggerEventHandler, owner));
+            } else {
                 Trace.line(TRACE_VALUE, tracePrefix + "Target breakpoint already exists at 0x" + address.toHexString() + " in " + teleTargetMethod);
-                return null;
             }
-            final TeleTargetBreakpoint teleTargetBreakpoint = teleTargetBreakpointFactory.makeSystemBreakpoint(address, owner);
-            teleTargetBreakpoint.setDescription("For bytecode " + key);
-            teleTargetBreakpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
-
-                public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-                    return owner.handleTriggerEvent(teleNativeThread);
-                }
-            });
-            return teleTargetBreakpoint;
+            return teleTargetBreakpoints;
         }
-
 
         private void fireBreakpointsChanged() {
             for (final MaxBreakpointListener listener : breakpointListeners) {
@@ -616,7 +645,15 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
             }
         }
 
-        public void writeSummaryToStream(PrintStream printStream) {
+        /**
+         * Writes a description of every bytecode breakpoint to the stream, including those usually not shown to clients,
+         * with more detail than typically displayed.
+         * <br>
+         * Thread-safe
+         *
+         * @param printStream
+         */
+        void writeSummaryToStream(PrintStream printStream) {
             printStream.println("Bytecode breakpoints :");
             for (TeleBytecodeBreakpoint bytecodeBreakpoint : breakpointCache) {
                 printStream.println("  " + bytecodeBreakpoint);

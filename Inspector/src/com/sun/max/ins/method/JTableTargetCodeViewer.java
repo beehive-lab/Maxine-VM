@@ -31,7 +31,6 @@ import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.debug.*;
@@ -76,7 +75,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         this.inspection = inspection;
         this.operandsRenderer = new OperandsRenderer();
         this.sourceLineRenderer = new SourceLineRenderer();
-        this.tableModel = new TargetCodeTableModel(inspection, teleTargetRoutine.getInstructions());
+        this.tableModel = new TargetCodeTableModel(inspection, teleTargetRoutine);
         this.columns = new TableColumn[TargetCodeColumnKind.VALUES.length()];
         instanceViewPreferences = new TargetCodeViewPreferences(TargetCodeViewPreferences.globalPreferences(inspection())) {
             @Override
@@ -184,7 +183,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        focus().setCodeLocation(maxVM().createCodeLocation(tableModel.rowToInstruction(row).address), false);
+        focus().setCodeLocation(instructionLocations().get(row));
     }
 
     @Override
@@ -198,8 +197,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      * that to force a scroll to make the selection visible.
      */
     @Override
-    public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
-        return table.updateCodeFocus(teleCodeLocation);
+    public boolean updateCodeFocus(MaxCodeLocation codeLocation) {
+        return table.updateCodeFocus(codeLocation);
     }
 
     @Override
@@ -251,12 +250,13 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
             if (col == ObjectColumnKind.TAG.ordinal()) {
                 final InspectorPopupMenu menu = new InspectorPopupMenu();
-                final Address address = JTableTargetCodeViewer.this.tableModel.rowToInstruction(row).address;
-                menu.add(actions().debugRunToInstructionWithBreakpoints(address, "Run to this instruction"));
-                menu.add(actions().debugRunToInstruction(address, "Run to this instruction (ignoring breakpoints)"));
-                menu.add(actions().toggleTargetCodeBreakpoint(address, "Toggle breakpoint (double-click)"));
-                menu.add(actions().setTargetCodeBreakpoint(address, "Set breakpoint"));
-                menu.add(actions().removeTargetCodeBreakpoint(address, "Unset breakpoint"));
+                final TargetCodeTableModel targetCodeTableModel = (TargetCodeTableModel) getModel();
+                final MaxCodeLocation codeLocation = targetCodeTableModel.rowToLocation(row);
+                menu.add(actions().debugRunToInstructionWithBreakpoints(codeLocation, "Run to this instruction"));
+                menu.add(actions().debugRunToInstruction(codeLocation, "Run to this instruction (ignoring breakpoints)"));
+                menu.add(actions().toggleTargetCodeBreakpoint(codeLocation, "Toggle breakpoint (double-click)"));
+                menu.add(actions().setTargetCodeBreakpoint(codeLocation, "Set breakpoint"));
+                menu.add(actions().removeTargetCodeBreakpoint(codeLocation, "Unset breakpoint"));
                 return menu;
             }
             return null;
@@ -271,7 +271,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 final int selectedRow = getSelectedRow();
                 final TargetCodeTableModel targetCodeTableModel = (TargetCodeTableModel) getModel();
                 if (selectedRow >= 0 && selectedRow < targetCodeTableModel.getRowCount()) {
-                    focus().setCodeLocation(maxVM().createCodeLocation(targetCodeTableModel.rowToInstruction(selectedRow).address), true);
+                    focus().setCodeLocation(targetCodeTableModel.rowToLocation(selectedRow));
                 }
             }
         }
@@ -281,16 +281,16 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          * Update even when the selection is set to the same value, because we want
          * that to force a scroll to make the selection visible.
          */
-        public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
+        public boolean updateCodeFocus(MaxCodeLocation codeLocation) {
             final int oldSelectedRow = getSelectedRow();
-            if (teleCodeLocation.hasTargetCodeLocation()) {
-                final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddress();
+            if (codeLocation.hasAddress()) {
+                final Address targetCodeInstructionAddress = focus().codeLocation().address();
                 if (teleTargetRoutine().targetCodeRegion().contains(targetCodeInstructionAddress)) {
                     final TargetCodeTableModel model = (TargetCodeTableModel) getModel();
                     final int row = model.findRow(targetCodeInstructionAddress);
                     if (row >= 0) {
                         if (row != oldSelectedRow) {
-                            changeSelection(row, row, false, false);
+                            updateSelection(row);
                             Trace.line(TRACE_VALUE, tracePrefix() + "changeSelection " + row);
                         }
                         scrollToRows(row, row);
@@ -329,11 +329,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      */
     private final class TargetCodeTableModel extends InspectorTableModel {
 
-        private final IndexedSequence<TargetCodeInstruction> instructions;
+        final TeleTargetRoutine teleTargetRoutine;
 
-        public TargetCodeTableModel(Inspection inspection, IndexedSequence<TargetCodeInstruction> instructions) {
+        public TargetCodeTableModel(Inspection inspection, TeleTargetRoutine teleTargetRoutine) {
             super(inspection);
-            this.instructions = instructions;
+            assert teleTargetRoutine != null;
+            this.teleTargetRoutine = teleTargetRoutine;
         }
 
         public int getColumnCount() {
@@ -341,7 +342,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public int getRowCount() {
-            return instructions.length();
+            return teleTargetRoutine.getInstructions().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -395,7 +396,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         public TargetCodeInstruction rowToInstruction(int row) {
-            return instructions.get(row);
+            return teleTargetRoutine.getInstructions().get(row);
+        }
+
+        public MaxCodeLocation rowToLocation(int row) {
+            return teleTargetRoutine.getInstructionLocations().get(row);
         }
 
         /**
@@ -404,7 +409,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
          */
         public int findRow(Address address) {
             int row = 0;
-            for (TargetCodeInstruction targetCodeInstruction : instructions) {
+            for (TargetCodeInstruction targetCodeInstruction : teleTargetRoutine.getInstructions()) {
                 if (targetCodeInstruction.address.equals(address)) {
                     return row;
                 }
@@ -462,7 +467,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 toolTipText.append("Stack ");
                 toolTipText.append(stackFrameInfo.position());
                 toolTipText.append(":  0x");
-                toolTipText.append(maxVM().getCodeAddress(stackFrameInfo.frame()).toHexString());
+                toolTipText.append(stackFrameInfo.codeLocation().address().toHexString());
                 toolTipText.append("  thread=");
                 toolTipText.append(inspection.nameDisplay().longName(stackFrameInfo.thread()));
                 toolTipText.append("; ");

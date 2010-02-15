@@ -22,7 +22,6 @@ package com.sun.max.ins;
 
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
@@ -41,7 +40,7 @@ public interface ViewFocusListener {
      * @param interactiveForNative if true, user is given an opportunity to add information
      * when location is determined to be in unknown native code.
      */
-    void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative);
+    void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative);
 
     /**
      * Notifies that the global thread focus has been set (view state only), non-null once running.

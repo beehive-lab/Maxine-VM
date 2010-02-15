@@ -34,12 +34,14 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleTargetBreakpoint.*;
+import com.sun.max.tele.method.*;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.bytecode.BytecodeLocation;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.compiler.target.*;
@@ -60,8 +62,9 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, MaxThread, ThreadProvider, TeleVMHolder {
+public abstract class TeleNativeThread extends AbstractTeleVMHolder implements Comparable<TeleNativeThread>, MaxThread, ThreadProvider {
 
+    @Override
     protected String  tracePrefix() {
         return "[TeleNativeThread: " + Thread.currentThread().getName() + "] ";
     }
@@ -147,7 +150,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     private static final Logger LOGGER = Logger.getLogger(TeleNativeThread.class.getName());
 
     private final TeleProcess teleProcess;
-    private final TeleVM teleVM;
     private TeleVmThread teleVmThread;
     private int suspendCount;
 
@@ -159,7 +161,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     /**
      * A cached stack trace for this thread.
      */
-    private Sequence<StackFrame> frames;
+    private IndexedSequence<StackFrame> frames;
 
     /**
      * Only if this value is less than the {@linkplain TeleProcess#epoch() epoch} of this thread's tele process, does
@@ -216,12 +218,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     protected TeleNativeThread(TeleProcess teleProcess, Params params) {
+        super(teleProcess.teleVM());
         this.teleProcess = teleProcess;
-        this.teleVM = teleProcess.teleVM();
         this.id = params.id;
         this.localHandle = params.localHandle;
         this.handle = params.handle;
-        final VMConfiguration vmConfiguration = teleVM.vmConfiguration();
+        final VMConfiguration vmConfiguration = teleProcess.teleVM().vmConfiguration();
         this.integerRegisters = new TeleIntegerRegisters(vmConfiguration);
         this.floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         this.stateRegisters = new TeleStateRegisters(vmConfiguration);
@@ -232,7 +234,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
     }
 
-    public Sequence<StackFrame> frames() {
+    public IndexedSequence<StackFrame> frames() {
         refreshFrames();
         return frames;
     }
@@ -249,10 +251,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     public TeleProcess teleProcess() {
         return teleProcess;
-    }
-
-    public TeleVM teleVM() {
-        return teleVM;
     }
 
     public TeleThreadLocalValues threadLocalsFor(Safepoint.State state) {
@@ -366,8 +364,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             if (enabledVmThreadLocalValues != null) {
                 final Long threadLocalValue = enabledVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
                 if (threadLocalValue != 0) {
-                    final Reference vmThreadReference = teleVM.wordToReference(Address.fromLong(threadLocalValue));
-                    teleVmThread = (TeleVmThread) teleVM.makeTeleObject(vmThreadReference);
+                    final Reference vmThreadReference = teleVM().wordToReference(Address.fromLong(threadLocalValue));
+                    teleVmThread = (TeleVmThread) teleVM().makeTeleObject(vmThreadReference);
                 }
             }
         }
@@ -395,10 +393,10 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
             state = BREAKPOINT;
             this.breakpoint = breakpoint;
-            final Address address = this.breakpoint.getCodeLocation().targetCodeInstructionAddress();
+            final Address address = this.breakpoint.codeLocation().address();
             if (updateInstructionPointer(address)) {
                 stateRegisters.setInstructionPointer(address);
-                Trace.line(TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
+                Trace.line(TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoc)h=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
                 ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + address + " was hit: " + this);
             }
@@ -412,7 +410,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * Clears the current list of frames.
      */
     private synchronized void clearFrames() {
-        frames = Sequence.Static.empty(StackFrame.class);
+        frames = IndexedSequence.Static.empty(StackFrame.class);
         framesChanged = true;
     }
 
@@ -432,7 +430,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             //refreshThreadLocals();
 
             final TeleVM teleVM = teleProcess.teleVM();
-            final Sequence<StackFrame> frames = new TeleStackFrameWalker(teleVM, this).frames();
+            final IndexedSequence<StackFrame> frames = new TeleStackFrameWalker(teleVM, this).frames();
             assert !frames.isEmpty();
             if (this.frames != null && frames.length() == this.frames.length()) {
                 framesChanged = false;
@@ -537,13 +535,25 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         return threadLocalsRegion;
     }
 
-    public final Pointer instructionPointer() {
+    /**
+     * @return the current instruction pointer of this thread
+     */
+    final Pointer instructionPointer() {
         if (!isLive()) {
             return Pointer.zero();
         }
         // No need to call refreshRegisters(): the instruction pointer is updated by updateAfterGather() which
         // ensures that it is always in sync.
         return stateRegisters.instructionPointer();
+    }
+
+    public final MachineCodeLocation instructionLocation() {
+        if (!isLive()) {
+            return null;
+        }
+        // No need to call refreshRegisters(): the instruction pointer is updated by updateAfterGather() which
+        // ensures that it is always in sync.
+        return codeManager().createMachineCodeLocation(stateRegisters.instructionPointer(), "Instruction pointer");
     }
 
     /**
@@ -554,10 +564,13 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     protected abstract boolean updateInstructionPointer(Address address);
 
-    public Pointer getReturnAddress() {
+    public CodeLocation getReturnLocation() {
         final StackFrame topFrame = frames().first();
         final StackFrame topFrameCaller = topFrame.callerFrame();
-        return topFrameCaller == null ? null : teleVM.getCodeAddress(topFrameCaller).asPointer();
+        if (topFrameCaller != null) {
+            return codeManager().createMachineCodeLocation(topFrameCaller);
+        }
+        return null;
     }
 
     public TeleObject vmThreadObject() {
@@ -723,7 +736,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
             for (LocalVariableTable.Entry entry : classMethodActor.codeAttribute().localVariableTable().entries()) {
                 final Value curValue = getValueImpl(entry.slot());
-                vmValues[entry.slot()] = teleVM.maxineValueToJDWPValue(curValue);
+                vmValues[entry.slot()] = teleVM().maxineValueToJDWPValue(curValue);
 
                 if (curValue.kind() == Kind.REFERENCE) {
                     values[entry.slot()] = curValue.asReference().toOrigin().toLong();
@@ -768,7 +781,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 final Pointer slotBase = stackFrame.slotBase();
                 final int offset = index * Word.size();
 
-                return teleVM.readValue(kind, slotBase, offset);
+                return teleVM().readValue(kind, slotBase, offset);
 
             } else if (l instanceof ParameterStackSlot) {
 
@@ -782,7 +795,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 int offset = index * Word.size() + javaStackFrame.layout.frameSize();
                 offset += javaStackFrame.layout.isReturnAddressPushedByCall() ? Word.size() : 0;
 
-                return teleVM.readValue(kind, slotBase, offset);
+                return teleVM().readValue(kind, slotBase, offset);
 
             } else if (l instanceof IntegerRegister) {
                 final IntegerRegister integerRegister = (IntegerRegister) l;
@@ -790,7 +803,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 final Address address = integerRegisters().get(integerRegisterIndex);
 
                 if (kind == Kind.REFERENCE) {
-                    return TeleReferenceValue.from(teleVM, Reference.fromOrigin(address.asPointer()));
+                    return TeleReferenceValue.from(teleVM(), Reference.fromOrigin(address.asPointer()));
                 }
                 return LongValue.from(address.toLong());
             }
@@ -802,8 +815,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             return targetMethod;
         }
 
-        public CodeLocation getLocation() {
-            return teleVM.vmAccess().createCodeLocation(teleVM.findTeleMethodActor(TeleClassMethodActor.class, classMethodActor), position, false);
+        public JdwpCodeLocation getLocation() {
+            return teleVM().vmAccess().createCodeLocation(teleVM().findTeleMethodActor(TeleClassMethodActor.class, classMethodActor), position, false);
         }
 
         public long getInstructionPointer() {
@@ -878,7 +891,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 z++;
 
                 final Address address = stackFrame.ip;
-                TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM, address);
+                TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM(), address);
                 if (teleTargetMethod == null) {
                     if (stackFrame.targetMethod() == null) {
                         LOGGER.warning("Target method of stack frame (" + stackFrame + ") was null!");
@@ -886,12 +899,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                     }
                     final TargetMethod targetMethod = stackFrame.targetMethod();
                     final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
-                    final TeleClassMethodActor teleClassMethodActor = teleVM.findTeleMethodActor(TeleClassMethodActor.class, classMethodActor);
+                    final TeleClassMethodActor teleClassMethodActor = teleVM().findTeleMethodActor(TeleClassMethodActor.class, classMethodActor);
                     if (teleClassMethodActor == null) {
                         ProgramWarning.message("Could not find tele class method actor for " + classMethodActor);
                         continue;
                     }
-                    teleTargetMethod = teleVM.findTeleTargetRoutine(TeleTargetMethod.class, targetMethod.codeStart().asAddress());
+                    teleTargetMethod = teleVM().findTeleTargetRoutine(TeleTargetMethod.class, targetMethod.codeStart().asAddress());
                     if (teleTargetMethod == null) {
                         ProgramWarning.message("Could not find tele target method actor for " + classMethodActor);
                         continue;
@@ -911,7 +924,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                     if (descriptor == null) {
                         LOGGER.info("WARNING: No Java frame descriptor found for Java stop " + stopIndex);
 
-                        if (teleVM.findTeleMethodActor(TeleClassMethodActor.class, teleTargetMethod.classMethodActor()) == null) {
+                        if (teleVM().findTeleMethodActor(TeleClassMethodActor.class, teleTargetMethod.classMethodActor()) == null) {
                             LOGGER.warning("Could not find tele method!");
                         } else {
                             result.append(new FrameProviderImpl(z == 1, teleTargetMethod, stackFrame, null, teleTargetMethod.classMethodActor(), 0));
@@ -919,7 +932,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                     } else {
 
                         while (descriptor != null) {
-                            final TeleClassMethodActor curTma = teleVM.findTeleMethodActor(TeleClassMethodActor.class, descriptor.classMethodActor);
+                            final TeleClassMethodActor curTma = teleVM().findTeleMethodActor(TeleClassMethodActor.class, descriptor.classMethodActor);
 
                             LOGGER.info("Found part frame " + descriptor + " tele method actor: " + curTma);
                             result.append(new FrameProviderImpl(z == 1, teleTargetMethod, stackFrame, descriptor));
@@ -928,7 +941,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                     }
                 } else {
                     LOGGER.info("Not at Java stop!");
-                    if (teleVM.findTeleMethodActor(TeleClassMethodActor.class, teleTargetMethod.classMethodActor()) == null) {
+                    if (teleVM().findTeleMethodActor(TeleClassMethodActor.class, teleTargetMethod.classMethodActor()) == null) {
                         LOGGER.warning("Could not find tele method!");
                     } else {
                         result.append(new FrameProviderImpl(z == 1, teleTargetMethod, stackFrame, null, teleTargetMethod.classMethodActor(), 0));
@@ -957,7 +970,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
         if (suspendCount == 0) {
             LOGGER.info("Asked to RESUME THREAD " + this + " we are resuming silently the whole VM for now");
-            teleVM.vmAccess().resume();
+            teleVM().vmAccess().resume();
         }
     }
 
@@ -979,25 +992,25 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     public ReferenceTypeProvider getReferenceType() {
-        return this.teleVM.vmAccess().getReferenceType(getClass());
+        return teleVM().vmAccess().getReferenceType(getClass());
     }
 
     public ThreadGroupProvider getThreadGroup() {
-        return isJava() ? this.teleVM.javaThreadGroupProvider() : this.teleVM.nativeThreadGroupProvider();
+        return isJava() ? teleVM().javaThreadGroupProvider() : teleVM().nativeThreadGroupProvider();
     }
 
     public void doSingleStep() {
         LOGGER.info("Asked to do a single step!");
-        teleVM.registerSingleStepThread(this);
+        teleVM().registerSingleStepThread(this);
     }
 
     public void doStepOut() {
         LOGGER.info("Asked to do a step out!");
-        teleVM.registerStepOutThread(this);
+        teleVM().registerStepOutThread(this);
     }
 
     public VMAccess getVM() {
-        return teleVM.vmAccess();
+        return teleVM().vmAccess();
     }
 
     public RegistersGroup getRegistersGroup() {

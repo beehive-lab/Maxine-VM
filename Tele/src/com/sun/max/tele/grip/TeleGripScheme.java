@@ -44,7 +44,7 @@ import com.sun.max.vm.grip.*;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public abstract class TeleGripScheme extends AbstractVMScheme implements GripScheme, TeleVMHolder {
+public abstract class TeleGripScheme extends AbstractVMScheme implements GripScheme {
 
     private static final int TRACE_VALUE = 1;
 

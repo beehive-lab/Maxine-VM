@@ -31,7 +31,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
@@ -250,7 +249,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                         setValue(null, "No stack frame focus");
                     } else {
                         final TargetMethod targetMethod = stackFrame.targetMethod();
-                        final String name = targetMethod == null ? "nativeMethod: 0x" + maxVM().getCodeAddress(stackFrame).toHexString() : targetMethod.toString();
+                        final String name = targetMethod == null ? "nativeMethod: 0x" + codeManager().createMachineCodeLocation(stackFrame).address().toHexString() : targetMethod.toString();
                         setValue(name, "Stack frame focus = " + name);
                     }
                 }
@@ -258,11 +257,11 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.CODE.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final TeleCodeLocation teleCodeLocation = focus().codeLocation();
-                    if (teleCodeLocation == null) {
+                    final MaxCodeLocation codeLocation = focus().codeLocation();
+                    if (codeLocation == null) {
                         setValue(null, "No code location focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longName(teleCodeLocation);
+                        final String longName = inspection().nameDisplay().longName(codeLocation);
                         setValue(longName, "Code location focus = " + longName);
                     }
                 }
@@ -274,7 +273,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
                     if (breakpoint == null) {
                         setValue(null, "No breakpoint focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longName(breakpoint.getCodeLocation());
+                        final String longName = inspection().nameDisplay().longName(breakpoint.codeLocation());
                         setValue(longName, "Breakpoint focus = " + longName);
                     }
                 }
@@ -349,7 +348,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         }
     }
 
-    public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
+    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
         refresh(true);
     }
 
