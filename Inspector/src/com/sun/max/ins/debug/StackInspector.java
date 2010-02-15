@@ -276,9 +276,9 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
             header.add(new TextLabel(inspection(), "start: "));
-            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, thread.stackRegion().start(), contentPane));
+            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, thread.stack().memoryRegion().start(), contentPane));
             header.add(new TextLabel(inspection(), "size: "));
-            header.add(new DataLabel.IntAsDecimal(inspection(), thread.stackRegion().size().toInt()));
+            header.add(new DataLabel.IntAsDecimal(inspection(), thread.stack().memoryRegion().size().toInt()));
             SpringUtilities.makeCompactGrid(header, 2);
             contentPane.add(header, BorderLayout.NORTH);
 

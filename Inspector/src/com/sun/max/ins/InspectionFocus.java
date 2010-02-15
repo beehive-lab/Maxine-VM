@@ -203,7 +203,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 }
             }
             // User Model Policy:  when thread focus changes, also set the memory region focus to the thread's stack memory.
-            setMemoryRegion(this.thread.stackRegion());
+            setMemoryRegion(this.thread.stack().memoryRegion());
 
         }
     }

@@ -171,9 +171,9 @@ public final class MemoryRegionsTable extends InspectorTable {
             }
 
             for (MaxThread thread : maxVMState().threads()) {
-                final TeleNativeStackMemoryRegion stackRegion = thread.stackRegion();
-                if (!stackRegion.size().isZero()) {
-                    sortedMemoryRegions.add(new StackRegionDisplay(stackRegion));
+                final MaxStack stack = thread.stack();
+                if (!stack.memoryRegion().size().isZero()) {
+                    sortedMemoryRegions.add(new StackRegionDisplay(stack));
                 }
                 TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.threadLocalsRegion();
                 if (!threadLocalsRegion.size().isZero()) {
@@ -475,21 +475,21 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     private final class StackRegionDisplay extends MemoryRegionDisplay {
 
-        private final TeleNativeStackMemoryRegion stackRegion;
+        private final MaxStack stack;
 
         @Override
         MemoryRegion memoryRegion() {
-            return stackRegion;
+            return stack.memoryRegion();
         }
 
-        StackRegionDisplay(TeleNativeStackMemoryRegion stackRegion) {
-            this.stackRegion = stackRegion;
+        StackRegionDisplay(MaxStack stack) {
+            this.stack = stack;
         }
 
         @Override
         Size allocated() {
             // Stack grows downward from the end of the region;
-            return end().minus(stackRegion.teleNativeThread.stackPointer()).asSize();
+            return end().minus(stack.thread().stackPointer()).asSize();
         }
 
     }
