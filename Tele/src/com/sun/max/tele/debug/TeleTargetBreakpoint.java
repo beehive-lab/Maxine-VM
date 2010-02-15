@@ -75,7 +75,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         this.originalCodeAtBreakpoint = originalCode == null ? teleVM.dataAccess().readFully(codeLocation.address(), factory.codeSize()) : originalCode;
     }
 
-    public boolean isMethodBreakpoint() {
+    public boolean isBytecodeBreakpoint() {
         return false;
     }
 
@@ -383,7 +383,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             return transientBreakpoints.get(address.toLong());
         }
 
-        public synchronized TeleTargetBreakpoint findClientBreakpoint(CompiledCodeLocation compiledCodeLocation) {
+        public synchronized TeleTargetBreakpoint findClientBreakpoint(MachineCodeLocation compiledCodeLocation) {
             assert compiledCodeLocation.hasAddress();
             return clientBreakpoints.get(compiledCodeLocation.address().toLong());
         }

@@ -98,7 +98,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         final AppendableSequence<MaxBreakpoint> targetBreakpoints = new LinkSequence<MaxBreakpoint>();
         final AppendableSequence<MaxBreakpoint> bytecodeBreakpoints = new LinkSequence<MaxBreakpoint>();
         for (MaxBreakpoint breakpoint : inspection.breakpointFactory().breakpoints()) {
-            if (breakpoint.isMethodBreakpoint()) {
+            if (breakpoint.isBytecodeBreakpoint()) {
                 bytecodeBreakpoints.append(breakpoint);
             } else {
                 targetBreakpoints.append(breakpoint);
@@ -136,7 +136,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final String description = settings.get(this, prefix + "." + DESCRIPTION_KEY, OptionTypes.STRING_TYPE, null);
             if (inspection.maxVM().containsInCode(address)) {
                 try {
-                    final MaxCodeLocation codeLocation = inspection.maxVM().codeManager().createCompiledLocation(address, "loaded by breakpoint persistence manager");
+                    final MaxCodeLocation codeLocation = inspection.maxVM().codeManager().createMachineCodeLocation(address, "loaded by breakpoint persistence manager");
                     final MaxBreakpoint breakpoint = inspection.maxVM().breakpointFactory().makeBreakpoint(codeLocation);
                     if (condition != null) {
                         breakpoint.setCondition(condition);
@@ -162,12 +162,11 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final String prefix = BYTECODE_BREAKPOINT_KEY + index++;
             final MaxCodeLocation codeLocation = breakpoint.codeLocation();
             final MethodKey methodKey = codeLocation.methodKey();
-            final int position = codeLocation.hasBytecodeLocation() ? codeLocation.bytecodeLocation().position() : 0;
             if (methodKey != null) {
                 settings.save(prefix + "." + METHOD_HOLDER_KEY, methodKey.holder().string);
                 settings.save(prefix + "." + METHOD_NAME_KEY, methodKey.name().string);
                 settings.save(prefix + "." + METHOD_SIGNATURE_KEY, methodKey.signature().string);
-                settings.save(prefix + "." + POSITION_KEY, position);
+                settings.save(prefix + "." + POSITION_KEY, codeLocation.bytecodePosition());
                 settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             } else {
                 ProgramWarning.message("Unable to save bytecode breakpoint, no key in " + breakpoint);
@@ -188,7 +187,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                 ProgramWarning.message("Ignoring non-zero bytecode position for saved breakpoint in " + methodKey);
             }
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
-            final MaxCodeLocation location = inspection.maxVM().codeManager().createMethodLocation(methodKey, "loaded by breakpoint persistence manager");
+            final MaxCodeLocation location = inspection.maxVM().codeManager().createBytecodeLocation(methodKey, "loaded by breakpoint persistence manager");
             MaxBreakpoint bytecodeBreakpoint;
             try {
                 bytecodeBreakpoint = inspection.maxVM().breakpointFactory().makeBreakpoint(location);

@@ -1622,7 +1622,7 @@ public abstract class TeleVM implements MaxVM {
     public void advanceToJavaEntryPoint() throws IOException {
         setVMInspectable();
         final Address startEntryAddress = bootImageStart().plus(bootImage().header.vmRunMethodOffset);
-        final CompiledCodeLocation entryLocation = codeManager().createCompiledLocation(startEntryAddress, "vm start address");
+        final MachineCodeLocation entryLocation = codeManager().createMachineCodeLocation(startEntryAddress, "vm start address");
         try {
             runToInstruction(entryLocation, true, false);
         } catch (Exception exception) {
@@ -2180,7 +2180,7 @@ public abstract class TeleVM implements MaxVM {
             breakpointLocations.add(codeLocation);
             assert breakpointLocations.contains(codeLocation);
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final MethodCodeLocation methodCodeLocation = codeManager().createMethodLocation(teleClassMethodActor, 0, "");
+            final BytecodeLocation methodCodeLocation = codeManager().createBytecodeLocation(teleClassMethodActor, 0, "");
             try {
                 TeleVM.this.breakpointFactory().makeBreakpoint(methodCodeLocation);
             } catch (MaxVMBusyException maxVMBusyException) {

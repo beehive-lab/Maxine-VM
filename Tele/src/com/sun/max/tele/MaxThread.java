@@ -160,7 +160,7 @@ public interface MaxThread {
     /**
      * @return location of the instruction pointer for the thread; null if thread has died
      */
-    CompiledCodeLocation instructionLocation();
+    MachineCodeLocation instructionLocation();
 
     /**
      * Gets the return address of the next-to-top frame on the stack: the next instruction to be executed when execution

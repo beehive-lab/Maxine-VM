@@ -179,7 +179,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     @Override
     protected void setFocusAtRow(int row) {
         final int position = tableModel.rowToInstruction(row).position();
-        focus().setCodeLocation(codeManager().createMethodLocation(teleClassMethodActor(), position, "bytecode view set focus"), false);
+        focus().setCodeLocation(codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view set focus"), false);
     }
 
     @Override
@@ -240,9 +240,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
                     final int position = bytecodeInstruction.position();
                     if (targetCodeFirstAddress.isZero()) {
-                        focus().setCodeLocation(codeManager().createMethodLocation(teleClassMethodActor(), position, "bytecode view"));
+                        focus().setCodeLocation(codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view"));
                     } else {
-                        focus().setCodeLocation(codeManager().createCompiledLocation(targetCodeFirstAddress, teleClassMethodActor(), position, "bytecode view"), true);
+                        focus().setCodeLocation(codeManager().createMachineCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position, "bytecode view"), true);
                     }
                 }
             }
@@ -252,12 +252,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             final int oldSelectedRow = getSelectedRow();
             final BytecodeTableModel model = (BytecodeTableModel) getModel();
             int focusRow = -1;
-            if (codeLocation.hasBytecodeLocation()) {
-                final MaxBytecodeLocation bytecodeLocation = codeLocation.bytecodeLocation();
-                if (bytecodeLocation.teleClassMethodActor().classMethodActor() == teleClassMethodActor().classMethodActor()) {
-                    focusRow = model.findRowAtPosition(bytecodeLocation.position());
+            if (codeLocation.hasTeleClassMethodActor()) {
+                if (codeLocation.teleClassMethodActor().classMethodActor() == teleClassMethodActor().classMethodActor()) {
+                    focusRow = model.findRowAtPosition(codeLocation.bytecodePosition());
                 }
-            } else if (codeLocation.hasKey()) {
+            } else if (codeLocation.hasMethodKey()) {
                 // Shouldn't happen, but...
                 if (codeLocation.methodKey().equals(methodKey())) {
                     focusRow = model.findRowAtPosition(0);

@@ -69,7 +69,7 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
      * @return compiled code location for each instruction.
      * @see #getInstructions()
      */
-    IndexedSequence<CompiledCodeLocation> getInstructionLocations();
+    IndexedSequence<MachineCodeLocation> getInstructionLocations();
 
     /**
      * Gets a location that specifies the entry.

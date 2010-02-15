@@ -114,7 +114,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 if (thread != null && codeLocation.hasAddress()) {
                     final Sequence<StackFrame> frames = thread.frames();
                     for (StackFrame stackFrame : frames) {
-                        if (codeManager().createCompiledLocation(stackFrame).equals(codeLocation)) {
+                        if (codeManager().createMachineCodeLocation(stackFrame).isSameAs(codeLocation)) {
                             setStackFrame(thread, stackFrame, false);
                             break;
                         }
@@ -255,7 +255,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         // or call return location.
         // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
-        final MaxCodeLocation newCodeLocation = codeManager().createCompiledLocation(stackFrame);
+        final MaxCodeLocation newCodeLocation = codeManager().createMachineCodeLocation(stackFrame);
         if (!newCodeLocation.isSameAs(codeLocation)) {
             setCodeLocation(newCodeLocation, interactiveForNative);
         }

@@ -114,7 +114,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     private IndexedSequence<TargetCodeInstruction> instructions;
-    private IndexedSequence<CompiledCodeLocation> instructionLocations;
+    private IndexedSequence<MachineCodeLocation> instructionLocations;
 
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (instructions == null) {
@@ -124,13 +124,13 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         return instructions;
     }
 
-    public IndexedSequence<CompiledCodeLocation> getInstructionLocations() {
+    public IndexedSequence<MachineCodeLocation> getInstructionLocations() {
         if (instructionLocations == null) {
             getInstructions();
             final int length = instructions.length();
-            final MutableSequence<CompiledCodeLocation> locations = new VectorSequence<CompiledCodeLocation>(length);
+            final MutableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
             for (int i = 0; i < length; i++) {
-                locations.set(i, codeManager().createCompiledLocation(instructions.get(i).address, "native target code instruction"));
+                locations.set(i, codeManager().createMachineCodeLocation(instructions.get(i).address, "native target code instruction"));
             }
             instructionLocations = locations;
         }
@@ -138,7 +138,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     public CodeLocation entryLocation() {
-        return codeManager().createCompiledLocation(callEntryPoint(), "entry for native routine " + getName());
+        return codeManager().createMachineCodeLocation(callEntryPoint(), "entry for native routine " + getName());
     }
 
     public Sequence<MaxCodeLocation> labelLocations() {
@@ -146,7 +146,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label != null) {
                 final String description = "Label " + targetCodeInstruction.label.toString() + " in " + getName();
-                locations.append(codeManager().createCompiledLocation(targetCodeInstruction.address, description));
+                locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, description));
             }
         }
         return locations;

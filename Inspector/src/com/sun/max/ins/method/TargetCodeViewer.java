@@ -27,7 +27,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -65,7 +64,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
     }
 
     private final IndexedSequence<TargetCodeInstruction> instructions;
-    private IndexedSequence<CompiledCodeLocation> instructionLocations;
+    private IndexedSequence<MaxCodeLocation> instructionLocations;
 
     /**
      * @return disassembled target code instructions for the method being viewed.
@@ -74,7 +73,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         return instructions;
     }
 
-    public IndexedSequence<CompiledCodeLocation> instructionLocations() {
+    public IndexedSequence<MaxCodeLocation> instructionLocations() {
         return instructionLocations;
     }
 
@@ -128,7 +127,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         super(inspection, parent);
         this.teleTargetRoutine = teleTargetRoutine;
         instructions = teleTargetRoutine.getInstructions();
-        instructionLocations = teleTargetRoutine.getInstructionLocations();
+        instructionLocations = new VectorSequence<MaxCodeLocation>(teleTargetRoutine.getInstructionLocations());
         final TeleClassMethodActor teleClassMethodActor = teleTargetRoutine.getTeleClassMethodActor();
         if (teleClassMethodActor != null) {
             final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
@@ -180,8 +179,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
                         tagTextForRow[row] = ""; // presumably in the prolog
                     } else {
                         tagTextForRow[row] = bytecodePosition + ": " + bytecodeInfo.bytecode().name();
-                        final BytecodeLocation bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
-                        rowToBytecodeLocation[row] = bytecodeLocation;
+                        rowToBytecodeLocation[row] = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
                     }
                     do {
                         ++bytecodeIndex;
@@ -194,12 +192,13 @@ public abstract class TargetCodeViewer extends CodeViewer {
         } else {
             for (int row = 0; row < targetInstructionCount; row++) {
                 int stopIndex = -1;
-                final int position = instructions.get(row).position;
-                if (position >= 0 && position < positionToStopIndex.length) {
+                // byte offset of this machine code instruction from beginning
+                final int machineInstructionPosition = instructions.get(row).position;
+                if (machineInstructionPosition >= 0 && machineInstructionPosition < positionToStopIndex.length) {
                     // The disassembler sometimes seems to report wild positions
                     // when disassembling random binary; this can happen when
                     // viewing some unknown native code whose length we must guess.
-                    stopIndex = positionToStopIndex[position];
+                    stopIndex = positionToStopIndex[machineInstructionPosition];
                 }
                 if (stopIndex >= 0) {
                     // the row is at a stop point
@@ -208,6 +207,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
                         final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
                         final TargetJavaFrameDescriptor javaFrameDescriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
                         if (javaFrameDescriptor != null) {
+                            // This is a call
+                            //javaFrameDescriptor.classMethodActor;
                             final BytecodeLocation bytecodeLocation = javaFrameDescriptor;
                             rowToBytecodeLocation[row] = bytecodeLocation;
                             // TODO (mlvdv) only works for non-inlined calls
@@ -261,7 +262,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
     private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
 
     /**
-     * @param bytecodePosition
+     * @param bytecodes
+     * @param bytecodePosition byte offset into bytecodes
      * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
      */
     private int findCalleeIndex(byte[] bytecodes, int bytecodePosition) {
@@ -297,7 +299,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         int stackPosition = 0;
         for (StackFrame frame : frames) {
             final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
-            final MaxCodeLocation frameCodeLocation = codeManager().createCompiledLocation(frame);
+            final MaxCodeLocation frameCodeLocation = codeManager().createMachineCodeLocation(frame);
             if (frameCodeLocation != null) {
                 final boolean isFrameForThisCode =
                     frame instanceof CompiledStackFrame ?

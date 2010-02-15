@@ -407,7 +407,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 menu.add(new InspectorAction(inspection(), "Open native code dialog...") {
                     @Override
                     protected void procedure() {
-                        focus().setCodeLocation(codeManager().createCompiledLocation(stackFrame), true);
+                        focus().setCodeLocation(codeManager().createMachineCodeLocation(stackFrame), true);
                     }
                 });
             }

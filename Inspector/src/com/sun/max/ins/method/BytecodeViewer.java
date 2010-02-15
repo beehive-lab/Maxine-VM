@@ -222,7 +222,7 @@ public abstract class BytecodeViewer extends CodeViewer {
             int stackPosition = 0;
             for (StackFrame frame : frames) {
                 frameCache[stackPosition] = frame;
-                locationCache[stackPosition] = codeManager().createCompiledLocation(frame);
+                locationCache[stackPosition] = codeManager().createMachineCodeLocation(frame);
                 stackPosition++;
             }
             for (int row = 0; row < bytecodeInstructions.length(); row++) {
@@ -247,7 +247,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         final AppendableSequence<MaxBreakpoint> breakpoints = new LinkSequence<MaxBreakpoint>();
         if (haveTargetCodeAddresses) {
             for (MaxBreakpoint breakpoint : breakpointFactory().breakpoints()) {
-                if (!breakpoint.isMethodBreakpoint() && rowContainsAddress(row, breakpoint.codeLocation().address())) {
+                if (!breakpoint.isBytecodeBreakpoint() && rowContainsAddress(row, breakpoint.codeLocation().address())) {
                     breakpoints.append(breakpoint);
                 }
             }
@@ -260,11 +260,10 @@ public abstract class BytecodeViewer extends CodeViewer {
      */
     protected MaxBreakpoint getBytecodeBreakpointAtRow(int row) {
         for (MaxBreakpoint breakpoint : breakpointFactory().breakpoints()) {
-            if (breakpoint.isMethodBreakpoint()) {
+            if (breakpoint.isBytecodeBreakpoint()) {
                 final MaxCodeLocation breakpointLocation = breakpoint.codeLocation();
                 // the direction of key comparison is significant
-                final int breakpointPosition = breakpointLocation.hasBytecodeLocation() ? breakpointLocation.bytecodeLocation().position() : 0;
-                if (methodKey.equals(breakpointLocation.methodKey()) &&  bytecodeInstructions().get(row).position() == breakpointPosition) {
+                if (methodKey.equals(breakpointLocation.methodKey()) &&  bytecodeInstructions().get(row).position() == breakpointLocation.bytecodePosition()) {
                     return breakpoint;
                 }
             }
