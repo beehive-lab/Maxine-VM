@@ -29,6 +29,7 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
 import static com.sun.max.vm.type.JavaTypeDescriptor.*;
 
+import java.lang.instrument.*;
 import java.io.*;
 import java.security.*;
 import java.util.*;
@@ -46,6 +47,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -1387,8 +1389,22 @@ public final class ClassfileReader {
      *             class specified by {@code bytes}
      */
     public static ClassActor defineClassActor(String name, ClassLoader classLoader, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, Object source, boolean isRemote) {
-        saveClassfile(name, bytes);
-        final ClassfileStream classfileStream = new ClassfileStream(bytes, offset, length);
+        final Instrumentation instrumentation = InstrumentationManager.getInstrumentation();
+        byte[] classfileBytes = bytes;
+        if (instrumentation != null) {
+            if (offset != 0 || length != bytes.length) {
+                classfileBytes = new byte[length];
+                System.arraycopy(bytes, offset, classfileBytes, 0, length);
+                offset = 0;
+            }
+            final byte[] tBytes = InstrumentationManager.transform(classLoader == BootClassLoader.BOOT_CLASS_LOADER ? null : classLoader, name.replace('.', '/'), null, protectionDomain, classfileBytes, false);
+            if (tBytes != null) {
+                classfileBytes = tBytes;
+                length = tBytes.length;
+            }
+        }
+        saveClassfile(name, classfileBytes);
+        final ClassfileStream classfileStream = new ClassfileStream(classfileBytes, offset, length);
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         final ClassActor classActor = classfileReader.loadClass(SymbolTable.makeSymbol(name), source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
