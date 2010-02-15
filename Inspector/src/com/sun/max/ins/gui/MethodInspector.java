@@ -142,9 +142,9 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
         if (codeLocation.hasAddress()) {
             return make(inspection, codeLocation.address(), interactiveForNative);
         }
-        if (codeLocation.hasBytecodeLocation()) {
+        if (codeLocation.hasTeleClassMethodActor()) {
             // TODO (mlvdv)  Select the specified bytecode position
-            return make(inspection, codeLocation.bytecodeLocation().teleClassMethodActor(), MethodCodeKind.BYTECODES);
+            return make(inspection, codeLocation.teleClassMethodActor(), MethodCodeKind.BYTECODES);
         }
         // Has neither target nor bytecode location specified.
         return null;

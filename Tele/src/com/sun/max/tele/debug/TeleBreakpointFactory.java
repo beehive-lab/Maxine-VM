@@ -73,11 +73,11 @@ public class TeleBreakpointFactory extends AbstractTeleVMHolder implements MaxBr
     }
 
     public  TeleBreakpoint findBreakpoint(MaxCodeLocation maxCodeLocation) {
-        if (maxCodeLocation instanceof CompiledCodeLocation) {
-            final CompiledCodeLocation compiledCodeLocation = (CompiledCodeLocation) maxCodeLocation;
+        if (maxCodeLocation instanceof MachineCodeLocation) {
+            final MachineCodeLocation compiledCodeLocation = (MachineCodeLocation) maxCodeLocation;
             return targetBreakpointFactory.findClientBreakpoint(compiledCodeLocation);
         }
-        final MethodCodeLocation methodCodeLocation = (MethodCodeLocation) maxCodeLocation;
+        final BytecodeLocation methodCodeLocation = (BytecodeLocation) maxCodeLocation;
         return bytecodeBreakpointFactory.findClientBreakpoint(methodCodeLocation);
     }
 

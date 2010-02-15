@@ -372,8 +372,8 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 }
             }
         }
-        if (codeLocation.hasBytecodeLocation()) {
-            name.append("Bytecode{").append(codeLocation.bytecodeLocation()).append("} ");
+        if (codeLocation.hasTeleClassMethodActor()) {
+            name.append("Bytecode{").append(codeLocation.bytecodePosition()).append("} ");
         } else if (codeLocation.methodKey() != null) {
             name.append("MethodKey{").append(longName(codeLocation.methodKey())).append("} ");
         }

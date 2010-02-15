@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele.object;
 
-import java.lang.reflect.*;
-
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
@@ -152,7 +150,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
      */
     public CodeLocation getCodeStartLocation() {
         if (codeStartLocation == null && getCodeStart() != null) {
-            codeStartLocation = codeManager().createCompiledLocation(getCodeStart(), "code start location in method");
+            codeStartLocation = codeManager().createMachineCodeLocation(getCodeStart(), "code start location in method");
         }
         return codeStartLocation;
     }
@@ -226,8 +224,8 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
             return getCodeStartLocation();
         }
         final CallEntryPoint callEntryPoint = (CallEntryPoint) teleCallEntryPoint.deepCopy();
-        final Pointer callEntryPointer = codeStart.plus(callEntryPoint.offsetFromCodeStart());
-        return codeManager().createCompiledLocation(callEntryPointer, "call entry");
+        final Pointer callEntryPointer = codeStart.plus(callEntryPoint.offset());
+        return codeManager().createMachineCodeLocation(callEntryPointer, "call entry");
     }
 
     /**
@@ -257,7 +255,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
     }
 
     private IndexedSequence<TargetCodeInstruction> instructions;
-    private IndexedSequence<CompiledCodeLocation> instructionLocations;
+    private IndexedSequence<MachineCodeLocation> instructionLocations;
 
     public final  IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (instructions == null) {
@@ -269,14 +267,14 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         return instructions;
     }
 
-    public IndexedSequence<CompiledCodeLocation> getInstructionLocations() {
+    public IndexedSequence<MachineCodeLocation> getInstructionLocations() {
         if (instructionLocations == null) {
             getInstructions();
             final int length = instructions.length();
             final CodeManager codeManager = codeManager();
-            final VariableSequence<CompiledCodeLocation> locations = new VectorSequence<CompiledCodeLocation>(length);
+            final VariableSequence<MachineCodeLocation> locations = new VectorSequence<MachineCodeLocation>(length);
             for (int i = 0; i < length; i++) {
-                locations.append(codeManager.createCompiledLocation(instructions.get(i).address, "native target code instruction"));
+                locations.append(codeManager.createMachineCodeLocation(instructions.get(i).address, "native target code instruction"));
             }
             instructionLocations = locations;
         }
@@ -352,7 +350,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         final int targetCodePosition = maxCodeLocation.address().minus(getCodeStart()).toInt();
         final int nextCallPosition = getNextCallPosition(targetCodePosition);
         if (nextCallPosition > 0) {
-            return codeManager().createCompiledLocation(getCodeStart().plus(nextCallPosition), "next call location");
+            return codeManager().createMachineCodeLocation(getCodeStart().plus(nextCallPosition), "next call location");
         }
         return null;
     }
@@ -448,7 +446,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         if (callEntryPoint.isZero()) {
             return null;
         }
-        return codeManager().createCompiledLocation(callEntryPoint, "Method entry");
+        return codeManager().createMachineCodeLocation(callEntryPoint, "Method entry");
     }
 
     public Sequence<MaxCodeLocation> labelLocations() {
@@ -456,7 +454,7 @@ public class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTar
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label != null) {
                 final String description = "Label " + targetCodeInstruction.label.toString() + " in " + getName();
-                locations.append(codeManager().createCompiledLocation(targetCodeInstruction.address, description));
+                locations.append(codeManager().createMachineCodeLocation(targetCodeInstruction.address, description));
             }
         }
         return locations;

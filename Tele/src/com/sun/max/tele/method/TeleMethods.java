@@ -69,9 +69,9 @@ public class TeleMethods extends AbstractTeleVMHolder {
     // Checkstyle: resume field name check
 
     // CAUTION:  order-dependent declarations; must follow the auto-generated fields.
-    private CodeLocation compilationComplete = CodeLocation.create(teleVM(), InspectableCodeInfo_inspectableCompilationComplete, "Compilation complete (internal)");
-    private CodeLocation gcCompleted = CodeLocation.create(teleVM(), InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
-    private CodeLocation gcStarted = CodeLocation.create(teleVM(), InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
+    private CodeLocation compilationComplete = CodeLocation.createMachineCodeLocation(teleVM(), InspectableCodeInfo_inspectableCompilationComplete, "Compilation complete (internal)");
+    private CodeLocation gcCompleted = CodeLocation.createMachineCodeLocation(teleVM(), InspectableHeapInfo_inspectableGCCompleted, "GC completed (internal)");
+    private CodeLocation gcStarted = CodeLocation.createMachineCodeLocation(teleVM(), InspectableHeapInfo_inspectableGCStarted, "GC started (internal)");
 
     private final Sequence<CodeLocation> clientInspectableMethods;
 
@@ -81,10 +81,10 @@ public class TeleMethods extends AbstractTeleVMHolder {
         // updateSource(true);
 
         final VariableSequence<CodeLocation> methods = new ArrayListSequence<CodeLocation>();
-        methods.append(CodeLocation.create(teleVM(), HeapScheme$Static_inspectableGCStarted, "Start of GC"));
-        methods.append(CodeLocation.create(teleVM(), HeapScheme$Static_inspectableGCCompleted, "End of GC"));
-        methods.append(CodeLocation.create(teleVM(), CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
-        methods.append(CodeLocation.create(teleVM(), HeapScheme$Static_objectRelocated, "Object relocated"));
+        methods.append(CodeLocation.createMachineCodeLocation(teleVM(), HeapScheme$Static_inspectableGCStarted, "Start of GC"));
+        methods.append(CodeLocation.createMachineCodeLocation(teleVM(), HeapScheme$Static_inspectableGCCompleted, "End of GC"));
+        methods.append(CodeLocation.createMachineCodeLocation(teleVM(), CompilationScheme$Static_inspectableCompilationComplete, "End of method compilation"));
+        methods.append(CodeLocation.createMachineCodeLocation(teleVM(), HeapScheme$Static_objectRelocated, "Object relocated"));
         clientInspectableMethods = methods;
     }
 

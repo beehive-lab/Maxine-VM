@@ -53,8 +53,8 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
 
     public Sequence<MaxCodeLocation> inspectableMethods() {
         final AppendableSequence<MaxCodeLocation> locations = new LinkSequence<MaxCodeLocation>();
-        locations.append(CodeLocation.create(teleVM(), teleVM().teleMethods().SemiSpaceHeapScheme_increaseMemory, heapSchemeClass().getSimpleName() + ": increase memory"));
-        locations.append(CodeLocation.create(teleVM(), teleVM().teleMethods().SemiSpaceHeapScheme_decreaseMemory, heapSchemeClass().getSimpleName() + ": decrease memory"));
+        locations.append(CodeLocation.createMachineCodeLocation(teleVM(), teleVM().teleMethods().SemiSpaceHeapScheme_increaseMemory, heapSchemeClass().getSimpleName() + ": increase memory"));
+        locations.append(CodeLocation.createMachineCodeLocation(teleVM(), teleVM().teleMethods().SemiSpaceHeapScheme_decreaseMemory, heapSchemeClass().getSimpleName() + ": decrease memory"));
         return locations;
     }
 

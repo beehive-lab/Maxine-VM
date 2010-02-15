@@ -37,60 +37,70 @@ public interface MaxCodeManager {
     /**
      * Creates a code location in the VM specified only by an abstract description a method, which may not
      * even have been loaded yet into the VM.  No explicit position information is given, so the implied position
-     * is instruction 0, the method entry. When requested, attempts will be made to locate the surrogate
+     * is bytecode instruction 0, the method entry. When requested, attempts will be made to locate the surrogate
      * for the {@link ClassMethodActor} in the VM that identifies the method, once the class has been loaded.
+     * <br>
+     * Important: this location will always have {@link #bytecodePosition()} = -1, which in any machine code
+     * compilation is understood to mean the beginning of the method prologue, which comes before the machine
+     * code deriving from bytecode instruction 0;
      * <br>
      * Thread-safe
      *
      * @param methodKey an abstract description of a method
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
+     * @throws ProgramError if methodKey is null
      */
-    MaxCodeLocation createMethodLocation(MethodKey methodKey, String description);
+    MaxCodeLocation createBytecodeLocation(MethodKey methodKey, String description) throws ProgramError;
 
     /**
      * Creates a code location in the VM specified as a position in the bytecodes representation of a method
-     * in a class loaded in the VM.
+     * in a class loaded in the VM.  Positions 0 and -1 both refer to the first bytecode instruction.  Position -1
+     * in any compiled machine code representation is understood
+     * to refer to the beginning of the method prologue, which is before the machine code instructions derived
+     * from the first bytecode instruction.
      * <br>
      * Thread-safe
      *
      * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param position offset into the method's bytecodes of a bytecode instruction
+     * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
+     * @throws ProgramError if teleClassMethodActor is null or bytecodePosition &lt; -1
      */
-    MaxCodeLocation createMethodLocation(TeleClassMethodActor teleClassMethodActor, int position, String description);
+    MaxCodeLocation createBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws ProgramError;
 
     /**
-     * Creates a code location in VM specified as the memory address of a compiled target code instruction.
+     * Creates a code location in VM specified as the memory address of a compiled machine code instruction.
      * <br>
      * Thread-safe
      *
-     * @param address a non-zero address in VM memory that represents the beginning of a compiled target code instruction
+     * @param address a non-zero address in VM memory that represents the beginning of a compiled machine code instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a newly created location
      * @throws ProgramError if the address is null or zero
      */
-    MaxCodeLocation createCompiledLocation(Address address, String description) throws ProgramError;
+    MaxCodeLocation createMachineCodeLocation(Address address, String description) throws ProgramError;
 
     /**
-     * Creates a code location in the VM based on both a classfile and compiled code description:
+     * Creates a code location in the VM based on both a bytecode and compiled machine code description:
      * a position in the bytecodes representation of a method in a class loaded in the VM, in addition
-     * to the memory address of the corresponding target code instruction in a specific compilation
+     * to the memory address of the corresponding machine code instruction in a specific compilation
      * of the method.
      * <br>
      * Thread-safe
      *
-     * @param address an address in VM memory that represents the beginning of a compiled target code instruction
+     * @param address an address in VM memory that represents the beginning of a compiled machine code instruction
      * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param position offset into the method's bytecodes of a bytecode instruction
+     * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws ProgramError if the address is null or zero
+     * @throws ProgramError if the address is null or zero or  if teleClassMethodActor is null or bytecodePosition &lt; -1
      */
-    MaxCodeLocation createCompiledLocation(Address address, TeleClassMethodActor teleClassMethodActor, int position, String description) throws ProgramError;
+    MaxCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws ProgramError;
 
     // TODO (mlvdv) review uses for null return with error frames.
+    // TODO (mlvdv) fold this into a new stack frame abstraction and Tele support
     /**
      *
      * Returns the compiled code location in a stack frame, either IP (top frame) or call return address.
@@ -101,9 +111,10 @@ public interface MaxCodeManager {
      * Returns null if the frame has no location, for example an error frame.
      *
      * @param stackFrame a VM stack frame
-     * @return code location of current IP, if top frame, or next target instruction to be executed when control is returned to the frame;
+     * @return code location of current IP, if top frame, or next machine code instruction to be executed when control is returned to the frame;
      * null if no location is available.
+     * @throws ProgramError if stackFrame is null
      */
-    MaxCodeLocation createCompiledLocation(StackFrame stackFrame);
+    MaxCodeLocation createMachineCodeLocation(StackFrame stackFrame) throws ProgramError;
 
 }

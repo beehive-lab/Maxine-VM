@@ -29,21 +29,27 @@ import com.sun.max.vm.actor.member.*;
 
 // TODO (mlvdv) extend code location to represent source code
 // TODO (mlvdv) extend code location to represent ranges of instructions
-// TODO (mlvdv) complete instruction mapping code bytecode <-> target code
+// TODO (mlvdv) complete instruction mapping code bytecode <-> machine code, see TeleBytecodeBreakpoint
 
 /**
- * Describes a location in VM code:  compiled target code, bytecode, source code, or some
+ * Location of a code instruction in the VM.  This might be
+ * specified in terms of one or more representations:
+ * compiled machine code, bytecode, source code, or some
  * combination that represents an equivalent location in each.  An instance may
  * not have all kinds of information. Some kinds of additional information cannot be
  * determined until an initial reading of the VM state has been completed.  Some kinds
  * of information cannot be determined until a specified class is loaded into the VM.
  * <br>
- * A location with an address (subclasses of {@link CompiledCodeLocation}  is assumed
+ * A location with an address (subclasses of {@link MachineCodeLocation}  is assumed
  * to refer uniquely to a single compilation of a method,
- * where the actual method may or (rarely) not be known.
+ * where the actual method may or (in rare cases) may not be known.
  * <br>
- * A location originally specified without an address (subclasses of {@link MethodCodeLocation})
- * is assumed to refer only to the method, and not to any particular compilation.
+ * A location originally specified without an address (subclasses of {@link BytecodeLocation})
+ * is assumed to refer to the method in general, and by implication to every machine code
+ * compilation.
+ * <br>
+ * This class is intended to encapsulate as many techniques for mapping among code locations
+ * as possible.
  *
  * @author Michael Van De Vanter
  */
@@ -52,8 +58,12 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
     /**
      * Creates a code location in the VM specified only by an abstract description a method, which may not
      * even have been loaded yet into the VM.  No explicit position information is given, so the implied position
-     * is instruction 0, the method entry. When requested, attempts will be made to locate the surrogate
+     * is bytecode instruction 0, the method entry. When requested, attempts will be made to locate the surrogate
      * for the {@link ClassMethodActor} in the VM that identifies the method, once the class has been loaded.
+     * <br>
+     * Important: this location will always have {@link #bytecodePosition()} = -1, which in any machine code
+     * compilation is understood to mean the beginning of the method prologue, which comes before the machine
+     * code deriving from bytecode instruction 0;
      * <br>
      * Thread-safe
      *
@@ -61,66 +71,72 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @param methodKey an abstract description of a method
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
+     * @throws ProgramError if methodKey is null
      */
-    public static MethodCodeLocation createMethodLocation(TeleVM teleVM, MethodKey methodKey, String description) {
+    public static BytecodeLocation createBytecodeLocation(TeleVM teleVM, MethodKey methodKey, String description) throws ProgramError {
         return new MethodKeyLocation(teleVM, methodKey, description);
     }
 
     /**
      * Creates a code location in the VM specified as a position in the bytecodes representation of a method
-     * in a class loaded in the VM.
+     * in a class loaded in the VM.  Positions 0 and -1 both refer to the first bytecode instruction.  Position -1
+     * in any compiled machine code representation is understood
+     * to refer to the beginning of the method prologue, which is before the machine code instructions derived
+     * from the first bytecode instruction.
      * <br>
      * Thread-safe
      *
      * @param teleVM the VM
      * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param position offset into the method's bytecodes of a bytecode instruction
+     * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
+     * @throws ProgramError if teleClassMethodActor is null or bytecodePosition &lt; -1
      */
-    public static MethodCodeLocation createMethodLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int position, String description) {
-        return new ClassMethodActorLocation(teleVM, teleClassMethodActor, position, description);
+    public static BytecodeLocation createBytecodeLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws ProgramError {
+        return new ClassMethodActorLocation(teleVM, teleClassMethodActor, bytecodePosition, description);
     }
 
     /**
-     * Creates a code location in VM specified as the memory address of a compiled target code instruction.
+     * Creates a code location in VM specified as the memory address of a compiled machine code instruction.
      * <br>
      * Thread-safe
      *
      * @param teleVM the VM
-     * @param address an address in VM memory that represents the beginning of a compiled target code instruction
+     * @param address an address in VM memory that represents the beginning of a compiled machine code instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a newly created location
      * @throws ProgramError if the address is null or zero
      */
-    public static AddressCodeLocation createCompiledLocation(TeleVM teleVM, Address address, String description) throws ProgramError {
-        ProgramError.check(address != null && !address.isZero());
+    public static AddressCodeLocation createMachineCodeLocation(TeleVM teleVM, Address address, String description) throws ProgramError {
         return new AddressCodeLocation(teleVM, address, description);
     }
 
     /**
-     * Creates a code location in the VM based on both a classfile and compiled code description:
+     * Creates a code location in the VM based on both a bytecode and compiled machine code description:
      * a position in the bytecodes representation of a method in a class loaded in the VM, in addition
-     * to the memory address of the corresponding target code instruction in a specific compilation
+     * to the memory address of the corresponding machine code instruction in a specific compilation
      * of the method.
+     * <br>
+     * Important:  there is a strong presumption that the machine code address corresponds to
+     * the specified bytecode instruction.
      * <br>
      * Thread-safe
      *
      * @param teleVM the VM
-     * @param address an address in VM memory that represents the beginning of a compiled target code instruction
+     * @param address an address in VM memory that represents the beginning of a compiled machine code instruction
      * @param teleClassMethodActor surrogate for a {@link ClassMethodActor} in the VM that identifies a method.
-     * @param position offset into the method's bytecodes of a bytecode instruction
+     * @param bytecodePosition offset into the method's bytecodes of a bytecode instruction
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
-     * @throws ProgramError  if the address is null or zero
+     * @throws ProgramError if the address is null or zero or  if teleClassMethodActor is null or bytecodePosition &lt; -1
      */
-    public static CompiledCodeLocation createCompiledLocation(TeleVM teleVM, Address address, TeleClassMethodActor teleClassMethodActor, int position, String description) throws ProgramError {
-        ProgramError.check(address != null && !address.isZero());
-        return new ClassMethodActorAddressLocation(teleVM, address, teleClassMethodActor, position, description);
+    public static MachineCodeLocation createMachineCodeLocation(TeleVM teleVM, Address address, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws ProgramError {
+        return new ClassMethodActorAddressLocation(teleVM, address, teleClassMethodActor, bytecodePosition, description);
     }
 
     /**
-     * Creates a code location in the VM specified by a predefined method accessor for methods in
+     * Creates a code location in the VM specified by a predefined method accessor for compiled methods in
      * the boot image.  Resolution of the accessor into other VM-related information is delayed, so that
      * these location instances can be created without any other VM-related services, early in the
      * startup cycle.
@@ -129,8 +145,9 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * @param teleMethodAccess a statically defined accessor for a specially marked method in VM code
      * @param description a human-readable description, suitable for a menu or for debugging
      * @return a new location
+     * @throws ProgramError if teleMethodAccess is null
      */
-    public static CompiledCodeLocation create(TeleVM teleVM, TeleMethodAccess teleMethodAccess, String description) {
+    public static MachineCodeLocation createMachineCodeLocation(TeleVM teleVM, TeleMethodAccess teleMethodAccess, String description) throws ProgramError {
         return new MethodAccessLocation(teleVM, teleMethodAccess, description);
     }
 
@@ -147,64 +164,46 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" + (hasAddress() ? (" 0x" + address().toHexString()) : "")
-                        + (hasBytecodeLocation() ? (" " + bytecodeLocation()) : "") + " }";
+        final StringBuilder sb = new StringBuilder(getClass().getSimpleName()).append("{");
+        if (hasAddress()) {
+            sb.append(" 0x").append(address().toHexString()).append(", ");
+        }
+        if  (hasTeleClassMethodActor()) {
+            sb.append(teleClassMethodActor().getName()).append(" pos=").append(bytecodePosition());
+        }
+        sb.append("}");
+        return sb.toString();
     }
 
     /**
-     * Attempt to create a method methodKey for a method located in the VM.  Null if
+     * Attempt to create an abstract key for a method located in the VM.  Null if
      * the information cannot be determined at present, for example if the VM is busy.
      *
-     * @param bytecodeLocation location in a method's bytecode, specified by loaded
-     * method description in the VM and a position offset in bytes.
-     * @return a new method methodKey describing the method
+     * @param teleClassMethodActor location in a method's bytecode, specified by loaded
+     * method description in the VM.
+     * @return a new key describing the method
      */
-    protected MethodKey bytecodeLocationToKey(MaxBytecodeLocation bytecodeLocation) {
-        assert bytecodeLocation != null;
+    protected MethodKey teleClassMethodActorToMethodKey(TeleClassMethodActor teleClassMethodActor) {
+        assert teleClassMethodActor != null;
         if (!teleVM().tryLock()) {
             return null;
         }
         try {
-            return new MethodKey.DefaultMethodKey(bytecodeLocation.teleClassMethodActor().methodActor());
+            return new MethodKey.DefaultMethodKey(teleClassMethodActor().methodActor());
         } finally {
             teleVM().unlock();
         }
     }
 
     /**
-     * Attempt to determine the target code address of the method entry in the first
-     * compilation of the specified method.  Always identifies the method entry,
-     * ignoring any position information in the specified location.
-     *
-     * @param location in a method's bytecode, specified by loaded
-     * method description in the VM; any position is ignored, treated as 0.
-     * @return a non-zero address, null if not available
-     */
-    protected Address bytecodeLocationToFirstCompiledEntry(MaxBytecodeLocation bytecodeLocation) {
-        assert bytecodeLocation != null;
-        if (!teleVM().tryLock()) {
-            return null;
-        }
-        try {
-            final TeleTargetMethod javaTargetMethod = bytecodeLocation.teleClassMethodActor().getJavaTargetMethod(0);
-            if (javaTargetMethod != null) {
-                return javaTargetMethod.callEntryPoint();
-            }
-        } finally {
-            teleVM().unlock();
-        }
-        return null;
-    }
-
-    /**
-     * Attempt to locate bytecode location information for a method loaded in the VM, based
-     * on an abstraction description of the method.  Null if the method is not known to be loaded,
+     * Attempt to locate information for a method loaded in the VM, based
+     * on an abstract description of the method.  Null if the method is not known to be loaded,
      * or if the information cannot be determined at present, for example if the VM is busy.
      *
-     * @param methodKey an abstract specification of a method, with a bytecode offset
-     * @return a description of the location expressed in terms of the method loaded in the VM
+     * @param methodKey an abstract specification of a method
+     * @return a description of the method loaded in the VM
      */
-    protected MaxBytecodeLocation keyToBytecodeLocation(MethodKey methodKey) {
+    protected TeleClassMethodActor methodKeyToTeleClassMethodActor(MethodKey methodKey) {
         if (!teleVM().tryLock()) {
             return null;
         }
@@ -216,8 +215,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
                 for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
                     if (teleMethodActor instanceof TeleClassMethodActor) {
                         if (teleMethodActor.methodActor().descriptor().toJavaString(true, true).equals(methodKeyString)) {
-                            final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
-                            return new TeleBytecodeLocation(teleClassMethodActor, 0);
+                            return  (TeleClassMethodActor) teleMethodActor;
                         }
                     }
                 }
@@ -226,8 +224,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             // Try to locate TeleClassMethodActor via compiled methods in the tele VM.
             final Sequence<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(teleVM(), methodKey);
             if (teleTargetMethods.length() > 0) {
-                final TeleClassMethodActor teleClassMethodActor = teleTargetMethods.first().getTeleClassMethodActor();
-                return new TeleBytecodeLocation(teleClassMethodActor, 0);
+                return teleTargetMethods.first().getTeleClassMethodActor();
             }
             return null;
         } finally {
@@ -235,38 +232,36 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
         }
     }
 
-    // TODO (mlvdv)  attempt to map target code to bytecode location, at least for JIT methods.
+    // TODO (mlvdv)  attempt to map machine code to bytecode location, at least for JIT methods.
     /**
      * Attempt to locate bytecode location information for the method whose compilation
-     * includes a target code instruction at a given address.
+     * includes a machine code instruction at a given address.
      * <br>
      * Note that in many cases it will not be possible to determine the actual corresponding
      * bytecode instruction, in which case the position will be 0 (method entry).
      * <br>
      * <strong>Unimplemented:</strong> No attempt is made at present to compute a
-     * bytecode instruction position corresponding to the target code location, although this
+     * bytecode instruction position corresponding to the machine code location, although this
      * could be done for JIT methods.
      *
-     * @param address an address in the VM, possibly the location of a target code instruction
+     * @param address an address in the VM, possibly the location of a machine code instruction
      * in the compilation of a method.
      * @return  a description of the location expressed in terms of the method loaded in the VM
      */
-    protected MaxBytecodeLocation addressToBytecodeLocation(Address address) {
+    protected TeleClassMethodActor addressToTeleClassMethodActor(Address address) {
         if (!teleVM().tryLock()) {
             return null;
         }
+        TeleClassMethodActor teleClassMethodActor = null;
         try {
             final TeleTargetMethod teleTargetMethod = teleVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
-                final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
-                if (teleClassMethodActor != null) {
-                    return new TeleBytecodeLocation(teleClassMethodActor, 0);
-                }
+                teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
             }
         } finally {
             teleVM().unlock();
         }
-        return null;
+        return teleClassMethodActor;
     }
 
     /**
@@ -275,16 +270,35 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * the VM is not busy.
      *
      * @param teleMethodAccess a static method accessor produced by annotation of distinguished VM methods.
-     * @return
+     * @return a new location
      */
-    protected MaxBytecodeLocation methodAccessToBytecodeLocation(TeleMethodAccess teleMethodAccess) {
+    protected TeleClassMethodActor methodAccessToTeleClassMethodActor(TeleMethodAccess teleMethodAccess) {
         if (!teleVM().tryLock()) {
             return null;
         }
         try {
-            final TeleClassMethodActor teleClassMethodActor = teleMethodAccess.teleClassMethodActor();
-            if (teleClassMethodActor != null) {
-                return new TeleBytecodeLocation(teleClassMethodActor, 0);
+            return teleMethodAccess.teleClassMethodActor();
+        } finally {
+            teleVM().unlock();
+        }
+    }
+
+    /**
+     * Attempt to determine the first machine code instruction address of the first
+     * compilation of the specified method.  This is the first machine code instruction
+     * of the method prologue, which is equivalent to a bytecodePosition of -1.
+     *
+     * @param teleClassMethodActor description of the method in the VM
+     * @return a non-zero address, null if not available
+     */
+    protected Address teleClassMethodActorToFirstCompilationCallEntry(TeleClassMethodActor teleClassMethodActor) {
+        if (!teleVM().tryLock()) {
+            return null;
+        }
+        try {
+            final TeleTargetMethod javaTargetMethod = teleClassMethodActor.getJavaTargetMethod(0);
+            if (javaTargetMethod != null) {
+                return javaTargetMethod.callEntryPoint();
             }
         } finally {
             teleVM().unlock();
@@ -297,15 +311,15 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      *
      * @author Michael Van De Vanter
      */
-    public abstract static class MethodCodeLocation extends CodeLocation {
+    public abstract static class BytecodeLocation extends CodeLocation {
 
-        protected MethodCodeLocation(TeleVM teleVM, String description) {
+        protected BytecodeLocation(TeleVM teleVM, String description) {
             super(teleVM, description);
         }
 
         public boolean isSameAs(MaxCodeLocation codeLocation) {
-            if (codeLocation instanceof MethodCodeLocation) {
-                if (hasKey()) {
+            if (codeLocation instanceof BytecodeLocation) {
+                if (hasMethodKey()) {
                     return methodKey().equals(codeLocation.methodKey());
                 }
             }
@@ -322,36 +336,14 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      *
      * @author Michael Van De Vanter
      */
-    public abstract static class CompiledCodeLocation extends CodeLocation {
+    public abstract static class MachineCodeLocation extends CodeLocation {
 
-        /**
-         * A code location that refers to a method in general, and not to any specific compilation.
-         *
-         * @author Michael Van De Vanter
-         */
-        public abstract static class MethodCodeLocation extends CodeLocation {
-
-            protected MethodCodeLocation(TeleVM teleVM, String description) {
-                super(teleVM, description);
-            }
-
-            public boolean isSameAs(MaxCodeLocation codeLocation) {
-                if (codeLocation instanceof MethodCodeLocation) {
-                    if (hasKey()) {
-                        return methodKey().equals(codeLocation.methodKey());
-                    }
-                }
-                return false;
-            }
-
-        }
-
-        protected CompiledCodeLocation(TeleVM teleVM, String description) {
+        protected MachineCodeLocation(TeleVM teleVM, String description) {
             super(teleVM, description);
         }
 
         public boolean isSameAs(MaxCodeLocation codeLocation) {
-            if (codeLocation instanceof CompiledCodeLocation) {
+            if (codeLocation instanceof MachineCodeLocation) {
                 if (hasAddress()) {
                     return address().equals(codeLocation.address());
                 }
@@ -362,20 +354,21 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
 
     /**
      * A code location in the VM specified by an abstract description of a method, which may
-     * not be loaded in the VM.  The implied position in the method is 0, the method entry.
-    * It is not bound to any particular compilation, and so never had a target code address.
+     * not yet be loaded in the VM.  The implied bytecode position in the method is -1; this refers
+     * to the first bytecode instruction and to the beginning of the prologue in any machine code compilation.
+    * It is not bound to any particular compilation, and so never had a machine code address.
      *
-     * @see CodeLocation#createMethodLocation(TeleVM, MethodKey, String)
+     * @see CodeLocation#createBytecodeLocation(TeleVM, MethodKey, String)
      * @author Michael Van De Vanter
      */
-    private static final class MethodKeyLocation extends MethodCodeLocation {
+    private static final class MethodKeyLocation extends BytecodeLocation {
 
         private final MethodKey methodKey;
-        private volatile MaxBytecodeLocation bytecodeLocation = null;
+        private volatile TeleClassMethodActor teleClassMethodActor = null;
 
         public MethodKeyLocation(TeleVM teleVM, MethodKey methodKey, String description) {
             super(teleVM, description);
-            assert methodKey != null;
+            ProgramError.check(methodKey != null);
             this.methodKey = methodKey;
         }
 
@@ -387,17 +380,21 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return Address.zero();
         }
 
-        public boolean hasBytecodeLocation() {
-            tryCreateBytecodeLocation();
-            return bytecodeLocation != null;
+        public boolean hasTeleClassMethodActor() {
+            tryLocateTeleClassMethodActor();
+            return teleClassMethodActor != null;
         }
 
-        public MaxBytecodeLocation bytecodeLocation() {
-            tryCreateBytecodeLocation();
-            return bytecodeLocation;
+        public TeleClassMethodActor teleClassMethodActor() {
+            tryLocateTeleClassMethodActor();
+            return teleClassMethodActor;
         }
 
-        public boolean hasKey() {
+        public int bytecodePosition() {
+            return -1;
+        }
+
+        public boolean hasMethodKey() {
             return true;
         }
 
@@ -405,30 +402,32 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return methodKey;
         }
 
-        private void tryCreateBytecodeLocation() {
-            if (bytecodeLocation == null) {
-                bytecodeLocation = keyToBytecodeLocation(methodKey);
+        private void tryLocateTeleClassMethodActor() {
+            if (teleClassMethodActor == null) {
+                teleClassMethodActor = methodKeyToTeleClassMethodActor(methodKey);
             }
         }
     }
 
     /**
-     * A code location in the VM specified only as a bytecode position in a loaded classfile.
-     * It is not bound to any particular compilation, and so never had a target code address.
+     * A code location in the VM specified only as a bytecode position in a loaded classfile method.
+     * It is not bound to any particular compilation, and so never had a machine code address.
      *
-     * @see #createMethodLocation(TeleVM, TeleClassMethodActor, int, String)
+     * @see #createBytecodeLocation(TeleVM, TeleClassMethodActor, int, String)
      * @author Michael Van De Vanter
      */
-    private static final class ClassMethodActorLocation extends MethodCodeLocation {
+    private static final class ClassMethodActorLocation extends BytecodeLocation {
 
-        private final TeleBytecodeLocation bytecodeLocation;
+        private final TeleClassMethodActor teleClassMethodActor;
+        private final int bytecodePosition;
         private volatile MethodKey methodKey = null;
 
-        public ClassMethodActorLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int position, String description) {
+        public ClassMethodActorLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) {
             super(teleVM, description);
-            assert teleClassMethodActor != null;
-            assert position >= 0;
-            this.bytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, position);
+            ProgramError.check(teleClassMethodActor != null);
+            ProgramError.check(bytecodePosition >= -1);
+            this.teleClassMethodActor = teleClassMethodActor;
+            this.bytecodePosition = bytecodePosition;
         }
 
         public boolean hasAddress() {
@@ -439,15 +438,19 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return Address.zero();
         }
 
-        public boolean hasBytecodeLocation() {
+        public boolean hasTeleClassMethodActor() {
             return true;
         }
 
-        public MaxBytecodeLocation bytecodeLocation() {
-            return bytecodeLocation;
+        public TeleClassMethodActor teleClassMethodActor() {
+            return teleClassMethodActor;
         }
 
-        public boolean hasKey() {
+        public int bytecodePosition() {
+            return bytecodePosition;
+        }
+
+        public boolean hasMethodKey() {
             tryCreateKey();
             return methodKey != null;
         }
@@ -459,7 +462,7 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
 
         private void tryCreateKey() {
             if (methodKey == null) {
-                methodKey = bytecodeLocationToKey(bytecodeLocation);
+                methodKey = teleClassMethodActorToMethodKey(teleClassMethodActor);
             }
         }
 
@@ -467,18 +470,23 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
 
     /**
      * A code location in the VM specified only as an address in compiled code.
+     * <br>
+     * Additional information about the compilation, the method, and an equivalent
+     * bytecode location will be made discovered when possible.
      *
-     * @see #createCompiledLocation(TeleVM, Address, String)
+     * @see #createMachineCodeLocation(TeleVM, Address, String)
      * @author Michael Van De Vanter
      */
-    private static final class AddressCodeLocation extends CompiledCodeLocation {
+    private static final class AddressCodeLocation extends MachineCodeLocation {
 
         private final Address address;
-        private volatile MaxBytecodeLocation bytecodeLocation = null;
+        private volatile TeleClassMethodActor teleClassMethodActor = null;
+        private volatile int bytecodePosition = -1;
         private volatile MethodKey methodKey = null;
 
         public AddressCodeLocation(TeleVM teleVM, Address address, String description) {
             super(teleVM, description);
+            ProgramError.check(address != null && !address.isZero());
             this.address = address;
         }
 
@@ -490,37 +498,41 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return address;
         }
 
-        public boolean hasBytecodeLocation() {
-            tryCreateBytecodeLocation();
-            return bytecodeLocation != null;
+        public boolean hasTeleClassMethodActor() {
+            tryLocateTeleClassMethodActor();
+            return teleClassMethodActor != null;
         }
 
-        public MaxBytecodeLocation bytecodeLocation() {
-            tryCreateBytecodeLocation();
-            return bytecodeLocation;
+        public TeleClassMethodActor teleClassMethodActor() {
+            tryLocateTeleClassMethodActor();
+            return teleClassMethodActor;
         }
 
-        public boolean hasKey() {
-            tryCreateKey();
+        public int bytecodePosition() {
+            return bytecodePosition;
+        }
+
+        public boolean hasMethodKey() {
+            tryCreateMethodKey();
             return methodKey != null;
         }
 
         public MethodKey methodKey() {
-            tryCreateKey();
+            tryCreateMethodKey();
             return methodKey;
         }
 
-        private void tryCreateBytecodeLocation() {
-            if (bytecodeLocation == null) {
-                bytecodeLocation = addressToBytecodeLocation(address);
+        private void tryLocateTeleClassMethodActor() {
+            if (teleClassMethodActor == null) {
+                teleClassMethodActor = addressToTeleClassMethodActor(address);
             }
         }
 
-        private void tryCreateKey() {
+        private void tryCreateMethodKey() {
             if (methodKey == null) {
-                tryCreateBytecodeLocation();
-                if (bytecodeLocation != null) {
-                    methodKey = bytecodeLocationToKey(bytecodeLocation);
+                tryLocateTeleClassMethodActor();
+                if (teleClassMethodActor != null) {
+                    methodKey = teleClassMethodActorToMethodKey(teleClassMethodActor);
                 }
             }
         }
@@ -529,24 +541,26 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
 
     /**
      * A code location in the VM specified both as a bytecode position in a loaded classfile and the
-     * memory location of the corresponding target code instruction in a compilation of the method.
+     * memory location of the corresponding machine code instruction in a compilation of the method.
      *
-     * @see #createCompiledLocation(TeleVM, Address, TeleClassMethodActor, int, String)
+     * @see CodeLocation#createMachineCodeLocation(TeleVM, Address, TeleClassMethodActor, int, String)
      * @author Michael Van De Vanter
      */
-    private static final class ClassMethodActorAddressLocation extends CompiledCodeLocation {
+    private static final class ClassMethodActorAddressLocation extends MachineCodeLocation {
 
         private final Address address;
-        private final TeleBytecodeLocation bytecodeLocation;
+        private final TeleClassMethodActor teleClassMethodActor;
+        private final int bytecodePosition;
         private volatile MethodKey methodKey = null;
 
-        public ClassMethodActorAddressLocation(TeleVM teleVM, Address address, TeleClassMethodActor teleClassMethodActor, int position, String description) {
+        public ClassMethodActorAddressLocation(TeleVM teleVM, Address address, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) {
             super(teleVM, description);
-            assert address != null;
+            ProgramError.check(address != null && !address.isZero());
+            ProgramError.check(teleClassMethodActor != null);
+            ProgramError.check(bytecodePosition >= -1);
             this.address = address;
-            assert teleClassMethodActor != null;
-            assert position >= 0;
-            this.bytecodeLocation = new TeleBytecodeLocation(teleClassMethodActor, position);
+            this.teleClassMethodActor = teleClassMethodActor;
+            this.bytecodePosition = bytecodePosition;
         }
 
         public boolean hasAddress() {
@@ -557,27 +571,31 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return address;
         }
 
-        public boolean hasBytecodeLocation() {
+        public boolean hasTeleClassMethodActor() {
             return true;
         }
 
-        public MaxBytecodeLocation bytecodeLocation() {
-            return bytecodeLocation;
+        public TeleClassMethodActor teleClassMethodActor() {
+            return teleClassMethodActor;
         }
 
-        public boolean hasKey() {
-            tryCreateKey();
+        public int bytecodePosition() {
+            return bytecodePosition;
+        }
+
+        public boolean hasMethodKey() {
+            tryCreateMethodKey();
             return methodKey != null;
         }
 
         public MethodKey methodKey() {
-            tryCreateKey();
+            tryCreateMethodKey();
             return methodKey;
         }
 
-        private void tryCreateKey() {
+        private void tryCreateMethodKey() {
             if (methodKey == null) {
-                methodKey = bytecodeLocationToKey(bytecodeLocation);
+                methodKey = teleClassMethodActorToMethodKey(teleClassMethodActor);
             }
         }
     }
@@ -586,19 +604,22 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
      * A code location specified as the entry of a method known to be compiled into the
      * boot image, identified by an annotation in the VM source code and made available
      * with static accessors.
+     * <br>
+     * The location corresponds to the beginning of the compiled method prologue, which
+     * is equivalent to a bytecode position specification of -1.
      *
      * @author Michael Van De Vanter
      */
-    private static final class MethodAccessLocation extends CompiledCodeLocation {
+    private static final class MethodAccessLocation extends MachineCodeLocation {
 
         private final TeleMethodAccess teleMethodAccess;
-        private volatile MaxBytecodeLocation bytecodeLocation = null;
         private volatile Address address = null;
+        private volatile TeleClassMethodActor teleClassMethodActor = null;
         private volatile MethodKey methodKey = null;
 
         public MethodAccessLocation(TeleVM teleVM, TeleMethodAccess teleMethodAccess, String description) {
             super(teleVM, description);
-            assert teleMethodAccess != null;
+            ProgramError.check(teleMethodAccess != null);
             this.teleMethodAccess = teleMethodAccess;
         }
 
@@ -612,46 +633,50 @@ public abstract class CodeLocation extends AbstractTeleVMHolder implements MaxCo
             return address;
         }
 
-        public boolean hasBytecodeLocation() {
-            tryCreateBytecodeLocation();
-            return bytecodeLocation != null;
+        public boolean hasTeleClassMethodActor() {
+            tryLocateTeleClassMethodActor();
+            return teleClassMethodActor != null;
         }
 
-        public MaxBytecodeLocation bytecodeLocation() {
-            tryCreateBytecodeLocation();
-            return bytecodeLocation;
+        public TeleClassMethodActor teleClassMethodActor() {
+            tryLocateTeleClassMethodActor();
+            return teleClassMethodActor;
         }
 
-        public boolean hasKey() {
-            tryCreateKey();
+        public int bytecodePosition() {
+            return -1;
+        }
+
+        public boolean hasMethodKey() {
+            tryCreateMethodKey();
             return methodKey != null;
         }
 
         public MethodKey methodKey() {
-            tryCreateKey();
+            tryCreateMethodKey();
             return methodKey;
         }
 
         private void tryCreateAddress() {
             if (address == null) {
-                tryCreateBytecodeLocation();
-                if (bytecodeLocation != null) {
-                    address = bytecodeLocationToFirstCompiledEntry(bytecodeLocation);
+                tryLocateTeleClassMethodActor();
+                if (teleClassMethodActor != null) {
+                    address = teleClassMethodActorToFirstCompilationCallEntry(teleClassMethodActor);
                 }
             }
         }
 
-        private void tryCreateBytecodeLocation() {
-            if (bytecodeLocation == null) {
-                bytecodeLocation = methodAccessToBytecodeLocation(teleMethodAccess);
+        private void tryLocateTeleClassMethodActor() {
+            if (teleClassMethodActor == null) {
+                teleClassMethodActor = methodAccessToTeleClassMethodActor(teleMethodAccess);
             }
         }
 
-        private void tryCreateKey() {
+        private void tryCreateMethodKey() {
             if (methodKey == null) {
-                tryCreateBytecodeLocation();
-                if (bytecodeLocation != null) {
-                    methodKey = bytecodeLocationToKey(bytecodeLocation);
+                tryLocateTeleClassMethodActor();
+                if (teleClassMethodActor != null) {
+                    methodKey = teleClassMethodActorToMethodKey(teleClassMethodActor);
                 }
             }
         }

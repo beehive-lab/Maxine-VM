@@ -546,13 +546,13 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         return stateRegisters.instructionPointer();
     }
 
-    public final CompiledCodeLocation instructionLocation() {
+    public final MachineCodeLocation instructionLocation() {
         if (!isLive()) {
             return null;
         }
         // No need to call refreshRegisters(): the instruction pointer is updated by updateAfterGather() which
         // ensures that it is always in sync.
-        return codeManager().createCompiledLocation(stateRegisters.instructionPointer(), "Instruction pointer");
+        return codeManager().createMachineCodeLocation(stateRegisters.instructionPointer(), "Instruction pointer");
     }
 
     /**
@@ -567,7 +567,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         final StackFrame topFrame = frames().first();
         final StackFrame topFrameCaller = topFrame.callerFrame();
         if (topFrameCaller != null) {
-            return codeManager().createCompiledLocation(topFrameCaller);
+            return codeManager().createMachineCodeLocation(topFrameCaller);
         }
         return null;
     }

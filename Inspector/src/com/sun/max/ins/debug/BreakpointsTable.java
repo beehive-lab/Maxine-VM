@@ -245,7 +245,7 @@ public final class BreakpointsTable extends InspectorTable {
                 breakpointData.markDeleted(true);
             }
             for (MaxBreakpoint breakpoint : breakpointFactory().breakpoints()) {
-                if (breakpoint.isMethodBreakpoint()) {
+                if (breakpoint.isBytecodeBreakpoint()) {
                     // Bytecode breakpoint
                     final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.codeLocation());
                     if (breakpointData == null) {
@@ -257,7 +257,7 @@ public final class BreakpointsTable extends InspectorTable {
                         breakpointData.markDeleted(false);
                     }
                 } else {
-                    // Target code breakpoint
+                    // Machine code breakpoint
                     final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.codeLocation().address());
                     if (breakpointData == null) {
                         // new breakpoint in VM since last refresh
@@ -688,22 +688,28 @@ public final class BreakpointsTable extends InspectorTable {
     private final class BytecodeBreakpointData extends BreakpointData {
 
         final MaxCodeLocation codeLocation;
-        final int location;
         String shortName;
         String longName;
 
         BytecodeBreakpointData(MaxBreakpoint bytecodeBreakpoint) {
             super(bytecodeBreakpoint);
             codeLocation = bytecodeBreakpoint.codeLocation();
-            location = codeLocation.hasBytecodeLocation() ? codeLocation.bytecodeLocation().position() : 0;
             final MethodKey key = codeLocation.methodKey();
-            final int position = codeLocation.hasBytecodeLocation() ? codeLocation.bytecodeLocation().position() : 0;
+            final int position = codeLocation.bytecodePosition();
             shortName = key.holder().toJavaString(false) + "." + key.name().toString() + key.signature().toJavaString(false,  false);
-            longName = "Method: " + key.signature().resultDescriptor().toJavaString(false) + " " + key.name().toString() + key.signature().toJavaString(false,  false);
-            if (position > 0) {
-                longName += " + " + position;
+            final StringBuilder longBuilder = new StringBuilder("Method: ");
+            longBuilder.append(key.signature().resultDescriptor().toJavaString(false)).append(" ");
+            longBuilder.append(key.name().toString());
+            longBuilder.append(key.signature().toJavaString(false,  false));
+            if (position == -1) {
+                longBuilder.append("(prologue)");
+            } else if (position == 0) {
+                longBuilder.append("(entry)");
+            } else {
+                longBuilder.append(" + ").append(position);
             }
-            longName = longName + " in " + key.holder().toJavaString();
+            longBuilder.append(" in ").append(key.holder().toJavaString());
+            longName = longBuilder.toString();
         }
 
         @Override
@@ -728,7 +734,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         int location() {
-            return location;
+            return codeLocation.bytecodePosition();
         }
 
         @Override

@@ -31,16 +31,16 @@ import com.sun.max.tele.debug.BreakpointCondition.*;
 public interface MaxBreakpoint {
 
     /**
-     * Discriminates between "method" (abstract, apply to all compilations) and "compilation" (apply to
+     * Discriminates between "bytecode" (abstract, apply to all compilations) and "machine code" (apply to
      * a single compilation) breakpoints.
      * <br>
      * Thread-safe
      *
      * @return true if the breakpoint is set abstractly for a method location (a.k.a. "bytecode breakpoint);
-     * false if set in target code (a.k.a. "target code breakpoint")
+     * false if set in machine code (a.k.a. "machine code breakpoint")
      * of a single compilation
      */
-    boolean isMethodBreakpoint();
+    boolean isBytecodeBreakpoint();
 
     /**
      * @return whether this breakpoint is to be deleted when a process execution stops or an inspection session finishes.

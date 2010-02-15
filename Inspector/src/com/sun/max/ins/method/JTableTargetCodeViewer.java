@@ -41,7 +41,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
@@ -400,7 +399,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             return teleTargetRoutine.getInstructions().get(row);
         }
 
-        public CompiledCodeLocation rowToLocation(int row) {
+        public MaxCodeLocation rowToLocation(int row) {
             return teleTargetRoutine.getInstructionLocations().get(row);
         }
 

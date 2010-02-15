@@ -496,8 +496,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @throws InvalidVMRequestException
      */
     public final void runToInstruction(final CodeLocation codeLocation, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
-        assert codeLocation instanceof CompiledCodeLocation;
-        final CompiledCodeLocation compiledCodeLocation = (CompiledCodeLocation) codeLocation;
+        assert codeLocation instanceof MachineCodeLocation;
+        final MachineCodeLocation compiledCodeLocation = (MachineCodeLocation) codeLocation;
         Trace.begin(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " schedule");
         final TeleEventRequest request = new TeleEventRequest(RUN_TO_INSTRUCTION, null, withClientBreakpoints) {
             @Override

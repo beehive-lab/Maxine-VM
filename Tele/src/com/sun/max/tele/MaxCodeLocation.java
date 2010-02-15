@@ -20,54 +20,65 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
- * A location in code in the VM, possibly specified by an absolute
- * address (for example for compiled methods that are not relocatable)
- * or by method description (which can be specified whether the
- * named method has been compiled or even loaded into the VM).
+ * Location of a code instruction in the VM.  This might be specified by the absolute memory
+ * address of a machine code instruction, for example in a method compilation (which
+ * are assumed to be not relocatable).  A location also might be specified
+ * by method description, which can be specified whether the
+ * named method has been compiled or even loaded into the VM.
  *
  * @author Michael Van De Vanter
  */
 public interface MaxCodeLocation {
 
     /**
-     * Is there a target code representation for the code location in the VM.
+     * Is there a machine code representation for the code location in the VM,
+     * which refers to a specific compilation.
      * <br>
      * Thread-safe
      *
-     * @return whether an absolute code location for target code is specified
+     * @return whether an absolute machine code location is specified
+     * @see #address()
      */
     boolean hasAddress();
 
     /**
-     * Target code instruction pointer;
-     * zero if no target code information about the location available.
+     * Location in VM memory of a machine code instruction;
+     * returns {@link Address#zero()}
+     * if no machine code information about the location is specified.
+     * <br>
+     * Machine code is assumed <strong>not</strong> to relocate in VM memory.
      * <br>
      * Thread-safe
      *
-     * @return memory address in the VM of the code location
+     * @return memory address in the VM of the machine code instruction,
+     * {@link Address#zero()} if not available.
+     * @see #hasAddress()
      */
     Address address();
 
     /**
      * Is there a bytecode representation for the code location, expressed in terms
-     * of the method description loaded in the VM and a byte offset of the instruction.
+     * of the method description loaded in the VM, and by extension a specific
+     * bytecode representation.
      * <br>
-     * Initially false when location is created by key.  Becomes true when a
+     * Initially false when location is created by method key specification.  Becomes true when a
      * corresponding loaded method in the VM is located.
      * <br>
      * Thread-safe
      *
-     * @return whether information about the method loaded in the VM is available.
+     * @return whether bytecode information about the method loaded in the VM is available.
+     * @see #teleClassMethodActor()
      */
-    boolean hasBytecodeLocation();
+    boolean hasTeleClassMethodActor();
 
     /**
-     * A representation for the code location, expressed in terms
-     * of the method description loaded in the VM and a byte offset of the instruction.
+     * Access to a description in the VM of the method containing the location, and by extension
+     * to the bytecode representation of the method.
      * <br>
      * Initially null when location is created by key.  Becomes non-null when a
      * corresponding loaded method in the VM is located.
@@ -75,8 +86,9 @@ public interface MaxCodeLocation {
      * Thread-safe
      *
      * @return  bytecode position and information about the method loaded in the VM
+     * @see #hasTeleClassMethodActor()
      */
-    MaxBytecodeLocation bytecodeLocation();
+    TeleClassMethodActor teleClassMethodActor();
 
     /**
      * Is there an abstract intentional representation of the location, in terms of method name and signature, available?
@@ -84,19 +96,38 @@ public interface MaxCodeLocation {
      * Thread-safe
      *
      * @return whether a method key is available
+     * @see #methodKey()
      */
-    boolean hasKey();
+    boolean hasMethodKey();
 
     /**
      * Gets an intentional description of the location, which may be the only specification present.
      *
      * @return a key describing by name the method and bytecode location, independent of the loaded class.
+     * @see #hasMethodKey()
      */
     MethodKey methodKey();
 
     /**
+     * Location of a bytecode instruction, specified as as the byte offset from the beginning of the bytecodes, default value is -1.
+     * <br>
+     * Specific values:
+     * <ol>
+     * <li>-1; specifies method entry (first bytecode instruction, and the prologue entry of any machine code compilation); this value
+     * can be meaningful, even if bytecode information is not yet available. </li>
+     * <li>0:  specifies method entry (first bytecode instruction of the method, and the machine code corresponding to the first bytecode instruction
+     * in any machine code compilation); this value can be meaningful, even if bytecode information is not yet available.</li>
+     * <li>> 0:  offset in bytes of the instruction, relative to the method bytecodes available via {@link MaxCodeLocation#teleClassMethodActor()}.</li>
+     * </ol>
+     *
+     * @return offset of location in bytes from beginning of bytecode representation
+     * @see #teleClassMethodActor()
+     */
+    int bytecodePosition();
+
+    /**
      * Determines whether two descriptions are equivalent.  For locations specified in terms of
-     * an address in a method compilation, returns whether the address are equal.  For locations
+     * an address in a machine code compilation, returns whether the address are equal.  For locations
      * specified only in terms of a method description, return whether the descriptions refer to
      * the same method in terms of the language.  Comparing one kind with the other will always
      * return false.
