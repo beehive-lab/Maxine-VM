@@ -158,6 +158,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     private TeleStateRegisters stateRegisters;
     private TeleFloatingPointRegisters floatingPointRegisters;
 
+    private final TeleStack teleStack;
+
     /**
      * A cached stack trace for this thread.
      */
@@ -169,11 +171,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      */
     private long framesEpoch;
     private boolean framesChanged;
-
-    /**
-     * The memory containing the stack of a Java thread; {@code null} if this is a non-Java thread.
-     */
-    private final TeleNativeStackMemoryRegion stackRegion;
 
     /**
      * The memory containing the thread locals of a Java thread; {@code null} if this is a non-Java thread.
@@ -229,9 +226,9 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         this.stateRegisters = new TeleStateRegisters(vmConfiguration);
 
         this.teleVmThreadLocals = !params.threadLocalsRegion.start().isZero() ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
-        this.stackRegion = new TeleNativeStackMemoryRegion(this, params.stackRegion);
         this.threadLocalsRegion = new TeleThreadLocalsMemoryRegion(this, params.threadLocalsRegion);
         this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
+        this.teleStack = new TeleStack(teleProcess.teleVM(), this, new TeleNativeStackMemoryRegion(this, params.stackRegion));
     }
 
     public IndexedSequence<StackFrame> frames() {
@@ -522,10 +519,10 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     }
 
     /**
-     * @see com.sun.max.tele.MaxThread#stackRegion()
+     * @see com.sun.max.tele.MaxThread#stack()
      */
-    public final TeleNativeStackMemoryRegion stackRegion() {
-        return stackRegion;
+    public final TeleStack stack() {
+        return teleStack;
     }
 
     /**
@@ -662,8 +659,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         if (isLive()) {
             sb.append(",ip=0x").append(instructionPointer().toHexString());
             if (isJava()) {
-                sb.append(",stack_start=0x").append(stackRegion().start().toHexString());
-                sb.append(",stack_size=").append(stackRegion().size().toLong());
+                sb.append(",stack_start=0x").append(stack().memoryRegion().start().toHexString());
+                sb.append(",stack_size=").append(stack().memoryRegion().size().toLong());
             }
         }
         sb.append("]");

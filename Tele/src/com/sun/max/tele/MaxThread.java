@@ -135,18 +135,17 @@ public interface MaxThread {
     long localHandle();
 
     /**
+     * Current stack pointer.
+     *
      * @return the current stack pointer for the thread, zero if thread has died.
+     * @see #stack()
      */
     Pointer stackPointer();
 
     /**
-     * Gets description of  VM memory containing the stack for this thread.
-     * <br>
-     * The identity of the result is immutable and thread-safe, although its contents are not.
-     *
-     * @return this thread's stack memory
+     * Gets a description of the stack for this thread.
      */
-    TeleNativeStackMemoryRegion stackRegion();
+    MaxStack stack();
 
     /**
      * Gets description of VM memory containing the  {@linkplain VmThreadLocal thread locals} for this thread.
