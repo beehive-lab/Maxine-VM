@@ -66,7 +66,7 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
     }
 
     private final BreakpointKind kind;
-    private final TeleCodeLocation teleCodeLocation;
+    private final CodeLocation codeLocation;
     private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
     private String description = null;
     /**
@@ -80,13 +80,13 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
      * By default, this breakpoint, when enabled, will halt VM execution when triggered.
      *
      * @param teleVM
-     * @param teleCodeLocation location in the VM's code where the breakpoint should be set
+     * @param codeLocation location in the VM's code where the breakpoint should be set
      * @param kind  the kind of breakpoint
      * @param owner another breakpoint, the implementation of which caused this breakpoint to be created; null if none
      */
-    protected TeleBreakpoint(TeleVM teleVM, TeleCodeLocation teleCodeLocation, BreakpointKind kind, TeleBreakpoint owner) {
+    protected TeleBreakpoint(TeleVM teleVM, CodeLocation codeLocation, BreakpointKind kind, TeleBreakpoint owner) {
         super(teleVM);
-        this.teleCodeLocation = teleCodeLocation;
+        this.codeLocation = codeLocation;
         this.kind = kind;
         this.owner = owner;
     }
@@ -111,8 +111,8 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
         return kind == BreakpointKind.CLIENT;
     }
 
-    public final TeleCodeLocation getCodeLocation() {
-        return teleCodeLocation;
+    public final CodeLocation codeLocation() {
+        return codeLocation;
     }
 
     public final String getDescription() {
@@ -125,13 +125,13 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
 
     public abstract boolean isEnabled();
 
-    public abstract void setEnabled(boolean enabled);
+    public abstract void setEnabled(boolean enabled) throws MaxVMBusyException;
 
     public abstract BreakpointCondition getCondition();
 
-    public abstract void setCondition(String conditionDescriptor) throws ExpressionException;
+    public abstract void setCondition(String conditionDescriptor) throws ExpressionException, MaxVMBusyException;
 
-    public abstract void remove();
+    public abstract void remove() throws MaxVMBusyException;
 
     /**
      * Assigns to this breakpoint a  handler for events triggered by this breakpoint.  A null handler

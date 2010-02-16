@@ -37,7 +37,6 @@ import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
@@ -180,7 +179,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     @Override
     protected void setFocusAtRow(int row) {
         final int position = tableModel.rowToInstruction(row).position();
-        focus().setCodeLocation(maxVM().createCodeLocation(teleClassMethodActor(), position), false);
+        focus().setCodeLocation(codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view set focus"), false);
     }
 
     @Override
@@ -192,8 +191,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
      * Global code selection has changed.
      */
     @Override
-    public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
-        return table.updateCodeFocus(teleCodeLocation);
+    public boolean updateCodeFocus(MaxCodeLocation codeLocation) {
+        return table.updateCodeFocus(codeLocation);
     }
 
     @Override
@@ -240,37 +239,40 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.rowToInstruction(selectedRow);
                     final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
                     final int position = bytecodeInstruction.position();
-                    focus().setCodeLocation(maxVM().createCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position), true);
+                    if (targetCodeFirstAddress.isZero()) {
+                        focus().setCodeLocation(codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view"));
+                    } else {
+                        focus().setCodeLocation(codeManager().createMachineCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position, "bytecode view"), true);
+                    }
                 }
             }
         }
 
-        public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
+        public boolean updateCodeFocus(MaxCodeLocation codeLocation) {
             final int oldSelectedRow = getSelectedRow();
             final BytecodeTableModel model = (BytecodeTableModel) getModel();
-            if (teleCodeLocation.hasBytecodeLocation()) {
-                final BytecodeLocation bytecodeLocation = teleCodeLocation.bytecodeLocation();
-                if (bytecodeLocation.classMethodActor == teleClassMethodActor().classMethodActor()) {
-                    final int row = model.findRowAtPosition(bytecodeLocation.bytecodePosition);
-                    if (row >= 0) {
-                        if (row != oldSelectedRow) {
-                            changeSelection(row, row, false, false);
-                        }
-                        scrollToRows(row, row);
-                        return true;
-                    }
+            int focusRow = -1;
+            if (codeLocation.hasTeleClassMethodActor()) {
+                if (codeLocation.teleClassMethodActor().classMethodActor() == teleClassMethodActor().classMethodActor()) {
+                    focusRow = model.findRowAtPosition(codeLocation.bytecodePosition());
                 }
-            } else if (teleCodeLocation.hasTargetCodeLocation()) {
-                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(teleCodeLocation.targetCodeInstructionAddress())) {
-                    final int row = model.findRow(teleCodeLocation.targetCodeInstructionAddress());
-                    if (row >= 0) {
-                        if (row != oldSelectedRow) {
-                            changeSelection(row, row, false, false);
-                        }
-                        scrollToRows(row, row);
-                        return true;
-                    }
+            } else if (codeLocation.hasMethodKey()) {
+                // Shouldn't happen, but...
+                if (codeLocation.methodKey().equals(methodKey())) {
+                    focusRow = model.findRowAtPosition(0);
                 }
+            } else if (codeLocation.hasAddress()) {
+                if (teleTargetMethod() != null && teleTargetMethod().targetCodeRegion().contains(codeLocation.address())) {
+                    focusRow = model.findRow(codeLocation.address());
+                }
+            }
+            if (focusRow >= 0) {
+                // View contains the focus; ensure it is selected and visible
+                if (focusRow != oldSelectedRow) {
+                    updateSelection(focusRow);
+                }
+                scrollToRows(focusRow, focusRow);
+                return true;
             }
             // View doesn't contain the focus; clear any old selection
             if (oldSelectedRow >= 0) {
@@ -439,7 +441,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 toolTipText.append("Stack ");
                 toolTipText.append(stackFrameInfo.position());
                 toolTipText.append(":  0x");
-                toolTipText.append(maxVM().getCodeAddress(stackFrameInfo.frame()).toHexString());
+                toolTipText.append(stackFrameInfo.codeLocation().address().toHexString());
                 toolTipText.append(" thread=");
                 toolTipText.append(inspection.nameDisplay().longName(stackFrameInfo.thread()));
                 toolTipText.append("; ");

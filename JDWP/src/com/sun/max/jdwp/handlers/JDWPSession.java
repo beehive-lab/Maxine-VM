@@ -380,7 +380,7 @@ public class JDWPSession {
         return makeID(p, ID.FrameID.class);
     }
 
-    public JDWPLocation fromCodeLocation(CodeLocation location) {
+    public JDWPLocation fromCodeLocation(JdwpCodeLocation location) {
         final ReferenceTypeProvider refType = methodToReferenceType(location.method());
         return new JDWPLocation(getTypeTag(refType), ID.convert(toID(refType), ID.ClassID.class), toID(location.method()), location.position());
     }
@@ -407,7 +407,7 @@ public class JDWPSession {
         return 0;
     }
 
-    public CodeLocation toCodeLocation(JDWPLocation location) throws JDWPException {
+    public JdwpCodeLocation toCodeLocation(JDWPLocation location) throws JDWPException {
         final MethodProvider curMethod = getMethod(location.getClassID(), location.getMethodID());
         final int curPosition = (int) location.getIndex();
         return vm().createCodeLocation(curMethod, curPosition, false);

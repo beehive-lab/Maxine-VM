@@ -28,8 +28,6 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -346,25 +344,21 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
     /**
      * E.g. "int foo(Pointer, Word, int[])  in com.sun.max.ins.Bar"
-     * E.g. "int foo(Pointer, Word, int[])  +14 in com.sun.max.ins.Bar"
      */
-    public String longName(Key key) {
+    public String longName(MethodKey key) {
         final StringBuilder name = new StringBuilder();
         name.append(key.signature().resultDescriptor().toJavaString(false)).append(" ").append(key.name()).append(key.signature().toJavaString(false, false));
-        if (key.position() != 0) {
-            name.append(" +").append(key.position());
-        }
         name.append(" in ").append(key.holder().toJavaString());
         return name.toString();
     }
 
-    public String longName(TeleCodeLocation teleCodeLocation) {
-        if (teleCodeLocation == null) {
+    public String longName(MaxCodeLocation codeLocation) {
+        if (codeLocation == null) {
             return "null";
         }
         final StringBuilder name = new StringBuilder();
-        if (teleCodeLocation.hasTargetCodeLocation()) {
-            final Address address = teleCodeLocation.targetCodeInstructionAddress();
+        if (codeLocation.hasAddress()) {
+            final Address address = codeLocation.address();
             name.append("Target{0x").append(address.toHexString());
             if (maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address) != null) {
                 // a native routine that's already been registered.
@@ -378,10 +372,10 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
                 }
             }
         }
-        if (teleCodeLocation.hasBytecodeLocation()) {
-            name.append("Bytecode{").append(teleCodeLocation.bytecodeLocation()).append("} ");
-        } else if (teleCodeLocation.hasKey()) {
-            name.append("Key{").append(longName(teleCodeLocation.key())).append("} ");
+        if (codeLocation.hasTeleClassMethodActor()) {
+            name.append("Bytecode{").append(codeLocation.bytecodePosition()).append("} ");
+        } else if (codeLocation.methodKey() != null) {
+            name.append("MethodKey{").append(longName(codeLocation.methodKey())).append("} ");
         }
         return name.toString();
     }

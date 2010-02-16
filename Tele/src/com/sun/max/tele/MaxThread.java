@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -42,7 +43,7 @@ public interface MaxThread {
      * Gets the frames of this stack as produced by a {@linkplain StackFrameWalker stack walk}
      * when the associated thread last stopped.  Empty after thread dies.
      */
-    Sequence<StackFrame> frames();
+    IndexedSequence<StackFrame> frames();
 
     /**
      * Have the frames of this stack changed in the epoch that completed last time this thread stopped.
@@ -157,9 +158,9 @@ public interface MaxThread {
     TeleThreadLocalsMemoryRegion threadLocalsRegion();
 
     /**
-     * @return the current instruction pointer for the thread, zero if thread has died.
+     * @return location of the instruction pointer for the thread; null if thread has died
      */
-    Pointer instructionPointer();
+    MachineCodeLocation instructionLocation();
 
     /**
      * Gets the return address of the next-to-top frame on the stack: the next instruction to be executed when execution
@@ -169,7 +170,7 @@ public interface MaxThread {
      * in native code that was entered via a native method annotated with {@link C_FUNCTION}. The stub for such methods
      * do not leave the bread crumbs on the stack that record how to find caller frames.
      */
-    Pointer getReturnAddress();
+    MaxCodeLocation getReturnLocation();
 
     /**
      * Gets the surrogate for the heap object in the VM that implements this thread.
