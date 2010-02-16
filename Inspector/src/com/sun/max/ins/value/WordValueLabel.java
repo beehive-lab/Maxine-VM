@@ -744,7 +744,7 @@ public class WordValueLabel extends ValueLabel {
                 action = new InspectorAction(inspection(), "View Code at address") {
                     @Override
                     public void procedure() {
-                        focus().setCodeLocation(maxVM().createCodeLocation(address), true);
+                        focus().setCodeLocation(codeManager().createMachineCodeLocation(address, "code address from WordValueLabel"), true);
                     }
                 };
                 break;

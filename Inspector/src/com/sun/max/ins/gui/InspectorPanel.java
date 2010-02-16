@@ -68,6 +68,14 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
         return inspection.maxVMState();
     }
 
+    public final MaxCodeManager codeManager() {
+        return inspection.codeManager();
+    }
+
+    public final MaxBreakpointFactory breakpointFactory() {
+        return inspection.breakpointFactory();
+    }
+
     public final MaxWatchpointFactory watchpointFactory() {
         return inspection.watchpointFactory();
     }

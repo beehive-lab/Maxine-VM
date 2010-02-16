@@ -150,7 +150,7 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
         private final VMListener listener = new VMAdapter() {
 
             @Override
-            public void singleStepMade(ThreadProvider thr, CodeLocation location) {
+            public void singleStepMade(ThreadProvider thr, JdwpCodeLocation location) {
                 Logger.getLogger(SingleStep.class.getName()).info("SingleStep was made by thread " + thr + " onto location " + location);
                 Logger.getLogger(SingleStep.class.getName()).info("Method name: " + location.method().getName() + ", Signature: " + location.method().getSignature());
 
@@ -268,7 +268,7 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
     public static class Breakpoint extends JDWPEventRequest<Composite.Events.Breakpoint> {
 
         private JDWPLocation location;
-        private CodeLocation codeLocation;
+        private JdwpCodeLocation codeLocation;
 
         public Breakpoint(EventRequestCommands.Set.IncomingRequest incomingRequest, JDWPSender sender, JDWPSession session) throws JDWPException {
             super(incomingRequest, sender, session);
@@ -281,7 +281,7 @@ public abstract class JDWPEventRequest<EventsCommon_Type extends Composite.Event
         private final VMListener listener = new VMAdapter() {
 
             @Override
-            public void breakpointHit(ThreadProvider thread, CodeLocation loc) {
+            public void breakpointHit(ThreadProvider thread, JdwpCodeLocation loc) {
 
                 Logger.getLogger(Breakpoint.class.getName()).info("Breakpoint was hit by thread " + thread + " on location " + loc);
 
