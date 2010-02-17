@@ -263,13 +263,13 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
      * Gets a panel that has controls for specifying which columns should be visible.
      */
     public JPanel getPanel() {
-        final JCheckBox[] checkBoxes = new JCheckBox[columnTypeValues.length()];
+        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[columnTypeValues.length()];
 
         final ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final Object source = e.getItemSelectable();
                 for (ColumnKind_Type columnType : columnTypeValues) {
-                    final JCheckBox checkBox = checkBoxes[columnType.ordinal()];
+                    final InspectorCheckBox checkBox = checkBoxes[columnType.ordinal()];
                     if (source == checkBox) {
                         if (checkBox.isSelected() != isVisible(columnType)) {
                             setIsVisible(columnType, checkBox.isSelected());
@@ -283,7 +283,7 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
         content.add(new TextLabel(inspection, "View Columns:  "));
         for (ColumnKind_Type columnType : columnTypeValues) {
             if (canBeMadeInvisible(columnType)) {
-                final JCheckBox checkBox =
+                final InspectorCheckBox checkBox =
                     new InspectorCheckBox(inspection, label(columnType), saveSettingsListener != null ? "Display column in all views?" : "Display column in this view?", isVisible(columnType));
                 checkBox.addItemListener(itemListener);
                 checkBoxes[columnType.ordinal()] = checkBox;
