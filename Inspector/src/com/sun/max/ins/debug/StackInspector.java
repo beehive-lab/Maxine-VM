@@ -320,7 +320,6 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             stackFrameList.setVisibleRowCount(10);
             stackFrameList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             stackFrameList.setLayoutOrientation(JList.VERTICAL);
-            stackFrameList.addKeyListener(stackFrameKeyTypedListener);
             stackFrameList.addMouseListener(new InspectorMouseClickAdapter(inspection()) {
 
                 @Override
@@ -557,28 +556,6 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             position++;
         }
     }
-
-    /**
-     * Watch for shift key being released to display the selected activation's stack frame.
-     */
-    private final KeyListener stackFrameKeyTypedListener = new KeyListener() {
-        public final void keyTyped(KeyEvent keyEvent) {
-        }
-        public final void keyPressed(KeyEvent keyEvent) {
-        }
-
-        public final void keyReleased(KeyEvent keyEvent) {
-            if (keyEvent.getKeyCode() == KeyEvent.VK_SHIFT) {
-                final int index = stackFrameList.getSelectedIndex();
-                if (index >= 0 && index < stackFrameListModel.getSize()) {
-                    final MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(index);
-                    if (stackFrame instanceof MaxStackFrame.Jit) {
-                        LocalsInspector.make(inspection(), stack.thread(), (MaxStackFrame.Jit) stackFrame).highlight();
-                    }
-                }
-            }
-        }
-    };
 
     private final class CopyStackToClipboardAction extends InspectorAction {
 
