@@ -42,10 +42,10 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.cps.jit.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.CompiledStackFrameLayout.*;
 import com.sun.max.vm.value.*;
-import com.sun.max.vm.cps.jit.JitTargetMethod;
 
 /**
  * A table that displays the contents of a VM compiled method stack frame in the VM.
@@ -54,10 +54,10 @@ import com.sun.max.vm.cps.jit.JitTargetMethod;
  */
 public class CompiledStackFrameTable extends InspectorTable {
 
+    private final MaxStackFrame.Compiled compiledStackFrame;
     private final CompiledStackFrameViewPreferences viewPreferences;
     private final CompiledStackFrameTableModel tableModel;
     private final CompiledStackFrameTableColumnModel columnModel;
-    private final MaxThread thread;
 
     /**
      * A table specialized to display the slots in a Java method stack frame in the VM.
@@ -65,11 +65,11 @@ public class CompiledStackFrameTable extends InspectorTable {
      * Each slot is assumed to occupy one word in memory.
      * @param thread TODO
      */
-    public CompiledStackFrameTable(Inspection inspection, CompiledStackFrame javaStackFrame, final  MaxThread thread, CompiledStackFrameViewPreferences viewPreferences) {
+    public CompiledStackFrameTable(Inspection inspection, MaxStackFrame.Compiled compiledStackFrame, CompiledStackFrameViewPreferences viewPreferences) {
         super(inspection);
+        this.compiledStackFrame = compiledStackFrame;
         this.viewPreferences = viewPreferences;
-        this.thread = thread;
-        this.tableModel = new CompiledStackFrameTableModel(inspection, javaStackFrame);
+        this.tableModel = new CompiledStackFrameTableModel(inspection, compiledStackFrame);
         this.columnModel = new CompiledStackFrameTableColumnModel(viewPreferences);
         configureMemoryTable(tableModel, columnModel);
     }
@@ -82,7 +82,7 @@ public class CompiledStackFrameTable extends InspectorTable {
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
-                    final String regionDescription =  "Stack: thread="  + inspection().nameDisplay().shortName(thread);
+                    final String regionDescription =  "Stack: thread="  + inspection().nameDisplay().shortName(compiledStackFrame.stack().thread());
                     actions().setRegionWatchpoint(memoryRegion, "Set memory watchpoint", regionDescription).perform();
                     final Sequence<MaxWatchpoint> watchpoints = tableModel.getWatchpoints(row);
                     if (watchpoints.length() > 0) {
@@ -171,16 +171,16 @@ public class CompiledStackFrameTable extends InspectorTable {
      */
     private final class CompiledStackFrameTableModel extends InspectorMemoryTableModel {
 
-        private final CompiledStackFrame javaStackFrame;
+        private final MaxStackFrame.Compiled javaStackFrame;
         private final int frameSize;
         private final Slots slots;
         private final MemoryRegion[] regions;
 
-        public CompiledStackFrameTableModel(Inspection inspection,  CompiledStackFrame javaStackFrame) {
+        public CompiledStackFrameTableModel(Inspection inspection,  MaxStackFrame.Compiled javaStackFrame) {
             super(inspection, javaStackFrame.slotBase());
             this.javaStackFrame = javaStackFrame;
-            frameSize = javaStackFrame.layout.frameSize();
-            slots = javaStackFrame.layout.slots();
+            frameSize = javaStackFrame.layout().frameSize();
+            slots = javaStackFrame.layout().slots();
             regions = new MemoryRegion[slots.length()];
             int index = 0;
             for (Slot slot : slots) {
@@ -194,7 +194,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return javaStackFrame.layout.slots().length();
+            return javaStackFrame.layout().slots().length();
         }
 
         public Object getValueAt(int rowIndex, int columnIndex) {
@@ -261,8 +261,8 @@ public class CompiledStackFrameTable extends InspectorTable {
             final TargetMethod targetMethod = javaStackFrame.targetMethod();
             if (targetMethod instanceof JitTargetMethod) {
                 final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
-                final JitStackFrameLayout jitLayout = (JitStackFrameLayout) javaStackFrame.layout;
-                final int bytecodePosition = jitTargetMethod.bytecodePositionFor(javaStackFrame.ip);
+                final JitStackFrameLayout jitLayout = (JitStackFrameLayout) javaStackFrame.layout();
+                final int bytecodePosition = jitTargetMethod.bytecodePositionFor(javaStackFrame.ip());
                 final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
                 CodeAttribute codeAttribute = classMethodActor == null ? null : classMethodActor.codeAttribute();
                 if (bytecodePosition != -1 && codeAttribute != null) {

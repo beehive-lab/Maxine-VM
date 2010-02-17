@@ -37,7 +37,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.cps.jit.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 public class LocalsInspector extends UniqueInspector<LocalsInspector> implements ItemListener {
@@ -45,7 +44,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     /**
      * Display and highlight an inspector for stack frame locals.
      */
-    public static LocalsInspector make(Inspection inspection, MaxThread thread, JitStackFrame jitStackFrame) {
+    public static LocalsInspector make(Inspection inspection, MaxThread thread, MaxStackFrame.Jit jitStackFrame) {
         // CLEANUP: probably want to hide the use of calleeFramePointer in framePointer() ?
         final Pointer localsBasePointer = jitStackFrame.localsPointer(0);
         final UniqueInspector.Key<LocalsInspector> key = UniqueInspector.Key.create(LocalsInspector.class, localsBasePointer.toLong());
@@ -57,7 +56,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     }
 
     private final MaxThread thread;
-    private final JitStackFrame jitStackFrame;
+    private final MaxStackFrame.Jit jitStackFrame;
 
     private final JPanel localsPanel;
     private final JPanel stackPanel;
@@ -71,8 +70,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
      */
     private boolean showAll;
 
-    public LocalsInspector(Inspection inspection, MaxThread thread, JitStackFrame jitStackFrame) {
-        super(inspection, LongValue.from(jitStackFrame.fp.toLong()));
+    public LocalsInspector(Inspection inspection, MaxThread thread, MaxStackFrame.Jit jitStackFrame) {
+        super(inspection, LongValue.from(jitStackFrame.fp().toLong()));
         this.thread = thread;
         this.jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();
@@ -109,12 +108,12 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         if (getJComponent().isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
-            final Sequence<StackFrame> frames = thread.frames();
-            for (StackFrame stackFrame : frames) {
-                if (stackFrame instanceof JitStackFrame) {
-                    final JitStackFrame jitStackFrame = (JitStackFrame) stackFrame;
+            final Sequence<MaxStackFrame> frames = thread.stack().frames();
+            for (MaxStackFrame stackFrame : frames) {
+                if (stackFrame instanceof MaxStackFrame.Jit) {
+                    final MaxStackFrame.Jit jitStackFrame = (MaxStackFrame.Jit) stackFrame;
                     if (this.jitStackFrame.isSameFrame(jitStackFrame)) {
-                        stackPointer = jitStackFrame.sp;
+                        stackPointer = jitStackFrame.sp();
                         break;
                     }
                 }
@@ -213,6 +212,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     private void initPanelView() {
         final JitTargetMethod targetMethod = (JitTargetMethod) jitStackFrame.targetMethod();
+        // TODO (mlvdv) shoudn't the following call be to targetmethod.callEntryPoint()?  or is the variable incorrectly named?
         final Word callEntryPoint = targetMethod.codeStart();
         final WordValueLabel header = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, callEntryPoint, localsPanel);
         // header.setToolTipText(_jitStackFrame.targetMethod().name());
@@ -227,7 +227,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
             final Word localVar = readlocalVariable(localVarIndex);
             final WordValueLabel label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, localVar, localsPanel);
             JLabel indexLabel = new LocalIndex(localVarIndex);
-            final int bytecodePosition = targetMethod.bytecodePositionFor(jitStackFrame.ip);
+            final int bytecodePosition = targetMethod.bytecodePositionFor(jitStackFrame.ip());
             if (bytecodePosition != -1) {
                 final Entry entry = localVariableTable.findLocalVariable(localVarIndex, bytecodePosition);
                 if (entry != null) {
@@ -274,7 +274,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     @Override
     public String getTextForTitle() {
-        return "StackFrame @ " + jitStackFrame.fp.toHexString();
+        return "StackFrame @ " + jitStackFrame.fp().toHexString();
     }
 
     @Override

@@ -413,7 +413,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
 
     /**
      * Update the current list of frames.
-     * As a side effect, set {@link #framesChanged} to true if the identify of the stack frames has change,
+     * As a side effect, set {@link #framesChanged} to true if the identity of the stack frames has changed,
      * even if the objects representing them are different.
      */
     private synchronized void refreshFrames() {

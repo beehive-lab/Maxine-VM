@@ -20,8 +20,10 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.memory.*;
+import java.io.*;
 
+import com.sun.max.collect.*;
+import com.sun.max.memory.*;
 
 /**
  * The stack for a thread in the VM.
@@ -31,7 +33,7 @@ import com.sun.max.memory.*;
 public interface MaxStack {
 
     /**
-     * @return the memory in the VM occupied by this stack.
+     * @return the memory in the VM allocated for this stack.
      */
     MemoryRegion memoryRegion();
 
@@ -39,5 +41,19 @@ public interface MaxStack {
      * @return the thread that owns this stack.
      */
     MaxThread thread();
+
+    /**
+     * @return the frames in the stack
+     */
+    IndexedSequence<MaxStackFrame> frames();
+
+    /**
+     * Writes a textual description of each stack frame.
+     * <br>
+     * Thread-safe
+     *
+     * @param printStream
+     */
+    void writeSummaryToStream(PrintStream printStream);
 
 }

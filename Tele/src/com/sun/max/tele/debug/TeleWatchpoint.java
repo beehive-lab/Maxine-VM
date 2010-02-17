@@ -1262,13 +1262,6 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             }
         }
 
-        /**
-         * Writes a textual description of each existing watchpoint.
-         * <br>
-         * Thread-safe
-         *
-         * @param printStream
-         */
         public void writeSummaryToStream(PrintStream printStream) {
             printStream.println("Watchpoints :");
             for (MaxWatchpoint maxWatchpoint : clientWatchpointsCache) {

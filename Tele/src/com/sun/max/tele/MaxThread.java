@@ -21,7 +21,6 @@
 package com.sun.max.tele;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.method.CodeLocation.*;
@@ -38,12 +37,6 @@ import com.sun.max.vm.thread.*;
  * @author Michael Van De Vanter
  */
 public interface MaxThread {
-
-    /**
-     * Gets the frames of this stack as produced by a {@linkplain StackFrameWalker stack walk}
-     * when the associated thread last stopped.  Empty after thread dies.
-     */
-    IndexedSequence<StackFrame> frames();
 
     /**
      * Have the frames of this stack changed in the epoch that completed last time this thread stopped.

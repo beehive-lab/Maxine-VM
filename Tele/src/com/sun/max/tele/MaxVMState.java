@@ -60,10 +60,15 @@ public interface MaxVMState  {
     long serialID();
 
     /**
-     * Process epoch in the VM at this state transition.
+     * Process epoch in the VM at this state transition, counting the number
+     * of times that the VM process has been executed.  This is generally
+     * much higher than the number of VM state changes, as counted by
+     * {@link #serialID()}, since the VM may be started and stopped many
+     * times in service of a single client request.
      *
      * @return the number of VM state generations since started,
      * @see TeleProcess#epoch()
+     * @see #serialID()
      */
     long epoch();
 

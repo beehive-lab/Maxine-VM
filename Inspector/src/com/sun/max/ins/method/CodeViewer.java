@@ -30,7 +30,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * Base class for panels that show a row-oriented view of a method in a MethodInspector framework.
@@ -286,58 +285,10 @@ public abstract class CodeViewer extends InspectorPanel {
         parent.flash();
     }
 
-    /**
-     * Summary information for a frame on the stack.
-     */
-    protected final class StackFrameInfo {
-
-        private final StackFrame stackFrame;
-
-        private final MaxThread thread;
-
-        private final int stackPosition;
-
-        private final MaxCodeLocation codeLocation;
-
-        public StackFrameInfo(StackFrame stackFrame, MaxThread thread, int stackPosition, MaxCodeLocation codeLocation) {
-            this.stackFrame = stackFrame;
-            this.thread = thread;
-            this.stackPosition = stackPosition;
-            this.codeLocation = codeLocation;
-        }
-
-        /**
-         * @return the {@link StackFrame}
-         */
-        public StackFrame frame() {
-            return stackFrame;
-        }
-
-        /**
-         * @return the thread in whose stack the frame resides.
-         */
-        public MaxThread thread() {
-            return thread;
-        }
-
-        /**
-         * @return the position of the frame on the stack, with 0 at top
-         */
-        public int position() {
-            return stackPosition;
-        }
-
-        /**
-         * @return the code location for the frame, either the IP (top frame) or call return address.
-         */
-        public MaxCodeLocation codeLocation() {
-            return codeLocation;
-        }
-    }
-
     // Cached stack information, relative to this method, derived from the thread of current focus.
     // TODO (mlvdv) Generalize to account for the possibility of multiple stack frames associated with a single row.
-    protected StackFrameInfo[] rowToStackFrameInfo;
+    protected MaxStackFrame[] rowToStackFrame;
+
 
     /**
      * Rebuild the data in the cached stack information for the code view.
@@ -361,10 +312,10 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     /**
-     * Returns stack frame information, if any, associated with the row.
+     * Returns stack frame, if any, associated with the row.
      */
-    protected StackFrameInfo stackFrameInfo(int row) {
-        return rowToStackFrameInfo[row];
+    protected MaxStackFrame stackFrame(int row) {
+        return rowToStackFrame[row];
     }
 
     /**
@@ -372,8 +323,8 @@ public abstract class CodeViewer extends InspectorPanel {
      * for a non-top frame of the stack of the thread that is the current focus?
      */
     protected boolean isCallReturn(int row) {
-        final StackFrameInfo stackFrameInfo = rowToStackFrameInfo[row];
-        return stackFrameInfo != null && !stackFrameInfo.frame().isTopFrame();
+        final MaxStackFrame stackFrame = rowToStackFrame[row];
+        return stackFrame != null && !stackFrame.isTop();
     }
 
     /**
@@ -381,8 +332,8 @@ public abstract class CodeViewer extends InspectorPanel {
      * for the top frame of the stack of the thread that is the current focus?
      */
     protected boolean isInstructionPointer(int row) {
-        final StackFrameInfo stackFrameInfo = rowToStackFrameInfo[row];
-        return stackFrameInfo != null && stackFrameInfo.frame().isTopFrame();
+        final MaxStackFrame stackFrame = rowToStackFrame[row];
+        return stackFrame != null && stackFrame.isTop();
     }
 
     // Active rows are those for which there is an associated stack frame
@@ -391,8 +342,8 @@ public abstract class CodeViewer extends InspectorPanel {
 
     private void updateActiveRows() {
         activeRows.clear();
-        for (int row = 0; row < rowToStackFrameInfo.length; row++) {
-            if (rowToStackFrameInfo[row] != null) {
+        for (int row = 0; row < rowToStackFrame.length; row++) {
+            if (rowToStackFrame[row] != null) {
                 activeRows.append(row);
             }
         }

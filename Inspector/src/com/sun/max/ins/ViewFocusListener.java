@@ -24,7 +24,6 @@ import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * Interface for listening to changes of focus (view state) in the Inspector.
@@ -50,7 +49,7 @@ public interface ViewFocusListener {
     /**
      * Notifies that the global stack frame focus has been changed (view state only), non-null once running.
      */
-    void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame);
+    void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame);
 
     /**
      * Notifies that the global {@link Address} focus has been changed (view state only).
