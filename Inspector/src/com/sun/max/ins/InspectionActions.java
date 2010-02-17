@@ -4648,7 +4648,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            maxVM().describeVMStateHistory(System.out);
+            maxVMState().writeSummary(System.out);
         }
     }
 

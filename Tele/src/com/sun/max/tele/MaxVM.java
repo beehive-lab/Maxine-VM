@@ -553,13 +553,6 @@ public interface MaxVM {
     void removeVMStateListener(MaxVMStateListener listener);
 
     /**
-     * Writes a textual summary describing the current {@link #maxVMState()}, including all predecessor states.
-     * <br>
-     * Thread-safe.
-     */
-    void describeVMStateHistory(PrintStream printStream);
-
-    /**
      * Finds a thread by ID.
      * <br>
      * Thread-safe
