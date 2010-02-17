@@ -207,7 +207,7 @@ public class WordValueLabel extends ValueLabel {
                                 final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
                                 if (teleClassMethodActor != null) {
                                     // Add method-related menu items
-                                    final ClassMethodMenuItems items = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
+                                    final ClassMethodActorMenuItems items = new ClassMethodActorMenuItems(inspection(), teleClassMethodActor);
                                     items.addTo(menu);
                                 }
                                 break;

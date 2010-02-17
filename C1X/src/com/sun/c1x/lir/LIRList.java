@@ -28,6 +28,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
@@ -78,8 +79,10 @@ public class LIRList {
         return operations.get(i);
     }
 
-    public void callInterface(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
-        append(new LIRCall(LIROpcode.InterfaceCall, method, result, arguments, info, false));
+    public void callInterface(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info, GlobalStub globalStub) {
+        LIRCall op = new LIRCall(LIROpcode.InterfaceCall, method, result, arguments, info, false);
+        op.globalStub = globalStub;
+        append(op);
     }
 
     public void callVirtual(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
@@ -118,8 +121,10 @@ public class LIRList {
         append(new LIRLabel(lbl));
     }
 
-    public void negate(LIROperand from, LIROperand to) {
-        append(new LIROp1(LIROpcode.Neg, from, to));
+    public void negate(LIROperand from, LIROperand to, GlobalStub globalStub) {
+        LIROp1 op = new LIROp1(LIROpcode.Neg, from, to);
+        op.globalStub = globalStub;
+        append(op);
     }
 
     public void leal(LIROperand from, LIROperand resultReg) {
@@ -166,8 +171,10 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Safepoint, tmp, info));
     }
 
-    public void convert(int code, LIROperand left, LIROperand dst) {
-        append(new LIRConvert(code, left, dst));
+    public void convert(int code, LIROperand left, LIROperand dst, GlobalStub globalStub) {
+        LIRConvert op = new LIRConvert(code, left, dst);
+        op.globalStub = globalStub;
+        append(op);
     }
 
     public void logicalAnd(LIROperand left, LIROperand right, LIROperand dst) {
@@ -353,16 +360,22 @@ public class LIRList {
         append(new LIROp2(isUnorderedLess ? LIROpcode.Ucmpfd2i : LIROpcode.Cmpfd2i, left, right, dst));
     }
 
-    public void checkcast(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo info, LocalStub stub) {
-        append(new LIRTypeCheck(LIROpcode.CheckCast, result, object, klass, tmp1, tmp2, tmp3, fastCheck, info, stub));
+    public void checkcast(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo info, LocalStub stub, GlobalStub globalStub) {
+        LIRTypeCheck op = new LIRTypeCheck(LIROpcode.CheckCast, result, object, klass, tmp1, tmp2, tmp3, fastCheck, info, stub);
+        op.globalStub = globalStub;
+        append(op);
     }
 
-    public void genInstanceof(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForPatch) {
-        append(new LIRTypeCheck(LIROpcode.InstanceOf, result, object, klass, tmp1, tmp2, tmp3, fastCheck, null, null));
+    public void genInstanceof(LIROperand result, LIROperand object, RiType klass, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, boolean fastCheck, LIRDebugInfo infoForPatch, GlobalStub globalStub) {
+        LIRTypeCheck op = new LIRTypeCheck(LIROpcode.InstanceOf, result, object, klass, tmp1, tmp2, tmp3, fastCheck, null, null);
+        op.globalStub = globalStub;
+        append(op);
     }
 
-    public void storeCheck(LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIRDebugInfo infoForException, LocalStub arrayStoreStub) {
-        append(new LIRTypeCheck(LIROpcode.StoreCheck, object, array, tmp1, tmp2, tmp3, infoForException, arrayStoreStub));
+    public void storeCheck(LIROperand object, LIROperand array, LIROperand tmp1, LIROperand tmp2, LIROperand tmp3, LIRDebugInfo infoForException, LocalStub arrayStoreStub, GlobalStub globalStub) {
+        LIRTypeCheck op = new LIRTypeCheck(LIROpcode.StoreCheck, object, array, tmp1, tmp2, tmp3, infoForException, arrayStoreStub);
+        op.globalStub = globalStub;
+        append(op);
     }
 
     public void casLong(LIROperand addr, LIROperand cmpValue, LIROperand newValue, LIROperand t1, LIROperand t2) {

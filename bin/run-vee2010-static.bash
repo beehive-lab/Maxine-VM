@@ -56,20 +56,20 @@ function c1x() {
     c1x-opt 3 "$@"
 }
 
-echo JDK16
+#echo JDK16
 c1x jdk16 5 10 "^java"
 
 echo Maxine
-c1x maxine 5 10 "^com.sun.max"
+c1x maxine 5 10 "^com.sun.max !sparc"
 
-echo C1X
+#echo C1X
 c1x c1x 10 25 "^com.sun.c1x"
 
-echo SpecJVM98
+#echo SpecJVM98
 c1x specjvm98 10 25 "^spec."
 
-echo SpecJVM98
+#echo SciMark 2
 c1x scimark 25 50 "^jnt."
 
-echo DaCapo
-c1x dacapo 10 25 "^dacapo ^org.eclipse ^EDU.purdue ^antlr ^net.sourceforge.pmd avalon batik ^org.apache.fop ^org.apache.xerces"
+#echo DaCapo
+#c1x dacapo 10 25 "^dacapo ^org.eclipse ^EDU.purdue ^antlr ^net.sourceforge.pmd avalon batik ^org.apache.fop ^org.apache.xerces"

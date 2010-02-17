@@ -851,14 +851,14 @@ public class MaxXirGenerator extends RiXirGenerator {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
         callRuntimeThroughStub(asm, "monitorExit", null, object);
-        return finishTemplate(asm, "monitorenter");
+        return finishTemplate(asm, "monitorexit");
     }
 
     private XirTemplate buildMonitorEnter() {
         asm.restart(CiKind.Void);
         XirParameter object = asm.createInputParameter("object", CiKind.Object);
         callRuntimeThroughStub(asm, "monitorEnter", null, object);
-        return finishTemplate(asm, "monitorexit");
+        return finishTemplate(asm, "monitorenter");
     }
 
     private XirPair buildCheckcastForLeaf(boolean nonnull) {

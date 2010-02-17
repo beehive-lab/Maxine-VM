@@ -32,11 +32,11 @@ import com.sun.max.vm.actor.member.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class ClassMethodMenuItems extends AbstractInspectorMenuItems {
+public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems {
 
     private final TeleClassMethodActor teleClassMethodActor;
 
-    public ClassMethodMenuItems(Inspection inspection, TeleClassMethodActor teleClassMethodActor) {
+    public ClassMethodActorMenuItems(Inspection inspection, TeleClassMethodActor teleClassMethodActor) {
         super(inspection);
         this.teleClassMethodActor = teleClassMethodActor;
         refresh(true);

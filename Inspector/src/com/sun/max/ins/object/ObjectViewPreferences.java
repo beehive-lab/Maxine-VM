@@ -129,19 +129,19 @@ public class ObjectViewPreferences extends TableColumnVisibilityPreferences<Obje
     @Override
     public JPanel getPanel() {
 
-        final JCheckBox showHeaderCheckBox =
+        final InspectorCheckBox showHeaderCheckBox =
             new InspectorCheckBox(inspection(), "Show Header", "Display object headers?", showHeader);
         showHeaderCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                final JCheckBox checkBox = (JCheckBox) e.getSource();
+                final InspectorCheckBox checkBox = (InspectorCheckBox) e.getSource();
                 setShowHeader(checkBox.isSelected());
             }
         });
-        final JCheckBox hideNullArrayElementsCheckBox =
+        final InspectorCheckBox hideNullArrayElementsCheckBox =
             new InspectorCheckBox(inspection(), "Hide null array elements", "Hide null elements in array displays?", hideNullArrayElements);
         hideNullArrayElementsCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                final JCheckBox checkBox = (JCheckBox) e.getSource();
+                final InspectorCheckBox checkBox = (InspectorCheckBox) e.getSource();
                 setHideNullArrayElements(checkBox.isSelected());
             }
         });

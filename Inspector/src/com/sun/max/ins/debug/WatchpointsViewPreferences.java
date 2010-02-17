@@ -112,28 +112,28 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
     @Override
     public JPanel getPanel() {
 
-        final JCheckBox readCheckBox = new InspectorCheckBox(inspection(), "Read", "New watchpoints by default trap on trapOnRead", trapOnRead);
+        final InspectorCheckBox readCheckBox = new InspectorCheckBox(inspection(), "Read", "New watchpoints by default trap on trapOnRead", trapOnRead);
         readCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBox checkBox = (JCheckBox) e.getSource();
                 trapOnRead = checkBox.isSelected();
             }
         });
-        final JCheckBox writeCheckBox = new InspectorCheckBox(inspection(), "Write", "New watchpoints by default trap on trapOnWrite", trapOnWrite);
+        final InspectorCheckBox writeCheckBox = new InspectorCheckBox(inspection(), "Write", "New watchpoints by default trap on trapOnWrite", trapOnWrite);
         writeCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBox checkBox = (JCheckBox) e.getSource();
                 trapOnWrite = checkBox.isSelected();
             }
         });
-        final JCheckBox execCheckBox = new InspectorCheckBox(inspection(), "Exec", "New watchpoints by default trap on trapOnExec", trapOnExec);
+        final InspectorCheckBox execCheckBox = new InspectorCheckBox(inspection(), "Exec", "New watchpoints by default trap on trapOnExec", trapOnExec);
         execCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBox checkBox = (JCheckBox) e.getSource();
                 trapOnExec = checkBox.isSelected();
             }
         });
-        final JCheckBox gcCheckBox = new InspectorCheckBox(inspection(), "Enable During GC", "New watchpoints by default area enabled during GC", enableDuringGC);
+        final InspectorCheckBox gcCheckBox = new InspectorCheckBox(inspection(), "Enable During GC", "New watchpoints by default area enabled during GC", enableDuringGC);
         gcCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBox checkBox = (JCheckBox) e.getSource();

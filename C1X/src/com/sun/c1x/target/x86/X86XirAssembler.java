@@ -37,6 +37,7 @@ public class X86XirAssembler extends CiXirAssembler {
     protected XirTemplate buildTemplate(String name, boolean isStub) {
         List<XirInstruction> fastPath = new ArrayList<XirInstruction>(instructions.size());
         List<XirInstruction> slowPath = new ArrayList<XirInstruction>();
+        List<XirTemplate> calleeTemplates = new ArrayList<XirTemplate>();
 
         int flags = 0;
 
@@ -115,6 +116,7 @@ public class X86XirAssembler extends CiXirAssembler {
                     break;
                 case CallStub:
                     flags |= XirTemplate.GlobalFlags.HAS_STUB_CALL.mask;
+                    calleeTemplates.add((XirTemplate) i.extra);
                     break;
                 case CallRuntime:
                     flags |= XirTemplate.GlobalFlags.HAS_RUNTIME_CALL.mask;
@@ -158,7 +160,8 @@ public class X86XirAssembler extends CiXirAssembler {
         XirParameter[] xirParameters = parameters.toArray(new XirParameter[parameters.size()]);
         XirTemp[] temporaryOperands = temps.toArray(new XirTemp[temps.size()]);
         XirConstant[] constantOperands = constants.toArray(new XirConstant[constants.size()]);
-        return new XirTemplate(name, this.variableCount, this.allocateResultOperand, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags);
+        XirTemplate[] calleeTemplateArray = calleeTemplates.toArray(new XirTemplate[calleeTemplates.size()]);
+        return new XirTemplate(name, this.variableCount, this.allocateResultOperand, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags, calleeTemplateArray);
     }
 
     @Override

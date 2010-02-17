@@ -50,7 +50,7 @@ public class JavaMethodInspector extends MethodInspector {
     /**
      * Shared check boxes to be used in all UI code view selection.
      */
-    private final JCheckBox[] codeViewCheckBoxes = new JCheckBox[MethodCodeKind.VALUES.length()];
+    private final JCheckBoxMenuItem[] codeViewCheckBoxes = new JCheckBoxMenuItem[MethodCodeKind.VALUES.length()];
 
     private final TeleClassMethodActor teleClassMethodActor;
     private final MethodCodeKind requestedCodeKind;
@@ -115,7 +115,7 @@ public class JavaMethodInspector extends MethodInspector {
             // viewers present at this point in the construction of the inspector.
             final boolean currentValue = false;
             final String toolTipText = "Display this kind of source for the Java method?";
-            final JCheckBox checkBox = new InspectorCheckBox(inspection(), codeKind.toString(), toolTipText, currentValue);
+            final JCheckBoxMenuItem checkBox = new InspectorCheckBox(inspection(), codeKind.toString(), toolTipText, currentValue);
             checkBox.setEnabled(codeKindEnabled.get(codeKind));
             checkBox.addItemListener(new ItemListener() {
                 public void itemStateChanged(ItemEvent itemEvent) {
@@ -435,13 +435,13 @@ public class JavaMethodInspector extends MethodInspector {
 
         public ViewOptionsPanel(Inspection inspection) {
             super(inspection, new BorderLayout());
-            final JCheckBox[] checkBoxes = new JCheckBox[MethodCodeKind.VALUES.length()];
+            final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[MethodCodeKind.VALUES.length()];
 
             final ItemListener itemListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
                     final Object source = e.getItemSelectable();
                     for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
-                        final JCheckBox checkBox = checkBoxes[codeKind.ordinal()];
+                        final InspectorCheckBox checkBox = checkBoxes[codeKind.ordinal()];
                         if (source == checkBox) {
                             if (checkBox.isSelected()) {
                                 if (!codeViewers.containsKey(codeKind)) {
@@ -460,7 +460,7 @@ public class JavaMethodInspector extends MethodInspector {
             final String toolTipText = "Should new Method inspectors initially display this code, when available?";
             for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
                 final boolean currentValue = codeViewers.containsKey(codeKind);
-                final JCheckBox checkBox =
+                final InspectorCheckBox checkBox =
                     new InspectorCheckBox(inspection(), codeKind.toString(), toolTipText, currentValue);
                 checkBox.addItemListener(itemListener);
                 checkBoxes[codeKind.ordinal()] = checkBox;
