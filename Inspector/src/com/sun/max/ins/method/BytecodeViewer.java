@@ -30,10 +30,10 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -44,7 +44,6 @@ import com.sun.max.vm.type.*;
  * Base class for Bytecode viewers.
  *
  * @author Michael Van De Vanter
- *
  */
 public abstract class BytecodeViewer extends CodeViewer {
 
@@ -67,7 +66,17 @@ public abstract class BytecodeViewer extends CodeViewer {
         return teleClassMethodActor;
     }
 
-    private final MethodActorKey methodActorKey;
+    /**
+     * Abstract description of the method being viewed.
+     */
+    private final MethodKey methodKey;
+
+    /**
+     * @return abstract description of the method being viewed.
+     */
+    protected final MethodKey methodKey() {
+        return methodKey;
+    }
 
     private final TeleTargetMethod teleTargetMethod;
 
@@ -126,7 +135,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         super(inspection, parent);
         this.teleClassMethodActor = teleClassMethodActor;
         this.teleTargetMethod = teleTargetMethod;
-        methodActorKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
+        methodKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
         final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
         // Always use the {@link ConstantPool} taken from the {@link CodeAttribute}; in a substituted method, the
         // constant pool for the bytecodes is the one from the origin of the substitution, not the current holder of the method.
@@ -207,12 +216,20 @@ public abstract class BytecodeViewer extends CodeViewer {
         if (haveTargetCodeAddresses()) {
             final MaxThread thread = focus().thread();
             final Sequence<StackFrame> frames = thread.frames();
+            final int frameCount = frames.length();
+            final StackFrame[] frameCache = new StackFrame[frameCount];
+            final MaxCodeLocation[] locationCache = new MaxCodeLocation[frameCount];
+            int stackPosition = 0;
+            for (StackFrame frame : frames) {
+                frameCache[stackPosition] = frame;
+                locationCache[stackPosition] = codeManager().createMachineCodeLocation(frame);
+                stackPosition++;
+            }
             for (int row = 0; row < bytecodeInstructions.length(); row++) {
-                int stackPosition = 0;
                 StackFrameInfo stackFrameInfo = null;
-                for (StackFrame frame : frames) {
-                    if (rowContainsAddress(row, maxVM().getCodeAddress(frame))) {
-                        stackFrameInfo = new StackFrameInfo(frame, thread, stackPosition);
+                for (int stackIndex = 0; stackIndex < frameCount; stackIndex++) {
+                    if (rowContainsAddress(row, locationCache[stackIndex].address())) {
+                        stackFrameInfo = new StackFrameInfo(frameCache[stackIndex], thread, stackPosition, locationCache[stackIndex]);
                         break;
                     }
                     stackPosition++;
@@ -229,8 +246,8 @@ public abstract class BytecodeViewer extends CodeViewer {
     protected Sequence<MaxBreakpoint> getTargetBreakpointsAtRow(int row) {
         final AppendableSequence<MaxBreakpoint> breakpoints = new LinkSequence<MaxBreakpoint>();
         if (haveTargetCodeAddresses) {
-            for (MaxBreakpoint breakpoint : maxVM().targetBreakpoints()) {
-                if (rowContainsAddress(row, breakpoint.getCodeLocation().targetCodeInstructionAddress())) {
+            for (MaxBreakpoint breakpoint : breakpointFactory().breakpoints()) {
+                if (!breakpoint.isBytecodeBreakpoint() && rowContainsAddress(row, breakpoint.codeLocation().address())) {
                     breakpoints.append(breakpoint);
                 }
             }
@@ -242,11 +259,13 @@ public abstract class BytecodeViewer extends CodeViewer {
      * @return the bytecode breakpoint, if any, set at the bytecode being displayed in the row.
      */
     protected MaxBreakpoint getBytecodeBreakpointAtRow(int row) {
-        for (MaxBreakpoint breakpoint : maxVM().bytecodeBreakpoints()) {
-            final Key key = breakpoint.getCodeLocation().key();
-            // the direction of key comparison is significant
-            if (methodActorKey.equals(key) &&  bytecodeInstructions().get(row).position() == key.position()) {
-                return breakpoint;
+        for (MaxBreakpoint breakpoint : breakpointFactory().breakpoints()) {
+            if (breakpoint.isBytecodeBreakpoint()) {
+                final MaxCodeLocation breakpointLocation = breakpoint.codeLocation();
+                // the direction of key comparison is significant
+                if (methodKey.equals(breakpointLocation.methodKey()) &&  bytecodeInstructions().get(row).position() == breakpointLocation.bytecodePosition()) {
+                    return breakpoint;
+                }
             }
         }
         return null;

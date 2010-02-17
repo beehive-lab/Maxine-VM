@@ -22,7 +22,6 @@ package com.sun.max.ins;
 
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
@@ -34,7 +33,7 @@ import com.sun.max.vm.stack.*;
  */
 public class InspectionFocusAdapter implements ViewFocusListener {
 
-    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
+    public void codeLocationFocusSet(MaxCodeLocation codeLocation, boolean interactiveForNative) {
     }
 
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {

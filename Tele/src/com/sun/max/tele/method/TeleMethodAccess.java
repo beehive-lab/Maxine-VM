@@ -85,7 +85,7 @@ public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
      * @return surrogate for the descriptor for this method in the VM.
      */
     public TeleClassMethodActor teleClassMethodActor() {
-        return teleVM.findTeleMethodActor(TeleClassMethodActor.class, methodActor);
+        return teleVM().findTeleMethodActor(TeleClassMethodActor.class, methodActor);
     }
 
     /**

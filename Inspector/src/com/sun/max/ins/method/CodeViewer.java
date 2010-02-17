@@ -30,7 +30,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -71,7 +70,7 @@ public abstract class CodeViewer extends InspectorPanel {
 
     public abstract void print(String name);
 
-    public abstract boolean updateCodeFocus(TeleCodeLocation teleCodeLocation);
+    public abstract boolean updateCodeFocus(MaxCodeLocation codeLocation);
 
     public void updateThreadFocus(MaxThread thread) {
         updateCaches(false);
@@ -294,14 +293,25 @@ public abstract class CodeViewer extends InspectorPanel {
 
         private final StackFrame stackFrame;
 
+        private final MaxThread thread;
+
+        private final int stackPosition;
+
+        private final MaxCodeLocation codeLocation;
+
+        public StackFrameInfo(StackFrame stackFrame, MaxThread thread, int stackPosition, MaxCodeLocation codeLocation) {
+            this.stackFrame = stackFrame;
+            this.thread = thread;
+            this.stackPosition = stackPosition;
+            this.codeLocation = codeLocation;
+        }
+
         /**
          * @return the {@link StackFrame}
          */
         public StackFrame frame() {
             return stackFrame;
         }
-
-        private final MaxThread thread;
 
         /**
          * @return the thread in whose stack the frame resides.
@@ -310,8 +320,6 @@ public abstract class CodeViewer extends InspectorPanel {
             return thread;
         }
 
-        private final int stackPosition;
-
         /**
          * @return the position of the frame on the stack, with 0 at top
          */
@@ -319,10 +327,11 @@ public abstract class CodeViewer extends InspectorPanel {
             return stackPosition;
         }
 
-        public StackFrameInfo(StackFrame stackFrame, MaxThread thread, int stackPosition) {
-            this.stackFrame = stackFrame;
-            this.thread = thread;
-            this.stackPosition = stackPosition;
+        /**
+         * @return the code location for the frame, either the IP (top frame) or call return address.
+         */
+        public MaxCodeLocation codeLocation() {
+            return codeLocation;
         }
     }
 
