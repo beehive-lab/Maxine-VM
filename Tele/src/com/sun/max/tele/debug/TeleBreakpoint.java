@@ -145,7 +145,7 @@ public abstract class TeleBreakpoint extends AbstractTeleVMHolder implements VMT
     }
 
     public final boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
-        assert teleNativeThread.state() == TeleNativeThread.ThreadState.BREAKPOINT;
+        assert teleNativeThread.state() == MaxThreadState.BREAKPOINT;
         Trace.begin(TRACE_VALUE, tracePrefix() + "handling trigger event for " + this);
         final boolean handleTriggerEvent = triggerEventHandler.handleTriggerEvent(teleNativeThread);
         Trace.end(TRACE_VALUE, tracePrefix() + "handling trigger event for " + this);

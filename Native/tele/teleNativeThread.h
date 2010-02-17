@@ -25,7 +25,7 @@
 #define __teleNativeThread_h__ 1
 
 /*
- * This enum must be kept in sync the one of the same named defined in com.sun.max.tele.debug.TeleNativeThread.java.
+ * This enum must be kept in sync the one defined in com.sun.max.tele.MaxThreadState.java.
  */
 typedef enum ThreadState {
 	TS_MONITOR_WAIT,
