@@ -304,7 +304,6 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected int emitPrologue(Object out, Adapter adapter) {
-            //assert adapter != null : "JIT2OPT calls need adapter to save & restore RBP";
             AMD64Assembler asm64 = out instanceof OutputStream ? new AMD64Assembler() : (AMD64Assembler) out;
 
             if (adapter == null) {
