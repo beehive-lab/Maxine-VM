@@ -22,7 +22,6 @@ package com.sun.max.tele;
 
 import com.sun.max.annotate.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -151,7 +150,7 @@ public interface MaxThread {
     /**
      * @return location of the instruction pointer for the thread; null if thread has died
      */
-    MachineCodeLocation instructionLocation();
+    MaxCodeLocation instructionLocation();
 
     /**
      * Gets the return address of the next-to-top frame on the stack: the next instruction to be executed when execution
