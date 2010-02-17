@@ -27,7 +27,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * Holds the focus of user attention, expressed by user actions
@@ -112,10 +111,9 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 }
                 // User Model Policy: when setting code location, if it happens to match a stack frame of the current thread then focus on that frame.
                 if (thread != null && codeLocation.hasAddress()) {
-                    final Sequence<StackFrame> frames = thread.frames();
-                    for (StackFrame stackFrame : frames) {
-                        if (codeManager().createMachineCodeLocation(stackFrame).isSameAs(codeLocation)) {
-                            setStackFrame(thread, stackFrame, false);
+                    for (MaxStackFrame maxStackFrame : thread.stack().frames()) {
+                        if (codeLocation.isSameAs(maxStackFrame.codeLocation())) {
+                            setStackFrame(stackFrame, false);
                             break;
                         }
                     }
@@ -178,10 +176,10 @@ public class InspectionFocus extends AbstractInspectionHolder {
             // User Model Policy:  when thread focus changes, restore an old frame focus if possible.
             // If no record of a prior choice and thread is at a breakpoint, focus there.
             // Else focus on the top frame.
-            final StackFrame previousStackFrame = frameSelections.get(thread);
-            StackFrame newStackFrame = null;
+            final MaxStackFrame previousStackFrame = frameSelections.get(thread);
+            MaxStackFrame newStackFrame = null;
             if (previousStackFrame != null) {
-                for (StackFrame stackFrame : this.thread.frames()) {
+                for (MaxStackFrame stackFrame : this.thread.stack().frames()) {
                     if (stackFrame.isSameFrame(previousStackFrame)) {
                         newStackFrame = stackFrame;
                         break;
@@ -190,7 +188,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             if (newStackFrame != null) {
                 // Reset frame selection to one previously selected by the user
-                setStackFrame(thread, newStackFrame, false);
+                setStackFrame(newStackFrame, false);
             } else {
                 // No prior frame selection
                 final MaxBreakpoint breakpoint = this.thread.breakpoint();
@@ -199,7 +197,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                     setBreakpoint(breakpoint);
                 } else {
                     // default is to focus on the top frame
-                    setStackFrame(thread, thread.frames().first(), false);
+                    setStackFrame(thread.stack().frames().first(), false);
                 }
             }
             // User Model Policy:  when thread focus changes, also set the memory region focus to the thread's stack memory.
@@ -209,9 +207,9 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     // Remember most recent frame selection per thread, and restore this selection (if possible) when thread focus changes.
-    private final VariableMapping<MaxThread, StackFrame> frameSelections = HashMapping.<MaxThread, StackFrame>createVariableEqualityMapping();
+    private final VariableMapping<MaxThread, MaxStackFrame> frameSelections = HashMapping.<MaxThread, MaxStackFrame>createVariableEqualityMapping();
 
-    private StackFrame stackFrame;
+    private MaxStackFrame stackFrame;
     // Since frames don't record what stack they're in, we must keep a reference to the thread of the frame.
     private MaxThread threadForStackFrame;
 
@@ -223,9 +221,9 @@ public class InspectionFocus extends AbstractInspectionHolder {
     };
 
     /**
-     * @return the {@link StackFrame} that is current user focus (view state).
+     * @return the {@link MaxStackFrame} that is current user focus (view state).
      */
-    public StackFrame stackFrame() {
+    public MaxStackFrame stackFrame() {
         return stackFrame;
     }
 
@@ -233,30 +231,29 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * Shifts the focus of the Inspection to a particular stack frame in a particular thread; notify interested inspectors.
      * Sets the current thread to be the thread of the frame.
      * This is a view state change that can happen when there is no change to VM state.
-     *
-     * @param thread the thread in whose stack the frame resides
-     * @param stackFrame the frame on which to focus.
+     * @param newStackFrame the frame on which to focus.
      * @param interactiveForNative whether (should a side effect be to land in a native method) the user should be consulted if unknown.
      */
-    public void setStackFrame(MaxThread thread, StackFrame stackFrame, boolean interactiveForNative) {
-        if (!thread.equals(threadForStackFrame) || !stackFrame.isSameFrame(this.stackFrame)) {
-            final StackFrame oldStackFrame = this.stackFrame;
-            threadForStackFrame = thread;
-            this.stackFrame = stackFrame;
-            frameSelections.put(thread, stackFrame);
+    public void setStackFrame(MaxStackFrame newStackFrame, boolean interactiveForNative) {
+        final MaxThread newThread = newStackFrame.stack().thread();
+        if (!newThread.equals(this.threadForStackFrame) || !newStackFrame.isSameFrame(this.stackFrame)) {
+            final MaxStackFrame oldStackFrame = this.stackFrame;
+            this.threadForStackFrame = newThread;
+            this.stackFrame = newStackFrame;
+            frameSelections.put(newThread, newStackFrame);
             Trace.line(TRACE_VALUE, stackFrameFocusTracer);
             // For consistency, be sure we're in the right thread context before doing anything with the stack frame.
-            setThread(thread);
+            setThread(newThread);
             for (ViewFocusListener listener : listeners.clone()) {
-                listener.stackFrameFocusChanged(oldStackFrame, thread, stackFrame);
+                listener.stackFrameFocusChanged(oldStackFrame, newStackFrame);
             }
         }
         // User Model Policy:  When a stack frame becomes the focus, then also focus on the code at the frame's instruction pointer
         // or call return location.
         // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
-        final MaxCodeLocation newCodeLocation = codeManager().createMachineCodeLocation(stackFrame);
-        if (!newCodeLocation.isSameAs(codeLocation)) {
+        final MaxCodeLocation newCodeLocation = newStackFrame.codeLocation();
+        if (this.codeLocation == null || !this.codeLocation.isSameAs(newCodeLocation)) {
             setCodeLocation(newCodeLocation, interactiveForNative);
         }
     }
@@ -404,7 +401,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             // thread, if any, that is stopped at the breakpoint.  If no thread stopped,
             // then just focus on the code location.
             if (threadAtBreakpoint != null) {
-                setStackFrame(threadAtBreakpoint, threadAtBreakpoint.frames().first(), false);
+                setStackFrame(threadAtBreakpoint.stack().frames().first(), false);
             } else {
                 setCodeLocation(maxBreakpoint.codeLocation());
             }

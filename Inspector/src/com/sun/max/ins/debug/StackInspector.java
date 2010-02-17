@@ -41,7 +41,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * A singleton inspector that displays stack contents for the thread in the VM that is the current user focus.
@@ -83,41 +82,75 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private static CompiledStackFrameViewPreferences viewPreferences;
 
-    static class TruncatedStackFrame extends StackFrame {
-        private StackFrame truncatedStackFrame;
+    /**
+     * A specially wrapped stack frame used to mark the last frame in a
+     * truncated view of the stack.
+     */
+    private static final class TruncatedStackFrame implements MaxStackFrame {
+        private final MaxStack stack;
+        private final MaxStackFrame stackFrame;
+        private final int position;
 
-        TruncatedStackFrame(StackFrame callee, StackFrame truncatedStackFrame) {
-            super(callee, truncatedStackFrame.ip, truncatedStackFrame.sp, truncatedStackFrame.fp);
-            this.truncatedStackFrame = truncatedStackFrame;
+        TruncatedStackFrame(MaxStack stack, MaxStackFrame stackFrame, int position) {
+            this.stack = stack;
+            this.stackFrame = stackFrame;
+            this.position = position;
         }
 
-        StackFrame getTruncatedStackFrame() {
-            return truncatedStackFrame;
+        public MaxStack stack() {
+            return stack;
         }
 
-        @Override
+        public int position() {
+            return position;
+        }
+
+        public boolean isTop() {
+            return position == 0;
+        }
+
+        public Pointer ip() {
+            return stackFrame.ip();
+        }
+
+        public Pointer sp() {
+            return stackFrame.sp();
+        }
+
+        public Pointer fp() {
+            return stackFrame.fp();
+        }
+
+        public MaxCodeLocation codeLocation() {
+            return stackFrame.codeLocation();
+        }
+
         public TargetMethod targetMethod() {
-            return truncatedStackFrame.targetMethod();
+            return stackFrame.targetMethod();
         }
 
-        @Override
-        public boolean isSameFrame(StackFrame stackFrame) {
+        public boolean isSameFrame(MaxStackFrame stackFrame) {
             if (stackFrame instanceof TruncatedStackFrame) {
-                final TruncatedStackFrame other = (TruncatedStackFrame) stackFrame;
-                return truncatedStackFrame.isSameFrame(other.truncatedStackFrame);
+                final TruncatedStackFrame otherFrame = (TruncatedStackFrame) stackFrame;
+                return stackFrame.isSameFrame(otherFrame.stackFrame);
             }
             return false;
         }
 
+
+        public String description() {
+            return toString();
+        }
+
         @Override
         public String toString() {
-            return "<truncated frame>" + truncatedStackFrame;
+            return "<truncated frame>" + stackFrame;
         }
     }
 
     private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "stackInspectorGeometry");
 
-    private MaxThread thread = null;
+    private MaxStack stack = null;
     private InspectorPanel contentPane = null;
     private  DefaultListModel stackFrameListModel = null;
     private JList stackFrameList = null;
@@ -128,21 +161,20 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer();
 
     private boolean stateChanged = true;  // conservative assessment of possible stack change
-    private CompiledStackFramePanel<? extends CompiledStackFrame> selectedFramePanel;
+    private CompiledStackFramePanel selectedFramePanel;
 
     private final class StackFrameListCellRenderer extends DefaultListCellRenderer {
 
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int modelIndex, boolean isSelected, boolean cellHasFocus) {
-            final StackFrame stackFrame = (StackFrame) value;
+            final MaxStackFrame stackFrame = (MaxStackFrame) value;
             String name;
             String toolTip = null;
             Component component;
-            if (stackFrame instanceof CompiledStackFrame) {
-                final CompiledStackFrame compiledStackFrame = (CompiledStackFrame) stackFrame;
-                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(compiledStackFrame.targetMethod().codeStart());
+            if (stackFrame instanceof MaxStackFrame.Compiled) {
+                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(stackFrame.targetMethod().codeStart());
                 name = inspection().nameDisplay().veryShortName(teleTargetMethod);
-                toolTip = inspection().nameDisplay().longName(teleTargetMethod, compiledStackFrame.ip);
+                toolTip = inspection().nameDisplay().longName(teleTargetMethod, stackFrame.ip());
                 final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
                 if (teleClassMethodActor != null && teleClassMethodActor.isSubstituted()) {
                     name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
@@ -150,12 +182,13 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 }
             } else if (stackFrame instanceof TruncatedStackFrame) {
                 name = "*select here to extend the display*";
-            } else if (stackFrame instanceof TeleStackFrameWalker.ErrorStackFrame) {
+            } else if (stackFrame instanceof MaxStackFrame.Error) {
                 name = "*a stack walker error occurred*";
-                toolTip = ((TeleStackFrameWalker.ErrorStackFrame) stackFrame).errorMessage();
+                final MaxStackFrame.Error errorStackFrame = (MaxStackFrame.Error) stackFrame;
+                toolTip = errorStackFrame.errorMessage();
             } else {
-                ProgramWarning.check(stackFrame instanceof NativeStackFrame, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
-                final Pointer instructionPointer = stackFrame.ip;
+                ProgramWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
+                final Pointer instructionPointer = stackFrame.ip();
                 final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
                 if (teleNativeTargetRoutine != null) {
                     // native that we know something about
@@ -202,12 +235,12 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
             // TODO (mlvdv) Create appropriate stack frame viewers for all the kinds of frames we might find.
             if (index >= 0 && index < stackFrameListModel.getSize()) {
-                final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
+                final MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(index);
                 // New stack frame selection; set the global focus.
-                inspection().focus().setStackFrame(thread, stackFrame, false);
-                if (stackFrame instanceof CompiledStackFrame) {
-                    final CompiledStackFrame compiledStackFrame = (CompiledStackFrame) stackFrame;
-                    selectedFramePanel = new DefaultCompiledStackFramePanel(inspection(), compiledStackFrame, thread, viewPreferences);
+                inspection().focus().setStackFrame(stackFrame, false);
+                if (stackFrame instanceof MaxStackFrame.Compiled) {
+                    final MaxStackFrame.Compiled compiledStackFrame = (MaxStackFrame.Compiled) stackFrame;
+                    selectedFramePanel = new DefaultCompiledStackFramePanel<MaxStackFrame.Compiled>(inspection(), compiledStackFrame, viewPreferences);
                     newRightComponent = selectedFramePanel;
                 } else if (stackFrame instanceof TruncatedStackFrame) {
                     maxFramesDisplay *= 2;
@@ -267,18 +300,19 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void createView() {
-        thread = inspection().focus().thread();
+        final MaxThread thread = inspection().focus().thread();
         contentPane = new InspectorPanel(inspection(), new BorderLayout());
         if (thread != null) {
+            stack = thread.stack();
             stackFrameListModel = new DefaultListModel();
             stackFrameList = new JList(stackFrameListModel);
             stackFrameList.setCellRenderer(stackFrameListCellRenderer);
 
             final JPanel header = new InspectorPanel(inspection(), new SpringLayout());
             header.add(new TextLabel(inspection(), "start: "));
-            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, thread.stack().memoryRegion().start(), contentPane));
+            header.add(new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, stack.memoryRegion().start(), contentPane));
             header.add(new TextLabel(inspection(), "size: "));
-            header.add(new DataLabel.IntAsDecimal(inspection(), thread.stack().memoryRegion().size().toInt()));
+            header.add(new DataLabel.IntAsDecimal(inspection(), stack.memoryRegion().size().toInt()));
             SpringUtilities.makeCompactGrid(header, 2);
             contentPane.add(header, BorderLayout.NORTH);
 
@@ -348,8 +382,8 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     @Override
     public String getTextForTitle() {
         String title = "Stack: ";
-        if (thread != null) {
-            title += inspection().nameDisplay().longNameWithState(thread);
+        if (stack != null && stack.thread() != null) {
+            title += inspection().nameDisplay().longNameWithState(stack.thread());
         }
         return title;
     }
@@ -366,8 +400,8 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         };
     }
 
-    private String javaStackFrameName(CompiledStackFrame javaStackFrame) {
-        final Address address = javaStackFrame.ip;
+    private String javaStackFrameName(MaxStackFrame.Compiled javaStackFrame) {
+        final Address address = javaStackFrame.ip();
         final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
         String name;
         if (teleTargetMethod != null) {
@@ -384,30 +418,30 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     }
 
     private InspectorPopupMenu getPopupMenu(int row, MouseEvent mouseEvent) {
-        final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(row);
+        final MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(row);
         final InspectorPopupMenu menu = new InspectorPopupMenu("Stack Frame");
         menu.add(new InspectorAction(inspection(), "Select frame (Left-Button)") {
             @Override
             protected void procedure() {
-                inspection().focus().setStackFrame(thread, stackFrame, false);
+                inspection().focus().setStackFrame(stackFrame, false);
             }
         });
-        if (stackFrame instanceof CompiledStackFrame) {
-            final CompiledStackFrame javaStackFrame = (CompiledStackFrame) stackFrame;
-            final int frameSize = javaStackFrame.layout.frameSize();
-            final Pointer stackPointer = javaStackFrame.sp;
+        if (stackFrame instanceof MaxStackFrame.Compiled) {
+            final MaxStackFrame.Compiled javaStackFrame = (MaxStackFrame.Compiled) stackFrame;
+            final int frameSize = javaStackFrame.layout().frameSize();
+            final Pointer stackPointer = javaStackFrame.sp();
             final MemoryRegion memoryRegion = new FixedMemoryRegion(stackPointer, Size.fromInt(frameSize), "");
             final String frameName = javaStackFrameName(javaStackFrame);
             menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
         }
-        if (stackFrame instanceof NativeStackFrame) {
-            final Pointer instructionPointer = stackFrame.ip;
+        if (stackFrame instanceof MaxStackFrame.Native) {
+            final Pointer instructionPointer = stackFrame.ip();
             final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
             if (teleNativeTargetRoutine == null) {
                 menu.add(new InspectorAction(inspection(), "Open native code dialog...") {
                     @Override
                     protected void procedure() {
-                        focus().setCodeLocation(codeManager().createMachineCodeLocation(stackFrame), true);
+                        focus().setCodeLocation(stackFrame.codeLocation(), true);
                     }
                 });
             }
@@ -418,8 +452,8 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     protected void refreshView(boolean force) {
-        if (thread != null && thread.isLive()) {
-            final Sequence<StackFrame> frames = thread.frames();
+        if (stack != null && stack.thread() != null && stack.thread().isLive()) {
+            final Sequence<MaxStackFrame> frames = stack.frames();
             assert !frames.isEmpty();
             if (stateChanged || force) {
                 stackFrameListModel.clear();
@@ -430,8 +464,8 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                 // so avoid a complete redisplay for performance reasons.
                 // However, the object representing the top frame may be different,
                 // in which case the state of the old frame object is out of date.
-                final StackFrame newTopFrame = frames.first();
-                if (selectedFramePanel != null && selectedFramePanel.stackFrame().isTopFrame() && selectedFramePanel.stackFrame().isSameFrame(newTopFrame)) {
+                final MaxStackFrame newTopFrame = frames.first();
+                if (selectedFramePanel != null && selectedFramePanel.stackFrame().isTop() && selectedFramePanel.stackFrame().isSameFrame(newTopFrame)) {
                     selectedFramePanel.setStackFrame(newTopFrame);
                 }
             }
@@ -448,15 +482,15 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void threadStateChanged(MaxThread thread) {
-        if (thread.equals(this.thread)) {
+        if (stack != null && thread.equals(this.stack.thread())) {
             stateChanged = thread.framesChanged();
         }
         super.threadStateChanged(thread);
     }
 
     @Override
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame newStackFrame) {
-        if (threadForStackFrame == thread) {
+    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame newStackFrame) {
+        if (newStackFrame.stack().thread() == this.stack.thread()) {
             updateFocusSelection(newStackFrame);
         }
     }
@@ -464,11 +498,11 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     /**
      * Updates list selection state to agree with focus on a particular stack frame.
      */
-    private void updateFocusSelection(StackFrame newStackFrame) {
+    private void updateFocusSelection(MaxStackFrame newStackFrame) {
         if (newStackFrame != null) {
             final int oldIndex = stackFrameList.getSelectedIndex();
             for (int index = 0; index < stackFrameListModel.getSize(); index++) {
-                final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
+                final MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(index);
                 if (stackFrame.isSameFrame(newStackFrame)) {
                     // The frame is in the list; we may or may not have to update the current selection.
                     if (index != oldIndex) {
@@ -511,16 +545,16 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     /**
      * Add frames to the stack model until {@link #maxFramesDisplay} reached.
      */
-    private void addToModel(final Sequence<StackFrame> frames) {
-        StackFrame parentStackFrame = null;
-        for (StackFrame stackFrame : frames) {
-            if (stackFrameListModel.size()  >= maxFramesDisplay) {
-                stackFrameListModel.addElement(new TruncatedStackFrame(parentStackFrame, stackFrame));
+    private void addToModel(final Sequence<MaxStackFrame> frames) {
+        int position = stackFrameListModel.size();
+        for (MaxStackFrame stackFrame : frames) {
+            if (position  >= maxFramesDisplay) {
+                stackFrameListModel.addElement(new TruncatedStackFrame(stackFrame.stack(), stackFrame,  position));
                 inspection().gui().informationMessage("stack depth of " + stackFrameListModel.size() + " exceeds " + maxFramesDisplay + ": truncated", "Stack Inspector");
                 break;
             }
             stackFrameListModel.addElement(stackFrame);
-            parentStackFrame = stackFrame;
+            position++;
         }
     }
 
@@ -537,9 +571,9 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             if (keyEvent.getKeyCode() == KeyEvent.VK_SHIFT) {
                 final int index = stackFrameList.getSelectedIndex();
                 if (index >= 0 && index < stackFrameListModel.getSize()) {
-                    final StackFrame stackFrame = (StackFrame) stackFrameListModel.get(index);
-                    if (stackFrame instanceof JitStackFrame) {
-                        LocalsInspector.make(inspection(), thread, (JitStackFrame) stackFrame).highlight();
+                    final MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(index);
+                    if (stackFrame instanceof MaxStackFrame.Jit) {
+                        LocalsInspector.make(inspection(), stack.thread(), (MaxStackFrame.Jit) stackFrame).highlight();
                     }
                 }
             }

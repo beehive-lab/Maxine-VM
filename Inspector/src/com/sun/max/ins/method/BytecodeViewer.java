@@ -21,6 +21,7 @@
 package com.sun.max.ins.method;
 
 import java.io.*;
+import java.util.Arrays;
 
 import javax.swing.*;
 
@@ -37,7 +38,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -143,7 +143,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         localConstantPool = teleConstantPool.getTeleHolder().classActor().constantPool();
         methodBytes = teleCodeAttribute.readBytecodes();
         buildView();
-        rowToStackFrameInfo = new StackFrameInfo[bytecodeInstructions.length()];
+        rowToStackFrame = new MaxStackFrame[bytecodeInstructions.length()];
     }
 
     private void buildView() {
@@ -214,27 +214,14 @@ public abstract class BytecodeViewer extends CodeViewer {
     @Override
     protected void updateStackCache() {
         if (haveTargetCodeAddresses()) {
-            final MaxThread thread = focus().thread();
-            final Sequence<StackFrame> frames = thread.frames();
-            final int frameCount = frames.length();
-            final StackFrame[] frameCache = new StackFrame[frameCount];
-            final MaxCodeLocation[] locationCache = new MaxCodeLocation[frameCount];
-            int stackPosition = 0;
-            for (StackFrame frame : frames) {
-                frameCache[stackPosition] = frame;
-                locationCache[stackPosition] = codeManager().createMachineCodeLocation(frame);
-                stackPosition++;
-            }
+            Arrays.fill(rowToStackFrame, null);
             for (int row = 0; row < bytecodeInstructions.length(); row++) {
-                StackFrameInfo stackFrameInfo = null;
-                for (int stackIndex = 0; stackIndex < frameCount; stackIndex++) {
-                    if (rowContainsAddress(row, locationCache[stackIndex].address())) {
-                        stackFrameInfo = new StackFrameInfo(frameCache[stackIndex], thread, stackPosition, locationCache[stackIndex]);
+                for (MaxStackFrame frame : focus().thread().stack().frames()) {
+                    if (rowContainsAddress(row, frame.codeLocation().address())) {
+                        rowToStackFrame[row] = frame;
                         break;
                     }
-                    stackPosition++;
                 }
-                rowToStackFrameInfo[row] = stackFrameInfo;
             }
         }
     }

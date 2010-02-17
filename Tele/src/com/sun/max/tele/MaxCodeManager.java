@@ -24,7 +24,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * Client access to code in the VM.
@@ -98,23 +97,5 @@ public interface MaxCodeManager {
      * @throws ProgramError if the address is null or zero or  if teleClassMethodActor is null or bytecodePosition &lt; -1
      */
     MaxCodeLocation createMachineCodeLocation(Address address, TeleClassMethodActor teleClassMethodActor, int bytecodePosition, String description) throws ProgramError;
-
-    // TODO (mlvdv) review uses for null return with error frames.
-    // TODO (mlvdv) fold this into a new stack frame abstraction and Tele support
-    /**
-     *
-     * Returns the compiled code location in a stack frame, either IP (top frame) or call return address.
-     * <br>
-     * Note that a platform-specific offset is applied to the stored address in
-     * non-top frames (see SPARC), except at a trap, to produce the actual call return address.
-     * <br>
-     * Returns null if the frame has no location, for example an error frame.
-     *
-     * @param stackFrame a VM stack frame
-     * @return code location of current IP, if top frame, or next machine code instruction to be executed when control is returned to the frame;
-     * null if no location is available.
-     * @throws ProgramError if stackFrame is null
-     */
-    MaxCodeLocation createMachineCodeLocation(StackFrame stackFrame) throws ProgramError;
 
 }

@@ -34,7 +34,6 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -244,12 +243,12 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
             labels[FocusRowKind.FRAME.ordinal()] = new PlainLabel(inspection, "") {
                 @Override
                 public void refresh(boolean force) {
-                    final StackFrame stackFrame = focus().stackFrame();
+                    final MaxStackFrame stackFrame = focus().stackFrame();
                     if (stackFrame == null) {
                         setValue(null, "No stack frame focus");
                     } else {
                         final TargetMethod targetMethod = stackFrame.targetMethod();
-                        final String name = targetMethod == null ? "nativeMethod: 0x" + codeManager().createMachineCodeLocation(stackFrame).address().toHexString() : targetMethod.toString();
+                        final String name = targetMethod == null ? "nativeMethod: 0x" + stackFrame.codeLocation().address().toHexString() : targetMethod.toString();
                         setValue(name, "Stack frame focus = " + name);
                     }
                 }
@@ -356,7 +355,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         refresh(true);
     }
 
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
+    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
         refresh(true);
     }
 

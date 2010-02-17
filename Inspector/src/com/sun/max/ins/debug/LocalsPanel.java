@@ -24,8 +24,8 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * A panel for displaying locals and operand stack of a stack frame associated with a method
@@ -39,7 +39,7 @@ public final class LocalsPanel extends InspectorPanel {
     public final int maxStacks;
     public final int numArguments;
 
-    public LocalsPanel(Inspection inspection, CompiledStackFrame javaStackFrame) {
+    public LocalsPanel(Inspection inspection, MaxStackFrame.Compiled javaStackFrame) {
         super(inspection, new SpringLayout());
         final ClassMethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
         maxLocals = classMethodActor.codeAttribute().maxLocals;

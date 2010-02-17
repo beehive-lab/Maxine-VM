@@ -20,9 +20,12 @@
  */
 package com.sun.max.tele.debug;
 
+import java.io.*;
+
+import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-
+import com.sun.max.vm.stack.*;
 
 /**
  * Description of a stack in the VM.
@@ -33,6 +36,8 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
 
     private final TeleNativeThread teleNativeThread;
     private final TeleNativeStackMemoryRegion region;
+    private long lastUpdatedEpoch = -1;
+    private volatile IndexedSequence<MaxStackFrame> maxStackFrames = IndexedSequence.Static.empty(MaxStackFrame.class);
 
     public TeleStack(TeleVM teleVM, TeleNativeThread teleNativeThread, TeleNativeStackMemoryRegion region) {
         super(teleVM);
@@ -40,14 +45,35 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         this.region = region;
     }
 
-    @Override
     public MemoryRegion memoryRegion() {
         return region;
     }
 
-    @Override
     public MaxThread thread() {
         return teleNativeThread;
+    }
+
+    public IndexedSequence<MaxStackFrame> frames() {
+        final long processEpoch = teleVM().teleProcess().epoch();
+        if (lastUpdatedEpoch < processEpoch) {
+            lastUpdatedEpoch = processEpoch;
+            final IndexedSequence<StackFrame> frames = teleNativeThread.frames();
+            final VariableSequence<MaxStackFrame> maxStackFrames = new VectorSequence<MaxStackFrame>(frames.length());
+            int position = 0;
+            for (StackFrame stackFrame : frames) {
+                maxStackFrames.append(TeleStackFrame.createFrame(teleVM(), this, position, stackFrame));
+                position++;
+            }
+            this.maxStackFrames = maxStackFrames;
+        }
+        return maxStackFrames;
+    }
+
+    public void writeSummaryToStream(PrintStream printStream) {
+        printStream.println("Stack frames :");
+        for (MaxStackFrame maxStackFrame : frames().clone()) {
+            printStream.println("  " + maxStackFrame.toString());
+        }
     }
 
 }
