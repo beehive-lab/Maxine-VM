@@ -717,8 +717,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
     /**
      * Determines if this method was compiled with the template JIT compiler.
      */
-    public boolean isJitCompiled() {
-        return false;
+    public final boolean isJitCompiled() {
+        return abi.callEntryPoint == CallEntryPoint.JIT_ENTRY_POINT;
     }
 
     /**
