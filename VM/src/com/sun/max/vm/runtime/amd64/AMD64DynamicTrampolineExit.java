@@ -56,22 +56,7 @@ public class AMD64DynamicTrampolineExit extends DynamicTrampolineExit {
         final Pointer ripLocation = stackPointer.plus(trampolineFrameSize);
         final Pointer ripPointer = ripLocation.readWord(0).asPointer();
         final TargetMethod caller = Code.codePointerToTargetMethod(ripPointer);
-        // Two cases: either the caller is the dynamic trampoline's adapter frame
-        // and the method is being invoked from JITed code, or it is not, and the method is
-        // invoked from optimized code.
-        if (caller instanceof Adapter) {
-            // The trampoline was called from a JIT method via a JIT2OPT adapter. In this case, we patch the
-            // second (i.e. lower) RIP slot in the adapter frame (the one labeled "OPT main body" in the
-            // diagram in the javadoc comment for the Jit2OptAdapterFrameLayout class). This adapter has been
-            // specially compiled to use this second RIP slot when returning instead of the first (i.e. higher
-            // slot like all other adapters.
-            Pointer adapterRipLocationToBePatched = ripLocation.plus(caller.frameSize());
-            Address jitEntryPoint = vtableEntryPoint.plus(JIT_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
-            adapterRipLocationToBePatched.writeWord(0, jitEntryPoint);
-            return ripPointer;
-        }
-        Address optEntryPoint = vtableEntryPoint.plus(OPTIMIZED_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
-        return optEntryPoint;
+        return vtableEntryPoint.plus(caller.abi().callEntryPoint.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
 }
