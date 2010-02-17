@@ -56,7 +56,7 @@ public class AMD64DynamicTrampolineExit extends DynamicTrampolineExit {
         final Pointer ripLocation = stackPointer.plus(trampolineFrameSize);
         final Pointer ripPointer = ripLocation.readWord(0).asPointer();
         final TargetMethod caller = Code.codePointerToTargetMethod(ripPointer);
-        // Two cases: either the caller is the dynamic trampoline's adapter an adapterself, in which case, it's the trampoline's adapter frame
+        // Two cases: either the caller is the dynamic trampoline's adapter frame
         // and the method is being invoked from JITed code, or it is not, and the method is
         // invoked from optimized code.
         if (caller instanceof Adapter) {

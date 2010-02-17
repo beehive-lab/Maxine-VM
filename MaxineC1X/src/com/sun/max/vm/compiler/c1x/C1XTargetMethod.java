@@ -613,46 +613,6 @@ public class C1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer) {
-        preparer.tracePrepareReferenceMap(this, stopIndex, refmapFramePointer, "frame");
-        int frameSlotIndex = preparer.referenceMapBitIndex(refmapFramePointer);
-        int byteIndex = stopIndex * totalReferenceMapSize();
-        for (int i = 0; i < frameReferenceMapSize(); i++) {
-            final byte frameReferenceMapByte = referenceMaps[byteIndex];
-            preparer.traceReferenceMapByteBefore(byteIndex, frameReferenceMapByte, "Frame");
-            preparer.setBits(frameSlotIndex, frameReferenceMapByte);
-            preparer.traceReferenceMapByteAfter(refmapFramePointer, frameSlotIndex, frameReferenceMapByte);
-            frameSlotIndex += Bytes.WIDTH;
-            byteIndex++;
-        }
-    }
-
-    @Override
-    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
-        int stopIndex = lookupStopPosition(instructionPointer);
-        for (int i = 0; i < referenceRegisterCount; i++) {
-            if (isRegisterReferenceMapBitSet(stopIndex, i)) {
-                preparer.setReferenceMapBit(registerState.plusWords(i));
-            }
-        }
-    }
-
-    private int lookupStopPosition(Pointer instructionPointer) {
-        int offset = instructionPointer.minus(codeStart()).toInt();
-        for (int i = 0; i < stopPositions.length; i++) {
-            if (stopPositions[i] == offset) {
-                return i;
-            }
-        }
-
-        Log.print("Could not find stop position for instruction at position ");
-        Log.print(instructionPointer.minus(codeStart()).toInt());
-        Log.print(" in ");
-        Log.printMethod(this, true);
-        throw FatalError.unexpected("Could not find stop position in target method");
-    }
-
-    @Override
     @HOSTED_ONLY
     public void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls) {
         // first gather methods in the directCallees array

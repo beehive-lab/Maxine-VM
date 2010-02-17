@@ -27,6 +27,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.gen.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
@@ -130,7 +131,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             if (is64) {
                 if (indexOpr.kind == CiKind.Int) {
                     LIROperand tmp = newRegister(CiKind.Long);
-                    lir.convert(Bytecodes.I2L, indexOpr, tmp);
+                    lir.convert(Bytecodes.I2L, indexOpr, tmp, null);
                     indexOpr = tmp;
                 }
             }
@@ -245,7 +246,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             LIROperand tmp2 = newRegister(CiKind.Object);
             LIROperand tmp3 = newRegister(CiKind.Object);
 
-            lir.storeCheck(value, array, tmp1, tmp2, tmp3, rangeCheckInfo.copy(), null);
+            lir.storeCheck(value, array, tmp1, tmp2, tmp3, rangeCheckInfo.copy(), null, stubFor(CiRuntimeCall.SlowStoreCheck));
         }
 
         if (needsBarrier) {
@@ -265,7 +266,13 @@ public final class X86LIRGenerator extends LIRGenerator {
         value.setDestroysRegister();
         value.loadItem();
         LIROperand reg = newRegister(x.kind);
-        lir.negate(value.result(), reg);
+        GlobalStub globalStub = null;
+        if (x.kind == CiKind.Float) {
+            globalStub = stubFor(GlobalStub.Id.fneg);
+        } else if (x.kind == CiKind.Double) {
+            globalStub = stubFor(GlobalStub.Id.dneg);
+        }
+        lir.negate(value.result(), reg, globalStub);
         setResult(x, reg);
     }
 
@@ -644,7 +651,14 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand result = newRegister(x.kind);
 
         // arguments of lirConvert
-        lir.convert(x.opcode(), input, result);
+        GlobalStub globalStub = null;
+        switch (x.opcode()) {
+            case Bytecodes.F2I: globalStub = stubFor(GlobalStub.Id.f2i); break;
+            case Bytecodes.F2L: globalStub = stubFor(GlobalStub.Id.f2l); break;
+            case Bytecodes.D2I: globalStub = stubFor(GlobalStub.Id.d2i); break;
+            case Bytecodes.D2L: globalStub = stubFor(GlobalStub.Id.d2l); break;
+        }
+        lir.convert(x.opcode(), input, result, globalStub);
         setResult(x, result);
     }
 
@@ -759,13 +773,17 @@ public final class X86LIRGenerator extends LIRGenerator {
         // info for exceptions
         LIRDebugInfo info = stateFor(x, x.stateBefore());
         LocalStub stub = null;
-        if (x.directCompare()) {
+        boolean directCompare = x.directCompare();
+        GlobalStub globalStub = null;
+        if (directCompare) {
             // this is a direct check, make a slow path
             stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowClassCastException), info, obj.result());
             info = null;
+        } else {
+            globalStub = stubFor(CiRuntimeCall.SlowCheckCast);
         }
         LIROperand reg = rlockResult(x);
-        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), ILLEGAL, ILLEGAL, x.directCompare(), info, stub);
+        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), ILLEGAL, ILLEGAL, directCompare, info, stub, globalStub);
     }
 
     @Override
@@ -775,7 +793,11 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIROperand reg = rlockResult(x);
         LIRDebugInfo patchingInfo = null;
         obj.loadItem();
-        lir.genInstanceof(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(CiKind.Object), ILLEGAL, x.directCompare(), patchingInfo);
+        GlobalStub globalStub = null;
+        if (!x.directCompare()) {
+            globalStub = stubFor(CiRuntimeCall.SlowInstanceOf);
+        }
+        lir.genInstanceof(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newRegister(CiKind.Object), ILLEGAL, x.directCompare(), patchingInfo,  globalStub);
     }
 
     @Override

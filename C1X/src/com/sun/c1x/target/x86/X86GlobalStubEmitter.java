@@ -34,7 +34,9 @@ import com.sun.c1x.xir.CiXirAssembler.*;
 
 public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
-    private static boolean callerFrameContainsArguments = false;
+    public static final int ARGUMENT_SIZE = 8;
+
+    private static boolean callerFrameContainsArguments = true;
 
     private static final int ReservedArgumentSlots = 4;
     private static final long FloatSignFlip = 0x8000000080000000L;
@@ -48,6 +50,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
     private final CiTarget target;
     private int argsSize;
     private int[] argOffsets;
+    private int resultOffset;
     private int localSize;
     private int saveSize;
     private int registerRestoreEpilogueOffset;
@@ -73,20 +76,28 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         saveSize = 0;
         argsSize = 0;
         argOffsets = new int[argTypes.length];
+        resultOffset = 0;
         registerRestoreEpilogueOffset = -1;
         registersSaved = null;
 
         for (int i = 0; i < argTypes.length; i++) {
             if (callerFrameContainsArguments) {
                 argOffsets[i] = argsSize;
-                argsSize += 8; // TODO: always allocate 8 bytes regardless of target word width?
             } else {
-                argOffsets[i] = -16 - (i * 8);
+                argOffsets[i] = -(ARGUMENT_SIZE + target.arch.wordSize) - (i * ARGUMENT_SIZE);
             }
+            argsSize += ARGUMENT_SIZE;
         }
 
-        if (resultKind != CiKind.Void && argsSize == 0) {
-            argsSize = 8;
+        if (resultKind != CiKind.Void) {
+            if (argsSize == 0) {
+                argsSize = ARGUMENT_SIZE;
+            }
+            if (callerFrameContainsArguments) {
+                resultOffset = 0;
+            } else {
+                resultOffset = -(ARGUMENT_SIZE + target.arch.wordSize);
+            }
         }
     }
 
@@ -95,7 +106,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         emitStandardForward(null, runtimeCall);
         CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + runtimeCall);
-        return new GlobalStub(null, runtimeCall.resultKind, stubObject, argsSize, argOffsets);
+        return new GlobalStub(null, runtimeCall.resultKind, stubObject, argsSize, argOffsets, resultOffset);
     }
 
     public GlobalStub emit(GlobalStub.Id stub, RiRuntime runtime) {
@@ -124,7 +135,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
 
         CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, "stub-" + stub);
-        return new GlobalStub(stub, stub.resultKind, stubObject, argsSize, argOffsets);
+        return new GlobalStub(stub, stub.resultKind, stubObject, argsSize, argOffsets, resultOffset);
     }
 
     private LIROperand allocateOperand(XirParameter param, int parameterIndex) {
@@ -233,7 +244,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         epilogue();
         CiTargetMethod targetMethod = asm.finishTargetMethod(this.runtime, registerRestoreEpilogueOffset);
         Object stubObject = runtime.registerTargetMethod(targetMethod, template.name);
-        return new GlobalStub(null, template.resultOperand.kind, stubObject, 0, argOffsets);
+        return new GlobalStub(null, template.resultOperand.kind, stubObject, argsSize, argOffsets, resultOffset);
     }
 
     private CiKind[] getArgumentKinds(XirTemplate template) {
@@ -339,12 +350,12 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
             // <-- lower addresses
             // | stub frame              | caller frame   |
             // | locals,savearea,retaddr | args .....     |
-            return frameSize() + (index + 1) * target.arch.wordSize;
+            return frameSize() + (index + 1) * ARGUMENT_SIZE;
         } else {
             // <-- lower addresses
             // | stub frame                   | caller frame   |
             // | locals,savearea,args,retaddr | ..........     |
-            return frameSize() - (index + 1) * target.arch.wordSize;
+            return frameSize() - (index + 1) * ARGUMENT_SIZE;
         }
     }
 
@@ -390,8 +401,8 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         asm.setFrameSize(frameSize());
         // save all registers
         for (CiRegister r : allRegisters) {
-            int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
-            if (r != X86.rsp && offset >= 0) {
+          int offset = target.registerConfig.getCalleeSaveRegisterOffset(r);
+              if (r != X86.rsp && offset >= 0) {
                 asm.movq(new Address(X86.rsp, offset), r);
             }
         }
@@ -402,7 +413,7 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         if (callerFrameContainsArguments) {
             return 0;
         } else {
-            return ReservedArgumentSlots * target.arch.wordSize;
+            return ReservedArgumentSlots * ARGUMENT_SIZE;
         }
     }
 

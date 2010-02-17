@@ -532,10 +532,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
         return (classMethodActor == null) ? description() : classMethodActor.format("%H.%n(%p)");
     }
 
-    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer instructionPointer, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
-
-    }
-
     protected final void setABI(TargetABI abi) {
         this.abi = abi;
     }
@@ -680,8 +676,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion {
      */
     @HOSTED_ONLY
     public abstract void gatherCalls(Set<MethodActor> directCalls, Set<MethodActor> virtualCalls, Set<MethodActor> interfaceCalls);
-
-    public abstract void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer);
 
     public abstract Address throwAddressToCatchAddress(boolean isTopFrame, Address throwAddress, Class<? extends Throwable> throwableClass);
 

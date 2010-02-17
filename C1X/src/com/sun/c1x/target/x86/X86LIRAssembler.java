@@ -925,8 +925,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 masm.cvttss2sil(dest.asRegister(), srcRegister);
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(Condition.notEqual, endLabel);
-                GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.f2i);
-                masm.callGlobalStub(globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
@@ -936,8 +935,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 masm.cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
                 masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(Condition.notEqual, endLabel);
-                GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.d2i);
-                masm.callGlobalStub(globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
                 // cannot cause an exception
                 masm.bind(endLabel);
                 break;
@@ -956,8 +954,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 masm.mov64(rscratch1, Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(Condition.notEqual, endLabel);
-                GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.f2l);
-                masm.callGlobalStub(globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
                 masm.bind(endLabel);
                 break;
             }
@@ -968,8 +965,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 masm.mov64(rscratch1, Long.MIN_VALUE);
                 masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(Condition.notEqual, endLabel);
-                GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.d2l);
-                masm.callGlobalStub(globalStub, null, dest.asRegister(), srcRegister);
+                masm.callGlobalStub(op.globalStub, null, dest.asRegister(), srcRegister);
                 masm.bind(endLabel);
                 break;
             }
@@ -1000,7 +996,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
             // get instance klass
             masm.movptr(kRInfo, new Address(kRInfo, compilation.runtime.elementHubOffset()));
-            masm.callRuntimeCalleeSaved(CiRuntimeCall.SlowStoreCheck, op.info, rtmp1, kRInfo, klassRInfo);
+            masm.callGlobalStub(op.globalStub, op.info, rtmp1, kRInfo, klassRInfo);
             masm.bind(done);
         } else if (op.code == LIROpcode.CheckCast) {
             // we always need a stub for the failure case.
@@ -1037,7 +1033,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 masm.bind(done);
             } else {
                 // perform a runtime call to cast the object
-                masm.callRuntimeCalleeSaved(CiRuntimeCall.SlowCheckCast, op.info, dst, obj, expectedHub);
+                masm.callGlobalStub(op.globalStub, op.info, dst, obj, expectedHub);
                 masm.bind(done);
             }
             if (dst != obj) {
@@ -1082,7 +1078,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 masm.cmpptr(obj, (int) NULLWORD);
                 masm.jcc(X86Assembler.Condition.equal, zero);
                 masm.movptr(klassRInfo, new Address(obj, compilation.runtime.hubOffset()));
-                masm.callRuntimeCalleeSaved(CiRuntimeCall.SlowSubtypeCheck, op.info, dst, kRInfo, klassRInfo);
+                masm.callGlobalStub(op.globalStub, op.info, dst, kRInfo, klassRInfo);
                 masm.jmp(done);
             }
             masm.bind(zero);
@@ -2078,14 +2074,14 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     }
 
     @Override
-    protected void emitInterfaceCall(RiMethod method, LIROperand receiver, LIRDebugInfo info) {
+    protected void emitInterfaceCall(RiMethod method, LIROperand receiver, LIRDebugInfo info, GlobalStub globalStub) {
         assert method.isLoaded() : "method is not resolved";
         assert receiver != null && receiver.isVariableOrRegister() : "Receiver must be in a register";
 
         // TODO: emit interface ID calculation inline
         masm.movl(rscratch1, method.interfaceID());
         // asm.recordExceptionHandlers(codePos(), info);
-        masm.callRuntimeCalleeSaved(CiRuntimeCall.RetrieveInterfaceIndex, info, rscratch1, receiver.asRegister(), rscratch1);
+        masm.callGlobalStub(globalStub, info, rscratch1, receiver.asRegister(), rscratch1);
         masm.addq(rscratch1, method.indexInInterface() * wordSize);
 
         masm.addq(rscratch1, new Address(receiver.asRegister(), compilation.runtime.hubOffset()));
@@ -2225,7 +2221,9 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     }
 
     @Override
-    protected void emitNegate(LIROperand left, LIROperand dest) {
+    protected void emitNegate(LIROp1 op) {
+        LIROperand left = op.operand();
+        LIROperand dest = op.result();
         if (left.isSingleCpu()) {
             masm.negl(left.asRegister());
             moveRegs(left.asRegister(), dest.asRegister());
@@ -2253,16 +2251,14 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
-            GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.fneg);
-            masm.callGlobalStub(globalStub, null, asXmmFloatReg(dest), asXmmFloatReg(dest));
+            masm.callGlobalStub(op.globalStub, null, asXmmFloatReg(dest), asXmmFloatReg(dest));
 
         } else if (dest.isDoubleXmm()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
 
-            GlobalStub globalStub = compilation.compiler.lookupGlobalStub(GlobalStub.Id.dneg);
-            masm.callGlobalStub(globalStub, null, asXmmDoubleReg(dest), asXmmDoubleReg(dest));
+            masm.callGlobalStub(op.globalStub, null, asXmmDoubleReg(dest), asXmmDoubleReg(dest));
         } else {
             throw Util.shouldNotReachHere();
         }

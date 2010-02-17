@@ -57,11 +57,6 @@ public class X86MacroAssembler extends X86Assembler {
         return callGlobalStubHelper(stub, stub.resultKind, info, result, args);
     }
 
-    public final int callRuntimeCalleeSaved(CiRuntimeCall stub, LIRDebugInfo info, CiRegister result, Object...args) {
-        assert args.length == stub.arguments.length;
-        return callGlobalStubHelper(compiler.lookupGlobalStub(stub), stub.resultKind, info, result, args);
-    }
-
     private int callGlobalStubHelper(GlobalStub stub, CiKind resultKind, LIRDebugInfo info, CiRegister result, Object... args) {
         for (int i = 0; i < args.length; i++) {
             storeParameter(args[i], stub.argOffsets[i]);
@@ -70,7 +65,7 @@ public class X86MacroAssembler extends X86Assembler {
         int pos = directCall(stub.stubObject, info);
 
         if (result != CiRegister.None) {
-            this.loadResult(result, 0, resultKind);
+            this.loadResult(result, stub.resultOffset, resultKind);
         }
 
         // Clear out parameters
@@ -82,18 +77,12 @@ public class X86MacroAssembler extends X86Assembler {
         return pos;
     }
 
-    private int calcGlobalStubParameterOffset(int index) {
-        assert index >= 0 : "invalid offset from rsp";
-        return -(index + 2) * wordSize;
-    }
-
-    void loadResult(CiRegister r, int index, CiKind kind) {
-        int offsetFromRspInBytes = calcGlobalStubParameterOffset(index);
+    void loadResult(CiRegister r, int offset, CiKind kind) {
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
-            movl(r, new Address(X86.rsp, offsetFromRspInBytes));
+            movl(r, new Address(X86.rsp, offset));
         } else {
             assert is64 : "64 bit only for now";
-            movq(r, new Address(X86.rsp, offsetFromRspInBytes));
+            movq(r, new Address(X86.rsp, offset));
         }
     }
 

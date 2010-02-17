@@ -58,10 +58,11 @@ public class XirTemplate {
     public final XirConstant[] constants;
     public final int variableCount;
     public final boolean allocateResultOperand;
+    public final XirTemplate[] calleeTemplates;
 
     public final int flags;
 
-    public XirTemplate(String name, int variableCount, boolean allocateResultOperand, XirOperand resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constantValues, int flags) {
+    public XirTemplate(String name, int variableCount, boolean allocateResultOperand, XirOperand resultOperand, CiXirAssembler.XirInstruction[] fastPath, CiXirAssembler.XirInstruction[] slowPath, XirLabel[] labels, XirParameter[] parameters, XirTemp[] temps, XirConstant[] constantValues, int flags, XirTemplate[] calleeTemplates) {
     	this.name = name;
     	this.variableCount = variableCount;
     	this.resultOperand = resultOperand;
@@ -73,32 +74,33 @@ public class XirTemplate {
         this.temps = temps;
         this.allocateResultOperand = allocateResultOperand;
         this.constants = constantValues;
+        this.calleeTemplates = calleeTemplates;
 
         assert fastPath != null;
         assert labels != null;
         assert parameters != null;
 
         parameterDestroyed = new boolean[parameters.length];
-        for (int i=0; i<parameters.length; i++) {
-        	for (XirInstruction ins : fastPath) {
-        		if (ins.result == parameters[i]) {
-        			parameterDestroyed[i] = true;
-        			break;
-        		}
-        	}
+        for (int i = 0; i < parameters.length; i++) {
+            for (XirInstruction ins : fastPath) {
+                if (ins.result == parameters[i]) {
+                    parameterDestroyed[i] = true;
+                    break;
+                }
+            }
 
-        	if (slowPath != null && !parameterDestroyed[i]) {
-        		for (XirInstruction ins : slowPath) {
-            		if (ins.result == parameters[i]) {
-            			parameterDestroyed[i] = true;
-            		}
-            	}
-        	}
+            if (slowPath != null && !parameterDestroyed[i]) {
+                for (XirInstruction ins : slowPath) {
+                    if (ins.result == parameters[i]) {
+                        parameterDestroyed[i] = true;
+                    }
+                }
+            }
         }
     }
 
     public boolean isParameterDestroyed(int index) {
-    	return parameterDestroyed[index];
+        return parameterDestroyed[index];
     }
 
     public boolean hasJavaCall() {
