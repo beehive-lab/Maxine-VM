@@ -18,34 +18,40 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.method;
+package com.sun.max.jdwp.vm.proxy;
 
-import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.jdwp.vm.core.*;
 
 /**
- * Describes a bytecode location in the {@link TeleVM}.
+ * Interface for defining a code position.
  *
- * @author Michael Van De Vanter
+ * @author Thomas Wuerthinger
+ *
  */
-public class TeleBytecodeLocation {
+public interface JdwpCodeLocation {
 
-    private final TeleClassMethodActor teleClassMethodActor;
+    /**
+     * Method provider for the compiled method.
+     *
+     * @return the method provider
+     */
+    @ConstantReturnValue
+    MethodProvider method();
 
-    public TeleClassMethodActor teleClassMethodActor() {
-        return teleClassMethodActor;
-    }
+    /**
+     * Position within the code. This can be a byte code or a machine code position.
+     *
+     * @return position
+     */
+    @ConstantReturnValue
+    long position();
 
-    private final BytecodeLocation bytecodeLocation;
-
-    public BytecodeLocation bytecodeLocation() {
-        return bytecodeLocation;
-    }
-
-    public TeleBytecodeLocation(TeleClassMethodActor teleClassMethodActor, int position) {
-        this.teleClassMethodActor = teleClassMethodActor;
-        this.bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), position);
-    }
-
+    /**
+     * Checks whether the position refers to a machine code location.
+     *
+     * @return true if this code location represents a machine code location
+     */
+    @JDWPPlus
+    @ConstantReturnValue
+    boolean isMachineCode();
 }

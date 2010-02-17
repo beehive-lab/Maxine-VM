@@ -40,6 +40,6 @@ public interface TeleScheme {
      *
      * @return descriptions of methods unique to a specific scheme implementation.
      */
-    Sequence<MaxInspectableMethod> inspectableMethods();
+    Sequence<MaxCodeLocation> inspectableMethods();
 
 }

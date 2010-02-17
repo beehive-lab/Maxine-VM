@@ -28,21 +28,21 @@ import com.sun.max.jdwp.vm.proxy.*;
  *
  * @author Thomas Wuerthinger
  */
-class CodeLocationImpl implements CodeLocation{
+class JdwpCodeLocationImpl implements JdwpCodeLocation{
 
     private MethodProvider method;
     private long position;
     private boolean isMachineCode;
 
-    CodeLocationImpl(MethodProvider method) {
+    JdwpCodeLocationImpl(MethodProvider method) {
         this(method, 0);
     }
 
-    CodeLocationImpl(MethodProvider method, int position) {
+    JdwpCodeLocationImpl(MethodProvider method, int position) {
         this(method, position, false);
     }
 
-    CodeLocationImpl(MethodProvider method, long position, boolean isMachineCode) {
+    JdwpCodeLocationImpl(MethodProvider method, long position, boolean isMachineCode) {
         this.method = method;
         this.position = position;
         this.isMachineCode = isMachineCode;
@@ -75,10 +75,10 @@ class CodeLocationImpl implements CodeLocation{
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof CodeLocationImpl)) {
+        if (!(obj instanceof JdwpCodeLocationImpl)) {
             return false;
         }
-        final CodeLocationImpl cl = (CodeLocationImpl) obj;
+        final JdwpCodeLocationImpl cl = (JdwpCodeLocationImpl) obj;
         return cl.method().equals(method()) && cl.position == position && cl.isMachineCode == isMachineCode;
     }
 

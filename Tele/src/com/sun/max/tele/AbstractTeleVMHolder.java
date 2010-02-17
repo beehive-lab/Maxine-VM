@@ -20,6 +20,9 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
+
 /**
  * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
  *
@@ -28,11 +31,7 @@ package com.sun.max.tele;
  */
 public abstract class AbstractTeleVMHolder implements TeleVMHolder {
 
-    protected final TeleVM teleVM;
-
-    public final TeleVM teleVM() {
-        return teleVM;
-    }
+    private final TeleVM teleVM;
 
     private final String tracePrefix;
 
@@ -46,6 +45,22 @@ public abstract class AbstractTeleVMHolder implements TeleVMHolder {
     protected AbstractTeleVMHolder(TeleVM teleVM) {
         this.teleVM = teleVM;
         this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
+    }
+
+    public final TeleVM teleVM() {
+        return teleVM;
+    }
+
+    public CodeManager codeManager() {
+        return teleVM.codeManager();
+    }
+
+    public TeleBreakpointFactory breakpointFactory() {
+        return teleVM.breakpointFactory();
+    }
+
+    public TeleWatchpoint.Factory watchpointFactory() {
+        return teleVM.watchpointFactory();
     }
 
 }

@@ -33,7 +33,7 @@ public interface FrameProvider extends Provider {
     /**
      * @return the current location of the instruction pointer in this frame
      */
-    CodeLocation getLocation();
+    JdwpCodeLocation getLocation();
 
     /**
      * Accesses the values on the stack.

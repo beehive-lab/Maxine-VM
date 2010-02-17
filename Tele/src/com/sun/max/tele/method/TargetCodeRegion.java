@@ -33,14 +33,28 @@ public class TargetCodeRegion extends RuntimeMemoryRegion {
 
     private final TeleTargetRoutine teleTargetRoutine;
 
-    public TeleTargetRoutine teleTargetRoutine() {
-        return teleTargetRoutine;
-    }
-
     public TargetCodeRegion(TeleTargetRoutine teleTargetRoutine, Address start, Size size) {
         super(start, size);
         this.teleTargetRoutine = teleTargetRoutine;
         setDescription("TeleTarget-" + teleTargetRoutine.toString());
+    }
+
+    public TeleTargetRoutine teleTargetRoutine() {
+        return teleTargetRoutine;
+    }
+
+    /**
+     * Does this region of compiled code contain a particular location.
+     * Always false if the location is not a compiled location.
+     *
+     * @param codeLocation location of a code instruction in the VM
+     * @return whether the code instruction is a target instruction in this region
+     */
+    public boolean contains(MaxCodeLocation codeLocation) {
+        if (codeLocation.hasAddress()) {
+            return contains(codeLocation.address());
+        }
+        return false;
     }
 
 }

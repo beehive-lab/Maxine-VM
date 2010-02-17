@@ -63,12 +63,17 @@ public abstract class TargetCodeViewer extends CodeViewer {
     }
 
     private final IndexedSequence<TargetCodeInstruction> instructions;
+    private IndexedSequence<MaxCodeLocation> instructionLocations;
 
     /**
      * @return disassembled target code instructions for the method being viewed.
      */
     public IndexedSequence<TargetCodeInstruction> instructions() {
         return instructions;
+    }
+
+    public IndexedSequence<MaxCodeLocation> instructionLocations() {
+        return instructionLocations;
     }
 
     private final TeleConstantPool teleConstantPool;
@@ -121,6 +126,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
         super(inspection, parent);
         this.teleTargetRoutine = teleTargetRoutine;
         instructions = teleTargetRoutine.getInstructions();
+        instructionLocations = new VectorSequence<MaxCodeLocation>(teleTargetRoutine.getInstructionLocations());
         final TeleClassMethodActor teleClassMethodActor = teleTargetRoutine.getTeleClassMethodActor();
         if (teleClassMethodActor != null) {
             final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
@@ -186,12 +192,13 @@ public abstract class TargetCodeViewer extends CodeViewer {
         } else {
             for (int row = 0; row < targetInstructionCount; row++) {
                 int stopIndex = -1;
-                final int position = instructions.get(row).position;
-                if (position >= 0 && position < positionToStopIndex.length) {
+                // byte offset of this machine code instruction from beginning
+                final int machineInstructionPosition = instructions.get(row).position;
+                if (machineInstructionPosition >= 0 && machineInstructionPosition < positionToStopIndex.length) {
                     // The disassembler sometimes seems to report wild positions
                     // when disassembling random binary; this can happen when
                     // viewing some unknown native code whose length we must guess.
-                    stopIndex = positionToStopIndex[position];
+                    stopIndex = positionToStopIndex[machineInstructionPosition];
                 }
                 if (stopIndex >= 0) {
                     // the row is at a stop point
@@ -250,7 +257,8 @@ public abstract class TargetCodeViewer extends CodeViewer {
     private final MethodRefIndexFinder methodRefIndexFinder = new MethodRefIndexFinder();
 
     /**
-     * @param bytecodePosition
+     * @param bytecodes
+     * @param bytecodePosition byte offset into bytecodes
      * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
      */
     private int findCalleeIndex(byte[] bytecodes, int bytecodePosition) {
@@ -286,17 +294,21 @@ public abstract class TargetCodeViewer extends CodeViewer {
         int stackPosition = 0;
         for (StackFrame frame : frames) {
             final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
-            final boolean isFrameForThisCode = frame instanceof CompiledStackFrame ?
-                            targetCodeRegion.overlaps(frame.targetMethod()) :
-                            targetCodeRegion.contains(maxVM().getCodeAddress(frame));
-            if (isFrameForThisCode) {
-                int row = 0;
-                for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                    if (targetCodeInstruction.address.equals(maxVM().getCodeAddress(frame))) {
-                        rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition);
-                        break;
+            final MaxCodeLocation frameCodeLocation = codeManager().createMachineCodeLocation(frame);
+            if (frameCodeLocation != null) {
+                final boolean isFrameForThisCode =
+                    frame instanceof CompiledStackFrame ?
+                                    targetCodeRegion.overlaps(frame.targetMethod()) :
+                                        targetCodeRegion.contains(frameCodeLocation);
+                if (isFrameForThisCode) {
+                    int row = 0;
+                    for (TargetCodeInstruction targetCodeInstruction : instructions) {
+                        if (targetCodeInstruction.address.equals(frameCodeLocation.address())) {
+                            rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition, frameCodeLocation);
+                            break;
+                        }
+                        row++;
                     }
-                    row++;
                 }
             }
             stackPosition++;
@@ -307,7 +319,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * Does the instruction address have a target code breakpoint set in the VM.
      */
     protected MaxBreakpoint getTargetBreakpointAtRow(int row) {
-        return maxVM().getBreakpointAt(instructions.get(row).address);
+        return breakpointFactory().findBreakpoint(instructionLocations.get(row));
     }
 
     protected final String rowToTagText(int row) {
