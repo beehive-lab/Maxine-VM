@@ -243,8 +243,6 @@ public abstract class SPARCAdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected Adapter create(Sig sig) {
-            assert sig != DYNAMIC_TRAMPOLINE;
-
             throw FatalError.unimplemented();
         }
 
@@ -378,7 +376,6 @@ public abstract class SPARCAdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected Adapter create(Sig sig) {
-            assert sig != SPARCAdapterGenerator.DYNAMIC_TRAMPOLINE : "dynamic trampoline compiled with JIT calling convention";
             throw FatalError.unimplemented();
         }
 
