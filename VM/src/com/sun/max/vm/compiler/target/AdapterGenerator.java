@@ -34,7 +34,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
-import com.sun.max.vm.trampoline.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -55,11 +54,6 @@ public abstract class AdapterGenerator {
      * Local alias to {@link JitStackFrameLayout#JIT_SLOT_SIZE}.
      */
     public static final int JIT_SLOT_SIZE = JitStackFrameLayout.JIT_SLOT_SIZE;
-
-    /**
-     * Sentinel value denoting the special adapter for a {@linkplain DynamicTrampoline dynamic trampoline}.
-     */
-    public static final Sig DYNAMIC_TRAMPOLINE = new Sig(SignatureDescriptor.VOID, 0);
 
     /**
      * A signature denotes the parameter kinds of a call including the receiver kind if applicable.
@@ -113,7 +107,7 @@ public abstract class AdapterGenerator {
     /**
      * The special adapter called by a dynamic trampoline.
      */
-    private Adapter dynamicTrampolineAdapter;
+    //protected Adapter dynamicTrampolineAdapter;
 
     /**
      * The ABI for code compiled with the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT OPT} calling convention.
@@ -242,11 +236,10 @@ public abstract class AdapterGenerator {
             }
             // JIT2OPT parameterless calls still require an adapter to save and restore the frame pointer
         }
-        if (Actor.isVirtualTrampoline(flags) || Actor.isInterfaceTrampoline(flags)) {
-            if (dynamicTrampolineAdapter == null) {
-                dynamicTrampolineAdapter = create(DYNAMIC_TRAMPOLINE);
-            }
-            return dynamicTrampolineAdapter;
+
+        if (Actor.isTrampoline(flags)) {
+            // Trampolines save and restore all registers
+            return null;
         }
 
         // Access to table of adapters must be synchronized
