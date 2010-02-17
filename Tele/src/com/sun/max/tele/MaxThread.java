@@ -22,7 +22,6 @@ package com.sun.max.tele;
 
 import com.sun.max.annotate.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -81,7 +80,7 @@ public interface MaxThread {
     /**
      * @return the current state of the thread.
      */
-    ThreadState state();
+    MaxThreadState state();
 
     /**
      * Determines if this is the primordial VM thread. The primordial VM thread is the native thread on which the VM was
