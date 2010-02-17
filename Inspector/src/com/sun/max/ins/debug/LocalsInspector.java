@@ -282,7 +282,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         initPanelView();
         final JPanel mainPanel = new InspectorPanel(inspection());
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
-        final JCheckBox showAll = new InspectorCheckBox(inspection(), "show all", null, true);
+        final InspectorCheckBox showAll = new InspectorCheckBox(inspection(), "show all", null, true);
         showAll.setMnemonic(KeyEvent.VK_C);
         showAll.addItemListener(this);
         showAll.setAlignmentX(Component.LEFT_ALIGNMENT);

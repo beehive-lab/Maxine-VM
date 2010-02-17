@@ -98,7 +98,7 @@ public final class HubInspector extends ObjectInspector {
 
         // Display a tool bar with check boxes to control which panes are displayed.
         final JToolBar toolBar = new InspectorToolBar(inspection());
-        final  JCheckBox showFieldsCheckBox = new InspectorCheckBox(inspection(), "fields", "Display hub fields?", showFields);
+        final  InspectorCheckBox showFieldsCheckBox = new InspectorCheckBox(inspection(), "fields", "Display hub fields?", showFields);
         showFieldsCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 showFields = showFieldsCheckBox.isSelected();
@@ -107,7 +107,7 @@ public final class HubInspector extends ObjectInspector {
         });
         toolBar.add(showFieldsCheckBox);
         toolBar.add(Box.createHorizontalGlue());
-        final JCheckBox showVTableCheckBox = new InspectorCheckBox(inspection(), "vTable", "Display hub vTables?", showVTables);
+        final InspectorCheckBox showVTableCheckBox = new InspectorCheckBox(inspection(), "vTable", "Display hub vTables?", showVTables);
         showVTableCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 showVTables = showVTableCheckBox.isSelected();
@@ -116,7 +116,7 @@ public final class HubInspector extends ObjectInspector {
         });
         toolBar.add(showVTableCheckBox);
         toolBar.add(Box.createHorizontalGlue());
-        final JCheckBox showITableCheckBox = new InspectorCheckBox(inspection(), "iTable", "Display hub iTables?", showITables);
+        final InspectorCheckBox showITableCheckBox = new InspectorCheckBox(inspection(), "iTable", "Display hub iTables?", showITables);
         showITableCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 showITables = showITableCheckBox.isSelected();
@@ -125,7 +125,7 @@ public final class HubInspector extends ObjectInspector {
         });
         toolBar.add(showITableCheckBox);
         toolBar.add(Box.createHorizontalGlue());
-        final JCheckBox showMTableCheckBox = new InspectorCheckBox(inspection(), "mTable", "Display hub mTables?", showMTables);
+        final InspectorCheckBox showMTableCheckBox = new InspectorCheckBox(inspection(), "mTable", "Display hub mTables?", showMTables);
         showMTableCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 showMTables = showMTableCheckBox.isSelected();
@@ -134,7 +134,7 @@ public final class HubInspector extends ObjectInspector {
         });
         toolBar.add(showMTableCheckBox);
         toolBar.add(Box.createHorizontalGlue());
-        final JCheckBox showRefMapCheckBox = new InspectorCheckBox(inspection(), "ref. map", "Display hub ref map?", showRefMaps);
+        final InspectorCheckBox showRefMapCheckBox = new InspectorCheckBox(inspection(), "ref. map", "Display hub ref map?", showRefMaps);
         showRefMapCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 showRefMaps = showRefMapCheckBox.isSelected();

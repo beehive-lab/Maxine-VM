@@ -93,7 +93,7 @@ public final class CompiledStackFrameViewPreferences extends TableColumnVisibili
     @Override
     public JPanel getPanel() {
 
-        final JCheckBox biasCheckBox = new InspectorCheckBox(inspection(), "Bias Offsets", "Display stack slot offsets with platform-specific bias", biasSlotOffsets);
+        final InspectorCheckBox biasCheckBox = new InspectorCheckBox(inspection(), "Bias Offsets", "Display stack slot offsets with platform-specific bias", biasSlotOffsets);
         biasCheckBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final JCheckBox checkBox = (JCheckBox) e.getSource();

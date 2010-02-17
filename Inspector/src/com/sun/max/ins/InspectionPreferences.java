@@ -375,7 +375,7 @@ final class InspectionPreferences extends AbstractSaveSettingsListener {
      */
     private JPanel getDebugPanel() {
 
-        final JCheckBox wordValueCheckBox =
+        final InspectorCheckBox wordValueCheckBox =
             new InspectorCheckBox(inspection,
                             "Investigate memory references",
                             "Should displayed memory words be investigated as possible references by reading from the VM",

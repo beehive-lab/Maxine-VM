@@ -88,13 +88,13 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
      * @return a GUI panel for setting these preferences
      */
     public JPanel getPanel() {
-        final JCheckBox[] checkBoxes = new JCheckBox[MethodCodeKind.VALUES.length()];
+        final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[MethodCodeKind.VALUES.length()];
 
         final ItemListener itemListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 final Object source = e.getItemSelectable();
                 for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
-                    final JCheckBox checkBox = checkBoxes[codeKind.ordinal()];
+                    final InspectorCheckBox checkBox = checkBoxes[codeKind.ordinal()];
                     if (source == checkBox) {
                         visibleCodeKinds.put(codeKind, checkBox.isSelected());
                         inspection().settings().save();
@@ -108,7 +108,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
         final String toolTipText = "Should new Method inspectors initially display this code, when available?";
         for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
             final boolean currentValue = visibleCodeKinds.get(codeKind);
-            final JCheckBox checkBox =
+            final InspectorCheckBox checkBox =
                 new InspectorCheckBox(inspection(), codeKind.toString(), toolTipText, currentValue);
             checkBox.addItemListener(itemListener);
             checkBoxes[codeKind.ordinal()] = checkBox;
