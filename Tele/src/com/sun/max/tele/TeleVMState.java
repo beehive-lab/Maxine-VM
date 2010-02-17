@@ -174,7 +174,7 @@ public final class TeleVMState implements MaxVMState {
         return sb.toString();
     }
 
-    public void writeSummaryToStream(PrintStream printStream) {
+    public void writeSummary(PrintStream printStream) {
         MaxVMState state = this;
         while (state != null) {
             final StringBuilder sb = new StringBuilder(100);

@@ -701,10 +701,6 @@ public abstract class TeleVM implements MaxVM {
         }
     }
 
-    public final void describeVMStateHistory(PrintStream printStream) {
-        teleVMState.writeSummaryToStream(printStream);
-    }
-
     public final int getInterpreterUseLevel() {
         return interpreterUseLevel;
     }

@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 
@@ -164,4 +166,12 @@ public interface MaxVMState  {
      * Any state transition is strictly newer than null.
      */
     boolean newerThan(MaxVMState maxVMState);
+
+
+    /**
+     * Writes a textual summary describing this and all predecessor states.
+     * <br>
+     * Thread-safe.
+     */
+    void writeSummary(PrintStream printStream);
 }
