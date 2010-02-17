@@ -69,7 +69,7 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         return maxStackFrames;
     }
 
-    public void writeSummaryToStream(PrintStream printStream) {
+    public void writeSummary(PrintStream printStream) {
         printStream.println("Stack frames :");
         for (MaxStackFrame maxStackFrame : frames().clone()) {
             printStream.println("  " + maxStackFrame.toString());

@@ -95,5 +95,5 @@ public interface MaxBreakpointFactory {
      *
      * @param printStream
      */
-    void writeSummaryToStream(PrintStream printStream);
+    void writeSummary(PrintStream printStream);
 }

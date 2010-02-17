@@ -188,6 +188,6 @@ public interface MaxWatchpointFactory {
      *
      * @param printStream
      */
-    void writeSummaryToStream(PrintStream printStream);
+    void writeSummary(PrintStream printStream);
 
 }

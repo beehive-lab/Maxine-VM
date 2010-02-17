@@ -4676,7 +4676,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                thread.stack().writeSummaryToStream(System.out);
+                thread.stack().writeSummary(System.out);
             }
         }
     }
@@ -4772,7 +4772,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            maxVM().breakpointFactory().writeSummaryToStream(System.out);
+            maxVM().breakpointFactory().writeSummary(System.out);
         }
     }
 
@@ -4798,7 +4798,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            watchpointFactory().writeSummaryToStream(System.out);
+            watchpointFactory().writeSummary(System.out);
         }
     }
 

@@ -54,6 +54,6 @@ public interface MaxStack {
      *
      * @param printStream
      */
-    void writeSummaryToStream(PrintStream printStream);
+    void writeSummary(PrintStream printStream);
 
 }
