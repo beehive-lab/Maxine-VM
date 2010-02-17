@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -32,7 +33,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * Base class for views of disassembled target code for a single method in the VM.
@@ -140,7 +140,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
             localConstantPool = null;
         }
         final int targetInstructionCount = instructions.length();
-        rowToStackFrameInfo = new StackFrameInfo[targetInstructionCount];
+        rowToStackFrame = new MaxStackFrame[targetInstructionCount];
         tagTextForRow = new String[targetInstructionCount];
         rowToBytecodeLocation = new BytecodeLocation[targetInstructionCount];
         rowToCalleeIndex = new int[targetInstructionCount];
@@ -155,8 +155,10 @@ public abstract class TargetCodeViewer extends CodeViewer {
         Arrays.fill(positionToStopIndex, -1);
         final StopPositions stopPositions = teleTargetRoutine.getStopPositions();
         if (stopPositions != null) {
-            for (int i = 0; i < stopPositions.length(); ++i) {
-                positionToStopIndex[stopPositions.get(i)] = i;
+            for (int stopPositionIndex = 0; stopPositionIndex < stopPositions.length(); ++stopPositionIndex) {
+                final int stopPosition = stopPositions.get(stopPositionIndex);
+                ProgramError.check(stopPosition >= 0 && stopPosition < positionToStopIndex.length);
+                positionToStopIndex[stopPosition] = stopPositionIndex;
             }
         }
 
@@ -284,34 +286,30 @@ public abstract class TargetCodeViewer extends CodeViewer {
         if (thread == null) {
             return;
         }
-        final Sequence<StackFrame> frames = thread.frames();
+        final Sequence<MaxStackFrame> frames = thread.stack().frames();
 
-        Arrays.fill(rowToStackFrameInfo, null);
+        Arrays.fill(rowToStackFrame, null);
 
         // For very deep stacks (e.g. when debugging a metacircular related infinite recursion issue),
         // it's faster to loop over the frames and then only loop over the instructions for each
         // frame related to the target code represented by this viewer.
-        int stackPosition = 0;
-        for (StackFrame frame : frames) {
-            final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
-            final MaxCodeLocation frameCodeLocation = codeManager().createMachineCodeLocation(frame);
+        final TargetCodeRegion targetCodeRegion = teleTargetRoutine().targetCodeRegion();
+        for (MaxStackFrame frame : frames) {
+            final MaxCodeLocation frameCodeLocation = frame.codeLocation();
             if (frameCodeLocation != null) {
                 final boolean isFrameForThisCode =
-                    frame instanceof CompiledStackFrame ?
+                    frame instanceof MaxStackFrame.Compiled ?
                                     targetCodeRegion.overlaps(frame.targetMethod()) :
                                         targetCodeRegion.contains(frameCodeLocation);
                 if (isFrameForThisCode) {
-                    int row = 0;
-                    for (TargetCodeInstruction targetCodeInstruction : instructions) {
-                        if (targetCodeInstruction.address.equals(frameCodeLocation.address())) {
-                            rowToStackFrameInfo[row] = new StackFrameInfo(frame, thread, stackPosition, frameCodeLocation);
+                    for (int row = 0; row < instructions.length(); row++) {
+                        if (instructions.get(row).address.equals(frameCodeLocation.address())) {
+                            rowToStackFrame[row] = frame;
                             break;
                         }
-                        row++;
                     }
                 }
             }
-            stackPosition++;
         }
     }
 

@@ -24,7 +24,6 @@ import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * An adapter for listening to changes of focus (view state) in the Inspector.
@@ -39,7 +38,7 @@ public class InspectionFocusAdapter implements ViewFocusListener {
     public void threadFocusSet(MaxThread oldThread, MaxThread thread) {
     }
 
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
+    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {

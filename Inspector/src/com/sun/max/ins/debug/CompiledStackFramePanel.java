@@ -31,6 +31,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.lang.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
@@ -43,30 +44,30 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-abstract class CompiledStackFramePanel<StackFrame_Type extends CompiledStackFrame> extends InspectorPanel {
+abstract class CompiledStackFramePanel<MaxStackFrame_Type extends MaxStackFrame.Compiled> extends InspectorPanel {
 
     // TODO (mlvdv) create a suite of StackFramePanels to handle the different kinds of frames more usefully.
 
-    private StackFrame_Type stackFrame;
+    private MaxStackFrame_Type stackFrame;
     private CompiledStackFrameHeaderPanel headerPanel;
 
     /**
      * A panel specialized for displaying a stack frame, uses {@link BorderLayout}, and
      * adds a generic frame description at the top.
      */
-    public CompiledStackFramePanel(Inspection inspection, StackFrame_Type stackFrame) {
+    public CompiledStackFramePanel(Inspection inspection, MaxStackFrame_Type stackFrame) {
         super(inspection, new BorderLayout());
         this.stackFrame = stackFrame;
         this.headerPanel = new CompiledStackFrameHeaderPanel(inspection, stackFrame);
         add(headerPanel, BorderLayout.NORTH);
     }
 
-    public final StackFrame_Type stackFrame() {
+    public final MaxStackFrame_Type stackFrame() {
         return stackFrame;
     }
 
-    public final void setStackFrame(StackFrame stackFrame) {
-        final Class<StackFrame_Type> type = null;
+    public final void setStackFrame(MaxStackFrame stackFrame) {
+        final Class<MaxStackFrame_Type> type = null;
         this.stackFrame = StaticLoophole.cast(type, stackFrame);
         refresh(true);
     }
@@ -93,7 +94,7 @@ abstract class CompiledStackFramePanel<StackFrame_Type extends CompiledStackFram
         // Labels that may need updating
         private final AppendableSequence<InspectorLabel> labels = new LinkSequence<InspectorLabel>();
 
-        public CompiledStackFrameHeaderPanel(Inspection inspection, StackFrame_Type stackFrame) {
+        public CompiledStackFrameHeaderPanel(Inspection inspection, MaxStackFrame_Type stackFrame) {
             super(inspection, new SpringLayout());
 
             final String frameClassName = stackFrame.getClass().getSimpleName();
@@ -104,7 +105,7 @@ abstract class CompiledStackFramePanel<StackFrame_Type extends CompiledStackFram
 
                 @Override
                 public void refresh(boolean force) {
-                    setValue(CompiledStackFramePanel.this.stackFrame.layout.frameSize());
+                    setValue(CompiledStackFramePanel.this.stackFrame.layout().frameSize());
                 }
             });
 
@@ -112,7 +113,7 @@ abstract class CompiledStackFramePanel<StackFrame_Type extends CompiledStackFram
             addInspectorLabel(new DataLabel.BiasedStackAddressAsHex(inspection(), bias) {
                 @Override
                 public void refresh(boolean force) {
-                    setValue(CompiledStackFramePanel.this.stackFrame.fp);
+                    setValue(CompiledStackFramePanel.this.stackFrame.fp());
                 }
             });
 
@@ -120,7 +121,7 @@ abstract class CompiledStackFramePanel<StackFrame_Type extends CompiledStackFram
             addInspectorLabel(new DataLabel.BiasedStackAddressAsHex(inspection(), bias) {
                 @Override
                 public void refresh(boolean force) {
-                    setValue(CompiledStackFramePanel.this.stackFrame.sp);
+                    setValue(CompiledStackFramePanel.this.stackFrame.sp());
                 }
             });
 
@@ -128,7 +129,7 @@ abstract class CompiledStackFramePanel<StackFrame_Type extends CompiledStackFram
             addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, this) {
                 @Override
                 public Value fetchValue() {
-                    return WordValue.from(CompiledStackFramePanel.this.stackFrame.ip);
+                    return WordValue.from(CompiledStackFramePanel.this.stackFrame.ip());
                 }
             });
 

@@ -27,20 +27,19 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * Display panel specialized for displaying VM stack frames for VM compiled methods.
  *
  * @author Michael Van De Vanter
  */
-public final class DefaultCompiledStackFramePanel extends CompiledStackFramePanel<CompiledStackFrame> {
+public final class DefaultCompiledStackFramePanel<MaxStackFrame_Type extends MaxStackFrame.Compiled> extends CompiledStackFramePanel<MaxStackFrame_Type> {
 
     private final CompiledStackFrameTable compiledStackFrameTable;
 
-    public DefaultCompiledStackFramePanel(Inspection inspection, CompiledStackFrame javaStackFrame, MaxThread thread, CompiledStackFrameViewPreferences preferences) {
+    public DefaultCompiledStackFramePanel(Inspection inspection, MaxStackFrame_Type javaStackFrame, CompiledStackFrameViewPreferences preferences) {
         super(inspection, javaStackFrame);
-        compiledStackFrameTable = new CompiledStackFrameTable(inspection, javaStackFrame, thread, preferences);
+        compiledStackFrameTable = new CompiledStackFrameTable(inspection, javaStackFrame, preferences);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), compiledStackFrameTable);
         add(scrollPane, BorderLayout.CENTER);
         refresh(true);

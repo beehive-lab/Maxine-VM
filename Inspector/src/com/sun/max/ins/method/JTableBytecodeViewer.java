@@ -436,16 +436,16 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
             final StringBuilder toolTipText = new StringBuilder(100);
-            final StackFrameInfo stackFrameInfo = stackFrameInfo(row);
-            if (stackFrameInfo != null) {
+            final MaxStackFrame stackFrame = stackFrame(row);
+            if (stackFrame != null) {
                 toolTipText.append("Stack ");
-                toolTipText.append(stackFrameInfo.position());
+                toolTipText.append(stackFrame.position());
                 toolTipText.append(":  0x");
-                toolTipText.append(stackFrameInfo.codeLocation().address().toHexString());
+                toolTipText.append(stackFrame.codeLocation().address().toHexString());
                 toolTipText.append(" thread=");
-                toolTipText.append(inspection.nameDisplay().longName(stackFrameInfo.thread()));
+                toolTipText.append(inspection.nameDisplay().longName(stackFrame.stack().thread()));
                 toolTipText.append("; ");
-                if (stackFrameInfo.frame().isTopFrame()) {
+                if (stackFrame.isTop()) {
                     setIcon(style().debugIPTagIcon());
                     setForeground(style().debugIPTagColor());
                 } else {

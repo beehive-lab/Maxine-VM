@@ -18,42 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.debug;
+package com.sun.max.tele;
 
-import javax.swing.*;
+import java.io.*;
 
-import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.stack.*;
+import com.sun.max.collect.*;
+import com.sun.max.memory.*;
 
 /**
- * A panel for displaying locals and operand stack of a stack frame associated with a method
- * compiled with the template-based compiler.
- * @author Laurent Daynes
+ * The stack for a thread in the VM.
  *
+ * @author Michael Van De Vanter
  */
-public final class LocalsPanel extends InspectorPanel {
+public interface MaxStack {
 
-    public final int maxLocals;
-    public final int maxStacks;
-    public final int numArguments;
+    /**
+     * @return the memory in the VM allocated for this stack.
+     */
+    MemoryRegion memoryRegion();
 
-    public LocalsPanel(Inspection inspection, CompiledStackFrame javaStackFrame) {
-        super(inspection, new SpringLayout());
-        final ClassMethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
-        maxLocals = classMethodActor.codeAttribute().maxLocals;
-        maxStacks = classMethodActor.codeAttribute().maxStack;
-        numArguments = classMethodActor.numberOfParameterSlots();
-    }
+    /**
+     * @return the thread that owns this stack.
+     */
+    MaxThread thread();
 
-    @Override
-    public void refresh(boolean force) {
-        // No data that can change
-    }
+    /**
+     * @return the frames in the stack
+     */
+    IndexedSequence<MaxStackFrame> frames();
 
-    @Override
-    public void redisplay() {
-        // No apparent view configuration information
-    }
+    /**
+     * Writes a textual description of each stack frame.
+     * <br>
+     * Thread-safe
+     *
+     * @param printStream
+     */
+    void writeSummaryToStream(PrintStream printStream);
+
 }

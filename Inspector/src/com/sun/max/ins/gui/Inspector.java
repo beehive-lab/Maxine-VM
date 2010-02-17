@@ -36,7 +36,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.stack.*;
 
 /**
  * <p>
@@ -447,7 +446,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
     public void threadFocusSet(MaxThread oldMaxThread, MaxThread maxeThread) {
     }
 
-    public void stackFrameFocusChanged(StackFrame oldStackFrame, MaxThread threadForStackFrame, StackFrame stackFrame) {
+    public void stackFrameFocusChanged(MaxStackFrame oldStackFrame, MaxStackFrame stackFrame) {
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {
