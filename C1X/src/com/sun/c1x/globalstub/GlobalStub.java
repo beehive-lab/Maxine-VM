@@ -60,13 +60,15 @@ public class GlobalStub {
     public final Object stubObject;
     public final int argsSize;
     public final int[] argOffsets;
+    public final int resultOffset;
 
-    public GlobalStub(Id id, CiKind resultKind, Object stubObject, int argsSize, int[] argOffsets) {
+    public GlobalStub(Id id, CiKind resultKind, Object stubObject, int argsSize, int[] argOffsets, int resultOffset) {
         this.id = id;
         this.resultKind = resultKind;
         this.stubObject = stubObject;
         this.argsSize = argsSize;
         this.argOffsets = argOffsets;
+        this.resultOffset = resultOffset;
     }
 
 }

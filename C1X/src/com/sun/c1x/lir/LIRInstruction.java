@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.util.Util;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
 
@@ -55,7 +56,9 @@ public abstract class LIRInstruction {
 
     public final boolean hasCall;
 
-    public LocalStub stub;
+    public final LocalStub stub;
+    public GlobalStub globalStub;
+
     public static final OperandMode[] OPERAND_MODES = OperandMode.values();
 
     public enum OperandMode {
@@ -352,7 +355,6 @@ public abstract class LIRInstruction {
      * @param out the LogStream to print into.
      */
     public void printInstruction(LogStream out) {
-
         out.printf("%s = (", result.get(this), this.code.name());
         for (OperandSlot operandSlot : operandSlots) {
             out.printf("%s ", operandSlot.get(this));

@@ -31,6 +31,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
 
 /**
  * This class represents an ongoing or completed compilation.
@@ -159,6 +160,9 @@ public class Compilation implements Future<TargetMethod> {
         Throwable error = null;
         String methodString = "";
         try {
+            if (StackReferenceMapPreparer.verifyRefMaps.getValue()) {
+                StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
+            }
             if (GC_ON_COMPILE_OPTION.getValue() && Heap.isInitialized()) {
                 System.gc();
             }

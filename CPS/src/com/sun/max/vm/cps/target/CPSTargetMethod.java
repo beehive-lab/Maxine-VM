@@ -29,7 +29,6 @@ import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
@@ -309,62 +308,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
         return -1;
     }
 
-    /**
-     * Prepares the reference map for a portion of memory that contains saved register state corresponding
-     * to a safepoint triggered at a particular instruction. This method fetches the reference map information
-     * for the specified method and then copies it over the reference map for this portion of memory.
-     *
-     * @param ip the instruction pointer at the safepoint trap
-     * @param registerState a pointer to the saved register state
-     * @param calleeKind the kind of callee method that
-     */
-    @Override
-    public void prepareRegisterReferenceMap(StackReferenceMapPreparer preparer, Pointer ip, Pointer registerState, StackFrameWalker.CalleeKind calleeKind) {
-        Pointer resumptionIp = ip;
-        if (calleeKind == StackFrameWalker.CalleeKind.TRAP_STUB) {
-            // this trap will cause an exception to be delivered
-            int trapNum = TrapStateAccess.instance().getTrapNumber(registerState);
-            Class<? extends Throwable> throwableClass = Trap.Number.toImplicitExceptionClass(trapNum);
-            if (throwableClass != null) {
-                // this trap will cause an exception to be thrown
-                resumptionIp = throwAddressToCatchAddress(true, resumptionIp, throwableClass).asPointer();
-                if (resumptionIp.isZero()) {
-                    // there is no handler for this exception in this method
-                    return;
-                }
-            }
-
-            // look up the reference map at the resumption ip
-            preparer.tracePrepareReferenceMap(this, this.findClosestStopIndex(resumptionIp), Pointer.zero(), "registers");
-            final int safepointIndex = this.findSafepointIndex(resumptionIp);
-            if (safepointIndex < 0) {
-                Log.print("Could not find safepoint index for instruction at position ");
-                Log.print(resumptionIp.minus(codeStart()).toInt());
-                Log.print(" in ");
-                Log.printMethod(this, true);
-                FatalError.unexpected("Could not find safepoint index");
-            }
-
-            // The register reference maps come after all the frame reference maps in referenceMap.
-            int byteIndex = frameReferenceMapsSize() + (registerReferenceMapSize() * safepointIndex);
-
-            final int registersSlotIndex = preparer.referenceMapBitIndex(registerState);
-            for (int i = 0; i < registerReferenceMapSize(); i++) {
-                final byte referenceMapByte = referenceMaps[byteIndex];
-                preparer.traceReferenceMapByteBefore(byteIndex, referenceMapByte, "Register");
-                final int baseSlotIndex = registersSlotIndex + (i * Bytes.WIDTH);
-                preparer.setBits(baseSlotIndex, referenceMapByte);
-                preparer.traceReferenceMapByteAfter(Pointer.zero(), baseSlotIndex, referenceMapByte);
-                byteIndex++;
-            }
-        } else if (calleeKind == StackFrameWalker.CalleeKind.TRAMPOLINE) {
-            // this method called a trampoline; put in the register map according to the calling convention
-        } else {
-            // CPS methods should never directly call callee-saved methods
-            FatalError.unexpected("CPS method appears to have called a callee-save method");
-        }
-    }
-
     @Override
     public final boolean isGenerated() {
         return code != null;
@@ -549,21 +492,6 @@ public abstract class CPSTargetMethod extends TargetMethod implements IrMethod {
      */
     public final byte[] compressedJavaFrameDescriptors() {
         return compressedJavaFrameDescriptors;
-    }
-
-    @Override
-    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer) {
-        preparer.tracePrepareReferenceMap(this, stopIndex, refmapFramePointer, "frame");
-        int frameSlotIndex = preparer.referenceMapBitIndex(refmapFramePointer);
-        int byteIndex = stopIndex * frameReferenceMapSize();
-        for (int i = 0; i < frameReferenceMapSize(); i++) {
-            final byte frameReferenceMapByte = referenceMaps[byteIndex];
-            preparer.traceReferenceMapByteBefore(byteIndex, frameReferenceMapByte, "Frame");
-            preparer.setBits(frameSlotIndex, frameReferenceMapByte);
-            preparer.traceReferenceMapByteAfter(refmapFramePointer, frameSlotIndex, frameReferenceMapByte);
-            frameSlotIndex += Bytes.WIDTH;
-            byteIndex++;
-        }
     }
 
     @HOSTED_ONLY

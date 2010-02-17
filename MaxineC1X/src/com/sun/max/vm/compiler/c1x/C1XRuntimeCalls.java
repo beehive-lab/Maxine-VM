@@ -310,7 +310,7 @@ public class C1XRuntimeCalls {
         throw new IncompatibleClassChangeError();
     }
 
-    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.SlowSubtypeCheck)
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.SlowInstanceOf)
     public static boolean runtimeSlowSubtypeCheck(Hub a, Hub b) {
         verifyRefMaps();
         return b.isSubClassHub(a.classActor);
@@ -420,6 +420,15 @@ public class C1XRuntimeCalls {
         verifyRefMaps();
         final InterfaceMethodActor virtualMethodActor = (InterfaceMethodActor) constantPool.methodAt(index).resolve(constantPool, index);
         return MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, virtualMethodActor).asAddress().toLong();
+    }
+
+    @UNSAFE
+    @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RetrieveInterfaceImpl)
+    public static long runtimeResolvedInvokeInterface(Object receiver, int interfaceID, int methodID) {
+        verifyRefMaps();
+        final Hub hub = ObjectAccess.readHub(receiver);
+        final int interfaceIndex = hub.getITableIndex(interfaceID);
+        return hub.getWord(interfaceIndex + methodID).asAddress().toLong();
     }
 
     @C1X_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Debug)

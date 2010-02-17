@@ -593,6 +593,7 @@ public final class StackReferenceMapPreparer {
      */
     public void setReferenceMapBits(Cursor cursor, Pointer slotPointer, int refMap, int numBits) {
         if (Heap.traceRootScanning()) {
+            boolean lockDisabledSafepoints = Log.lock();
             Log.print("    setReferenceMapBits: sp = ");
             Log.print(cursor.sp());
             Log.print(" fp = ");
@@ -605,6 +606,7 @@ public final class StackReferenceMapPreparer {
             }
             Log.print(", description = ");
             Log.println(cursor.targetMethod().description());
+            Log.unlock(lockDisabledSafepoints);
         }
         if (!inThisStack(cursor.sp())) {
             throw FatalError.unexpected("sp not in this stack");

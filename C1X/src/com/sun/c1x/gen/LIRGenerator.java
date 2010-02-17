@@ -601,31 +601,38 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        if (snippet == null && !target.isLoaded()) {
-            // handle unresolved invocations by calling resolution method, which returns destination address
+        if (snippet == null) {
             CiRuntimeCall call;
-            switch (opcode) {
-                case Bytecodes.INVOKESTATIC:
-                    call = CiRuntimeCall.ResolveInvokeStatic;
-                    break;
-                case Bytecodes.INVOKESPECIAL:
-                    call = CiRuntimeCall.ResolveInvokeSpecial;
-                    break;
-                case Bytecodes.INVOKEVIRTUAL:
-                    call = CiRuntimeCall.ResolveInvokeVirtual;
-                    break;
-                case Bytecodes.INVOKEINTERFACE:
-                    call = CiRuntimeCall.ResolveInvokeInterface;
-                    break;
-                default:
-                    throw Util.shouldNotReachHere();
-            }
-            LIRConstant cpi = forInt(x.cpi);
-            LIROperand cp = forConstant(x.constantPool.encoding());
-            if (x.hasReceiver()) {
-                destinationAddress = callRuntimeWithResult(call, info.copy(), load(x.receiver()), cpi, cp);
-            } else {
-                destinationAddress = callRuntimeWithResult(call, info.copy(), cpi, cp);
+            if (!target.isLoaded()) {
+                // handle unresolved invocations by calling resolution method, which returns destination address
+                switch (opcode) {
+                    case Bytecodes.INVOKESTATIC:
+                        call = CiRuntimeCall.ResolveInvokeStatic;
+                        break;
+                    case Bytecodes.INVOKESPECIAL:
+                        call = CiRuntimeCall.ResolveInvokeSpecial;
+                        break;
+                    case Bytecodes.INVOKEVIRTUAL:
+                        call = CiRuntimeCall.ResolveInvokeVirtual;
+                        break;
+                    case Bytecodes.INVOKEINTERFACE:
+                        call = CiRuntimeCall.ResolveInvokeInterface;
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
+                }
+                LIRConstant cpi = forInt(x.cpi);
+                LIROperand cp = forConstant(x.constantPool.encoding());
+                if (x.hasReceiver()) {
+                    destinationAddress = callRuntimeWithResult(call, info.copy(), load(x.receiver()), cpi, cp);
+                } else {
+                    destinationAddress = callRuntimeWithResult(call, info.copy(), cpi, cp);
+                }
+            } else if (opcode == Bytecodes.INVOKEINTERFACE) {
+                call = CiRuntimeCall.RetrieveInterfaceImpl;
+                LIRConstant interfaceID = forInt(x.target().interfaceID());
+                LIRConstant methodID = forInt(x.target().indexInInterface());
+                destinationAddress = callRuntimeWithResult(call, info.copy(), load(x.receiver()), interfaceID, methodID);
             }
         }
 
@@ -662,7 +669,8 @@ public abstract class LIRGenerator extends ValueVisitor {
                         lir.callDirect(target, resultRegister, argList, info);
                     } else {
                         if (opcode == Bytecodes.INVOKEINTERFACE) {
-                            lir.callInterface(target, resultRegister, argList, info);
+                            GlobalStub globalStub = stubFor(CiRuntimeCall.RetrieveInterfaceIndex);
+                            lir.callInterface(target, resultRegister, argList, info, globalStub);
                         } else {
                             lir.callVirtual(target, resultRegister, argList, info);
                         }
@@ -975,6 +983,11 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         }
 
+        for (XirTemplate calleeTemplate : snippet.template.calleeTemplates) {
+            // TODO Save these for use in X86LIRAssembler
+            stubFor(calleeTemplate);
+        }
+
         for (XirConstant c : snippet.template.constants) {
             assert operands[c.index] == null;
             operands[c.index] = forConstant(c.value);
@@ -1250,7 +1263,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // XXX: what about floats and doubles and objects? (used in OSR)
             if (x.base().kind.isLong()) {
                 baseOp = newRegister(CiKind.Int);
-                lir.convert(Bytecodes.L2I, base.result(), baseOp);
+                lir.convert(Bytecodes.L2I, base.result(), baseOp, null);
             } else {
                 assert x.base().kind.isInt() : "must be";
             }
@@ -1349,7 +1362,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // XXX: what about floats and doubles and objects? (used in OSR)
             if (x.base().kind.isLong()) {
                 baseOp = newRegister(CiKind.Int);
-                lir.convert(Bytecodes.L2I, base.result(), baseOp);
+                lir.convert(Bytecodes.L2I, base.result(), baseOp, null);
             } else {
                 assert x.base().kind.isInt() : "must be";
             }

@@ -114,10 +114,11 @@ public class AMD64OptimizedTargetMethod extends OptimizedTargetMethod {
                 FatalError.unexpected("Could not find safepoint index");
             }
 
-            int byteIndex = frameReferenceMapsSize() + (registerReferenceMapSize() * safepointIndex);
+            int registerReferenceMapSize = registerReferenceMapSize();
+            int byteIndex = frameReferenceMapsSize() + (registerReferenceMapSize * safepointIndex);
             Pointer slotPointer = registerState;
             preparer.tracePrepareReferenceMap(this, stopIndex, slotPointer, "CPS register state");
-            for (int i = 0; i < frameReferenceMapSize; i++) {
+            for (int i = 0; i < registerReferenceMapSize; i++) {
                 preparer.setReferenceMapBits(current, slotPointer, referenceMaps[byteIndex] & 0xff, Bytes.WIDTH);
                 slotPointer = slotPointer.plusWords(Bytes.WIDTH);
                 byteIndex++;
