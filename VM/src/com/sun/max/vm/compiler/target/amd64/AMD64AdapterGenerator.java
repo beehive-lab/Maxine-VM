@@ -772,7 +772,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         } else if (optArg instanceof TargetLocation.ParameterStackSlot) {
             int optStackOffset32 = ((TargetLocation.ParameterStackSlot) optArg).index() * OPT_SLOT_SIZE;
             adapt(asm, kind, optStackOffset32, jitStackOffset32, adapterFrameSize);
-            if (kind == Kind.REFERENCE) {
+            if (kind.isReference) {
                 return optStackOffset32 / Word.size();
             }
         } else {
@@ -783,7 +783,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
     protected void stackCopy(AMD64Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         // First, load into a scratch register of appropriate size for the kind, then write to memory location
-        if ((!kind.isCategory1) || kind == Kind.WORD || kind == Kind.REFERENCE) {
+        if ((!kind.isCategory1) || kind.isWord || kind.isReference) {
             asm.mov(scratch64, sourceStackOffset, AMD64IndirectRegister64.RSP_INDIRECT);
             asm.mov(destStackOffset, AMD64IndirectRegister64.RSP_INDIRECT, scratch64);
         } else {

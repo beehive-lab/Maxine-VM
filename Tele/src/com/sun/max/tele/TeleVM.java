@@ -1859,19 +1859,19 @@ public abstract class TeleVM implements MaxVM {
 
         final Reference reference = originToReference(pointer);
 
-        if (kind == Kind.REFERENCE) {
+        if (kind.isReference) {
             final Word word = dataAccess().readWord(pointer, offset);
             return TeleReferenceValue.from(this, wordToReference(word));
         }
 
         final Value result = kind.readValue(reference, offset);
 
-        if (result.kind() == Kind.WORD) {
+        if (result.kind().isWord) {
             LOGGER.info("Creating WORD reference! " + result.asWord());
             return LongValue.from(result.asWord().asAddress().toLong());
         }
 
-        if (result.kind() == Kind.REFERENCE
+        if (result.kind().isReference
                 && !isValidOrigin(result.asReference().toOrigin())) {
             LOGGER.severe("Wrong reference encountered ("
                     + result.asReference() + "), returning null reference!");

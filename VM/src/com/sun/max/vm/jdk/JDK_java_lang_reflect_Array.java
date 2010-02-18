@@ -246,7 +246,7 @@ final class JDK_java_lang_reflect_Array {
     public static void set(Object array, int index, Object value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
         checkIndex(array, index);
         final Kind elementKind = ObjectAccess.readClassActor(array).componentClassActor().kind;
-        if (elementKind == Kind.REFERENCE) {
+        if (elementKind.isReference) {
             ArrayAccess.setObject(array, index, value);
         } else {
             elementKind.setErasedValue(array, index, elementKind.convert(Value.fromBoxedJavaValue(value)));

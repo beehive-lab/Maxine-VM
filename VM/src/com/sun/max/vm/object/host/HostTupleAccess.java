@@ -29,7 +29,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.prototype.JDKInterceptor.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -81,7 +80,7 @@ public final class HostTupleAccess {
             final Field field = fieldActor.toJava();
             field.setAccessible(true);
             Object boxedJavaValue = field.get(tuple);
-            if (fieldActor.kind == Kind.REFERENCE) {
+            if (fieldActor.kind.isReference) {
                 boxedJavaValue = HostObjectAccess.hostToTarget(boxedJavaValue);
             }
             return fieldActor.kind.asValue(boxedJavaValue);

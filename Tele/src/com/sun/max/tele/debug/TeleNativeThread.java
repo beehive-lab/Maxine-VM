@@ -735,9 +735,9 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                 final Value curValue = getValueImpl(entry.slot());
                 vmValues[entry.slot()] = teleVM().maxineValueToJDWPValue(curValue);
 
-                if (curValue.kind() == Kind.REFERENCE) {
+                if (curValue.kind().isReference) {
                     values[entry.slot()] = curValue.asReference().toOrigin().toLong();
-                } else if (curValue.kind() == Kind.WORD) {
+                } else if (curValue.kind().isWord) {
                     values[entry.slot()] = curValue.asWord().asPointer().toLong();
                 }
             }
@@ -799,7 +799,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                 final int integerRegisterIndex = integerRegister.index();
                 final Address address = integerRegisters().get(integerRegisterIndex);
 
-                if (kind == Kind.REFERENCE) {
+                if (kind.isReference) {
                     return TeleReferenceValue.from(teleVM(), Reference.fromOrigin(address.asPointer()));
                 }
                 return LongValue.from(address.toLong());

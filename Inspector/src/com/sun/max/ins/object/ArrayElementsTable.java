@@ -417,7 +417,7 @@ public final class ArrayElementsTable extends InspectorTable {
             final int elementIndex = tableModel.rowToElementIndex(row);
             InspectorLabel label = labels[elementIndex];
             if (label == null) {
-                if (elementKind == Kind.REFERENCE) {
+                if (elementKind.isReference) {
                     label = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
@@ -429,7 +429,7 @@ public final class ArrayElementsTable extends InspectorTable {
                             ArrayElementsTable.this.repaint();
                         }
                     };
-                } else if (elementKind == Kind.WORD) {
+                } else if (elementKind.isWord) {
                     label = new WordValueLabel(inspection, wordValueMode, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {

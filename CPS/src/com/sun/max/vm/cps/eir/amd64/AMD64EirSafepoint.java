@@ -24,7 +24,6 @@ import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.cps.eir.*;
-import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -53,7 +52,7 @@ public final class AMD64EirSafepoint extends EirSafepoint<EirInstructionVisitor,
         for (EirVariable variable : liveVariables()) {
             if (variable.location().category() == EirLocationCategory.INTEGER_REGISTER) {
                 final EirRegister register = (EirRegister) variable.location();
-                if (variable.kind() == Kind.REFERENCE) {
+                if (variable.kind().isReference) {
                     map.set(register.ordinal);
                 }
             }

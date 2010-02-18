@@ -59,7 +59,7 @@ public final class EirVariable extends EirValue implements Comparable<EirVariabl
     }
 
     public boolean isReferenceCompatibleWith(EirValue other) {
-        return (kind == Kind.REFERENCE) == (other.kind() == Kind.REFERENCE);
+        return (kind.isReference) == (other.kind().isReference);
     }
 
     private int weight;

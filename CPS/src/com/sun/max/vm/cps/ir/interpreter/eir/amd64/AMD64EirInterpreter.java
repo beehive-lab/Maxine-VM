@@ -135,7 +135,7 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
     public void visit(AMD64EirLoad load) {
         final Value value;
         final Value pointer = cpu.read(load.pointerOperand().location());
-        if (pointer.kind() == Kind.WORD) {
+        if (pointer.kind().isWord) {
             // This must be a load from the stack
             assert load.indexOperand() == null;
             final int offset = load.offsetOperand() != null ? cpu.read(load.offsetOperand().location()).asInt() : 0;
@@ -193,9 +193,9 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
 
     public void visit(AMD64EirStore store) {
         final Value pointer = cpu.read(store.pointerOperand().location());
-        if (pointer.kind() == Kind.WORD) {
+        if (pointer.kind().isWord) {
             // This must be a store to the stack: don't type check the load if it's Word-type store
-            final Value value = store.kind() == Kind.WORD ?
+            final Value value = store.kind().isWord ?
                             cpu.read(store.valueOperand().location()) :
                             cpu.read(store.kind(), store.valueOperand().location());
             assert store.indexOperand() == null;
@@ -334,7 +334,7 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
         Value valueB = cpu.read(instruction.sourceOperand().location());
         final long a;
         final long b;
-        if (valueA.kind() == Kind.REFERENCE || valueB.kind() == Kind.REFERENCE) {
+        if (valueA.kind().isReference || valueB.kind().isReference) {
             if (valueA.kind() != Kind.REFERENCE) {
                 ProgramError.check(valueA.toLong() == 0L);
                 valueA = ReferenceValue.NULL;

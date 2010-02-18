@@ -70,7 +70,7 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
 
     public Kind eirKind(Kind kind) {
         final Kind k = kind.stackKind;
-        if (k == Kind.WORD) {
+        if (k.isWord) {
             return (wordWidth == WordWidth.BITS_64) ? Kind.LONG : Kind.INT;
         }
         return k;

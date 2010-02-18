@@ -105,7 +105,7 @@ public final class MethodArgsDialog {
                 }
 
                 args[i] = LongValue.from(Long.parseLong(input));
-            } else if (kind == Kind.REFERENCE) {
+            } else if (kind.isReference) {
                 final String input = inspection.gui().inputDialog("Argument " + i + " (reference, origin address in hex):", "");
 
                 if (input == null) {

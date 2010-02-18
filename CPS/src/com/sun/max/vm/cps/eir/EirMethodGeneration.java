@@ -291,7 +291,7 @@ public abstract class EirMethodGeneration {
     }
 
     public EirConstant createEirConstant(Value value) {
-        final EirConstant constant = (value.kind() == Kind.REFERENCE) ? new EirConstant.Reference(value, constants.length()) : new EirConstant(value);
+        final EirConstant constant = (value.kind().isReference) ? new EirConstant.Reference(value, constants.length()) : new EirConstant(value);
         constants.append(constant);
         return constant;
     }
