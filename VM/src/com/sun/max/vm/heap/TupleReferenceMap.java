@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A facility for building and traversing the reference map for a {@linkplain TupleClassActor tuple} object.
@@ -49,7 +48,7 @@ public class TupleReferenceMap {
      */
     public TupleReferenceMap(FieldActor[] staticFieldActors) {
         for (FieldActor staticFieldActor : staticFieldActors) {
-            if (staticFieldActor.kind == Kind.REFERENCE) {
+            if (staticFieldActor.kind.isReference) {
                 final int fieldIndex = Unsigned.idiv(staticFieldActor.offset(), Word.size());
                 indexes.append(fieldIndex);
             }
@@ -65,7 +64,7 @@ public class TupleReferenceMap {
         ClassActor c = classActor;
         do {
             for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
-                if (instanceFieldActor.kind == Kind.REFERENCE && !instanceFieldActor.isSpecialReference()) {
+                if (instanceFieldActor.kind.isReference && !instanceFieldActor.isSpecialReference()) {
                     final int fieldIndex = Unsigned.idiv(instanceFieldActor.offset(), Word.size());
                     indexes.append(fieldIndex);
                 }

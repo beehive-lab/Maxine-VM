@@ -35,7 +35,7 @@ public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorSc
 
     public static void addFrameReferenceMap(PoolSet<EirVariable> liveVariables, WordWidth stackSlotWidth, ByteArrayBitMap map) {
         for (EirVariable variable : liveVariables) {
-            if (variable.kind() == Kind.REFERENCE) {
+            if (variable.kind().isReference) {
                 EirLocation location = variable.location();
                 if (location.category() == EirLocationCategory.STACK_SLOT) {
                     final EirStackSlot stackSlot = (EirStackSlot) location;
@@ -58,7 +58,7 @@ public abstract class SPARCEirGenerator extends EirGenerator<SPARCEirGeneratorSc
         addFrameReferenceMap(liveVariables, stackSlotWidth, map);
         if (arguments != null) {
             for (EirOperand argument : arguments) {
-                if (argument.kind() == Kind.REFERENCE) {
+                if (argument.kind().isReference) {
                     final EirLocation location = argument.location();
                     if (location instanceof EirStackSlot) {
                         final EirStackSlot stackSlot = (EirStackSlot) location;

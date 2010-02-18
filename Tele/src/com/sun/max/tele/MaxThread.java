@@ -21,7 +21,6 @@
 package com.sun.max.tele;
 
 import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.method.CodeLocation.*;
@@ -38,12 +37,6 @@ import com.sun.max.vm.thread.*;
  * @author Michael Van De Vanter
  */
 public interface MaxThread {
-
-    /**
-     * Gets the frames of this stack as produced by a {@linkplain StackFrameWalker stack walk}
-     * when the associated thread last stopped.  Empty after thread dies.
-     */
-    IndexedSequence<StackFrame> frames();
 
     /**
      * Have the frames of this stack changed in the epoch that completed last time this thread stopped.
@@ -135,18 +128,17 @@ public interface MaxThread {
     long localHandle();
 
     /**
+     * Current stack pointer.
+     *
      * @return the current stack pointer for the thread, zero if thread has died.
+     * @see #stack()
      */
     Pointer stackPointer();
 
     /**
-     * Gets description of  VM memory containing the stack for this thread.
-     * <br>
-     * The identity of the result is immutable and thread-safe, although its contents are not.
-     *
-     * @return this thread's stack memory
+     * Gets a description of the stack for this thread.
      */
-    TeleNativeStackMemoryRegion stackRegion();
+    MaxStack stack();
 
     /**
      * Gets description of VM memory containing the  {@linkplain VmThreadLocal thread locals} for this thread.

@@ -33,7 +33,6 @@ import com.sun.max.vm.cps.eir.sparc.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.*;
 import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -327,7 +326,7 @@ public final class SPARCEirCPU extends EirCPU<SPARCEirCPU> {
         if (value == null || value.isZero()) {
             return Address.zero();
         }
-        if (value.kind() == Kind.WORD) {
+        if (value.kind().isWord) {
             return value.asWord().asAddress();
         }
         return Address.fromLong(0x1A355978BC123523L); // producing "random" high bits

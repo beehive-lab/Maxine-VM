@@ -118,7 +118,7 @@ public abstract class SignatureDescriptor extends Descriptor {
      */
     public static boolean containsWord(SignatureDescriptor signature) {
         for (TypeDescriptor type : signature.typeDescriptors) {
-            if (type.toKind() == Kind.WORD) {
+            if (type.toKind().isWord) {
                 return true;
             }
         }

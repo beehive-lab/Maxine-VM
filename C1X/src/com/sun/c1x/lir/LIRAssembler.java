@@ -27,6 +27,7 @@ import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
@@ -234,7 +235,7 @@ public abstract class LIRAssembler {
 
         switch (op.code) {
             case InterfaceCall:
-                emitInterfaceCall(op.method(), op.receiver(), op.info);
+                emitInterfaceCall(op.method(), op.receiver(), op.info, op.globalStub);
                 break;
             case VirtualCall:
                 emitVirtualCall(op.method(), op.receiver(), op.info);
@@ -279,7 +280,7 @@ public abstract class LIRAssembler {
             case Branch:
                 break;
             case Neg:
-                emitNegate(op.operand(), op.result());
+                emitNegate(op);
                 break;
             case Leal:
                 emitLeal(((LIRAddress) op.operand()), ((LIRLocation) op.result()));
@@ -459,7 +460,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitLeal(LIRAddress inOpr, LIRLocation resultOpr);
 
-    protected abstract void emitNegate(LIROperand inOpr, LIROperand resultOpr);
+    protected abstract void emitNegate(LIROp1 negate);
 
     protected abstract void emitSafepoint(LIROperand inOpr, LIRDebugInfo info);
 
@@ -511,7 +512,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitDirectCall(RiMethod ciMethod, LIRDebugInfo info);
 
-    protected abstract void emitInterfaceCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info);
+    protected abstract void emitInterfaceCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info, GlobalStub globalStub);
 
     protected abstract void emitVirtualCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info);
 

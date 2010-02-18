@@ -27,7 +27,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.transform.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -61,7 +60,7 @@ public class CirOptimizerTest_word extends CompilerTestCase<CirMethod> {
         assertNull(CirSearch.byPredicate(cirMethod.closure(), new CirPredicate() {
             @Override
             public boolean evaluateValue(CirValue cirValue) {
-                if (cirValue instanceof CirConstant && cirValue.kind() == Kind.REFERENCE) {
+                if (cirValue instanceof CirConstant && cirValue.kind().isReference) {
                     final ReferenceValue referenceValue = (ReferenceValue) cirValue.value();
                     return referenceValue.asObject() == ClassActor.fromJava(ClassCastException.class);
                 }
@@ -82,7 +81,7 @@ public class CirOptimizerTest_word extends CompilerTestCase<CirMethod> {
         assertNull(CirSearch.byPredicate(cirMethod.closure(), new CirPredicate() {
             @Override
             public boolean evaluateValue(CirValue cirValue) {
-                if (cirValue instanceof CirConstant && cirValue.kind() == Kind.REFERENCE) {
+                if (cirValue instanceof CirConstant && cirValue.kind().isReference) {
                     final ReferenceValue referenceValue = (ReferenceValue) cirValue.value();
                     return referenceValue.asObject() == ClassActor.fromJava(ClassCastException.class);
                 }

@@ -62,60 +62,7 @@ public class LIRConvert extends LIROp1 {
      */
     @Override
     public void printInstruction(LogStream out) {
-        printBytecode(out, bytecode);
+        out.print("[" + Bytecodes.name(bytecode) + "] ");
         super.printInstruction(out);
-    }
-
-    public static void printBytecode(LogStream out, int bytecode) {
-        switch (bytecode) {
-            case Bytecodes.D2F:
-                out.print("[d2f] ");
-                break;
-            case Bytecodes.D2I:
-                out.print("[d2i] ");
-                break;
-            case Bytecodes.D2L:
-                out.print("[d2l] ");
-                break;
-            case Bytecodes.F2D:
-                out.print("[f2d] ");
-                break;
-            case Bytecodes.F2I:
-                out.print("[f2i] ");
-                break;
-            case Bytecodes.F2L:
-                out.print("[f2l] ");
-                break;
-            case Bytecodes.I2B:
-                out.print("[i2b] ");
-                break;
-            case Bytecodes.I2C:
-                out.print("[i2c] ");
-                break;
-            case Bytecodes.I2D:
-                out.print("[i2d] ");
-                break;
-            case Bytecodes.I2F:
-                out.print("[i2f] ");
-                break;
-            case Bytecodes.I2L:
-                out.print("[i2l] ");
-                break;
-            case Bytecodes.I2S:
-                out.print("[i2s] ");
-                break;
-            case Bytecodes.L2I:
-                out.print("[l2i] ");
-                break;
-            case Bytecodes.L2F:
-                out.print("[l2f] ");
-                break;
-            case Bytecodes.L2D:
-                out.print("[l2d] ");
-                break;
-            default:
-                out.printf("[?%d]", bytecode);
-                break;
-        }
     }
 }

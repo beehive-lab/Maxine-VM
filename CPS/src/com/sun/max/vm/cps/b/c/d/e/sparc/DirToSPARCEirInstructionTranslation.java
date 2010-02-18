@@ -86,7 +86,7 @@ public final class DirToSPARCEirInstructionTranslation extends DirToEirInstructi
         // The caller should arrange for this to be the case and passed the appropriate comparisonKind in that case.
         return match.isZeroConstant() &&
             (comparator == ValueComparator.EQUAL || comparator == ValueComparator.NOT_EQUAL) &&
-            (comparisonKind == Kind.LONG || comparisonKind == Kind.WORD);
+            (comparisonKind == Kind.LONG || comparisonKind.isWord);
     }
 
     private EirBlock translateConditionalBranch(DirSwitch dirSwitch, int index) {

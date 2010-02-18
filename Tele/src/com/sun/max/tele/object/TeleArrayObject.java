@@ -122,7 +122,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     @Override
     public Object shallowCopy() {
         final int length = getLength();
-        if (componentKind() == Kind.REFERENCE) {
+        if (componentKind().isReference) {
             final Reference[] newRefArray = new Reference[length];
             for (int index = 0; index < length; index++) {
                 newRefArray[index] = readElementValue(index).asReference();

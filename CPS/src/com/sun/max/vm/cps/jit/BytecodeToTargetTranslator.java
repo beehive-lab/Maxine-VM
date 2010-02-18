@@ -133,7 +133,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     protected final AdapterGenerator adapterGenerator;
 
     public BytecodeToTargetTranslator(ClassMethodActor classMethodActor, CodeBuffer codeBuffer, TemplateTable templateTable, JitStackFrameLayout jitStackFrameLayout, boolean trace) {
-        if (classMethodActor.holder().kind == Kind.WORD || SignatureDescriptor.containsWord(classMethodActor.descriptor())) {
+        if (classMethodActor.holder().kind.isWord || SignatureDescriptor.containsWord(classMethodActor.descriptor())) {
             FatalError.unexpected("Cannot JIT compile method that uses Word types: " + classMethodActor.format("%H.%n(%p)"));
         }
         this.isTraceInstrumented = trace;
@@ -1595,7 +1595,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      */
     private Kind invokeKind(SignatureDescriptor signature) {
         final Kind resultKind = signature.resultKind();
-        if (resultKind == Kind.WORD || resultKind == Kind.REFERENCE || resultKind.stackKind == Kind.INT) {
+        if (resultKind.isWord || resultKind.isReference || resultKind.stackKind == Kind.INT) {
             return Kind.WORD;
         }
         return resultKind;

@@ -41,7 +41,6 @@ import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.gui.CirAnnotatedTrace.*;
 import com.sun.max.vm.cps.cir.gui.CirAnnotatedTrace.Element;
 import com.sun.max.vm.cps.cir.transform.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -1132,7 +1131,7 @@ final class CirTraceVisualizer extends JPanel {
                 public void visitConstant(CirConstant constant) {
                     final Value value = constant.value();
                     sb.append("<tr><td>Kind</td><td>" + value.kind() + "</td></tr>");
-                    if (value.kind() == Kind.REFERENCE) {
+                    if (value.kind().isReference) {
                         final Object object = value.asObject();
                         sb.append("<tr><td>toString</td><td>" + object + "</td></tr>");
                         if (object != null) {

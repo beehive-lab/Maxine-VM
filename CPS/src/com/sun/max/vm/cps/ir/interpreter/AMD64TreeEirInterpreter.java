@@ -34,7 +34,6 @@ import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.hotpath.compiler.Console.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -100,7 +99,7 @@ public class AMD64TreeEirInterpreter extends AMD64EirInterpreter {
     @Override
     public void visit(EirAssignment assignment) {
         final Value read = cpu().read(assignment.sourceOperand().location());
-        if (read.kind() == Kind.REFERENCE) {
+        if (read.kind().isReference) {
             exitGuard = (TirGuard) read.asObject();
         }
         super.visit(assignment);

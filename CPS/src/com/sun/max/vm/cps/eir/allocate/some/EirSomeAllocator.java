@@ -28,7 +28,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.cps.eir.*;
 import com.sun.max.vm.cps.eir.EirTraceObserver.*;
 import com.sun.max.vm.cps.eir.allocate.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A medium speed, medium quality register allocator.
@@ -295,7 +294,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
             return false;
         }
 
-        if (acquirer.kind() == Kind.REFERENCE && acquiree.location() instanceof EirStackSlot && acquirer.location() instanceof EirStackSlot) {
+        if (acquirer.kind().isReference && acquiree.location() instanceof EirStackSlot && acquirer.location() instanceof EirStackSlot) {
             EirStackSlot s1 = (EirStackSlot) acquiree.location();
             EirStackSlot s2 = (EirStackSlot) acquirer.location();
             if (s1.purpose != s2.purpose) {

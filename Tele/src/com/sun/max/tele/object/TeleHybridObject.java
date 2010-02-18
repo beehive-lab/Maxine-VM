@@ -33,7 +33,6 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -81,7 +80,7 @@ public abstract class TeleHybridObject extends TeleObject {
 
     @Override
     public Value readFieldValue(FieldActor fieldActor) {
-        if (fieldActor.kind == Kind.REFERENCE) {
+        if (fieldActor.kind.isReference) {
             return TeleReferenceValue.from(teleVM(), teleVM().wordToReference(reference().readWord(fieldActor.offset())));
         }
         return fieldActor.readValue(reference());
@@ -125,7 +124,7 @@ public abstract class TeleHybridObject extends TeleObject {
             // The tuple part
             do {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {
-                    if (!(fieldActor.kind == Kind.REFERENCE || fieldActor.isInjected())) {
+                    if (!(fieldActor.kind.isReference || fieldActor.isInjected())) {
                         final Field field = fieldActor.toJava();
                         field.setAccessible(true);
                         try {

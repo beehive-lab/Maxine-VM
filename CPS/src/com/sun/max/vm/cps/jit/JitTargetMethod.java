@@ -85,11 +85,6 @@ public abstract class JitTargetMethod extends CPSTargetMethod {
         return bytecodeToTargetCodePositionMap;
     }
 
-    @Override
-    public boolean isJitCompiled() {
-        return true;
-    }
-
     public int sizeOfNonParameterLocals() {
         return JitStackFrameLayout.JIT_SLOT_SIZE * (classMethodActor.codeAttribute().maxLocals - classMethodActor.numberOfParameterSlots());
     }

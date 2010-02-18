@@ -132,11 +132,6 @@ public abstract class Adapter extends TargetMethod {
     }
 
     @Override
-    public void prepareFrameReferenceMap(int stopIndex, Pointer refmapFramePointer, StackReferenceMapPreparer preparer) {
-        FatalError.unexpected("should not reach here");
-    }
-
-    @Override
     public void patchCallSite(int callOffset, Word callEntryPoint) {
         FatalError.unimplemented();
     }

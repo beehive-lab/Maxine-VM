@@ -29,7 +29,7 @@ import com.sun.max.ins.*;
  *
  * @author Michael Van De Vanter
  */
-public final class InspectorCheckBox extends JCheckBox {
+public final class InspectorCheckBox extends JCheckBoxMenuItem {
 
     /**
      *  Creates a new {@link JCheckBox} specialized for use in the Maxine Inspector.

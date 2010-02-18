@@ -60,7 +60,7 @@ public class DirConstant extends DirValue {
 
     @Override
     public int hashCodeForBlock() {
-        if (value.kind() == Kind.REFERENCE) {
+        if (value.kind().isReference) {
             return super.hashCodeForBlock();
         }
         return super.hashCodeForBlock() ^ value.hashCode();

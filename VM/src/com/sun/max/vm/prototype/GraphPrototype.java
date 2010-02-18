@@ -248,7 +248,7 @@ public class GraphPrototype extends Prototype {
         private static boolean addClassInfoFields(AppendableSequence<ReferenceFieldInfo> fieldInfos, FieldActor[] fieldActors) {
             boolean foundMutableField = false;
             for (FieldActor fieldActor : fieldActors) {
-                if (fieldActor.kind == Kind.REFERENCE) {
+                if (fieldActor.kind.isReference) {
                     final InterceptedField interceptedField = JDKInterceptor.getInterceptedField(fieldActor);
                     ReferenceFieldInfo fieldInfo = null;
                     if (interceptedField != null) {

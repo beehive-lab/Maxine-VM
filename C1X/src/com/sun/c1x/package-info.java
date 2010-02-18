@@ -1,6 +1,7 @@
 // Checkstyle: stop
 package com.sun.c1x;
 
+
 /**
  * This is a collection of notes about the C1X compiler, including future directions, refactorings,
  * missing features, broken features, etc.
@@ -156,7 +157,7 @@ package com.sun.c1x;
  * is uninterruptible and works fine in the VM, signal handlers triggered when debugging or inspecting this code
  * sequence may destroy these values when the OS calls the signal handler. This requires knowing which global
  * stubs are called before finalizing the frame size; currently only the calls to
- * {@link X86MacroAssembler#callRuntimeCalleeSaved(CiRuntimeCall, LIRDebugInfo, CiRegister, Object[])}
+ * {@link X86MacroAssembler#callRuntimeCalleeSaved(com.sun.c1x.ci.CiRuntimeCall, com.sun.c1x.lir.LIRDebugInfo, com.sun.c1x.ci.CiRegister, Object...)}
  * do not fit this pattern. This needs to be fixed so that all global stubs that are called by the assembled
  * code are known before beginning assembling. The {@link X86GlobalStubEmitter} controls
  * how the global stubs accept their parameters. See {@link X86GlobalStubEmitter#callerFrameContainsArguments}

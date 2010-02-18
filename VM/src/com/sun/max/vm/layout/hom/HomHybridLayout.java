@@ -98,7 +98,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
         }
         final int index = offset / kind.width.numberOfBytes;
         if ((kind == Kind.INT && index >= mirror.firstIntIndex()) ||
-            (kind == Kind.WORD && index >= mirror.firstWordIndex())) {
+            (kind.isWord && index >= mirror.firstWordIndex())) {
             return mirror.readElement(kind, index);
         }
         return tupleLayout.readValue(kind, mirror, offset);
@@ -112,7 +112,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
         }
         final int index = offset / Word.size();
         if ((kind == Kind.INT && index >= mirror.firstIntIndex()) ||
-            (kind == Kind.WORD && index >= mirror.firstWordIndex())) {
+            (kind.isWord && index >= mirror.firstWordIndex())) {
             super.writeValue(kind, mirror, offset, value);
         } else {
             tupleLayout.writeValue(kind, mirror, offset, value);

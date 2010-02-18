@@ -292,7 +292,7 @@ public final class JniFunctionsSource {
     private static Object allocObject(Class javaClass) throws InstantiationException {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         if (classActor.isTupleClassActor() && !classActor.isAbstract()) {
-            return JniHandles.createLocalHandle(Heap.createTuple(classActor.dynamicHub()));
+            return Heap.createTuple(classActor.dynamicHub());
         }
         throw new InstantiationException();
     }

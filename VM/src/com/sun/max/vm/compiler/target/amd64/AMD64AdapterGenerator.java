@@ -304,17 +304,28 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected int emitPrologue(Object out, Adapter adapter) {
-            assert adapter != null : "JIT2OPT calls need adapter to save & restore RBP";
             AMD64Assembler asm64 = out instanceof OutputStream ? new AMD64Assembler() : (AMD64Assembler) out;
 
-            // This instruction is 5 bytes long
-            int placeholder = 0;
-            asm64.call(placeholder);
+            if (adapter == null) {
+                asm64.nop();
+                asm64.nop();
+                asm64.nop();
+                asm64.nop();
+                asm64.nop();
+                asm64.nop();
+                asm64.nop();
+                asm64.nop();
+            } else {
 
-            // Pad with 3 bytes to yield an 8-byte long prologue,
-            asm64.nop();
-            asm64.nop();
-            asm64.nop();
+                // This instruction is 5 bytes long
+                int placeholder = 0;
+                asm64.call(placeholder);
+
+                // Pad with 3 bytes to yield an 8-byte long prologue,
+                asm64.nop();
+                asm64.nop();
+                asm64.nop();
+            }
             int size = asm64.currentPosition();
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm64, out);
@@ -400,23 +411,13 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
             asm.leave();
 
             String description = Type.JIT2OPT + "-Adapter" + sig;
-            if (sig != DYNAMIC_TRAMPOLINE) {
-                // RSP has been restored to the location holding the address of the OPT main body.
-                // The adapter must return to the JIT caller whose RIP is one slot higher up.
-                asm.addq(AMD64GeneralRegister64.RSP, Word.size());
+            // RSP has been restored to the location holding the address of the OPT main body.
+            // The adapter must return to the JIT caller whose RIP is one slot higher up.
+            asm.addq(AMD64GeneralRegister64.RSP, Word.size());
 
-                assert WordWidth.signedEffective(jitArgsSize).lessEqual(WordWidth.BITS_16);
-                // Retract the stack pointer back to its position before the first argument on the caller's stack.
-                asm.ret((short) jitArgsSize);
-            } else {
-                // The dynamic trampoline has modified the slot holding the OPT main body to
-                // now be the entry address of the method just compiled. The JIT caller's RIP
-                // is still one slot higher up. By executing a RET in this state, execution
-                // will jump to the newly compiled method and looks as though it was called
-                // directly from the JIT caller. See AMD64DynamicTrampolineExit for more details.
-                asm.ret((short) 0);
-                description += "[DYNAMIC_TRAMPOLINE]";
-            }
+            assert WordWidth.signedEffective(jitArgsSize).lessEqual(WordWidth.BITS_16);
+            // Retract the stack pointer back to its position before the first argument on the caller's stack.
+            asm.ret((short) jitArgsSize);
 
             final byte[] code;
             try {
@@ -661,7 +662,6 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected Adapter create(Sig sig) {
-            assert sig != AMD64AdapterGenerator.DYNAMIC_TRAMPOLINE : "dynamic trampoline compiled with JIT calling convention";
 
             TargetLocation[] optArgs = optABI.getParameterTargetLocations(sig.kinds);
             AMD64Assembler asm = new AMD64Assembler();
@@ -772,7 +772,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
         } else if (optArg instanceof TargetLocation.ParameterStackSlot) {
             int optStackOffset32 = ((TargetLocation.ParameterStackSlot) optArg).index() * OPT_SLOT_SIZE;
             adapt(asm, kind, optStackOffset32, jitStackOffset32, adapterFrameSize);
-            if (kind == Kind.REFERENCE) {
+            if (kind.isReference) {
                 return optStackOffset32 / Word.size();
             }
         } else {
@@ -783,7 +783,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
     protected void stackCopy(AMD64Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         // First, load into a scratch register of appropriate size for the kind, then write to memory location
-        if ((!kind.isCategory1) || kind == Kind.WORD || kind == Kind.REFERENCE) {
+        if ((!kind.isCategory1) || kind.isWord || kind.isReference) {
             asm.mov(scratch64, sourceStackOffset, AMD64IndirectRegister64.RSP_INDIRECT);
             asm.mov(destStackOffset, AMD64IndirectRegister64.RSP_INDIRECT, scratch64);
         } else {

@@ -361,7 +361,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             checkResolved();
             if (teleClassMethodActor != null) {
                 menu.addSeparator();
-                final ClassMethodMenuItems classMethodMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
+                final ClassMethodActorMenuItems classMethodMenuItems = new ClassMethodActorMenuItems(inspection(), teleClassMethodActor);
                 classMethodMenuItems.addTo(menu);
             }
         }

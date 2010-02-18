@@ -33,7 +33,6 @@ import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.cps.bir.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 import com.sun.max.vm.verifier.types.*;
 
@@ -349,7 +348,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         final ReferenceMap[] verifiedMaps = new ReferenceMap[codeLength];
         if (classVerifier instanceof TypeCheckingVerifier) {
             new TypeCheckingMethodVerifier(classVerifier, classMethodActor, codeAttribute) {
-                private final boolean receiverTypeIsWord = thisObjectType.typeDescriptor().toKind() == Kind.WORD;
+                private final boolean receiverTypeIsWord = thisObjectType.typeDescriptor().toKind().isWord;
                 @Override
                 public void verify() {
                     clearNonBlockStartFrames(frameMap, blockStarts);
@@ -365,7 +364,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             }.verify();
         } else {
             new TypeInferencingMethodVerifier(classVerifier, classMethodActor, codeAttribute) {
-                private final boolean receiverTypeIsWord = thisObjectType.typeDescriptor().toKind() == Kind.WORD;
+                private final boolean receiverTypeIsWord = thisObjectType.typeDescriptor().toKind().isWord;
                 @Override
                 public void verify() {
                     clearNonBlockStartFrames(frameMap, blockStarts);

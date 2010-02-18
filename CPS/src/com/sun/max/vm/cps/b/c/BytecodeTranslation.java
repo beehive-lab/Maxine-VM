@@ -183,7 +183,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected CirVariable popReferenceOrWord() {
         final CirVariable stackVariable = stack.pop();
-        assert stackVariable.kind() == Kind.REFERENCE || stackVariable.kind() == Kind.WORD : expectedReferenceOrWordErrorMessage(stackVariable.kind());
+        assert stackVariable.kind().isReference || stackVariable.kind().isWord : expectedReferenceOrWordErrorMessage(stackVariable.kind());
         return stackVariable;
     }
 
@@ -202,7 +202,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected CirVariable getReferenceOrWordTop() {
         final CirVariable stackVariable = stack.getTop();
-        assert stackVariable.kind() == Kind.REFERENCE || stackVariable.kind() == Kind.WORD : expectedReferenceOrWordErrorMessage(stackVariable.kind());
+        assert stackVariable.kind().isReference || stackVariable.kind().isWord : expectedReferenceOrWordErrorMessage(stackVariable.kind());
         return stackVariable;
     }
 
@@ -364,7 +364,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             argumentIndex++;
         }
         if (receiverDescriptor != null) {
-            if (methodTranslation.classMethodActor().holder().kind == Kind.WORD) {
+            if (methodTranslation.classMethodActor().holder().kind.isWord) {
                 // Don't check code in the Word subclasses as it contains casts between WORD and REFERENCE types that only executes in prototype mode.
             } else {
                 // Must be a non-static invocation - check the receiver
@@ -383,11 +383,11 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         if (argumentKind != parameterKind) {
             // This situation only occurs when calling a method that has one or more WORD type parameters (including the receiver)
             // and the parameter in question is of type Accessor (which is implemented by both WORD and REFERENCE types).
-            assert argumentKind == Kind.WORD;
+            assert argumentKind.isWord;
             assert parameterDescriptor.equals(JavaTypeDescriptor.ACCESSOR) :
                 "argument " + argumentIndex + " can only be applied to a WORD parameter type or parameter of type " + Accessor.class.getName() + "(in " + methodTranslation.birMethod() + ")";
             if (argumentKind != Kind.WORD) {
-                assert parameterKind == Kind.WORD :  "argument " + argumentIndex + " cannot be of kind " + argumentKind + " when parameter is not of kind " + Kind.WORD;
+                assert parameterKind.isWord :  "argument " + argumentIndex + " cannot be of kind " + argumentKind + " when parameter is not of kind " + Kind.WORD;
             }
         }
     }

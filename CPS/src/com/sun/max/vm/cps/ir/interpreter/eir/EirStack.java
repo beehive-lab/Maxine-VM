@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -107,22 +106,22 @@ public class EirStack {
     }
 
     public byte readByte(Address address) {
-        assert read(address).kind() == Kind.WORD;
+        assert read(address).kind().isWord;
         return read(address).unsignedToByte();
     }
 
     public short readShort(Address address) {
-        assert read(address).kind() == Kind.WORD;
+        assert read(address).kind().isWord;
         return read(address).unsignedToShort();
     }
 
     public int readInt(Address address) {
-        assert read(address).kind() == Kind.WORD;
+        assert read(address).kind().isWord;
         return read(address).unsignedToInt();
     }
 
     public long readLong(Address address) {
-        assert read(address).kind() == Kind.WORD;
+        assert read(address).kind().isWord;
         return read(address).toLong();
     }
 
@@ -142,7 +141,7 @@ public class EirStack {
     private WordValue partiallyOverwrite(Address address, int n, int mask) {
         Address word = Address.zero();
         final Value value = read(address);
-        if (value != null && value.kind() == Kind.WORD) {
+        if (value != null && value.kind().isWord) {
             word = value.asWord().asAddress().and(Address.fromInt(mask).not());
         }
         return new WordValue(word.or(n & mask));

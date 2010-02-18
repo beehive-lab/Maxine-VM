@@ -243,8 +243,6 @@ public abstract class SPARCAdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected Adapter create(Sig sig) {
-            assert sig != DYNAMIC_TRAMPOLINE;
-
             throw FatalError.unimplemented();
         }
 
@@ -378,7 +376,6 @@ public abstract class SPARCAdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected Adapter create(Sig sig) {
-            assert sig != SPARCAdapterGenerator.DYNAMIC_TRAMPOLINE : "dynamic trampoline compiled with JIT calling convention";
             throw FatalError.unimplemented();
         }
 
@@ -417,7 +414,7 @@ public abstract class SPARCAdapterGenerator extends AdapterGenerator {
         } else if (optArg instanceof TargetLocation.ParameterStackSlot) {
             int optStackOffset32 = ((TargetLocation.ParameterStackSlot) optArg).index() * OPT_SLOT_SIZE;
             adapt(asm, kind, optStackOffset32, jitStackOffset32, adapterFrameSize);
-            if (kind == Kind.REFERENCE) {
+            if (kind.isReference) {
                 return optStackOffset32 / Word.size();
             }
         } else {

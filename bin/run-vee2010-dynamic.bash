@@ -49,11 +49,11 @@ elif [ x"$1" = xopt ]; then
     echo opt-c1x1x
     $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=${MAXVM_CONFIGS} -maxvm-config-alias=opt-c1x1x > $RESULTS_DIR/opt-c1x1x
 
-    echo opt-c1x2
-    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=${MAXVM_CONFIGS} -maxvm-config-alias=opt-c1x2 > $RESULTS_DIR/opt-c1x2
+#    echo opt-c1x2
+#    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=${MAXVM_CONFIGS} -maxvm-config-alias=opt-c1x2 > $RESULTS_DIR/opt-c1x2
 
-    echo opt-c1x2x
-    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=${MAXVM_CONFIGS} -maxvm-config-alias=opt-c1x2x > $RESULTS_DIR/opt-c1x2x
+#    echo opt-c1x2x
+#    $MAX gate ${VEE_TEST_OPTIONS} -maxvm-configs=${MAXVM_CONFIGS} -maxvm-config-alias=opt-c1x2x > $RESULTS_DIR/opt-c1x2x
 else
     echo "Usage: $0 jit|opt"
 fi

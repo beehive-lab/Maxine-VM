@@ -33,7 +33,7 @@ public abstract class AMD64EirGenerator extends EirGenerator<AMD64EirGeneratorSc
 
     public static void addFrameReferenceMap(PoolSet<EirVariable> liveVariables, WordWidth stackSlotWidth, ByteArrayBitMap map) {
         for (EirVariable variable : liveVariables) {
-            if (variable.kind() == Kind.REFERENCE) {
+            if (variable.kind().isReference) {
                 EirLocation location = variable.location();
                 if (location.category() == EirLocationCategory.STACK_SLOT) {
                     final EirStackSlot stackSlot = (EirStackSlot) location;

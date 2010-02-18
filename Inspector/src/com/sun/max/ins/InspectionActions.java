@@ -1328,7 +1328,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), thread.stackRegion(), "Thread " + thread.toShortString());
+                final Inspector inspector = new MemoryWordsInspector(inspection(), thread.stack().memoryRegion(), "Thread " + thread.toShortString());
                 inspector.highlight();
             } else {
                 gui().errorMessage("no thread selected");
@@ -4659,6 +4659,35 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     public final InspectorAction listVMStateHistory() {
         return listVMStateHistory;
+    }
+
+    /**
+     * Action:  lists to the console the stack frames in the currently focused thread.
+     */
+    final class ListStackFrames extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "List current thread's stack";
+
+        ListStackFrames(String actionTitle) {
+            super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
+        }
+
+        @Override
+        protected void procedure() {
+            final MaxThread thread = focus().thread();
+            if (thread != null) {
+                thread.stack().writeSummaryToStream(System.out);
+            }
+        }
+    }
+
+    private InspectorAction listStackFrames = new ListStackFrames(null);
+
+    /**
+     * @return an Action that will list to the console the history of the VM state
+     */
+    public final InspectorAction listStackFrames() {
+        return listStackFrames;
     }
 
     /**
