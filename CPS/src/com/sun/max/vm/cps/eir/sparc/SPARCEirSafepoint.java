@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.cps.eir.*;
-import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -52,7 +51,7 @@ public final class SPARCEirSafepoint extends EirSafepoint<EirInstructionVisitor,
     @Override
     public void addRegisterReferenceMap(ByteArrayBitMap map) {
         for (EirVariable variable : liveVariables()) {
-            if (variable.kind() == Kind.REFERENCE) {
+            if (variable.kind().isReference) {
                 EirLocation location = variable.location();
                 if (location instanceof SPARCEirRegisters.GeneralPurpose) {
                     final SPARCEirRegisters.GeneralPurpose gpr = (SPARCEirRegisters.GeneralPurpose) location;

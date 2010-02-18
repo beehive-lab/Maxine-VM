@@ -261,7 +261,7 @@ public class AMD64OptStackWalking {
         for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
             final TypeDescriptor parameter = descriptor.parameterDescriptorAt(i);
             final Kind parameterKind = parameter.toKind();
-            if (parameterKind == Kind.REFERENCE) {
+            if (parameterKind.isReference) {
                 // set a bit for this parameter
                 preparer.setReferenceMapBits(current, trampolineRegisters.plusWords(parameterRegisterIndex), 1, 1);
             }

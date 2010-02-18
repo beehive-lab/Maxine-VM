@@ -46,7 +46,7 @@ final class JavaFrame extends JavaSlots {
         final JavaStackSlot slot = slots[localIndex];
         assert slot instanceof VariableJavaStackSlot;
         final CirVariable result = ((VariableJavaStackSlot) slot).cirVariable();
-        assert result.kind() == Kind.REFERENCE || result.kind() == Kind.WORD;
+        assert result.kind().isReference || result.kind().isWord;
         return result;
     }
 

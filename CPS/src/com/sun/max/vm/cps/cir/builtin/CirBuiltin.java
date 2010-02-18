@@ -304,7 +304,7 @@ public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible
         }
         for (int i = 0; i < arguments.length - 2; i++) {
             CirValue argument = arguments[i];
-            if (!argument.isConstant() || argument.kind() == Kind.REFERENCE) {
+            if (!argument.isConstant() || argument.kind().isReference) {
                 return false;
             }
         }

@@ -25,7 +25,6 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.optimize.*;
 import com.sun.max.vm.cps.cir.transform.*;
-import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -64,6 +63,6 @@ public class CirPointerLoadBuiltin extends CirSpecialBuiltin {
     @HOSTED_ONLY
     @Override
     public boolean isHostFoldable(CirValue[] arguments) {
-        return arguments[0].kind() == Kind.REFERENCE && CirValue.areConstant(arguments);
+        return arguments[0].kind().isReference && CirValue.areConstant(arguments);
     }
 }

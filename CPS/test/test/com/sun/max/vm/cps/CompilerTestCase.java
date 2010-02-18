@@ -407,11 +407,11 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
 
     public static boolean usesWordTypes(MethodActor classMethodActor) {
         final SignatureDescriptor signature = classMethodActor.descriptor();
-        if (signature.resultKind() == Kind.WORD) {
+        if (signature.resultKind().isWord) {
             return true;
         }
         for (int i = 0; i < signature.numberOfParameters(); i++) {
-            if (signature.parameterDescriptorAt(i).toKind() == Kind.WORD) {
+            if (signature.parameterDescriptorAt(i).toKind().isWord) {
                 return true;
             }
         }
@@ -438,7 +438,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends VmT
                     try {
                         final Value stubReturnValue = executeGeneratedStub(classMethodActor, stub, boxing, arguments);
                         if (stubProperties == null || stubProperties.compareResult()) {
-                            if (returnValue.kind() == Kind.REFERENCE) {
+                            if (returnValue.kind().isReference) {
                                 if (boxing == Boxing.VALUE) {
                                     assertEquals(((Value) stubReturnValue.asObject()).asObject(), returnValue.asObject());
                                 } else {

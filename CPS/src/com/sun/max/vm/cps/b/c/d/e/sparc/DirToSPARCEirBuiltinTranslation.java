@@ -722,7 +722,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
     @Override
     public void visitConvertLongToDouble(ConvertLongToDouble builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments[0].kind() == Kind.LONG || dirArguments[0].kind() == Kind.WORD;
+        assert dirArguments[0].kind() == Kind.LONG || dirArguments[0].kind().isWord;
         new IntegerToFloatingPointConversion(dirResult, dirArguments, Kind.DOUBLE) {
             @Override
             protected SPARCEirOperation convert(EirValue destination, EirValue temp) {

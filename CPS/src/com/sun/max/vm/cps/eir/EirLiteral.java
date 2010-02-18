@@ -22,7 +22,6 @@ package com.sun.max.vm.cps.eir;
 
 import com.sun.max.asm.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 public class EirLiteral extends EirLocation.Constant {
@@ -66,7 +65,7 @@ public class EirLiteral extends EirLocation.Constant {
 
     @Override
     public TargetLocation toTargetLocation() {
-        if (value().kind() == Kind.REFERENCE) {
+        if (value().kind().isReference) {
             return new TargetLocation.ReferenceLiteral(index);
         }
         return new TargetLocation.ScalarLiteral(index);

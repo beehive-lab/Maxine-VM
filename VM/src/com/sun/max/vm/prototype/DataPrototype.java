@@ -567,7 +567,7 @@ public final class DataPrototype extends Prototype {
          */
         private void write(Value value, int offsetInCell) {
             final byte[] valueBytes;
-            if (value.kind() == Kind.REFERENCE) {
+            if (value.kind().isReference) {
                 valueBytes = (value.asObject() == null) ? nullGripBytes : gripScheme.createPrototypeGrip(originFor(value.asObject()));
             } else {
                 valueBytes = value.toBytes(dataModel);
@@ -760,7 +760,7 @@ public final class DataPrototype extends Prototype {
          */
         private void print(String name, String type, int offsetInCell, Value value) {
             final String valueString;
-            if (value.kind() == Kind.REFERENCE) {
+            if (value.kind().isReference) {
                 if (value == ReferenceValue.NULL) {
                     valueString = "null";
                 } else {
@@ -779,7 +779,7 @@ public final class DataPrototype extends Prototype {
                         }
                     }
                 }
-            } else if (value.kind() == Kind.WORD) {
+            } else if (value.kind().isWord) {
                 valueString = value.toString() + "[" + value.toLong() + "]";
             } else {
                 valueString = value.toString();
@@ -983,7 +983,7 @@ public final class DataPrototype extends Prototype {
         if (specificLayout.isArrayLayout()) {
             if (specificLayout.isReferenceArrayLayout()) {
                 final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
-                assert arrayLayout.elementKind() == Kind.REFERENCE;
+                assert arrayLayout.elementKind().isReference;
                 final int n = HostObjectAccess.getArrayLength(object);
                 for (int i = 0; i < n; i++) {
                     final Address address = cell.plus(arrayLayout.getElementOffsetInCell(i));
