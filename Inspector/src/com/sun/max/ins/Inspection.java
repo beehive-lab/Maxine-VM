@@ -556,21 +556,12 @@ public final class Inspection implements InspectionHolder {
         Trace.begin(TRACE_VALUE, threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
         if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {
-            final MaxThread currentThread = focus().thread();
-            if (!currentThread.isLive()) {
-                boolean foundMatchingThread = false;
-                for (MaxThread thread : maxVMState().threads()) {
-                    if (thread.localHandle() == currentThread.localHandle()) {
-                        focus().setThread(thread);
-                        foundMatchingThread = true;
-                        break;
-                    }
-                }
-                if (!foundMatchingThread && !maxVMState().threads().isEmpty()) {
-                    // Need to preserve invariant that a live thread is the current focus
-                    focus().setThread(maxVMState().threads().first());
-                }
+            if (!focus().thread().isLive()) {
+                // Our most recent thread focus died; pick a new one to maintain the
+                // invariant, even if another one gets set eventually.
+                focus().setThread(maxVMState().threads().first());
             }
+            // Assume that all thread state may have changed.
             for (MaxThread thread : maxVMState().threads()) {
                 for (InspectionListener listener : listeners) {
                     listener.threadStateChanged(thread);
@@ -578,6 +569,7 @@ public final class Inspection implements InspectionHolder {
             }
         } else {
             // A kind of optimization that keeps the StackInspector from walking every stack every time; is it needed?
+            // TODO (mlvdv) is any of this really necessary any more?  Look closely at the stack inspector
             final MaxThread currentThread = focus().thread();
             for (InspectionListener listener : listeners) {
                 listener.threadStateChanged(currentThread);

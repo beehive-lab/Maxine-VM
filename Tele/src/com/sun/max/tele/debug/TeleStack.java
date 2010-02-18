@@ -36,13 +36,17 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
 
     private final TeleNativeThread teleNativeThread;
     private final TeleNativeStackMemoryRegion region;
-    private long lastUpdatedEpoch = -1;
+    private volatile TeleVMState lastUpdatedState = null;
     private volatile IndexedSequence<MaxStackFrame> maxStackFrames = IndexedSequence.Static.empty(MaxStackFrame.class);
 
     public TeleStack(TeleVM teleVM, TeleNativeThread teleNativeThread, TeleNativeStackMemoryRegion region) {
         super(teleVM);
         this.teleNativeThread = teleNativeThread;
         this.region = region;
+    }
+
+    public TeleVMState lastUpdated() {
+        return lastUpdatedState;
     }
 
     public MemoryRegion memoryRegion() {
@@ -54,17 +58,23 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
     }
 
     public IndexedSequence<MaxStackFrame> frames() {
-        final long processEpoch = teleVM().teleProcess().epoch();
-        if (lastUpdatedEpoch < processEpoch) {
-            lastUpdatedEpoch = processEpoch;
-            final IndexedSequence<StackFrame> frames = teleNativeThread.frames();
-            final VariableSequence<MaxStackFrame> maxStackFrames = new VectorSequence<MaxStackFrame>(frames.length());
-            int position = 0;
-            for (StackFrame stackFrame : frames) {
-                maxStackFrames.append(TeleStackFrame.createFrame(teleVM(), this, position, stackFrame));
-                position++;
+
+        if (teleVM().vmState().newerThan(lastUpdatedState)) {
+            if (teleVM().tryLock()) {
+                try {
+                    final IndexedSequence<StackFrame> frames = teleNativeThread.frames();
+                    final VariableSequence<MaxStackFrame> maxStackFrames = new VectorSequence<MaxStackFrame>(frames.length());
+                    int position = 0;
+                    for (StackFrame stackFrame : frames) {
+                        maxStackFrames.append(TeleStackFrame.createFrame(teleVM(), this, position, stackFrame));
+                        position++;
+                    }
+                    this.maxStackFrames = maxStackFrames;
+                    lastUpdatedState = teleVM().vmState();
+                } finally {
+                    teleVM().unlock();
+                }
             }
-            this.maxStackFrames = maxStackFrames;
         }
         return maxStackFrames;
     }

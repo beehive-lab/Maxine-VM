@@ -33,16 +33,35 @@ import com.sun.max.memory.*;
 public interface MaxStack {
 
     /**
+     * Identifies the point in VM state history where this information was most recently updated.
+     *
+     * @return the VM state recorded the last time this information was last updated.
+     */
+    MaxVMState lastUpdated();
+
+    /**
+     * Gets the allocated memory region.
+     * <br>
+     * Thread-safe
+     *
      * @return the memory in the VM allocated for this stack.
      */
     MemoryRegion memoryRegion();
 
     /**
+     * Gets the thread that owns the stack; doesn't change.
+     * <br>
+     * Thread-safe
+     *
      * @return the thread that owns this stack.
      */
     MaxThread thread();
 
     /**
+     * Gets the frames currently in the stack.
+     * <br>
+     * Thread-safe with respect to membership.
+     *
      * @return the frames in the stack
      */
     IndexedSequence<MaxStackFrame> frames();
