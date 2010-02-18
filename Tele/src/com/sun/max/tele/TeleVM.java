@@ -1697,6 +1697,15 @@ public abstract class TeleVM implements MaxVM {
         teleProcess.runToInstruction(codeLocation, synchronous, withClientBreakpoints);
     }
 
+    public final  void returnFromFrame(final MaxThread thread, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
+        final TeleNativeThread teleNativeThread = (TeleNativeThread) thread;
+        final CodeLocation returnLocation = teleNativeThread.getReturnLocation();
+        if (returnLocation == null) {
+            throw new InvalidVMRequestException("No return location available");
+        }
+        teleProcess.runToInstruction(returnLocation, synchronous, withClientBreakpoints);
+    }
+
     public final  void pauseVM() throws InvalidVMRequestException, OSExecutionRequestException {
         teleProcess.pauseProcess();
     }
