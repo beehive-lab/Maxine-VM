@@ -25,6 +25,7 @@ import static com.sun.max.vm.VMOptions.*;
 import java.io.*;
 import java.lang.instrument.*;
 import java.lang.reflect.*;
+import java.net.*;
 import java.security.*;
 import java.util.jar.*;
 
@@ -38,6 +39,7 @@ import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.instrument.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -341,21 +343,22 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      * @throws InvocationTargetException if invocation failed
      * @throws IllegalAccessException if access is denied
      */
-    public static void invokeAgentMethod(String agentClassName, String agentMethodName, String agentArgs) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static void invokeAgentMethod(URL url, String agentClassName, String agentMethodName, String agentArgs) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         final ClassLoader appClassLoader = Launcher.getLauncher().getClassLoader();
-        final Class<?> preMainClass = appClassLoader.loadClass(agentClassName);
-        Method premainMethod = null;
+        final Class<?> agentClass = appClassLoader.loadClass(agentClassName);
+        Method agentMethod = null;
         Object[] agentInvokeArgs = null;
         try {
-            premainMethod = lookupMainOrAgentClass(preMainClass, agentMethodName, new Class<?>[] {String.class, Instrumentation.class});
+            agentMethod = lookupMainOrAgentClass(agentClass, agentMethodName, new Class<?>[] {String.class, Instrumentation.class});
             agentInvokeArgs = new Object[2];
-            agentInvokeArgs[1] = null; // TODO create a java.lang.Instrumentation instance
+            agentInvokeArgs[1] = InstrumentationManager.createInstrumentation();
         } catch (NoSuchMethodException ex) {
-            premainMethod = lookupMainOrAgentClass(preMainClass, agentMethodName, new Class<?>[] {String.class});
+            agentMethod = lookupMainOrAgentClass(agentClass, agentMethodName, new Class<?>[] {String.class});
             agentInvokeArgs = new Object[1];
         }
         agentInvokeArgs[0] = agentArgs;
-        premainMethod.invoke(null, agentInvokeArgs);
+        InstrumentationManager.registerAgent(url);
+        agentMethod.invoke(null, agentInvokeArgs);
     }
 
     private void loadAgents() throws IOException, ClassNotFoundException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
@@ -380,7 +383,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     if (preMainClassName == null) {
                         Log.println("could not find premain class in jarfile: " + jarPath);
                     }
-                    invokeAgentMethod(preMainClassName, "premain", agentArgs);
+                    final URL url = new URL("file://" + jarPath);
+                    Launcher.addURLToAppClassLoader(url);
+                    invokeAgentMethod(url, preMainClassName, "premain", agentArgs);
                 } finally {
                     if (jarFile != null) {
                         jarFile.close();
