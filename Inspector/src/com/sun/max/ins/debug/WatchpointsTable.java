@@ -537,7 +537,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
-            final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
+            final MaxWatchpointEvent watchpointEvent = maxVM().vmState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
                 final MaxThread maxThread = watchpointEvent.maxThread();
                 setText(inspection().nameDisplay().longName(maxThread));
@@ -561,7 +561,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
-            final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
+            final MaxWatchpointEvent watchpointEvent = maxVM().vmState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
                 final String addressText = watchpointEvent.address().toHexString();
                 setText(addressText);
@@ -585,7 +585,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
-            final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
+            final MaxWatchpointEvent watchpointEvent = maxVM().vmState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
                 final int watchpointCode = watchpointEvent.eventCode();
                 String codeName;
