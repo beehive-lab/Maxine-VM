@@ -4086,14 +4086,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MaxCodeLocation returnLocation = focus().thread().getReturnLocation();
-            if (returnLocation != null) {
-                try {
-                    maxVM().runToInstruction(returnLocation, false, false);
-                    // TODO (mlvdv) too broad a catch; narrow this
-                } catch (Exception exception) {
-                    gui().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
-                }
+            try {
+                maxVM().returnFromFrame(focus().thread(), false, false);
+                // TODO (mlvdv) too broad a catch; narrow this
+            } catch (Exception exception) {
+                gui().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
             }
         }
 
@@ -4128,13 +4125,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void procedure() {
-            final MaxCodeLocation returnLocation = focus().thread().getReturnLocation();
-            if (returnLocation != null) {
-                try {
-                    maxVM().runToInstruction(returnLocation, false, true);
-                } catch (Exception exception) {
-                    gui().errorMessage("Return from frame could not be performed.", exception.toString());
-                }
+            try {
+                maxVM().returnFromFrame(focus().thread(), false, true);
+            } catch (Exception exception) {
+                gui().errorMessage("Return from frame could not be performed.", exception.toString());
             }
         }
 

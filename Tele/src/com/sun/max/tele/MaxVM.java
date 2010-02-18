@@ -720,6 +720,15 @@ public interface MaxVM {
     void runToInstruction(final MaxCodeLocation codeLocation, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
 
     /**
+     * @param thread the thread whose top frame should be returned from
+     * @param synchronous should the call wait for the execution to complete?
+     * @param withClientBreakpoints should client breakpoints be enabled duration of the execution?
+     * @throws OSExecutionRequestException execution failed in OS.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
+     */
+    void returnFromFrame(final MaxThread thread, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
+
+    /**
      * Pauses the running VM.
      *
      * @throws InvalidVMRequestException execution not permissible in current VM state.
