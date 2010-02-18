@@ -199,7 +199,7 @@ public final class Inspection implements InspectionHolder {
     }
 
     public  MaxVMState maxVMState() {
-        return maxVM.maxVMState();
+        return maxVM.vmState();
     }
 
     public MaxBreakpointFactory breakpointFactory() {
@@ -333,7 +333,7 @@ public final class Inspection implements InspectionHolder {
     private MaxVMState lastVMStateProcessed = null;
 
     /**
-     * Handles reported changes in the {@linkplain MaxVM#maxVMState()  VM process state}.
+     * Handles reported changes in the {@linkplain MaxVM#vmState()  VM process state}.
      * Must only be run in AWT event thread.
      */
     private void processVMStateChange() {
@@ -380,7 +380,7 @@ public final class Inspection implements InspectionHolder {
     }
 
     /**
-     * Handles reported changes in the {@linkplain MaxVM#maxVMState() VM state}.
+     * Handles reported changes in the {@linkplain MaxVM#vmState() VM state}.
      * Updates state synchronously, then posts an event for follow-up on the AST event thread
      */
     private final class VMStateListener implements MaxVMStateListener {

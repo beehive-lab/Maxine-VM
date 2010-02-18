@@ -27,7 +27,7 @@ import com.sun.max.tele.debug.*;
 
 /**
  * <p>
- * An immutable summary of the Maxine VM state at some point in time, thread-safe and suitable for safe sharing between GUI and execution threads.</p>
+ * A (mostly) immutable summary of the Maxine VM state at some point in time, thread-safe and suitable for safe sharing between GUI and execution threads.</p>
  * <p>
  * The typical progression of process states is
  * { {@linkplain ProcessState.STOPPED STOPPED} -> {@linkplain ProcessState.RUNNING RUNNING} }* -> {@linkplain ProcessState.TERMINATED TERMINATED}.

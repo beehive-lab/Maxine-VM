@@ -481,7 +481,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private MaxVMState lastRefreshedState = null;
 
     public void refresh(boolean force) {
-        final MaxVMState maxVMState = inspection.maxVM().maxVMState();
+        final MaxVMState maxVMState = inspection.maxVM().vmState();
         if (maxVMState.newerThan(lastRefreshedState)) {
             lastRefreshedState = maxVMState;
             setTitle(inspection.currentInspectionTitle());

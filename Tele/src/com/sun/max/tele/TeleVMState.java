@@ -27,7 +27,7 @@ import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 
 /**
- * Implements the immutable history of Maxine VM states during a debugging sessions.
+ * Implements the (mostly) immutable history of Maxine VM states during a debugging sessions.
  *
  * @author Michael Van De Vanter
  */
