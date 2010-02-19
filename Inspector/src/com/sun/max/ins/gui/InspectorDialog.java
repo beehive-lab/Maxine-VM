@@ -55,8 +55,8 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
         return inspection.maxVM();
     }
 
-    public final MaxVMState maxVMState() {
-        return inspection.maxVMState();
+    public final MaxVMState vmState() {
+        return inspection.vmState();
     }
 
     public final MaxCodeManager codeManager() {

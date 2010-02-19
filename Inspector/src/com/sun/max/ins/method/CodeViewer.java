@@ -302,8 +302,8 @@ public abstract class CodeViewer extends InspectorPanel {
 
     private void updateCaches(boolean force) {
         final MaxThread thread = focus().thread();
-        if (thread != threadForCache || maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
+        if (thread != threadForCache || vmState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = vmState();
             updateStackCache();
             // Active rows depend on the stack cache.
             updateActiveRows();

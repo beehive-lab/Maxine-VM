@@ -45,7 +45,7 @@ public interface InspectionHolder {
      * @return the immutable state history of the VM associated with this inspection;
      * updated synchronously; thread safe.
      */
-    MaxVMState maxVMState();
+    MaxVMState vmState();
 
     /**
      * @return the manager for information about code in the VM.

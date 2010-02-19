@@ -760,7 +760,7 @@ public final class MemoryWordsInspector extends Inspector {
 
     @Override
     public void watchpointSetChanged() {
-        if (maxVMState().processState() != ProcessState.TERMINATED) {
+        if (vmState().processState() != ProcessState.TERMINATED) {
             refreshView(true);
         }
     }
