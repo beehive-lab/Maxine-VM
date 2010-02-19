@@ -48,8 +48,8 @@ public abstract class InspectorTableModel extends AbstractTableModel implements 
         return inspection.maxVM();
     }
 
-    public final MaxVMState maxVMState() {
-        return inspection.maxVMState();
+    public final MaxVMState vmState() {
+        return inspection.vmState();
     }
 
     public final MaxCodeManager codeManager() {

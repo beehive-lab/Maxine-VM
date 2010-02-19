@@ -79,7 +79,7 @@ public abstract class ValueLabel extends InspectorLabel {
         } catch (DataIOError dataIOError) {
             value = VoidValue.VOID;
         }
-        lastRefreshedState = maxVMState();
+        lastRefreshedState = vmState();
     }
 
     /**
@@ -98,8 +98,8 @@ public abstract class ValueLabel extends InspectorLabel {
     }
 
     public final void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
+        if (vmState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = vmState();
             Value newValue;
             try {
                 newValue = fetchValue();

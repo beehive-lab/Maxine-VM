@@ -357,8 +357,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return inspection.maxVM();
     }
 
-    public final MaxVMState maxVMState() {
-        return inspection.maxVMState();
+    public final MaxVMState vmState() {
+        return inspection.vmState();
     }
 
     public final MaxCodeManager codeManager() {
@@ -428,7 +428,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     private MaxVMState lastRefreshedState;
 
     public void refresh(boolean force) {
-        MaxVMState maxVMState = maxVMState();
+        MaxVMState maxVMState = vmState();
         if (maxVMState.newerThan(lastRefreshedState) || force) {
             getInspectorTableModel().refresh();
             getInspectorTableColumnModel().refresh(force);

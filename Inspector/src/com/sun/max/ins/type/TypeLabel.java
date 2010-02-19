@@ -137,8 +137,8 @@ public class TypeLabel extends InspectorLabel {
     private MaxVMState lastRefreshedState = null;
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
+        if (vmState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = vmState();
             updateClassActor();
         }
     }

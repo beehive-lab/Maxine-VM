@@ -252,7 +252,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                     newRightComponent = selectedFramePanel;
                 } else if (stackFrame instanceof TruncatedStackFrame) {
                     maxFramesDisplay *= 2;
-                    lastChangedState = maxVMState();
+                    lastChangedState = vmState();
                     refreshView(true);
                 } else {
                     newRightComponent = nativeFrame;
@@ -541,7 +541,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void watchpointSetChanged() {
-        if (maxVMState().processState() == ProcessState.STOPPED) {
+        if (vmState().processState() == ProcessState.STOPPED) {
             refreshView(true);
         }
     }

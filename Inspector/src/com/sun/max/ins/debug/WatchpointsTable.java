@@ -286,7 +286,7 @@ public final class WatchpointsTable extends InspectorTable {
      * @return color the text specially in the row where a triggered watchpoint is displayed
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
         if (watchpointEvent != null && tableModel.rowToWatchpoint(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
@@ -325,7 +325,7 @@ public final class WatchpointsTable extends InspectorTable {
                 }
             }
             // If a watchpoint is currently triggered here, add a pointer icon.
-            final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+            final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
             if (watchpointEvent != null && tableModel.rowToWatchpoint(row).contains(watchpointEvent.address())) {
                 label.setIcon(style().debugIPTagIcon());
                 label.setForeground(style().debugIPTagColor());
