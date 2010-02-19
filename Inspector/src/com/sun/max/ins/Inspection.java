@@ -538,8 +538,6 @@ public final class Inspection implements InspectionHolder {
         inspectorMainFrame.redisplay();
     }
 
-    private final Tracer threadTracer = new Tracer("refresh thread state");
-
     /**
      * Determines what happened in VM execution that just concluded. Then updates all view state as needed.
      */
@@ -550,38 +548,15 @@ public final class Inspection implements InspectionHolder {
         // on update to send the method viewer to the currently selected breakpoint, even
         // if it has nothing to do with where we are.
         focus().setBreakpoint(null);
-        final IdentityHashSet<InspectionListener> listeners = inspectionListeners.clone();
-
-        // Notify of any changes of the thread set
-        Trace.begin(TRACE_VALUE, threadTracer);
-        final long startTimeMillis = System.currentTimeMillis();
-        if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {
-            if (!focus().thread().isLive()) {
-                // Our most recent thread focus died; pick a new one to maintain the
-                // invariant, even if another one gets set eventually.
-                focus().setThread(maxVMState().threads().first());
-            }
-            // Assume that all thread state may have changed.
-            for (MaxThread thread : maxVMState().threads()) {
-                for (InspectionListener listener : listeners) {
-                    listener.threadStateChanged(thread);
-                }
-            }
-        } else {
-            // A kind of optimization that keeps the StackInspector from walking every stack every time; is it needed?
-            // TODO (mlvdv) is any of this really necessary any more?  Look closely at the stack inspector
-            final MaxThread currentThread = focus().thread();
-            for (InspectionListener listener : listeners) {
-                listener.threadStateChanged(currentThread);
-            }
+        if (!focus().thread().isLive()) {
+            // Our most recent thread focus died; pick a new one to maintain the
+            // invariant, even if another one gets set eventually.
+            focus().setThread(maxVMState().threads().first());
         }
-        Trace.end(TRACE_VALUE, threadTracer, startTimeMillis);
         try {
             refreshAll(false);
-
             // Make visible the code at the IP of the thread that triggered the breakpoint
             // or the memory location that triggered a watchpoint
-
             final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
             if (watchpointEvent != null) {
                 focus().setThread(watchpointEvent.maxThread());

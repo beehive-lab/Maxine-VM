@@ -39,35 +39,34 @@ import com.sun.max.vm.value.*;
 /**
  * Display panels for VM compiled stack frames.
  * <br>
- * Creates a generic stack frame header at the top of the panel, leaving it to subclasses to add a view of the
- * stack frame contents.
+ * Creates a stack frame header at the top of the panel.
  *
  * @author Michael Van De Vanter
  */
-abstract class CompiledStackFramePanel<MaxStackFrame_Type extends MaxStackFrame.Compiled> extends InspectorPanel {
+abstract class CompiledStackFramePanel extends InspectorPanel {
 
     // TODO (mlvdv) create a suite of StackFramePanels to handle the different kinds of frames more usefully.
 
-    private MaxStackFrame_Type stackFrame;
+    private MaxStackFrame.Compiled stackFrame;
     private CompiledStackFrameHeaderPanel headerPanel;
 
     /**
      * A panel specialized for displaying a stack frame, uses {@link BorderLayout}, and
      * adds a generic frame description at the top.
      */
-    public CompiledStackFramePanel(Inspection inspection, MaxStackFrame_Type stackFrame) {
+    public CompiledStackFramePanel(Inspection inspection, MaxStackFrame.Compiled stackFrame) {
         super(inspection, new BorderLayout());
         this.stackFrame = stackFrame;
         this.headerPanel = new CompiledStackFrameHeaderPanel(inspection, stackFrame);
         add(headerPanel, BorderLayout.NORTH);
     }
 
-    public final MaxStackFrame_Type stackFrame() {
+    public final MaxStackFrame.Compiled stackFrame() {
         return stackFrame;
     }
 
     public final void setStackFrame(MaxStackFrame stackFrame) {
-        final Class<MaxStackFrame_Type> type = null;
+        final Class<MaxStackFrame.Compiled> type = null;
         this.stackFrame = StaticLoophole.cast(type, stackFrame);
         refresh(true);
     }
@@ -94,7 +93,7 @@ abstract class CompiledStackFramePanel<MaxStackFrame_Type extends MaxStackFrame.
         // Labels that may need updating
         private final AppendableSequence<InspectorLabel> labels = new LinkSequence<InspectorLabel>();
 
-        public CompiledStackFrameHeaderPanel(Inspection inspection, MaxStackFrame_Type stackFrame) {
+        public CompiledStackFrameHeaderPanel(Inspection inspection, MaxStackFrame.Compiled stackFrame) {
             super(inspection, new SpringLayout());
 
             final String frameClassName = stackFrame.getClass().getSimpleName();

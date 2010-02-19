@@ -33,11 +33,13 @@ import com.sun.max.memory.*;
 public interface MaxStack {
 
     /**
-     * Identifies the point in VM state history where this information was most recently updated.
+     * Gets the thread that owns the stack; doesn't change.
+     * <br>
+     * Thread-safe
      *
-     * @return the VM state recorded the last time this information was last updated.
+     * @return the thread that owns this stack.
      */
-    MaxVMState lastUpdated();
+    MaxThread thread();
 
     /**
      * Gets the allocated memory region.
@@ -49,22 +51,35 @@ public interface MaxStack {
     MemoryRegion memoryRegion();
 
     /**
-     * Gets the thread that owns the stack; doesn't change.
+     * Gets the frames currently in the stack.  If the VM is busy,
+     * then previous value is returned.
      * <br>
      * Thread-safe
-     *
-     * @return the thread that owns this stack.
-     */
-    MaxThread thread();
-
-    /**
-     * Gets the frames currently in the stack.
-     * <br>
-     * Thread-safe with respect to membership.
      *
      * @return the frames in the stack
      */
     IndexedSequence<MaxStackFrame> frames();
+
+    /**
+     * Identifies the point in VM state history where this information was most recently updated.
+     * <br>
+     * Thread-safe
+     *
+     * @return the VM state recorded the last time this information was last updated.
+     */
+    MaxVMState lastUpdated();
+
+    /**
+     * Identifies the last point in VM state history when the stack "structurally" changed.
+     * The stack is understood to be unchanged if the length is unchanged and the frames
+     * are all equivalent in content (even if the object representing them differ) with the
+     * exception of the top frame.
+     * <br>
+     * Thread-safe
+     *
+     * @return the last VM state at which the stack structurally changed.
+     */
+    MaxVMState lastChanged();
 
     /**
      * Writes a textual description of each stack frame.

@@ -24,7 +24,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -34,13 +33,6 @@ import com.sun.max.vm.thread.*;
  * @author Michael Van De Vanter
  */
 public interface MaxThread {
-
-    /**
-     * Have the frames of this stack changed in the epoch that completed last time this thread stopped.
-     * This may be true even if the objects representing the frames have changed.
-     * @see StackFrame#isSameFrame(StackFrame)
-     */
-    boolean framesChanged();
 
     /**
      * Gets the VM thread locals corresponding to a given safepoint state.
