@@ -33,34 +33,58 @@ import com.sun.max.vm.stack.StackFrameWalker.*;
 public interface MaxStackFrame {
 
     /**
+     * Gets the stack containing this frame.
+     * <br>
+     * Thread-safe
+     *
      * @return the stack that contains this frame
      */
     MaxStack stack();
 
     /**
+     * Gets the position of this frame in the stack.
+     * <br>
+     * Thread-safe
+     *
      * @return the position of this frame in its stack. The top frame is at position 0;
      * @see #stack()
      */
     int position();
 
     /**
+     * Determines whether this frame is at the top of it's stack, position.
+     * <br>
+     * Thread-safe
+     *
      * @return whether this frame is at the top of the stack.
      */
     boolean isTop();
 
     /**
+     * Gets this frame's Instruction Pointer.
+     * <br>
+     * Thread-safe
+     *
      * @return the address of the next instruction to be executed in this frame.
      * @see Cursor#ip()
      */
     Pointer ip();
 
     /**
+     * Gets this frame's Stack Pointer.
+     * <br>
+     * Thread-safe
+     *
      * @return the current stack pointer
      * @see Cursor#sp()
      */
     Pointer sp();
 
     /**
+     * Gets this frame's Frame Pointer.
+     * <br>
+     * Thread-safe
+     *
      * @return the current frame pointer
      * @see Cursor#fp()
      */
@@ -80,7 +104,9 @@ public interface MaxStackFrame {
     MaxCodeLocation codeLocation();
 
     /**
-     * Gets the complied method enclosing the {@linkplain #ip() execution point} in this frame.
+     * Gets the compiled method enclosing the {@linkplain #ip() execution point} in this frame, if any.
+     * <br>
+     * Thread-safe
      *
      * @return null if this is a frame of a native function or other special frame not associated with a method
      */
@@ -88,6 +114,8 @@ public interface MaxStackFrame {
 
     /**
      * Determines if this frame and another refer to the same frame.
+     * <br>
+     * Thread-safe
      *
      * @param stackFrame another stack frame.
      * @return whether the two refer to the same frame
@@ -131,32 +159,6 @@ public interface MaxStackFrame {
          */
         StackBias bias();
 
-    }
-
-    /**
-     * A stack frame holding the activation of a JIT compiled method.
-     */
-    public static interface Jit extends Compiled {
-
-        /**
-         * Gets a pointer to the operand stack slot indexed by a given offset.
-         * @param index the operand stack index
-         * @return a pointer to the memory location in the stack containing the operand
-         */
-        Pointer operandStackPointer(int index);
-
-        /**
-         * Gets a pointer to the local variable indexed by a given offset.
-         * @param index the local variable index
-         * @return a pointer to the memory location in the stack containing the local variable
-         */
-        Pointer localsPointer(int index);
-
-        /**
-         * Gets the number of elements currently on the operand stack.
-         * @return the number of elements on the operand stack
-         */
-        int operandStackDepth();
     }
 
     /**

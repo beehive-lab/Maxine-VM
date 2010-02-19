@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.tele.*;
 
 /**
  * Notification service for changes to state in the VM.
@@ -36,11 +35,6 @@ public interface InspectionListener {
      * @param force suspend caching behavior; reload state unconditionally.
      */
     void vmStateChanged(boolean force);
-
-    /**
-     * Notifies that the state associated with a particular thread  in the VM has changed.
-     */
-    void threadStateChanged(MaxThread thread);
 
     /**
      * Notifies that the set and/or status (enabled/disabled) of breakpoints in the VM has changed.
