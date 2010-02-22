@@ -465,9 +465,9 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
             return "-X-";
         }
         final String s;
-        if (value.kind() == Kind.WORD) {
+        if (value.kind().isWord) {
             s = "" + value.toLong();
-        } else if (value.kind() == Kind.REFERENCE) {
+        } else if (value.kind().isReference) {
             final Object object = value.asObject();
             if (object == null) {
                 s = "null";

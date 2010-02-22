@@ -354,7 +354,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
             for (int i = signature.numberOfParameters() - 1; i >= 0; --i) {
                 final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
                 final Kind parameterKind = parameter.toKind();
-                if (parameterKind == Kind.REFERENCE) {
+                if (parameterKind.isReference) {
                     preparer.setReferenceMapBits(caller, slotPointer, 1, 1);
                 }
                 int parameterSlots = (!parameterKind.isCategory1) ? 2 : 1;

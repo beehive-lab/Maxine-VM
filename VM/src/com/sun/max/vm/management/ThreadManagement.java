@@ -125,7 +125,7 @@ public class ThreadManagement {
         return threadInfoArray;
     }
 
-    private static Thread findThread(long id) {
+    public static Thread findThread(long id) {
         FindProcedure proc = new FindProcedure(id);
         synchronized (VmThreadMap.ACTIVE) {
             VmThreadMap.ACTIVE.forAllThreads(null, proc);

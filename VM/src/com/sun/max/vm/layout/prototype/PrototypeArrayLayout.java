@@ -50,7 +50,7 @@ public abstract class PrototypeArrayLayout<Value_Type extends Value<Value_Type>>
     @Override
     public final boolean isReferenceArrayLayout() {
         final Kind rawKind = elementKind;
-        return rawKind == Kind.REFERENCE;
+        return rawKind.isReference;
     }
 
     public Offset getElementOffsetFromOrigin(int index) {

@@ -86,7 +86,7 @@ public final class CirSelectVirtualMethod extends CirSnippet {
         assert arguments.length == Parameter.VALUES.length();
         if (isConstantArgument(arguments, Parameter.declaredVirtualMethodActor)) {
             final VirtualMethodActor declaredMethod = (VirtualMethodActor) getConstantArgumentValue(arguments, Parameter.declaredVirtualMethodActor).asObject();
-            if (declaredMethod.isFinal() || declaredMethod.holder().isFinal() || declaredMethod.holder().kind == Kind.WORD) {
+            if (declaredMethod.isFinal() || declaredMethod.holder().isFinal() || declaredMethod.holder().kind.isWord) {
                 return new CirCall(getNormalContinuation(arguments), builtinOrMethod(declaredMethod, cirGenerator));
             }
             if (isConstantArgument(arguments, Parameter.receiver)) {

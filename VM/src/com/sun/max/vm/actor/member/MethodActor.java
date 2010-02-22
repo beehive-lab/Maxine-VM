@@ -379,7 +379,7 @@ public abstract class MethodActor extends MemberActor {
 
     public static boolean containWord(Value[] values) {
         for (Value value : values) {
-            if (value.kind() == Kind.WORD) {
+            if (value.kind().isWord) {
                 return true;
             }
         }
@@ -452,7 +452,7 @@ public abstract class MethodActor extends MemberActor {
     @HOSTED_ONLY
     private static Object getBoxedJavaValue(Value value, Class<?> parameterType) {
         final Kind parameterKind = Kind.fromJava(parameterType);
-        if (parameterKind == Kind.WORD) {
+        if (parameterKind.isWord) {
             if (MaxineVM.isHosted()) {
                 final Word word = value.unboxWord();
                 final Class<Class<? extends Word>> type = null;
@@ -506,7 +506,7 @@ public abstract class MethodActor extends MemberActor {
             return descriptor().copyParameterKinds(null, 0);
         }
         final Kind[] kinds = descriptor().copyParameterKinds(null, 1);
-        kinds[0] = holder().kind == Kind.WORD ? Kind.WORD : Kind.REFERENCE;
+        kinds[0] = holder().kind.isWord ? Kind.WORD : Kind.REFERENCE;
         return kinds;
     }
 

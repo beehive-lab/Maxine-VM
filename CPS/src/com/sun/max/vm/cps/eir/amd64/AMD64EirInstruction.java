@@ -433,7 +433,7 @@ public interface AMD64EirInstruction {
             AMD64EirGenerator.addFrameReferenceMap(liveVariables(), stackSlotWidth, map);
             if (arguments != null) {
                 for (EirOperand argument : arguments) {
-                    if (argument.kind() == Kind.REFERENCE && argument.location() instanceof EirStackSlot) {
+                    if (argument.kind().isReference && argument.location() instanceof EirStackSlot) {
                         final EirStackSlot stackSlot = (EirStackSlot) argument.location();
                         final int stackSlotBitIndex = stackSlot.offset / stackSlotWidth.numberOfBytes;
                         map.set(stackSlotBitIndex);

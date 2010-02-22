@@ -270,7 +270,7 @@ public final class Machine extends AbstractTeleVMHolder{
         if (kind.isExtendedPrimitiveValue()) {
             return widenIfNecessary(fieldActor.readValue(instance));
         } else {
-            assert kind == Kind.REFERENCE;
+            assert kind.isReference;
             if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
                 return teleVM().createReferenceValue(teleVM().wordToReference(instance.readWord(fieldActor.offset())));
             } else {
@@ -443,7 +443,7 @@ public final class Machine extends AbstractTeleVMHolder{
 
             try {
                 Value result = method.invoke(arguments);
-                if (result.kind() == Kind.REFERENCE) {
+                if (result.kind().isReference) {
                     result = toReferenceValue(Reference.fromJava(result.asObject()));
                 }
                 push(widenIfNecessary(result));

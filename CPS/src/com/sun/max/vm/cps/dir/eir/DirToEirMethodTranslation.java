@@ -122,7 +122,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
                 // of the caller which will have them covered by a stack reference map.
                 // However, if there is an adapter frame in between, then the parameter
                 // stack locations are in a frame covered by no reference map.
-                if (dirParameter.kind() == Kind.REFERENCE && parameterEirLocation instanceof EirStackSlot) {
+                if (dirParameter.kind().isReference && parameterEirLocation instanceof EirStackSlot) {
                     EirVariable stackReferenceParameter = createEirVariable(Kind.REFERENCE);
                     eirParameters[i] = stackReferenceParameter;
                     if (refParamToLocalMoves == null) {

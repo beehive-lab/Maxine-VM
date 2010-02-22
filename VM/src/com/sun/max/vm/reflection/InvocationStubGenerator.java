@@ -322,7 +322,7 @@ public class InvocationStubGenerator<T> {
 
         final ByteArrayBytecodeAssembler asm = new ByteArrayBytecodeAssembler(constantPoolEditor);
         final Kind returnKind = Kind.fromJava(returnType);
-        boolean isUnsafe = returnKind == Kind.WORD;
+        boolean isUnsafe = returnKind.isWord;
 
         // Index of parameters:
         //     invoke(Object obj, Object[] args)
@@ -438,7 +438,7 @@ public class InvocationStubGenerator<T> {
             asm.iconst(i);
             asm.aaload();
             boxing.unbox(asm, parameterType, runtimeParameterTypesPoolCPIs[i]);
-            if (parameterKind == Kind.WORD) {
+            if (parameterKind.isWord) {
                 isUnsafe = true;
             }
         }
@@ -713,7 +713,7 @@ public class InvocationStubGenerator<T> {
         Method method = VALUE_UNBOX_METHOD.get(kind.asEnum);
         if (method == null) {
             final String kindName = kind.name.toString();
-            if (kind == Kind.REFERENCE) {
+            if (kind.isReference) {
                 method = Classes.getDeclaredMethod(Value.class, "unboxObject");
             } else {
                 final String camelCaseName = Character.toUpperCase(kindName.charAt(0)) + kindName.substring(1);

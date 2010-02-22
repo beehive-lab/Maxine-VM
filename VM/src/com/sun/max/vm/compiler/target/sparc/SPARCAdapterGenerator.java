@@ -414,7 +414,7 @@ public abstract class SPARCAdapterGenerator extends AdapterGenerator {
         } else if (optArg instanceof TargetLocation.ParameterStackSlot) {
             int optStackOffset32 = ((TargetLocation.ParameterStackSlot) optArg).index() * OPT_SLOT_SIZE;
             adapt(asm, kind, optStackOffset32, jitStackOffset32, adapterFrameSize);
-            if (kind == Kind.REFERENCE) {
+            if (kind.isReference) {
                 return optStackOffset32 / Word.size();
             }
         } else {

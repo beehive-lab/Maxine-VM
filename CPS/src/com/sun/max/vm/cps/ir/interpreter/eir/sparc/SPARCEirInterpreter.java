@@ -243,7 +243,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
     public void visit(SPARCEirLoad load) {
         final Value value;
         final Value pointer = cpu.read(load.pointerOperand().location());
-        if (pointer.kind() == Kind.WORD) {
+        if (pointer.kind().isWord) {
             // This must be a load from the stack
             assert load.indexOperand() == null;
             final int offset = load.offsetOperand() != null ? cpu.read(load.offsetOperand().location()).asInt() : 0;
@@ -301,9 +301,9 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
 
     public void visit(SPARCEirStore store) {
         final Value pointer = cpu.read(store.pointerOperand().location());
-        if (pointer.kind() == Kind.WORD) {
+        if (pointer.kind().isWord) {
             // This must be a store to the stack: don't type check the load
-            final Value value = store.kind == Kind.WORD ?
+            final Value value = store.kind.isWord ?
                             cpu.read(store.valueOperand().location()) :
                             cpu.read(store.kind, store.valueOperand().location());
             assert store.indexOperand() == null;
@@ -573,7 +573,7 @@ public class SPARCEirInterpreter extends EirInterpreter implements SPARCEirInstr
         Value valueB = cpu.read(instruction.rightLocation());
         final long a;
         final long b;
-        if (valueA.kind() == Kind.REFERENCE || valueB.kind() == Kind.REFERENCE) {
+        if (valueA.kind().isReference || valueB.kind().isReference) {
             if (valueA.kind() != Kind.REFERENCE) {
                 ProgramError.check(valueA.toLong() == 0L);
                 valueA = ReferenceValue.NULL;

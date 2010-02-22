@@ -127,7 +127,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         final Kind resultKind = resultDescriptor.toKind();
         final StringBuilder nativeFunctionDescriptor = new StringBuilder("(");
         int nativeFunctionArgSlots = 0;
-        final TypeDescriptor nativeResultDescriptor = resultKind == Kind.REFERENCE ? JavaTypeDescriptor.JNI_HANDLE : resultDescriptor;
+        final TypeDescriptor nativeResultDescriptor = resultKind.isReference ? JavaTypeDescriptor.JNI_HANDLE : resultDescriptor;
 
         int jniHandles = 0;
         int top = 0;
@@ -240,7 +240,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         if (!isCFunction) {
             // Unwrap a reference result from its enclosing JNI handle. This must be done
             // *before* the JNI frame is restored.
-            if (resultKind == Kind.REFERENCE) {
+            if (resultKind.isReference) {
                 invokevirtual(unhandHandle, 1, 1);
             }
 
@@ -257,7 +257,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         }
 
         // Return result
-        if (resultKind == Kind.REFERENCE) {
+        if (resultKind.isReference) {
             assert !isCFunction;
 
             // Insert cast if return type is not java.lang.Object

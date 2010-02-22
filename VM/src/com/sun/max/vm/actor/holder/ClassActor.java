@@ -1374,7 +1374,7 @@ public abstract class ClassActor extends Actor {
             result.or(interfaceActor.getSuperClassActorSerials());
         }
         if (MaxineVM.isHosted()) {
-            if (kind == Kind.WORD) {
+            if (kind.isWord) {
                 result.clear(ClassRegistry.OBJECT.id);
             }
         }

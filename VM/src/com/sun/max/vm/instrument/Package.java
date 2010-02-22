@@ -18,58 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.cps.dir;
+package com.sun.max.vm.instrument;
 
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.*;
+import com.sun.max.vm.*;
 
 /**
- * A value that is constant at compile time.
+ * @see MaxPackage
  *
- * @author Bernd Mathiske
+ * @author Mick Jordan
  */
-public class DirConstant extends DirValue {
-
-    private final Value value;
-
-    public DirConstant(Value value) {
-        this.value = value;
+public class Package extends VMPackage {
+    public Package() {
+        super();
     }
-
-    public Kind kind() {
-        return value.kind();
-    }
-
-    @Override
-    public Value value() {
-        return value;
-    }
-
-    public boolean isConstant() {
-        return true;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof DirConstant) {
-            final DirConstant dirConstant = (DirConstant) other;
-            return value.equals(dirConstant.value);
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCodeForBlock() {
-        if (value.kind().isReference) {
-            return super.hashCodeForBlock();
-        }
-        return super.hashCodeForBlock() ^ value.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return value.toString();
-    }
-
-    public static final DirConstant VOID = new DirConstant(VoidValue.VOID);
 }

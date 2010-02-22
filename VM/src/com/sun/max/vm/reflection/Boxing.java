@@ -67,7 +67,7 @@ public enum Boxing {
                 if (returnKind == Kind.VOID) {
                     asm.aconst_null();
                 } else if (returnKind != Kind.REFERENCE) {
-                    if (returnKind == Kind.WORD) {
+                    if (returnKind.isWord) {
                         throw new IllegalArgumentException("cannot reflectively invoke method with a Word return type");
                     }
                     asm.invokestatic(JAVA_BOX_PRIMITIVE.get(returnKind.asEnum), returnKind.stackSlots, 1);
@@ -78,10 +78,10 @@ public enum Boxing {
         @Override
         void unbox(BytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex) {
             final Kind parameterKind = Kind.fromJava(parameterType);
-            if (parameterKind == Kind.REFERENCE) {
+            if (parameterKind.isReference) {
                 asm.checkcast(parameterTypePoolConstantIndex);
             } else {
-                if (parameterKind == Kind.WORD) {
+                if (parameterKind.isWord) {
                     throw new IllegalArgumentException("cannot reflectively invoke method with Word type parameter");
                 }
                 asm.invokestatic(JAVA_UNBOX_PRIMITIVE.get(parameterKind.asEnum), 1, parameterKind.stackSlots);
@@ -102,7 +102,7 @@ public enum Boxing {
                 if (returnKind == Kind.VOID) {
                     return "null";
                 } else if (returnKind != Kind.REFERENCE) {
-                    if (returnKind == Kind.WORD) {
+                    if (returnKind.isWord) {
                         throw new IllegalArgumentException("cannot reflectively invoke method with a Word return type");
                     }
 
@@ -116,10 +116,10 @@ public enum Boxing {
         @Override
         String sourceUnbox(ConstantPool pool, Class parameterType, String parameter) {
             final Kind parameterKind = Kind.fromJava(parameterType);
-            if (parameterKind == Kind.REFERENCE) {
+            if (parameterKind.isReference) {
                 return "(" + parameterType.getSimpleName() + ") " + parameter;
             }
-            if (parameterKind == Kind.WORD) {
+            if (parameterKind.isWord) {
                 throw new IllegalArgumentException("cannot reflectively invoke method with Word type parameter");
             }
 
@@ -168,12 +168,12 @@ public enum Boxing {
         void unbox(BytecodeAssembler asm, Class parameterType, int parameterTypePoolConstantIndex) {
             final Kind parameterKind = Kind.fromJava(parameterType);
             asm.invokevirtual(VALUE_UNBOX.get(parameterKind.asEnum), 1, parameterKind.stackSlots);
-            if (parameterKind == Kind.REFERENCE) {
+            if (parameterKind.isReference) {
                 // cast against Object is unnecessary AND causes problems with values that are StaticTuples
                 if (parameterType != Object.class) {
                     asm.checkcast(parameterTypePoolConstantIndex);
                 }
-            } else if (parameterKind == Kind.WORD) {
+            } else if (parameterKind.isWord) {
                 if (parameterType != Word.class) {
                     Integer methodRefIndex = CAST_WORD.get(parameterType);
                     asm.invokevirtual(methodRefIndex, 1, 1);
@@ -209,9 +209,9 @@ public enum Boxing {
 
             final ClassMethodRefConstant unboxMethod = pool.classMethodAt(VALUE_UNBOX.get(parameterKind.asEnum));
             final String unboxedParameter = parameter + "." + unboxMethod.name(pool) + "()";
-            if (parameterKind == Kind.REFERENCE) {
+            if (parameterKind.isReference) {
                 return "(" + parameterType.getSimpleName() + ") " + unboxedParameter;
-            } else if (parameterKind == Kind.WORD) {
+            } else if (parameterKind.isWord) {
                 // The following instructions will be optimized away to nothing
                 return "Boxing.castWord(" + parameterType.getSimpleName() + ", " + unboxedParameter + ")";
             }

@@ -30,7 +30,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
@@ -136,7 +135,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
 
     private void recordExtraCallInfo(EirCall call, Label label) {
         // TODO: Re-enable recording of reference calls once they are needed for deoptimization
-        final boolean isReferenceCall = false && call.result() != null && call.result().eirValue().kind() == Kind.REFERENCE;
+        final boolean isReferenceCall = false && call.result() != null && call.result().eirValue().kind().isReference;
         if (isReferenceCall || call.isNativeFunctionCall) {
             extraCallInfos.append(new ExtraCallInfo(label, isReferenceCall, call.isNativeFunctionCall));
         }

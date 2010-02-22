@@ -2,17 +2,6 @@ package com.sun.bce;
 
 public class BytecodeExtender {
 
-
-    public static class Frame {
-        private final Type[] locals;
-        private final Type[] stack;
-
-        Frame(int maxStack, int maxLocals) {
-            locals = new Type[maxLocals];
-            stack = new Type[maxStack];
-        }
-    }
-
     public int[] extra;
 
     public static class StackMap {
@@ -24,10 +13,6 @@ public class BytecodeExtender {
     }
 
     public void run(byte[] code) {
-
-
-        byte[] out = code.clone();
-
         int bci = 0;
         while (bci != code.length) {
             int opcode = code[bci++];

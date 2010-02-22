@@ -31,7 +31,6 @@ import com.sun.max.vm.cps.eir.EirStackSlot.*;
 import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
@@ -183,7 +182,7 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         if (value == null || value.isZero()) {
             return Address.zero();
         }
-        if (value.kind() == Kind.WORD) {
+        if (value.kind().isWord) {
             return value.asWord().asAddress();
         }
         return Address.fromLong(0x1A355978BC123523L); // producing "random" high bits

@@ -29,7 +29,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -101,7 +100,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
 
         @Override
         public int hashCode() {
-            if (subject.kind() == Kind.REFERENCE) {
+            if (subject.kind().isReference) {
                 return type().hashCode() ^ subject.asReference().toOrigin().toInt();
             }
             return type().hashCode() ^ subject.toInt();
