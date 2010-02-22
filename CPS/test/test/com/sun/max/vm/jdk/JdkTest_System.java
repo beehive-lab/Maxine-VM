@@ -60,7 +60,7 @@ public abstract class JdkTest_System<Method_Type extends IrMethod> extends Compi
     private static Object createFullArray(Kind kind) {
         final Object array = createEmptyArray(kind);
         for (int i = 0; i < Array.getLength(array); i++) {
-            if (kind == Kind.REFERENCE) {
+            if (kind.isReference) {
                 final Object value = ReferenceValue.from(new Integer(i));
                 Array.set(array, i, value);
             } else {

@@ -380,14 +380,14 @@ public final class ObjectFieldsTable extends InspectorTable {
             InspectorLabel label = labels[row];
             if (label == null) {
                 final FieldActor fieldActor = (FieldActor) value;
-                if (fieldActor.kind == Kind.REFERENCE) {
+                if (fieldActor.kind.isReference) {
                     label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {
                             return teleObject.readFieldValue(fieldActor);
                         }
                     };
-                } else if (fieldActor.kind == Kind.WORD) {
+                } else if (fieldActor.kind.isWord) {
                     label = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, ObjectFieldsTable.this) {
                         @Override
                         public Value fetchValue() {

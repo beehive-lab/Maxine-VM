@@ -55,6 +55,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     public final WordWidth width;
     public final boolean isCategory1;
     public final int stackSlots;
+    public final boolean isWord;
+    public final boolean isReference;
 
     protected Kind(KindEnum kindEnum, String name, Class javaClass, Class javaArrayClass, Class<Value_Type> valueClass, char character,
                    final Class boxedClass, TypeDescriptor typeDescriptor, WordWidth width) {
@@ -70,6 +72,8 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         this.stackKind = "ZBCS".indexOf(character) != -1 ? INT : this;
         this.isCategory1 = "JD".indexOf(character) == -1;
         this.stackSlots = !isCategory1 ? 2 : (character == 'V' ? 0 : 1);
+        this.isWord = kindEnum == KindEnum.WORD;
+        this.isReference = kindEnum == KindEnum.REFERENCE;
     }
 
     @Override

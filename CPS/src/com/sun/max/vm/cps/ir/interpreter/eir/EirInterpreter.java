@@ -259,7 +259,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
      */
     @Override
     public Value pointerLoad(Kind kind, Value[] arguments) {
-        if (arguments[0].kind() == Kind.LONG || arguments[0].kind() == Kind.WORD) {
+        if (arguments[0].kind() == Kind.LONG || arguments[0].kind().isWord) {
             // Assume this dereferencing a pointer to a stack slot
             assert arguments.length == 2 : "expecting a stack address dereference";
             final Address address = arguments[0].toWord().asAddress();
@@ -279,7 +279,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
      */
     @Override
     public void pointerStore(Kind kind, Value[] arguments) {
-        if (arguments[0].kind() == Kind.LONG || arguments[0].kind() == Kind.WORD) {
+        if (arguments[0].kind() == Kind.LONG || arguments[0].kind().isWord) {
             // Assume this dereferencing a pointer to a stack slot
             assert arguments.length == 3 : "expecting a stack address dereference";
             final Address address = arguments[0].toWord().asAddress();
@@ -575,7 +575,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         final Value[] arguments = new Value[argumentLocations.length];
         final Map<Value, Value> valuesToHandles = isNativeInvoke ? new HashMap<Value, Value>(argumentLocations.length) : null;
         for (int i = 0; i < argumentLocations.length; i++) {
-            if (isNativeInvoke && parameterKinds[i] == Kind.REFERENCE) {
+            if (isNativeInvoke && parameterKinds[i].isReference) {
                 final Value argumentValue = cpu().read(Kind.fromJava(JniHandle.class), argumentLocations[i]);
                 arguments[i] = unwrapJniHandle(argumentValue, argumentLocations, valuesToHandles);
             } else {
@@ -586,7 +586,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             final Value result = classMethodActor.invoke(arguments);
             assert (result == VoidValue.VOID) == (classMethodActor.resultKind() == Kind.VOID);
             if (result != VoidValue.VOID) {
-                if (isNativeInvoke && classMethodActor.resultKind() == Kind.REFERENCE) {
+                if (isNativeInvoke && classMethodActor.resultKind().isReference) {
                     final Value handle;
                     handle = valuesToHandles.get(result);
                     ProgramError.check(handle != null, "reference result from native function must be one of the parameters");

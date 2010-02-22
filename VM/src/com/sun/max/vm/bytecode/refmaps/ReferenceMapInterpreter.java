@@ -125,10 +125,10 @@ public abstract class ReferenceMapInterpreter {
             final int positionOfNew = uninitializedNewType.position();
             final int constantPoolIndex = ((code[positionOfNew + 1] & 0xFF) << 8) | (code[positionOfNew + 2] & 0xFF);
             final TypeDescriptor typeDescriptor = constantPool.classAt(constantPoolIndex).typeDescriptor();
-            return typeDescriptor.toKind() == Kind.REFERENCE;
+            return typeDescriptor.toKind().isReference;
         } else if (VerificationType.REFERENCE.isAssignableFrom(type)) {
             final TypeDescriptor typeDescriptor = type.typeDescriptor();
-            if (typeDescriptor == null || typeDescriptor.toKind() == Kind.REFERENCE) {
+            if (typeDescriptor == null || typeDescriptor.toKind().isReference) {
                 return true;
             }
         }
@@ -187,7 +187,7 @@ public abstract class ReferenceMapInterpreter {
             for (int i = 0; i < signature.numberOfParameters(); ++i) {
                 final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
                 final Kind parameterKind = parameter.toKind();
-                if (parameterKind == Kind.REFERENCE) {
+                if (parameterKind.isReference) {
                     updateLocal(activeLocals, true);
                 }
                 activeLocals += parameterKind.isCategory1 ? 1 : 2;
@@ -226,7 +226,7 @@ public abstract class ReferenceMapInterpreter {
         }
 
         private boolean isReference(VerificationType type) {
-            return ReferenceMapInterpreter.isReference(context.classMethodActor().holder().kind == Kind.WORD, code, constantPool, type);
+            return ReferenceMapInterpreter.isReference(context.classMethodActor().holder().kind.isWord, code, constantPool, type);
         }
 
         public void push(VerificationType type) {
@@ -258,7 +258,7 @@ public abstract class ReferenceMapInterpreter {
         }
 
         public ObjectType getObjectType(TypeDescriptor typeDescriptor) {
-            if (typeDescriptor.toKind() == Kind.WORD) {
+            if (typeDescriptor.toKind().isWord) {
                 return VerificationType.WORD;
             }
             return VerificationType.OBJECT;
@@ -297,7 +297,7 @@ public abstract class ReferenceMapInterpreter {
         final FramesInitialization framesInitialization = new FramesInitialization();
         final ClassMethodActor classMethodActor = context.classMethodActor();
         if (!classMethodActor.isStatic()) {
-            final VerificationType receiverType = classMethodActor.holder().kind == Kind.REFERENCE ? VerificationType.OBJECT : VerificationType.WORD;
+            final VerificationType receiverType = classMethodActor.holder().kind.isReference ? VerificationType.OBJECT : VerificationType.WORD;
             framesInitialization.store(receiverType, 0);
         }
 
@@ -458,7 +458,7 @@ public abstract class ReferenceMapInterpreter {
     }
 
     void push(Kind kind) {
-        if (kind == Kind.REFERENCE) {
+        if (kind.isReference) {
             pushRef();
         } else {
             if (!kind.isCategory1) {
@@ -1154,7 +1154,7 @@ public abstract class ReferenceMapInterpreter {
                     final FieldRefConstant fieldConstant = constantPool.fieldAt(index);
                     final TypeDescriptor type = fieldConstant.type(constantPool);
                     final Kind kind = type.toKind();
-                    if (kind == Kind.REFERENCE) {
+                    if (kind.isReference) {
                         pushRef();
                     } else {
                         if (kind.isCategory1) {
@@ -1183,7 +1183,7 @@ public abstract class ReferenceMapInterpreter {
                     final FieldRefConstant fieldConstant = constantPool.fieldAt(index);
                     final TypeDescriptor type = fieldConstant.type(constantPool);
                     final Kind kind = type.toKind();
-                    if (kind == Kind.REFERENCE) {
+                    if (kind.isReference) {
                         pushRef();
                     } else {
                         if (kind.isCategory1) {

@@ -173,7 +173,7 @@ public class TirRecorder {
     }
 
     private void checkNull(TirInstruction instruction) {
-        assert instruction.kind() == Kind.REFERENCE;
+        assert instruction.kind().isReference;
         call(Snippet.CheckNullPointer.SNIPPET, instruction);
     }
 
@@ -294,7 +294,7 @@ public class TirRecorder {
             final TirInstruction value = arguments[2];
             checkNullPointer(array);
             checkArrayIndex(array, index);
-            if (kind == Kind.REFERENCE) {
+            if (kind.isReference) {
                 checkArrayStore(array, value);
             }
             state.popMany(Kind.REFERENCE, Kind.INT, kind);

@@ -114,11 +114,11 @@ public class C1XRuntimeCalls {
             case Int:
                 return resultKind == Kind.INT;
             case Jsr:
-                return resultKind == Kind.REFERENCE;
+                return resultKind.isReference;
             case Long:
                 return resultKind == Kind.LONG;
             case Object:
-                return resultKind == Kind.REFERENCE;
+                return resultKind.isReference;
             case Short:
                 return resultKind == Kind.SHORT;
             case Void:

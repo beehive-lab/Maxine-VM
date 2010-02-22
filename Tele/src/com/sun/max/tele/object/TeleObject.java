@@ -493,14 +493,14 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                 try {
                     final Value value = teleObject.readFieldValue(fieldActor);
                     final Object newJavaValue;
-                    if (fieldActor.kind == Kind.REFERENCE) {
+                    if (fieldActor.kind.isReference) {
                         final TeleObject teleFieldReferenceObject = teleObject.teleVM().makeTeleObject(value.asReference());
                         if (teleFieldReferenceObject == null) {
                             newJavaValue = null;
                         } else {
                             newJavaValue = makeDeepCopy(fieldActor, teleFieldReferenceObject);
                         }
-                    } else if (fieldActor.kind == Kind.WORD) {
+                    } else if (fieldActor.kind.isWord) {
                         final Class<Class< ? extends Word>> type = null;
                         final Class< ? extends Word> wordType = StaticLoophole.cast(type, fieldActor.toJava().getType());
                         newJavaValue = value.asWord().as(wordType);

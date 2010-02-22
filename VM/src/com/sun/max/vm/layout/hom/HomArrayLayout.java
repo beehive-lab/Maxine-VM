@@ -56,7 +56,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
     @Override
     public final boolean isReferenceArrayLayout() {
         final Kind rawKind = elementKind;
-        return rawKind == Kind.REFERENCE;
+        return rawKind.isReference;
     }
 
     @INLINE
@@ -103,7 +103,7 @@ public abstract class HomArrayLayout<Value_Type extends Value<Value_Type>> exten
         final int length = Array.getLength(array);
         final Hub hub = HostObjectAccess.readHub(array);
         final Kind elementKind = hub.classActor.componentClassActor().kind;
-        if (elementKind == Kind.REFERENCE) {
+        if (elementKind.isReference) {
             for (int i = 0; i < length; i++) {
                 final Object object = Array.get(array, i);
                 visitor.visitElement(getElementOffsetInCell(i).toInt(), i, ReferenceValue.from(object));

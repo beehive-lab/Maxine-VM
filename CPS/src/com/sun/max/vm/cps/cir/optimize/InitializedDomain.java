@@ -22,7 +22,6 @@
 package com.sun.max.vm.cps.cir.optimize;
 
 import com.sun.max.vm.cps.cir.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -44,7 +43,7 @@ public final class InitializedDomain extends AbstractValueDomain<InitializedDoma
     @Override
     public Set fromConstant(CirConstant c) {
         final Value v = c.value();
-        if (v.kind() == Kind.REFERENCE) {
+        if (v.kind().isReference) {
             final Object o = v.asObject();
             if (o == null) {
                 return NULL;

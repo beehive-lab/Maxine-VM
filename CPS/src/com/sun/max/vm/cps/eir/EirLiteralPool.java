@@ -23,7 +23,6 @@ package com.sun.max.vm.cps.eir;
 import java.util.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 public class EirLiteralPool {
@@ -51,7 +50,7 @@ public class EirLiteralPool {
     private int nextScalarLiteralByteIndex;
 
     public EirLiteral makeLiteral(Value value) {
-        if (value.kind() == Kind.REFERENCE) {
+        if (value.kind().isReference) {
             EirLiteral literal = referenceLiterals.get(value);
             if (literal == null) {
                 literal = new EirLiteral(nextReferenceLiteralIndex, value);

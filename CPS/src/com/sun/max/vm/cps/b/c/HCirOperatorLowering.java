@@ -173,7 +173,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
         if (!checksNullPointer(operator)) {
             return cc;
         }
-        if (object.kind() == Kind.REFERENCE) {
+        if (object.kind().isReference) {
             final CirSnippet checkNullPointer = CirSnippet.get(Snippet.CheckNullPointer.SNIPPET);
             return call(
                        checkNullPointer,
@@ -181,7 +181,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                        cont(cc),
                        ce());
         }
-        assert object.kind() == Kind.WORD;
+        assert object.kind().isWord;
         return cc;
     }
 
@@ -613,7 +613,7 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
 
         final CirSnippet arrayStore = CirSnippet.get(ArraySetSnippet.selectSnippetByKind(operator.elementKind()));
 
-        if (operator.elementKind() == Kind.REFERENCE) {
+        if (operator.elementKind().isReference) {
             final CirSnippet checkReferenceArrayStore = CirSnippet.get(Snippet.CheckReferenceArrayStore.SNIPPET);
             set(nullCheck(
                     array,
