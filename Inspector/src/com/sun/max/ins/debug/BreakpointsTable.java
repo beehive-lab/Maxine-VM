@@ -182,7 +182,7 @@ public final class BreakpointsTable extends InspectorTable {
                     } catch (MaxVMBusyException maxVMBusyException) {
                         final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
-                        System.out.println("Reset enabled checkbox at row=" + row + ", col=" + column);
+                        // System.out.println("Reset enabled checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
                         inspection().announceVMBusyFailure("Breakpont ENABLED setting");
                     }
