@@ -51,6 +51,16 @@ public interface MaxStack {
     MemoryRegion memoryRegion();
 
     /**
+     * Gets the top frame from the currently updated stack.  If the VM is busy,
+     * then the top of the previous stack is returned.
+     * <br>
+     * Thread-safe
+     *
+     * @return the to frame in the stack
+     */
+    MaxStackFrame top();
+
+    /**
      * Gets the frames currently in the stack.  If the VM is busy,
      * then previous value is returned.
      * <br>

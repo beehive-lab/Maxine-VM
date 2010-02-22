@@ -574,7 +574,7 @@ public final class Inspection implements InspectionHolder {
             }
             // Reset focus to new IP.
             final MaxThread focusThread = focus().thread();
-            focus().setStackFrame(focusThread.stack().frames().first(), false);
+            focus().setStackFrame(focusThread.stack().top(), false);
         } catch (Throwable throwable) {
             new InspectorError("could not update view", throwable).display(this);
         } finally {

@@ -197,7 +197,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                     setBreakpoint(breakpoint);
                 } else {
                     // default is to focus on the top frame
-                    setStackFrame(thread.stack().frames().first(), false);
+                    setStackFrame(thread.stack().top(), false);
                 }
             }
             // User Model Policy:  when thread focus changes, also set the memory region focus to the thread's stack memory.
@@ -401,7 +401,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             // thread, if any, that is stopped at the breakpoint.  If no thread stopped,
             // then just focus on the code location.
             if (threadAtBreakpoint != null) {
-                setStackFrame(threadAtBreakpoint.stack().frames().first(), false);
+                setStackFrame(threadAtBreakpoint.stack().top(), false);
             } else {
                 setCodeLocation(maxBreakpoint.codeLocation());
             }

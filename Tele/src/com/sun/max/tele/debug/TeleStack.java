@@ -66,6 +66,10 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         return memoryRegion;
     }
 
+    public MaxStackFrame top() {
+        return frames().first();
+    }
+
     public IndexedSequence<MaxStackFrame> frames() {
         final TeleVMState currentVmState = teleVM().vmState();
         if (currentVmState.newerThan(lastUpdatedState)) {
