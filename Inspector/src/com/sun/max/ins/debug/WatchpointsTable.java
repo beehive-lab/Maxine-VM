@@ -188,7 +188,7 @@ public final class WatchpointsTable extends InspectorTable {
                     } catch (MaxVMBusyException maxVMBusyException) {
                         final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
-                        System.out.println("Reset WRITE checkbox at row=" + row + ", col=" + column);
+                        // System.out.println("Reset WRITE checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
                         inspection().announceVMBusyFailure("Watchpoint WRITE setting");
                     }
@@ -203,7 +203,7 @@ public final class WatchpointsTable extends InspectorTable {
                     } catch (MaxVMBusyException maxVMBusyException) {
                         final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
-                        System.out.println("Reset EXEC checkbox at row=" + row + ", col=" + column);
+                        // System.out.println("Reset EXEC checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
                         inspection().announceVMBusyFailure("Watchpoint EXEC setting");
                     }
@@ -217,7 +217,7 @@ public final class WatchpointsTable extends InspectorTable {
                     } catch (MaxVMBusyException maxVMBusyException) {
                         final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
-                        System.out.println("Reset GC checkbox at row=" + row + ", col=" + column);
+                        // System.out.println("Reset GC checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
                         inspection().announceVMBusyFailure("Watchpoint GC setting");
                     }

@@ -727,7 +727,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                 l = descriptor.locals[slot];
             }
 
-            System.out.println("STACKFRAME ACCESS at " + slot + ", target=" + l);
+            // System.out.println("STACKFRAME ACCESS at " + slot + ", target=" + l);
 
             final Entry entry = classMethodActor.codeAttribute().localVariableTable().findLocalVariable(slot, position);
             if (entry == null) {
