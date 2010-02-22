@@ -466,10 +466,10 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     protected void refreshView(boolean force) {
         ProgramError.check(stack != null);
         if (stack.thread() != null && stack.thread().isLive()) {
-            if (stack.lastUpdated().newerThan(lastUpdatedState) || force) {
+            if (force || stack.lastUpdated() == null || stack.lastUpdated().newerThan(lastUpdatedState)) {
                 final Sequence<MaxStackFrame> frames = stack.frames();
                 assert !frames.isEmpty();
-                if (stack.lastChanged().newerThan(this.lastChangedState) || force) {
+                if (force || stack.lastChanged().newerThan(this.lastChangedState)) {
                     stackFrameListModel.clear();
                     addToModel(frames);
                     this.lastChangedState = stack.lastChanged();
