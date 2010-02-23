@@ -33,13 +33,13 @@ public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
     private final Kind primitiveElementKind;
 
     public NewArray(int atype) {
-        super(CALL | NEGATIVE_ARRAY_SIZE_CHECK, null, 0, Kind.REFERENCE);
+        super(CALL_STOP | NEGATIVE_ARRAY_SIZE_CHECK, null, 0, Kind.REFERENCE);
         primitiveElementKind = Kind.fromNewArrayTag(atype);
         actor = primitiveElementKind.arrayClassActor();
     }
 
     public NewArray(ConstantPool constantPool, int index) {
-        super(CALL | NEGATIVE_ARRAY_SIZE_CHECK, constantPool, index, Kind.REFERENCE);
+        super(CALL_STOP | NEGATIVE_ARRAY_SIZE_CHECK, constantPool, index, Kind.REFERENCE);
         primitiveElementKind = null;
     }
 

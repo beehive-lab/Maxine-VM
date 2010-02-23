@@ -171,4 +171,30 @@ public final class ExceptionHandlerEntry {
         }
         return new ArraySequence<ExceptionHandlerEntry>(entries);
     }
+
+    /**
+     * Decodes the exception handler table as an array of triplets (start bci, end bci, handler bci).
+     */
+    public static int[] decodeHandlerPositions(DataInputStream dataInputStream) throws IOException {
+        final int length = dataInputStream.readUnsignedShort();
+        assert length != 0;
+        final int[] entries = new int[length * 3];
+        final boolean byteEncoding = dataInputStream.readBoolean();
+        if (byteEncoding) {
+            for (int i = 0; i < entries.length; i += 3) {
+                entries[i    ] = dataInputStream.readUnsignedByte();
+                entries[i + 1] = dataInputStream.readUnsignedByte();
+                entries[i + 2] = dataInputStream.readUnsignedByte();
+                dataInputStream.skip(1);
+            }
+        } else {
+            for (int i = 0; i < entries.length; i += 3) {
+                entries[i    ] = dataInputStream.readUnsignedShort();
+                entries[i + 1] = dataInputStream.readUnsignedShort();
+                entries[i + 2] = dataInputStream.readUnsignedShort();
+                dataInputStream.skip(2);
+            }
+        }
+        return entries;
+    }
 }

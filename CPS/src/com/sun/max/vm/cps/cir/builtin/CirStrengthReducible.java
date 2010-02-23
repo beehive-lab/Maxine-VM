@@ -22,9 +22,7 @@ package com.sun.max.vm.cps.cir.builtin;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.cps.cir.*;
@@ -274,10 +272,10 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                 if (divisor == 0 || divisor == -1 || divisor == 1) {
                     return true;
                 }
-                if (MaxineVM.isHosted() && Ints.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
-                    ProgramWarning.message(cirOptimizer.classMethodActor().format("%H.%n(%p): Consider replacing division by " + divisor +
-                        " with use of " + Unsigned.class + " or a shift operation"));
-                }
+//                if (MaxineVM.isHosted() && Ints.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
+//                    ProgramWarning.message(cirOptimizer.classMethodActor().format("%H.%n(%p): Consider replacing division by " + divisor +
+//                        " with use of " + Unsigned.class + " or a shift operation"));
+//                }
             }
             if (arguments[0].isScalarConstant()) {
                 final Value dividendValue = arguments[0].value();
@@ -332,10 +330,10 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                 if (divisor == 0L || divisor == -1L || divisor == 1L) {
                     return true;
                 }
-                if (MaxineVM.isHosted() && Longs.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
-                    ProgramWarning.message(cirOptimizer.classMethodActor().format("%H.%n(%p): Consider replacing division by " + divisor +
-                        " with use of " + Unsigned.class + " or a shift operation"));
-                }
+//                if (MaxineVM.isHosted() && Longs.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
+//                    ProgramWarning.message(cirOptimizer.classMethodActor().format("%H.%n(%p): Consider replacing division by " + divisor +
+//                        " with use of " + Unsigned.class + " or a shift operation"));
+//                }
             }
             if (arguments[0].isScalarConstant()) {
                 final Value dividendValue = arguments[0].value();

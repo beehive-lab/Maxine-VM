@@ -116,7 +116,7 @@ public abstract class JavaOperator extends CirOperator {
 
         public JavaResolvableOperator(int reasonsMayStop, ConstantPool constantPool, int index, Kind resultKind) {
             super(reasonsMayStop);
-            assert (reasonsMayStop & CALL) != 0 : "operator translated by one more snippets must indicate CALL as a stop reason";
+            assert (reasonsMayStop & CALL_STOP) != 0 : "operator translated by one more snippets must indicate CALL as a stop reason";
             this.constantPool = constantPool;
             this.index = index;
             this.resultKind = resultKind;
@@ -251,11 +251,11 @@ public abstract class JavaOperator extends CirOperator {
      * @author Yi Guo
      * @author Aziz Ghuloum
      */
-    private static final class JavaBuiltinOperator extends JavaOperator implements Lowerable {
+    public static final class JavaBuiltinOperator extends JavaOperator implements Lowerable {
 
         private final CirBuiltin cirBuiltin;
 
-        private JavaBuiltinOperator(Builtin builtin) {
+        public JavaBuiltinOperator(Builtin builtin) {
             super(builtin.reasonsMayStop());
             cirBuiltin = CirBuiltin.get(builtin);
         }
@@ -304,7 +304,7 @@ public abstract class JavaOperator extends CirOperator {
         private final CirSnippet snippet;
 
         JavaSnippetOperator(Snippet snippet) {
-            super(CALL);
+            super(CALL_STOP);
             this.snippet = CirSnippet.get(snippet);
         }
 
@@ -351,7 +351,7 @@ public abstract class JavaOperator extends CirOperator {
         private final Builtin builtin;
         private final Snippet snippet;
         private JavaBuiltinOrSnippetOperator(Builtin builtin, Snippet snippet) {
-            super(VMConfiguration.target().bootCompilerScheme().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL);
+            super(VMConfiguration.target().bootCompilerScheme().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL_STOP);
             this.builtin = builtin;
             this.snippet = snippet;
         }

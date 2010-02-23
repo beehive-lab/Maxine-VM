@@ -20,8 +20,11 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import java.util.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
@@ -58,7 +61,7 @@ public final class JDK_java_lang_Throwable {
      * Casts this object to its corresponding {@code java.lang.Throwable} instance.
      * @return this object cast to the {@code java.lang.Throwable} type
      */
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     private native Throwable thisThrowable();
 
     /**

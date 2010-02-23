@@ -20,12 +20,14 @@
  */
 package com.sun.max.vm.jni;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
 import java.nio.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -80,10 +82,10 @@ public final class JniFunctions {
     public static final int JNI_COMMIT = 1;
     public static final int JNI_ABORT = 2;
 
-    @UNSAFE_CAST public static native JniHandle asJniHandle(int value);
-    @UNSAFE_CAST public static native MethodID  asMethodID(int value);
-    @UNSAFE_CAST public static native FieldID   asFieldID(int value);
-    @UNSAFE_CAST public static native Pointer   asPointer(int value);
+    @INTRINSIC(UNSAFE_CAST) public static native JniHandle asJniHandle(int value);
+    @INTRINSIC(UNSAFE_CAST) public static native MethodID  asMethodID(int value);
+    @INTRINSIC(UNSAFE_CAST) public static native FieldID   asFieldID(int value);
+    @INTRINSIC(UNSAFE_CAST) public static native Pointer   asPointer(int value);
 
     /**
      * This method implements part of the prologue for entering a JNI upcall from native code.

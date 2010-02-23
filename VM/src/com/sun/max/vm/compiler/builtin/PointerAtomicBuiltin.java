@@ -36,15 +36,15 @@ public abstract class PointerAtomicBuiltin extends PointerBuiltin {
         return Stoppable.NULL_POINTER_CHECK;
     }
 
-    public static class CompareAndSwapIntAtLongOffset extends PointerAtomicBuiltin {
+    public static class CompareAndSwapInt extends PointerAtomicBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 4;
-            visitor.visitCompareAndSwapIntAtLongOffset(this, result, arguments);
+            visitor.visitCompareAndSwapInt(this, result, arguments);
         }
 
-        public static final CompareAndSwapIntAtLongOffset BUILTIN = new CompareAndSwapIntAtLongOffset();
+        public static final CompareAndSwapInt BUILTIN = new CompareAndSwapInt();
     }
 
     public static class CompareAndSwapIntAtIntOffset extends PointerAtomicBuiltin {
@@ -58,15 +58,15 @@ public abstract class PointerAtomicBuiltin extends PointerBuiltin {
         public static final CompareAndSwapIntAtIntOffset BUILTIN = new CompareAndSwapIntAtIntOffset();
     }
 
-    public static class CompareAndSwapWordAtLongOffset extends PointerAtomicBuiltin {
+    public static class CompareAndSwapWord extends PointerAtomicBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 4;
-            visitor.visitCompareAndSwapWordAtLongOffset(this, result, arguments);
+            visitor.visitCompareAndSwapWord(this, result, arguments);
         }
 
-        public static final CompareAndSwapWordAtLongOffset BUILTIN = new CompareAndSwapWordAtLongOffset();
+        public static final CompareAndSwapWord BUILTIN = new CompareAndSwapWord();
     }
 
     public static class CompareAndSwapWordAtIntOffset extends PointerAtomicBuiltin {
@@ -80,15 +80,15 @@ public abstract class PointerAtomicBuiltin extends PointerBuiltin {
         public static final CompareAndSwapWordAtIntOffset BUILTIN = new CompareAndSwapWordAtIntOffset();
     }
 
-    public static class CompareAndSwapReferenceAtLongOffset extends PointerAtomicBuiltin {
+    public static class CompareAndSwapReference extends PointerAtomicBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 4;
-            visitor.visitCompareAndSwapReferenceAtLongOffset(this, result, arguments);
+            visitor.visitCompareAndSwapReference(this, result, arguments);
         }
 
-        public static final CompareAndSwapReferenceAtLongOffset BUILTIN = new CompareAndSwapReferenceAtLongOffset();
+        public static final CompareAndSwapReference BUILTIN = new CompareAndSwapReference();
     }
 
     public static class CompareAndSwapReferenceAtIntOffset extends PointerAtomicBuiltin {

@@ -71,7 +71,7 @@ public class JITTest_stackManipulations extends CompilerTestCase<CPSTargetMethod
         static int popInt2() {
             final Pointer sp = VMRegister.getAbiStackPointer();
             final int value = sp.readInt(0);
-            SpecialBuiltin.addWordsToIntegerRegister(VMRegister.Role.CPU_STACK_POINTER, 1);
+            SpecialBuiltin.adjustJitStack(1);
             return value;
         }
 

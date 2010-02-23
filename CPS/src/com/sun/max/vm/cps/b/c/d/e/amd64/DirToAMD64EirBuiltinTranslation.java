@@ -889,7 +889,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitReadByteAtLongOffset(ReadByteAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitReadByte(ReadByte builtin, DirValue dirResult, DirValue[] dirArguments) {
         read(Kind.BYTE, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -904,7 +904,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitReadShortAtLongOffset(ReadShortAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitReadShort(ReadShort builtin, DirValue dirResult, DirValue[] dirArguments) {
         read(Kind.SHORT, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -919,7 +919,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitReadCharAtLongOffset(ReadCharAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitReadChar(ReadChar builtin, DirValue dirResult, DirValue[] dirArguments) {
         read(Kind.CHAR, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -934,7 +934,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitReadIntAtLongOffset(ReadIntAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitReadInt(ReadInt builtin, DirValue dirResult, DirValue[] dirArguments) {
         read(Kind.INT, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -949,7 +949,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitReadFloatAtLongOffset(ReadFloatAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitReadFloat(ReadFloat builtin, DirValue dirResult, DirValue[] dirArguments) {
         read(Kind.FLOAT, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -964,7 +964,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitReadLongAtLongOffset(ReadLongAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitReadLong(ReadLong builtin, DirValue dirResult, DirValue[] dirArguments) {
         read(Kind.LONG, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -979,7 +979,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitReadDoubleAtLongOffset(ReadDoubleAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitReadDouble(ReadDouble builtin, DirValue dirResult, DirValue[] dirArguments) {
         read(Kind.DOUBLE, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -994,7 +994,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitReadWordAtLongOffset(ReadWordAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitReadWord(ReadWord builtin, DirValue dirResult, DirValue[] dirArguments) {
         read(Kind.WORD, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -1009,7 +1009,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitReadReferenceAtLongOffset(ReadReferenceAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitReadReference(ReadReference builtin, DirValue dirResult, DirValue[] dirArguments) {
         read(Kind.REFERENCE, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -1078,7 +1078,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitWriteByteAtLongOffset(WriteByteAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitWriteByte(WriteByte builtin, DirValue dirResult, DirValue[] dirArguments) {
         write(Kind.BYTE, Kind.LONG, dirArguments);
     }
 
@@ -1093,7 +1093,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitWriteShortAtLongOffset(WriteShortAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitWriteShort(WriteShort builtin, DirValue dirResult, DirValue[] dirArguments) {
         write(Kind.SHORT, Kind.LONG, dirArguments);
     }
 
@@ -1108,7 +1108,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitWriteIntAtLongOffset(WriteIntAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitWriteInt(WriteInt builtin, DirValue dirResult, DirValue[] dirArguments) {
         write(Kind.INT, Kind.LONG, dirArguments);
     }
 
@@ -1123,7 +1123,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitWriteFloatAtLongOffset(WriteFloatAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitWriteFloat(WriteFloat builtin, DirValue dirResult, DirValue[] dirArguments) {
         write(Kind.FLOAT, Kind.LONG, dirArguments);
     }
 
@@ -1138,7 +1138,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitWriteLongAtLongOffset(WriteLongAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitWriteLong(WriteLong builtin, DirValue dirResult, DirValue[] dirArguments) {
         write(Kind.LONG, Kind.LONG, dirArguments);
     }
 
@@ -1153,7 +1153,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitWriteDoubleAtLongOffset(WriteDoubleAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitWriteDouble(WriteDouble builtin, DirValue dirResult, DirValue[] dirArguments) {
         write(Kind.DOUBLE, Kind.LONG, dirArguments);
     }
 
@@ -1168,7 +1168,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitWriteWordAtLongOffset(WriteWordAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitWriteWord(WriteWord builtin, DirValue dirResult, DirValue[] dirArguments) {
         write(Kind.WORD, Kind.LONG, dirArguments);
     }
 
@@ -1183,7 +1183,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitWriteReferenceAtLongOffset(WriteReferenceAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitWriteReference(WriteReference builtin, DirValue dirResult, DirValue[] dirArguments) {
         write(Kind.REFERENCE, Kind.LONG, dirArguments);
     }
 
@@ -1216,7 +1216,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitCompareAndSwapIntAtLongOffset(CompareAndSwapIntAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitCompareAndSwapInt(CompareAndSwapInt builtin, DirValue dirResult, DirValue[] dirArguments) {
         compareAndSwapAtOffset(Kind.INT, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -1226,7 +1226,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitCompareAndSwapWordAtLongOffset(CompareAndSwapWordAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitCompareAndSwapWord(CompareAndSwapWord builtin, DirValue dirResult, DirValue[] dirArguments) {
         compareAndSwapAtOffset(Kind.WORD, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -1236,7 +1236,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitCompareAndSwapReferenceAtLongOffset(CompareAndSwapReferenceAtLongOffset builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitCompareAndSwapReference(CompareAndSwapReference builtin, DirValue dirResult, DirValue[] dirArguments) {
         compareAndSwapAtOffset(Kind.REFERENCE, Kind.LONG, dirResult, dirArguments);
     }
 
@@ -1264,11 +1264,10 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitAddWordsToIntegerRegister(AddWordsToIntegerRegister builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 2 && dirArguments[0].isConstant() && dirArguments[0].value().asObject() instanceof VMRegister.Role;
-        final VMRegister.Role registerRole = (VMRegister.Role) dirArguments[0].value().asObject();
-        final EirValue registerPointerValue = methodTranslation().integerRegisterRoleValue(registerRole);
-        final EirValue delta = dirToEirValue(dirArguments[1]);
+    public void visitAdjustJitStack(AdjustJitStack builtin, DirValue dirResult, DirValue[] dirArguments) {
+        assert dirArguments.length == 1;
+        final EirValue registerPointerValue = methodTranslation().integerRegisterRoleValue(VMRegister.Role.ABI_STACK_POINTER);
+        final EirValue delta = dirToEirValue(dirArguments[0]);
         if (delta.isConstant()) {
             final EirConstant constant = (EirConstant) delta;
             int addend = constant.value().asInt();
@@ -1288,26 +1287,12 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 1 && dirArguments[0].isConstant() && dirArguments[0].value().asObject() instanceof VMRegister.Role;
-        final EirValue result = dirToEirValue(dirResult);
-        final VMRegister.Role registerRole = (VMRegister.Role) dirArguments[0].value().asObject();
-        assign(Kind.DOUBLE, result, methodTranslation().floatingPointRegisterRoleValue(registerRole));
-    }
-
-    @Override
     public void visitGetInstructionPointer(GetInstructionPointer builtin, DirValue dirResult, DirValue[] dirArguments) {
         final EirValue result = dirToEirValue(dirResult);
 
         final EirVariable destination = createEirVariable(Kind.LONG);
         addInstruction(new LEA_PC(eirBlock(), destination));
         assign(Kind.LONG, result, destination);
-    }
-
-    @Override
-    public void visitJump(Jump builtin, DirValue dirResult, DirValue[] dirArguments) {
-        final EirValue address = dirToEirValue(dirArguments[0]);
-        addInstruction(new JMP_indirect(eirBlock(), address));
     }
 
     @Override
@@ -1335,7 +1320,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitCompareReferences(CompareReferences builtin, DirValue dirResult, DirValue[] dirArguments) {
+    public void visitCompareWords(CompareWords builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirResult == null;
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);

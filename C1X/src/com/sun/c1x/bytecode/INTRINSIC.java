@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,33 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.cps.cir.operator;
+package com.sun.c1x.bytecode;
 
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.cps.b.c.*;
-import com.sun.max.vm.cps.cir.operator.JavaOperator.*;
-import com.sun.max.vm.cps.cir.transform.*;
-import com.sun.max.vm.type.*;
+import java.lang.annotation.*;
 
-public class CheckCast extends JavaResolvableOperator<ClassActor> {
 
-    public CheckCast(ConstantPool constantPool, int index) {
-        super(CALL_STOP | CLASS_CAST_CHECK, constantPool, index, Kind.VOID);
-    }
-
-    @Override
-    public void acceptVisitor(CirVisitor visitor) {
-        visitor.visitHCirOperator(this);
-    }
-
-    @Override
-    public Kind[] parameterKinds() {
-        return new Kind[] {constantPool.classAt(index).typeDescriptor().toKind()};
-    }
-
-    @Override
-    public void acceptVisitor(HCirOperatorVisitor visitor) {
-        visitor.visit(this);
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface INTRINSIC {
+    /**
+     * The extended bytecode corresponding to this intrinsic.
+     */
+    int value();
 }

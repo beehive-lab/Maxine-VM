@@ -52,4 +52,5 @@ public abstract class HCirOperatorVisitor {
     public abstract void visit(MonitorExit op);
     public abstract void visit(Mirror op);
     public abstract void visit(CallNative op);
+    public abstract void visit(Call op);
 }

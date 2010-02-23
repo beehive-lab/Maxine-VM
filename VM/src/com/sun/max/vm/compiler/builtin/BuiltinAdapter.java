@@ -329,7 +329,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitPointerLoadBuiltin(builtin, result, arguments);
     }
 
-    public void visitReadByteAtLongOffset(ReadByteAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitReadByte(ReadByte builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -341,7 +341,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitReadShortAtLongOffset(ReadShortAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitReadShort(ReadShort builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -353,7 +353,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitReadCharAtLongOffset(ReadCharAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitReadChar(ReadChar builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -365,7 +365,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitReadIntAtLongOffset(ReadIntAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitReadInt(ReadInt builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -377,7 +377,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitReadFloatAtLongOffset(ReadFloatAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitReadFloat(ReadFloat builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -389,7 +389,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitReadLongAtLongOffset(ReadLongAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitReadLong(ReadLong builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -401,7 +401,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitReadDoubleAtLongOffset(ReadDoubleAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitReadDouble(ReadDouble builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -413,7 +413,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitReadWordAtLongOffset(ReadWordAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitReadWord(ReadWord builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -425,7 +425,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitReadReferenceAtLongOffset(ReadReferenceAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitReadReference(ReadReference builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -454,7 +454,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitPointerStoreBuiltin(builtin, result, arguments);
     }
 
-    public void visitWriteByteAtLongOffset(WriteByteAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitWriteByte(WriteByte builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -466,7 +466,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitWriteShortAtLongOffset(WriteShortAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitWriteShort(WriteShort builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -478,7 +478,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitWriteIntAtLongOffset(WriteIntAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitWriteInt(WriteInt builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -490,7 +490,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitWriteFloatAtLongOffset(WriteFloatAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitWriteFloat(WriteFloat builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -502,7 +502,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitWriteLongAtLongOffset(WriteLongAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitWriteLong(WriteLong builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -514,7 +514,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitWriteDoubleAtLongOffset(WriteDoubleAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitWriteDouble(WriteDouble builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -526,7 +526,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitWriteWordAtLongOffset(WriteWordAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitWriteWord(WriteWord builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -538,7 +538,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitCiscInstructionSet(builtin, result, arguments);
     }
 
-    public void visitWriteReferenceAtLongOffset(WriteReferenceAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitWriteReference(WriteReference builtin, IR_Type result, IR_Type[] arguments) {
         visitWordWidth64(builtin, result, arguments);
     }
 
@@ -557,7 +557,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitBuiltin(builtin, result, arguments);
     }
 
-    public void visitCompareAndSwapIntAtLongOffset(CompareAndSwapIntAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitCompareAndSwapInt(CompareAndSwapInt builtin, IR_Type result, IR_Type[] arguments) {
         visitPointerAtomicBuiltin(builtin, result, arguments);
     }
 
@@ -565,7 +565,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitPointerAtomicBuiltin(builtin, result, arguments);
     }
 
-    public void visitCompareAndSwapWordAtLongOffset(CompareAndSwapWordAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitCompareAndSwapWord(CompareAndSwapWord builtin, IR_Type result, IR_Type[] arguments) {
         visitPointerAtomicBuiltin(builtin, result, arguments);
     }
 
@@ -573,7 +573,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitPointerAtomicBuiltin(builtin, result, arguments);
     }
 
-    public void visitCompareAndSwapReferenceAtLongOffset(CompareAndSwapReferenceAtLongOffset builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitCompareAndSwapReference(CompareAndSwapReference builtin, IR_Type result, IR_Type[] arguments) {
         visitPointerAtomicBuiltin(builtin, result, arguments);
     }
 
@@ -596,11 +596,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    public void visitAddWordsToIntegerRegister(AddWordsToIntegerRegister builtin, IR_Type result, IR_Type[] arguments) {
-        visitSpecialBuiltin(builtin, result, arguments);
-    }
-
-    public void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitAdjustJitStack(AdjustJitStack builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
@@ -609,10 +605,6 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
     }
 
     public void visitPause(Pause builtin, IR_Type result, IR_Type[] arguments) {
-        visitSpecialBuiltin(builtin, result, arguments);
-    }
-
-    public void visitJump(Jump builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
@@ -628,7 +620,7 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    public void visitCompareReferences(CompareReferences builtin, IR_Type result, IR_Type[] arguments) {
+    public void visitCompareWords(CompareWords builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 

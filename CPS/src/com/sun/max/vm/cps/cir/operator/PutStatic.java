@@ -30,7 +30,7 @@ import com.sun.max.vm.type.*;
 public class PutStatic extends JavaResolvableOperator<FieldActor> {
 
     public PutStatic(ConstantPool constantPool, int index) {
-        super(CALL, constantPool, index, Kind.VOID);
+        super(CALL_STOP, constantPool, index, Kind.VOID);
     }
 
     @Override

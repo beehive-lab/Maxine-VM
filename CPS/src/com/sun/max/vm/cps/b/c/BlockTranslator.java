@@ -45,10 +45,9 @@ final class BlockTranslator {
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(visitor);
         try {
             bytecodeScanner.scan(blockState.birBlock().bytecodeBlock());
-        } catch (RuntimeException runtimeException) {
-            throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(translation.classMethodActor())).initCause(runtimeException);
-        } catch (Error error) {
-            throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(translation.classMethodActor())).initCause(error);
+        } catch (Throwable e) {
+            String dis = "\n\n" + BytecodePrinter.toString(translation.classMethodActor().codeAttribute().constantPool, blockState.birBlock().bytecodeBlock());
+            throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(translation.classMethodActor()) + dis).initCause(e);
         }
         visitor.terminateBlock();
     }

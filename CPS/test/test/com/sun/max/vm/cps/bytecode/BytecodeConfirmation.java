@@ -21,7 +21,6 @@
 package test.com.sun.max.vm.cps.bytecode;
 
 import static com.sun.max.vm.bytecode.Bytecode.*;
-import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
@@ -29,7 +28,7 @@ import com.sun.max.vm.bytecode.*;
 
 /**
  * Confirmation that requested byte codes actually occur or do not occur in a method.
- * 
+ *
  * Use it to confirm that a CIR generator test case dedicated
  * to certain byte codes actually does or does not contain said byte codes.
  */
@@ -66,7 +65,7 @@ public class BytecodeConfirmation extends BytecodeAdapter {
             final BytecodeScanner bytecodeScanner = new BytecodeScanner(this);
             final byte[] initBytes = new byte[256];
             for (Bytecode opcode : Bytecode.values()) {
-                if (!(opcode.isLegalInClassfile() || opcode.is(EXTENSION))) {
+                if (opcode.isLegalInClassfile()) {
                     if (opcode == WIDE) {
                         bytecodeScanner.scan(new BytecodeBlock(initBytes, 0, 0)); // scan nop byte code, then patch:
                         initBytes[0] = (byte) WIDE.ordinal();

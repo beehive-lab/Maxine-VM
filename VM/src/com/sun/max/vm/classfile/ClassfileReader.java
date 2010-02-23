@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.jar.*;
 import java.util.zip.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -45,7 +46,9 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.AnnotationInfo.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
@@ -835,7 +838,7 @@ public final class ClassfileReader {
                         flags = setVmFlags(name, descriptor, genericSignature, flags, info);
 
                         if ((flags & (BUILTIN | UNSAFE_CAST)) != 0) {
-                            // don't use the bytecode of builtin and unsafe cast methods
+                            // discard bytecode for builtin and unsafe cast methods
                             codeAttribute = null;
                         }
 
@@ -952,13 +955,20 @@ public final class ClassfileReader {
                     ProgramError.unexpected("unknown element on TRAMPOLINE annotation");
                 }
             }
-        } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE_CAST.class))) {
-            boolean isStatic = (flags & Actor.ACC_STATIC) != 0;
-            ProgramError.check(genericSignature == null, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a generic method: " + memberString(name, descriptor));
-            ProgramError.check(descriptor.resultKind() != Kind.VOID, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a void method: " + memberString(name, descriptor));
-            ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() +
-                " to a method with exactly one parameter: " + memberString(name, descriptor));
-            flags |= UNSAFE_CAST;
+        } else if (annotationTypeDescriptor.equals(forJavaClass(INTRINSIC.class))) {
+            assert info.nameElementPairs().length == 1;
+            NameElementPair value = info.nameElementPairs()[0];
+            assert value.name.equals("value");
+            int intrinsic = ((AnnotationInfo.ValueElement) value.element).value().asInt();
+            if (intrinsic == Bytecodes.UNSAFE_CAST) {
+                boolean isStatic = (flags & Actor.ACC_STATIC) != 0;
+                String anno = INTRINSIC.class.getSimpleName() + "(UNSAFE_CAST)";
+                ProgramError.check(genericSignature == null, "Cannot apply " + anno + " to a generic method: " + memberString(name, descriptor));
+                ProgramError.check(descriptor.resultKind() != Kind.VOID, "Cannot apply " + anno + " to a void method: " + memberString(name, descriptor));
+                ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + anno +
+                    " to a method with exactly one parameter: " + memberString(name, descriptor));
+                flags |= UNSAFE_CAST;
+            }
         } else if (annotationTypeDescriptor.equals(forJavaClass(FOLD.class))) {
             flags |= FOLD;
         } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE.class))) {
@@ -1236,7 +1246,7 @@ public final class ClassfileReader {
             final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
             for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
                 if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(HOSTED_ONLY.class))) {
-                    ProgramError.unexpected("Trying to load a prototype only class " + name);
+                    throw new HostOnlyClassError(name.string);
                 }
             }
         }
@@ -1484,21 +1494,22 @@ public final class ClassfileReader {
                     ProgramWarning.message("class with same name generated twice: " + name);
                 }
             }
-        } else {
-            if (saveClassDir.getValue() != null) {
-                File classfile = new File(saveClassDir.getValue(), classfilePath);
-                try {
-                    classfile.getParentFile().mkdirs();
-                    FileOutputStream out = new FileOutputStream(classfile);
-                    out.write(classfileBytes);
-                    out.close();
-                    if (verboseOption.verboseClass) {
-                        Log.println("[Wrote class file to " + classfile + "]");
-                    }
-                } catch (IOException e) {
-                    Log.println("[Error writing class file bytes to " + classfile + ": " + e + "]");
+        }
+
+        if (saveClassDir.getValue() != null) {
+            File classfile = new File(saveClassDir.getValue(), classfilePath);
+            try {
+                classfile.getParentFile().mkdirs();
+                FileOutputStream out = new FileOutputStream(classfile);
+                out.write(classfileBytes);
+                out.close();
+                if (verboseOption.verboseClass) {
+                    Log.println("[Wrote class file to " + classfile + "]");
                 }
+            } catch (IOException e) {
+                Log.println("[Error writing class file bytes to " + classfile + ": " + e + "]");
             }
         }
+
     }
 }

@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
 
     public InvokeVirtual(ConstantPool constantPool, int index) {
-        super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.methodAt(index).signature(constantPool).resultKind());
+        super(CALL_STOP | NULL_POINTER_CHECK, constantPool, index, constantPool.methodAt(index).signature(constantPool).resultKind());
     }
 
     @Override

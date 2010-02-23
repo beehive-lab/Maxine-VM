@@ -20,20 +20,16 @@
  */
 package com.sun.max.vm.cps.cir.operator;
 
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.cps.b.c.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.type.*;
 
-public class CallNative extends JavaOperator {
+public class Call extends JavaOperator {
     private final SignatureDescriptor signatureDescriptor;
-    private final ClassMethodActor classMethodActor;
 
-    public CallNative(ConstantPool constantPool, int nativeFunctionDescriptorIndex, ClassMethodActor classMethodActor) {
+    public Call(SignatureDescriptor signatureDescriptor) {
         super(CALL_STOP);
-        this.signatureDescriptor = SignatureDescriptor.create(constantPool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
-        this.classMethodActor = classMethodActor;
+        this.signatureDescriptor = signatureDescriptor;
     }
 
     public Kind resultKind() {
@@ -54,10 +50,6 @@ public class CallNative extends JavaOperator {
         return signatureDescriptor;
     }
 
-    public ClassMethodActor classMethodActor() {
-        return classMethodActor;
-    }
-
     @Override
     public Kind[] parameterKinds() {
         return signatureDescriptor.copyParameterKinds(null, 0);
@@ -65,6 +57,6 @@ public class CallNative extends JavaOperator {
 
     @Override
     public String toString() {
-        return "CallNative:" + classMethodActor.name;
+        return "Call:" + signatureDescriptor;
     }
 }

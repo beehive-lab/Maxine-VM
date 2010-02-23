@@ -30,7 +30,7 @@ import com.sun.max.vm.type.*;
 public class New extends JavaResolvableOperator<ClassActor> {
 
     public New(ConstantPool constantPool, int index) {
-        super(CALL, constantPool, index, Kind.REFERENCE);
+        super(CALL_STOP, constantPool, index, Kind.REFERENCE);
     }
 
     @Override

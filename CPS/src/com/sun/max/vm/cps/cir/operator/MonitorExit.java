@@ -27,7 +27,7 @@ import com.sun.max.vm.type.*;
 public class MonitorExit extends JavaOperator {
 
     public MonitorExit() {
-        super(CALL | NULL_POINTER_CHECK);
+        super(CALL_STOP | NULL_POINTER_CHECK);
     }
 
     public Kind resultKind() {
