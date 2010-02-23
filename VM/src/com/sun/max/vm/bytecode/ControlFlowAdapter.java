@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.bytecode;
 
+import com.sun.c1x.bytecode.*;
+
 /**
  * Byte code visitor that focuses on control flow changing opcodes.
  *
@@ -180,6 +182,14 @@ public abstract class ControlFlowAdapter extends BytecodeAdapter {
     @Override
     protected void areturn() {
         terminate();
+    }
+
+    @Override
+    protected boolean extension(int opcode, boolean isWide) {
+        if (opcode == Bytecodes.WRETURN) {
+            terminate();
+        }
+        return false;
     }
 
     @Override

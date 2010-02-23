@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -69,7 +72,7 @@ public abstract class HashableLockword64 extends ModalLockword64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public static HashableLockword64 from(Word word) {
         return new BoxedHashableLockword64(word);
     }

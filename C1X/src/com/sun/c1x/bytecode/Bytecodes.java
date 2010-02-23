@@ -20,6 +20,13 @@
  */
 package com.sun.c1x.bytecode;
 
+import static com.sun.c1x.bytecode.Bytecodes.Flags.*;
+
+import java.io.*;
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.regex.*;
+
 import com.sun.c1x.util.*;
 
 /**
@@ -27,6 +34,7 @@ import com.sun.c1x.util.*;
  * in particular the opcode numbers for each bytecode.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public class Bytecodes {
     public static final int NOP                  =   0; // 0x00
@@ -233,240 +241,526 @@ public class Bytecodes {
     public static final int JSR_W                = 201; // 0xC9
     public static final int BREAKPOINT           = 202; // 0xCA
 
-    public static final int NUM_JAVA_CODES = 203;
+    // Start extended bytecodes
+
+    public static final int JNICALL              = 203;
+    public static final int CALL                 = 204;
+
+    public static final int WLOAD                = 205;
+    public static final int WLOAD_0              = 206;
+    public static final int WLOAD_1              = 207;
+    public static final int WLOAD_2              = 208;
+    public static final int WLOAD_3              = 209;
+
+    public static final int WSTORE               = 210;
+    public static final int WSTORE_0             = 211;
+    public static final int WSTORE_1             = 212;
+    public static final int WSTORE_2             = 213;
+    public static final int WSTORE_3             = 214;
+
+    public static final int ZERO                 = 215;
+    public static final int WDIV                 = 216;
+    public static final int WDIVI                = 217; // Divisor is an int
+    public static final int WMOD                 = 218;
+    public static final int WMODI                = 219; // Divisor is an int
+
+    public static final int ICMP                 = 220; // Signed int compare, sets condition flags
+    public static final int WCMP                 = 221; // Word compare, sets condition flags
+
+    public static final int PREAD                = 222;
+    public static final int PWRITE               = 223;
+
+    public static final int PGET                 = 224;
+    public static final int PSET                 = 225;
+
+    public static final int PCMPSWP              = 226; // Pointer compare-and-swap
+
+    public static final int MOV_I2F              = 227;
+    public static final int MOV_F2I              = 228;
+    public static final int MOV_L2D              = 229;
+    public static final int MOV_D2L              = 230;
+
+    public static final int UWLT                 = 231; // Unsigned word less-than
+    public static final int UWLTEQ               = 232; // Unsigned word less-than-or-equal
+    public static final int UWGT                 = 233; // Unsigned word greater-than
+    public static final int UWGTEQ               = 234; // Unsigned word greater-than-or-equal
+
+    public static final int UGE                  = 235; // Unsigned int greater-than-or-equal
+
+    public static final int READGPR              = 236;
+    public static final int WRITEGPR             = 237;
+    public static final int UNSAFE_CAST          = 238;
+    public static final int WRETURN              = 239;
+    public static final int SAFEPOINT            = 240;
+    public static final int ALLOCA               = 241;
+    public static final int MEMBAR               = 242;
+    public static final int STACKADDR            = 243;
+    public static final int PAUSE                = 244;
+    public static final int ADD_SP               = 245;
+    public static final int READ_PC              = 246;
+    public static final int FLUSHW               = 247;
+
+    // End extended bytecodes
+
     public static final int ILLEGAL = 255;
     public static final int END = 256;
 
-    private static final int FLAG_TRAP = 1;
-    private static final int FLAG_COMMUTATIVE = 2;
-    private static final int FLAG_ASSOCIATIVE = 4;
-    private static final int FLAG_LOAD = 8;
-    private static final int FLAG_STORE = 16;
-    private static final int FLAG_IMPLICIT = 32;
+    // Extended bytecodes with operand:
 
-    private static final String[] names = new String[NUM_JAVA_CODES];
-    private static final byte[] flags = new byte[NUM_JAVA_CODES];
-    private static final byte[] length = new byte[NUM_JAVA_CODES];
+    // Pointer compare-and-swap with word-sized offset
+    public static final int PCMPSWP_INT         = PCMPSWP  | 1 << 8;
+    public static final int PCMPSWP_WORD        = PCMPSWP  | 2 << 8;
+    public static final int PCMPSWP_REFERENCE   = PCMPSWP  | 3 << 8;
+
+    // Pointer compare-and-swap with int-sized offset
+    public static final int PCMPSWP_INT_I       = PCMPSWP  | 4 << 8;
+    public static final int PCMPSWP_WORD_I      = PCMPSWP  | 5 << 8;
+    public static final int PCMPSWP_REFERENCE_I = PCMPSWP  | 6 << 8;
+
+    // Pointer read with word-sized offset
+    public static final int PREAD_BYTE         = PREAD  | 1 << 8;
+    public static final int PREAD_CHAR         = PREAD  | 2 << 8;
+    public static final int PREAD_SHORT        = PREAD  | 3 << 8;
+    public static final int PREAD_INT          = PREAD  | 4 << 8;
+    public static final int PREAD_FLOAT        = PREAD  | 5 << 8;
+    public static final int PREAD_LONG         = PREAD  | 6 << 8;
+    public static final int PREAD_DOUBLE       = PREAD  | 7 << 8;
+    public static final int PREAD_WORD         = PREAD  | 8 << 8;
+    public static final int PREAD_REFERENCE    = PREAD  | 9 << 8;
+
+    // Pointer read with int-sized offset
+    public static final int PREAD_BYTE_I       = PREAD  | 10  << 8;
+    public static final int PREAD_CHAR_I       = PREAD  | 11 << 8;
+    public static final int PREAD_SHORT_I      = PREAD  | 12 << 8;
+    public static final int PREAD_INT_I        = PREAD  | 13 << 8;
+    public static final int PREAD_FLOAT_I      = PREAD  | 14 << 8;
+    public static final int PREAD_LONG_I       = PREAD  | 15 << 8;
+    public static final int PREAD_DOUBLE_I     = PREAD  | 16 << 8;
+    public static final int PREAD_WORD_I       = PREAD  | 17 << 8;
+    public static final int PREAD_REFERENCE_I  = PREAD  | 18 << 8;
+
+    // Pointer write with word-sized offset
+    public static final int PWRITE_BYTE        = PWRITE | 1 << 8;
+    public static final int PWRITE_SHORT       = PWRITE | 2 << 8;
+    public static final int PWRITE_INT         = PWRITE | 3 << 8;
+    public static final int PWRITE_FLOAT       = PWRITE | 4 << 8;
+    public static final int PWRITE_LONG        = PWRITE | 5 << 8;
+    public static final int PWRITE_DOUBLE      = PWRITE | 6 << 8;
+    public static final int PWRITE_WORD        = PWRITE | 7 << 8;
+    public static final int PWRITE_REFERENCE   = PWRITE | 8 << 8;
+    // Pointer write with int-sized offset
+    public static final int PWRITE_BYTE_I      = PWRITE | 9  << 8;
+    public static final int PWRITE_SHORT_I     = PWRITE | 10  << 8;
+    public static final int PWRITE_INT_I       = PWRITE | 11 << 8;
+    public static final int PWRITE_FLOAT_I     = PWRITE | 12 << 8;
+    public static final int PWRITE_LONG_I      = PWRITE | 13 << 8;
+    public static final int PWRITE_DOUBLE_I    = PWRITE | 14 << 8;
+    public static final int PWRITE_WORD_I      = PWRITE | 15 << 8;
+    public static final int PWRITE_REFERENCE_I = PWRITE | 16 << 8;
+
+    public static final int PGET_BYTE          = PGET   | 1 << 8;
+    public static final int PGET_CHAR          = PGET   | 2 << 8;
+    public static final int PGET_SHORT         = PGET   | 3 << 8;
+    public static final int PGET_INT           = PGET   | 4 << 8;
+    public static final int PGET_FLOAT         = PGET   | 5 << 8;
+    public static final int PGET_LONG          = PGET   | 6 << 8;
+    public static final int PGET_DOUBLE        = PGET   | 7 << 8;
+    public static final int PGET_WORD          = PGET   | 8 << 8;
+    public static final int PGET_REFERENCE     = PGET   | 9 << 8;
+
+    public static final int PSET_BYTE          = PSET   | 1 << 8;
+    public static final int PSET_SHORT         = PSET   | 2 << 8;
+    public static final int PSET_INT           = PSET   | 3 << 8;
+    public static final int PSET_FLOAT         = PSET   | 4 << 8;
+    public static final int PSET_LONG          = PSET   | 5 << 8;
+    public static final int PSET_DOUBLE        = PSET   | 6 << 8;
+    public static final int PSET_WORD          = PSET   | 7 << 8;
+    public static final int PSET_REFERENCE     = PSET   | 8 << 8;
+
+    public static final int MEMBAR_LOAD_LOAD   = MEMBAR   | 1 << 8;
+    public static final int MEMBAR_LOAD_STORE  = MEMBAR   | 2 << 8;
+    public static final int MEMBAR_STORE_LOAD  = MEMBAR   | 3 << 8;
+    public static final int MEMBAR_STORE_STORE = MEMBAR   | 4 << 8;
+    public static final int MEMBAR_MEMOP_STORE = MEMBAR   | 5 << 8;
+    public static final int MEMBAR_ALL         = MEMBAR   | 6 << 8;
+
+    /**
+     * A collection of flags describing various bytecode attributes.
+     */
+    public static class Flags {
+
+        /**
+         * Denotes a {@code INVOKEVIRTUAL}, {@code INVOKESPECIAL}, {@code INVOKEINTERFACE} or {@code INVOKESTATIC} instruction.
+         */
+        public static final int INVOKE_ = 0x00000001;
+
+        /**
+         * Denotes a {@code LDC} or {@code LDC_W} instruction.
+         */
+        public static final int LDC_ = 0x00000002;
+
+        /**
+         * Denotes an instruction that ends a basic block and does not let control flow fall through to its lexical successor.
+         */
+        public static final int STOP = 0x00000004;
+
+        /**
+         * Denotes an instruction that ends a basic block and may let control flow fall through to its lexical successor.
+         */
+        public static final int FALL_THROUGH = 0x00000008;
+
+        /**
+         * Denotes an instruction that has a 2 or 4 byte operand that is an offset to another instruction in the same method.
+         * This does not include the {@linkplain #SWITCH switch} instructions.
+         */
+        public static final int BRANCH = 0x00000010;
+
+        /**
+         * Denotes an instruction that reads the value of a static or instance field.
+         */
+        public static final int FIELD_READ = 0x00000020;
+
+        /**
+         * Denotes an instruction that writes the value of a static or instance field.
+         */
+        public static final int FIELD_WRITE = 0x00000040;
+
+        /**
+         * Denotes an instruction that is not defined in the JVM specification.
+         */
+        public static final int EXTENSION = 0x00000080;
+
+        /**
+         * Denotes an {@link #EXTENSION} instruction whose complete opcode is 3 bytes long.
+         */
+        public static final int OPCODE3 = 0x00010000;
+
+        /**
+         * Denotes a {@code TABLESWITCH} or {@code LOOKUPSWITCH} instruction.
+         */
+        public static final int SWITCH = 0x00000100;
+
+        /**
+         * Denotes a {@code RETURN}, {@code IRETURN}, {@code LRETURN}, {@code DRETURN}, {@code ARETURN} or {@code FRETURN} instruction.
+         */
+        public static final int RETURN_ = 0x00000200;
+
+        /**
+         * Denotes a {@code RET}, {@code JSR}, {@code JSR_W} instruction.
+         */
+        public static final int JSR_OR_RET = 0x00000400;
+
+        private static final int TRAP        = 0x00000800;
+        private static final int COMMUTATIVE = 0x00001000;
+        private static final int ASSOCIATIVE = 0x00002000;
+        private static final int LOAD        = 0x00004000;
+        private static final int STORE       = 0x00008000;
+
+    }
+
+    static {
+        int allFlags = 0;
+        try {
+            for (Field field : Flags.class.getDeclaredFields()) {
+                int flagsFilter = Modifier.FINAL | Modifier.STATIC | Modifier.PUBLIC;
+                if ((field.getModifiers() & flagsFilter) == flagsFilter) {
+                    assert field.getType() == int.class : "Only " + field;
+                    final int flag = field.getInt(null);
+                    assert flag != 0;
+                    assert (flag & allFlags) == 0 : field.getName() + " has a value conflicting with another flag";
+                    allFlags |= flag;
+                }
+            }
+        } catch (Exception e) {
+            throw new InternalError(e.toString());
+        }
+    }
+
+    private static final String[] names = new String[255];
+    private static HashMap<Integer, String> extNames = new HashMap<Integer, String>();
+    private static final int[] flags = new int[255];
+    private static final int[] length = new int[255];
 
     // Checkstyle: stop
     static {
-        def(NOP                 , "nop"                 , "b"    );
-        def(ACONST_NULL         , "aconst_null"         , "b"    );
-        def(ICONST_M1           , "iconst_m1"           , "b"    );
-        def(ICONST_0            , "iconst_0"            , "b"    );
-        def(ICONST_1            , "iconst_1"            , "b"    );
-        def(ICONST_2            , "iconst_2"            , "b"    );
-        def(ICONST_3            , "iconst_3"            , "b"    );
-        def(ICONST_4            , "iconst_4"            , "b"    );
-        def(ICONST_5            , "iconst_5"            , "b"    );
-        def(LCONST_0            , "lconst_0"            , "b"    );
-        def(LCONST_1            , "lconst_1"            , "b"    );
-        def(FCONST_0            , "fconst_0"            , "b"    );
-        def(FCONST_1            , "fconst_1"            , "b"    );
-        def(FCONST_2            , "fconst_2"            , "b"    );
-        def(DCONST_0            , "dconst_0"            , "b"    );
-        def(DCONST_1            , "dconst_1"            , "b"    );
-        def(BIPUSH              , "bipush"              , "bc"   );
-        def(SIPUSH              , "sipush"              , "bcc"  );
-        def(LDC                 , "ldc"                 , "bi"   , FLAG_TRAP);
-        def(LDC_W               , "ldc_w"               , "bii"  , FLAG_TRAP);
-        def(LDC2_W              , "ldc2_w"              , "bii"  , FLAG_TRAP);
-        def(ILOAD               , "iload"               , "bi"   , FLAG_LOAD);
-        def(LLOAD               , "lload"               , "bi"   , FLAG_LOAD);
-        def(FLOAD               , "fload"               , "bi"   , FLAG_LOAD);
-        def(DLOAD               , "dload"               , "bi"   , FLAG_LOAD);
-        def(ALOAD               , "aload"               , "bi"   , FLAG_LOAD);
-        def(ILOAD_0             , "iload_0"             , "b"    , FLAG_LOAD);
-        def(ILOAD_1             , "iload_1"             , "b"    , FLAG_LOAD);
-        def(ILOAD_2             , "iload_2"             , "b"    , FLAG_LOAD);
-        def(ILOAD_3             , "iload_3"             , "b"    , FLAG_LOAD);
-        def(LLOAD_0             , "lload_0"             , "b"    , FLAG_LOAD);
-        def(LLOAD_1             , "lload_1"             , "b"    , FLAG_LOAD);
-        def(LLOAD_2             , "lload_2"             , "b"    , FLAG_LOAD);
-        def(LLOAD_3             , "lload_3"             , "b"    , FLAG_LOAD);
-        def(FLOAD_0             , "fload_0"             , "b"    , FLAG_LOAD);
-        def(FLOAD_1             , "fload_1"             , "b"    , FLAG_LOAD);
-        def(FLOAD_2             , "fload_2"             , "b"    , FLAG_LOAD);
-        def(FLOAD_3             , "fload_3"             , "b"    , FLAG_LOAD);
-        def(DLOAD_0             , "dload_0"             , "b"    , FLAG_LOAD);
-        def(DLOAD_1             , "dload_1"             , "b"    , FLAG_LOAD);
-        def(DLOAD_2             , "dload_2"             , "b"    , FLAG_LOAD);
-        def(DLOAD_3             , "dload_3"             , "b"    , FLAG_LOAD);
-        def(ALOAD_0             , "aload_0"             , "b"    , FLAG_LOAD);
-        def(ALOAD_1             , "aload_1"             , "b"    , FLAG_LOAD);
-        def(ALOAD_2             , "aload_2"             , "b"    , FLAG_LOAD);
-        def(ALOAD_3             , "aload_3"             , "b"    , FLAG_LOAD);
-        def(IALOAD              , "iaload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(LALOAD              , "laload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(FALOAD              , "faload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(DALOAD              , "daload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(AALOAD              , "aaload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(BALOAD              , "baload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(CALOAD              , "caload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(SALOAD              , "saload"              , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(ISTORE              , "istore"              , "bi"   , FLAG_STORE);
-        def(LSTORE              , "lstore"              , "bi"   , FLAG_STORE);
-        def(FSTORE              , "fstore"              , "bi"   , FLAG_STORE);
-        def(DSTORE              , "dstore"              , "bi"   , FLAG_STORE);
-        def(ASTORE              , "astore"              , "bi"   , FLAG_STORE);
-        def(ISTORE_0            , "istore_0"            , "b"    , FLAG_STORE);
-        def(ISTORE_1            , "istore_1"            , "b"    , FLAG_STORE);
-        def(ISTORE_2            , "istore_2"            , "b"    , FLAG_STORE);
-        def(ISTORE_3            , "istore_3"            , "b"    , FLAG_STORE);
-        def(LSTORE_0            , "lstore_0"            , "b"    , FLAG_STORE);
-        def(LSTORE_1            , "lstore_1"            , "b"    , FLAG_STORE);
-        def(LSTORE_2            , "lstore_2"            , "b"    , FLAG_STORE);
-        def(LSTORE_3            , "lstore_3"            , "b"    , FLAG_STORE);
-        def(FSTORE_0            , "fstore_0"            , "b"    , FLAG_STORE);
-        def(FSTORE_1            , "fstore_1"            , "b"    , FLAG_STORE);
-        def(FSTORE_2            , "fstore_2"            , "b"    , FLAG_STORE);
-        def(FSTORE_3            , "fstore_3"            , "b"    , FLAG_STORE);
-        def(DSTORE_0            , "dstore_0"            , "b"    , FLAG_STORE);
-        def(DSTORE_1            , "dstore_1"            , "b"    , FLAG_STORE);
-        def(DSTORE_2            , "dstore_2"            , "b"    , FLAG_STORE);
-        def(DSTORE_3            , "dstore_3"            , "b"    , FLAG_STORE);
-        def(ASTORE_0            , "astore_0"            , "b"    , FLAG_STORE);
-        def(ASTORE_1            , "astore_1"            , "b"    , FLAG_STORE);
-        def(ASTORE_2            , "astore_2"            , "b"    , FLAG_STORE);
-        def(ASTORE_3            , "astore_3"            , "b"    , FLAG_STORE);
-        def(IASTORE             , "iastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(LASTORE             , "lastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(FASTORE             , "fastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(DASTORE             , "dastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(AASTORE             , "aastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(BASTORE             , "bastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(CASTORE             , "castore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(SASTORE             , "sastore"             , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(POP                 , "pop"                 , "b"    );
-        def(POP2                , "pop2"                , "b"    );
-        def(DUP                 , "dup"                 , "b"    );
-        def(DUP_X1              , "dup_x1"              , "b"    );
-        def(DUP_X2              , "dup_x2"              , "b"    );
-        def(DUP2                , "dup2"                , "b"    );
-        def(DUP2_X1             , "dup2_x1"             , "b"    );
-        def(DUP2_X2             , "dup2_x2"             , "b"    );
-        def(SWAP                , "swap"                , "b"    );
-        def(IADD                , "iadd"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(LADD                , "ladd"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(FADD                , "fadd"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(DADD                , "dadd"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(ISUB                , "isub"                , "b"    );
-        def(LSUB                , "lsub"                , "b"    );
-        def(FSUB                , "fsub"                , "b"    );
-        def(DSUB                , "dsub"                , "b"    );
-        def(IMUL                , "imul"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(LMUL                , "lmul"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(FMUL                , "fmul"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(DMUL                , "dmul"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(IDIV                , "idiv"                , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(LDIV                , "ldiv"                , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(FDIV                , "fdiv"                , "b"    );
-        def(DDIV                , "ddiv"                , "b"    );
-        def(IREM                , "irem"                , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(LREM                , "lrem"                , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
-        def(FREM                , "frem"                , "b"    );
-        def(DREM                , "drem"                , "b"    );
-        def(INEG                , "ineg"                , "b"    );
-        def(LNEG                , "lneg"                , "b"    );
-        def(FNEG                , "fneg"                , "b"    );
-        def(DNEG                , "dneg"                , "b"    );
-        def(ISHL                , "ishl"                , "b"    );
-        def(LSHL                , "lshl"                , "b"    );
-        def(ISHR                , "ishr"                , "b"    );
-        def(LSHR                , "lshr"                , "b"    );
-        def(IUSHR               , "iushr"               , "b"    );
-        def(LUSHR               , "lushr"               , "b"    );
-        def(IAND                , "iand"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(LAND                , "land"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(IOR                 , "ior"                 , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(LOR                 , "lor"                 , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(IXOR                , "ixor"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(LXOR                , "lxor"                , "b"    , FLAG_COMMUTATIVE | FLAG_ASSOCIATIVE);
-        def(IINC                , "iinc"                , "bic"  , FLAG_LOAD | FLAG_STORE);
-        def(I2L                 , "i2l"                 , "b"    );
-        def(I2F                 , "i2f"                 , "b"    );
-        def(I2D                 , "i2d"                 , "b"    );
-        def(L2I                 , "l2i"                 , "b"    );
-        def(L2F                 , "l2f"                 , "b"    );
-        def(L2D                 , "l2d"                 , "b"    );
-        def(F2I                 , "f2i"                 , "b"    );
-        def(F2L                 , "f2l"                 , "b"    );
-        def(F2D                 , "f2d"                 , "b"    );
-        def(D2I                 , "d2i"                 , "b"    );
-        def(D2L                 , "d2l"                 , "b"    );
-        def(D2F                 , "d2f"                 , "b"    );
-        def(I2B                 , "i2b"                 , "b"    );
-        def(I2C                 , "i2c"                 , "b"    );
-        def(I2S                 , "i2s"                 , "b"    );
-        def(LCMP                , "lcmp"                , "b"    );
-        def(FCMPL               , "fcmpl"               , "b"    );
-        def(FCMPG               , "fcmpg"               , "b"    );
-        def(DCMPL               , "dcmpl"               , "b"    );
-        def(DCMPG               , "dcmpg"               , "b"    );
-        def(IFEQ                , "ifeq"                , "boo"  );
-        def(IFNE                , "ifne"                , "boo"  );
-        def(IFLT                , "iflt"                , "boo"  );
-        def(IFGE                , "ifge"                , "boo"  );
-        def(IFGT                , "ifgt"                , "boo"  );
-        def(IFLE                , "ifle"                , "boo"  );
-        def(IF_ICMPEQ           , "if_icmpeq"           , "boo"  , FLAG_COMMUTATIVE);
-        def(IF_ICMPNE           , "if_icmpne"           , "boo"  , FLAG_COMMUTATIVE);
-        def(IF_ICMPLT           , "if_icmplt"           , "boo"  );
-        def(IF_ICMPGE           , "if_icmpge"           , "boo"  );
-        def(IF_ICMPGT           , "if_icmpgt"           , "boo"  );
-        def(IF_ICMPLE           , "if_icmple"           , "boo"  );
-        def(IF_ACMPEQ           , "if_acmpeq"           , "boo"  , FLAG_COMMUTATIVE);
-        def(IF_ACMPNE           , "if_acmpne"           , "boo"  , FLAG_COMMUTATIVE);
-        def(GOTO                , "goto"                , "boo"  );
-        def(JSR                 , "jsr"                 , "boo"  );
-        def(RET                 , "ret"                 , "bi"   );
-        def(TABLESWITCH         , "tableswitch"         , ""     );
-        def(LOOKUPSWITCH        , "lookupswitch"        , ""     );
-        def(IRETURN             , "ireturn"             , "b"    , FLAG_TRAP);
-        def(LRETURN             , "lreturn"             , "b"    , FLAG_TRAP);
-        def(FRETURN             , "freturn"             , "b"    , FLAG_TRAP);
-        def(DRETURN             , "dreturn"             , "b"    , FLAG_TRAP);
-        def(ARETURN             , "areturn"             , "b"    , FLAG_TRAP);
-        def(RETURN              , "return"              , "b"    , FLAG_TRAP);
-        def(GETSTATIC           , "getstatic"           , "bjj"  , FLAG_TRAP);
-        def(PUTSTATIC           , "putstatic"           , "bjj"  , FLAG_TRAP);
-        def(GETFIELD            , "getfield"            , "bjj"  , FLAG_TRAP | FLAG_IMPLICIT);
-        def(PUTFIELD            , "putfield"            , "bjj"  , FLAG_TRAP | FLAG_IMPLICIT);
-        def(INVOKEVIRTUAL       , "invokevirtual"       , "bjj"  , FLAG_TRAP);
-        def(INVOKESPECIAL       , "invokespecial"       , "bjj"  , FLAG_TRAP);
-        def(INVOKESTATIC        , "invokestatic"        , "bjj"  , FLAG_TRAP);
-        def(INVOKEINTERFACE     , "invokeinterface"     , "bjja_", FLAG_TRAP);
-        def(XXXUNUSEDXXX        , "xxxunusedxxx"        , ""     );
-        def(NEW                 , "new"                 , "bii"  , FLAG_TRAP);
-        def(NEWARRAY            , "newarray"            , "bc"   , FLAG_TRAP);
-        def(ANEWARRAY           , "anewarray"           , "bii"  , FLAG_TRAP);
-        def(ARRAYLENGTH         , "arraylength"         , "b"    , FLAG_TRAP);
-        def(ATHROW              , "athrow"              , "b"    , FLAG_TRAP);
-        def(CHECKCAST           , "checkcast"           , "bii"  , FLAG_TRAP);
-        def(INSTANCEOF          , "instanceof"          , "bii"  , FLAG_TRAP);
-        def(MONITORENTER        , "monitorenter"        , "b"    , FLAG_TRAP);
-        def(MONITOREXIT         , "monitorexit"         , "b"    , FLAG_TRAP);
-        def(WIDE                , "wide"                , ""     );
-        def(MULTIANEWARRAY      , "multianewarray"      , "biic" , FLAG_TRAP);
-        def(IFNULL              , "ifnull"              , "boo"  );
-        def(IFNONNULL           , "ifnonnull"           , "boo"  );
-        def(GOTO_W              , "goto_w"              , "boooo");
-        def(JSR_W               , "jsr_w"               , "boooo");
-        def(BREAKPOINT          , "breakpoint"          , "b"    , FLAG_TRAP | FLAG_IMPLICIT);
+        def("nop"             , "b"    );
+        def("aconst_null"     , "b"    );
+        def("iconst_m1"       , "b"    );
+        def("iconst_0"        , "b"    );
+        def("iconst_1"        , "b"    );
+        def("iconst_2"        , "b"    );
+        def("iconst_3"        , "b"    );
+        def("iconst_4"        , "b"    );
+        def("iconst_5"        , "b"    );
+        def("lconst_0"        , "b"    );
+        def("lconst_1"        , "b"    );
+        def("fconst_0"        , "b"    );
+        def("fconst_1"        , "b"    );
+        def("fconst_2"        , "b"    );
+        def("dconst_0"        , "b"    );
+        def("dconst_1"        , "b"    );
+        def("bipush"          , "bc"   );
+        def("sipush"          , "bcc"  );
+        def("ldc"             , "bi"   , TRAP | LDC_);
+        def("ldc_w"           , "bii"  , TRAP | LDC_);
+        def("ldc2_w"          , "bii"  , TRAP | LDC_);
+        def("iload"           , "bi"   , LOAD);
+        def("lload"           , "bi"   , LOAD);
+        def("fload"           , "bi"   , LOAD);
+        def("dload"           , "bi"   , LOAD);
+        def("aload"           , "bi"   , LOAD);
+        def("iload_0"         , "b"    , LOAD);
+        def("iload_1"         , "b"    , LOAD);
+        def("iload_2"         , "b"    , LOAD);
+        def("iload_3"         , "b"    , LOAD);
+        def("lload_0"         , "b"    , LOAD);
+        def("lload_1"         , "b"    , LOAD);
+        def("lload_2"         , "b"    , LOAD);
+        def("lload_3"         , "b"    , LOAD);
+        def("fload_0"         , "b"    , LOAD);
+        def("fload_1"         , "b"    , LOAD);
+        def("fload_2"         , "b"    , LOAD);
+        def("fload_3"         , "b"    , LOAD);
+        def("dload_0"         , "b"    , LOAD);
+        def("dload_1"         , "b"    , LOAD);
+        def("dload_2"         , "b"    , LOAD);
+        def("dload_3"         , "b"    , LOAD);
+        def("aload_0"         , "b"    , LOAD);
+        def("aload_1"         , "b"    , LOAD);
+        def("aload_2"         , "b"    , LOAD);
+        def("aload_3"         , "b"    , LOAD);
+        def("iaload"          , "b"    , TRAP);
+        def("laload"          , "b"    , TRAP);
+        def("faload"          , "b"    , TRAP);
+        def("daload"          , "b"    , TRAP);
+        def("aaload"          , "b"    , TRAP);
+        def("baload"          , "b"    , TRAP);
+        def("caload"          , "b"    , TRAP);
+        def("saload"          , "b"    , TRAP);
+        def("istore"          , "bi"   , STORE);
+        def("lstore"          , "bi"   , STORE);
+        def("fstore"          , "bi"   , STORE);
+        def("dstore"          , "bi"   , STORE);
+        def("astore"          , "bi"   , STORE);
+        def("istore_0"        , "b"    , STORE);
+        def("istore_1"        , "b"    , STORE);
+        def("istore_2"        , "b"    , STORE);
+        def("istore_3"        , "b"    , STORE);
+        def("lstore_0"        , "b"    , STORE);
+        def("lstore_1"        , "b"    , STORE);
+        def("lstore_2"        , "b"    , STORE);
+        def("lstore_3"        , "b"    , STORE);
+        def("fstore_0"        , "b"    , STORE);
+        def("fstore_1"        , "b"    , STORE);
+        def("fstore_2"        , "b"    , STORE);
+        def("fstore_3"        , "b"    , STORE);
+        def("dstore_0"        , "b"    , STORE);
+        def("dstore_1"        , "b"    , STORE);
+        def("dstore_2"        , "b"    , STORE);
+        def("dstore_3"        , "b"    , STORE);
+        def("astore_0"        , "b"    , STORE);
+        def("astore_1"        , "b"    , STORE);
+        def("astore_2"        , "b"    , STORE);
+        def("astore_3"        , "b"    , STORE);
+        def("iastore"         , "b"    , TRAP);
+        def("lastore"         , "b"    , TRAP);
+        def("fastore"         , "b"    , TRAP);
+        def("dastore"         , "b"    , TRAP);
+        def("aastore"         , "b"    , TRAP);
+        def("bastore"         , "b"    , TRAP);
+        def("castore"         , "b"    , TRAP);
+        def("sastore"         , "b"    , TRAP);
+        def("pop"             , "b"    );
+        def("pop2"            , "b"    );
+        def("dup"             , "b"    );
+        def("dup_x1"          , "b"    );
+        def("dup_x2"          , "b"    );
+        def("dup2"            , "b"    );
+        def("dup2_x1"         , "b"    );
+        def("dup2_x2"         , "b"    );
+        def("swap"            , "b"    );
+        def("iadd"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("ladd"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("fadd"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("dadd"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("isub"            , "b"    );
+        def("lsub"            , "b"    );
+        def("fsub"            , "b"    );
+        def("dsub"            , "b"    );
+        def("imul"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("lmul"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("fmul"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("dmul"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("idiv"            , "b"    , TRAP);
+        def("ldiv"            , "b"    , TRAP);
+        def("fdiv"            , "b"    );
+        def("ddiv"            , "b"    );
+        def("irem"            , "b"    , TRAP);
+        def("lrem"            , "b"    , TRAP);
+        def("frem"            , "b"    );
+        def("drem"            , "b"    );
+        def("ineg"            , "b"    );
+        def("lneg"            , "b"    );
+        def("fneg"            , "b"    );
+        def("dneg"            , "b"    );
+        def("ishl"            , "b"    );
+        def("lshl"            , "b"    );
+        def("ishr"            , "b"    );
+        def("lshr"            , "b"    );
+        def("iushr"           , "b"    );
+        def("lushr"           , "b"    );
+        def("iand"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("land"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("ior"             , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("lor"             , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("ixor"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("lxor"            , "b"    , COMMUTATIVE | ASSOCIATIVE);
+        def("iinc"            , "bic"  , LOAD | STORE);
+        def("i2l"             , "b"    );
+        def("i2f"             , "b"    );
+        def("i2d"             , "b"    );
+        def("l2i"             , "b"    );
+        def("l2f"             , "b"    );
+        def("l2d"             , "b"    );
+        def("f2i"             , "b"    );
+        def("f2l"             , "b"    );
+        def("f2d"             , "b"    );
+        def("d2i"             , "b"    );
+        def("d2l"             , "b"    );
+        def("d2f"             , "b"    );
+        def("i2b"             , "b"    );
+        def("i2c"             , "b"    );
+        def("i2s"             , "b"    );
+        def("lcmp"            , "b"    );
+        def("fcmpl"           , "b"    );
+        def("fcmpg"           , "b"    );
+        def("dcmpl"           , "b"    );
+        def("dcmpg"           , "b"    );
+        def("ifeq"            , "boo"  , FALL_THROUGH | BRANCH);
+        def("ifne"            , "boo"  , FALL_THROUGH | BRANCH);
+        def("iflt"            , "boo"  , FALL_THROUGH | BRANCH);
+        def("ifge"            , "boo"  , FALL_THROUGH | BRANCH);
+        def("ifgt"            , "boo"  , FALL_THROUGH | BRANCH);
+        def("ifle"            , "boo"  , FALL_THROUGH | BRANCH);
+        def("if_icmpeq"       , "boo"  , COMMUTATIVE | FALL_THROUGH | BRANCH);
+        def("if_icmpne"       , "boo"  , COMMUTATIVE | FALL_THROUGH | BRANCH);
+        def("if_icmplt"       , "boo"  , FALL_THROUGH | BRANCH);
+        def("if_icmpge"       , "boo"  , FALL_THROUGH | BRANCH);
+        def("if_icmpgt"       , "boo"  , FALL_THROUGH | BRANCH);
+        def("if_icmple"       , "boo"  , FALL_THROUGH | BRANCH);
+        def("if_acmpeq"       , "boo"  , COMMUTATIVE | FALL_THROUGH | BRANCH);
+        def("if_acmpne"       , "boo"  , COMMUTATIVE | FALL_THROUGH | BRANCH);
+        def("goto"            , "boo"  , STOP | BRANCH);
+        def("jsr"             , "boo"  , STOP | BRANCH | JSR_OR_RET);
+        def("ret"             , "bi"   , STOP | JSR_OR_RET);
+        def("tableswitch"     , ""     , STOP | SWITCH);
+        def("lookupswitch"    , ""     , STOP | SWITCH);
+        def("ireturn"         , "b"    , TRAP | STOP | RETURN_);
+        def("lreturn"         , "b"    , TRAP | STOP | RETURN_);
+        def("freturn"         , "b"    , TRAP | STOP | RETURN_);
+        def("dreturn"         , "b"    , TRAP | STOP | RETURN_);
+        def("areturn"         , "b"    , TRAP | STOP | RETURN_);
+        def("return"          , "b"    , TRAP | STOP | RETURN_);
+        def("getstatic"       , "bjj"  , TRAP | FIELD_READ);
+        def("putstatic"       , "bjj"  , TRAP | FIELD_WRITE);
+        def("getfield"        , "bjj"  , TRAP | FIELD_READ);
+        def("putfield"        , "bjj"  , TRAP | FIELD_WRITE);
+        def("invokevirtual"   , "bjj"  , TRAP | INVOKE_);
+        def("invokespecial"   , "bjj"  , TRAP | INVOKE_);
+        def("invokestatic"    , "bjj"  , TRAP | INVOKE_);
+        def("invokeinterface" , "bjja_", TRAP | INVOKE_);
+        def("xxxunusedxxx"    , ""     );
+        def("new"             , "bii"  , TRAP);
+        def("newarray"        , "bc"   , TRAP);
+        def("anewarray"       , "bii"  , TRAP);
+        def("arraylength"     , "b"    , TRAP);
+        def("athrow"          , "b"    , TRAP | STOP);
+        def("checkcast"       , "bii"  , TRAP);
+        def("instanceof"      , "bii"  , TRAP);
+        def("monitorenter"    , "b"    , TRAP);
+        def("monitorexit"     , "b"    , TRAP);
+        def("wide"            , ""     );
+        def("multianewarray"  , "biic" , TRAP);
+        def("ifnull"          , "boo"  , FALL_THROUGH | BRANCH);
+        def("ifnonnull"       , "boo"  , FALL_THROUGH | BRANCH);
+        def("goto_w"          , "boooo", STOP | BRANCH);
+        def("jsr_w"           , "boooo", STOP | BRANCH | JSR_OR_RET);
+        def("breakpoint"      , "b"    , TRAP);
+
+        def("wload"           , "bi"   , EXTENSION);
+        def("wload_0"         , "b"    , EXTENSION);
+        def("wload_1"         , "b"    , EXTENSION);
+        def("wload_2"         , "b"    , EXTENSION);
+        def("wload_3"         , "b"    , EXTENSION);
+        def("wstore"          , "bi"   , EXTENSION);
+        def("wstore_0"        , "b"    , EXTENSION);
+        def("wstore_1"        , "b"    , EXTENSION);
+        def("wstore_2"        , "b"    , EXTENSION);
+        def("wstore_3"        , "b"    , EXTENSION);
+        def("zero"            , "bii"  , EXTENSION);
+        def("wdiv"            , "bii"  , EXTENSION | TRAP);
+        def("wdivi"           , "bii"  , EXTENSION | TRAP);
+        def("wmod"            , "bii"  , EXTENSION | TRAP);
+        def("wmodi"           , "bii"  , EXTENSION | TRAP);
+        def("icmp"            , "bii"  , EXTENSION);
+        def("wcmp"            , "bii"  , EXTENSION);
+        def("pread"           , "bii"  , EXTENSION | TRAP);
+        def("pwrite"          , "bii"  , EXTENSION | TRAP);
+        def("pget"            , "bii"  , EXTENSION | TRAP);
+        def("pset"            , "bii"  , EXTENSION | TRAP);
+        def("pcmpswp"         , "bii"  , EXTENSION | TRAP);
+        def("mov_i2f"         , "bii"  , EXTENSION | TRAP);
+        def("mov_f2i"         , "bii"  , EXTENSION | TRAP);
+        def("mov_l2d"         , "bii"  , EXTENSION | TRAP);
+        def("mov_d2l"         , "bii"  , EXTENSION | TRAP);
+        def("uwlt"            , "bii"  , EXTENSION);
+        def("uwlteq"          , "bii"  , EXTENSION);
+        def("uwgt"            , "bii"  , EXTENSION);
+        def("uwgteq"          , "bii"  , EXTENSION);
+        def("uge"             , "bii"  , EXTENSION);
+        def("jnicall"         , "bii"  , EXTENSION | TRAP);
+        def("call"            , "bii"  , EXTENSION | TRAP);
+        def("readgpr"         , "bii"  , EXTENSION);
+        def("writegpr"        , "bii"  , EXTENSION);
+        def("unsafe_cast"     , "bii"  , EXTENSION);
+        def("wreturn"         , "b"    , EXTENSION | TRAP | STOP | RETURN_);
+        def("safepoint"       , "bii"  , EXTENSION | TRAP);
+        def("alloca"          , "bii"  , EXTENSION);
+        def("membar"          , "bii"  , EXTENSION);
+        def("stackaddr"       , "bii"  , EXTENSION);
+        def("pause"           , "bii"  , EXTENSION);
+        def("add_sp"          , "bii"  , EXTENSION);
+        def("read_pc"         , "bii"  , EXTENSION);
+        def("flushw"          , "bii"  , EXTENSION);
     }
     // Checkstyle: resume
 
-    public static boolean isCommutative(int op) {
-        return (flags[op] & FLAG_COMMUTATIVE) != 0;
+    public static boolean isCommutative(int opcode) {
+        return (flags[opcode & 0xff] & COMMUTATIVE) != 0;
     }
 
+    /**
+     * Gets the length of an instruction denoted by a given opcode.
+     *
+     * @param opcode an instruction opcode
+     * @return the length of the instruction denoted by {@code opcode}. If {@code opcode} is {@link #WIDE} or denotes a
+     *         variable length instruction (e.g. {@link #TABLESWITCH}), then 0 is returned.
+     */
     public static int length(int opcode) {
-        return length[opcode];
+        return length[opcode & 0xff];
     }
 
+    /**
+     * Gets the length of an instruction at a given position in a given bytecode array.
+     * This methods handles variable length and {@linkplain #WIDE widened} instructions.
+     *
+     * @param code an array of bytecode
+     * @param bci the position in {@code code} of an instruction's opcode
+     * @return the length of the instruction at position {@code bci} in {@code code}
+     */
     public static int length(byte[] code, int bci) {
         int opcode = Bytes.beU1(code, bci);
-        int length = Bytecodes.length[opcode];
+        int length = Bytecodes.length[opcode & 0xff];
         if (length == 0) {
             switch (opcode) {
                 case TABLESWITCH: {
@@ -497,10 +791,17 @@ public class Bytecodes {
      *
      * @param opcode an opcode
      * @return the mnemonic for {@code opcode}
-     * @throws IndexOutOfBoundsException if {@code opcode} is not a legal opcode
+     * @throws IllegalArgumentException if {@code opcode} is not a legal opcode
      */
     public static String name(int opcode) {
-        return names[opcode];
+        if (opcode >= 0 && opcode < names.length) {
+            return names[opcode];
+        }
+        String extName = extNames.get(Integer.valueOf(opcode));
+        if (extName == null) {
+            throw new IllegalArgumentException("Illegal opcode: " + opcode);
+        }
+        return extName;
     }
 
     /**
@@ -510,7 +811,7 @@ public class Bytecodes {
      * @return {@code true} if {@code opcode} can cause an implicit exception, {@code false} otherwise
      */
     public static boolean canTrap(int opcode) {
-        return (flags[opcode] & FLAG_TRAP) != 0;
+        return (flags[opcode & 0xff] & TRAP) != 0;
     }
 
     /**
@@ -520,18 +821,68 @@ public class Bytecodes {
      * @return {@code true} if {@code opcode} loads a local variable to the operand stack, {@code false} otherwise
      */
     public static boolean isLoad(int opcode) {
-        return (flags[opcode] & FLAG_LOAD) != 0;
+        return (flags[opcode & 0xff] & LOAD) != 0;
     }
 
     /**
-     * Determines if a given opcode denotes an instruction that stores a value to local variable after popping it from
-     * the operand stack.
+     * Determines if a given opcode denotes an instruction that stores a value to a local variable
+     * after popping it from the operand stack.
      *
      * @param opcode an opcode to test
      * @return {@code true} if {@code opcode} stores a value to a local variable, {@code false} otherwise
      */
     public static boolean isStore(int opcode) {
-        return (flags[opcode] & FLAG_STORE) != 0;
+        return (flags[opcode & 0xff] & STORE) != 0;
+    }
+
+    public static boolean isBlockEnd(int opcode) {
+        return (flags[opcode & 0xff] & (STOP | FALL_THROUGH)) != 0;
+    }
+
+    /**
+     * Determines if a given opcode is an instruction that has a 2 or 4 byte operand that is an offset to another
+     * instruction in the same method. This does not include the {@linkplain #SWITCH switch} instructions.
+     *
+     * @param opcode an opcode to test
+     * @return {@code true} if {@code opcode} is a branch instruction with a single operand
+     */
+    public static boolean isBranch(int opcode) {
+        return (flags[opcode & 0xff] & BRANCH) != 0;
+    }
+
+    public static boolean isConditionalBranch(int opcode) {
+        return (flags[opcode & 0xff] & FALL_THROUGH) != 0;
+    }
+
+    /**
+     * Determines if a given opcode denotes a bytecode extension. An extended bytecode instruction is one
+     * that is not part of the JVM specification.
+     *
+     * @param opcode an opcode to test
+     * @return {@code true} if {@code opcode} is an extended bytecode
+     */
+    public static boolean isExtension(int opcode) {
+        return (flags[opcode & 0xff] & EXTENSION) != 0;
+    }
+
+    /**
+     * Determines if a given extension opcode includes an operand value.
+     *
+     * @param opcode an opcode to test
+     * @return {@code true} if {@code (opcode & ~0xff) != 0}
+     */
+    public static boolean isOpcode3(int opcode) {
+        return (opcode & ~0xff) != 0;
+    }
+
+    /**
+     * Determines if a given extension opcode needs to be combined with its 2 byte operand
+     * to derive the a complete {@linkplain #isOpcode3(int) 3-byte} opcode.
+     *
+     * @param opcode an opcode to test
+     */
+    public static boolean hasOpcode3(int opcode) {
+        return (flags[opcode & 0xff] & OPCODE3) != 0;
     }
 
     /**
@@ -732,22 +1083,139 @@ public class Bytecodes {
         return null; // unknown compare opcode
     }
 
-    private static void def(int opcode, String name, String format) {
-        def(opcode, name, format, 0);
+    private static void def(String name, String format) {
+        def(name, format, 0);
     }
 
-    private static void def(int opcode, String name, String format, int flags) {
-        names[opcode] = name;
-        length[opcode] = (byte) format.length();
-        Bytecodes.flags[opcode] = (byte) flags;
+    private static void def(String name, String format, int flags) {
+        try {
+            Field field = Bytecodes.class.getDeclaredField(name.toUpperCase());
+            int opcode = field.getInt(null);
+            assert names[opcode] == null : "opcode " + opcode + " is already bound to name " + names[opcode];
+            names[opcode] = name;
+            int length = format.length();
+            Bytecodes.length[opcode] = length;
+            Bytecodes.flags[opcode] = flags;
+
+            assert !isConditionalBranch(opcode) || isBranch(opcode) : "a conditional branch must also be a branch";
+
+            if (isExtension(opcode)) {
+                for (Field otherField : Bytecodes.class.getDeclaredFields()) {
+                    if (otherField.getName().startsWith(field.getName()) && !otherField.equals(field)) {
+                        String extName = otherField.getName();
+                        int opcodeWithOperand = otherField.getInt(null);
+                        if (isOpcode3(opcodeWithOperand)) {
+                            assert length == 3;
+                            Bytecodes.flags[opcode] |= OPCODE3;
+                            assert (opcodeWithOperand & 0xff) == opcode : "Extended opcode " + extName + " must share same low 8 bits as " + field.getName();
+                            String oldValue = extNames.put(opcodeWithOperand, extName.toLowerCase());
+                            assert oldValue == null;
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            throw (InternalError) new InternalError("Error defining " + name).initCause(e);
+        }
     }
 
     /**
-     * Checks if it is a valid bytecode.
-     * @param code the code to be checked
-     * @return
+     * Utility for ensuring that the extended opcodes are contiguous and follow on directly
+     * from the standard JVM opcodes. If these conditions do not hold for the input source
+     * file, then it is modified 'in situ' to fix the problem.
+     *
+     * @param args {@code args[0]} is the path to this source file
      */
-    public static boolean isDefined(int code) {
-        return 0 <= code && code < NUM_JAVA_CODES && names[code] != null;
+    public static void main(String[] args) throws Exception {
+        Pattern opcodeDecl = Pattern.compile("(\\s*public static final int )(\\w+)(\\s*=\\s*)(\\d+)(;.*)");
+
+        File file = new File(args[0]);
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        CharArrayWriter buffer = new CharArrayWriter((int) file.length());
+        PrintWriter out = new PrintWriter(buffer);
+        String line;
+        int lastExtendedOpcode = BREAKPOINT;
+        boolean modified = false;
+        int section = 0;
+        while ((line = br.readLine()) != null) {
+            if (section == 0) {
+                if (line.equals("    // Start extended bytecodes")) {
+                    section = 1;
+                }
+            } else if (section == 1) {
+                if (line.equals("    // End extended bytecodes")) {
+                    section = 2;
+                } else {
+                    Matcher matcher = opcodeDecl.matcher(line);
+                    if (matcher.matches()) {
+                        String name = matcher.group(2);
+                        String value = matcher.group(4);
+                        int opcode = Integer.parseInt(value);
+                        if (names[opcode] == null || !names[opcode].equalsIgnoreCase(name)) {
+                            throw new RuntimeException("Missing definition of name and flags for " + name + " -- " + names[opcode]);
+                        }
+                        if (opcode != lastExtendedOpcode + 1) {
+                            System.err.println("Fixed declaration of opcode " + name + " to be " + (lastExtendedOpcode + 1) + " (was " + value + ")");
+                            opcode = lastExtendedOpcode + 1;
+                            line = line.substring(0, matcher.start(4)) + opcode + line.substring(matcher.end(4));
+                            modified = true;
+                        }
+
+                        if (opcode >= 256) {
+                            throw new RuntimeException("Exceeded maximum opcode value with " + name);
+                        }
+
+                        lastExtendedOpcode = opcode;
+                    }
+                }
+            }
+
+            out.println(line);
+        }
+        if (section == 0) {
+            throw new RuntimeException("Did not find line starting extended bytecode declarations:\n\n    // Start extended bytecodes");
+        } else if (section == 1) {
+            throw new RuntimeException("Did not find line ending extended bytecode declarations:\n\n    // End extended bytecodes");
+        }
+
+        if (modified) {
+            out.flush();
+            FileWriter fileWriter = new FileWriter(file);
+            fileWriter.write(buffer.toCharArray());
+            fileWriter.close();
+
+            System.out.println("Modified: " + file);
+        }
+
+
+        // Uncomment to print out visitor method declarations:
+//        for (int opcode = 0; opcode < flags.length; ++opcode) {
+//            if (isExtension(opcode)) {
+//                String visitorParams = length(opcode) == 1 ? "" : "int index";
+//                System.out.println("@Override");
+//                System.out.println("protected void " + name(opcode) + "(" + visitorParams + ") {");
+//                System.out.println("}");
+//                System.out.println();
+//            }
+//        }
+
+        // Uncomment to print out visitor method declarations:
+//        for (int opcode = 0; opcode < flags.length; ++opcode) {
+//            if (isExtension(opcode)) {
+//                System.out.println("case " + name(opcode).toUpperCase() + ": {");
+//                String arg = "";
+//                int length = length(opcode);
+//                if (length == 2) {
+//                    arg = "readUnsigned1()";
+//                } else if (length == 3) {
+//                    arg = "readUnsigned2()";
+//                }
+//                System.out.println("    bytecodeVisitor." + name(opcode) + "(" + arg + ");");
+//                System.out.println("    break;");
+//                System.out.println("}");
+//            }
+//        }
+
     }
 }

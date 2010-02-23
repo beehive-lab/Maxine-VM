@@ -38,6 +38,7 @@ import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.cir.*;
+import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.operator.*;
 import com.sun.max.vm.cps.cir.operator.CheckCast;
 import com.sun.max.vm.cps.cir.operator.InstanceOf;
@@ -856,6 +857,11 @@ public final class HCirOperatorLowering extends HCirOperatorVisitor {
                     call),
                     ce()));
         }
+    }
+
+    @Override
+    public void visit(Call operator) {
+        set(call(CirBuiltin.get(SpecialBuiltin.Call.BUILTIN), arguments));
     }
 
     @Override

@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.heap;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -64,7 +67,7 @@ public abstract class TLABRefillPolicy {
      */
     public abstract Size nextTlabSize();
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     private static native TLABRefillPolicy asTLABRefillPolicy(Object object);
 
     @INLINE

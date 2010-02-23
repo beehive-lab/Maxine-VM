@@ -39,6 +39,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
@@ -248,6 +249,9 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.util.jar", false); // needed to load classes from jar files
         loadClass(sun.misc.VM.class);
 
+        loadPackage("com.sun.c1x.bytecode", false); // needed for extended bytecodes
+
+
         // These classes need to be compiled and in the boot image in order to be able to
         // run the optimizing compiler at run time (amongst other reasons)
         loadClass(sun.misc.SharedSecrets.class);
@@ -357,6 +361,7 @@ public class JavaPrototype extends Prototype {
                 initializeMaxClasses();
 
                 vmConfiguration.bootCompilerScheme().createBuiltins(packageLoader);
+                Intrinsics.register();
                 Builtin.register(vmConfiguration.bootCompilerScheme());
                 vmConfiguration.bootCompilerScheme().createSnippets(packageLoader);
                 Snippet.register();

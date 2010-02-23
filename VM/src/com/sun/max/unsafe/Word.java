@@ -20,10 +20,13 @@
  */
 package com.sun.max.unsafe;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -141,6 +144,7 @@ public abstract class Word {
     }
 
     @INLINE
+    @INTRINSIC(ZERO)
     public static Word zero() {
         return Address.zero();
     }
@@ -170,7 +174,7 @@ public abstract class Word {
         return widthValue().numberOfBytes;
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public final JniHandle asJniHandle() {
         if (this instanceof BoxedJniHandle) {
             return (BoxedJniHandle) this;
@@ -179,7 +183,7 @@ public abstract class Word {
         return BoxedJniHandle.from(box.value());
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public final Address asAddress() {
         if (this instanceof BoxedAddress) {
             return (BoxedAddress) this;
@@ -188,7 +192,7 @@ public abstract class Word {
         return BoxedAddress.from(box.value());
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public final Offset asOffset() {
         if (this instanceof BoxedOffset) {
             return (BoxedOffset) this;
@@ -197,7 +201,7 @@ public abstract class Word {
         return BoxedOffset.from(box.value());
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public final Size asSize() {
         if (this instanceof BoxedSize) {
             return (BoxedSize) this;
@@ -206,7 +210,7 @@ public abstract class Word {
         return BoxedSize.from(box.value());
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public final Pointer asPointer() {
         if (this instanceof BoxedPointer) {
             return (BoxedPointer) this;

@@ -20,6 +20,9 @@
  */
 package com.sun.max.memory;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -63,11 +66,6 @@ public enum MemoryBarrier implements PoolObject {
     STORE_LOAD,
 
     /**
-     * All stores and loads before subsequent loads will be serialized.
-     */
-    MEMOP_STORE,
-
-    /**
      * All stores before subsequent stores will be serialized.
      */
     STORE_STORE;
@@ -78,67 +76,67 @@ public enum MemoryBarrier implements PoolObject {
         return ordinal();
     }
 
-    @BUILTIN(builtinClass = SpecialBuiltin.BarMemory.class)
+    @BUILTIN(SpecialBuiltin.BarMemory.class)
     private static void barMemory(PoolSet<MemoryBarrier> relations) {
     }
 
-    private static final PoolSet<MemoryBarrier> loadLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_LOAD);
+    public static final PoolSet<MemoryBarrier> loadLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_LOAD);
 
     /**
      * Ensures all preceding loads complete before any subsequent loads.
      */
     @INLINE
+    @INTRINSIC(MEMBAR_LOAD_LOAD)
     public static void loadLoad() {
-        barMemory(loadLoad);
     }
 
-    private static final PoolSet<MemoryBarrier> loadStore = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_STORE);
+    public static final PoolSet<MemoryBarrier> loadStore = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_STORE);
 
     /**
      * Ensures all preceding loads complete before any subsequent stores.
      */
     @INLINE
+    @INTRINSIC(MEMBAR_LOAD_STORE)
     public static void loadStore() {
-        barMemory(loadStore);
     }
 
-    private static final PoolSet<MemoryBarrier> storeLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_LOAD);
+    public static final PoolSet<MemoryBarrier> storeLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_LOAD);
 
     /**
      * Ensures all preceding stores complete before any subsequent loads.
      */
     @INLINE
+    @INTRINSIC(MEMBAR_STORE_LOAD)
     public static void storeLoad() {
-        barMemory(storeLoad);
     }
 
-    private static final PoolSet<MemoryBarrier> storeStore = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_STORE);
+    public static final PoolSet<MemoryBarrier> storeStore = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_STORE);
 
     /**
      * Ensures all preceding stores complete before any subsequent stores.
      */
     @INLINE
+    @INTRINSIC(MEMBAR_STORE_STORE)
     public static void storeStore() {
-        barMemory(storeStore);
     }
 
-    private static final PoolSet<MemoryBarrier> memopStore = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_STORE, MemoryBarrier.LOAD_STORE);
+    public static final PoolSet<MemoryBarrier> memopStore = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_STORE, MemoryBarrier.LOAD_STORE);
 
     /**
      * Ensures all preceding stores and loads complete before any subsequent stores.
      */
     @INLINE
+    @INTRINSIC(MEMBAR_MEMOP_STORE)
     public static void memopStore() {
-        barMemory(memopStore);
     }
 
-    private static final PoolSet<MemoryBarrier> all = PoolSet.allOf(VALUE_POOL);
+    public static final PoolSet<MemoryBarrier> all = PoolSet.allOf(VALUE_POOL);
 
     /**
      * Ensures all preceding stores and loads complete before any subsequent stores and loads.
      */
     @INLINE
+    @INTRINSIC(MEMBAR_ALL)
     public static void all() {
-        barMemory(all);
     }
 }

@@ -49,24 +49,24 @@ public final class JitStackFrameOperation {
     private JitStackFrameOperation() {
     }
 
-    private static final int SLOT_WORDS = JitStackFrameLayout.JIT_SLOT_SIZE / Word.size();
+    private static final int WORDS_PER_SLOT = JitStackFrameLayout.JIT_SLOT_SIZE / Word.size();
     private static final int BIAS = JitStackFrameLayout.JIT_STACK_BIAS;
 
     private static final int HALFWORD_OFFSET_IN_WORD = JitStackFrameLayout.offsetWithinWord(Kind.INT);
 
     @INLINE
     public static void addSlots(int numberOfSlots) {
-        VMRegister.addWordsToAbiStackPointer(-(numberOfSlots * SLOT_WORDS));
+        VMRegister.addWordsToAbiStackPointer(-(numberOfSlots * WORDS_PER_SLOT));
     }
 
     @INLINE
     public static void removeSlots(int numberOfSlots) {
-        VMRegister.addWordsToAbiStackPointer(numberOfSlots * SLOT_WORDS);
+        VMRegister.addWordsToAbiStackPointer(numberOfSlots * WORDS_PER_SLOT);
     }
 
     @INLINE
     public static Word peekWord(int index) {
-        return VMRegister.getAbiStackPointer().getWord(BIAS, index * SLOT_WORDS);
+        return VMRegister.getAbiStackPointer().getWord(BIAS, index * WORDS_PER_SLOT);
     }
 
     @INLINE
@@ -91,12 +91,12 @@ public final class JitStackFrameOperation {
 
     @INLINE
     public static Object peekReference(int index) {
-        return VMRegister.getAbiStackPointer().getReference(BIAS, index * SLOT_WORDS).toJava();
+        return VMRegister.getAbiStackPointer().getReference(BIAS, index * WORDS_PER_SLOT).toJava();
     }
 
     @INLINE
     public static void pokeWord(int index, Word value) {
-        VMRegister.getAbiStackPointer().setWord(BIAS, index * SLOT_WORDS, value);
+        VMRegister.getAbiStackPointer().setWord(BIAS, index * WORDS_PER_SLOT, value);
     }
 
     @INLINE
@@ -121,7 +121,7 @@ public final class JitStackFrameOperation {
 
     @INLINE
     public static void pokeReference(int index, Object value) {
-        VMRegister.getAbiStackPointer().setReference(BIAS, index * SLOT_WORDS, Reference.fromJava(value));
+        VMRegister.getAbiStackPointer().setReference(BIAS, index * WORDS_PER_SLOT, Reference.fromJava(value));
     }
 
     @INLINE

@@ -22,6 +22,7 @@ package com.sun.max.vm.bytecode;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
@@ -117,31 +118,31 @@ public final class BytecodeScanner {
         return buf.append(" [bytecode index=" + currentOpcodePosition + ", opcode=" + currentOpcode + "]").toString();
     }
 
-    private byte readByte() {
+    public byte readByte() {
         return bytecodeBlock.code()[currentBytePosition++];
     }
 
-    private int readUnsigned1() {
+    public int readUnsigned1() {
         return readByte() & 0xff;
     }
 
-    private int readSigned1() {
+    public int readSigned1() {
         return readByte();
     }
 
-    private int readUnsigned2() {
+    public int readUnsigned2() {
         final int high = readByte() & 0xff;
         final int low = readByte() & 0xff;
         return (high << 8) | low;
     }
 
-    private int readSigned2() {
+    public int readSigned2() {
         final int high = readByte();
         final int low = readByte() & 0xff;
         return (high << 8) | low;
     }
 
-    private int readSigned4() {
+    public int readSigned4() {
         final int b3 = readByte() << 24;
         final int b2 = (readByte() & 0xff) << 16;
         final int b1 = (readByte() & 0xff) << 8;
@@ -167,59 +168,74 @@ public final class BytecodeScanner {
     private void wide() {
         currentOpcodeWidened = true;
         currentOpcode = Bytecode.from(readUnsigned1());
-        final int index = readUnsigned2();
         switch (currentOpcode) {
             case ILOAD: {
-                bytecodeVisitor.iload(index);
+                bytecodeVisitor.iload(readUnsigned2());
                 break;
             }
             case LLOAD: {
-                bytecodeVisitor.lload(index);
+                bytecodeVisitor.lload(readUnsigned2());
                 break;
             }
             case FLOAD: {
-                bytecodeVisitor.fload(index);
+                bytecodeVisitor.fload(readUnsigned2());
                 break;
             }
             case DLOAD: {
-                bytecodeVisitor.dload(index);
+                bytecodeVisitor.dload(readUnsigned2());
                 break;
             }
             case ALOAD: {
-                bytecodeVisitor.aload(index);
+                bytecodeVisitor.aload(readUnsigned2());
                 break;
             }
             case ISTORE: {
-                bytecodeVisitor.istore(index);
+                bytecodeVisitor.istore(readUnsigned2());
                 break;
             }
             case LSTORE: {
-                bytecodeVisitor.lstore(index);
+                bytecodeVisitor.lstore(readUnsigned2());
                 break;
             }
             case FSTORE: {
-                bytecodeVisitor.fstore(index);
+                bytecodeVisitor.fstore(readUnsigned2());
                 break;
             }
             case DSTORE: {
-                bytecodeVisitor.dstore(index);
+                bytecodeVisitor.dstore(readUnsigned2());
                 break;
             }
             case ASTORE: {
-                bytecodeVisitor.astore(index);
+                bytecodeVisitor.astore(readUnsigned2());
                 break;
             }
             case IINC: {
+                final int index2 = readUnsigned2();
                 final int addend = readSigned2();
-                bytecodeVisitor.iinc(index, addend);
+                bytecodeVisitor.iinc(index2, addend);
                 break;
             }
             case RET: {
-                bytecodeVisitor.ret(index);
+                bytecodeVisitor.ret(readUnsigned2());
                 break;
             }
             default: {
-                throw verifyError("Invalid application of WIDE prefix to " + currentOpcode);
+                int opcode = currentOpcode.ordinal();
+                if (Bytecodes.isExtension(opcode)) {
+                    int length = Bytecodes.length(opcode);
+                    assert length != 0;
+                    boolean parsedAllBytes = bytecodeVisitor.extension(opcode, true);
+                    int endPos = currentOpcodePosition + length - 1;
+                    if (parsedAllBytes) {
+                        assert currentBytePosition == endPos;
+                    } else {
+                        assert currentBytePosition <= endPos;
+                        currentBytePosition = endPos;
+                    }
+                } else {
+                    bytecodeVisitor.unknown(opcode);
+                }
+                break;
             }
         }
         currentOpcodeWidened = false;
@@ -1129,7 +1145,22 @@ public final class BytecodeScanner {
                 break;
             }
             default: {
-                throw verifyError("Unsupported bytecode: " + currentOpcode);
+                int opcode = currentOpcode.ordinal();
+                if (Bytecodes.isExtension(opcode)) {
+                    int length = Bytecodes.length(opcode);
+                    assert length != 0;
+                    boolean parsedAllBytes = bytecodeVisitor.extension(opcode, false);
+                    int endPos = currentOpcodePosition + length;
+                    if (parsedAllBytes) {
+                        assert currentBytePosition == endPos;
+                    } else {
+                        assert currentBytePosition <= endPos;
+                        currentBytePosition = endPos;
+                    }
+                } else {
+                    bytecodeVisitor.unknown(opcode);
+                }
+                break;
             }
         }
         bytecodeVisitor.instructionDecoded();

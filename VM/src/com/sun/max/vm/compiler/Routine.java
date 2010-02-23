@@ -51,7 +51,7 @@ public abstract class Routine {
         final Method[] methods = holder.getDeclaredMethods();
         for (Method method : methods) {
             final BUILTIN builtinAnnotation = method.getAnnotation(BUILTIN.class);
-            if (builtinAnnotation != null && builtinAnnotation.builtinClass().getSimpleName().equals(className)) {
+            if (builtinAnnotation != null && builtinAnnotation.value().getSimpleName().equals(className)) {
                 return ClassMethodActor.fromJava(method);
             }
             if (method.getName().equals(methodName) && method.isAnnotationPresent(SNIPPET.class)) {
@@ -60,7 +60,7 @@ public abstract class Routine {
             }
         }
         if (fatalIfMissing) {
-            ProgramError.unexpected("Could not find method named '" + methodName + "' in " + className);
+            ProgramError.unexpected("Could not find method named '" + methodName + "' in " + holder);
         }
         return null;
     }

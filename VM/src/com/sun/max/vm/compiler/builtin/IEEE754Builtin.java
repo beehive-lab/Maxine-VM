@@ -52,7 +52,7 @@ public abstract class IEEE754Builtin extends Builtin {
             visitor.visitConvertFloatToInt(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertFloatToInt.class)
+        @BUILTIN(value = ConvertFloatToInt.class)
         public static int convertFloatToInt(float floatValue) {
             assert floatValue < MAX_FLOAT_VALUE : "IEEE754 convertFloatToInt not implemented for value " + floatValue;
             return (int) floatValue;
@@ -69,7 +69,7 @@ public abstract class IEEE754Builtin extends Builtin {
             visitor.visitConvertFloatToLong(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertFloatToLong.class)
+        @BUILTIN(value = ConvertFloatToLong.class)
         public static long convertFloatToLong(float floatValue) {
             assert floatValue < MAX_FLOAT_VALUE : "IEEE754 convertFloatToLong not implemented for value " + floatValue;
             return (long) floatValue;
@@ -86,7 +86,7 @@ public abstract class IEEE754Builtin extends Builtin {
             visitor.visitConvertDoubleToInt(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertDoubleToInt.class)
+        @BUILTIN(value = ConvertDoubleToInt.class)
         public static int convertDoubleToInt(double doubleValue) {
             assert doubleValue < MAX_DOUBLE_VALUE : "IEEE754 convertDoubleToInt not implemented for value " + doubleValue;
             return (int) doubleValue;
@@ -103,7 +103,7 @@ public abstract class IEEE754Builtin extends Builtin {
             visitor.visitConvertDoubleToLong(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertDoubleToLong.class)
+        @BUILTIN(value = ConvertDoubleToLong.class)
         public static long convertDoubleToLong(double doubleValue) {
             assert doubleValue < MAX_DOUBLE_VALUE : "IEEE754 convertDoubleToLong not implemented for value " + doubleValue;
             return (long) doubleValue;

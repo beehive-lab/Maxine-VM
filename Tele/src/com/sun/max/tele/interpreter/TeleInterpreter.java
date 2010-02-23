@@ -2068,8 +2068,130 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
 
                 /*========================================================================*/
 
-            default:
-                machine.raiseException(new ClassFormatError("Unsupported bytecode: " + opcode));
+            default: {
+//                if (Bytecodes.isExtension(opcode.ordinal())) {
+//                    // Checkstyle: stop
+//                    switch (opcode.ordinal()) {
+//                        case Bytecodes.UNSAFE_CAST: break;
+//                        case Bytecodes.WLOAD:                  localLoadReferenceOrWord(operand); break;
+//                        case Bytecodes.WLOAD_0:                localLoadReferenceOrWord(0); break;
+//                        case Bytecodes.WLOAD_1:                localLoadReferenceOrWord(1); break;
+//                        case Bytecodes.WLOAD_2:                localLoadReferenceOrWord(2); break;
+//                        case Bytecodes.WLOAD_3:                localLoadReferenceOrWord(3); break;
+//                        case Bytecodes.WSTORE:                 localStoreReferenceOrWord(operand); break;
+//                        case Bytecodes.WSTORE_0:               localStoreReferenceOrWord(0); break;
+//                        case Bytecodes.WSTORE_1:               localStoreReferenceOrWord(1); break;
+//                        case Bytecodes.WSTORE_2:               localStoreReferenceOrWord(2); break;
+//                        case Bytecodes.WSTORE_3:               localStoreReferenceOrWord(3); break;
+//                        case Bytecodes.ZERO:                   push(WordValue.ZERO); break;
+//                        case Bytecodes.WDIV:                   stackCall(DividedByAddress.BUILTIN); break;
+//                        case Bytecodes.WDIVI:                  stackCall(DividedByInt.BUILTIN); break;
+//                        case Bytecodes.WMOD:                   stackCall(RemainderByAddress.BUILTIN); break;
+//                        case Bytecodes.WMODI:                  stackCall(RemainderByInt.BUILTIN); break;
+//                        case Bytecodes.ICMP:                   stackCall(CompareInts.BUILTIN); break;
+//                        case Bytecodes.WCMP:                   stackCall(CompareWords.BUILTIN); break;
+//                        case Bytecodes.PREAD_BYTE:             stackCall(ReadByte.BUILTIN); break;
+//                        case Bytecodes.PREAD_CHAR:             stackCall(ReadChar.BUILTIN); break;
+//                        case Bytecodes.PREAD_SHORT:            stackCall(ReadShort.BUILTIN); break;
+//                        case Bytecodes.PREAD_INT:              stackCall(ReadInt.BUILTIN); break;
+//                        case Bytecodes.PREAD_FLOAT:            stackCall(ReadFloat.BUILTIN); break;
+//                        case Bytecodes.PREAD_LONG:             stackCall(ReadLong.BUILTIN); break;
+//                        case Bytecodes.PREAD_DOUBLE:           stackCall(ReadDouble.BUILTIN); break;
+//                        case Bytecodes.PREAD_WORD:             stackCall(ReadWord.BUILTIN); break;
+//                        case Bytecodes.PREAD_REFERENCE:        stackCall(ReadReference.BUILTIN); break;
+//                        case Bytecodes.PREAD_BYTE_I:           stackCall(ReadByteAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PREAD_CHAR_I:           stackCall(ReadCharAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PREAD_SHORT_I:          stackCall(ReadShortAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PREAD_INT_I:            stackCall(ReadIntAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PREAD_FLOAT_I:          stackCall(ReadFloatAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PREAD_LONG_I:           stackCall(ReadLongAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PREAD_DOUBLE_I:         stackCall(ReadDoubleAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PREAD_WORD_I:           stackCall(ReadWordAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PREAD_REFERENCE_I:      stackCall(ReadReferenceAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PWRITE_BYTE:            stackCall(WriteByte.BUILTIN); break;
+//                        case Bytecodes.PWRITE_SHORT:           stackCall(WriteShort.BUILTIN); break;
+//                        case Bytecodes.PWRITE_INT:             stackCall(WriteInt.BUILTIN); break;
+//                        case Bytecodes.PWRITE_FLOAT:           stackCall(WriteFloat.BUILTIN); break;
+//                        case Bytecodes.PWRITE_LONG:            stackCall(WriteLong.BUILTIN); break;
+//                        case Bytecodes.PWRITE_DOUBLE:          stackCall(WriteDouble.BUILTIN); break;
+//                        case Bytecodes.PWRITE_WORD:            stackCall(WriteWord.BUILTIN); break;
+//                        case Bytecodes.PWRITE_REFERENCE:       stackCall(WriteReference.BUILTIN); break;
+//                        case Bytecodes.PWRITE_BYTE_I:          stackCall(WriteByteAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PWRITE_SHORT_I:         stackCall(WriteShortAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PWRITE_INT_I:           stackCall(WriteIntAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PWRITE_FLOAT_I:         stackCall(WriteFloatAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PWRITE_LONG_I:          stackCall(WriteLongAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PWRITE_DOUBLE_I:        stackCall(WriteDoubleAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PWRITE_WORD_I:          stackCall(WriteWordAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PWRITE_REFERENCE_I:     stackCall(WriteReferenceAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PGET_BYTE:              stackCall(GetByte.BUILTIN); break;
+//                        case Bytecodes.PGET_CHAR:              stackCall(GetChar.BUILTIN); break;
+//                        case Bytecodes.PGET_SHORT:             stackCall(GetShort.BUILTIN); break;
+//                        case Bytecodes.PGET_INT:               stackCall(GetInt.BUILTIN); break;
+//                        case Bytecodes.PGET_FLOAT:             stackCall(GetFloat.BUILTIN); break;
+//                        case Bytecodes.PGET_LONG:              stackCall(GetLong.BUILTIN); break;
+//                        case Bytecodes.PGET_DOUBLE:            stackCall(GetDouble.BUILTIN); break;
+//                        case Bytecodes.PGET_WORD:              stackCall(GetWord.BUILTIN); break;
+//                        case Bytecodes.PGET_REFERENCE:         stackCall(GetReference.BUILTIN); break;
+//                        case Bytecodes.PSET_BYTE:              stackCall(SetByte.BUILTIN); break;
+//                        case Bytecodes.PSET_SHORT:             stackCall(SetShort.BUILTIN); break;
+//                        case Bytecodes.PSET_INT:               stackCall(SetInt.BUILTIN); break;
+//                        case Bytecodes.PSET_FLOAT:             stackCall(SetFloat.BUILTIN); break;
+//                        case Bytecodes.PSET_LONG:              stackCall(SetLong.BUILTIN); break;
+//                        case Bytecodes.PSET_DOUBLE:            stackCall(SetDouble.BUILTIN); break;
+//                        case Bytecodes.PSET_WORD:              stackCall(SetWord.BUILTIN); break;
+//                        case Bytecodes.PSET_REFERENCE:         stackCall(SetReference.BUILTIN); break;
+//                        case Bytecodes.PCMPSWP_INT:            stackCall(CompareAndSwapInt.BUILTIN); break;
+//                        case Bytecodes.PCMPSWP_WORD:           stackCall(CompareAndSwapWord.BUILTIN); break;
+//                        case Bytecodes.PCMPSWP_REFERENCE:      stackCall(CompareAndSwapReference.BUILTIN); break;
+//                        case Bytecodes.PCMPSWP_INT_I:          stackCall(CompareAndSwapIntAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PCMPSWP_WORD_I:         stackCall(CompareAndSwapWordAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.PCMPSWP_REFERENCE_I:    stackCall(CompareAndSwapReferenceAtIntOffset.BUILTIN); break;
+//                        case Bytecodes.MOV_I2F:                stackCall(IntToFloat.BUILTIN); break;
+//                        case Bytecodes.MOV_F2I:                stackCall(FloatToInt.BUILTIN); break;
+//                        case Bytecodes.MOV_L2D:                stackCall(LongToDouble.BUILTIN); break;
+//                        case Bytecodes.MOV_D2L:                stackCall(DoubleToLong.BUILTIN); break;
+//                        case Bytecodes.UWLT:                   stackCall(LessThan.BUILTIN); break;
+//                        case Bytecodes.UWLTEQ:                 stackCall(LessEqual.BUILTIN); break;
+//                        case Bytecodes.UWGT:                   stackCall(GreaterThan.BUILTIN); break;
+//                        case Bytecodes.UWGTEQ:                 stackCall(GreaterEqual.BUILTIN); break;
+//                        case Bytecodes.UGE:                    stackCall(UnsignedIntGreaterEqual.BUILTIN); break;
+//                        case Bytecodes.JNICALL:                callnative(operand); break;
+//                        case Bytecodes.READGPR:                stackCall(GetIntegerRegister.BUILTIN); break;
+//                        case Bytecodes.WRITEGPR:               stackCall(SetIntegerRegister.BUILTIN); break;
+//                        case Bytecodes.MEMBAR_LOAD_LOAD:       membar(MemoryBarrier.loadLoad); break;
+//                        case Bytecodes.MEMBAR_LOAD_STORE:      membar(MemoryBarrier.loadStore); break;
+//                        case Bytecodes.MEMBAR_STORE_LOAD:      membar(MemoryBarrier.storeLoad); break;
+//                        case Bytecodes.MEMBAR_STORE_STORE:     membar(MemoryBarrier.storeStore); break;
+//                        case Bytecodes.MEMBAR_MEMOP_STORE:     membar(MemoryBarrier.memopStore); break;
+//                        case Bytecodes.MEMBAR_ALL:             membar(MemoryBarrier.all); break;
+//                        case Bytecodes.ALLOCA:                 stackCall(StackAllocate.BUILTIN); break;
+//                        case Bytecodes.STACKADDR:              stackCall(MakeStackVariable.BUILTIN); break;
+//                        case Bytecodes.SAFEPOINT:              stackCall(SafepointBuiltin.BUILTIN); break;
+//                        case Bytecodes.PAUSE:                  stackCall(Pause.BUILTIN); break;
+//                        case Bytecodes.ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;
+//                        case Bytecodes.READ_PC:                stackCall(GetInstructionPointer.BUILTIN); break;
+//                        case Bytecodes.FLUSHW:                 stackCall(FlushRegisterWindows.BUILTIN); break;
+//                        case Bytecodes.CALL: {
+//                            Invocation inv = invoke(operand, 0);
+//                            completeInvocation(new Call(inv.sig), inv.sig.resultKind(), inv.args);
+//                            break;
+//                        }
+//                        case Bytecodes.WRETURN: {
+//                            assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
+//                            currentCall.setProcedure(methodTranslation.variableFactory().normalContinuationParameter());
+//                            final CirVariable result = stack.pop();
+//                            currentCall.setArguments(result);
+//                            break;
+//                        }
+//                        default: {
+//                            throw verifyError("Unsupported bytecode: " + Bytecodes.name(opcode));
+//                        }
+//                    }
+//                } else {
+                    machine.raiseException(new ClassFormatError("Unsupported bytecode: " + opcode));
+//                }
+            }
         }
         return MethodStatus.METHOD_CONTINUE;
     }

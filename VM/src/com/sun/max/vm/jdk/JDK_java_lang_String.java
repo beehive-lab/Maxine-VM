@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.classfile.constant.*;
 
@@ -34,7 +37,7 @@ public class JDK_java_lang_String {
      * Cast this instance to a {@code java.lang.String}.
      * @return this instance viewed as a string
      */
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     private native String thisString();
 
     /**

@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
@@ -38,7 +41,7 @@ public abstract class BiasedLockEpoch64 extends Word {
     protected BiasedLockEpoch64() {
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public static BiasedLockEpoch64 from(Word word) {
         return new BoxedBiasedLockEpoch64(word);
     }

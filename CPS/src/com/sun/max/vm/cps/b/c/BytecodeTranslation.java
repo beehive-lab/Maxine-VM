@@ -20,9 +20,14 @@
  */
 package com.sun.max.vm.cps.b.c;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
+import com.sun.c1x.bytecode.*;
+import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -32,13 +37,19 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.*;
+import com.sun.max.vm.compiler.builtin.SpecialBuiltin.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.FieldReadSnippet.*;
 import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.cps.cir.*;
 import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.operator.*;
+import com.sun.max.vm.cps.cir.operator.Call;
 import com.sun.max.vm.cps.cir.operator.Throw;
+import com.sun.max.vm.cps.cir.operator.JavaOperator.*;
 import com.sun.max.vm.cps.cir.snippet.*;
 import com.sun.max.vm.cps.cir.variable.*;
 import com.sun.max.vm.object.host.*;
@@ -85,6 +96,8 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected final ConstantPool constantPool;
     protected CirCall currentCall;
 
+    private boolean isUnsafe;
+
     public BytecodeTranslation(BlockState blockState, BirToCirMethodTranslation methodTranslation) {
         this.blockState = blockState;
         this.frame = blockState.frame();
@@ -93,6 +106,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         this.constantPool = methodTranslation.classMethodActor().codeAttribute().constantPool;
         final CirCall body = blockState.cirBlock().closure().body();
         this.currentCall = body;
+        isUnsafe = methodTranslation.classMethodActor().isUnsafe();
     }
 
     public String classMethodName() {
@@ -147,7 +161,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private void assign(CirVariable variable, CirValue value) {
-        assert variable.kind().stackKind == value.kind().stackKind : incompatibleTypesErrorMessage(variable.kind().stackKind, value.kind().stackKind);
+        assert isUnsafe || variable.kind().stackKind == value.kind().stackKind : incompatibleTypesErrorMessage(variable.kind().stackKind, value.kind().stackKind);
         final CirClosure closure = new CirClosure();
         currentCall.setProcedure(closure);
         currentCall.setArguments(value);
@@ -158,7 +172,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     protected void push(Kind kind, CirValue argument) {
-        assert argument.kind() == kind : incompatibleTypesErrorMessage(argument.kind(), kind);
+        assert isUnsafe || argument.kind() == kind : incompatibleTypesErrorMessage(argument.kind(), kind);
         final CirVariable stackVariable = stack.push(kind);
         assign(stackVariable, argument);
     }
@@ -177,13 +191,13 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected CirVariable pop(Kind kind) {
         final CirVariable stackVariable = stack.pop();
-        assert stackVariable.kind() == kind.stackKind : incompatibleTypesErrorMessage(stackVariable.kind(), kind.stackKind);
+        assert isUnsafe || stackVariable.kind() == kind.stackKind : incompatibleTypesErrorMessage(stackVariable.kind(), kind.stackKind);
         return stackVariable;
     }
 
     protected CirVariable popReferenceOrWord() {
         final CirVariable stackVariable = stack.pop();
-        assert stackVariable.kind().isReference || stackVariable.kind().isWord : expectedReferenceOrWordErrorMessage(stackVariable.kind());
+        assert isUnsafe || stackVariable.kind().isReference || stackVariable.kind().isWord : expectedReferenceOrWordErrorMessage(stackVariable.kind());
         return stackVariable;
     }
 
@@ -196,13 +210,13 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected CirVariable getTop(Kind kind) {
         final CirVariable stackVariable = stack.getTop();
-        assert stackVariable.kind() == kind.stackKind : incompatibleTypesErrorMessage(stackVariable.kind(), kind.stackKind);
+        assert isUnsafe || stackVariable.kind() == kind.stackKind : incompatibleTypesErrorMessage(stackVariable.kind(), kind.stackKind);
         return stackVariable;
     }
 
     protected CirVariable getReferenceOrWordTop() {
         final CirVariable stackVariable = stack.getTop();
-        assert stackVariable.kind().isReference || stackVariable.kind().isWord : expectedReferenceOrWordErrorMessage(stackVariable.kind());
+        assert isUnsafe || stackVariable.kind().isReference || stackVariable.kind().isWord : expectedReferenceOrWordErrorMessage(stackVariable.kind());
         return stackVariable;
     }
 
@@ -212,7 +226,8 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private void localLoadReferenceOrWord(int index) {
-        final CirVariable localVariable = frame.getReferenceOrWordVariable(index);
+        final CirVariable localVariable = frame.getVariable(index);
+        assert isUnsafe || localVariable.kind().isReference || localVariable.kind().isWord;
         push(localVariable.kind(), localVariable);
     }
 
@@ -281,7 +296,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     protected void stackCall(Builtin builtin) {
-        stackCall(CirBuiltin.get(builtin));
+        stackCall(new JavaBuiltinOperator(builtin));
     }
 
     protected boolean isEndOfBlock() {
@@ -323,7 +338,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     private void referenceOrWordBranch(CirSwitch cirSwitch, int offset) {
         final CirVariable value2 = popReferenceOrWord();
         final CirVariable value1 = popReferenceOrWord();
-        assert value1.kind() == value2.kind() : incompatibleTypesErrorMessage(value1.kind(), value2.kind());
+        assert isUnsafe || value1.kind() == value2.kind() : incompatibleTypesErrorMessage(value1.kind(), value2.kind());
         conditionalBranch(value1, cirSwitch, value2, offset);
     }
 
@@ -1178,58 +1193,59 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         callAndPush(getstatic);
     }
 
-    @Override
-    protected void invokeinterface(int index, int countUnused) {
-        final InterfaceMethodRefConstant interfaceMethodRef = constantPool.interfaceMethodAt(index);
-        final SignatureDescriptor signatureDescriptor = interfaceMethodRef.signature(constantPool);
-        final int numberOfParameters = signatureDescriptor.numberOfParameters();
-        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 3);
-        for (int i = numberOfParameters - 1; i >= 0; i--) {
-            arguments[i + 1] = stack.pop();
+    static class Invocation {
+        final CirValue[] args;
+        final SignatureDescriptor sig;
+        public Invocation(CirValue[] args, SignatureDescriptor sig) {
+            this.args = args;
+            this.sig = sig;
         }
-        final CirVariable receiver = popReferenceOrWord();
-        arguments[0] = receiver;
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, interfaceMethodRef.holder(constantPool));
-        final JavaOperator invokeinterface = new InvokeInterface(constantPool, index);
-        completeInvocation(invokeinterface, signatureDescriptor.resultKind(), arguments);
     }
 
-    private void invokeClassMethod(int index, JavaOperator op) {
-        final ClassMethodRefConstant classMethodRef = constantPool.classMethodAt(index);
-        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(constantPool);
-        final int numberOfParameters = signatureDescriptor.numberOfParameters();
-        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 3);
+    private Invocation invoke(int index, int receiverCount) {
+        final MethodRefConstant methodRef = constantPool.methodAt(index);
+        final SignatureDescriptor sig = methodRef.signature(constantPool);
+        final int numberOfParameters = sig.numberOfParameters();
+        final CirValue[] args = CirCall.newArguments(receiverCount + numberOfParameters + 2);
         for (int i = numberOfParameters - 1; i >= 0; i--) {
-            arguments[i + 1] = stack.pop();
+            args[i + receiverCount] = stack.pop();
         }
-        final CirVariable receiver = popReferenceOrWord();
-        arguments[0] = receiver;
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, classMethodRef.holder(constantPool));
-        completeInvocation(op, signatureDescriptor.resultKind(), arguments);
+        TypeDescriptor receiverDescriptor;
+        if (receiverCount == 1) {
+            final CirVariable receiver = popReferenceOrWord();
+            args[0] = receiver;
+            receiverDescriptor = methodRef.holder(constantPool);
+        } else {
+            assert receiverCount == 0;
+            receiverDescriptor = null;
+        }
+        assert isUnsafe || areArgumentsMatchingSignatureDescriptor(args, sig, receiverDescriptor);
+        return new Invocation(args, sig);
+
+    }
+
+    @Override
+    protected void invokeinterface(int index, int countUnused) {
+        Invocation invocation = invoke(index, 1);
+        completeInvocation(new InvokeInterface(constantPool, index), invocation.sig.resultKind(), invocation.args);
     }
 
     @Override
     protected void invokevirtual(int index) {
-        invokeClassMethod(index, new InvokeVirtual(constantPool, index));
+        Invocation invocation = invoke(index, 1);
+        completeInvocation(new InvokeVirtual(constantPool, index), invocation.sig.resultKind(), invocation.args);
     }
 
     @Override
     protected void invokespecial(int index) {
-        invokeClassMethod(index, new InvokeSpecial(constantPool, index));
+        Invocation invocation = invoke(index, 1);
+        completeInvocation(new InvokeSpecial(constantPool, index), invocation.sig.resultKind(), invocation.args);
     }
 
     @Override
     protected void invokestatic(int index) {
-        final ClassMethodRefConstant classMethodRef = constantPool.classMethodAt(index);
-        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(constantPool);
-        final int numberOfParameters = signatureDescriptor.numberOfParameters();
-        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 2);
-        for (int i = numberOfParameters - 1; i >= 0; i--) {
-            arguments[i] = stack.pop();
-        }
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
-        final JavaOperator op = new InvokeStatic(constantPool, index);
-        completeInvocation(op, signatureDescriptor.resultKind(), arguments);
+        Invocation invocation = invoke(index, 0);
+        completeInvocation(new InvokeStatic(constantPool, index), invocation.sig.resultKind(), invocation.args);
     }
 
     @Override
@@ -1405,7 +1421,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             arguments[i] = stack.pop();
         }
 
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
+        assert isUnsafe || areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
 
         completeInvocation(op, signatureDescriptor.resultKind(), arguments);
     }
@@ -1709,5 +1725,148 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final Throw athrow = new Throw();
         final CirVariable throwable = pop(Kind.REFERENCE);
         call(athrow, new CirValue[] {throwable}, CirValue.UNDEFINED);
+    }
+
+    @Override
+    protected boolean extension(int opcode, boolean isWide) {
+        int length = Bytecodes.length(opcode);
+        int operand = 0;
+        if (length == 2) {
+            operand = isWide ? bytecodeScanner().readUnsigned2() : bytecodeScanner().readUnsigned1();
+        } else if (length == 3) {
+            assert !isWide;
+            operand = bytecodeScanner().readUnsigned2();
+        } else {
+            assert !isWide;
+            assert length == 1;
+        }
+        if (hasOpcode3(opcode)) {
+            opcode = opcode | operand << 8;
+        }
+
+        switch (opcode) {
+            // Checkstyle: stop
+            case UNSAFE_CAST:            isUnsafe = true; break;
+            case WLOAD:                  localLoadReferenceOrWord(operand); break;
+            case WLOAD_0:                localLoadReferenceOrWord(0); break;
+            case WLOAD_1:                localLoadReferenceOrWord(1); break;
+            case WLOAD_2:                localLoadReferenceOrWord(2); break;
+            case WLOAD_3:                localLoadReferenceOrWord(3); break;
+            case WSTORE:                 localStoreReferenceOrWord(operand); break;
+            case WSTORE_0:               localStoreReferenceOrWord(0); break;
+            case WSTORE_1:               localStoreReferenceOrWord(1); break;
+            case WSTORE_2:               localStoreReferenceOrWord(2); break;
+            case WSTORE_3:               localStoreReferenceOrWord(3); break;
+            case ZERO:                   push(WordValue.ZERO); break;
+            case WDIV:                   stackCall(DividedByAddress.BUILTIN); break;
+            case WDIVI:                  stackCall(DividedByInt.BUILTIN); break;
+            case WMOD:                   stackCall(RemainderByAddress.BUILTIN); break;
+            case WMODI:                  stackCall(RemainderByInt.BUILTIN); break;
+            case ICMP:                   stackCall(CompareInts.BUILTIN); break;
+            case WCMP:                   stackCall(CompareWords.BUILTIN); break;
+            case PREAD_BYTE:             stackCall(ReadByte.BUILTIN); break;
+            case PREAD_CHAR:             stackCall(ReadChar.BUILTIN); break;
+            case PREAD_SHORT:            stackCall(ReadShort.BUILTIN); break;
+            case PREAD_INT:              stackCall(ReadInt.BUILTIN); break;
+            case PREAD_FLOAT:            stackCall(ReadFloat.BUILTIN); break;
+            case PREAD_LONG:             stackCall(ReadLong.BUILTIN); break;
+            case PREAD_DOUBLE:           stackCall(ReadDouble.BUILTIN); break;
+            case PREAD_WORD:             stackCall(ReadWord.BUILTIN); break;
+            case PREAD_REFERENCE:        stackCall(ReadReference.BUILTIN); break;
+            case PREAD_BYTE_I:           stackCall(ReadByteAtIntOffset.BUILTIN); break;
+            case PREAD_CHAR_I:           stackCall(ReadCharAtIntOffset.BUILTIN); break;
+            case PREAD_SHORT_I:          stackCall(ReadShortAtIntOffset.BUILTIN); break;
+            case PREAD_INT_I:            stackCall(ReadIntAtIntOffset.BUILTIN); break;
+            case PREAD_FLOAT_I:          stackCall(ReadFloatAtIntOffset.BUILTIN); break;
+            case PREAD_LONG_I:           stackCall(ReadLongAtIntOffset.BUILTIN); break;
+            case PREAD_DOUBLE_I:         stackCall(ReadDoubleAtIntOffset.BUILTIN); break;
+            case PREAD_WORD_I:           stackCall(ReadWordAtIntOffset.BUILTIN); break;
+            case PREAD_REFERENCE_I:      stackCall(ReadReferenceAtIntOffset.BUILTIN); break;
+            case PWRITE_BYTE:            stackCall(WriteByte.BUILTIN); break;
+            case PWRITE_SHORT:           stackCall(WriteShort.BUILTIN); break;
+            case PWRITE_INT:             stackCall(WriteInt.BUILTIN); break;
+            case PWRITE_FLOAT:           stackCall(WriteFloat.BUILTIN); break;
+            case PWRITE_LONG:            stackCall(WriteLong.BUILTIN); break;
+            case PWRITE_DOUBLE:          stackCall(WriteDouble.BUILTIN); break;
+            case PWRITE_WORD:            stackCall(WriteWord.BUILTIN); break;
+            case PWRITE_REFERENCE:       stackCall(WriteReference.BUILTIN); break;
+            case PWRITE_BYTE_I:          stackCall(WriteByteAtIntOffset.BUILTIN); break;
+            case PWRITE_SHORT_I:         stackCall(WriteShortAtIntOffset.BUILTIN); break;
+            case PWRITE_INT_I:           stackCall(WriteIntAtIntOffset.BUILTIN); break;
+            case PWRITE_FLOAT_I:         stackCall(WriteFloatAtIntOffset.BUILTIN); break;
+            case PWRITE_LONG_I:          stackCall(WriteLongAtIntOffset.BUILTIN); break;
+            case PWRITE_DOUBLE_I:        stackCall(WriteDoubleAtIntOffset.BUILTIN); break;
+            case PWRITE_WORD_I:          stackCall(WriteWordAtIntOffset.BUILTIN); break;
+            case PWRITE_REFERENCE_I:     stackCall(WriteReferenceAtIntOffset.BUILTIN); break;
+            case PGET_BYTE:              stackCall(GetByte.BUILTIN); break;
+            case PGET_CHAR:              stackCall(GetChar.BUILTIN); break;
+            case PGET_SHORT:             stackCall(GetShort.BUILTIN); break;
+            case PGET_INT:               stackCall(GetInt.BUILTIN); break;
+            case PGET_FLOAT:             stackCall(GetFloat.BUILTIN); break;
+            case PGET_LONG:              stackCall(GetLong.BUILTIN); break;
+            case PGET_DOUBLE:            stackCall(GetDouble.BUILTIN); break;
+            case PGET_WORD:              stackCall(GetWord.BUILTIN); break;
+            case PGET_REFERENCE:         stackCall(GetReference.BUILTIN); break;
+            case PSET_BYTE:              stackCall(SetByte.BUILTIN); break;
+            case PSET_SHORT:             stackCall(SetShort.BUILTIN); break;
+            case PSET_INT:               stackCall(SetInt.BUILTIN); break;
+            case PSET_FLOAT:             stackCall(SetFloat.BUILTIN); break;
+            case PSET_LONG:              stackCall(SetLong.BUILTIN); break;
+            case PSET_DOUBLE:            stackCall(SetDouble.BUILTIN); break;
+            case PSET_WORD:              stackCall(SetWord.BUILTIN); break;
+            case PSET_REFERENCE:         stackCall(SetReference.BUILTIN); break;
+            case PCMPSWP_INT:            stackCall(CompareAndSwapInt.BUILTIN); break;
+            case PCMPSWP_WORD:           stackCall(CompareAndSwapWord.BUILTIN); break;
+            case PCMPSWP_REFERENCE:      stackCall(CompareAndSwapReference.BUILTIN); break;
+            case PCMPSWP_INT_I:          stackCall(CompareAndSwapIntAtIntOffset.BUILTIN); break;
+            case PCMPSWP_WORD_I:         stackCall(CompareAndSwapWordAtIntOffset.BUILTIN); break;
+            case PCMPSWP_REFERENCE_I:    stackCall(CompareAndSwapReferenceAtIntOffset.BUILTIN); break;
+            case MOV_I2F:                stackCall(IntToFloat.BUILTIN); break;
+            case MOV_F2I:                stackCall(FloatToInt.BUILTIN); break;
+            case MOV_L2D:                stackCall(LongToDouble.BUILTIN); break;
+            case MOV_D2L:                stackCall(DoubleToLong.BUILTIN); break;
+            case UWLT:                   stackCall(LessThan.BUILTIN); break;
+            case UWLTEQ:                 stackCall(LessEqual.BUILTIN); break;
+            case UWGT:                   stackCall(GreaterThan.BUILTIN); break;
+            case UWGTEQ:                 stackCall(GreaterEqual.BUILTIN); break;
+            case UGE:                    stackCall(UnsignedIntGreaterEqual.BUILTIN); break;
+            case JNICALL:                callnative(operand); break;
+            case READGPR:                stackCall(GetIntegerRegister.BUILTIN); break;
+            case WRITEGPR:               stackCall(SetIntegerRegister.BUILTIN); break;
+            case MEMBAR_LOAD_LOAD:       membar(MemoryBarrier.loadLoad); break;
+            case MEMBAR_LOAD_STORE:      membar(MemoryBarrier.loadStore); break;
+            case MEMBAR_STORE_LOAD:      membar(MemoryBarrier.storeLoad); break;
+            case MEMBAR_STORE_STORE:     membar(MemoryBarrier.storeStore); break;
+            case MEMBAR_MEMOP_STORE:     membar(MemoryBarrier.memopStore); break;
+            case MEMBAR_ALL:             membar(MemoryBarrier.all); break;
+            case ALLOCA:                 stackCall(StackAllocate.BUILTIN); break;
+            case STACKADDR:              stackCall(MakeStackVariable.BUILTIN); break;
+            case SAFEPOINT:              stackCall(SafepointBuiltin.BUILTIN); break;
+            case PAUSE:                  stackCall(Pause.BUILTIN); break;
+            case ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;
+            case READ_PC:                stackCall(GetInstructionPointer.BUILTIN); break;
+            case FLUSHW:                 stackCall(FlushRegisterWindows.BUILTIN); break;
+            case CALL: {
+                Invocation inv = invoke(operand, 0);
+                completeInvocation(new Call(inv.sig), inv.sig.resultKind(), inv.args);
+                break;
+            }
+            case WRETURN: {
+                assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
+                currentCall.setProcedure(methodTranslation.variableFactory().normalContinuationParameter());
+                final CirVariable result = stack.pop();
+                currentCall.setArguments(result);
+                break;
+            }
+            default: {
+                throw verifyError("Unsupported bytecode: " + Bytecodes.name(opcode));
+            }
+            // Checkstyle: resume
+        }
+        return true;
+    }
+
+    private void membar(PoolSet<MemoryBarrier> barrier) {
+        push(ReferenceValue.from(barrier)); stackCall(BarMemory.BUILTIN);
     }
 }

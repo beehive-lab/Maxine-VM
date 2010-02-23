@@ -181,6 +181,12 @@ public abstract class ClassMethodActor extends MethodActor {
                     if (substitute != null) {
                         compilee = substitute;
                         codeAttribute = substitute.originalCodeAttribute;
+                        if (substitute.compilee != null) {
+                            // Don't go through code preprocessing when the substitute already has
+                            this.codeAttribute = codeAttribute;
+                            this.compilee = compilee;
+                            return compilee;
+                        }
                     }
                     if (MaxineVM.isHosted() && !hostedVerificationDisabled) {
                         validateInlineAnnotation(compilee);
@@ -222,6 +228,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     if (MaxineVM.isHosted()) {
                         try {
                             codeAttribute = verifier.verify(compilee, codeAttribute);
+                        } catch (HostOnlyClassError e) {
                         } catch (HostOnlyMethodError e) {
                         } catch (OmittedClassError e) {
                             // Ignore: assume all classes being loaded during boot imaging are verifiable.
@@ -230,6 +237,11 @@ public abstract class ClassMethodActor extends MethodActor {
                         codeAttribute = verifier.verify(compilee, codeAttribute);
                     }
                 }
+
+                if (codeAttribute != null) {
+                    new Intrinsics(compilee, codeAttribute).run();
+                }
+
                 this.codeAttribute = codeAttribute;
                 this.compilee = compilee;
             }
