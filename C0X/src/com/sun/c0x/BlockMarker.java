@@ -136,12 +136,12 @@ public class BlockMarker {
                     break;
                 }
                 case Bytecodes.WIDE: {
-                    bci += Bytecodes.length(code, bci);
+                    bci += Bytecodes.lengthOf(code, bci);
                     break;
                 }
 
                 default: {
-                    bci += Bytecodes.length(opcode); // all variable length instructions are handled above
+                    bci += Bytecodes.lengthOf(opcode); // all variable length instructions are handled above
                 }
             }
         }

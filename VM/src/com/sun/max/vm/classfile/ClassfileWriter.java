@@ -549,28 +549,28 @@ public class ClassfileWriter {
             final byte[] codeCopy = code.clone();
             final BytecodeAdapter bytecodeAdapter = new BytecodeAdapter() {
                 @Override
-                protected void callnative(int nativeFunctionDescriptorIndex) {
+                protected void jnicall(int nativeFunctionDescriptorIndex) {
                     final Utf8Constant name = SymbolTable.makeSymbol("callnative_" + nativeFunctionDescriptorIndex);
                     final ConstantPool pool = codeAttribute.constantPool;
                     final SignatureDescriptor signature = SignatureDescriptor.create(pool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
                     final ClassMethodRefConstant method = PoolConstantFactory.createClassMethodConstant(pool.holder(), name, signature);
                     final int index = cf.indexOf(method);
                     final int position = bytecodeScanner().currentOpcodePosition();
-                    codeCopy[position] = (byte) Bytecode.INVOKESTATIC.ordinal();
+                    codeCopy[position] = (byte) Bytecodes.INVOKESTATIC;
                     codeCopy[position + 1] = (byte) (index >> 8);
                     codeCopy[position + 2] = (byte) index;
                 }
                 @Override
                 protected boolean extension(int opcode, boolean isWide) {
                     if (originalCodeAttribute != null) {
-                        int length = Bytecodes.length(opcode);
+                        int length = Bytecodes.lengthOf(opcode);
                         int start = bytecodeScanner().currentOpcodePosition();
                         byte[] originalCode = originalCodeAttribute.code();
                         for (int bci = start; bci < start + length; bci++) {
                             codeCopy[bci] = originalCode[bci];
                         }
                     } else {
-                        ProgramWarning.message("Non-standard JVM bytecode " + opcode + " (" + Bytecodes.name(opcode) + ") written to class file generated for " + cf.constantPoolEditor.pool().holder());
+                        ProgramWarning.message("Non-standard JVM bytecode " + opcode + " (" + Bytecodes.nameOf(opcode) + ") written to class file generated for " + cf.constantPoolEditor.pool().holder());
                     }
                     return false;
                 }

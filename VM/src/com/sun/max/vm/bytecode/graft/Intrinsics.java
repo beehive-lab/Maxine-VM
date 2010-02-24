@@ -113,7 +113,8 @@ public class Intrinsics extends Intrinsifier {
     private void intrinsify(BytecodeExtender bce, int cpi, boolean isStatic) {
         MethodRefConstant constant = cp.methodAt(cpi);
         TypeDescriptor holder = constant.holder(cp);
-        if (holder.toKind().isWord || constant.isResolvableWithoutClassLoading(cp)) {
+        boolean holderIsWord = holder.toKind().isWord;
+        if (holderIsWord || constant.isResolvableWithoutClassLoading(cp)) {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
                 Integer intrinsic = intrinsicsMap.get(method);
@@ -122,6 +123,10 @@ public class Intrinsics extends Intrinsifier {
                     assert Bytecodes.isExtension(opcode);
                     int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xff : cpi;
                     bce.intrinsify(opcode, operand);
+                } else if (holderIsWord && !isStatic) {
+                    // Cannot dispatch dynamically on Word types
+                    bce.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
+
                 }
             } catch (HostOnlyClassError e) {
             } catch (HostOnlyMethodError e) {

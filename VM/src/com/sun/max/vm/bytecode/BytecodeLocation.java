@@ -82,9 +82,9 @@ public class BytecodeLocation implements Iterable<BytecodeLocation> {
      * Gets the opcode of the instruction at the bytecode position denoted by this
      * frame descriptor.
      */
-    public Bytecode getBytecode() {
+    public int getBytecode() {
         final byte[] code = classMethodActor.codeAttribute().code();
-        return Bytecode.from(code[bytecodePosition]);
+        return code[bytecodePosition] & 0xff;
     }
 
     /**

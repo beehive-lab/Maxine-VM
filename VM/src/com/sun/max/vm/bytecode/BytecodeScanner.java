@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.bytecode;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 
 import com.sun.c1x.bytecode.*;
@@ -67,17 +68,17 @@ public final class BytecodeScanner {
         return stopped;
     }
 
-    protected Bytecode currentOpcode;
+    protected int currentOpcode = -1;
 
     /**
      * Gets the most recently scanned opcode. Note that if this is called while in
-     * {@link BytecodeVisitor#opcodeDecoded()} and the current instruction is widened then the {@link Bytecode#WIDE}
+     * {@link BytecodeVisitor#opcodeDecoded()} and the current instruction is widened then the {@link Bytecodes#WIDE}
      * opcode will be returned. If it's called while in the visitor method for the widened instruction then the widened
      * opcode is returned and {@link #isCurrentOpcodeWidened()} will return true. If it's called while in
      * {@link BytecodeVisitor#instructionDecoded()} then the opcode is returned and {@link #isCurrentOpcodeWidened()}
      * will return false.
      */
-    public Bytecode currentOpcode() {
+    public int currentOpcode() {
         return currentOpcode;
     }
 
@@ -167,7 +168,7 @@ public final class BytecodeScanner {
 
     private void wide() {
         currentOpcodeWidened = true;
-        currentOpcode = Bytecode.from(readUnsigned1());
+        currentOpcode = readUnsigned1();
         switch (currentOpcode) {
             case ILOAD: {
                 bytecodeVisitor.iload(readUnsigned2());
@@ -220,9 +221,9 @@ public final class BytecodeScanner {
                 break;
             }
             default: {
-                int opcode = currentOpcode.ordinal();
+                int opcode = currentOpcode;
                 if (Bytecodes.isExtension(opcode)) {
-                    int length = Bytecodes.length(opcode);
+                    int length = Bytecodes.lengthOf(opcode);
                     assert length != 0;
                     boolean parsedAllBytes = bytecodeVisitor.extension(opcode, true);
                     int endPos = currentOpcodePosition + length - 1;
@@ -242,7 +243,7 @@ public final class BytecodeScanner {
     }
 
     protected void scanInstruction() {
-        currentOpcode = Bytecode.from(readUnsigned1());
+        currentOpcode = readUnsigned1();
         bytecodeVisitor.opcodeDecoded();
         if (stopped) {
             return;
@@ -975,7 +976,7 @@ public final class BytecodeScanner {
                 bytecodeVisitor.tableswitch(defaultOffset, lowMatch, highMatch, numberOfCases);
                 final int caseBytesRead = currentBytePosition - start;
                 if ((caseBytesRead % 4) != 0 || (caseBytesRead >> 2) != numberOfCases) {
-                    ProgramError.unexpected("Bytecode visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodePosition);
+                    ProgramError.unexpected("Bytecodes visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodePosition);
                 }
                 break;
             }
@@ -990,7 +991,7 @@ public final class BytecodeScanner {
                 bytecodeVisitor.lookupswitch(defaultOffset, numberOfCases);
                 final int caseBytesRead = currentBytePosition - start;
                 if ((caseBytesRead % 8) != 0 || (caseBytesRead >> 3) != numberOfCases) {
-                    ProgramError.unexpected("Bytecode visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodePosition);
+                    ProgramError.unexpected("Bytecodes visitor did not consume exactly the offset operands of the tableswitch instruction at " + currentOpcodePosition);
                 }
                 break;
             }
@@ -1139,15 +1140,15 @@ public final class BytecodeScanner {
                 bytecodeVisitor.breakpoint();
                 break;
             }
-            case CALLNATIVE: {
+            case JNICALL: {
                 final int nativeFunctionDescriptorIndex = readUnsigned2();
-                bytecodeVisitor.callnative(nativeFunctionDescriptorIndex);
+                bytecodeVisitor.jnicall(nativeFunctionDescriptorIndex);
                 break;
             }
             default: {
-                int opcode = currentOpcode.ordinal();
+                int opcode = currentOpcode;
                 if (Bytecodes.isExtension(opcode)) {
-                    int length = Bytecodes.length(opcode);
+                    int length = Bytecodes.lengthOf(opcode);
                     assert length != 0;
                     boolean parsedAllBytes = bytecodeVisitor.extension(opcode, false);
                     int endPos = currentOpcodePosition + length;

@@ -20,7 +20,7 @@
  */
 package test.com.sun.max.vm.cps.bytecode;
 
-import static com.sun.max.vm.bytecode.Bytecode.*;
+import static com.sun.c1x.bytecode.Bytecodes.*;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
@@ -37,22 +37,16 @@ public class BytecodeConfirmation extends BytecodeAdapter {
     public static class BytecodeAbsent extends RuntimeException {
         public BytecodeAbsent() {
         }
-        public BytecodeAbsent(Bytecode opcode) {
-            super(opcode.toString());
-        }
         public BytecodeAbsent(int opcode) {
-            this(Bytecode.values()[opcode]);
+            super(nameOf(opcode));
         }
     }
 
     public static class BytecodePresent extends RuntimeException {
         public BytecodePresent() {
         }
-        public BytecodePresent(Bytecode opcode) {
-            super(opcode.toString());
-        }
         public BytecodePresent(int opcode) {
-            this(Bytecode.values()[opcode]);
+            super(nameOf(opcode));
         }
     }
 
@@ -64,14 +58,14 @@ public class BytecodeConfirmation extends BytecodeAdapter {
         try {
             final BytecodeScanner bytecodeScanner = new BytecodeScanner(this);
             final byte[] initBytes = new byte[256];
-            for (Bytecode opcode : Bytecode.values()) {
-                if (opcode.isLegalInClassfile()) {
+            for (int opcode = 0; opcode <= LAST_JVM_OPCODE; ++opcode) {
+                if (opcode != XXXUNUSEDXXX) {
                     if (opcode == WIDE) {
                         bytecodeScanner.scan(new BytecodeBlock(initBytes, 0, 0)); // scan nop byte code, then patch:
-                        initBytes[0] = (byte) WIDE.ordinal();
+                        initBytes[0] = (byte) WIDE;
                         wide();
                     } else {
-                        initBytes[0] = (byte) opcode.ordinal();
+                        initBytes[0] = (byte) opcode;
                         bytecodeScanner.scan(new BytecodeBlock(initBytes, 0, 0));
                     }
                 }
@@ -113,7 +107,7 @@ public class BytecodeConfirmation extends BytecodeAdapter {
                 break;
             case CONFIRM:
                 isOpcodePresent[opcode] = true;
-                if (opcode == WIDE.ordinal()) {
+                if (opcode == WIDE) {
                     opcode = code()[currentOpcodePosition() + 1] & 0xff;
                     isOpcodePresent[opcode] = true;
                 }

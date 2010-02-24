@@ -1409,10 +1409,10 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     /**
-     * @see Bytecode#CALLNATIVE
+     * @see Bytecodes#JNICALL
      */
     @Override
-    protected void callnative(int nativeFunctionDescriptorIndex) {
+    protected void jnicall(int nativeFunctionDescriptorIndex) {
         final CallNative op = new CallNative(constantPool, nativeFunctionDescriptorIndex, methodTranslation.classMethodActor());
         final SignatureDescriptor signatureDescriptor = op.signatureDescriptor();
         final int numberOfParameters = signatureDescriptor.numberOfParameters();
@@ -1729,7 +1729,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected boolean extension(int opcode, boolean isWide) {
-        int length = Bytecodes.length(opcode);
+        int length = Bytecodes.lengthOf(opcode);
         int operand = 0;
         if (length == 2) {
             operand = isWide ? bytecodeScanner().readUnsigned2() : bytecodeScanner().readUnsigned1();
@@ -1830,7 +1830,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case UWGT:                   stackCall(GreaterThan.BUILTIN); break;
             case UWGTEQ:                 stackCall(GreaterEqual.BUILTIN); break;
             case UGE:                    stackCall(UnsignedIntGreaterEqual.BUILTIN); break;
-            case JNICALL:                callnative(operand); break;
+            case JNICALL:                jnicall(operand); break;
             case READGPR:                stackCall(GetIntegerRegister.BUILTIN); break;
             case WRITEGPR:               stackCall(SetIntegerRegister.BUILTIN); break;
             case MEMBAR_LOAD_LOAD:       membar(MemoryBarrier.loadLoad); break;
@@ -1859,7 +1859,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                 break;
             }
             default: {
-                throw verifyError("Unsupported bytecode: " + Bytecodes.name(opcode));
+                throw verifyError("Unsupported bytecode: " + Bytecodes.nameOf(opcode));
             }
             // Checkstyle: resume
         }

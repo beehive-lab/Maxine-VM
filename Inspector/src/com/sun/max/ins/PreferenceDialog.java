@@ -74,7 +74,7 @@ public class PreferenceDialog extends SimpleDialog {
 
         final JPanel bytecodeLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         bytecodeLabelPanel.setBorder(border);
-        bytecodeLabelPanel.add(new TextLabel(inspection, "Bytecode"), BorderLayout.WEST);
+        bytecodeLabelPanel.add(new TextLabel(inspection, "Bytecodes"), BorderLayout.WEST);
         prefPanel.add(bytecodeLabelPanel);
 
         final JPanel bytecodeInspectorPanel = BytecodeViewPreferences.globalPreferences(inspection).getPanel();

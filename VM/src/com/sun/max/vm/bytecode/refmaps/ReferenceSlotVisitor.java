@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.bytecode.refmaps;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.c1x.bytecode.*;
 
 /**
  * Implemented by clients interested in knowing which local variables and operand stack slots contain a reference at the
@@ -35,7 +35,7 @@ public interface ReferenceSlotVisitor {
      * interpretation position.
      *
      * @param parametersPopped if {@code true}, then the interpreter is interpreting an
-     *            {@linkplain Bytecode.Flags#INVOKE_ invoke} or {@link Bytecode#CALLNATIVE} instruction and has already
+     *            invoke... or {@link Bytecodes#JNICALL} instruction and has already
      *            popped the parameters for the invocation from the stack but not yet pushed the return value
      */
     void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped);
