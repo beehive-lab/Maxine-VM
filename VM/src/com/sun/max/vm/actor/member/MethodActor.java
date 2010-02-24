@@ -53,39 +53,6 @@ import com.sun.max.vm.value.*;
  */
 public abstract class MethodActor extends MemberActor {
 
-    /**
-     * Flags indicating special annotations applied to methods.
-     */
-    public enum VmFlag {
-        Fold,
-        Inline,
-        InlineAfterSnippetsAreCompiled,
-        NeverInline,
-        NoSafepoints,
-        StaticTrampoline,
-        VirtualTrampoline,
-        InterfaceTrampoline,
-        UnsafeCast,
-        Initializer,
-        C_Function,
-        JNI_Function,
-        Builtin,
-        LocalSubstitute,
-        Unsafe;
-
-        public final int mask;
-
-        VmFlag() {
-            assert ordinal() < 16 : "Too many VmFlags to fit into 16 bits";
-            mask = 1 << (ordinal() + 16);
-        }
-
-        @INLINE
-        public boolean check(MethodActor methodActor) {
-            return (methodActor.flags() & mask) != 0;
-        }
-    }
-
     public static final MethodActor[] NONE = {};
 
     public static final TypeDescriptor[] NO_CHECKED_EXCEPTIONS = {};

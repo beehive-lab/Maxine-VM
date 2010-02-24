@@ -22,7 +22,6 @@ package com.sun.max.vm.jit;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.cps.jit.*;
@@ -183,7 +182,7 @@ public abstract class Stop {
     }
 
     /**
-     * Represents a {@linkplain StopType#DIRECT_CALL direct call} stop inserted when compiling an {@linkplain Bytecode.Flags#INVOKE_ invoke} bytecode.
+     * Represents a {@linkplain StopType#DIRECT_CALL direct call} stop inserted when compiling an {@code INVOKE...} bytecode.
      */
     public static class BytecodeDirectCall extends Stop {
         final ClassMethodActor callee;

@@ -277,15 +277,15 @@ public class VerifierTest extends VmTestCase {
 
     private ClassActor loadClassActor(String name) {
         final TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForJavaString(name);
-        final HostedBootClassLoader prototypeClassLoader = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
-        final Classpath classpath = prototypeClassLoader.classpath();
-        ClassActor classActor = ClassRegistry.get(prototypeClassLoader, typeDescriptor, false);
+        final HostedBootClassLoader bootClassLoader = HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
+        final Classpath classpath = bootClassLoader.classpath();
+        ClassActor classActor = ClassRegistry.get(bootClassLoader, typeDescriptor, false);
         if (classActor == null) {
             final ClasspathFile classpathFile = classpath.readClassFile(name);
             if (classpathFile == null) {
                 fail("Could not find class " + name + " on class path: " + classpath);
             }
-            classActor = ClassfileReader.defineClassActor(name, BootClassLoader.BOOT_CLASS_LOADER, classpathFile.contents, null, classpathFile.classpathEntry, true);
+            classActor = ClassfileReader.defineClassActor(name, bootClassLoader, classpathFile.contents, null, classpathFile.classpathEntry, true);
         }
         return classActor;
     }

@@ -20,8 +20,8 @@
  */
 package test.com.sun.max.vm.cps;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.type.*;
@@ -46,7 +46,7 @@ public abstract class CompilerTest_large<Method_Type extends IrMethod> extends C
     }
 
     public void test_Bytecode_clinit() {
-        compileMethod(Bytecode.class, SymbolTable.CLINIT.toString(), SignatureDescriptor.create(void.class));
+        compileMethod(Bytecodes.class, SymbolTable.CLINIT.toString(), SignatureDescriptor.create(void.class));
     }
 
 }

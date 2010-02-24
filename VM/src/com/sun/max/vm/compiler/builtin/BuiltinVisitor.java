@@ -113,80 +113,77 @@ public interface BuiltinVisitor<IR_Type> {
     void visitRemainderByAddress(RemainderByAddress builtin, IR_Type result, IR_Type[] arguments);
     void visitRemainderByInt(RemainderByInt builtin, IR_Type result, IR_Type[] arguments);
 
-    void visitReadByteAtLongOffset(ReadByteAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitReadByte(ReadByte builtin, IR_Type result, IR_Type[] arguments);
     void visitReadByteAtIntOffset(ReadByteAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitGetByte(GetByte builtin, IR_Type result, IR_Type[] arguments);
-    void visitReadShortAtLongOffset(ReadShortAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitReadShort(ReadShort builtin, IR_Type result, IR_Type[] arguments);
     void visitReadShortAtIntOffset(ReadShortAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitGetShort(GetShort builtin, IR_Type result, IR_Type[] arguments);
-    void visitReadCharAtLongOffset(ReadCharAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitReadChar(ReadChar builtin, IR_Type result, IR_Type[] arguments);
     void visitReadCharAtIntOffset(ReadCharAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitGetChar(GetChar builtin, IR_Type result, IR_Type[] arguments);
-    void visitReadIntAtLongOffset(ReadIntAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitReadInt(ReadInt builtin, IR_Type result, IR_Type[] arguments);
     void visitReadIntAtIntOffset(ReadIntAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitGetInt(GetInt builtin, IR_Type result, IR_Type[] arguments);
-    void visitReadFloatAtLongOffset(ReadFloatAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitReadFloat(ReadFloat builtin, IR_Type result, IR_Type[] arguments);
     void visitReadFloatAtIntOffset(ReadFloatAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitGetFloat(GetFloat builtin, IR_Type result, IR_Type[] arguments);
-    void visitReadLongAtLongOffset(ReadLongAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitReadLong(ReadLong builtin, IR_Type result, IR_Type[] arguments);
     void visitReadLongAtIntOffset(ReadLongAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitGetLong(GetLong builtin, IR_Type result, IR_Type[] arguments);
-    void visitReadDoubleAtLongOffset(ReadDoubleAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitReadDouble(ReadDouble builtin, IR_Type result, IR_Type[] arguments);
     void visitReadDoubleAtIntOffset(ReadDoubleAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitGetDouble(GetDouble builtin, IR_Type result, IR_Type[] arguments);
-    void visitReadWordAtLongOffset(ReadWordAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitReadWord(ReadWord builtin, IR_Type result, IR_Type[] arguments);
     void visitReadWordAtIntOffset(ReadWordAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitGetWord(GetWord builtin, IR_Type result, IR_Type[] arguments);
-    void visitReadReferenceAtLongOffset(ReadReferenceAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitReadReference(ReadReference builtin, IR_Type result, IR_Type[] arguments);
     void visitReadReferenceAtIntOffset(ReadReferenceAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitGetReference(GetReference builtin, IR_Type result, IR_Type[] arguments);
 
-    void visitWriteByteAtLongOffset(WriteByteAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitWriteByte(WriteByte builtin, IR_Type result, IR_Type[] arguments);
     void visitWriteByteAtIntOffset(WriteByteAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetByte(SetByte builtin, IR_Type result, IR_Type[] arguments);
-    void visitWriteShortAtLongOffset(WriteShortAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitWriteShort(WriteShort builtin, IR_Type result, IR_Type[] arguments);
     void visitWriteShortAtIntOffset(WriteShortAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetShort(SetShort builtin, IR_Type result, IR_Type[] arguments);
-    void visitWriteIntAtLongOffset(WriteIntAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitWriteInt(WriteInt builtin, IR_Type result, IR_Type[] arguments);
     void visitWriteIntAtIntOffset(WriteIntAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetInt(SetInt builtin, IR_Type result, IR_Type[] arguments);
-    void visitWriteFloatAtLongOffset(WriteFloatAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitWriteFloat(WriteFloat builtin, IR_Type result, IR_Type[] arguments);
     void visitWriteFloatAtIntOffset(WriteFloatAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetFloat(SetFloat builtin, IR_Type result, IR_Type[] arguments);
-    void visitWriteLongAtLongOffset(WriteLongAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitWriteLong(WriteLong builtin, IR_Type result, IR_Type[] arguments);
     void visitWriteLongAtIntOffset(WriteLongAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetLong(SetLong builtin, IR_Type result, IR_Type[] arguments);
-    void visitWriteDoubleAtLongOffset(WriteDoubleAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitWriteDouble(WriteDouble builtin, IR_Type result, IR_Type[] arguments);
     void visitWriteDoubleAtIntOffset(WriteDoubleAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetDouble(SetDouble builtin, IR_Type result, IR_Type[] arguments);
-    void visitWriteWordAtLongOffset(WriteWordAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitWriteWord(WriteWord builtin, IR_Type result, IR_Type[] arguments);
     void visitWriteWordAtIntOffset(WriteWordAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetWord(SetWord builtin, IR_Type result, IR_Type[] arguments);
-    void visitWriteReferenceAtLongOffset(WriteReferenceAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitWriteReference(WriteReference builtin, IR_Type result, IR_Type[] arguments);
     void visitWriteReferenceAtIntOffset(WriteReferenceAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetReference(SetReference builtin, IR_Type result, IR_Type[] arguments);
 
     void visitCompareAndSwapIntAtIntOffset(CompareAndSwapIntAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
-    void visitCompareAndSwapIntAtLongOffset(CompareAndSwapIntAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitCompareAndSwapInt(CompareAndSwapInt builtin, IR_Type result, IR_Type[] arguments);
     void visitCompareAndSwapWordAtIntOffset(CompareAndSwapWordAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
-    void visitCompareAndSwapWordAtLongOffset(CompareAndSwapWordAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitCompareAndSwapWord(CompareAndSwapWord builtin, IR_Type result, IR_Type[] arguments);
     void visitCompareAndSwapReferenceAtIntOffset(CompareAndSwapReferenceAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
-    void visitCompareAndSwapReferenceAtLongOffset(CompareAndSwapReferenceAtLongOffset builtin, IR_Type result, IR_Type[] arguments);
+    void visitCompareAndSwapReference(CompareAndSwapReference builtin, IR_Type result, IR_Type[] arguments);
 
     void visitGetInstructionPointer(GetInstructionPointer builtin, IR_Type result, IR_Type[] arguments);
     void visitGetIntegerRegister(GetIntegerRegister builtin, IR_Type result, IR_Type[] arguments);
     void visitSetIntegerRegister(SetIntegerRegister builtin, IR_Type result, IR_Type[] arguments);
-    void visitAddWordsToIntegerRegister(AddWordsToIntegerRegister builtin, IR_Type result, IR_Type[] arguments);
+    void visitAdjustJitStack(AdjustJitStack builtin, IR_Type result, IR_Type[] arguments);
     void visitPause(Pause builtin, IR_Type result, IR_Type[] arguments);
 
-    void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, IR_Type result, IR_Type[] arguments);
-
-    void visitJump(Jump builtin, IR_Type result, IR_Type[] arguments);
     void visitCall(Call builtin, IR_Type result, IR_Type[] arguments);
 
     void visitCompareInts(CompareInts builtin, IR_Type result, IR_Type[] arguments);
     void visitUnsignedIntGreaterEqual(UnsignedIntGreaterEqual builtin, IR_Type result, IR_Type[] arguments);
-    void visitCompareReferences(CompareReferences builtin, IR_Type result, IR_Type[] arguments);
+    void visitCompareWords(CompareWords builtin, IR_Type result, IR_Type[] arguments);
 
     void visitBarMemory(BarMemory builtin, IR_Type result, IR_Type[] arguments);
 

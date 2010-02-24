@@ -20,20 +20,20 @@
  */
 package com.sun.max.ins.gui;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.ins.*;
-import com.sun.max.vm.bytecode.*;
 
 /**
- * A label for presenting a Bytecode instruction mnemonic.
+ * A label for presenting a Bytecodes instruction mnemonic.
  *
  * @author Michael Van De Vanter
  *
  */
 public class BytecodeMnemonicLabel extends InspectorLabel {
 
-    private Bytecode opcode;
+    private int opcode;
 
-    public BytecodeMnemonicLabel(Inspection inspection, Bytecode opcode) {
+    public BytecodeMnemonicLabel(Inspection inspection, int opcode) {
         super(inspection, "");
         this.opcode = opcode;
         redisplay();
@@ -44,20 +44,19 @@ public class BytecodeMnemonicLabel extends InspectorLabel {
         updateText();
     }
 
-    public final void setValue(Bytecode opcode) {
+    public final void setValue(int opcode) {
         this.opcode = opcode;
         updateText();
     }
 
     private void updateText() {
-        if (opcode == null) {
+        try {
+            setText(Bytecodes.nameOf(opcode));
+            setToolTipText("Opcode " + opcode + " (0x" + Integer.toHexString(opcode) + ")");
+        } catch (IllegalArgumentException e) {
             setText(null);
             setToolTipText(null);
-        } else {
-            setText(opcode.toString().toLowerCase());
-            setToolTipText("Opcode " + opcode.ordinal() + " (0x" + Integer.toHexString(opcode.ordinal()) + ")");
         }
-
     }
 
     public final void refresh(boolean force) {

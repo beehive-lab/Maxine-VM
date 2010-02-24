@@ -131,18 +131,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         compileClass(BytecodeToTargetTranslator.class);
     }
 
-    public void test_InvocationStub() {
-        final ClassMethodActor method = ClassActor.fromJava(Pointer.class).findLocalVirtualMethodActor("readIntAtIntOffset");
-        final ClassActor stubClassActor = ClassActor.fromJava(method.makeInvocationStub().getClass());
-        for (ClassMethodActor invoke : stubClassActor.localVirtualMethodActors()) {
-            if (!invoke.isInitializer()) {
-                assert invoke.name.equals("invoke");
-                compileMethod(invoke);
-            }
-
-        }
-    }
-
     public void test_BigFloatParams() {
         final double answer = BigFloatParams01.test(0);
         final Method_Type method = compileMethod(BigFloatParams01.class, "test");

@@ -20,8 +20,11 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import java.security.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
@@ -44,7 +47,7 @@ public final class JDK_java_lang_ClassLoader {
      * Cast this {@code JDK_java_lang_ClassLoader} instance to a {@code ClassLoader} instance.
      * @return a view of this object as a class loader
      */
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     private native ClassLoader thisClassLoader();
 
     /**

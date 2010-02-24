@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.hotpath.state;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.type.*;
 
@@ -294,14 +294,14 @@ public abstract class State<Element_Type extends Classifiable> {
         frames.removeLast();
     }
 
-    public final void execute(Bytecode bytecode) {
+    public final void execute(int opcode) {
 
-        if (bytecode == Bytecode.POP) {
+        if (opcode == Bytecodes.POP) {
             popOne();
             return;
         }
 
-        if (bytecode == Bytecode.POP2) {
+        if (opcode == Bytecodes.POP2) {
             popOne();
             popOne();
             return;
@@ -309,7 +309,7 @@ public abstract class State<Element_Type extends Classifiable> {
 
         final Element_Type element1 = popOne();
 
-        if (bytecode == Bytecode.DUP) {
+        if (opcode == Bytecodes.DUP) {
             pushOne(element1);
             pushOne(element1);
             return;
@@ -317,7 +317,7 @@ public abstract class State<Element_Type extends Classifiable> {
 
         final Element_Type element2 = popOne();
 
-        if (bytecode == Bytecode.DUP2) {
+        if (opcode == Bytecodes.DUP2) {
             pushOne(element2);
             pushOne(element1);
             pushOne(element2);
@@ -325,13 +325,13 @@ public abstract class State<Element_Type extends Classifiable> {
             return;
         }
 
-        if (bytecode == Bytecode.SWAP) {
+        if (opcode == Bytecodes.SWAP) {
             pushOne(element1);
             pushOne(element2);
             return;
         }
 
-        if (bytecode == Bytecode.DUP_X1) {
+        if (opcode == Bytecodes.DUP_X1) {
             pushOne(element1);
             pushOne(element2);
             pushOne(element1);
@@ -340,7 +340,7 @@ public abstract class State<Element_Type extends Classifiable> {
 
         final Element_Type element3 = popOne();
 
-        if (bytecode == Bytecode.DUP_X2) {
+        if (opcode == Bytecodes.DUP_X2) {
             pushOne(element1);
             pushOne(element3);
             pushOne(element2);
@@ -348,7 +348,7 @@ public abstract class State<Element_Type extends Classifiable> {
             return;
         }
 
-        if (bytecode == Bytecode.DUP2_X1) {
+        if (opcode == Bytecodes.DUP2_X1) {
             pushOne(element2);
             pushOne(element1);
             pushOne(element3);
@@ -359,7 +359,7 @@ public abstract class State<Element_Type extends Classifiable> {
 
         final Element_Type element4 = popOne();
 
-        if (bytecode == Bytecode.DUP2_X2) {
+        if (opcode == Bytecodes.DUP2_X2) {
             pushOne(element2);
             pushOne(element1);
             pushOne(element4);
@@ -369,7 +369,7 @@ public abstract class State<Element_Type extends Classifiable> {
             return;
         }
 
-        ProgramError.unexpected("Bytecode " + bytecode);
+        ProgramError.unexpected("Bytecodes " + opcode);
     }
 
     public final <Other_Element_Type extends Classifiable> void compare(State<Other_Element_Type> other, StatePairVisitor<Element_Type, Other_Element_Type> visitor) {

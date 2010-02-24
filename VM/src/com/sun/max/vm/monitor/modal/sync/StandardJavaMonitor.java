@@ -20,16 +20,16 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
  * Provides Java monitor services on behalf of a {@linkplain #boundObject() bound} object.
  *
- * The {@link Bytecode#MONITORENTER} and {@link Bytecode#MONITOREXIT} instructions are implemented via a per-monitor
+ * The {@link Bytecodes#MONITORENTER} and {@link Bytecodes#MONITOREXIT} instructions are implemented via a per-monitor
  * mutex. {@linkplain Object#wait() Wait} and {@linkplain Object#notify() notify} are implemented via a per-monitor
  * waiting list and a per-thread {@linkplain VmThread#waitingCondition() condition variable} on which a thread suspends
  * itself. A per-thread condition variable is necessary in order to implement single thread notification.

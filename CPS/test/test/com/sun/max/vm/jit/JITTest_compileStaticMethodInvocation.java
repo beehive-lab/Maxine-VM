@@ -23,7 +23,7 @@ package test.com.sun.max.vm.jit;
 import test.com.sun.max.vm.cps.*;
 import test.com.sun.max.vm.cps.bytecode.*;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.c1x.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
@@ -141,19 +141,19 @@ public class JITTest_compileStaticMethodInvocation extends JitCompilerTestCase {
         return resolvedStaticGetObject();
     }
 
-    void compileMethod(String methodName, final Bytecode bytecode, Class returnType) {
+    void compileMethod(String methodName, final int bytecode, Class returnType) {
         final TargetMethod targetMethod = compileMethod(methodName, SignatureDescriptor.create(returnType));
         new BytecodeConfirmation(targetMethod.classMethodActor()) {
             @Override
             public void invokespecial(int index) {
-                if (bytecode == Bytecode.INVOKESPECIAL) {
+                if (bytecode == Bytecodes.INVOKESPECIAL) {
                     confirmPresence();
                 }
             }
 
             @Override
             public void invokestatic(int index) {
-                if (bytecode == Bytecode.INVOKESTATIC) {
+                if (bytecode == Bytecodes.INVOKESTATIC) {
                     confirmPresence();
                 }
             }
@@ -161,35 +161,35 @@ public class JITTest_compileStaticMethodInvocation extends JitCompilerTestCase {
     }
 
     public void test_compileResolvedInit() {
-        compileMethod("performResolvedInit", Bytecode.INVOKESPECIAL, Object.class);
+        compileMethod("performResolvedInit", Bytecodes.INVOKESPECIAL, Object.class);
     }
 
     public void test_compileUnresolvedInit() {
-        compileMethod("performUnresolvedInit", Bytecode.INVOKESPECIAL, Object.class);
+        compileMethod("performUnresolvedInit", Bytecodes.INVOKESPECIAL, Object.class);
     }
 
     public void test_compileResolvedSuperInvoke() {
-        compileMethod("performResolvedSuperInvoke", Bytecode.INVOKESPECIAL, TargetMethod.class);
+        compileMethod("performResolvedSuperInvoke", Bytecodes.INVOKESPECIAL, TargetMethod.class);
     }
 
     public void test_compileResolvedStaticInvoke() {
-        compileMethod("performResolvedStaticMethod0", Bytecode.INVOKESTATIC, void.class);
-        compileMethod("performResolvedStaticMethod1", Bytecode.INVOKESTATIC, void.class);
+        compileMethod("performResolvedStaticMethod0", Bytecodes.INVOKESTATIC, void.class);
+        compileMethod("performResolvedStaticMethod1", Bytecodes.INVOKESTATIC, void.class);
     }
 
     public void test_compileUnesolvedStaticInvoke() {
-        compileMethod("performUnresolvedStaticMethod0", Bytecode.INVOKESTATIC, void.class);
-        compileMethod("performUnresolvedStaticMethod1", Bytecode.INVOKESTATIC, void.class);
-        compileMethod("performUnresolvedStaticMethodReturningInt", Bytecode.INVOKESTATIC, int.class);
+        compileMethod("performUnresolvedStaticMethod0", Bytecodes.INVOKESTATIC, void.class);
+        compileMethod("performUnresolvedStaticMethod1", Bytecodes.INVOKESTATIC, void.class);
+        compileMethod("performUnresolvedStaticMethodReturningInt", Bytecodes.INVOKESTATIC, int.class);
     }
 
     public void test_compileResolvedStaticInvokeWithResult() {
-        compileMethod("performResolvedStaticMethodReturningChar", Bytecode.INVOKESTATIC, char.class);
-        compileMethod("performResolvedStaticMethodReturningInt", Bytecode.INVOKESTATIC, int.class);
-        compileMethod("performResolvedStaticMethodReturningFloat", Bytecode.INVOKESTATIC, float.class);
-        compileMethod("performResolvedStaticMethodReturningLong", Bytecode.INVOKESTATIC, long.class);
-        compileMethod("performResolvedStaticMethodReturningDouble", Bytecode.INVOKESTATIC, double.class);
-        compileMethod("performResolvedStaticMethodReturningObject", Bytecode.INVOKESTATIC, Object.class);
+        compileMethod("performResolvedStaticMethodReturningChar", Bytecodes.INVOKESTATIC, char.class);
+        compileMethod("performResolvedStaticMethodReturningInt", Bytecodes.INVOKESTATIC, int.class);
+        compileMethod("performResolvedStaticMethodReturningFloat", Bytecodes.INVOKESTATIC, float.class);
+        compileMethod("performResolvedStaticMethodReturningLong", Bytecodes.INVOKESTATIC, long.class);
+        compileMethod("performResolvedStaticMethodReturningDouble", Bytecodes.INVOKESTATIC, double.class);
+        compileMethod("performResolvedStaticMethodReturningObject", Bytecodes.INVOKESTATIC, Object.class);
     }
 
     public JITTest_compileStaticMethodInvocation(String name) {

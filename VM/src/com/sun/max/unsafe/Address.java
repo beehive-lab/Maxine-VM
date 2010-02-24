@@ -20,8 +20,11 @@
  */
 package com.sun.max.unsafe;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import java.math.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -197,7 +200,8 @@ public abstract class Address extends Word {
         return fromInt(other) == this;
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.GreaterThan.class)
+    @BUILTIN(value = AddressBuiltin.GreaterThan.class)
+    @INTRINSIC(UWGT)
     public final boolean greaterThan(Address other) {
         assert Word.isBoxed();
         final long a = toLong();
@@ -209,39 +213,46 @@ public abstract class Address extends Word {
     }
 
     @INLINE(override = true)
+    @INTRINSIC(UWGT)
     public final boolean greaterThan(int other) {
         return greaterThan(fromInt(other));
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.GreaterEqual.class)
+    @BUILTIN(value = AddressBuiltin.GreaterEqual.class)
+    @INTRINSIC(UWGTEQ)
     public final boolean greaterEqual(Address other) {
         assert Word.isBoxed();
         return !other.greaterThan(this);
     }
 
     @INLINE(override = true)
+    @INTRINSIC(UWGTEQ)
     public final boolean greaterEqual(int other) {
         return greaterEqual(fromInt(other));
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.LessThan.class)
+    @BUILTIN(value = AddressBuiltin.LessThan.class)
+    @INTRINSIC(UWLT)
     public final boolean lessThan(Address other) {
         assert Word.isBoxed();
         return other.greaterThan(this);
     }
 
     @INLINE(override = true)
+    @INTRINSIC(UWLT)
     public final boolean lessThan(int other) {
         return lessThan(fromInt(other));
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.LessEqual.class)
+    @BUILTIN(value = AddressBuiltin.LessEqual.class)
+    @INTRINSIC(UWLTEQ)
     public final boolean lessEqual(Address other) {
         assert Word.isBoxed();
         return !greaterThan(other);
     }
 
     @INLINE(override = true)
+    @INTRINSIC(UWLTEQ)
     public final boolean lessEqual(int other) {
         return lessEqual(fromInt(other));
     }
@@ -296,34 +307,42 @@ public abstract class Address extends Word {
         return asOffset().times(factor).asAddress();
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.DividedByAddress.class)
+    @BUILTIN(value = AddressBuiltin.DividedByAddress.class)
+    @INTRINSIC(WDIV)
     protected abstract Address dividedByAddress(Address divisor);
 
     @INLINE(override = true)
+    @INTRINSIC(WDIV)
     public Address dividedBy(Address divisor) {
         return dividedByAddress(divisor);
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.DividedByInt.class)
+    @BUILTIN(value = AddressBuiltin.DividedByInt.class)
+    @INTRINSIC(WDIVI)
     protected abstract Address dividedByInt(int divisor);
 
     @INLINE(override = true)
+    @INTRINSIC(WDIVI)
     public Address dividedBy(int divisor) {
         return dividedByInt(divisor);
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.RemainderByAddress.class)
+    @BUILTIN(value = AddressBuiltin.RemainderByAddress.class)
+    @INTRINSIC(WMOD)
     protected abstract Address remainderByAddress(Address divisor);
 
     @INLINE(override = true)
+    @INTRINSIC(WMOD)
     public Address remainder(Address divisor) {
         return remainderByAddress(divisor);
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.RemainderByInt.class)
+    @BUILTIN(value = AddressBuiltin.RemainderByInt.class)
+    @INTRINSIC(WMODI)
     protected abstract int remainderByInt(int divisor);
 
     @INLINE(override = true)
+    @INTRINSIC(WMODI)
     public final int remainder(int divisor) {
         return remainderByInt(divisor);
     }

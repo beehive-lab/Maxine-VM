@@ -28,7 +28,7 @@ public class ArrayLoad extends JavaOperator {
     private final Kind kind;
 
     public ArrayLoad(Kind kind) {
-        super(CALL | NULL_POINTER_CHECK | ARRAY_BOUNDS_CHECK);
+        super(CALL_STOP | NULL_POINTER_CHECK | ARRAY_BOUNDS_CHECK);
         this.kind = kind;
     }
 

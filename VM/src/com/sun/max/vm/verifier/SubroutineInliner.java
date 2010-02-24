@@ -20,17 +20,17 @@
  */
 package com.sun.max.vm.verifier;
 
-import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
+import static com.sun.c1x.bytecode.Bytecodes.*;
 import static com.sun.max.vm.verifier.InstructionHandle.Flag.*;
 
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.verifier.TypeInferencingMethodVerifier.*;
 
@@ -150,7 +150,7 @@ public class SubroutineInliner {
                                 break;
                         }
                     }
-                    if (instruction.opcode.is(FALL_THROUGH_DELIMITER)) {
+                    if (Bytecodes.isStop(instruction.opcode)) {
                         typeStatePosition = position + instruction.size();
                         break;
                     }
@@ -222,25 +222,25 @@ public class SubroutineInliner {
 
                     if (instruction instanceof Branch) {
                         final Branch branch = (Branch) instruction;
-                        final Bytecode opcode = instruction.opcode;
+                        final int opcode = instruction.opcode;
 
                         if (instruction instanceof Jsr) {
                             final Jsr jsr = (Jsr) branch;
                             assert instructionHandle.flag == JSR_SIMPLE_GOTO || instructionHandle.flag == JSR_TARGETED_GOTO;
                             final SubroutineCall innerSubroutine = new SubroutineCall(jsr.target.subroutineFrame().subroutine, subroutine, instructionHandle);
 
-                            if (opcode == Bytecode.JSR_W) {
+                            if (opcode == JSR_W) {
                                 assert instruction.size() == 5;
-                                Bytecode.GOTO_W.writeTo(dataStream);
+                                dataStream.write(GOTO_W);
                                 dataStream.writeInt(calculateNewOffset(position, innerSubroutine, branch.target.position(), Ints.VALUE_RANGE));
                             } else {
                                 assert instruction.size() == 3;
-                                Bytecode.GOTO.writeTo(dataStream);
+                                dataStream.write(GOTO);
                                 dataStream.writeShort(calculateNewOffset(position, innerSubroutine, branch.target.position(), Shorts.VALUE_RANGE));
                             }
                         } else {
-                            opcode.writeTo(dataStream);
-                            if (opcode == Bytecode.GOTO_W) {
+                            dataStream.write(opcode);
+                            if (opcode == Bytecodes.GOTO_W) {
                                 assert instruction.size() == 5;
                                 dataStream.writeInt(calculateNewOffset(position, subroutine, branch.target.position(), Ints.VALUE_RANGE));
                             } else {
@@ -249,7 +249,7 @@ public class SubroutineInliner {
                             }
                         }
                     } else {
-                        final Bytecode opcode = instruction.opcode;
+                        final int opcode = instruction.opcode;
                         switch (opcode) {
                             case RET: {
                                 final Ret ret = (Ret) instruction;
@@ -263,14 +263,14 @@ public class SubroutineInliner {
                                 final InstructionHandle gotoTarget = instructionHandles.get(callingSuboutine.nextInstuctionHandleIndex());
                                 final int offset = gotoTarget.position - position;
                                 checkOffset(offset, Shorts.VALUE_RANGE);
-                                Bytecode.GOTO.writeTo(dataStream);
+                                dataStream.write(GOTO);
                                 dataStream.writeShort(offset);
                                 break;
                             }
                             case TABLESWITCH:
                             case LOOKUPSWITCH: {
                                 final Select select = (Select) instruction;
-                                opcode.writeTo(dataStream);
+                                dataStream.write(opcode);
                                 final int padding = 3 - position % 4; // number of pad bytes
 
                                 for (int i = 0; i < padding; i++) {
@@ -280,7 +280,7 @@ public class SubroutineInliner {
                                 // Update default target
                                 dataStream.writeInt(calculateNewOffset(position, subroutine, select.defaultTarget.position(), Ints.VALUE_RANGE));
 
-                                if (opcode == Bytecode.TABLESWITCH) {
+                                if (opcode == Bytecodes.TABLESWITCH) {
                                     final Tableswitch tableswitch = (Tableswitch) select;
                                     dataStream.writeInt(tableswitch.low);
                                     dataStream.writeInt(tableswitch.high);

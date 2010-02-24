@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.bytecode;
 
+import java.util.*;
+
 import com.sun.max.lang.*;
 
 /**

@@ -20,13 +20,14 @@
  */
 package com.sun.max.vm.bytecode;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.value.*;
 
 /**
  * Enumerates the conditions for bytecode branch instructions. Unconditional branches are treated as a conditional case
  * where the condition is {@linkplain #NONE "none"}. The second operand of a branch instruction may be implicit in the
- * instruction opcode. For example, {@link Bytecode#IFLT} implies a second operand value of 0.
+ * instruction opcode. For example, {@link Bytecodes#IFLT} implies a second operand value of 0.
  *
  * @author Laurent Daynes
  * @author Michael Bebenita

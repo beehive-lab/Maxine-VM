@@ -43,12 +43,19 @@ public final class CodeAttributePrinter {
     }
 
     /**
+     * Formats the contents of a given CodeAttribute to a string.
+     */
+    public static String toString(CodeAttribute codeAttribute) {
+        CharArrayWriter charArrayWriter = new CharArrayWriter();
+        print(charArrayWriter, codeAttribute);
+        return charArrayWriter.toString();
+    }
+
+    /**
      * Prints the contents of a given CodeAttribute in a textual format to a given print stream.
      *
-     * @param stream
-     *                where to print the contents
-     * @param codeAttribute
-     *                the object to print
+     * @param stream where to print the contents
+     * @param codeAttribute the object to print
      */
     public static void print(OutputStream stream, CodeAttribute codeAttribute) {
         final PrintWriter writer = new PrintWriter(stream);
@@ -58,10 +65,8 @@ public final class CodeAttributePrinter {
     /**
      * Prints the contents of a given CodeAttribute in a textual format to a given print writer.
      *
-     * @param _stream
-     *                where to print the contents
-     * @param codeAttribute
-     *                the object to print
+     * @param writer where to print the contents
+     * @param codeAttribute the object to print
      */
     public static void print(Writer writer, CodeAttribute codeAttribute) {
         final PrintWriter printWriter = (writer instanceof PrintWriter) ? (PrintWriter) writer : new PrintWriter(writer);
@@ -122,10 +127,8 @@ public final class CodeAttributePrinter {
      * object to a given print writer. This method outputs nothing to {@code printWriter} if the stack map table is
      * empty or does not exist.
      *
-     * @param codeAttribute
-     *                a code attribute that contains a (possibly null) stack map table
-     * @param printWriter
-     *                where to print the contents of the stack map table
+     * @param codeAttribute a code attribute that contains a (possibly null) stack map table
+     * @param printWriter where to print the contents of the stack map table
      */
     public static void printStackMapTable(CodeAttribute codeAttribute, final PrintWriter printWriter) {
         final StackMapTable stackMapTable = codeAttribute.stackMapTable();
@@ -145,14 +148,12 @@ public final class CodeAttributePrinter {
     }
 
     /**
-     * Prints the contents of the {@linkplain CodeAttribute#lineNumberTable() line number table} in a given code attribute
-     * object to a given print writer. This method outputs nothing to {@code printWriter} if the line number table is
-     * empty.
+     * Prints the contents of the {@linkplain CodeAttribute#lineNumberTable() line number table} in a given code
+     * attribute object to a given print writer. This method outputs nothing to {@code printWriter} if the line number
+     * table is empty.
      *
-     * @param codeAttribute
-     *                a code attribute that contains a (possibly empty) line number table
-     * @param printWriter
-     *                where to print the contents of the line number table
+     * @param codeAttribute a code attribute that contains a (possibly empty) line number table
+     * @param printWriter where to print the contents of the line number table
      */
     public static void printLineNumberTable(CodeAttribute codeAttribute, final PrintWriter printWriter) {
         final LineNumberTable lineNumberTable = codeAttribute.lineNumberTable();
@@ -166,14 +167,12 @@ public final class CodeAttributePrinter {
     }
 
     /**
-     * Prints the contents of the {@linkplain CodeAttribute#localVariableTable() local variable table} in a given code attribute
-     * object to a given print writer. This method outputs nothing to {@code printWriter} if the local variable table is
-     * empty.
+     * Prints the contents of the {@linkplain CodeAttribute#localVariableTable() local variable table} in a given code
+     * attribute object to a given print writer. This method outputs nothing to {@code printWriter} if the local
+     * variable table is empty.
      *
-     * @param codeAttribute
-     *                a code attribute that contains a (possibly empty) local variable table
-     * @param printWriter
-     *                where to print the contents of the local variable table
+     * @param codeAttribute a code attribute that contains a (possibly empty) local variable table
+     * @param printWriter where to print the contents of the local variable table
      */
     public static void printLocalVariableTable(CodeAttribute codeAttribute, final PrintWriter printWriter) {
         final LocalVariableTable localVariableTable = codeAttribute.localVariableTable();

@@ -400,7 +400,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitConvert(Convert convert) {
-        out.print(Bytecodes.name(convert.opcode())).print('(').print(convert.value()).print(')');
+        out.print(Bytecodes.nameOf(convert.opcode())).print('(').print(convert.value()).print(')');
     }
 
     @Override
@@ -476,7 +476,7 @@ public class InstructionPrinter extends ValueVisitor {
             argStart = 1;
           }
 
-          out.print(Bytecodes.name(invoke.opcode())).print('(');
+          out.print(Bytecodes.nameOf(invoke.opcode())).print('(');
           Value[] arguments = invoke.arguments();
           for (int i = argStart; i < arguments.length; i++) {
               if (i > argStart) {

@@ -22,15 +22,15 @@ package com.sun.max.vm.template;
 
 import java.util.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.type.*;
 
 /**
  * The set of bytecode templates available to a template-based JIT compiler.
  *
  * The prefix of each {@code BytecodeTemplate} enum constant name up to the first '$'
- * character (if any) corresponds to the name of a {@link Bytecode} enum constant.
+ * character (if any) corresponds to the name of a {@link Bytecodes} enum constant.
  * This convention is used to determine the {@linkplain #bytecode} implemented by a given
  * bytecode template.
  *
@@ -372,15 +372,15 @@ public enum BytecodeTemplate {
     IFNULL,
     IFNONNULL;
 
-    public static final EnumMap<KindEnum, BytecodeTemplate> PUTSTATICS = makeKindMap(Bytecode.PUTSTATIC);
-    public static final EnumMap<KindEnum, BytecodeTemplate> GETSTATICS = makeKindMap(Bytecode.GETSTATIC);
-    public static final EnumMap<KindEnum, BytecodeTemplate> PUTFIELDS = makeKindMap(Bytecode.PUTFIELD);
-    public static final EnumMap<KindEnum, BytecodeTemplate> GETFIELDS = makeKindMap(Bytecode.GETFIELD);
+    public static final EnumMap<KindEnum, BytecodeTemplate> PUTSTATICS = makeKindMap(Bytecodes.PUTSTATIC);
+    public static final EnumMap<KindEnum, BytecodeTemplate> GETSTATICS = makeKindMap(Bytecodes.GETSTATIC);
+    public static final EnumMap<KindEnum, BytecodeTemplate> PUTFIELDS = makeKindMap(Bytecodes.PUTFIELD);
+    public static final EnumMap<KindEnum, BytecodeTemplate> GETFIELDS = makeKindMap(Bytecodes.GETFIELD);
 
-    public static final EnumMap<KindEnum, BytecodeTemplate> INVOKEVIRTUALS = makeKindMap(Bytecode.INVOKEVIRTUAL);
-    public static final EnumMap<KindEnum, BytecodeTemplate> INVOKEINTERFACES = makeKindMap(Bytecode.INVOKEINTERFACE);
-    public static final EnumMap<KindEnum, BytecodeTemplate> INVOKESPECIALS = makeKindMap(Bytecode.INVOKESPECIAL);
-    public static final EnumMap<KindEnum, BytecodeTemplate> INVOKESTATICS = makeKindMap(Bytecode.INVOKESTATIC);
+    public static final EnumMap<KindEnum, BytecodeTemplate> INVOKEVIRTUALS = makeKindMap(Bytecodes.INVOKEVIRTUAL);
+    public static final EnumMap<KindEnum, BytecodeTemplate> INVOKEINTERFACES = makeKindMap(Bytecodes.INVOKEINTERFACE);
+    public static final EnumMap<KindEnum, BytecodeTemplate> INVOKESPECIALS = makeKindMap(Bytecodes.INVOKESPECIAL);
+    public static final EnumMap<KindEnum, BytecodeTemplate> INVOKESTATICS = makeKindMap(Bytecodes.INVOKESTATIC);
 
     /**
      * Creates a map from kinds to the template specialized for each kind a given bytecode is parameterized by.
@@ -388,12 +388,13 @@ public enum BytecodeTemplate {
      * @param bytecode a bytecode instruction that is specialized for a number of kinds
      */
     @HOSTED_ONLY
-    private static EnumMap<KindEnum, BytecodeTemplate> makeKindMap(Bytecode bytecode) {
+    private static EnumMap<KindEnum, BytecodeTemplate> makeKindMap(int bytecode) {
         EnumMap<KindEnum, BytecodeTemplate> map = new EnumMap<KindEnum, BytecodeTemplate>(KindEnum.class);
         for (BytecodeTemplate bt : values()) {
-            if (bt.name().startsWith(bytecode.name())) {
+            String name = Bytecodes.nameOf(bytecode).toUpperCase();
+            if (bt.name().startsWith(name)) {
                 for (KindEnum kind : KindEnum.VALUES) {
-                    if (bt.name().equals(bytecode.name() + "$" + kind.name().toLowerCase())) {
+                    if (bt.name().equals(name + "$" + kind.name().toLowerCase())) {
                         map.put(kind, bt);
                     }
                 }
@@ -405,7 +406,7 @@ public enum BytecodeTemplate {
     /**
      * The bytecode implemented by this template.
      */
-    public final Bytecode bytecode;
+    public final int bytecode;
 
     /**
      * Denotes the template that omits the class initialization check required by the {@linkplain #bytecode} instruction.
@@ -429,9 +430,9 @@ public enum BytecodeTemplate {
         String name = name();
         int dollar = name.indexOf('$');
         if (dollar == -1) {
-            bytecode = Bytecode.valueOf(name);
+            bytecode = Bytecodes.valueOf(name);
         } else {
-            bytecode = Bytecode.valueOf(name.substring(0, dollar));
+            bytecode = Bytecodes.valueOf(name.substring(0, dollar));
         }
     }
 

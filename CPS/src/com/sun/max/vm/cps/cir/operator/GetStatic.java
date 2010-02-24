@@ -30,7 +30,7 @@ import com.sun.max.vm.type.*;
 public class GetStatic extends JavaResolvableOperator<FieldActor> {
 
     public GetStatic(ConstantPool constantPool, int index) {
-        super(CALL, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
+        super(CALL_STOP, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
     }
 
     @Override

@@ -365,7 +365,7 @@ public final class CirBytecodeReader {
                     break;
                 }
 
-                // Bytecode instructions for unsigned comparisons.
+                // Bytecodes instructions for unsigned comparisons.
 
                 case SWITCH_UNSIGNED_INT_LESS_THAN: {
                     push(CirSwitch.UNSIGNED_INT_LESS_THAN);

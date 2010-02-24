@@ -20,12 +20,15 @@
  */
 package com.sun.max.vm.jdk;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 
 import sun.reflect.annotation.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -43,7 +46,7 @@ final class JDK_java_lang_reflect_Constructor {
     /**
      * An unsafe cast from this to {@link Constructor}.
      */
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     private native Constructor thisConstructor();
 
     /**

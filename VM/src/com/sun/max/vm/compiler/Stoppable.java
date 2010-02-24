@@ -80,7 +80,7 @@ public interface Stoppable {
      * Constant denoting an operation that makes a call. This is also used by {@link JavaOperator}s to indicate
      * if they are translated (or {@linkplain HCirOperatorLowering lowered}) to one or more snippet calls.
      */
-    int CALL = 0x00000100;
+    int CALL_STOP = 0x00000100;
 
     /**
      * Gets a value indicating the reasons this operation may be a stop.
@@ -113,7 +113,7 @@ public interface Stoppable {
             NEGATIVE_ARRAY_SIZE_CHECK |
             DIVIDE_BY_ZERO_CHECK |
             CLASS_CAST_CHECK |
-            CALL;
+            CALL_STOP;
 
         public static final int ALL_REASONS =
             ALL_REASONS_CAUSING_EXCEPTIONS | SAFEPOINT;
@@ -197,7 +197,7 @@ public interface Stoppable {
          * Determines if a given operation is a call.
          */
         public static boolean isCall(Stoppable operation) {
-            return (operation.reasonsMayStop() & CALL) != 0;
+            return (operation.reasonsMayStop() & CALL_STOP) != 0;
         }
 
         /**

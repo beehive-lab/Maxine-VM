@@ -22,12 +22,14 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.type.*;
 
@@ -91,11 +93,11 @@ public @interface METHOD_SUBSTITUTIONS {
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.
                     if (substituteMethod.getAnnotation(INLINE.class) == null &&
-                                    substituteMethod.getAnnotation(UNSAFE_CAST.class) == null &&
+                                    !Intrinsics.isUnsafeCast(substituteMethod) &&
                                     !Modifier.isStatic(substituteMethod.getModifiers())) {
                         ProgramError.unexpected(
                             "method without @" + SUBSTITUTE.class.getSimpleName() + " annotation in " + substitutor +
-                            " must be static, have @" + UNSAFE_CAST.class.getSimpleName() + " or @" + INLINE.class.getSimpleName() + " annotation: " + substituteMethod);
+                            " must be static, have @" + INTRINSIC.class.getSimpleName() + "(UNSAFE_CAST) or @" + INLINE.class.getSimpleName() + " annotation: " + substituteMethod);
                     }
                 }
             }
