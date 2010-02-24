@@ -458,7 +458,7 @@ public final class JDKInterceptor {
         private final ClassRef classRef;
         private Object result;
         NewShutdownHookList(ClassRef classRef, String fieldName) {
-            super(fieldName, false);
+            super(fieldName, true);
             this.classRef = classRef;
         }
 
