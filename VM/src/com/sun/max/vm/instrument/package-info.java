@@ -18,43 +18,9 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins;
-
-
 /**
- * Notification service for changes to state in the VM.
+ * Support classes for java.lang.instrument.*
  *
- *
- * @author Michael Van De Vanter
+ * @author Mick Jordan
  */
-public interface InspectionListener {
-
-    /**
-     * Notifies that  VM state has potentially changed and should be revisited.
-     *
-     * @param force suspend caching behavior; reload state unconditionally.
-     */
-    void vmStateChanged(boolean force);
-
-    /**
-     * Notifies that the set and/or status (enabled/disabled) of breakpoints in the VM has changed.
-     */
-    void breakpointStateChanged();
-
-    /**
-     * Notifies that the set of watchpoints in the VM has changed.
-     */
-    void watchpointSetChanged();
-
-    /**
-     * Notifies that an important aspect of view style/parameters/configuration have changed,
-     * and that views should be reconstructed if needed (view state change only).
-     */
-    void viewConfigurationChanged();
-
-    /**
-     * Notifies that the running process associated with a VM has
-     * stopped running.
-     */
-    void vmProcessTerminated();
-}
+package com.sun.max.vm.instrument;

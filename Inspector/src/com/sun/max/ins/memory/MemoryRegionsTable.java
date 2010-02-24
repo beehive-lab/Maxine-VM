@@ -170,7 +170,7 @@ public final class MemoryRegionsTable extends InspectorTable {
                 sortedMemoryRegions.add(new CodeRegionDisplay(teleRuntimeCodeRegion));
             }
 
-            for (MaxThread thread : maxVMState().threads()) {
+            for (MaxThread thread : vmState().threads()) {
                 final MaxStack stack = thread.stack();
                 if (!stack.memoryRegion().size().isZero()) {
                     sortedMemoryRegions.add(new StackRegionDisplay(stack));
@@ -222,7 +222,7 @@ public final class MemoryRegionsTable extends InspectorTable {
      * @return foreground color for row; color the text specially in the row where a watchpoint is triggered
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }

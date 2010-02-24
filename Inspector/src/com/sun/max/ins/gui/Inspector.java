@@ -428,9 +428,6 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
         refreshView(force);
     }
 
-    public void threadStateChanged(MaxThread thread) {
-    }
-
     public void breakpointStateChanged() {
     }
 

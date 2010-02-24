@@ -150,6 +150,16 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private final SaveSettingsListener saveSettingsListener = createGeometrySettingsClient(this, "stackInspectorGeometry");
 
+    /**
+     * Marks the last time in VM state history that we refreshed from the stack.
+     */
+    private MaxVMState lastUpdatedState = null;
+
+    /**
+     * Marks the last time in VM state history when the stack changed structurally.
+     */
+    private MaxVMState lastChangedState = null;
+
     private MaxStack stack = null;
     private InspectorPanel contentPane = null;
     private  DefaultListModel stackFrameListModel = null;
@@ -160,13 +170,13 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
     private final FrameSelectionListener frameSelectionListener = new FrameSelectionListener();
     private final StackFrameListCellRenderer stackFrameListCellRenderer = new StackFrameListCellRenderer();
 
-    private boolean stateChanged = true;  // conservative assessment of possible stack change
     private CompiledStackFramePanel selectedFramePanel;
 
     private final class StackFrameListCellRenderer extends DefaultListCellRenderer {
 
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int modelIndex, boolean isSelected, boolean cellHasFocus) {
+
             final MaxStackFrame stackFrame = (MaxStackFrame) value;
             String name;
             String toolTip = null;
@@ -232,19 +242,17 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
             final Component oldRightComponent = splitPane.getRightComponent();
             Component newRightComponent = oldRightComponent;
-
-            // TODO (mlvdv) Create appropriate stack frame viewers for all the kinds of frames we might find.
             if (index >= 0 && index < stackFrameListModel.getSize()) {
                 final MaxStackFrame stackFrame = (MaxStackFrame) stackFrameListModel.get(index);
                 // New stack frame selection; set the global focus.
                 inspection().focus().setStackFrame(stackFrame, false);
                 if (stackFrame instanceof MaxStackFrame.Compiled) {
                     final MaxStackFrame.Compiled compiledStackFrame = (MaxStackFrame.Compiled) stackFrame;
-                    selectedFramePanel = new DefaultCompiledStackFramePanel<MaxStackFrame.Compiled>(inspection(), compiledStackFrame, viewPreferences);
+                    selectedFramePanel = new DefaultCompiledStackFramePanel(inspection(), compiledStackFrame, viewPreferences);
                     newRightComponent = selectedFramePanel;
                 } else if (stackFrame instanceof TruncatedStackFrame) {
                     maxFramesDisplay *= 2;
-                    stateChanged = true;
+                    lastChangedState = vmState();
                     refreshView(true);
                 } else {
                     newRightComponent = nativeFrame;
@@ -300,10 +308,15 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void createView() {
+        lastUpdatedState = null;
+        lastChangedState = null;
         final MaxThread thread = inspection().focus().thread();
         contentPane = new InspectorPanel(inspection(), new BorderLayout());
         if (thread != null) {
             stack = thread.stack();
+            lastUpdatedState = stack.lastUpdated();
+            lastChangedState = stack.lastChanged();
+            assert stack != null;
             stackFrameListModel = new DefaultListModel();
             stackFrameList = new JList(stackFrameListModel);
             stackFrameList.setCellRenderer(stackFrameListCellRenderer);
@@ -451,40 +464,39 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     protected void refreshView(boolean force) {
-        if (stack != null && stack.thread() != null && stack.thread().isLive()) {
-            final Sequence<MaxStackFrame> frames = stack.frames();
-            assert !frames.isEmpty();
-            if (stateChanged || force) {
-                stackFrameListModel.clear();
-                addToModel(frames);
-                stateChanged = false;
-            } else {
-                // The stack is structurally unchanged with respect to methods,
-                // so avoid a complete redisplay for performance reasons.
-                // However, the object representing the top frame may be different,
-                // in which case the state of the old frame object is out of date.
-                final MaxStackFrame newTopFrame = frames.first();
-                if (selectedFramePanel != null && selectedFramePanel.stackFrame().isTop() && selectedFramePanel.stackFrame().isSameFrame(newTopFrame)) {
-                    selectedFramePanel.setStackFrame(newTopFrame);
+        ProgramError.check(stack != null);
+        if (stack.thread() != null && stack.thread().isLive()) {
+            if (force || stack.lastUpdated() == null || stack.lastUpdated().newerThan(lastUpdatedState)) {
+                final Sequence<MaxStackFrame> frames = stack.frames();
+                assert !frames.isEmpty();
+                if (force || stack.lastChanged().newerThan(this.lastChangedState)) {
+                    stackFrameListModel.clear();
+                    addToModel(frames);
+                    this.lastChangedState = stack.lastChanged();
+                } else {
+                    // The stack is structurally unchanged with respect to methods,
+                    // which typically happens after a single step.
+                    // Avoid a complete redisplay for performance reasons.
+                    // However, the object representing the top frame may be different,
+                    // in which case the state of the old frame object is out of date.
+                    final MaxStackFrame newTopFrame = frames.first();
+                    stackFrameListModel.set(0, newTopFrame);
+                    if (selectedFramePanel != null && selectedFramePanel.stackFrame().isTop() && selectedFramePanel.stackFrame().isSameFrame(newTopFrame)) {
+                        // If the top frame is selected, update the panel displaying its contents
+                        selectedFramePanel.setStackFrame(newTopFrame);
+                    }
                 }
+                lastUpdatedState = stack.lastUpdated();
+                if (selectedFramePanel != null) {
+                    selectedFramePanel.refresh(force);
+                }
+                final InspectorPanel panel = (InspectorPanel) splitPane.getRightComponent();
+                panel.refresh(true);
             }
-            if (selectedFramePanel != null) {
-                selectedFramePanel.refresh(force);
-            }
-            final InspectorPanel panel = (InspectorPanel) splitPane.getRightComponent();
-            panel.refresh(true);
         }
         super.refreshView(force);
         // The title displays thread state, so must be updated.
         setTitle();
-    }
-
-    @Override
-    public void threadStateChanged(MaxThread thread) {
-        if (stack != null && thread.equals(this.stack.thread())) {
-            stateChanged = thread.framesChanged();
-        }
-        super.threadStateChanged(thread);
     }
 
     @Override
@@ -529,8 +541,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void watchpointSetChanged() {
-        if (maxVMState().processState() == ProcessState.STOPPED) {
-            // TODO (mlvdv) workaround - not completely thread safe
+        if (vmState().processState() == ProcessState.STOPPED) {
             refreshView(true);
         }
     }

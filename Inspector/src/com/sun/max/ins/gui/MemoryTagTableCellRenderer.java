@@ -78,7 +78,7 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
             }
         }
         // If a watchpoint is currently triggered here, add a pointer icon.
-        if (maxVM().maxVMState().watchpointEvent() != null && memoryRegion.contains(inspection().maxVM().maxVMState().watchpointEvent().address())) {
+        if (maxVM().vmState().watchpointEvent() != null && memoryRegion.contains(inspection().maxVM().vmState().watchpointEvent().address())) {
             label.setIcon(style().debugIPTagIcon());
             label.setForeground(style().debugIPTagColor());
         } else {

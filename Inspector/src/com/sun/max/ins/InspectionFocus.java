@@ -391,7 +391,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
         if (maxBreakpoint != null) {
             MaxThread threadAtBreakpoint = null;
-            for (MaxThread thread : maxVMState().threads()) {
+            for (MaxThread thread : vmState().threads()) {
                 if (thread.breakpoint() == maxBreakpoint) {
                     threadAtBreakpoint = thread;
                     break;

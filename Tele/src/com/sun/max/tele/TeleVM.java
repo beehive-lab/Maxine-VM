@@ -463,7 +463,7 @@ public abstract class TeleVM implements MaxVM {
     /**
      * @return VM state; thread safe.
      */
-    public final MaxVMState maxVMState() {
+    public final TeleVMState vmState() {
         return teleVMState;
     }
 
@@ -699,10 +699,6 @@ public abstract class TeleVM implements MaxVM {
         for (final MaxVMStateListener listener : vmStateListeners) {
             listener.stateChanged(teleVMState);
         }
-    }
-
-    public final void describeVMStateHistory(PrintStream printStream) {
-        teleVMState.writeSummaryToStream(printStream);
     }
 
     public final int getInterpreterUseLevel() {
@@ -1703,6 +1699,15 @@ public abstract class TeleVM implements MaxVM {
     public final void runToInstruction(final MaxCodeLocation maxCodeLocation, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
         final CodeLocation codeLocation = (CodeLocation) maxCodeLocation;
         teleProcess.runToInstruction(codeLocation, synchronous, withClientBreakpoints);
+    }
+
+    public final  void returnFromFrame(final MaxThread thread, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
+        final TeleNativeThread teleNativeThread = (TeleNativeThread) thread;
+        final CodeLocation returnLocation = teleNativeThread.getReturnLocation();
+        if (returnLocation == null) {
+            throw new InvalidVMRequestException("No return location available");
+        }
+        teleProcess.runToInstruction(returnLocation, synchronous, withClientBreakpoints);
     }
 
     public final  void pauseVM() throws InvalidVMRequestException, OSExecutionRequestException {

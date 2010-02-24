@@ -50,14 +50,10 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
      * @param stackFrame the frame to be wrapped
      * @return a newly created instance of {@link TeleStackFrame}
      */
-    public static MaxStackFrame createFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame stackFrame) {
-        if (stackFrame instanceof JitStackFrame) {
-            final JitStackFrame jitStackFrame = (JitStackFrame) stackFrame;
-            return new JitCompiledFrame(teleVM, teleStack, position, jitStackFrame);
-        }
+    public static TeleStackFrame createFrame(TeleVM teleVM, TeleStack teleStack, int position, StackFrame stackFrame) {
         if (stackFrame instanceof CompiledStackFrame) {
             final CompiledStackFrame compiledStackFrame = (CompiledStackFrame) stackFrame;
-            return new CompiledFrame<CompiledStackFrame>(teleVM, teleStack, position, compiledStackFrame);
+            return new CompiledFrame(teleVM, teleStack, position, compiledStackFrame);
         }
         if (stackFrame instanceof NativeStackFrame) {
             final NativeStackFrame nativeStackFrame = (NativeStackFrame) stackFrame;
@@ -155,9 +151,9 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         return Integer.toString(position) + ":  " + description();
     }
 
-    static class CompiledFrame<CompiledStackFrame_Type extends CompiledStackFrame> extends TeleStackFrame<CompiledStackFrame_Type> implements MaxStackFrame.Compiled {
+    static final class CompiledFrame extends TeleStackFrame<CompiledStackFrame> implements MaxStackFrame.Compiled {
 
-        protected CompiledFrame(TeleVM teleVM, TeleStack teleStack, int position, CompiledStackFrame_Type compiledStackFrame) {
+        protected CompiledFrame(TeleVM teleVM, TeleStack teleStack, int position, CompiledStackFrame compiledStackFrame) {
             super(teleVM, teleStack, position, compiledStackFrame);
         }
 
@@ -179,28 +175,6 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         public String description() {
             return "<" + stackFrame.getClass().getSimpleName() + "> " + stackFrame.toString();
-        }
-    }
-
-    static final class JitCompiledFrame extends CompiledFrame<JitStackFrame> implements MaxStackFrame.Jit {
-
-        private JitCompiledFrame(TeleVM teleVM, TeleStack teleStack, int position, JitStackFrame jitStackFrame) {
-            super(teleVM, teleStack, position, jitStackFrame);
-        }
-
-        @Override
-        public Pointer localsPointer(int index) {
-            return stackFrame.localsPointer(index);
-        }
-
-        @Override
-        public int operandStackDepth() {
-            return stackFrame.operandStackDepth();
-        }
-
-        @Override
-        public Pointer operandStackPointer(int index) {
-            return stackFrame.operandStackPointer(index);
         }
     }
 

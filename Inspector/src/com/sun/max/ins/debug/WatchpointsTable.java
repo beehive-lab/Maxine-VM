@@ -188,7 +188,7 @@ public final class WatchpointsTable extends InspectorTable {
                     } catch (MaxVMBusyException maxVMBusyException) {
                         final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
-                        System.out.println("Reset WRITE checkbox at row=" + row + ", col=" + column);
+                        // System.out.println("Reset WRITE checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
                         inspection().announceVMBusyFailure("Watchpoint WRITE setting");
                     }
@@ -203,7 +203,7 @@ public final class WatchpointsTable extends InspectorTable {
                     } catch (MaxVMBusyException maxVMBusyException) {
                         final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
-                        System.out.println("Reset EXEC checkbox at row=" + row + ", col=" + column);
+                        // System.out.println("Reset EXEC checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
                         inspection().announceVMBusyFailure("Watchpoint EXEC setting");
                     }
@@ -217,7 +217,7 @@ public final class WatchpointsTable extends InspectorTable {
                     } catch (MaxVMBusyException maxVMBusyException) {
                         final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
-                        System.out.println("Reset GC checkbox at row=" + row + ", col=" + column);
+                        // System.out.println("Reset GC checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
                         inspection().announceVMBusyFailure("Watchpoint GC setting");
                     }
@@ -286,7 +286,7 @@ public final class WatchpointsTable extends InspectorTable {
      * @return color the text specially in the row where a triggered watchpoint is displayed
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
         if (watchpointEvent != null && tableModel.rowToWatchpoint(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
@@ -325,7 +325,7 @@ public final class WatchpointsTable extends InspectorTable {
                 }
             }
             // If a watchpoint is currently triggered here, add a pointer icon.
-            final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+            final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
             if (watchpointEvent != null && tableModel.rowToWatchpoint(row).contains(watchpointEvent.address())) {
                 label.setIcon(style().debugIPTagIcon());
                 label.setForeground(style().debugIPTagColor());
@@ -537,7 +537,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
-            final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
+            final MaxWatchpointEvent watchpointEvent = maxVM().vmState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
                 final MaxThread maxThread = watchpointEvent.maxThread();
                 setText(inspection().nameDisplay().longName(maxThread));
@@ -561,7 +561,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
-            final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
+            final MaxWatchpointEvent watchpointEvent = maxVM().vmState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
                 final String addressText = watchpointEvent.address().toHexString();
                 setText(addressText);
@@ -585,7 +585,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxWatchpoint watchpoint = tableModel.rowToWatchpoint(row);
-            final MaxWatchpointEvent watchpointEvent = maxVM().maxVMState().watchpointEvent();
+            final MaxWatchpointEvent watchpointEvent = maxVM().vmState().watchpointEvent();
             if (watchpointEvent != null && watchpointEvent.maxWatchpoint() == watchpoint) {
                 final int watchpointCode = watchpointEvent.eventCode();
                 String codeName;

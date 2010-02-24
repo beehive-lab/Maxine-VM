@@ -20,12 +20,14 @@
  */
 package com.sun.max.tele;
 
+import java.io.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 
 /**
  * <p>
- * An immutable summary of the Maxine VM state at some point in time, thread-safe and suitable for safe sharing between GUI and execution threads.</p>
+ * A (mostly) immutable summary of the Maxine VM state at some point in time, thread-safe and suitable for safe sharing between GUI and execution threads.</p>
  * <p>
  * The typical progression of process states is
  * { {@linkplain ProcessState.STOPPED STOPPED} -> {@linkplain ProcessState.RUNNING RUNNING} }* -> {@linkplain ProcessState.TERMINATED TERMINATED}.
@@ -164,4 +166,12 @@ public interface MaxVMState  {
      * Any state transition is strictly newer than null.
      */
     boolean newerThan(MaxVMState maxVMState);
+
+
+    /**
+     * Writes a textual summary describing this and all predecessor states.
+     * <br>
+     * Thread-safe.
+     */
+    void writeSummary(PrintStream printStream);
 }

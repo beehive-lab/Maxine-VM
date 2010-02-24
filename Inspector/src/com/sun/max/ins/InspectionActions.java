@@ -4086,14 +4086,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MaxCodeLocation returnLocation = focus().thread().getReturnLocation();
-            if (returnLocation != null) {
-                try {
-                    maxVM().runToInstruction(returnLocation, false, false);
-                    // TODO (mlvdv) too broad a catch; narrow this
-                } catch (Exception exception) {
-                    gui().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
-                }
+            try {
+                maxVM().returnFromFrame(focus().thread(), false, false);
+                // TODO (mlvdv) too broad a catch; narrow this
+            } catch (Exception exception) {
+                gui().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
             }
         }
 
@@ -4128,13 +4125,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void procedure() {
-            final MaxCodeLocation returnLocation = focus().thread().getReturnLocation();
-            if (returnLocation != null) {
-                try {
-                    maxVM().runToInstruction(returnLocation, false, true);
-                } catch (Exception exception) {
-                    gui().errorMessage("Return from frame could not be performed.", exception.toString());
-                }
+            try {
+                maxVM().returnFromFrame(focus().thread(), false, true);
+            } catch (Exception exception) {
+                gui().errorMessage("Return from frame could not be performed.", exception.toString());
             }
         }
 
@@ -4648,7 +4642,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            maxVM().describeVMStateHistory(System.out);
+            vmState().writeSummary(System.out);
         }
     }
 
@@ -4676,7 +4670,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                thread.stack().writeSummaryToStream(System.out);
+                thread.stack().writeSummary(System.out);
             }
         }
     }
@@ -4772,7 +4766,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            maxVM().breakpointFactory().writeSummaryToStream(System.out);
+            maxVM().breakpointFactory().writeSummary(System.out);
         }
     }
 
@@ -4798,7 +4792,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            watchpointFactory().writeSummaryToStream(System.out);
+            watchpointFactory().writeSummary(System.out);
         }
     }
 

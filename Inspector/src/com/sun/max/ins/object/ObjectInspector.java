@@ -224,7 +224,7 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void watchpointSetChanged() {
         // TODO (mlvdv)  patch for concurrency issue; not completely safe
-        if (maxVMState().processState() == ProcessState.STOPPED) {
+        if (vmState().processState() == ProcessState.STOPPED) {
             refreshView(true);
         }
     }

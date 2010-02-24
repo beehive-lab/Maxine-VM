@@ -182,7 +182,7 @@ public final class BreakpointsTable extends InspectorTable {
                     } catch (MaxVMBusyException maxVMBusyException) {
                         final DefaultCellEditor editor = (DefaultCellEditor) columnModel.columnAt(column).getCellEditor();
                         final JCheckBox checkBox = (JCheckBox) editor.getComponent();
-                        System.out.println("Reset enabled checkbox at row=" + row + ", col=" + column);
+                        // System.out.println("Reset enabled checkbox at row=" + row + ", col=" + column);
                         checkBox.setSelected(!newState);
                         inspection().announceVMBusyFailure("Breakpont ENABLED setting");
                     }
@@ -529,7 +529,7 @@ public final class BreakpointsTable extends InspectorTable {
          * @return the thread in the VM, if any, that is currently stopped at this breakpoint.
          */
         final MaxThread triggerThread() {
-            for (MaxBreakpointEvent breakpointEvent : maxVMState().breakpointEvents()) {
+            for (MaxBreakpointEvent breakpointEvent : vmState().breakpointEvents()) {
                 final MaxBreakpoint triggeredBreakpoint = breakpointEvent.breakpoint();
                 if (triggeredBreakpoint == breakpoint || triggeredBreakpoint.owner() == breakpoint) {
                     return breakpointEvent.thread();

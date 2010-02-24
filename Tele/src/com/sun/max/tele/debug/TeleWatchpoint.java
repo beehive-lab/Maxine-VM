@@ -314,7 +314,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
     public final boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
         assert alive;
-        assert teleNativeThread.state() == TeleNativeThread.ThreadState.WATCHPOINT;
+        assert teleNativeThread.state() == MaxThreadState.WATCHPOINT;
         Trace.begin(TRACE_VALUE, tracePrefix() + "handling trigger event for " + this);
         if (factory.teleVM().isInGC() && !settings.enabledDuringGC) {
             // Ignore the event if the VM is in GC and the watchpoint is not to be enabled during GC.
@@ -1262,7 +1262,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             }
         }
 
-        public void writeSummaryToStream(PrintStream printStream) {
+        public void writeSummary(PrintStream printStream) {
             printStream.println("Watchpoints :");
             for (MaxWatchpoint maxWatchpoint : clientWatchpointsCache) {
                 printStream.println("  " + maxWatchpoint.toString());

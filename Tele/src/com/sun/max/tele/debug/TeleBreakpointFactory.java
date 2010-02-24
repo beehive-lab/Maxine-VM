@@ -85,7 +85,7 @@ public class TeleBreakpointFactory extends AbstractTeleVMHolder implements MaxBr
         return breakpointCache;
     }
 
-    public void writeSummaryToStream(PrintStream printStream) {
+    public void writeSummary(PrintStream printStream) {
         teleVM().teleProcess().targetBreakpointFactory().writeSummaryToStream(printStream);
         bytecodeBreakpointFactory.writeSummaryToStream(printStream);
     }

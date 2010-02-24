@@ -147,8 +147,8 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
         return inspection.maxVM();
     }
 
-    public final MaxVMState maxVMState() {
-        return inspection.maxVMState();
+    public final MaxVMState vmState() {
+        return inspection.vmState();
     }
 
     public final MaxCodeManager codeManager() {

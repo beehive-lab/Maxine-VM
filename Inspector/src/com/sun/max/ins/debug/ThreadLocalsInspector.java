@@ -110,7 +110,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
                 // Refresh a newly exposed pane to be sure it is current
                 public void stateChanged(ChangeEvent event) {
                     // TODO (mlvdv)  Data reading PATCH, there should be a more systematic way of handling this.
-                    if (maxVMState().processState() == ProcessState.TERMINATED) {
+                    if (vmState().processState() == ProcessState.TERMINATED) {
                         return;
                     }
                     final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) tabbedPane.getSelectedComponent();
@@ -230,7 +230,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     public void watchpointSetChanged() {
-        if (maxVMState().processState() != ProcessState.TERMINATED) {
+        if (vmState().processState() != ProcessState.TERMINATED) {
             refreshView(true);
         }
     }

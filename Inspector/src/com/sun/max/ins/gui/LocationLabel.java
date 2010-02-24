@@ -103,8 +103,8 @@ public abstract class LocationLabel extends InspectorLabel {
     }
 
     public final void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
+        if (vmState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = vmState();
             updateText();
         }
     }

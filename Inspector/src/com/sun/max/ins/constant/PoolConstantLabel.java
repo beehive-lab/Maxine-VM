@@ -150,8 +150,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
     private MaxVMState lastRefreshedState = null;
 
     public void refresh(boolean force) {
-        if (maxVMState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = maxVMState();
+        if (vmState().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = vmState();
             if (teleConstantPool != null) {
                 try {
                     telePoolConstant = teleConstantPool.readTelePoolConstant(index);

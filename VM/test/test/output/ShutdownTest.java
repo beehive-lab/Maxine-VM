@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,43 +18,37 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins;
+package test.output;
 
+public class ShutdownTest extends Thread {
+    public static void main(String[] args) {
+        boolean exit = false;
+        for (String arg : args) {
+            if (arg.equals("exit")) {
+                exit = true;
+            }
+        }
+        final Thread nonDaemon = new ShutdownTest();
+        Runtime.getRuntime().addShutdownHook(new Thread(new MyHook()));
+        nonDaemon.start();
+        System.out.println(exit ? "explicit exit" : " implicit exit");
+        if (exit) {
+            System.exit(1);
+        }
+    }
 
-/**
- * Notification service for changes to state in the VM.
- *
- *
- * @author Michael Van De Vanter
- */
-public interface InspectionListener {
+    @Override
+    public void run() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ex) {
+        }
+    }
 
-    /**
-     * Notifies that  VM state has potentially changed and should be revisited.
-     *
-     * @param force suspend caching behavior; reload state unconditionally.
-     */
-    void vmStateChanged(boolean force);
+    static class MyHook implements Runnable {
+        public void run() {
+            System.out.println("MyHook running");
+        }
+    }
 
-    /**
-     * Notifies that the set and/or status (enabled/disabled) of breakpoints in the VM has changed.
-     */
-    void breakpointStateChanged();
-
-    /**
-     * Notifies that the set of watchpoints in the VM has changed.
-     */
-    void watchpointSetChanged();
-
-    /**
-     * Notifies that an important aspect of view style/parameters/configuration have changed,
-     * and that views should be reconstructed if needed (view state change only).
-     */
-    void viewConfigurationChanged();
-
-    /**
-     * Notifies that the running process associated with a VM has
-     * stopped running.
-     */
-    void vmProcessTerminated();
 }

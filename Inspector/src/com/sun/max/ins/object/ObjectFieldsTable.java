@@ -269,7 +269,7 @@ public final class ObjectFieldsTable extends InspectorTable {
      * @return color the text specially in the row where a watchpoint is triggered
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }

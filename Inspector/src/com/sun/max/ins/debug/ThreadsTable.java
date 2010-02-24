@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.debug;
 
+import static com.sun.max.tele.MaxThreadState.*;
+
 import java.awt.*;
 import java.awt.datatransfer.*;
 
@@ -30,9 +32,7 @@ import javax.swing.table.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.object.*;
-
 /**
  * A table specialized for displaying the threads in the VM.
  *
@@ -112,7 +112,7 @@ public final class ThreadsTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return maxVMState().threads().length();
+            return vmState().threads().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -126,7 +126,7 @@ public final class ThreadsTable extends InspectorTable {
 
         public int findRow(MaxThread findThread) {
             int row = 0;
-            for (MaxThread thread : maxVMState().threads()) {
+            for (MaxThread thread : vmState().threads()) {
                 if (thread.equals(findThread)) {
                     return row;
                 }
@@ -137,7 +137,7 @@ public final class ThreadsTable extends InspectorTable {
 
         public MaxThread getThreadAt(int row) {
             int count = 0;
-            for (MaxThread thread : maxVMState().threads()) {
+            for (MaxThread thread : vmState().threads()) {
                 if (count == row) {
                     return thread;
                 }
@@ -152,8 +152,8 @@ public final class ThreadsTable extends InspectorTable {
      */
     private Color getRowTextColor(int row) {
         final MaxThread thread = (MaxThread) tableModel.getValueAt(row, 0);
-        final ThreadState threadState = thread.state();
-        if (threadState == ThreadState.BREAKPOINT || threadState == ThreadState.WATCHPOINT) {
+        final MaxThreadState threadState = thread.state();
+        if (threadState == BREAKPOINT || threadState == WATCHPOINT) {
             return style().debugIPTagColor();
         }
         return null;
@@ -271,7 +271,7 @@ public final class ThreadsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final MaxThread thread = (MaxThread) value;
-            final ThreadState threadState = thread.state();
+            final MaxThreadState threadState = thread.state();
             setText(threadState.toString());
             String toolTipText = "Thread status: " + threadState;
             if (thread.breakpoint() != null) {

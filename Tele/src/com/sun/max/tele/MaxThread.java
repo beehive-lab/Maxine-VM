@@ -20,14 +20,10 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.annotate.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.*;
-import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -37,13 +33,6 @@ import com.sun.max.vm.thread.*;
  * @author Michael Van De Vanter
  */
 public interface MaxThread {
-
-    /**
-     * Have the frames of this stack changed in the epoch that completed last time this thread stopped.
-     * This may be true even if the objects representing the frames have changed.
-     * @see StackFrame#isSameFrame(StackFrame)
-     */
-    boolean framesChanged();
 
     /**
      * Gets the VM thread locals corresponding to a given safepoint state.
@@ -81,7 +70,7 @@ public interface MaxThread {
     /**
      * @return the current state of the thread.
      */
-    ThreadState state();
+    MaxThreadState state();
 
     /**
      * Determines if this is the primordial VM thread. The primordial VM thread is the native thread on which the VM was
@@ -152,17 +141,7 @@ public interface MaxThread {
     /**
      * @return location of the instruction pointer for the thread; null if thread has died
      */
-    MachineCodeLocation instructionLocation();
-
-    /**
-     * Gets the return address of the next-to-top frame on the stack: the next instruction to be executed when execution
-     * returns from the current frame.
-     * <br>
-     * The result will be null in the case where this thread is
-     * in native code that was entered via a native method annotated with {@link C_FUNCTION}. The stub for such methods
-     * do not leave the bread crumbs on the stack that record how to find caller frames.
-     */
-    MaxCodeLocation getReturnLocation();
+    MaxCodeLocation instructionLocation();
 
     /**
      * Gets the surrogate for the heap object in the VM that implements this thread.

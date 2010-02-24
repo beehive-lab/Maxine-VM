@@ -534,14 +534,14 @@ public interface MaxVM {
      *
      * @return VM state summary
      */
-    MaxVMState maxVMState();
+    MaxVMState vmState();
 
     /**
      * Adds a VM state listener.
      * <br>
      * Thread-safe.
      *
-     * @param listener will be notified of changes to {@link #maxVMState()}.
+     * @param listener will be notified of changes to {@link #vmState()}.
      */
     void addVMStateListener(MaxVMStateListener listener);
 
@@ -551,13 +551,6 @@ public interface MaxVM {
      * Thread-safe.
      */
     void removeVMStateListener(MaxVMStateListener listener);
-
-    /**
-     * Writes a textual summary describing the current {@link #maxVMState()}, including all predecessor states.
-     * <br>
-     * Thread-safe.
-     */
-    void describeVMStateHistory(PrintStream printStream);
 
     /**
      * Finds a thread by ID.
@@ -725,6 +718,15 @@ public interface MaxVM {
      * @throws InvalidVMRequestException execution not permissible in current VM state.
      */
     void runToInstruction(final MaxCodeLocation codeLocation, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
+
+    /**
+     * @param thread the thread whose top frame should be returned from
+     * @param synchronous should the call wait for the execution to complete?
+     * @param withClientBreakpoints should client breakpoints be enabled duration of the execution?
+     * @throws OSExecutionRequestException execution failed in OS.
+     * @throws InvalidVMRequestException execution not permissible in current VM state.
+     */
+    void returnFromFrame(final MaxThread thread, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
 
     /**
      * Pauses the running VM.

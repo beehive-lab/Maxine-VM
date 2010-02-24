@@ -27,7 +27,7 @@ import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 
 /**
- * Implements the immutable history of Maxine VM states during a debugging sessions.
+ * Implements the (mostly) immutable history of Maxine VM states during a debugging sessions.
  *
  * @author Michael Van De Vanter
  */
@@ -174,7 +174,7 @@ public final class TeleVMState implements MaxVMState {
         return sb.toString();
     }
 
-    public void writeSummaryToStream(PrintStream printStream) {
+    public void writeSummary(PrintStream printStream) {
         MaxVMState state = this;
         while (state != null) {
             final StringBuilder sb = new StringBuilder(100);

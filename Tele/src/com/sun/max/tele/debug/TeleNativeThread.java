@@ -20,7 +20,7 @@
  */
 package com.sun.max.tele.debug;
 
-import static com.sun.max.tele.debug.TeleNativeThread.ThreadState.*;
+import static com.sun.max.tele.MaxThreadState.*;
 
 import java.util.*;
 import java.util.logging.*;
@@ -71,82 +71,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
 
     private static final int TRACE_LEVEL = 2;
 
-    /**
-     * The states a thread can be in.
-     * N.B. Many platforms will not be able to detect all these states, e.g., MONITOR_WAIT,
-     * in which case the generic SUSPENDED is appropriate.
-     *
-     * Note: This enum must be kept in sync the one of the same name in MaxineNative/inspector/teleNativeThread.h.
-     */
-    public enum ThreadState {
-        /**
-         * Denotes that a thread is waiting to acquire ownership of a monitor.
-         */
-        MONITOR_WAIT("Monitor", true),
-
-        /**
-         * Denotes that a thread is waiting to be {@linkplain Object#notify() notified}.
-         */
-        NOTIFY_WAIT("Wait", true),
-
-        /**
-         * Denotes that a thread is waiting for another
-         * {@linkplain Thread#join(long, int) thread to die or a timer to expire}.
-         */
-        JOIN_WAIT("Join", true),
-
-        /**
-         * Denotes that a thread is {@linkplain Thread#sleep(long) sleeping}.
-         */
-        SLEEPING("Sleeping", true),
-
-        /**
-         * Denotes that a thread is suspended at a breakpoint.
-         */
-        BREAKPOINT("Breakpoint", true),
-
-        /**
-         * A thread is suspended at a watchpoint.
-         */
-        WATCHPOINT("Watchpoint", true),
-
-        /**
-         * Denotes that a thread is suspended for some reason other than {@link #MONITOR_WAIT}, {@link #NOTIFY_WAIT},
-         * {@link #JOIN_WAIT}, {@link #SLEEPING} or {@link #BREAKPOINT}.
-         */
-        SUSPENDED("Suspended", true),
-
-        DEAD("Dead", false),
-
-        /**
-         * Denotes that a thread is not suspended.
-         */
-        RUNNING("Running", false);
-
-        public static final IndexedSequence<ThreadState> VALUES = new ArraySequence<ThreadState>(values());
-
-        private final String asString;
-        private final boolean allowsDataAccess;
-
-        ThreadState(String asString, boolean allowsDataAccess) {
-            this.asString = asString;
-            this.allowsDataAccess = allowsDataAccess;
-        }
-
-        @Override
-        public String toString() {
-            return asString;
-        }
-
-        /**
-         * Determines whether a thread in this state allows thread specific data to be accessed in the remote process.
-         * Thread specific data includes register values, stack memory, and {@linkplain VmThreadLocal VM thread locals}.
-         */
-        public final boolean allowsDataAccess() {
-            return allowsDataAccess;
-        }
-    }
-
     private static final Logger LOGGER = Logger.getLogger(TeleNativeThread.class.getName());
 
     private final TeleProcess teleProcess;
@@ -161,16 +85,20 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     private final TeleStack teleStack;
 
     /**
-     * A cached stack trace for this thread.
+     * A cached stack trace for this thread, never null.
      */
-    private IndexedSequence<StackFrame> frames;
+    private IndexedSequence<StackFrame> frames = IndexedSequence.Static.empty(StackFrame.class);
 
     /**
      * Only if this value is less than the {@linkplain TeleProcess#epoch() epoch} of this thread's tele process, does
      * the {@link #refreshFrames(boolean)} method do anything.
      */
-    private long framesEpoch;
-    private boolean framesChanged;
+    private long framesRefreshedEpoch;
+
+    /**
+     * The last epoch at which the structure of the stack changed, even if the contents of the top frame may have.
+     */
+    private long framesLastChangedEpoch;
 
     /**
      * The memory containing the thread locals of a Java thread; {@code null} if this is a non-Java thread.
@@ -185,7 +113,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      */
     private long teleVmThreadLocalsEpoch;
 
-    private ThreadState state = SUSPENDED;
+    private MaxThreadState state = SUSPENDED;
     private TeleTargetBreakpoint breakpoint;
     private FrameProvider[] frameCache;
 
@@ -231,14 +159,51 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         this.teleStack = new TeleStack(teleProcess.teleVM(), this, new TeleNativeStackMemoryRegion(this, params.stackRegion));
     }
 
+    /**
+     * @return the most currently refreshed frames on the thread's stack, never null.
+     */
     public IndexedSequence<StackFrame> frames() {
-        refreshFrames();
+        final long currentProcessEpoch = teleProcess().epoch();
+        if (framesRefreshedEpoch < currentProcessEpoch) {
+            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + currentProcessEpoch + ") for " + this);
+
+            // The stack walk requires the VM thread locals to be up to date
+            //refreshThreadLocals();
+
+            final IndexedSequence<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.teleVM(), this).frames();
+            assert !newFrames.isEmpty();
+            // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
+            // frame may have changed.
+            if (newFrames.length() != this.frames.length()) {
+                // Clear structural change; lengths are different
+                framesLastChangedEpoch = currentProcessEpoch;
+            } else {
+                // Lengths are the same; see if any frames differ.
+                final Iterator<StackFrame> oldFramesIterator = this.frames.iterator();
+                final Iterator<StackFrame> newFramesIterator = newFrames.iterator();
+                while (oldFramesIterator.hasNext()) {
+                    final StackFrame oldFrame = oldFramesIterator.next();
+                    final StackFrame newFrame = newFramesIterator.next();
+                    if (!oldFrame.isSameFrame(newFrame)) {
+                        framesLastChangedEpoch = currentProcessEpoch;
+                        break;
+                    }
+                }
+            }
+            this.frames = newFrames;
+            framesRefreshedEpoch = currentProcessEpoch;
+        }
         return frames;
     }
 
-    public boolean framesChanged() {
-        refreshFrames();
-        return framesChanged;
+    /**
+     * Track when the structure of the stack changes, in any respect other than
+     * the contents of the top frame.
+     *
+     * @return the last process epoch at which the structure of the stack changed.
+     */
+    public Long framesLastChangedEpoch() {
+        return framesLastChangedEpoch;
     }
 
     /**
@@ -284,7 +249,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      * @param instructionPointer the current value of the instruction pointer for the thread
      * @param vmThreadLocals the address of the various VM thread locals storage areas
      */
-    final void updateAfterGather(ThreadState state, Pointer instructionPointer, Map<Safepoint.State, Pointer> vmThreadLocals) {
+    final void updateAfterGather(MaxThreadState state, Pointer instructionPointer, Map<Safepoint.State, Pointer> vmThreadLocals) {
         this.state = state;
         stateRegisters.setInstructionPointer(instructionPointer);
         if (vmThreadLocals != null) {
@@ -408,43 +373,42 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      */
     private synchronized void clearFrames() {
         frames = IndexedSequence.Static.empty(StackFrame.class);
-        framesChanged = true;
+        framesLastChangedEpoch = teleProcess().epoch();
     }
 
     /**
-     * Update the current list of frames.
-     * As a side effect, set {@link #framesChanged} to true if the identity of the stack frames has changed,
-     * even if the objects representing them are different.
+     * Update the current list of frames, and notice if the structure of the stack has changed.
      */
     private synchronized void refreshFrames() {
         final long processEpoch = teleProcess().epoch();
-        if (framesEpoch < processEpoch) {
-            framesEpoch = processEpoch;
-
+        if (framesRefreshedEpoch < processEpoch) {
             Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
 
             // The stack walk requires the VM thread locals to be up to date
             //refreshThreadLocals();
 
             final TeleVM teleVM = teleProcess.teleVM();
-            final IndexedSequence<StackFrame> frames = new TeleStackFrameWalker(teleVM, this).frames();
-            assert !frames.isEmpty();
-            if (this.frames != null && frames.length() == this.frames.length()) {
-                framesChanged = false;
-                final Iterator<StackFrame> oldFrames = this.frames.iterator();
-                final Iterator<StackFrame> newFrames = frames.iterator();
-                while (oldFrames.hasNext()) {
-                    final StackFrame oldFrame = oldFrames.next();
-                    final StackFrame newFrame = newFrames.next();
+            final IndexedSequence<StackFrame> newFrames = new TeleStackFrameWalker(teleVM, this).frames();
+            assert !newFrames.isEmpty();
+            // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
+            // frame may have changed.
+            if (newFrames.length() != this.frames.length()) {
+                // Clear structural change; lengths are different
+                framesLastChangedEpoch = processEpoch;
+            } else {
+                final Iterator<StackFrame> oldFramesIterator = this.frames.iterator();
+                final Iterator<StackFrame> newFramesIterator = newFrames.iterator();
+                while (oldFramesIterator.hasNext()) {
+                    final StackFrame oldFrame = oldFramesIterator.next();
+                    final StackFrame newFrame = newFramesIterator.next();
                     if (!oldFrame.isSameFrame(newFrame)) {
-                        framesChanged = true;
+                        framesLastChangedEpoch = processEpoch;
                         break;
                     }
                 }
-            } else {
-                framesChanged = true;
             }
-            this.frames = frames;
+            this.frames = newFrames;
+            framesRefreshedEpoch = processEpoch;
         }
     }
 
@@ -460,7 +424,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      */
     private boolean breakpointIsAtInstructionPointer;
 
-    public final ThreadState state() {
+    public final MaxThreadState state() {
         return state;
     }
 
@@ -763,7 +727,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
                 l = descriptor.locals[slot];
             }
 
-            System.out.println("STACKFRAME ACCESS at " + slot + ", target=" + l);
+            // System.out.println("STACKFRAME ACCESS at " + slot + ", target=" + l);
 
             final Entry entry = classMethodActor.codeAttribute().localVariableTable().findLocalVariable(slot, position);
             if (entry == null) {

@@ -144,7 +144,7 @@ public final class Inspection implements InspectionHolder {
         MethodInspector.Manager.make(this);
         objectInspectorFactory = ObjectInspectorFactory.make(this);
 
-        if (maxVMState().processState() == UNKNOWN) {
+        if (vmState().processState() == UNKNOWN) {
             // Inspector is working with a boot image only, no process exists.
 
             // Initialize the CodeManager and ClassRegistry, which seems to keep some heap reads
@@ -157,7 +157,7 @@ public final class Inspection implements InspectionHolder {
                 // Choose an arbitrary thread as the "current" thread. If the inspector is
                 // creating the process to be debugged (as opposed to attaching to it), then there
                 // should only be one thread.
-                final IterableWithLength<MaxThread> threads = maxVMState().threads();
+                final IterableWithLength<MaxThread> threads = vmState().threads();
                 MaxThread nonJavaThread = null;
                 for (MaxThread thread : threads) {
                     if (thread.isJava()) {
@@ -198,8 +198,8 @@ public final class Inspection implements InspectionHolder {
         return maxVM;
     }
 
-    public  MaxVMState maxVMState() {
-        return maxVM.maxVMState();
+    public  MaxVMState vmState() {
+        return maxVM.vmState();
     }
 
     public MaxBreakpointFactory breakpointFactory() {
@@ -241,8 +241,8 @@ public final class Inspection implements InspectionHolder {
         final StringBuilder sb = new StringBuilder(50);
         sb.append(INSPECTOR_NAME);
         sb.append(" (");
-        sb.append(maxVMState() == null ? "" : maxVMState().processState());
-        if (maxVMState().isInGC()) {
+        sb.append(vmState() == null ? "" : vmState().processState());
+        if (vmState().isInGC()) {
             sb.append(" in GC");
         }
         sb.append(") ");
@@ -308,7 +308,7 @@ public final class Inspection implements InspectionHolder {
      * @return Is the Inspector in debugging mode with a legitimate process?
      */
     public boolean hasProcess() {
-        final ProcessState processState = maxVMState().processState();
+        final ProcessState processState = vmState().processState();
         return !(processState == UNKNOWN || processState == TERMINATED);
     }
 
@@ -318,7 +318,7 @@ public final class Inspection implements InspectionHolder {
      * @return VM state == {@link ProcessState#RUNNING}.
      */
     public boolean isVMRunning() {
-        return maxVMState().processState() == RUNNING;
+        return vmState().processState() == RUNNING;
     }
 
     /**
@@ -327,13 +327,13 @@ public final class Inspection implements InspectionHolder {
      * @return VM state == {@link ProcessState#STOPPED}.
      */
     public boolean isVMReady() {
-        return maxVMState().processState() == STOPPED;
+        return vmState().processState() == STOPPED;
     }
 
     private MaxVMState lastVMStateProcessed = null;
 
     /**
-     * Handles reported changes in the {@linkplain MaxVM#maxVMState()  VM process state}.
+     * Handles reported changes in the {@linkplain MaxVM#vmState()  VM process state}.
      * Must only be run in AWT event thread.
      */
     private void processVMStateChange() {
@@ -341,7 +341,7 @@ public final class Inspection implements InspectionHolder {
         // though display elements may find the VM in a newer state by the time they
         // attempt to update their state.
         inspectorMainFrame.refresh(true);
-        final MaxVMState maxVMState = maxVMState();
+        final MaxVMState maxVMState = vmState();
         if (!maxVMState.newerThan(lastVMStateProcessed)) {
             Trace.line(1, tracePrefix() + "ignoring redundant state change=" + maxVMState);
         }
@@ -380,7 +380,7 @@ public final class Inspection implements InspectionHolder {
     }
 
     /**
-     * Handles reported changes in the {@linkplain MaxVM#maxVMState() VM state}.
+     * Handles reported changes in the {@linkplain MaxVM#vmState() VM state}.
      * Updates state synchronously, then posts an event for follow-up on the AST event thread
      */
     private final class VMStateListener implements MaxVMStateListener {
@@ -538,8 +538,6 @@ public final class Inspection implements InspectionHolder {
         inspectorMainFrame.redisplay();
     }
 
-    private final Tracer threadTracer = new Tracer("refresh thread state");
-
     /**
      * Determines what happened in VM execution that just concluded. Then updates all view state as needed.
      */
@@ -550,53 +548,22 @@ public final class Inspection implements InspectionHolder {
         // on update to send the method viewer to the currently selected breakpoint, even
         // if it has nothing to do with where we are.
         focus().setBreakpoint(null);
-        final IdentityHashSet<InspectionListener> listeners = inspectionListeners.clone();
-
-        // Notify of any changes of the thread set
-        Trace.begin(TRACE_VALUE, threadTracer);
-        final long startTimeMillis = System.currentTimeMillis();
-        if (!maxVMState().threadsStarted().isEmpty() || !maxVMState().threadsDied().isEmpty()) {
-            final MaxThread currentThread = focus().thread();
-            if (!currentThread.isLive()) {
-                boolean foundMatchingThread = false;
-                for (MaxThread thread : maxVMState().threads()) {
-                    if (thread.localHandle() == currentThread.localHandle()) {
-                        focus().setThread(thread);
-                        foundMatchingThread = true;
-                        break;
-                    }
-                }
-                if (!foundMatchingThread && !maxVMState().threads().isEmpty()) {
-                    // Need to preserve invariant that a live thread is the current focus
-                    focus().setThread(maxVMState().threads().first());
-                }
-            }
-            for (MaxThread thread : maxVMState().threads()) {
-                for (InspectionListener listener : listeners) {
-                    listener.threadStateChanged(thread);
-                }
-            }
-        } else {
-            // A kind of optimization that keeps the StackInspector from walking every stack every time; is it needed?
-            final MaxThread currentThread = focus().thread();
-            for (InspectionListener listener : listeners) {
-                listener.threadStateChanged(currentThread);
-            }
+        if (!focus().thread().isLive()) {
+            // Our most recent thread focus died; pick a new one to maintain the
+            // invariant, even if another one gets set eventually.
+            focus().setThread(vmState().threads().first());
         }
-        Trace.end(TRACE_VALUE, threadTracer, startTimeMillis);
         try {
             refreshAll(false);
-
             // Make visible the code at the IP of the thread that triggered the breakpoint
             // or the memory location that triggered a watchpoint
-
-            final MaxWatchpointEvent watchpointEvent = maxVMState().watchpointEvent();
+            final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
             if (watchpointEvent != null) {
                 focus().setThread(watchpointEvent.maxThread());
                 focus().setWatchpoint(watchpointEvent.maxWatchpoint());
                 focus().setAddress(watchpointEvent.address());
-            } else if (!maxVMState().breakpointEvents().isEmpty()) {
-                final MaxThread thread = maxVMState().breakpointEvents().first().thread();
+            } else if (!vmState().breakpointEvents().isEmpty()) {
+                final MaxThread thread = vmState().breakpointEvents().first().thread();
                 if (thread != null) {
                     focus().setThread(thread);
                 } else {
@@ -631,7 +598,7 @@ public final class Inspection implements InspectionHolder {
     public void quit() {
         settings().quit();
         try {
-            if (maxVMState().processState() != TERMINATED) {
+            if (vmState().processState() != TERMINATED) {
                 maxVM().terminateVM();
             }
         } catch (Exception exception) {

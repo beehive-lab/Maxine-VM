@@ -18,43 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.debug;
+package com.sun.max.vm.instrument;
 
-import java.awt.*;
-
-import javax.swing.*;
-
-import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
+import com.sun.max.*;
+import com.sun.max.vm.*;
 
 /**
- * Display panel specialized for displaying VM stack frames for VM compiled methods.
+ * @see MaxPackage
  *
- * @author Michael Van De Vanter
+ * @author Mick Jordan
  */
-public final class DefaultCompiledStackFramePanel extends CompiledStackFramePanel {
-
-    private final CompiledStackFrameTable compiledStackFrameTable;
-
-    public DefaultCompiledStackFramePanel(Inspection inspection, MaxStackFrame.Compiled javaStackFrame, CompiledStackFrameViewPreferences preferences) {
-        super(inspection, javaStackFrame);
-        compiledStackFrameTable = new CompiledStackFrameTable(inspection, javaStackFrame, preferences);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), compiledStackFrameTable);
-        add(scrollPane, BorderLayout.CENTER);
-        refresh(true);
+public class Package extends VMPackage {
+    public Package() {
+        super();
     }
-
-    @Override
-    public void refresh(boolean force) {
-        compiledStackFrameTable.refresh(force);
-        super.refresh(force);
-    }
-
-    @Override
-    public void redisplay() {
-        compiledStackFrameTable.redisplay();
-        super.redisplay();
-    }
-
 }
