@@ -45,18 +45,18 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         return Stoppable.NULL_POINTER_CHECK;
     }
 
-    public static class ReadByteAtLongOffset extends PointerLoadBuiltin {
+    public static class ReadByte extends PointerLoadBuiltin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitReadByteAtLongOffset(this, result, arguments);
+            visitor.visitReadByte(this, result, arguments);
         }
 
-        public static final ReadByteAtLongOffset BUILTIN = new ReadByteAtLongOffset();
+        public static final ReadByte BUILTIN = new ReadByte();
     }
 
     public static class ReadByteAtIntOffset extends PointerLoadBuiltin {
-        @BUILTIN(builtinClass = ReadByteAtIntOffset.class)
+        @BUILTIN(value = ReadByteAtIntOffset.class)
         private static byte readByteAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
             return HostTupleAccess.readByte(tuple, hub.findFieldActor(offset));
@@ -82,19 +82,19 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         public static final GetByte BUILTIN = new GetByte();
     }
 
-    public static class ReadShortAtLongOffset extends PointerLoadBuiltin {
+    public static class ReadShort extends PointerLoadBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitReadShortAtLongOffset(this, result, arguments);
+            visitor.visitReadShort(this, result, arguments);
         }
 
-        public static final ReadShortAtLongOffset BUILTIN = new ReadShortAtLongOffset();
+        public static final ReadShort BUILTIN = new ReadShort();
     }
 
     public static class ReadShortAtIntOffset extends PointerLoadBuiltin {
-        @BUILTIN(builtinClass = ReadShortAtIntOffset.class)
+        @BUILTIN(value = ReadShortAtIntOffset.class)
         private static short readShortAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
             return HostTupleAccess.readShort(tuple, hub.findFieldActor(offset));
@@ -119,19 +119,19 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         public static final GetShort BUILTIN = new GetShort();
     }
 
-    public static class ReadCharAtLongOffset extends PointerLoadBuiltin {
+    public static class ReadChar extends PointerLoadBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitReadCharAtLongOffset(this, result, arguments);
+            visitor.visitReadChar(this, result, arguments);
         }
 
-        public static final ReadCharAtLongOffset BUILTIN = new ReadCharAtLongOffset();
+        public static final ReadChar BUILTIN = new ReadChar();
     }
 
     public static class ReadCharAtIntOffset extends PointerLoadBuiltin {
-        @BUILTIN(builtinClass = ReadCharAtIntOffset.class)
+        @BUILTIN(value = ReadCharAtIntOffset.class)
         private static char readCharAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
             return HostTupleAccess.readChar(tuple, hub.findFieldActor(offset));
@@ -156,19 +156,19 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         public static final GetChar BUILTIN = new GetChar();
     }
 
-    public static class ReadIntAtLongOffset extends PointerLoadBuiltin {
+    public static class ReadInt extends PointerLoadBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitReadIntAtLongOffset(this, result, arguments);
+            visitor.visitReadInt(this, result, arguments);
         }
 
-        public static final ReadIntAtLongOffset BUILTIN = new ReadIntAtLongOffset();
+        public static final ReadInt BUILTIN = new ReadInt();
     }
 
     public static class ReadIntAtIntOffset extends PointerLoadBuiltin {
-        @BUILTIN(builtinClass = ReadIntAtIntOffset.class)
+        @BUILTIN(value = ReadIntAtIntOffset.class)
         private static int readIntAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
             return HostTupleAccess.readInt(tuple, hub.findFieldActor(offset));
@@ -194,19 +194,19 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         public static final GetInt BUILTIN = new GetInt();
     }
 
-    public static class ReadFloatAtLongOffset extends PointerLoadBuiltin {
+    public static class ReadFloat extends PointerLoadBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitReadFloatAtLongOffset(this, result, arguments);
+            visitor.visitReadFloat(this, result, arguments);
         }
 
-        public static final ReadFloatAtLongOffset BUILTIN = new ReadFloatAtLongOffset();
+        public static final ReadFloat BUILTIN = new ReadFloat();
     }
 
     public static class ReadFloatAtIntOffset extends PointerLoadBuiltin {
-        @BUILTIN(builtinClass = ReadFloatAtIntOffset.class)
+        @BUILTIN(value = ReadFloatAtIntOffset.class)
         private static float readFloatAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
             return HostTupleAccess.readFloat(tuple, hub.findFieldActor(offset));
@@ -232,19 +232,19 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         public static final GetFloat BUILTIN = new GetFloat();
     }
 
-    public static class ReadLongAtLongOffset extends PointerLoadBuiltin {
+    public static class ReadLong extends PointerLoadBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitReadLongAtLongOffset(this, result, arguments);
+            visitor.visitReadLong(this, result, arguments);
         }
 
-        public static final ReadLongAtLongOffset BUILTIN = new ReadLongAtLongOffset();
+        public static final ReadLong BUILTIN = new ReadLong();
     }
 
     public static class ReadLongAtIntOffset extends PointerLoadBuiltin {
-        @BUILTIN(builtinClass = ReadLongAtIntOffset.class)
+        @BUILTIN(value = ReadLongAtIntOffset.class)
         private static long readLongAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
             return HostTupleAccess.readLong(tuple, hub.findFieldActor(offset));
@@ -270,19 +270,19 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         public static final GetLong BUILTIN = new GetLong();
     }
 
-    public static class ReadDoubleAtLongOffset extends PointerLoadBuiltin {
+    public static class ReadDouble extends PointerLoadBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitReadDoubleAtLongOffset(this, result, arguments);
+            visitor.visitReadDouble(this, result, arguments);
         }
 
-        public static final ReadDoubleAtLongOffset BUILTIN = new ReadDoubleAtLongOffset();
+        public static final ReadDouble BUILTIN = new ReadDouble();
     }
 
     public static class ReadDoubleAtIntOffset extends PointerLoadBuiltin {
-        @BUILTIN(builtinClass = ReadDoubleAtIntOffset.class)
+        @BUILTIN(value = ReadDoubleAtIntOffset.class)
         private static double readDoubleAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
             return HostTupleAccess.readDouble(tuple, hub.findFieldActor(offset));
@@ -308,19 +308,19 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         public static final GetDouble BUILTIN = new GetDouble();
     }
 
-    public static class ReadWordAtLongOffset extends PointerLoadBuiltin {
+    public static class ReadWord extends PointerLoadBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitReadWordAtLongOffset(this, result, arguments);
+            visitor.visitReadWord(this, result, arguments);
         }
 
-        public static final ReadWordAtLongOffset BUILTIN = new ReadWordAtLongOffset();
+        public static final ReadWord BUILTIN = new ReadWord();
     }
 
     public static class ReadWordAtIntOffset extends PointerLoadBuiltin {
-        @BUILTIN(builtinClass = ReadWordAtIntOffset.class)
+        @BUILTIN(value = ReadWordAtIntOffset.class)
         private static Word readWordAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
             return HostTupleAccess.readWord(tuple, hub.findFieldActor(offset));
@@ -346,19 +346,19 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
         public static final GetWord BUILTIN = new GetWord();
     }
 
-    public static class ReadReferenceAtLongOffset extends PointerLoadBuiltin {
+    public static class ReadReference extends PointerLoadBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitReadReferenceAtLongOffset(this, result, arguments);
+            visitor.visitReadReference(this, result, arguments);
         }
 
-        public static final ReadReferenceAtLongOffset BUILTIN = new ReadReferenceAtLongOffset();
+        public static final ReadReference BUILTIN = new ReadReference();
     }
 
     public static class ReadReferenceAtIntOffset extends PointerLoadBuiltin {
-        @BUILTIN(builtinClass = ReadReferenceAtIntOffset.class)
+        @BUILTIN(value = ReadReferenceAtIntOffset.class)
         private static Object readReferenceAtIntOffset(Object tuple, int offset) {
             final Hub hub = HostObjectAccess.readHub(tuple);
             return HostTupleAccess.readObject(tuple, hub.findFieldActor(offset));

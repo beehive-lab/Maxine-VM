@@ -20,11 +20,16 @@
  */
 package com.sun.max.unsafe;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
-import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.builtin.PointerAtomicBuiltin.*;
+import com.sun.max.vm.compiler.builtin.PointerLoadBuiltin.*;
+import com.sun.max.vm.compiler.builtin.PointerStoreBuiltin.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -52,6 +57,7 @@ public abstract class Pointer extends Address implements Accessor {
     }
 
     @INLINE
+    @INTRINSIC(ZERO)
     public static Pointer zero() {
         return Word.isBoxed() ? BoxedPointer.ZERO : fromInt(0);
     }
@@ -148,18 +154,21 @@ public abstract class Pointer extends Address implements Accessor {
 
     @Override
     @INLINE
+    @INTRINSIC(WDIV)
     public final Pointer dividedBy(Address divisor) {
         return asAddress().dividedBy(divisor).asPointer();
     }
 
     @Override
     @INLINE
+    @INTRINSIC(WDIVI)
     public final Pointer dividedBy(int divisor) {
         return asAddress().dividedBy(divisor).asPointer();
     }
 
     @Override
     @INLINE
+    @INTRINSIC(WMOD)
     public final Pointer remainder(Address divisor) {
         return asAddress().remainder(divisor).asPointer();
     }
@@ -266,26 +275,18 @@ public abstract class Pointer extends Address implements Accessor {
         return Platform.hostOrTarget().processorKind.instructionSet.category == InstructionSet.Category.RISC;
     }
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadByteAtLongOffset.class)
-    protected native byte readByteAtLongOffset(long offset);
-
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadByteAtIntOffset.class)
-    protected native byte readByteAtIntOffset(int offset);
-
-    @INLINE(override = true)
+    @BUILTIN(ReadByteAtIntOffset.class)
+    @INTRINSIC(PREAD_BYTE_I)
     public byte readByte(int offset) {
-        return readByteAtIntOffset(offset);
+        return readByte(Offset.fromInt(offset));
     }
 
-    @INLINE(override = true)
-    public final byte readByte(Offset offset) {
-        if (Word.width() == 64) {
-            return readByteAtLongOffset(offset.toLong());
-        }
-        return readByteAtIntOffset(offset.toInt());
-    }
+    @BUILTIN(ReadByte.class)
+    @INTRINSIC(PREAD_BYTE)
+    public abstract byte readByte(Offset offset);
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.GetByte.class)
+    @BUILTIN(GetByte.class)
+    @INTRINSIC(PGET_BYTE)
     private native byte builtinGetByte(int displacement, int index);
 
     @INLINE
@@ -331,26 +332,18 @@ public abstract class Pointer extends Address implements Accessor {
         return getBoolean(0);
     }
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadShortAtLongOffset.class)
-    protected native short readShortAtLongOffset(long offset);
-
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadShortAtIntOffset.class)
-    protected native short readShortAtIntOffset(int offset);
-
-    @INLINE
+    @BUILTIN(ReadShortAtIntOffset.class)
+    @INTRINSIC(PREAD_SHORT_I)
     public final short readShort(int offset) {
-        return readShortAtIntOffset(offset);
+        return readShort(Offset.fromInt(offset));
     }
 
-    @INLINE
-    public final short readShort(Offset offset) {
-        if (Word.width() == 64) {
-            return readShortAtLongOffset(offset.toLong());
-        }
-        return readShortAtIntOffset(offset.toInt());
-    }
+    @BUILTIN(ReadShort.class)
+    @INTRINSIC(PREAD_SHORT)
+    public abstract short readShort(Offset offset);
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.GetShort.class)
+    @BUILTIN(GetShort.class)
+    @INTRINSIC(PGET_SHORT)
     private native short builtinGetShort(int displacement, int index);
 
     @INLINE
@@ -371,26 +364,18 @@ public abstract class Pointer extends Address implements Accessor {
         return getShort(0);
     }
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadCharAtLongOffset.class)
-    protected native char readCharAtLongOffset(long offset);
-
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadCharAtIntOffset.class)
-    protected native char readCharAtIntOffset(int offset);
-
-    @INLINE
+    @BUILTIN(ReadCharAtIntOffset.class)
+    @INTRINSIC(PREAD_CHAR_I)
     public final char readChar(int offset) {
-        return readCharAtIntOffset(offset);
+        return readChar(Offset.fromInt(offset));
     }
 
-    @INLINE
-    public final char readChar(Offset offset) {
-        if (Word.width() == 64) {
-            return readCharAtLongOffset(offset.toLong());
-        }
-        return readCharAtIntOffset(offset.toInt());
-    }
+    @BUILTIN(ReadChar.class)
+    @INTRINSIC(PREAD_CHAR)
+    public abstract char readChar(Offset offset);
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.GetChar.class)
+    @BUILTIN(GetChar.class)
+    @INTRINSIC(PGET_CHAR)
     private native char builtinGetChar(int displacement, int index);
 
     @INLINE
@@ -411,26 +396,18 @@ public abstract class Pointer extends Address implements Accessor {
         return getChar(0);
     }
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadIntAtLongOffset.class)
-    protected native int readIntAtLongOffset(long offset);
-
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadIntAtIntOffset.class)
-    protected native int readIntAtIntOffset(int offset);
-
-    @INLINE
+    @BUILTIN(ReadIntAtIntOffset.class)
+    @INTRINSIC(PREAD_INT_I)
     public final int readInt(int offset) {
-        return readIntAtIntOffset(offset);
+        return readInt(Offset.fromInt(offset));
     }
 
-    @INLINE
-    public final int readInt(Offset offset) {
-        if (Word.width() == 64) {
-            return readIntAtLongOffset(offset.toLong());
-        }
-        return readIntAtIntOffset(offset.toInt());
-    }
+    @BUILTIN(ReadInt.class)
+    @INTRINSIC(PREAD_INT)
+    public abstract int readInt(Offset offset);
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.GetInt.class)
+    @BUILTIN(GetInt.class)
+    @INTRINSIC(PGET_INT)
     private native int builtinGetInt(int displacement, int index);
 
     @INLINE
@@ -451,26 +428,18 @@ public abstract class Pointer extends Address implements Accessor {
         return getInt(0);
     }
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadFloatAtLongOffset.class)
-    protected native float readFloatAtLongOffset(long offset);
-
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadFloatAtIntOffset.class)
-    protected native float readFloatAtIntOffset(int offset);
-
-    @INLINE
+    @BUILTIN(ReadFloatAtIntOffset.class)
+    @INTRINSIC(PREAD_FLOAT_I)
     public final float readFloat(int offset) {
-        return readFloatAtIntOffset(offset);
+        return readFloat(Offset.fromInt(offset));
     }
 
-    @INLINE
-    public final float readFloat(Offset offset) {
-        if (Word.width() == 64) {
-            return readFloatAtLongOffset(offset.toLong());
-        }
-        return readFloatAtIntOffset(offset.toInt());
-    }
+    @BUILTIN(ReadFloat.class)
+    @INTRINSIC(PREAD_FLOAT)
+    public abstract float readFloat(Offset offset);
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.GetFloat.class)
+    @BUILTIN(GetFloat.class)
+    @INTRINSIC(PGET_FLOAT)
     private native float builtinGetFloat(int displacement, int index);
 
     @INLINE
@@ -491,26 +460,18 @@ public abstract class Pointer extends Address implements Accessor {
         return getFloat(0);
     }
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadLongAtLongOffset.class)
-    protected native long readLongAtLongOffset(long offset);
-
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadLongAtIntOffset.class)
-    protected native long readLongAtIntOffset(int offset);
-
-    @INLINE
+    @BUILTIN(ReadLongAtIntOffset.class)
+    @INTRINSIC(PREAD_LONG_I)
     public final long readLong(int offset) {
-        return readLongAtIntOffset(offset);
+        return readLong(Offset.fromInt(offset));
     }
 
-    @INLINE
-    public final long readLong(Offset offset) {
-        if (Word.width() == 64) {
-            return readLongAtLongOffset(offset.toLong());
-        }
-        return readLongAtIntOffset(offset.toInt());
-    }
+    @BUILTIN(ReadLong.class)
+    @INTRINSIC(PREAD_LONG)
+    public abstract long readLong(Offset offset);
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.GetLong.class)
+    @BUILTIN(GetLong.class)
+    @INTRINSIC(PGET_LONG)
     private native long builtinGetLong(int displacement, int index);
 
     @INLINE
@@ -531,26 +492,18 @@ public abstract class Pointer extends Address implements Accessor {
         return getLong(0);
     }
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadDoubleAtLongOffset.class)
-    protected native double readDoubleAtLongOffset(long offset);
-
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadDoubleAtIntOffset.class)
-    protected native double readDoubleAtIntOffset(int offset);
-
-    @INLINE
+    @BUILTIN(ReadDoubleAtIntOffset.class)
+    @INTRINSIC(PREAD_DOUBLE_I)
     public final double readDouble(int offset) {
-        return readDoubleAtIntOffset(offset);
+        return readDouble(Offset.fromInt(offset));
     }
 
-    @INLINE
-    public final double readDouble(Offset offset) {
-        if (Word.width() == 64) {
-            return readDoubleAtLongOffset(offset.toLong());
-        }
-        return readDoubleAtIntOffset(offset.toInt());
-    }
+    @BUILTIN(ReadDouble.class)
+    @INTRINSIC(PREAD_DOUBLE)
+    public abstract double readDouble(Offset offset);
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.GetDouble.class)
+    @BUILTIN(GetDouble.class)
+    @INTRINSIC(PGET_DOUBLE)
     private native double builtinGetDouble(int displacement, int index);
 
     @INLINE
@@ -571,26 +524,18 @@ public abstract class Pointer extends Address implements Accessor {
         return getDouble(0);
     }
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadWordAtLongOffset.class)
-    protected native Word readWordAtLongOffset(long offset);
-
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadWordAtIntOffset.class)
-    protected native Word readWordAtIntOffset(int offset);
-
-    @INLINE
+    @BUILTIN(ReadWordAtIntOffset.class)
+    @INTRINSIC(PREAD_WORD_I)
     public final Word readWord(int offset) {
-        return readWordAtIntOffset(offset);
+        return readWord(Offset.fromInt(offset));
     }
 
-    @INLINE
-    public final Word readWord(Offset offset) {
-        if (Word.width() == 64) {
-            return readWordAtLongOffset(offset.toLong());
-        }
-        return readWordAtIntOffset(offset.toInt());
-    }
+    @BUILTIN(ReadWord.class)
+    @INTRINSIC(PREAD_WORD)
+    public abstract Word readWord(Offset offset);
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.GetWord.class)
+    @BUILTIN(GetWord.class)
+    @INTRINSIC(PGET_WORD)
     private native Word builtinGetWord(int displacement, int index);
 
     @INLINE
@@ -636,26 +581,18 @@ public abstract class Pointer extends Address implements Accessor {
         return getGrip(0);
     }
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadReferenceAtLongOffset.class)
-    protected native Reference readReferenceAtLongOffset(long offset);
-
-    @BUILTIN(builtinClass = PointerLoadBuiltin.ReadReferenceAtIntOffset.class)
-    protected native Reference readReferenceAtIntOffset(int offset);
-
-    @INLINE
+    @BUILTIN(ReadReferenceAtIntOffset.class)
+    @INTRINSIC(PREAD_REFERENCE_I)
     public final Reference readReference(int offset) {
-        return readReferenceAtIntOffset(offset);
+        return readReference(Offset.fromInt(offset));
     }
 
-    @INLINE
-    public final Reference readReference(Offset offset) {
-        if (Word.width() == 64) {
-            return readReferenceAtLongOffset(offset.toLong());
-        }
-        return readReferenceAtIntOffset(offset.toInt());
-    }
+    @BUILTIN(ReadReference.class)
+    @INTRINSIC(PREAD_REFERENCE)
+    public abstract Reference readReference(Offset offset);
 
-    @BUILTIN(builtinClass = PointerLoadBuiltin.GetReference.class)
+    @BUILTIN(GetReference.class)
+    @INTRINSIC(PGET_REFERENCE)
     private native Reference builtinGetReference(int displacement, int index);
 
     @INLINE
@@ -676,27 +613,18 @@ public abstract class Pointer extends Address implements Accessor {
         return getReference(0);
     }
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteByteAtLongOffset.class)
-    protected native void writeByteAtLongOffset(long offset, byte value);
-
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteByteAtIntOffset.class)
-    protected native void writeByteAtIntOffset(int offset, byte value);
-
-    @INLINE
+    @BUILTIN(WriteByteAtIntOffset.class)
+    @INTRINSIC(PWRITE_BYTE_I)
     public final void writeByte(int offset, byte value) {
-        writeByteAtIntOffset(offset, value);
+        writeByte(Offset.fromInt(offset), value);
     }
 
-    @INLINE
-    public final void writeByte(Offset offset, byte value) {
-        if (Word.width() == 64) {
-            writeByteAtLongOffset(offset.toLong(), value);
-        } else {
-            writeByteAtIntOffset(offset.toInt(), value);
-        }
-    }
+    @BUILTIN(WriteByte.class)
+    @INTRINSIC(PWRITE_BYTE)
+    public abstract void writeByte(Offset offset, byte value);
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.SetByte.class)
+    @BUILTIN(SetByte.class)
+    @INTRINSIC(PSET_BYTE)
     private native void builtinSetByte(int displacement, int index, byte value);
 
     @INLINE
@@ -743,27 +671,18 @@ public abstract class Pointer extends Address implements Accessor {
         setBoolean(0, value);
     }
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteShortAtLongOffset.class)
-    protected native void writeShortAtLongOffset(long offset, short value);
-
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteShortAtIntOffset.class)
-    protected native void writeShortAtIntOffset(int offset, short value);
-
-    @INLINE
+    @BUILTIN(WriteShortAtIntOffset.class)
+    @INTRINSIC(PWRITE_SHORT_I)
     public final void writeShort(int offset, short value) {
-        writeShortAtIntOffset(offset, value);
+        writeShort(Offset.fromInt(offset), value);
     }
 
-    @INLINE
-    public final void writeShort(Offset offset, short value) {
-        if (Word.width() == 64) {
-            writeShortAtLongOffset(offset.toLong(), value);
-        } else {
-            writeShortAtIntOffset(offset.toInt(), value);
-        }
-    }
+    @BUILTIN(WriteShort.class)
+    @INTRINSIC(PWRITE_SHORT)
+    public abstract void writeShort(Offset offset, short value);
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.SetShort.class)
+    @BUILTIN(SetShort.class)
+    @INTRINSIC(PSET_SHORT)
     private native void builtinSetShort(int displacement, int index, short value);
 
     @INLINE
@@ -810,27 +729,18 @@ public abstract class Pointer extends Address implements Accessor {
         setChar(0, value);
     }
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteIntAtLongOffset.class)
-    protected native void writeIntAtLongOffset(long offset, int value);
-
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteIntAtIntOffset.class)
-    protected native void writeIntAtIntOffset(int offset, int value);
-
-    @INLINE
+    @BUILTIN(WriteIntAtIntOffset.class)
+    @INTRINSIC(PWRITE_INT_I)
     public final void writeInt(int offset, int value) {
-        writeIntAtIntOffset(offset, value);
+        writeInt(Offset.fromInt(offset), value);
     }
 
-    @INLINE
-    public final void writeInt(Offset offset, int value) {
-        if (Word.width() == 64) {
-            writeIntAtLongOffset(offset.toLong(), value);
-        } else {
-            writeIntAtIntOffset(offset.toInt(), value);
-        }
-    }
+    @BUILTIN(WriteInt.class)
+    @INTRINSIC(PWRITE_INT)
+    public abstract void writeInt(Offset offset, int value);
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.SetInt.class)
+    @BUILTIN(SetInt.class)
+    @INTRINSIC(PSET_INT)
     private native void builtinSetInt(int displacement, int index, int value);
 
     @INLINE
@@ -852,27 +762,18 @@ public abstract class Pointer extends Address implements Accessor {
         setInt(0, value);
     }
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteFloatAtLongOffset.class)
-    protected native void writeFloatAtLongOffset(long offset, float value);
-
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteFloatAtIntOffset.class)
-    protected native void writeFloatAtIntOffset(int offset, float value);
-
-    @INLINE
+    @BUILTIN(WriteFloatAtIntOffset.class)
+    @INTRINSIC(PWRITE_FLOAT_I)
     public final void writeFloat(int offset, float value) {
-        writeFloatAtIntOffset(offset, value);
+        writeFloat(Offset.fromInt(offset), value);
     }
 
-    @INLINE
-    public final void writeFloat(Offset offset, float value) {
-        if (Word.width() == 64) {
-            writeFloatAtLongOffset(offset.toLong(), value);
-        } else {
-            writeFloatAtIntOffset(offset.toInt(), value);
-        }
-    }
+    @BUILTIN(WriteFloat.class)
+    @INTRINSIC(PWRITE_FLOAT)
+    public abstract void writeFloat(Offset offset, float value);
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.SetFloat.class)
+    @BUILTIN(SetFloat.class)
+    @INTRINSIC(PSET_FLOAT)
     private native void builtinSetFloat(int displacement, int index, float value);
 
     @INLINE
@@ -894,27 +795,18 @@ public abstract class Pointer extends Address implements Accessor {
         setFloat(0, value);
     }
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteLongAtLongOffset.class)
-    protected native void writeLongAtLongOffset(long offset, long value);
-
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteLongAtIntOffset.class)
-    protected native void writeLongAtIntOffset(int offset, long value);
-
-    @INLINE
+    @BUILTIN(WriteLongAtIntOffset.class)
+    @INTRINSIC(PWRITE_LONG_I)
     public final void writeLong(int offset, long value) {
-        writeLongAtIntOffset(offset, value);
+        writeLong(Offset.fromInt(offset), value);
     }
 
-    @INLINE
-    public final void writeLong(Offset offset, long value) {
-        if (Word.width() == 64) {
-            writeLongAtLongOffset(offset.toLong(), value);
-        } else {
-            writeLongAtIntOffset(offset.toInt(), value);
-        }
-    }
+    @BUILTIN(WriteLong.class)
+    @INTRINSIC(PWRITE_LONG)
+    public abstract void writeLong(Offset offset, long value);
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.SetLong.class)
+    @BUILTIN(SetLong.class)
+    @INTRINSIC(PSET_LONG)
     private native void builtinSetLong(int displacement, int index, long value);
 
     @INLINE
@@ -936,27 +828,18 @@ public abstract class Pointer extends Address implements Accessor {
         setLong(0, value);
     }
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteDoubleAtLongOffset.class)
-    protected native void writeDoubleAtLongOffset(long offset, double value);
-
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteDoubleAtIntOffset.class)
-    protected native void writeDoubleAtIntOffset(int offset, double value);
-
-    @INLINE
+    @BUILTIN(WriteDoubleAtIntOffset.class)
+    @INTRINSIC(PWRITE_DOUBLE_I)
     public final void writeDouble(int offset, double value) {
-        writeDoubleAtIntOffset(offset, value);
+        writeDouble(Offset.fromInt(offset), value);
     }
 
-    @INLINE
-    public final void writeDouble(Offset offset, double value) {
-        if (Word.width() == 64) {
-            writeDoubleAtLongOffset(offset.toLong(), value);
-        } else {
-            writeDoubleAtIntOffset(offset.toInt(), value);
-        }
-    }
+    @BUILTIN(WriteDouble.class)
+    @INTRINSIC(PWRITE_DOUBLE)
+    public abstract void writeDouble(Offset offset, double value);
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.SetDouble.class)
+    @BUILTIN(SetDouble.class)
+    @INTRINSIC(PSET_DOUBLE)
     private native void builtinSetDouble(int displacement, int index, double value);
 
     @INLINE
@@ -978,27 +861,18 @@ public abstract class Pointer extends Address implements Accessor {
         setDouble(0, value);
     }
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteWordAtLongOffset.class)
-    protected native void writeWordAtLongOffset(long offset, Word value);
-
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteWordAtIntOffset.class)
-    protected native void writeWordAtIntOffset(int offset, Word value);
-
-    @INLINE
+    @BUILTIN(WriteWordAtIntOffset.class)
+    @INTRINSIC(PWRITE_WORD_I)
     public final void writeWord(int offset, Word value) {
-        writeWordAtIntOffset(offset, value);
+        writeWord(Offset.fromInt(offset), value);
     }
 
-    @INLINE
-    public final void writeWord(Offset offset, Word value) {
-        if (Word.width() == 64) {
-            writeWordAtLongOffset(offset.toLong(), value);
-        } else {
-            writeWordAtIntOffset(offset.toInt(), value);
-        }
-    }
+    @BUILTIN(WriteWord.class)
+    @INTRINSIC(PWRITE_WORD)
+    public abstract void writeWord(Offset offset, Word value);
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.SetWord.class)
+    @BUILTIN(SetWord.class)
+    @INTRINSIC(PSET_WORD)
     private native void builtinSetWord(int displacement, int index, Word value);
 
     @INLINE
@@ -1045,27 +919,18 @@ public abstract class Pointer extends Address implements Accessor {
         setGrip(0, value);
     }
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteReferenceAtLongOffset.class)
-    protected native void writeReferenceAtLongOffset(long offset, Reference value);
-
-    @BUILTIN(builtinClass = PointerStoreBuiltin.WriteReferenceAtIntOffset.class)
-    protected native void writeReferenceAtIntOffset(int offset, Reference value);
-
-    @INLINE
+    @BUILTIN(WriteReferenceAtIntOffset.class)
+    @INTRINSIC(PWRITE_REFERENCE_I)
     public final void writeReference(int offset, Reference value) {
-        writeReferenceAtIntOffset(offset, value);
+        writeReference(Offset.fromInt(offset), value);
     }
 
-    @INLINE
-    public final void writeReference(Offset offset, Reference value) {
-        if (Word.width() == 64) {
-            writeReferenceAtLongOffset(offset.toLong(), value);
-        } else {
-            writeReferenceAtIntOffset(offset.toInt(), value);
-        }
-    }
+    @BUILTIN(WriteReference.class)
+    @INTRINSIC(PWRITE_REFERENCE)
+    public abstract void writeReference(Offset offset, Reference value);
 
-    @BUILTIN(builtinClass = PointerStoreBuiltin.SetReference.class)
+    @BUILTIN(SetReference.class)
+    @INTRINSIC(PSET_REFERENCE)
     private native void builtinSetReference(int displacement, int index, Reference value);
 
     @INLINE
@@ -1090,95 +955,44 @@ public abstract class Pointer extends Address implements Accessor {
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapIntAtLongOffset.class)
-    protected native int compareAndSwapIntAtLongOffset(long offset, int suspectedValue, int newValue);
+    @BUILTIN(CompareAndSwapIntAtIntOffset.class)
+    @INTRINSIC(PCMPSWP_INT_I)
+    public native int compareAndSwapInt(int offset, int suspectedValue, int newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapIntAtIntOffset.class)
-    protected native int compareAndSwapIntAtIntOffset(int offset, int suspectedValue, int newValue);
+    @BUILTIN(CompareAndSwapInt.class)
+    @INTRINSIC(PCMPSWP_INT)
+    public native int compareAndSwapInt(Offset offset, int suspectedValue, int newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @INLINE
-    public final int compareAndSwapInt(int offset, int suspectedValue, int newValue) {
-        return compareAndSwapIntAtIntOffset(offset, suspectedValue, newValue);
-    }
+    @BUILTIN(CompareAndSwapWordAtIntOffset.class)
+    @INTRINSIC(PCMPSWP_WORD_I)
+    public native Word compareAndSwapWord(int offset, Word suspectedValue, Word newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @INLINE
-    public final int compareAndSwapInt(Offset offset, int suspectedValue, int newValue) {
-        if (Word.width() == 64) {
-            return compareAndSwapIntAtLongOffset(offset.toLong(), suspectedValue, newValue);
-        }
-        return compareAndSwapIntAtIntOffset(offset.toInt(), suspectedValue, newValue);
-    }
+    @BUILTIN(CompareAndSwapWord.class)
+    @INTRINSIC(PCMPSWP_WORD)
+    public native Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapWordAtLongOffset.class)
-    protected native Word compareAndSwapWordAtLongOffset(long offset, Word suspectedValue, Word newValue);
+    @BUILTIN(CompareAndSwapReferenceAtIntOffset.class)
+    @INTRINSIC(PCMPSWP_REFERENCE_I)
+    public native Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
-    @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapWordAtIntOffset.class)
-    protected native Word compareAndSwapWordAtIntOffset(int offset, Word suspectedValue, Word newValue);
-
-    /**
-     * @see Accessor#compareAndSwapInt(Offset, int, int)
-     */
-    @INLINE
-    public final Word compareAndSwapWord(int offset, Word suspectedValue, Word newValue) {
-        return compareAndSwapWordAtIntOffset(offset, suspectedValue, newValue);
-    }
-
-    /**
-     * @see Accessor#compareAndSwapInt(Offset, int, int)
-     */
-    @INLINE
-    public final Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue) {
-        if (Word.width() == 64) {
-            return compareAndSwapWordAtLongOffset(offset.toLong(), suspectedValue, newValue);
-        }
-        return compareAndSwapWordAtIntOffset(offset.toInt(), suspectedValue, newValue);
-    }
-
-    /**
-     * @see Accessor#compareAndSwapInt(Offset, int, int)
-     */
-    @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapReferenceAtLongOffset.class)
-    protected native Reference compareAndSwapReferenceAtLongOffset(long offset, Reference suspectedValue, Reference newValue);
-
-    /**
-     * @see Accessor#compareAndSwapInt(Offset, int, int)
-     */
-    @BUILTIN(builtinClass = PointerAtomicBuiltin.CompareAndSwapReferenceAtIntOffset.class)
-    protected native Reference compareAndSwapReferenceAtIntOffset(int offset, Reference suspectedValue, Reference newValue);
-
-    /**
-     * @see Accessor#compareAndSwapInt(Offset, int, int)
-     */
-    @INLINE
-    public final Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue) {
-        return compareAndSwapReferenceAtIntOffset(offset, suspectedValue, newValue);
-    }
-
-    /**
-     * @see Accessor#compareAndSwapInt(Offset, int, int)
-     */
-    @INLINE
-    public final Reference compareAndSwapReference(Offset offset, Reference suspectedValue, Reference newValue) {
-        if (Word.width() == 64) {
-            return compareAndSwapReferenceAtLongOffset(offset.toLong(), suspectedValue, newValue);
-        }
-        return compareAndSwapReferenceAtIntOffset(offset.toInt(), suspectedValue, newValue);
-    }
+    @BUILTIN(CompareAndSwapReference.class)
+    @INTRINSIC(PCMPSWP_REFERENCE)
+    public native Reference compareAndSwapReference(Offset offset, Reference suspectedValue, Reference newValue);
 
     /**
      * Sets a bit in the bit map whose base is denoted by the value of this pointer.

@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -80,7 +83,7 @@ public abstract class ThinLockword64 extends LightweightLockword64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public static ThinLockword64 from(Word word) {
         return new BoxedThinLockword64(word);
     }

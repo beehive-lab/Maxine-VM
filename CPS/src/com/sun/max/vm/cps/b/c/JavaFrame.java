@@ -35,19 +35,15 @@ final class JavaFrame extends JavaSlots {
         variableFactory.copyParametersInto(slots);
     }
 
+    public CirVariable getVariable(int localIndex) {
+        return ((VariableJavaStackSlot) slots[localIndex]).cirVariable();
+    }
+
     public CirVariable makeVariable(Kind kind, int localIndex) {
         final CirVariable var = variableFactory.makeVariable(kind, localIndex);
         final VariableJavaStackSlot slot = new VariableJavaStackSlot(var);
         slots[localIndex] = slot;
         return var;
-    }
-
-    public CirVariable getReferenceOrWordVariable(int localIndex) {
-        final JavaStackSlot slot = slots[localIndex];
-        assert slot instanceof VariableJavaStackSlot;
-        final CirVariable result = ((VariableJavaStackSlot) slot).cirVariable();
-        assert result.kind().isReference || result.kind().isWord;
-        return result;
     }
 
     @Override

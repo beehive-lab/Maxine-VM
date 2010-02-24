@@ -22,6 +22,7 @@ package com.sun.max.vm.verifier;
 
 import static com.sun.max.vm.verifier.types.VerificationType.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -49,7 +50,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         this.thisObjectType = classVerifier.getObjectType(classActor().typeDescriptor);
         this.frame = createInitialFrame(classMethodActor);
         this.frameMap = initializeFrameMap(codeAttribute, frame.copy(), classVerifier);
-        this.opcodeMap = new Bytecode[codeLength];
+        this.opcodeMap = new boolean[codeLength];
         this.exceptionHandlerMap = ExceptionHandler.createHandlerMap(codeLength, codeAttribute.exceptionHandlerTable());
     }
 
@@ -78,10 +79,9 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     protected final ExceptionHandler[] exceptionHandlerMap;
 
     /**
-     * A map from each bytecode position to the instruction {@linkplain Bytecode opcode} at that position. A null entry
-     * means that an instruction does not start at that position.
+     * A bit map indicating the bytecode positions at which an instruction starts.
      */
-    private final Bytecode[] opcodeMap;
+    private final boolean[] opcodeMap;
 
     @Override
     public void verify() {
@@ -174,7 +174,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         for (int position = 0; position != frameMap.length; ++position) {
             final Frame recordedFrame = frameMap[position];
             if (recordedFrame != null) {
-                if (opcodeMap[position] == null) {
+                if (!opcodeMap[position]) {
                     throw verifyError("Offset (" +  position + ") in a frame of the StackMapTable attribute does not point to an instruction");
                 }
             }
@@ -183,7 +183,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
     protected void verifyIsValidInstructionPosition(int position, String positionDescription) {
         try {
-            if (opcodeMap[position] != null) {
+            if (opcodeMap[position]) {
                 return;
             }
         } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
@@ -237,11 +237,11 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         if (verbose) {
             Log.println(Strings.indent(frame.toString(), "    "));
-            Log.println(currentOpcodePosition + ": " + interpreter.currentOpcode());
+            Log.println(currentOpcodePosition + ": " + Bytecodes.nameOf(interpreter.currentOpcode()));
             Log.println();
         }
 
-        opcodeMap[currentOpcodePosition] = interpreter.currentOpcode();
+        opcodeMap[currentOpcodePosition] = true;
 
         for (ExceptionHandler handler = exceptionHandlerMap[currentOpcodePosition]; handler != null; handler = handler.next()) {
             final int handlerPosition = handler.position();
@@ -1271,14 +1271,14 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 // Java source compiler will produce such code. As such, the instruction is
                 // re-written to use invokevirtual instead.
                 final byte[] code = bytecodeScanner().bytecodeBlock().code();
-                code[bytecodeScanner().currentOpcodePosition()] = (byte) Bytecode.INVOKEVIRTUAL.ordinal();
+                code[bytecodeScanner().currentOpcodePosition()] = (byte) Bytecodes.INVOKEVIRTUAL;
             }
 
             pushMethodResult(methodSignature);
         }
 
         @Override
-        public void callnative(int nativeFunctionDescriptorIndex) {
+        public void jnicall(int nativeFunctionDescriptorIndex) {
             final SignatureDescriptor nativeFunctionDescriptor = SignatureDescriptor.create(constantPool().utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
             popMethodParameters(nativeFunctionDescriptor);
             pushMethodResult(nativeFunctionDescriptor);
@@ -1324,7 +1324,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         }
 
         /**
-         * Gets the type of object constructed by a {@link Bytecode#NEW} instruction at a given position.
+         * Gets the type of object constructed by a {@link Bytecodes#NEW} instruction at a given position.
          */
         private TypeDescriptor getTypeDescriptorFromNewBytecode(int position) {
             final byte[] bytecodes = bytecodeScanner().bytecodeBlock().code();

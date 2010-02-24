@@ -20,13 +20,13 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
-import static com.sun.max.vm.bytecode.Bytecode.*;
+import static com.sun.c1x.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.type.*;
@@ -329,8 +329,8 @@ public abstract class BytecodeAssembler {
         emitByte(s);
     }
 
-    private void emitOpcode(Bytecode opcode) {
-        emitByte(opcode.ordinal());
+    private void emitOpcode(int opcode) {
+        emitByte(opcode);
     }
 
     private void emitOffset2(int offset) {
@@ -361,7 +361,7 @@ public abstract class BytecodeAssembler {
         emitOffset2(index);
     }
 
-    public void branch(Bytecode opcode, int address) {
+    public void branch(int opcode, int address) {
         final int offset = address - currentAddress;
         if (offset < Short.MIN_VALUE || offset > Short.MAX_VALUE) {
             throw classFormatError("Offset (" + offset + ") cannot be represented as signed 16-bit value");
@@ -370,7 +370,7 @@ public abstract class BytecodeAssembler {
         emitOffset2(offset);
     }
 
-    public void branch(final Bytecode opcode, final Label label) {
+    public void branch(final int opcode, final Label label) {
         if (label.isBound()) {
             branch(opcode, label.address());
         } else {
@@ -567,13 +567,13 @@ public abstract class BytecodeAssembler {
     }
 
     /**
-     * @see Bytecode#CALLNATIVE
+     * @see Bytecodes#JNICALL
      * @param nativeFunctionDescriptor
      *                the parameters and result type of the native function linked for the Java native method
      */
     public void callnative(SignatureDescriptor nativeFunctionDescriptor, int argSlots, int returnValueSlots) {
         final int nativeFunctionDescriptorIndex = constantPoolEditor.indexOf(makeUtf8Constant(nativeFunctionDescriptor.toString()));
-        emitOpcode(CALLNATIVE);
+        emitOpcode(JNICALL);
         emitCPIndex2(nativeFunctionDescriptorIndex);
         assert adjustmentMatchesSignature(nativeFunctionDescriptor, true, argSlots, returnValueSlots);
         setStack(stack - argSlots + returnValueSlots);
@@ -659,11 +659,11 @@ public abstract class BytecodeAssembler {
     /**
      * Emit a local variable load or store instruction.
      */
-    private void accessLocalVariable(Bytecode immediate0Opcode, Bytecode standardOpcode, int index, Kind kind, boolean isLoad) {
+    private void accessLocalVariable(int immediate0Opcode, int standardOpcode, int index, Kind kind, boolean isLoad) {
         ProgramError.check(index >= 0 && index < maxLocals);
-        assert immediate0Opcode.implicitNumericOperand() == 0;
+        assert nameOf(immediate0Opcode).endsWith("_0");
         if (index >= 0 && index <= 3) {
-            emitOpcode(Bytecode.from(immediate0Opcode.ordinal() + index));
+            emitOpcode(immediate0Opcode + index);
         } else if (index <= 0xff) {
             emitOpcode(standardOpcode);
             emitByte(index);
@@ -780,7 +780,7 @@ public abstract class BytecodeAssembler {
         if (value == -1) {
             emitOpcode(ICONST_M1);
         } else if (value >= 0 && value <= 5) {
-            emitOpcode(Bytecode.from(ICONST_0.ordinal() + value));
+            emitOpcode(ICONST_0 + value);
         } else if (value >= Byte.MIN_VALUE && value <= Byte.MAX_VALUE) {
             emitOpcode(BIPUSH);
             emitByte(value);

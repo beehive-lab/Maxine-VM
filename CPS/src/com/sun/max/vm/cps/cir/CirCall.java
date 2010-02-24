@@ -20,9 +20,9 @@
  */
 package com.sun.max.vm.cps.cir;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
@@ -158,7 +158,7 @@ public final class CirCall extends CirNode {
     /**
      * Determines if this is a call to a native function. Note, this does not mean a call to a native method, but the
      * call inside a native method's stub to the actual native code. This will be the translation of the
-     * {@link Bytecode#CALLNATIVE} instruction.
+     * {@link Bytecodes#JNICALL} instruction.
      */
     public boolean isNative() {
         return isNative;

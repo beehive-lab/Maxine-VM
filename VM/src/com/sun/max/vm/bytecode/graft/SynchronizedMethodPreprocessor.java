@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.bytecode.graft;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.vm.actor.member.*;
@@ -133,7 +134,7 @@ public final class SynchronizedMethodPreprocessor extends BytecodeAssembler {
                                                                        Sequence<ExceptionHandlerEntry> exceptionHandlerTable, OpcodePositionRelocator relocator) {
         final int codeLength = code.length;
         final int relocatedCodeStartAddress = relocator.relocate(0);
-        assert Bytecode.from(code[codeLength - 1]) == Bytecode.ATHROW;
+        assert (code[codeLength - 1] & 0xff) == Bytecodes.ATHROW;
         if (exceptionHandlerTable.isEmpty()) {
             return new ArraySequence<ExceptionHandlerEntry>(new ExceptionHandlerEntry(relocatedCodeStartAddress, codeLength - 1, monitorExitHandlerAddress, 0));
         }

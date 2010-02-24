@@ -25,6 +25,7 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
@@ -129,6 +130,22 @@ public final class CodeAttribute {
         return new DataInputStream(new ByteArrayInputStream(encodedData, offset, encodedData.length - offset));
     }
 
+    /**
+     * Gets the exception handler table as an array of triplets (start bci, end bci, handler bci).
+     *
+     * @return {@code null} if this code attribute has no exception handlers
+     */
+    public int[] exceptionHandlerPositions() {
+        if (exceptionHandlerTableOffset == -1) {
+            return null;
+        }
+        try {
+            return ExceptionHandlerEntry.decodeHandlerPositions(encodedData(exceptionHandlerTableOffset));
+        } catch (IOException e) {
+            throw ProgramError.unexpected(e);
+        }
+    }
+
     public Sequence<ExceptionHandlerEntry> exceptionHandlerTable() {
         try {
             return exceptionHandlerTableOffset == -1 ? Sequence.Static.empty(ExceptionHandlerEntry.class) : ExceptionHandlerEntry.decode(encodedData(exceptionHandlerTableOffset));
@@ -166,5 +183,14 @@ public final class CodeAttribute {
 
     public void setStackMapTableAttribute(StackMapTable stackMapTable) {
         stackMapTableAttribute = stackMapTable;
+    }
+
+    @Override
+    public String toString() {
+        try {
+            return CodeAttributePrinter.toString(this);
+        } catch (Exception e) {
+            return super.toString() + "[" + e + "]";
+        }
     }
 }

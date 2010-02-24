@@ -523,8 +523,8 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         }
 
         @Override
-        protected void execute(Bytecode bytecode) {
-            state.execute(bytecode);
+        protected void execute(int opcode) {
+            state.execute(opcode);
         }
 
         @Override

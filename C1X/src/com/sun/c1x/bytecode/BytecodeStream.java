@@ -188,7 +188,7 @@ public class BytecodeStream {
         curBCI = bci;
         if (curBCI < code.length) {
             opcode = Bytes.beU1(code, bci);
-            nextBCI = bci + Bytecodes.length(code, bci);
+            nextBCI = bci + Bytecodes.lengthOf(code, bci);
         } else {
             opcode = Bytecodes.END;
             nextBCI = curBCI;

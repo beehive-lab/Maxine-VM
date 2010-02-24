@@ -35,100 +35,47 @@
  */
 
 JNIEXPORT jbyte JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadByteAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadByte(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jbyte result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
     return result;
 }
 
-JNIEXPORT jbyte JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadByteAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
-{
-    jbyte result;
-    memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
-    return result;
-}
-
-
 JNIEXPORT jshort JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadShortAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadShort(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jshort result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
     return result;
 }
 
-JNIEXPORT jshort JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadShortAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
-{
-    jshort result;
-    memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
-    return result;
-}
-
-
 JNIEXPORT jchar JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadCharAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadChar(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jchar result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
     return result;
 }
 
-JNIEXPORT jchar JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadCharAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
-{
-    jchar result;
-    memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
-    return result;
-}
-
-
 JNIEXPORT jint JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadIntAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadInt(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jint result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
     return result;
 }
 
-JNIEXPORT jint JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadIntAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
-{
-    jint result;
-    memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
-    return result;
-}
-
-
 JNIEXPORT jfloat JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadFloatAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadFloat(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jfloat result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
     return result;
 }
 
-JNIEXPORT jfloat JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadFloatAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
-{
-    jfloat result;
-    memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
-    return result;
-}
-
-
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadLongAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
-{
-    jlong result;
-    memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
-    return result;
-}
-
-JNIEXPORT jlong JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadLongAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadLong(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jlong result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -136,7 +83,7 @@ Java_com_sun_max_unsafe_BoxedPointer_nativeReadLongAtIntOffset(JNIEnv *env, jcla
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadObjectAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadObject(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jobject result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
@@ -144,99 +91,51 @@ Java_com_sun_max_unsafe_BoxedPointer_nativeReadObjectAtLongOffset(JNIEnv *env, j
 }
 
 JNIEXPORT jdouble JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadDoubleAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset)
+Java_com_sun_max_unsafe_BoxedPointer_nativeReadDouble(JNIEnv *env, jclass c, jlong pointer, jlong offset)
 {
     jdouble result;
     memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
     return result;
 }
 
-JNIEXPORT jdouble JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeReadDoubleAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset)
-{
-    jdouble result;
-    memcpy(&result, (char *) ((Address) pointer) + offset, sizeof(result));
-    return result;
-}
-
-
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteByteAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jbyte value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteByte(JNIEnv *env, jclass c, jlong pointer, jlong offset, jbyte value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteByteAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jbyte value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteShortAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jshort value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteShort(JNIEnv *env, jclass c, jlong pointer, jlong offset, jshort value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteShortAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jshort value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteInt(JNIEnv *env, jclass c, jlong pointer, jlong offset, jint value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteIntAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jint value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteFloat(JNIEnv *env, jclass c, jlong pointer, jlong offset, jfloat value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteIntAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jint value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteFloatAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jfloat value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteLong(JNIEnv *env, jclass c, jlong pointer, jlong offset, jlong value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteFloatAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jfloat value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteLongAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jlong value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteObject(JNIEnv *env, jclass c, jlong pointer, jlong offset, jobject value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteLongAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jlong value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteObjectAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jobject value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteDoubleAtLongOffset(JNIEnv *env, jclass c, jlong pointer, jlong offset, jdouble value)
-{
-    memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
-}
-
-JNIEXPORT void JNICALL
-Java_com_sun_max_unsafe_BoxedPointer_nativeWriteDoubleAtIntOffset(JNIEnv *env, jclass c, jlong pointer, jint offset, jdouble value)
+Java_com_sun_max_unsafe_BoxedPointer_nativeWriteDouble(JNIEnv *env, jclass c, jlong pointer, jlong offset, jdouble value)
 {
     memcpy((char *) ((Address) pointer) + offset, &value, sizeof(value));
 }

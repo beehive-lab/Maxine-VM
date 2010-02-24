@@ -20,8 +20,11 @@
  */
 package com.sun.max.vm.value;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import java.io.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -124,7 +127,7 @@ public final class ObjectReferenceValue extends ReferenceValue {
         return value;
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     private static native Word toWord(Object value);
 
     @Override

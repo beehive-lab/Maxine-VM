@@ -246,7 +246,7 @@ public final class BreakpointsTable extends InspectorTable {
             }
             for (MaxBreakpoint breakpoint : breakpointFactory().breakpoints()) {
                 if (breakpoint.isBytecodeBreakpoint()) {
-                    // Bytecode breakpoint
+                    // Bytecodes breakpoint
                     final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.codeLocation());
                     if (breakpointData == null) {
                         // new breakpoint since last refresh
@@ -719,7 +719,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String kindName() {
-            return "Bytecode breakpoint";
+            return "Bytecodes breakpoint";
         }
 
         @Override
@@ -739,7 +739,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         String locationDescription() {
-            return "Bytecode position=" + location();
+            return "Bytecodes position=" + location();
         }
 
     }

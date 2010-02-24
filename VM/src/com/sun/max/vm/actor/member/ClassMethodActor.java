@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.actor.member;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 
 import java.lang.reflect.*;
 
@@ -181,6 +181,12 @@ public abstract class ClassMethodActor extends MethodActor {
                     if (substitute != null) {
                         compilee = substitute;
                         codeAttribute = substitute.originalCodeAttribute;
+                        if (substitute.compilee != null) {
+                            // Don't go through code preprocessing when the substitute already has
+                            this.codeAttribute = codeAttribute;
+                            this.compilee = compilee;
+                            return compilee;
+                        }
                     }
                     if (MaxineVM.isHosted() && !hostedVerificationDisabled) {
                         validateInlineAnnotation(compilee);
@@ -222,6 +228,7 @@ public abstract class ClassMethodActor extends MethodActor {
                     if (MaxineVM.isHosted()) {
                         try {
                             codeAttribute = verifier.verify(compilee, codeAttribute);
+                        } catch (HostOnlyClassError e) {
                         } catch (HostOnlyMethodError e) {
                         } catch (OmittedClassError e) {
                             // Ignore: assume all classes being loaded during boot imaging are verifiable.
@@ -230,6 +237,11 @@ public abstract class ClassMethodActor extends MethodActor {
                         codeAttribute = verifier.verify(compilee, codeAttribute);
                     }
                 }
+
+                if (codeAttribute != null) {
+                    new Intrinsics(compilee, codeAttribute).run();
+                }
+
                 this.codeAttribute = codeAttribute;
                 this.compilee = compilee;
             }
@@ -268,8 +280,8 @@ public abstract class ClassMethodActor extends MethodActor {
         final BytecodeVisitor visitor = new BytecodeAdapter() {
             @Override
             protected void opcodeDecoded() {
-                final Bytecode currentOpcode = currentOpcode();
-                if (currentOpcode.is(JSR_OR_RET)) {
+                final int currentOpcode = currentOpcode();
+                if (currentOpcode == JSR || currentOpcode == RET || currentOpcode == JSR_W) {
                     bytecodeScanner().stop();
                 }
             }

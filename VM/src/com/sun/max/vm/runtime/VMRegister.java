@@ -168,7 +168,7 @@ public final class VMRegister {
 
     @INLINE
     public static void addWordsToAbiStackPointer(int numberOfWords) {
-        SpecialBuiltin.addWordsToIntegerRegister(Role.ABI_STACK_POINTER, numberOfWords);
+        SpecialBuiltin.adjustJitStack(numberOfWords);
     }
 
     @INLINE

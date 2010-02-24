@@ -95,201 +95,115 @@ public final class BoxedPointer extends Pointer implements Boxed {
         return BoxedAddress.from(nativeWord).remainderByInt(divisor);
     }
 
-    private static native byte nativeReadByteAtLongOffset(long pointer, long offset);
+    private static native byte nativeReadByte(long pointer, long offset);
 
     @Override
-    protected byte readByteAtLongOffset(long offset) {
-        return nativeReadByteAtLongOffset(nativeWord, offset);
+    public byte readByte(Offset offset) {
+        return nativeReadByte(nativeWord, offset.toLong());
+    }
+
+    private static native short nativeReadShort(long pointer, long offset);
+
+    @Override
+    public short readShort(Offset offset) {
+        return nativeReadShort(nativeWord, offset.toLong());
     }
 
     @Override
-    protected byte readByteAtIntOffset(int offset) {
-        return readByteAtLongOffset(offset);
+    public char readChar(Offset offset) {
+        return (char) nativeReadShort(nativeWord, offset.toLong());
     }
 
-    private static native short nativeReadShortAtLongOffset(long pointer, long offset);
+    private static native int nativeReadInt(long pointer, long offset);
 
     @Override
-    protected short readShortAtLongOffset(long offset) {
-        return nativeReadShortAtLongOffset(nativeWord, offset);
-    }
-
-    @Override
-    protected short readShortAtIntOffset(int offset) {
-        return readShortAtLongOffset(offset);
+    public int readInt(Offset offset) {
+        return nativeReadInt(nativeWord, offset.toLong());
     }
 
     @Override
-    protected char readCharAtLongOffset(long offset) {
-        return (char) readShortAtLongOffset(offset);
+    public float readFloat(Offset offset) {
+        return SpecialBuiltin.intToFloat(readInt(offset));
+    }
+
+    private static native long nativeReadLong(long pointer, long offset);
+
+    @Override
+    public long readLong(Offset offset) {
+        return nativeReadLong(nativeWord, offset.toLong());
     }
 
     @Override
-    protected char readCharAtIntOffset(int offset) {
-        return readCharAtLongOffset(offset);
-    }
-
-    private static native int nativeReadIntAtLongOffset(long pointer, long offset);
-
-    @Override
-    protected int readIntAtLongOffset(long offset) {
-        return nativeReadIntAtLongOffset(nativeWord, offset);
+    public double readDouble(Offset offset) {
+        return SpecialBuiltin.longToDouble(readLong(offset));
     }
 
     @Override
-    protected int readIntAtIntOffset(int offset) {
-        return readIntAtLongOffset(offset);
-    }
-
-    @Override
-    protected float readFloatAtLongOffset(long offset) {
-        return SpecialBuiltin.intToFloat(readIntAtLongOffset(offset));
-    }
-
-    @Override
-    protected float readFloatAtIntOffset(int offset) {
-        return readFloatAtLongOffset(offset);
-    }
-
-    private static native long nativeReadLongAtLongOffset(long pointer, long offset);
-
-    @Override
-    protected long readLongAtLongOffset(long offset) {
-        return nativeReadLongAtLongOffset(nativeWord, offset);
-    }
-
-    @Override
-    protected long readLongAtIntOffset(int offset) {
-        return readLongAtLongOffset(offset);
-    }
-
-    @Override
-    protected double readDoubleAtLongOffset(long offset) {
-        return SpecialBuiltin.longToDouble(readLongAtLongOffset(offset));
-    }
-
-    @Override
-    protected double readDoubleAtIntOffset(int offset) {
-        return readDoubleAtLongOffset(offset);
-    }
-
-    @Override
-    protected Word readWordAtLongOffset(long offset) {
+    public Word readWord(Offset offset) {
         if (Word.width() == 64) {
-            return Address.fromLong(readLongAtLongOffset(offset));
+            return Address.fromLong(readLong(offset));
         }
-        return Address.fromInt(readIntAtLongOffset(offset));
+        return Address.fromInt(readInt(offset));
+    }
+
+    private static native Object nativeReadObject(long offset);
+
+    @Override
+    public Reference readReference(Offset offset) {
+        return Reference.fromJava(nativeReadObject(offset.toLong()));
+    }
+
+    private static native void nativeWriteByte(long pointer, long offset, byte value);
+
+    @Override
+    public void writeByte(Offset offset, byte value) {
+        nativeWriteByte(nativeWord, offset.toLong(), value);
+    }
+
+    private static native void nativeWriteShort(long pointer, long offset, short value);
+
+    @Override
+    public void writeShort(Offset offset, short value) {
+        nativeWriteShort(nativeWord, offset.toLong(), value);
+    }
+
+    private static native void nativeWriteInt(long pointer, long offset, int value);
+
+    @Override
+    public void writeInt(Offset offset, int value) {
+        nativeWriteInt(nativeWord, offset.toLong(), value);
     }
 
     @Override
-    protected Word readWordAtIntOffset(int offset) {
-        return readWordAtLongOffset(offset);
+    public void writeFloat(Offset offset, float value) {
+        writeInt(offset, SpecialBuiltin.floatToInt(value));
     }
 
-    private static native Object nativeReadObjectAtLongOffset(long offset);
+    private static native void nativeWriteLong(long pointer, long offset, long value);
 
     @Override
-    protected Reference readReferenceAtLongOffset(long offset) {
-        return Reference.fromJava(nativeReadObjectAtLongOffset(offset));
-    }
-
-    @Override
-    protected Reference readReferenceAtIntOffset(int offset) {
-        return readReferenceAtLongOffset(offset);
-    }
-
-    private static native void nativeWriteByteAtLongOffset(long pointer, long offset, byte value);
-
-    @Override
-    protected void writeByteAtLongOffset(long offset, byte value) {
-        nativeWriteByteAtLongOffset(nativeWord, offset, value);
+    public void writeLong(Offset offset, long value) {
+        nativeWriteLong(nativeWord, offset.toLong(), value);
     }
 
     @Override
-    protected void writeByteAtIntOffset(int offset, byte value) {
-        writeByteAtLongOffset(offset, value);
-    }
-
-    private static native void nativeWriteShortAtLongOffset(long pointer, long offset, short value);
-
-    @Override
-    protected void writeShortAtLongOffset(long offset, short value) {
-        nativeWriteShortAtLongOffset(nativeWord, offset, value);
+    public void writeDouble(Offset offset, double value) {
+        writeLong(offset, SpecialBuiltin.doubleToLong(value));
     }
 
     @Override
-    protected void writeShortAtIntOffset(int offset, short value) {
-        writeShortAtLongOffset(offset, value);
-    }
-
-    private static native void nativeWriteIntAtLongOffset(long pointer, long offset, int value);
-
-    @Override
-    protected void writeIntAtLongOffset(long offset, int value) {
-        nativeWriteIntAtLongOffset(nativeWord, offset, value);
-    }
-
-    @Override
-    protected void writeIntAtIntOffset(int offset, int value) {
-        writeIntAtLongOffset(offset, value);
-    }
-
-    @Override
-    protected void writeFloatAtLongOffset(long offset, float value) {
-        writeIntAtLongOffset(offset, SpecialBuiltin.floatToInt(value));
-    }
-
-    @Override
-    protected void writeFloatAtIntOffset(int offset, float value) {
-        writeFloatAtLongOffset(offset, value);
-    }
-
-    private static native void nativeWriteLongAtLongOffset(long pointer, long offset, long value);
-
-    @Override
-    protected void writeLongAtLongOffset(long offset, long value) {
-        nativeWriteLongAtLongOffset(nativeWord, offset, value);
-    }
-
-    @Override
-    protected void writeLongAtIntOffset(int offset, long value) {
-        writeLongAtLongOffset(offset, value);
-    }
-
-    @Override
-    protected void writeDoubleAtLongOffset(long offset, double value) {
-        writeLongAtLongOffset(offset, SpecialBuiltin.doubleToLong(value));
-    }
-
-    @Override
-    protected void writeDoubleAtIntOffset(int offset, double value) {
-        writeDoubleAtLongOffset(offset, value);
-    }
-
-    @Override
-    protected void writeWordAtLongOffset(long offset, Word value) {
+    public void writeWord(Offset offset, Word value) {
         if (Word.width() == 64) {
-            writeLongAtLongOffset(offset, value.asOffset().toLong());
+            writeLong(offset, value.asOffset().toLong());
         } else {
-            writeIntAtLongOffset(offset, value.asOffset().toInt());
+            writeInt(offset, value.asOffset().toInt());
         }
     }
 
-    @Override
-    protected void writeWordAtIntOffset(int offset, Word value) {
-        writeWordAtLongOffset(offset, value);
-    }
-
-    private static native void nativeWriteObjectAtLongOffset(long pointer, long offset, Object value);
+    private static native void nativeWriteObject(long pointer, long offset, Object value);
 
     @Override
-    protected void writeReferenceAtLongOffset(long offset, Reference value) {
-        nativeWriteObjectAtLongOffset(nativeWord, offset, value.toJava());
+    public void writeReference(Offset offset, Reference value) {
+        nativeWriteObject(nativeWord, offset.toLong(), value.toJava());
     }
-
-    @Override
-    protected void writeReferenceAtIntOffset(int offset, Reference value) {
-        writeReferenceAtLongOffset(offset, value);
-    }
-
 }

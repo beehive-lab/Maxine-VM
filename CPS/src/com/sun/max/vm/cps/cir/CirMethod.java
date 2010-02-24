@@ -299,7 +299,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public int reasonsMayStop() {
-        return Stoppable.CALL;
+        return Stoppable.CALL_STOP;
     }
 
     public int count(final Builtin builtin, int defaultResult) {

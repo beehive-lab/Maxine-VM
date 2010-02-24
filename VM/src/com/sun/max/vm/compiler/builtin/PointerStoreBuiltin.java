@@ -35,15 +35,15 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
         kind = signature.parameterDescriptorAt(signature.numberOfParameters() - 1).toKind();
     }
 
-    public static class WriteByteAtLongOffset extends PointerStoreBuiltin {
+    public static class WriteByte extends PointerStoreBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 3;
-            visitor.visitWriteByteAtLongOffset(this, result, arguments);
+            visitor.visitWriteByte(this, result, arguments);
         }
 
-        public static final WriteByteAtLongOffset BUILTIN = new WriteByteAtLongOffset();
+        public static final WriteByte BUILTIN = new WriteByte();
     }
 
     public static class WriteByteAtIntOffset extends PointerStoreBuiltin {
@@ -68,15 +68,15 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
         public static final SetByte BUILTIN = new SetByte();
     }
 
-    public static class WriteShortAtLongOffset extends PointerStoreBuiltin {
+    public static class WriteShort extends PointerStoreBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 3;
-            visitor.visitWriteShortAtLongOffset(this, result, arguments);
+            visitor.visitWriteShort(this, result, arguments);
         }
 
-        public static final WriteShortAtLongOffset BUILTIN = new WriteShortAtLongOffset();
+        public static final WriteShort BUILTIN = new WriteShort();
     }
 
     public static class WriteShortAtIntOffset extends PointerStoreBuiltin {
@@ -101,15 +101,15 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
         public static final SetShort BUILTIN = new SetShort();
     }
 
-    public static class WriteIntAtLongOffset extends PointerStoreBuiltin {
+    public static class WriteInt extends PointerStoreBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 3;
-            visitor.visitWriteIntAtLongOffset(this, result, arguments);
+            visitor.visitWriteInt(this, result, arguments);
         }
 
-        public static final WriteIntAtLongOffset BUILTIN = new WriteIntAtLongOffset();
+        public static final WriteInt BUILTIN = new WriteInt();
     }
 
     public static class WriteIntAtIntOffset extends PointerStoreBuiltin {
@@ -134,15 +134,15 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
         public static final SetInt BUILTIN = new SetInt();
     }
 
-    public static class WriteFloatAtLongOffset extends PointerStoreBuiltin {
+    public static class WriteFloat extends PointerStoreBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 3;
-            visitor.visitWriteFloatAtLongOffset(this, result, arguments);
+            visitor.visitWriteFloat(this, result, arguments);
         }
 
-        public static final WriteFloatAtLongOffset BUILTIN = new WriteFloatAtLongOffset();
+        public static final WriteFloat BUILTIN = new WriteFloat();
     }
 
     public static class WriteFloatAtIntOffset extends PointerStoreBuiltin {
@@ -167,15 +167,15 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
         public static final SetFloat BUILTIN = new SetFloat();
     }
 
-    public static class WriteLongAtLongOffset extends PointerStoreBuiltin {
+    public static class WriteLong extends PointerStoreBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 3;
-            visitor.visitWriteLongAtLongOffset(this, result, arguments);
+            visitor.visitWriteLong(this, result, arguments);
         }
 
-        public static final WriteLongAtLongOffset BUILTIN = new WriteLongAtLongOffset();
+        public static final WriteLong BUILTIN = new WriteLong();
     }
 
     public static class WriteLongAtIntOffset extends PointerStoreBuiltin {
@@ -200,15 +200,15 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
         public static final SetLong BUILTIN = new SetLong();
     }
 
-    public static class WriteDoubleAtLongOffset extends PointerStoreBuiltin {
+    public static class WriteDouble extends PointerStoreBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 3;
-            visitor.visitWriteDoubleAtLongOffset(this, result, arguments);
+            visitor.visitWriteDouble(this, result, arguments);
         }
 
-        public static final WriteDoubleAtLongOffset BUILTIN = new WriteDoubleAtLongOffset();
+        public static final WriteDouble BUILTIN = new WriteDouble();
     }
 
     public static class WriteDoubleAtIntOffset extends PointerStoreBuiltin {
@@ -233,15 +233,15 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
         public static final SetDouble BUILTIN = new SetDouble();
     }
 
-    public static class WriteWordAtLongOffset extends PointerStoreBuiltin {
+    public static class WriteWord extends PointerStoreBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 3;
-            visitor.visitWriteWordAtLongOffset(this, result, arguments);
+            visitor.visitWriteWord(this, result, arguments);
         }
 
-        public static final WriteWordAtLongOffset BUILTIN = new WriteWordAtLongOffset();
+        public static final WriteWord BUILTIN = new WriteWord();
     }
 
     public static class WriteWordAtIntOffset extends PointerStoreBuiltin {
@@ -266,15 +266,15 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
         public static final SetWord BUILTIN = new SetWord();
     }
 
-    public static class WriteReferenceAtLongOffset extends PointerStoreBuiltin {
+    public static class WriteReference extends PointerStoreBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 3;
-            visitor.visitWriteReferenceAtLongOffset(this, result, arguments);
+            visitor.visitWriteReference(this, result, arguments);
         }
 
-        public static final WriteReferenceAtLongOffset BUILTIN = new WriteReferenceAtLongOffset();
+        public static final WriteReference BUILTIN = new WriteReference();
     }
 
     public static class WriteReferenceAtIntOffset extends PointerStoreBuiltin {

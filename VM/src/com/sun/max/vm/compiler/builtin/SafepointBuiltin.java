@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.*;
 
@@ -45,7 +46,8 @@ public final class SafepointBuiltin extends SpecialBuiltin {
         visitor.visitSafepoint(this, result, arguments);
     }
 
-    @BUILTIN(builtinClass = SafepointBuiltin.class)
+    @BUILTIN(value = SafepointBuiltin.class)
+    @INTRINSIC(Bytecodes.SAFEPOINT)
     public static void safepointBuiltin() {
     }
 }

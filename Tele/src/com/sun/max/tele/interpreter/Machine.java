@@ -32,7 +32,6 @@ import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
@@ -94,7 +93,7 @@ public final class Machine extends AbstractTeleVMHolder{
         currentThread.frame().jump(offset);
     }
 
-    public Bytecode readOpcode() {
+    public int readOpcode() {
         return currentThread.frame().readOpcode();
     }
 
@@ -151,7 +150,7 @@ public final class Machine extends AbstractTeleVMHolder{
         return value;
     }
 
-    public Value resolveConstantReference(short cpIndex) {
+    public Value resolveConstantReference(int cpIndex) {
         Value constant = currentThread.frame().constantPool().valueAt(cpIndex);
 
         if (constant instanceof ObjectReferenceValue) {
@@ -209,7 +208,7 @@ public final class Machine extends AbstractTeleVMHolder{
         return currentThread.frame().stack().size();
     }
 
-    public Value getStatic(short cpIndex) {
+    public Value getStatic(int cpIndex) {
         final ConstantPool constantPool = currentThread.frame().constantPool();
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
         if (teleVM() != null) {
@@ -251,7 +250,7 @@ public final class Machine extends AbstractTeleVMHolder{
         return null;
     }
 
-    public void putStatic(short cpIndex, Value value) {
+    public void putStatic(int cpIndex, Value value) {
         if (teleVM() != null) {
             ProgramError.unexpected("Cannot run putstatic remotely!");
         } else {
@@ -261,7 +260,10 @@ public final class Machine extends AbstractTeleVMHolder{
         }
     }
 
-    public Value getField(Reference instance, short cpIndex) {
+    public Value getField(Reference instance, int cpIndex) throws TeleInterpreterException {
+        if (instance.isZero()) {
+            raiseException(new NullPointerException());
+        }
         final ConstantPool constantPool = currentThread.frame().constantPool();
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
         final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
@@ -279,7 +281,7 @@ public final class Machine extends AbstractTeleVMHolder{
         }
     }
 
-    public void putField(Object instance, short cpIndex, Value value) {
+    public void putField(Object instance, int cpIndex, Value value) {
         if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
             ProgramError.unexpected("Cannot run putfield remotely!");
         } else {
@@ -295,7 +297,7 @@ public final class Machine extends AbstractTeleVMHolder{
         }
     }
 
-    public MethodActor resolveMethod(short cpIndex) {
+    public MethodActor resolveMethod(int cpIndex) {
         final ConstantPool cp = currentThread.frame().constantPool();
         final MethodRefConstant methodRef = cp.methodAt(cpIndex);
         return methodRef.resolve(cp, cpIndex);
@@ -468,7 +470,7 @@ public final class Machine extends AbstractTeleVMHolder{
         }
     }
 
-    public ClassActor resolveClassReference(short constantPoolIndex) {
+    public ClassActor resolveClassReference(int constantPoolIndex) {
         final ConstantPool constantPool = currentThread.frame().constantPool();
         return constantPool.classAt(constantPoolIndex).resolve(constantPool, constantPoolIndex);
     }

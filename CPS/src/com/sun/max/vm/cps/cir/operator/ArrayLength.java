@@ -27,7 +27,7 @@ import com.sun.max.vm.type.*;
 public class ArrayLength extends JavaOperator {
 
     public ArrayLength() {
-        super(CALL | NULL_POINTER_CHECK);
+        super(CALL_STOP | NULL_POINTER_CHECK);
     }
 
     public Kind resultKind() {

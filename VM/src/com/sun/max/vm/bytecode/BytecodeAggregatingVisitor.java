@@ -23,6 +23,7 @@
  */
 package com.sun.max.vm.bytecode;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -190,7 +191,7 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
         assert false;
     }
 
-    protected void execute(Bytecode bytecode) {
+    protected void execute(int opcode) {
         assert false;
     }
 
@@ -299,7 +300,7 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
     }
 
     @Override
-    protected void callnative(int nativeFunctionDescriptorIndex) {
+    protected void jnicall(int nativeFunctionDescriptorIndex) {
     }
 
     @Override
@@ -449,32 +450,32 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
 
     @Override
     protected void dup() {
-        execute(Bytecode.DUP);
+        execute(Bytecodes.DUP);
     }
 
     @Override
     protected void dup_x1() {
-        execute(Bytecode.DUP_X1);
+        execute(Bytecodes.DUP_X1);
     }
 
     @Override
     protected void dup_x2() {
-        execute(Bytecode.DUP_X2);
+        execute(Bytecodes.DUP_X2);
     }
 
     @Override
     protected void dup2() {
-        execute(Bytecode.DUP2);
+        execute(Bytecodes.DUP2);
     }
 
     @Override
     protected void dup2_x1() {
-        execute(Bytecode.DUP2_X1);
+        execute(Bytecodes.DUP2_X1);
     }
 
     @Override
     protected void dup2_x2() {
-        execute(Bytecode.DUP2_X2);
+        execute(Bytecodes.DUP2_X2);
     }
 
     @Override
@@ -1182,12 +1183,12 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
 
     @Override
     protected void pop() {
-        execute(Bytecode.POP);
+        execute(Bytecodes.POP);
     }
 
     @Override
     protected void pop2() {
-        execute(Bytecode.POP2);
+        execute(Bytecodes.POP2);
     }
 
     @Override
@@ -1222,7 +1223,7 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
 
     @Override
     protected void swap() {
-        execute(Bytecode.SWAP);
+        execute(Bytecodes.SWAP);
     }
 
     @Override
@@ -1254,7 +1255,7 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
 
     @Override
     protected final void wide() {
-        // Wide opcode modifier is handled by the Bytecode Scanner so it can be ignored here.
+        // Wide opcode modifier is handled by the Bytecodes Scanner so it can be ignored here.
     }
 
     protected FieldRefConstant fieldAt(int index) {
