@@ -20,13 +20,13 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.c1x.bytecode.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A value constant is a constant whose value can be directly used as a program value via a {@link Bytecode#LDC},
- * {@link Bytecode#LDC_W} or {@link Bytecode#LDC2_W} instruction.
- * 
+ * A value constant is a constant whose value can be directly used as a program value via a {@link Bytecodes#LDC},
+ * {@link Bytecodes#LDC_W} or {@link Bytecodes#LDC2_W} instruction.
+ *
  * @author Doug Simon
  */
 public interface ValueConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> {

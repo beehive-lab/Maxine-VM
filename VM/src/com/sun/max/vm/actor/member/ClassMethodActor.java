@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.actor.member;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 
 import java.lang.reflect.*;
 
@@ -280,8 +280,8 @@ public abstract class ClassMethodActor extends MethodActor {
         final BytecodeVisitor visitor = new BytecodeAdapter() {
             @Override
             protected void opcodeDecoded() {
-                final Bytecode currentOpcode = currentOpcode();
-                if (currentOpcode.is(JSR_OR_RET)) {
+                final int currentOpcode = currentOpcode();
+                if (currentOpcode == JSR || currentOpcode == RET || currentOpcode == JSR_W) {
                     bytecodeScanner().stop();
                 }
             }

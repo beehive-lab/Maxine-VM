@@ -80,7 +80,7 @@ public final class ClassMethodActorMenuItems extends AbstractInspectorMenuItems 
 
         final InspectorMenu debugMenu = new InspectorMenu("Debug");
         final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at method entry");
-        breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecode"));
+        breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecodes"));
         debugMenu.add(breakOnEntryMenu);
         debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
         menu.add(debugMenu);

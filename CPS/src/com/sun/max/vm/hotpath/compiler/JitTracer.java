@@ -93,7 +93,7 @@ public class JitTracer extends Tracer {
         final JitTargetMethod tracedMethod = (JitTargetMethod) Code.codePointerToTargetMethod(instructionPointer);
         final ClassMethodActor methodActor = tracedMethod.classMethodActor();
         final int bytecodePosition = tracedMethod.bytecodePositionFor(instructionPointer);
-        final Bytecode bytecode = Bytecode.from(methodActor.codeAttribute().code()[bytecodePosition]);
+        final Bytecodes bytecode = Bytecodes.from(methodActor.codeAttribute().code()[bytecodePosition]);
 
         // If we've looped back to the anchor bytecode position then stop recording.
         if (bytecodePosition == _treeAnchor.position()) {

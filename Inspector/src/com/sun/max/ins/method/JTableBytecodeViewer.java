@@ -86,7 +86,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         super.createView();
 
         // Set up toolbar
-        // TODO (mlvdv) implement remaining debugging controls in Bytecode view
+        // TODO (mlvdv) implement remaining debugging controls in Bytecodes view
         // the disabled ones haven't been adapted for bytecode-based debugging
         JButton button = new InspectorButton(inspection, actions().toggleBytecodeBreakpoint());
         button.setToolTipText(button.getText());
@@ -137,7 +137,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         toolBar().add(Box.createHorizontalGlue());
 
-        toolBar().add(new TextLabel(inspection(), "Bytecode"));
+        toolBar().add(new TextLabel(inspection(), "Bytecodes"));
 
         toolBar().add(Box.createHorizontalGlue());
 
@@ -148,10 +148,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         final JButton viewOptionsButton = new InspectorButton(inspection, new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
                 final BytecodeViewPreferences globalPreferences = BytecodeViewPreferences.globalPreferences(inspection());
-                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BytecodeColumnKind>(inspection(), "Bytecode View Options", instanceViewPreferences, globalPreferences);
+                new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BytecodeColumnKind>(inspection(), "Bytecodes View Options", instanceViewPreferences, globalPreferences);
             }
         });
-        viewOptionsButton.setToolTipText("Bytecode view options");
+        viewOptionsButton.setToolTipText("Bytecodes view options");
         viewOptionsButton.setText(null);
         viewOptionsButton.setIcon(style().generalPreferencesIcon());
         toolBar().add(viewOptionsButton);
@@ -348,7 +348,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 case POSITION:
                     return Integer.class;
                 case INSTRUCTION:
-                    return Bytecode.class;
+                    return int.class;
                 case OPERAND1:
                 case OPERAND2:
                 case SOURCE_LINE:
@@ -536,11 +536,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final class InstructionRenderer extends BytecodeMnemonicLabel implements TableCellRenderer {
 
         public InstructionRenderer() {
-            super(inspection, null);
+            super(inspection, -1);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final Bytecode opcode = (Bytecode) value;
+            final int opcode = (Integer) value;
             setValue(opcode);
             setBackgroundForRow(this, row);
             setForeground(getRowTextColor(row));

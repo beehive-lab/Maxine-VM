@@ -844,7 +844,7 @@ public class BytecodeAdapter extends BytecodeVisitor {
     }
 
     @Override
-    protected void callnative(int nativeFunctionDescriptorIndex) {
+    protected void jnicall(int nativeFunctionDescriptorIndex) {
     }
 
 }

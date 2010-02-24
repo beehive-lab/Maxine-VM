@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.interpreter;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -29,6 +31,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.value.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -38,6 +41,7 @@ import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -144,14 +148,14 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
      */
     private void traceExecution() {
         if (Trace.hasLevel(2)) {
-            final PrintStream stream = Trace.stream();
-            final ExecutionFrame frame = machine.currentThread().frame();
+            PrintStream stream = Trace.stream();
+            ExecutionFrame frame = machine.currentThread().frame();
 
-            final int depth = frame.depth();
+            int depth = frame.depth();
             if (lastTracedFrame == null) {
                 stream.println("Interpreter: " + Strings.spaces(depth * 2) + "ENTERING: " + frame.method().format("%H.%n(%p)"));
             } else if (lastTracedFrame != frame) {
-                final int lastFrameDepth = lastTracedFrame.depth();
+                int lastFrameDepth = lastTracedFrame.depth();
                 if (lastFrameDepth < depth) {
                     stream.println("Interpreter: " + Strings.spaces(depth * 2) + "ENTERING: " + frame.method().format("%H.%n(%p)"));
                 } else {
@@ -166,14 +170,14 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 if (bcpToTrace == null) {
                     bcpToTrace = new HashMap<Integer, String>();
                     bytecodeTraces.put(machine.currentMethod(), bcpToTrace);
-                    final ConstantPool constantPool = frame.constantPool();
-                    final BytecodeBlock bytecodeBlock = new BytecodeBlock(frame.code());
-                    final String[] instructions = BytecodePrinter.toString(constantPool, bytecodeBlock, "", "\0", 0).split("\0");
+                    ConstantPool constantPool = frame.constantPool();
+                    BytecodeBlock bytecodeBlock = new BytecodeBlock(frame.code());
+                    String[] instructions = BytecodePrinter.toString(constantPool, bytecodeBlock, "", "\0", 0).split("\0");
                     for (String instruction : instructions) {
-                        final int colonIndex = instruction.indexOf(':');
+                        int colonIndex = instruction.indexOf(':');
                         assert colonIndex != -1 : "instruction trace does not start with expected '<bcp>:': " + instruction;
                         try {
-                            final int bcp = Integer.parseInt(instruction.substring(0, colonIndex));
+                            int bcp = Integer.parseInt(instruction.substring(0, colonIndex));
                             bcpToTrace.put(bcp, instruction);
                         } catch (NumberFormatException numberFormatException) {
                             ProgramWarning.message("instruction trace does not start with expected '<bcp>:': " + instruction);
@@ -194,34 +198,51 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
         machine.pushFrame(classMethodActor);
         int j = 0;
         for (int i = 0; i < arguments.length; i++, j++) {
-            machine.setLocal(j, arguments[i]);
+            setLocal(j, arguments[i]);
             if (arguments[i].isCategory2()) {
                 j++;
             }
         }
 
-        Bytecode code;
+        int opcode;
         MethodStatus status;
         instructionsExecuted = 0;
 
         while (true) {
-            code = machine.readOpcode();
+            opcode = machine.readOpcode();
 
             traceExecution();
 
             try {
-                status = interpret(code);
+
+                boolean isWide = false;
+                if (opcode == WIDE) {
+                    opcode = machine.readOpcode();
+                    isWide = true;
+                }
+
+                if (hasOpcode3(opcode)) {
+                    int operand = readU2();
+                    opcode = opcode | operand << 8;
+                }
+
+                status = interpret(opcode, isWide);
+
                 if (status == MethodStatus.METHOD_END) {
                     break;
                 }
             } catch (TeleInterpreterException executionException) {
-                final ReferenceValue throwableReference = executionException.throwableReference();
-                final boolean handled = machine.handleException(throwableReference); //if this succeeds we keep looping
+                ReferenceValue throwableReference = executionException.throwableReference();
+                boolean handled = machine.handleException(throwableReference); //if this succeeds we keep looping
                 if (!handled) {
                     throw executionException;
                 }
             } catch (Throwable throwable) {
-                throw new TeleInterpreterException(throwable, machine);
+                ReferenceValue throwableReference = ReferenceValue.from(throwable);
+                boolean handled = machine.handleException(throwableReference); //if this succeeds we keep looping
+                if (!handled) {
+                    throw new TeleInterpreterException(throwable, machine);
+                }
             } finally {
                 instructionsExecuted++;
             }
@@ -231,1207 +252,517 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
             returnValue = TeleReferenceValue.from(teleVM, machine.makeLocalReference((TeleReference) returnValue.asReference()));
         }
 
-        final Kind resultKind = classMethodActor.resultKind();
+        Kind resultKind = classMethodActor.resultKind();
         if (resultKind.stackKind == Kind.INT) {
             returnValue = resultKind.convert(returnValue);
         }
         return returnValue;
     }
 
-    private MethodStatus interpret(Bytecode opcode) throws TeleInterpreterException {
-        switch (opcode) {
-            case NOP:                       // 0x00
-                break;
-
-            case ACONST_NULL:               // 0x01
-                machine.push(ReferenceValue.NULL);
-                break;
-
-                /*========================================================================*/
-
-            case ICONST_M1:                 // 0x02;
-                machine.push(IntValue.from(-1));
-                break;
-
-            case ICONST_0:                  // 0x03;
-                machine.push(IntValue.from(0));
-                break;
-
-            case ICONST_1:                  // 0x04;
-                machine.push(IntValue.from(1));
-                break;
-
-            case ICONST_2:                  // 0x05;
-                machine.push(IntValue.from(2));
-                break;
-
-            case ICONST_3:                  // 0x06;
-                machine.push(IntValue.from(3));
-                break;
-
-            case ICONST_4:                  // 0x07;
-                machine.push(IntValue.from(4));
-                break;
-
-            case ICONST_5:                  // 0x08;
-                machine.push(IntValue.from(5));
-                break;
-
-                /*========================================================================*/
-
-            case LCONST_0:                  // 0x09;
-                machine.push(LongValue.from(0));
-                break;
-
-            case LCONST_1:                  // 0x0A;
-                machine.push(LongValue.from(1));
-                break;
-
-                /*========================================================================*/
-
-            case FCONST_0:                  // 0x0B;
-                machine.push(FloatValue.from(0));
-                break;
-
-            case FCONST_1:                  // 0x0C;
-                machine.push(FloatValue.from(1));
-                break;
-
-            case FCONST_2:                  // 0x0D;
-                machine.push(FloatValue.from(2));
-                break;
-
-                /*========================================================================*/
-
-            case DCONST_0:                  // 0x0E;
-                machine.push(DoubleValue.from(0));
-                break;
-
-            case DCONST_1:                  // 0x0F;
-                machine.push(DoubleValue.from(1));
-                break;
-
-                /*========================================================================*/
-
-            case BIPUSH:                    // 0x10;
-                machine.push(IntValue.from(machine.readByte()));
-                break;
-
-            case SIPUSH:                    // 0x11;
-                machine.push(IntValue.from(machine.readShort()));
-                break;
-
-                /*========================================================================*/
-
-            case LDC: {                     // 0x12;
-                final byte cpIndex = machine.readByte();
-                machine.push(machine.resolveConstantReference((short) (cpIndex & 0xFF)));
-                break;
-            }
-
-            case LDC_W:                     // 0x13;
-            case LDC2_W: {                  // 0x14;
-                final short cpIndex = machine.readShort();
-                machine.push(machine.resolveConstantReference(cpIndex));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case ILOAD:                     // 0x15;
-            case LLOAD:                     // 0x16;
-            case FLOAD:                     // 0x17;
-            case DLOAD:                     // 0x18;
-            case ALOAD:                     // 0x19;
-                machine.push(machine.getLocal(machine.readByte()));
-                break;
-
-                /*========================================================================*/
-
-            case ILOAD_0:                   // 0x1A;
-                machine.push(machine.getLocal(0));
-                break;
-
-            case ILOAD_1:                   // 0x1B;
-                machine.push(machine.getLocal(1));
-                break;
-
-            case ILOAD_2:                   // 0x1C;
-                machine.push(machine.getLocal(2));
-                break;
-
-            case ILOAD_3:                   // 0x1D;
-                machine.push(machine.getLocal(3));
-                break;
-
-                /*========================================================================*/
-
-            case LLOAD_0:                   // 0x1E;
-                machine.push(machine.getLocal(0));
-                break;
-
-            case LLOAD_1:                   // 0x1F;
-                machine.push(machine.getLocal(1));
-                break;
-
-            case LLOAD_2:                   // 0x20;
-                machine.push(machine.getLocal(2));
-                break;
-
-            case LLOAD_3:                   // 0x21;
-                machine.push(machine.getLocal(3));
-                break;
-
-                /*========================================================================*/
-
-            case FLOAD_0:                   // 0x22;
-                machine.push(machine.getLocal(0));
-                break;
-
-            case FLOAD_1:                   // 0x23;
-                machine.push(machine.getLocal(1));
-                break;
-
-            case FLOAD_2:                   // 0x24;
-                machine.push(machine.getLocal(2));
-                break;
-
-            case FLOAD_3:                   // 0x25;
-                machine.push(machine.getLocal(3));
-                break;
-
-                /*========================================================================*/
-
-            case DLOAD_0:                   // 0x26;
-                machine.push(machine.getLocal(0));
-                break;
-
-            case DLOAD_1:                   // 0x27;
-                machine.push(machine.getLocal(1));
-                break;
-
-            case DLOAD_2:                   // 0x28;
-                machine.push(machine.getLocal(2));
-                break;
-
-            case DLOAD_3:                   // 0x29;
-                machine.push(machine.getLocal(3));
-                break;
-
-                /*========================================================================*/
-
-            case ALOAD_0:                   // 0x2A;
-                machine.push(machine.getLocal(0));
-                break;
-
-            case ALOAD_1:                   // 0x2B;
-                machine.push(machine.getLocal(1));
-                break;
-
-            case ALOAD_2:                   // 0x2C;
-                machine.push(machine.getLocal(2));
-                break;
-
-            case ALOAD_3:                   // 0x2D;
-                machine.push(machine.getLocal(3));
-                break;
-
-                /*========================================================================*/
-
-            case IALOAD: {                  // 0x2E;
-                final int index = machine.pop().asInt();                // Get array index (IntValue)
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                final int val = Layout.getInt(array, index);
-
-                // Push value to operand stack
-                machine.push(IntValue.from(val));
-                break;
-            }
-
-            case LALOAD: {                  // 0x2F;
-                final int index = machine.pop().asInt();                // Get array index (IntValue)
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                final long val = Layout.getLong(array, index);
-
-                // Push value to operand stack
-                machine.push(LongValue.from(val));
-                break;
-            }
-
-            case FALOAD: {                  // 0x30;
-                final int index = machine.pop().asInt();                // Get array index (IntValue)
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                final float val = Layout.getFloat(array, index);
-
-                // Push value to operand stack
-                machine.push(FloatValue.from(val));
-                break;
-            }
-
-            case DALOAD: {                  // 0x31;
-                final int index = machine.pop().asInt();                // Get array index (IntValue)
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                final double val = Layout.getDouble(array, index);
-
-                // Push value to operand stack
-                machine.push(DoubleValue.from(val));
-                break;
-            }
-
-            case AALOAD: {                  // 0x32;
-                final int index = machine.pop().asInt();                // Get array index (IntValue)
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                final Reference val = Layout.getReference(array, index);
-
-                // Push value to operand stack
-                machine.push(machine.toReferenceValue(val));
-                break;
-            }
-
-            case BALOAD: {                  // 0x33;
-                final int index = machine.pop().asInt();                  // Get array index (IntValue)
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                final IntValue val;
-
+    private Value pop() {
+        return machine.pop();
+    }
+
+    private Value popCheckZero() throws TeleInterpreterException {
+        Value value = machine.pop();
+        if (value.isZero()) {
+            machine.raiseException(new ArithmeticException("Division by zero"));
+        }
+        return value;
+    }
+
+    private void push(Value value) {
+        machine.push(value);
+    }
+
+    private void jumpIf(boolean condition, int offset) {
+        if (condition) {
+            machine.jump(offset);
+        }
+    }
+
+    private void push(int value) {
+        push(IntValue.from(value));
+    }
+
+    private void setLocal(int index, Value value) {
+        machine.setLocal(index, value);
+    }
+
+    private Value local(int index) {
+        return machine.getLocal(index);
+    }
+
+    private short readS2() {
+        return machine.readShort();
+    }
+
+    private byte readS1() {
+        return machine.readByte();
+    }
+
+    private int readU2() {
+        return machine.readShort() & 0xffff;
+    }
+
+    private int readU1() {
+        return machine.readByte() & 0xff;
+    }
+
+    private void pointerLoad(Kind kind, boolean intOffset) throws TeleInterpreterException {
+        Offset off = intOffset ? Offset.fromInt(pop().asInt()) : pop().asWord().asOffset();
+        Pointer ptr = pop().asWord().asPointer();
+        DataAccess dataAccess = teleVM.teleProcess().dataAccess();
+        switch (kind.asEnum) {
+            // Checkstyle: stop
+            case BYTE:      push(IntValue.from(dataAccess.readByte(ptr, off))); break;
+            case CHAR:      push(IntValue.from(dataAccess.readChar(ptr, off))); break;
+            case SHORT:     push(IntValue.from(dataAccess.readShort(ptr, off))); break;
+            case INT:       push(IntValue.from(dataAccess.readInt(ptr, off))); break;
+            case LONG:      push(LongValue.from(dataAccess.readLong(ptr, off))); break;
+            case FLOAT:     push(FloatValue.from(dataAccess.readFloat(ptr, off))); break;
+            case DOUBLE:    push(DoubleValue.from(dataAccess.readDouble(ptr, off))); break;
+            case WORD:      push(WordValue.from(dataAccess.readWord(ptr, off))); break;
+            case REFERENCE: push(machine.toReferenceValue(teleVM.wordToReference(dataAccess.readWord(ptr, off)))); break;
+            default:        machine.raiseException(new ClassFormatError("Invalid pointer load kind: " + kind));
+            // Checkstyle: resume
+        }
+    }
+
+    private void pointerGet(Kind kind) throws TeleInterpreterException {
+        int index = pop().asInt();
+        int disp = pop().asInt();
+        Pointer ptr = pop().asWord().asPointer();
+        DataAccess dataAccess = teleVM.teleProcess().dataAccess();
+        switch (kind.asEnum) {
+            // Checkstyle: stop
+            case BYTE:      push(IntValue.from(dataAccess.getByte(ptr, disp, index))); break;
+            case CHAR:      push(IntValue.from(dataAccess.getChar(ptr, disp, index))); break;
+            case SHORT:     push(IntValue.from(dataAccess.getShort(ptr, disp, index))); break;
+            case INT:       push(IntValue.from(dataAccess.getInt(ptr, disp, index))); break;
+            case LONG:      push(LongValue.from(dataAccess.getLong(ptr, disp, index))); break;
+            case FLOAT:     push(FloatValue.from(dataAccess.getFloat(ptr, disp, index))); break;
+            case DOUBLE:    push(DoubleValue.from(dataAccess.getDouble(ptr, disp, index))); break;
+            case WORD:      push(WordValue.from(dataAccess.getWord(ptr, disp, index))); break;
+            case REFERENCE: push(machine.toReferenceValue(teleVM.wordToReference(dataAccess.getWord(ptr, disp, index)))); break;
+            default:        machine.raiseException(new ClassFormatError("Invalid pointer load kind: " + kind));
+            // Checkstyle: resume
+        }
+    }
+
+    private void arrayLoad(Kind kind) throws TeleInterpreterException {
+        int index = machine.pop().asInt();
+        Reference array = machine.pop().asReference();
+
+        if (array.isZero()) {
+            machine.raiseException(new NullPointerException());
+        }
+
+        if (Layout.readArrayLength(array) <= index || index < 0) {
+            machine.raiseException(new ArrayIndexOutOfBoundsException());
+        }
+
+        switch (kind.asEnum) {
+            // Checkstyle: stop
+            case BYTE:
                 if (machine.toReferenceValue(array).getClassActor() == ClassRegistry.BOOLEAN_ARRAY) {
-                    final boolean booleanVal = Layout.getBoolean(array, index);
-                    val = booleanVal ? IntValue.ONE : IntValue.ZERO;
+                    push(Layout.getBoolean(array, index) ? IntValue.ONE : IntValue.ZERO);
                 } else {
-                    final byte byteVal = Layout.getByte(array, index);
-                    val = IntValue.from(byteVal);
+                    push(IntValue.from(Layout.getByte(array, index)));
                 }
+                break;
+            case CHAR:      push(IntValue.from(Layout.getChar(array, index))); break;
+            case SHORT:     push(IntValue.from(Layout.getShort(array, index))); break;
+            case INT:       push(IntValue.from(Layout.getInt(array, index))); break;
+            case LONG:      push(LongValue.from(Layout.getLong(array, index))); break;
+            case FLOAT:     push(FloatValue.from(Layout.getFloat(array, index))); break;
+            case DOUBLE:    push(DoubleValue.from(Layout.getDouble(array, index))); break;
+            case REFERENCE: push(machine.toReferenceValue(Layout.getReference(array, index))); break;
+            default:        machine.raiseException(new ClassFormatError("Invalid array kind: " + kind));
+            // Checkstyle: resume
+        }
+    }
 
-                // Push value to operand stack
-                machine.push(val);
+    private void arrayStore(Kind kind) throws TeleInterpreterException {
+        Value val = pop();
+        int index = pop().toInt();
+        Reference array = pop().asReference();
+
+        if (array.isZero()) {
+            machine.raiseException(new NullPointerException());
+        }
+
+        if (Layout.readArrayLength(array) <= index || index < 0) {
+            machine.raiseException(new ArrayIndexOutOfBoundsException());
+        }
+
+        switch (kind.asEnum) {
+            // Checkstyle: stop
+            case BYTE:      Layout.setByte(array, index, val.toByte()); break;
+            case CHAR:      Layout.setChar(array, index, val.toChar()); break;
+            case SHORT:     Layout.setShort(array, index, val.toShort()); break;
+            case INT:       Layout.setInt(array, index, val.toInt()); break;
+            case LONG:      Layout.setLong(array, index, val.toLong()); break;
+            case FLOAT:     Layout.setFloat(array, index, val.toFloat()); break;
+            case DOUBLE:    Layout.setDouble(array, index, val.toDouble()); break;
+            case REFERENCE: Layout.setReference(array, index, val.asReference()); break;
+            default:        machine.raiseException(new ClassFormatError("Invalid array kind: " + kind));
+            // Checkstyle: resume
+        }
+    }
+
+    private MethodStatus interpret(int opcode, boolean isWide) throws Throwable {
+        switch (opcode) {
+            // Checkstyle: stop
+            case NOP:                break;
+
+            case ACONST_NULL:        push(ReferenceValue.NULL); break;
+            case ICONST_M1:          push(IntValue.from(-1));   break;
+            case ICONST_0:           push(IntValue.ZERO); break;
+            case ICONST_1:           push(IntValue.ONE); break;
+            case ICONST_2:           push(IntValue.TWO); break;
+            case ICONST_3:           push(IntValue.THREE); break;
+            case ICONST_4:           push(IntValue.FOUR); break;
+            case ICONST_5:           push(IntValue.FIVE); break;
+            case LCONST_0:           push(LongValue.ZERO); break;
+            case LCONST_1:           push(LongValue.ONE); break;
+            case FCONST_0:           push(FloatValue.ZERO); break;
+            case FCONST_1:           push(FloatValue.ONE); break;
+            case FCONST_2:           push(FloatValue.TWO); break;
+            case DCONST_0:           push(DoubleValue.ZERO); break;
+            case DCONST_1:           push(DoubleValue.ONE); break;
+            case BIPUSH:             push(IntValue.from(readS1())); break;
+            case SIPUSH:             push(IntValue.from(readS2())); break;
+            case LDC:                push(machine.resolveConstantReference(readU1())); break;
+            case LDC_W:
+            case LDC2_W:             push(machine.resolveConstantReference(readU2())); break;
+            case ILOAD:
+            case LLOAD:
+            case FLOAD:
+            case DLOAD:
+            case WLOAD:
+            case ALOAD:              push(local(isWide ? readU2() : readU1())); break;
+            case ILOAD_0:
+            case ILOAD_1:
+            case ILOAD_2:
+            case ILOAD_3:            push(local(opcode - ILOAD_0)); break;
+            case LLOAD_0:
+            case LLOAD_1:
+            case LLOAD_2:
+            case LLOAD_3:            push(local(opcode - LLOAD_0)); break;
+            case FLOAD_0:
+            case FLOAD_1:
+            case FLOAD_2:
+            case FLOAD_3:            push(local(opcode - FLOAD_0)); break;
+            case DLOAD_0:
+            case DLOAD_1:
+            case DLOAD_2:
+            case DLOAD_3:            push(local(opcode - DLOAD_0)); break;
+            case ALOAD_0:
+            case ALOAD_1:
+            case ALOAD_2:
+            case ALOAD_3:            push(local(opcode - ALOAD_0)); break;
+            case WLOAD_0:
+            case WLOAD_1:
+            case WLOAD_2:
+            case WLOAD_3:            push(local(opcode - WLOAD_0)); break;
+            case IALOAD:             arrayLoad(Kind.INT); break;
+            case LALOAD:             arrayLoad(Kind.LONG); break;
+            case FALOAD:             arrayLoad(Kind.FLOAT); break;
+            case DALOAD:             arrayLoad(Kind.DOUBLE); break;
+            case AALOAD:             arrayLoad(Kind.REFERENCE); break;
+            case BALOAD:             arrayLoad(Kind.BYTE); break;
+            case CALOAD:             arrayLoad(Kind.CHAR); break;
+            case SALOAD:             arrayLoad(Kind.SHORT); break;
+            case ISTORE:
+            case LSTORE:
+            case FSTORE:
+            case DSTORE:
+            case WSTORE:
+            case ASTORE:             setLocal(isWide ? readU2() : readU1(), pop()); break;
+            case ISTORE_0:
+            case ISTORE_1:
+            case ISTORE_2:
+            case ISTORE_3:           setLocal(opcode - ISTORE_0, pop()); break;
+            case LSTORE_0:
+            case LSTORE_1:
+            case LSTORE_2:
+            case LSTORE_3:           setLocal(opcode - LSTORE_0, pop()); break;
+            case FSTORE_0:
+            case FSTORE_1:
+            case FSTORE_2:
+            case FSTORE_3:           setLocal(opcode - FSTORE_0, pop()); break;
+            case DSTORE_0:
+            case DSTORE_1:
+            case DSTORE_2:
+            case DSTORE_3:           setLocal(opcode - DSTORE_0, pop()); break;
+            case ASTORE_0:
+            case ASTORE_1:
+            case ASTORE_2:
+            case ASTORE_3:           setLocal(opcode - ASTORE_0, pop()); break;
+            case WSTORE_0:
+            case WSTORE_1:
+            case WSTORE_2:
+            case WSTORE_3:           setLocal(opcode - WSTORE_0, pop()); break;
+            case IASTORE:            arrayStore(Kind.INT); break;
+            case LASTORE:            arrayStore(Kind.LONG); break;
+            case FASTORE:            arrayStore(Kind.FLOAT); break;
+            case DASTORE:            arrayStore(Kind.DOUBLE); break;
+            case AASTORE:            arrayStore(Kind.REFERENCE); break;
+            case BASTORE:            arrayStore(Kind.BYTE); break;
+            case CASTORE:            arrayStore(Kind.CHAR); break;
+            case SASTORE:            arrayStore(Kind.SHORT); break;
+            case POP:                pop(); break;
+            case POP2:               if (!pop().isCategory2()) pop(); break;
+            case DUP:
+                push(machine.peek());
+                break;
+            case DUP_X1: {
+                Value s1 = pop();
+                Value s2 = pop();
+
+                push(s1);
+                push(s2);
+                push(s1);
                 break;
             }
 
-            case CALOAD: {                   // 0x34;
-                final int index = machine.pop().asInt();                // Get array index (IntValue)
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                final char val = Layout.getChar(array, index);
-
-                // Push value to operand stack
-                machine.push(IntValue.from(val));
-                break;
-            }
-
-            case SALOAD: {                   // 0x35;
-                final int index = machine.pop().asInt();                  // Get array index (IntValue)
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                final short val = Layout.getShort(array, index);
-
-                // Push value to operand stack
-                machine.push(IntValue.from(val));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case ISTORE:                    // 0x36;
-            case LSTORE:                    // 0x37;
-            case FSTORE:                    // 0x38;
-            case DSTORE:                    // 0x39;
-            case ASTORE:                    // 0x3A;
-                machine.setLocal(machine.readByte(), machine.pop());
-                break;
-
-                /*========================================================================*/
-
-            case ISTORE_0:                  // 0x3B;
-                machine.setLocal(0, machine.pop());
-                break;
-
-            case ISTORE_1:                  // 0x3C;
-                machine.setLocal(1, machine.pop());
-                break;
-
-            case ISTORE_2:                  // 0x3D;
-                machine.setLocal(2, machine.pop());
-                break;
-
-            case ISTORE_3:                  // 0x3E;
-                machine.setLocal(3, machine.pop());
-                break;
-
-                /*========================================================================*/
-
-            case LSTORE_0:                  // 0x3F;
-                machine.setLocal(0, machine.pop());
-                break;
-
-            case LSTORE_1:                  // 0x40;
-                machine.setLocal(1, machine.pop());
-                break;
-
-            case LSTORE_2:                  // 0x41;
-                machine.setLocal(2, machine.pop());
-                break;
-
-            case LSTORE_3:                  // 0x42;
-                machine.setLocal(3, machine.pop());
-                break;
-
-                /*========================================================================*/
-
-            case FSTORE_0:                  // 0x43;
-                machine.setLocal(0, machine.pop());
-                break;
-
-            case FSTORE_1:                  // 0x44;
-                machine.setLocal(1, machine.pop());
-                break;
-
-            case FSTORE_2:                  // 0x45;
-                machine.setLocal(2, machine.pop());
-                break;
-
-            case FSTORE_3:                  // 0x46;
-                machine.setLocal(3, machine.pop());
-                break;
-
-                /*========================================================================*/
-
-            case DSTORE_0:                  // 0x47;
-                machine.setLocal(0, machine.pop());
-                break;
-
-            case DSTORE_1:                  // 0x48;
-                machine.setLocal(1, machine.pop());
-                break;
-
-            case DSTORE_2:                  // 0x49;
-                machine.setLocal(2, machine.pop());
-                break;
-
-            case DSTORE_3:                  // 0x4A;
-                machine.setLocal(3, machine.pop());
-                break;
-
-                /*========================================================================*/
-
-            case ASTORE_0:                  // 0x4B;
-                machine.setLocal(0, machine.pop());
-                break;
-
-            case ASTORE_1:                  // 0x4C;
-                machine.setLocal(1, machine.pop());
-                break;
-
-            case ASTORE_2:                  // 0x4D;
-                machine.setLocal(2, machine.pop());
-                break;
-
-            case ASTORE_3:                  // 0x4E;
-                machine.setLocal(3, machine.pop());
-                break;
-
-                /*========================================================================*/
-
-            case IASTORE: {                 // 0x4F;
-                final int val = machine.pop().toInt();                  // Get value to store
-                final int index = machine.pop().toInt();                // Get array index
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                Layout.setInt(array, index, val);
-                break;
-            }
-
-            case LASTORE: {                 // 0x50;
-                final long val = machine.pop().toLong();                // Get value to store
-                final int index = machine.pop().toInt();                // Get array index
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                Layout.setLong(array, index, val);
-                break;
-            }
-
-            case FASTORE: {                 // 0x51;
-                final float val = machine.pop().toFloat();              // Get value to store
-                final int index = machine.pop().toInt();                // Get array index
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                Layout.setFloat(array, index, val);
-                break;
-            }
-
-            case DASTORE: {                 // 0x52;
-                final double val = machine.pop().toDouble();            // Get value to store
-                final int index = machine.pop().toInt();                // Get array index
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                Layout.setDouble(array, index, val);
-                break;
-            }
-
-            case AASTORE: {                 // 0x53;
-                final Reference val = machine.pop().asReference();      // Get value to store
-                final int index = machine.pop().toInt();                // Get array index
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                Layout.setReference(array, index, val);
-                break;
-            }
-
-            case BASTORE: {                 // 0x54;
-                final int val = machine.pop().toInt();                  // Get value to store
-                final int index = machine.pop().toInt();                // Get array index
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                Layout.setByte(array, index, (byte) val);
-                break;
-            }
-
-            case CASTORE: {                 // 0x55;
-                final int val = machine.pop().toInt();                  // Get value to store
-                final int index = machine.pop().toInt();                // Get array index
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                Layout.setChar(array, index, (char) val);
-                break;
-            }
-
-            case SASTORE: {                 // 0x56;
-                final int val = machine.pop().toInt();                  // Get value to store
-                final int index = machine.pop().toInt();                // Get array index
-                final Reference array = machine.pop().asReference();    // Get the array (ReferenceValue)
-
-                if (array.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                if (Layout.readArrayLength(array) <= index || index < 0) {
-                    machine.raiseException(new ArrayIndexOutOfBoundsException());
-                }
-
-                Layout.setShort(array, index, (short) val);
-                break;
-            }
-
-            /*========================================================================*/
-
-            case POP:                       // 0x57;
-                machine.pop();
-                break;
-
-            case POP2: {                    // 0x58;
-                final Value s1 = machine.pop();
-
-                if (!s1.isCategory2()) {
-                    machine.pop();
-                }
-                break;
-            }
-
-            case DUP:                       // 0x59;
-                machine.push(machine.peek());
-                break;
-
-            case DUP_X1: {                  // 0x5A;
-                final Value s1 = machine.pop();
-                final Value s2 = machine.pop();
-
-                machine.push(s1);
-                machine.push(s2);
-                machine.push(s1);
-                break;
-            }
-
-            case DUP_X2: {                  // 0x5B;
-                final Value s1 = machine.pop();
-                final Value s2 = machine.pop();
+            case DUP_X2: {
+                Value s1 = pop();
+                Value s2 = pop();
 
                 if (s2.isCategory2()) {
-                    machine.push(s1);
-                    machine.push(s2);
-                    machine.push(s1);
+                    push(s1);
+                    push(s2);
+                    push(s1);
                 } else {
-                    final Value s3 = machine.pop();
+                    Value s3 = pop();
 
-                    machine.push(s1);
-                    machine.push(s3);
-                    machine.push(s2);
-                    machine.push(s1);
+                    push(s1);
+                    push(s3);
+                    push(s2);
+                    push(s1);
                 }
                 break;
             }
 
-            case DUP2: {                    // 0x5C;
-                final Value s1 = machine.pop();
+            case DUP2: {
+                Value s1 = pop();
 
                 if (s1.isCategory2()) {
-                    machine.push(s1);
-                    machine.push(s1);
+                    push(s1);
+                    push(s1);
                 } else {
-                    final Value s2 = machine.pop();
+                    Value s2 = pop();
 
-                    machine.push(s2);
-                    machine.push(s1);
-                    machine.push(s2);
-                    machine.push(s1);
+                    push(s2);
+                    push(s1);
+                    push(s2);
+                    push(s1);
                 }
                 break;
             }
 
-            case DUP2_X1: {                 // 0x5D;
-                final Value s1 = machine.pop();
+            case DUP2_X1: {
+                Value s1 = pop();
 
                 if (s1.isCategory2()) {
-                    final Value s2 = machine.pop();
+                    Value s2 = pop();
 
-                    machine.push(s1);
-                    machine.push(s2);
-                    machine.push(s1);
+                    push(s1);
+                    push(s2);
+                    push(s1);
                 } else {
-                    final Value s2 = machine.pop();
-                    final Value s3 = machine.pop();
+                    Value s2 = pop();
+                    Value s3 = pop();
 
-                    machine.push(s2);
-                    machine.push(s1);
-                    machine.push(s3);
-                    machine.push(s2);
-                    machine.push(s1);
+                    push(s2);
+                    push(s1);
+                    push(s3);
+                    push(s2);
+                    push(s1);
                 }
                 break;
             }
 
-            case DUP2_X2: {                 // 0x5E;
-                final Value s1 = machine.pop();
+            case DUP2_X2: {
+                Value s1 = pop();
 
                 if (s1.isCategory2()) {
-                    final Value s2 = machine.pop();
+                    Value s2 = pop();
 
                     if (s2.isCategory2()) {
-                        machine.push(s1);
-                        machine.push(s2);
-                        machine.push(s1);
+                        push(s1);
+                        push(s2);
+                        push(s1);
                     } else {
-                        final Value s3 = machine.pop();
+                        Value s3 = pop();
 
-                        machine.push(s1);
-                        machine.push(s3);
-                        machine.push(s2);
-                        machine.push(s1);
+                        push(s1);
+                        push(s3);
+                        push(s2);
+                        push(s1);
                     }
                 } else {
-                    final Value s2 = machine.pop();
-                    final Value s3 = machine.pop();
+                    Value s2 = pop();
+                    Value s3 = pop();
 
                     if (s3.isCategory2()) {
-                        machine.push(s2);
-                        machine.push(s1);
-                        machine.push(s3);
-                        machine.push(s2);
-                        machine.push(s1);
+                        push(s2);
+                        push(s1);
+                        push(s3);
+                        push(s2);
+                        push(s1);
                     } else {
-                        final Value s4 = machine.pop();
+                        Value s4 = pop();
 
-                        machine.push(s2);
-                        machine.push(s1);
-                        machine.push(s4);
-                        machine.push(s3);
-                        machine.push(s2);
-                        machine.push(s1);
+                        push(s2);
+                        push(s1);
+                        push(s4);
+                        push(s3);
+                        push(s2);
+                        push(s1);
                     }
                 }
                 break;
             }
 
-            case SWAP: {                    // 0x5F;
-                final Value s1 = machine.pop();
-                final Value s2 = machine.pop();
+            case SWAP: {
+                Value s1 = pop();
+                Value s2 = pop();
 
-                machine.push(s1);
-                machine.push(s2);
+                push(s1);
+                push(s2);
                 break;
             }
 
-            /*========================================================================*/
+            case IADD:               push(IntValue.from(pop().asInt() + pop().asInt())); break;
+            case LADD:               push(LongValue.from(pop().asLong() + pop().asLong())); break;
+            case FADD:               push(FloatValue.from(pop().asFloat() + pop().asFloat())); break;
+            case DADD:               push(DoubleValue.from(pop().asDouble() + pop().asDouble())); break;
 
-            case IADD: {                    // 0x60;
-                final int v1 = machine.pop().asInt();
-                final int v2 = machine.pop().asInt();
+            case ISUB:               push(IntValue.from(-pop().asInt() + pop().asInt())); break;
+            case LSUB:               push(LongValue.from(-pop().asLong() + pop().asLong())); break;
+            case FSUB:               push(FloatValue.from(-pop().asFloat() + pop().asFloat())); break;
+            case DSUB:               push(DoubleValue.from(-pop().asDouble() + pop().asDouble())); break;
 
-                machine.push(IntValue.from(v1 + v2));
+            case IMUL:               push(IntValue.from(pop().asInt() * pop().asInt())); break;
+            case LMUL:               push(LongValue.from(pop().asLong() * pop().asLong())); break;
+            case FMUL:               push(FloatValue.from(pop().asFloat() * pop().asFloat())); break;
+            case DMUL:               push(DoubleValue.from(pop().asDouble() * pop().asDouble())); break;
+
+            case IDIV:             { int v2 = popCheckZero().asInt(); push(IntValue.from(pop().asInt() / v2)); break; }
+            case LDIV:             { long v2 = popCheckZero().asLong(); push(LongValue.from(pop().asLong() / v2)); break; }
+            case FDIV:             { float v2 = popCheckZero().asFloat(); push(FloatValue.from(pop().asFloat() / v2)); break; }
+            case DDIV:             { double v2 = popCheckZero().asDouble(); push(DoubleValue.from(pop().asDouble() / v2)); break; }
+            case WDIV: {
+                machine.skipBytes(2);
+                Address v2 = popCheckZero().asWord().asAddress();
+                Address v1 = pop().asWord().asAddress();
+                push(WordValue.from(v1.dividedBy(v2)));
+                break;
+            }
+            case WDIVI: {
+                machine.skipBytes(2);
+                int v2 = popCheckZero().asInt();
+                Address v1 = pop().asWord().asAddress();
+                push(WordValue.from(v1.dividedBy(v2)));
+                break;
+            }
+            case WMOD: {
+                machine.skipBytes(2);
+                Address v2 = popCheckZero().asWord().asAddress();
+                Address v1 = pop().asWord().asAddress();
+                push(WordValue.from(v1.remainder(v2)));
+                break;
+            }
+            case WMODI: {
+                machine.skipBytes(2);
+                int v2 = popCheckZero().asInt();
+                Address v1 = pop().asWord().asAddress();
+                push(IntValue.from(v1.remainder(v2)));
                 break;
             }
 
-            case LADD: {                    // 0x61;
-                final long v1 = machine.pop().asLong();
-                final long v2 = machine.pop().asLong();
+            case IREM:             { int v2 = popCheckZero().asInt(); push(IntValue.from(pop().asInt() % v2)); break; }
+            case LREM:             { long v2 = popCheckZero().asLong(); push(LongValue.from(pop().asLong() % v2)); break; }
+            case FREM:             { float v2 = popCheckZero().asFloat(); push(FloatValue.from(pop().asFloat() % v2)); break; }
+            case DREM:             { double v2 = popCheckZero().asDouble(); push(DoubleValue.from(pop().asDouble() % v2)); break; }
 
-                machine.push(LongValue.from(v1 + v2));
+            case INEG:               push(IntValue.from(0 - pop().asInt())); break;
+            case LNEG:               push(LongValue.from(0 - pop().asLong())); break;
+            case FNEG:               push(FloatValue.from((float) 0.0 - pop().asFloat())); break;
+            case DNEG:               push(DoubleValue.from(0.0 - pop().asDouble())); break;
+
+            case ISHL:             { int amount = pop().asInt(); int value =  pop().asInt();  push(IntValue.from(value << (amount & 0x1F))); break; }
+            case LSHL:             { int amount = pop().asInt(); long value = pop().asLong(); push(LongValue.from(value << (amount & 0x3F))); break; }
+            case ISHR:             { int amount = pop().asInt(); int value =  pop().asInt();  push(IntValue.from(value >> (amount & 0x1F))); break; }
+            case LSHR:             { int amount = pop().asInt(); long value = pop().asLong(); push(LongValue.from(value >> (amount & 0x3F))); break; }
+            case IUSHR:            { int amount = pop().asInt(); int value  = pop().asInt();  push(IntValue.from(value >>> (amount & 0x1F))); break; }
+            case LUSHR:            { int amount = pop().asInt(); long value = pop().asLong(); push(LongValue.from(value >>> (amount & 0x3F))); break; }
+
+            case IAND:               push(IntValue.from(pop().asInt() & pop().asInt())); break;
+            case LAND:               push(LongValue.from(pop().asLong() & pop().asLong())); break;
+            case IOR:                push(IntValue.from(pop().asInt() | pop().asInt())); break;
+            case LOR:                push(LongValue.from(pop().asLong() | pop().asLong())); break;
+            case IXOR:               push(IntValue.from(pop().asInt() ^ pop().asInt())); break;
+            case LXOR:               push(LongValue.from(pop().asLong() ^ pop().asLong())); break;
+
+            case IINC: {
+                int index     = isWide ? readU2() : readU1();
+                int increment = isWide ? readS2() : readS1();
+                int value     = local(index).asInt();
+                setLocal(index, IntValue.from(value + increment));
                 break;
             }
 
-            case FADD: {                    // 0x62;
-                final float v1 = machine.pop().asFloat();
-                final float v2 = machine.pop().asFloat();
+            case I2L:                 push(LongValue.from(pop().asInt())); break;
+            case I2F:                 push(FloatValue.from(pop().asInt())); break;
+            case I2D:                 push(DoubleValue.from(pop().asInt())); break;
+            case L2I:                 push(IntValue.from((int) pop().asLong())); break;
+            case L2F:                 push(FloatValue.from(pop().asLong())); break;
+            case L2D:                 push(DoubleValue.from(pop().asLong())); break;
+            case F2I:                 push(IntValue.from((int) pop().asFloat())); break;
+            case F2L:                 push(LongValue.from((long) pop().asFloat())); break;
+            case F2D:                 push(DoubleValue.from(pop().asFloat())); break;
+            case D2I:                 push(IntValue.from((int) pop().asDouble())); break;
+            case D2L:                 push(LongValue.from((long) pop().asDouble())); break;
+            case D2F:                 push(FloatValue.from((float) pop().asDouble())); break;
+            case I2B:                 push(IntValue.from(pop().toByte())); break;
+            case I2C:                 push(IntValue.from(pop().toChar())); break;
+            case I2S:                 push(IntValue.from(pop().toShort())); break;
 
-                machine.push(FloatValue.from(v1 + v2));
+            case LCMP: {
+                long right  = pop().asLong();
+                long left   = pop().asLong();
+                int  result = (left < right) ? -1 : (left == right) ? 0 : 1;
+
+                push(IntValue.from(result));
                 break;
             }
 
-            case DADD: {                    // 0x63;
-                final double v1 = machine.pop().asDouble();
-                final double v2 = machine.pop().asDouble();
+            case FCMPL:
+            case FCMPG: {
+                float right  = pop().asFloat();
+                float left   = pop().asFloat();
+                int   result = (left < right) ? -1 : (left == right) ? 0 : 1;
 
-                machine.push(DoubleValue.from(v1 + v2));
+                push(IntValue.from(result));
                 break;
             }
 
-            /*========================================================================*/
+            case DCMPL:
+            case DCMPG: {
+                double right  = pop().asDouble();
+                double left   = pop().asDouble();
+                int    result = (left < right) ? -1 : (left == right) ? 0 : 1;
 
-            case ISUB: {                    // 0x64;
-                final int v1 = machine.pop().asInt();
-                final int v2 = machine.pop().asInt();
-
-                machine.push(IntValue.from(v2 - v1));
+                push(IntValue.from(result));
                 break;
             }
 
-            case LSUB: {                    // 0x65;
-                final long v1 = machine.pop().asLong();
-                final long v2 = machine.pop().asLong();
-
-                machine.push(LongValue.from(v2 - v1));
-                break;
-            }
-
-            case FSUB: {                    // 0x66;
-                final float v1 = machine.pop().asFloat();
-                final float v2 = machine.pop().asFloat();
-
-                machine.push(FloatValue.from(v2 - v1));
-                break;
-            }
-
-            case DSUB: {                    // 0x67;
-                final double v1 = machine.pop().asDouble();
-                final double v2 = machine.pop().asDouble();
-
-                machine.push(DoubleValue.from(v2 - v1));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case IMUL: {                    // 0x68;
-                final int v1 = machine.pop().asInt();
-                final int v2 = machine.pop().asInt();
-
-                machine.push(IntValue.from(v1 * v2));
-                break;
-            }
-
-            case LMUL: {                    // 0x69;
-                final long v1 = machine.pop().asLong();
-                final long v2 = machine.pop().asLong();
-
-                machine.push(LongValue.from(v1 * v2));
-                break;
-            }
-
-            case FMUL: {                    // 0x6A;
-                final float v1 = machine.pop().asFloat();
-                final float v2 = machine.pop().asFloat();
-
-                machine.push(FloatValue.from(v1 * v2));
-                break;
-            }
-
-            case DMUL: {                    // 0x6B;
-                final double v1 = machine.pop().asDouble();
-                final double v2 = machine.pop().asDouble();
-
-                machine.push(DoubleValue.from(v1 * v2));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case IDIV: {                    // 0x6C;
-                final int v1 = machine.pop().asInt();
-                final int v2 = machine.pop().asInt();
-
-                if (v1 == 0) {
-                    machine.raiseException(new ArithmeticException("Division by zero"));
-                }
-
-                machine.push(IntValue.from(v2 / v1));
-                break;
-            }
-
-            case LDIV: {                    // 0x6D;
-                final long v1 = machine.pop().asLong();
-                final long v2 = machine.pop().asLong();
-
-                if (v1 == 0L) {
-                    machine.raiseException(new ArithmeticException("Division by zero"));
-                }
-
-                machine.push(LongValue.from(v2 / v1));
-                break;
-            }
-
-            case FDIV: {                    // 0x6E;
-                final float v1 = machine.pop().asFloat();
-                final float v2 = machine.pop().asFloat();
-
-                if (v1 == 0.0) {
-                    machine.raiseException(new ArithmeticException("Division by zero"));
-                }
-
-                machine.push(FloatValue.from(v2 / v1));
-                break;
-            }
-
-            case DDIV: {                    // 0x6F;
-                final double v1 = machine.pop().asDouble();
-                final double v2 = machine.pop().asDouble();
-
-                if (v1 == 0.0D) {
-                    machine.raiseException(new ArithmeticException("Division by zero"));
-                }
-
-                machine.push(DoubleValue.from(v2 / v1));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case IREM: {                    // 0x70;
-                final int v1 = machine.pop().asInt();
-                final int v2 = machine.pop().asInt();
-
-                if (v1 == 0) {
-                    machine.raiseException(new ArithmeticException("Division by zero"));
-                }
-
-                machine.push(IntValue.from(v2 % v1));
-                break;
-            }
-
-            case LREM: {                    // 0x71;
-                final long v1 = machine.pop().asLong();
-                final long v2 = machine.pop().asLong();
-
-                if (v1 == 0L) {
-                    machine.raiseException(new ArithmeticException("Division by zero"));
-                }
-
-                machine.push(LongValue.from(v2 % v1));
-                break;
-            }
-
-            case FREM: {                    // 0x72;
-                final float v1 = machine.pop().asFloat();
-                final float v2 = machine.pop().asFloat();
-
-                if (v1 == 0.0) {
-                    machine.raiseException(new ArithmeticException("Division by zero"));
-                }
-
-                machine.push(FloatValue.from(v2 % v1));
-                break;
-            }
-
-            case DREM: {                    // 0x73;
-                final double v1 = machine.pop().asDouble();
-                final double v2 = machine.pop().asDouble();
-
-                if (v1 == 0.0D) {
-                    machine.raiseException(new ArithmeticException("Division by zero"));
-                }
-
-                machine.push(DoubleValue.from(v2 % v1));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case INEG:                      // 0x74;
-                machine.push(IntValue.from(0 - machine.pop().asInt()));
-                break;
-
-            case LNEG:                      // 0x75;
-                machine.push(LongValue.from(0 - machine.pop().asLong()));
-                break;
-
-            case FNEG:                      // 0x76;
-                machine.push(FloatValue.from((float) 0.0 - machine.pop().asFloat()));
-                break;
-
-            case DNEG:                      // 0x77;
-                machine.push(DoubleValue.from(0.0 - machine.pop().asDouble()));
-                break;
-
-                /*========================================================================*/
-
-            case ISHL: {                    // 0x78;
-                final int amount = machine.pop().asInt();
-                final int value  = machine.pop().asInt();
-
-                machine.push(IntValue.from(value << (amount & 0x1F)));
-                break;
-            }
-
-            case LSHL: {                    // 0x79;
-                final int amount = machine.pop().asInt();
-                final long value = machine.pop().asLong();
-
-                machine.push(LongValue.from(value << (amount & 0x3F)));
-                break;
-            }
-
-            case ISHR: {                    // 0x7A;
-                final int amount = machine.pop().asInt();
-                final int value  = machine.pop().asInt();
-
-                machine.push(IntValue.from(value >> (amount & 0x1F)));
-                break;
-            }
-
-            case LSHR: {                    // 0x7B;
-                final int amount = machine.pop().asInt();
-                final long value = machine.pop().asLong();
-
-                machine.push(LongValue.from(value >> (amount & 0x3F)));
-                break;
-            }
-
-            case IUSHR: {                   // 0x7C;
-                final int amount = machine.pop().asInt();
-                final int value  = machine.pop().asInt();
-
-                machine.push(IntValue.from(value >>> (amount & 0x1F)));
-                break;
-            }
-
-            case LUSHR: {                   // 0x7D;
-                final int amount = machine.pop().asInt();
-                final long value = machine.pop().asLong();
-
-                machine.push(LongValue.from(value >>> (amount & 0x3F)));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case IAND: {                    // 0x7E;
-                final int s1 = machine.pop().asInt();
-                final int s2 = machine.pop().asInt();
-
-                machine.push(IntValue.from(s2 & s1));
-                break;
-            }
-
-            case LAND: {                    // 0x7F;
-                final long s1 = machine.pop().asLong();
-                final long s2 = machine.pop().asLong();
-
-                machine.push(LongValue.from(s2 & s1));
-                break;
-            }
-
-            case IOR: {                     // 0x80;
-                final int s1 = machine.pop().asInt();
-                final int s2 = machine.pop().asInt();
-
-                machine.push(IntValue.from(s2 | s1));
-                break;
-            }
-
-            case LOR: {                     // 0x81;
-                final long s1 = machine.pop().asLong();
-                final long s2 = machine.pop().asLong();
-
-                machine.push(LongValue.from(s2 | s1));
-                break;
-            }
-
-            case IXOR: {                    // 0x82;
-                final int s1 = machine.pop().asInt();
-                final int s2 = machine.pop().asInt();
-
-                machine.push(IntValue.from(s2 ^ s1));
-                break;
-            }
-
-            case LXOR: {                    // 0x83;
-                final long s1 = machine.pop().asLong();
-                final long s2 = machine.pop().asLong();
-
-                machine.push(LongValue.from(s2 ^ s1));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case IINC: {                    // 0x84;
-                final int index     = machine.readByte();
-                final int increment = machine.readByte();
-                final int value     = machine.getLocal(index).asInt();
-
-                machine.setLocal(index, IntValue.from(value + increment));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case I2L: {                     // 0x85;
-                final int value = machine.pop().asInt();
-                machine.push(LongValue.from(value));
-                break;
-            }
-
-            case I2F: {                     // 0x86;
-                final int value = machine.pop().asInt();
-                machine.push(FloatValue.from(value));
-                break;
-            }
-
-            case I2D: {                     // 0x87;
-                final int value = machine.pop().asInt();
-                machine.push(DoubleValue.from(value));
-                break;
-            }
-
-            case L2I: {                     // 0x88;
-                final long value = machine.pop().asLong();
-                machine.push(IntValue.from((int) value));
-                break;
-            }
-
-            case L2F: {                     // 0x89;
-                final long value = machine.pop().asLong();
-                machine.push(FloatValue.from(value));
-                break;
-            }
-
-            case L2D: {                     // 0x8A;
-                final long value = machine.pop().asLong();
-                machine.push(DoubleValue.from(value));
-                break;
-            }
-
-            case F2I: {                     // 0x8B;
-                final float value = machine.pop().asFloat();
-                machine.push(IntValue.from((int) value));
-                break;
-            }
-
-            case F2L: {                     // 0x8C;
-                final float value = machine.pop().asFloat();
-                machine.push(LongValue.from((long) value));
-                break;
-            }
-
-            case F2D: {                     // 0x8D;
-                final float value = machine.pop().asFloat();
-                machine.push(DoubleValue.from(value));
-                break;
-            }
-
-            case D2I: {                     // 0x8E;
-                final double value = machine.pop().asDouble();
-                machine.push(IntValue.from((int) value));
-                break;
-            }
-
-            case D2L: {                     // 0x8F;
-                final double value = machine.pop().asDouble();
-                machine.push(LongValue.from((long) value));
-                break;
-            }
-
-            case D2F: {                     // 0x90;
-                final double value = machine.pop().asDouble();
-                machine.push(FloatValue.from((float) value));
-                break;
-            }
-
-            case I2B: {                     // 0x91;
-                final byte value = machine.pop().toByte();
-                machine.push(IntValue.from(value));
-                break;
-            }
-
-            case I2C: {                     // 0x92;
-                final char value = machine.pop().toChar();
-                machine.push(IntValue.from(value));
-                break;
-            }
-
-            case I2S: {                     // 0x93;
-                final short value  = machine.pop().toShort();
-                machine.push(IntValue.from(value));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case LCMP: {                    // 0x94;
-                final long right  = machine.pop().asLong();
-                final long left   = machine.pop().asLong();
-                final int  result = (left < right) ? -1 : (left == right) ? 0 : 1;
-
-                machine.push(IntValue.from(result));
-                break;
-            }
-
-            case FCMPL:                     // 0x95;
-            case FCMPG: {                   // 0x96;
-                final float right  = machine.pop().asFloat();
-                final float left   = machine.pop().asFloat();
-                final int   result = (left < right) ? -1 : (left == right) ? 0 : 1;
-
-                machine.push(IntValue.from(result));
-                break;
-            }
-
-            case DCMPL:                     // 0x97;
-            case DCMPG: {                   // 0x98;
-                final double right  = machine.pop().asDouble();
-                final double left   = machine.pop().asDouble();
-                final int    result = (left < right) ? -1 : (left == right) ? 0 : 1;
-
-                machine.push(IntValue.from(result));
-                break;
-            }
-
-            /*========================================================================*/
-
-            case IFEQ: {                    // 0x99;
-                final short offset = machine.readShort();
+            case IFEQ: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 if (s1 == 0) {
                     machine.jump(offset);
@@ -1439,8 +770,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IFNE: {                    // 0x9A;
-                final short offset = machine.readShort();
+            case IFNE: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 if (s1 != 0) {
                     machine.jump(offset);
@@ -1448,8 +779,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IFLT: {                    // 0x9B;
-                final short offset = machine.readShort();
+            case IFLT: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 if (s1 < 0) {
                     machine.jump(offset);
@@ -1457,8 +788,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IFGE: {                    // 0x9C;
-                final short offset = machine.readShort();
+            case IFGE: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 if (s1 >= 0) {
                     machine.jump(offset);
@@ -1466,8 +797,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IFGT: {                    // 0x9D;
-                final short offset = machine.readShort();
+            case IFGT: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 if (s1 > 0) {
                     machine.jump(offset);
@@ -1475,8 +806,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IFLE: {                    // 0x9E;
-                final short offset = machine.readShort();
+            case IFLE: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 if (s1 <= 0) {
                     machine.jump(offset);
@@ -1484,8 +815,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IF_ICMPEQ: {               // 0x9F;
-                final short offset = machine.readShort();
+            case IF_ICMPEQ: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 final int s2 = machine.pop().asInt();
                 if (s2 == s1) {
@@ -1494,8 +825,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IF_ICMPNE: {               // 0xA0;
-                final short offset = machine.readShort();
+            case IF_ICMPNE: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 final int s2 = machine.pop().asInt();
                 if (s2 != s1) {
@@ -1504,8 +835,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IF_ICMPLT: {               // 0xA1;
-                final short offset = machine.readShort();
+            case IF_ICMPLT: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 final int s2 = machine.pop().asInt();
                 if (s2 < s1) {
@@ -1514,8 +845,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IF_ICMPGE: {               // 0xA2;
-                final short offset = machine.readShort();
+            case IF_ICMPGE: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 final int s2 = machine.pop().asInt();
                 if (s2 >= s1) {
@@ -1524,8 +855,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IF_ICMPGT: {               // 0xA3;
-                final short offset = machine.readShort();
+            case IF_ICMPGT: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 final int s2 = machine.pop().asInt();
                 if (s2 > s1) {
@@ -1534,8 +865,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IF_ICMPLE: {               // 0xA4;
-                final short offset = machine.readShort();
+            case IF_ICMPLE: {
+                final short offset = readS2();
                 final int s1 = machine.pop().asInt();
                 final int s2 = machine.pop().asInt();
                 if (s2 <= s1) {
@@ -1544,8 +875,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IF_ACMPEQ: {               // 0xA5;
-                final short offset = machine.readShort();
+            case IF_ACMPEQ: {
+                final short offset = readS2();
                 final ReferenceValue s1 = (ReferenceValue) machine.pop();
                 final ReferenceValue s2 = (ReferenceValue) machine.pop();
                 if (s2.equals(s1)) {
@@ -1554,8 +885,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IF_ACMPNE: {               // 0xA6;
-                final short offset = machine.readShort();
+            case IF_ACMPNE: {
+                final short offset = readS2();
                 final ReferenceValue s1 = (ReferenceValue) machine.pop();
                 final ReferenceValue s2 = (ReferenceValue) machine.pop();
 
@@ -1565,59 +896,56 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            /*========================================================================*/
+            case GOTO: {
+                final short offset = readS2();
+                machine.jump(offset);
+                break;
+            }
 
-            case GOTO: {                    // 0xA7;
-                final short offset = machine.readShort();
+            case JSR: {
+                short offset = readS2();
+                int returnPosition = machine.currentThread().frame().currentBytePosition();
+                push(IntValue.from(returnPosition));
                 machine.jump(offset);
                 break;
             }
-            case JSR: {                      // 0xA8;
-                final short offset = machine.readShort();
-                final int returnPosition = machine.currentThread().frame().currentBytePosition();
-                machine.push(IntValue.from(returnPosition));
-                machine.jump(offset);
-                break;
-            }
-            case RET: {                     // 0xA9;
-                final int index = machine.readByte();
-                final int value = machine.getLocal(index).asInt();
+            case RET: {
+                int index = isWide ? readU2() : readU1();
+                int value = local(index).asInt();
 
                 machine.currentThread().frame().setBytecodePosition(value);
                 break;
             }
 
-            /*========================================================================*/
-
-            case TABLESWITCH: {             // 0xAA;
-                final int index   = machine.pop().asInt();
+            case TABLESWITCH: {
+                int index   = pop().asInt();
                 machine.alignInstructionPosition();
-                final int defawlt = machine.readInt();
-                final int low     = machine.readInt();
-                final int high    = machine.readInt();
+                int defawlt = machine.readInt();
+                int low     = machine.readInt();
+                int high    = machine.readInt();
 
                 if (index < low || index > high) {
                     machine.jump(defawlt);
                 } else {
-                    final int jumpTableIndex = index - low;
+                    int jumpTableIndex = index - low;
                     machine.skipBytes(jumpTableIndex * 4);
-                    final int offset = machine.readInt();
+                    int offset = machine.readInt();
                     machine.jump(offset);
                 }
 
                 break;
             }
 
-            case LOOKUPSWITCH: {             // 0xAB;
-                final int key     = machine.pop().asInt();
+            case LOOKUPSWITCH: {
+                int key     = pop().asInt();
                 machine.alignInstructionPosition();
-                final int defawlt = machine.readInt();
-                final int nPairs  = machine.readInt();
+                int defawlt = machine.readInt();
+                int nPairs  = machine.readInt();
 
                 boolean foundMatch = false;
                 for (int i = 0; i < nPairs; i++) {
-                    final int value = machine.readInt();
-                    final int offset = machine.readInt();
+                    int value = machine.readInt();
+                    int offset = machine.readInt();
                     if (value == key) {
                         machine.jump(offset);
                         foundMatch = true;
@@ -1631,15 +959,14 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            /*========================================================================*/
-
-            case IRETURN:                   // 0xAC;
-            case LRETURN:                   // 0xAD;
-            case FRETURN:                   // 0xAE;
-            case DRETURN:                   // 0xAF;
-            case ARETURN: {                 // 0xB0;
-                final Value result = machine.pop();
-                final ExecutionFrame frame = machine.popFrame();
+            case IRETURN:
+            case LRETURN:
+            case FRETURN:
+            case DRETURN:
+            case WRETURN:
+            case ARETURN: {
+                Value result = pop();
+                ExecutionFrame frame = machine.popFrame();
 
                 //if this was the topmost frame on the stack
                 if (frame == null) {
@@ -1647,12 +974,12 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                     return MethodStatus.METHOD_END;
                 }
 
-                machine.push(result);
+                push(result);
                 break;
             }
 
-            case RETURN: {                  // 0xB1;
-                final ExecutionFrame frame = machine.popFrame();
+            case RETURN: {
+                ExecutionFrame frame = machine.popFrame();
                 if (frame == null) {
                     returnValue = VoidValue.VOID;
                     return MethodStatus.METHOD_END;
@@ -1660,191 +987,107 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            /*========================================================================*/
-
-            case GETSTATIC: {               // 0xB2;
-                final short cpIndex = machine.readShort();
-                try {
-                    machine.push(machine.getStatic(cpIndex));
-                } catch (LinkageError e) {
-                    machine.raiseException(e);
-                }
+            case GETSTATIC:  push(machine.getStatic(readU2())); break;
+            case PUTSTATIC:  machine.putStatic(readU2(), pop()); break;
+            case GETFIELD:   push(machine.getField(pop().asReference(), readU2())); break;
+            case PUTFIELD: {
+                Value value = pop();
+                Object instance = pop().asBoxedJavaValue();
+                machine.putField(instance, readU2(), value);
                 break;
             }
 
-            case PUTSTATIC: {                // 0xB5;
-                final short cpIndex = machine.readShort();
-                try {
-                    machine.putStatic(cpIndex, machine.pop());
-                } catch (LinkageError e) {
-                    machine.raiseException(e);
-                }
-                break;
-            }
-
-            case GETFIELD: {                // 0xB4;
-                final Reference instance = machine.pop().asReference();
-                final short cpIndex = machine.readShort();
-
-                if (instance.isZero()) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                try {
-                    machine.push(machine.getField(instance, cpIndex));
-                } catch (LinkageError e) {
-                    machine.raiseException(e);
-                }
-
-                break;
-            }
-
-            case PUTFIELD: {                // 0xB5;
-                final Value value = machine.pop();
-                final Object instance = machine.pop().asBoxedJavaValue();
-                final short cpIndex = machine.readShort();
-
-                if (instance == null) {
-                    machine.raiseException(new NullPointerException());
-                }
-
-                try {
-                    machine.putField(instance, cpIndex, value);
-                } catch (LinkageError e) {
-                    machine.raiseException(e);
-                }
-
-                break;
-            }
-
-            /*========================================================================*/
-
-            case INVOKEVIRTUAL: {           // 0xB6;
-                final short cpIndex = machine.readShort();
-
-                try {
-                    final ClassMethodActor resolveMethod = (ClassMethodActor) machine.resolveMethod(cpIndex);
-                    ClassMethodActor methodActor = resolveMethod;
-                    final Value value = machine.peek(methodActor.descriptor().numberOfParameters() + 1);
-                    if (value instanceof ReferenceValue) {
-                        final ReferenceValue receiver = (ReferenceValue) value;
-                        if (receiver.isZero()) {
-                            machine.raiseException(new NullPointerException());
-                        }
-
-                        final ClassActor dynamicClass = receiver.getClassActor();
-                        assert dynamicClass != null;
-
-                        methodActor = dynamicClass.findVirtualMethodActor(methodActor);
-                    }
-
-                    if (methodActor == null) {
-                        final ReferenceValue receiver = (ReferenceValue) value;
-                        final ClassActor dynamicClass = receiver.getClassActor();
-
-                        methodActor = dynamicClass.findVirtualMethodActor(methodActor);
-                        machine.raiseException(new AbstractMethodError());
-                    } else if (methodActor.isAbstract()) {
-                        machine.raiseException(new AbstractMethodError());
-                    }
-
-                    machine.invokeMethod(methodActor);
-                } catch (LinkageError e) {
-                    machine.raiseException(e);
-                }
-
-                break;
-            }
-
-            case INVOKESPECIAL: {           // 0xB7;
-                final short cpIndex = machine.readShort();
-
-                try {
-                    final ClassMethodActor methodActor = (ClassMethodActor) machine.resolveMethod(cpIndex);
-                    final ReferenceValue receiver = (ReferenceValue) machine.peek(methodActor.descriptor().numberOfParameters() + 1);
-
+            case INVOKEVIRTUAL: {
+                int cpIndex = readU2();
+                ClassMethodActor resolveMethod = (ClassMethodActor) machine.resolveMethod(cpIndex);
+                ClassMethodActor methodActor = resolveMethod;
+                Value value = machine.peek(methodActor.descriptor().numberOfParameters() + 1);
+                if (value instanceof ReferenceValue) {
+                    ReferenceValue receiver = (ReferenceValue) value;
                     if (receiver.isZero()) {
                         machine.raiseException(new NullPointerException());
                     }
 
-                    machine.invokeMethod(methodActor);
-                } catch (LinkageError e) {
-                    machine.raiseException(e);
-                }
-
-                break;
-            }
-
-            case INVOKESTATIC: {            // 0xB8;
-                final short cpIndex = machine.readShort();
-
-                try {
-                    final ClassMethodActor methodActor = (ClassMethodActor) machine.resolveMethod(cpIndex);
-                    machine.invokeMethod(methodActor);
-                } catch (LinkageError e) {
-                    machine.raiseException(e);
-                }
-
-                break;
-            }
-
-            case INVOKEINTERFACE: {         // 0xB9;
-                final short cpIndex = machine.readShort();
-                machine.readShort();
-
-                try {
-                    final InterfaceMethodActor methodActor = (InterfaceMethodActor) machine.resolveMethod(cpIndex);
-                    final ReferenceValue receiver = (ReferenceValue) machine.peek(methodActor.descriptor().numberOfParameters() + 1);
-
-                    if (receiver.isZero()) {
-                        machine.raiseException(new NullPointerException());
-                    }
-
-                    final ClassActor dynamicClass = receiver.getClassActor();
+                    ClassActor dynamicClass = receiver.getClassActor();
                     assert dynamicClass != null;
 
-                    if (!dynamicClass.getAllInterfaceActors().contains((InterfaceActor) methodActor.holder())) {
-                        machine.raiseException(new IncompatibleClassChangeError(dynamicClass + " does not implement " + methodActor.holder()));
-                    }
-
-                    final VirtualMethodActor dynamicMethodActor = dynamicClass.findVirtualMethodActor(methodActor);
-
-                    if (dynamicMethodActor == null) {
-                        machine.raiseException(new AbstractMethodError("No such method " + methodActor + " found in " + dynamicClass));
-                    } else if (dynamicMethodActor.isAbstract()) {
-                        machine.raiseException(new AbstractMethodError("Method " + dynamicMethodActor + " is abstract in " + dynamicClass));
-                    } else if (!dynamicMethodActor.isPublic()) {
-                        machine.raiseException(new IllegalAccessError("Method " + dynamicMethodActor + " is not public in " + dynamicClass));
-                    }
-
-                    machine.invokeMethod(dynamicMethodActor);
-                } catch (LinkageError e) {
-                    machine.raiseException(e);
+                    methodActor = dynamicClass.findVirtualMethodActor(methodActor);
                 }
 
+                if (methodActor == null) {
+                    ReferenceValue receiver = (ReferenceValue) value;
+                    ClassActor dynamicClass = receiver.getClassActor();
+
+                    methodActor = dynamicClass.findVirtualMethodActor(methodActor);
+                    machine.raiseException(new AbstractMethodError());
+                } else if (methodActor.isAbstract()) {
+                    machine.raiseException(new AbstractMethodError());
+                }
+
+                machine.invokeMethod(methodActor);
                 break;
             }
 
-            /*========================================================================*/
+            case INVOKESPECIAL: {
+                int cpIndex = readU2();
+                ClassMethodActor methodActor = (ClassMethodActor) machine.resolveMethod(cpIndex);
+                Value receiver = machine.peek(methodActor.descriptor().numberOfParameters() + 1);
 
-            case XXXUNUSEDXXX:              // 0xBA;
-                break;
-
-            /*========================================================================*/
-
-            case NEW: {                      // 0xBB;
-                final short cpIndex = machine.readShort();
-                final ClassActor classActor = machine.resolveClassReference(cpIndex);
-                try {
-                    machine.push(ReferenceValue.from(Objects.allocateInstance(classActor.toJava())));
-                } catch (InstantiationException instantiationException) {
-                    machine.raiseException(instantiationException);
+                if (receiver.isZero() && receiver instanceof ReferenceValue) {
+                    machine.raiseException(new NullPointerException());
                 }
+
+                machine.invokeMethod(methodActor);
                 break;
             }
-            case NEWARRAY: {                // 0xBC;
-                final byte arrayType = machine.readByte();
-                final int arraySize  = machine.pop().asInt();
+
+            case INVOKESTATIC: {
+                int cpIndex = readU2();
+                ClassMethodActor methodActor = (ClassMethodActor) machine.resolveMethod(cpIndex);
+                machine.invokeMethod(methodActor);
+                break;
+            }
+
+            case INVOKEINTERFACE: {
+                int cpIndex = readU2();
+                readU2();
+                InterfaceMethodActor methodActor = (InterfaceMethodActor) machine.resolveMethod(cpIndex);
+                ReferenceValue receiver = (ReferenceValue) machine.peek(methodActor.descriptor().numberOfParameters() + 1);
+
+                if (receiver.isZero()) {
+                    machine.raiseException(new NullPointerException());
+                }
+
+                ClassActor dynamicClass = receiver.getClassActor();
+                assert dynamicClass != null;
+
+                if (!dynamicClass.getAllInterfaceActors().contains((InterfaceActor) methodActor.holder())) {
+                    machine.raiseException(new IncompatibleClassChangeError(dynamicClass + " does not implement " + methodActor.holder()));
+                }
+
+                VirtualMethodActor dynamicMethodActor = dynamicClass.findVirtualMethodActor(methodActor);
+
+                if (dynamicMethodActor == null) {
+                    machine.raiseException(new AbstractMethodError("No such method " + methodActor + " found in " + dynamicClass));
+                } else if (dynamicMethodActor.isAbstract()) {
+                    machine.raiseException(new AbstractMethodError("Method " + dynamicMethodActor + " is abstract in " + dynamicClass));
+                } else if (!dynamicMethodActor.isPublic()) {
+                    machine.raiseException(new IllegalAccessError("Method " + dynamicMethodActor + " is not public in " + dynamicClass));
+                }
+
+                machine.invokeMethod(dynamicMethodActor);
+                break;
+            }
+
+            case NEW: {
+                int cpIndex = readU2();
+                ClassActor classActor = machine.resolveClassReference(cpIndex);
+                push(ReferenceValue.from(Objects.allocateInstance(classActor.toJava())));
+                break;
+            }
+            case NEWARRAY: {
+                int arrayType = readU1();
+                int arraySize  = pop().asInt();
 
                 if (arraySize < 0) {
                     machine.raiseException(new NegativeArraySizeException());
@@ -1852,181 +1095,128 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
 
                 switch (arrayType) {
                     case 4:
-                        machine.push(ReferenceValue.from(new boolean[arraySize]));
+                        push(ReferenceValue.from(new boolean[arraySize]));
                         break;
                     case 5:
-                        machine.push(ReferenceValue.from(new char[arraySize]));
+                        push(ReferenceValue.from(new char[arraySize]));
                         break;
                     case 6:
-                        machine.push(ReferenceValue.from(new float[arraySize]));
+                        push(ReferenceValue.from(new float[arraySize]));
                         break;
                     case 7:
-                        machine.push(ReferenceValue.from(new double[arraySize]));
+                        push(ReferenceValue.from(new double[arraySize]));
                         break;
                     case 8:
-                        machine.push(ReferenceValue.from(new byte[arraySize]));
+                        push(ReferenceValue.from(new byte[arraySize]));
                         break;
                     case 9:
-                        machine.push(ReferenceValue.from(new short[arraySize]));
+                        push(ReferenceValue.from(new short[arraySize]));
                         break;
                     case 10:
-                        machine.push(ReferenceValue.from(new int[arraySize]));
+                        push(ReferenceValue.from(new int[arraySize]));
                         break;
                     case 11:
-                        machine.push(ReferenceValue.from(new long[arraySize]));
+                        push(ReferenceValue.from(new long[arraySize]));
                         break;
                 }
 
                 break;
             }
 
-            case ANEWARRAY: {               // 0xBB;
-                final short cpIndex = machine.readShort();
-                final int arraySize = machine.pop().asInt();
+            case ANEWARRAY: {
+                int cpIndex = readU2();
+                int arraySize = pop().asInt();
 
-                final ClassActor classActor = machine.resolveClassReference(cpIndex);
+                ClassActor classActor = machine.resolveClassReference(cpIndex);
 
                 if (arraySize < 0) {
                     machine.raiseException(new NegativeArraySizeException());
                 }
 
-                machine.push(ReferenceValue.from(Array.newInstance(classActor.toJava(), arraySize)));
+                push(ReferenceValue.from(Array.newInstance(classActor.toJava(), arraySize)));
                 break;
             }
 
-            case ARRAYLENGTH: {             // 0xBE;
-                final Reference array = machine.pop().asReference();
+            case ARRAYLENGTH: {
+                Reference array = pop().asReference();
 
                 if (array.isZero()) {
                     machine.raiseException(new NullPointerException());
                 }
 
-                machine.push(IntValue.from(Layout.readArrayLength(array)));
+                push(IntValue.from(Layout.readArrayLength(array)));
                 break;
             }
 
-            /*========================================================================*/
-
-            case ATHROW: {                  // 0xBF;
-                final ReferenceValue t = (ReferenceValue) machine.pop();
-
+            case ATHROW: {
+                ReferenceValue t = (ReferenceValue) pop();
                 if (t.isZero()) {
-                    throw machine.raiseException(new NullPointerException());
+                    throw new NullPointerException();
                 } else {
                     throw machine.raiseException(t);
                 }
             }
 
-            case CHECKCAST: {               // 0xC0;
-                final short cpIndex = machine.readShort();
-                final ClassActor classActor = machine.resolveClassReference(cpIndex);
-                final ReferenceValue object = (ReferenceValue) machine.pop();
+            case CHECKCAST: {
+                int cpIndex = readU2();
+                ClassActor classActor = machine.resolveClassReference(cpIndex);
+                ReferenceValue object = (ReferenceValue) pop();
 
                 if (!object.isZero()) {
                     if (!classActor.isAssignableFrom(object.getClassActor())) {
-                        final String message = object.getClassActor().toJava() + " is not a subclass of " + classActor;
+                        String message = object.getClassActor().toJava() + " is not a subclass of " + classActor;
                         machine.raiseException(new ClassCastException(message));
                     }
                 }
 
-                machine.push(object);
+                push(object);
                 break;
             }
 
-            case INSTANCEOF: {              // 0xC1;
-                final short cpIndex = machine.readShort();
-                final ClassActor classActor = machine.resolveClassReference(cpIndex);
-                final ReferenceValue object = (ReferenceValue) machine.pop();
+            case INSTANCEOF: {
+                int cpIndex = readU2();
+                ClassActor classActor = machine.resolveClassReference(cpIndex);
+                ReferenceValue object = (ReferenceValue) pop();
 
                 if (object.isZero() || !classActor.isAssignableFrom(object.getClassActor())) {
-                    machine.push(IntValue.from(0));
+                    push(IntValue.from(0));
                 } else {
-                    machine.push(IntValue.from(1));
+                    push(IntValue.from(1));
                 }
 
                 break;
             }
 
-            /*========================================================================*/
-
-            case MONITORENTER:              // 0xC2;
-            case MONITOREXIT:               // 0xC3;
-                machine.pop();
+            case MONITORENTER:
+            case MONITOREXIT:
+                pop();
                 break;
 
-            /*========================================================================*/
-
-            case WIDE: {                    // 0xC4;
-                final Bytecode nextCode = machine.readOpcode();
-                final short index = machine.readShort();
-
-                switch (nextCode) {
-                    case ILOAD:
-                    case FLOAD:
-                    case ALOAD:
-                    case LLOAD:
-                    case DLOAD:
-                        machine.push(machine.getLocal(index));
-                        break;
-
-                    case ISTORE:
-                    case FSTORE:
-                    case ASTORE:
-                    case LSTORE:
-                    case DSTORE:
-                        machine.setLocal(index, machine.pop());
-                        break;
-
-                    case IINC: {
-                        final int increment = machine.readShort();
-                        final int value = machine.getLocal(index).asInt();
-
-                        machine.setLocal(index, IntValue.from(value + increment));
-                        break;
-                    }
-
-                    case RET: {
-                        final Value value = machine.getLocal(index);
-                        machine.currentThread().frame().setBytecodePosition(value.asInt());
-                        break;
-                    }
-
-                    default:
-                        machine.raiseException(new ClassFormatError("Illegal wide bytecode encountered"));
-                }
-
-                break;
-            }
-
-            /*========================================================================*/
-
-            case MULTIANEWARRAY: {          // 0xC5;
-                final short cpIndex = machine.readShort();
-                final ClassActor arrayClassActor = machine.resolveClassReference(cpIndex);
-                final int lengthsCount = (short) (machine.readByte() & 0x7F);
+            case MULTIANEWARRAY: {
+                int cpIndex = readU2();
+                ClassActor arrayClassActor = machine.resolveClassReference(cpIndex);
+                int lengthsCount = (short) (readS1() & 0x7F);
                 if (lengthsCount < 1) {
                     throw new ClassFormatError("dimensions operand of multianewarray is less than 1");
                 }
-                final int[] lengths = new int[lengthsCount];
+                int[] lengths = new int[lengthsCount];
 
                 if (lengthsCount > arrayClassActor.numberOfDimensions()) {
                     throw new IncompatibleClassChangeError(lengthsCount + " is too many dimensions for " + arrayClassActor);
                 }
 
                 for (int i = lengthsCount - 1; i >= 0; --i) {
-                    lengths[i] = machine.pop().asInt();
+                    lengths[i] = pop().asInt();
                     if (lengths[i] < 0) {
                         machine.raiseException(new NegativeArraySizeException());
                     }
                 }
 
-                machine.push(ReferenceValue.from(createMultiDimensionArray(arrayClassActor, 0, lengths)));
+                push(ReferenceValue.from(createMultiDimensionArray(arrayClassActor, 0, lengths)));
                 break;
             }
 
-            /*========================================================================*/
-
-            case IFNULL: {                  // 0xC6;
+            case IFNULL: {
                 final int offset = machine.readShort();
                 final Value r = machine.pop();
 
@@ -2037,7 +1227,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            case IFNONNULL: {               // 0xC7;
+            case IFNONNULL: {
                 final int offset = machine.readShort();
                 final Value r = machine.pop();
 
@@ -2048,150 +1238,85 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
             }
 
-            /*========================================================================*/
-
-            case GOTO_W:                    // 0xC8;
+            case GOTO_W:
                 machine.jump(machine.readInt());
                 break;
 
-            case JSR_W:                     // 0xC9;
-                final int offset = machine.readInt();
-                final int returnPosition = machine.currentThread().frame().currentBytePosition();
-                machine.push(IntValue.from(returnPosition));
+            case JSR_W:
+                int offset = machine.readInt();
+                int returnPosition = machine.currentThread().frame().currentBytePosition();
+                push(IntValue.from(returnPosition));
                 machine.jump(offset);
                 break;
 
-                /*========================================================================*/
-
-            case BREAKPOINT:                // 0xCA;
-                break;
-
-                /*========================================================================*/
-
-            default: {
-//                if (Bytecodes.isExtension(opcode.ordinal())) {
-//                    // Checkstyle: stop
-//                    switch (opcode.ordinal()) {
-//                        case Bytecodes.UNSAFE_CAST: break;
-//                        case Bytecodes.WLOAD:                  localLoadReferenceOrWord(operand); break;
-//                        case Bytecodes.WLOAD_0:                localLoadReferenceOrWord(0); break;
-//                        case Bytecodes.WLOAD_1:                localLoadReferenceOrWord(1); break;
-//                        case Bytecodes.WLOAD_2:                localLoadReferenceOrWord(2); break;
-//                        case Bytecodes.WLOAD_3:                localLoadReferenceOrWord(3); break;
-//                        case Bytecodes.WSTORE:                 localStoreReferenceOrWord(operand); break;
-//                        case Bytecodes.WSTORE_0:               localStoreReferenceOrWord(0); break;
-//                        case Bytecodes.WSTORE_1:               localStoreReferenceOrWord(1); break;
-//                        case Bytecodes.WSTORE_2:               localStoreReferenceOrWord(2); break;
-//                        case Bytecodes.WSTORE_3:               localStoreReferenceOrWord(3); break;
-//                        case Bytecodes.ZERO:                   push(WordValue.ZERO); break;
-//                        case Bytecodes.WDIV:                   stackCall(DividedByAddress.BUILTIN); break;
-//                        case Bytecodes.WDIVI:                  stackCall(DividedByInt.BUILTIN); break;
-//                        case Bytecodes.WMOD:                   stackCall(RemainderByAddress.BUILTIN); break;
-//                        case Bytecodes.WMODI:                  stackCall(RemainderByInt.BUILTIN); break;
-//                        case Bytecodes.ICMP:                   stackCall(CompareInts.BUILTIN); break;
-//                        case Bytecodes.WCMP:                   stackCall(CompareWords.BUILTIN); break;
-//                        case Bytecodes.PREAD_BYTE:             stackCall(ReadByte.BUILTIN); break;
-//                        case Bytecodes.PREAD_CHAR:             stackCall(ReadChar.BUILTIN); break;
-//                        case Bytecodes.PREAD_SHORT:            stackCall(ReadShort.BUILTIN); break;
-//                        case Bytecodes.PREAD_INT:              stackCall(ReadInt.BUILTIN); break;
-//                        case Bytecodes.PREAD_FLOAT:            stackCall(ReadFloat.BUILTIN); break;
-//                        case Bytecodes.PREAD_LONG:             stackCall(ReadLong.BUILTIN); break;
-//                        case Bytecodes.PREAD_DOUBLE:           stackCall(ReadDouble.BUILTIN); break;
-//                        case Bytecodes.PREAD_WORD:             stackCall(ReadWord.BUILTIN); break;
-//                        case Bytecodes.PREAD_REFERENCE:        stackCall(ReadReference.BUILTIN); break;
-//                        case Bytecodes.PREAD_BYTE_I:           stackCall(ReadByteAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PREAD_CHAR_I:           stackCall(ReadCharAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PREAD_SHORT_I:          stackCall(ReadShortAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PREAD_INT_I:            stackCall(ReadIntAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PREAD_FLOAT_I:          stackCall(ReadFloatAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PREAD_LONG_I:           stackCall(ReadLongAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PREAD_DOUBLE_I:         stackCall(ReadDoubleAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PREAD_WORD_I:           stackCall(ReadWordAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PREAD_REFERENCE_I:      stackCall(ReadReferenceAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PWRITE_BYTE:            stackCall(WriteByte.BUILTIN); break;
-//                        case Bytecodes.PWRITE_SHORT:           stackCall(WriteShort.BUILTIN); break;
-//                        case Bytecodes.PWRITE_INT:             stackCall(WriteInt.BUILTIN); break;
-//                        case Bytecodes.PWRITE_FLOAT:           stackCall(WriteFloat.BUILTIN); break;
-//                        case Bytecodes.PWRITE_LONG:            stackCall(WriteLong.BUILTIN); break;
-//                        case Bytecodes.PWRITE_DOUBLE:          stackCall(WriteDouble.BUILTIN); break;
-//                        case Bytecodes.PWRITE_WORD:            stackCall(WriteWord.BUILTIN); break;
-//                        case Bytecodes.PWRITE_REFERENCE:       stackCall(WriteReference.BUILTIN); break;
-//                        case Bytecodes.PWRITE_BYTE_I:          stackCall(WriteByteAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PWRITE_SHORT_I:         stackCall(WriteShortAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PWRITE_INT_I:           stackCall(WriteIntAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PWRITE_FLOAT_I:         stackCall(WriteFloatAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PWRITE_LONG_I:          stackCall(WriteLongAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PWRITE_DOUBLE_I:        stackCall(WriteDoubleAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PWRITE_WORD_I:          stackCall(WriteWordAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PWRITE_REFERENCE_I:     stackCall(WriteReferenceAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PGET_BYTE:              stackCall(GetByte.BUILTIN); break;
-//                        case Bytecodes.PGET_CHAR:              stackCall(GetChar.BUILTIN); break;
-//                        case Bytecodes.PGET_SHORT:             stackCall(GetShort.BUILTIN); break;
-//                        case Bytecodes.PGET_INT:               stackCall(GetInt.BUILTIN); break;
-//                        case Bytecodes.PGET_FLOAT:             stackCall(GetFloat.BUILTIN); break;
-//                        case Bytecodes.PGET_LONG:              stackCall(GetLong.BUILTIN); break;
-//                        case Bytecodes.PGET_DOUBLE:            stackCall(GetDouble.BUILTIN); break;
-//                        case Bytecodes.PGET_WORD:              stackCall(GetWord.BUILTIN); break;
-//                        case Bytecodes.PGET_REFERENCE:         stackCall(GetReference.BUILTIN); break;
-//                        case Bytecodes.PSET_BYTE:              stackCall(SetByte.BUILTIN); break;
-//                        case Bytecodes.PSET_SHORT:             stackCall(SetShort.BUILTIN); break;
-//                        case Bytecodes.PSET_INT:               stackCall(SetInt.BUILTIN); break;
-//                        case Bytecodes.PSET_FLOAT:             stackCall(SetFloat.BUILTIN); break;
-//                        case Bytecodes.PSET_LONG:              stackCall(SetLong.BUILTIN); break;
-//                        case Bytecodes.PSET_DOUBLE:            stackCall(SetDouble.BUILTIN); break;
-//                        case Bytecodes.PSET_WORD:              stackCall(SetWord.BUILTIN); break;
-//                        case Bytecodes.PSET_REFERENCE:         stackCall(SetReference.BUILTIN); break;
-//                        case Bytecodes.PCMPSWP_INT:            stackCall(CompareAndSwapInt.BUILTIN); break;
-//                        case Bytecodes.PCMPSWP_WORD:           stackCall(CompareAndSwapWord.BUILTIN); break;
-//                        case Bytecodes.PCMPSWP_REFERENCE:      stackCall(CompareAndSwapReference.BUILTIN); break;
-//                        case Bytecodes.PCMPSWP_INT_I:          stackCall(CompareAndSwapIntAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PCMPSWP_WORD_I:         stackCall(CompareAndSwapWordAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.PCMPSWP_REFERENCE_I:    stackCall(CompareAndSwapReferenceAtIntOffset.BUILTIN); break;
-//                        case Bytecodes.MOV_I2F:                stackCall(IntToFloat.BUILTIN); break;
-//                        case Bytecodes.MOV_F2I:                stackCall(FloatToInt.BUILTIN); break;
-//                        case Bytecodes.MOV_L2D:                stackCall(LongToDouble.BUILTIN); break;
-//                        case Bytecodes.MOV_D2L:                stackCall(DoubleToLong.BUILTIN); break;
-//                        case Bytecodes.UWLT:                   stackCall(LessThan.BUILTIN); break;
-//                        case Bytecodes.UWLTEQ:                 stackCall(LessEqual.BUILTIN); break;
-//                        case Bytecodes.UWGT:                   stackCall(GreaterThan.BUILTIN); break;
-//                        case Bytecodes.UWGTEQ:                 stackCall(GreaterEqual.BUILTIN); break;
-//                        case Bytecodes.UGE:                    stackCall(UnsignedIntGreaterEqual.BUILTIN); break;
-//                        case Bytecodes.JNICALL:                callnative(operand); break;
-//                        case Bytecodes.READGPR:                stackCall(GetIntegerRegister.BUILTIN); break;
-//                        case Bytecodes.WRITEGPR:               stackCall(SetIntegerRegister.BUILTIN); break;
-//                        case Bytecodes.MEMBAR_LOAD_LOAD:       membar(MemoryBarrier.loadLoad); break;
-//                        case Bytecodes.MEMBAR_LOAD_STORE:      membar(MemoryBarrier.loadStore); break;
-//                        case Bytecodes.MEMBAR_STORE_LOAD:      membar(MemoryBarrier.storeLoad); break;
-//                        case Bytecodes.MEMBAR_STORE_STORE:     membar(MemoryBarrier.storeStore); break;
-//                        case Bytecodes.MEMBAR_MEMOP_STORE:     membar(MemoryBarrier.memopStore); break;
-//                        case Bytecodes.MEMBAR_ALL:             membar(MemoryBarrier.all); break;
-//                        case Bytecodes.ALLOCA:                 stackCall(StackAllocate.BUILTIN); break;
-//                        case Bytecodes.STACKADDR:              stackCall(MakeStackVariable.BUILTIN); break;
-//                        case Bytecodes.SAFEPOINT:              stackCall(SafepointBuiltin.BUILTIN); break;
-//                        case Bytecodes.PAUSE:                  stackCall(Pause.BUILTIN); break;
-//                        case Bytecodes.ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;
-//                        case Bytecodes.READ_PC:                stackCall(GetInstructionPointer.BUILTIN); break;
-//                        case Bytecodes.FLUSHW:                 stackCall(FlushRegisterWindows.BUILTIN); break;
-//                        case Bytecodes.CALL: {
-//                            Invocation inv = invoke(operand, 0);
-//                            completeInvocation(new Call(inv.sig), inv.sig.resultKind(), inv.args);
-//                            break;
-//                        }
-//                        case Bytecodes.WRETURN: {
-//                            assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
-//                            currentCall.setProcedure(methodTranslation.variableFactory().normalContinuationParameter());
-//                            final CirVariable result = stack.pop();
-//                            currentCall.setArguments(result);
-//                            break;
-//                        }
-//                        default: {
-//                            throw verifyError("Unsupported bytecode: " + Bytecodes.name(opcode));
-//                        }
-//                    }
-//                } else {
-                    machine.raiseException(new ClassFormatError("Unsupported bytecode: " + opcode));
-//                }
-            }
+            case UNSAFE_CAST:            machine.skipBytes(2); break;
+            case ZERO:                   machine.skipBytes(2); push(WordValue.ZERO); break;
+            case PREAD_BYTE:             pointerLoad(Kind.BYTE, false); break;
+            case PREAD_CHAR:             pointerLoad(Kind.CHAR, false); break;
+            case PREAD_SHORT:            pointerLoad(Kind.SHORT, false); break;
+            case PREAD_INT:              pointerLoad(Kind.INT, false); break;
+            case PREAD_FLOAT:            pointerLoad(Kind.FLOAT, false); break;
+            case PREAD_LONG:             pointerLoad(Kind.LONG, false); break;
+            case PREAD_DOUBLE:           pointerLoad(Kind.DOUBLE, false); break;
+            case PREAD_WORD:             pointerLoad(Kind.WORD, false); break;
+            case PREAD_REFERENCE:        pointerLoad(Kind.REFERENCE, false); break;
+            case PREAD_BYTE_I:           pointerLoad(Kind.BYTE, true); break;
+            case PREAD_CHAR_I:           pointerLoad(Kind.CHAR, true); break;
+            case PREAD_SHORT_I:          pointerLoad(Kind.SHORT, true); break;
+            case PREAD_INT_I:            pointerLoad(Kind.INT, true); break;
+            case PREAD_FLOAT_I:          pointerLoad(Kind.FLOAT, true); break;
+            case PREAD_LONG_I:           pointerLoad(Kind.LONG, true); break;
+            case PREAD_DOUBLE_I:         pointerLoad(Kind.DOUBLE, true); break;
+            case PREAD_WORD_I:           pointerLoad(Kind.WORD, true); break;
+            case PREAD_REFERENCE_I:      pointerLoad(Kind.REFERENCE, true); break;
+            case PWRITE_BYTE:
+            case PWRITE_SHORT:
+            case PWRITE_INT:
+            case PWRITE_FLOAT:
+            case PWRITE_LONG:
+            case PWRITE_DOUBLE:
+            case PWRITE_WORD:
+            case PWRITE_REFERENCE:
+            case PWRITE_BYTE_I:
+            case PWRITE_SHORT_I:
+            case PWRITE_INT_I:
+            case PWRITE_FLOAT_I:
+            case PWRITE_LONG_I:
+            case PWRITE_DOUBLE_I:
+            case PWRITE_WORD_I:
+            case PWRITE_REFERENCE_I:     throw FatalError.unexpected("Cannot interpret pointer writes remotely");
+            case PGET_BYTE:              pointerGet(Kind.BYTE); break;
+            case PGET_CHAR:              pointerGet(Kind.CHAR); break;
+            case PGET_SHORT:             pointerGet(Kind.SHORT); break;
+            case PGET_INT:               pointerGet(Kind.INT); break;
+            case PGET_FLOAT:             pointerGet(Kind.FLOAT); break;
+            case PGET_LONG:              pointerGet(Kind.LONG); break;
+            case PGET_DOUBLE:            pointerGet(Kind.DOUBLE); break;
+            case PGET_WORD:              pointerGet(Kind.WORD); break;
+            case PGET_REFERENCE:         pointerGet(Kind.REFERENCE); break;
+            case PSET_BYTE:
+            case PSET_SHORT:
+            case PSET_INT:
+            case PSET_FLOAT:
+            case PSET_LONG:
+            case PSET_DOUBLE:
+            case PSET_WORD:
+            case PSET_REFERENCE:
+            case PCMPSWP_INT:
+            case PCMPSWP_WORD:
+            case PCMPSWP_REFERENCE:
+            case PCMPSWP_INT_I:
+            case PCMPSWP_WORD_I:
+            case PCMPSWP_REFERENCE_I:    throw FatalError.unexpected("Cannot interpret pointer writes remotely");
+            case MOV_I2F:                machine.skipBytes(2); push(FloatValue.from(Float.intBitsToFloat(pop().asInt()))); break;
+            case MOV_F2I:                machine.skipBytes(2); push(IntValue.from(Float.floatToRawIntBits(pop().asFloat()))); break;
+            case MOV_L2D:                machine.skipBytes(2); push(DoubleValue.from(Double.longBitsToDouble(pop().asLong()))); break;
+            case MOV_D2L:                machine.skipBytes(2); push(LongValue.from(Double.doubleToRawLongBits(pop().asDouble()))); break;
+            case SAFEPOINT:              machine.skipBytes(2); break;
+            case PAUSE:                  machine.skipBytes(2); break;
+            case FLUSHW:                 machine.skipBytes(2); break;
+            default:                     machine.raiseException(new ClassFormatError("Unsupported bytecode: " + opcode));
+            // Checkstyle: resume
         }
         return MethodStatus.METHOD_CONTINUE;
     }
@@ -2202,17 +1327,17 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
     }
 
     private static Object createMultiDimensionArray(ClassActor arrayClassActor, int lengthIndex, int[] lengths) {
-        final ClassActor componentClassActor = arrayClassActor.componentClassActor();
+        ClassActor componentClassActor = arrayClassActor.componentClassActor();
         assert componentClassActor != null : arrayClassActor + " is not an array class";
-        final int length = lengths[lengthIndex];
+        int length = lengths[lengthIndex];
         assert length >= 0 : "negative array length: " + length;
-        final Object result = Array.newInstance(componentClassActor.toJava(), length);
+        Object result = Array.newInstance(componentClassActor.toJava(), length);
         if (length > 0) {
-            final int nextLengthIndex = lengthIndex + 1;
+            int nextLengthIndex = lengthIndex + 1;
             if (nextLengthIndex < lengths.length) {
                 for (int i = 0; i < length; i++) {
-                    final Object subArray = createMultiDimensionArray(componentClassActor, nextLengthIndex, lengths);
-                    final Object[] array = (Object[]) result;
+                    Object subArray = createMultiDimensionArray(componentClassActor, nextLengthIndex, lengths);
+                    Object[] array = (Object[]) result;
                     array[i] = subArray;
                 }
             }

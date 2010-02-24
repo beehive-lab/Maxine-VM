@@ -302,9 +302,6 @@ public class Bytecodes {
 
     // End extended bytecodes
 
-    public static final int ILLEGAL = 255;
-    public static final int END = 256;
-
     // Extended bytecodes with operand:
 
     // Pointer compare-and-swap with word-sized offset
@@ -384,77 +381,67 @@ public class Bytecodes {
     public static final int MEMBAR_MEMOP_STORE = MEMBAR   | 5 << 8;
     public static final int MEMBAR_ALL         = MEMBAR   | 6 << 8;
 
+    // Other constants:
+
+    public static final int ILLEGAL = 255;
+    public static final int END = 256;
+
+    /**
+     * The last opcode defined by the JVM specification. To iterate over all JVM bytecodes:
+     * <pre>
+     *     for (int opcode = 0; opcode <= Bytecodes.LAST_JVM_OPCODE; ++opcode) {
+     *         //
+     *     }
+     * </pre>
+     */
+    public static final int LAST_JVM_OPCODE = JSR_W;
+
     /**
      * A collection of flags describing various bytecode attributes.
      */
-    public static class Flags {
-
-        /**
-         * Denotes a {@code INVOKEVIRTUAL}, {@code INVOKESPECIAL}, {@code INVOKEINTERFACE} or {@code INVOKESTATIC} instruction.
-         */
-        public static final int INVOKE_ = 0x00000001;
-
-        /**
-         * Denotes a {@code LDC} or {@code LDC_W} instruction.
-         */
-        public static final int LDC_ = 0x00000002;
+    static class Flags {
 
         /**
          * Denotes an instruction that ends a basic block and does not let control flow fall through to its lexical successor.
          */
-        public static final int STOP = 0x00000004;
+        static final int STOP = 0x00000001;
 
         /**
          * Denotes an instruction that ends a basic block and may let control flow fall through to its lexical successor.
          */
-        public static final int FALL_THROUGH = 0x00000008;
+        static final int FALL_THROUGH = 0x00000002;
 
         /**
          * Denotes an instruction that has a 2 or 4 byte operand that is an offset to another instruction in the same method.
-         * This does not include the {@linkplain #SWITCH switch} instructions.
+         * This does not include the {@link Bytecodes#TABLESWITCH} or {@link Bytecodes#LOOKUPSWITCH} instructions.
          */
-        public static final int BRANCH = 0x00000010;
+        static final int BRANCH = 0x00000004;
 
         /**
          * Denotes an instruction that reads the value of a static or instance field.
          */
-        public static final int FIELD_READ = 0x00000020;
+        static final int FIELD_READ = 0x00000008;
 
         /**
          * Denotes an instruction that writes the value of a static or instance field.
          */
-        public static final int FIELD_WRITE = 0x00000040;
+        static final int FIELD_WRITE = 0x00000010;
 
         /**
          * Denotes an instruction that is not defined in the JVM specification.
          */
-        public static final int EXTENSION = 0x00000080;
+        static final int EXTENSION = 0x00000020;
 
         /**
          * Denotes an {@link #EXTENSION} instruction whose complete opcode is 3 bytes long.
          */
-        public static final int OPCODE3 = 0x00010000;
+        static final int OPCODE3 = 0x00000040;
 
-        /**
-         * Denotes a {@code TABLESWITCH} or {@code LOOKUPSWITCH} instruction.
-         */
-        public static final int SWITCH = 0x00000100;
-
-        /**
-         * Denotes a {@code RETURN}, {@code IRETURN}, {@code LRETURN}, {@code DRETURN}, {@code ARETURN} or {@code FRETURN} instruction.
-         */
-        public static final int RETURN_ = 0x00000200;
-
-        /**
-         * Denotes a {@code RET}, {@code JSR}, {@code JSR_W} instruction.
-         */
-        public static final int JSR_OR_RET = 0x00000400;
-
-        private static final int TRAP        = 0x00000800;
-        private static final int COMMUTATIVE = 0x00001000;
-        private static final int ASSOCIATIVE = 0x00002000;
-        private static final int LOAD        = 0x00004000;
-        private static final int STORE       = 0x00008000;
+        static final int TRAP        = 0x00000080;
+        static final int COMMUTATIVE = 0x00000100;
+        static final int ASSOCIATIVE = 0x00000200;
+        static final int LOAD        = 0x00000400;
+        static final int STORE       = 0x00000800;
 
     }
 
@@ -501,9 +488,9 @@ public class Bytecodes {
         def("dconst_1"        , "b"    );
         def("bipush"          , "bc"   );
         def("sipush"          , "bcc"  );
-        def("ldc"             , "bi"   , TRAP | LDC_);
-        def("ldc_w"           , "bii"  , TRAP | LDC_);
-        def("ldc2_w"          , "bii"  , TRAP | LDC_);
+        def("ldc"             , "bi"   , TRAP);
+        def("ldc_w"           , "bii"  , TRAP);
+        def("ldc2_w"          , "bii"  , TRAP);
         def("iload"           , "bi"   , LOAD);
         def("lload"           , "bi"   , LOAD);
         def("fload"           , "bi"   , LOAD);
@@ -651,24 +638,24 @@ public class Bytecodes {
         def("if_acmpeq"       , "boo"  , COMMUTATIVE | FALL_THROUGH | BRANCH);
         def("if_acmpne"       , "boo"  , COMMUTATIVE | FALL_THROUGH | BRANCH);
         def("goto"            , "boo"  , STOP | BRANCH);
-        def("jsr"             , "boo"  , STOP | BRANCH | JSR_OR_RET);
-        def("ret"             , "bi"   , STOP | JSR_OR_RET);
-        def("tableswitch"     , ""     , STOP | SWITCH);
-        def("lookupswitch"    , ""     , STOP | SWITCH);
-        def("ireturn"         , "b"    , TRAP | STOP | RETURN_);
-        def("lreturn"         , "b"    , TRAP | STOP | RETURN_);
-        def("freturn"         , "b"    , TRAP | STOP | RETURN_);
-        def("dreturn"         , "b"    , TRAP | STOP | RETURN_);
-        def("areturn"         , "b"    , TRAP | STOP | RETURN_);
-        def("return"          , "b"    , TRAP | STOP | RETURN_);
+        def("jsr"             , "boo"  , STOP | BRANCH);
+        def("ret"             , "bi"   , STOP);
+        def("tableswitch"     , ""     , STOP);
+        def("lookupswitch"    , ""     , STOP);
+        def("ireturn"         , "b"    , TRAP | STOP);
+        def("lreturn"         , "b"    , TRAP | STOP);
+        def("freturn"         , "b"    , TRAP | STOP);
+        def("dreturn"         , "b"    , TRAP | STOP);
+        def("areturn"         , "b"    , TRAP | STOP);
+        def("return"          , "b"    , TRAP | STOP);
         def("getstatic"       , "bjj"  , TRAP | FIELD_READ);
         def("putstatic"       , "bjj"  , TRAP | FIELD_WRITE);
         def("getfield"        , "bjj"  , TRAP | FIELD_READ);
         def("putfield"        , "bjj"  , TRAP | FIELD_WRITE);
-        def("invokevirtual"   , "bjj"  , TRAP | INVOKE_);
-        def("invokespecial"   , "bjj"  , TRAP | INVOKE_);
-        def("invokestatic"    , "bjj"  , TRAP | INVOKE_);
-        def("invokeinterface" , "bjja_", TRAP | INVOKE_);
+        def("invokevirtual"   , "bjj"  , TRAP);
+        def("invokespecial"   , "bjj"  , TRAP);
+        def("invokestatic"    , "bjj"  , TRAP);
+        def("invokeinterface" , "bjja_", TRAP);
         def("xxxunusedxxx"    , ""     );
         def("new"             , "bii"  , TRAP);
         def("newarray"        , "bc"   , TRAP);
@@ -684,7 +671,7 @@ public class Bytecodes {
         def("ifnull"          , "boo"  , FALL_THROUGH | BRANCH);
         def("ifnonnull"       , "boo"  , FALL_THROUGH | BRANCH);
         def("goto_w"          , "boooo", STOP | BRANCH);
-        def("jsr_w"           , "boooo", STOP | BRANCH | JSR_OR_RET);
+        def("jsr_w"           , "boooo", STOP | BRANCH);
         def("breakpoint"      , "b"    , TRAP);
 
         def("wload"           , "bi"   , EXTENSION);
@@ -723,7 +710,7 @@ public class Bytecodes {
         def("readgpr"         , "bii"  , EXTENSION);
         def("writegpr"        , "bii"  , EXTENSION);
         def("unsafe_cast"     , "bii"  , EXTENSION);
-        def("wreturn"         , "b"    , EXTENSION | TRAP | STOP | RETURN_);
+        def("wreturn"         , "b"    , EXTENSION | TRAP | STOP);
         def("safepoint"       , "bii"  , EXTENSION | TRAP);
         def("alloca"          , "bii"  , EXTENSION);
         def("membar"          , "bii"  , EXTENSION);
@@ -746,7 +733,7 @@ public class Bytecodes {
      * @return the length of the instruction denoted by {@code opcode}. If {@code opcode} is {@link #WIDE} or denotes a
      *         variable length instruction (e.g. {@link #TABLESWITCH}), then 0 is returned.
      */
-    public static int length(int opcode) {
+    public static int lengthOf(int opcode) {
         return length[opcode & 0xff];
     }
 
@@ -758,7 +745,7 @@ public class Bytecodes {
      * @param bci the position in {@code code} of an instruction's opcode
      * @return the length of the instruction at position {@code bci} in {@code code}
      */
-    public static int length(byte[] code, int bci) {
+    public static int lengthOf(byte[] code, int bci) {
         int opcode = Bytes.beU1(code, bci);
         int length = Bytecodes.length[opcode & 0xff];
         if (length == 0) {
@@ -787,13 +774,13 @@ public class Bytecodes {
     }
 
     /**
-     * Gets the mnemonic for a given opcode.
+     * Gets the lower-case mnemonic for a given opcode.
      *
      * @param opcode an opcode
      * @return the mnemonic for {@code opcode}
      * @throws IllegalArgumentException if {@code opcode} is not a legal opcode
      */
-    public static String name(int opcode) {
+    public static String nameOf(int opcode) throws IllegalArgumentException {
         if (opcode >= 0 && opcode < names.length) {
             return names[opcode];
         }
@@ -802,6 +789,27 @@ public class Bytecodes {
             throw new IllegalArgumentException("Illegal opcode: " + opcode);
         }
         return extName;
+    }
+
+    /**
+     * Gets the opcode corresponding to a given mnemonic.
+     *
+     * @param name an opcode mnemonic
+     * @return the opcode corresponding to {@code mnemonic}
+     * @throws IllegalArgumentException if {@code name} does not denote a valid opcode
+     */
+    public static int valueOf(String name) {
+        for (int opcode = 0; opcode < names.length; ++opcode) {
+            if (name.equalsIgnoreCase(names[opcode])) {
+                return opcode;
+            }
+        }
+        for (Map.Entry<Integer, String> entry : extNames.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(name)) {
+                return entry.getKey();
+            }
+        }
+        throw new IllegalArgumentException("No opcode for " + name);
     }
 
     /**
@@ -825,6 +833,16 @@ public class Bytecodes {
     }
 
     /**
+     * Determines if a given opcode denotes an instruction that ends a basic block and does not let control flow fall
+     * through to its lexical successor.
+     *
+     * @param opcode an opcode to test
+     */
+    public static boolean isStop(int opcode) {
+        return (flags[opcode & 0xff] & STOP) != 0;
+    }
+
+    /**
      * Determines if a given opcode denotes an instruction that stores a value to a local variable
      * after popping it from the operand stack.
      *
@@ -835,6 +853,12 @@ public class Bytecodes {
         return (flags[opcode & 0xff] & STORE) != 0;
     }
 
+    /**
+     * Determines if a given opcode is an instruction that delimits a basic block.
+     *
+     * @param opcode an opcode to test
+     * @return {@code true} if {@code opcode} delimits a basic block
+     */
     public static boolean isBlockEnd(int opcode) {
         return (flags[opcode & 0xff] & (STOP | FALL_THROUGH)) != 0;
     }
@@ -885,9 +909,22 @@ public class Bytecodes {
         return (flags[opcode & 0xff] & OPCODE3) != 0;
     }
 
+
+
+    /**
+     * Determines if any of the given attributes applies a given bytecode.
+     *
+     * @param opcode an opcode
+     * @param maskOfFlags a mask of {@linkplain Flags attribute constants}
+     * @return {@code true} if any of {@code maskOfFlags} is set for {@code opcode}
+     */
+    public static boolean is(int opcode, int maskOfFlags) {
+        return (flags[opcode & 0xff] & maskOfFlags) != 0;
+    }
+
     /**
      * Gets an arithmetic operator name for a given opcode. If {@code opcode} does not denote an
-     * arithmetic instruction, then the {@linkplain #name(int) name} of the opcode is returned
+     * arithmetic instruction, then the {@linkplain #nameOf(int) name} of the opcode is returned
      * instead.
      *
      * @param op an opcode
@@ -930,7 +967,7 @@ public class Bytecodes {
             case IXOR : // fall through
             case LXOR : return "^";
         }
-        return name(op);
+        return nameOf(op);
     }
 
     /**

@@ -141,12 +141,8 @@ public class BytecodePrinter extends BytecodeVisitor {
     }
 
     protected void printOpcode() {
-        Bytecode currentOpcode = currentOpcode();
-        if (Bytecodes.isExtension(currentOpcode.ordinal())) {
-            writer.print(Bytecodes.name(currentOpcode.ordinal()));
-        } else {
-            writer.print(currentOpcode.toString().toLowerCase());
-        }
+        int currentOpcode = currentOpcode();
+        writer.print(Bytecodes.nameOf(currentOpcode));
     }
 
     protected void printImmediate(int immediate) {
@@ -1180,7 +1176,7 @@ public class BytecodePrinter extends BytecodeVisitor {
     }
 
     @Override
-    public void callnative(int nativeFunctionDescriptorIndex) {
+    public void jnicall(int nativeFunctionDescriptorIndex) {
         printInstructionWithConstant(nativeFunctionDescriptorIndex);
     }
 
@@ -1267,7 +1263,7 @@ public class BytecodePrinter extends BytecodeVisitor {
 
     @Override
     protected boolean extension(int opcode, boolean isWide) {
-        int length = Bytecodes.length(opcode);
+        int length = Bytecodes.lengthOf(opcode);
         if (length == 2) {
             int index = bytecodeScanner().readUnsigned1();
             printInstructionWithImmediate(index);

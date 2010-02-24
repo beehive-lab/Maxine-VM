@@ -235,7 +235,7 @@ public final class BytecodeExtender {
 
     private void recordChange() {
         if (DEBUG) {
-            System.out.println("     ---> " + name(code[opcodePos]));
+            System.out.println("     ---> " + nameOf(code[opcodePos]));
         }
         changed = true;
     }
@@ -353,7 +353,7 @@ public final class BytecodeExtender {
         } catch (Throwable e) {
             int opcode = code[opcodePos] & 0xff;
             Frame errorFrame = new Frame(opcodePos, sp, stack, locals, null);
-            throw (InternalError) new InternalError("Error while preprocessing " + method + " {" + name(opcode) + " @ " + errorFrame + "}").initCause(e);
+            throw (InternalError) new InternalError("Error while preprocessing " + method + " {" + nameOf(opcode) + " @ " + errorFrame + "}").initCause(e);
         }
     }
 
@@ -385,7 +385,7 @@ public final class BytecodeExtender {
 
             int opcode = code[bci++] & 0xff;
 
-            int length = length(opcode);
+            int length = lengthOf(opcode);
             int nextBci = bci + length - 1;
             boolean wide;
             if (opcode == WIDE) {
@@ -402,8 +402,8 @@ public final class BytecodeExtender {
             }
 
             if (DEBUG) {
-                System.out.println("  sp=" + sp + "\t" + opcodePos + ": " + name(opcode));
-                assert name(opcode) != null : opcode;
+                System.out.println("  sp=" + sp + "\t" + opcodePos + ": " + nameOf(opcode));
+                assert nameOf(opcode) != null : opcode;
             }
 
             switch (opcode) {
@@ -750,7 +750,7 @@ public final class BytecodeExtender {
                 case JNICALL:         intrinsifier.jnicall(this, readU2(bci));         break;
 
                 default:
-                    throw new InternalError("unexpected opcode " + opcode + " [" + name(opcode) + "]");
+                    throw new InternalError("unexpected opcode " + opcode + " [" + nameOf(opcode) + "]");
             }
 
             if (handlerMap != null && canTrap(opcode)) {

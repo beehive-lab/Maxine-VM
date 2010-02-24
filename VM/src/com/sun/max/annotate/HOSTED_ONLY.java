@@ -46,7 +46,7 @@ import java.lang.annotation.*;
  * </pre>
  * <p>
  * A second usage of this annotation is for testing compilation of code that references a potentially unresolved symbol.
- * For example, to test the implementation of {@link com.sun.max.vm.bytecode.Bytecode#INVOKEVIRTUAL INVOKEVIRTUAL}, a test
+ * For example, to test the implementation of {@link com.sun.max.vm.bytecode.Bytecodes#INVOKEVIRTUAL INVOKEVIRTUAL}, a test
  * case can be written that calls a method in a class annotated with this annotation.
  * <p>
  * During {@linkplain com.sun.max.vm.prototype.BootImageGenerator boot image generation}, all such annotated entities are omitted from the

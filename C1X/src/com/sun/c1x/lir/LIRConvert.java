@@ -62,7 +62,7 @@ public class LIRConvert extends LIROp1 {
      */
     @Override
     public void printInstruction(LogStream out) {
-        out.print("[" + Bytecodes.name(bytecode) + "] ");
+        out.print("[" + Bytecodes.nameOf(bytecode) + "] ");
         super.printInstruction(out);
     }
 }

@@ -23,7 +23,7 @@ package com.sun.max.vm.verifier.types;
 
 import java.io.*;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.c1x.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 
 /**
@@ -40,7 +40,7 @@ public final class UninitializedNewType extends UninitializedType {
     }
 
     /**
-     * Gets the bytecode position of the {@link Bytecode#NEW} instruction that created the uninitialized object denoted by this type.
+     * Gets the bytecode position of the {@link Bytecodes#NEW} instruction that created the uninitialized object denoted by this type.
      */
     public int position() {
         return position;

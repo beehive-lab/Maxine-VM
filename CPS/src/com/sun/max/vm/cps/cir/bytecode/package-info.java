@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * Bytecode format for storing CIR graphs in a more compact form.
+ * Bytecodes format for storing CIR graphs in a more compact form.
  * 
  * @author Doug Simon
  */

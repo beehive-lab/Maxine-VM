@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm.cps.jit;
 
-import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 import static com.sun.max.vm.template.BytecodeTemplate.*;
 
 import java.util.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
@@ -52,7 +52,7 @@ import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Bytecode to target template-based translator. This translator keeps minimal state about the compilation and
+ * Bytecodes to target template-based translator. This translator keeps minimal state about the compilation and
  * emits templates with no assumptions with respect to values produced on top of the stack, or state of the referenced
  * symbolic links. Values produced and consumed by each bytecode are pushed / popped off an evaluation stack, as
  * described in the JVM specification.
@@ -111,7 +111,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     protected boolean[] blockStarts;
     protected int numberOfBlocks;
-    private Bytecode previousBytecode;
+    private int previousBytecode = -1;
 
     private int[] catchRangePositions;
 
@@ -167,7 +167,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     public abstract TargetABI targetABI();
 
-    private void beginBytecode(Bytecode bytecode) {
+    private void beginBytecode(int bytecode) {
         final int opcodePosition = currentOpcodePosition();
         final int targetCodePosition = codeBuffer.currentPosition();
 
@@ -177,7 +177,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             bytecodeToTargetCodePositionMap[opcodePosition] = targetCodePosition;
         }
 
-        if (previousBytecode != null && previousBytecode.is(FALL_THROUGH_DELIMITER | CONDITIONAL_BRANCH | UNCONDITIONAL_BRANCH)) {
+        if (Bytecodes.isBlockEnd(previousBytecode)) {
             startBlock(opcodePosition);
         }
         previousBytecode = bytecode;
@@ -505,7 +505,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     protected abstract void emitBranch(BranchCondition branchCondition, int fromBytecodePosition, int toBytecodePosition);
 
     /**
-     * Emits the code for a {@link Bytecode#TABLESWITCH} instruction.
+     * Emits the code for a {@link Bytecodes#TABLESWITCH} instruction.
      *
      * @param low the lower bound (inclusive) of the switch table case values
      * @param high the upper bound (inclusive) of the switch table case values
@@ -516,7 +516,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     protected abstract void emitTableSwitch(int low, int high, int opcodePosition, int defaultTargetOffset, int numberOfCases);
 
     /**
-     * Emits the code for a {@link Bytecode#LOOKUPSWITCH} instruction.
+     * Emits the code for a {@link Bytecodes#LOOKUPSWITCH} instruction.
      *
      * @param opcodePosition the bytecode position of the LOOKUPSWITCH opcode
      * @param defaultTargetOffset the offset from {@code opcodePosition} for the default case
@@ -803,12 +803,12 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         return (high << 8) | low;
     }
 
-    public Bytecode getNextBytecode() {
+    public int getNextBytecode() {
         return getBytecodeAt(bytecodeScanner().currentBytePosition());
     }
 
-    public Bytecode getBytecodeAt(int opcodeAddress) {
-        return Bytecode.from(getUnsigned1(opcodeAddress));
+    public int getBytecodeAt(int opcodeAddress) {
+        return getUnsigned1(opcodeAddress);
     }
 
     @Override
@@ -1247,7 +1247,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         emitBranch(condition, currentBytecodePosition, targetBytecodePosition);
     }
 
-    private void emitGoto(Bytecode bytecode, int offset) {
+    private void emitGoto(int bytecode, int offset) {
         int currentBytecodePosition = currentOpcodePosition();
         int targetBytecodePosition = currentBytecodePosition + offset;
         startBlock(targetBytecodePosition);
@@ -1257,12 +1257,12 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     @Override
     protected void goto_(int offset) {
-        emitGoto(Bytecode.GOTO, offset);
+        emitGoto(Bytecodes.GOTO, offset);
     }
 
     @Override
     protected void goto_w(int offset) {
-        emitGoto(Bytecode.GOTO_W, offset);
+        emitGoto(Bytecodes.GOTO_W, offset);
     }
 
     @Override
@@ -1585,7 +1585,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     }
 
     @Override
-    protected void callnative(int nativeFunctionDescriptorIndex) {
+    protected void jnicall(int nativeFunctionDescriptorIndex) {
         // Native method stubs must be compiled with the optimizing compiler.
         throw ProgramError.unexpected();
     }
@@ -1779,7 +1779,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     @Override
     protected void ldc(int index) {
         final PoolConstant constant = constantPool.at(index);
-        final Bytecode bytecode = Bytecode.LDC;
+        final int bytecode = Bytecodes.LDC;
         switch (constant.tag()) {
             case CLASS: {
                 final ClassConstant classConstant = (ClassConstant) constant;
@@ -1897,7 +1897,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     @Override
     protected void lookupswitch(int defaultOffset, int numberOfCases) {
         final int opcodePosition = currentOpcodePosition();
-        beginBytecode(Bytecode.LOOKUPSWITCH);
+        beginBytecode(Bytecodes.LOOKUPSWITCH);
         emitLookupSwitch(opcodePosition, defaultOffset, numberOfCases);
     }
 
@@ -1981,7 +1981,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         final ClassConstant classRef = constantPool.classAt(index);
         if (isResolved(classRef)) {
             final TargetMethod code = getCode(MULTIANEWARRAY$resolved);
-            beginBytecode(Bytecode.MULTIANEWARRAY);
+            beginBytecode(Bytecodes.MULTIANEWARRAY);
             final ClassActor arrayClassActor = classRef.resolve(constantPool, index);
             assert arrayClassActor.isArrayClassActor();
             assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
@@ -1993,7 +1993,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         }
         // Unresolved case
         final TargetMethod code = getCode(MULTIANEWARRAY);
-        beginBytecode(Bytecode.MULTIANEWARRAY);
+        beginBytecode(Bytecodes.MULTIANEWARRAY);
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveClass.SNIPPET));
         assignReferenceLiteralTemplateArgument(1, new int[numberOfDimensions]);
         emitAndRecordStops(code);
@@ -2006,14 +2006,14 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             final ClassActor classActor = classRef.resolve(constantPool, index);
             if (classActor.isInitialized()) {
                 final TargetMethod code = getCode(NEW$init);
-                beginBytecode(Bytecode.NEW);
+                beginBytecode(Bytecodes.NEW);
                 assignReferenceLiteralTemplateArgument(0, classActor);
                 emitAndRecordStops(code);
                 return;
             }
         }
         final TargetMethod code = getCode(NEW);
-        beginBytecode(Bytecode.NEW);
+        beginBytecode(Bytecodes.NEW);
         assignReferenceLiteralTemplateArgument(0, constantPool.makeResolutionGuard(index, ResolveClassForNew.SNIPPET));
         emitAndRecordStops(code);
     }
@@ -2021,7 +2021,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     @Override
     protected void newarray(int tag) {
         final TargetMethod code = getCode(NEWARRAY);
-        beginBytecode(Bytecode.NEWARRAY);
+        beginBytecode(Bytecodes.NEWARRAY);
         final Kind arrayElementKind = Kind.fromNewArrayTag(tag);
         assignReferenceLiteralTemplateArgument(0, arrayElementKind);
         emitAndRecordStops(code);
@@ -2080,7 +2080,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     @Override
     protected void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
         final int opcodePosition = currentOpcodePosition();
-        beginBytecode(Bytecode.TABLESWITCH);
+        beginBytecode(Bytecodes.TABLESWITCH);
         emitTableSwitch(lowMatch, highMatch, opcodePosition, defaultOffset, numberOfCases);
     }
 

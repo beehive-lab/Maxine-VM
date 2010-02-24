@@ -22,6 +22,7 @@ package com.sun.max.vm.jit;
 
 import java.util.Arrays;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -158,7 +159,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                     final int offset = stopIndex * targetMethod.frameReferenceMapSize();
                     Log.print(bcp);
                     Log.print(":");
-                    final String opcode = Bytecode.from(codeAttribute.code()[bcp]).name();
+                    final String opcode = Bytecodes.nameOf(codeAttribute.code()[bcp]);
                     Log.print(opcode);
                     int chars = Ints.sizeOfBase10String(bcp) + 1 + opcode.length();
                     while (chars++ < 20) {

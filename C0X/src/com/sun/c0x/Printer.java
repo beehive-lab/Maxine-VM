@@ -85,7 +85,7 @@ public class Printer {
     static void printBytecodeStart(int bci, int opcode, int depth) {
         if (C1XOptions.PrintHIR) {
             out.print(CTRL_LIGHTGRAY);
-            out.print("    " + Bytecodes.name(opcode) + " @ " + bci + " depth = " + depth);
+            out.print("    " + Bytecodes.nameOf(opcode) + " @ " + bci + " depth = " + depth);
             out.println("");
             out.print(CTRL_DEFAULT);
         }
