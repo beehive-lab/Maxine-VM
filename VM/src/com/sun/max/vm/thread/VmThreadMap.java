@@ -218,6 +218,10 @@ public final class VmThreadMap {
      */
     private volatile boolean mainThreadExited;
 
+    void setMainThreadExited() {
+        mainThreadExited = true;
+    }
+
     @INLINE
     private static Pointer getPrev(Pointer threadLocals) {
         return VmThreadLocal.BACKWARD_LINK.getConstantWord(threadLocals).asPointer();
@@ -404,7 +408,6 @@ public final class VmThreadMap {
         if (VmThread.TRACE_THREADS_OPTION.getValue()) {
             Log.println("Main thread finished waiting for all non-daemon threads to terminate");
         }
-        mainThreadExited = true;
     }
 
     /**
