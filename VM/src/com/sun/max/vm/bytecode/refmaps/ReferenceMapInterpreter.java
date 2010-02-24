@@ -1368,7 +1368,7 @@ public abstract class ReferenceMapInterpreter {
             }
         }
 
-        assert Bytecodes.isStop(opcode);
+        assert !Bytecodes.isStop(opcode);
         // Merge into successor
         return merge(blockIndex + 1) || changed;
     }

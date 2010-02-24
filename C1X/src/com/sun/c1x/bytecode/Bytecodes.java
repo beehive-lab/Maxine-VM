@@ -463,10 +463,10 @@ public class Bytecodes {
         }
     }
 
-    private static final String[] names = new String[255];
+    private static final String[] names = new String[256];
     private static HashMap<Integer, String> extNames = new HashMap<Integer, String>();
-    private static final int[] flags = new int[255];
-    private static final int[] length = new int[255];
+    private static final int[] flags = new int[256];
+    private static final int[] length = new int[256];
 
     // Checkstyle: stop
     static {
@@ -730,7 +730,7 @@ public class Bytecodes {
      * Gets the length of an instruction denoted by a given opcode.
      *
      * @param opcode an instruction opcode
-     * @return the length of the instruction denoted by {@code opcode}. If {@code opcode} is {@link #WIDE} or denotes a
+     * @return the length of the instruction denoted by {@code opcode}. If {@code opcode} is an illegal instruction or denotes a
      *         variable length instruction (e.g. {@link #TABLESWITCH}), then 0 is returned.
      */
     public static int lengthOf(int opcode) {
@@ -782,7 +782,11 @@ public class Bytecodes {
      */
     public static String nameOf(int opcode) throws IllegalArgumentException {
         if (opcode >= 0 && opcode < names.length) {
-            return names[opcode];
+            String name = names[opcode];
+            if (name == null) {
+                throw new IllegalArgumentException("Illegal opcode: " + opcode);
+            }
+            return name;
         }
         String extName = extNames.get(Integer.valueOf(opcode));
         if (extName == null) {
