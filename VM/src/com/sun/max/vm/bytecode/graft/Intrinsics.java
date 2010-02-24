@@ -25,7 +25,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.bytecode.*;
-import com.sun.c1x.bytecode.BytecodeExtender.*;
+import com.sun.c1x.bytecode.BytecodeIntrinsifier.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -36,24 +36,40 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 /**
- *
+ * The Maxine-specific part of {@linkplain BytecodeIntrinsifier intrinsification}.
  *
  * @author Doug Simon
  */
-public class Intrinsics extends Intrinsifier {
+public class Intrinsics extends IntrinsifierClient {
 
     final ClassMethodActor compilee;
     final CodeAttribute codeAttribute;
     final ConstantPool cp;
 
+    /**
+     * Creates an {@link Intrinsics} instance to process the bytecode of a single method.
+     *
+     * @param compilee the method to be processed
+     * @param codeAttribute the code of the method to be processed
+     */
     public Intrinsics(ClassMethodActor compilee, CodeAttribute codeAttribute) {
         this.cp = codeAttribute.constantPool;
         this.compilee = compilee;
         this.codeAttribute = codeAttribute;
     }
 
+    /**
+     * Maps a method denoting a Java language extension to the extended bytecode
+     * used to replace a call to it.
+     */
     private static final HashMap<MethodActor, Integer> intrinsicsMap = new HashMap<MethodActor, Integer>();
 
+    /**
+     * Determines if a given method is annotated with {@code @INTRINSIC(UNSAFE_CAST)}.
+     *
+     * @param method a method to test
+     * @return {@code true} iff {@code method} is annotated with {@code @INTRINSIC(UNSAFE_CAST)}
+     */
     @HOSTED_ONLY
     public static boolean isUnsafeCast(Method method) {
         final INTRINSIC intrinsic = method.getAnnotation(INTRINSIC.class);
@@ -63,6 +79,10 @@ public class Intrinsics extends Intrinsifier {
         return intrinsic.value() == Bytecodes.UNSAFE_CAST;
     }
 
+    /**
+     * Initializes the data structures used to map intrinsic {@code MethodActor}s to the
+     * extended bytecodes they are correlated with.
+     */
     @HOSTED_ONLY
     public static synchronized void register() {
         for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
@@ -84,7 +104,11 @@ public class Intrinsics extends Intrinsifier {
         }
     }
 
-    public void run() {
+    /**
+     * Creates the map denoting which local variables of the method being intrinsified
+     * initially hold {@link Word} values based its signature.
+     */
+    private boolean[] initLocals() {
         boolean[] locals = new boolean[codeAttribute.maxLocals];
         int i = 0;
         if (!compilee.isStatic()) {
@@ -98,19 +122,26 @@ public class Intrinsics extends Intrinsifier {
             }
             i += kind.stackSlots;
         }
+        return locals;
+    }
+
+    public void run() {
         try {
-            BytecodeExtender bce = new BytecodeExtender(this, compilee, codeAttribute.code(), codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, locals);
-            bce.run();
+            new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, initLocals()).run();
         } catch (Throwable e) {
-            String dis = "\n\n" + CodeAttributePrinter.toString(codeAttribute);
-            Throwable error = new InternalError("Error while intrinsifying " + compilee + dis).initCause(e);
-            error.printStackTrace();
-            new BytecodeExtender(this, compilee, codeAttribute.code(), codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, locals).run();
-            throw (InternalError) error;
+            String msg = String.format("Error while intrinsifying " + compilee + "%n" + CodeAttributePrinter.toString(codeAttribute));
+            throw (InternalError) new InternalError(msg).initCause(e);
         }
     }
 
-    private void intrinsify(BytecodeExtender bce, int cpi, boolean isStatic) {
+    /**
+     * Attempts to intrinsify a method invocation.
+     *
+     * @param bi the intrinsification engine
+     * @param cpi the constant pool index of the invocation to process
+     * @param isStatic specifies if the invocation is to a static method
+     */
+    private void intrinsify(BytecodeIntrinsifier bi, int cpi, boolean isStatic) {
         MethodRefConstant constant = cp.methodAt(cpi);
         TypeDescriptor holder = constant.holder(cp);
         boolean holderIsWord = holder.toKind().isWord;
@@ -122,10 +153,10 @@ public class Intrinsics extends Intrinsifier {
                     int opcode = intrinsic & 0xff;
                     assert Bytecodes.isExtension(opcode);
                     int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xff : cpi;
-                    bce.intrinsify(opcode, operand);
+                    bi.intrinsify(opcode, operand);
                 } else if (holderIsWord && !isStatic) {
                     // Cannot dispatch dynamically on Word types
-                    bce.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
+                    bi.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
 
                 }
             } catch (HostOnlyClassError e) {
@@ -134,90 +165,89 @@ public class Intrinsics extends Intrinsifier {
         }
 
         SignatureDescriptor sig = constant.signature(cp);
-        invoke(bce, isStatic, sig);
+        invoke(bi, isStatic, sig);
     }
 
-    private void invoke(BytecodeExtender bce, boolean isStatic, SignatureDescriptor sig) {
+    private void invoke(BytecodeIntrinsifier bi, boolean isStatic, SignatureDescriptor sig) {
         for (int i = sig.numberOfParameters() - 1; i >= 0; --i) {
             Kind kind = sig.parameterDescriptorAt(i).toKind();
-            bce.pop(kind.stackSlots);
+            bi.pop(kind.stackSlots);
         }
 
         if (!isStatic) {
-            bce.pop(1);
+            bi.pop(1);
         }
         Kind resultKind = sig.resultKind();
         if (resultKind != Kind.VOID) {
             if (resultKind.isCategory1) {
-                bce.push1(resultKind.isWord);
+                bi.push1(resultKind.isWord);
             } else {
-                bce.push2();
+                bi.push2();
             }
         }
     }
 
     @Override
-    public void invokeinterface(BytecodeExtender bce, int cpi) {
-        intrinsify(bce, cpi, false);
+    public void invokeinterface(BytecodeIntrinsifier bi, int cpi) {
+        intrinsify(bi, cpi, false);
     }
 
     @Override
-    public void invokespecial(BytecodeExtender bce, int cpi) {
-        intrinsify(bce, cpi, false);
+    public void invokespecial(BytecodeIntrinsifier bi, int cpi) {
+        intrinsify(bi, cpi, false);
     }
 
     @Override
-    public void invokestatic(BytecodeExtender bce, int cpi) {
-        intrinsify(bce, cpi, true);
+    public void invokestatic(BytecodeIntrinsifier bi, int cpi) {
+        intrinsify(bi, cpi, true);
     }
 
     @Override
-    public void invokevirtual(BytecodeExtender bce, int cpi) {
-        intrinsify(bce, cpi, false);
+    public void invokevirtual(BytecodeIntrinsifier bi, int cpi) {
+        intrinsify(bi, cpi, false);
     }
 
     @Override
-    public void jnicall(BytecodeExtender bce, int cpi) {
+    public void jnicall(BytecodeIntrinsifier bi, int cpi) {
         SignatureDescriptor sig = SignatureDescriptor.create(cp.utf8At(cpi, "native function descriptor"));
-        invoke(bce, true, sig);
+        invoke(bi, true, sig);
     }
 
     @Override
-    public void getfield(BytecodeExtender bce, int cpi) {
+    public void getfield(BytecodeIntrinsifier bi, int cpi) {
         FieldRefConstant constant = cp.fieldAt(cpi);
         Kind kind = constant.type(cp).toKind();
-        bce.pop1();
+        bi.pop1();
         if (kind.isCategory1) {
-            bce.push1(kind.isWord);
+            bi.push1(kind.isWord);
         } else {
-            bce.push2();
+            bi.push2();
         }
     }
 
     @Override
-    public void getstatic(BytecodeExtender bce, int cpi) {
+    public void getstatic(BytecodeIntrinsifier bi, int cpi) {
         FieldRefConstant constant = cp.fieldAt(cpi);
         Kind kind = constant.type(cp).toKind();
         if (kind.isCategory1) {
-            bce.push1(kind.isWord);
+            bi.push1(kind.isWord);
         } else {
-            bce.push2();
+            bi.push2();
         }
     }
 
     @Override
-    public void putfield(BytecodeExtender bce, int cpi) {
+    public void putfield(BytecodeIntrinsifier bi, int cpi) {
         FieldRefConstant constant = cp.fieldAt(cpi);
         Kind kind = constant.type(cp).toKind();
-        bce.pop(kind.stackSlots);
-        bce.pop1();
+        bi.pop(kind.stackSlots);
+        bi.pop1();
     }
 
     @Override
-    public void putstatic(BytecodeExtender bce, int cpi) {
+    public void putstatic(BytecodeIntrinsifier bi, int cpi) {
         FieldRefConstant constant = cp.fieldAt(cpi);
         Kind kind = constant.type(cp).toKind();
-        bce.pop(kind.stackSlots);
+        bi.pop(kind.stackSlots);
     }
-
 }
