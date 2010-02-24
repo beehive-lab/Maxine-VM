@@ -1743,10 +1743,10 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         if (hasOpcode3(opcode)) {
             opcode = opcode | operand << 8;
         }
-
+        isUnsafe = true;
         switch (opcode) {
             // Checkstyle: stop
-            case UNSAFE_CAST:            isUnsafe = true; break;
+            case UNSAFE_CAST:            break;
             case WLOAD:                  localLoadReferenceOrWord(operand); break;
             case WLOAD_0:                localLoadReferenceOrWord(0); break;
             case WLOAD_1:                localLoadReferenceOrWord(1); break;
