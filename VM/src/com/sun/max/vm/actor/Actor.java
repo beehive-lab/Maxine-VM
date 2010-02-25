@@ -92,9 +92,8 @@ public abstract class Actor {
     public static final int STATIC_TRAMPOLINE =    0x00020000;
     public static final int VIRTUAL_TRAMPOLINE =   0x00040000;
     public static final int INTERFACE_TRAMPOLINE = 0x00080000;
-    public static final int UNSAFE_CAST =          0x00100000;
     public static final int TEMPLATE =             0x00200000;
-    public static final int INITIALIZER       =    0x00400000;
+    public static final int INITIALIZER =          0x00400000;
     public static final int C_FUNCTION =           0x01000000;
     public static final int VM_ENTRY_POINT =       0x02000000;
     public static final int FOLD =                 0x04000000;
@@ -329,11 +328,6 @@ public abstract class Actor {
     @INLINE
     public static boolean isVmEntryPoint(int flags) {
         return (flags & VM_ENTRY_POINT) != 0;
-    }
-
-    @INLINE
-    public static boolean isUnsafeCast(int flags) {
-        return (flags & UNSAFE_CAST) != 0;
     }
 
     @INLINE
