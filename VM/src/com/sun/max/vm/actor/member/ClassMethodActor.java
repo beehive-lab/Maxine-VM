@@ -173,26 +173,21 @@ public abstract class ClassMethodActor extends MethodActor {
                 if (compilee != null) {
                     return compilee;
                 }
-                ClassMethodActor compilee = this;
-                CodeAttribute codeAttribute = this.originalCodeAttribute;
 
                 if (!isHiddenToReflection()) {
                     final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
                     if (substitute != null) {
-                        compilee = substitute;
-                        codeAttribute = substitute.originalCodeAttribute;
-                        if (substitute.compilee != null) {
-                            // Don't go through code preprocessing when the substitute already has
-                            this.codeAttribute = codeAttribute;
-                            this.compilee = compilee;
-                            return compilee;
-                        }
+                        compilee = substitute.compilee();
+                        codeAttribute = compilee.codeAttribute;
+                        return compilee;
                     }
                     if (MaxineVM.isHosted() && !hostedVerificationDisabled) {
-                        validateInlineAnnotation(compilee);
+                        validateInlineAnnotation(this);
                     }
                 }
 
+                ClassMethodActor compilee = this;
+                CodeAttribute codeAttribute = originalCodeAttribute;
                 ClassVerifier verifier = null;
 
                 final CodeAttribute processedCodeAttribute = Preprocessor.apply(compilee, codeAttribute);
