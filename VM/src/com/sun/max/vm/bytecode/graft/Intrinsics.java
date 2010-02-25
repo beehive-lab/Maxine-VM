@@ -21,13 +21,9 @@
 
 package com.sun.max.vm.bytecode.graft;
 
-import java.lang.reflect.*;
-import java.util.*;
-
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.bytecode.BytecodeIntrinsifier.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
@@ -59,52 +55,6 @@ public class Intrinsics extends IntrinsifierClient {
     }
 
     /**
-     * Maps a method denoting a Java language extension to the extended bytecode
-     * used to replace a call to it.
-     */
-    private static final HashMap<MethodActor, Integer> intrinsicsMap = new HashMap<MethodActor, Integer>();
-
-    /**
-     * Determines if a given method is annotated with {@code @INTRINSIC(UNSAFE_CAST)}.
-     *
-     * @param method a method to test
-     * @return {@code true} iff {@code method} is annotated with {@code @INTRINSIC(UNSAFE_CAST)}
-     */
-    @HOSTED_ONLY
-    public static boolean isUnsafeCast(Method method) {
-        final INTRINSIC intrinsic = method.getAnnotation(INTRINSIC.class);
-        if (intrinsic == null) {
-            return false;
-        }
-        return intrinsic.value() == Bytecodes.UNSAFE_CAST;
-    }
-
-    /**
-     * Initializes the data structures used to map intrinsic {@code MethodActor}s to the
-     * extended bytecodes they are correlated with.
-     */
-    @HOSTED_ONLY
-    public static synchronized void register() {
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
-            for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
-                registerMethod(classMethodActor);
-            }
-            for (ClassMethodActor classMethodActor : classActor.localVirtualMethodActors()) {
-                registerMethod(classMethodActor);
-            }
-        }
-    }
-
-    @HOSTED_ONLY
-    private static void registerMethod(ClassMethodActor classMethodActor) {
-        final INTRINSIC intrinsic = classMethodActor.getAnnotation(INTRINSIC.class);
-        if (intrinsic != null) {
-            Integer oldValue = intrinsicsMap.put(classMethodActor, intrinsic.value());
-            assert oldValue == null;
-        }
-    }
-
-    /**
      * Creates the map denoting which local variables of the method being intrinsified
      * initially hold {@link Word} values based its signature.
      */
@@ -125,9 +75,9 @@ public class Intrinsics extends IntrinsifierClient {
         return locals;
     }
 
-    public void run() {
+    public boolean run() {
         try {
-            new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, initLocals()).run();
+            return new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, initLocals()).run();
         } catch (Throwable e) {
             String msg = String.format("Error while intrinsifying " + compilee + "%n" + CodeAttributePrinter.toString(codeAttribute));
             throw (InternalError) new InternalError(msg).initCause(e);
@@ -148,8 +98,8 @@ public class Intrinsics extends IntrinsifierClient {
         if (holderIsWord || constant.isResolvableWithoutClassLoading(cp)) {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
-                Integer intrinsic = intrinsicsMap.get(method);
-                if (intrinsic != null) {
+                int intrinsic = method.intrinsic();
+                if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
                     assert Bytecodes.isExtension(opcode);
                     int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xff : cpi;
@@ -157,7 +107,6 @@ public class Intrinsics extends IntrinsifierClient {
                 } else if (holderIsWord && !isStatic) {
                     // Cannot dispatch dynamically on Word types
                     bi.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
-
                 }
             } catch (HostOnlyClassError e) {
             } catch (HostOnlyMethodError e) {

@@ -25,26 +25,26 @@ import com.sun.max.vm.compiler.*;
 /**
  * Hiroshi pointed out that the following leads to an
  * invokevirtual that references an interface method:
- * 
+ *
  * interface I {
  *     void foo();
  * }
- * 
+ *
  * abstract class C implements I { }
- * 
+ *
  * class D extends C {
  *     public void foo() { }
  * }
- * 
+ *
  * void m() {
  *     C c = new D();
  *     c.foo(); // invokevirtual C.foo
  * }
- * 
+ *
  * To deal with "missing dynamic methods" like this,
  * we supplement classes like C with synthesized dynamic methods
  * that do nothing but appropriately throw AbtractMethodError.
- * 
+ *
  * Such methods are known as Miranda methods.
  * (This now common naming of this "feature"
  *  has been losely derived from the US's "Miranda" law as paraphrased here:
@@ -53,7 +53,7 @@ import com.sun.max.vm.compiler.*;
  *
  * The miranda methods we create are public and abstract, they have no code.
  * Executing the invokevirtual byte code against one of these is expected to throw AbstractMethodError.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class MirandaMethodActor extends VirtualMethodActor {
@@ -62,7 +62,7 @@ public class MirandaMethodActor extends VirtualMethodActor {
         super(interfaceMethodActor.name,
               interfaceMethodActor.descriptor(),
               ACC_PUBLIC | MethodActor.ACC_ABSTRACT | ACC_SYNTHETIC,
-              null);
+              null, 0);
     }
 
     @Override

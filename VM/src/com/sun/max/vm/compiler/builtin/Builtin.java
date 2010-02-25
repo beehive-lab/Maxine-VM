@@ -20,16 +20,13 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
-import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -68,27 +65,11 @@ public abstract class Builtin extends Routine implements Comparable<Builtin>, St
     }
 
     @HOSTED_ONLY
-    private static int[] builtinToIntrinsicMap;
-
-    @HOSTED_ONLY
     private static void registerMethod(ClassMethodActor classMethodActor) {
         if (classMethodActor.isBuiltin()) {
             final BUILTIN builtinAnnotation = classMethodActor.getAnnotation(BUILTIN.class);
             final Builtin builtin = BUILTIN.Static.get(builtinAnnotation.value());
             classMethodActorToBuiltin.put(classMethodActor, builtin);
-            if (!(builtin instanceof JavaBuiltin)) {
-                INTRINSIC intrinsic = classMethodActor.getAnnotation(INTRINSIC.class);
-                if (intrinsic == null) {
-                    ProgramWarning.message("Builtin method without INTRINSIC annotation:" + classMethodActor.format("%H.%n(%p)"));
-                } else {
-                    int opc = builtinToIntrinsicMap[builtin.serial];
-                    if (opc == 0) {
-                        builtinToIntrinsicMap[builtin.serial] = intrinsic.value();
-                    } else if (opc != intrinsic.value()) {
-                        FatalError.unexpected("Builtin " + builtin + " already associated with INTRINSIC" + opc);
-                    }
-                }
-            }
         }
     }
 
@@ -124,7 +105,6 @@ public abstract class Builtin extends Routine implements Comparable<Builtin>, St
         Builtin[] result = Sequence.Static.toArray(builtins, new Builtin[builtins.length()]);
         java.util.Arrays.sort(result);
         builtins = new ArraySequence<Builtin>(result);
-        builtinToIntrinsicMap = new int[builtins.length()];
         for (int i = 0; i < builtins.length(); i++) {
             final Builtin builtin = builtins.get(i);
             builtin.serial = i;

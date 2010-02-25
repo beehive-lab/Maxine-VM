@@ -781,18 +781,18 @@ public class Bytecodes {
      * @throws IllegalArgumentException if {@code opcode} is not a legal opcode
      */
     public static String nameOf(int opcode) throws IllegalArgumentException {
-        if (opcode >= 0 && opcode < names.length) {
-            String name = names[opcode];
-            if (name == null) {
+        if (isOpcode3(opcode)) {
+            String extName = extNames.get(Integer.valueOf(opcode));
+            if (extName == null) {
                 throw new IllegalArgumentException("Illegal opcode: " + opcode);
             }
-            return name;
+            return extName;
         }
-        String extName = extNames.get(Integer.valueOf(opcode));
-        if (extName == null) {
+        String name = names[opcode & 0xff];
+        if (name == null) {
             throw new IllegalArgumentException("Illegal opcode: " + opcode);
         }
-        return extName;
+        return name;
     }
 
     /**

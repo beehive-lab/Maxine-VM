@@ -86,8 +86,8 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     public final NativeFunction nativeFunction;
 
-    public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute) {
-        super(name, descriptor, flags);
+    public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, int intrinsic) {
+        super(name, descriptor, flags, intrinsic);
         this.originalCodeAttribute = codeAttribute;
         this.nativeFunction = isNative() ? new NativeFunction(this) : null;
     }
