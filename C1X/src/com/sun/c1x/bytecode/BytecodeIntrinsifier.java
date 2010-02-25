@@ -293,7 +293,7 @@ public final class BytecodeIntrinsifier {
      */
     private void recordChange() {
         if (DEBUG) {
-            debugOut.println("     ---> " + nameOf(inCode[opcodeBci]));
+            debugOut.println("     ---> " + nameOf(inCode[opcodeBci] & 0xff));
         }
         changed = true;
     }
@@ -476,7 +476,7 @@ public final class BytecodeIntrinsifier {
      * will match with a definition along all paths to the use and that the type (is a word
      * or not) will be the same along each path.
      *
-     * @return
+     * @return {@code true} if one or more instructions were modified
      */
     public boolean run() {
         try {

@@ -48,6 +48,6 @@ public abstract class TeleMemberActor extends TeleActor {
      * @return index of this member in the {@link ClassActor} in the {@link TeleVM} that holds this member
      */
     public int getMemberIndex() {
-        return teleVM().teleFields().MemberActor_memberIndex.readInt(reference());
+        return teleVM().teleFields().MemberActor_memberIndex.readChar(reference());
     }
 }

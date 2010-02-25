@@ -31,8 +31,8 @@ import com.sun.max.vm.type.*;
  */
 public class InterfaceMethodActor extends MethodActor {
 
-    public InterfaceMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags) {
-        super(name, descriptor, flags);
+    public InterfaceMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, int intrinsic) {
+        super(name, descriptor, flags, intrinsic);
     }
 
     @CONSTANT

@@ -39,7 +39,6 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
@@ -361,7 +360,6 @@ public class JavaPrototype extends Prototype {
                 initializeMaxClasses();
 
                 vmConfiguration.bootCompilerScheme().createBuiltins(packageLoader);
-                Intrinsics.register();
                 Builtin.register(vmConfiguration.bootCompilerScheme());
                 vmConfiguration.bootCompilerScheme().createSnippets(packageLoader);
                 Snippet.register();
