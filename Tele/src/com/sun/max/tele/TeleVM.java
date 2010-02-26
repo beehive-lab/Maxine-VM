@@ -443,6 +443,7 @@ public abstract class TeleVM implements MaxVM {
     private TeleClassRegistry teleClassRegistry;
     private TeleCodeRegistry teleCodeRegistry;
 
+    private final TeleThreadManager threadManager;
     private final CodeManager codeManager;
 
     /**
@@ -564,6 +565,7 @@ public abstract class TeleVM implements MaxVM {
         final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfiguration.gripScheme();
         teleGripScheme.setTeleVM(this);
 
+        this.threadManager = new TeleThreadManager(this);
         this.codeManager = new CodeManager(this);
 
         this.bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(this);
@@ -788,8 +790,8 @@ public abstract class TeleVM implements MaxVM {
             if (!stackRegion.size().isZero()) {
                 regions.append(stackRegion);
             }
-            TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.threadLocalsRegion();
-            if (!threadLocalsRegion.size().isZero()) {
+            final TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.locals().memoryRegion();
+            if (threadLocalsRegion != null) {
                 regions.append(threadLocalsRegion);
             }
         }
@@ -803,16 +805,14 @@ public abstract class TeleVM implements MaxVM {
             if (memoryRegion == null) {
                 memoryRegion = teleCodeManager().regionContaining(address);
                 if (memoryRegion == null) {
-                    MaxThread maxThread = threadStackContaining(address);
+                    MaxThread maxThread = threadManager.findThread(address);
                     if (maxThread != null) {
-                        memoryRegion = maxThread.stack().memoryRegion();
-                    } else {
-                        maxThread = threadLocalsBlockContaining(address);
-                        if (maxThread != null) {
-                            memoryRegion = maxThread.threadLocalsRegion();
+                        if (maxThread.stack().memoryRegion().contains(address)) {
+                            memoryRegion = maxThread.stack().memoryRegion();
+                        } else if (maxThread.locals().memoryRegion() != null && maxThread.locals().memoryRegion().contains(address)) {
+                            memoryRegion = maxThread.locals().memoryRegion();
                         }
                     }
-
                 }
             }
         } catch (DataIOError dataIOError) {
@@ -821,7 +821,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final boolean contains(Address address) {
-        return containsInHeap(address) || containsInCode(address) || containsInThread(address);
+        return containsInHeap(address) || containsInCode(address) || threadManager.findThread(address) != null;
     }
 
     public final boolean containsInHeap(Address address) {
@@ -930,10 +930,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final IndexedSequence<TeleCodeRegion> teleCodeRegions() {
         return new ArraySequence<TeleCodeRegion>(teleBootCodeRegion(), teleRuntimeCodeRegion());
-    }
-
-    public final boolean containsInThread(Address address) {
-        return threadStackContaining(address) != null || threadLocalsBlockContaining(address) != null;
     }
 
     private RemoteTeleGrip createTemporaryRemoteTeleGrip(Word rawGrip) {
@@ -1466,31 +1462,8 @@ public abstract class TeleVM implements MaxVM {
         teleCodeRegistry().writeSummaryToStream(printStream);
     }
 
-    public final MaxThread getThread(long threadID) {
-        for (MaxThread maxThread : teleVMState.threads()) {
-            if (maxThread.id() == threadID) {
-                return maxThread;
-            }
-        }
-        return null;
-    }
-
-    public final MaxThread threadStackContaining(Address address) {
-        for (MaxThread thread : teleVMState.threads()) {
-            if (thread.stack().memoryRegion().contains(address)) {
-                return thread;
-            }
-        }
-        return null;
-    }
-
-    public final MaxThread threadLocalsBlockContaining(Address address) {
-        for (MaxThread thread : teleVMState.threads()) {
-            if (thread.threadLocalsRegion().contains(address)) {
-                return thread;
-            }
-        }
-        return null;
+    public final TeleThreadManager threadManager() {
+        return threadManager;
     }
 
     public final CodeManager codeManager() {

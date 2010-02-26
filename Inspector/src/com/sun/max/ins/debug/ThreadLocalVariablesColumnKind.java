@@ -23,20 +23,20 @@ package com.sun.max.ins.debug;
 import com.sun.max.collect.*;
 
 /**
- * Defines the columns that can be displayed describing thread local values in the VM.
+ * Defines the columns that can be displayed describing thread local variables in the VM.
  *
  * @author Michael Van De Vanter
  */
-public enum ThreadLocalsColumnKind implements ColumnKind {
+public enum ThreadLocalVariablesColumnKind implements ColumnKind {
     TAG("Tag", "Tags: register targets, watchpoints, ...", true, -1) {
         @Override
         public boolean canBeMadeInvisible() {
             return false;
         }
     },
-    ADDRESS("Addr.", "Memory address of thread local", false, -1),
-    POSITION("Pos.", "Offset of thread local relative to TLS base (bytes)", true, 20),
-    NAME("Field", "Thread local field name", true, -1) {
+    ADDRESS("Addr.", "Memory address of thread local variable", false, -1),
+    POSITION("Pos.", "Offset of thread local relative to thread local area base (bytes)", true, 20),
+    NAME("Field", "Thread local variable name", true, -1) {
         @Override
         public boolean canBeMadeInvisible() {
             return false;
@@ -50,7 +50,7 @@ public enum ThreadLocalsColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private ThreadLocalsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    private ThreadLocalVariablesColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;
@@ -83,5 +83,5 @@ public enum ThreadLocalsColumnKind implements ColumnKind {
         return defaultVisibility;
     }
 
-    public static final IndexedSequence<ThreadLocalsColumnKind> VALUES = new ArraySequence<ThreadLocalsColumnKind>(values());
+    public static final IndexedSequence<ThreadLocalVariablesColumnKind> VALUES = new ArraySequence<ThreadLocalVariablesColumnKind>(values());
 }

@@ -298,47 +298,44 @@ public class WordValueLabel extends ValueLabel {
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
-                    thread = maxVM().threadStackContaining(address);
-                    if (thread != null) {
+                    thread = maxVM().threadManager().findThread(address);
+                    if (thread != null && thread.stack().memoryRegion().contains(address)) {
                         displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
+                    } else if (thread != null && thread.locals().memoryRegion() != null && thread.locals().memoryRegion().contains(address)) {
+                        displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                     } else {
-                        thread = maxVM().threadLocalsBlockContaining(address);
-                        if (thread != null) {
-                            displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
+                        if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
+                            displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
                         } else {
-                            if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
-                                displayMode = DisplayMode.INVALID_OBJECT_REFERENCE;
-                            } else {
-                                try {
-                                    teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
-                                    if (teleTargetMethod != null) {
-                                        final Address codeStart = teleTargetMethod.getCodeStart();
-                                        final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offset());
-                                        final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset());
-                                        if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
-                                            displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
-                                        } else {
-                                            displayMode = (valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
-                                        }
-                                    } else if (valueMode == ValueMode.ITABLE_ENTRY) {
-                                        final TeleClassActor teleClassActor = maxVM().findTeleClassActor(newValue.asWord().asAddress().toInt());
-                                        if (teleClassActor != null) {
-                                            this.teleClassActor = teleClassActor;
-                                            displayMode = DisplayMode.CLASS_ACTOR;
-                                        } else {
-                                            displayMode = DisplayMode.CLASS_ACTOR_ID;
-                                        }
+                            try {
+                                teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
+                                if (teleTargetMethod != null) {
+                                    final Address codeStart = teleTargetMethod.getCodeStart();
+                                    final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offset());
+                                    final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset());
+                                    if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
+                                        displayMode = (valueMode == ValueMode.CALL_ENTRY_POINT) ? DisplayMode.CALL_ENTRY_POINT_TEXT : DisplayMode.CALL_ENTRY_POINT;
+                                    } else {
+                                        displayMode = (valueMode == ValueMode.CALL_RETURN_POINT) ? DisplayMode.CALL_RETURN_POINT : DisplayMode.CALL_RETURN_POINT;
                                     }
-                                } catch (DataIOError dataIOError) {
-                                    // Can't read anything, so just display as a plain word.
-                                    displayMode = DisplayMode.WORD;
-                                } catch (Throwable throwable) {
-
-                                    // If we don't catch this the views will not be updated at all.
-                                    displayMode = DisplayMode.INVALID;
-                                    setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
-                                    throwable.printStackTrace(Trace.stream());
+                                } else if (valueMode == ValueMode.ITABLE_ENTRY) {
+                                    final TeleClassActor teleClassActor = maxVM().findTeleClassActor(newValue.asWord().asAddress().toInt());
+                                    if (teleClassActor != null) {
+                                        this.teleClassActor = teleClassActor;
+                                        displayMode = DisplayMode.CLASS_ACTOR;
+                                    } else {
+                                        displayMode = DisplayMode.CLASS_ACTOR_ID;
+                                    }
                                 }
+                            } catch (DataIOError dataIOError) {
+                                // Can't read anything, so just display as a plain word.
+                                displayMode = DisplayMode.WORD;
+                            } catch (Throwable throwable) {
+
+                                // If we don't catch this the views will not be updated at all.
+                                displayMode = DisplayMode.INVALID;
+                                setToolTipText("<html><b>" + throwable + "</b><br>See log for complete stack trace.");
+                                throwable.printStackTrace(Trace.stream());
                             }
                         }
                     }
@@ -474,7 +471,7 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 setText(hexString);
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.threadLocalsRegion().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.locals().memoryRegion().start()).toLong();
                 final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
                 setToolTipText("Thread locals:  thread=" + threadName + ", offset=" + hexOffsetString);
                 break;
@@ -483,7 +480,7 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.threadLocalsRegion().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.locals().memoryRegion().start()).toLong();
                 final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setText(threadName + " " + decimalOffsetString);
                 setToolTipText("Thread locals:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));

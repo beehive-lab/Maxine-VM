@@ -43,7 +43,6 @@ import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.object.*;
@@ -3764,15 +3763,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetThreadLocalWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch thread local variable";
-        private final TeleThreadLocalValues teleThreadLocalValues;
-        private final int index;
-        private final MemoryRegion memoryRegion;
+        private final MaxThreadLocalVariable threadLocalVariable;
 
-        SetThreadLocalWatchpointAction(TeleThreadLocalValues teleThreadLocalValues, int index, String actionTitle) {
+        SetThreadLocalWatchpointAction(MaxThreadLocalVariable threadLocalVariable, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
-            this.teleThreadLocalValues = teleThreadLocalValues;
-            this.index = index;
-            this.memoryRegion = teleThreadLocalValues.getMemoryRegion(index);
+            this.threadLocalVariable = threadLocalVariable;
             refresh(true);
         }
 
@@ -3780,11 +3775,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
-                final VmThreadLocal vmThreadLocal = teleThreadLocalValues.getVmThreadLocal(index);
-                final String description = "Thread local \"" + vmThreadLocal.name
-                    + "\" (" + inspection().nameDisplay().shortName(teleThreadLocalValues.getMaxThread()) + ","
-                    + teleThreadLocalValues.safepointState().toString() + ")";
-                final MaxWatchpoint watchpoint = watchpointFactory().createVmThreadLocalWatchpoint(description, teleThreadLocalValues, index, prefs.settings());
+                final String description = "Thread local variable\"" + threadLocalVariable.name()
+                    + "\" (" + inspection().nameDisplay().shortName(threadLocalVariable.thread()) + ","
+                    + threadLocalVariable.safepointState().toString() + ")";
+                final MaxWatchpoint watchpoint = watchpointFactory().createVmThreadLocalWatchpoint(description, threadLocalVariable, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3803,20 +3797,19 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
                 && watchpointFactory() != null
-                && watchpointFactory().findWatchpoints(memoryRegion).isEmpty());
+                && watchpointFactory().findWatchpoints(threadLocalVariable.memoryRegion()).isEmpty());
         }
     }
 
     /**
      * Creates an action that will create a thread local variable watchpoint.
      *
-     * @param teleThreadLocalValues the set of thread local variables containing the variable
-     * @param index index of the variable to watch
+     * @param threadLocalVariable a thread local variable
      * @param actionTitle a name for the action, use default name if null
      * @return an action that will create a thread local variable watchpoint
      */
-    public final InspectorAction setThreadLocalWatchpoint(TeleThreadLocalValues teleThreadLocalValues, int index, String actionTitle) {
-        return new SetThreadLocalWatchpointAction(teleThreadLocalValues, index, actionTitle);
+    public final InspectorAction setThreadLocalWatchpoint(MaxThreadLocalVariable threadLocalVariable, String actionTitle) {
+        return new SetThreadLocalWatchpointAction(threadLocalVariable, actionTitle);
     }
 
     /**

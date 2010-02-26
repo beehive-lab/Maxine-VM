@@ -227,7 +227,6 @@ public interface MaxVM {
      *   <li>{@link TeleProcess}</li>
      *   <li>{@link TeleNativeStackMemoryRegion}</li>
      *   <li>{@link TeleThreadLocalsMemoryRegion}</li>
-     *   <li>{@link #containsInThread(Address)}</li>
      * </ol>
      *
      * @return all allocated memory regions in the VM.
@@ -324,15 +323,6 @@ public interface MaxVM {
      * @see #teleRuntimeCodeRegion()
      */
     IndexedSequence<TeleCodeRegion> teleCodeRegions();
-
-    /**
-     * @param address a memory address in the VM.
-     * @return is the address within a {@link MemoryRegion} associated with a thread?
-     * @see #allocatedMemoryRegions()
-     * @see TeleNativeStackMemoryRegion
-     * @see TeleThreadLocalsMemoryRegion
-     */
-    boolean containsInThread(Address address);
 
     /**
      * @param origin current absolute location of the beginning of a heap object's memory in the VM,
@@ -553,34 +543,13 @@ public interface MaxVM {
     void removeVMStateListener(MaxVMStateListener listener);
 
     /**
-     * Finds a thread by ID.
+     * Gets the manager for locating and managing thread-related information in the VM.
      * <br>
      * Thread-safe
      *
-     * @param threadID
-     * @return the thread associated with the id, null if none exists.
+     * @return the singleton manager for information about threads in the VM.
      */
-    MaxThread getThread(long threadID);
-
-    /**
-     * Returns a VM thread, if any, whose stack memory contains a specified address.
-     * <br>
-     * Thread-safe.
-     *
-     * @param address an address in the VM
-     * @return thread whose stack contains the address, null if none.
-     */
-    MaxThread threadStackContaining(Address address);
-
-    /**
-     * Returns a VM thread, if any, whose thread locals block contains a specified address.
-     * <br>
-     * Thread-safe.
-     *
-     * @param address an address in the VM
-     * @return thread whose thread locals block contains the address, null if none.
-     */
-    MaxThread threadLocalsBlockContaining(Address address);
+    MaxThreadManager threadManager();
 
     /**
      * Gets the manager for locating and managing code related information in the VM.

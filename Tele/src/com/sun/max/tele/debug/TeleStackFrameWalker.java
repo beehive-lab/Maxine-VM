@@ -39,7 +39,7 @@ import com.sun.max.vm.thread.*;
 public final class TeleStackFrameWalker extends StackFrameWalker {
 
     private final TeleVM teleVM;
-    private final TeleThreadLocalValues teleEnabledVmThreadLocalValues;
+    private final TeleThreadLocalsArea teleEnabledVmThreadLocalValues;
     private final TeleNativeThread teleNativeThread;
 
     private final Pointer cpuInstructionPointer;
@@ -50,7 +50,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         super();
         this.teleVM = teleVM;
         this.teleNativeThread = teleNativeThread;
-        this.teleEnabledVmThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
+        this.teleEnabledVmThreadLocalValues = teleNativeThread.locals().threadLocalsAreaFor(Safepoint.State.ENABLED);
         this.cpuInstructionPointer = teleNativeThread.instructionPointer();
         this.cpuStackPointer = teleNativeThread.stackPointer();
         this.cpuFramePointer = teleNativeThread.framePointer();

@@ -76,7 +76,7 @@ public final class ThreadsTable extends InspectorTable {
     protected Transferable getTransferable(int row, int col) {
         final MaxThread thread = tableModel.getThreadAt(row);
         assert thread != null;
-        final TeleObject vmThreadObject  =  thread.vmThreadObject();
+        final TeleObject vmThreadObject  =  thread.teleVmThread();
         if (vmThreadObject != null) {
             return new InspectorTransferable.TeleObjectTransferable(inspection(), vmThreadObject);
         }

@@ -35,7 +35,6 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
@@ -175,8 +174,8 @@ public final class MemoryRegionsTable extends InspectorTable {
                 if (!stack.memoryRegion().size().isZero()) {
                     sortedMemoryRegions.add(new StackRegionDisplay(stack));
                 }
-                TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.threadLocalsRegion();
-                if (!threadLocalsRegion.size().isZero()) {
+                MemoryRegion threadLocalsRegion = thread.locals().memoryRegion();
+                if (threadLocalsRegion != null) {
                     sortedMemoryRegions.add(new ThreadLocalsRegionDisplay(threadLocalsRegion));
                 }
             }
@@ -496,14 +495,14 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     private final class ThreadLocalsRegionDisplay extends MemoryRegionDisplay {
 
-        private final TeleThreadLocalsMemoryRegion threadLocalsRegion;
+        private final MemoryRegion threadLocalsRegion;
 
         @Override
         MemoryRegion memoryRegion() {
             return threadLocalsRegion;
         }
 
-        ThreadLocalsRegionDisplay(TeleThreadLocalsMemoryRegion threadLocalsRegion) {
+        ThreadLocalsRegionDisplay(MemoryRegion threadLocalsRegion) {
             this.threadLocalsRegion = threadLocalsRegion;
         }
     }
