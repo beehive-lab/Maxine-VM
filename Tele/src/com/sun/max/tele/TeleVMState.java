@@ -162,8 +162,8 @@ public final class TeleVMState implements MaxVMState {
         sb.append(getClass().getSimpleName()).append("(");
         sb.append(Long.toString(serialID)).append(", ");
         sb.append(processState.toString()).append(", ");
-        sb.append(Long.toString(epoch)).append(", ");
-        sb.append(Boolean.toString(isInGC)).append(", ");
+        sb.append("epoch =").append(Long.toString(epoch)).append(", ");
+        sb.append("gc=").append(Boolean.toString(isInGC)).append(", ");
         sb.append("prev=");
         if (previous == null) {
             sb.append("null");
