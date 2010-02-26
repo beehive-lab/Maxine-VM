@@ -48,7 +48,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetLocation.*;
 import com.sun.max.vm.cps.target.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -74,7 +73,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     private static final Logger LOGGER = Logger.getLogger(TeleNativeThread.class.getName());
 
     private final TeleProcess teleProcess;
-    private TeleVmThread teleVmThread;
     private int suspendCount;
 
     private long registersEpoch;
@@ -101,17 +99,11 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     private long framesLastChangedEpoch;
 
     /**
-     * The memory containing the thread locals of a Java thread; {@code null} if this is a non-Java thread.
+     * Access to information about and contained in this thread's local storage area.
+     * Holds a dummy if no thread local information is available:  i.e. either this is a non-Java thread, or
+     * the thread is very early in its creation sequence.
      */
-    private final TeleThreadLocalsMemoryRegion threadLocalsRegion;
-
-    private final Map<Safepoint.State, TeleThreadLocalValues> teleVmThreadLocals;
-
-    /**
-     * Only if this value is less than the {@linkplain TeleProcess#epoch() epoch} of this thread's tele process, does
-     * the {@link #refreshThreadLocals()} method do anything.
-     */
-    private long teleVmThreadLocalsEpoch;
+    private final TeleThreadLocals threadLocals;
 
     private MaxThreadState state = SUSPENDED;
     private TeleTargetBreakpoint breakpoint;
@@ -138,7 +130,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
 
         @Override
         public String toString() {
-            return String.format("id=%d, localHandle=0x%08x, handle=%d, stackRegion=%s, threadLocalsRegion=%s", id, localHandle, handle, MemoryRegion.Util.asString(stackRegion), MemoryRegion.Util.asString(threadLocalsRegion));
+            return String.format("id=%d, localHandle=0x%08x, handle=%d, stackRegion=%s, threadLocalsAreasRegion=%s", id, localHandle, handle, MemoryRegion.Util.asString(stackRegion), MemoryRegion.Util.asString(threadLocalsRegion));
         }
     }
 
@@ -152,9 +144,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         this.integerRegisters = new TeleIntegerRegisters(vmConfiguration);
         this.floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         this.stateRegisters = new TeleStateRegisters(vmConfiguration);
-
-        this.teleVmThreadLocals = !params.threadLocalsRegion.start().isZero() ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
-        this.threadLocalsRegion = new TeleThreadLocalsMemoryRegion(this, params.threadLocalsRegion);
+        this.threadLocals = TeleThreadLocals.create(this, params.threadLocalsRegion);
         this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
         this.teleStack = new TeleStack(teleProcess.teleVM(), this, new TeleNativeStackMemoryRegion(this, params.stackRegion));
     }
@@ -166,10 +156,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         final long currentProcessEpoch = teleProcess().epoch();
         if (framesRefreshedEpoch < currentProcessEpoch) {
             Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + currentProcessEpoch + ") for " + this);
-
-            // The stack walk requires the VM thread locals to be up to date
-            //refreshThreadLocals();
-
+            threadLocals.refresh();
             final IndexedSequence<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.teleVM(), this).frames();
             assert !newFrames.isEmpty();
             // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
@@ -215,14 +202,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         return teleProcess;
     }
 
-    public TeleThreadLocalValues threadLocalsFor(Safepoint.State state) {
-        refreshThreadLocals();
-        if (teleVmThreadLocals == null) {
-            return null;
-        }
-        return teleVmThreadLocals.get(state);
-    }
-
     public TeleIntegerRegisters integerRegisters() {
         refreshRegisters();
         return integerRegisters;
@@ -247,27 +226,13 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      *
      * @param state the state of the thread
      * @param instructionPointer the current value of the instruction pointer for the thread
-     * @param vmThreadLocals the address of the various VM thread locals storage areas
+     * @param threadLocalsRegion the memory region reported to be holding the thread local block; null if not available
+     * @param tlaSize the size of each Thread Locals Area in the thread local block.
      */
-    final void updateAfterGather(MaxThreadState state, Pointer instructionPointer, Map<Safepoint.State, Pointer> vmThreadLocals) {
+    final void updateAfterGather(MaxThreadState state, Pointer instructionPointer, MemoryRegion threadLocalsRegion, int tlaSize) {
         this.state = state;
         stateRegisters.setInstructionPointer(instructionPointer);
-        if (vmThreadLocals != null) {
-            assert teleVmThreadLocals != null;
-            for (Safepoint.State safepointState : Safepoint.State.CONSTANTS) {
-                final Pointer vmThreadLocalsPointer = vmThreadLocals.get(safepointState);
-                if (vmThreadLocalsPointer.isZero()) {
-                    teleVmThreadLocals.put(safepointState, null);
-                } else {
-                    // Only create a new TeleThreadLocalValues if the start address has changed which
-                    // should only happen once going from 0 to a non-zero value.
-                    final TeleThreadLocalValues teleVMThreadLocalValues = teleVmThreadLocals.get(safepointState);
-                    if (teleVMThreadLocalValues == null || !teleVMThreadLocalValues.start().equals(vmThreadLocalsPointer)) {
-                        teleVmThreadLocals.put(safepointState, new TeleThreadLocalValues(this, safepointState, vmThreadLocalsPointer));
-                    }
-                }
-            }
-        }
+        threadLocals.updateAfterGather(threadLocalsRegion, tlaSize);
     }
 
     /**
@@ -279,6 +244,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         Trace.line(TRACE_LEVEL, tracePrefix() + "refresh(epoch=" + epoch + ") for " + this);
         if (state.allowsDataAccess()) {
             refreshBreakpoint();
+            threadLocals.refresh();
         }
     }
 
@@ -297,39 +263,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
             integerRegisters.refresh();
             floatingPointRegisters.refresh();
             stateRegisters.refresh();
-        }
-    }
-
-    /**
-     * Refreshes the values of the cached VM thread local variables for this thread.
-     * This method also updates the reference to the {@linkplain #maxVMThread() maxVMThread}.
-     */
-    private synchronized void refreshThreadLocals() {
-        if (teleVmThreadLocals == null) {
-            return;
-        }
-        final long processEpoch = teleProcess().epoch();
-        if (teleVmThreadLocalsEpoch < processEpoch) {
-            teleVmThreadLocalsEpoch = processEpoch;
-
-            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshThreadLocals (epoch=" + processEpoch + ") for " + this);
-
-            final DataAccess dataAccess = teleProcess().dataAccess();
-            for (TeleThreadLocalValues teleVmThreadLocalValues : teleVmThreadLocals.values()) {
-                if (teleVmThreadLocalValues != null) {
-                    teleVmThreadLocalValues.refresh(dataAccess);
-                }
-            }
-
-            final TeleThreadLocalValues enabledVmThreadLocalValues = teleVmThreadLocals.get(Safepoint.State.ENABLED);
-            teleVmThread = null;
-            if (enabledVmThreadLocalValues != null) {
-                final Long threadLocalValue = enabledVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
-                if (threadLocalValue != 0) {
-                    final Reference vmThreadReference = teleVM().wordToReference(Address.fromLong(threadLocalValue));
-                    teleVmThread = (TeleVmThread) teleVM().makeTeleObject(vmThreadReference);
-                }
-            }
         }
     }
 
@@ -383,10 +316,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         final long processEpoch = teleProcess().epoch();
         if (framesRefreshedEpoch < processEpoch) {
             Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
-
-            // The stack walk requires the VM thread locals to be up to date
-            //refreshThreadLocals();
-
+            threadLocals.refresh();
             final TeleVM teleVM = teleProcess.teleVM();
             final IndexedSequence<StackFrame> newFrames = new TeleStackFrameWalker(teleVM, this).frames();
             assert !newFrames.isEmpty();
@@ -443,11 +373,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         state = DEAD;
         clearFrames();
         breakpoint = null;
-        teleVmThread = null;
         frameCache = null;
-        if (teleVmThreadLocals != null) {
-            teleVmThreadLocals.clear();
-        }
+        threadLocals.clear();
         integerRegisters = null;
         stateRegisters = null;
         floatingPointRegisters = null;
@@ -482,18 +409,12 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         return integerRegisters.framePointer();
     }
 
-    /**
-     * @see com.sun.max.tele.MaxThread#stack()
-     */
     public final TeleStack stack() {
         return teleStack;
     }
 
-    /**
-     * @see com.sun.max.tele.MaxThread#threadLocalsRegion()
-     */
-    public final TeleThreadLocalsMemoryRegion threadLocalsRegion() {
-        return threadLocalsRegion;
+    public final TeleThreadLocals locals() {
+        return threadLocals;
     }
 
     /**
@@ -534,16 +455,13 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         return null;
     }
 
-    public TeleObject vmThreadObject() {
-        if (teleVmThread == null) {
-            refreshThreadLocals();
-        }
-        return teleVmThread;
+    public TeleVmThread teleVmThread() {
+        return threadLocals.teleVmThread();
     }
 
     public String vmThreadName() {
-        if (teleVmThread != null) {
-            return teleVmThread.name();
+        if (teleVmThread() != null) {
+            return teleVmThread().name();
         }
         return null;
     }
@@ -614,7 +532,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     @Override
     public final String toString() {
         final StringBuilder sb = new StringBuilder(100);
-        sb.append(isPrimordial() ? "primordial" : (teleVmThread == null ? "native" : teleVmThread.name()));
+        sb.append(isPrimordial() ? "primordial" : (teleVmThread() == null ? "native" : teleVmThread().name()));
         sb.append("[id=").append(id());
         sb.append(",handle=").append(handleString());
         sb.append(",local handle=").append(localHandle());
@@ -636,7 +554,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      */
     public final String toShortString() {
         final StringBuilder sb = new StringBuilder(100);
-        sb.append(isPrimordial() ? "primordial" : (teleVmThread == null ? "native" : teleVmThread.name()));
+        sb.append(isPrimordial() ? "primordial" : (teleVmThread() == null ? "native" : teleVmThread().name()));
         sb.append("[id=").append(id());
         sb.append(",handle=").append(handleString());
         sb.append(",local handle=").append(localHandle());
