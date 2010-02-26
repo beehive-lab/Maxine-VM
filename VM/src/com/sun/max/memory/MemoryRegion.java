@@ -88,6 +88,9 @@ public interface MemoryRegion {
          * and {@linkplain MemoryRegion#start()} - {@linkplain MemoryRegion#end()} address range.
          */
         public static String asString(MemoryRegion memoryRegion) {
+            if (memoryRegion == null) {
+                return "null";
+            }
             final StringBuilder sb = new StringBuilder();
             if (memoryRegion.description() != null) {
                 sb.append(memoryRegion.description()).append(":");
