@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.verifier.types;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
@@ -34,13 +34,13 @@ public interface VerificationRegistry {
 
     /**
      * Gets the canonical object type for a TypeDescriptor.
-     * 
+     *
      * @return null if {@code typeDescriptor} denotes a {@linkplain TypeDescriptor#isPrimitive() primitive type}
      */
     ObjectType getObjectType(TypeDescriptor typeDescriptor);
 
     /**
-     * Gets the canonical type of an uninitialized object created by a {@link Bytecode#NEW} instruction at a given
+     * Gets the canonical type of an uninitialized object created by a {@link Bytecodes#NEW} instruction at a given
      * bytecode position.
      */
     UninitializedNewType getUninitializedNewType(int position);
@@ -57,7 +57,7 @@ public interface VerificationRegistry {
 
     /**
      * Clears all recorded subroutines.
-     * 
+     *
      * @return the number of recorded subroutines cleared
      */
     int clearSubroutines();

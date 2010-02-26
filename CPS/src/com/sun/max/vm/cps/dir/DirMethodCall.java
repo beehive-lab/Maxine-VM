@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.cps.dir;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.c1x.bytecode.*;
 import com.sun.max.vm.cps.dir.transform.*;
 
 /**
@@ -39,7 +39,7 @@ public class DirMethodCall extends DirCall<DirValue> {
     /**
      * Determines if this is a call to a native function. Note, this does not mean a call to a native method, but the
      * call inside a native method's stub to the actual native code. This will be the translation of the
-     * {@link Bytecode#CALLNATIVE} instruction.
+     * {@link Bytecodes#JNICALL} instruction.
      */
     public boolean isNative() {
         return isNative;

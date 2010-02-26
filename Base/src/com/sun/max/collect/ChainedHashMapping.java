@@ -211,7 +211,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
      * Determines if a given entry matches a given key.
      * <p>
      * This method exists primarily for the benefit of subclasses who can override this implementation with a more
-     * efficient one that uses {@code hashForKey}. For example, the {@linkplain HashEntryChainedHashMapping} subclass uses buck
+     * efficient one that uses {@code hashForKey}. For example, the {@linkplain HashEntryChainedHashMapping} subclass uses bucket
      * entries that record the hash of a key to avoid re-computing it every time an entry is compared.
      *
      * @param entry

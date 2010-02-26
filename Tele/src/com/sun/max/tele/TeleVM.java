@@ -757,6 +757,10 @@ public abstract class TeleVM implements MaxVM {
         return teleProcess.dataAccess().readWord(address, offset);
     }
 
+    public final Word readWord(Address address, Offset offset) {
+        return teleProcess.dataAccess().readWord(address, offset);
+    }
+
     public final void readFully(Address address, byte[] bytes) {
         teleProcess.dataAccess().readFully(address, bytes);
     }

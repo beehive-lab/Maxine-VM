@@ -30,7 +30,7 @@ import com.sun.max.vm.type.*;
 public class GetField extends JavaResolvableOperator<FieldActor> {
 
     public GetField(ConstantPool constantPool, int index) {
-        super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
+        super(CALL_STOP | NULL_POINTER_CHECK, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
     }
 
     @Override

@@ -225,7 +225,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Bytecode breakpoint");
+        final StringBuilder sb = new StringBuilder("Bytecodes breakpoint");
         sb.append("{");
         sb.append(kind().toString()).append(", ");
         sb.append(codeLocation().methodKey().toString()).append(", ");
@@ -293,7 +293,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     /**
      * A factory that creates, tracks, and removes bytecode breakpoints from the VM.
      * <br>
-     * Bytecode breakpoints can be created before a specified method is compiled
+     * Bytecodes breakpoints can be created before a specified method is compiled
      * or even loaded.
      * <br>
      * A bytecode breakpoint causes a target code breakpoint to be created for every
@@ -654,7 +654,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * @param printStream
          */
         void writeSummaryToStream(PrintStream printStream) {
-            printStream.println("Bytecode breakpoints :");
+            printStream.println("Bytecodes breakpoints :");
             for (TeleBytecodeBreakpoint bytecodeBreakpoint : breakpointCache) {
                 printStream.println("  " + bytecodeBreakpoint);
             }

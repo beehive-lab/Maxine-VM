@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -55,39 +58,46 @@ public class MakeStackVariable extends SpecialBuiltin {
      *            initialized with {@code value}.
      * @return the address of the stack slot where {@code value} resides
      */
-    @BUILTIN(builtinClass = MakeStackVariable.class)
+    @BUILTIN(value = MakeStackVariable.class)
+    @INTRINSIC(STACKADDR)
     public static native Pointer makeStackVariable(int value);
 
-    @BUILTIN(builtinClass = MakeStackVariable.class)
+    @BUILTIN(value = MakeStackVariable.class)
+    @INTRINSIC(STACKADDR)
     public static native Pointer makeStackVariable(byte value);
 
     /**
      * @see #makeStackVariable(int)
      */
-    @BUILTIN(builtinClass = MakeStackVariable.class)
+    @BUILTIN(value = MakeStackVariable.class)
+    @INTRINSIC(STACKADDR)
     public static native Pointer makeStackVariable(float value);
 
     /**
      * @see #makeStackVariable(int)
      */
-    @BUILTIN(builtinClass = MakeStackVariable.class)
+    @BUILTIN(value = MakeStackVariable.class)
+    @INTRINSIC(STACKADDR)
     public static native Pointer makeStackVariable(long value);
 
     /**
      * @see #makeStackVariable(int)
      */
-    @BUILTIN(builtinClass = MakeStackVariable.class)
+    @BUILTIN(value = MakeStackVariable.class)
+    @INTRINSIC(STACKADDR)
     public static native Pointer makeStackVariable(double value);
 
     /**
      * @see #makeStackVariable(int)
      */
-    @BUILTIN(builtinClass = MakeStackVariable.class)
+    @BUILTIN(value = MakeStackVariable.class)
+    @INTRINSIC(STACKADDR)
     public static native Pointer makeStackVariable(Reference value);
 
     /**
      * @see #makeStackVariable(int)
      */
-    @BUILTIN(builtinClass = MakeStackVariable.class)
+    @BUILTIN(value = MakeStackVariable.class)
+    @INTRINSIC(STACKADDR)
     public static native Pointer makeStackVariable(Word value);
 }

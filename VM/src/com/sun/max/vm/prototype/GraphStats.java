@@ -152,7 +152,7 @@ public class GraphStats {
         MethodStats[] methodStats = mstats.toArray(new MethodStats[mstats.size()]);
         Arrays.sort(methodStats, BY_METHOD_SIZE);
         printStream.println("Method Histogram Start");
-        printStream.println("Total      Actor      Bytecode   TargMeth   TargCode   Ratio  Method");
+        printStream.println("Total      Actor      Bytecodes   TargMeth   TargCode   Ratio  Method");
         printStream.println("==============================================================================");
         for (MethodStats s : methodStats) {
             final double ratio = s.targetCodeSize / (double) s.bytecodeSize;

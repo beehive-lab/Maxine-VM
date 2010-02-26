@@ -41,7 +41,7 @@ public @interface BUILTIN {
     /**
      * The {@link Builtin} subclass the annotated method is associated with.
      */
-    Class<? extends Builtin> builtinClass();
+    Class<? extends Builtin> value();
 
     @HOSTED_ONLY
     public static final class Static {

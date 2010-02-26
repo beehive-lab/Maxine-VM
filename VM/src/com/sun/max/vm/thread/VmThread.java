@@ -412,6 +412,7 @@ public class VmThread {
         if (thread == MAIN_VM_THREAD) {
             VmThreadMap.ACTIVE.joinAllNonDaemons();
             invokeShutdownHooks();
+            VmThreadMap.ACTIVE.setMainThreadExited();
         }
 
         JniFunctions.epilogue(anchor, null);

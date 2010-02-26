@@ -50,7 +50,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * AMD64-specific part of the Bytecode to Target Translator.
+ * AMD64-specific part of the Bytecodes to Target Translator.
  *
  * @author Laurent Daynes
  * @author Bernd Mathiske

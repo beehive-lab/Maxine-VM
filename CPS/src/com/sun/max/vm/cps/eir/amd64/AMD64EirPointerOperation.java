@@ -41,8 +41,6 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
         return kind;
     }
 
-    private final Kind offsetKind;
-
     private final EirOperand offsetOperand;
 
     public EirOperand offsetOperand() {
@@ -82,7 +80,6 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
         super(block, destination, destinationEffect, destinationLocationCategories,
                      pointer, EirOperand.Effect.USE, G);
         this.kind = kind;
-        this.offsetKind = null;
         this.offsetOperand = null;
         this.indexOperand = null;
     }
@@ -100,7 +97,6 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
         super(block, destination, destinationEffect, destinationLocationCategories,
                      pointer, EirOperand.Effect.USE, G);
         this.kind = kind;
-        this.offsetKind = offsetKind;
         this.offsetOperand = new EirOperand(this, EirOperand.Effect.USE, offsetLocationCategories(offsetKind));
         this.offsetOperand.setEirValue(offset);
         this.indexOperand = null;
@@ -118,7 +114,6 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
         super(block, destination, destinationEffect, destinationLocationCategories,
                      pointer, EirOperand.Effect.USE, G);
         this.kind = kind;
-        this.offsetKind = null;
         this.offsetOperand = null;
         this.indexOperand = new EirOperand(this, EirOperand.Effect.USE, G);
         this.indexOperand.setEirValue(index);
@@ -137,7 +132,6 @@ public abstract class AMD64EirPointerOperation extends AMD64EirBinaryOperation {
         super(block, destination, destinationEffect, destinationLocationCategories,
                      pointer, EirOperand.Effect.USE, G);
         this.kind = kind;
-        this.offsetKind = Kind.INT;
         this.offsetOperand = new EirOperand(this, EirOperand.Effect.USE, I8_I32);
         this.offsetOperand.setEirValue(displacement);
         this.indexOperand = new EirOperand(this, EirOperand.Effect.USE, G);

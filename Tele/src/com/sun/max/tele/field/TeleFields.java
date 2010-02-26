@@ -143,7 +143,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess JitTargetMethod_stackFrameLayout = new TeleInstanceReferenceFieldAccess(JitTargetMethod.class, "stackFrameLayout", JitStackFrameLayout.class);
     public final TeleInstanceCharFieldAccess Kind_character = new TeleInstanceCharFieldAccess(Kind.class, "character");
     public final TeleInstanceReferenceFieldAccess MemberActor_holder = new TeleInstanceReferenceFieldAccess(MemberActor.class, "holder", ClassActor.class);
-    public final TeleInstanceIntFieldAccess MemberActor_memberIndex = new TeleInstanceIntFieldAccess(MemberActor.class, "memberIndex");
+    public final TeleInstanceCharFieldAccess MemberActor_memberIndex = new TeleInstanceCharFieldAccess(MemberActor.class, "memberIndex");
     public final TeleInstanceReferenceFieldAccess ObjectReferenceValue_value = new TeleInstanceReferenceFieldAccess(ObjectReferenceValue.class, "value", Object.class);
     public final TeleInstanceReferenceFieldAccess ClassConstant$Resolved_classActor = new TeleInstanceReferenceFieldAccess(ClassConstant.Resolved.class, "classActor", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess FieldRefConstant$Resolved_fieldActor = new TeleInstanceReferenceFieldAccess(FieldRefConstant.Resolved.class, "fieldActor", FieldActor.class);

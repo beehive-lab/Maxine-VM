@@ -65,10 +65,10 @@ public abstract class Builtin extends Routine implements Comparable<Builtin>, St
     }
 
     @HOSTED_ONLY
-    public static void registerMethod(ClassMethodActor classMethodActor) {
+    private static void registerMethod(ClassMethodActor classMethodActor) {
         if (classMethodActor.isBuiltin()) {
             final BUILTIN builtinAnnotation = classMethodActor.getAnnotation(BUILTIN.class);
-            final Builtin builtin = BUILTIN.Static.get(builtinAnnotation.builtinClass());
+            final Builtin builtin = BUILTIN.Static.get(builtinAnnotation.value());
             classMethodActorToBuiltin.put(classMethodActor, builtin);
         }
     }

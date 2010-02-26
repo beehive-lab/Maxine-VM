@@ -99,13 +99,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         return ReferenceValue.from(classMethodActor);
     }
 
-    private CirCall foldUnsafeCast(CirValue[] arguments) {
-        assert arguments.length == 3;
-        final CirValue result = arguments[0];
-        final CirValue normalContinuation = arguments[1];
-        return new CirCall(normalContinuation, result);
-    }
-
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         if (MaxineVM.isHosted()) {
             // This happens when interpreting a CIR method with the CirInterpreter
@@ -115,9 +108,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         }
 
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
-        if (classMethodActor.isUnsafeCast()) {
-            return foldUnsafeCast(arguments);
-        }
         if (classMethodActor.isStatic() && arguments.length == 2) {
             // no application arguments, just the 2 continuations
             cirGenerator.makeIrMethod(this);
@@ -130,9 +120,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         final ClassMethodActor compilee = classMethodActor.compilee();
         if (compilee.isHiddenToReflection()) {
             return false;
-        }
-        if (classMethodActor.isUnsafeCast()) {
-            return true;
         }
         if (!compilee.isDeclaredFoldable()) {
             return false;
@@ -299,7 +286,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public int reasonsMayStop() {
-        return Stoppable.CALL;
+        return Stoppable.CALL_STOP;
     }
 
     public int count(final Builtin builtin, int defaultResult) {

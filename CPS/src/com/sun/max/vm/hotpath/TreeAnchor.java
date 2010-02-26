@@ -43,7 +43,7 @@ public class TreeAnchor extends Anchor {
     }
 
     /**
-     * Bytecode position at which this counter is inserted.
+     * Bytecodes position at which this counter is inserted.
      */
     public int position() {
         return location.bytecodePosition;

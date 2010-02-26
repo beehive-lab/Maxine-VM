@@ -27,6 +27,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.ide.*;
@@ -456,6 +457,7 @@ public class ClassfileWriter {
         MethodInfo(MethodActor methodActor) {
             super(methodActor);
             final CodeAttribute codeAttribute = methodActor instanceof ClassMethodActor ? ((ClassMethodActor) methodActor).codeAttribute() : null;
+            final CodeAttribute originalCodeAttribute = methodActor instanceof ClassMethodActor ? ((ClassMethodActor) methodActor).originalCodeAttribute() : null;
             final byte[] runtimeVisibleParameterAnnotationsBytes = methodActor.runtimeVisibleParameterAnnotationsBytes();
             final byte[] annotationDefaultBytes = methodActor.annotationDefaultBytes();
             final TypeDescriptor[] checkedExceptions = methodActor.checkedExceptions();
@@ -479,7 +481,7 @@ public class ClassfileWriter {
             }
 
             if (codeAttribute != null) {
-                attributes.append(new Code(codeAttribute));
+                attributes.append(new Code(codeAttribute, originalCodeAttribute));
             }
         }
 
@@ -492,10 +494,12 @@ public class ClassfileWriter {
     public static class Code extends Attribute {
         protected final AppendableSequence<Attribute> attributes = new ArrayListSequence<Attribute>();
         protected final CodeAttribute codeAttribute;
+        protected final CodeAttribute originalCodeAttribute;
 
-        public Code(CodeAttribute codeAttribute) {
+        public Code(CodeAttribute codeAttribute, CodeAttribute originalCodeAttribute) {
             super("Code");
             this.codeAttribute = codeAttribute;
+            this.originalCodeAttribute = originalCodeAttribute;
             final StackMapTable stackMapTable = codeAttribute.stackMapTable();
             final LineNumberTable lineNumberTable = codeAttribute.lineNumberTable();
             final LocalVariableTable localVariableTable = codeAttribute.localVariableTable();
@@ -537,7 +541,7 @@ public class ClassfileWriter {
         /**
          * Replace non-standard bytecodes with standard JVM bytecodes.
          */
-        private static byte[] standardizeCode(final CodeAttribute codeAttribute, final ClassfileWriter cf) {
+        private static byte[] standardizeCode(final CodeAttribute codeAttribute, final CodeAttribute originalCodeAttribute, final ClassfileWriter cf) {
             final byte[] code = codeAttribute.code();
             if (code == null) {
                 return code;
@@ -545,16 +549,30 @@ public class ClassfileWriter {
             final byte[] codeCopy = code.clone();
             final BytecodeAdapter bytecodeAdapter = new BytecodeAdapter() {
                 @Override
-                protected void callnative(int nativeFunctionDescriptorIndex) {
+                protected void jnicall(int nativeFunctionDescriptorIndex) {
                     final Utf8Constant name = SymbolTable.makeSymbol("callnative_" + nativeFunctionDescriptorIndex);
                     final ConstantPool pool = codeAttribute.constantPool;
                     final SignatureDescriptor signature = SignatureDescriptor.create(pool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
                     final ClassMethodRefConstant method = PoolConstantFactory.createClassMethodConstant(pool.holder(), name, signature);
                     final int index = cf.indexOf(method);
                     final int position = bytecodeScanner().currentOpcodePosition();
-                    codeCopy[position] = (byte) Bytecode.INVOKESTATIC.ordinal();
+                    codeCopy[position] = (byte) Bytecodes.INVOKESTATIC;
                     codeCopy[position + 1] = (byte) (index >> 8);
                     codeCopy[position + 2] = (byte) index;
+                }
+                @Override
+                protected boolean extension(int opcode, boolean isWide) {
+                    if (originalCodeAttribute != null) {
+                        int length = Bytecodes.lengthOf(opcode);
+                        int start = bytecodeScanner().currentOpcodePosition();
+                        byte[] originalCode = originalCodeAttribute.code();
+                        for (int bci = start; bci < start + length; bci++) {
+                            codeCopy[bci] = originalCode[bci];
+                        }
+                    } else {
+                        ProgramWarning.message("Non-standard JVM bytecode " + opcode + " (" + Bytecodes.nameOf(opcode) + ") written to class file generated for " + cf.constantPoolEditor.pool().holder());
+                    }
+                    return false;
                 }
             };
             new BytecodeScanner(bytecodeAdapter).scan(new BytecodeBlock(code));
@@ -563,11 +581,10 @@ public class ClassfileWriter {
 
         @Override
         protected void writeData(ClassfileWriter cf) throws IOException {
-            final CodeAttribute codeAttributeCopy = this.codeAttribute;
-            final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttributeCopy.exceptionHandlerTable();
-            cf.writeUnsigned2(codeAttributeCopy.maxStack);
-            cf.writeUnsigned2(codeAttributeCopy.maxLocals);
-            final byte[] code = standardizeCode(codeAttributeCopy, cf);
+            final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
+            cf.writeUnsigned2(codeAttribute.maxStack);
+            cf.writeUnsigned2(codeAttribute.maxLocals);
+            final byte[] code = standardizeCode(codeAttribute, originalCodeAttribute, cf);
             cf.writeUnsigned4(code.length);
             cf.writeUnsigned1Array(code);
             cf.writeUnsigned2(exceptionHandlerTable.length());

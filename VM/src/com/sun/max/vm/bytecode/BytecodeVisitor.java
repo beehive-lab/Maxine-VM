@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.bytecode;
 
+import static com.sun.max.vm.classfile.ErrorContext.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 
 /**
@@ -47,12 +50,12 @@ public abstract class BytecodeVisitor {
     }
 
     @INLINE
-    public final Bytecode currentOpcode() {
+    public final int currentOpcode() {
         return bytecodeScanner.currentOpcode();
     }
 
     /**
-     * Determines if the instruction currently being visited has a {@linkplain Bytecode#WIDE wide} prefix.
+     * Determines if the instruction currently being visited has a {@linkplain Bytecodes#WIDE wide} prefix.
      */
     @INLINE
     public final boolean isCurrentOpcodeWidened() {
@@ -299,8 +302,26 @@ public abstract class BytecodeVisitor {
     protected abstract void breakpoint();
 
     /**
-     * @see Bytecode#CALLNATIVE
+     * @see Bytecodes#JNICALL
      */
-    protected abstract void callnative(int nativeFunctionDescriptorIndex);
+    protected abstract void jnicall(int nativeFunctionDescriptorIndex);
 
+    /**
+     * Parses an {@linkplain Bytecodes#isExtension(int) extended} bytecode instruction.
+     *
+     * @param opcode the opcode of the extended bytecode instruction
+     * @param isWide specifies if the WIDE prefix was parsed before the opcode
+     * @return {@code true} if this method ensures that the complete instruction has been parsed from the stream;
+     *         otherwise the caller is responsible for skipping any unparsed bytes of the instruction.
+     */
+    protected boolean extension(int opcode, boolean isWide) {
+        int length = Bytecodes.lengthOf(opcode);
+        assert length != 0;
+        bytecodeScanner.skipBytes(length - 1);
+        return true;
+    }
+
+    protected void unknown(int opcode) {
+        throw verifyError("Unsupported bytecode: " + opcode);
+    }
 }

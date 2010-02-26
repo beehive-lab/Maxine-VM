@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 public class Throw extends JavaOperator implements Lowerable{
 
     public Throw() {
-        super(CALL);
+        super(CALL_STOP);
     }
 
     public Kind resultKind() {

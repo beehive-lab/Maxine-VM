@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.bytecode;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -51,8 +52,8 @@ public final class BytecodeAssessor {
             new BytecodeScanner(new BytecodeAdapter() {
                 @Override
                 public void opcodeDecoded() {
-                    final Bytecode opcode = currentOpcode();
-                    if (opcode.is(Bytecode.Flags.CONDITIONAL_BRANCH | Bytecode.Flags.UNCONDITIONAL_BRANCH | Bytecode.Flags.SWITCH)) {
+                    final int opcode = currentOpcode();
+                    if (Bytecodes.isBlockEnd(opcode)) {
                         bytecodeScanner().stop();
                     }
                 }

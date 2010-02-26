@@ -22,6 +22,7 @@ package com.sun.max.ins.method;
 
 import java.util.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -176,11 +177,11 @@ public abstract class TargetCodeViewer extends CodeViewer {
                     alternate = !alternate;
 
                     int opcode = bytecodes[bytecodeIndex];
-                    if (opcode == Bytecode.WIDE.ordinal()) {
+                    if (opcode == Bytecodes.WIDE) {
                         opcode = bytecodes[bytecodeIndex + 1];
                     }
 
-                    tagTextForRow[row] = bytecodePosition + ": " + Bytecode.from(opcode).name();
+                    tagTextForRow[row] = bytecodePosition + ": " + Bytecodes.nameOf(opcode);
                     final BytecodeLocation bytecodeLocation = new BytecodeLocation(teleClassMethodActor.classMethodActor(), bytecodePosition);
                     rowToBytecodeLocation[row] = bytecodeLocation;
                     do {

@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -42,37 +45,13 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
-     * Gets the value of a given floating point register. This should only be called for register roles
-     * that can denote floating point registers such as {@link Role#ABI_SCRATCH}, {@link Role#ABI_RESULT}
-     * and {@link Role#ABI_RETURN}.
-     *
-     * @param r specifies the register to read
-     * @return the value of the register specified by {@code r}
-     */
-    @BUILTIN(builtinClass = SpecialBuiltin.GetFloatingPointRegister.class)
-    public static native Pointer getFloatingPointRegister(VMRegister.Role r);
-
-    /**
-     * @see SpecialBuiltin#getFloatingPointRegister(Role)
-     */
-    public static class GetFloatingPointRegister extends SpecialBuiltin {
-
-        @Override
-        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 1;
-            visitor.visitGetFloatingPointRegister(this, result, arguments);
-        }
-
-        public static final GetFloatingPointRegister BUILTIN = new GetFloatingPointRegister();
-    }
-
-    /**
      * Gets the value of a given integer register.
      *
      * @param r specifies the register to read
      * @return the value of the register specified by {@code r}
      */
-    @BUILTIN(builtinClass = SpecialBuiltin.GetIntegerRegister.class)
+    @BUILTIN(GetIntegerRegister.class)
+    @INTRINSIC(READGPR)
     public static native Pointer getIntegerRegister(VMRegister.Role r);
 
     /**
@@ -95,7 +74,8 @@ public abstract class SpecialBuiltin extends Builtin {
      * @param r specifies the register to update
      * @param the value to write to the register specified by {@code r}
      */
-    @BUILTIN(builtinClass = SpecialBuiltin.SetIntegerRegister.class)
+    @BUILTIN(SetIntegerRegister.class)
+    @INTRINSIC(WRITEGPR)
     public static native Pointer setIntegerRegister(VMRegister.Role r, Word value);
 
     /**
@@ -113,27 +93,26 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
-     * Adjusts the value of a given integer register. The value of the register
+     * Adjusts the value register used as the JIT's stack pointer. The value of the register
      * adjusted by adding {@code numberOrWords * Word.size()} to its current value.
      *
-     * @param registerRole the register whose value will be updated
-     * @param numberOfWords the adjustment amount specified in words
+     * @param numberOfWords the signed adjustment amount specified in words
      */
-    @BUILTIN(builtinClass = SpecialBuiltin.AddWordsToIntegerRegister.class)
-    public static native void addWordsToIntegerRegister(VMRegister.Role registerRole, int numberOfWords);
+    @BUILTIN(AdjustJitStack.class)
+    public static native void adjustJitStack(int numberOfWords);
 
     /**
-     * @see SpecialBuiltin#addWordsToIntegerRegister(com.sun.max.vm.runtime.VMRegister.Role, int)
+     * @see SpecialBuiltin#adjustJitStack(int)
      */
-    public static class AddWordsToIntegerRegister extends SpecialBuiltin {
+    public static class AdjustJitStack extends SpecialBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 2;
-            visitor.visitAddWordsToIntegerRegister(this, result, arguments);
+            assert arguments.length == 1;
+            visitor.visitAdjustJitStack(this, result, arguments);
         }
 
-        public static final AddWordsToIntegerRegister BUILTIN = new AddWordsToIntegerRegister();
+        public static final AdjustJitStack BUILTIN = new AdjustJitStack();
     }
 
     /**
@@ -141,7 +120,7 @@ public abstract class SpecialBuiltin extends Builtin {
      *
      * @return the address of the first instruction generated for this builtin
      */
-    @BUILTIN(builtinClass = SpecialBuiltin.GetInstructionPointer.class)
+    @BUILTIN(GetInstructionPointer.class)
     public static native Pointer getInstructionPointer();
 
     /**
@@ -161,7 +140,8 @@ public abstract class SpecialBuiltin extends Builtin {
     /**
      * @see Pause
      */
-    @BUILTIN(builtinClass = SpecialBuiltin.Pause.class)
+    @BUILTIN(Pause.class)
+    @INTRINSIC(PAUSE)
     public static native void pause();
 
     /**
@@ -182,67 +162,68 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final Pause BUILTIN = new Pause();
     }
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Jump.class)
-    public static native void jump(Address address);
-
-    public static class Jump extends SpecialBuiltin {
-
-        @Override
-        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 1;
-            visitor.visitJump(this, result, arguments);
-        }
-
-        public static final Jump BUILTIN = new Jump();
-    }
-
     // The following native methods all map to the same builtin call. The purpose is to be able to
     // have different types of return values. The builtin itself is agnostic to the
     // return type, so we don't need to have one SpecialBuiltin class per returnType.
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native void call();
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native float callFloat();
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native long callLong();
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native double callDouble();
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native Word callWord();
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native void call(Word address);
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native float callFloat(Word address);
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native long callLong(Word address);
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native double callDouble(Word address);
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native Word callWord(Word address);
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native void call(Word address, Object receiver);
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native float callFloat(Word address, Object receiver);
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native long callLong(Word address, Object receiver);
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native double callDouble(Word address, Object receiver);
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Call.class)
+    @BUILTIN(Call.class)
+    @INTRINSIC(CALL)
     public static native Word callWord(Word address, Object receiver);
 
     public static class Call extends SpecialBuiltin {
@@ -255,12 +236,13 @@ public abstract class SpecialBuiltin extends Builtin {
 
         @Override
         public int reasonsMayStop() {
-            return Stoppable.CALL;
+            return Stoppable.CALL_STOP;
         }
         public static final Call BUILTIN = new Call();
     }
 
-    @BUILTIN(builtinClass = SpecialBuiltin.UnsignedIntGreaterEqual.class)
+    @BUILTIN(UnsignedIntGreaterEqual.class)
+    @INTRINSIC(UGE)
     public static boolean unsignedIntGreaterEqual(int value1, int value2) {
         final long unsignedInt1 = value1 & 0xFFFFFFFFL;
         final long unsignedInt2 = value2 & 0xFFFFFFFFL;
@@ -286,7 +268,8 @@ public abstract class SpecialBuiltin extends Builtin {
     /**
      * A compare instruction modifying condition flags, without returning a value in a register or memory location.
      */
-    @BUILTIN(builtinClass = SpecialBuiltin.CompareInts.class)
+    @BUILTIN(CompareInts.class)
+    @INTRINSIC(ICMP)
     public static native void compareInts(int value1, int value2);
 
     public static class CompareInts extends SpecialBuiltin {
@@ -308,10 +291,11 @@ public abstract class SpecialBuiltin extends Builtin {
     /**
      * A compare instruction modifying condition flags, without returning a value in a register or memory location.
      */
-    @BUILTIN(builtinClass = SpecialBuiltin.CompareReferences.class)
-    public static native void compareReferences(Object value1, Object value2);
+    @BUILTIN(CompareWords.class)
+    @INTRINSIC(WCMP)
+    public static native void compareWords(Word value1, Word value2);
 
-    public static class CompareReferences extends SpecialBuiltin {
+    public static class CompareWords extends SpecialBuiltin {
 
         @Override
         public final boolean hasSideEffects() {
@@ -321,10 +305,10 @@ public abstract class SpecialBuiltin extends Builtin {
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
-            visitor.visitCompareReferences(this, result, arguments);
+            visitor.visitCompareWords(this, result, arguments);
         }
 
-        public static final CompareReferences BUILTIN = new CompareReferences();
+        public static final CompareWords BUILTIN = new CompareWords();
     }
 
     public static class BarMemory extends SpecialBuiltin {
@@ -342,7 +326,8 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final BarMemory BUILTIN = new BarMemory();
     }
 
-    @BUILTIN(builtinClass = SpecialBuiltin.FlushRegisterWindows.class)
+    @BUILTIN(FlushRegisterWindows.class)
+    @INTRINSIC(FLUSHW)
     public static native void flushRegisterWindows();
 
     public static class FlushRegisterWindows extends SpecialBuiltin {
@@ -356,7 +341,8 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final FlushRegisterWindows BUILTIN = new FlushRegisterWindows();
     }
 
-    @BUILTIN(builtinClass = IntToFloat.class)
+    @BUILTIN(value = IntToFloat.class)
+    @INTRINSIC(MOV_I2F)
     public static float intToFloat(int value) {
         return Float.intBitsToFloat(value);
     }
@@ -372,7 +358,8 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final IntToFloat BUILTIN = new IntToFloat();
     }
 
-    @BUILTIN(builtinClass = FloatToInt.class)
+    @BUILTIN(value = FloatToInt.class)
+    @INTRINSIC(MOV_F2I)
     public static int floatToInt(float value) {
         return Float.floatToRawIntBits(value);
     }
@@ -388,7 +375,8 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final FloatToInt BUILTIN = new FloatToInt();
     }
 
-    @BUILTIN(builtinClass = LongToDouble.class)
+    @BUILTIN(value = LongToDouble.class)
+    @INTRINSIC(MOV_L2D)
     public static double longToDouble(long value) {
         return Double.longBitsToDouble(value);
     }
@@ -404,7 +392,8 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final LongToDouble BUILTIN = new LongToDouble();
     }
 
-    @BUILTIN(builtinClass = DoubleToLong.class)
+    @BUILTIN(value = DoubleToLong.class)
+    @INTRINSIC(MOV_D2L)
     public static long doubleToLong(double value) {
         return Double.doubleToRawLongBits(value);
     }
@@ -423,7 +412,7 @@ public abstract class SpecialBuiltin extends Builtin {
     /**
      * Marks the current position in a {@link TargetMethod}.
      */
-    @BUILTIN(builtinClass = SpecialBuiltin.Marker.class)
+    @BUILTIN(Marker.class)
     public static native void mark();
 
     public static class Marker extends SpecialBuiltin {
