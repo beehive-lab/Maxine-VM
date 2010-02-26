@@ -25,7 +25,6 @@ import java.io.*;
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.MaxWatchpoint.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -150,15 +149,14 @@ public interface MaxWatchpointFactory {
      * Creates a new, active watchpoint that covers a thread local variable in the VM.
      *
      * @param description text useful to a person, for example capturing the intent of the watchpoint
-     * @param teleThreadLocalValues a set of thread local values
-     * @param index identifies the particular thread local variable
+     * @param threadLocaVariable a thread local variable i the VM
      * @param settings initial settings for the watchpoint
      * @return a new watchpoint, if successful
      * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
      * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
      * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
      */
-    MaxWatchpoint createVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, WatchpointSettings settings)
+    MaxWatchpoint createVmThreadLocalWatchpoint(String description, MaxThreadLocalVariable threadLocaVariable, WatchpointSettings settings)
         throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException;
 
     /**

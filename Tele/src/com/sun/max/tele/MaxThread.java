@@ -21,9 +21,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -33,55 +31,6 @@ import com.sun.max.vm.thread.*;
  * @author Michael Van De Vanter
  */
 public interface MaxThread {
-
-    /**
-     * Gets the VM thread locals corresponding to a given safepoint state.
-     */
-    TeleThreadLocalValues threadLocalsFor(Safepoint.State state);
-
-    /**
-     * This thread's integer registers.
-     *
-     * @return the integer registers; null after thread dies.
-     */
-    TeleIntegerRegisters integerRegisters();
-
-    /**
-     * This thread's floating point registers.
-     *
-     * @return the floating point registers; null after thread dies.
-     */
-    TeleFloatingPointRegisters floatingPointRegisters();
-
-    /**
-     * This thread's state registers.
-     *
-     * @return the state registers; null after thread dies.
-     */
-    TeleStateRegisters stateRegisters();
-
-    /**
-     * Gets the breakpoint this thread is currently stopped at (if any).
-     *
-     * @return null if this thread is not stopped at a breakpoint or if thread has died
-     */
-    MaxBreakpoint breakpoint();
-
-    /**
-     * @return the current state of the thread.
-     */
-    MaxThreadState state();
-
-    /**
-     * Determines if this is the primordial VM thread. The primordial VM thread is the native thread on which the VM was
-     * launched. It is not associated with a {@link VmThread} instance but does have VM thread locals}.
-     */
-    boolean isPrimordial();
-
-    /**
-     * @return whether this thread is still alive.
-     */
-    boolean isLive();
 
     /**
      * Gets the identifier passed to {@link VmThread#run} when the thread was started. Note that this is different from
@@ -117,6 +66,70 @@ public interface MaxThread {
     long localHandle();
 
     /**
+     * Determines if this is the primordial VM thread. The primordial VM thread is the native thread on which the VM was
+     * launched. It is not associated with a {@link VmThread} instance but does have VM thread locals}.
+     */
+    boolean isPrimordial();
+
+    /**
+     * Determines if this thread is associated with a {@link VmThread} instance. Note that even if this method returns
+     * {@code true}, the {@link #vThreadObject()} method will return {@code null} if the thread has not reached the
+     * execution point in {@link VmThread#run} where the {@linkplain VmThreadLocal#VM_THREAD reference} to the
+     * {@link VmThread} object has been initialized.
+     * <br>
+     * Immutable; thread-safe.
+     */
+    boolean isJava();
+
+    /**
+     * @return whether this thread is still alive.
+     */
+    boolean isLive();
+
+    /**
+     * @return the current state of the thread.
+     */
+    MaxThreadState state();
+
+    /**
+     * Gets the breakpoint this thread is currently stopped at (if any).
+     *
+     * @return null if this thread is not stopped at a breakpoint or if thread has died
+     */
+    MaxBreakpoint breakpoint();
+
+    /**
+     * Gets information about the "thread locals block" for this thread in the VM,
+     * null if a non-Java thread, or the thread is very early in its creation sequence.
+     * <br>
+     * Thread-safe
+     *
+     * @return access to the thread locals block for this thread; null if not available
+     */
+    MaxThreadLocals locals();
+
+    /**
+     * This thread's integer registers.
+     *
+     * @return the integer registers; null after thread dies.
+     */
+    TeleIntegerRegisters integerRegisters();
+
+    /**
+     * This thread's floating point registers.
+     *
+     * @return the floating point registers; null after thread dies.
+     */
+    TeleFloatingPointRegisters floatingPointRegisters();
+
+    /**
+     * This thread's state registers.
+     *
+     * @return the state registers; null after thread dies.
+     */
+    TeleStateRegisters stateRegisters();
+
+    /**
      * Current stack pointer.
      *
      * @return the current stack pointer for the thread, zero if thread has died.
@@ -130,15 +143,6 @@ public interface MaxThread {
     MaxStack stack();
 
     /**
-     * Gets description of VM memory containing the  {@linkplain VmThreadLocal thread locals} for this thread.
-     * <br>
-     * The identity of the result is immutable and thread-safe, although its contents are not.
-     *
-     * @return this thread's thread locals memory
-     */
-    TeleThreadLocalsMemoryRegion threadLocalsRegion();
-
-    /**
      * @return location of the instruction pointer for the thread; null if thread has died
      */
     MaxCodeLocation instructionLocation();
@@ -146,14 +150,16 @@ public interface MaxThread {
     /**
      * Gets the surrogate for the heap object in the VM that implements this thread.
      * This method returns {@code null} for any of the following reasons:
-     *
-     * 1. The thread is a non-Java thread
-     * 2. The thread is a Java thread that has not yet reached the execution point (somewhere in {@link VmThread#run})
-     *    that initializes {@link VmThreadLocal#VM_THREAD}.
+     * <ol>
+     * <li>The thread is a non-Java thread</li>
+     * <li>The thread is a Java thread that has not yet reached the execution point (somewhere in {@link VmThread#run})
+     *    that initializes {@link VmThreadLocal#VM_THREAD}.</li>
+     *  </ol>
+     *  Thread-safe
      *
      * @return null if this thread is not (yet) associated with a VM thread
      */
-    TeleObject vmThreadObject();
+    TeleVmThread teleVmThread();
 
     /**
      * Gets the name for this thread in the VM, if it is a Java thread and is ready to run.
@@ -167,15 +173,5 @@ public interface MaxThread {
      * @return a printable version of the thread's internal state that only shows key aspects
      */
     String toShortString();
-
-    /**
-     * Determines if this thread is associated with a {@link VmThread} instance. Note that even if this method returns
-     * {@code true}, the {@link #vThreadObject()} method will return {@code null} if the thread has not reached the
-     * execution point in {@link VmThread#run} where the {@linkplain VmThreadLocal#VM_THREAD reference} to the
-     * {@link VmThread} object has been initialized.
-     * <br>
-     * Immutable; thread-safe.
-     */
-    boolean isJava();
 
 }

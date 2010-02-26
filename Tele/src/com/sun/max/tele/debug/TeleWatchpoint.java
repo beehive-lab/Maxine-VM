@@ -513,11 +513,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleVmThreadLocalWatchpoint extends TeleWatchpoint {
 
-        private final TeleThreadLocalValues teleThreadLocalValues;
-
-        private TeleVmThreadLocalWatchpoint(WatchpointKind kind, Factory factory, String description, TeleThreadLocalValues teleThreadLocalValues, int index, WatchpointSettings settings) {
-            super(kind, factory,  description, teleThreadLocalValues.getMemoryRegion(index), settings);
-            this.teleThreadLocalValues = teleThreadLocalValues;
+        private TeleVmThreadLocalWatchpoint(WatchpointKind kind, Factory factory, String description, MaxThreadLocalVariable threadLocalVariable, WatchpointSettings settings) {
+            super(kind, factory,  description, threadLocalVariable.memoryRegion(), settings);
         }
 
         public boolean isRelocatable() {
@@ -996,22 +993,21 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * Creates a new, active watchpoint that covers a thread local variable in the VM.
          *
          * @param description text useful to a person, for example capturing the intent of the watchpoint
-         * @param teleThreadLocalValues a set of thread local values
-         * @param index identifies the particular thread local variable
+         * @param threadLocalVariable a thread local variable in the VM
          * @param settings initial settings for the watchpoint
          * @return a new watchpoint, if successful
          * @throws TooManyWatchpointsException if setting a watchpoint would exceed a platform-specific limit
          * @throws DuplicateWatchpointException if the region overlaps, in part or whole, with an existing watchpoint.
          * @throws MaxVMBusyException if watchpoints cannot be set at present, presumably because the VM is running.
          */
-        public TeleWatchpoint createVmThreadLocalWatchpoint(String description, TeleThreadLocalValues teleThreadLocalValues, int index, WatchpointSettings settings)
+        public TeleWatchpoint createVmThreadLocalWatchpoint(String description, MaxThreadLocalVariable threadLocalVariable, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException, MaxVMBusyException {
             if (!teleVM().tryLock()) {
                 throw new MaxVMBusyException();
             }
             TeleWatchpoint teleWatchpoint;
             try {
-                teleWatchpoint = new TeleVmThreadLocalWatchpoint(WatchpointKind.CLIENT, this, description, teleThreadLocalValues, index, settings);
+                teleWatchpoint = new TeleVmThreadLocalWatchpoint(WatchpointKind.CLIENT, this, description, threadLocalVariable, settings);
                 teleWatchpoint = addClientWatchpoint(teleWatchpoint);
             } finally {
                 teleVM().unlock();

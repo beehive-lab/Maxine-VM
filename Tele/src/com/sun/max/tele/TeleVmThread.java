@@ -83,7 +83,7 @@ public class TeleVmThread extends TeleTupleObject {
      */
     public MaxThread maxThread() {
         for (MaxThread maxThread : teleVM().vmState().threads()) {
-            if (maxThread.vmThreadObject() == this) {
+            if (maxThread.teleVmThread() == this) {
                 return maxThread;
             }
         }

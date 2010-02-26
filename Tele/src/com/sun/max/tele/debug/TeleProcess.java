@@ -39,7 +39,6 @@ import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -907,8 +906,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         assert state >= 0 && state < MaxThreadState.VALUES.length() : state;
         TeleNativeThread thread = handleToThreadMap.get(localHandle);
 
-        MemoryRegion stackRegion = new FixedMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack region");
-        MemoryRegion threadLocalsRegion = new FixedMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals region");
+        final MemoryRegion stackRegion = new FixedMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack region");
+        MemoryRegion threadLocalsRegion =
+            (tlb == 0) ? null :  new FixedMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals region");
 
         Params params = new Params();
         params.id = id;
@@ -935,20 +935,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             }
         }
 
-        final Map<Safepoint.State, Pointer> vmThreadLocals;
-        if (tlb != 0) {
-            Pointer enabledVmThreadLocals = TeleThreadLocalsMemoryRegion.getThreadLocalsArea(threadLocalsRegion, tlaSize, Safepoint.State.ENABLED).asPointer();
-            Pointer disabledVmThreadLocals = TeleThreadLocalsMemoryRegion.getThreadLocalsArea(threadLocalsRegion, tlaSize, Safepoint.State.DISABLED).asPointer();
-            Pointer triggeredVmThreadLocals = TeleThreadLocalsMemoryRegion.getThreadLocalsArea(threadLocalsRegion, tlaSize, Safepoint.State.TRIGGERED).asPointer();
-            vmThreadLocals = new EnumMap<Safepoint.State, Pointer>(Safepoint.State.class);
-            vmThreadLocals.put(Safepoint.State.ENABLED, enabledVmThreadLocals);
-            vmThreadLocals.put(Safepoint.State.DISABLED, disabledVmThreadLocals);
-            vmThreadLocals.put(Safepoint.State.TRIGGERED, triggeredVmThreadLocals);
-        } else {
-            vmThreadLocals = null;
-        }
-
-        thread.updateAfterGather(MaxThreadState.VALUES.get(state), Pointer.fromLong(instructionPointer), vmThreadLocals);
+        thread.updateAfterGather(MaxThreadState.VALUES.get(state), Pointer.fromLong(instructionPointer), threadLocalsRegion, tlaSize);
         threads.append(thread);
     }
 
