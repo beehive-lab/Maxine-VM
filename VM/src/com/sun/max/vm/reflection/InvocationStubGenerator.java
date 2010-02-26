@@ -315,7 +315,7 @@ public class InvocationStubGenerator<T> {
                         SymbolTable.INIT,
                         VOID_NO_ARGS,
                         Actor.ACC_PUBLIC | Actor.INITIALIZER | Actor.ACC_SYNTHETIC,
-                        codeAttribute);
+                        codeAttribute, 0);
     }
 
     private ClassMethodActor generateInvoke(Class returnType) {
@@ -527,7 +527,7 @@ public class InvocationStubGenerator<T> {
             virtualMethodActor = new VirtualMethodActor(newInstance,
                 boxing.newInstanceSignature(),
                 Actor.ACC_PUBLIC | Actor.ACC_SYNTHETIC,
-                codeAttribute);
+                codeAttribute, 0);
             final ClassRegistry classRegistry = ClassRegistry.makeRegistry(constantPoolEditor.pool().classLoader());
             classRegistry.set(CHECKED_EXCEPTIONS, virtualMethodActor, checkedExceptions);
         } else {
@@ -538,7 +538,7 @@ public class InvocationStubGenerator<T> {
             virtualMethodActor = new VirtualMethodActor(invoke,
                             boxing.invokeSignature(),
                             Actor.ACC_PUBLIC | Actor.ACC_SYNTHETIC,
-                            codeAttribute);
+                            codeAttribute, 0);
             final ClassRegistry classRegistry = ClassRegistry.makeRegistry(constantPoolEditor.pool().classLoader());
             classRegistry.set(CHECKED_EXCEPTIONS, virtualMethodActor, checkedExceptions);
         }

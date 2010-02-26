@@ -167,7 +167,7 @@ public class JavaMethodInspector extends MethodInspector {
             breakOnEntryMenu.add(actions().setTargetCodeBreakpointAtMethodEntry(teleTargetMethod, "Target code"));
         }
         if (teleClassMethodActor != null) {
-            breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecode"));
+            breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecodes"));
         }
         debugMenu.add(breakOnEntryMenu);
         if (teleTargetMethod != null) {

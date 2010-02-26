@@ -41,7 +41,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Base class for Bytecode viewers.
+ * Base class for Bytecodes viewers.
  *
  * @author Michael Van De Vanter
  */
@@ -292,13 +292,13 @@ public abstract class BytecodeViewer extends CodeViewer {
             return targetCodeFirstAddress;
         }
 
-        Bytecode opcode;
+        int opcode;
 
         // * Either a rendering component or an index into the constant pool if a reference kind. */
         Object operand1;
         Object operand2;
 
-        BytecodeInstruction(int bytecodeRow, int position, byte[] bytes, Bytecode opcode, Object operand1, Object operand2, int targetCodeRow, Address targetCodeFirstAddress) {
+        BytecodeInstruction(int bytecodeRow, int position, byte[] bytes, int opcode, Object operand1, Object operand2, int targetCodeRow, Address targetCodeFirstAddress) {
             this.row = bytecodeRow;
             this.position = position;
             this.instructionBytes = bytes;
@@ -320,14 +320,14 @@ public abstract class BytecodeViewer extends CodeViewer {
         protected void prolog() {
         }
 
-        private Bytecode opcode;
+        private int opcode;
 
         @Override
         protected void printOpcode() {
             opcode = currentOpcode();
         }
 
-        public Bytecode opcode() {
+        public int opcode() {
             return opcode;
         }
 

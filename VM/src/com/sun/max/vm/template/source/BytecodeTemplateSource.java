@@ -25,6 +25,7 @@ import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveArrayClas
 import static com.sun.max.vm.template.BytecodeTemplate.*;
 import static com.sun.max.vm.template.source.NoninlineTemplateRuntime.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -1601,7 +1602,7 @@ public final class BytecodeTemplateSource {
     private static void acmp0_prefix() {
         final Object value = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.removeSlots(1);
-        SpecialBuiltin.compareReferences(value, null);
+        SpecialBuiltin.compareWords(toWord(value), Address.zero());
     }
 
     @INLINE
@@ -1612,12 +1613,15 @@ public final class BytecodeTemplateSource {
         SpecialBuiltin.compareInts(value1, value2);
     }
 
+    @INTRINSIC(Bytecodes.UNSAFE_CAST)
+    private static native Word toWord(Object object);
+
     @INLINE
     private static void acmp_prefix() {
         final Object value2 = JitStackFrameOperation.peekReference(0);
         final Object value1 = JitStackFrameOperation.peekReference(1);
         JitStackFrameOperation.removeSlots(2);
-        SpecialBuiltin.compareReferences(value1, value2);
+        SpecialBuiltin.compareWords(toWord(value1), toWord(value2));
     }
 
     @BYTECODE_TEMPLATE(IF_ACMPEQ)

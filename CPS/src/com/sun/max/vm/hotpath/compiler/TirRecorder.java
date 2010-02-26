@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.hotpath.compiler;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.holder.*;
@@ -363,7 +364,7 @@ public class TirRecorder {
         }
 
         @Override
-        protected void execute(Bytecode bytecode) {
+        protected void execute(int bytecode) {
             state.execute(bytecode);
         }
 
@@ -535,7 +536,7 @@ public class TirRecorder {
 
         @Override
         protected void opcodeDecoded() {
-            append(new TirInstruction.Placeholder("RECORDING: " + currentOpcode().toString()));
+            append(new TirInstruction.Placeholder("RECORDING: " + Bytecodes.nameOf(currentOpcode())));
             if (printState.getValue()) {
                 state.println(NameMap.COMPACT);
                 Console.println();

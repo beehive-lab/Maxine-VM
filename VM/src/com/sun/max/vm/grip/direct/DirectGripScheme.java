@@ -21,6 +21,9 @@
 
 package com.sun.max.vm.grip.direct;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -74,7 +77,7 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
         return toGrip(reference);
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     private static native Grip toGrip(Reference reference);
 
     @INLINE
@@ -82,7 +85,7 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
         return toGrip(origin);
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     private static native Grip toGrip(Pointer origin);
 
     @INLINE
@@ -90,7 +93,7 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
         return toWord(grip).asPointer();
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     private static native Word toWord(Grip grip);
 
     @INLINE

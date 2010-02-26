@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.cps.jit.amd64;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
@@ -341,7 +341,7 @@ public class AMD64JitTargetMethod extends JitTargetMethod {
         final ConstantPool constantPool = codeAttribute.constantPool;
         final byte[] code = codeAttribute.code();
         final MethodRefConstant methodConstant = constantPool.methodAt(getInvokeConstantPoolIndexOperand(code, bytecodePosition));
-        final boolean isInvokestatic = (code[bytecodePosition] & 0xFF) == Bytecode.INVOKESTATIC.ordinal();
+        final boolean isInvokestatic = (code[bytecodePosition] & 0xFF) == Bytecodes.INVOKESTATIC;
         final SignatureDescriptor signature = methodConstant.signature(constantPool);
 
         int slotSize = JitStackFrameLayout.JIT_SLOT_SIZE;

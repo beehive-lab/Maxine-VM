@@ -26,7 +26,7 @@ import com.sun.max.vm.type.*;
 public class ArrayStore extends JavaOperator {
     private Kind elementKind;
     public ArrayStore(Kind elementKind) {
-        super(CALL | NULL_POINTER_CHECK | ARRAY_BOUNDS_CHECK | (elementKind.isReference ? ARRAY_STORE_CHECK : 0));
+        super(CALL_STOP | NULL_POINTER_CHECK | ARRAY_BOUNDS_CHECK | (elementKind.isReference ? ARRAY_STORE_CHECK : 0));
         this.elementKind = elementKind;
     }
     public Kind elementKind() {

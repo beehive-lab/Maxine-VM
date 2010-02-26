@@ -25,6 +25,7 @@ import com.sun.max.vm.cps.cir.builtin.*;
 import com.sun.max.vm.cps.cir.operator.*;
 import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.cps.cir.variable.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -65,12 +66,15 @@ public class HCirToLCirTranslation {
         @Override
         public void visitCall(CirCall call) {
             final CirValue procedure = call.procedure();
-            assert procedure instanceof CirClosure ||
-                   procedure instanceof JavaOperator ||
-                   procedure instanceof CirBlock ||
-                   procedure instanceof CirVariable ||
-                   procedure instanceof CirSwitch
-               : "invalid operator in HCIR " + (procedure instanceof CirBuiltin ? ((CirBuiltin) procedure).builtin : procedure);
+            if (procedure instanceof CirClosure ||
+                procedure instanceof JavaOperator ||
+                procedure instanceof CirBlock ||
+                procedure instanceof CirVariable ||
+                procedure instanceof CirSwitch) {
+                // ok
+            } else {
+                FatalError.unexpected("invalid operator in HCIR " + (procedure instanceof CirBuiltin ? ((CirBuiltin) procedure).builtin : procedure));
+            }
         }
     }
 

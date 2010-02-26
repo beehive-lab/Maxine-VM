@@ -23,7 +23,7 @@ package test.com.sun.max.vm.jit;
 import test.com.sun.max.vm.cps.*;
 import test.com.sun.max.vm.cps.bytecode.*;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.c1x.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
@@ -96,19 +96,19 @@ public class JITTest_compileDynamicMethodInvocation extends JitCompilerTestCase 
         o.unresolvedInterfaceMethod(1, 2);
     }
 
-    void compileMethod(String methodName, final Bytecode bytecode, Class parameterType) {
+    void compileMethod(String methodName, final int bytecode, Class parameterType) {
         final TargetMethod targetMethod = compileMethod(methodName, SignatureDescriptor.create(void.class, parameterType));
         new BytecodeConfirmation(targetMethod.classMethodActor()) {
             @Override
             public void invokevirtual(int index) {
-                if (bytecode == Bytecode.INVOKEVIRTUAL) {
+                if (bytecode == Bytecodes.INVOKEVIRTUAL) {
                     confirmPresence();
                 }
             }
 
             @Override
             public void invokeinterface(int index, int count) {
-                if (bytecode == Bytecode.INVOKEINTERFACE) {
+                if (bytecode == Bytecodes.INVOKEINTERFACE) {
                     confirmPresence();
                 }
             }
@@ -116,26 +116,26 @@ public class JITTest_compileDynamicMethodInvocation extends JitCompilerTestCase 
     }
 
     public void test_compileResolvedVirtualCall() {
-        compileMethod("performResolvedVirtualCall", Bytecode.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
-        compileMethod("performResolvedVirtualCall1", Bytecode.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
-        compileMethod("performResolvedVirtualCall2", Bytecode.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
-        compileMethod("performResolvedVirtualCall3", Bytecode.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
-        compileMethod("performResolvedVirtualCall4", Bytecode.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
+        compileMethod("performResolvedVirtualCall", Bytecodes.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
+        compileMethod("performResolvedVirtualCall1", Bytecodes.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
+        compileMethod("performResolvedVirtualCall2", Bytecodes.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
+        compileMethod("performResolvedVirtualCall3", Bytecodes.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
+        compileMethod("performResolvedVirtualCall4", Bytecodes.INVOKEVIRTUAL, JITTest_compileDynamicMethodInvocation.class);
     }
 
     public void test_compileUnresolvedVirtualCall() {
-        compileMethod("performUnresolvedVirtualCall", Bytecode.INVOKEVIRTUAL, UnresolvedAtTestTime.class);
+        compileMethod("performUnresolvedVirtualCall", Bytecodes.INVOKEVIRTUAL, UnresolvedAtTestTime.class);
     }
 
     public void test_compileUnresolvedVirtualCallWithParams() {
-        compileMethod("performUnresolvedVirtualCallWithParams", Bytecode.INVOKEVIRTUAL, UnresolvedAtTestTime.class);
+        compileMethod("performUnresolvedVirtualCallWithParams", Bytecodes.INVOKEVIRTUAL, UnresolvedAtTestTime.class);
     }
 
     public void test_compileUnresolvedInterfaceCall() {
-        compileMethod("performUnresolvedInterfaceCall", Bytecode.INVOKEINTERFACE, UnresolvedInterface.class);
+        compileMethod("performUnresolvedInterfaceCall", Bytecodes.INVOKEINTERFACE, UnresolvedInterface.class);
     }
 
     public void test_compileUnresolvedInterfaceCallWithParams() {
-        compileMethod("performUnresolvedInterfaceCallWithParams", Bytecode.INVOKEINTERFACE, UnresolvedInterface.class);
+        compileMethod("performUnresolvedInterfaceCallWithParams", Bytecodes.INVOKEINTERFACE, UnresolvedInterface.class);
     }
 }

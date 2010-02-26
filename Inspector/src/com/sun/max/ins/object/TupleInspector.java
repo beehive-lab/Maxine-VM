@@ -63,7 +63,7 @@ public class TupleInspector extends ObjectInspector {
 
             final InspectorMenu debugMenu = frame.makeMenu(MenuKind.DEBUG_MENU);
             final InspectorMenu breakOnEntryMenu = new InspectorMenu("Break at method entry");
-            breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecode"));
+            breakOnEntryMenu.add(actions().setBytecodeBreakpointAtMethodEntry(teleClassMethodActor, "Bytecodes"));
             debugMenu.add(breakOnEntryMenu);
             debugMenu.add(actions().debugInvokeMethod(teleClassMethodActor));
             debugMenu.add(defaultMenuItems(MenuKind.DEBUG_MENU));

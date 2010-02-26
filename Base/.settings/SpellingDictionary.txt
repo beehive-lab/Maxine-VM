@@ -174,3 +174,8 @@ viewport
 vm
 watchpoint
 watchpoints
+intrinsified
+builtins
+intrinsification
+intrinsifying
+intrinsify

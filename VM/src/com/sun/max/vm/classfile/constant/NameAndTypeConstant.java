@@ -64,8 +64,8 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
             try {
                 descriptor = JavaTypeDescriptor.parseTypeDescriptor(((Utf8Constant) descriptor).toString());
             } catch (ClassCastException e) {
-                // This just means another thread beats us in the race to convert _descriptor to a real Descriptor object.
-                // If _descriptor still has the wrong Descriptor type, then the cast in the return statement will catch it.
+                // This just means another thread beats us in the race to convert descriptor to a real Descriptor object.
+                // If descriptor still has the wrong Descriptor type, then the cast in the return statement will catch it.
                 // Using an exception handler obviates the need for synchronization.
             }
         }
@@ -81,8 +81,8 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
             try {
                 descriptor = SignatureDescriptor.create(((Utf8Constant) descriptor).toString());
             } catch (ClassCastException e) {
-                // This just means another thread beats us in the race to convert _descriptor to a real Descriptor object.
-                // If _descriptor still has the wrong Descriptor type, then the following cast will catch it.
+                // This just means another thread beats us in the race to convert descriptor to a real Descriptor object.
+                // If descriptor still has the wrong Descriptor type, then the following cast will catch it.
                 // Using an exception handler obviates the need for synchronization.
             }
 

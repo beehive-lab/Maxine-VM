@@ -2174,7 +2174,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         return teleMethodActor.hasCodeAttribute();
                     }
                 };
-                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, hasBytecodePredicate, "View Bytecode for Method...", "Inspect");
+                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, hasBytecodePredicate, "View Bytecodes for Method...", "Inspect");
                 if (teleMethodActor != null && teleMethodActor instanceof TeleClassMethodActor) {
                     final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
                     final MaxCodeLocation teleCodeLocation = codeManager().createBytecodeLocation(teleClassMethodActor, 0, "view method by name bytecode action");
@@ -3289,7 +3289,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final TypeDescriptor typeDescriptor = TypeSearchDialog.show(inspection(), "Class for bytecode method entry breakpoint...", "Select");
             if (typeDescriptor != null) {
-                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method entry breakpoint", "Set Breakpoint");
+                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecodes method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
                     try {
                         breakpointFactory().makeBreakpoint(codeManager().createBytecodeLocation(methodKey, "set bytecode breakpoint"));

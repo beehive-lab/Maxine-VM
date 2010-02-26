@@ -344,7 +344,7 @@ public class BlockMap {
                     break;
                 }
                 case Bytecodes.WIDE: {
-                    bci += Bytecodes.length(code, bci);
+                    bci += Bytecodes.lengthOf(code, bci);
                     break;
                 }
 
@@ -352,7 +352,7 @@ public class BlockMap {
                     if (exceptionMap != null && Bytecodes.canTrap(opcode)) {
                         exceptionMap.setCanTrap(bci);
                     }
-                    bci += Bytecodes.length(opcode); // all variable length instructions are handled above
+                    bci += Bytecodes.lengthOf(opcode); // all variable length instructions are handled above
                 }
             }
         }
@@ -469,7 +469,7 @@ public class BlockMap {
                 } else if (Bytecodes.isStore(opcode)) {
                     bci += processStore(opcode, code, bci);
                 } else {
-                    bci += Bytecodes.length(code, bci);
+                    bci += Bytecodes.lengthOf(code, bci);
                 }
                 if (bci >= code.length || blockMap[bci] != null) {
                     // stop when we reach the next block
@@ -488,7 +488,7 @@ public class BlockMap {
             case Bytecodes.DSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
             case Bytecodes.ASTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
         }
-        return Bytecodes.length(code, bci);
+        return Bytecodes.lengthOf(code, bci);
     }
 
     int processStore(int opcode, byte[] code, int bci) {

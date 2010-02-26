@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.verifier;
 
-import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 import static com.sun.max.vm.verifier.types.VerificationType.*;
 
 import java.io.*;
 import java.util.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -184,7 +184,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             while (true) {
                 instruction.interpret();
-                if (instruction.opcode.is(FALL_THROUGH_DELIMITER)) {
+                if (Bytecodes.isStop(instruction.opcode)) {
                     break;
                 }
                 instruction = instruction.next();
@@ -256,7 +256,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             typeState().store(subroutine, index);
 
             final Instruction astore = instructionMap[currentOpcodePosition()];
-            assert astore.opcode.name().startsWith("ASTORE");
+            assert Bytecodes.nameOf(astore.opcode).startsWith("astore");
             if (returnPositionStores == null) {
                 returnPositionStores = new HashSet<Instruction>();
             }
@@ -517,13 +517,12 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     public class Instruction {
 
-        public final Bytecode opcode;
+        public final int opcode;
         private final BytecodeBlock block;
         private Instruction next;
         private boolean visited;
 
-        public Instruction(Bytecode opcode, int position, int endPosition, Instruction previous) {
-            assert opcode != null;
+        public Instruction(int opcode, int position, int endPosition, Instruction previous) {
             assert endPosition > position;
             this.opcode = opcode;
             this.block = new BytecodeBlock(codeAttribute().code(), position, endPosition - 1);
@@ -558,7 +557,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         @Override
         public String toString() {
-            return opcode.toString();
+            return Bytecodes.nameOf(opcode);
         }
 
         public void writeTo(DataOutputStream outputStream) throws IOException {
@@ -585,7 +584,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
          */
         final TypeState target;
 
-        public Branch(Bytecode opcode, int position, int endPosition, TypeState target, Instruction previous) {
+        public Branch(int opcode, int position, int endPosition, TypeState target, Instruction previous) {
             super(opcode, position, endPosition, previous);
             this.target = target;
         }
@@ -596,7 +595,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         final TypeState defaultTarget;
         final TypeState[] caseTargets;
 
-        public Select(Bytecode opcode, int position, int endPosition, TypeState defaultTarget, TypeState[] caseTargets, Instruction previous) {
+        public Select(int opcode, int position, int endPosition, TypeState defaultTarget, TypeState[] caseTargets, Instruction previous) {
             super(opcode, position, endPosition, previous);
             this.defaultTarget = defaultTarget;
             this.caseTargets = caseTargets;
@@ -608,7 +607,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         final int low;
         final int high;
 
-        public Tableswitch(Bytecode opcode, int position, int size, TypeState defaultTarget, int low, int high, TypeState[] caseTargets, Instruction previous) {
+        public Tableswitch(int opcode, int position, int size, TypeState defaultTarget, int low, int high, TypeState[] caseTargets, Instruction previous) {
             super(opcode, position, size, defaultTarget, caseTargets, previous);
             this.low = low;
             this.high = high;
@@ -619,7 +618,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         final int[] matches;
 
-        public Lookupswitch(Bytecode opcode, int position, int size, TypeState defaultTarget, int[] matches, TypeState[] caseTargets, Instruction previous) {
+        public Lookupswitch(int opcode, int position, int size, TypeState defaultTarget, int[] matches, TypeState[] caseTargets, Instruction previous) {
             super(opcode, position, size, defaultTarget, caseTargets, previous);
             this.matches = matches;
         }
@@ -629,12 +628,12 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         private Instruction ret;
 
-        public Jsr(Bytecode opcode, int position, int size, TypeState branchTarget, Instruction previous) {
+        public Jsr(int opcode, int position, int size, TypeState branchTarget, Instruction previous) {
             super(opcode, position, size, branchTarget, previous);
         }
 
         public void verifyRet(Instruction ret) {
-            assert ret.opcode == Bytecode.RET;
+            assert ret.opcode == Bytecodes.RET;
             if (this.ret == null) {
                 this.ret = ret;
             } else {
@@ -653,7 +652,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
         private int numberOfFramesPopped = -1;
 
-        public Ret(Bytecode opcode, int position, int endPosition, Instruction previous) {
+        public Ret(int opcode, int position, int endPosition, Instruction previous) {
             super(opcode, position, endPosition, previous);
         }
 

@@ -22,6 +22,7 @@ package com.sun.max.vm.bytecode;
 
 import java.io.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
@@ -140,7 +141,8 @@ public class BytecodePrinter extends BytecodeVisitor {
     }
 
     protected void printOpcode() {
-        writer.print(currentOpcode().toString().toLowerCase());
+        int currentOpcode = currentOpcode();
+        writer.print(Bytecodes.nameOf(currentOpcode));
     }
 
     protected void printImmediate(int immediate) {
@@ -1174,7 +1176,7 @@ public class BytecodePrinter extends BytecodeVisitor {
     }
 
     @Override
-    public void callnative(int nativeFunctionDescriptorIndex) {
+    public void jnicall(int nativeFunctionDescriptorIndex) {
         printInstructionWithConstant(nativeFunctionDescriptorIndex);
     }
 
@@ -1232,11 +1234,6 @@ public class BytecodePrinter extends BytecodeVisitor {
     }
 
     @Override
-    public void wide() {
-        printInstruction();
-    }
-
-    @Override
     public void multianewarray(int index, int nDimensions) {
         prolog();
         printOpcode();
@@ -1260,4 +1257,23 @@ public class BytecodePrinter extends BytecodeVisitor {
         printInstruction();
     }
 
+    @Override
+    protected void wide() {
+    }
+
+    @Override
+    protected boolean extension(int opcode, boolean isWide) {
+        int length = Bytecodes.lengthOf(opcode);
+        if (length == 2) {
+            int index = bytecodeScanner().readUnsigned1();
+            printInstructionWithImmediate(index);
+        } else if (length == 3) {
+            int index = bytecodeScanner().readUnsigned2();
+            printInstructionWithImmediate(index);
+        } else {
+            assert length == 1;
+            printInstruction();
+        }
+        return true;
+    }
 }

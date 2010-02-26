@@ -30,7 +30,7 @@ import com.sun.max.vm.type.*;
 public class PutField extends JavaResolvableOperator<FieldActor> {
 
     public PutField(ConstantPool constantPool, int index) {
-        super(CALL | NULL_POINTER_CHECK, constantPool, index, Kind.VOID);
+        super(CALL_STOP | NULL_POINTER_CHECK, constantPool, index, Kind.VOID);
     }
 
     @Override

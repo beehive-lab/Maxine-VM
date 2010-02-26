@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
@@ -46,7 +49,7 @@ public final class StackAllocate extends SpecialBuiltin {
      * Allocates a requested block of memory within the current activation frame.
      * The allocated memory is reclaimed when the method returns.
      *
-     * The allocation is actually performed upon method entry. That is, the compiler
+     * The allocation is for the lifetime of the method execution. That is, the compiler
      * reserves the space in the compiled size of the frame. As such, a failure
      * to allocate the requested space will result in a {@link StackOverflowError}
      * when the method's prologue is executed.
@@ -54,7 +57,8 @@ public final class StackAllocate extends SpecialBuiltin {
      * @param size bytes to allocate. This must be a constant.
      * @return the address of the allocated block. <b>The contents of the block are uninitialized</b>.
      */
-    @BUILTIN(builtinClass = StackAllocate.class)
+    @BUILTIN(value = StackAllocate.class)
+    @INTRINSIC(ALLOCA)
     public static native Pointer stackAllocate(int size);
 
 }

@@ -20,8 +20,9 @@
  */
 package com.sun.max.vm.bytecode.refmaps;
 
-import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
+import static com.sun.c1x.bytecode.Bytecodes.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -659,7 +660,7 @@ public abstract class ReferenceMapInterpreter {
         bytecodePosition = blockStartBytecodePosition(blockIndex);
         this.sp = sp;
         final int endPosition = blockStartBytecodePosition(blockIndex + 1);
-        Bytecode opcode = null;
+        int opcode = -1;
         int opcodeBytecodePosition;
         boolean changed = false;
 
@@ -670,7 +671,7 @@ public abstract class ReferenceMapInterpreter {
             changed = mergeWithExceptionHandlers(opcodeBytecodePosition) || changed;
 
             final boolean atSearchPosition = opcodeBytecodePosition == searchBytecodePosition;
-            opcode = Bytecode.from(readUnsigned1());
+            opcode = readUnsigned1();
 
             if (atSearchPosition) {
                 // Record BEFORE popping invoke parameters,
@@ -724,7 +725,7 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case LDC_W:
                 case LDC: {
-                    final int index = opcode == Bytecode.LDC ? readUnsigned1() : readUnsigned2();
+                    final int index = opcode == Bytecodes.LDC ? readUnsigned1() : readUnsigned2();
                     final ConstantPool.Tag tag = constantPool.tagAt(index);
                     switch (tag) {
                         case FLOAT:
@@ -790,7 +791,7 @@ public abstract class ReferenceMapInterpreter {
                 case ALOAD_1:
                 case ALOAD_2:
                 case ALOAD_3: {
-                    loadAndPushRefOrWord(opcode.implicitNumericOperand());
+                    loadAndPushRefOrWord(opcode - ALOAD_0);
                     break;
                 }
                 case IALOAD:
@@ -833,30 +834,36 @@ public abstract class ReferenceMapInterpreter {
                 case ISTORE_0:
                 case ISTORE_1:
                 case ISTORE_2:
-                case ISTORE_3:
+                case ISTORE_3: {
+                    popAndStoreCategory1(opcode - ISTORE_0);
+                    break;
+                }
                 case FSTORE_0:
                 case FSTORE_1:
                 case FSTORE_2:
                 case FSTORE_3: {
-                    popAndStoreCategory1(opcode.implicitNumericOperand());
+                    popAndStoreCategory1(opcode - FSTORE_0);
                     break;
                 }
                 case LSTORE_0:
                 case LSTORE_1:
                 case LSTORE_2:
-                case LSTORE_3:
+                case LSTORE_3: {
+                    popAndStoreCategory2(opcode - LSTORE_0);
+                    break;
+                }
                 case DSTORE_0:
                 case DSTORE_1:
                 case DSTORE_2:
                 case DSTORE_3: {
-                    popAndStoreCategory2(opcode.implicitNumericOperand());
+                    popAndStoreCategory2(opcode - DSTORE_0);
                     break;
                 }
                 case ASTORE_0:
                 case ASTORE_1:
                 case ASTORE_2:
                 case ASTORE_3: {
-                    popAndStoreRefOrWord(opcode.implicitNumericOperand());
+                    popAndStoreRefOrWord(opcode - ASTORE_0);
                     break;
                 }
                 case IASTORE:
@@ -1208,7 +1215,7 @@ public abstract class ReferenceMapInterpreter {
                     popCategory1(); // instance containing the field
                     break;
                 }
-                case CALLNATIVE: {
+                case JNICALL: {
                     final int index = readUnsigned2();
                     final SignatureDescriptor methodSignature = SignatureDescriptor.create(constantPool.utf8At(index));
                     for (int i = methodSignature.numberOfParameters() - 1; i >= 0; --i) {
@@ -1228,7 +1235,7 @@ public abstract class ReferenceMapInterpreter {
                 case INVOKEINTERFACE:
                 case INVOKESTATIC: {
                     final int index = readUnsigned2();
-                    if (opcode == Bytecode.INVOKEINTERFACE) {
+                    if (opcode == Bytecodes.INVOKEINTERFACE) {
                         skip2();
                     }
                     final MethodRefConstant methodConstant = constantPool.methodAt(index);
@@ -1237,7 +1244,7 @@ public abstract class ReferenceMapInterpreter {
                         final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
                         pop(parameter.toKind());
                     }
-                    if (opcode != Bytecode.INVOKESTATIC) {
+                    if (opcode != Bytecodes.INVOKESTATIC) {
                         popCategory1(); // receiver
                     }
 
@@ -1298,7 +1305,7 @@ public abstract class ReferenceMapInterpreter {
                     break;
                 }
                 case WIDE: {
-                    final Bytecode widenedOpcode = Bytecode.from(readUnsigned1());
+                    final int widenedOpcode = readUnsigned1();
                     final int index = readUnsigned2();
                     switch (widenedOpcode) {
                         case ILOAD:
@@ -1361,7 +1368,7 @@ public abstract class ReferenceMapInterpreter {
             }
         }
 
-        assert !opcode.is(FALL_THROUGH_DELIMITER);
+        assert !Bytecodes.isStop(opcode);
         // Merge into successor
         return merge(blockIndex + 1) || changed;
     }

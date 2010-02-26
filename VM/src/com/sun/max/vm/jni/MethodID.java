@@ -20,7 +20,9 @@
  */
 package com.sun.max.vm.jni;
 
-import com.sun.max.annotate.*;
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 
@@ -34,7 +36,7 @@ public abstract class MethodID extends MemberID {
     protected MethodID() {
     }
 
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public static MethodID fromWord(Word word) {
         return new BoxedMethodID(word);
     }

@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.inflated;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
@@ -55,7 +58,7 @@ public abstract class InflatedMonitorLockword64 extends HashableLockword64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @UNSAFE_CAST
+    @INTRINSIC(UNSAFE_CAST)
     public static final InflatedMonitorLockword64 from(Word word) {
         return new BoxedInflatedMonitorLockword64(word);
     }

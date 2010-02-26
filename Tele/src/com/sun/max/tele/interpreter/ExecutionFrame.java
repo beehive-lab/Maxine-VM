@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.value.*;
@@ -70,9 +69,9 @@ class ExecutionFrame {
         locals[index] = value;
     }
 
-    public Bytecode readOpcode() {
+    public int readOpcode() {
         currentOpcodePosition = currentBytePosition;
-        return Bytecode.from(readByte());
+        return readByte() & 0xff;
     }
 
     public byte readByte() {

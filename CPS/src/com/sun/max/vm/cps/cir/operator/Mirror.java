@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.cps.cir.operator;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.cps.b.c.*;
 import com.sun.max.vm.cps.cir.operator.JavaOperator.*;
@@ -29,12 +29,12 @@ import com.sun.max.vm.cps.cir.transform.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Operator used to translate an {@link Bytecode#LDC} instruction that loads a {@link Class} value.
+ * Operator used to translate an {@link Bytecodes#LDC} instruction that loads a {@link Class} value.
  */
 public class Mirror extends JavaResolvableOperator<ClassActor> {
 
     public Mirror(ConstantPool constantPool, int index) {
-        super(CALL, constantPool, index, Kind.REFERENCE);
+        super(CALL_STOP, constantPool, index, Kind.REFERENCE);
     }
 
     @Override
