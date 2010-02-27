@@ -132,30 +132,30 @@ public interface ReferenceScheme extends VMScheme {
      *
      * @param reference the base of the memory location
      * @param offset the offset of the memory location
-     * @param suspectedValue the value that must currently exist in the memory location for the update to occur
-     * @param newValue the value to which the memory is updated if its current value is {@code suspectedValue}
-     * @return the value of the memory location before this call; if it is equal to {@code suspectedValue}, then the
-     *         update occurred, otherwise the update did not occur (assuming {@code suspectedValue != newValue})
+     * @param expectedValue the value that must currently exist in the memory location for the update to occur
+     * @param newValue the value to which the memory is updated if its current value is {@code expectedValue}
+     * @return the value of the memory location before this call; if it is equal to {@code expectedValue}, then the
+     *         update occurred, otherwise the update did not occur (assuming {@code expectedValue != newValue})
      */
-    int compareAndSwapInt(Reference reference, Offset offset, int suspectedValue, int newValue);
+    int compareAndSwapInt(Reference reference, Offset offset, int expectedValue, int newValue);
 
     /**
      * @see #compareAndSwapInt(Reference, Offset, int, int)
      */
-    int compareAndSwapInt(Reference reference, int offset, int suspectedValue, int newValue);
+    int compareAndSwapInt(Reference reference, int offset, int expectedValue, int newValue);
 
     /**
      * @see #compareAndSwapInt(Reference, Offset, int, int)
      */
-    Word compareAndSwapWord(Reference reference, Offset offset, Word suspectedValue, Word newValue);
+    Word compareAndSwapWord(Reference reference, Offset offset, Word expectedValue, Word newValue);
 
     /**
      * @see #compareAndSwapInt(Reference, Offset, int, int)
      */
-    Word compareAndSwapWord(Reference reference, int offset, Word suspectedValue, Word newValue);
+    Word compareAndSwapWord(Reference reference, int offset, Word expectedValue, Word newValue);
 
-    Reference compareAndSwapReference(Reference reference, Offset offset, Reference suspectedValue, Reference newValue);
-    Reference compareAndSwapReference(Reference reference, int offset, Reference suspectedValue, Reference newValue);
+    Reference compareAndSwapReference(Reference reference, Offset offset, Reference expectedValue, Reference newValue);
+    Reference compareAndSwapReference(Reference reference, int offset, Reference expectedValue, Reference newValue);
 
     void copyElements(int displacement, Reference src, int srcIndex, Object dst, int dstIndex, int length);
 }

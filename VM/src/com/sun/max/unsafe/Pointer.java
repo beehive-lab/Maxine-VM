@@ -957,42 +957,42 @@ public abstract class Pointer extends Address implements Accessor {
      */
     @BUILTIN(CompareAndSwapIntAtIntOffset.class)
     @INTRINSIC(PCMPSWP_INT_I)
-    public native int compareAndSwapInt(int offset, int suspectedValue, int newValue);
+    public native int compareAndSwapInt(int offset, int expectedValue, int newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
     @BUILTIN(CompareAndSwapInt.class)
     @INTRINSIC(PCMPSWP_INT)
-    public native int compareAndSwapInt(Offset offset, int suspectedValue, int newValue);
+    public native int compareAndSwapInt(Offset offset, int expectedValue, int newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
     @BUILTIN(CompareAndSwapWordAtIntOffset.class)
     @INTRINSIC(PCMPSWP_WORD_I)
-    public native Word compareAndSwapWord(int offset, Word suspectedValue, Word newValue);
+    public native Word compareAndSwapWord(int offset, Word expectedValue, Word newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
     @BUILTIN(CompareAndSwapWord.class)
     @INTRINSIC(PCMPSWP_WORD)
-    public native Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue);
+    public native Word compareAndSwapWord(Offset offset, Word expectedValue, Word newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
     @BUILTIN(CompareAndSwapReferenceAtIntOffset.class)
     @INTRINSIC(PCMPSWP_REFERENCE_I)
-    public native Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue);
+    public native Reference compareAndSwapReference(int offset, Reference expectedValue, Reference newValue);
 
     /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
     @BUILTIN(CompareAndSwapReference.class)
     @INTRINSIC(PCMPSWP_REFERENCE)
-    public native Reference compareAndSwapReference(Offset offset, Reference suspectedValue, Reference newValue);
+    public native Reference compareAndSwapReference(Offset offset, Reference expectedValue, Reference newValue);
 
     /**
      * Sets a bit in the bit map whose base is denoted by the value of this pointer.

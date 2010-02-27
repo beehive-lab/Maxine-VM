@@ -431,54 +431,54 @@ public abstract class Reference implements Accessor {
      * contents of that memory location to a given new value.
      *
      * @param offset the offset from this reference of the memory location to be tested and potentially updated
-     * @param suspectedValue the value that must currently exist in the memory location for the update to occur
-     * @param newValue the value to which the memory is updated if its current value is {@code suspectedValue}
-     * @return the value of the memory location before this call; if it is equal to {@code suspectedValue}, then the
-     *         update occurred, otherwise the update did not occur (assuming {@code suspectedValue != newValue})
+     * @param expectedValue the value that must currently exist in the memory location for the update to occur
+     * @param newValue the value to which the memory is updated if its current value is {@code expectedValue}
+     * @return the value of the memory location before this call; if it is equal to {@code expectedValue}, then the
+     *         update occurred, otherwise the update did not occur (assuming {@code expectedValue != newValue})
      */
     @INLINE
-    public final int compareAndSwapInt(Offset offset, int suspectedValue, int newValue) {
-        return referenceScheme().compareAndSwapInt(this, offset, suspectedValue, newValue);
+    public final int compareAndSwapInt(Offset offset, int expectedValue, int newValue) {
+        return referenceScheme().compareAndSwapInt(this, offset, expectedValue, newValue);
     }
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
     @INLINE
-    public final int compareAndSwapInt(int offset, int suspectedValue, int newValue) {
-        return referenceScheme().compareAndSwapInt(this, offset, suspectedValue, newValue);
+    public final int compareAndSwapInt(int offset, int expectedValue, int newValue) {
+        return referenceScheme().compareAndSwapInt(this, offset, expectedValue, newValue);
     }
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
     @INLINE
-    public final Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue) {
-        return referenceScheme().compareAndSwapWord(this, offset, suspectedValue, newValue);
+    public final Word compareAndSwapWord(Offset offset, Word expectedValue, Word newValue) {
+        return referenceScheme().compareAndSwapWord(this, offset, expectedValue, newValue);
     }
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
     @INLINE
-    public final Word compareAndSwapWord(int offset, Word suspectedValue, Word newValue) {
-        return referenceScheme().compareAndSwapWord(this, offset, suspectedValue, newValue);
+    public final Word compareAndSwapWord(int offset, Word expectedValue, Word newValue) {
+        return referenceScheme().compareAndSwapWord(this, offset, expectedValue, newValue);
     }
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
     @INLINE
-    public final Reference compareAndSwapReference(Offset offset, Reference suspectedValue, Reference newValue) {
-        return referenceScheme().compareAndSwapReference(this, offset, suspectedValue, newValue);
+    public final Reference compareAndSwapReference(Offset offset, Reference expectedValue, Reference newValue) {
+        return referenceScheme().compareAndSwapReference(this, offset, expectedValue, newValue);
     }
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
     @INLINE
-    public final Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue) {
-        return referenceScheme().compareAndSwapReference(this, offset, suspectedValue, newValue);
+    public final Reference compareAndSwapReference(int offset, Reference expectedValue, Reference newValue) {
+        return referenceScheme().compareAndSwapReference(this, offset, expectedValue, newValue);
     }
 
     @INLINE

@@ -119,13 +119,13 @@ public final class ObjectAccess {
      * Atomically compare and swap the misc word of an object header.
      *
      * @param object the object in whose header to compare and swap
-     * @param suspectedValue the value to compare the misc word against
+     * @param expectedValue the value to compare the misc word against
      * @param newValue the new value to be written into the object header
      * @return the old value of the misc word, if the comparison succeeds; the new value if it fails
      */
     @INLINE
-    public static Word compareAndSwapMisc(Object object, Word suspectedValue, Word newValue) {
-        return Layout.compareAndSwapMisc(Reference.fromJava(object), suspectedValue, newValue);
+    public static Word compareAndSwapMisc(Object object, Word expectedValue, Word newValue) {
+        return Layout.compareAndSwapMisc(Reference.fromJava(object), expectedValue, newValue);
     }
 
     /**

@@ -529,41 +529,41 @@ public interface Accessor {
      * Atomic compare and swap.
      *
      * Compares a suspected value with the actual value in a location denoted by this accessor and a given offset.
-     * Iff they are same, {@code newValue} is placed into the location and the {@code suspectedValue} is returned.
+     * Iff they are same, {@code newValue} is placed into the location and the {@code expectedValue} is returned.
      * Otherwise, the actual value is returned.
      * All of the above is performed in one atomic hardware transaction.
      *
      * @param offset offset from accessor origin
-     * @param suspectedValue if this value is currently in the accessor location, perform the swap
+     * @param expectedValue if this value is currently in the accessor location, perform the swap
      * @param newValue the new value to put into the accessor location
-     * @return either {@code suspectedValue} or the actual value
+     * @return either {@code expectedValue} or the actual value
      */
-    int compareAndSwapInt(Offset offset, int suspectedValue, int newValue);
+    int compareAndSwapInt(Offset offset, int expectedValue, int newValue);
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
-    int compareAndSwapInt(int offset, int suspectedValue, int newValue);
+    int compareAndSwapInt(int offset, int expectedValue, int newValue);
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
-    Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue);
+    Word compareAndSwapWord(Offset offset, Word expectedValue, Word newValue);
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
-    Word compareAndSwapWord(int offset, Word suspectedValue, Word newValue);
+    Word compareAndSwapWord(int offset, Word expectedValue, Word newValue);
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
-    Reference compareAndSwapReference(Offset offset, Reference suspectedValue, Reference newValue);
+    Reference compareAndSwapReference(Offset offset, Reference expectedValue, Reference newValue);
 
     /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
-    Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue);
+    Reference compareAndSwapReference(int offset, Reference expectedValue, Reference newValue);
 
     /**
      * Copies elements from this array into a given array.

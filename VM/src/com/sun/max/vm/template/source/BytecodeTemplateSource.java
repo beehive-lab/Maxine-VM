@@ -2493,61 +2493,61 @@ public class BytecodeTemplateSource {
     @BYTECODE_TEMPLATE(PCMPSWP_INT)
     public static void pcmpswp_int() {
         int newValue = JitStackFrameOperation.peekInt(0);
-        int suspectedValue = JitStackFrameOperation.peekInt(1);
+        int expectedValue = JitStackFrameOperation.peekInt(1);
         Offset off = JitStackFrameOperation.peekWord(2).asOffset();
         Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
         JitStackFrameOperation.removeSlots(3);
-        JitStackFrameOperation.pokeInt(0, ptr.compareAndSwapInt(off, suspectedValue, newValue));
+        JitStackFrameOperation.pokeInt(0, ptr.compareAndSwapInt(off, expectedValue, newValue));
     }
 
     @BYTECODE_TEMPLATE(PCMPSWP_WORD)
     public static void pcmpswp_word() {
         Word newValue = JitStackFrameOperation.peekWord(0);
-        Word suspectedValue = JitStackFrameOperation.peekWord(1);
+        Word expectedValue = JitStackFrameOperation.peekWord(1);
         Offset off = JitStackFrameOperation.peekWord(2).asOffset();
         Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
         JitStackFrameOperation.removeSlots(3);
-        JitStackFrameOperation.pokeWord(0, ptr.compareAndSwapWord(off, suspectedValue, newValue));
+        JitStackFrameOperation.pokeWord(0, ptr.compareAndSwapWord(off, expectedValue, newValue));
     }
 
     @BYTECODE_TEMPLATE(PCMPSWP_REFERENCE)
     public static void pcmpswp_reference() {
         Reference newValue = JitStackFrameOperation.peekReference(0);
-        Reference suspectedValue = JitStackFrameOperation.peekReference(1);
+        Reference expectedValue = JitStackFrameOperation.peekReference(1);
         Offset off = JitStackFrameOperation.peekWord(2).asOffset();
         Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
         JitStackFrameOperation.removeSlots(3);
-        JitStackFrameOperation.pokeReference(0, ptr.compareAndSwapReference(off, suspectedValue, newValue));
+        JitStackFrameOperation.pokeReference(0, ptr.compareAndSwapReference(off, expectedValue, newValue));
     }
 
     @BYTECODE_TEMPLATE(PCMPSWP_INT_I)
     public static void pcmpswp_int_i() {
         int newValue = JitStackFrameOperation.peekInt(0);
-        int suspectedValue = JitStackFrameOperation.peekInt(1);
+        int expectedValue = JitStackFrameOperation.peekInt(1);
         int off = JitStackFrameOperation.peekInt(2);
         Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
         JitStackFrameOperation.removeSlots(3);
-        JitStackFrameOperation.pokeInt(0, ptr.compareAndSwapInt(off, suspectedValue, newValue));
+        JitStackFrameOperation.pokeInt(0, ptr.compareAndSwapInt(off, expectedValue, newValue));
     }
 
     @BYTECODE_TEMPLATE(PCMPSWP_WORD_I)
     public static void pcmpswp_word_i() {
         Word newValue = JitStackFrameOperation.peekWord(0);
-        Word suspectedValue = JitStackFrameOperation.peekWord(1);
+        Word expectedValue = JitStackFrameOperation.peekWord(1);
         int off = JitStackFrameOperation.peekInt(2);
         Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
         JitStackFrameOperation.removeSlots(3);
-        JitStackFrameOperation.pokeWord(0, ptr.compareAndSwapWord(off, suspectedValue, newValue));
+        JitStackFrameOperation.pokeWord(0, ptr.compareAndSwapWord(off, expectedValue, newValue));
     }
 
     @BYTECODE_TEMPLATE(PCMPSWP_REFERENCE_I)
     public static void pcmpswp_reference_i() {
         Reference newValue = JitStackFrameOperation.peekReference(0);
-        Reference suspectedValue = JitStackFrameOperation.peekReference(1);
+        Reference expectedValue = JitStackFrameOperation.peekReference(1);
         int off = JitStackFrameOperation.peekInt(2);
         Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
         JitStackFrameOperation.removeSlots(3);
-        JitStackFrameOperation.pokeReference(0, ptr.compareAndSwapReference(off, suspectedValue, newValue));
+        JitStackFrameOperation.pokeReference(0, ptr.compareAndSwapReference(off, expectedValue, newValue));
     }
 
     @BYTECODE_TEMPLATE(MOV_I2F)
