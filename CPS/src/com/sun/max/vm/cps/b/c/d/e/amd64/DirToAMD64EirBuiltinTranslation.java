@@ -1209,11 +1209,11 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue pointer = dirToEirValue(dirArguments[0]);
         final DirValue dirOffset = dirArguments[1];
-        final EirValue suspectedValue = dirToEirValue(dirArguments[2]);
+        final EirValue expectedValue = dirToEirValue(dirArguments[2]);
         final EirValue newValue = dirToEirValue(dirArguments[3]);
 
         final EirVariable rax = createEirVariable(kind);
-        assign(kind, rax, suspectedValue);
+        assign(kind, rax, expectedValue);
 
         final AMD64EirCompareAndSwap instruction = dirOffset.isZeroConstant() ?
             new AMD64EirCompareAndSwap(eirBlock(), kind, newValue, pointer, rax) :

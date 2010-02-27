@@ -406,8 +406,8 @@ public abstract class CiXirAssembler {
         append(new XirInstruction(kind, new AddressAccessInformation(canTrap, offset, scaling), XirOp.PointerStoreDisp, (XirOperand) null, pointer, disp, value));
     }
 
-    public void pcas(CiKind kind, XirOperand result, XirOperand pointer, XirOperand value, XirOperand suspectedValue) {
-        append(new XirInstruction(kind, XirOp.PointerLoad, result, pointer, value, suspectedValue));
+    public void pcas(CiKind kind, XirOperand result, XirOperand pointer, XirOperand value, XirOperand expectedValue) {
+        append(new XirInstruction(kind, XirOp.PointerLoad, result, pointer, value, expectedValue));
     }
 
     public void jmp(XirLabel l) {

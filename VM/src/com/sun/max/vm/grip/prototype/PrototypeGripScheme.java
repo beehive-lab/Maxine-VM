@@ -427,27 +427,27 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
         throw ProgramError.unexpected();
     }
 
-    public int compareAndSwapInt(Grip grip, Offset offset, int suspectedValue, int newValue) {
-        return toOrigin(grip).compareAndSwapInt(offset, suspectedValue, newValue);
+    public int compareAndSwapInt(Grip grip, Offset offset, int expectedValue, int newValue) {
+        return toOrigin(grip).compareAndSwapInt(offset, expectedValue, newValue);
     }
 
-    public int compareAndSwapInt(Grip grip, int offset, int suspectedValue, int newValue) {
-        return toOrigin(grip).compareAndSwapInt(offset, suspectedValue, newValue);
+    public int compareAndSwapInt(Grip grip, int offset, int expectedValue, int newValue) {
+        return toOrigin(grip).compareAndSwapInt(offset, expectedValue, newValue);
     }
 
-    public Word compareAndSwapWord(Grip grip, Offset offset, Word suspectedValue, Word newValue) {
+    public Word compareAndSwapWord(Grip grip, Offset offset, Word expectedValue, Word newValue) {
         throw ProgramError.unexpected();
     }
 
-    public Word compareAndSwapWord(Grip grip, int offset, Word suspectedValue, Word newValue) {
+    public Word compareAndSwapWord(Grip grip, int offset, Word expectedValue, Word newValue) {
         throw ProgramError.unexpected();
     }
 
-    public Reference compareAndSwapReference(Grip grip, Offset offset, Reference suspectedValue, Reference newValue) {
+    public Reference compareAndSwapReference(Grip grip, Offset offset, Reference expectedValue, Reference newValue) {
         throw ProgramError.unexpected();
     }
 
-    public Reference compareAndSwapReference(Grip grip, int offset, Reference suspectedValue, Reference newValue) {
+    public Reference compareAndSwapReference(Grip grip, int offset, Reference expectedValue, Reference newValue) {
         throw ProgramError.unexpected();
     }
 

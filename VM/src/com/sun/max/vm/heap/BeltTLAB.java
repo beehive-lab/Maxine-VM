@@ -187,7 +187,7 @@ public class BeltTLAB extends RuntimeMemoryRegion {
         mark.set(end());
     }
 
-    public Pointer compareAndSwapScavenge(Pointer suspectedValue, Pointer newValue) {
-        return scavenged.compareAndSwap(suspectedValue, newValue).asPointer();
+    public Pointer compareAndSwapScavenge(Pointer expectedValue, Pointer newValue) {
+        return scavenged.compareAndSwap(expectedValue, newValue).asPointer();
     }
 }

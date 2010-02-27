@@ -67,7 +67,7 @@ public interface GeneralLayout {
 
     void writeMisc(Accessor accessor, Word value);
 
-    Word compareAndSwapMisc(Accessor accessor, Word suspectedValue, Word newValue);
+    Word compareAndSwapMisc(Accessor accessor, Word expectedValue, Word newValue);
 
     Offset getOffsetFromOrigin(HeaderField headerField);
 
