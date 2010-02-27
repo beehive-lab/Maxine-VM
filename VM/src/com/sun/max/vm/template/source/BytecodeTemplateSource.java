@@ -27,6 +27,7 @@ import static com.sun.max.vm.template.source.NoninlineTemplateRuntime.*;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -38,6 +39,7 @@ import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
@@ -48,7 +50,7 @@ import com.sun.max.vm.type.*;
  * @author Laurent Daynes
  * @author Doug Simon
  */
-public final class BytecodeTemplateSource {
+public class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(NOP$instrumented$MethodEntry)
     public static void nop(MethodProfile mpo) {
@@ -58,13 +60,18 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(ACONST_NULL)
     public static void aconst_null() {
-        JitStackFrameOperation.pushReference(null);
+        JitStackFrameOperation.pushObject(null);
+    }
+
+    @BYTECODE_TEMPLATE(WCONST_0)
+    public static void wconst_0() {
+        JitStackFrameOperation.pushWord(Address.zero());
     }
 
     @BYTECODE_TEMPLATE(AALOAD)
     public static void aaload() {
-        final int index = JitStackFrameOperation.peekInt(0);
-        final Object array = JitStackFrameOperation.peekReference(1);
+        int index = JitStackFrameOperation.peekInt(0);
+        Object array = JitStackFrameOperation.peekObject(1);
         ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeReference(0, ArrayAccess.getObject(array, index));
@@ -72,105 +79,75 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(AASTORE)
     public static void aastore() {
-        final int index = JitStackFrameOperation.peekInt(1);
-        final Object array = JitStackFrameOperation.peekReference(2);
-        final Object value = JitStackFrameOperation.peekReference(0);
+        int index = JitStackFrameOperation.peekInt(1);
+        Object array = JitStackFrameOperation.peekObject(2);
+        Object value = JitStackFrameOperation.peekObject(0);
         noninlineArrayStore(index, array, value);
         JitStackFrameOperation.removeSlots(3);
     }
 
-    @INLINE
-    private static void aload_(int dispToLocalSlot) {
-        final Object value = JitStackFrameOperation.getLocalReference(dispToLocalSlot);
-        JitStackFrameOperation.pushReference(value);
-    }
-
     @BYTECODE_TEMPLATE(ALOAD)
     public static void aload(int dispToLocalSlot) {
-        aload_(dispToLocalSlot);
+        Object value = JitStackFrameOperation.getLocalObject(dispToLocalSlot);
+        JitStackFrameOperation.pushObject(value);
     }
 
-    @BYTECODE_TEMPLATE(ALOAD_0)
-    public static void aload_0(int dispToLocalSlot) {
-        aload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ALOAD_1)
-    public static void aload_1(int dispToLocalSlot) {
-        aload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ALOAD_2)
-    public static void aload_2(int dispToLocalSlot) {
-        aload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ALOAD_3)
-    public static void aload_3(int dispToLocalSlot) {
-        aload_(dispToLocalSlot);
+    @BYTECODE_TEMPLATE(WLOAD)
+    public static void wload(int dispToLocalSlot) {
+        Word value = JitStackFrameOperation.getLocalWord(dispToLocalSlot);
+        JitStackFrameOperation.pushWord(value);
     }
 
     @BYTECODE_TEMPLATE(ANEWARRAY)
     public static void anewarray(ResolutionGuard guard) {
-        final ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(resolveArrayClass(guard));
-        final int length = JitStackFrameOperation.peekInt(0);
+        ArrayClassActor arrayClassActor = UnsafeCast.asArrayClassActor(resolveArrayClass(guard));
+        int length = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.pokeReference(0, CreateReferenceArray.noninlineCreateReferenceArray(arrayClassActor, length));
     }
 
     @BYTECODE_TEMPLATE(ARETURN)
     public static Object areturn() {
-        final Object value = JitStackFrameOperation.peekReference(0);
+        Object value = JitStackFrameOperation.peekObject(0);
+        JitStackFrameOperation.removeSlots(1);
+        return value;
+    }
+
+    @BYTECODE_TEMPLATE(WRETURN)
+    public static Word wreturn() {
+        Word value = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.removeSlots(1);
         return value;
     }
 
     @BYTECODE_TEMPLATE(ARRAYLENGTH)
     public static void arraylength() {
-        final int length = ArrayAccess.readArrayLength(JitStackFrameOperation.peekReference(0));
+        int length = ArrayAccess.readArrayLength(JitStackFrameOperation.peekObject(0));
         JitStackFrameOperation.pokeInt(0, length);
-    }
-
-    @INLINE
-    private static void astore_(int displacementToSlot) {
-        final Object value = JitStackFrameOperation.peekReference(0);
-        JitStackFrameOperation.removeSlots(1);
-        JitStackFrameOperation.setLocalReference(displacementToSlot, value);
     }
 
     @BYTECODE_TEMPLATE(ASTORE)
     public static void astore(int displacementToSlot) {
-        astore_(displacementToSlot);
+        Object value = JitStackFrameOperation.peekObject(0);
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.setLocalObject(displacementToSlot, value);
     }
 
-    @BYTECODE_TEMPLATE(ASTORE_0)
-    public static void astore_0(int displacementToSlot) {
-        astore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ASTORE_1)
-    public static void astore_1(int displacementToSlot) {
-        astore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ASTORE_2)
-    public static void astore_2(int displacementToSlot) {
-        astore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ASTORE_3)
-    public static void astore_3(int displacementToSlot) {
-        astore_(displacementToSlot);
+    @BYTECODE_TEMPLATE(WSTORE)
+    public static void wstore(int displacementToSlot) {
+        Word value = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.setLocalWord(displacementToSlot, value);
     }
 
     @BYTECODE_TEMPLATE(ATHROW)
     public static void athrow() {
-        Throw.raise(JitStackFrameOperation.peekReference(0));
+        Throw.raise(JitStackFrameOperation.peekObject(0));
     }
 
     @BYTECODE_TEMPLATE(BALOAD)
     public static void baload() {
-        final int index = JitStackFrameOperation.peekInt(0);
-        final Object array = JitStackFrameOperation.peekReference(1);
+        int index = JitStackFrameOperation.peekInt(0);
+        Object array = JitStackFrameOperation.peekObject(1);
         ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, ArrayAccess.getByte(array, index));
@@ -178,10 +155,10 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(BASTORE)
     public static void bastore() {
-        final int index = JitStackFrameOperation.peekInt(1);
-        final Object array = JitStackFrameOperation.peekReference(2);
+        int index = JitStackFrameOperation.peekInt(1);
+        Object array = JitStackFrameOperation.peekObject(2);
         ArrayAccess.checkIndex(array, index);
-        final byte value = (byte) JitStackFrameOperation.peekInt(0);
+        byte value = (byte) JitStackFrameOperation.peekInt(0);
         ArrayAccess.setByte(array, index, value);
         JitStackFrameOperation.removeSlots(3);
     }
@@ -193,8 +170,8 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(CALOAD)
     public static void caload() {
-        final int index = JitStackFrameOperation.peekInt(0);
-        final Object array = JitStackFrameOperation.peekReference(1);
+        int index = JitStackFrameOperation.peekInt(0);
+        Object array = JitStackFrameOperation.peekObject(1);
         ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, ArrayAccess.getChar(array, index));
@@ -202,133 +179,103 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(CASTORE)
     public static void castore() {
-        final int index = JitStackFrameOperation.peekInt(1);
-        final Object array = JitStackFrameOperation.peekReference(2);
+        int index = JitStackFrameOperation.peekInt(1);
+        Object array = JitStackFrameOperation.peekObject(2);
         ArrayAccess.checkIndex(array, index);
-        final char value = (char) JitStackFrameOperation.peekInt(0);
+        char value = (char) JitStackFrameOperation.peekInt(0);
         ArrayAccess.setChar(array, index, value);
         JitStackFrameOperation.removeSlots(3);
     }
 
     @BYTECODE_TEMPLATE(CHECKCAST)
     public static void checkcast(ResolutionGuard guard) {
-        resolveAndCheckcast(guard, JitStackFrameOperation.peekReference(0));
+        resolveAndCheckcast(guard, JitStackFrameOperation.peekObject(0));
     }
 
     @BYTECODE_TEMPLATE(D2F)
     public static void d2f() {
-        final double value = JitStackFrameOperation.peekDouble(0);
+        double value = JitStackFrameOperation.peekDouble(0);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeFloat(0, (float) value);
     }
 
     @BYTECODE_TEMPLATE(D2I)
     public static void d2i() {
-        final double value = JitStackFrameOperation.peekDouble(0);
+        double value = JitStackFrameOperation.peekDouble(0);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, (int) value);
     }
 
     @BYTECODE_TEMPLATE(D2L)
     public static void d2l() {
-        final double value = JitStackFrameOperation.peekDouble(0);
+        double value = JitStackFrameOperation.peekDouble(0);
         JitStackFrameOperation.pokeLong(0, (long) value);
     }
 
     @BYTECODE_TEMPLATE(DADD)
     public static void dadd() {
-        final double value2 = JitStackFrameOperation.peekDouble(0);
-        final double value1 = JitStackFrameOperation.peekDouble(2);
+        double value2 = JitStackFrameOperation.peekDouble(0);
+        double value1 = JitStackFrameOperation.peekDouble(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeDouble(0, value1 + value2);
     }
 
     @BYTECODE_TEMPLATE(DALOAD)
     public static void daload() {
-        final int index = JitStackFrameOperation.peekInt(0);
-        final Object array = JitStackFrameOperation.peekReference(1);
+        int index = JitStackFrameOperation.peekInt(0);
+        Object array = JitStackFrameOperation.peekObject(1);
         ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.pokeDouble(0, ArrayAccess.getDouble(array, index));
     }
 
     @BYTECODE_TEMPLATE(DASTORE)
     public static void dastore() {
-        final int index = JitStackFrameOperation.peekInt(2);
-        final Object array = JitStackFrameOperation.peekReference(3);
+        int index = JitStackFrameOperation.peekInt(2);
+        Object array = JitStackFrameOperation.peekObject(3);
         ArrayAccess.checkIndex(array, index);
-        final double value = JitStackFrameOperation.peekDouble(0);
+        double value = JitStackFrameOperation.peekDouble(0);
         ArrayAccess.setDouble(array, index, value);
         JitStackFrameOperation.removeSlots(4);
     }
 
     @BYTECODE_TEMPLATE(DCMPG)
     public static void dcmpg() {
-        final double value2 = JitStackFrameOperation.peekDouble(0);
-        final double value1 = JitStackFrameOperation.peekDouble(2);
+        double value2 = JitStackFrameOperation.peekDouble(0);
+        double value1 = JitStackFrameOperation.peekDouble(2);
         JitStackFrameOperation.removeSlots(3);
         JitStackFrameOperation.pokeInt(0, JavaBuiltin.DoubleCompareG.doubleCompareG(value1, value2));
     }
 
     @BYTECODE_TEMPLATE(DCMPL)
     public static void dcmpl() {
-        final double value2 = JitStackFrameOperation.peekDouble(0);
-        final double value1 = JitStackFrameOperation.peekDouble(2);
+        double value2 = JitStackFrameOperation.peekDouble(0);
+        double value1 = JitStackFrameOperation.peekDouble(2);
         JitStackFrameOperation.removeSlots(3);
         JitStackFrameOperation.pokeInt(0, JavaBuiltin.DoubleCompareL.doubleCompareL(value1, value2));
     }
 
-    @BYTECODE_TEMPLATE(DCONST_0)
-    public static void dconst_0(double zero) {
-        JitStackFrameOperation.pushDouble(zero);
-    }
-
-    @BYTECODE_TEMPLATE(DCONST_1)
-    public static void dconst_1(double one) {
-        JitStackFrameOperation.pushDouble(one);
+    @BYTECODE_TEMPLATE(DCONST)
+    public static void dconst(double constant) {
+        JitStackFrameOperation.pushDouble(constant);
     }
 
     @BYTECODE_TEMPLATE(DDIV)
     public static void ddiv() {
-        final double value2 = JitStackFrameOperation.peekDouble(0);
-        final double value1 = JitStackFrameOperation.peekDouble(2);
+        double divisor = JitStackFrameOperation.peekDouble(0);
+        double dividend = JitStackFrameOperation.peekDouble(2);
         JitStackFrameOperation.removeSlots(2);
-        JitStackFrameOperation.pokeDouble(0, value1 / value2);
-    }
-
-    @INLINE
-    private static void dload_(int displacementToSlot) {
-        JitStackFrameOperation.pushDouble(JitStackFrameOperation.getLocalDouble(displacementToSlot));
+        JitStackFrameOperation.pokeDouble(0, dividend / divisor);
     }
 
     @BYTECODE_TEMPLATE(DLOAD)
     public static void dload(int displacementToSlot) {
-        dload_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(DLOAD_0)
-    public static void dload_0(int displacementToSlot) {
-        dload_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(DLOAD_1)
-    public static void dload_1(int displacementToSlot) {
-        dload_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(DLOAD_2)
-    public static void dload_2(int displacementToSlot) {
-        dload_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(DLOAD_3)
-    public static void dload_3(int displacementToSlot) {
-        dload_(displacementToSlot);
+        JitStackFrameOperation.pushDouble(JitStackFrameOperation.getLocalDouble(displacementToSlot));
     }
 
     @BYTECODE_TEMPLATE(DMUL)
     public static void dmul() {
-        final double value2 = JitStackFrameOperation.peekDouble(0);
-        final double value1 = JitStackFrameOperation.peekDouble(2);
+        double value2 = JitStackFrameOperation.peekDouble(0);
+        double value1 = JitStackFrameOperation.peekDouble(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeDouble(0, value1 * value2);
     }
@@ -340,8 +287,8 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(DREM)
     public static void drem() {
-        final double value2 = JitStackFrameOperation.peekDouble(0);
-        final double value1 = JitStackFrameOperation.peekDouble(2);
+        double value2 = JitStackFrameOperation.peekDouble(0);
+        double value1 = JitStackFrameOperation.peekDouble(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeDouble(0, value1 % value2);
     }
@@ -351,40 +298,15 @@ public final class BytecodeTemplateSource {
         return JitStackFrameOperation.popDouble();
     }
 
-    @INLINE
-    private static void dstore_(int displacementToSlot) {
-        JitStackFrameOperation.setLocalDouble(displacementToSlot, JitStackFrameOperation.popDouble());
-    }
-
     @BYTECODE_TEMPLATE(DSTORE)
     public static void dstore(int displacementToSlot) {
-        dstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(DSTORE_0)
-    public static void dstore_0(int displacementToSlot) {
-        dstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(DSTORE_1)
-    public static void dstore_1(int displacementToSlot) {
-        dstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(DSTORE_2)
-    public static void dstore_2(int displacementToSlot) {
-        dstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(DSTORE_3)
-    public static void dstore_3(int displacementToSlot) {
-        dstore_(displacementToSlot);
+        JitStackFrameOperation.setLocalDouble(displacementToSlot, JitStackFrameOperation.popDouble());
     }
 
     @BYTECODE_TEMPLATE(DSUB)
     public static void dsub() {
-        final double value2 = JitStackFrameOperation.peekDouble(0);
-        final double value1 = JitStackFrameOperation.peekDouble(2);
+        double value2 = JitStackFrameOperation.peekDouble(0);
+        double value1 = JitStackFrameOperation.peekDouble(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeDouble(0, value1 - value2);
     }
@@ -396,8 +318,8 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(DUP_X1)
     public static void dup_x1() {
-        final Word value1 = JitStackFrameOperation.peekWord(0);
-        final Word value2 = JitStackFrameOperation.peekWord(1);
+        Word value1 = JitStackFrameOperation.peekWord(0);
+        Word value2 = JitStackFrameOperation.peekWord(1);
         JitStackFrameOperation.pokeWord(1, value1);
         JitStackFrameOperation.pokeWord(0, value2);
         JitStackFrameOperation.pushWord(value1);
@@ -405,9 +327,9 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(DUP_X2)
     public static void dup_x2() {
-        final Word value1 = JitStackFrameOperation.peekWord(0);
-        final Word value2 = JitStackFrameOperation.peekWord(1);
-        final Word value3 = JitStackFrameOperation.peekWord(2);
+        Word value1 = JitStackFrameOperation.peekWord(0);
+        Word value2 = JitStackFrameOperation.peekWord(1);
+        Word value3 = JitStackFrameOperation.peekWord(2);
         JitStackFrameOperation.pushWord(value1);
         JitStackFrameOperation.pokeWord(1, value2);
         JitStackFrameOperation.pokeWord(2, value3);
@@ -416,17 +338,17 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(DUP2)
     public static void dup2() {
-        final Word value1 = JitStackFrameOperation.peekWord(0);
-        final Word value2 = JitStackFrameOperation.peekWord(1);
+        Word value1 = JitStackFrameOperation.peekWord(0);
+        Word value2 = JitStackFrameOperation.peekWord(1);
         JitStackFrameOperation.pushWord(value2);
         JitStackFrameOperation.pushWord(value1);
     }
 
     @BYTECODE_TEMPLATE(DUP2_X1)
     public static void dup2_x1() {
-        final Word value1 = JitStackFrameOperation.peekWord(0);
-        final Word value2 = JitStackFrameOperation.peekWord(1);
-        final Word value3 = JitStackFrameOperation.peekWord(2);
+        Word value1 = JitStackFrameOperation.peekWord(0);
+        Word value2 = JitStackFrameOperation.peekWord(1);
+        Word value3 = JitStackFrameOperation.peekWord(2);
         JitStackFrameOperation.pokeWord(2, value2);
         JitStackFrameOperation.pokeWord(1, value1);
         JitStackFrameOperation.pokeWord(0, value3);
@@ -436,10 +358,10 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(DUP2_X2)
     public static void dup2_x2() {
-        final Word value1 = JitStackFrameOperation.peekWord(0);
-        final Word value2 = JitStackFrameOperation.peekWord(1);
-        final Word value3 = JitStackFrameOperation.peekWord(2);
-        final Word value4 = JitStackFrameOperation.peekWord(3);
+        Word value1 = JitStackFrameOperation.peekWord(0);
+        Word value2 = JitStackFrameOperation.peekWord(1);
+        Word value3 = JitStackFrameOperation.peekWord(2);
+        Word value4 = JitStackFrameOperation.peekWord(3);
         JitStackFrameOperation.pokeWord(3, value2);
         JitStackFrameOperation.pokeWord(2, value1);
         JitStackFrameOperation.pokeWord(1, value4);
@@ -450,36 +372,36 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(F2D)
     public static void f2d() {
-        final float value = JitStackFrameOperation.peekFloat(0);
+        float value = JitStackFrameOperation.peekFloat(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeDouble(0, value);
     }
 
     @BYTECODE_TEMPLATE(F2I)
     public static void f2i() {
-        final float value = JitStackFrameOperation.peekFloat(0);
+        float value = JitStackFrameOperation.peekFloat(0);
         JitStackFrameOperation.pokeInt(0, (int) value);
     }
 
     @BYTECODE_TEMPLATE(F2L)
     public static void f2l() {
-        final float value = JitStackFrameOperation.peekFloat(0);
+        float value = JitStackFrameOperation.peekFloat(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeLong(0, (long) value);
     }
 
     @BYTECODE_TEMPLATE(FADD)
     public static void fadd() {
-        final float value2 = JitStackFrameOperation.peekFloat(0);
-        final float value1 = JitStackFrameOperation.peekFloat(1);
+        float value2 = JitStackFrameOperation.peekFloat(0);
+        float value1 = JitStackFrameOperation.peekFloat(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeFloat(0, value1 + value2);
     }
 
     @BYTECODE_TEMPLATE(FALOAD)
     public static void faload() {
-        final int index = JitStackFrameOperation.peekInt(0);
-        final Object array = JitStackFrameOperation.peekReference(1);
+        int index = JitStackFrameOperation.peekInt(0);
+        Object array = JitStackFrameOperation.peekObject(1);
         ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeFloat(0, ArrayAccess.getFloat(array, index));
@@ -487,90 +409,55 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(FASTORE)
     public static void fastore() {
-        final int index = JitStackFrameOperation.peekInt(1);
-        final Object array = JitStackFrameOperation.peekReference(2);
+        int index = JitStackFrameOperation.peekInt(1);
+        Object array = JitStackFrameOperation.peekObject(2);
         ArrayAccess.checkIndex(array, index);
-        final float value = JitStackFrameOperation.peekFloat(0);
+        float value = JitStackFrameOperation.peekFloat(0);
         ArrayAccess.setFloat(array, index, value);
         JitStackFrameOperation.removeSlots(3);
     }
 
     @BYTECODE_TEMPLATE(FCMPG)
     public static void fcmpg() {
-        final float value2 = JitStackFrameOperation.peekFloat(0);
-        final float value1 = JitStackFrameOperation.peekFloat(1);
+        float value2 = JitStackFrameOperation.peekFloat(0);
+        float value1 = JitStackFrameOperation.peekFloat(1);
         JitStackFrameOperation.removeSlots(1);
-        final int result = JavaBuiltin.FloatCompareG.floatCompareG(value1, value2);
+        int result = JavaBuiltin.FloatCompareG.floatCompareG(value1, value2);
         JitStackFrameOperation.pokeInt(0, result);
     }
 
     @BYTECODE_TEMPLATE(FCMPL)
     public static void fcmpl() {
-        final float value2 = JitStackFrameOperation.peekFloat(0);
-        final float value1 = JitStackFrameOperation.peekFloat(1);
+        float value2 = JitStackFrameOperation.peekFloat(0);
+        float value1 = JitStackFrameOperation.peekFloat(1);
         JitStackFrameOperation.removeSlots(1);
-        final int result = JavaBuiltin.FloatCompareL.floatCompareL(value1, value2);
+        int result = JavaBuiltin.FloatCompareL.floatCompareL(value1, value2);
         JitStackFrameOperation.pokeInt(0, result);
     }
 
-    @BYTECODE_TEMPLATE(FCONST_0)
-    public static void fconst_0(float zero) {
-        JitStackFrameOperation.pushFloat(zero);
-    }
-
-    @BYTECODE_TEMPLATE(FCONST_1)
-    public static void fconst_1(float one) {
-        JitStackFrameOperation.pushFloat(one);
-    }
-
-    @BYTECODE_TEMPLATE(FCONST_2)
-    public static void fconst_2(float two) {
-        JitStackFrameOperation.pushFloat(two);
+    @BYTECODE_TEMPLATE(FCONST)
+    public static void fconst(float constant) {
+        JitStackFrameOperation.pushFloat(constant);
     }
 
     @BYTECODE_TEMPLATE(FDIV)
     public static void fdiv() {
-        final float value2 = JitStackFrameOperation.peekFloat(0);
-        final float value1 = JitStackFrameOperation.peekFloat(1);
+        float divisor = JitStackFrameOperation.peekFloat(0);
+        float dividend = JitStackFrameOperation.peekFloat(1);
         JitStackFrameOperation.removeSlots(1);
-        JitStackFrameOperation.pokeFloat(0, value1 / value2);
-    }
-
-    @INLINE
-    private static void fload_(int dispToLocalSlot) {
-        final float value = JitStackFrameOperation.getLocalFloat(dispToLocalSlot);
-        JitStackFrameOperation.pushFloat(value);
+        JitStackFrameOperation.pokeFloat(0, dividend / divisor);
     }
 
     @BYTECODE_TEMPLATE(FLOAD)
     public static void fload(int dispToLocalSlot) {
-        fload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(FLOAD_0)
-    public static void fload_0(int dispToLocalSlot) {
-        fload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(FLOAD_1)
-    public static void fload_1(int dispToLocalSlot) {
-        fload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(FLOAD_2)
-    public static void fload_2(int dispToLocalSlot) {
-        fload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(FLOAD_3)
-    public static void fload_3(int dispToLocalSlot) {
-        fload_(dispToLocalSlot);
+        float value = JitStackFrameOperation.getLocalFloat(dispToLocalSlot);
+        JitStackFrameOperation.pushFloat(value);
     }
 
     @BYTECODE_TEMPLATE(FMUL)
     public static void fmul() {
-        final float value2 = JitStackFrameOperation.peekFloat(0);
-        final float value1 = JitStackFrameOperation.peekFloat(1);
+        float value2 = JitStackFrameOperation.peekFloat(0);
+        float value1 = JitStackFrameOperation.peekFloat(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeFloat(0, value1 * value2);
     }
@@ -582,8 +469,8 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(FREM)
     public static void frem() {
-        final float value2 = JitStackFrameOperation.peekFloat(0);
-        final float value1 = JitStackFrameOperation.peekFloat(1);
+        float value2 = JitStackFrameOperation.peekFloat(0);
+        float value1 = JitStackFrameOperation.peekFloat(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeFloat(0, value1 % value2);
     }
@@ -593,182 +480,157 @@ public final class BytecodeTemplateSource {
         return JitStackFrameOperation.popFloat();
     }
 
-    @INLINE
-    private static void fstore_(int displacementToSlot) {
-        JitStackFrameOperation.setLocalFloat(displacementToSlot, JitStackFrameOperation.popFloat());
-    }
-
     @BYTECODE_TEMPLATE(FSTORE)
     public static void fstore(int displacementToSlot) {
-        fstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(FSTORE_0)
-    public static void fstore_0(int displacementToSlot) {
-        fstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(FSTORE_1)
-    public static void fstore_1(int displacementToSlot) {
-        fstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(FSTORE_2)
-    public static void fstore_2(int displacementToSlot) {
-        fstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(FSTORE_3)
-    public static void fstore_3(int displacementToSlot) {
-        fstore_(displacementToSlot);
+        JitStackFrameOperation.setLocalFloat(displacementToSlot, JitStackFrameOperation.popFloat());
     }
 
     @BYTECODE_TEMPLATE(FSUB)
     public static void fsub() {
-        final float value2 = JitStackFrameOperation.peekFloat(0);
-        final float value1 = JitStackFrameOperation.peekFloat(1);
+        float value2 = JitStackFrameOperation.peekFloat(0);
+        float value1 = JitStackFrameOperation.peekFloat(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeFloat(0, value1 - value2);
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$reference)
     public static void getfieldReference(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeReference(0, resolveAndGetFieldReference(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$word)
     public static void getfieldWord(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeWord(0, resolveAndGetFieldWord(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$byte)
     public static void getfieldByte(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, resolveAndGetFieldByte(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$char)
     public static void getfieldChar(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, resolveAndGetFieldChar(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$double)
     public static void getfieldDouble(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeDouble(0, resolveAndGetFieldDouble(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$float)
     public static void getfieldFloat(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeFloat(0, resolveAndGetFieldFloat(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$int)
     public static void getfieldInt(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, resolveAndGetFieldInt(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$long)
     public static void getfieldLong(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeLong(0, resolveAndGetFieldLong(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$short)
     public static void getfieldShort(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, resolveAndGetFieldShort(guard, object));
     }
 
     @BYTECODE_TEMPLATE(GETFIELD$boolean)
     public static void getfieldBoolean(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, UnsafeCast.asByte(resolveAndGetFieldBoolean(guard, object)));
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$reference)
     public static void putfieldReference(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final Object value = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        Object value = JitStackFrameOperation.peekObject(0);
         resolveAndPutFieldReference(guard, object, value);
         JitStackFrameOperation.removeSlots(2);
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$word)
     public static void putfieldWord(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final Word value = JitStackFrameOperation.peekWord(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        Word value = JitStackFrameOperation.peekWord(0);
         resolveAndPutFieldWord(guard, object, value);
         JitStackFrameOperation.removeSlots(2);
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$byte)
     public static void putfieldByte(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final byte value = (byte) JitStackFrameOperation.peekInt(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        byte value = (byte) JitStackFrameOperation.peekInt(0);
         resolveAndPutFieldByte(guard, object, value);
         JitStackFrameOperation.removeSlots(2);
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$char)
     public static void putfieldChar(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final char value = (char) JitStackFrameOperation.peekInt(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        char value = (char) JitStackFrameOperation.peekInt(0);
         resolveAndPutFieldChar(guard, object, value);
         JitStackFrameOperation.removeSlots(2);
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$double)
     public static void putfieldDouble(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(2);
-        final double value = JitStackFrameOperation.peekDouble(0);
+        Object object = JitStackFrameOperation.peekObject(2);
+        double value = JitStackFrameOperation.peekDouble(0);
         resolveAndPutFieldDouble(guard, object, value);
         JitStackFrameOperation.removeSlots(3);
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$float)
     public static void putfieldFloat(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final float value = JitStackFrameOperation.peekFloat(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        float value = JitStackFrameOperation.peekFloat(0);
         resolveAndPutFieldFloat(guard, object, value);
         JitStackFrameOperation.removeSlots(2);
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$int)
     public static void putfieldInt(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final int value = JitStackFrameOperation.peekInt(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        int value = JitStackFrameOperation.peekInt(0);
         resolveAndPutFieldInt(guard, object, value);
         JitStackFrameOperation.removeSlots(2);
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$long)
     public static void putfieldLong(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(2);
-        final long value = JitStackFrameOperation.peekLong(0);
+        Object object = JitStackFrameOperation.peekObject(2);
+        long value = JitStackFrameOperation.peekLong(0);
         resolveAndPutFieldLong(guard, object, value);
         JitStackFrameOperation.removeSlots(3);
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$short)
     public static void putfieldShort(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final short value = (short) JitStackFrameOperation.peekInt(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        short value = (short) JitStackFrameOperation.peekInt(0);
         resolveAndPutFieldShort(guard, object, value);
         JitStackFrameOperation.removeSlots(2);
     }
 
     @BYTECODE_TEMPLATE(PUTFIELD$boolean)
     public static void putfieldBoolean(ResolutionGuard guard) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final boolean value = UnsafeCast.asBoolean((byte) JitStackFrameOperation.peekInt(0));
+        Object object = JitStackFrameOperation.peekObject(1);
+        boolean value = UnsafeCast.asBoolean((byte) JitStackFrameOperation.peekInt(0));
         resolveAndPutFieldBoolean(guard, object, value);
         JitStackFrameOperation.removeSlots(2);
     }
@@ -805,7 +667,12 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(GETSTATIC$reference)
     public static void getstaticReference(ResolutionGuard guard) {
-        JitStackFrameOperation.pushReference(resolveAndGetStaticReference(guard));
+        JitStackFrameOperation.pushObject(resolveAndGetStaticReference(guard));
+    }
+
+    @BYTECODE_TEMPLATE(GETSTATIC$word)
+    public static void getstaticWord(ResolutionGuard guard) {
+        JitStackFrameOperation.pushWord(resolveAndGetStaticWord(guard));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$short)
@@ -850,7 +717,13 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(PUTSTATIC$reference)
     public static void putstaticReference(ResolutionGuard guard) {
-        resolveAndPutStaticReference(guard, JitStackFrameOperation.peekReference(0));
+        resolveAndPutStaticReference(guard, JitStackFrameOperation.peekObject(0));
+        JitStackFrameOperation.removeSlots(1);
+    }
+
+    @BYTECODE_TEMPLATE(PUTSTATIC$word)
+    public static void putstaticWord(ResolutionGuard guard) {
+        resolveAndPutStaticWord(guard, JitStackFrameOperation.peekWord(0));
         JitStackFrameOperation.removeSlots(1);
     }
 
@@ -866,54 +739,54 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(I2B)
     public static void i2b() {
-        final int value = JitStackFrameOperation.peekInt(0);
+        int value = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.pokeInt(0, (byte) value);
     }
 
     @BYTECODE_TEMPLATE(I2C)
     public static void i2c() {
-        final int value = JitStackFrameOperation.peekInt(0);
+        int value = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.pokeInt(0, (char) value);
     }
 
     @BYTECODE_TEMPLATE(I2F)
     public static void i2f() {
-        final int value = JitStackFrameOperation.peekInt(0);
+        int value = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.pokeFloat(0, value);
     }
 
     @BYTECODE_TEMPLATE(I2S)
     public static void i2s() {
-        final int value = JitStackFrameOperation.peekInt(0);
+        int value = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.pokeInt(0, (short) value);
     }
 
     @BYTECODE_TEMPLATE(I2L)
     public static void i2l() {
-        final int value = JitStackFrameOperation.peekInt(0);
+        int value = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeLong(0, value);
     }
 
     @BYTECODE_TEMPLATE(I2D)
     public static void i2d() {
-        final int value = JitStackFrameOperation.peekInt(0);
+        int value = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeDouble(0, value);
     }
 
     @BYTECODE_TEMPLATE(IADD)
     public static void iadd() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 + value2);
     }
 
     @BYTECODE_TEMPLATE(IALOAD)
     public static void iaload() {
-        final int index = JitStackFrameOperation.peekInt(0);
-        final Object array = JitStackFrameOperation.peekReference(1);
+        int index = JitStackFrameOperation.peekInt(0);
+        Object array = JitStackFrameOperation.peekObject(1);
         ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, ArrayAccess.getInt(array, index));
@@ -921,18 +794,18 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(IAND)
     public static void iand() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 & value2);
     }
 
     @BYTECODE_TEMPLATE(IASTORE)
     public static void iastore() {
-        final int index = JitStackFrameOperation.peekInt(1);
-        final Object array = JitStackFrameOperation.peekReference(2);
+        int index = JitStackFrameOperation.peekInt(1);
+        Object array = JitStackFrameOperation.peekObject(2);
         ArrayAccess.checkIndex(array, index);
-        final int value = JitStackFrameOperation.peekInt(0);
+        int value = JitStackFrameOperation.peekInt(0);
         ArrayAccess.setInt(array, index, value);
         JitStackFrameOperation.removeSlots(3);
     }
@@ -974,10 +847,26 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(IDIV)
     public static void idiv() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int divisor = JitStackFrameOperation.peekInt(0);
+        int dividend = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
-        JitStackFrameOperation.pokeInt(0, value1 / value2);
+        JitStackFrameOperation.pokeInt(0, dividend / divisor);
+    }
+
+    @BYTECODE_TEMPLATE(WDIV)
+    public static void wdiv() {
+        Address divisor = JitStackFrameOperation.peekWord(0).asAddress();
+        Address dividend = JitStackFrameOperation.peekWord(1).asAddress();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeWord(0, dividend.dividedBy(divisor));
+    }
+
+    @BYTECODE_TEMPLATE(WDIVI)
+    public static void wdivi() {
+        int divisor = JitStackFrameOperation.peekInt(0);
+        Address dividend = JitStackFrameOperation.peekWord(1).asAddress();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeWord(0, dividend.dividedBy(divisor));
     }
 
     @BYTECODE_TEMPLATE(IINC)
@@ -985,41 +874,16 @@ public final class BytecodeTemplateSource {
         JitStackFrameOperation.setLocalInt(dispToLocalSlot, JitStackFrameOperation.getLocalInt(dispToLocalSlot) + increment);
     }
 
-    @INLINE
-    public static void iload_(int dispToLocalSlot) {
-        final int value = JitStackFrameOperation.getLocalInt(dispToLocalSlot);
-        JitStackFrameOperation.pushInt(value);
-    }
-
     @BYTECODE_TEMPLATE(ILOAD)
     public static void iload(int dispToLocalSlot) {
-        iload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ILOAD_0)
-    public static void iload_0(int dispToLocalSlot) {
-        iload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ILOAD_1)
-    public static void iload_1(int dispToLocalSlot) {
-        iload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ILOAD_2)
-    public static void iload_2(int dispToLocalSlot) {
-        iload_(dispToLocalSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ILOAD_3)
-    public static void iload_3(int dispToLocalSlot) {
-        iload_(dispToLocalSlot);
+        int value = JitStackFrameOperation.getLocalInt(dispToLocalSlot);
+        JitStackFrameOperation.pushInt(value);
     }
 
     @BYTECODE_TEMPLATE(IMUL)
     public static void imul() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 * value2);
     }
@@ -1031,78 +895,78 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(INSTANCEOF)
     public static void instanceof_(ResolutionGuard guard) {
-        final ClassActor classActor = UnsafeCast.asClassActor(NoninlineTemplateRuntime.resolveClass(guard));
-        final Object object = JitStackFrameOperation.peekReference(0);
+        ClassActor classActor = UnsafeCast.asClassActor(NoninlineTemplateRuntime.resolveClass(guard));
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, UnsafeCast.asByte(Snippet.InstanceOf.instanceOf(classActor, object)));
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$void)
     public static void invokevirtualVoid(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$float)
     public static void invokevirtualFloat(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$long)
     public static void invokevirtualLong(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$double)
     public static void invokevirtualDouble(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$word)
     public static void invokevirtualWord(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectVirtualMethod(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$void)
     public static void invokeinterfaceVoid(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$float)
     public static void invokeinterfaceFloat(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$long)
     public static void invokeinterfaceLong(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$double)
     public static void invokeinterfaceDouble(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$word)
     public static void invokeinterfaceWord(ResolutionGuard guard, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = resolveAndSelectInterfaceMethod(guard, receiver);
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
@@ -1158,18 +1022,34 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(IOR)
     public static void ior() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 | value2);
     }
 
     @BYTECODE_TEMPLATE(IREM)
     public static void irem() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 % value2);
+    }
+
+    @BYTECODE_TEMPLATE(WREM)
+    public static void wrem() {
+        Address divisor = JitStackFrameOperation.peekWord(0).asAddress();
+        Address dividend = JitStackFrameOperation.peekWord(1).asAddress();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeWord(0, dividend.remainder(divisor));
+    }
+
+    @BYTECODE_TEMPLATE(WREMI)
+    public static void wremi() {
+        int divisor = JitStackFrameOperation.peekInt(0);
+        Address dividend = JitStackFrameOperation.peekWord(1).asAddress();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, dividend.remainder(divisor));
     }
 
     @BYTECODE_TEMPLATE(IRETURN)
@@ -1179,70 +1059,45 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(ISHL)
     public static void ishl() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 << value2);
     }
 
     @BYTECODE_TEMPLATE(ISHR)
     public static void ishr() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 >> value2);
     }
 
-    @INLINE
-    private static void istore_(int displacementToSlot) {
-        JitStackFrameOperation.setLocalInt(displacementToSlot, JitStackFrameOperation.popInt());
-    }
-
     @BYTECODE_TEMPLATE(ISTORE)
     public static void istore(int displacementToSlot) {
-        istore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ISTORE_0)
-    public static void istore_0(int displacementToSlot) {
-        istore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ISTORE_1)
-    public static void istore_1(int displacementToSlot) {
-        istore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ISTORE_2)
-    public static void istore_2(int displacementToSlot) {
-        istore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(ISTORE_3)
-    public static void istore_3(int displacementToSlot) {
-        istore_(displacementToSlot);
+        JitStackFrameOperation.setLocalInt(displacementToSlot, JitStackFrameOperation.popInt());
     }
 
     @BYTECODE_TEMPLATE(ISUB)
     public static void isub() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 - value2);
     }
 
     @BYTECODE_TEMPLATE(IUSHR)
     public static void iushr() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 >>> value2);
     }
 
     @BYTECODE_TEMPLATE(IXOR)
     public static void ixor() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, value1 ^ value2);
     }
@@ -1259,9 +1114,9 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(LDC$reference)
     public static void unresolved_class_ldc(ResolutionGuard guard) {
-        final ClassActor classActor = NoninlineTemplateRuntime.resolveClass(guard);
-        final Object mirror = NoninlineTemplateRuntime.getClassMirror(classActor);
-        JitStackFrameOperation.pushReference(mirror);
+        ClassActor classActor = NoninlineTemplateRuntime.resolveClass(guard);
+        Object mirror = NoninlineTemplateRuntime.getClassMirror(classActor);
+        JitStackFrameOperation.pushObject(mirror);
     }
 
     @BYTECODE_TEMPLATE(LDC$long)
@@ -1276,119 +1131,89 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(L2D)
     public static void l2d() {
-        final long value = JitStackFrameOperation.peekLong(0);
+        long value = JitStackFrameOperation.peekLong(0);
         JitStackFrameOperation.pokeDouble(0, value);
     }
 
     @BYTECODE_TEMPLATE(L2F)
     public static void l2f() {
-        final long value = JitStackFrameOperation.peekLong(0);
+        long value = JitStackFrameOperation.peekLong(0);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeFloat(0, value);
     }
 
     @BYTECODE_TEMPLATE(L2I)
     public static void l2i() {
-        final long value = JitStackFrameOperation.peekLong(0);
+        long value = JitStackFrameOperation.peekLong(0);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, (int) value);
     }
 
     @BYTECODE_TEMPLATE(LADD)
     public static void ladd() {
-        final long value2 = JitStackFrameOperation.peekLong(0);
-        final long value1 = JitStackFrameOperation.peekLong(2);
+        long value2 = JitStackFrameOperation.peekLong(0);
+        long value1 = JitStackFrameOperation.peekLong(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeLong(0, value1 + value2);
     }
 
     @BYTECODE_TEMPLATE(LALOAD)
     public static void laload() {
-        final int index = JitStackFrameOperation.peekInt(0);
-        final Object array = JitStackFrameOperation.peekReference(1);
+        int index = JitStackFrameOperation.peekInt(0);
+        Object array = JitStackFrameOperation.peekObject(1);
         ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.pokeLong(0, ArrayAccess.getLong(array, index));
     }
 
     @BYTECODE_TEMPLATE(LAND)
     public static void land() {
-        final long value2 = JitStackFrameOperation.peekLong(0);
-        final long value1 = JitStackFrameOperation.peekLong(2);
+        long value2 = JitStackFrameOperation.peekLong(0);
+        long value1 = JitStackFrameOperation.peekLong(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeLong(0, value1 & value2);
     }
 
     @BYTECODE_TEMPLATE(LASTORE)
     public static void lastore() {
-        final int index = JitStackFrameOperation.peekInt(2);
-        final Object array = JitStackFrameOperation.peekReference(3);
+        int index = JitStackFrameOperation.peekInt(2);
+        Object array = JitStackFrameOperation.peekObject(3);
         ArrayAccess.checkIndex(array, index);
-        final long value = JitStackFrameOperation.peekLong(0);
+        long value = JitStackFrameOperation.peekLong(0);
         ArrayAccess.setLong(array, index, value);
         JitStackFrameOperation.removeSlots(4);
     }
 
     @BYTECODE_TEMPLATE(LCMP)
     public static void lcmp() {
-        final long value2 = JitStackFrameOperation.peekLong(0);
-        final long value1 = JitStackFrameOperation.peekLong(2);
-        final int result = JavaBuiltin.LongCompare.longCompare(value1, value2);
+        long value2 = JitStackFrameOperation.peekLong(0);
+        long value1 = JitStackFrameOperation.peekLong(2);
+        int result = JavaBuiltin.LongCompare.longCompare(value1, value2);
         JitStackFrameOperation.removeSlots(3);
         JitStackFrameOperation.pokeInt(0, result);
     }
 
-    @BYTECODE_TEMPLATE(LCONST_0)
-    public static void lconst_0(long zero) {
-        JitStackFrameOperation.pushLong(zero);
-    }
-
-    @BYTECODE_TEMPLATE(LCONST_1)
-    public static void lconst_1(long one) {
-        JitStackFrameOperation.pushLong(one);
-    }
-
-    @INLINE
-    private static void lload_(int displacementToSlot) {
-        JitStackFrameOperation.pushLong(JitStackFrameOperation.getLocalLong(displacementToSlot));
+    @BYTECODE_TEMPLATE(LCONST)
+    public static void lconst(long constant) {
+        JitStackFrameOperation.pushLong(constant);
     }
 
     @BYTECODE_TEMPLATE(LLOAD)
     public static void lload(int displacementToSlot) {
-        lload_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(LLOAD_0)
-    public static void lload_0(int displacementToSlot) {
-        lload_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(LLOAD_1)
-    public static void lload_1(int displacementToSlot) {
-        lload_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(LLOAD_2)
-    public static void lload_2(int displacementToSlot) {
-        lload_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(LLOAD_3)
-    public static void lload_3(int displacementToSlot) {
-        lload_(displacementToSlot);
+        JitStackFrameOperation.pushLong(JitStackFrameOperation.getLocalLong(displacementToSlot));
     }
 
     @BYTECODE_TEMPLATE(LDIV)
     public static void ldiv() {
-        final long value2 = JitStackFrameOperation.peekLong(0);
-        final long value1 = JitStackFrameOperation.peekLong(2);
+        long divisor = JitStackFrameOperation.peekLong(0);
+        long dividend = JitStackFrameOperation.peekLong(2);
         JitStackFrameOperation.removeSlots(2);
-        JitStackFrameOperation.pokeLong(0, value1 / value2);
+        JitStackFrameOperation.pokeLong(0, dividend / divisor);
     }
 
     @BYTECODE_TEMPLATE(LMUL)
     public static void lmul() {
-        final long value2 = JitStackFrameOperation.peekLong(0);
-        final long value1 = JitStackFrameOperation.peekLong(2);
+        long value2 = JitStackFrameOperation.peekLong(0);
+        long value1 = JitStackFrameOperation.peekLong(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeLong(0, value1 * value2);
     }
@@ -1400,16 +1225,16 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(LOR)
     public static void lor() {
-        final long value2 = JitStackFrameOperation.peekLong(0);
-        final long value1 = JitStackFrameOperation.peekLong(2);
+        long value2 = JitStackFrameOperation.peekLong(0);
+        long value1 = JitStackFrameOperation.peekLong(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeLong(0, value1 | value2);
     }
 
     @BYTECODE_TEMPLATE(LREM)
     public static void lrem() {
-        final long value2 = JitStackFrameOperation.peekLong(0);
-        final long value1 = JitStackFrameOperation.peekLong(2);
+        long value2 = JitStackFrameOperation.peekLong(0);
+        long value1 = JitStackFrameOperation.peekLong(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeLong(0, value1 % value2);
     }
@@ -1421,113 +1246,88 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(LSHL)
     public static void lshl() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final long value1 = JitStackFrameOperation.peekLong(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        long value1 = JitStackFrameOperation.peekLong(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeLong(0, value1 << value2);
     }
 
     @BYTECODE_TEMPLATE(LSHR)
     public static void lshr() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final long value1 = JitStackFrameOperation.peekLong(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        long value1 = JitStackFrameOperation.peekLong(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeLong(0, value1 >> value2);
     }
 
-    @INLINE
-    private static void lstore_(int displacementToSlot) {
-        JitStackFrameOperation.setLocalLong(displacementToSlot, JitStackFrameOperation.popLong());
-    }
-
     @BYTECODE_TEMPLATE(LSTORE)
     public static void lstor(int displacementToSlot) {
-        lstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(LSTORE_0)
-    public static void lstore_0(int displacementToSlot) {
-        lstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(LSTORE_1)
-    public static void lstore_1(int displacementToSlot) {
-        lstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(LSTORE_2)
-    public static void lstore_2(int displacementToSlot) {
-        lstore_(displacementToSlot);
-    }
-
-    @BYTECODE_TEMPLATE(LSTORE_3)
-    public static void lstore_3(int displacementToSlot) {
-        lstore_(displacementToSlot);
+        JitStackFrameOperation.setLocalLong(displacementToSlot, JitStackFrameOperation.popLong());
     }
 
     @BYTECODE_TEMPLATE(LSUB)
     public static void lsub() {
-        final long value2 = JitStackFrameOperation.peekLong(0);
-        final long value1 = JitStackFrameOperation.peekLong(2);
+        long value2 = JitStackFrameOperation.peekLong(0);
+        long value1 = JitStackFrameOperation.peekLong(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeLong(0, value1 - value2);
     }
 
     @BYTECODE_TEMPLATE(LUSHR)
     public static void lushr() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final long value1 = JitStackFrameOperation.peekLong(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        long value1 = JitStackFrameOperation.peekLong(1);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeLong(0, value1 >>> value2);
     }
 
     @BYTECODE_TEMPLATE(LXOR)
     public static void lxor() {
-        final long value2 = JitStackFrameOperation.peekLong(0);
-        final long value1 = JitStackFrameOperation.peekLong(2);
+        long value2 = JitStackFrameOperation.peekLong(0);
+        long value1 = JitStackFrameOperation.peekLong(2);
         JitStackFrameOperation.removeSlots(2);
         JitStackFrameOperation.pokeLong(0, value1 ^ value2);
     }
 
     @BYTECODE_TEMPLATE(MONITORENTER)
     public static void monitorenter() {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         Monitor.noninlineEnter(object);
         JitStackFrameOperation.removeSlots(1);
     }
 
     @BYTECODE_TEMPLATE(MONITOREXIT)
     public static void monitorexit() {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         Monitor.noninlineExit(object);
         JitStackFrameOperation.removeSlots(1);
     }
 
     @BYTECODE_TEMPLATE(MULTIANEWARRAY)
     public static void multianewarray(ResolutionGuard guard, int[] lengthsShared) {
-        final ClassActor arrayClassActor = NoninlineTemplateRuntime.resolveClass(guard);
+        ClassActor arrayClassActor = NoninlineTemplateRuntime.resolveClass(guard);
 
         // Need to use an unsafe cast to remove the checkcast inserted by javac as that causes this
         // template to have a reference literal in its compiled form.
-        final int[] lengths = UnsafeCast.asIntArray(lengthsShared.clone());
-        final int numberOfDimensions = lengths.length;
+        int[] lengths = UnsafeCast.asIntArray(lengthsShared.clone());
+        int numberOfDimensions = lengths.length;
 
         for (int i = 1; i <= numberOfDimensions; i++) {
-            final int length = JitStackFrameOperation.popInt();
+            int length = JitStackFrameOperation.popInt();
             Snippet.CheckArrayDimension.checkArrayDimension(length);
             ArrayAccess.setInt(lengths, numberOfDimensions - i, length);
         }
-        JitStackFrameOperation.pushReference(CreateMultiReferenceArray.createMultiReferenceArray(arrayClassActor, lengths));
+        JitStackFrameOperation.pushObject(CreateMultiReferenceArray.createMultiReferenceArray(arrayClassActor, lengths));
     }
 
     @BYTECODE_TEMPLATE(NEW)
     public static void new_(ResolutionGuard guard) {
-        JitStackFrameOperation.pushReference(resolveClassForNewAndCreate(guard));
+        JitStackFrameOperation.pushObject(resolveClassForNewAndCreate(guard));
     }
 
     @BYTECODE_TEMPLATE(NEWARRAY)
     public static void newarray(Kind kind) {
-        final int length = JitStackFrameOperation.peekInt(0);
+        int length = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.pokeReference(0, CreatePrimitiveArray.noninlineCreatePrimitiveArray(kind, length));
     }
 
@@ -1553,8 +1353,8 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(SALOAD)
     public static void saload() {
-        final int index = JitStackFrameOperation.peekInt(0);
-        final Object array = JitStackFrameOperation.peekReference(1);
+        int index = JitStackFrameOperation.peekInt(0);
+        Object array = JitStackFrameOperation.peekObject(1);
         ArrayAccess.checkIndex(array, index);
         JitStackFrameOperation.removeSlots(1);
         JitStackFrameOperation.pokeInt(0, ArrayAccess.getShort(array, index));
@@ -1562,9 +1362,9 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(SASTORE)
     public static void sastore() {
-        final short value = (short) JitStackFrameOperation.peekInt(0);
-        final int index = JitStackFrameOperation.peekInt(1);
-        final Object array = JitStackFrameOperation.peekReference(2);
+        short value = (short) JitStackFrameOperation.peekInt(0);
+        int index = JitStackFrameOperation.peekInt(1);
+        Object array = JitStackFrameOperation.peekObject(2);
         ArrayAccess.checkIndex(array, index);
         ArrayAccess.setShort(array, index, value);
         JitStackFrameOperation.removeSlots(3);
@@ -1577,8 +1377,8 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(SWAP)
     public static void swap() {
-        final Word value0 = JitStackFrameOperation.peekWord(0);
-        final Word value1 = JitStackFrameOperation.peekWord(1);
+        Word value0 = JitStackFrameOperation.peekWord(0);
+        Word value1 = JitStackFrameOperation.peekWord(1);
         JitStackFrameOperation.pokeWord(0, value1);
         JitStackFrameOperation.pokeWord(1, value0);
     }
@@ -1600,15 +1400,15 @@ public final class BytecodeTemplateSource {
 
     @INLINE
     private static void acmp0_prefix() {
-        final Object value = JitStackFrameOperation.peekReference(0);
+        Object value = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.removeSlots(1);
         SpecialBuiltin.compareWords(toWord(value), Address.zero());
     }
 
     @INLINE
     private static void icmp_prefix() {
-        final int value2 = JitStackFrameOperation.peekInt(0);
-        final int value1 = JitStackFrameOperation.peekInt(1);
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
         JitStackFrameOperation.removeSlots(2);
         SpecialBuiltin.compareInts(value1, value2);
     }
@@ -1618,8 +1418,8 @@ public final class BytecodeTemplateSource {
 
     @INLINE
     private static void acmp_prefix() {
-        final Object value2 = JitStackFrameOperation.peekReference(0);
-        final Object value1 = JitStackFrameOperation.peekReference(1);
+        Object value2 = JitStackFrameOperation.peekObject(0);
+        Object value1 = JitStackFrameOperation.peekObject(1);
         JitStackFrameOperation.removeSlots(2);
         SpecialBuiltin.compareWords(toWord(value1), toWord(value2));
     }
@@ -1708,7 +1508,7 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(NEW$init)
     public static void new_(ClassActor classActor) {
-        JitStackFrameOperation.pushReference(NoninlineTemplateRuntime.noninlineNew(classActor));
+        JitStackFrameOperation.pushObject(NoninlineTemplateRuntime.noninlineNew(classActor));
     }
 
     @BYTECODE_TEMPLATE(INVOKESTATIC$void$init)
@@ -1768,7 +1568,12 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(GETSTATIC$reference$init)
     public static void getstaticReference(Object staticTuple, int offset) {
-        JitStackFrameOperation.pushReference(TupleAccess.readObject(staticTuple, offset));
+        JitStackFrameOperation.pushObject(TupleAccess.readObject(staticTuple, offset));
+    }
+
+    @BYTECODE_TEMPLATE(GETSTATIC$word$init)
+    public static void getstaticWord(Object staticTuple, int offset) {
+        JitStackFrameOperation.pushWord(TupleAccess.readWord(staticTuple, offset));
     }
 
     @BYTECODE_TEMPLATE(GETSTATIC$short$init)
@@ -1783,56 +1588,63 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(PUTSTATIC$byte$init)
     public static void putstaticByte(Object staticTuple, int offset) {
-        final byte value = (byte) JitStackFrameOperation.popInt();
+        byte value = (byte) JitStackFrameOperation.popInt();
         TupleAccess.writeByte(staticTuple, offset, value);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$char$init)
     public static void putstaticChar(Object staticTuple, int offset) {
-        final char value = (char) JitStackFrameOperation.popInt();
+        char value = (char) JitStackFrameOperation.popInt();
         TupleAccess.writeChar(staticTuple, offset, value);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$double$init)
     public static void putstaticDouble(Object staticTuple, int offset) {
-        final double value = JitStackFrameOperation.popDouble();
+        double value = JitStackFrameOperation.popDouble();
         TupleAccess.writeDouble(staticTuple, offset, value);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$float$init)
     public static void putstaticFloat(Object staticTuple, int offset) {
-        final float value = JitStackFrameOperation.popFloat();
+        float value = JitStackFrameOperation.popFloat();
         TupleAccess.writeFloat(staticTuple, offset, value);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$int$init)
     public static void putstaticInt(Object staticTuple, int offset) {
-        final int value = JitStackFrameOperation.popInt();
+        int value = JitStackFrameOperation.popInt();
         TupleAccess.writeInt(staticTuple, offset, value);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$long$init)
     public static void putstaticLong(Object staticTuple, int offset) {
-        final long value = JitStackFrameOperation.popLong();
+        long value = JitStackFrameOperation.popLong();
         TupleAccess.writeLong(staticTuple, offset, value);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$reference$init)
     public static void putstaticReference(Object staticTuple, int offset) {
-        final Object value = JitStackFrameOperation.peekReference(0);
+        Object value = JitStackFrameOperation.peekObject(0);
         TupleAccess.noninlineWriteObject(staticTuple, offset, value);
+        JitStackFrameOperation.removeSlots(1);
+    }
+
+    @BYTECODE_TEMPLATE(PUTSTATIC$word$init)
+    public static void putstaticWord(Object staticTuple, int offset) {
+        Word value = JitStackFrameOperation.peekWord(0);
+        TupleAccess.writeWord(staticTuple, offset, value);
         JitStackFrameOperation.removeSlots(1);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$short$init)
     public static void putstaticShort(Object staticTuple, int offset) {
-        final short value = (short) JitStackFrameOperation.popInt();
+        short value = (short) JitStackFrameOperation.popInt();
         TupleAccess.writeShort(staticTuple, offset, value);
     }
 
     @BYTECODE_TEMPLATE(PUTSTATIC$boolean$init)
     public static void putstaticBoolean(Object staticTuple, int offset) {
-        final boolean value = UnsafeCast.asBoolean((byte) JitStackFrameOperation.popInt());
+        boolean value = UnsafeCast.asBoolean((byte) JitStackFrameOperation.popInt());
         TupleAccess.writeBoolean(staticTuple, offset, value);
     }
 
@@ -1840,23 +1652,23 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(LDC$reference$resolved)
     public static void rldc(Object value) {
-        JitStackFrameOperation.pushReference(value);
+        JitStackFrameOperation.pushObject(value);
     }
 
     @BYTECODE_TEMPLATE(CHECKCAST$resolved)
     public static void checkcast(ClassActor classActor) {
-        Snippet.CheckCast.checkCast(classActor, JitStackFrameOperation.peekReference(0));
+        Snippet.CheckCast.checkCast(classActor, JitStackFrameOperation.peekObject(0));
     }
 
     @BYTECODE_TEMPLATE(INSTANCEOF$resolved)
     public static void instanceof_(ClassActor classActor) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, UnsafeCast.asByte(Snippet.InstanceOf.instanceOf(classActor, object)));
     }
 
     @BYTECODE_TEMPLATE(ANEWARRAY$resolved)
     public static void anewarray(ArrayClassActor arrayClassActor) {
-        final int length = JitStackFrameOperation.peekInt(0);
+        int length = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.pokeReference(0, CreateReferenceArray.noninlineCreateReferenceArray(arrayClassActor, length));
     }
 
@@ -1864,154 +1676,154 @@ public final class BytecodeTemplateSource {
     public static void multianewarray(ArrayClassActor arrayClassActor, int[] lengthsShared) {
         // Need to use an unsafe cast to remove the checkcast inserted by javac as that causes this
         // template to have a reference literal in its compiled form.
-        final int[] lengths = UnsafeCast.asIntArray(lengthsShared.clone());
-        final int numberOfDimensions = lengths.length;
+        int[] lengths = UnsafeCast.asIntArray(lengthsShared.clone());
+        int numberOfDimensions = lengths.length;
         for (int i = 1; i <= numberOfDimensions; i++) {
-            final int length = JitStackFrameOperation.popInt();
+            int length = JitStackFrameOperation.popInt();
             Snippet.CheckArrayDimension.checkArrayDimension(length);
             ArrayAccess.setInt(lengths, numberOfDimensions - i, length);
         }
-        JitStackFrameOperation.pushReference(CreateMultiReferenceArray.createMultiReferenceArray(arrayClassActor, lengths));
+        JitStackFrameOperation.pushObject(CreateMultiReferenceArray.createMultiReferenceArray(arrayClassActor, lengths));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$reference$resolved)
     public static void getfieldReference(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeReference(0, TupleAccess.readObject(object, offset));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$word$resolved)
     public static void getfieldWord(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeWord(0, TupleAccess.readWord(object, offset));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$byte$resolved)
     public static void getfieldByte(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, TupleAccess.readByte(object, offset));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$char$resolved)
     public static void getfieldChar(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, TupleAccess.readChar(object, offset));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$double$resolved)
     public static void getfieldDouble(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeDouble(0, TupleAccess.readDouble(object, offset));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$float$resolved)
     public static void getfieldFloat(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeFloat(0, TupleAccess.readFloat(object, offset));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$int$resolved)
     public static void getfieldInt(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, TupleAccess.readInt(object, offset));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$long$resolved)
     public static void getfieldLong(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeLong(0, TupleAccess.readLong(object, offset));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$short$resolved)
     public static void getfieldShort(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, TupleAccess.readShort(object, offset));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.GETFIELD$boolean$resolved)
     public static void getfieldBoolean(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.pokeInt(0, UnsafeCast.asByte(TupleAccess.readBoolean(object, offset)));
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$reference$resolved)
     public static void putfieldReference(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final Object value = JitStackFrameOperation.peekReference(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        Object value = JitStackFrameOperation.peekObject(0);
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.noninlineWriteObject(object, offset, value);
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$word$resolved)
     public static void putfieldWord(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final Word value = JitStackFrameOperation.peekWord(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        Word value = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeWord(object, offset, value);
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$byte$resolved)
     public static void putfieldByte(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final byte value = (byte) JitStackFrameOperation.peekInt(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        byte value = (byte) JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeByte(object, offset, value);
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$char$resolved)
     public static void putfieldChar(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final char value = (char) JitStackFrameOperation.peekInt(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        char value = (char) JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeChar(object, offset, value);
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$double$resolved)
     public static void putfieldDouble(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(2);
-        final double value = JitStackFrameOperation.peekDouble(0);
+        Object object = JitStackFrameOperation.peekObject(2);
+        double value = JitStackFrameOperation.peekDouble(0);
         JitStackFrameOperation.removeSlots(3);
         TupleAccess.writeDouble(object, offset, value);
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$float$resolved)
     public static void putfieldFloat(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final float value = JitStackFrameOperation.peekFloat(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        float value = JitStackFrameOperation.peekFloat(0);
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeFloat(object, offset, value);
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$int$resolved)
     public static void putfieldInt(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final int value = JitStackFrameOperation.peekInt(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        int value = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeInt(object, offset, value);
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$long$resolved)
     public static void putfieldLong(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(2);
-        final long value = JitStackFrameOperation.peekLong(0);
+        Object object = JitStackFrameOperation.peekObject(2);
+        long value = JitStackFrameOperation.peekLong(0);
         JitStackFrameOperation.removeSlots(3);
         TupleAccess.writeLong(object, offset, value);
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$short$resolved)
     public static void putfieldShort(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final short value = (short) JitStackFrameOperation.peekInt(0);
+        Object object = JitStackFrameOperation.peekObject(1);
+        short value = (short) JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeShort(object, offset, value);
     }
 
     @BYTECODE_TEMPLATE(BytecodeTemplate.PUTFIELD$boolean$resolved)
     public static void putfieldBoolean(int offset) {
-        final Object object = JitStackFrameOperation.peekReference(1);
-        final boolean value = UnsafeCast.asBoolean((byte) JitStackFrameOperation.peekInt(0));
+        Object object = JitStackFrameOperation.peekObject(1);
+        boolean value = UnsafeCast.asBoolean((byte) JitStackFrameOperation.peekInt(0));
         JitStackFrameOperation.removeSlots(2);
         TupleAccess.writeBoolean(object, offset, value);
     }
@@ -2043,75 +1855,75 @@ public final class BytecodeTemplateSource {
      */
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$void$resolved)
     public static void invokevirtual(int vTableIndex, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$float$resolved)
     public static void invokevirtualReturnFloat(int vTableIndex, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$long$resolved)
     public static void invokevirtualLong(int vTableIndex, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$double$resolved)
     public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$word$resolved)
     public static void invokevirtualWord(int vTableIndex, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$void$resolved)
     public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$float$resolved)
     public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$long$resolved)
     public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$double$resolved)
     public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$word$resolved)
     public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
@@ -2149,87 +1961,704 @@ public final class BytecodeTemplateSource {
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$void$instrumented)
     public static void invokevirtual(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallVoid(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$float$instrumented)
     public static void invokevirtualReturnFloat(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallFloat(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$long$instrumented)
     public static void invokevirtualLong(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallLong(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$double$instrumented)
     public static void invokevirtualDouble(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallDouble(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEVIRTUAL$word$instrumented)
     public static void invokevirtualWord(int vTableIndex, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallWord(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$void$instrumented)
     public static void invokeinterface(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallVoid(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$float$instrumented)
     public static void invokeinterfaceFloat(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallFloat(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$long$instrumented)
     public static void invokeinterfaceLong(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallLong(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$double$instrumented)
     public static void invokeinterfaceDouble(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallDouble(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @BYTECODE_TEMPLATE(INVOKEINTERFACE$word$instrumented)
     public static void invokeinterfaceWord(InterfaceMethodActor interfaceMethodActor, int receiverStackIndex, MethodProfile mpo, int mpoIndex) {
-        final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
+        Object receiver = JitStackFrameOperation.peekObject(receiverStackIndex);
+        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor, mpo, mpoIndex);
         JitStackFrameOperation.indirectCallWord(entryPoint, VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
-    private static Address selectVirtualMethod(final Object receiver, int vTableIndex, MethodProfile mpo, int mpoIndex) {
-        final Hub hub = ObjectAccess.readHub(receiver);
-        final Address entryPoint = hub.getWord(vTableIndex).asAddress();
+    private static Address selectVirtualMethod(Object receiver, int vTableIndex, MethodProfile mpo, int mpoIndex) {
+        Hub hub = ObjectAccess.readHub(receiver);
+        Address entryPoint = hub.getWord(vTableIndex).asAddress();
         MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }
 
     @INLINE
-    private static Address selectInterfaceMethod(final Object receiver, InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex) {
-        final Hub hub = ObjectAccess.readHub(receiver);
-        final Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+    private static Address selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex) {
+        Hub hub = ObjectAccess.readHub(receiver);
+        Address entryPoint = SelectInterfaceMethod.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
         MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_BYTE)
+    public static void pread_byte() {
+        Offset off = JitStackFrameOperation.peekWord(0).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, ptr.readByte(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_CHAR)
+    public static void pread_char() {
+        Offset off = JitStackFrameOperation.peekWord(0).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, ptr.readChar(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_SHORT)
+    public static void pread_short() {
+        Offset off = JitStackFrameOperation.peekWord(0).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, ptr.readShort(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_INT)
+    public static void pread_int() {
+        Offset off = JitStackFrameOperation.peekWord(0).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, ptr.readInt(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_FLOAT)
+    public static void pread_float() {
+        Offset off = JitStackFrameOperation.peekWord(0).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeFloat(0, ptr.readFloat(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_LONG)
+    public static void pread_long() {
+        Offset off = JitStackFrameOperation.peekWord(0).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.pokeLong(0, ptr.readLong(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_DOUBLE)
+    public static void pread_double() {
+        Offset off = JitStackFrameOperation.peekWord(0).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.pokeDouble(0, ptr.readDouble(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_WORD)
+    public static void pread_word() {
+        Offset off = JitStackFrameOperation.peekWord(0).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeWord(0, ptr.readWord(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_REFERENCE)
+    public static void pread_reference() {
+        Offset off = JitStackFrameOperation.peekWord(0).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeReference(0, ptr.readReference(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_BYTE_I)
+    public static void pread_byte_i() {
+        int off = JitStackFrameOperation.peekInt(0);
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, ptr.readByte(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_CHAR_I)
+    public static void pread_char_i() {
+        int off = JitStackFrameOperation.peekInt(0);
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, ptr.readChar(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_SHORT_I)
+    public static void pread_short_i() {
+        int off = JitStackFrameOperation.peekInt(0);
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, ptr.readShort(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_INT_I)
+    public static void pread_int_i() {
+        int off = JitStackFrameOperation.peekInt(0);
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, ptr.readInt(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_FLOAT_I)
+    public static void pread_float_i() {
+        int off = JitStackFrameOperation.peekInt(0);
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeFloat(0, ptr.readFloat(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_LONG_I)
+    public static void pread_long_i() {
+        int off = JitStackFrameOperation.peekInt(0);
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.pokeLong(0, ptr.readLong(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_DOUBLE_I)
+    public static void pread_double_i() {
+        int off = JitStackFrameOperation.peekInt(0);
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.pokeDouble(0, ptr.readDouble(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_WORD_I)
+    public static void pread_word_i() {
+        int off = JitStackFrameOperation.peekInt(0);
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeWord(0, ptr.readWord(off));
+    }
+
+    @BYTECODE_TEMPLATE(PREAD_REFERENCE_I)
+    public static void pread_reference_i() {
+        int off = JitStackFrameOperation.peekInt(0);
+        Pointer ptr = JitStackFrameOperation.peekWord(1).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeReference(0, ptr.readReference(off));
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_BYTE)
+    public static void pwrite_byte() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        Offset off = JitStackFrameOperation.peekWord(1).asOffset();
+        byte value = (byte) JitStackFrameOperation.peekInt(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeByte(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_SHORT)
+    public static void pwrite_short() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        Offset off = JitStackFrameOperation.peekWord(1).asOffset();
+        short value = (short) JitStackFrameOperation.peekInt(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeShort(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_INT)
+    public static void pwrite_int() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        Offset off = JitStackFrameOperation.peekWord(1).asOffset();
+        int value = JitStackFrameOperation.peekInt(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeInt(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_FLOAT)
+    public static void pwrite_float() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        Offset off = JitStackFrameOperation.peekWord(1).asOffset();
+        float value = JitStackFrameOperation.peekFloat(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeFloat(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_LONG)
+    public static void pwrite_long() {
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        Offset off = JitStackFrameOperation.peekWord(2).asOffset();
+        long value = JitStackFrameOperation.peekLong(0);
+        JitStackFrameOperation.removeSlots(4);
+        ptr.writeLong(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_DOUBLE)
+    public static void pwrite_double() {
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        Offset off = JitStackFrameOperation.peekWord(2).asOffset();
+        double value = JitStackFrameOperation.peekDouble(0);
+        JitStackFrameOperation.removeSlots(4);
+        ptr.writeDouble(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_WORD)
+    public static void pwrite_word() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        Offset off = JitStackFrameOperation.peekWord(1).asOffset();
+        Word value = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeWord(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_REFERENCE)
+    public static void pwrite_reference() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        Offset off = JitStackFrameOperation.peekWord(1).asOffset();
+        Reference value = JitStackFrameOperation.peekReference(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeReference(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_BYTE_I)
+    public static void pwrite_byte_i() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        int off = JitStackFrameOperation.peekInt(1);
+        byte value = (byte) JitStackFrameOperation.peekInt(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeByte(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_SHORT_I)
+    public static void pwrite_short_i() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        int off = JitStackFrameOperation.peekInt(1);
+        short value = (short) JitStackFrameOperation.peekInt(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeShort(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_INT_I)
+    public static void pwrite_int_i() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        int off = JitStackFrameOperation.peekInt(1);
+        int value = JitStackFrameOperation.peekInt(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeInt(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_FLOAT_I)
+    public static void pwrite_float_i() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        int off = JitStackFrameOperation.peekInt(1);
+        float value = JitStackFrameOperation.peekFloat(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeFloat(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_LONG_I)
+    public static void pwrite_long_i() {
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        int off = JitStackFrameOperation.peekInt(2);
+        long value = JitStackFrameOperation.peekLong(0);
+        JitStackFrameOperation.removeSlots(4);
+        ptr.writeLong(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_DOUBLE_I)
+    public static void pwrite_double_i() {
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        int off = JitStackFrameOperation.peekInt(2);
+        double value = JitStackFrameOperation.peekDouble(0);
+        JitStackFrameOperation.removeSlots(4);
+        ptr.writeDouble(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_WORD_I)
+    public static void pwrite_word_i() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        int off = JitStackFrameOperation.peekInt(1);
+        Word value = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeWord(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PWRITE_REFERENCE_I)
+    public static void pwrite_reference_i() {
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        int off = JitStackFrameOperation.peekInt(1);
+        Reference value = JitStackFrameOperation.peekReference(0);
+        JitStackFrameOperation.removeSlots(3);
+        ptr.writeReference(off, value);
+    }
+
+    @BYTECODE_TEMPLATE(PGET_BYTE)
+    public static void pget_byte() {
+        int index = JitStackFrameOperation.peekInt(0);
+        int disp = JitStackFrameOperation.peekInt(1);
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        JitStackFrameOperation.removeSlots(2);
+        JitStackFrameOperation.pokeInt(0, ptr.getByte(disp, index));
+    }
+
+    @BYTECODE_TEMPLATE(PGET_SHORT)
+    public static void pget_short() {
+        int index = JitStackFrameOperation.peekInt(0);
+        int disp = JitStackFrameOperation.peekInt(1);
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        JitStackFrameOperation.removeSlots(2);
+        JitStackFrameOperation.pokeInt(0, ptr.getShort(disp, index));
+    }
+
+    @BYTECODE_TEMPLATE(PGET_CHAR)
+    public static void pget_char() {
+        int index = JitStackFrameOperation.peekInt(0);
+        int disp = JitStackFrameOperation.peekInt(1);
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        JitStackFrameOperation.removeSlots(2);
+        JitStackFrameOperation.pokeInt(0, ptr.getChar(disp, index));
+    }
+
+    @BYTECODE_TEMPLATE(PGET_INT)
+    public static void pget_int() {
+        int index = JitStackFrameOperation.peekInt(0);
+        int disp = JitStackFrameOperation.peekInt(1);
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        JitStackFrameOperation.removeSlots(2);
+        JitStackFrameOperation.pokeInt(0, ptr.getInt(disp, index));
+    }
+
+    @BYTECODE_TEMPLATE(PGET_FLOAT)
+    public static void pget_float() {
+        int index = JitStackFrameOperation.peekInt(0);
+        int disp = JitStackFrameOperation.peekInt(1);
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        JitStackFrameOperation.removeSlots(2);
+        JitStackFrameOperation.pokeFloat(0, ptr.getFloat(disp, index));
+    }
+
+    @BYTECODE_TEMPLATE(PGET_LONG)
+    public static void pget_long() {
+        int index = JitStackFrameOperation.peekInt(0);
+        int disp = JitStackFrameOperation.peekInt(1);
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeLong(0, ptr.getLong(disp, index));
+    }
+
+    @BYTECODE_TEMPLATE(PGET_DOUBLE)
+    public static void pget_double() {
+        int index = JitStackFrameOperation.peekInt(0);
+        int disp = JitStackFrameOperation.peekInt(1);
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeDouble(0, ptr.getDouble(disp, index));
+    }
+
+    @BYTECODE_TEMPLATE(PGET_WORD)
+    public static void pget_word() {
+        int index = JitStackFrameOperation.peekInt(0);
+        int disp = JitStackFrameOperation.peekInt(1);
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        JitStackFrameOperation.removeSlots(2);
+        JitStackFrameOperation.pokeWord(0, ptr.getWord(disp, index));
+    }
+
+    @BYTECODE_TEMPLATE(PGET_REFERENCE)
+    public static void pget_reference() {
+        int index = JitStackFrameOperation.peekInt(0);
+        int disp = JitStackFrameOperation.peekInt(1);
+        Pointer ptr = JitStackFrameOperation.peekWord(2).asPointer();
+        JitStackFrameOperation.removeSlots(2);
+        JitStackFrameOperation.pokeReference(0, ptr.getReference(disp, index));
+    }
+
+    @BYTECODE_TEMPLATE(PSET_BYTE)
+    public static void pset_byte() {
+        byte value = (byte) JitStackFrameOperation.peekInt(0);
+        int index = JitStackFrameOperation.peekInt(1);
+        int disp = JitStackFrameOperation.peekInt(2);
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(4);
+        ptr.setByte(disp, index, value);
+    }
+
+    @BYTECODE_TEMPLATE(PSET_SHORT)
+    public static void pset_short() {
+        short value = (short) JitStackFrameOperation.peekInt(0);
+        int index = JitStackFrameOperation.peekInt(1);
+        int disp = JitStackFrameOperation.peekInt(2);
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(4);
+        ptr.setShort(disp, index, value);
+    }
+
+    @BYTECODE_TEMPLATE(PSET_INT)
+    public static void pset_int() {
+        int value = JitStackFrameOperation.peekInt(0);
+        int index = JitStackFrameOperation.peekInt(1);
+        int disp = JitStackFrameOperation.peekInt(2);
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(4);
+        ptr.setInt(disp, index, value);
+    }
+
+    @BYTECODE_TEMPLATE(PSET_FLOAT)
+    public static void pset_float() {
+        float value = JitStackFrameOperation.peekFloat(0);
+        int index = JitStackFrameOperation.peekInt(1);
+        int disp = JitStackFrameOperation.peekInt(2);
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(4);
+        ptr.setFloat(disp, index, value);
+    }
+
+    @BYTECODE_TEMPLATE(PSET_LONG)
+    public static void pset_long() {
+        long value = JitStackFrameOperation.peekLong(0);
+        int index = JitStackFrameOperation.peekInt(2);
+        int disp = JitStackFrameOperation.peekInt(3);
+        Pointer ptr = JitStackFrameOperation.peekWord(4).asPointer();
+        JitStackFrameOperation.removeSlots(5);
+        ptr.setLong(disp, index, value);
+    }
+
+    @BYTECODE_TEMPLATE(PSET_DOUBLE)
+    public static void pset_double() {
+        double value = JitStackFrameOperation.peekDouble(0);
+        int index = JitStackFrameOperation.peekInt(2);
+        int disp = JitStackFrameOperation.peekInt(3);
+        Pointer ptr = JitStackFrameOperation.peekWord(4).asPointer();
+        JitStackFrameOperation.removeSlots(5);
+        ptr.setDouble(disp, index, value);
+    }
+
+    @BYTECODE_TEMPLATE(PSET_WORD)
+    public static void pset_word() {
+        Word value = JitStackFrameOperation.peekWord(0);
+        int index = JitStackFrameOperation.peekInt(1);
+        int disp = JitStackFrameOperation.peekInt(2);
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(4);
+        ptr.setWord(disp, index, value);
+    }
+
+    @BYTECODE_TEMPLATE(PSET_REFERENCE)
+    public static void pset_reference() {
+        Reference value = JitStackFrameOperation.peekReference(0);
+        int index = JitStackFrameOperation.peekInt(1);
+        int disp = JitStackFrameOperation.peekInt(2);
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(4);
+        ptr.setReference(disp, index, value);
+    }
+
+    @BYTECODE_TEMPLATE(PCMPSWP_INT)
+    public static void pcmpswp_int() {
+        int newValue = JitStackFrameOperation.peekInt(0);
+        int suspectedValue = JitStackFrameOperation.peekInt(1);
+        Offset off = JitStackFrameOperation.peekWord(2).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(3);
+        JitStackFrameOperation.pokeInt(0, ptr.compareAndSwapInt(off, suspectedValue, newValue));
+    }
+
+    @BYTECODE_TEMPLATE(PCMPSWP_WORD)
+    public static void pcmpswp_word() {
+        Word newValue = JitStackFrameOperation.peekWord(0);
+        Word suspectedValue = JitStackFrameOperation.peekWord(1);
+        Offset off = JitStackFrameOperation.peekWord(2).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(3);
+        JitStackFrameOperation.pokeWord(0, ptr.compareAndSwapWord(off, suspectedValue, newValue));
+    }
+
+    @BYTECODE_TEMPLATE(PCMPSWP_REFERENCE)
+    public static void pcmpswp_reference() {
+        Reference newValue = JitStackFrameOperation.peekReference(0);
+        Reference suspectedValue = JitStackFrameOperation.peekReference(1);
+        Offset off = JitStackFrameOperation.peekWord(2).asOffset();
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(3);
+        JitStackFrameOperation.pokeReference(0, ptr.compareAndSwapReference(off, suspectedValue, newValue));
+    }
+
+    @BYTECODE_TEMPLATE(PCMPSWP_INT_I)
+    public static void pcmpswp_int_i() {
+        int newValue = JitStackFrameOperation.peekInt(0);
+        int suspectedValue = JitStackFrameOperation.peekInt(1);
+        int off = JitStackFrameOperation.peekInt(2);
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(3);
+        JitStackFrameOperation.pokeInt(0, ptr.compareAndSwapInt(off, suspectedValue, newValue));
+    }
+
+    @BYTECODE_TEMPLATE(PCMPSWP_WORD_I)
+    public static void pcmpswp_word_i() {
+        Word newValue = JitStackFrameOperation.peekWord(0);
+        Word suspectedValue = JitStackFrameOperation.peekWord(1);
+        int off = JitStackFrameOperation.peekInt(2);
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(3);
+        JitStackFrameOperation.pokeWord(0, ptr.compareAndSwapWord(off, suspectedValue, newValue));
+    }
+
+    @BYTECODE_TEMPLATE(PCMPSWP_REFERENCE_I)
+    public static void pcmpswp_reference_i() {
+        Reference newValue = JitStackFrameOperation.peekReference(0);
+        Reference suspectedValue = JitStackFrameOperation.peekReference(1);
+        int off = JitStackFrameOperation.peekInt(2);
+        Pointer ptr = JitStackFrameOperation.peekWord(3).asPointer();
+        JitStackFrameOperation.removeSlots(3);
+        JitStackFrameOperation.pokeReference(0, ptr.compareAndSwapReference(off, suspectedValue, newValue));
+    }
+
+    @BYTECODE_TEMPLATE(MOV_I2F)
+    public static void mov_i2f() {
+        int value = JitStackFrameOperation.peekInt(0);
+        JitStackFrameOperation.pokeFloat(0, SpecialBuiltin.intToFloat(value));
+    }
+
+    @BYTECODE_TEMPLATE(MOV_F2I)
+    public static void mov_f2i() {
+        float value = JitStackFrameOperation.peekFloat(0);
+        JitStackFrameOperation.pokeInt(0, SpecialBuiltin.floatToInt(value));
+    }
+
+    @BYTECODE_TEMPLATE(MOV_L2D)
+    public static void mov_l2d() {
+        long value = JitStackFrameOperation.peekLong(0);
+        JitStackFrameOperation.pokeDouble(0, SpecialBuiltin.longToDouble(value));
+    }
+
+    @BYTECODE_TEMPLATE(MOV_D2L)
+    public static void mov_d2l() {
+        double value = JitStackFrameOperation.peekDouble(0);
+        JitStackFrameOperation.pokeLong(0, SpecialBuiltin.doubleToLong(value));
+    }
+
+    @BYTECODE_TEMPLATE(UWLT)
+    public static void uwlt() {
+        Address value2 = JitStackFrameOperation.peekWord(0).asAddress();
+        Address value1 = JitStackFrameOperation.peekWord(1).asAddress();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(value1.lessThan(value2)));
+    }
+
+    @BYTECODE_TEMPLATE(UWLTEQ)
+    public static void uwlteq() {
+        Address value2 = JitStackFrameOperation.peekWord(0).asAddress();
+        Address value1 = JitStackFrameOperation.peekWord(1).asAddress();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(value1.lessEqual(value2)));
+    }
+
+    @BYTECODE_TEMPLATE(UWGT)
+    public static void uwgt() {
+        Address value2 = JitStackFrameOperation.peekWord(0).asAddress();
+        Address value1 = JitStackFrameOperation.peekWord(1).asAddress();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(value1.greaterThan(value2)));
+    }
+
+    @BYTECODE_TEMPLATE(UWGTEQ)
+    public static void uwgteq() {
+        Address value2 = JitStackFrameOperation.peekWord(0).asAddress();
+        Address value1 = JitStackFrameOperation.peekWord(1).asAddress();
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(value1.greaterEqual(value2)));
+    }
+
+    @BYTECODE_TEMPLATE(UGE)
+    public static void uge() {
+        int value2 = JitStackFrameOperation.peekInt(0);
+        int value1 = JitStackFrameOperation.peekInt(1);
+        JitStackFrameOperation.removeSlots(1);
+        JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(SpecialBuiltin.unsignedIntGreaterEqual(value1, value2)));
+    }
+
+//    @INTRINSIC(Bytecodes.UNSAFE_CAST)
+//    private static native VMRegister.Role asRole(Object object);
+//
+//    @BYTECODE_TEMPLATE(READGPR)
+//    public static void readgpr() {
+//        VMRegister.Role role = asRole(JitStackFrameOperation.peekObject(0));
+//        Pointer value = SpecialBuiltin.getIntegerRegister(role);
+//        JitStackFrameOperation.pokeWord(0, value);
+//    }
+//
+//    @BYTECODE_TEMPLATE(WRITEGPR)
+//    public static void writegpr() {
+//        Word value = JitStackFrameOperation.peekWord(0);
+//        VMRegister.Role role = asRole(JitStackFrameOperation.peekObject(1));
+//        JitStackFrameOperation.removeSlots(2);
+//        SpecialBuiltin.setIntegerRegister(role, value);
+//    }
+
+    @BYTECODE_TEMPLATE(MEMBAR_LOAD_LOAD)
+    public static void membar_load_load() {
+        MemoryBarrier.loadLoad();
+    }
+
+    @BYTECODE_TEMPLATE(MEMBAR_LOAD_STORE)
+    public static void membar_load_store() {
+        MemoryBarrier.loadStore();
+    }
+
+    @BYTECODE_TEMPLATE(MEMBAR_STORE_STORE)
+    public static void membar_store_store() {
+        MemoryBarrier.loadStore();
+    }
+
+    @BYTECODE_TEMPLATE(MEMBAR_STORE_LOAD)
+    public static void membar_store_load() {
+        MemoryBarrier.storeLoad();
+    }
+
+    @BYTECODE_TEMPLATE(MEMBAR_MEMOP_STORE)
+    public static void membar_memop_store() {
+        MemoryBarrier.memopStore();
+    }
+
+    @BYTECODE_TEMPLATE(MEMBAR_ALL)
+    public static void membar_all() {
+        MemoryBarrier.all();
     }
 }

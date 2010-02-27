@@ -549,7 +549,7 @@ public interface AMD64EirInstruction {
     public static class CDQ extends AMD64EirBinaryOperation.Move {
 
         public CDQ(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, G, source, G);
+            super(block, destination, G, source, G, false);
             destinationOperand().setRequiredLocation(AMD64EirRegister.General.RDX);
             sourceOperand().setRequiredLocation(AMD64EirRegister.General.RAX);
         }
@@ -568,7 +568,7 @@ public interface AMD64EirInstruction {
     public static class CMOVA_I32 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public CMOVA_I32(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, true);
         }
 
         @Override
@@ -600,7 +600,7 @@ public interface AMD64EirInstruction {
     public static class CMOVB_I32 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public CMOVB_I32(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, true);
         }
 
         @Override
@@ -632,7 +632,7 @@ public interface AMD64EirInstruction {
     public static class CMOVE_I32 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public CMOVE_I32(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, true);
         }
 
         @Override
@@ -664,7 +664,7 @@ public interface AMD64EirInstruction {
     public static class CMOVAE_I32 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public CMOVAE_I32(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, true);
         }
 
         @Override
@@ -696,7 +696,7 @@ public interface AMD64EirInstruction {
     public static class CMOVL_I32 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public CMOVL_I32(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, true);
         }
 
         @Override
@@ -728,7 +728,7 @@ public interface AMD64EirInstruction {
     public static class CMOVBE_I32 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public CMOVBE_I32(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, true);
         }
 
         @Override
@@ -760,7 +760,7 @@ public interface AMD64EirInstruction {
     public static class CMOVP_I32 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public CMOVP_I32(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, true);
         }
 
         @Override
@@ -1088,7 +1088,7 @@ public interface AMD64EirInstruction {
     public static class CQO extends AMD64EirBinaryOperation.Move {
 
         public CQO(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, G, source, G);
+            super(block, destination, G, source, G, false);
             destinationOperand().setRequiredLocation(AMD64EirRegister.General.RDX);
             sourceOperand().setRequiredLocation(AMD64EirRegister.General.RAX);
         }
@@ -2194,7 +2194,7 @@ public interface AMD64EirInstruction {
     public static class MOVD_I32_F32 extends AMD64EirBinaryOperation.Move {
 
         public MOVD_I32_F32(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, G_S, source, F);
+            super(block, destination, G_S, source, F, false);
         }
 
         @Override
@@ -2230,7 +2230,7 @@ public interface AMD64EirInstruction {
     public static class MOVD_F32_I32 extends AMD64EirBinaryOperation.Move {
 
         public MOVD_F32_I32(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, F, source, G_S);
+            super(block, destination, F, source, G_S, false);
         }
 
         @Override
@@ -2266,7 +2266,7 @@ public interface AMD64EirInstruction {
     public static class MOVD_I64_F64 extends AMD64EirBinaryOperation.Move {
 
         public MOVD_I64_F64(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, G_S, source, F);
+            super(block, destination, G_S, source, F, false);
         }
 
         @Override
@@ -2302,7 +2302,7 @@ public interface AMD64EirInstruction {
     public static class MOVD_F64_I64 extends AMD64EirBinaryOperation.Move {
 
         public MOVD_F64_I64(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, F, source, G_S);
+            super(block, destination, F, source, G_S, false);
         }
 
         @Override
@@ -2338,7 +2338,7 @@ public interface AMD64EirInstruction {
     public static class MOVSX_I8 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public MOVSX_I8(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, false);
         }
 
         @Override
@@ -2370,7 +2370,7 @@ public interface AMD64EirInstruction {
     public static class MOVSX_I16 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public MOVSX_I16(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, false);
         }
 
         @Override
@@ -2405,7 +2405,7 @@ public interface AMD64EirInstruction {
     public static class MOVSXD extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public MOVSXD(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, false);
         }
 
         @Override
@@ -2437,7 +2437,7 @@ public interface AMD64EirInstruction {
     public static class MOVZX_I16 extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public MOVZX_I16(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, false);
         }
 
         @Override
@@ -2472,7 +2472,7 @@ public interface AMD64EirInstruction {
     public static class MOVZXD extends AMD64EirBinaryOperation.Move.GeneralToGeneral {
 
         public MOVZXD(EirBlock block, EirValue destination, EirValue source) {
-            super(block, destination, source);
+            super(block, destination, source, false);
         }
 
         @Override

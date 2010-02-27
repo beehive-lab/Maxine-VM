@@ -24,7 +24,6 @@ import com.sun.max.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -175,28 +174,6 @@ public final class PrototypeGenerator {
     }
 
     /**
-     * Utility to report a throwable caught during the course of prototype generation.
-     *
-     * @param throwable the throwable caught
-     */
-    public static void reportThrowable(Throwable throwable) {
-        System.out.flush();
-        System.err.print("<" + PrototypeGenerator.class.getSimpleName() + "> : something went wrong");
-        final int maxRecursion = 100;
-        Throwable cause = throwable;
-        for (int i = 0; i < maxRecursion; i++) {
-            System.err.println(",");
-            System.err.print("caused by: " + cause.getMessage());
-            cause = cause.getCause();
-            if (cause == null) {
-                break;
-            }
-        }
-        System.err.println(".");
-        throwable.printStackTrace(System.err);
-    }
-
-    /**
      * Create the Java prototype, which includes the basic JDK and Maxine classes.
      *
      * @param vmConfiguration the default VM configuration
@@ -240,40 +217,34 @@ public final class PrototypeGenerator {
         if (prototypeJit) {
             javaPrototype.vmConfiguration().compilationScheme().setMode(Mode.PROTOTYPE_JIT);
         }
-        try {
-            javaPrototype.loadCoreJavaPackages();
+        javaPrototype.loadCoreJavaPackages();
 
-            return MaxineVM.usingTarget(new Function<GraphPrototype>() {
-                public GraphPrototype call() {
-                    GraphPrototype graphPrototype;
-                    int numberOfClassActors = 0;
-                    int numberOfCompilationThreads = threadsOption.getValue();
-                    final CompiledPrototype compiledPrototype = new CompiledPrototype(javaPrototype, numberOfCompilationThreads);
-                    compiledPrototype.addEntrypoints();
-                    do {
-                        for (MethodActor methodActor : javaPrototype.vmConfiguration().runScheme().gatherNativeInitializationMethods()) {
-                            compiledPrototype.add(methodActor, null, null);
-                        }
-                        numberOfClassActors = currentNumberOfClasses();
-                        if (compiledPrototype.compile()) {
-                            graphPrototype = new GraphPrototype(compiledPrototype, tree);
-                        }
-                    } while (currentNumberOfClasses() != numberOfClassActors);
+        return MaxineVM.usingTarget(new Function<GraphPrototype>() {
+            public GraphPrototype call() {
+                GraphPrototype graphPrototype;
+                int numberOfClassActors = 0;
+                int numberOfCompilationThreads = threadsOption.getValue();
+                final CompiledPrototype compiledPrototype = new CompiledPrototype(javaPrototype, numberOfCompilationThreads);
+                compiledPrototype.addEntrypoints();
+                do {
+                    for (MethodActor methodActor : javaPrototype.vmConfiguration().runScheme().gatherNativeInitializationMethods()) {
+                        compiledPrototype.add(methodActor, null, null);
+                    }
+                    numberOfClassActors = currentNumberOfClasses();
+                    if (compiledPrototype.compile()) {
+                        graphPrototype = new GraphPrototype(compiledPrototype, tree);
+                    }
+                } while (currentNumberOfClasses() != numberOfClassActors);
 
-                    compiledPrototype.compileUnsafeMethods();
-                    compiledPrototype.link();
+                compiledPrototype.compileUnsafeMethods();
+                compiledPrototype.link();
 
-                    graphPrototype = new GraphPrototype(compiledPrototype, tree);
+                graphPrototype = new GraphPrototype(compiledPrototype, tree);
 
-                    Code.bootCodeRegion.trim();
-                    return graphPrototype;
-                }
-            });
-        } catch (Throwable throwable) {
-            reportThrowable(throwable);
-            ProgramError.unexpected("prototype failed");
-            return null;
-        }
+                Code.bootCodeRegion.trim();
+                return graphPrototype;
+            }
+        });
     }
 
     /**

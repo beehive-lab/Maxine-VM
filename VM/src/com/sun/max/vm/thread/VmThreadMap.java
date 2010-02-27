@@ -346,13 +346,11 @@ public final class VmThreadMap {
     }
 
     /**
-     * Creates the native thread for a VM thread and start it running. This method acquires an ID
-     * for the new thread and returns it to the caller.
+     * Creates the native thread for a VM thread and start it running.
      *
      * @param thread the VM thread to create
      * @param stackSize the requested stack size
      * @param priority the initial priority of the thread
-     * @return the native thread created
      */
     public void startThread(VmThread thread, Size stackSize, int priority) {
         synchronized (ACTIVE) {

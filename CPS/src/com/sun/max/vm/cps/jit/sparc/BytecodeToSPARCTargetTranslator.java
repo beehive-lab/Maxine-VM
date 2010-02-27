@@ -416,7 +416,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             // The safepoint instruction is emitted in the delay slot of the branch. It will be executed only if the
             // branch is taken.
             codeBuffer.emit(SAFEPOINT_TEMPLATE);
-            emitSafepoint(new BackwardBranchBytecodeSafepoint(branchPosition + 4, currentOpcodePosition()));
+            emitSafepoint(new BackwardBranchBytecodeSafepoint(branchPosition + 4, opcodeBci));
         }
     }
 
@@ -456,10 +456,9 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
         final int[] matches = new int[numberOfCases];
         final int[] targetBytecodePositions = new int[numberOfCases];
-        final BytecodeScanner scanner = bytecodeScanner();
         for (int i = 0; i != numberOfCases; ++i) {
-            matches[i] = scanner.readSwitchCase();
-            targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;
+            matches[i] = readS4();
+            targetBytecodePositions[i] = readS4() + opcodePosition;
         }
         addSwitch(new LookupSwitch(opcodePosition, defaultTargetBytecodePosition, matches, targetBytecodePositions));
     }
@@ -527,10 +526,9 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
 
         // Remember the location of the tableSwitch bytecode and the area in the code buffer where the targets will
         // be written.
-        final BytecodeScanner scanner = bytecodeScanner();
         final int[] targetBytecodePositions = new int[numberOfCases];
         for (int i = 0; i != numberOfCases; ++i) {
-            targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;
+            targetBytecodePositions[i] = readS4() + opcodePosition;
         }
         final int defaultTargetBytecodePosition = opcodePosition + defaultTargetOffset;
         addSwitch(new TableSwitch(opcodePosition, templateIndex, defaultTargetBytecodePosition, targetBytecodePositions, templatePrefixSize));

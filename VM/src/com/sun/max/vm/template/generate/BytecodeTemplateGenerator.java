@@ -73,7 +73,9 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
     private TargetMethod generateBytecodeTemplate(final ClassMethodActor bytecodeSourceTemplate) {
         return MaxineVM.usingTarget(new Function<TargetMethod>() {
             public TargetMethod call() {
-                ProgramError.check(!hasStackParameters(bytecodeSourceTemplate), "Template must not have *any* stack parameters: " + bytecodeSourceTemplate);
+                if (hasStackParameters(bytecodeSourceTemplate)) {
+                    ProgramError.unexpected("Template must not have *any* stack parameters: " + bytecodeSourceTemplate, null);
+                }
                 final TargetMethod targetMethod = targetGenerator().compile(bytecodeSourceTemplate);
                 if (!(targetMethod.referenceLiterals() == null)) {
                     StringBuilder sb = new StringBuilder("Template must not have *any* reference literals: " + targetMethod);
@@ -83,7 +85,9 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
                     }
                     ProgramError.unexpected(sb.toString());
                 }
-                ProgramError.check(targetMethod.scalarLiterals() == null, "Template must not have *any* scalar literals: " + targetMethod);
+                if (targetMethod.scalarLiterals() != null) {
+                    ProgramError.unexpected("Template must not have *any* scalar literals: " + targetMethod + "\n\n" + targetMethod.traceToString(), null);
+                }
                 if (targetMethod.frameSize() > maxTemplateFrameSize) {
                     maxTemplateFrameSize = targetMethod.frameSize();
                 }
