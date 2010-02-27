@@ -66,10 +66,14 @@ public abstract class MemberActor extends Actor {
     }
 
     /**
-     * Index of this field or method within the holder's relevant field or method array.
+     * Index of this field or method within a holder's local field or method array.
+     * The index space is shared within each member type (method or field) as follows:
+     *
+     * Method indexes: [virtual methods][static methods][interface methods]
+     * Field indexes:  [instance fields][static fields]
      *
      * Note: This field is of type char which means a limit of 65535 members of a particular
-     * category (e.g. static/instance/virtual) is supported.
+     * member type (method or field) is supported.
      */
     @CONSTANT
     @INSPECTED

@@ -41,7 +41,7 @@ public class BootHeapRegion extends LinearAllocatorHeapRegion {
 
     private Pointer referenceMap;
 
-    private Reference[] specialReferences;
+    private Reference[] specialReferences = {};
 
     public BootHeapRegion(Address start, Size size, String description) {
         super(start, size, description);

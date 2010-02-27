@@ -328,21 +328,21 @@ public abstract class Address extends Word {
     }
 
     @BUILTIN(value = AddressBuiltin.RemainderByAddress.class)
-    @INTRINSIC(WMOD)
+    @INTRINSIC(WREM)
     protected abstract Address remainderByAddress(Address divisor);
 
     @INLINE(override = true)
-    @INTRINSIC(WMOD)
+    @INTRINSIC(WREM)
     public Address remainder(Address divisor) {
         return remainderByAddress(divisor);
     }
 
     @BUILTIN(value = AddressBuiltin.RemainderByInt.class)
-    @INTRINSIC(WMODI)
+    @INTRINSIC(WREMI)
     protected abstract int remainderByInt(int divisor);
 
     @INLINE(override = true)
-    @INTRINSIC(WMODI)
+    @INTRINSIC(WREMI)
     public final int remainder(int divisor) {
         return remainderByInt(divisor);
     }

@@ -681,7 +681,7 @@ public abstract class ReferenceMapInterpreter {
 
             if (MaxineVM.isHosted() && trace) {
                 System.err.println("  " + currentFrameToString());
-                System.err.println(opcodeBytecodePosition + ":  " + opcode);
+                System.err.println(opcodeBytecodePosition + ":  " + Bytecodes.nameOf(opcode));
             }
 
             switch (opcode) {
@@ -1133,6 +1133,7 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case IRETURN:
                 case FRETURN:
+                case WRETURN:
                 case ARETURN:
                 {
                     popCategory1();
@@ -1353,6 +1354,230 @@ public abstract class ReferenceMapInterpreter {
                         popCategory1();
                     }
                     pushRef();
+                    break;
+                }
+
+
+                case UNSAFE_CAST: {
+                    pop(KindEnum.VALUES.get(readUnsigned1()).asKind());
+                    push(KindEnum.VALUES.get(readUnsigned1()).asKind());
+                    break;
+                }
+                case WLOAD: {
+                    skip1();
+                    pushCategory1();
+                    break;
+                }
+                case WLOAD_0:
+                case WLOAD_1:
+                case WLOAD_2:
+                case WLOAD_3: {
+                    pushCategory1();
+                    break;
+                }
+                case WSTORE: {
+                    skip1();
+                    popCategory1();
+                    break;
+                }
+                case WSTORE_0:
+                case WSTORE_1:
+                case WSTORE_2:
+                case WSTORE_3: {
+                    popCategory1();
+                    break;
+                }
+                case WCONST_0: {
+                    skip2();
+                    pushCategory1();
+                    break;
+                }
+                case WDIV:
+                case WDIVI:
+                case WREM:
+                case WREMI: {
+                    skip2();
+                    popCategory1();
+                    break;
+                }
+
+                case PREAD: {
+                    opcode |= readUnsigned2() << 8;
+                    switch (opcode) {
+                        case PREAD_BYTE:
+                        case PREAD_BYTE_I:
+                        case PREAD_CHAR:
+                        case PREAD_CHAR_I:
+                        case PREAD_SHORT:
+                        case PREAD_SHORT_I:
+                        case PREAD_INT:
+                        case PREAD_INT_I:
+                        case PREAD_FLOAT:
+                        case PREAD_FLOAT_I:
+                        case PREAD_WORD:
+                        case PREAD_WORD_I: {
+                            popCategory1();
+                            break;
+                        }
+                        case PREAD_REFERENCE:
+                        case PREAD_REFERENCE_I: {
+                            popCategory1();
+                            popCategory1();
+                            pushRef();
+                            break;
+                        }
+                        case PREAD_LONG:
+                        case PREAD_LONG_I:
+                        case PREAD_DOUBLE:
+                        case PREAD_DOUBLE_I: {
+                            break;
+                        }
+                        default: {
+                            FatalError.unexpected("Unknown bytcode");
+                        }
+                    }
+                    break;
+                }
+                case PWRITE: {
+                    opcode |= readUnsigned2() << 8;
+                    switch (opcode) {
+                        case PWRITE_WORD:
+                        case PWRITE_WORD_I:
+                        case PWRITE_REFERENCE:
+                        case PWRITE_REFERENCE_I:
+                        case PWRITE_BYTE:
+                        case PWRITE_BYTE_I:
+                        case PWRITE_SHORT:
+                        case PWRITE_SHORT_I:
+                        case PWRITE_INT:
+                        case PWRITE_INT_I:
+                        case PWRITE_FLOAT:
+                        case PWRITE_FLOAT_I: {
+                            popCategory1();
+                            popCategory1();
+                            popCategory1();
+                            break;
+                        }
+                        case PWRITE_LONG:
+                        case PWRITE_LONG_I:
+                        case PWRITE_DOUBLE:
+                        case PWRITE_DOUBLE_I: {
+                            popCategory2();
+                            popCategory1();
+                            popCategory1();
+                            break;
+                        }
+                        default: {
+                            FatalError.unexpected("Unknown bytcode");
+                        }
+                    }
+                    break;
+                }
+                case PGET: {
+                    opcode |= readUnsigned2() << 8;
+                    switch (opcode) {
+                        case PGET_BYTE:
+                        case PGET_CHAR:
+                        case PGET_SHORT:
+                        case PGET_INT:
+                        case PGET_FLOAT:
+                        case PGET_WORD: {
+                            popCategory1();
+                            popCategory1();
+                            break;
+                        }
+                        case PGET_LONG:
+                        case PGET_DOUBLE: {
+                            popCategory1();
+                            break;
+                        }
+                        case PGET_REFERENCE: {
+                            popCategory1();
+                            popCategory1();
+                            popCategory1();
+                            pushRef();
+                            break;
+                        }
+                        default: {
+                            FatalError.unexpected("Unknown bytcode");
+                        }
+                    }
+                    break;
+                }
+                case PSET: {
+                    opcode |= readUnsigned2() << 8;
+                    switch (opcode) {
+                        case PSET_BYTE:
+                        case PSET_SHORT:
+                        case PSET_INT:
+                        case PSET_FLOAT:
+                        case PSET_WORD:
+                        case PSET_REFERENCE: {
+                            popCategory1();
+                            popCategory1();
+                            popCategory1();
+                            popCategory1();
+                            break;
+                        }
+                        case PSET_DOUBLE:
+                        case PSET_LONG: {
+                            popCategory2();
+                            popCategory1();
+                            popCategory1();
+                            popCategory1();
+                            break;
+                        }
+                        default: {
+                            FatalError.unexpected("Unknown bytcode");
+                        }
+                    }
+                    break;
+                }
+                case PCMPSWP: {
+                    opcode |= readUnsigned2() << 8;
+                    switch (opcode) {
+                        case PCMPSWP_INT:
+                        case PCMPSWP_INT_I:
+                        case PCMPSWP_WORD:
+                        case PCMPSWP_WORD_I: {
+                            popCategory1();
+                            popCategory1();
+                            popCategory1();
+                            break;
+                        }
+                        case PCMPSWP_REFERENCE:
+                        case PCMPSWP_REFERENCE_I: {
+                            popCategory1();
+                            popCategory1();
+                            popCategory1();
+                            popCategory1();
+                            pushRef();
+                            break;
+                        }
+                        default: {
+                            FatalError.unexpected("Unknown bytcode");
+                        }
+                    }
+                    break;
+                }
+                case MOV_I2F:
+                case MOV_F2I:
+                case MOV_L2D:
+                case MOV_D2L: {
+                    skip2();
+                    break;
+                }
+                case UWLT:
+                case UWLTEQ:
+                case UWGT:
+                case UWGTEQ:
+                case UGE: {
+                    skip2();
+                    popCategory1();
+                    break;
+                }
+                case MEMBAR: {
+                    skip2();
                     break;
                 }
                 default: {

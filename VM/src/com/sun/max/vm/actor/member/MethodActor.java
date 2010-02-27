@@ -156,6 +156,11 @@ public abstract class MethodActor extends MemberActor {
     }
 
     @INLINE
+    public final boolean isExtended() {
+        return isExtended(flags());
+    }
+
+    @INLINE
     public final boolean isInline() {
         return isInline(flags());
     }
@@ -253,6 +258,11 @@ public abstract class MethodActor extends MemberActor {
             TupleAccess.writeObject(javaMethod, Method_methodActor.offset(), methodActor);
         }
         return methodActor;
+    }
+
+    @Override
+    public String toString() {
+        return format("%H.%n(%p)");
     }
 
     public static MethodActor fromJavaConstructor(Constructor javaConstructor) {

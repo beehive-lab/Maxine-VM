@@ -60,7 +60,7 @@ public class Compilation implements Future<TargetMethod> {
     private static long compilationTime;
 
     public final CompilationScheme compilationScheme;
-    public final RuntimeCompilerScheme compilerScheme;
+    public final RuntimeCompilerScheme compiler;
     public final ClassMethodActor classMethodActor;
     @INSPECTED
     public final Object previousTargetState;
@@ -74,13 +74,13 @@ public class Compilation implements Future<TargetMethod> {
     public boolean done;
 
     public Compilation(CompilationScheme compilationScheme,
-                       RuntimeCompilerScheme compilerScheme,
+                       RuntimeCompilerScheme compiler,
                        ClassMethodActor classMethodActor,
                        Object previousTargetState,
                        Thread compilingThread) {
 
         this.compilationScheme = compilationScheme;
-        this.compilerScheme = compilerScheme;
+        this.compiler = compiler;
         this.classMethodActor = classMethodActor;
         this.previousTargetState = previousTargetState;
         this.compilingThread = compilingThread;
@@ -151,7 +151,7 @@ public class Compilation implements Future<TargetMethod> {
      * @return the target method that is the result of the compilation
      */
     public TargetMethod compile(List<CompilationObserver> observers) {
-        RuntimeCompilerScheme compiler = compilerScheme;
+        RuntimeCompilerScheme compiler = this.compiler;
         TargetMethod targetMethod = null;
 
         // notify any compilation observers
@@ -183,7 +183,9 @@ public class Compilation implements Future<TargetMethod> {
             }
 
             logAfterCompilation(compiler, targetMethod, methodString);
-        } catch (Throwable t) {
+        } catch (RuntimeException t) {
+            error = t;
+        } catch (Error t) {
             error = t;
         } finally {
             // invariant: (targetMethod != null) != (error != null)
@@ -208,7 +210,6 @@ public class Compilation implements Future<TargetMethod> {
         if (error != null) {
             // an error occurred
             logCompilationError(error, compiler, methodString);
-            throw new RuntimeException(error);
         } else if (targetMethod == null) {
             // the compilation didn't produce a target method
             FatalError.unexpected("target method should not be null");
@@ -222,13 +223,13 @@ public class Compilation implements Future<TargetMethod> {
             Log.printCurrentThread(false);
             Log.print(": ");
             Log.print(compiler.name());
-            Log.print(": Compilation failed  ");
-            Log.print(methodString);
-            Log.print(" @ ");
-            Log.print(error.toString());
-            error.printStackTrace(Log.out);
-            Log.println();
+            Log.print(": Failed ");
+            Log.println(methodString);
         }
+        if (error instanceof Error) {
+            throw (Error) error;
+        }
+        throw (RuntimeException) error;
     }
 
     private String logBeforeCompilation(RuntimeCompilerScheme compiler) {

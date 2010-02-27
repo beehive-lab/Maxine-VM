@@ -57,7 +57,7 @@ public abstract class Pointer extends Address implements Accessor {
     }
 
     @INLINE
-    @INTRINSIC(ZERO)
+    @INTRINSIC(WCONST_0)
     public static Pointer zero() {
         return Word.isBoxed() ? BoxedPointer.ZERO : fromInt(0);
     }
@@ -168,7 +168,7 @@ public abstract class Pointer extends Address implements Accessor {
 
     @Override
     @INLINE
-    @INTRINSIC(WMOD)
+    @INTRINSIC(WREM)
     public final Pointer remainder(Address divisor) {
         return asAddress().remainder(divisor).asPointer();
     }

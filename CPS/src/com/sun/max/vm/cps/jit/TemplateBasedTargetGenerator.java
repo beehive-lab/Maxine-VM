@@ -25,7 +25,6 @@ import com.sun.max.asm.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -81,7 +80,6 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
 
         final BytecodeToTargetTranslator codeGenerator = makeTargetTranslator(classMethodActor);
-        final BytecodeScanner bytecodeScanner = new BytecodeScanner(codeGenerator);
 
         // emit prologue
         Adapter adapter = codeGenerator.emitPrologue();
@@ -90,13 +88,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         codeGenerator.emitEntrypointInstrumentation();
 
         // Translate bytecode into native code
-        try {
-            bytecodeScanner.scan(classMethodActor);
-        } catch (RuntimeException runtimeException) {
-            throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(classMethodActor)).initCause(runtimeException);
-        } catch (Error error) {
-            throw (InternalError) new InternalError("Error while translating " + bytecodeScanner.getCurrentLocationAsString(classMethodActor)).initCause(error);
-        }
+        codeGenerator.generate();
 
         codeGenerator.emitEpilogue();
 

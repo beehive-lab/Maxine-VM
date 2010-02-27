@@ -236,6 +236,33 @@ public class ClassfileWriter {
     }
 
     /**
+     * The {@code MaxineFlags} attribute is a Maxine specific attribute for a class, method or field
+     * in a class file generated from a {@link ClassActor}. It preserves the extra flags for these
+     * components.
+     *
+     * The {@code MaxineFlags} attribute has the following format:
+     * <pre>
+     *     MaxineFlags_attribute {
+     *         u2 attribute_name_index;
+     *         u4 attribute_length;
+     *         u4 flags;
+     *     }
+     */
+    public static class MaxineFlags extends Attribute {
+        public static final String NAME = "MaxineFlags";
+        public final int flags;
+
+        public MaxineFlags(int flags) {
+            super(NAME);
+            this.flags = flags;
+        }
+        @Override
+        protected void writeData(ClassfileWriter cf) throws IOException {
+            cf.writeUnsigned4(flags);
+        }
+    }
+
+    /**
      * Represents the class file info common to classes, fields and methods.
      */
     public abstract static class Info<Actor_Type extends Actor> {
@@ -392,6 +419,10 @@ public class ClassfileWriter {
                     }
                 });
             }
+
+            if ((classActor.flags() & ~Actor.JAVA_CLASS_FLAGS) != 0) {
+                attributes.append(new MaxineFlags(classActor.flags()));
+            }
         }
 
         @Override
@@ -406,7 +437,7 @@ public class ClassfileWriter {
             cf.writeUnsigned2(actor.majorVersion);
             cf.constantPoolEditor.write(cf.dataOutputStream);
 
-            cf.writeUnsigned2(actor.flags() & Actor.JAVA_CLASS_FLAGS);
+            cf.writeUnsigned2(actor.flags()/* & Actor.JAVA_CLASS_FLAGS*/);
             cf.writeUnsigned2(thisClassIndex);
             cf.writeUnsigned2(superClassIndex);
 
@@ -461,6 +492,11 @@ public class ClassfileWriter {
             final byte[] runtimeVisibleParameterAnnotationsBytes = methodActor.runtimeVisibleParameterAnnotationsBytes();
             final byte[] annotationDefaultBytes = methodActor.annotationDefaultBytes();
             final TypeDescriptor[] checkedExceptions = methodActor.checkedExceptions();
+
+            if ((methodActor.flags() & ~Actor.JAVA_METHOD_FLAGS) != 0) {
+                attributes.append(new MaxineFlags(methodActor.flags()));
+            }
+
             if (runtimeVisibleParameterAnnotationsBytes != null) {
                 attributes.append(new BytesAttribute("RuntimeVisibleParameterAnnotations", runtimeVisibleParameterAnnotationsBytes));
             }
@@ -605,6 +641,10 @@ public class ClassfileWriter {
         protected FieldInfo(FieldActor fieldActor) {
             super(fieldActor);
             final Value constantValue = fieldActor.constantValue();
+
+            if ((fieldActor.flags() & ~Actor.JAVA_FIELD_FLAGS) != 0) {
+                attributes.append(new MaxineFlags(fieldActor.flags()));
+            }
 
             if (constantValue != null) {
                 attributes.append(new Attribute("ConstantValue") {

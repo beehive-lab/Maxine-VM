@@ -235,7 +235,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 // The reference maps of the target should be used when at this safepoint.
                 final int stopPosition = codeBuffer.currentPosition();
                 codeBuffer.emit(VMConfiguration.hostOrTarget().safepoint.code);
-                emitSafepoint(new BackwardBranchBytecodeSafepoint(stopPosition, currentOpcodePosition()));
+                emitSafepoint(new BackwardBranchBytecodeSafepoint(stopPosition, opcodeBci));
             }
             // Compute relative offset.
             final int toBranchTarget = bytecodeToTargetCodePosition(toBytecodePosition);
@@ -289,10 +289,9 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             codeBuffer.reserve(jumpTable32.size());
 
             // Remember the location of the tableSwitch bytecode and the area in the code buffer where the targets will be written.
-            final BytecodeScanner scanner = bytecodeScanner();
             final int[] targetBytecodePositions = new int[numberOfCases];
             for (int i = 0; i != numberOfCases; ++i) {
-                targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;
+                targetBytecodePositions[i] = readS4() + opcodePosition;
             }
             final int defaultTargetBytecodePosition = opcodePosition + defaultTargetOffset;
             addSwitch(new TableSwitch(opcodePosition, templateIndex, defaultTargetBytecodePosition, targetBytecodePositions));
@@ -351,10 +350,9 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
             final int[] matches = new int[numberOfCases];
             final int[] targetBytecodePositions = new int[numberOfCases];
-            final BytecodeScanner scanner = bytecodeScanner();
             for (int i = 0; i != numberOfCases; ++i) {
-                matches[i] = scanner.readSwitchCase();
-                targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;
+                matches[i] = readS4();
+                targetBytecodePositions[i] = readS4() + opcodePosition;
             }
             addSwitch(new LookupSwitch(opcodePosition, defaultTargetBytecodePosition, matches, targetBytecodePositions));
         } catch (AssemblyException assemblyException) {
