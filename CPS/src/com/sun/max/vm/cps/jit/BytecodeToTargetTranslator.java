@@ -31,6 +31,7 @@ import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
@@ -1107,7 +1108,7 @@ public abstract class BytecodeToTargetTranslator {
         ClassConstant classConstant = constantPool.classAt(index);
         boolean isArray = template == ANEWARRAY;
         TargetMethod code;
-        if (isResolved(classConstant)) {
+        if (isResolved(classConstant, index)) {
             code = getCode(template.resolved);
             beginBytecode(template.opcode);
             ClassActor resolvedClassActor = classConstant.resolve(constantPool, index);
@@ -1135,7 +1136,7 @@ public abstract class BytecodeToTargetTranslator {
         FieldRefConstant fieldRefConstant = constantPool.fieldAt(index);
         Kind fieldKind = fieldRefConstant.type(constantPool).toKind();
         BytecodeTemplate template = templates.get(fieldKind.asEnum);
-        if (isResolved(fieldRefConstant)) {
+        if (isResolved(fieldRefConstant, index)) {
             try {
                 FieldActor fieldActor = fieldRefConstant.resolve(constantPool, index);
                 TargetMethod code;
@@ -1279,7 +1280,7 @@ public abstract class BytecodeToTargetTranslator {
         Kind kind = invokeKind(signature);
         BytecodeTemplate template = INVOKEVIRTUALS.get(kind.asEnum);
         try {
-            if (isResolved(classMethodRef)) {
+            if (isResolved(classMethodRef, index)) {
                 try {
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
                     checkInvocation(virtualMethodActor);
@@ -1325,7 +1326,7 @@ public abstract class BytecodeToTargetTranslator {
         Kind kind = invokeKind(signature);
         BytecodeTemplate template = INVOKEINTERFACES.get(kind.asEnum);
         try {
-            if (isResolved(interfaceMethodRef)) {
+            if (isResolved(interfaceMethodRef, index)) {
                 try {
                     InterfaceMethodActor interfaceMethodActor = (InterfaceMethodActor) interfaceMethodRef.resolve(constantPool, index);
                     checkInvocation(interfaceMethodActor);
@@ -1364,7 +1365,7 @@ public abstract class BytecodeToTargetTranslator {
         Kind kind = invokeKind(classMethodRef.signature(constantPool));
         BytecodeTemplate template = INVOKESPECIALS.get(kind.asEnum);
         try {
-            if (isResolved(classMethodRef)) {
+            if (isResolved(classMethodRef, index)) {
                 VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
                 checkInvocation(virtualMethodActor);
                 TargetMethod code = getCode(template.resolved);
@@ -1387,7 +1388,7 @@ public abstract class BytecodeToTargetTranslator {
         Kind kind = invokeKind(classMethodRef.signature(constantPool));
         BytecodeTemplate template = INVOKESTATICS.get(kind.asEnum);
         try {
-            if (isResolved(classMethodRef)) {
+            if (isResolved(classMethodRef, index)) {
                 StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(constantPool, index);
                 checkInvocation(staticMethodActor);
                 if (staticMethodActor.holder().isInitialized()) {
@@ -1416,7 +1417,7 @@ public abstract class BytecodeToTargetTranslator {
         switch (constant.tag()) {
             case CLASS: {
                 ClassConstant classConstant = (ClassConstant) constant;
-                if (isResolved(classConstant)) {
+                if (isResolved(classConstant, index)) {
                     TargetMethod code = getCode(LDC$reference$resolved);
                     beginBytecode(bytecode);
                     Object mirror = ((ClassActor) classConstant.value(constantPool, index).asObject()).mirror();
@@ -1495,7 +1496,7 @@ public abstract class BytecodeToTargetTranslator {
 
     private void emitMultianewarray(int index, int numberOfDimensions) {
         ClassConstant classRef = constantPool.classAt(index);
-        if (isResolved(classRef)) {
+        if (isResolved(classRef, index)) {
             TargetMethod code = getCode(MULTIANEWARRAY$resolved);
             beginBytecode(Bytecodes.MULTIANEWARRAY);
             ClassActor arrayClassActor = classRef.resolve(constantPool, index);
@@ -1517,7 +1518,7 @@ public abstract class BytecodeToTargetTranslator {
 
     private void emitNew(int index) {
         ClassConstant classRef = constantPool.classAt(index);
-        if (isResolved(classRef)) {
+        if (isResolved(classRef, index)) {
             ClassActor classActor = classRef.resolve(constantPool, index);
             if (classActor.isInitialized()) {
                 TargetMethod code = getCode(NEW$init);
@@ -1603,23 +1604,44 @@ public abstract class BytecodeToTargetTranslator {
         }
     }
 
+    private static final VMBooleanXXOption eagerResolutionOption = VMOptions.register(new VMBooleanXXOption(
+                    "-XX:-EagerResolutionByJIT", "Force JIT to perform symbolic resolution instead of using lazy resolution templates."), MaxineVM.Phase.STARTING);
+
+    private final boolean eagerResolution = eagerResolutionOption.getValue();
+
     @INLINE
-    private boolean isResolved(ClassMethodRefConstant classMethodRef) {
+    private boolean isResolved(ClassMethodRefConstant classMethodRef, int index) {
+        if (eagerResolution) {
+            classMethodRef.resolve(constantPool, index);
+            return true;
+        }
         return classMethodRef.isResolvableWithoutClassLoading(constantPool);
     }
 
     @INLINE
-    private boolean isResolved(InterfaceMethodRefConstant interfaceMethodRef) {
+    private boolean isResolved(InterfaceMethodRefConstant interfaceMethodRef, int index) {
+        if (eagerResolution) {
+            interfaceMethodRef.resolve(constantPool, index);
+            return true;
+        }
         return interfaceMethodRef.isResolvableWithoutClassLoading(constantPool);
     }
 
     @INLINE
-    private boolean isResolved(ClassConstant classConstant) {
+    private boolean isResolved(ClassConstant classConstant, int index) {
+        if (eagerResolution) {
+            classConstant.resolve(constantPool, index);
+            return true;
+        }
         return classConstant.isResolvableWithoutClassLoading(constantPool);
     }
 
     @INLINE
-    private boolean isResolved(FieldRefConstant fieldRefConstant) {
+    private boolean isResolved(FieldRefConstant fieldRefConstant, int index) {
+        if (eagerResolution) {
+            fieldRefConstant.resolve(constantPool, index);
+            return true;
+        }
         return fieldRefConstant.isResolvableWithoutClassLoading(constantPool);
     }
 
