@@ -199,8 +199,8 @@ public final class MemoryWordsInspector extends Inspector {
         Trace.line(1, tracePrefix() + " creating for region:  " + memoryRegion.toString());
 
         inspectors.add(this);
-        wordSize = inspection.maxVM().wordSize();
-        pageSize = inspection.maxVM().pageSize();
+        wordSize = inspection.vm().wordSize();
+        pageSize = inspection.vm().pageSize();
         wordsInPage = pageSize.dividedBy(wordSize).toInt();
 
         if (instanceViewPreferences == null) {
@@ -369,7 +369,7 @@ public final class MemoryWordsInspector extends Inspector {
      * mode set to {@link ViewMode#PAGE}.
      */
     public MemoryWordsInspector(Inspection inspection, Address address) {
-        this(inspection, new FixedMemoryRegion(address, inspection.maxVM().pageSize(), ""), null, address, ViewMode.PAGE, null);
+        this(inspection, new FixedMemoryRegion(address, inspection.vm().pageSize(), ""), null, address, ViewMode.PAGE, null);
     }
 
     @Override
@@ -518,7 +518,7 @@ public final class MemoryWordsInspector extends Inspector {
     public String getTextForTitle() {
         switch(viewMode()) {
             case OBJECT:
-                final TeleObject teleObject = maxVM().makeTeleObject(maxVM().originToReference(origin.asPointer()));
+                final TeleObject teleObject = vm().makeTeleObject(vm().originToReference(origin.asPointer()));
                 if (teleObject == null) {
                     return "Memory object: " + memoryWordRegion.start().toHexString();
                 }
@@ -647,7 +647,7 @@ public final class MemoryWordsInspector extends Inspector {
     }
 
     private void moveToCurrentObject() {
-        TeleObject teleObject = maxVM().findObjectAt(origin);
+        TeleObject teleObject = vm().findObjectAt(origin);
         if (teleObject != null) {
             MemoryRegion objectMemoryRegion = teleObject.memoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
@@ -663,7 +663,7 @@ public final class MemoryWordsInspector extends Inspector {
     }
 
     private void moveToPreviousObject() {
-        final TeleObject teleObject = maxVM().findObjectPreceding(origin, 1000000);
+        final TeleObject teleObject = vm().findObjectPreceding(origin, 1000000);
         if (teleObject != null) {
             MemoryRegion objectMemoryRegion = teleObject.memoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
@@ -677,7 +677,7 @@ public final class MemoryWordsInspector extends Inspector {
     }
 
     private void moveToNextObject() {
-        final TeleObject teleObject = maxVM().findObjectFollowing(origin, 1000000);
+        final TeleObject teleObject = vm().findObjectFollowing(origin, 1000000);
         if (teleObject != null) {
             final MemoryRegion objectMemoryRegion = teleObject.memoryRegion();
             // Start stays the same
@@ -760,7 +760,7 @@ public final class MemoryWordsInspector extends Inspector {
 
     @Override
     public void watchpointSetChanged() {
-        if (vmState().processState() != ProcessState.TERMINATED) {
+        if (vm().state().processState() != ProcessState.TERMINATED) {
             refreshView(true);
         }
     }

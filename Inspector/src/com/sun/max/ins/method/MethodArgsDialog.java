@@ -112,7 +112,7 @@ public final class MethodArgsDialog {
                     return null;
                 }
 
-                args[i] = inspection.maxVM().createReferenceValue(inspection.maxVM().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
+                args[i] = inspection.vm().createReferenceValue(inspection.vm().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
             } else if (kind == Kind.SHORT) {
                 final String input = inspection.gui().inputDialog("Argument " + i + " (short):", "");
 

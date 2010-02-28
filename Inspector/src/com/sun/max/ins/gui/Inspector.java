@@ -130,7 +130,7 @@ public abstract class Inspector<Inspector_Type extends Inspector> extends Abstra
                         final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
                         viewBreakpointsMenuItem.setText("View Breakpoints");
                         menu.add(viewBreakpointsMenuItem);
-                        if (watchpointsEnabled()) {
+                        if (vm().watchpointFactory() != null) {
                             menu.add(actions().genericWatchpointMenuItems());
                             final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
                             viewWatchpointsMenuItem.setText("View Watchpoints");

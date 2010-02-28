@@ -39,7 +39,7 @@ public interface MaxThreadManager {
      * state transition.
      *
      * @return the active (live) threads
-     * @see MaxVM#vmState()
+     * @see MaxVM#state()
      */
     Sequence<MaxThread> threads();
 
@@ -59,7 +59,7 @@ public interface MaxThreadManager {
      *
      * @param threadID
      * @return the thread associated with the id, null if none exists.
-     * @see MaxVM#vmState()
+     * @see MaxVM#state()
      */
     MaxThread getThread(long threadID);
 

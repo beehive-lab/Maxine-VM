@@ -464,7 +464,7 @@ public abstract class TeleVM implements MaxVM {
     /**
      * @return VM state; thread safe.
      */
-    public final TeleVMState vmState() {
+    public final TeleVMState state() {
         return teleVMState;
     }
 

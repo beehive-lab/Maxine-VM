@@ -108,7 +108,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     @Override
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && watchpointsEnabled()) {
+        if (mouseEvent.getClickCount() > 1 && vm().watchpointFactory() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -127,7 +127,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
-        if (watchpointsEnabled()) {
+        if (vm().watchpointFactory() != null) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
@@ -282,7 +282,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 if (instanceViewPreferences.hideNullArrayElements()) {
                     visibleElementCount = 0;
                     for (int index = 0; index < arrayLength; index++) {
-                        if (!maxVM().getElementValue(elementKind,  teleObject.reference(), index).isZero()) {
+                        if (!vm().getElementValue(elementKind,  teleObject.reference(), index).isZero()) {
                             rowToElementIndex[visibleElementCount++] = index;
                         }
                     }
@@ -304,7 +304,7 @@ public final class ArrayElementsTable extends InspectorTable {
      * @return color the text specially in the row where a watchpoint is triggered
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
@@ -421,7 +421,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     label = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return maxVM().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                            return vm().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -433,7 +433,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     label = new WordValueLabel(inspection, wordValueMode, ArrayElementsTable.this) {
                         @Override
                         public Value fetchValue() {
-                            return maxVM().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                            return vm().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -445,7 +445,7 @@ public final class ArrayElementsTable extends InspectorTable {
                     label = new PrimitiveValueLabel(inspection, elementKind) {
                         @Override
                         public Value fetchValue() {
-                            return maxVM().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                            return vm().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                         }
                         @Override
                         public void updateText() {
@@ -495,7 +495,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 label = new MemoryRegionValueLabel(inspection) {
                     @Override
                     public Value fetchValue() {
-                        return maxVM().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
+                        return vm().getElementValue(elementKind,  teleObject.reference(), startIndex + elementIndex);
                     }
                 };
                 label.setOpaque(true);

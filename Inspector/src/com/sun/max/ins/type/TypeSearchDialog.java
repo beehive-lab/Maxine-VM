@@ -67,7 +67,7 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 
     private TypeSearchDialog(Inspection inspection, String title, String actionName) {
         super(inspection, title == null ? "Select Class" : title, "Class Name", actionName, false);
-        types = maxVM().loadableTypeDescriptors();
+        types = vm().loadableTypeDescriptors();
     }
 
     private final Iterable<TypeDescriptor> types;

@@ -427,7 +427,7 @@ public abstract class DataLabel extends InspectorLabel {
                             final InspectorPopupMenu menu = new InspectorPopupMenu("Address");
                             menu.add(actions().copyWord(address, "Copy address to clipboard"));
                             menu.add(actions().inspectMemoryWords(address));
-                            if (watchpointsEnabled()) {
+                            if (vm().watchpointFactory() != null) {
                                 menu.add(actions().setWordWatchpoint(address, null));
                             }
                             menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());

@@ -619,7 +619,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
                 @Override
                 public Value fetchValue() {
-                    return new WordValue(maxVM().readWord(literalAddress, 0));
+                    return new WordValue(vm().readWord(literalAddress, 0));
                 }
             };
             wordValueLabel.setPrefix(literalLoadText.substring(0, literalLoadText.indexOf("[")));
@@ -634,7 +634,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null) {
                 @Override
                 public Value fetchValue() {
-                    return new WordValue(maxVM().readWord(literalAddress, 0));
+                    return new WordValue(vm().readWord(literalAddress, 0));
                 }
             };
             wordValueLabel.setSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
@@ -645,7 +645,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        InstructionSet instructionSet = maxVM().vmConfiguration().platform().instructionSet();
+        InstructionSet instructionSet = vm().vmConfiguration().platform().instructionSet();
         switch (instructionSet) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;
@@ -679,7 +679,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                             if (fileName != null) {
                                 final int lineNumber = stackTraceElement.getLineNumber();
                                 if (lineNumber > 0) {
-                                    if (maxVM().findJavaSourceFile(location.classMethodActor.holder()) != null) {
+                                    if (vm().findJavaSourceFile(location.classMethodActor.holder()) != null) {
                                         final BytecodeLocation locationCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
                                             public void actionPerformed(ActionEvent e) {

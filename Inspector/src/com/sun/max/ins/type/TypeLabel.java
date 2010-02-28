@@ -109,7 +109,7 @@ public class TypeLabel extends InspectorLabel {
             teleClassActor = null;
         } else {
             // Might be null if class not yet known in VM
-            teleClassActor = maxVM().findTeleClassActor(typeDescriptor);
+            teleClassActor = vm().findTeleClassActor(typeDescriptor);
         }
     }
 
@@ -137,8 +137,8 @@ public class TypeLabel extends InspectorLabel {
     private MaxVMState lastRefreshedState = null;
 
     public void refresh(boolean force) {
-        if (vmState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = vmState();
+        if (vm().state().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = vm().state();
             updateClassActor();
         }
     }
