@@ -115,5 +115,12 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         };
     }
 
-
+    public void reportPristineMemoryFailure(String memoryAreaName, Size numberOfBytes) {
+        Log.println("Error occurred during initialization of VM");
+        Log.print("Failed to allocate");
+        Log.print(numberOfBytes.toLong());
+        Log.print(" bytes of memory for ");
+        Log.println(memoryAreaName);
+        MaxineVM.native_exit(1);
+    }
 }

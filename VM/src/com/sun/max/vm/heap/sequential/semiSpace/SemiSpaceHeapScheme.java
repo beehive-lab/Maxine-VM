@@ -257,11 +257,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
 
         if (!heapAllocationOk) {
-            Log.println("Error occurred during initialization of VM");
-            Log.print("Could not reserve ");
-            Log.print(heapAllocationSize.toLong());
-            Log.println(" bytes of memory for object heap");
-            MaxineVM.native_exit(1);
+            reportPristineMemoryFailure("object heap", heapAllocationSize);
         } else {
             if (Heap.verbose()) {
                 Log.print("Allocated ");
