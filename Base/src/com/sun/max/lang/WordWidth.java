@@ -29,10 +29,10 @@ import com.sun.max.collect.*;
  */
 public enum WordWidth {
 
-    BITS_8(8, byte.class, Byte.MIN_VALUE, Byte.MAX_VALUE),
-    BITS_16(16, short.class, Short.MIN_VALUE, Short.MAX_VALUE),
-    BITS_32(32, int.class, Integer.MIN_VALUE, Integer.MAX_VALUE),
-    BITS_64(64, long.class, Long.MIN_VALUE, Long.MAX_VALUE);
+    BITS_8(8, byte.class, Byte.MIN_VALUE, Byte.MAX_VALUE, 3),
+    BITS_16(16, short.class, Short.MIN_VALUE, Short.MAX_VALUE, 4),
+    BITS_32(32, int.class, Integer.MIN_VALUE, Integer.MAX_VALUE, 5),
+    BITS_64(64, long.class, Long.MIN_VALUE, Long.MAX_VALUE, 6);
 
     public static final IndexedSequence<WordWidth> VALUES = new ArraySequence<WordWidth>(values());
 
@@ -41,6 +41,16 @@ public enum WordWidth {
      * This must be a positive power of two.
      */
     public final int numberOfBits;
+
+    /**
+     * Log2 of the number of bits.
+     */
+    public final int log2numberOfBits;
+
+    /**
+     * Log2 of the number of bytes.
+     */
+    public final int log2numberOfBytes;
 
     /**
      * Number of bytes in a Word.
@@ -52,12 +62,14 @@ public enum WordWidth {
     public final long min;
     public final long max;
 
-    private WordWidth(int numberOfBits, Class canonicalPrimitiveType, long min, long max) {
+    private WordWidth(int numberOfBits, Class canonicalPrimitiveType, long min, long max, int log2numberOfBits) {
         this.numberOfBits = numberOfBits;
         this.numberOfBytes = numberOfBits / 8;
         this.canonicalPrimitiveType = canonicalPrimitiveType;
         this.min = min;
         this.max = max;
+        this.log2numberOfBits = log2numberOfBits;
+        this.log2numberOfBytes = log2numberOfBits >> 3;
     }
 
     public boolean lessThan(WordWidth other) {

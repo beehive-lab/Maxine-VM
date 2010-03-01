@@ -52,13 +52,6 @@ public interface HeapScheme extends VMScheme {
     boolean isGcThread(Thread thread);
 
     /**
-     * If the heap implementation uses an adjusted card table,
-     * report the number of bits to shift an object address with.
-     * Otherwise return -1;
-     */
-    int adjustedCardTableShift();
-
-    /**
      * Given the size of the boot image, calculates the size of the auxiliary space that the substrate is to allocate
      * and pass to the target VM.
      */
