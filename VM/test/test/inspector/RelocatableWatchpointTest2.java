@@ -58,8 +58,18 @@ public class RelocatableWatchpointTest2 {
         System.out.println("program end");
     }
 
+    private static void longTest() {
+        for (int i = 0; i < 1000; i++) {
+            System.gc();
+            if (i % 10 == 0) {
+                System.out.print(".");
+            }
+        }
+    }
+
     public static void main(String[] args) {
         relocationTest();
+        longTest();
     }
 
     private static class SimpleObject {

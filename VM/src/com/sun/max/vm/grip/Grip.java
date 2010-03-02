@@ -449,33 +449,33 @@ public class Grip implements Accessor {
     }
 
     @INLINE
-    public final int compareAndSwapInt(Offset offset, int suspectedValue, int newValue) {
-        return gripScheme().compareAndSwapInt(this, offset, suspectedValue, newValue);
+    public final int compareAndSwapInt(Offset offset, int expectedValue, int newValue) {
+        return gripScheme().compareAndSwapInt(this, offset, expectedValue, newValue);
     }
 
     @INLINE
-    public final int compareAndSwapInt(int offset, int suspectedValue, int newValue) {
-        return gripScheme().compareAndSwapInt(this, offset, suspectedValue, newValue);
+    public final int compareAndSwapInt(int offset, int expectedValue, int newValue) {
+        return gripScheme().compareAndSwapInt(this, offset, expectedValue, newValue);
     }
 
     @INLINE
-    public final Word compareAndSwapWord(Offset offset, Word suspectedValue, Word newValue) {
-        return gripScheme().compareAndSwapWord(this, offset, suspectedValue, newValue);
+    public final Word compareAndSwapWord(Offset offset, Word expectedValue, Word newValue) {
+        return gripScheme().compareAndSwapWord(this, offset, expectedValue, newValue);
     }
 
     @INLINE
-    public final Word compareAndSwapWord(int offset, Word suspectedValue, Word newValue) {
-        return gripScheme().compareAndSwapWord(this, offset, suspectedValue, newValue);
+    public final Word compareAndSwapWord(int offset, Word expectedValue, Word newValue) {
+        return gripScheme().compareAndSwapWord(this, offset, expectedValue, newValue);
     }
 
     @INLINE
-    public final Reference compareAndSwapReference(Offset offset, Reference suspectedValue, Reference newValue) {
-        return gripScheme().compareAndSwapReference(this, offset, suspectedValue, newValue);
+    public final Reference compareAndSwapReference(Offset offset, Reference expectedValue, Reference newValue) {
+        return gripScheme().compareAndSwapReference(this, offset, expectedValue, newValue);
     }
 
     @INLINE
-    public final Reference compareAndSwapReference(int offset, Reference suspectedValue, Reference newValue) {
-        return gripScheme().compareAndSwapReference(this, offset, suspectedValue, newValue);
+    public final Reference compareAndSwapReference(int offset, Reference expectedValue, Reference newValue) {
+        return gripScheme().compareAndSwapReference(this, offset, expectedValue, newValue);
     }
 
     @INLINE

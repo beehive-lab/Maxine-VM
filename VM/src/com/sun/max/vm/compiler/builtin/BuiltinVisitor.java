@@ -166,6 +166,10 @@ public interface BuiltinVisitor<IR_Type> {
     void visitWriteReferenceAtIntOffset(WriteReferenceAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitSetReference(SetReference builtin, IR_Type result, IR_Type[] arguments);
 
+    void visitMostSignificantBit(MostSignificantBit builtin, IR_Type result, IR_Type[] arguments);
+    void visitLeastSignificantBit(LeastSignificantBit builtin, IR_Type result, IR_Type[] arguments);
+
+
     void visitCompareAndSwapIntAtIntOffset(CompareAndSwapIntAtIntOffset builtin, IR_Type result, IR_Type[] arguments);
     void visitCompareAndSwapInt(CompareAndSwapInt builtin, IR_Type result, IR_Type[] arguments);
     void visitCompareAndSwapWordAtIntOffset(CompareAndSwapWordAtIntOffset builtin, IR_Type result, IR_Type[] arguments);

@@ -59,7 +59,7 @@ public final class InspectableHeapInfo {
      * Inspectable description the memory allocated for the Inspector's root table.
      */
     @INSPECTED
-    private static RuntimeMemoryRegion rootsRegion;
+    private static LinearAllocationMemoryRegion rootsRegion;
 
     /**
      * Inspectable location of the memory allocated for the Inspector's root table.
@@ -117,7 +117,7 @@ public final class InspectableHeapInfo {
 
             try {
                 Heap.enableImmortalMemoryAllocation();
-                rootsRegion = new RuntimeMemoryRegion("TeleRoots");
+                rootsRegion = new LinearAllocationMemoryRegion("Heap-TeleRoots");
             } finally {
                 Heap.disableImmortalMemoryAllocation();
             }

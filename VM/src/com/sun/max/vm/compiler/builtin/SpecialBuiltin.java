@@ -138,6 +138,40 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
+     * Return the index to the least significant bit set in a word value.
+     * @param value the word scan for the least significant bit
+     * @return the index to the least significant bit within the specified word
+     */
+    @BUILTIN(LeastSignificantBit.class)
+    public static native int leastSignificantBit(Word value);
+
+    public static class LeastSignificantBit extends SpecialBuiltin {
+        @Override
+       public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+            assert arguments.length == 1;
+            visitor.visitLeastSignificantBit(this, result, arguments);
+        }
+        public static final LeastSignificantBit BUILTIN = new LeastSignificantBit();
+    }
+
+    /**
+     * Return the index to the most significant bit set in a word value.
+     * @param value the word scan for the most significant bit
+     * @return the index to the most significant bit within the specified word
+     */
+    @BUILTIN(MostSignificantBit.class)
+    public static native int mostSignificantBit(Word value);
+
+    public static class MostSignificantBit extends SpecialBuiltin {
+        @Override
+       public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+            assert arguments.length == 1;
+            visitor.visitMostSignificantBit(this, result, arguments);
+        }
+        public static final MostSignificantBit BUILTIN = new MostSignificantBit();
+    }
+
+    /**
      * @see Pause
      */
     @BUILTIN(Pause.class)

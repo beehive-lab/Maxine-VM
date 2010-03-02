@@ -29,7 +29,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.type.*;
 
@@ -93,7 +92,7 @@ public @interface METHOD_SUBSTITUTIONS {
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.
                     if (substituteMethod.getAnnotation(INLINE.class) == null &&
-                                    !Intrinsics.isUnsafeCast(substituteMethod) &&
+                                    substituteMethod.getAnnotation(INTRINSIC.class) == null &&
                                     !Modifier.isStatic(substituteMethod.getModifiers())) {
                         ProgramError.unexpected(
                             "method without @" + SUBSTITUTE.class.getSimpleName() + " annotation in " + substitutor +

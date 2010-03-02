@@ -88,7 +88,7 @@ public class AMD64EirAssignment extends AMD64EirBinaryOperation.Move implements 
     }
 
     public AMD64EirAssignment(EirBlock block, Kind kind, EirValue destination, EirValue source) {
-        super(block, destination, destinationLocationCategories(kind), source, sourceLocationCategories(kind));
+        super(block, destination, destinationLocationCategories(kind), source, sourceLocationCategories(kind), false);
         this.kind = kind;
         switch (kind.asEnum) {
             case INT:

@@ -27,24 +27,23 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 
-
 /**
  * Access to breakpoint creation and management in the VM.
  *
  * @author Michael Van De Vanter
  */
-public class TeleBreakpointFactory extends AbstractTeleVMHolder implements MaxBreakpointFactory {
+public class TeleBreakpointManager extends AbstractTeleVMHolder implements MaxBreakpointManager {
 
-    private final TeleBytecodeBreakpoint.Factory bytecodeBreakpointFactory;
-    private final TeleTargetBreakpoint.Factory targetBreakpointFactory;
+    private final TeleBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
+    private final TeleTargetBreakpoint.TargetBreakpointManager targetBreakpointManager;
 
     // Thread-safe, immutable list.  Will be read many, many more times than they will change.
     private volatile IterableWithLength<MaxBreakpoint> breakpointCache = Sequence.Static.empty(MaxBreakpoint.class);
 
-    public TeleBreakpointFactory(TeleVM teleVM, TeleBytecodeBreakpoint.Factory bytecodeBreakpointFactory) {
+    public TeleBreakpointManager(TeleVM teleVM, TeleBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager) {
         super(teleVM);
-        this.bytecodeBreakpointFactory = bytecodeBreakpointFactory;
-        this.targetBreakpointFactory = teleVM.teleProcess().targetBreakpointFactory();
+        this.bytecodeBreakpointManager = bytecodeBreakpointManager;
+        this.targetBreakpointManager = teleVM.teleProcess().targetBreakpointManager();
         updateBreakpointCache();
         addListener(new MaxBreakpointListener() {
 
@@ -55,30 +54,30 @@ public class TeleBreakpointFactory extends AbstractTeleVMHolder implements MaxBr
     }
 
     public void addListener(MaxBreakpointListener listener) {
-        targetBreakpointFactory.addListener(listener);
-        bytecodeBreakpointFactory.addListener(listener);
+        targetBreakpointManager.addListener(listener);
+        bytecodeBreakpointManager.addListener(listener);
     }
 
     public void removeListener(MaxBreakpointListener listener) {
-        targetBreakpointFactory.removeListener(listener);
-        bytecodeBreakpointFactory.removeListener(listener);
+        targetBreakpointManager.removeListener(listener);
+        bytecodeBreakpointManager.removeListener(listener);
     }
 
     public TeleBreakpoint makeBreakpoint(MaxCodeLocation maxCodeLocation) throws MaxVMBusyException {
         final CodeLocation codeLocation = (CodeLocation) maxCodeLocation;
         if (maxCodeLocation.hasAddress()) {
-            return targetBreakpointFactory.makeClientBreakpoint(codeLocation);
+            return targetBreakpointManager.makeClientBreakpoint(codeLocation);
         }
-        return bytecodeBreakpointFactory.makeClientBreakpoint(codeLocation);
+        return bytecodeBreakpointManager.makeClientBreakpoint(codeLocation);
     }
 
     public  TeleBreakpoint findBreakpoint(MaxCodeLocation maxCodeLocation) {
         if (maxCodeLocation instanceof MachineCodeLocation) {
             final MachineCodeLocation compiledCodeLocation = (MachineCodeLocation) maxCodeLocation;
-            return targetBreakpointFactory.findClientBreakpoint(compiledCodeLocation);
+            return targetBreakpointManager.findClientBreakpoint(compiledCodeLocation);
         }
         final BytecodeLocation methodCodeLocation = (BytecodeLocation) maxCodeLocation;
-        return bytecodeBreakpointFactory.findClientBreakpoint(methodCodeLocation);
+        return bytecodeBreakpointManager.findClientBreakpoint(methodCodeLocation);
     }
 
     public IterableWithLength<MaxBreakpoint> breakpoints() {
@@ -86,21 +85,21 @@ public class TeleBreakpointFactory extends AbstractTeleVMHolder implements MaxBr
     }
 
     public void writeSummary(PrintStream printStream) {
-        teleVM().teleProcess().targetBreakpointFactory().writeSummaryToStream(printStream);
-        bytecodeBreakpointFactory.writeSummaryToStream(printStream);
+        teleVM().teleProcess().targetBreakpointManager().writeSummaryToStream(printStream);
+        bytecodeBreakpointManager.writeSummaryToStream(printStream);
     }
 
     public TeleTargetBreakpoint makeTransientTargetBreakpoint(MaxCodeLocation maxCodeLocation) throws MaxVMBusyException {
         final CodeLocation codeLocation = (CodeLocation) maxCodeLocation;
-        return targetBreakpointFactory.makeTransientBreakpoint(codeLocation);
+        return targetBreakpointManager.makeTransientBreakpoint(codeLocation);
     }
 
     /**
      * Recomputes the immutable list cache of all client breakpoints.
      */
     private void updateBreakpointCache() {
-        final VariableSequence<MaxBreakpoint> newBreakpointsCache = new  VectorSequence<MaxBreakpoint>(targetBreakpointFactory.clientBreakpoints());
-        for (MaxBreakpoint breakpoint : bytecodeBreakpointFactory.clientBreakpoints()) {
+        final VariableSequence<MaxBreakpoint> newBreakpointsCache = new  VectorSequence<MaxBreakpoint>(targetBreakpointManager.clientBreakpoints());
+        for (MaxBreakpoint breakpoint : bytecodeBreakpointManager.clientBreakpoints()) {
             newBreakpointsCache.append(breakpoint);
         }
         breakpointCache = newBreakpointsCache;

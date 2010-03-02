@@ -26,6 +26,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -36,6 +37,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.cps.ir.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.layout.*;
@@ -669,14 +671,14 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 push(WordValue.from(v1.dividedBy(v2)));
                 break;
             }
-            case WMOD: {
+            case WREM: {
                 machine.skipBytes(2);
                 Address v2 = popCheckZero().asWord().asAddress();
                 Address v1 = pop().asWord().asAddress();
                 push(WordValue.from(v1.remainder(v2)));
                 break;
             }
-            case WMODI: {
+            case WREMI: {
                 machine.skipBytes(2);
                 int v2 = popCheckZero().asInt();
                 Address v1 = pop().asWord().asAddress();
@@ -1250,7 +1252,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 break;
 
             case UNSAFE_CAST:            machine.skipBytes(2); break;
-            case ZERO:                   machine.skipBytes(2); push(WordValue.ZERO); break;
+            case WCONST_0:               machine.skipBytes(2); push(WordValue.ZERO); break;
             case PREAD_BYTE:             pointerLoad(Kind.BYTE, false); break;
             case PREAD_CHAR:             pointerLoad(Kind.CHAR, false); break;
             case PREAD_SHORT:            pointerLoad(Kind.SHORT, false); break;
@@ -1315,7 +1317,42 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
             case SAFEPOINT:              machine.skipBytes(2); break;
             case PAUSE:                  machine.skipBytes(2); break;
             case FLUSHW:                 machine.skipBytes(2); break;
-            default:                     machine.raiseException(new ClassFormatError("Unsupported bytecode: " + opcode));
+            case UWGT: {
+                machine.skipBytes(2);
+                Address value2 = pop().asWord().asAddress();
+                Address value1 = pop().asWord().asAddress();
+                push(value1.greaterThan(value2) ? 1 : 0);
+                break;
+            }
+            case UWGTEQ: {
+                machine.skipBytes(2);
+                Address value2 = pop().asWord().asAddress();
+                Address value1 = pop().asWord().asAddress();
+                push(value1.greaterEqual(value2) ? 1 : 0);
+                break;
+            }
+            case UWLT: {
+                machine.skipBytes(2);
+                Address value2 = pop().asWord().asAddress();
+                Address value1 = pop().asWord().asAddress();
+                push(value1.lessThan(value2) ? 1 : 0);
+                break;
+            }
+            case UWLTEQ: {
+                machine.skipBytes(2);
+                Address value2 = pop().asWord().asAddress();
+                Address value1 = pop().asWord().asAddress();
+                push(value1.lessEqual(value2) ? 1 : 0);
+                break;
+            }
+            case UGE: {
+                machine.skipBytes(2);
+                int value2 = pop().asInt();
+                int value1 = pop().asInt();
+                push(SpecialBuiltin.unsignedIntGreaterEqual(value1, value2) ? 1 : 0);
+                break;
+            }
+            default:                     machine.raiseException(new ClassFormatError("Unsupported bytecode: " + opcode + " [" + Bytecodes.nameOf(opcode) + "]"));
             // Checkstyle: resume
         }
         return MethodStatus.METHOD_CONTINUE;

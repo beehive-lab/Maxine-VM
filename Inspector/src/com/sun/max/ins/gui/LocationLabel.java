@@ -103,8 +103,8 @@ public abstract class LocationLabel extends InspectorLabel {
     }
 
     public final void refresh(boolean force) {
-        if (vmState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = vmState();
+        if (vm().state().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = vm().state();
             updateText();
         }
     }
@@ -294,7 +294,7 @@ public abstract class LocationLabel extends InspectorLabel {
 
         @Override
         protected void updateText() {
-            final int wordOffset = value / maxVM().wordSize().toInt();
+            final int wordOffset = value / vm().wordSize().toInt();
             final String shortText = (wordOffset >= 0 ? "+" : "") + Integer.toString(wordOffset);
             setText(shortText);
             StringBuilder sb = new StringBuilder(50);

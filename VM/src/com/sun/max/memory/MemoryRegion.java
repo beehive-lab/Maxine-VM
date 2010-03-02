@@ -25,7 +25,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A region of memory in the {@link TeleVM}.
+ * A region of memory in the VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -47,14 +47,6 @@ public interface MemoryRegion {
      * @return address just past the last location in the region.
      */
     Address end();
-
-    /**
-     * Gets the address just past the last allocated/used location in the region.
-     *
-     * If this region is not used for allocation, then the value returned by this
-     * method will be identical to the value returned by {@link #end()}.
-     */
-    Address mark();
 
     /**
      * @return does the region contain the address.
@@ -88,6 +80,9 @@ public interface MemoryRegion {
          * and {@linkplain MemoryRegion#start()} - {@linkplain MemoryRegion#end()} address range.
          */
         public static String asString(MemoryRegion memoryRegion) {
+            if (memoryRegion == null) {
+                return "null";
+            }
             final StringBuilder sb = new StringBuilder();
             if (memoryRegion.description() != null) {
                 sb.append(memoryRegion.description()).append(":");

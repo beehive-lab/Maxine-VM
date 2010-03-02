@@ -77,7 +77,7 @@ public final class BootImageTable extends InspectorTable {
 
         BootImageTableModel(Inspection inspection) {
             super(inspection);
-            final BootImage bootImage = maxVM().bootImage();
+            final BootImage bootImage = vm().bootImage();
             final BootImage.Header header = bootImage.header;
             final VMConfiguration vmConfiguration = bootImage.vmConfiguration;
             final Platform platform = vmConfiguration.platform();
@@ -116,7 +116,7 @@ public final class BootImageTable extends InspectorTable {
             addRow("relocation data size:", new DataLabel.IntAsHex(inspection(), header.relocationDataSize), null);
             addRow("string data size:", new DataLabel.IntAsHex(inspection(), header.stringInfoSize), null);
 
-            final Pointer bootImageStart = maxVM().bootImageStart();
+            final Pointer bootImageStart = vm().bootImageStart();
 
             final Pointer bootHeapStart = bootImageStart;
             final Pointer bootHeapEnd = bootHeapStart.plus(header.heapSize);

@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Christos Kotselidis
  */
-public class BeltTLAB extends RuntimeMemoryRegion {
+public class BeltTLAB extends LinearAllocationMemoryRegion {
 
     private Address endAllocationMark;
     private Address previousAllocationMark;
@@ -187,7 +187,7 @@ public class BeltTLAB extends RuntimeMemoryRegion {
         mark.set(end());
     }
 
-    public Pointer compareAndSwapScavenge(Pointer suspectedValue, Pointer newValue) {
-        return scavenged.compareAndSwap(suspectedValue, newValue).asPointer();
+    public Pointer compareAndSwapScavenge(Pointer expectedValue, Pointer newValue) {
+        return scavenged.compareAndSwap(expectedValue, newValue).asPointer();
     }
 }

@@ -227,7 +227,6 @@ public interface MaxVM {
      *   <li>{@link TeleProcess}</li>
      *   <li>{@link TeleNativeStackMemoryRegion}</li>
      *   <li>{@link TeleThreadLocalsMemoryRegion}</li>
-     *   <li>{@link #containsInThread(Address)}</li>
      * </ol>
      *
      * @return all allocated memory regions in the VM.
@@ -271,7 +270,7 @@ public interface MaxVM {
      * @see #allocatedMemoryRegions()
      * @see #teleImmortalHeapRegion()
      */
-    TeleRuntimeMemoryRegion teleBootHeapRegion();
+    TeleLinearAllocationMemoryRegion teleBootHeapRegion();
 
     /**
      * @return surrogate for the immortal heap {@link MemoryRegion}
@@ -279,7 +278,7 @@ public interface MaxVM {
      * @see #allocatedMemoryRegions()
      * @see #teleBootHeapRegion()
      */
-    TeleRuntimeMemoryRegion teleImmortalHeapRegion();
+    TeleLinearAllocationMemoryRegion teleImmortalHeapRegion();
 
     /**
      * @return surrogates for all {@link MemoryRegion}s in the {@link Heap} of the VM.
@@ -288,13 +287,13 @@ public interface MaxVM {
      * @see #allocatedMemoryRegions()
      * @see #teleImmortalHeapRegion()
      */
-    IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions();
+    IndexedSequence<TeleLinearAllocationMemoryRegion> teleHeapRegions();
 
     /**
      * @return surrogate for the special memory region allocated for holding
      * remote copies of addresses being held in {@linkplain Reference references}.
      */
-    TeleRuntimeMemoryRegion teleRootsRegion();
+    TeleLinearAllocationMemoryRegion teleRootsRegion();
 
     /**
      * @param address a memory address in the VM.
@@ -324,15 +323,6 @@ public interface MaxVM {
      * @see #teleRuntimeCodeRegion()
      */
     IndexedSequence<TeleCodeRegion> teleCodeRegions();
-
-    /**
-     * @param address a memory address in the VM.
-     * @return is the address within a {@link MemoryRegion} associated with a thread?
-     * @see #allocatedMemoryRegions()
-     * @see TeleNativeStackMemoryRegion
-     * @see TeleThreadLocalsMemoryRegion
-     */
-    boolean containsInThread(Address address);
 
     /**
      * @param origin current absolute location of the beginning of a heap object's memory in the VM,
@@ -534,14 +524,14 @@ public interface MaxVM {
      *
      * @return VM state summary
      */
-    MaxVMState vmState();
+    MaxVMState state();
 
     /**
      * Adds a VM state listener.
      * <br>
      * Thread-safe.
      *
-     * @param listener will be notified of changes to {@link #vmState()}.
+     * @param listener will be notified of changes to {@link #state()}.
      */
     void addVMStateListener(MaxVMStateListener listener);
 
@@ -553,34 +543,13 @@ public interface MaxVM {
     void removeVMStateListener(MaxVMStateListener listener);
 
     /**
-     * Finds a thread by ID.
+     * Gets the manager for locating and managing thread-related information in the VM.
      * <br>
      * Thread-safe
      *
-     * @param threadID
-     * @return the thread associated with the id, null if none exists.
+     * @return the singleton manager for information about threads in the VM.
      */
-    MaxThread getThread(long threadID);
-
-    /**
-     * Returns a VM thread, if any, whose stack memory contains a specified address.
-     * <br>
-     * Thread-safe.
-     *
-     * @param address an address in the VM
-     * @return thread whose stack contains the address, null if none.
-     */
-    MaxThread threadStackContaining(Address address);
-
-    /**
-     * Returns a VM thread, if any, whose thread locals block contains a specified address.
-     * <br>
-     * Thread-safe.
-     *
-     * @param address an address in the VM
-     * @return thread whose thread locals block contains the address, null if none.
-     */
-    MaxThread threadLocalsBlockContaining(Address address);
+    MaxThreadManager threadManager();
 
     /**
      * Gets the manager for locating and managing code related information in the VM.
@@ -592,24 +561,24 @@ public interface MaxVM {
     MaxCodeManager codeManager();
 
     /**
-     * Gets the factory for creating and managing VM breakpoints.
+     * Gets the manager for creating and managing VM breakpoints.
      * <br>
      * Thread-safe
      *
-     * @return the singleton factory for creating and managing VM breakpoints
+     * @return the singleton manager for creating and managing VM breakpoints
      */
-    MaxBreakpointFactory breakpointFactory();
+    MaxBreakpointManager breakpointManager();
 
     /**
-     * Gets the factory for creating and managing VM watchpoints; null
+     * Gets the manager for creating and managing VM watchpoints; null
      * if watchpoints are not supported on this platform.
      * <br>
      * Thread-safe
      *
-     * @return the singleton factory for creating and managing VM watchpoints, or
+     * @return the singleton manager for creating and managing VM watchpoints, or
      * null if watchpoints not supported.
      */
-    MaxWatchpointFactory watchpointFactory();
+    MaxWatchpointManager watchpointManager();
 
     /**
      * Adds a listener for GC starts in the VM.

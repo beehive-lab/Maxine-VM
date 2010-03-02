@@ -22,6 +22,8 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Keeps track of a linked list of  free space threaded over the heap.
@@ -30,7 +32,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Laurent Daynes.
  */
-public class FreeHeapSpace extends RuntimeMemoryRegion {
+public class FreeHeapSpace extends LinearAllocationMemoryRegion {
     /**
      * Index of the word storing the address to the next free space within the current free heap space.
      */
@@ -61,6 +63,11 @@ public class FreeHeapSpace extends RuntimeMemoryRegion {
     }
 
     Pointer allocate(Size size) {
+        if (MaxineVM.isDebug()) {
+            FatalError.check(size.isWordAligned(), "Size must be word aligned");
+        }
+        Pointer oldAllocationMark;
+
         return null;
     }
 

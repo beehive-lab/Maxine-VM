@@ -179,7 +179,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     @Override
     protected void setFocusAtRow(int row) {
         final int position = tableModel.rowToInstruction(row).position();
-        focus().setCodeLocation(codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view set focus"), false);
+        focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view set focus"), false);
     }
 
     @Override
@@ -240,9 +240,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
                     final int position = bytecodeInstruction.position();
                     if (targetCodeFirstAddress.isZero()) {
-                        focus().setCodeLocation(codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view"));
+                        focus().setCodeLocation(vm().codeManager().createBytecodeLocation(teleClassMethodActor(), position, "bytecode view"));
                     } else {
-                        focus().setCodeLocation(codeManager().createMachineCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position, "bytecode view"), true);
+                        focus().setCodeLocation(vm().codeManager().createMachineCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position, "bytecode view"), true);
                     }
                 }
             }

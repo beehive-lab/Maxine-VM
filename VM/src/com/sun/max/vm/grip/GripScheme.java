@@ -169,14 +169,14 @@ public interface GripScheme extends VMScheme {
     void writeGrip(Grip grip, int offset, Grip value);
     void setGrip(Grip grip, int displacement, int index, Grip value);
 
-    int compareAndSwapInt(Grip grip, Offset offset, int suspectedValue, int newValue);
-    int compareAndSwapInt(Grip grip, int offset, int suspectedValue, int newValue);
+    int compareAndSwapInt(Grip grip, Offset offset, int expectedValue, int newValue);
+    int compareAndSwapInt(Grip grip, int offset, int expectedValue, int newValue);
 
-    Word compareAndSwapWord(Grip grip, Offset offset, Word suspectedValue, Word newValue);
-    Word compareAndSwapWord(Grip grip, int offset, Word suspectedValue, Word newValue);
+    Word compareAndSwapWord(Grip grip, Offset offset, Word expectedValue, Word newValue);
+    Word compareAndSwapWord(Grip grip, int offset, Word expectedValue, Word newValue);
 
-    Reference compareAndSwapReference(Grip grip, Offset offset, Reference suspectedValue, Reference newValue);
-    Reference compareAndSwapReference(Grip grip, int offset, Reference suspectedValue, Reference newValue);
+    Reference compareAndSwapReference(Grip grip, Offset offset, Reference expectedValue, Reference newValue);
+    Reference compareAndSwapReference(Grip grip, int offset, Reference expectedValue, Reference newValue);
 
     /**
      * @param reference prototype value data for the reference before relocation by the starter program

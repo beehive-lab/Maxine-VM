@@ -258,14 +258,14 @@ public class Bytecodes {
     public static final int WSTORE_2             = 213;
     public static final int WSTORE_3             = 214;
 
-    public static final int ZERO                 = 215;
+    public static final int WCONST_0             = 215;
     public static final int WDIV                 = 216;
     public static final int WDIVI                = 217; // Divisor is an int
-    public static final int WMOD                 = 218;
-    public static final int WMODI                = 219; // Divisor is an int
+    public static final int WREM                 = 218;
+    public static final int WREMI                = 219; // Divisor is an int
 
-    public static final int ICMP                 = 220; // Signed int compare, sets condition flags
-    public static final int WCMP                 = 221; // Word compare, sets condition flags
+    public static final int ICMP                 = 220; // Signed int compare, sets condition flags (for template JIT)
+    public static final int WCMP                 = 221; // Word compare, sets condition flags (for template JIT)
 
     public static final int PREAD                = 222;
     public static final int PWRITE               = 223;
@@ -289,14 +289,14 @@ public class Bytecodes {
 
     public static final int READGPR              = 236;
     public static final int WRITEGPR             = 237;
-    public static final int UNSAFE_CAST          = 238;
+    public static final int UNSAFE_CAST          = 238; // { u1 opcode; u1 fromKind; u1 toKind; }
     public static final int WRETURN              = 239;
     public static final int SAFEPOINT            = 240;
     public static final int ALLOCA               = 241;
     public static final int MEMBAR               = 242;
     public static final int STACKADDR            = 243;
     public static final int PAUSE                = 244;
-    public static final int ADD_SP               = 245;
+    public static final int ADD_SP               = 245; // (for template JIT)
     public static final int READ_PC              = 246;
     public static final int FLUSHW               = 247;
 
@@ -684,11 +684,11 @@ public class Bytecodes {
         def("wstore_1"        , "b"    , EXTENSION);
         def("wstore_2"        , "b"    , EXTENSION);
         def("wstore_3"        , "b"    , EXTENSION);
-        def("zero"            , "bii"  , EXTENSION);
+        def("wconst_0"        , "bii"  , EXTENSION);
         def("wdiv"            , "bii"  , EXTENSION | TRAP);
         def("wdivi"           , "bii"  , EXTENSION | TRAP);
-        def("wmod"            , "bii"  , EXTENSION | TRAP);
-        def("wmodi"           , "bii"  , EXTENSION | TRAP);
+        def("wrem"            , "bii"  , EXTENSION | TRAP);
+        def("wremi"           , "bii"  , EXTENSION | TRAP);
         def("icmp"            , "bii"  , EXTENSION);
         def("wcmp"            , "bii"  , EXTENSION);
         def("pread"           , "bii"  , EXTENSION | TRAP);
@@ -777,22 +777,21 @@ public class Bytecodes {
      * Gets the lower-case mnemonic for a given opcode.
      *
      * @param opcode an opcode
-     * @return the mnemonic for {@code opcode}
-     * @throws IllegalArgumentException if {@code opcode} is not a legal opcode
+     * @return the mnemonic for {@code opcode} or {@code "<illegal opcode: " + opcode + ">"} if {@code opcode} is not a legal opcode
      */
     public static String nameOf(int opcode) throws IllegalArgumentException {
-        if (opcode >= 0 && opcode < names.length) {
-            String name = names[opcode];
-            if (name == null) {
-                throw new IllegalArgumentException("Illegal opcode: " + opcode);
+        if (isOpcode3(opcode)) {
+            String extName = extNames.get(Integer.valueOf(opcode));
+            if (extName == null) {
+                return "<illegal opcode: " + opcode + ">";
             }
-            return name;
+            return extName;
         }
-        String extName = extNames.get(Integer.valueOf(opcode));
-        if (extName == null) {
-            throw new IllegalArgumentException("Illegal opcode: " + opcode);
+        String name = names[opcode & 0xff];
+        if (name == null) {
+            return "<illegal opcode: " + opcode + ">";
         }
-        return extName;
+        return name;
     }
 
     /**
@@ -911,19 +910,6 @@ public class Bytecodes {
      */
     public static boolean hasOpcode3(int opcode) {
         return (flags[opcode & 0xff] & OPCODE3) != 0;
-    }
-
-
-
-    /**
-     * Determines if any of the given attributes applies a given bytecode.
-     *
-     * @param opcode an opcode
-     * @param maskOfFlags a mask of {@linkplain Flags attribute constants}
-     * @return {@code true} if any of {@code maskOfFlags} is set for {@code opcode}
-     */
-    public static boolean is(int opcode, int maskOfFlags) {
-        return (flags[opcode & 0xff] & maskOfFlags) != 0;
     }
 
     /**

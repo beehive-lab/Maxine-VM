@@ -29,6 +29,7 @@ import java.lang.reflect.*;
 
 import sun.reflect.*;
 
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
@@ -53,6 +54,12 @@ import com.sun.max.vm.value.*;
  */
 public abstract class MethodActor extends MemberActor {
 
+    /**
+     * Extended {@linkplain Bytecodes#isExtension(int) opcode} for an {@linkplain INTRINSIC intrinsic} method.
+     * A value of 0 means this method is not an intrinsic method.
+     */
+    private final char intrinsic;
+
     public static final MethodActor[] NONE = {};
 
     public static final TypeDescriptor[] NO_CHECKED_EXCEPTIONS = {};
@@ -61,8 +68,21 @@ public abstract class MethodActor extends MemberActor {
 
     public MethodActor(Utf8Constant name,
                        SignatureDescriptor descriptor,
-                       int flags) {
+                       int flags,
+                       int intrinsic) {
         super(name, descriptor, flags);
+        assert (char) intrinsic == intrinsic;
+        this.intrinsic = (char) intrinsic;
+    }
+
+    /**
+     * Gets the {@linkplain Bytecodes#isExtension(int) extended opcode} of this method if
+     * it is an {@link INTRINSIC} method.
+     *
+     * @return 0 if this method is not an intrinsic method
+     */
+    public final int intrinsic() {
+        return intrinsic;
     }
 
     @INLINE
@@ -106,8 +126,8 @@ public abstract class MethodActor extends MemberActor {
     }
 
     @INLINE
-    public final boolean isUnsafeCast() {
-        return isUnsafeCast(flags());
+    public final boolean isIntrinsic() {
+        return intrinsic != 0;
     }
 
     @INLINE
@@ -133,6 +153,11 @@ public abstract class MethodActor extends MemberActor {
     @INLINE
     public final boolean isUnsafe() {
         return isUnsafe(flags());
+    }
+
+    @INLINE
+    public final boolean isExtended() {
+        return isExtended(flags());
     }
 
     @INLINE
@@ -233,6 +258,11 @@ public abstract class MethodActor extends MemberActor {
             TupleAccess.writeObject(javaMethod, Method_methodActor.offset(), methodActor);
         }
         return methodActor;
+    }
+
+    @Override
+    public String toString() {
+        return format("%H.%n(%p)");
     }
 
     public static MethodActor fromJavaConstructor(Constructor javaConstructor) {

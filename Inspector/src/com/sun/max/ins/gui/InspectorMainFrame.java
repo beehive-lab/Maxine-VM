@@ -242,7 +242,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
         desktopMenu.add(actions.viewStack());
         desktopMenu.add(actions.viewThreads());
         desktopMenu.add(actions.viewVmThreadLocals());
-        if (inspection.watchpointsEnabled()) {
+        if (inspection.vm().watchpointManager() != null) {
             desktopMenu.add(actions.viewWatchpoints());
         }
 
@@ -481,7 +481,7 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     private MaxVMState lastRefreshedState = null;
 
     public void refresh(boolean force) {
-        final MaxVMState maxVMState = inspection.maxVM().vmState();
+        final MaxVMState maxVMState = inspection.vm().state();
         if (maxVMState.newerThan(lastRefreshedState)) {
             lastRefreshedState = maxVMState;
             setTitle(inspection.currentInspectionTitle());

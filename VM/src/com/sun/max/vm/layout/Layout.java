@@ -378,20 +378,20 @@ public final class Layout {
 
     @ACCESSOR(Reference.class)
     @INLINE
-    public static Word compareAndSwapMisc(Reference reference, Word suspectedValue, Word newValue) {
-        return generalLayout().compareAndSwapMisc(reference, suspectedValue, newValue);
+    public static Word compareAndSwapMisc(Reference reference, Word expectedValue, Word newValue) {
+        return generalLayout().compareAndSwapMisc(reference, expectedValue, newValue);
     }
 
     @ACCESSOR(Grip.class)
     @INLINE
-    public static Word compareAndSwapMisc(Grip grip, Word suspectedValue, Word newValue) {
-        return generalLayout().compareAndSwapMisc(grip, suspectedValue, newValue);
+    public static Word compareAndSwapMisc(Grip grip, Word expectedValue, Word newValue) {
+        return generalLayout().compareAndSwapMisc(grip, expectedValue, newValue);
     }
 
     @ACCESSOR(Pointer.class)
     @INLINE
-    public static Word compareAndSwapMisc(Pointer origin, Word suspectedValue, Word newValue) {
-        return generalLayout().compareAndSwapMisc(origin, suspectedValue, newValue);
+    public static Word compareAndSwapMisc(Pointer origin, Word expectedValue, Word newValue) {
+        return generalLayout().compareAndSwapMisc(origin, expectedValue, newValue);
     }
 
     @ACCESSOR(Reference.class)

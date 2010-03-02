@@ -23,7 +23,6 @@ package com.sun.max.tele.debug;
 import java.io.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.vm.stack.*;
 
@@ -62,12 +61,16 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         return teleNativeThread;
     }
 
-    public MemoryRegion memoryRegion() {
+    public TeleNativeStackMemoryRegion memoryRegion() {
         return memoryRegion;
     }
 
+    public MaxStackFrame top() {
+        return frames().first();
+    }
+
     public IndexedSequence<MaxStackFrame> frames() {
-        final TeleVMState currentVmState = teleVM().vmState();
+        final TeleVMState currentVmState = teleVM().state();
         if (currentVmState.newerThan(lastUpdatedState)) {
             if (teleVM().tryLock()) {
                 try {

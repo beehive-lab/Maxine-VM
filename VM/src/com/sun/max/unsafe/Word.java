@@ -33,6 +33,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.value.*;
@@ -144,7 +145,7 @@ public abstract class Word {
     }
 
     @INLINE
-    @INTRINSIC(ZERO)
+    @INTRINSIC(WCONST_0)
     public static Word zero() {
         return Address.zero();
     }
@@ -217,6 +218,20 @@ public abstract class Word {
         }
         final Boxed box = (Boxed) this;
         return BoxedPointer.from(box.value());
+    }
+
+    /**
+     * @return bit index of the least significant bit set, or -1 if zero.
+     */
+    public final int leastSignificantBitSet() {
+        return isZero() ? -1 : SpecialBuiltin.leastSignificantBit(this);
+    }
+
+    /**
+     * @return bit index of the least significant bit set, or -1 if zero.
+     */
+    public final int mostSignificantBitSet() {
+        return isZero() ? -1 : SpecialBuiltin.mostSignificantBit(this);
     }
 
     @HOSTED_ONLY

@@ -86,6 +86,8 @@ public abstract class ClassActor extends Actor {
 
     /**
      * Unique class actor identifier. Simplifies the implementation of type checking, interface dispatch, etc.
+     *
+     * @see ClassID
      */
     @INSPECTED
     public final int id;

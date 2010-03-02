@@ -99,7 +99,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     @Override
     protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && watchpointsEnabled()) {
+        if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction action = new ToggleObjectHeaderWatchpointAction(inspection(), null, row);
             action.perform();
         }
@@ -107,7 +107,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
-        if (watchpointsEnabled()) {
+        if (vm().watchpointManager() != null) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new ToggleObjectHeaderWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             final HeaderField headerField = headerFields[row];
@@ -242,7 +242,7 @@ public final class ObjectHeaderTable extends InspectorTable {
      * @return color the text specially in the row where a watchpoint is triggered
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
@@ -340,7 +340,7 @@ public final class ObjectHeaderTable extends InspectorTable {
                         @Override
                         public Value fetchValue() {
                             final TeleHub teleHub = tableModel.teleHub();
-                            return teleHub == null ? WordValue.ZERO : WordValue.from(maxVM().readWord(teleObject.origin().plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer());
+                            return teleHub == null ? WordValue.ZERO : WordValue.from(vm().readWord(teleObject.origin().plus(Layout.generalLayout().getOffsetFromOrigin(HeaderField.HUB))).asPointer());
                         }
                     };
                 } else if (headerField == HeaderField.MISC) {

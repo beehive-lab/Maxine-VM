@@ -173,8 +173,8 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE
-    public final Word compareAndSwapMisc(Accessor accessor, Word suspectedValue, Word newValue) {
-        return accessor.compareAndSwapWord(miscOffset, suspectedValue, newValue);
+    public final Word compareAndSwapMisc(Accessor accessor, Word expectedValue, Word newValue) {
+        return accessor.compareAndSwapWord(miscOffset, expectedValue, newValue);
     }
 
     @INLINE

@@ -18,28 +18,40 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
+package com.sun.max.tele;
 
-import java.lang.annotation.*;
+import com.sun.max.memory.*;
+import com.sun.max.vm.runtime.*;
 
 /**
- * Any method annotated with this annotation exists solely to provide an escape hatch from Java's type checking. All
- * such methods are recognized by the compiler to simply be an unsafe coercion from one type to another.
+ * Access to the "thread locals block" of storage for a thread in the VM.
  *
- * Any method annotated with this annotation must take exactly one parameter (which will be the receiver if the method
- * is non-static ), have a non-void, non-generic return type. The type of the parameter is the type being
- * converted from and the return type is the type being converted to.
- *
- * The compiler must translate calls to these methods to simply replace the use of the result with the single parameter.
- *
- * A method annotated with {@link UNSAFE_CAST} may have an implementation (i.e. it is not {@code native} and not
- * {@code abstract}). This implementation is used to fold (i.e. compile-time evaluate) the method. The implementation
- * will simply be an explicit cast statement that results in a runtime type check when the method is
- * evaluated.
- *
- * @author Doug Simon
+ * @author Michael Van De Vanter
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface UNSAFE_CAST {
+public interface MaxThreadLocals {
+
+    /**
+     * Gets the thread that owns the thread locals block; doesn't change.
+     * <br>
+     * Thread-safe
+     *
+     * @return the thread that owns this thread locals block.
+     */
+    MaxThread thread();
+
+    /**
+     * Gets the VM thread locals area corresponding to a given safepoint state.
+     */
+    MaxThreadLocalsArea threadLocalsAreaFor(Safepoint.State state);
+
+    /**
+     * Gets description of VM memory containing
+     * all {@linkplain MaxThreadLocalsArea thread locals areas}  for this thread.
+     * <br>
+     * The identity of the result is immutable and thread-safe, although its contents are not.
+     *
+     * @return this thread's thread locals memory
+     */
+    MemoryRegion memoryRegion();
+
 }

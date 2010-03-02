@@ -61,8 +61,8 @@ public final class HubLabel extends InspectorLabel {
     }
 
     public void refresh(boolean force) {
-        if (vmState().newerThan(lastRefreshedState) || force) {
-            lastRefreshedState = vmState();
+        if (vm().state().newerThan(lastRefreshedState) || force) {
+            lastRefreshedState = vm().state();
             updateText();
         }
     }

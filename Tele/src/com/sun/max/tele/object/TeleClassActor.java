@@ -44,16 +44,16 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         super(teleVM, classActorReference);
     }
 
-    private ClassActor classActor;
-
     /**
      * @return Local {@link ClassActor} corresponding the {@link ClassActor} in the {@link TeleVM}.
      */
     public ClassActor classActor() {
-        if (classActor == null) {
-            // Requires loading the class; delay until needed.
-            classActor = teleVM().makeClassActor(reference());
-        }
+        return (ClassActor) actor();
+    }
+
+    @Override
+    protected Actor initActor() {
+        ClassActor classActor = teleVM().makeClassActor(reference());
         return classActor;
     }
 
@@ -105,11 +105,11 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         return teleTypeDescriptor;
     }
 
-    @Override
-    protected Object createDeepCopy(DeepCopier context) {
-        // Translate into local equivalent
-        return classActor();
-    }
+//    @Override
+//    protected Object createDeepCopy(DeepCopier context) {
+//        // Translate into local equivalent
+//        return classActor();
+//    }
 
     public TeleClass getTeleClass() {
         final Reference reference = teleVM().teleFields().ClassActor_mirror.readReference(reference());
@@ -402,10 +402,6 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         return null;
     }
 
-    public String getName() {
-        return classActor().name.toString();
-    }
-
     public String getSignature() {
         return classActor().typeDescriptor.toString();
     }
@@ -437,10 +433,6 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
 
     public String getSourceFileName() {
         return classActor().sourceFileName;
-    }
-
-    public int getFlags() {
-        return classActor().flags() & Actor.JAVA_CLASS_FLAGS;
     }
 
     public Type getType() {

@@ -1283,17 +1283,17 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue pointer = dirToEirValue(dirArguments[0]);
         final DirValue dirOffset = dirArguments[1];
-        final EirValue suspectedValue = dirToEirValue(dirArguments[2]);
+        final EirValue expectedValue = dirToEirValue(dirArguments[2]);
         final EirValue newValue = dirToEirValue(dirArguments[3]);
 
         final EirVariable exchangedValue = createEirVariable(kind);
         assign(kind, exchangedValue, newValue);
         if (dirOffset.isZeroConstant()) {
-            addInstruction(new SPARCEirCompareAndSwap(eirBlock(), kind, exchangedValue, pointer, suspectedValue));
+            addInstruction(new SPARCEirCompareAndSwap(eirBlock(), kind, exchangedValue, pointer, expectedValue));
         } else {
             final EirVariable p = createEirVariable(pointer.kind());
             addInstruction(new ADD_I64(eirBlock(), p, pointer, dirToEirValue(dirOffset)));
-            addInstruction(new SPARCEirCompareAndSwap(eirBlock(), kind, exchangedValue, p, suspectedValue));
+            addInstruction(new SPARCEirCompareAndSwap(eirBlock(), kind, exchangedValue, p, expectedValue));
         }
         assign(kind, result, exchangedValue);
     }

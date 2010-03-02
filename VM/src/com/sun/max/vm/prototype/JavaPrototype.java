@@ -39,7 +39,6 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
@@ -249,7 +248,9 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.util.jar", false); // needed to load classes from jar files
         loadClass(sun.misc.VM.class);
 
-        loadPackage("com.sun.c1x.bytecode", false); // needed for extended bytecodes
+        // Needed for bytecode definitions and utilities
+        loadPackage("com.sun.c1x.bytecode", false);
+        loadClass(com.sun.c1x.util.Bytes.class);
 
 
         // These classes need to be compiled and in the boot image in order to be able to
@@ -361,7 +362,6 @@ public class JavaPrototype extends Prototype {
                 initializeMaxClasses();
 
                 vmConfiguration.bootCompilerScheme().createBuiltins(packageLoader);
-                Intrinsics.register();
                 Builtin.register(vmConfiguration.bootCompilerScheme());
                 vmConfiguration.bootCompilerScheme().createSnippets(packageLoader);
                 Snippet.register();
@@ -383,7 +383,8 @@ public class JavaPrototype extends Prototype {
                     // This enables detection of violations of said requirement:
                     ClassActor.prohibitPackagePrefix(new com.sun.max.Package());
 
-                    UNSAFE.Static.determineMethods();
+                    // The logic for determining unsafeness is now in Intrinsics.java and Actor.<init>()
+                    // UNSAFE.Static.determineMethods();
 
                     VmThreadLocal.completeInitialization();
 
