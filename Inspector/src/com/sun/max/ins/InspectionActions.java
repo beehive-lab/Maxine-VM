@@ -45,6 +45,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleWatchpoint.*;
 import com.sun.max.tele.interpreter.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -1145,14 +1146,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final Inspector inspector = new MemoryWordsInspector(inspection(), memoryRegion, memoryRegion.description());
                 inspector.highlight();
             } else  if (address != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), new FixedMemoryRegion(address, vm().wordSize().times(10), ""));
+                final Inspector inspector = new MemoryWordsInspector(inspection(), new TeleMemoryRegion(address, vm().wordSize().times(10), ""));
                 inspector.highlight();
             } else {
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory at address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
-                        final Inspector inspector = new MemoryWordsInspector(inspection(), new FixedMemoryRegion(address, vm().wordSize().times(10), ""));
+                        final Inspector inspector = new MemoryWordsInspector(inspection(), new TeleMemoryRegion(address, vm().wordSize().times(10), ""));
                         inspector.highlight();
                     }
                 };
@@ -3466,7 +3467,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 new AddressInputDialog(inspection(), vm().bootImageStart(), "Watch memory...", "Watch") {
                     @Override
                     public void entered(Address address) {
-                        setWatchpoint(new FixedMemoryRegion(address, vm().wordSize(), ""), "User specified region");
+                        setWatchpoint(new TeleMemoryRegion(address, vm().wordSize(), ""), "User specified region");
                     }
                 };
             }
@@ -3651,7 +3652,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             this.index = index;
             this.indexPrefix = indexPrefix;
             final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
-            this.memoryRegion = new FixedMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
+            this.memoryRegion = new TeleMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
             refresh(true);
         }
 

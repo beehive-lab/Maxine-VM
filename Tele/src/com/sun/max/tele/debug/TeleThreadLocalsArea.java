@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.Safepoint.*;
@@ -65,13 +66,13 @@ public final class TeleThreadLocalsArea  extends AbstractTeleVMHolder implements
         super(teleNativeThread.teleVM());
         this.teleNativeThread = teleNativeThread;
         this.safepointState = safepointState;
-        this.memoryRegion = new FixedMemoryRegion(start, start.isZero() ? Size.zero() : VmThreadLocal.threadLocalsAreaSize(), "Thread local variables for: " + safepointState);
+        this.memoryRegion = new TeleMemoryRegion(start, start.isZero() ? Size.zero() : VmThreadLocal.threadLocalsAreaSize(), "Thread local variables for: " + safepointState);
         this.threadLocalAreaVariableCount = VmThreadLocal.values().length();
         this.threadLocalVariables = new TeleThreadLocalVariable[threadLocalAreaVariableCount];
         assert !start.isZero();
         final Size wordSize = teleNativeThread.teleVM().wordSize();
         for (VmThreadLocal vmThreadLocal : VmThreadLocal.values()) {
-            final FixedMemoryRegion threadLocalMemoryRegion = new FixedMemoryRegion(memoryRegion.start().plus(vmThreadLocal.offset), wordSize, "Thread Local");
+            final TeleMemoryRegion threadLocalMemoryRegion = new TeleMemoryRegion(memoryRegion.start().plus(vmThreadLocal.offset), wordSize, "Thread Local");
             final TeleThreadLocalVariable teleThreadLocalVariable = new TeleThreadLocalVariable(vmThreadLocal, teleNativeThread, safepointState, threadLocalMemoryRegion);
             threadLocalVariables[vmThreadLocal.index] = teleThreadLocalVariable;
             nameToThreadLocalVariable.put(vmThreadLocal.name, teleThreadLocalVariable);

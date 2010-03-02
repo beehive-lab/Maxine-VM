@@ -36,6 +36,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -184,7 +185,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             regions = new MemoryRegion[slots.length()];
             int index = 0;
             for (Slot slot : slots) {
-                regions[index] = new FixedMemoryRegion(getOrigin().plus(slot.offset), vm().wordSize(), "");
+                regions[index] = new TeleMemoryRegion(getOrigin().plus(slot.offset), vm().wordSize(), "");
                 index++;
             }
         }

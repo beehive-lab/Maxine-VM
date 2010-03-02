@@ -37,6 +37,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -442,7 +443,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             final MaxStackFrame.Compiled javaStackFrame = (MaxStackFrame.Compiled) stackFrame;
             final int frameSize = javaStackFrame.layout().frameSize();
             final Pointer stackPointer = javaStackFrame.sp();
-            final MemoryRegion memoryRegion = new FixedMemoryRegion(stackPointer, Size.fromInt(frameSize), "");
+            final MemoryRegion memoryRegion = new TeleMemoryRegion(stackPointer, Size.fromInt(frameSize), "");
             final String frameName = javaStackFrameName(javaStackFrame);
             menu.add(actions().inspectRegionMemoryWords(memoryRegion, "stack frame for " + frameName, "Inspect memory for frame" + frameName));
         }
