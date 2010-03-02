@@ -108,7 +108,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     @Override
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && vm().watchpointFactory() != null) {
+        if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -127,7 +127,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
-        if (vm().watchpointFactory() != null) {
+        if (vm().watchpointManager() != null) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 

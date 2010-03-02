@@ -140,7 +140,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         viewBreakpointsMenuItem.setText("View Breakpoints");
         menu.add(viewBreakpointsMenuItem);
 
-        if (vm().watchpointFactory() != null) {
+        if (vm().watchpointManager() != null) {
             menu.add(actions.genericWatchpointMenuItems());
             final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions.viewWatchpoints());
             viewWatchpointsMenuItem.setText("View Watchpoints");
@@ -173,7 +173,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(actions.listCodeRegistry());
         menu.add(actions.listCodeRegistryToFile());
         menu.add(actions.listBreakpoints());
-        if (vm().watchpointFactory() != null) {
+        if (vm().watchpointManager() != null) {
             menu.add(actions.listWatchpoints());
         }
         return menu;

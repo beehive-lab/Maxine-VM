@@ -935,7 +935,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(vm().watchpointFactory() != null);
+            setEnabled(vm().watchpointManager() != null);
         }
     }
 
@@ -3373,7 +3373,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         SetWordWatchpointAction(Address address, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.memoryRegion = new MemoryWordRegion(address, 1, vm().wordSize());
-            setEnabled(vm().watchpointFactory().findWatchpoints(memoryRegion).isEmpty());
+            setEnabled(vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
 
         @Override
@@ -3393,7 +3393,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private void setWatchpoint(MemoryRegion memoryRegion, String description) {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
-                final MaxWatchpoint watchpoint = vm().watchpointFactory().createRegionWatchpoint(description, memoryRegion, prefs.settings());
+                final MaxWatchpoint watchpoint = vm().watchpointManager().createRegionWatchpoint(description, memoryRegion, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3410,7 +3410,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess()  && vm().watchpointFactory() != null);
+            setEnabled(inspection().hasProcess()  && vm().watchpointManager() != null);
         }
     }
 
@@ -3454,7 +3454,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.memoryRegion = memoryRegion;
             this.regionDescription = regionDescription == null ? DEFAULT_REGION_DESCRIPTION : regionDescription;
-            setEnabled(vm().watchpointFactory().findWatchpoints(memoryRegion).isEmpty());
+            setEnabled(vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
 
         @Override
@@ -3475,7 +3475,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private void setWatchpoint(MemoryRegion memoryRegion, String description) {
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
-                final MaxWatchpoint watchpoint = vm().watchpointFactory().createRegionWatchpoint(description, memoryRegion, prefs.settings());
+                final MaxWatchpoint watchpoint = vm().watchpointManager().createRegionWatchpoint(description, memoryRegion, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3492,7 +3492,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess()  && vm().watchpointFactory() != null);
+            setEnabled(inspection().hasProcess()  && vm().watchpointManager() != null);
         }
     }
 
@@ -3538,7 +3538,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
                 final String description = "Whole object";
-                final MaxWatchpoint watchpoint = vm().watchpointFactory().createObjectWatchpoint(description, teleObject, prefs.settings());
+                final MaxWatchpoint watchpoint = vm().watchpointManager().createObjectWatchpoint(description, teleObject, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3556,8 +3556,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
-                && vm().watchpointFactory() != null
-                && vm().watchpointFactory().findWatchpoints(memoryRegion).isEmpty());
+                && vm().watchpointManager() != null
+                && vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
     }
 
@@ -3595,7 +3595,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
                 final String description = "Field \"" + fieldActor.name.toString() + "\"";
-                final MaxWatchpoint watchpoint = vm().watchpointFactory().createFieldWatchpoint(description, teleObject, fieldActor, prefs.settings());
+                final MaxWatchpoint watchpoint = vm().watchpointManager().createFieldWatchpoint(description, teleObject, fieldActor, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3613,8 +3613,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
-                && vm().watchpointFactory() != null
-                && vm().watchpointFactory().findWatchpoints(memoryRegion).isEmpty());
+                && vm().watchpointManager() != null
+                && vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
     }
 
@@ -3661,7 +3661,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             try {
                 final String description = "Element " + indexPrefix + "[" + Integer.toString(index) + "]";
                 final MaxWatchpoint watchpoint
-                    = vm().watchpointFactory().createArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, prefs.settings());
+                    = vm().watchpointManager().createArrayElementWatchpoint(description, teleObject, elementKind, arrayOffsetFromOrigin, index, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3679,8 +3679,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
-                && vm().watchpointFactory() != null
-                && vm().watchpointFactory().findWatchpoints(memoryRegion).isEmpty());
+                && vm().watchpointManager() != null
+                && vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
     }
 
@@ -3722,7 +3722,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final WatchpointsViewPreferences prefs = WatchpointsViewPreferences.globalPreferences(inspection());
             try {
                 final String description = "Field \"" + headerField.name + "\"";
-                final MaxWatchpoint watchpoint = vm().watchpointFactory().createHeaderWatchpoint(description, teleObject, headerField, prefs.settings());
+                final MaxWatchpoint watchpoint = vm().watchpointManager().createHeaderWatchpoint(description, teleObject, headerField, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3740,8 +3740,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
-                && vm().watchpointFactory() != null
-                && vm().watchpointFactory().findWatchpoints(memoryRegion).isEmpty());
+                && vm().watchpointManager() != null
+                && vm().watchpointManager().findWatchpoints(memoryRegion).isEmpty());
         }
     }
 
@@ -3778,7 +3778,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final String description = "Thread local variable\"" + threadLocalVariable.name()
                     + "\" (" + inspection().nameDisplay().shortName(threadLocalVariable.thread()) + ","
                     + threadLocalVariable.safepointState().toString() + ")";
-                final MaxWatchpoint watchpoint = vm().watchpointFactory().createVmThreadLocalWatchpoint(description, threadLocalVariable, prefs.settings());
+                final MaxWatchpoint watchpoint = vm().watchpointManager().createVmThreadLocalWatchpoint(description, threadLocalVariable, prefs.settings());
                 if (watchpoint == null) {
                     gui().errorMessage("Watchpoint creation failed");
                 } else {
@@ -3796,8 +3796,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         public void refresh(boolean force) {
             setEnabled(inspection().hasProcess()
-                && vm().watchpointFactory() != null
-                && vm().watchpointFactory().findWatchpoints(threadLocalVariable.memoryRegion()).isEmpty());
+                && vm().watchpointManager() != null
+                && vm().watchpointManager().findWatchpoints(threadLocalVariable.memoryRegion()).isEmpty());
         }
     }
 
@@ -3966,7 +3966,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setWatchpoint(null);
-            for (MaxWatchpoint watchpoint : vm().watchpointFactory().watchpoints()) {
+            for (MaxWatchpoint watchpoint : vm().watchpointManager().watchpoints()) {
                 try {
                     if (!watchpoint.remove()) {
                         gui().errorMessage("Failed to remove watchpoint" + watchpoint);
@@ -3979,7 +3979,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(vm().watchpointFactory() != null && vm().watchpointFactory().watchpoints().length() > 0);
+            setEnabled(vm().watchpointManager() != null && vm().watchpointManager().watchpoints().length() > 0);
         }
     }
 
@@ -4785,7 +4785,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            vm().watchpointFactory().writeSummary(System.out);
+            vm().watchpointManager().writeSummary(System.out);
         }
     }
 
@@ -4923,7 +4923,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 menu.add(actions().viewStack());
                 menu.add(actions().viewThreads());
                 menu.add(actions().viewVmThreadLocals());
-                if (vm().watchpointFactory() != null) {
+                if (vm().watchpointManager() != null) {
                     menu.add(actions().viewWatchpoints());
                 }
             }

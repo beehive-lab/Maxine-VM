@@ -99,7 +99,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     @Override
     protected void mouseButton1Clicked(int row, int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && vm().watchpointFactory() != null) {
+        if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction action = new ToggleObjectHeaderWatchpointAction(inspection(), null, row);
             action.perform();
         }
@@ -107,7 +107,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
-        if (vm().watchpointFactory() != null) {
+        if (vm().watchpointManager() != null) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new ToggleObjectHeaderWatchpointAction(inspection(), "Toggle watchpoint (double-click)", row));
             final HeaderField headerField = headerFields[row];

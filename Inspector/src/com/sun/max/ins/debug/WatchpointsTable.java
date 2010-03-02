@@ -59,7 +59,7 @@ public final class WatchpointsTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(int row, int col, MouseEvent mouseEvent) {
-        if (vm().watchpointFactory() != null && col == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
+        if (vm().watchpointManager() != null && col == WatchpointsColumnKind.DESCRIPTION.ordinal()) {
             final InspectorPopupMenu menu = new InspectorPopupMenu("Watchpoints");
             final MaxWatchpoint watchpoint = (MaxWatchpoint) tableModel.getValueAt(row, col);
             final TeleObject teleObject = watchpoint.getTeleObject();
@@ -130,7 +130,7 @@ public final class WatchpointsTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return vm().watchpointFactory().watchpoints().length();
+            return vm().watchpointManager().watchpoints().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -261,7 +261,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         MaxWatchpoint rowToWatchpoint(int row) {
             int count = 0;
-            for (MaxWatchpoint watchpoint : vm().watchpointFactory().watchpoints()) {
+            for (MaxWatchpoint watchpoint : vm().watchpointManager().watchpoints()) {
                 if (count == row) {
                     return watchpoint;
                 }
@@ -272,7 +272,7 @@ public final class WatchpointsTable extends InspectorTable {
 
         int findRow(MaxWatchpoint findWatchpoint) {
             int row = 0;
-            for (MaxWatchpoint watchpoint : vm().watchpointFactory().watchpoints()) {
+            for (MaxWatchpoint watchpoint : vm().watchpointManager().watchpoints()) {
                 if (watchpoint.equals(findWatchpoint)) {
                     return row;
                 }

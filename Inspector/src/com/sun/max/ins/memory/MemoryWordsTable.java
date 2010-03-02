@@ -67,7 +67,7 @@ public final class MemoryWordsTable extends InspectorTable {
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1 && col == MemoryWordsColumnKind.OFFSET.ordinal()) {
             setOriginToSelectionAction.perform();
-        } else if (mouseEvent.getClickCount() > 1 && vm().watchpointFactory() != null) {
+        } else if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -87,7 +87,7 @@ public final class MemoryWordsTable extends InspectorTable {
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         final InspectorPopupMenu menu = new InspectorPopupMenu();
-        if (vm().watchpointFactory() != null) {
+        if (vm().watchpointManager() != null) {
             final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 

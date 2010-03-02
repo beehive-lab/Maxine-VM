@@ -37,7 +37,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxWatchpointFactory {
+public interface MaxWatchpointManager {
 
     /**
      * Adds a listener for watchpoint changes.

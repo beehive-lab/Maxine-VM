@@ -135,8 +135,8 @@ public final class Inspection implements InspectionHolder {
 
         vm.addVMStateListener(new VMStateListener());
         vm.breakpointFactory().addListener(new BreakpointListener());
-        if (vm.watchpointFactory() != null) {
-            vm.watchpointFactory().addListener(new WatchpointListener());
+        if (vm.watchpointManager() != null) {
+            vm.watchpointManager().addListener(new WatchpointListener());
         }
 
         inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);

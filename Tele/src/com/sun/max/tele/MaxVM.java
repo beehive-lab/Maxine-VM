@@ -570,15 +570,15 @@ public interface MaxVM {
     MaxBreakpointFactory breakpointFactory();
 
     /**
-     * Gets the factory for creating and managing VM watchpoints; null
+     * Gets the manager for creating and managing VM watchpoints; null
      * if watchpoints are not supported on this platform.
      * <br>
      * Thread-safe
      *
-     * @return the singleton factory for creating and managing VM watchpoints, or
+     * @return the singleton manager for creating and managing VM watchpoints, or
      * null if watchpoints not supported.
      */
-    MaxWatchpointFactory watchpointFactory();
+    MaxWatchpointManager watchpointManager();
 
     /**
      * Adds a listener for GC starts in the VM.
