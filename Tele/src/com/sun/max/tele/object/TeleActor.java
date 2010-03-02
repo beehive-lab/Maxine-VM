@@ -38,17 +38,53 @@ public abstract class TeleActor extends TeleTupleObject {
     /**
      * @return the generic name of this {@link Actor} copied from the {@link TeleVM}.
      */
-    public String readName() {
-        final Reference utf8ConstantReference = teleVM().teleFields().Actor_name.readReference(reference());
-        final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleVM().makeTeleObject(utf8ConstantReference);
-        return teleUtf8Constant.getString();
+    public final String getName() {
+        return getTeleName().utf8Constant().string;
+    }
+
+    /**
+     * Field is final once non-null so cache it.
+     */
+    private TeleUtf8Constant name;
+
+    public final TeleUtf8Constant getTeleName() {
+        if (name == null) {
+            Reference utf8ConstantReference = teleVM().teleFields().Actor_name.readReference(reference());
+            name = (TeleUtf8Constant) teleVM().makeTeleObject(utf8ConstantReference);
+        }
+        return name;
+    }
+
+    /**
+     * Local copy of the actor.
+     */
+    private Actor actor;
+
+    /**
+     * Subclasses override this method to create the local actor of the relevant type.
+     */
+    protected abstract Actor initActor();
+
+    /**
+     * Gets the local {@link Actor} instance corresponding to this tele actor.
+     */
+    public final Actor actor() {
+        if (actor == null) {
+            actor = initActor();
+        }
+        return actor;
+    }
+
+    @Override
+    protected final Object createDeepCopy(DeepCopier context) {
+        return actor();
     }
 
     /**
      * @return contents of the {@link #flags} field, read from this
      *         {@link Actor} in the {@link TeleVM}.
      */
-    public int readFlags() {
+    public final int getFlags() {
         return teleVM().teleFields().Actor_flags.readInt(reference());
     }
 
@@ -68,7 +104,7 @@ public abstract class TeleActor extends TeleTupleObject {
      *         flag that is set.
      */
     public final String flagsAsString() {
-        final int flagsValue = readFlags();
+        final int flagsValue = getFlags();
         final StringBuilder sb = new StringBuilder(100);
         if ((flagsValue & Actor.ACC_PUBLIC) != 0) {
             // 0x00000001

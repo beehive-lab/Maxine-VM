@@ -29,7 +29,9 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
 
 /**
  *  Canonical surrogate for an object of type {@link MethodActor} in the {@link TeleVM}.
@@ -39,27 +41,26 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleMethodActor extends TeleMemberActor implements TeleRoutine, MethodProvider {
 
-    private MethodActor methodActor;
-
     /**
      * @return local {@link MethodActor} corresponding the the {@link TeleVM}'s {@link MethodActor} for this method.
      */
-    public MethodActor methodActor() {
-        if (methodActor == null) {
-            methodActor = getTeleHolder().classActor().getLocalMethodActor(getMemberIndex());
-        }
+    @Override
+    protected Actor initActor() {
+        // Cannot use member index as it may be different in local ClassActor
+        Utf8Constant name = getTeleName().utf8Constant();
+        SignatureDescriptor signature = (SignatureDescriptor) getTeleDescriptor().descriptor();
+        MethodActor methodActor = getTeleHolder().classActor().findLocalMethodActor(name, signature);
+        assert getName().equals(methodActor.name.string);
         return methodActor;
+    }
+
+    public MethodActor methodActor() {
+        return (MethodActor) actor();
     }
 
     // Keep construction minimal for both performance and synchronization.
     protected TeleMethodActor(TeleVM teleVM, Reference methodActorReference) {
         super(teleVM, methodActorReference);
-    }
-
-    @Override
-    protected Object createDeepCopy(DeepCopier context) {
-        // Translate into local equivalent
-        return methodActor();
     }
 
     /**
@@ -131,16 +132,6 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
 
     public ReferenceTypeProvider getReferenceTypeHolder() {
         return super.getTeleHolder();
-    }
-
-    public int getFlags() {
-        int flags = methodActor().flags();
-        flags = flags & Actor.JAVA_METHOD_FLAGS;
-        return flags;
-    }
-
-    public String getName() {
-        return methodActor().name.string;
     }
 
     public String getSignature() {

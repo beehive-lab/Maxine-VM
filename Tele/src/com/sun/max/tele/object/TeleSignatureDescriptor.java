@@ -35,11 +35,4 @@ public final class TeleSignatureDescriptor extends TeleDescriptor {
     protected TeleSignatureDescriptor(TeleVM teleVM, Reference signatureDescriptorReference) {
         super(teleVM, signatureDescriptorReference);
     }
-
-    @Override
-    protected Object createDeepCopy(DeepCopier context) {
-        // Translate into local equivalent
-        return SignatureDescriptor.create(string());
-    }
-
 }
