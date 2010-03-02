@@ -25,6 +25,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -61,11 +62,13 @@ public class BytecodeTemplateGenerator extends TemplateGenerator {
         // This will enable some compiler optimization that we want the templates to benefit from.
         final Class templateHolderClassInTarget = initializeClassInTarget(templateSourceClass);
         final Method[] templateMethods = templateHolderClassInTarget.getDeclaredMethods();
-        for (Method m : templateMethods) {
-            BYTECODE_TEMPLATE bct = m.getAnnotation(BYTECODE_TEMPLATE.class);
-            if (bct != null) {
-                BytecodeTemplate bt = bct.value();
-                templates.put(bt, generateBytecodeTemplate(m));
+        for (Method method : templateMethods) {
+            if (Platform.target().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
+                BYTECODE_TEMPLATE bct = method.getAnnotation(BYTECODE_TEMPLATE.class);
+                if (bct != null) {
+                    BytecodeTemplate bt = bct.value();
+                    templates.put(bt, generateBytecodeTemplate(method));
+                }
             }
         }
     }

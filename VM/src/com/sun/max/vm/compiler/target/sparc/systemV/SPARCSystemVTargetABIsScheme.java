@@ -42,12 +42,12 @@ public final class SPARCSystemVTargetABIsScheme extends SPARCTargetABIsScheme {
 
     @HOSTED_ONLY
     private static RegisterRoleAssignment<GPR, FPR> javaRegisterRoleAssignment() {
-        return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, G1, G2, L7, FPR.class, F0, F30, I7, O7);
+        return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, G1, G2, L7, FPR.class, F0, F30, I7);
     }
 
     @HOSTED_ONLY
     private static RegisterRoleAssignment<GPR, FPR> javaJitRegisterRoleAssignment() {
-        return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, L6, I0, O0, G1, G2, L7, FPR.class, F0, F30, I7, O7);
+        return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, L6, I0, O0, G1, G2, L7, FPR.class, F0, F30, I7);
     }
 
     @HOSTED_ONLY

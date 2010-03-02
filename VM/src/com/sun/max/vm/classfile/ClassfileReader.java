@@ -30,6 +30,7 @@ import static com.sun.max.vm.type.ClassRegistry.Property.*;
 import static com.sun.max.vm.type.JavaTypeDescriptor.*;
 
 import java.io.*;
+import java.lang.annotation.*;
 import java.lang.instrument.*;
 import java.security.*;
 import java.util.*;
@@ -41,13 +42,13 @@ import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.AnnotationInfo.*;
 import com.sun.max.vm.classfile.ClassfileWriter.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.instrument.*;
@@ -431,24 +432,26 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (MaxineVM.isHosted()) {
-                    if (runtimeVisibleAnnotationsBytes != null) {
-                        final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-                        for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
-                            final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
-                            if (annotationTypeDescriptor.equals(forJavaClass(HOSTED_ONLY.class))) {
+                if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
+                    for (Annotation annotation : getAnnotations(name, descriptor)) {
+                        if (annotation.annotationType() == HOSTED_ONLY.class) {
+                            continue nextField;
+                        } else if (annotation.annotationType() == PLATFORM.class) {
+                            if (!Platform.target().isAcceptedBy((PLATFORM) annotation)) {
                                 continue nextField;
-                            } else if (info.annotationTypeDescriptor().equals(forJavaClass(RESET.class))) {
-                                assert !Actor.isFinal(flags) :
-                                    "A final field cannot have the RESET annotation: " + classDescriptor.toJavaString() + "." + name;
-                            } else if (info.annotationTypeDescriptor().equals(forJavaClass(CONSTANT.class))) {
-                                flags |= CONSTANT;
-                            } else if (info.annotationTypeDescriptor().equals(forJavaClass(CONSTANT_WHEN_NOT_ZERO.class))) {
-                                flags |= CONSTANT_WHEN_NOT_ZERO;
                             }
+                        } else if (annotation.annotationType() == RESET.class) {
+                            assert !Actor.isFinal(flags) :
+                                "A final field cannot have the RESET annotation: " + classDescriptor.toJavaString() + "." + name;
+                        } else if (annotation.annotationType() == CONSTANT.class) {
+                            flags |= CONSTANT;
+                        } else if (annotation.annotationType() == CONSTANT_WHEN_NOT_ZERO.class) {
+                            flags |= CONSTANT_WHEN_NOT_ZERO;
                         }
+
                     }
                 }
+
 
                 final Kind kind = descriptor.toKind();
                 if (kind == Kind.VOID) {
@@ -689,6 +692,27 @@ public final class ClassfileReader {
         return classDescriptor.toJavaString() + "." + name + ((SignatureDescriptor) descriptor).toJavaString(false, true);
     }
 
+    @HOSTED_ONLY
+    private Annotation[] getAnnotations(Utf8Constant name, Descriptor descriptor) {
+        Class holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
+        Annotation[] annotations;
+        if (name.equals(SymbolTable.INIT)) {
+            SignatureDescriptor sig = (SignatureDescriptor) descriptor;
+            annotations = Classes.getDeclaredConstructor(holder, sig.resolveParameterTypes(ClassfileReader.class.getClassLoader())).getAnnotations();
+        } else if (descriptor instanceof TypeDescriptor) {
+            TypeDescriptor type = (TypeDescriptor) descriptor;
+            if (name.equals(type.toJavaString())) {
+                annotations = holder.getAnnotations();
+            } else {
+                annotations = Classes.getDeclaredField(holder, name.string).getAnnotations();
+            }
+        } else {
+            SignatureDescriptor sig = (SignatureDescriptor) descriptor;
+            annotations = Classes.getDeclaredMethod(holder, name.string, sig.resolveParameterTypes(ClassfileReader.class.getClassLoader())).getAnnotations();
+        }
+        return annotations;
+    }
+
     protected MethodActor[] readMethods(boolean isInterface) {
         final int numberOfMethods = classfileStream.readUnsigned2();
         if (numberOfMethods == 0) {
@@ -835,54 +859,40 @@ public final class ClassfileReader {
                 int substituteeIndex = -1;
                 int intrinsic = 0;
 
-                if (runtimeVisibleAnnotationsBytes != null) {
-                    // PERF: may need to make the .isMaxineClass() test cheaper
-                    final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-                    for (AnnotationInfo info : AnnotationInfo.parse(annotations, constantPool)) {
-                        final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
-                        if (annotationTypeDescriptor.equals(forJavaClass(HOSTED_ONLY.class))) {
+                if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
+                    for (Annotation annotation : getAnnotations(name, descriptor)) {
+                        if (annotation.annotationType() == HOSTED_ONLY.class) {
                             continue nextMethod;
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(C_FUNCTION.class))) {
+                        } else if (annotation.annotationType() == C_FUNCTION.class) {
                             ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
                             ProgramError.check(isNative(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-native method: " + memberString(name, descriptor));
                             flags |= C_FUNCTION;
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(VM_ENTRY_POINT.class))) {
+                        } else if (annotation.annotationType() == VM_ENTRY_POINT.class) {
                             ensureSignatureIsPrimitive(descriptor, VM_ENTRY_POINT.class);
                             ProgramError.check(isStatic(flags), "Cannot apply " + VM_ENTRY_POINT.class.getName() + " to a non-native method: " + memberString(name, descriptor));
                             flags |= VM_ENTRY_POINT;
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(NO_SAFEPOINTS.class))) {
+                        } else if (annotation.annotationType() == NO_SAFEPOINTS.class) {
                             flags |= NO_SAFEPOINTS;
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(BUILTIN.class))) {
+                        } else if (annotation.annotationType() == BUILTIN.class) {
                             flags |= BUILTIN | UNSAFE;
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(BYTECODE_TEMPLATE.class))) {
+                        } else if (annotation.annotationType() == PLATFORM.class) {
+                            if (!Platform.target().isAcceptedBy((PLATFORM) annotation)) {
+                                continue nextMethod;
+                            }
+                        } else if (annotation.annotationType() == BYTECODE_TEMPLATE.class) {
                             flags |= TEMPLATE | UNSAFE;
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(INLINE.class))) {
+                        } else if (annotation.annotationType() == INLINE.class) {
                             flags |= INLINE;
-                            for (AnnotationInfo.NameElementPair nameElementPair : info.nameElementPairs()) {
-                                if (nameElementPair.name().equals("afterSnippetsAreCompiled")) {
-                                    final AnnotationInfo.ValueElement valueElement = (AnnotationInfo.ValueElement) nameElementPair.element();
-                                    if (valueElement.value().toBoolean()) {
-                                        flags |= INLINE_AFTER_SNIPPETS_ARE_COMPILED;
-                                    }
-                                }
+                            if (((INLINE) annotation).afterSnippetsAreCompiled()) {
+                                flags |= INLINE_AFTER_SNIPPETS_ARE_COMPILED;
                             }
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(NEVER_INLINE.class))) {
+                        } else if (annotation.annotationType() == NEVER_INLINE.class) {
                             flags |= NEVER_INLINE;
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(TRAMPOLINE.class))) {
-                            for (AnnotationInfo.NameElementPair nameElementPair : info.nameElementPairs()) {
-                                if (nameElementPair.name().equals("invocation")) {
-                                    final AnnotationInfo.EnumElement enumElement = (AnnotationInfo.EnumElement) nameElementPair.element();
-                                    TRAMPOLINE.Invocation invocation = Enum.valueOf(TRAMPOLINE.Invocation.class, enumElement.enumConstantName());
-                                    flags |= invocation.flag;
-                                } else {
-                                    ProgramError.unexpected("unknown element on TRAMPOLINE annotation");
-                                }
-                            }
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(INTRINSIC.class))) {
-                            assert info.nameElementPairs().length == 1;
-                            NameElementPair value = info.nameElementPairs()[0];
-                            assert value.name.equals("value");
-                            intrinsic = ((AnnotationInfo.ValueElement) value.element).value().asInt();
+                        } else if (annotation.annotationType() == TRAMPOLINE.class) {
+                            flags |= ((TRAMPOLINE) annotation).invocation().flag;
+                        } else if (annotation.annotationType() == INTRINSIC.class) {
+                            INTRINSIC intrinsicAnnotation = (INTRINSIC) annotation;
+                            intrinsic = intrinsicAnnotation.value();
                             if (intrinsic == Bytecodes.UNSAFE_CAST) {
                                 String anno = INTRINSIC.class.getSimpleName() + "(UNSAFE_CAST)";
                                 ProgramError.check(genericSignature == null, "Cannot apply " + anno + " to a generic method: " + memberString(name, descriptor));
@@ -890,11 +900,11 @@ public final class ClassfileReader {
                                 ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + anno +
                                     " to a method with exactly one parameter: " + memberString(name, descriptor));
                             }
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(FOLD.class))) {
+                        } else if (annotation.annotationType() == FOLD.class) {
                             flags |= FOLD;
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE.class))) {
+                        } else if (annotation.annotationType() == UNSAFE.class) {
                             flags |= UNSAFE;
-                        } else if (annotationTypeDescriptor.equals(forJavaClass(LOCAL_SUBSTITUTION.class))) {
+                        } else if (annotation.annotationType() == LOCAL_SUBSTITUTION.class) {
                             // process any class-local substitutions
                             flags |= LOCAL_SUBSTITUTE;
                             final Utf8Constant substituteeName = SymbolTable.lookupSymbol(toSubstituteeName(name.toString()));
@@ -1242,9 +1252,8 @@ public final class ClassfileReader {
         classfileStream.checkEndOfFile();
 
         if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
-            final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-            for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
-                if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(HOSTED_ONLY.class))) {
+            for (Annotation annotation : getAnnotations(name, classDescriptor)) {
+                if (annotation.annotationType() == HOSTED_ONLY.class) {
                     throw new HostOnlyClassError(name.string);
                 }
             }
@@ -1292,10 +1301,9 @@ public final class ClassfileReader {
         }
 
         if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
-            final ClassfileStream annotations = new ClassfileStream(runtimeVisibleAnnotationsBytes);
-            for (AnnotationInfo annotationInfo : AnnotationInfo.parse(annotations, constantPool)) {
-                if (annotationInfo.annotationTypeDescriptor().equals(forJavaClass(METHOD_SUBSTITUTIONS.class))) {
-                    METHOD_SUBSTITUTIONS.Static.processAnnotationInfo(annotationInfo, classActor);
+            for (Annotation annotation : getAnnotations(name, classDescriptor)) {
+                if (annotation.annotationType() == METHOD_SUBSTITUTIONS.class) {
+                    METHOD_SUBSTITUTIONS.Static.processAnnotationInfo((METHOD_SUBSTITUTIONS) annotation, classActor);
                 }
             }
         }

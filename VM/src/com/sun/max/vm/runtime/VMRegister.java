@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -118,21 +121,10 @@ public final class VMRegister {
 
         },
         /**
-         * The register holding the address of the call instruction
+         * The register holding the address to which a call returns (e.g. {@code %i7 on SPARC}).
          * Not all platform defines one.
         */
-        CALL_INSTRUCTION_ADDRESS {
-            @Override
-            public Kind kind() {
-                return Kind.WORD;
-            }
-        },
-
-        /**
-         * The register holding the address of the call instruction for a frame-less call.
-         * Not all platform defines one.
-         */
-        FRAMELESS_CALL_INSTRUCTION_ADDRESS {
+        LINK_ADDRESS {
             @Override
             public Kind kind() {
                 return Kind.WORD;
@@ -147,21 +139,25 @@ public final class VMRegister {
     }
 
     @INLINE
+    @INTRINSIC(READGPR_SP_CPU)
     public static Pointer getCpuStackPointer() {
         return SpecialBuiltin.getIntegerRegister(Role.CPU_STACK_POINTER);
     }
 
     @INLINE
+    @INTRINSIC(WRITEGPR_SP_CPU)
     public static void setCpuStackPointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.CPU_STACK_POINTER, value);
     }
 
     @INLINE
+    @INTRINSIC(READGPR_FP_CPU)
     public static Pointer getCpuFramePointer() {
         return SpecialBuiltin.getIntegerRegister(Role.CPU_FRAME_POINTER);
     }
 
     @INLINE
+    @INTRINSIC(WRITEGPR_FP_CPU)
     public static void setCpuFramePointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.CPU_FRAME_POINTER, value);
     }
@@ -172,72 +168,59 @@ public final class VMRegister {
     }
 
     @INLINE
+    @INTRINSIC(READGPR_SP_ABI)
     public static Pointer getAbiStackPointer() {
         return SpecialBuiltin.getIntegerRegister(Role.ABI_STACK_POINTER);
     }
 
     @INLINE
+    @INTRINSIC(WRITEGPR_SP_ABI)
     public static void setAbiStackPointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.ABI_STACK_POINTER, value);
     }
 
     @INLINE
+    @INTRINSIC(READGPR_FP_ABI)
     public static Pointer getAbiFramePointer() {
         return SpecialBuiltin.getIntegerRegister(Role.ABI_FRAME_POINTER);
     }
 
     @INLINE
+    @INTRINSIC(WRITEGPR_FP_ABI)
     public static void setAbiFramePointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.ABI_FRAME_POINTER, value);
     }
 
     @INLINE
+    @INTRINSIC(READGPR_LATCH)
     public static Pointer getSafepointLatchRegister() {
         return SpecialBuiltin.getIntegerRegister(Role.SAFEPOINT_LATCH);
     }
 
     @INLINE
+    @INTRINSIC(WRITEGPR_LATCH)
     public static void setSafepointLatchRegister(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.SAFEPOINT_LATCH, value);
     }
 
     @INLINE
+    @INTRINSIC(READ_PC)
     public static Pointer getInstructionPointer() {
         return SpecialBuiltin.getInstructionPointer();
     }
 
     @FOLD
     private static boolean callAddressRegisterExists() {
-        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.CALL_INSTRUCTION_ADDRESS) != null;
+        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.LINK_ADDRESS) != null;
     }
 
     @INLINE
-    public static Pointer getCallAddressRegister() {
-        if (callAddressRegisterExists()) {
-            return SpecialBuiltin.getIntegerRegister(Role.CALL_INSTRUCTION_ADDRESS);
-        }
-        throw ProgramError.unexpected("There is no call address register in this target ABI");
-    }
-
-    @INLINE
+    @INTRINSIC(WRITEGPR_LINK)
     public static void setCallAddressRegister(Word value) {
         if (callAddressRegisterExists()) {
-            SpecialBuiltin.setIntegerRegister(Role.CALL_INSTRUCTION_ADDRESS, value);
+            SpecialBuiltin.setIntegerRegister(Role.LINK_ADDRESS, value);
             return;
         }
         throw ProgramError.unexpected("There is no call address register in this target ABI");
-    }
-
-    @FOLD
-    private static boolean framelessCallAddressRegisterExists() {
-        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS) != null;
-    }
-
-    @INLINE
-    public static Pointer getFramelessCallAddressRegister() {
-        if (framelessCallAddressRegisterExists()) {
-            return SpecialBuiltin.getIntegerRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS);
-        }
-        throw ProgramError.unexpected("There is no frameless call address register in this target ABI");
     }
 }

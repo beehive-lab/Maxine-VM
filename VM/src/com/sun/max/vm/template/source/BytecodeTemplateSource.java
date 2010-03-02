@@ -2614,24 +2614,6 @@ public class BytecodeTemplateSource {
         JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(SpecialBuiltin.unsignedIntGreaterEqual(value1, value2)));
     }
 
-//    @INTRINSIC(Bytecodes.UNSAFE_CAST)
-//    private static native VMRegister.Role asRole(Object object);
-//
-//    @BYTECODE_TEMPLATE(READGPR)
-//    public static void readgpr() {
-//        VMRegister.Role role = asRole(JitStackFrameOperation.peekObject(0));
-//        Pointer value = SpecialBuiltin.getIntegerRegister(role);
-//        JitStackFrameOperation.pokeWord(0, value);
-//    }
-//
-//    @BYTECODE_TEMPLATE(WRITEGPR)
-//    public static void writegpr() {
-//        Word value = JitStackFrameOperation.peekWord(0);
-//        VMRegister.Role role = asRole(JitStackFrameOperation.peekObject(1));
-//        JitStackFrameOperation.removeSlots(2);
-//        SpecialBuiltin.setIntegerRegister(role, value);
-//    }
-
     @BYTECODE_TEMPLATE(MEMBAR_LOAD_LOAD)
     public static void membar_load_load() {
         MemoryBarrier.loadLoad();
@@ -2660,5 +2642,83 @@ public class BytecodeTemplateSource {
     @BYTECODE_TEMPLATE(MEMBAR_ALL)
     public static void membar_all() {
         MemoryBarrier.all();
+    }
+
+    @BYTECODE_TEMPLATE(SAFEPOINT)
+    public static void safepoint() {
+        Safepoint.safepoint();
+    }
+
+    @BYTECODE_TEMPLATE(PAUSE)
+    public static void pause() {
+        SpecialBuiltin.pause();
+    }
+
+    @BYTECODE_TEMPLATE(READGPR_FP_CPU)
+    public static void readgpr_fp_cpu() {
+        JitStackFrameOperation.pushWord(VMRegister.getCpuFramePointer());
+    }
+
+    @BYTECODE_TEMPLATE(READGPR_SP_CPU)
+    public static void readgpr_sp_cpu() {
+        JitStackFrameOperation.pushWord(VMRegister.getCpuStackPointer());
+    }
+
+    @BYTECODE_TEMPLATE(READGPR_FP_ABI)
+    public static void readgpr_fp_abi() {
+        JitStackFrameOperation.pushWord(VMRegister.getAbiFramePointer());
+    }
+
+    @BYTECODE_TEMPLATE(READGPR_SP_ABI)
+    public static void readgpr_sp_abi() {
+        JitStackFrameOperation.pushWord(VMRegister.getAbiStackPointer());
+    }
+
+    @BYTECODE_TEMPLATE(READGPR_LATCH)
+    public static void readgpr_latch() {
+        JitStackFrameOperation.pushWord(VMRegister.getSafepointLatchRegister());
+    }
+
+    @BYTECODE_TEMPLATE(WRITEGPR_FP_CPU)
+    public static void writegpr_fp_cpu() {
+        Word value = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.removeSlots(1);
+        VMRegister.setCpuFramePointer(value);
+    }
+
+    @BYTECODE_TEMPLATE(WRITEGPR_SP_CPU)
+    public static void writegpr_sp_cpu() {
+        Word value = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.removeSlots(1);
+        VMRegister.setCpuStackPointer(value);
+    }
+
+    @BYTECODE_TEMPLATE(WRITEGPR_FP_ABI)
+    public static void writegpr_fp_abi() {
+        Word value = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.removeSlots(1);
+        VMRegister.setAbiFramePointer(value);
+    }
+
+    @BYTECODE_TEMPLATE(WRITEGPR_SP_ABI)
+    public static void writegpr_sp_abi() {
+        Word value = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.removeSlots(1);
+        VMRegister.setAbiStackPointer(value);
+    }
+
+    @BYTECODE_TEMPLATE(WRITEGPR_LATCH)
+    public static void writegpr_latch() {
+        Word value = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.removeSlots(1);
+        VMRegister.setSafepointLatchRegister(value);
+    }
+
+    @PLATFORM(cpu = "sparc")
+    @BYTECODE_TEMPLATE(WRITEGPR_LINK)
+    public static void writegpr_link() {
+        Word value = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.removeSlots(1);
+        VMRegister.setCallAddressRegister(value);
     }
 }

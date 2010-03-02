@@ -38,7 +38,7 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
 
     @HOSTED_ONLY
     private static RegisterRoleAssignment<GPR, FPR> nativeRegisterRoleAssignment() {
-        return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, null, null, null, FPR.class, F0, null, I7, O7);
+        return new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, null, null, null, FPR.class, F0, null, I7);
     }
 
     @HOSTED_ONLY
