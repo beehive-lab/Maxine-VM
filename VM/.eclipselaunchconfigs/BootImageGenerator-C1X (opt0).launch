@@ -17,7 +17,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.vm.prototype.BootImageGenerator"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -opt=c1x -vmargs=&quot;-XX:OptLevel=2 -XX:+UseXIR&quot;"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -opt=c1x -vmargs=&quot;-C1X:OptLevel=0 -C1X:+UseXIR&quot;"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="MaxineC1X"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -Xss2m -Xms1G -Xmx2G -Dmax.trace.noconsoles"/>
 </launchConfiguration>

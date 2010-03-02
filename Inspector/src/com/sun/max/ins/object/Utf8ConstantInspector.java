@@ -64,7 +64,7 @@ class Utf8ConstantInspector extends ObjectInspector {
 
         stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
-                return teleUtf8Constant.getString();
+                return teleUtf8Constant.utf8Constant().string;
             }
         });
         tabbedPane.add("string value", stringPane);

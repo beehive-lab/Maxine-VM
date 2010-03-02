@@ -35,22 +35,4 @@ public final class TeleTypeDescriptor extends TeleDescriptor {
     protected TeleTypeDescriptor(TeleVM teleVM, Reference typeDescriptorReference) {
         super(teleVM, typeDescriptorReference);
     }
-
-    private TypeDescriptor typeDescriptor;
-
-    /**
-     * @return local equivalent of the {@link TypeDescriptor} in the target VM.
-     */
-    public TypeDescriptor toJava() {
-        if (typeDescriptor == null) {
-            typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(string());
-        }
-        return typeDescriptor;
-    }
-
-    @Override
-    protected Object createDeepCopy(DeepCopier context) {
-        // Translate into local equivalent
-        return toJava();
-    }
 }
