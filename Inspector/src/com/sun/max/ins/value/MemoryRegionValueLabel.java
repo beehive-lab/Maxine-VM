@@ -90,7 +90,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
         toolTipText = null;
         if (value() != null && !value().isZero()) {
             address = value().toWord().asAddress();
-            memoryRegion = vm().memoryRegionContaining(address);
+            memoryRegion = vm().findMemoryRegion(address);
         }
         if (memoryRegion != null) {
             regionName = inspection().nameDisplay().shortName(memoryRegion);
