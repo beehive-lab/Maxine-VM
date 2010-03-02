@@ -31,7 +31,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * @author Christos Kotselidis
  */
-public class Belt extends RuntimeMemoryRegion {
+public class Belt extends LinearAllocationMemoryRegion {
     private static final int NO_BELT_INDEX = -1;
     /**
      * The relative order of a belt. Always starts from Zero (0). The lower the value, the older

@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleCodeRegion extends TeleRuntimeMemoryRegion {
+public final class TeleCodeRegion extends TeleLinearAllocationMemoryRegion {
 
     private static final int TRACE_VALUE = 2;
 

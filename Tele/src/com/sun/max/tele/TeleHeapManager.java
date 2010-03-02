@@ -91,20 +91,20 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         return teleHeapManager;
     }
 
-    private TeleRuntimeMemoryRegion teleBootHeapRegion = null;
+    private TeleLinearAllocationMemoryRegion teleBootHeapRegion = null;
 
-    private TeleRuntimeMemoryRegion teleImmortalHeapRegion = null;
+    private TeleLinearAllocationMemoryRegion teleImmortalHeapRegion = null;
 
     /**
      * Surrogates for each of the heap regions created by GC implementations in the VM.
      */
-    protected TeleRuntimeMemoryRegion[] teleHeapRegions = new TeleRuntimeMemoryRegion[0];
+    protected TeleLinearAllocationMemoryRegion[] teleHeapRegions = new TeleLinearAllocationMemoryRegion[0];
 
     private Pointer teleRuntimeMemoryRegionRegistrationPointer = Pointer.zero();
 
     private Pointer teleRootsPointer = Pointer.zero();
 
-    private TeleRuntimeMemoryRegion teleRootsRegion = null;
+    private TeleLinearAllocationMemoryRegion teleRootsRegion = null;
 
     private final TeleHeapScheme teleHeapScheme;
 
@@ -133,7 +133,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         Trace.begin(1, tracePrefix() + "initializing");
         final long startTimeMillis = System.currentTimeMillis();
         final Reference bootHeapRegionReference = teleVM().teleFields().Heap_bootHeapRegion.readReference(teleVM());
-        teleBootHeapRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
+        teleBootHeapRegion = (TeleLinearAllocationMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
         final int teleRootsOffset = teleVM().teleFields().InspectableHeapInfo_rootsPointer.fieldActor().offset();
 
         // The address of the tele roots field must be accessible before any {@link TeleObject}s can be created,
@@ -160,11 +160,11 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
                 final TeleArrayObject teleArrayObject = (TeleArrayObject) teleVM().makeTeleObject(runtimeHeapRegionsArrayReference);
                 final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
                 if (teleHeapRegions.length != heapRegionReferences.length) {
-                    teleHeapRegions = new TeleRuntimeMemoryRegion[heapRegionReferences.length];
+                    teleHeapRegions = new TeleLinearAllocationMemoryRegion[heapRegionReferences.length];
                 }
                 int next = 0;
                 for (int i = 0; i < heapRegionReferences.length; i++) {
-                    final TeleRuntimeMemoryRegion region = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(heapRegionReferences[i]);
+                    final TeleLinearAllocationMemoryRegion region = (TeleLinearAllocationMemoryRegion) teleVM().makeTeleObject(heapRegionReferences[i]);
                     if (region != null) {
                         teleHeapRegions[next++] = region;
                     } else {
@@ -180,7 +180,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
             if (teleRootsRegion == null) {
                 final Reference teleRootsRegionReference = teleVM().teleFields().InspectableHeapInfo_rootsRegion.readReference(teleVM());
                 if (teleRootsRegionReference != null && !teleRootsRegionReference.isZero()) {
-                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(teleRootsRegionReference);
+                    final TeleLinearAllocationMemoryRegion maybeAllocatedRegion = (TeleLinearAllocationMemoryRegion) teleVM().makeTeleObject(teleRootsRegionReference);
                     if (maybeAllocatedRegion != null && maybeAllocatedRegion.isAllocated()) {
                         teleRootsRegion = maybeAllocatedRegion;
                     }
@@ -190,7 +190,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
             if (teleImmortalHeapRegion == null) {
                 final Reference immortalHeapReference = teleVM().teleFields().ImmortalHeap_immortalHeap.readReference(teleVM());
                 if (immortalHeapReference != null && !immortalHeapReference.isZero()) {
-                    final TeleRuntimeMemoryRegion maybeAllocatedRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(immortalHeapReference);
+                    final TeleLinearAllocationMemoryRegion maybeAllocatedRegion = (TeleLinearAllocationMemoryRegion) teleVM().makeTeleObject(immortalHeapReference);
                     if (maybeAllocatedRegion != null && maybeAllocatedRegion.isAllocated()) {
                         teleImmortalHeapRegion = maybeAllocatedRegion;
                     }
@@ -201,29 +201,29 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
     }
 
     /**
-     * @return surrogate for the special heap {@link RuntimeMemoryRegion} in the {@link BootImage} of the VM.
+     * @return surrogate for the special heap {@link LinearAllocationMemoryRegion} in the {@link BootImage} of the VM.
      */
-    public TeleRuntimeMemoryRegion teleBootHeapRegion() {
+    public TeleLinearAllocationMemoryRegion teleBootHeapRegion() {
         return teleBootHeapRegion;
     }
 
     /**
-     * @return surrogate for the immortal heap {@link RuntimeMemoryRegion} of the VM.
+     * @return surrogate for the immortal heap {@link LinearAllocationMemoryRegion} of the VM.
      */
-    public TeleRuntimeMemoryRegion teleImmortalHeapRegion() {
+    public TeleLinearAllocationMemoryRegion teleImmortalHeapRegion() {
         return teleImmortalHeapRegion;
     }
 
     /**
-     * @return surrogates for all {@link RuntimeMemoryRegion}s in the {@link Heap} of the VM.
+     * @return surrogates for all {@link LinearAllocationMemoryRegion}s in the {@link Heap} of the VM.
      * Sorted in order of allocation.  Does not include the boot heap region.
      * @see InspectableHeapInfo
      */
-    public IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {
-        return new ArraySequence<TeleRuntimeMemoryRegion>(teleHeapRegions);
+    public IndexedSequence<TeleLinearAllocationMemoryRegion> teleHeapRegions() {
+        return new ArraySequence<TeleLinearAllocationMemoryRegion>(teleHeapRegions);
     }
 
-    public TeleRuntimeMemoryRegion[] teleHeapRegionsArray() {
+    public TeleLinearAllocationMemoryRegion[] teleHeapRegionsArray() {
         return teleHeapRegions;
     }
 
@@ -233,7 +233,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
      * @see TeleRoots
      * @see InspectableHeapInfo
      */
-    public TeleRuntimeMemoryRegion teleRootsRegion() {
+    public TeleLinearAllocationMemoryRegion teleRootsRegion() {
         return teleRootsRegion;
     }
 
@@ -254,17 +254,17 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
     }
 
     /**
-     * @return the allocated heap {@link RuntimeMemoryRegion} in the VM that contains the address,
+     * @return the allocated heap {@link LinearAllocationMemoryRegion} in the VM that contains the address,
      * possibly the boot heap; null if none.
      */
-    public TeleRuntimeMemoryRegion regionContaining(Address address) {
+    public TeleLinearAllocationMemoryRegion regionContaining(Address address) {
         if (teleBootHeapRegion.contains(address)) {
             return teleBootHeapRegion;
         }
         if (teleImmortalHeapRegion != null && teleImmortalHeapRegion.contains(address)) {
             return teleImmortalHeapRegion;
         }
-        for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
+        for (TeleLinearAllocationMemoryRegion teleHeapRegion : teleHeapRegions) {
             // TODO (mlvdv) there is a race that sometimes causes us to get a null element; we should fix the race.
             if (teleHeapRegion != null && teleHeapRegion.contains(address)) {
                 return teleHeapRegion;
@@ -307,7 +307,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
             // the case where it is in the boot region, otherwise assume all is well.
             return !teleBootHeapRegion.contains(address);
         }
-        for (TeleRuntimeMemoryRegion teleHeapRegion : teleHeapRegions) {
+        for (TeleLinearAllocationMemoryRegion teleHeapRegion : teleHeapRegions) {
             if (teleHeapRegion.contains(address)) {
                 return true;
             }

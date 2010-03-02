@@ -170,10 +170,6 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         return memoryRegion.end();
     }
 
-    public final Address mark() {
-        return memoryRegion.mark();
-    }
-
     public final  boolean contains(Address address) {
         return memoryRegion.contains(address);
     }

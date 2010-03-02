@@ -152,8 +152,8 @@ public final class MemoryRegionsTable extends InspectorTable {
             sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionDisplay>();
 
             sortedMemoryRegions.add(bootHeapRegionDisplay);
-            for (TeleRuntimeMemoryRegion teleRuntimeMemoryRegion : maxVM().teleHeapRegions()) {
-                sortedMemoryRegions.add(new HeapRegionDisplay(teleRuntimeMemoryRegion));
+            for (TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion : maxVM().teleHeapRegions()) {
+                sortedMemoryRegions.add(new HeapRegionDisplay(teleLinearAllocationMemoryRegion));
             }
             if (maxVM().teleRootsRegion() != null) {
                 sortedMemoryRegions.add(new OtherRegionDisplay(maxVM().teleRootsRegion()));
@@ -434,20 +434,20 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     private final class HeapRegionDisplay extends MemoryRegionDisplay {
 
-        private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
+        private final TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion;
 
         @Override
         public MemoryRegion memoryRegion() {
-            return teleRuntimeMemoryRegion;
+            return teleLinearAllocationMemoryRegion;
         }
 
-        HeapRegionDisplay(TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
-            this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
+        HeapRegionDisplay(TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion) {
+            this.teleLinearAllocationMemoryRegion = teleLinearAllocationMemoryRegion;
         }
 
         @Override
         Size allocated() {
-            return teleRuntimeMemoryRegion.allocatedSize();
+            return teleLinearAllocationMemoryRegion.allocatedSize();
         }
 
     }
