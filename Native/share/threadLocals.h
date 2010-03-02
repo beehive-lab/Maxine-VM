@@ -31,7 +31,7 @@
 
 /*
  * A thread locals block is a block of memory allocated on a page boundary (e.g. by valloc(3c)).
- * It contains all the Vm and native thread local data for a thread.
+ * It contains all the VM and native thread local data for a thread.
  * This block of memory is laid out as follows:
  *
  * (low addresses)

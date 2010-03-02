@@ -348,7 +348,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
     /**
      * The abstract interpreter that simulates the JVM instructions at the level of types (as opposed to values).
      */
-    class Interpreter extends BytecodeVisitor {
+    final class Interpreter extends BytecodeVisitor {
 
         private boolean constructorInvoked;
 

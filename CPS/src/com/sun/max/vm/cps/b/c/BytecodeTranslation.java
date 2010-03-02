@@ -1757,11 +1757,11 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case WSTORE_1:               localStoreReferenceOrWord(1); break;
             case WSTORE_2:               localStoreReferenceOrWord(2); break;
             case WSTORE_3:               localStoreReferenceOrWord(3); break;
-            case ZERO:                   push(WordValue.ZERO); break;
+            case WCONST_0:                   push(WordValue.ZERO); break;
             case WDIV:                   stackCall(DividedByAddress.BUILTIN); break;
             case WDIVI:                  stackCall(DividedByInt.BUILTIN); break;
-            case WMOD:                   stackCall(RemainderByAddress.BUILTIN); break;
-            case WMODI:                  stackCall(RemainderByInt.BUILTIN); break;
+            case WREM:                   stackCall(RemainderByAddress.BUILTIN); break;
+            case WREMI:                  stackCall(RemainderByInt.BUILTIN); break;
             case ICMP:                   stackCall(CompareInts.BUILTIN); break;
             case WCMP:                   stackCall(CompareWords.BUILTIN); break;
             case PREAD_BYTE:             stackCall(ReadByte.BUILTIN); break;
@@ -1867,6 +1867,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private void membar(PoolSet<MemoryBarrier> barrier) {
-        push(ReferenceValue.from(barrier)); stackCall(BarMemory.BUILTIN);
+        callAndPush(new JavaBuiltinOperator(BarMemory.BUILTIN), CirConstant.fromObject(barrier));
     }
 }

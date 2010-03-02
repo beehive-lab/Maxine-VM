@@ -25,7 +25,6 @@ import static com.sun.max.vm.VMOptions.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -97,7 +96,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     "In mixed mode, sets the recompilation threshold for methods."), MaxineVM.Phase.STARTING);
     private static final VMBooleanXXOption gcOnRecompileOption = register(new VMBooleanXXOption("-XX:-GCOnRecompilation",
                     "When specified, the compiler will request GC before every re-compilation operation."), MaxineVM.Phase.STARTING);
-    private static final VMBooleanXXOption failoverOption = register(new VMBooleanXXOption("-XX:-FailOverCompilation",
+    private static final VMBooleanXXOption failoverOption = register(new VMBooleanXXOption("-XX:+FailOverCompilation",
                     "When specified, the compiler will attempt to use a different compiler if compilation fails " +
                     "with the first compiler."), MaxineVM.Phase.STARTING);
 
@@ -179,53 +178,59 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @return the target method that results from compiling the specified method
      */
     public TargetMethod synchronousCompile(ClassMethodActor classMethodActor) {
-        return synchronousCompileHelper(classMethodActor, null, null);
+        return synchronousCompileHelper(classMethodActor, null);
     }
 
     public TargetMethod synchronousCompile(ClassMethodActor classMethodActor, RuntimeCompilerScheme compiler) {
-        return synchronousCompileHelper(classMethodActor, compiler, null);
+        return synchronousCompileHelper(classMethodActor, compiler);
     }
 
-    private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme recommendedCompiler, RuntimeCompilerScheme prohibitedCompiler) {
-        Compilation compilation;
-        boolean doCompile = true;
-        synchronized (classMethodActor) {
-            assert !(classMethodActor.isNative() && classMethodActor.isVmEntryPoint()) : "cannot compile JNI functions that are native";
-            Object targetState = classMethodActor.targetState;
-            if (targetState == null) {
-                // this is the first compilation.
-                RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, true, recommendedCompiler, prohibitedCompiler);
-                compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
-                classMethodActor.targetState = compilation;
-            } else if (targetState instanceof Compilation) {
-                // the method is currently being compiled, just wait for the result
-                compilation = (Compilation) targetState;
-                doCompile = false;
-            } else {
-                // this method has already been compiled once
-                RuntimeCompilerScheme compiler = selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, recommendedCompiler, prohibitedCompiler);
-                TargetMethod targetMethod = classMethodActor.currentTargetMethod();
-                if (targetMethod != null && compiler.compiledType() == targetMethod.getClass()) {
-                    return targetMethod;
+    private TargetMethod synchronousCompileHelper(ClassMethodActor classMethodActor, RuntimeCompilerScheme recommendedCompiler) {
+        boolean retrying = false;
+        while (true) {
+            Compilation compilation;
+            boolean doCompile = true;
+            synchronized (classMethodActor) {
+                assert !(classMethodActor.isNative() && classMethodActor.isVmEntryPoint()) : "cannot compile JNI functions that are native";
+                Object targetState = classMethodActor.targetState;
+                if (targetState == null) {
+                    // this is the first compilation.
+                    RuntimeCompilerScheme compiler = !retrying ? selectCompiler(classMethodActor, true, recommendedCompiler) : bootCompiler;
+                    compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
+                    classMethodActor.targetState = compilation;
+                } else if (targetState instanceof Compilation) {
+                    // the method is currently being compiled, just wait for the result
+                    compilation = (Compilation) targetState;
+                    doCompile = false;
+                } else {
+                    // this method has already been compiled once
+                    RuntimeCompilerScheme compiler = !retrying ? selectCompiler(classMethodActor, classMethodActor.targetMethodCount() == 0, recommendedCompiler) : bootCompiler;
+                    TargetMethod targetMethod = classMethodActor.currentTargetMethod();
+                    if (targetMethod != null && compiler.compiledType() == targetMethod.getClass()) {
+                        return targetMethod;
+                    }
+                    compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
+                    classMethodActor.targetState = compilation;
                 }
-                compilation = new Compilation(this, compiler, classMethodActor, targetState, Thread.currentThread());
-                classMethodActor.targetState = compilation;
             }
-        }
 
-        try {
-            if (doCompile) {
-                return compilation.compile(observers);
+            try {
+                if (doCompile) {
+                    return compilation.compile(observers);
+                }
+                return compilation.get();
+            } catch (Throwable t) {
+                classMethodActor.targetState = null;
+                String errorMessage = "Compilation of " + classMethodActor + " by " + compilation.compiler + " failed";
+                Log.println(errorMessage);
+                if (compilation.compiler != bootCompiler && (failoverOption.getValue())) {
+                    t.printStackTrace(Log.out);
+                    Log.println("Retrying with " + bootCompiler + "...");
+                    retrying = true;
+                } else {
+                    throw (InternalError) new InternalError(errorMessage).initCause(t);
+                }
             }
-            return compilation.get();
-        } catch (Throwable t) {
-            // compilation failed for some reason
-            Trace.line(1, "Exception occurred during compilation of method " + classMethodActor.toString() + ": " + t.toString());
-            Trace.line(1, "Compiler scheme is: " + compilation.compilerScheme.toString() + " - trying different compiler scheme...");
-            if (failoverOption.getValue()) {
-                return synchronousCompileHelper(classMethodActor, null, compilation.compilerScheme);
-            }
-            throw new RuntimeException("Error compiling: " + classMethodActor, t);
         }
     }
 
@@ -266,52 +271,60 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      * @param classMethodActor the class method actor to compile
      * @param firstCompile {@code true} if this is the first compilation of this method
      * @param recommendedCompiler the compiler recommended for use
-     * @param prohibitedCompiler the compiler not to use (because it failed)
      * @return the compiler that should be used to perform the next compilation of the method
      */
-    RuntimeCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile, RuntimeCompilerScheme recommendedCompiler, RuntimeCompilerScheme prohibitedCompiler) {
-        // check if the boot compiler just failed
-        if (prohibitedCompiler == bootCompiler) {
-            throw new RuntimeException("Compilation failed with boot compiler");
-        }
+    RuntimeCompilerScheme selectCompiler(ClassMethodActor classMethodActor, boolean firstCompile, RuntimeCompilerScheme recommendedCompiler) {
 
-        // only the boot compiler can handle unsafe, or natives
-        if (classMethodActor.isUnsafe() || prohibitedCompiler != null || classMethodActor.isNative()) {
+        if (classMethodActor.compilee().isUnsafe() || classMethodActor.isUnsafe()) {
             return bootCompiler;
         }
 
+        RuntimeCompilerScheme compiler;
+
         // use the recommended compiler
         if (recommendedCompiler != null) {
-            return recommendedCompiler;
+            compiler = recommendedCompiler;
+        } else if (MaxineVM.isHosted()) {
+            if (classMethodActor.getAnnotation(SNIPPET.class) != null) {
+                // snippets must be compiled with the boot compiler
+                compiler = bootCompiler;
+            } else if (classMethodActor.isSynthetic()) {
+                // at boot time, invocation stubs must be compiled with the boot compiler
+                compiler = bootCompiler;
+            } else if (mode == Mode.PROTOTYPE_JIT) {
+                compiler = jitCompiler;
+            } else {
+                // at prototyping time, default to the opt compiler
+                compiler = optCompiler;
+            }
+        } else {
+            // in optimized mode, default to the optimizing compiler
+            if (mode == Mode.OPTIMIZED) {
+                if (classMethodActor.isSynthetic() && firstCompile) {
+                    // we must at first use the JIT for reflective invocation stubs,
+                    // otherwise the CPS compiler may not terminate
+                    compiler = jitCompiler;
+                } else {
+                    compiler = optCompiler;
+                }
+            } else {
+                // use the jit if the first compile or in JIT mode
+                if (firstCompile || mode == Mode.JIT) {
+                    compiler = jitCompiler;
+                } else {
+                    // not the first compile, use the optimizing compiler
+                    compiler = optCompiler;
+                }
+            }
         }
 
-        // at prototyping time, default to the opt compiler
-        if (MaxineVM.isHosted()) {
-            if (classMethodActor.holder().name.toString().startsWith("com.sun.max")) {
-                // for now, all Maxine code is compiled with boot compiler
+        if (compiler.toString().contains("C1X")) {
+            if (classMethodActor.isExtended() || classMethodActor.holder().name.toString().startsWith("com.sun.max")) {
+                // C1X does not yet recognize the extended bytecodes
                 return bootCompiler;
             }
-            if (mode == Mode.PROTOTYPE_JIT) {
-                return jitCompiler;
-            }
-            return optCompiler;
         }
-
-        // in optimized mode, default to the optimizing compiler
-        if (mode == Mode.OPTIMIZED) {
-            if (classMethodActor.isSynthetic() && firstCompile) {
-                // we must at first use the JIT for reflective invocation stubs,
-                // otherwise the CPS compiler may not terminate
-                return jitCompiler;
-            }
-            return optCompiler;
-        }
-        // use the jit if the first compile or in JIT mode
-        if (firstCompile || mode == Mode.JIT) {
-            return jitCompiler;
-        }
-        // not the first compile, use the optimizing compiler
-        return optCompiler;
+        return compiler;
     }
 
     /**

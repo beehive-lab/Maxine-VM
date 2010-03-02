@@ -128,7 +128,7 @@ public class PrototypeGeneralLayout extends AbstractLayout  implements GeneralLa
         ProgramError.unexpected();
     }
 
-    public final Word compareAndSwapMisc(Accessor accessor, Word suspectedValue, Word newValue) {
+    public final Word compareAndSwapMisc(Accessor accessor, Word expectedValue, Word newValue) {
         throw ProgramError.unexpected();
     }
 
