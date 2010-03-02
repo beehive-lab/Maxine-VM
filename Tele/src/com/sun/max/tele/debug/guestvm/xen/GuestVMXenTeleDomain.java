@@ -31,6 +31,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -74,7 +75,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize;
         final long stackBottom = pageAlign(params.stackRegion.start().toLong(), pageSize) + pageSize;
         final long adjStackSize = params.stackRegion.size().toLong() - (stackBottom - params.stackRegion.start().toLong());
-        final MemoryRegion adjStack = new FixedMemoryRegion(Address.fromLong(stackBottom), Size.fromLong(adjStackSize), params.stackRegion.description());
+        final MemoryRegion adjStack = new TeleMemoryRegion(Address.fromLong(stackBottom), Size.fromLong(adjStackSize), params.stackRegion.description());
         params.stackRegion = adjStack;
         return new GuestVMXenNativeThread(this, params);
     }

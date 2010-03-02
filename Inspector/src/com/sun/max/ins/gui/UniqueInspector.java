@@ -24,9 +24,7 @@ import java.io.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.lang.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -143,44 +141,6 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         }
     }
 
-    private static final class TeleRoutineKey<UniqueInspector_Type extends UniqueInspector> extends Key<UniqueInspector_Type> {
-
-        private final TeleRoutine teleRoutine;
-
-        public TeleRoutine teleRoutine() {
-            return teleRoutine;
-        }
-
-        private TeleRoutineKey(Class<UniqueInspector_Type> type, TeleRoutine teleRoutine) {
-            super(type);
-            assert teleRoutine != null;
-            this.teleRoutine = teleRoutine;
-        }
-
-        @Override
-        public int hashCode() {
-            return teleRoutine.hashCode();
-        }
-
-        // Tele objects are canonical, so we use object identity.
-        @Override
-        public boolean equals(Object other) {
-            if (other instanceof TeleRoutineKey) {
-                final TeleRoutineKey key = (TeleRoutineKey) other;
-                return type() == key.type() && teleRoutine == key.teleRoutine;
-            }
-            return false;
-        }
-
-        public int compareTo(Key<UniqueInspector_Type> other) {
-            if (other instanceof TeleRoutineKey) {
-                final TeleRoutineKey key = (TeleRoutineKey) other;
-                return teleRoutine.getUniqueName().compareTo(key.teleRoutine.getUniqueName());
-            }
-            return type().getName().compareTo(other.type().getName());
-        }
-    }
-
     private final Key<Inspector_Type> key;
 
     public Key<Inspector_Type> key() {
@@ -192,10 +152,6 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         final Class<Class<Inspector_Type>> classType = null;
         final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
         key = new ValueKey<Inspector_Type>(frameType, subject);
-    }
-
-    protected UniqueInspector(Inspection inspection, Reference subject) {
-        this(inspection, inspection.vm().createReferenceValue(subject));
     }
 
     protected UniqueInspector(Inspection inspection, File file) {

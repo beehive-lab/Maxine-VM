@@ -33,7 +33,7 @@ import com.sun.max.vm.reference.*;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
+public final class TeleCodeManager extends TeleTupleObject {
 
     private static final int TRACE_VALUE = 1;
 
@@ -113,7 +113,7 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
      * @return the allocated {@link CodeRegion} in the {@link TeleVM} that contains the address,
      * possibly the boot code region; null if none.
      */
-    public TeleCodeRegion regionContaining(Address address) {
+    public TeleCodeRegion findCodeRegion(Address address) {
         if (teleBootCodeRegion.contains(address)) {
             return teleBootCodeRegion;
         }
@@ -121,11 +121,6 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
             return teleRuntimeCodeRegion;
         }
         return null;
-    }
-
-    @Override
-    public boolean contains(Address address) {
-        return regionContaining(address) != null;
     }
 
 }
