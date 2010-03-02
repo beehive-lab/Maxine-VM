@@ -182,7 +182,7 @@ public interface MaxVM {
      * Memory regions currently allocated remotely in the VM.
      *
      * <br>See:<ol>
-     *   <li>{@link #memoryRegionContaining(Address)}</li>
+     *   <li>{@link #findMemoryRegion(Address)}</li>
      *   <li>{@link #contains(Address)}</li>
      *   </ol>
      *   <p>
@@ -229,13 +229,21 @@ public interface MaxVM {
     IndexedSequence<MemoryRegion> allocatedMemoryRegions();
 
     /**
+     * Finds the allocated region of memory in the VM, if any, that includes an address.
+     *
      * @param address a memory location in the VM
      * @return the allocated {@link MemoryRegion} containing the address, null if not in any known region.
      * @see #allocatedMemoryRegions()
      */
-    MemoryRegion memoryRegionContaining(Address address);
+    MemoryRegion findMemoryRegion(Address address);
 
     /**
+     * Returns whether the VM contains any allocated memory regions that include an address.
+     * <br>
+     * <strong>Note:</strong> this is not equivalent to {@code findMemoryRegion(address) != null}.
+     * Early in the startup sequence this test cannot be performed by checking memory
+     * regions, but must instead be done using low level mechanisms.
+     *
      * @param address a memory location in the VM.
      * @return whether the location is either in the object heap, the code
      *         regions, or a stack region of the VM.
