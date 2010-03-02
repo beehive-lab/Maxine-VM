@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.field.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -35,6 +34,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
@@ -107,11 +107,6 @@ public interface MaxVM {
      * @return start location of the boot image in memory.
      */
     Pointer bootImageStart();
-
-    /**
-     * @return access to specific fields in VM heap objects.
-     */
-    TeleFields teleFields();
 
     /**
      * @return access to specific methods in the VM
