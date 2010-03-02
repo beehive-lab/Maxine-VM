@@ -20,8 +20,8 @@
  */
 package com.sun.max.ins.memory;
 
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public class MemoryWordRegion extends FixedMemoryRegion {
+public class MemoryWordRegion extends TeleMemoryRegion {
 
     public final int wordCount;
     private final Size wordSize;
