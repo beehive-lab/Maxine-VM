@@ -243,7 +243,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
      * <br>
      * It is equivalent to the starting location of {@link #teleRootsRegion()}, but must be
      * accessed this way instead to avoid a circularity.  It is used before
-     * more abstract objects such as {@link FixedMemoryRegion}s can be created.
+     * more abstract objects such as {@link TeleMemoryRegion}s can be created.
      *
      * @return location of the specially allocated VM memory region where teleRoots are stored.
      * @see TeleRoots

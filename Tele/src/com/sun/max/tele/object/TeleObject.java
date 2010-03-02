@@ -29,6 +29,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.grip.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -240,14 +241,14 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public final MemoryRegion memoryRegion() {
         if (isObsolete() || isDead()) {
             //Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
-            return new FixedMemoryRegion(specificLayout.originToCell(lastValidPointer), objectSize(), "");
+            return new TeleMemoryRegion(specificLayout.originToCell(lastValidPointer), objectSize(), "");
         }
-        return new FixedMemoryRegion(specificLayout.originToCell(reference.toOrigin()), objectSize(), "");
+        return new TeleMemoryRegion(specificLayout.originToCell(reference.toOrigin()), objectSize(), "");
     }
 
     public final MemoryRegion getForwardedMemoryRegion() {
         if (isObsolete()) {
-            return new FixedMemoryRegion(specificLayout.originToCell(reference.grip().getForwardedTeleGrip().toOrigin()), objectSize(), "");
+            return new TeleMemoryRegion(specificLayout.originToCell(reference.grip().getForwardedTeleGrip().toOrigin()), objectSize(), "");
         }
         return null;
     }
@@ -307,7 +308,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public final MemoryRegion headerMemoryRegion(HeaderField headerField) {
         final Pointer start = origin().plus(headerOffset(headerField));
         final Size size = headerSize(headerField);
-        return new FixedMemoryRegion(start, size, "Current memory for header field " + headerField.name);
+        return new TeleMemoryRegion(start, size, "Current memory for header field " + headerField.name);
     }
 
     /**
@@ -381,7 +382,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public final MemoryRegion fieldMemoryRegion(FieldActor fieldActor) {
         final Pointer start = origin().plus(fieldActor.offset());
         final Size size = fieldSize(fieldActor);
-        return new FixedMemoryRegion(start, size, "");
+        return new TeleMemoryRegion(start, size, "");
     }
 
     /**
