@@ -233,7 +233,7 @@ public abstract class BytecodeViewer extends CodeViewer {
     protected Sequence<MaxBreakpoint> getTargetBreakpointsAtRow(int row) {
         final AppendableSequence<MaxBreakpoint> breakpoints = new LinkSequence<MaxBreakpoint>();
         if (haveTargetCodeAddresses) {
-            for (MaxBreakpoint breakpoint : vm().breakpointFactory().breakpoints()) {
+            for (MaxBreakpoint breakpoint : vm().breakpointManager().breakpoints()) {
                 if (!breakpoint.isBytecodeBreakpoint() && rowContainsAddress(row, breakpoint.codeLocation().address())) {
                     breakpoints.append(breakpoint);
                 }
@@ -246,7 +246,7 @@ public abstract class BytecodeViewer extends CodeViewer {
      * @return the bytecode breakpoint, if any, set at the bytecode being displayed in the row.
      */
     protected MaxBreakpoint getBytecodeBreakpointAtRow(int row) {
-        for (MaxBreakpoint breakpoint : vm().breakpointFactory().breakpoints()) {
+        for (MaxBreakpoint breakpoint : vm().breakpointManager().breakpoints()) {
             if (breakpoint.isBytecodeBreakpoint()) {
                 final MaxCodeLocation breakpointLocation = breakpoint.codeLocation();
                 // the direction of key comparison is significant

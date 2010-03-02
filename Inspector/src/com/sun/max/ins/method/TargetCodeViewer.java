@@ -319,7 +319,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * Does the instruction address have a target code breakpoint set in the VM.
      */
     protected MaxBreakpoint getTargetBreakpointAtRow(int row) {
-        return vm().breakpointFactory().findBreakpoint(instructionLocations.get(row));
+        return vm().breakpointManager().findBreakpoint(instructionLocations.get(row));
     }
 
     protected final String rowToTagText(int row) {

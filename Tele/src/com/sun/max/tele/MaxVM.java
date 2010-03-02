@@ -561,13 +561,13 @@ public interface MaxVM {
     MaxCodeManager codeManager();
 
     /**
-     * Gets the factory for creating and managing VM breakpoints.
+     * Gets the manager for creating and managing VM breakpoints.
      * <br>
      * Thread-safe
      *
-     * @return the singleton factory for creating and managing VM breakpoints
+     * @return the singleton manager for creating and managing VM breakpoints
      */
-    MaxBreakpointFactory breakpointFactory();
+    MaxBreakpointManager breakpointManager();
 
     /**
      * Gets the manager for creating and managing VM watchpoints; null

@@ -73,7 +73,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         }
 
         // Once load-in is finished, register for notification of subsequent breakpoint changes in the VM.
-        inspection.vm().breakpointFactory().addListener(this);
+        inspection.vm().breakpointManager().addListener(this);
     }
 
     // Keys used for making data persistent
@@ -97,7 +97,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     public void saveSettings(SaveSettingsEvent settings) {
         final AppendableSequence<MaxBreakpoint> targetBreakpoints = new LinkSequence<MaxBreakpoint>();
         final AppendableSequence<MaxBreakpoint> bytecodeBreakpoints = new LinkSequence<MaxBreakpoint>();
-        for (MaxBreakpoint breakpoint : inspection.vm().breakpointFactory().breakpoints()) {
+        for (MaxBreakpoint breakpoint : inspection.vm().breakpointManager().breakpoints()) {
             if (breakpoint.isBytecodeBreakpoint()) {
                 bytecodeBreakpoints.append(breakpoint);
             } else {
@@ -137,7 +137,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             if (inspection.vm().containsInCode(address)) {
                 try {
                     final MaxCodeLocation codeLocation = inspection.vm().codeManager().createMachineCodeLocation(address, "loaded by breakpoint persistence manager");
-                    final MaxBreakpoint breakpoint = inspection.vm().breakpointFactory().makeBreakpoint(codeLocation);
+                    final MaxBreakpoint breakpoint = inspection.vm().breakpointManager().makeBreakpoint(codeLocation);
                     if (condition != null) {
                         breakpoint.setCondition(condition);
                     }
@@ -190,7 +190,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final MaxCodeLocation location = inspection.vm().codeManager().createBytecodeLocation(methodKey, "loaded by breakpoint persistence manager");
             MaxBreakpoint bytecodeBreakpoint;
             try {
-                bytecodeBreakpoint = inspection.vm().breakpointFactory().makeBreakpoint(location);
+                bytecodeBreakpoint = inspection.vm().breakpointManager().makeBreakpoint(location);
                 if (bytecodeBreakpoint.isEnabled() != enabled) {
                     bytecodeBreakpoint.setEnabled(enabled);
                 }

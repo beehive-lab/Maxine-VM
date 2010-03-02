@@ -134,7 +134,7 @@ public final class Inspection implements InspectionHolder {
         inspectionActions.refresh(true);
 
         vm.addVMStateListener(new VMStateListener());
-        vm.breakpointFactory().addListener(new BreakpointListener());
+        vm.breakpointManager().addListener(new BreakpointListener());
         if (vm.watchpointManager() != null) {
             vm.watchpointManager().addListener(new WatchpointListener());
         }
