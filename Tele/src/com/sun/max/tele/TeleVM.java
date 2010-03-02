@@ -807,7 +807,7 @@ public abstract class TeleVM implements MaxVM {
         try {
             memoryRegion = teleHeapManager.regionContaining(address);
             if (memoryRegion == null) {
-                memoryRegion = teleCodeManager().regionContaining(address);
+                memoryRegion = teleCodeManager().findCodeRegion(address);
                 if (memoryRegion == null) {
                     MaxThread maxThread = threadManager.findThread(address);
                     if (maxThread != null) {
@@ -921,7 +921,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final boolean containsInCode(Address address) {
-        return teleCodeManager().contains(address);
+        return teleCodeManager().findCodeRegion(address) != null;
     }
 
     public final TeleCodeRegion teleBootCodeRegion() {
