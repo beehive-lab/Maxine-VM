@@ -52,7 +52,7 @@ public interface TeleVMHolder {
      *
      * @return the singleton factory for creating and managing VM breakpoints
      */
-    TeleBreakpointFactory breakpointFactory();
+    TeleBreakpointManager breakpointManager();
 
     /**
      * Gets the factory for creating and managing VM watchpoints; null

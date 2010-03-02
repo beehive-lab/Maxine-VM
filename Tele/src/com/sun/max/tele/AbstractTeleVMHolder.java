@@ -55,8 +55,8 @@ public abstract class AbstractTeleVMHolder implements TeleVMHolder {
         return teleVM.codeManager();
     }
 
-    public TeleBreakpointFactory breakpointFactory() {
-        return teleVM.breakpointFactory();
+    public TeleBreakpointManager breakpointManager() {
+        return teleVM.breakpointManager();
     }
 
     public TeleWatchpoint.WatchpointManager watchpointManager() {

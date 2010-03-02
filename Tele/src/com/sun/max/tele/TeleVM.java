@@ -447,11 +447,11 @@ public abstract class TeleVM implements MaxVM {
     private final CodeManager codeManager;
 
     /**
-     * Breakpoint factory, for both target and bytecode breakpoints.
+     * Breakpoint manager, for both target and bytecode breakpoints.
      */
-    private final TeleBreakpointFactory teleBreakpointFactory;
+    private final TeleBreakpointManager teleBreakpointManager;
 
-    private final TeleBytecodeBreakpoint.Factory bytecodeBreakpointFactory;
+    private final TeleBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
 
     private final TeleWatchpoint.WatchpointManager watchpointManager;
 
@@ -568,9 +568,9 @@ public abstract class TeleVM implements MaxVM {
         this.threadManager = new TeleThreadManager(this);
         this.codeManager = new CodeManager(this);
 
-        this.bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(this);
+        this.bytecodeBreakpointManager = new TeleBytecodeBreakpoint.BytecodeBreakpointManager(this);
 
-        this.teleBreakpointFactory = new TeleBreakpointFactory(this, this.bytecodeBreakpointFactory);
+        this.teleBreakpointManager = new TeleBreakpointManager(this, this.bytecodeBreakpointManager);
 
         this.watchpointManager = teleProcess.getWatchpointManager();
     }
@@ -1474,8 +1474,8 @@ public abstract class TeleVM implements MaxVM {
         return codeManager;
     }
 
-    public final TeleBreakpointFactory breakpointFactory() {
-        return teleBreakpointFactory;
+    public final TeleBreakpointManager breakpointManager() {
+        return teleBreakpointManager;
     }
 
     public final TeleWatchpoint.WatchpointManager watchpointManager() {
@@ -1497,7 +1497,7 @@ public abstract class TeleVM implements MaxVM {
                 }
             };
             try {
-                gcStartedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
+                gcStartedBreakpoint = teleProcess.targetBreakpointManager().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
                 gcStartedBreakpoint.setDescription("Internal breakpoint, just after start of GC, to notify listeners");
             } catch (MaxVMBusyException maxVMBusyException) {
                 gcStartedListeners.remove(listener);
@@ -1535,7 +1535,7 @@ public abstract class TeleVM implements MaxVM {
                 }
             };
             try {
-                gcCompletedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
+                gcCompletedBreakpoint = teleProcess.targetBreakpointManager().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
                 gcCompletedBreakpoint.setDescription("Internal breakpoint, just after end of GC, to notify listeners");
             } catch (MaxVMBusyException maxVMBusyException) {
                 gcCompletedListeners.remove(listener);
@@ -2198,7 +2198,7 @@ public abstract class TeleVM implements MaxVM {
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
             final BytecodeLocation methodCodeLocation = codeManager().createBytecodeLocation(teleClassMethodActor, 0, "");
             try {
-                TeleVM.this.breakpointFactory().makeBreakpoint(methodCodeLocation);
+                TeleVM.this.breakpointManager().makeBreakpoint(methodCodeLocation);
             } catch (MaxVMBusyException maxVMBusyException) {
                 ProgramError.unexpected("breakpoint creation failed");
             }
@@ -2207,7 +2207,7 @@ public abstract class TeleVM implements MaxVM {
 
         public void removeBreakpoint(JdwpCodeLocation codeLocation) {
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final MaxBreakpoint breakpoint = TeleVM.this.breakpointFactory().findBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryLocation());
+            final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryLocation());
             if (breakpoint != null) {
                 try {
                     breakpoint.remove();

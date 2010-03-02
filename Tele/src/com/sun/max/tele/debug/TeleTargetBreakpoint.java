@@ -45,7 +45,7 @@ import com.sun.max.vm.value.*;
  */
 public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
-    protected final Factory factory;
+    protected final TargetBreakpointManager manager;
 
     /**
      * The original code from the target code in the VM that was present before
@@ -62,17 +62,17 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
      * Creates a target code breakpoint for a given address in the VM.
      *
      * @param teleVM the VM
-     * @param factory the factory responsible for managing these breakpoints
+     * @param manager the manager responsible for managing these breakpoints
      * @param codeLocation  the location at which the breakpoint is to be created, by address
      * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
      *            instruction. If this value is null, then the code will be read from {@code address}.
      * @param owner the bytecode breakpoint for which this is being created, null if none.
      * @param the kind of breakpoint
      */
-    private TeleTargetBreakpoint(TeleVM teleVM, Factory factory, CodeLocation codeLocation, byte[] originalCode, BreakpointKind kind, TeleBytecodeBreakpoint owner) {
+    private TeleTargetBreakpoint(TeleVM teleVM, TargetBreakpointManager manager, CodeLocation codeLocation, byte[] originalCode, BreakpointKind kind, TeleBytecodeBreakpoint owner) {
         super(teleVM, codeLocation, kind, owner);
-        this.factory = factory;
-        this.originalCodeAtBreakpoint = originalCode == null ? teleVM.dataAccess().readFully(codeLocation.address(), factory.codeSize()) : originalCode;
+        this.manager = manager;
+        this.originalCodeAtBreakpoint = originalCode == null ? teleVM.dataAccess().readFully(codeLocation.address(), manager.codeSize()) : originalCode;
     }
 
     public boolean isBytecodeBreakpoint() {
@@ -101,7 +101,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
     @Override
     public void remove() throws MaxVMBusyException {
-        factory.removeNonTransientBreakpointAt(address());
+        manager.removeNonTransientBreakpointAt(address());
     }
 
     /**
@@ -121,7 +121,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         if (active != isActive) {
             if (active) {
                 // Patches the target code in the VM at this breakpoint's address with platform-dependent target instructions implementing a breakpoint.
-                teleVM().dataAccess().writeBytes(address(), factory.code());
+                teleVM().dataAccess().writeBytes(address(), manager.code());
             } else {
                 // Patches the target code in the VM at this breakpoint's address with the original code that was compiled at that address.
                 teleVM().dataAccess().writeBytes(address(), originalCodeAtBreakpoint);
@@ -144,13 +144,13 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          * A client-created breakpoint for a given target code address, enabled by default.
          *
          * @param teleVM the VM
-         * @param factory the factory that manages these breakpoints.
+         * @param manager the manager that manages these breakpoints.
          * @param codeLocation the location at which the breakpoint is to be created, by address
          * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
          *            instruction. If this value is null, then the code will be read from {@code address}.
          */
-        ClientTargetBreakpoint(TeleVM teleVM, Factory factory, CodeLocation codeLocation, byte[] originalCode) {
-            super(teleVM, factory, codeLocation, originalCode, BreakpointKind.CLIENT, null);
+        ClientTargetBreakpoint(TeleVM teleVM, TargetBreakpointManager manager, CodeLocation codeLocation, byte[] originalCode) {
+            super(teleVM, manager, codeLocation, originalCode, BreakpointKind.CLIENT, null);
         }
 
         @Override
@@ -165,7 +165,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
             }
             try {
                 this.enabled = enabled;
-                factory.updateAfterBreakpointChanges(true);
+                manager.updateAfterBreakpointChanges(true);
             } finally {
                 teleVM().unlock();
             }
@@ -211,8 +211,8 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
         * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
         *            instruction. If this value is null, then the code will be read from {@code address}.
         */
-        SystemTargetBreakpoint(TeleVM teleVM, Factory factory, CodeLocation codeLocation, byte[] originalCode, TeleBytecodeBreakpoint owner) {
-            super(teleVM, factory, codeLocation, originalCode, BreakpointKind.SYSTEM, owner);
+        SystemTargetBreakpoint(TeleVM teleVM, TargetBreakpointManager manager, CodeLocation codeLocation, byte[] originalCode, TeleBytecodeBreakpoint owner) {
+            super(teleVM, manager, codeLocation, originalCode, BreakpointKind.SYSTEM, owner);
         }
 
         @Override
@@ -264,13 +264,13 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
          * A transient breakpoint for a given target code address.
          *
          * @param teleVM the VM
-         * @param factory the factory that manages these breakpoints
+         * @param manager the manager for these breakpoints
          * @param codeLocation location containing the target code address at which the breakpoint is to be created
          * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
          *            instruction. If this value is null, then the code will be read from {@code address}.
          */
-        TransientTargetBreakpoint(TeleVM teleVM, Factory factory, CodeLocation codeLocation, byte[] originalCode) {
-            super(teleVM, factory, codeLocation, originalCode, BreakpointKind.TRANSIENT, null);
+        TransientTargetBreakpoint(TeleVM teleVM, TargetBreakpointManager manager, CodeLocation codeLocation, byte[] originalCode) {
+            super(teleVM, manager, codeLocation, originalCode, BreakpointKind.TRANSIENT, null);
         }
 
         @Override
@@ -297,11 +297,11 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
     }
 
-    public static final class Factory extends AbstractTeleVMHolder {
+    public static final class TargetBreakpointManager extends AbstractTeleVMHolder {
 
         private final byte[] code;
 
-        // The map implementations are not thread-safe; the factory must take care of that.
+        // The map implementations are not thread-safe; the manager must take care of that.
         private final Map<Long, ClientTargetBreakpoint> clientBreakpoints = new HashMap<Long, ClientTargetBreakpoint>();
         private final Map<Long, SystemTargetBreakpoint> systemBreakpoints = new HashMap<Long, SystemTargetBreakpoint>();
         private final Map<Long, TransientTargetBreakpoint> transientBreakpoints = new HashMap<Long, TransientTargetBreakpoint>();
@@ -314,7 +314,7 @@ public abstract class TeleTargetBreakpoint extends TeleBreakpoint {
 
         private List<MaxBreakpointListener> breakpointListeners = new CopyOnWriteArrayList<MaxBreakpointListener>();
 
-        Factory(TeleVM teleVM) {
+        TargetBreakpointManager(TeleVM teleVM) {
             super(teleVM);
             this.code = TargetBreakpoint.createBreakpointCode(teleVM.vmConfiguration().platform().processorKind.instructionSet);
         }

@@ -33,7 +33,6 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleTargetBreakpoint.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
@@ -272,12 +271,12 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      * instruction on which the breakpoint was set.
      */
     private void refreshBreakpoint() {
-        final Factory breakpointFactory = teleProcess().targetBreakpointFactory();
+        final TeleTargetBreakpoint.TargetBreakpointManager breakpointManager = teleProcess().targetBreakpointManager();
         TeleTargetBreakpoint breakpoint = null;
 
         try {
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
-            breakpoint = breakpointFactory.getTargetBreakpointAt(breakpointAddress);
+            breakpoint = breakpointManager.getTargetBreakpointAt(breakpointAddress);
         } catch (DataIOError dataIOError) {
             // This is a catch for problems getting accurate state for threads that are not at breakpoints
         }
@@ -505,7 +504,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         if (breakpointIsAtInstructionPointer) {
             return instructionPointer();
         }
-        return instructionPointer.minus(teleProcess().targetBreakpointFactory().codeSize());
+        return instructionPointer.minus(teleProcess().targetBreakpointManager().codeSize());
     }
 
     @Override

@@ -2602,7 +2602,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             focus().setBreakpoint(null);
             try {
-                for (MaxBreakpoint breakpoint : vm().breakpointFactory().breakpoints()) {
+                for (MaxBreakpoint breakpoint : vm().breakpointManager().breakpoints()) {
                     breakpoint.remove();
                 }
             } catch (MaxVMBusyException maxVMBusyException) {
@@ -2612,7 +2612,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(inspection().hasProcess() && (vm().breakpointFactory().breakpoints().length() > 0));
+            setEnabled(inspection().hasProcess() && (vm().breakpointManager().breakpoints().length() > 0));
         }
     }
 
@@ -2727,7 +2727,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                final MaxBreakpoint breakpoint = vm().breakpointFactory().makeBreakpoint(codeLocation);
+                final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(codeLocation);
                 focus().setBreakpoint(breakpoint);
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -2736,7 +2736,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(vm().breakpointFactory().findBreakpoint(codeLocation) == null);
+            setEnabled(vm().breakpointManager().findBreakpoint(codeLocation) == null);
         }
     }
 
@@ -2768,7 +2768,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                final MaxBreakpoint breakpoint = vm().breakpointFactory().makeBreakpoint(codeLocation);
+                final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(codeLocation);
                 focus().setBreakpoint(breakpoint);
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -2778,7 +2778,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(vm().breakpointFactory().findBreakpoint(codeLocation) == null);
+            setEnabled(vm().breakpointManager().findBreakpoint(codeLocation) == null);
         }
     }
 
@@ -2804,7 +2804,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final MaxBreakpoint breakpoint = vm().breakpointFactory().findBreakpoint(codeLocation);
+            final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(codeLocation);
             if (breakpoint != null) {
                 try {
                     breakpoint.remove();
@@ -2817,7 +2817,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(boolean force) {
-            setEnabled(vm().breakpointFactory().findBreakpoint(codeLocation) != null);
+            setEnabled(vm().breakpointManager().findBreakpoint(codeLocation) != null);
         }
     }
 
@@ -2858,11 +2858,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxCodeLocation toggleCodeLocation = (codeLocation != null) ? codeLocation : focus().codeLocation();
             if (toggleCodeLocation.hasAddress() && !toggleCodeLocation.address().isZero()) {
-                MaxBreakpoint breakpoint = vm().breakpointFactory().findBreakpoint(toggleCodeLocation);
+                MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(toggleCodeLocation);
                 try {
                     if (breakpoint == null) {
                         try {
-                            breakpoint = vm().breakpointFactory().makeBreakpoint(toggleCodeLocation);
+                            breakpoint = vm().breakpointManager().makeBreakpoint(toggleCodeLocation);
                             focus().setBreakpoint(breakpoint);
                         } catch (MaxVMBusyException maxVMBusyException) {
                             inspection().announceVMBusyFailure(name());
@@ -2929,7 +2929,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 public void entered(Address address, String description) {
                     if (!address.isZero()) {
                         try {
-                            final MaxBreakpoint breakpoint = vm().breakpointFactory().makeBreakpoint(vm().codeManager().createMachineCodeLocation(address, "set target breakpoint"));
+                            final MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(vm().codeManager().createMachineCodeLocation(address, "set target breakpoint"));
                             if (breakpoint == null) {
                                 gui().errorMessage("Unable to create breakpoint at: " + "0x" + address.toHexString());
                             } else {
@@ -2976,7 +2976,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 for (MaxCodeLocation location : locations) {
-                    vm().breakpointFactory().makeBreakpoint(location);
+                    vm().breakpointManager().makeBreakpoint(location);
                 }
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -3010,7 +3010,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             try {
                 for (MaxCodeLocation location : labelLocations) {
-                    final MaxBreakpoint breakpoint = vm().breakpointFactory().findBreakpoint(location);
+                    final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(location);
                     if (breakpoint != null) {
                         breakpoint.remove();
                     }
@@ -3045,7 +3045,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxCodeLocation entryLocation = teleTargetMethod.entryLocation();
             try {
-                MaxBreakpoint breakpoint = vm().breakpointFactory().makeBreakpoint(entryLocation);
+                MaxBreakpoint breakpoint = vm().breakpointManager().makeBreakpoint(entryLocation);
                 focus().setBreakpoint(breakpoint);
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
@@ -3094,7 +3094,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         // There may be multiple compilations of a method in the result.
                         MaxBreakpoint targetBreakpoint = null;
                         for (TeleTargetMethod teleTargetMethod : teleTargetMethods) {
-                            targetBreakpoint = vm().breakpointFactory().makeBreakpoint(teleTargetMethod.getTeleClassMethodActor().entryLocation());
+                            targetBreakpoint = vm().breakpointManager().makeBreakpoint(teleTargetMethod.getTeleClassMethodActor().entryLocation());
                         }
                         focus().setBreakpoint(targetBreakpoint);
                     } catch (MaxVMBusyException maxVMBusyException) {
@@ -3146,7 +3146,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                                 if (teleClassMethodActor != null) {
                                     for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
                                         final MaxCodeLocation entryLocation = teleTargetMethod.entryLocation();
-                                        breakpoint = vm().breakpointFactory().makeBreakpoint(entryLocation);
+                                        breakpoint = vm().breakpointManager().makeBreakpoint(entryLocation);
                                     }
                                 }
                             }
@@ -3200,10 +3200,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxCodeLocation codeLocation = focus().codeLocation();
             if (codeLocation.hasMethodKey()) {
-                final MaxBreakpoint breakpoint = vm().breakpointFactory().findBreakpoint(codeLocation);
+                final MaxBreakpoint breakpoint = vm().breakpointManager().findBreakpoint(codeLocation);
                 try {
                     if (breakpoint == null) {
-                        vm().breakpointFactory().makeBreakpoint(codeLocation);
+                        vm().breakpointManager().makeBreakpoint(codeLocation);
                     } else {
                         breakpoint.remove();
                     }
@@ -3247,7 +3247,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxCodeLocation location = vm().codeManager().createBytecodeLocation(teleClassMethodActor, -1, "teleClassMethodActor entry");
             try {
-                vm().breakpointFactory().makeBreakpoint(location);
+                vm().breakpointManager().makeBreakpoint(location);
             } catch (MaxVMBusyException maxVMBusyException) {
                 inspection().announceVMBusyFailure(name());
             }
@@ -3292,7 +3292,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecodes method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
                     try {
-                        vm().breakpointFactory().makeBreakpoint(vm().codeManager().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
+                        vm().breakpointManager().makeBreakpoint(vm().codeManager().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
                     } catch (MaxVMBusyException maxVMBusyException) {
                         inspection().announceVMBusyFailure(name());
                     }
@@ -3333,7 +3333,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
                 try {
-                    vm().breakpointFactory().makeBreakpoint(vm().codeManager().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
+                    vm().breakpointManager().makeBreakpoint(vm().codeManager().createBytecodeLocation(methodKey, "set bytecode breakpoint"));
                 } catch (MaxVMBusyException maxVMBusyException) {
                     inspection().announceVMBusyFailure(name());
                 }
@@ -4759,7 +4759,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            vm().breakpointFactory().writeSummary(System.out);
+            vm().breakpointManager().writeSummary(System.out);
         }
     }
 

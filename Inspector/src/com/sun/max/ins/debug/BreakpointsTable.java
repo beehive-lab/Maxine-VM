@@ -244,7 +244,7 @@ public final class BreakpointsTable extends InspectorTable {
             for (BreakpointData breakpointData : breakpoints) {
                 breakpointData.markDeleted(true);
             }
-            for (MaxBreakpoint breakpoint : vm().breakpointFactory().breakpoints()) {
+            for (MaxBreakpoint breakpoint : vm().breakpointManager().breakpoints()) {
                 if (breakpoint.isBytecodeBreakpoint()) {
                     // Bytecodes breakpoint
                     final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.codeLocation());
