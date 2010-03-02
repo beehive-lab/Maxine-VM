@@ -123,7 +123,7 @@ public abstract class ObjectInspector extends Inspector {
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().inspectObjectMemoryWords(teleObject, "Inspect this object's memory"));
-        if (vm().watchpointFactory() != null) {
+        if (vm().watchpointManager() != null) {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));

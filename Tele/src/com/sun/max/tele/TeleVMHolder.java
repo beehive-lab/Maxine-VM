@@ -63,6 +63,6 @@ public interface TeleVMHolder {
      * @return the singleton factory for creating and managing VM watchpoints, or
      * null if watchpoints not supported.
      */
-    TeleWatchpoint.Factory watchpointFactory();
+    TeleWatchpoint.WatchpointManager watchpointManager();
 
 }

@@ -453,7 +453,7 @@ public abstract class TeleVM implements MaxVM {
 
     private final TeleBytecodeBreakpoint.Factory bytecodeBreakpointFactory;
 
-    private final TeleWatchpoint.Factory watchpointFactory;
+    private final TeleWatchpoint.WatchpointManager watchpointManager;
 
     /**
      * The immutable history of all VM states, as of the last state transition; thread safe
@@ -572,7 +572,7 @@ public abstract class TeleVM implements MaxVM {
 
         this.teleBreakpointFactory = new TeleBreakpointFactory(this, this.bytecodeBreakpointFactory);
 
-        this.watchpointFactory = teleProcess.getWatchpointFactory();
+        this.watchpointManager = teleProcess.getWatchpointManager();
     }
 
     /**
@@ -1478,8 +1478,8 @@ public abstract class TeleVM implements MaxVM {
         return teleBreakpointFactory;
     }
 
-    public final TeleWatchpoint.Factory watchpointFactory() {
-        return watchpointFactory;
+    public final TeleWatchpoint.WatchpointManager watchpointManager() {
+        return watchpointManager;
     }
 
     public void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {

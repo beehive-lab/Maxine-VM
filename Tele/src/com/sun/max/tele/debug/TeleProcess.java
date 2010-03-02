@@ -175,13 +175,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                             case WATCHPOINT:
                                 eventCauseFound = true;
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
-                                final TeleWatchpoint systemTeleWatchpoint = watchpointFactory.findSystemWatchpoint(triggeredWatchpointAddress);
+                                final TeleWatchpoint systemTeleWatchpoint = watchpointManager.findSystemWatchpoint(triggeredWatchpointAddress);
                                 if (systemTeleWatchpoint != null && systemTeleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering system watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
                                     resumeExecution = false;
                                 }
-                                final TeleWatchpoint clientTeleWatchpoint = watchpointFactory.findClientWatchpointContaining(triggeredWatchpointAddress);
+                                final TeleWatchpoint clientTeleWatchpoint = watchpointManager.findClientWatchpointContaining(triggeredWatchpointAddress);
                                 if (clientTeleWatchpoint != null && clientTeleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering client watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
@@ -319,12 +319,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     private final int maximumWatchpointCount;
 
     /**
-     * A factory for creating and managing memory watchpoints in the VM;
+     * A manager for creating and managing memory watchpoints in the VM;
      * null if watchpoints are not supported on this platform.
      *
      * @see #watchpointsEnabled()
      */
-    private final TeleWatchpoint.Factory watchpointFactory;
+    private final TeleWatchpoint.WatchpointManager watchpointManager;
 
     private final RequestHandlingThread requestHandlingThread;
 
@@ -383,7 +383,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         epoch = 0;
         this.targetBreakpointFactory = new TeleTargetBreakpoint.Factory(teleVM);
         this.maximumWatchpointCount = platformWatchpointCount();
-        this.watchpointFactory = watchpointsEnabled() ? new TeleWatchpoint.Factory(teleVM, this) : null;
+        this.watchpointManager = watchpointsEnabled() ? new TeleWatchpoint.WatchpointManager(teleVM, this) : null;
 
         //Initiate the thread that continuously waits on the running process.
         this.requestHandlingThread = new RequestHandlingThread();
@@ -407,8 +407,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      *
      * @return the creator/manager of watchpoints; null watchpoints not supported on platform.
      */
-    public final TeleWatchpoint.Factory getWatchpointFactory() {
-        return watchpointFactory;
+    public final TeleWatchpoint.WatchpointManager getWatchpointManager() {
+        return watchpointManager;
     }
 
     /**
@@ -1012,8 +1012,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     private void updateWatchpointCaches() {
-        if (watchpointFactory != null) {
-            watchpointFactory.updateWatchpointMemoryCaches();
+        if (watchpointManager != null) {
+            watchpointManager.updateWatchpointMemoryCaches();
         }
     }
 }

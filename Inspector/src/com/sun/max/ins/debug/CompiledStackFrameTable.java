@@ -76,7 +76,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
     @Override
     protected void mouseButton1Clicked(final int row, final int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && vm().watchpointFactory() != null) {
+        if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -97,7 +97,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, final int col, MouseEvent mouseEvent) {
-        if (vm().watchpointFactory() != null && col == CompiledStackFrameColumnKind.TAG.ordinal()) {
+        if (vm().watchpointManager() != null && col == CompiledStackFrameColumnKind.TAG.ordinal()) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             final Slot slot = (Slot) tableModel.getValueAt(row, col);

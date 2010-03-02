@@ -113,9 +113,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
     private volatile RuntimeMemoryRegion memoryRegion;
 
     /**
-     * Watchpoints factory.
+     * Watchpoints manager.
      */
-    protected final Factory factory;
+    protected final WatchpointManager watchpointManager;
 
     /**
      * Is this watchpoint still alive (not yet removed) and available for activation/deactivation?
@@ -145,17 +145,17 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
     private VMTriggerEventHandler triggerEventHandler = VMTriggerEventHandler.Static.ALWAYS_TRUE;
 
-    private TeleWatchpoint(WatchpointKind kind, Factory factory, String description, Address start, Size size, WatchpointSettings settings) {
-        super(factory.teleVM());
+    private TeleWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, Address start, Size size, WatchpointSettings settings) {
+        super(watchpointManager.teleVM());
         this.kind = kind;
-        this.factory = factory;
+        this.watchpointManager = watchpointManager;
         this.settings = settings;
         this.memoryRegion = new RuntimeMemoryRegion(start, size);
         this.memoryRegion.setDescription(description);
     }
 
-    private TeleWatchpoint(WatchpointKind kind, Factory factory, String description, MemoryRegion memoryRegion, WatchpointSettings settings) {
-        this(kind, factory, description, memoryRegion.start(), memoryRegion.size(), settings);
+    private TeleWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, MemoryRegion memoryRegion, WatchpointSettings settings) {
+        this(kind, watchpointManager, description, memoryRegion.start(), memoryRegion.size(), settings);
     }
 
     public final Address start() {
@@ -270,7 +270,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         final WatchpointSettings oldSettings = settings;
         try {
             this.settings = new WatchpointSettings(settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec, enabledDuringGC);
-            if (enabledDuringGC && factory.teleVM().isInGC() && !active) {
+            if (enabledDuringGC && watchpointManager.teleVM().isInGC() && !active) {
                 setActive(true);
             }
             success = reset();
@@ -298,7 +298,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             if (active) {
                 setActive(false);
             }
-            success =  factory.removeWatchpoint(this);
+            success =  watchpointManager.removeWatchpoint(this);
             if (success) {
                 alive = false;
             }
@@ -312,7 +312,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         assert alive;
         assert teleNativeThread.state() == MaxThreadState.WATCHPOINT;
         Trace.begin(TRACE_VALUE, tracePrefix() + "handling trigger event for " + this);
-        if (factory.teleVM().isInGC() && !settings.enabledDuringGC) {
+        if (watchpointManager.teleVM().isInGC() && !settings.enabledDuringGC) {
             // Ignore the event if the VM is in GC and the watchpoint is not to be enabled during GC.
             // This is a lazy policy that avoids the need to interrupt the VM every time GC starts.
             // Just in case such a watchpoint would trigger repeatedly during GC, however, deactivate
@@ -372,7 +372,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             memoryCache = new byte[size().toInt()];
         }
         try {
-            memoryCache = factory.teleVM().dataAccess().readFully(start(), size().toInt());
+            memoryCache = watchpointManager.teleVM().dataAccess().readFully(start(), size().toInt());
         } catch (DataIOError e) {
             // Must be a watchpoint in an address space that doesn't (yet?) exist in the VM process.
             memoryCache = null;
@@ -396,7 +396,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         assert alive;
         if (active) {  // Try to activate
             ProgramError.check(!this.active, "Attempt to activate an active watchpoint:", this);
-            if (factory.teleProcess.activateWatchpoint(this)) {
+            if (watchpointManager.teleProcess.activateWatchpoint(this)) {
                 this.active = true;
                 Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint activated: " + this);
                 return true;
@@ -406,7 +406,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             }
         } else { // Try to deactivate
             ProgramError.check(this.active, "Attempt to deactivate an inactive watchpoint:", this);
-            if (factory.teleProcess.deactivateWatchpoint(this)) {
+            if (watchpointManager.teleProcess.deactivateWatchpoint(this)) {
                 this.active = false;
                 Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint deactivated " + this);
                 return true;
@@ -435,7 +435,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             }
         }
         Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint reset " + this);
-        factory.updateAfterWatchpointChanges();
+        watchpointManager.updateAfterWatchpointChanges();
         return true;
     }
 
@@ -468,7 +468,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             setStart(newAddress);
         }
         Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint reset " + start().toHexString());
-        factory.updateAfterWatchpointChanges();
+        watchpointManager.updateAfterWatchpointChanges();
         return true;
     }
 
@@ -488,8 +488,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleRegionWatchpoint extends TeleWatchpoint {
 
-        private TeleRegionWatchpoint(WatchpointKind kind, Factory factory, String description, MemoryRegion memoryRegion, WatchpointSettings settings) {
-            super(kind, factory, description, memoryRegion.start(), memoryRegion.size(), settings);
+        private TeleRegionWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, MemoryRegion memoryRegion, WatchpointSettings settings) {
+            super(kind, watchpointManager, description, memoryRegion.start(), memoryRegion.size(), settings);
         }
 
         public boolean isRelocatable() {
@@ -509,8 +509,8 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleVmThreadLocalWatchpoint extends TeleWatchpoint {
 
-        private TeleVmThreadLocalWatchpoint(WatchpointKind kind, Factory factory, String description, MaxThreadLocalVariable threadLocalVariable, WatchpointSettings settings) {
-            super(kind, factory,  description, threadLocalVariable.memoryRegion(), settings);
+        private TeleVmThreadLocalWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, MaxThreadLocalVariable threadLocalVariable, WatchpointSettings settings) {
+            super(kind, watchpointManager,  description, threadLocalVariable.memoryRegion(), settings);
         }
 
         public boolean isRelocatable() {
@@ -555,9 +555,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         private TeleWatchpoint relocationWatchpoint = null;
 
-        private TeleObjectWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, Offset offset, Size size, WatchpointSettings settings)
+        private TeleObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, Offset offset, Size size, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException  {
-            super(kind, factory, description, teleObject.origin().plus(offset), size, settings);
+            super(kind, watchpointManager, description, teleObject.origin().plus(offset), size, settings);
             ProgramError.check(teleObject.isLive(), "Attempt to set an object-based watchpoint on an object that is not live: ", teleObject);
             this.teleObject = teleObject;
             this.offset = offset;
@@ -573,10 +573,10 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          * @throws TooManyWatchpointsException
          */
         private void setRelocationWatchpoint(final Pointer origin) throws TooManyWatchpointsException {
-            final TeleVM teleVM = factory.teleVM();
+            final TeleVM teleVM = watchpointManager.teleVM();
             final Pointer forwardPointerLocation = origin.plus(teleVM.gcForwardingPointerOffset());
             final MemoryRegion forwardPointerRegion = new FixedMemoryRegion(forwardPointerLocation, teleVM.wordSize(), "Forwarding pointer for object relocation watchpoint");
-            relocationWatchpoint = factory.createSystemWatchpoint("Object relocation watchpoint", forwardPointerRegion, relocationWatchpointSettings);
+            relocationWatchpoint = watchpointManager.createSystemWatchpoint("Object relocation watchpoint", forwardPointerRegion, relocationWatchpointSettings);
             relocationWatchpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
 
                 public boolean handleTriggerEvent(TeleNativeThread teleNativeThread) {
@@ -672,7 +672,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                         remove();
                         final FixedMemoryRegion watchpointRegion = new FixedMemoryRegion(start(), size(), "Old memory location of watched object");
                         final TeleWatchpoint newRegionWatchpoint =
-                            factory.createRegionWatchpoint("Replacement for watchpoint on GC'd object", watchpointRegion, getSettings());
+                            watchpointManager.createRegionWatchpoint("Replacement for watchpoint on GC'd object", watchpointRegion, getSettings());
                         Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint on collected object replaced: " + newRegionWatchpoint);
                     } catch (TooManyWatchpointsException tooManyWatchpointsException) {
                         ProgramWarning.message("Failed to replace object watchpoint with region watchpoint: " + tooManyWatchpointsException);
@@ -690,9 +690,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleWholeObjectWatchpoint extends TeleObjectWatchpoint {
 
-        private TeleWholeObjectWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, WatchpointSettings settings)
+        private TeleWholeObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
-            super(kind, factory, description, teleObject, Offset.zero(), teleObject.objectSize(), settings);
+            super(kind, watchpointManager, description, teleObject, Offset.zero(), teleObject.objectSize(), settings);
         }
     }
 
@@ -701,9 +701,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleFieldWatchpoint extends TeleObjectWatchpoint {
 
-        private TeleFieldWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
+        private TeleFieldWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, FieldActor fieldActor, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
-            super(kind, factory, description, teleObject, Offset.fromInt(fieldActor.offset()), teleObject.fieldSize(fieldActor), settings);
+            super(kind, watchpointManager, description, teleObject, Offset.fromInt(fieldActor.offset()), teleObject.fieldSize(fieldActor), settings);
         }
     }
 
@@ -712,9 +712,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleArrayElementWatchpoint extends TeleObjectWatchpoint {
 
-        private TeleArrayElementWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
+        private TeleArrayElementWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, Kind elementKind, Offset arrayOffsetFromOrigin, int index, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
-            super(kind, factory, description, teleObject, arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes), Size.fromInt(elementKind.width.numberOfBytes), settings);
+            super(kind, watchpointManager, description, teleObject, arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes), Size.fromInt(elementKind.width.numberOfBytes), settings);
         }
     }
 
@@ -723,20 +723,20 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      */
     private static final class TeleHeaderWatchpoint extends TeleObjectWatchpoint {
 
-        private TeleHeaderWatchpoint(WatchpointKind kind, Factory factory, String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
+        private TeleHeaderWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, HeaderField headerField, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
-            super(kind, factory, description, teleObject, teleObject.headerOffset(headerField), teleObject.headerSize(headerField), settings);
+            super(kind, watchpointManager, description, teleObject, teleObject.headerOffset(headerField), teleObject.headerSize(headerField), settings);
         }
     }
 
     /**
-     * A factory for creating and managing process watchpoints.
+     * A manager for creating and managing process watchpoints.
      * <br>
      * Overlapping watchpoints are not permitted.
      *
      * @author Michael Van De Vanter
      */
-    public static final class Factory extends AbstractTeleVMHolder implements MaxWatchpointFactory {
+    public static final class WatchpointManager extends AbstractTeleVMHolder implements MaxWatchpointManager {
 
         private final TeleProcess teleProcess;
 
@@ -749,9 +749,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             }
         };
 
-        // This implementation is not thread-safe; this factory must take care of that.
+        // This implementation is not thread-safe; this manager must take care of that.
         // Keep the set ordered by start address only, implemented by the comparator and equals().
-        // An additional constraint imposed by this factory is that no regions overlap,
+        // An additional constraint imposed by this manager is that no regions overlap,
         // either in part or whole, with others in the set.
         private final TreeSet<TeleWatchpoint> clientWatchpoints = new TreeSet<TeleWatchpoint>(watchpointComparator);
 
@@ -771,10 +771,10 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         private volatile List<MaxWatchpointListener> watchpointListeners = new CopyOnWriteArrayList<MaxWatchpointListener>();
 
         /**
-         * Creates a factory for creating and managing watchpoints in the vm.
+         * Creates a manager for creating and managing watchpoints in the vm.
          *
          */
-        Factory(TeleVM teleVM, TeleProcess teleProcess) {
+        WatchpointManager(TeleVM teleVM, TeleProcess teleProcess) {
             super(teleVM);
             this.teleProcess = teleProcess;
             teleVM().addVMStateListener(new MaxVMStateListener() {
@@ -1119,7 +1119,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         private void updateAfterWatchpointChanges() {
             clientWatchpointsCache = new VectorSequence<MaxWatchpoint>(clientWatchpoints);
             systemWatchpointsCache = new VectorSequence<MaxWatchpoint>(systemWatchpoints);
-            // Ensure that the factory listens for GC completion events iff
+            // Ensure that the manager listens for GC completion events iff
             // there are watchpoints.
             if (watchpointCount() > 0) {
                 if (gcCompletedListener == null) {
