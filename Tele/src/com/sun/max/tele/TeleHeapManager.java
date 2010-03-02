@@ -264,6 +264,9 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
         if (teleImmortalHeapRegion != null && teleImmortalHeapRegion.contains(address)) {
             return teleImmortalHeapRegion;
         }
+        if (teleRootsRegion() != null && teleRootsRegion().contains(address)) {
+            return teleRootsRegion();
+        }
         for (TeleLinearAllocationMemoryRegion teleHeapRegion : teleHeapRegions) {
             // TODO (mlvdv) there is a race that sometimes causes us to get a null element; we should fix the race.
             if (teleHeapRegion != null && teleHeapRegion.contains(address)) {
