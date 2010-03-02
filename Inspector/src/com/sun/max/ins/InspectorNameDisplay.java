@@ -645,7 +645,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     private class Utf8ConstantReferenceRenderer implements ReferenceRenderer{
         public String referenceLabelText(TeleObject teleObject) {
             final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject;
-            final String s = teleUtf8Constant.getString();
+            final String s = teleUtf8Constant.utf8Constant().string;
             if (s.length() > style().maxStringInlineDisplayLength()) {
                 return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
             }
@@ -655,7 +655,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceToolTipText(TeleObject teleObject) {
             final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject;
             final ClassActor classActorForType = teleUtf8Constant.classActorForType();
-            final String s = teleUtf8Constant.getString();
+            final String s = teleUtf8Constant.utf8Constant().string;
             return objectReference(null, teleObject, classActorForType.qualifiedName(), "\"" + s + "\"");
         }
     }

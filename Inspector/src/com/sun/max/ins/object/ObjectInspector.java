@@ -21,7 +21,6 @@
 package com.sun.max.ins.object;
 
 import java.awt.*;
-import java.util.*;
 
 import javax.swing.*;
 
@@ -34,8 +33,6 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.grip.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 
 /**
  * An inspector that displays the content of a Maxine low level heap object in the VM.
@@ -277,31 +274,5 @@ public abstract class ObjectInspector extends Inspector {
 
     public void viewConfigurationChanged() {
         reconstructView();
-    }
-
-    /**
-     * Gets the fields for either a tuple or hybrid object, static fields in the special case of a {@link StaticTuple} object.
-     *
-     * @return a {@FieldActor} for every field in the object, sorted by offset.
-     */
-    protected Collection<FieldActor> getFieldActors() {
-        final TreeSet<FieldActor> fieldActors = new TreeSet<FieldActor>(new Comparator<FieldActor>() {
-            public int compare(FieldActor a, FieldActor b) {
-                final Integer aOffset = a.offset();
-                return aOffset.compareTo(b.offset());
-            }
-        });
-        collectFieldActors(teleObject().classActorForType(), teleObject instanceof TeleStaticTuple, fieldActors);
-        return fieldActors;
-    }
-
-    private void collectFieldActors(ClassActor classActor, boolean isStatic, TreeSet<FieldActor> fieldActors) {
-        if (classActor != null) {
-            final FieldActor[] localFieldActors = isStatic ? classActor.localStaticFieldActors() : classActor.localInstanceFieldActors();
-            for (FieldActor fieldActor : localFieldActors) {
-                fieldActors.add(fieldActor);
-            }
-            collectFieldActors(classActor.superClassActor, isStatic, fieldActors);
-        }
     }
 }

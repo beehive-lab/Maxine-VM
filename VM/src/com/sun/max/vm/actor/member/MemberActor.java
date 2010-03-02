@@ -41,6 +41,7 @@ import com.sun.max.vm.type.*;
  */
 public abstract class MemberActor extends Actor {
 
+    @INSPECTED
     public final Descriptor descriptor;
 
     protected MemberActor(Utf8Constant name, Descriptor descriptor, int flags) {

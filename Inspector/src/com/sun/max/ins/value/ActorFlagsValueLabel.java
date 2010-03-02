@@ -48,7 +48,7 @@ public final class ActorFlagsValueLabel extends ValueLabel {
 
     @Override
     protected Value fetchValue() {
-        final int flags = teleActor.readFlags();
+        final int flags = teleActor.getFlags();
         flagsAsHex = "Flags: 0x" + Integer.toHexString(flags);
         flagsAsString = teleActor.flagsAsString();
         return IntValue.from(flags);
