@@ -98,7 +98,7 @@ public final class Inspection implements InspectionHolder {
 
     private static final String INSPECTOR_NAME = "Maxine Inspector";
 
-    private final MaxVM maxVM;
+    private final MaxVM vm;
 
     private final String bootImageFileName;
 
@@ -117,14 +117,14 @@ public final class Inspection implements InspectionHolder {
 
     private InspectorMainFrame inspectorMainFrame;
 
-    public Inspection(MaxVM maxVM) {
+    public Inspection(MaxVM vm) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
         final long startTimeMillis = System.currentTimeMillis();
-        this.maxVM = maxVM;
-        this.bootImageFileName = maxVM.bootImageFile().getAbsolutePath().toString();
+        this.vm = vm;
+        this.bootImageFileName = vm.bootImageFile().getAbsolutePath().toString();
         this.nameDisplay = new InspectorNameDisplay(this);
         this.focus = new InspectionFocus(this);
-        this.settings = new InspectionSettings(this, new File(maxVM.programFile().getParentFile(), SETTINGS_FILE_NAME));
+        this.settings = new InspectionSettings(this, new File(vm.programFile().getParentFile(), SETTINGS_FILE_NAME));
         this.preferences = new InspectionPreferences(this, settings);
         this.inspectionActions = new InspectionActions(this);
 
@@ -133,10 +133,10 @@ public final class Inspection implements InspectionHolder {
         BreakpointPersistenceManager.initialize(this);
         inspectionActions.refresh(true);
 
-        maxVM.addVMStateListener(new VMStateListener());
-        maxVM.breakpointFactory().addListener(new BreakpointListener());
-        if (maxVM.watchpointFactory() != null) {
-            maxVM.watchpointFactory().addListener(new WatchpointListener());
+        vm.addVMStateListener(new VMStateListener());
+        vm.breakpointFactory().addListener(new BreakpointListener());
+        if (vm.watchpointFactory() != null) {
+            vm.watchpointFactory().addListener(new WatchpointListener());
         }
 
         inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, nameDisplay, settings, inspectionActions);
@@ -144,7 +144,7 @@ public final class Inspection implements InspectionHolder {
         MethodInspector.Manager.make(this);
         objectInspectorFactory = ObjectInspectorFactory.make(this);
 
-        if (vm().state().processState() == UNKNOWN) {
+        if (vm.state().processState() == UNKNOWN) {
             // Inspector is working with a boot image only, no process exists.
 
             // Initialize the CodeManager and ClassRegistry, which seems to keep some heap reads
@@ -195,7 +195,7 @@ public final class Inspection implements InspectionHolder {
     }
 
     public MaxVM vm() {
-        return maxVM;
+        return vm;
     }
 
     public InspectorGUI gui() {
@@ -366,7 +366,7 @@ public final class Inspection implements InspectionHolder {
     private final class VMStateListener implements MaxVMStateListener {
 
         public void stateChanged(final MaxVMState vmState) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "notified MaxVMState=" + vmState);
+            Trace.line(TRACE_VALUE, tracePrefix() + "notified vmState=" + vmState);
             for (MaxThread thread : vmState.threadsStarted()) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "started: " + thread);
             }
