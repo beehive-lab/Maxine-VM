@@ -64,7 +64,7 @@ public class DescriptorInspector extends ObjectInspector {
 
         stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
-                return teleDescriptor.string();
+                return teleDescriptor.descriptor().string;
             }
         });
         tabbedPane.add("string value", stringPane);

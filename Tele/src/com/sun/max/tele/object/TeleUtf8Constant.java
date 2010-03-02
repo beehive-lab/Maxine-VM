@@ -35,25 +35,27 @@ public final class TeleUtf8Constant extends TelePoolConstant {
         super(teleVM, utf8ConstantReference);
     }
 
-    // The field is final; cache it.
-    private String string;
+    // The field is final once non-null; cache it.
+    private Utf8Constant utf8Constant;
 
     /**
-     * @return a local copy of the string contained in this object in the {@link TeleVM}.
+     * @return a local copy of this object in the {@link TeleVM}.
      */
-    public String getString() {
-        if (string == null) {
-            final Reference stringReference = teleVM().teleFields().Utf8Constant_string.readReference(reference());
-            final TeleString teleString = (TeleString) teleVM().makeTeleObject(stringReference);
-            string = teleString.getString();
+    public Utf8Constant utf8Constant() {
+        if (utf8Constant == null) {
+            Reference reference = teleVM().teleFields().Utf8Constant_string.readReference(reference());
+            TeleString teleString = (TeleString) teleVM().makeTeleObject(reference);
+            if (teleString != null) {
+                utf8Constant = SymbolTable.makeSymbol(teleString.getString());
+            }
         }
-        return string;
+        return utf8Constant;
     }
 
     @Override
     protected Object createDeepCopy(DeepCopier context) {
         // Translate into local equivalent
-        return SymbolTable.makeSymbol(getString());
+        return utf8Constant();
     }
 
     @Override
