@@ -524,14 +524,14 @@ public interface MaxVM {
      *
      * @return VM state summary
      */
-    MaxVMState vmState();
+    MaxVMState state();
 
     /**
      * Adds a VM state listener.
      * <br>
      * Thread-safe.
      *
-     * @param listener will be notified of changes to {@link #vmState()}.
+     * @param listener will be notified of changes to {@link #state()}.
      */
     void addVMStateListener(MaxVMStateListener listener);
 

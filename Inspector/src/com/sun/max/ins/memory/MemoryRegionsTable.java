@@ -58,9 +58,9 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
-        bootHeapRegionDisplay = new HeapRegionDisplay(maxVM().teleBootHeapRegion());
-        bootCodeRegionDisplay = new CodeRegionDisplay(maxVM().teleBootCodeRegion());
-        heapScheme = inspection.maxVM().vmConfiguration().heapScheme();
+        bootHeapRegionDisplay = new HeapRegionDisplay(vm().teleBootHeapRegion());
+        bootCodeRegionDisplay = new CodeRegionDisplay(vm().teleBootCodeRegion());
+        heapScheme = inspection.vm().vmConfiguration().heapScheme();
         heapSchemeName = heapScheme.getClass().getSimpleName();
         tableModel = new MemoryRegionsTableModel(inspection);
         columnModel = new MemoryRegionsColumnModel(viewPreferences);
@@ -152,24 +152,24 @@ public final class MemoryRegionsTable extends InspectorTable {
             sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionDisplay>();
 
             sortedMemoryRegions.add(bootHeapRegionDisplay);
-            for (TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion : maxVM().teleHeapRegions()) {
+            for (TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion : vm().teleHeapRegions()) {
                 sortedMemoryRegions.add(new HeapRegionDisplay(teleLinearAllocationMemoryRegion));
             }
-            if (maxVM().teleRootsRegion() != null) {
-                sortedMemoryRegions.add(new OtherRegionDisplay(maxVM().teleRootsRegion()));
+            if (vm().teleRootsRegion() != null) {
+                sortedMemoryRegions.add(new OtherRegionDisplay(vm().teleRootsRegion()));
             }
 
-            if (maxVM().teleImmortalHeapRegion() != null) {
-                sortedMemoryRegions.add(new HeapRegionDisplay(maxVM().teleImmortalHeapRegion()));
+            if (vm().teleImmortalHeapRegion() != null) {
+                sortedMemoryRegions.add(new HeapRegionDisplay(vm().teleImmortalHeapRegion()));
             }
 
             sortedMemoryRegions.add(bootCodeRegionDisplay);
-            final TeleCodeRegion teleRuntimeCodeRegion = maxVM().teleRuntimeCodeRegion();
+            final TeleCodeRegion teleRuntimeCodeRegion = vm().teleRuntimeCodeRegion();
             if (teleRuntimeCodeRegion.isAllocated()) {
                 sortedMemoryRegions.add(new CodeRegionDisplay(teleRuntimeCodeRegion));
             }
 
-            for (MaxThread thread : vmState().threads()) {
+            for (MaxThread thread : vm().state().threads()) {
                 final MaxStack stack = thread.stack();
                 if (!stack.memoryRegion().size().isZero()) {
                     sortedMemoryRegions.add(new StackRegionDisplay(stack));
@@ -221,7 +221,7 @@ public final class MemoryRegionsTable extends InspectorTable {
      * @return foreground color for row; color the text specially in the row where a watchpoint is triggered
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }

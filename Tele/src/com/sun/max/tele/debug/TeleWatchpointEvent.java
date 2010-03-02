@@ -42,11 +42,11 @@ public class TeleWatchpointEvent implements MaxWatchpointEvent {
         this.code = code;
     }
 
-    public MaxWatchpoint maxWatchpoint() {
+    public MaxWatchpoint watchpoint() {
         return maxWatchpoint;
     }
 
-    public MaxThread maxThread() {
+    public MaxThread thread() {
         return teleNativeThread;
     }
 
@@ -63,7 +63,7 @@ public class TeleWatchpointEvent implements MaxWatchpointEvent {
         final StringBuilder sb = new StringBuilder(50);
         sb.append(getClass().getSimpleName()).append("(");
         sb.append(maxWatchpoint.toString()).append(", ");
-        sb.append(maxThread().toString()).append(" @");
+        sb.append(thread().toString()).append(" @");
         sb.append(address.toHexString()).append("code=");
         sb.append(Integer.toString(code)).append(")");
         return sb.toString();

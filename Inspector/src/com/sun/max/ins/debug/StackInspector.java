@@ -182,7 +182,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             String toolTip = null;
             Component component;
             if (stackFrame instanceof MaxStackFrame.Compiled) {
-                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(stackFrame.targetMethod().codeStart());
+                final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(stackFrame.targetMethod().codeStart());
                 name = inspection().nameDisplay().veryShortName(teleTargetMethod);
                 toolTip = inspection().nameDisplay().longName(teleTargetMethod, stackFrame.ip());
                 final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
@@ -199,7 +199,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             } else {
                 ProgramWarning.check(stackFrame instanceof MaxStackFrame.Native, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.ip();
-                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
+                final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
                 if (teleNativeTargetRoutine != null) {
                     // native that we know something about
                     name = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
@@ -252,7 +252,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
                     newRightComponent = selectedFramePanel;
                 } else if (stackFrame instanceof TruncatedStackFrame) {
                     maxFramesDisplay *= 2;
-                    lastChangedState = vmState();
+                    lastChangedState = vm().state();
                     refreshView(true);
                 } else {
                     newRightComponent = nativeFrame;
@@ -414,7 +414,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     private String javaStackFrameName(MaxStackFrame.Compiled javaStackFrame) {
         final Address address = javaStackFrame.ip();
-        final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
+        final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
         String name;
         if (teleTargetMethod != null) {
             name = inspection().nameDisplay().veryShortName(teleTargetMethod);
@@ -448,7 +448,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
         }
         if (stackFrame instanceof MaxStackFrame.Native) {
             final Pointer instructionPointer = stackFrame.ip();
-            final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
+            final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
             if (teleNativeTargetRoutine == null) {
                 menu.add(new InspectorAction(inspection(), "Open native code dialog...") {
                     @Override
@@ -541,7 +541,7 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
 
     @Override
     public void watchpointSetChanged() {
-        if (vmState().processState() == ProcessState.STOPPED) {
+        if (vm().state().processState() == ProcessState.STOPPED) {
             refreshView(true);
         }
     }

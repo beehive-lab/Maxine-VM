@@ -123,7 +123,7 @@ public abstract class ObjectInspector extends Inspector {
 
         final InspectorMenu memoryMenu = frame.makeMenu(MenuKind.MEMORY_MENU);
         memoryMenu.add(actions().inspectObjectMemoryWords(teleObject, "Inspect this object's memory"));
-        if (watchpointsEnabled()) {
+        if (vm().watchpointFactory() != null) {
             memoryMenu.add(actions().setObjectWatchpoint(teleObject, "Watch this object's memory"));
         }
         memoryMenu.add(defaultMenuItems(MenuKind.MEMORY_MENU));
@@ -224,7 +224,7 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void watchpointSetChanged() {
         // TODO (mlvdv)  patch for concurrency issue; not completely safe
-        if (vmState().processState() == ProcessState.STOPPED) {
+        if (vm().state().processState() == ProcessState.STOPPED) {
             refreshView(true);
         }
     }

@@ -76,7 +76,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
     @Override
     protected void mouseButton1Clicked(final int row, final int col, MouseEvent mouseEvent) {
-        if (mouseEvent.getClickCount() > 1 && watchpointFactory() != null) {
+        if (mouseEvent.getClickCount() > 1 && vm().watchpointFactory() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -97,7 +97,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, final int col, MouseEvent mouseEvent) {
-        if (watchpointFactory() != null && col == CompiledStackFrameColumnKind.TAG.ordinal()) {
+        if (vm().watchpointFactory() != null && col == CompiledStackFrameColumnKind.TAG.ordinal()) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             final Slot slot = (Slot) tableModel.getValueAt(row, col);
@@ -184,7 +184,7 @@ public class CompiledStackFrameTable extends InspectorTable {
             regions = new MemoryRegion[slots.length()];
             int index = 0;
             for (Slot slot : slots) {
-                regions[index] = new FixedMemoryRegion(getOrigin().plus(slot.offset), maxVM().wordSize(), "");
+                regions[index] = new FixedMemoryRegion(getOrigin().plus(slot.offset), vm().wordSize(), "");
                 index++;
             }
         }
@@ -208,7 +208,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         @Override
         public int findRow(Address address) {
-            final int wordOffset = address.minus(getOrigin()).dividedBy(maxVM().wordSize()).toInt();
+            final int wordOffset = address.minus(getOrigin()).dividedBy(vm().wordSize()).toInt();
             return (wordOffset >= 0 && wordOffset < slots.length()) ? wordOffset : -1;
         }
 
@@ -285,7 +285,7 @@ public class CompiledStackFrameTable extends InspectorTable {
      * @return foreground color for row; color the text specially in the row where a watchpoint is triggered
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
@@ -397,7 +397,7 @@ public class CompiledStackFrameTable extends InspectorTable {
                 label = new WordValueLabel(inspection, ValueMode.INTEGER_REGISTER, CompiledStackFrameTable.this) {
                     @Override
                     public Value fetchValue() {
-                        return new WordValue(maxVM().readWord(address));
+                        return new WordValue(vm().readWord(address));
                     }
                 };
                 label.setOpaque(true);
@@ -434,7 +434,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             try {
-                final Word word = maxVM().readWord(tableModel.getAddress(row));
+                final Word word = vm().readWord(tableModel.getAddress(row));
                 setValue(WordValue.from(word));
                 setBackground(cellBackgroundColor(isSelected));
                 return this;

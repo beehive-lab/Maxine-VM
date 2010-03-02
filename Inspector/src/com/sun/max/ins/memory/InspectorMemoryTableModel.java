@@ -42,7 +42,7 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
     public InspectorMemoryTableModel(Inspection inspection, Address origin) {
         super(inspection);
         this.origin = origin;
-        wordSize = inspection.maxVM().wordSize();
+        wordSize = inspection.vm().wordSize();
     }
 
     /**
@@ -72,8 +72,8 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
      */
     public Sequence<MaxWatchpoint> getWatchpoints(int row) {
         DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
-        if (watchpointsEnabled()) {
-            for (MaxWatchpoint watchpoint : watchpointFactory().watchpoints()) {
+        if (vm().watchpointFactory() != null) {
+            for (MaxWatchpoint watchpoint : vm().watchpointFactory().watchpoints()) {
                 if (watchpoint.overlaps(getMemoryRegion(row))) {
                     if (watchpoints.isEmpty()) {
                         watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);

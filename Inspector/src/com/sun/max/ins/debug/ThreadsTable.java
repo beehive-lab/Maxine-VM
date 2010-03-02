@@ -112,7 +112,7 @@ public final class ThreadsTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            return vmState().threads().length();
+            return vm().state().threads().length();
         }
 
         public Object getValueAt(int row, int col) {
@@ -126,7 +126,7 @@ public final class ThreadsTable extends InspectorTable {
 
         public int findRow(MaxThread findThread) {
             int row = 0;
-            for (MaxThread thread : vmState().threads()) {
+            for (MaxThread thread : vm().state().threads()) {
                 if (thread.equals(findThread)) {
                     return row;
                 }
@@ -137,7 +137,7 @@ public final class ThreadsTable extends InspectorTable {
 
         public MaxThread getThreadAt(int row) {
             int count = 0;
-            for (MaxThread thread : vmState().threads()) {
+            for (MaxThread thread : vm().state().threads()) {
                 if (count == row) {
                     return thread;
                 }

@@ -37,7 +37,7 @@ public class TeleThreadManager extends AbstractTeleVMHolder implements MaxThread
     }
 
     public Sequence<MaxThread> threads() {
-        return teleVM().vmState().threads();
+        return teleVM().state().threads();
     }
 
     public MaxThread findThread(Address address) {

@@ -299,7 +299,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             // User Model Policy:  select the memory region that contains the newly selected address; clears if not known.
             // If
-            setMemoryRegion(maxVM().memoryRegionContaining(address));
+            setMemoryRegion(vm().memoryRegionContaining(address));
         }
     }
 
@@ -391,7 +391,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
         if (maxBreakpoint != null) {
             MaxThread threadAtBreakpoint = null;
-            for (MaxThread thread : vmState().threads()) {
+            for (MaxThread thread : vm().state().threads()) {
                 if (thread.breakpoint() == maxBreakpoint) {
                     threadAtBreakpoint = thread;
                     break;
