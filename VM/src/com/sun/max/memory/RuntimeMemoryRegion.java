@@ -23,7 +23,6 @@ package com.sun.max.memory;
 import java.lang.management.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.atomic.*;
 import com.sun.max.unsafe.*;
 
 public class RuntimeMemoryRegion implements MemoryRegion {
@@ -39,13 +38,6 @@ public class RuntimeMemoryRegion implements MemoryRegion {
 
     @INSPECTED
     protected Size size;
-
-    /**
-     * The current allocation mark. This is an atomic word so that it can be updated
-     * atomically if necessary.
-     */
-    @INSPECTED
-    public final AtomicWord mark = new AtomicWord();
 
     public RuntimeMemoryRegion() {
         start = Address.zero();
@@ -76,11 +68,6 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     @INLINE
     public final Address start() {
         return start;
-    }
-
-    @INLINE
-    public final Pointer mark() {
-        return mark.get().asPointer();
     }
 
     public void setStart(Address start) {
@@ -126,17 +113,14 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         return Util.equal(this, otherMemoryRegion);
     }
 
+    public MemoryUsage getUsage() {
+        return null;
+    }
+
     @Override
     public String toString() {
         return "[" + start.toHexString() + " - " + end().minus(1).toHexString() + "]";
     }
 
-    @INLINE
-    public final Address getAllocationMark() {
-        return mark.get().asAddress();
-    }
 
-    public MemoryUsage getUsage() {
-        return new MemoryUsage(size.toLong(), getAllocationMark().minus(start).toLong(), size.toLong(), size.toLong());
-    }
 }

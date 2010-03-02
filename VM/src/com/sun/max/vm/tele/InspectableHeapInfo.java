@@ -117,7 +117,7 @@ public final class InspectableHeapInfo {
 
             try {
                 Heap.enableImmortalMemoryAllocation();
-                rootsRegion = new RuntimeMemoryRegion("TeleRoots");
+                rootsRegion = new LinearAllocationMemoryRegion("TeleRoots");
             } finally {
                 Heap.disableImmortalMemoryAllocation();
             }

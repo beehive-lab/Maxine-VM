@@ -32,7 +32,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * @author Bernd Mathiske
  */
-public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion {
+public class LinearAllocatorHeapRegion extends LinearAllocationMemoryRegion {
 
     public void setMark(Address mark) {
         this.mark.set(mark.wordAligned());

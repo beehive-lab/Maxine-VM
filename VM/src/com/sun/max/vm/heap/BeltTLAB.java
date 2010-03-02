@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Christos Kotselidis
  */
-public class BeltTLAB extends RuntimeMemoryRegion {
+public class BeltTLAB extends LinearAllocationMemoryRegion {
 
     private Address endAllocationMark;
     private Address previousAllocationMark;

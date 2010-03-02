@@ -766,7 +766,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final IndexedSequence<MemoryRegion> allocatedMemoryRegions() {
-        final IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions = teleHeapRegions();
+        final IndexedSequence<TeleLinearAllocationMemoryRegion> teleHeapRegions = teleHeapRegions();
         final TeleCodeRegion teleRuntimeCodeRegion = teleCodeManager().teleRuntimeCodeRegion();
         final IterableWithLength<TeleNativeThread> threads = teleProcess.threads();
         final VariableSequence<MemoryRegion> regions = new ArrayListSequence<MemoryRegion>(teleHeapRegions.length() + 1 + threads.length() + 2);
@@ -840,23 +840,23 @@ public abstract class TeleVM implements MaxVM {
         return teleHeapManager.isInLiveMemory(address);
     }
 
-    public final TeleRuntimeMemoryRegion teleBootHeapRegion() {
+    public final TeleLinearAllocationMemoryRegion teleBootHeapRegion() {
         return teleHeapManager.teleBootHeapRegion();
     }
 
-    public final TeleRuntimeMemoryRegion teleImmortalHeapRegion() {
+    public final TeleLinearAllocationMemoryRegion teleImmortalHeapRegion() {
         return teleHeapManager.teleImmortalHeapRegion();
     }
 
-    public final IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {
+    public final IndexedSequence<TeleLinearAllocationMemoryRegion> teleHeapRegions() {
         return teleHeapManager.teleHeapRegions();
     }
 
-    public final TeleRuntimeMemoryRegion[] teleHeapRegionsArray() {
+    public final TeleLinearAllocationMemoryRegion[] teleHeapRegionsArray() {
         return teleHeapManager.teleHeapRegionsArray();
     }
 
-    public final TeleRuntimeMemoryRegion teleRootsRegion() {
+    public final TeleLinearAllocationMemoryRegion teleRootsRegion() {
         return teleHeapManager.teleRootsRegion();
     }
 

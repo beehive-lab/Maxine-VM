@@ -22,14 +22,13 @@ package com.sun.max.tele.object;
 
 import java.lang.management.*;
 
-import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for objects in the {@link TeleVM} that represent a region of memory.
+ * Canonical surrogate for objects in the VM that represent a region of memory.
  *
  * @author Michael Van De Vanter
  */
@@ -40,7 +39,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
     }
 
     /**
-     * Reads from the {@link TeleVM} the start field of the {@link RuntimeMemoryRegion}.
+     * Reads from the VM the start field of the {@link RuntimeMemoryRegion}.
      */
     private Address readStart() {
         return teleVM().teleFields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();
@@ -63,35 +62,14 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
     }
 
     /**
-     * @return whether memory has been allocated yet in the {@link TeleVM} for this region.
+     * @return whether memory has been allocated yet in the VM for this region.
      */
     public boolean isAllocated() {
         return !start().isZero();
     }
 
     /**
-     * Reads from the {@link TeleVM} the mark field of the {@link RuntimeMemoryRegion}.
-     */
-    public Address mark() {
-        final Reference mark = teleVM().teleFields().RuntimeMemoryRegion_mark.readReference(reference());
-        return mark.readWord(AtomicWord.valueOffset()).asPointer();
-    }
-
-    /**
-     * @return how much memory in region has been allocated to objects, {@link Size#zero()) if memory for region not allocated.
-     */
-    public Size allocatedSize() {
-        if (isAllocated()) {
-            final Address mark = mark();
-            if (!mark.isZero()) {
-                return mark.minus(start()).asSize();
-            }
-        }
-        return Size.zero();
-    }
-
-    /**
-     * Reads from the {@link TeleVM} the size field of the {@link RuntimeMemoryRegion}.
+     * Reads from the TeleVM the size field of the {@link RuntimeMemoryRegion}.
      */
     public Size size() {
         return teleVM().teleFields().RuntimeMemoryRegion_size.readWord(reference()).asSize();

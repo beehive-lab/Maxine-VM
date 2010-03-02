@@ -68,7 +68,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
             return true;
         }
 
-        for (TeleRuntimeMemoryRegion teleHeapRegion : teleVM().teleHeapRegions()) {
+        for (TeleLinearAllocationMemoryRegion teleHeapRegion : teleVM().teleHeapRegions()) {
             if (teleHeapRegion.contains(address)) {
                 if (teleHeapRegion.description().equals(SemiSpaceHeapScheme.FROM_REGION_NAME)) { // everything in from-space is dead
                     return false;
