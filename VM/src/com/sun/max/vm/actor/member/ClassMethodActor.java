@@ -234,7 +234,16 @@ public abstract class ClassMethodActor extends MethodActor {
                 }
 
                 if (codeAttribute != null) {
-                    new Intrinsics(compilee, codeAttribute).run();
+                    Intrinsics intrinsics = new Intrinsics(compilee, codeAttribute);
+                    intrinsics.run();
+                    if (intrinsics.unsafe) {
+                        compilee.beUnsafe();
+                        beUnsafe();
+                    }
+                    if (intrinsics.extended) {
+                        compilee.beExtended();
+                        beExtended();
+                    }
                 }
 
                 this.codeAttribute = codeAttribute;

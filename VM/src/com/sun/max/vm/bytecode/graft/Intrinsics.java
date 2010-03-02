@@ -24,6 +24,7 @@ package com.sun.max.vm.bytecode.graft;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.bytecode.BytecodeIntrinsifier.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
@@ -41,6 +42,8 @@ public class Intrinsics extends IntrinsifierClient {
     final ClassMethodActor compilee;
     final CodeAttribute codeAttribute;
     final ConstantPool cp;
+    public boolean unsafe;
+    public boolean extended;
 
     /**
      * Creates an {@link Intrinsics} instance to process the bytecode of a single method.
@@ -52,6 +55,7 @@ public class Intrinsics extends IntrinsifierClient {
         this.cp = codeAttribute.constantPool;
         this.compilee = compilee;
         this.codeAttribute = codeAttribute;
+        unsafe = compilee.isUnsafe();
     }
 
     /**
@@ -75,13 +79,48 @@ public class Intrinsics extends IntrinsifierClient {
         return locals;
     }
 
+    /**
+     * Processes the given code to intrinsify it.
+     *
+     * @return {@code} if the code is determined to be unsafe (i.e. cannot be compiled by the JIT compiler)
+     */
     public boolean run() {
         try {
-            return new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, initLocals()).run();
+            extended = new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, initLocals()).run();
+            return unsafe;
         } catch (Throwable e) {
             String msg = String.format("Error while intrinsifying " + compilee + "%n" + CodeAttributePrinter.toString(codeAttribute));
             throw (InternalError) new InternalError(msg).initCause(e);
         }
+    }
+
+    /**
+     * Determines if a given opcode is unsafe (i.e. cannot be compiled by the JIT compiler).
+     *
+     * @param opcode an opcode to test
+     */
+    private static boolean isUnsafe(int opcode) {
+        switch (opcode) {
+            // Checkstyle: stop
+            case Bytecodes.READGPR            :
+            case Bytecodes.WRITEGPR           :
+            case Bytecodes.SAFEPOINT          :
+            case Bytecodes.PAUSE              :
+            case Bytecodes.ADD_SP             :
+            case Bytecodes.READ_PC            :
+            case Bytecodes.FLUSHW             :
+            case Bytecodes.ALLOCA             :
+            case Bytecodes.STACKADDR          :
+            case Bytecodes.JNICALL            :
+            case Bytecodes.CALL               :
+            case Bytecodes.ICMP               :
+            case Bytecodes.WCMP               :
+            case Bytecodes.RET                :
+            case Bytecodes.JSR_W              :
+            case Bytecodes.JSR                : return true;
+            // Checkstyle: resume
+        }
+        return false;
     }
 
     /**
@@ -94,26 +133,38 @@ public class Intrinsics extends IntrinsifierClient {
     private void intrinsify(BytecodeIntrinsifier bi, int cpi, boolean isStatic) {
         MethodRefConstant constant = cp.methodAt(cpi);
         TypeDescriptor holder = constant.holder(cp);
+        SignatureDescriptor sig = constant.signature(cp);
         boolean holderIsWord = holder.toKind().isWord;
         if (holderIsWord || constant.isResolvableWithoutClassLoading(cp)) {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
                 int intrinsic = method.intrinsic();
-                if (intrinsic != 0) {
+                if (intrinsic == Bytecodes.UNSAFE_CAST) {
+                    Kind fromKind = isStatic ? sig.parameterDescriptorAt(0).toKind() : holder.toKind();
+                    Kind toKind = sig.resultKind();
+                    bi.intrinsify(Bytecodes.UNSAFE_CAST, fromKind.asEnum.ordinal() << 8 | toKind.asEnum.ordinal());
+                } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
+                    if (!unsafe) {
+                        unsafe = isUnsafe(opcode);
+                    }
                     assert Bytecodes.isExtension(opcode);
-                    int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xff : cpi;
+                    int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xffff : cpi;
                     bi.intrinsify(opcode, operand);
-                } else if (holderIsWord && !isStatic) {
-                    // Cannot dispatch dynamically on Word types
-                    bi.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
+                } else {
+                    if (!unsafe) {
+                        unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
+                    }
+                    if (holderIsWord && !isStatic) {
+                        // Cannot dispatch dynamically on Word types
+                        bi.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
+                    }
                 }
             } catch (HostOnlyClassError e) {
             } catch (HostOnlyMethodError e) {
             }
         }
 
-        SignatureDescriptor sig = constant.signature(cp);
         invoke(bi, isStatic, sig);
     }
 

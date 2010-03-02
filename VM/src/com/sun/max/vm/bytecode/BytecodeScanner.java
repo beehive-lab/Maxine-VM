@@ -1056,12 +1056,12 @@ public final class BytecodeScanner {
             }
             case INVOKEINTERFACE: {
                 final int index = readUnsigned2();
-                final int countUnused = readUnsigned1();
+                final int count = readUnsigned1();
                 final byte zero = readByte();
                 if (zero != 0) {
                     throw verifyError("Fourth operand byte of invokeinterface must be zero");
                 }
-                bytecodeVisitor.invokeinterface(index, countUnused);
+                bytecodeVisitor.invokeinterface(index, count);
                 break;
             }
             case NEW: {

@@ -82,6 +82,9 @@ public final class Disassemble {
      *            {@link DisassemblyPrinter} is created and used.
      */
     public static void disassemble(OutputStream out, byte[] code, ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder, DisassemblyPrinter disassemblyPrinter) {
+        if (code.length == 0) {
+            return;
+        }
         final Disassembler disassembler = createDisassembler(processorKind, startAddress, inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(code));
         try {

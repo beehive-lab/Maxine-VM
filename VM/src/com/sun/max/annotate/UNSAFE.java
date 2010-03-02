@@ -218,7 +218,6 @@ public @interface UNSAFE {
 
         private static void determine(ClassMethodActor classMethodActor) {
             if (isUnsafe(classMethodActor)) {
-                isUnsafe(classMethodActor);
                 list.append(classMethodActor);
             }
         }

@@ -90,8 +90,13 @@ public final class JitStackFrameOperation {
     }
 
     @INLINE
-    public static Object peekReference(int index) {
+    public static Object peekObject(int index) {
         return VMRegister.getAbiStackPointer().getReference(BIAS, index * WORDS_PER_SLOT).toJava();
+    }
+
+    @INLINE
+    public static Reference peekReference(int index) {
+        return VMRegister.getAbiStackPointer().getReference(BIAS, index * WORDS_PER_SLOT);
     }
 
     @INLINE
@@ -171,7 +176,7 @@ public final class JitStackFrameOperation {
     }
 
     @INLINE
-    public static void pushReference(final Object value) {
+    public static void pushObject(final Object value) {
         addSlots(1);
         pokeReference(0, value);
     }
@@ -189,8 +194,13 @@ public final class JitStackFrameOperation {
     }
 
     @INLINE
-    public static void setLocalReference(int slotOffset, Object value) {
+    public static void setLocalObject(int slotOffset, Object value) {
         VMRegister.getAbiFramePointer().writeReference(slotOffset, Reference.fromJava(value));
+    }
+
+    @INLINE
+    public static void setLocalWord(int slotOffset, Word value) {
+        VMRegister.getAbiFramePointer().writeWord(slotOffset, value);
     }
 
     @INLINE
@@ -214,8 +224,13 @@ public final class JitStackFrameOperation {
     }
 
     @INLINE
-    public static Object getLocalReference(int slotOffset) {
+    public static Object getLocalObject(int slotOffset) {
         return VMRegister.getAbiFramePointer().readReference(slotOffset).toJava();
+    }
+
+    @INLINE
+    public static Word getLocalWord(int slotOffset) {
+        return VMRegister.getAbiFramePointer().readWord(slotOffset);
     }
 
     @INLINE

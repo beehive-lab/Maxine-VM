@@ -159,7 +159,8 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
                     final int offset = stopIndex * targetMethod.frameReferenceMapSize();
                     Log.print(bcp);
                     Log.print(":");
-                    final String opcode = Bytecodes.nameOf(codeAttribute.code()[bcp]);
+                    int opc = codeAttribute.code()[bcp] & 0xff;
+                    final String opcode = Bytecodes.nameOf(opc);
                     Log.print(opcode);
                     int chars = Ints.sizeOfBase10String(bcp) + 1 + opcode.length();
                     while (chars++ < 20) {

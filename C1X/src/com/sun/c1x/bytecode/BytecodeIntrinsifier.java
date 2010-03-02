@@ -65,15 +65,50 @@ public final class BytecodeIntrinsifier {
         public abstract void jnicall(BytecodeIntrinsifier bi, int cpi);
     }
 
+    /**
+     * The state of the JVM local variables and operand stack at a given bytecode position.
+     */
     static class Frame {
 
+        /**
+         * The operand stack depth.
+         */
         final int sp;
+
+        /**
+         * The local variable state.
+         */
         final boolean[] locals;
+
+        /**
+         * The operand stack state.
+         */
         final boolean[] stack;
+
+        /**
+         * Specifies if the basic block denoted by this frame has been {@linkplain BytecodeIntrinsifier#parseBlock(int) parsed}.
+         */
         boolean visited;
+
+        /**
+         * The next {@code Frame} object in a linked list.
+         */
         final Frame next;
+
+        /**
+         * The bytecode position of this frame.
+         */
         final int bci;
 
+        /**
+         * Creates a {@code Frame} object.
+         *
+         * @param bci the bytecode position
+         * @param sp the operand stack depth
+         * @param stack the operand stack state
+         * @param locals the local variable state
+         * @param next the next {@code Frame} in a linked list
+         */
         Frame(int bci, int sp, boolean[] stack, boolean[] locals, Frame next) {
             this.bci = bci;
             this.sp = sp;
@@ -82,6 +117,13 @@ public final class BytecodeIntrinsifier {
             this.next = next;
         }
 
+        /**
+         * Updates the given operand stack and local variable state based on this frame.
+         *
+         * @param stack the operand stack state modified to match the operand stack state of this frame
+         * @param locals the local variable state modified to match the local variable state of this frame
+         * @return the stack depth of this frame
+         */
         int get(boolean[] stack, boolean[] locals) {
             for (int i = 0; i < sp; ++i) {
                 stack[i] = this.stack[i];
@@ -93,20 +135,6 @@ public final class BytecodeIntrinsifier {
                 locals[i] = this.locals[i];
             }
             return sp;
-        }
-
-        boolean matches(int sp, boolean[] stack, boolean[] locals) {
-            for (int i = 0; i < sp; ++i) {
-                if (stack[i] != this.stack[i]) {
-                    return false;
-                }
-            }
-            for (int i = 0; i < locals.length; ++i) {
-                if (locals[i] != this.locals[i]) {
-                    return false;
-                }
-            }
-            return true;
         }
 
         @Override
@@ -129,7 +157,15 @@ public final class BytecodeIntrinsifier {
         }
     }
 
+    /**
+     * The work list of basic blocks to be {@linkplain #parseBlock parsed}.
+     */
     private Frame todo;
+
+    /**
+     * The work list of exception handler entry basic blocks to be {@linkplain #parseBlock parsed}.
+     * This list is processed once the {@linkplain #todo primary} work list is completed.
+     */
     private Frame todoHandler;
 
     /**
@@ -162,6 +198,11 @@ public final class BytecodeIntrinsifier {
      * The position of the opcode of the instruction currently being processed.
      */
     private int opcodeBci;
+
+    /**
+     * The current bytecode position.
+     */
+    private int bci;
 
     /**
      * The method being processed.
@@ -395,58 +436,59 @@ public final class BytecodeIntrinsifier {
     }
 
     /**
-     * Reads an unsigned 2-byte value from a given position in the code.
+     * Reads an unsigned byte from the code stream.
      *
-     * @param bci the position at which to decode the value
-     * @return the unsigned 2-byte value at index {@code bci} in the code
+     * @return the unsigned byte value read
      */
-    private int readU2(int bci) {
-        return (inCode[bci] & 0xff) << 8 | inCode[bci + 1] & 0xff;
+    private int readU1() {
+        return inCode[bci++] & 0xff;
     }
 
     /**
-     * Reads an unsigned 1 or 2 byte value from a given position in the code.
+     * Reads an unsigned 2-byte value from the code stream.
      *
-     * @param bci the position at which to decode the value
+     * @return the unsigned 2-byte value read
+     */
+    private int readU2() {
+        return (inCode[bci++] & 0xff) << 8 | inCode[bci++] & 0xff;
+    }
+
+    /**
+     * Reads an unsigned 1 or 2-byte value from the code stream.
+     *
      * @param wide if {@code true}, a 2 byte value is read
-     * @return the unsigned 1 or 2 byte value at index {@code bci} in the code
+     * @return the unsigned 1 or 2 byte value read
      */
-    private int readVarIndex(int bci, boolean wide) {
+    private int readVarIndex(boolean wide) {
         if (wide) {
-            return inCode[bci] & 0xff << 8 | inCode[bci + 1] & 0xff;
+            return readU2();
         }
-        return inCode[bci] & 0xff;
+        return readU1();
     }
 
     /**
-     * Reads a signed 2-byte value from a given position in the code.
+     * Reads a signed 2-byte value from the code stream.
      *
-     * @param bci the position at which to decode the value
-     * @return the signed 2-byte value at index {@code bci} in the code
+     * @return the signed 2-byte value read
      */
-    private int readS2(int bci) {
-        return inCode[bci] << 8 | inCode[bci + 1] & 0xff;
+    private int readS2() {
+        return inCode[bci++] << 8 | inCode[bci++] & 0xff;
     }
 
     /**
-     * Reads a signed 4-byte value from a given position in the code.
+     * Reads a signed 4-byte value from the code stream.
      *
-     * @param bci the position at which to decode the value
-     * @return the signed 4-byte value at index {@code bci} in the code
+     * @return the signed 4-byte value read
      */
-    private int readS4(int bci) {
-        return inCode[bci + 0]          << 24 |
-               (inCode[bci + 1] & 0xff) << 16 |
-               (inCode[bci + 2] & 0xff) << 8  |
-               (inCode[bci + 3] & 0xff);
+    private int readS4() {
+        return (inCode[bci++]          << 24) |
+               (inCode[bci++] & 0xff) << 16 |
+               (inCode[bci++] & 0xff) << 8  |
+               (inCode[bci++] & 0xff);
     }
 
-    private int align4(int bci) {
-        final int remainder = bci & 0x3;
-        if (remainder != 0) {
-            return bci + 4 - remainder;
-        }
-        return bci;
+    private void align4() {
+        bci = (bci + 3) & ~0x3;
     }
 
     /**
@@ -512,7 +554,8 @@ public final class BytecodeIntrinsifier {
 
             sp = head.get(stack, locals);
             head.visited = true;
-            parseBlock(head.bci);
+            this.bci = head.bci;
+            parseBlock();
             if (DEBUG) {
                 debugOut.println("  ==============");
             }
@@ -523,21 +566,19 @@ public final class BytecodeIntrinsifier {
     /**
      * Parses and processes a single basic block of bytecode.
      *
-     * @param bci the entry point to the block
+     * @param ci the entry point to the block
      */
-    private void parseBlock(int bci) {
-        byte[] code = this.inCode;
-
+    private void parseBlock() {
         while (true) {
             opcodeBci = bci;
 
-            int opcode = code[bci++] & 0xff;
+            int opcode = readU1();
 
             int length = lengthOf(opcode);
             int nextBci = bci + length - 1;
             boolean wide;
             if (opcode == WIDE) {
-                opcode = code[bci++] & 0xff;
+                opcode = readU1();
                 wide = true;
                 if (opcode == IINC) {
                     nextBci = opcodeBci + 6;
@@ -682,7 +723,7 @@ public final class BytecodeIntrinsifier {
                 case LOR          :
                 case LXOR         : pop(2); break;
                 case ILOAD        :
-                case FLOAD        : load1(readVarIndex(bci, wide)); break;
+                case FLOAD        : load1(readVarIndex(wide)); break;
                 case ILOAD_0      :
                 case FLOAD_0      : load1(0); break;
                 case ILOAD_1      :
@@ -692,7 +733,7 @@ public final class BytecodeIntrinsifier {
                 case ILOAD_3      :
                 case FLOAD_3      : load1(3); break;
                 case LLOAD        :
-                case DLOAD        : load2(readVarIndex(bci, wide)); break;
+                case DLOAD        : load2(readVarIndex(wide)); break;
                 case LLOAD_0      :
                 case DLOAD_0      : load2(0); break;
                 case LLOAD_1      :
@@ -702,7 +743,7 @@ public final class BytecodeIntrinsifier {
                 case LLOAD_3      :
                 case DLOAD_3      : load2(3); break;
                 case ISTORE       :
-                case FSTORE       : store1(readVarIndex(bci, wide)); break;
+                case FSTORE       : store1(readVarIndex(wide)); break;
                 case ISTORE_0     :
                 case FSTORE_0     : store1(0); break;
                 case ISTORE_1     :
@@ -712,7 +753,7 @@ public final class BytecodeIntrinsifier {
                 case ISTORE_3     :
                 case FSTORE_3     : store1(0); break;
                 case LSTORE       :
-                case DSTORE       : store2(readVarIndex(bci, wide)); break;
+                case DSTORE       : store2(readVarIndex(wide)); break;
                 case LSTORE_0     :
                 case DSTORE_0     : store2(0); break;
                 case LSTORE_1     :
@@ -797,7 +838,8 @@ public final class BytecodeIntrinsifier {
                 }
 
                 case MULTIANEWARRAY: {
-                    int dimensions = code[bci + 2] & 0xff;
+                    readU2();
+                    int dimensions = readU1();
                     pop(dimensions);
                     push1();
                     break;
@@ -811,29 +853,29 @@ public final class BytecodeIntrinsifier {
                     break;
                 }
 
-                case ALOAD:     loadRefOrWord(readVarIndex(bci, wide), WLOAD); break;
+                case ALOAD:     loadRefOrWord(readVarIndex(wide), WLOAD); break;
                 case ALOAD_0:   loadRefOrWord(0, WLOAD_0); break;
                 case ALOAD_1:   loadRefOrWord(0, WLOAD_1); break;
                 case ALOAD_2:   loadRefOrWord(0, WLOAD_2); break;
                 case ALOAD_3:   loadRefOrWord(0, WLOAD_3); break;
 
-                case ASTORE:    storeRefOrWord(readVarIndex(bci, wide), WSTORE); break;
+                case ASTORE:    storeRefOrWord(readVarIndex(wide), WSTORE); break;
                 case ASTORE_0:  storeRefOrWord(0, WSTORE_0); break;
                 case ASTORE_1:  storeRefOrWord(0, WSTORE_1); break;
                 case ASTORE_2:  storeRefOrWord(0, WSTORE_2); break;
                 case ASTORE_3:  storeRefOrWord(0, WSTORE_3); break;
 
-                case INVOKEVIRTUAL:   intrinsifier.invokevirtual(this, readU2(bci));   break;
-                case INVOKESPECIAL:   intrinsifier.invokespecial(this, readU2(bci));   break;
-                case INVOKESTATIC:    intrinsifier.invokestatic(this, readU2(bci));    break;
-                case INVOKEINTERFACE: intrinsifier.invokeinterface(this, readU2(bci)); break;
+                case INVOKEVIRTUAL:   intrinsifier.invokevirtual(this, readU2());   break;
+                case INVOKESPECIAL:   intrinsifier.invokespecial(this, readU2());   break;
+                case INVOKESTATIC:    intrinsifier.invokestatic(this, readU2());    break;
+                case INVOKEINTERFACE: intrinsifier.invokeinterface(this, readU2()); break;
 
-                case GETFIELD:        intrinsifier.getfield(this, readU2(bci));        break;
-                case PUTFIELD:        intrinsifier.putfield(this, readU2(bci));        break;
-                case GETSTATIC:       intrinsifier.getstatic(this, readU2(bci));       break;
-                case PUTSTATIC:       intrinsifier.putstatic(this, readU2(bci));       break;
+                case GETFIELD:        intrinsifier.getfield(this, readU2());        break;
+                case PUTFIELD:        intrinsifier.putfield(this, readU2());        break;
+                case GETSTATIC:       intrinsifier.getstatic(this, readU2());       break;
+                case PUTSTATIC:       intrinsifier.putstatic(this, readU2());       break;
 
-                case JNICALL:         intrinsifier.jnicall(this, readU2(bci));         break;
+                case JNICALL:         intrinsifier.jnicall(this, readU2());         break;
 
                 default:
                     throw new InternalError("unexpected opcode " + opcode + " [" + nameOf(opcode) + "]");
@@ -864,32 +906,32 @@ public final class BytecodeIntrinsifier {
             if (isBlockEnd(opcode) || frameMap[nextBci] != null) {
                 if (isBranch(opcode)) {
                     if (length == 3) {
-                        merge(opcodeBci + readS2(bci));
+                        merge(opcodeBci + readS2());
                     } else {
                         assert length == 5;
-                        merge(opcodeBci + readS4(bci));
+                        merge(opcodeBci + readS4());
                     }
                     if (isConditionalBranch(opcode)) {
                         merge(opcodeBci + length);
                     }
                 } else if (opcode == TABLESWITCH) {
-                    bci = align4(bci);
-                    final int defaultOffset = readS4(bci);  bci += 4;
-                    final int lowMatch = readS4(bci);       bci += 4;
-                    final int highMatch = readS4(bci);      bci += 4;
+                    align4();
+                    final int defaultOffset = readS4();
+                    final int lowMatch = readS4();
+                    final int highMatch = readS4();
                     final int numberOfCases = highMatch - lowMatch + 1;
                     merge(opcodeBci + defaultOffset);
                     for (int i = 0; i < numberOfCases; i++) {
-                        merge(opcodeBci + readS4(bci));     bci += 4;
+                        merge(opcodeBci + readS4());
                     }
                 } else if (opcode == LOOKUPSWITCH) {
-                    bci = align4(bci);
-                    final int defaultOffset = readS4(bci);  bci += 4;
-                    final int numberOfCases = readS4(bci);  bci += 4;
+                    align4();
+                    final int defaultOffset = readS4();
+                    final int numberOfCases = readS4();
                     merge(opcodeBci + defaultOffset);
                     for (int i = 0; i < numberOfCases; i++) {
-                        readS4(bci);                        bci += 4;
-                        merge(opcodeBci + readS4(bci));     bci += 4;
+                        readS4();
+                        merge(opcodeBci + readS4());
                     }
                 }
 

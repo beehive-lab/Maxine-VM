@@ -401,13 +401,13 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
     }
 
     @INLINE
-    public int compareAndSwapInt(Grip grip, Offset offset, int suspectedValue, int newValue) {
-        return toOrigin(grip).compareAndSwapInt(offset, suspectedValue, newValue);
+    public int compareAndSwapInt(Grip grip, Offset offset, int expectedValue, int newValue) {
+        return toOrigin(grip).compareAndSwapInt(offset, expectedValue, newValue);
     }
 
     @INLINE
-    public int compareAndSwapInt(Grip grip, int offset, int suspectedValue, int newValue) {
-        return toOrigin(grip).compareAndSwapInt(offset, suspectedValue, newValue);
+    public int compareAndSwapInt(Grip grip, int offset, int expectedValue, int newValue) {
+        return toOrigin(grip).compareAndSwapInt(offset, expectedValue, newValue);
     }
 
     @INLINE
@@ -416,23 +416,23 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
     }
 
     @INLINE
-    public Reference compareAndSwapReference(Grip grip, Offset offset, Reference suspectedValue, Reference newValue) {
-        return toOrigin(grip).compareAndSwapReference(offset, suspectedValue, newValue);
+    public Reference compareAndSwapReference(Grip grip, Offset offset, Reference expectedValue, Reference newValue) {
+        return toOrigin(grip).compareAndSwapReference(offset, expectedValue, newValue);
     }
 
     @INLINE
-    public Reference compareAndSwapReference(Grip grip, int offset, Reference suspectedValue, Reference newValue) {
-        return toOrigin(grip).compareAndSwapReference(offset, suspectedValue, newValue);
+    public Reference compareAndSwapReference(Grip grip, int offset, Reference expectedValue, Reference newValue) {
+        return toOrigin(grip).compareAndSwapReference(offset, expectedValue, newValue);
     }
 
     @INLINE
-    public Word compareAndSwapWord(Grip grip, Offset offset, Word suspectedValue, Word newValue) {
-        return toOrigin(grip).compareAndSwapWord(offset, suspectedValue, newValue);
+    public Word compareAndSwapWord(Grip grip, Offset offset, Word expectedValue, Word newValue) {
+        return toOrigin(grip).compareAndSwapWord(offset, expectedValue, newValue);
     }
 
     @INLINE
-    public Word compareAndSwapWord(Grip grip, int offset, Word suspectedValue, Word newValue) {
-        return toOrigin(grip).compareAndSwapWord(offset, suspectedValue, newValue);
+    public Word compareAndSwapWord(Grip grip, int offset, Word expectedValue, Word newValue) {
+        return toOrigin(grip).compareAndSwapWord(offset, expectedValue, newValue);
     }
 
     @INLINE

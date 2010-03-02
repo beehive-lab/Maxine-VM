@@ -376,35 +376,35 @@ public final class HeapReferenceScheme extends AbstractVMScheme implements Refer
     }
 
     @INLINE
-    public int compareAndSwapInt(Reference reference, Offset offset, int suspectedValue, int newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapInt(offset, suspectedValue, newValue);
+    public int compareAndSwapInt(Reference reference, Offset offset, int expectedValue, int newValue) {
+        return gripScheme().fromReference(reference).compareAndSwapInt(offset, expectedValue, newValue);
     }
 
     @INLINE
-    public int compareAndSwapInt(Reference reference, int offset, int suspectedValue, int newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapInt(offset, suspectedValue, newValue);
+    public int compareAndSwapInt(Reference reference, int offset, int expectedValue, int newValue) {
+        return gripScheme().fromReference(reference).compareAndSwapInt(offset, expectedValue, newValue);
     }
 
     @INLINE
-    public Word compareAndSwapWord(Reference reference, Offset offset, Word suspectedValue, Word newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapWord(offset, suspectedValue, newValue);
+    public Word compareAndSwapWord(Reference reference, Offset offset, Word expectedValue, Word newValue) {
+        return gripScheme().fromReference(reference).compareAndSwapWord(offset, expectedValue, newValue);
     }
 
     @INLINE
-    public Word compareAndSwapWord(Reference reference, int offset, Word suspectedValue, Word newValue) {
-        return gripScheme().fromReference(reference).compareAndSwapWord(offset, suspectedValue, newValue);
+    public Word compareAndSwapWord(Reference reference, int offset, Word expectedValue, Word newValue) {
+        return gripScheme().fromReference(reference).compareAndSwapWord(offset, expectedValue, newValue);
     }
 
     @INLINE
-    public Reference compareAndSwapReference(Reference reference, Offset offset, Reference suspectedValue, Reference newValue) {
+    public Reference compareAndSwapReference(Reference reference, Offset offset, Reference expectedValue, Reference newValue) {
         heapScheme().writeBarrier(reference, newValue);
-        return gripScheme().fromReference(reference).compareAndSwapReference(offset, suspectedValue, newValue);
+        return gripScheme().fromReference(reference).compareAndSwapReference(offset, expectedValue, newValue);
     }
 
     @INLINE
-    public Reference compareAndSwapReference(Reference reference, int offset, Reference suspectedValue, Reference newValue) {
+    public Reference compareAndSwapReference(Reference reference, int offset, Reference expectedValue, Reference newValue) {
         heapScheme().writeBarrier(reference, newValue);
-        return gripScheme().fromReference(reference).compareAndSwapReference(offset, suspectedValue, newValue);
+        return gripScheme().fromReference(reference).compareAndSwapReference(offset, expectedValue, newValue);
     }
 
     @INLINE

@@ -144,7 +144,7 @@ public abstract class Word {
     }
 
     @INLINE
-    @INTRINSIC(ZERO)
+    @INTRINSIC(WCONST_0)
     public static Word zero() {
         return Address.zero();
     }

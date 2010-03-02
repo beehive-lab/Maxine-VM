@@ -745,10 +745,12 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);
+        final EirValue one = createEirVariable(Kind.INT);
 
         addInstruction(new ZERO(eirBlock(), Kind.WORD, result));
+        assign(Kind.INT, one, createEirConstant(IntValue.ONE));
         addInstruction(new CMP_I64(eirBlock(), a, b));
-        addInstruction(new CMOVBE_I32(eirBlock(), result, createEirConstant(IntValue.ONE)));
+        addInstruction(new CMOVBE_I32(eirBlock(), result, one));
     }
 
     @Override
@@ -756,10 +758,12 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);
+        final EirValue one = createEirVariable(Kind.INT);
 
         addInstruction(new ZERO(eirBlock(), Kind.WORD, result));
+        assign(Kind.INT, one, createEirConstant(IntValue.ONE));
         addInstruction(new CMP_I64(eirBlock(), a, b));
-        addInstruction(new CMOVB_I32(eirBlock(), result, createEirConstant(IntValue.ONE)));
+        addInstruction(new CMOVB_I32(eirBlock(), result, one));
     }
 
     @Override
@@ -767,10 +771,12 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);
+        final EirValue one = createEirVariable(Kind.INT);
 
         addInstruction(new ZERO(eirBlock(), Kind.WORD, result));
+        assign(Kind.INT, one, createEirConstant(IntValue.ONE));
         addInstruction(new CMP_I64(eirBlock(), a, b));
-        addInstruction(new CMOVAE_I32(eirBlock(), result, createEirConstant(IntValue.ONE)));
+        addInstruction(new CMOVAE_I32(eirBlock(), result, one));
     }
 
     @Override
@@ -778,10 +784,12 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);
+        final EirValue one = createEirVariable(Kind.INT);
 
         addInstruction(new ZERO(eirBlock(), Kind.WORD, result));
+        assign(Kind.INT, one, createEirConstant(IntValue.ONE));
         addInstruction(new CMP_I64(eirBlock(), a, b));
-        addInstruction(new CMOVA_I32(eirBlock(), result, createEirConstant(IntValue.ONE)));
+        addInstruction(new CMOVA_I32(eirBlock(), result, one));
     }
 
     @Override
@@ -1201,11 +1209,11 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue pointer = dirToEirValue(dirArguments[0]);
         final DirValue dirOffset = dirArguments[1];
-        final EirValue suspectedValue = dirToEirValue(dirArguments[2]);
+        final EirValue expectedValue = dirToEirValue(dirArguments[2]);
         final EirValue newValue = dirToEirValue(dirArguments[3]);
 
         final EirVariable rax = createEirVariable(kind);
-        assign(kind, rax, suspectedValue);
+        assign(kind, rax, expectedValue);
 
         final AMD64EirCompareAndSwap instruction = dirOffset.isZeroConstant() ?
             new AMD64EirCompareAndSwap(eirBlock(), kind, newValue, pointer, rax) :
@@ -1312,10 +1320,12 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue result = dirToEirValue(dirResult);
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);
+        final EirValue one = createEirVariable(Kind.INT);
 
         addInstruction(new ZERO(eirBlock(), Kind.WORD, result));
+        assign(Kind.INT, one, createEirConstant(IntValue.ONE));
         addInstruction(new CMP_I32(eirBlock(), a, b));
-        addInstruction(new CMOVAE_I32(eirBlock(), result, createEirConstant(IntValue.ONE)));
+        addInstruction(new CMOVAE_I32(eirBlock(), result, one));
 
     }
 

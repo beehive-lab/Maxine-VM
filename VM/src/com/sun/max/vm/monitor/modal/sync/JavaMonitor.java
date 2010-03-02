@@ -82,11 +82,11 @@ public interface JavaMonitor {
      * Compares and swaps the the displaced misc header word of this monitor's
      * bound object.
      * @see  #setDisplacedMisc(Word lockword)
-     * @param suspectedValue the suspected current displaced misc word
+     * @param expectedValue the suspected current displaced misc word
      * @param newValue the new displaced misc word
-     * @return suspectedValue if successful, the current displaced misc word if unsuccessful
+     * @return expectedValue if successful, the current displaced misc word if unsuccessful
      */
-    Word compareAndSwapDisplacedMisc(Word suspectedValue, Word newValue);
+    Word compareAndSwapDisplacedMisc(Word expectedValue, Word newValue);
 
     /**
      * Sets this monitor to be owned by the given thread.
