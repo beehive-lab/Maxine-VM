@@ -39,7 +39,6 @@ import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -157,7 +156,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     // Read VM memory and update various bits of cached state about the VM state
                     teleVM().refresh(++epoch);
                     refreshThreads();
-                    targetBreakpointFactory().setActiveAll(false);
+                    targetBreakpointManager().setActiveAll(false);
 
                     // Look through all the threads to see which, if any, have events triggered that caused the stop
                     for (TeleNativeThread thread : threads()) {
@@ -176,13 +175,13 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                             case WATCHPOINT:
                                 eventCauseFound = true;
                                 final Address triggeredWatchpointAddress = Address.fromLong(readWatchpointAddress());
-                                final TeleWatchpoint systemTeleWatchpoint = watchpointFactory.findSystemWatchpoint(triggeredWatchpointAddress);
+                                final TeleWatchpoint systemTeleWatchpoint = watchpointManager.findSystemWatchpoint(triggeredWatchpointAddress);
                                 if (systemTeleWatchpoint != null && systemTeleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering system watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
                                     resumeExecution = false;
                                 }
-                                final TeleWatchpoint clientTeleWatchpoint = watchpointFactory.findClientWatchpointContaining(triggeredWatchpointAddress);
+                                final TeleWatchpoint clientTeleWatchpoint = watchpointManager.findClientWatchpointContaining(triggeredWatchpointAddress);
                                 if (clientTeleWatchpoint != null && clientTeleWatchpoint.handleTriggerEvent(thread)) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + " stopping thread [id=" + thread.id() + "] after triggering client watchpoint");
                                     // Case 4. At least one thread is at a memory watchpoint that specifies that execution should halt; record it and do not continue.
@@ -211,7 +210,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     }
                 } while (resumeExecution);
                 // Finished with these now
-                targetBreakpointFactory().removeTransientBreakpoints();
+                targetBreakpointManager().removeTransientBreakpoints();
                 Trace.end(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request);
                 Trace.begin(TRACE_VALUE, tracePrefix() + "firing execution post-request action: " + request);
                 request.notifyProcessStopped();
@@ -315,17 +314,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     private final Platform platform;
 
-    private final TeleTargetBreakpoint.Factory targetBreakpointFactory;
+    private final TeleTargetBreakpoint.TargetBreakpointManager targetBreakpointManager;
 
     private final int maximumWatchpointCount;
 
     /**
-     * A factory for creating and managing memory watchpoints in the VM;
+     * A manager for creating and managing memory watchpoints in the VM;
      * null if watchpoints are not supported on this platform.
      *
      * @see #watchpointsEnabled()
      */
-    private final TeleWatchpoint.Factory watchpointFactory;
+    private final TeleWatchpoint.WatchpointManager watchpointManager;
 
     private final RequestHandlingThread requestHandlingThread;
 
@@ -382,9 +381,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         this.platform = platform;
         this.processState = initialState;
         epoch = 0;
-        this.targetBreakpointFactory = new TeleTargetBreakpoint.Factory(teleVM);
+        this.targetBreakpointManager = new TeleTargetBreakpoint.TargetBreakpointManager(teleVM);
         this.maximumWatchpointCount = platformWatchpointCount();
-        this.watchpointFactory = watchpointsEnabled() ? new TeleWatchpoint.Factory(teleVM, this) : null;
+        this.watchpointManager = watchpointsEnabled() ? new TeleWatchpoint.WatchpointManager(teleVM, this) : null;
 
         //Initiate the thread that continuously waits on the running process.
         this.requestHandlingThread = new RequestHandlingThread();
@@ -408,8 +407,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      *
      * @return the creator/manager of watchpoints; null watchpoints not supported on platform.
      */
-    public final TeleWatchpoint.Factory getWatchpointFactory() {
-        return watchpointFactory;
+    public final TeleWatchpoint.WatchpointManager getWatchpointManager() {
+        return watchpointManager;
     }
 
     /**
@@ -505,10 +504,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.begin(TRACE_VALUE, tracePrefix() + RUN_TO_INSTRUCTION + " perform");
                 updateWatchpointCaches();
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
-                TeleTargetBreakpoint breakpoint = targetBreakpointFactory.findClientBreakpoint(compiledCodeLocation);
+                TeleTargetBreakpoint breakpoint = targetBreakpointManager.findClientBreakpoint(compiledCodeLocation);
                 if (breakpoint == null || !breakpoint.isEnabled()) {
                     try {
-                        breakpoint = breakpointFactory().makeTransientTargetBreakpoint(compiledCodeLocation);
+                        breakpoint = breakpointManager().makeTransientTargetBreakpoint(compiledCodeLocation);
                     } catch (MaxVMBusyException e) {
                         ProgramError.unexpected("run to instruction should alwasy be executed inside VM lock on request handling thread");
                     }
@@ -654,10 +653,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
-     * @return factory for creation and management of target breakpoints in the process,
+     * @return manager for creation and management of target breakpoints in the process,
      */
-    public final TeleTargetBreakpoint.Factory targetBreakpointFactory() {
-        return targetBreakpointFactory;
+    public final TeleTargetBreakpoint.TargetBreakpointManager targetBreakpointManager() {
+        return targetBreakpointManager;
     }
 
     /**
@@ -809,9 +808,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             thread.evadeBreakpoint();
         }
         if (withClientBreakpoints) {
-            targetBreakpointFactory.setActiveAll(true);
+            targetBreakpointManager.setActiveAll(true);
         } else {
-            targetBreakpointFactory.setActiveNonClient(true);
+            targetBreakpointManager.setActiveNonClient(true);
         }
         resume();
     }
@@ -907,8 +906,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         assert state >= 0 && state < MaxThreadState.VALUES.length() : state;
         TeleNativeThread thread = handleToThreadMap.get(localHandle);
 
-        MemoryRegion stackRegion = new FixedMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack region");
-        MemoryRegion threadLocalsRegion = new FixedMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals region");
+        final MemoryRegion stackRegion = new FixedMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack region");
+        MemoryRegion threadLocalsRegion =
+            (tlb == 0) ? null :  new FixedMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals region");
 
         Params params = new Params();
         params.id = id;
@@ -935,20 +935,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             }
         }
 
-        final Map<Safepoint.State, Pointer> vmThreadLocals;
-        if (tlb != 0) {
-            Pointer enabledVmThreadLocals = TeleThreadLocalsMemoryRegion.getThreadLocalsArea(threadLocalsRegion, tlaSize, Safepoint.State.ENABLED).asPointer();
-            Pointer disabledVmThreadLocals = TeleThreadLocalsMemoryRegion.getThreadLocalsArea(threadLocalsRegion, tlaSize, Safepoint.State.DISABLED).asPointer();
-            Pointer triggeredVmThreadLocals = TeleThreadLocalsMemoryRegion.getThreadLocalsArea(threadLocalsRegion, tlaSize, Safepoint.State.TRIGGERED).asPointer();
-            vmThreadLocals = new EnumMap<Safepoint.State, Pointer>(Safepoint.State.class);
-            vmThreadLocals.put(Safepoint.State.ENABLED, enabledVmThreadLocals);
-            vmThreadLocals.put(Safepoint.State.DISABLED, disabledVmThreadLocals);
-            vmThreadLocals.put(Safepoint.State.TRIGGERED, triggeredVmThreadLocals);
-        } else {
-            vmThreadLocals = null;
-        }
-
-        thread.updateAfterGather(MaxThreadState.VALUES.get(state), Pointer.fromLong(instructionPointer), vmThreadLocals);
+        thread.updateAfterGather(MaxThreadState.VALUES.get(state), Pointer.fromLong(instructionPointer), threadLocalsRegion, tlaSize);
         threads.append(thread);
     }
 
@@ -1025,8 +1012,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     private void updateWatchpointCaches() {
-        if (watchpointFactory != null) {
-            watchpointFactory.updateWatchpointMemoryCaches();
+        if (watchpointManager != null) {
+            watchpointManager.updateWatchpointMemoryCaches();
         }
     }
 }

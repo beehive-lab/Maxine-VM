@@ -244,7 +244,7 @@ public final class BreakpointsTable extends InspectorTable {
             for (BreakpointData breakpointData : breakpoints) {
                 breakpointData.markDeleted(true);
             }
-            for (MaxBreakpoint breakpoint : breakpointFactory().breakpoints()) {
+            for (MaxBreakpoint breakpoint : vm().breakpointManager().breakpoints()) {
                 if (breakpoint.isBytecodeBreakpoint()) {
                     // Bytecodes breakpoint
                     final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.codeLocation());
@@ -529,7 +529,7 @@ public final class BreakpointsTable extends InspectorTable {
          * @return the thread in the VM, if any, that is currently stopped at this breakpoint.
          */
         final MaxThread triggerThread() {
-            for (MaxBreakpointEvent breakpointEvent : vmState().breakpointEvents()) {
+            for (MaxBreakpointEvent breakpointEvent : vm().state().breakpointEvents()) {
                 final MaxBreakpoint triggeredBreakpoint = breakpointEvent.breakpoint();
                 if (triggeredBreakpoint == breakpoint || triggeredBreakpoint.owner() == breakpoint) {
                     return breakpointEvent.thread();
@@ -618,7 +618,7 @@ public final class BreakpointsTable extends InspectorTable {
         TargetBreakpointData(MaxBreakpoint targetBreakpoint) {
             super(targetBreakpoint);
             final Address address = codeLocation().address();
-            final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
+            final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 shortName = inspection().nameDisplay().shortName(teleTargetMethod);
                 final StringBuilder sb = new StringBuilder();
@@ -634,7 +634,7 @@ public final class BreakpointsTable extends InspectorTable {
                 codeStart = teleTargetMethod.getCodeStart();
                 location = address.minus(codeStart.asAddress()).toInt();
             } else {
-                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
+                final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
                 if (teleNativeTargetRoutine != null) {
                     codeStart = teleNativeTargetRoutine.getCodeStart();
                     location = address.minus(codeStart.asAddress()).toInt();

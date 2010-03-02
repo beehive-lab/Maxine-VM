@@ -26,6 +26,7 @@ import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
@@ -36,16 +37,19 @@ import com.sun.max.vm.type.*;
  */
 public final class TeleFieldActor extends TeleMemberActor implements FieldProvider {
 
-    private FieldActor fieldActor;
-
     /**
      * @return local {@link FieldActor} corresponding the the target VM's {@link FieldActor} for this field.
      */
     public FieldActor fieldActor() {
-        if (fieldActor == null) {
-            fieldActor = getTeleHolder().classActor().getLocalFieldActor(getMemberIndex());
-        }
-        return fieldActor;
+        return (FieldActor) actor();
+    }
+
+    @Override
+    protected Actor initActor() {
+        // Cannot use member index as it may be different in local ClassActor
+        Utf8Constant name = getTeleName().utf8Constant();
+        TypeDescriptor type = (TypeDescriptor) getTeleDescriptor().descriptor();
+        return getTeleHolder().classActor().findLocalFieldActor(name, type);
     }
 
     // Keep construction minimal for both performance and synchronization.
@@ -54,27 +58,20 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
     }
 
     @Override
-    protected Object createDeepCopy(DeepCopier context) {
-        // Translate into local equivalent
-        return fieldActor();
-    }
-
-    @Override
     public String maxineRole() {
         return "FieldActor";
     }
 
     public VMValue getStaticValue() {
-
         final Pointer pointer = this.getTeleHolder().getTeleStaticTuple().getReference().toOrigin();
-        final int offset = fieldActor.offset();
-        final Kind kind = fieldActor.kind;
+        final int offset = fieldActor().offset();
+        final Kind kind = fieldActor().kind;
         return teleVM().maxineValueToJDWPValue(teleVM().readValue(kind, pointer, offset));
     }
 
     public VMValue getValue(ObjectProvider object) {
         final Reference reference = ((TeleObject) object).getReference();
-        return teleVM().maxineValueToJDWPValue(teleVM().readValue(fieldActor.kind, reference.toOrigin(), fieldActor.offset()));
+        return teleVM().maxineValueToJDWPValue(teleVM().readValue(fieldActor().kind, reference.toOrigin(), fieldActor().offset()));
     }
 
     public void setStaticValue(VMValue value) {
@@ -91,14 +88,6 @@ public final class TeleFieldActor extends TeleMemberActor implements FieldProvid
 
     public Type getType() {
         return TeleVM.maxineKindToJDWPType(fieldActor().kind);
-    }
-
-    public int getFlags() {
-        return fieldActor().flags() & Actor.JAVA_FIELD_FLAGS;
-    }
-
-    public String getName() {
-        return fieldActor().name.toString();
     }
 
     public String getSignature() {

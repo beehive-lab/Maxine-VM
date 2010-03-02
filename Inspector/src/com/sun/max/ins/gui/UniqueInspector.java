@@ -24,9 +24,7 @@ import java.io.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.lang.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
@@ -51,32 +49,12 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
             this.type = type;
         }
 
-        public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type, Value subject) {
-            return new ValueKey<UniqueInspector_Type>(type, subject);
-        }
-
-        public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type, Word subject) {
-            return new ValueKey<UniqueInspector_Type>(type, new WordValue(subject));
-        }
-
-        public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Inspection inspection, Class<UniqueInspector_Type> type, Reference subject) {
-            return new ValueKey<UniqueInspector_Type>(type, inspection.maxVM().createReferenceValue(subject));
-        }
-
         public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type, long subject) {
             return new ValueKey<UniqueInspector_Type>(type, LongValue.from(subject));
         }
 
         public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type, File file) {
             return new FileKey<UniqueInspector_Type>(type, file);
-        }
-
-        public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type, TeleRoutine tele) {
-            return new TeleRoutineKey<UniqueInspector_Type>(type, tele);
-        }
-
-        public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type, TeleTargetMethod tele) {
-            return new TeleTargetMethodKey<UniqueInspector_Type>(type, tele);
         }
 
         public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type) {
@@ -203,44 +181,6 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         }
     }
 
-    private static final class TeleTargetMethodKey<UniqueInspector_Type extends UniqueInspector> extends Key<UniqueInspector_Type> {
-
-        private final TeleTargetMethod teleTargetMethod;
-
-        public TeleTargetMethod teleTargetMethod() {
-            return teleTargetMethod;
-        }
-
-        private TeleTargetMethodKey(Class<UniqueInspector_Type> type, TeleTargetMethod teleTargetMethod) {
-            super(type);
-            assert teleTargetMethod != null;
-            this.teleTargetMethod = teleTargetMethod;
-        }
-
-        @Override
-        public int hashCode() {
-            return teleTargetMethod.hashCode();
-        }
-
-        // Tele objects are canonical, so we use object identity.
-        @Override
-        public boolean equals(Object other) {
-            if (other instanceof TeleTargetMethodKey) {
-                final TeleTargetMethodKey key = (TeleTargetMethodKey) other;
-                return type() == key.type() && teleTargetMethod == key.teleTargetMethod;
-            }
-            return false;
-        }
-
-        public int compareTo(Key<UniqueInspector_Type> other) {
-            if (other instanceof TeleTargetMethodKey) {
-                final TeleTargetMethodKey key = (TeleTargetMethodKey) other;
-                return teleTargetMethod.toString().compareTo(key.teleTargetMethod.toString());
-            }
-            return type().getName().compareTo(other.type().getName());
-        }
-    }
-
     private final Key<Inspector_Type> key;
 
     public Key<Inspector_Type> key() {
@@ -255,11 +195,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
     }
 
     protected UniqueInspector(Inspection inspection, Reference subject) {
-        this(inspection, inspection.maxVM().createReferenceValue(subject));
-    }
-
-    protected UniqueInspector(Inspection inspection) {
-        this(inspection, VoidValue.VOID);
+        this(inspection, inspection.vm().createReferenceValue(subject));
     }
 
     protected UniqueInspector(Inspection inspection, File file) {
@@ -267,30 +203,6 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         final Class<Class<Inspector_Type>> classType = null;
         final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
         key = new FileKey<Inspector_Type>(frameType, file);
-    }
-
-    /**
-     * Creates an inspector for an entity representing some code in the tele VM. The key for the inspector is derived
-     * from {@code teleTargetRoutine} if it is not null, otherwise it derived from {@code teleRoutine}.
-     *
-     * @param inspection the inspection context
-     * @param teleTargetRoutine the target method in the tele VM containing the code being inspected. This value may be
-     *            null if the code being inspected is bytecode and has no compiled form.
-     * @param teleRoutine the {@linkplain TeleMethodActor method actor} or {@linkplain TeleNativeRoutine native routine}
-     *            containing the code. This value must not be null if {@code teleTargetRoutine} is null.
-     */
-    protected UniqueInspector(Inspection inspection, TeleTargetMethod teleTargetMethod, TeleRoutine teleRoutine) {
-        super(inspection);
-        if (teleTargetMethod != null) {
-            final Class<Class<Inspector_Type>> classType = null;
-            final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
-            key = new TeleTargetMethodKey<Inspector_Type>(frameType, teleTargetMethod);
-        } else {
-            assert teleRoutine != null;
-            final Class<Class<Inspector_Type>> classType = null;
-            final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
-            key = new TeleRoutineKey<Inspector_Type>(frameType, teleRoutine);
-        }
     }
 
     private static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type match(Inspector inspector, Key<UniqueInspector_Type> key) {
@@ -319,21 +231,4 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         return null;
     }
 
-    public static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type find(Inspection inspection, Class<UniqueInspector_Type> type) {
-        return find(inspection, Key.create(type));
-    }
-
-    /*
-     * Support for marking inspectors, e.g., for GC purposes
-     */
-
-    private boolean marked;
-
-    public boolean marked() {
-        return marked;
-    }
-
-    public void setMarked(boolean val) {
-        marked = val;
-    }
 }

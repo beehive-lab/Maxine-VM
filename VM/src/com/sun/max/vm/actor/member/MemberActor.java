@@ -41,6 +41,7 @@ import com.sun.max.vm.type.*;
  */
 public abstract class MemberActor extends Actor {
 
+    @INSPECTED
     public final Descriptor descriptor;
 
     protected MemberActor(Utf8Constant name, Descriptor descriptor, int flags) {
@@ -65,9 +66,19 @@ public abstract class MemberActor extends Actor {
         return holder().qualifiedName() + "." + name;
     }
 
+    /**
+     * Index of this field or method within a holder's local field or method array.
+     * The index space is shared within each member type (method or field) as follows:
+     *
+     * Method indexes: [virtual methods][static methods][interface methods]
+     * Field indexes:  [instance fields][static fields]
+     *
+     * Note: This field is of type char which means a limit of 65535 members of a particular
+     * member type (method or field) is supported.
+     */
     @CONSTANT
     @INSPECTED
-    private int memberIndex;
+    private char memberIndex;
 
     @INLINE
     public final int memberIndex() {
@@ -75,8 +86,9 @@ public abstract class MemberActor extends Actor {
     }
 
     public final void assignHolder(ClassActor classActor, int index) {
+        assert (char) index == index : "exceeded member index range";
         this.holder = classActor;
-        this.memberIndex = index;
+        this.memberIndex = (char) index;
         if (MaxineVM.isHosted() && isNative(flags())) {
             // Make sure the C symbol for a native method is cooked into the boot image
             ((ClassMethodActor) this).nativeFunction.makeSymbol();

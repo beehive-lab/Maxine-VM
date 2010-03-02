@@ -31,7 +31,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Hannes Payer
  */
-public class ImmortalMemoryRegion extends RuntimeMemoryRegion{
+public class ImmortalMemoryRegion extends LinearAllocationMemoryRegion{
 
     public ImmortalMemoryRegion() {
     }

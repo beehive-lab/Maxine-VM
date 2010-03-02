@@ -443,16 +443,17 @@ public abstract class TeleVM implements MaxVM {
     private TeleClassRegistry teleClassRegistry;
     private TeleCodeRegistry teleCodeRegistry;
 
+    private final TeleThreadManager threadManager;
     private final CodeManager codeManager;
 
     /**
-     * Breakpoint factory, for both target and bytecode breakpoints.
+     * Breakpoint manager, for both target and bytecode breakpoints.
      */
-    private final TeleBreakpointFactory teleBreakpointFactory;
+    private final TeleBreakpointManager teleBreakpointManager;
 
-    private final TeleBytecodeBreakpoint.Factory bytecodeBreakpointFactory;
+    private final TeleBytecodeBreakpoint.BytecodeBreakpointManager bytecodeBreakpointManager;
 
-    private final TeleWatchpoint.Factory watchpointFactory;
+    private final TeleWatchpoint.WatchpointManager watchpointManager;
 
     /**
      * The immutable history of all VM states, as of the last state transition; thread safe
@@ -463,7 +464,7 @@ public abstract class TeleVM implements MaxVM {
     /**
      * @return VM state; thread safe.
      */
-    public final TeleVMState vmState() {
+    public final TeleVMState state() {
         return teleVMState;
     }
 
@@ -564,13 +565,14 @@ public abstract class TeleVM implements MaxVM {
         final TeleGripScheme teleGripScheme = (TeleGripScheme) vmConfiguration.gripScheme();
         teleGripScheme.setTeleVM(this);
 
+        this.threadManager = new TeleThreadManager(this);
         this.codeManager = new CodeManager(this);
 
-        this.bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(this);
+        this.bytecodeBreakpointManager = new TeleBytecodeBreakpoint.BytecodeBreakpointManager(this);
 
-        this.teleBreakpointFactory = new TeleBreakpointFactory(this, this.bytecodeBreakpointFactory);
+        this.teleBreakpointManager = new TeleBreakpointManager(this, this.bytecodeBreakpointManager);
 
-        this.watchpointFactory = teleProcess.getWatchpointFactory();
+        this.watchpointManager = teleProcess.getWatchpointManager();
     }
 
     /**
@@ -764,7 +766,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final IndexedSequence<MemoryRegion> allocatedMemoryRegions() {
-        final IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions = teleHeapRegions();
+        final IndexedSequence<TeleLinearAllocationMemoryRegion> teleHeapRegions = teleHeapRegions();
         final TeleCodeRegion teleRuntimeCodeRegion = teleCodeManager().teleRuntimeCodeRegion();
         final IterableWithLength<TeleNativeThread> threads = teleProcess.threads();
         final VariableSequence<MemoryRegion> regions = new ArrayListSequence<MemoryRegion>(teleHeapRegions.length() + 1 + threads.length() + 2);
@@ -792,8 +794,8 @@ public abstract class TeleVM implements MaxVM {
             if (!stackRegion.size().isZero()) {
                 regions.append(stackRegion);
             }
-            TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.threadLocalsRegion();
-            if (!threadLocalsRegion.size().isZero()) {
+            final TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.locals().memoryRegion();
+            if (threadLocalsRegion != null) {
                 regions.append(threadLocalsRegion);
             }
         }
@@ -807,16 +809,14 @@ public abstract class TeleVM implements MaxVM {
             if (memoryRegion == null) {
                 memoryRegion = teleCodeManager().regionContaining(address);
                 if (memoryRegion == null) {
-                    MaxThread maxThread = threadStackContaining(address);
+                    MaxThread maxThread = threadManager.findThread(address);
                     if (maxThread != null) {
-                        memoryRegion = maxThread.stack().memoryRegion();
-                    } else {
-                        maxThread = threadLocalsBlockContaining(address);
-                        if (maxThread != null) {
-                            memoryRegion = maxThread.threadLocalsRegion();
+                        if (maxThread.stack().memoryRegion().contains(address)) {
+                            memoryRegion = maxThread.stack().memoryRegion();
+                        } else if (maxThread.locals().memoryRegion() != null && maxThread.locals().memoryRegion().contains(address)) {
+                            memoryRegion = maxThread.locals().memoryRegion();
                         }
                     }
-
                 }
             }
         } catch (DataIOError dataIOError) {
@@ -825,7 +825,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final boolean contains(Address address) {
-        return containsInHeap(address) || containsInCode(address) || containsInThread(address);
+        return containsInHeap(address) || containsInCode(address) || threadManager.findThread(address) != null;
     }
 
     public final boolean containsInHeap(Address address) {
@@ -840,23 +840,23 @@ public abstract class TeleVM implements MaxVM {
         return teleHeapManager.isInLiveMemory(address);
     }
 
-    public final TeleRuntimeMemoryRegion teleBootHeapRegion() {
+    public final TeleLinearAllocationMemoryRegion teleBootHeapRegion() {
         return teleHeapManager.teleBootHeapRegion();
     }
 
-    public final TeleRuntimeMemoryRegion teleImmortalHeapRegion() {
+    public final TeleLinearAllocationMemoryRegion teleImmortalHeapRegion() {
         return teleHeapManager.teleImmortalHeapRegion();
     }
 
-    public final IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {
+    public final IndexedSequence<TeleLinearAllocationMemoryRegion> teleHeapRegions() {
         return teleHeapManager.teleHeapRegions();
     }
 
-    public final TeleRuntimeMemoryRegion[] teleHeapRegionsArray() {
+    public final TeleLinearAllocationMemoryRegion[] teleHeapRegionsArray() {
         return teleHeapManager.teleHeapRegionsArray();
     }
 
-    public final TeleRuntimeMemoryRegion teleRootsRegion() {
+    public final TeleLinearAllocationMemoryRegion teleRootsRegion() {
         return teleHeapManager.teleRootsRegion();
     }
 
@@ -934,10 +934,6 @@ public abstract class TeleVM implements MaxVM {
 
     public final IndexedSequence<TeleCodeRegion> teleCodeRegions() {
         return new ArraySequence<TeleCodeRegion>(teleBootCodeRegion(), teleRuntimeCodeRegion());
-    }
-
-    public final boolean containsInThread(Address address) {
-        return threadStackContaining(address) != null || threadLocalsBlockContaining(address) != null;
     }
 
     private RemoteTeleGrip createTemporaryRemoteTeleGrip(Word rawGrip) {
@@ -1458,7 +1454,7 @@ public abstract class TeleVM implements MaxVM {
         final TeleClassActor teleClassActor = teleClassRegistry.findTeleClassActorByType(methodActor.holder().typeDescriptor);
         if (teleClassActor != null) {
             for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
-                if (teleMethodActorType.isInstance(teleMethodActor) && methodActor.memberIndex() == teleMethodActor.getMemberIndex()) {
+                if (teleMethodActor.methodActor().equals(methodActor)) {
                     return teleMethodActorType.cast(teleMethodActor);
                 }
             }
@@ -1470,43 +1466,20 @@ public abstract class TeleVM implements MaxVM {
         teleCodeRegistry().writeSummaryToStream(printStream);
     }
 
-    public final MaxThread getThread(long threadID) {
-        for (MaxThread maxThread : teleVMState.threads()) {
-            if (maxThread.id() == threadID) {
-                return maxThread;
-            }
-        }
-        return null;
-    }
-
-    public final MaxThread threadStackContaining(Address address) {
-        for (MaxThread thread : teleVMState.threads()) {
-            if (thread.stack().memoryRegion().contains(address)) {
-                return thread;
-            }
-        }
-        return null;
-    }
-
-    public final MaxThread threadLocalsBlockContaining(Address address) {
-        for (MaxThread thread : teleVMState.threads()) {
-            if (thread.threadLocalsRegion().contains(address)) {
-                return thread;
-            }
-        }
-        return null;
+    public final TeleThreadManager threadManager() {
+        return threadManager;
     }
 
     public final CodeManager codeManager() {
         return codeManager;
     }
 
-    public final TeleBreakpointFactory breakpointFactory() {
-        return teleBreakpointFactory;
+    public final TeleBreakpointManager breakpointManager() {
+        return teleBreakpointManager;
     }
 
-    public final TeleWatchpoint.Factory watchpointFactory() {
-        return watchpointFactory;
+    public final TeleWatchpoint.WatchpointManager watchpointManager() {
+        return watchpointManager;
     }
 
     public void addGCStartedListener(MaxGCStartedListener listener) throws MaxVMBusyException {
@@ -1524,7 +1497,7 @@ public abstract class TeleVM implements MaxVM {
                 }
             };
             try {
-                gcStartedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
+                gcStartedBreakpoint = teleProcess.targetBreakpointManager().makeSystemBreakpoint(teleMethods.gcStarted(), triggerEventHandler);
                 gcStartedBreakpoint.setDescription("Internal breakpoint, just after start of GC, to notify listeners");
             } catch (MaxVMBusyException maxVMBusyException) {
                 gcStartedListeners.remove(listener);
@@ -1562,7 +1535,7 @@ public abstract class TeleVM implements MaxVM {
                 }
             };
             try {
-                gcCompletedBreakpoint = teleProcess.targetBreakpointFactory().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
+                gcCompletedBreakpoint = teleProcess.targetBreakpointManager().makeSystemBreakpoint(teleMethods.gcCompleted(), triggerEventHandler);
                 gcCompletedBreakpoint.setDescription("Internal breakpoint, just after end of GC, to notify listeners");
             } catch (MaxVMBusyException maxVMBusyException) {
                 gcCompletedListeners.remove(listener);
@@ -2225,7 +2198,7 @@ public abstract class TeleVM implements MaxVM {
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
             final BytecodeLocation methodCodeLocation = codeManager().createBytecodeLocation(teleClassMethodActor, 0, "");
             try {
-                TeleVM.this.breakpointFactory().makeBreakpoint(methodCodeLocation);
+                TeleVM.this.breakpointManager().makeBreakpoint(methodCodeLocation);
             } catch (MaxVMBusyException maxVMBusyException) {
                 ProgramError.unexpected("breakpoint creation failed");
             }
@@ -2234,7 +2207,7 @@ public abstract class TeleVM implements MaxVM {
 
         public void removeBreakpoint(JdwpCodeLocation codeLocation) {
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            final MaxBreakpoint breakpoint = TeleVM.this.breakpointFactory().findBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryLocation());
+            final MaxBreakpoint breakpoint = TeleVM.this.breakpointManager().findBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryLocation());
             if (breakpoint != null) {
                 try {
                     breakpoint.remove();

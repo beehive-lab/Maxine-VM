@@ -88,12 +88,12 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
      */
     private static MethodInspector make(final Inspection inspection, Address address, boolean interactive) {
         MethodInspector methodInspector = null;
-        final TeleTargetMethod teleTargetMethod = inspection.maxVM().makeTeleTargetMethod(address);
+        final TeleTargetMethod teleTargetMethod = inspection.vm().makeTeleTargetMethod(address);
         if (teleTargetMethod != null) {
             // Java method
             methodInspector = make(inspection, teleTargetMethod, MethodCodeKind.TARGET_CODE);
         } else {
-            final TeleTargetRoutine teleTargetRoutine = inspection.maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
+            final TeleTargetRoutine teleTargetRoutine = inspection.vm().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 // Some other kind of known target code
                 methodInspector = make(inspection, teleTargetRoutine);
@@ -110,7 +110,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
                             if (description == null || description.equals("")) {
                                 description = "Native code @0x" + nativeAddress.toHexString();
                             }
-                            final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().createTeleNativeTargetRoutine(nativeAddress, codeSize, description);
+                            final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().createTeleNativeTargetRoutine(nativeAddress, codeSize, description);
                             result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
                             // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                         } catch (IllegalArgumentException illegalArgumentException) {
@@ -270,7 +270,7 @@ public abstract class MethodInspector extends Inspector<MethodInspector> {
     @Override
     public void breakpointStateChanged() {
         // TODO (mlvdv)  Data reading PATCH, there should be a more systematic way of handling this.
-        if (vmState().processState() != ProcessState.TERMINATED) {
+        if (vm().state().processState() != ProcessState.TERMINATED) {
             refreshView(true);
         }
     }

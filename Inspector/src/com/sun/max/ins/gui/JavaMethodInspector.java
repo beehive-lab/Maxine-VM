@@ -183,7 +183,7 @@ public class JavaMethodInspector extends MethodInspector {
         final JMenuItem viewBreakpointsMenuItem = new JMenuItem(actions().viewBreakpoints());
         viewBreakpointsMenuItem.setText("View Breakpoints");
         debugMenu.add(viewBreakpointsMenuItem);
-        if (watchpointsEnabled()) {
+        if (vm().watchpointManager() != null) {
             debugMenu.add(actions().genericWatchpointMenuItems());
             final JMenuItem viewWatchpointsMenuItem = new JMenuItem(actions().viewWatchpoints());
             viewWatchpointsMenuItem.setText("View Watchpoints");

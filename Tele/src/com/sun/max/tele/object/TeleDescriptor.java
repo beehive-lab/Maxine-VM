@@ -36,16 +36,31 @@ public abstract class TeleDescriptor extends TeleTupleObject {
         super(teleVM, descriptorReference);
     }
 
-    // The string field is final; cache it.
-    private String string;
+    private Descriptor descriptor;
 
-    public String string() {
-        if (string == null) {
+    /**
+     * @return local equivalent of the {@link TypeDescriptor} in the target VM.
+     */
+    public Descriptor descriptor() {
+        if (descriptor == null) {
             final Reference stringReference = teleVM().teleFields().Descriptor_string.readReference(reference());
             final TeleString teleString = (TeleString) teleVM().makeTeleObject(stringReference);
-            string = teleString.getString();
+            String string = teleString.getString();
+            if (string != null) {
+                if (this instanceof TeleTypeDescriptor) {
+                    descriptor = JavaTypeDescriptor.parseTypeDescriptor(string);
+                } else {
+                    assert this instanceof TeleSignatureDescriptor;
+                    descriptor = SignatureDescriptor.create(string);
+                }
+            }
         }
-        return string;
+        return descriptor;
     }
 
+    @Override
+    protected Object createDeepCopy(DeepCopier context) {
+        // Translate into local equivalent
+        return descriptor();
+    }
 }

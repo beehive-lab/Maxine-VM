@@ -68,7 +68,7 @@ public final class TargetMethodSearchDialog extends TeleObjectSearchDialog {
                 }
             }
         } else {
-            for (TeleCodeRegion teleCodeRegion : inspection().maxVM().teleCodeRegions()) {
+            for (TeleCodeRegion teleCodeRegion : inspection().vm().teleCodeRegions()) {
                 for (TeleTargetMethod teleTargetMethod : teleCodeRegion.teleTargetMethods()) {
                     ClassMethodActor methodActor = teleTargetMethod.classMethodActor();
                     String targetMethodType = Classes.getSimpleName(teleTargetMethod.getTeleHub().getTeleClassActor().getName());

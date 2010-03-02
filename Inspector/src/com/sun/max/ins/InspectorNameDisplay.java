@@ -47,7 +47,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public InspectorNameDisplay(Inspection inspection) {
         super(inspection);
 
-        heapSchemeSuffix = "{" + maxVM().vmConfiguration().heapScheme().getClass().getSimpleName() + "}";
+        heapSchemeSuffix = "{" + vm().vmConfiguration().heapScheme().getClass().getSimpleName() + "}";
 
         referenceRenderers.put(TeleArrayObject.class, new ArrayReferenceRenderer());
         referenceRenderers.put(TeleHub.class, new HubReferenceRenderer());
@@ -360,11 +360,11 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (codeLocation.hasAddress()) {
             final Address address = codeLocation.address();
             name.append("Target{0x").append(address.toHexString());
-            if (maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address) != null) {
+            if (vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address) != null) {
                 // a native routine that's already been registered.
                 name.append("}");
             } else {
-                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
+                final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
                 if (teleTargetMethod != null) {
                     name.append(",  ").append(longName(teleTargetMethod, address)).append("} ");
                 } else {
@@ -386,24 +386,24 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
     public String longName(MemoryRegion memoryRegion) {
         final String description = memoryRegion.description();
-        if (memoryRegion == maxVM().teleBootHeapRegion()) {
+        if (memoryRegion == vm().teleBootHeapRegion()) {
             return "Boot heap region";
         }
-        if (Sequence.Static.containsIdentical(maxVM().teleHeapRegions(), memoryRegion)) {
+        if (Sequence.Static.containsIdentical(vm().teleHeapRegions(), memoryRegion)) {
             return "Dynamic heap region:  " + description + heapSchemeSuffix;
         }
-        if (memoryRegion == maxVM().teleImmortalHeapRegion()) {
+        if (memoryRegion == vm().teleImmortalHeapRegion()) {
             return "Immortal heap: " + description;
         }
 
-        if (memoryRegion == maxVM().teleRootsRegion()) {
+        if (memoryRegion == vm().teleRootsRegion()) {
             return "Inspector roots region: " + description;
         }
 
-        if (memoryRegion == maxVM().teleBootCodeRegion()) {
+        if (memoryRegion == vm().teleBootCodeRegion()) {
             return "Boot code region: " + description;
         }
-        if (memoryRegion == maxVM().teleRuntimeCodeRegion()) {
+        if (memoryRegion == vm().teleRuntimeCodeRegion()) {
             return "Dynamic code region: " + description;
         }
         if (memoryRegion instanceof TeleNativeStackMemoryRegion) {
@@ -645,7 +645,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     private class Utf8ConstantReferenceRenderer implements ReferenceRenderer{
         public String referenceLabelText(TeleObject teleObject) {
             final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject;
-            final String s = teleUtf8Constant.getString();
+            final String s = teleUtf8Constant.utf8Constant().string;
             if (s.length() > style().maxStringInlineDisplayLength()) {
                 return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
             }
@@ -655,7 +655,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceToolTipText(TeleObject teleObject) {
             final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject;
             final ClassActor classActorForType = teleUtf8Constant.classActorForType();
-            final String s = teleUtf8Constant.getString();
+            final String s = teleUtf8Constant.utf8Constant().string;
             return objectReference(null, teleObject, classActorForType.qualifiedName(), "\"" + s + "\"");
         }
     }

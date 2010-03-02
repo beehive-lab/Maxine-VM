@@ -45,9 +45,15 @@ public abstract class TeleMemberActor extends TeleActor {
     }
 
     /**
-     * @return index of this member in the {@link ClassActor} in the {@link TeleVM} that holds this member
+     * Field is final once non-null so cache it.
      */
-    public int getMemberIndex() {
-        return teleVM().teleFields().MemberActor_memberIndex.readInt(reference());
+    private TeleDescriptor descriptor;
+
+    public final TeleDescriptor getTeleDescriptor() {
+        if (descriptor == null) {
+            Reference reference = teleVM().teleFields().MemberActor_descriptor.readReference(reference());
+            descriptor = (TeleDescriptor) teleVM().makeTeleObject(reference);
+        }
+        return descriptor;
     }
 }

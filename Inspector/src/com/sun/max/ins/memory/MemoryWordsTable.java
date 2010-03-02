@@ -67,7 +67,7 @@ public final class MemoryWordsTable extends InspectorTable {
     protected void mouseButton1Clicked(final int row, int col, MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1 && col == MemoryWordsColumnKind.OFFSET.ordinal()) {
             setOriginToSelectionAction.perform();
-        } else if (mouseEvent.getClickCount() > 1 && watchpointFactory() != null) {
+        } else if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
                 @Override
@@ -87,7 +87,7 @@ public final class MemoryWordsTable extends InspectorTable {
     @Override
     protected InspectorPopupMenu getPopupMenu(final int row, int col, MouseEvent mouseEvent) {
         final InspectorPopupMenu menu = new InspectorPopupMenu();
-        if (watchpointFactory() != null) {
+        if (vm().watchpointManager() != null) {
             final MemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
@@ -270,7 +270,7 @@ public final class MemoryWordsTable extends InspectorTable {
      * @return foreground color for row; color the text specially in the row where a watchpoint is triggered
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
@@ -278,7 +278,7 @@ public final class MemoryWordsTable extends InspectorTable {
     }
 
     private boolean isBoundaryRow(int row) {
-        return maxVM().isValidOrigin(tableModel.getMemoryRegion(row).start().asPointer());
+        return vm().isValidOrigin(tableModel.getMemoryRegion(row).start().asPointer());
     }
 
     private final class TagRenderer extends MemoryTagTableCellRenderer implements TableCellRenderer {
@@ -314,7 +314,7 @@ public final class MemoryWordsTable extends InspectorTable {
             final Address address = tableModel.getAddress(row);
             WordValueLabel label = addressToLabelMap.get(address.toLong());
             if (label == null) {
-                final ValueMode labelValueMode = maxVM().isValidOrigin(address.asPointer()) ? ValueMode.REFERENCE : ValueMode.WORD;
+                final ValueMode labelValueMode = vm().isValidOrigin(address.asPointer()) ? ValueMode.REFERENCE : ValueMode.WORD;
                 label = new WordValueLabel(inspection, labelValueMode, address, MemoryWordsTable.this);
                 label.setOpaque(true);
                 addressToLabelMap.put(address.toLong(), label);
@@ -401,7 +401,7 @@ public final class MemoryWordsTable extends InspectorTable {
                 label = new WordValueLabel(inspection, ValueMode.WORD, MemoryWordsTable.this) {
                     @Override
                     public Value fetchValue() {
-                        return new WordValue(maxVM().readWord(address));
+                        return new WordValue(vm().readWord(address));
                     }
                 };
                 label.setOpaque(true);
@@ -441,7 +441,7 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
             final byte[] bytes = new byte[tableModel.getWordSize().toInt()];
-            maxVM().readFully(address, bytes);
+            vm().readFully(address, bytes);
             if (isBoundaryRow(row)) {
                 setBorder(style().defaultPaneTopBorder());
             } else {
@@ -462,7 +462,7 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
             final byte[] bytes = new byte[tableModel.getWordSize().toInt()];
-            maxVM().readFully(address, bytes);
+            vm().readFully(address, bytes);
             if (isBoundaryRow(row)) {
                 setBorder(style().defaultPaneTopBorder());
             } else {
@@ -483,7 +483,7 @@ public final class MemoryWordsTable extends InspectorTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
             final byte[] bytes = new byte[tableModel.getWordSize().toInt()];
-            maxVM().readFully(address, bytes);
+            vm().readFully(address, bytes);
             if (isBoundaryRow(row)) {
                 setBorder(style().defaultPaneTopBorder());
             } else {
@@ -503,7 +503,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
-            final Word word = maxVM().readWord(address);
+            final Word word = vm().readWord(address);
             final WordValue wordValue = new WordValue(word);
             final float f = Float.intBitsToFloat((int) (wordValue.toLong() & 0xffffffffL));
             setValue(f);
@@ -525,7 +525,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             final Address address = tableModel.getAddress(row);
-            final Word word = maxVM().readWord(address);
+            final Word word = vm().readWord(address);
             final WordValue wordValue = new WordValue(word);
             final double f = Double.longBitsToDouble(wordValue.toLong());
             setValue(f);
@@ -549,7 +549,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             try {
-                final Word word = maxVM().readWord(tableModel.getAddress(row));
+                final Word word = vm().readWord(tableModel.getAddress(row));
                 setValue(WordValue.from(word));
                 if (isBoundaryRow(row)) {
                     setBorder(style().defaultPaneTopBorder());

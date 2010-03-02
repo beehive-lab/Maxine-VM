@@ -68,7 +68,7 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
             return true;
         }
 
-        for (TeleRuntimeMemoryRegion teleHeapRegion : teleVM().teleHeapRegions()) {
+        for (TeleLinearAllocationMemoryRegion teleHeapRegion : teleVM().teleHeapRegions()) {
             if (teleHeapRegion.contains(address)) {
                 if (teleHeapRegion.description().equals(SemiSpaceHeapScheme.FROM_REGION_NAME)) { // everything in from-space is dead
                     return false;
@@ -77,10 +77,10 @@ public final class TeleSemiSpaceHeapScheme extends AbstractTeleVMHolder implemen
                     return false;
                 }
                 for (TeleNativeThread teleNativeThread : teleVM().teleProcess().threads()) { // iterate over threads in check in case of tlabs if objects are dead or live
-                    TeleThreadLocalValues teleThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
-                    if (teleThreadLocalValues != null && !teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME).equals(Word.zero())) {
-                        if (address.greaterEqual(teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME).asAddress())
-                                        && teleThreadLocalValues.getWord(HeapSchemeWithTLAB.TLAB_TOP_THREAD_LOCAL_NAME).asAddress().greaterThan(address)) {
+                    TeleThreadLocalsArea teleThreadLocalsArea = teleNativeThread.locals().threadLocalsAreaFor(Safepoint.State.ENABLED);
+                    if (teleThreadLocalsArea != null && !teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_DISABLED_THREAD_LOCAL_NAME).equals(Word.zero())) {
+                        if (address.greaterEqual(teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_MARK_THREAD_LOCAL_NAME).asAddress())
+                                        && teleThreadLocalsArea.getWord(HeapSchemeWithTLAB.TLAB_TOP_THREAD_LOCAL_NAME).asAddress().greaterThan(address)) {
                             return false;
                         }
                     }

@@ -23,6 +23,7 @@ package com.sun.max.ins.method;
 import java.util.*;
 
 import com.sun.c1x.bytecode.*;
+import com.sun.c1x.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -176,9 +177,9 @@ public abstract class TargetCodeViewer extends CodeViewer {
                     isBoundaryRow[row] = true;
                     alternate = !alternate;
 
-                    int opcode = bytecodes[bytecodeIndex];
+                    int opcode = Bytes.beU1(bytecodes, bytecodeIndex);
                     if (opcode == Bytecodes.WIDE) {
-                        opcode = bytecodes[bytecodeIndex + 1];
+                        opcode = Bytes.beU1(bytecodes, bytecodeIndex + 1);
                     }
 
                     tagTextForRow[row] = bytecodePosition + ": " + Bytecodes.nameOf(opcode);
@@ -318,7 +319,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * Does the instruction address have a target code breakpoint set in the VM.
      */
     protected MaxBreakpoint getTargetBreakpointAtRow(int row) {
-        return breakpointFactory().findBreakpoint(instructionLocations.get(row));
+        return vm().breakpointManager().findBreakpoint(instructionLocations.get(row));
     }
 
     protected final String rowToTagText(int row) {

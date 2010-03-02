@@ -29,7 +29,7 @@ import com.sun.max.collect.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxBreakpointFactory {
+public interface MaxBreakpointManager {
 
     /**
      * Adds a listener for breakpoint changes.

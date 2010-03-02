@@ -35,7 +35,6 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
@@ -59,9 +58,9 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
-        bootHeapRegionDisplay = new HeapRegionDisplay(maxVM().teleBootHeapRegion());
-        bootCodeRegionDisplay = new CodeRegionDisplay(maxVM().teleBootCodeRegion());
-        heapScheme = inspection.maxVM().vmConfiguration().heapScheme();
+        bootHeapRegionDisplay = new HeapRegionDisplay(vm().teleBootHeapRegion());
+        bootCodeRegionDisplay = new CodeRegionDisplay(vm().teleBootCodeRegion());
+        heapScheme = inspection.vm().vmConfiguration().heapScheme();
         heapSchemeName = heapScheme.getClass().getSimpleName();
         tableModel = new MemoryRegionsTableModel(inspection);
         columnModel = new MemoryRegionsColumnModel(viewPreferences);
@@ -153,30 +152,30 @@ public final class MemoryRegionsTable extends InspectorTable {
             sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionDisplay>();
 
             sortedMemoryRegions.add(bootHeapRegionDisplay);
-            for (TeleRuntimeMemoryRegion teleRuntimeMemoryRegion : maxVM().teleHeapRegions()) {
-                sortedMemoryRegions.add(new HeapRegionDisplay(teleRuntimeMemoryRegion));
+            for (TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion : vm().teleHeapRegions()) {
+                sortedMemoryRegions.add(new HeapRegionDisplay(teleLinearAllocationMemoryRegion));
             }
-            if (maxVM().teleRootsRegion() != null) {
-                sortedMemoryRegions.add(new OtherRegionDisplay(maxVM().teleRootsRegion()));
+            if (vm().teleRootsRegion() != null) {
+                sortedMemoryRegions.add(new OtherRegionDisplay(vm().teleRootsRegion()));
             }
 
-            if (maxVM().teleImmortalHeapRegion() != null) {
-                sortedMemoryRegions.add(new HeapRegionDisplay(maxVM().teleImmortalHeapRegion()));
+            if (vm().teleImmortalHeapRegion() != null) {
+                sortedMemoryRegions.add(new HeapRegionDisplay(vm().teleImmortalHeapRegion()));
             }
 
             sortedMemoryRegions.add(bootCodeRegionDisplay);
-            final TeleCodeRegion teleRuntimeCodeRegion = maxVM().teleRuntimeCodeRegion();
+            final TeleCodeRegion teleRuntimeCodeRegion = vm().teleRuntimeCodeRegion();
             if (teleRuntimeCodeRegion.isAllocated()) {
                 sortedMemoryRegions.add(new CodeRegionDisplay(teleRuntimeCodeRegion));
             }
 
-            for (MaxThread thread : vmState().threads()) {
+            for (MaxThread thread : vm().state().threads()) {
                 final MaxStack stack = thread.stack();
                 if (!stack.memoryRegion().size().isZero()) {
                     sortedMemoryRegions.add(new StackRegionDisplay(stack));
                 }
-                TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.threadLocalsRegion();
-                if (!threadLocalsRegion.size().isZero()) {
+                MemoryRegion threadLocalsRegion = thread.locals().memoryRegion();
+                if (threadLocalsRegion != null) {
                     sortedMemoryRegions.add(new ThreadLocalsRegionDisplay(threadLocalsRegion));
                 }
             }
@@ -222,7 +221,7 @@ public final class MemoryRegionsTable extends InspectorTable {
      * @return foreground color for row; color the text specially in the row where a watchpoint is triggered
      */
     private Color getRowTextColor(int row) {
-        final MaxWatchpointEvent watchpointEvent = vmState().watchpointEvent();
+        final MaxWatchpointEvent watchpointEvent = vm().state().watchpointEvent();
         if (watchpointEvent != null && tableModel.getMemoryRegion(row).contains(watchpointEvent.address())) {
             return style().debugIPTagColor();
         }
@@ -435,20 +434,20 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     private final class HeapRegionDisplay extends MemoryRegionDisplay {
 
-        private final TeleRuntimeMemoryRegion teleRuntimeMemoryRegion;
+        private final TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion;
 
         @Override
         public MemoryRegion memoryRegion() {
-            return teleRuntimeMemoryRegion;
+            return teleLinearAllocationMemoryRegion;
         }
 
-        HeapRegionDisplay(TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
-            this.teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
+        HeapRegionDisplay(TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion) {
+            this.teleLinearAllocationMemoryRegion = teleLinearAllocationMemoryRegion;
         }
 
         @Override
         Size allocated() {
-            return teleRuntimeMemoryRegion.allocatedSize();
+            return teleLinearAllocationMemoryRegion.allocatedSize();
         }
 
     }
@@ -496,14 +495,14 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     private final class ThreadLocalsRegionDisplay extends MemoryRegionDisplay {
 
-        private final TeleThreadLocalsMemoryRegion threadLocalsRegion;
+        private final MemoryRegion threadLocalsRegion;
 
         @Override
         MemoryRegion memoryRegion() {
             return threadLocalsRegion;
         }
 
-        ThreadLocalsRegionDisplay(TeleThreadLocalsMemoryRegion threadLocalsRegion) {
+        ThreadLocalsRegionDisplay(MemoryRegion threadLocalsRegion) {
             this.threadLocalsRegion = threadLocalsRegion;
         }
     }

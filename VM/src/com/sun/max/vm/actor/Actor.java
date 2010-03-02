@@ -92,9 +92,9 @@ public abstract class Actor {
     public static final int STATIC_TRAMPOLINE =    0x00020000;
     public static final int VIRTUAL_TRAMPOLINE =   0x00040000;
     public static final int INTERFACE_TRAMPOLINE = 0x00080000;
-    public static final int UNSAFE_CAST =          0x00100000;
     public static final int TEMPLATE =             0x00200000;
-    public static final int INITIALIZER       =    0x00400000;
+    public static final int INITIALIZER =          0x00400000;
+    public static final int EXTENDED =             0x00800000;
     public static final int C_FUNCTION =           0x01000000;
     public static final int VM_ENTRY_POINT =       0x02000000;
     public static final int FOLD =                 0x04000000;
@@ -103,6 +103,25 @@ public abstract class Actor {
     public static final int UNSAFE =               0x20000000;
     public static final int INLINE =               0x40000000;
     public static final int NEVER_INLINE =         0x80000000;
+
+    /**
+     * Mask of flags used to determine if a given method is unsafe. Unsafe methods
+     * cannot be compiled with the JIT compiler.
+     */
+    public static final int UNSAFE_FLAGS =
+        Actor.ACC_NATIVE |
+        Actor.TEMPLATE |
+        Actor.BUILTIN |
+        Actor.UNSAFE |
+        Actor.C_FUNCTION |
+        Actor.VM_ENTRY_POINT |
+        Actor.FOLD |
+        Actor.LOCAL_SUBSTITUTE |
+        Actor.INLINE |
+        Actor.STATIC_TRAMPOLINE |
+        Actor.INTERFACE_TRAMPOLINE |
+        Actor.VIRTUAL_TRAMPOLINE |
+        Actor.NO_SAFEPOINTS;
 
     /**
      * Mask of the flags defined for classes in Table 4.1 of the JVM specification.
@@ -162,6 +181,9 @@ public abstract class Actor {
     public Object ciObject;
 
     protected Actor(Utf8Constant name, int flags) {
+        if ((flags & UNSAFE_FLAGS) != 0) {
+            flags |= UNSAFE;
+        }
         this.flags = flags;
         this.name = name;
     }
@@ -332,11 +354,6 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isUnsafeCast(int flags) {
-        return (flags & UNSAFE_CAST) != 0;
-    }
-
-    @INLINE
     public static boolean isTemplate(int flags) {
         return (flags & TEMPLATE) != 0;
     }
@@ -393,12 +410,27 @@ public abstract class Actor {
 
     @INLINE
     public final void beUnsafe() {
+
+        if (toString().equals("com.sun.c1x.debug.IRInterpreter$Evaluator.visitNegateOp(NegateOp)")) {
+            System.console();
+        }
+
         flags |= UNSAFE;
     }
 
     @INLINE
     public static boolean isInline(int flags) {
         return (flags & INLINE) != 0;
+    }
+
+    @INLINE
+    public final void beExtended() {
+        flags |= EXTENDED;
+    }
+
+    @INLINE
+    public static boolean isExtended(int flags) {
+        return (flags & EXTENDED) != 0;
     }
 
     @INLINE
@@ -686,7 +718,8 @@ public abstract class Actor {
                     case 'h': {
                         if (this instanceof MemberActor) {
                             final MemberActor memberActor = (MemberActor) this;
-                            sb.append(memberActor.holder().typeDescriptor.toJavaString(qualified));
+                            ClassActor holder = memberActor.holder();
+                            sb.append(holder == null ? "null" : holder.typeDescriptor.toJavaString(qualified));
                         } else {
                             if (strict) {
                                 throw new IllegalFormatConversionException(specifier, getClass());
@@ -757,6 +790,7 @@ public abstract class Actor {
 
     public final void checkAccessBy(ClassActor accessor) {
         if (!isAccessibleBy(accessor)) {
+            isAccessibleBy(accessor);
             throw new IllegalAccessError(accessor.name + " cannot access " + this);
         }
     }

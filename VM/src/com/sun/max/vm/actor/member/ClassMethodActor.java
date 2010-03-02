@@ -86,8 +86,8 @@ public abstract class ClassMethodActor extends MethodActor {
      */
     public final NativeFunction nativeFunction;
 
-    public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute) {
-        super(name, descriptor, flags);
+    public ClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, int intrinsic) {
+        super(name, descriptor, flags, intrinsic);
         this.originalCodeAttribute = codeAttribute;
         this.nativeFunction = isNative() ? new NativeFunction(this) : null;
     }
@@ -173,26 +173,21 @@ public abstract class ClassMethodActor extends MethodActor {
                 if (compilee != null) {
                     return compilee;
                 }
-                ClassMethodActor compilee = this;
-                CodeAttribute codeAttribute = this.originalCodeAttribute;
 
                 if (!isHiddenToReflection()) {
                     final ClassMethodActor substitute = METHOD_SUBSTITUTIONS.Static.findSubstituteFor(this);
                     if (substitute != null) {
-                        compilee = substitute;
-                        codeAttribute = substitute.originalCodeAttribute;
-                        if (substitute.compilee != null) {
-                            // Don't go through code preprocessing when the substitute already has
-                            this.codeAttribute = codeAttribute;
-                            this.compilee = compilee;
-                            return compilee;
-                        }
+                        compilee = substitute.compilee();
+                        codeAttribute = compilee.codeAttribute;
+                        return compilee;
                     }
                     if (MaxineVM.isHosted() && !hostedVerificationDisabled) {
-                        validateInlineAnnotation(compilee);
+                        validateInlineAnnotation(this);
                     }
                 }
 
+                ClassMethodActor compilee = this;
+                CodeAttribute codeAttribute = originalCodeAttribute;
                 ClassVerifier verifier = null;
 
                 final CodeAttribute processedCodeAttribute = Preprocessor.apply(compilee, codeAttribute);
@@ -239,7 +234,16 @@ public abstract class ClassMethodActor extends MethodActor {
                 }
 
                 if (codeAttribute != null) {
-                    new Intrinsics(compilee, codeAttribute).run();
+                    Intrinsics intrinsics = new Intrinsics(compilee, codeAttribute);
+                    intrinsics.run();
+                    if (intrinsics.unsafe) {
+                        compilee.beUnsafe();
+                        beUnsafe();
+                    }
+                    if (intrinsics.extended) {
+                        compilee.beExtended();
+                        beExtended();
+                    }
                 }
 
                 this.codeAttribute = codeAttribute;

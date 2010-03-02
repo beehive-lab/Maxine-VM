@@ -22,6 +22,8 @@ package com.sun.c1x.bytecode;
 
 import static com.sun.c1x.bytecode.Bytecodes.*;
 
+import java.io.*;
+
 /**
  * A utility to process a bytecode stream to replace certain standard
  * JVM instructions with extended bytecode instructions. The extended
@@ -36,30 +38,77 @@ import static com.sun.c1x.bytecode.Bytecodes.*;
  *
  * @author Doug Simon
  */
-public final class BytecodeExtender {
+public final class BytecodeIntrinsifier {
 
+    /**
+     * Set to true to trace the bytecode processing.
+     */
     private static final boolean DEBUG = false;
 
-    public abstract static class Intrinsifier {
-        public abstract void invokevirtual(BytecodeExtender bce, int cpi);
-        public abstract void invokestatic(BytecodeExtender bce, int cpi);
-        public abstract void invokespecial(BytecodeExtender bce, int cpi);
-        public abstract void invokeinterface(BytecodeExtender bce, int cpi);
-        public abstract void getstatic(BytecodeExtender bce, int cpi);
-        public abstract void putstatic(BytecodeExtender bce, int cpi);
-        public abstract void getfield(BytecodeExtender bce, int cpi);
-        public abstract void putfield(BytecodeExtender bce, int cpi);
-        public abstract void jnicall(BytecodeExtender bce, int cpi);
+    /**
+     * The interface implemented by a client that submits code to be intrinsified.
+     * This interface is comprised of a number of methods for the bytecode instructions
+     * that are amenable to intrinsification.
+     *
+     * @author Doug Simon
+     */
+    public abstract static class IntrinsifierClient {
+
+        public abstract void invokevirtual(BytecodeIntrinsifier bi, int cpi);
+        public abstract void invokestatic(BytecodeIntrinsifier bi, int cpi);
+        public abstract void invokespecial(BytecodeIntrinsifier bi, int cpi);
+        public abstract void invokeinterface(BytecodeIntrinsifier bi, int cpi);
+        public abstract void getstatic(BytecodeIntrinsifier bi, int cpi);
+        public abstract void putstatic(BytecodeIntrinsifier bi, int cpi);
+        public abstract void getfield(BytecodeIntrinsifier bi, int cpi);
+        public abstract void putfield(BytecodeIntrinsifier bi, int cpi);
+        public abstract void jnicall(BytecodeIntrinsifier bi, int cpi);
     }
 
+    /**
+     * The state of the JVM local variables and operand stack at a given bytecode position.
+     */
     static class Frame {
+
+        /**
+         * The operand stack depth.
+         */
         final int sp;
+
+        /**
+         * The local variable state.
+         */
         final boolean[] locals;
+
+        /**
+         * The operand stack state.
+         */
         final boolean[] stack;
+
+        /**
+         * Specifies if the basic block denoted by this frame has been {@linkplain BytecodeIntrinsifier#parseBlock(int) parsed}.
+         */
         boolean visited;
+
+        /**
+         * The next {@code Frame} object in a linked list.
+         */
         final Frame next;
+
+        /**
+         * The bytecode position of this frame.
+         */
         final int bci;
 
+        /**
+         * Creates a {@code Frame} object.
+         *
+         * @param bci the bytecode position
+         * @param sp the operand stack depth
+         * @param stack the operand stack state
+         * @param locals the local variable state
+         * @param next the next {@code Frame} in a linked list
+         */
         Frame(int bci, int sp, boolean[] stack, boolean[] locals, Frame next) {
             this.bci = bci;
             this.sp = sp;
@@ -68,6 +117,13 @@ public final class BytecodeExtender {
             this.next = next;
         }
 
+        /**
+         * Updates the given operand stack and local variable state based on this frame.
+         *
+         * @param stack the operand stack state modified to match the operand stack state of this frame
+         * @param locals the local variable state modified to match the local variable state of this frame
+         * @return the stack depth of this frame
+         */
         int get(boolean[] stack, boolean[] locals) {
             for (int i = 0; i < sp; ++i) {
                 stack[i] = this.stack[i];
@@ -79,20 +135,6 @@ public final class BytecodeExtender {
                 locals[i] = this.locals[i];
             }
             return sp;
-        }
-
-        boolean matches(int sp, boolean[] stack, boolean[] locals) {
-            for (int i = 0; i < sp; ++i) {
-                if (stack[i] != this.stack[i]) {
-                    return false;
-                }
-            }
-            for (int i = 0; i < locals.length; ++i) {
-                if (locals[i] != this.locals[i]) {
-                    return false;
-                }
-            }
-            return true;
         }
 
         @Override
@@ -115,17 +157,23 @@ public final class BytecodeExtender {
         }
     }
 
-    public int[] extra;
-
-    Frame todo;
-    Frame todoHandler;
+    /**
+     * The work list of basic blocks to be {@linkplain #parseBlock parsed}.
+     */
+    private Frame todo;
 
     /**
-     * Sentinel value used in {@link #frameMap} to denote that a given instruction (bci) has been processed.
-     * This required as without a pre-pass to establish basic block boundaries, it's possible
-     * for {@linkplain #parseBlock(int) block parsing} to cross a block boundary at a
-     * (as yet unknown) control flow merge point. There's no need to re-process the instructions
-     * after the merge point when the other branch to the merge point is subsequently discovered.
+     * The work list of exception handler entry basic blocks to be {@linkplain #parseBlock parsed}.
+     * This list is processed once the {@linkplain #todo primary} work list is completed.
+     */
+    private Frame todoHandler;
+
+    /**
+     * Sentinel value used in {@link #frameMap} to denote that a given instruction (bci) has been processed. This
+     * required as without a pre-pass to establish basic block boundaries, it's possible for
+     * {@linkplain #parseBlock(int) block parsing} to cross a block boundary at a (as yet unknown) control flow merge
+     * point. There's no need to re-process the instructions after the merge point when the other branch to the merge
+     * point is subsequently discovered.
      */
     private static final Frame VISITED = new Frame(-1, 0, null, null, null);
     static {
@@ -134,25 +182,45 @@ public final class BytecodeExtender {
 
     /**
      * A map from each bci to a {@link Frame} object. A entry equal to {@link #VISITED} in this map for a given bci
-     * indicates that the instruction at bci has already be processed. A {@code null} entry means that
-     * the instruction has not yet been processes and not a known basic block entry point. A non-null
-     * entry not equals to {@link #VISITED} indicates a known basic block entry point and the value of
-     * the {@link Frame} object indicates the frame state to be used when parsing the block.
+     * indicates that the instruction at bci has already be processed. A {@code null} entry means that the instruction
+     * has not yet been processes and not a known basic block entry point. A non-null entry not equals to
+     * {@link #VISITED} indicates a known basic block entry point and the value of the {@link Frame} object indicates
+     * the frame state to be used when parsing the block.
      */
     private final Frame[] frameMap;
 
+    /**
+     * A map from each bci to the head of a list of {@link Handler} objects denoting the handlers active at that bci.
+     */
     private final Handler[] handlerMap;
 
-    public int opcodePos;
-    public final Object method;
-    public final Intrinsifier intrinsifier;
+    /**
+     * The position of the opcode of the instruction currently being processed.
+     */
+    private int opcodeBci;
+
+    /**
+     * The current bytecode position.
+     */
+    private int bci;
+
+    /**
+     * The method being processed.
+     */
+    private final Object method;
+
+    /**
+     * The intrinsification client.
+     */
+    private final IntrinsifierClient intrinsifier;
 
     /**
      * Indicates if one or more instructions were replaced with an extended instruction.
      */
     private boolean changed;
 
-    private final byte[] code;
+    private final byte[] inCode;
+    private final byte[] outCode;
 
     private final boolean[] locals;
     private final boolean[] stack;
@@ -162,6 +230,7 @@ public final class BytecodeExtender {
         Frame frame;
         final Handler next;
         final int bci;
+
         Handler(int bci, Handler next) {
             this.bci = bci;
             this.next = next;
@@ -169,23 +238,35 @@ public final class BytecodeExtender {
     }
 
     /**
+     * Creates an object used to process some given bytecode for the purpose of intrinsification.
      *
-     * @param intrinsifier
-     * @param method
-     * @param code
-     * @param handlers the exception handler table as an array of triplets (start bci, end bci, handler bci) or {@code
-     *            null} if the method has not exception handlers
-     * @param maxStack
-     * @param locals
+     * @param intrinsifier the client side of intrinsification
+     * @param method the method being processed. The only use of this value is to call its {@link Object#toString()} method for debug tracing.
+     * @param inCode the code to be processed
+     * @param outCode the code array in which the processed code is written. If {@code null}, then processing is performed 'in situ' on {@code inCode}
+     * @param handlers the exception handler table as an array of triplets (start bci, end bci, handler bci) or
+     *            {@code null} if the method has no exception handlers
+     * @param maxStack the maximum amount of stack used by {@code inCode}
+     * @param locals the initial state of the local variables derived from the signature of the method
      */
-    public BytecodeExtender(Intrinsifier intrinsifier, Object method, byte[] code, int[] handlers, int maxStack, boolean[] locals) {
+    public BytecodeIntrinsifier(IntrinsifierClient intrinsifier, Object method, byte[] inCode, byte[] outCode, int[] handlers, int maxStack, boolean[] locals) {
         this.intrinsifier = intrinsifier;
         this.stack = new boolean[maxStack];
         this.locals = new boolean[locals.length];
-        this.code = code;
+        this.inCode = inCode;
+        if (outCode == null) {
+            this.outCode = inCode;
+        } else {
+            if (outCode != inCode) {
+                assert inCode.length == outCode.length : "outCode.length does not match inCode.length";
+                System.arraycopy(inCode, 0, outCode, 0, inCode.length);
+            }
+            this.outCode = outCode;
+        }
+
         this.method = method;
-        this.frameMap = new Frame[code.length];
-        this.handlerMap = initHandlerMap(code, handlers, maxStack, locals);
+        this.frameMap = new Frame[inCode.length];
+        this.handlerMap = initHandlerMap(inCode, handlers, maxStack, locals);
 
         Frame entryFrame = new Frame(0, 0, new boolean[maxStack], locals, todo);
         todo = entryFrame;
@@ -219,129 +300,230 @@ public final class BytecodeExtender {
         return handlerMap;
     }
 
+    /**
+     * Interprets a push of a single-slot value to the stack.
+     *
+     * @param word specifies if the value pushed is a Word value
+     */
     public void push1(boolean word) {
         stack[sp] = word;
         sp++;
     }
 
+    /**
+     * Interprets a push of a single-slot, non-Word value to the stack.
+     */
     public void push1() {
         stack[sp++] = false;
     }
 
+    /**
+     * Interprets a push of a double-slot value to the stack. By definition, the value
+     * cannot be a Word value as Word values have the same slot size as Object values
+     * which is one slot.
+     */
     public void push2() {
         stack[sp++] = false;
         stack[sp++] = false;
     }
 
+    private static final PrintStream debugOut = System.out;
+
+    /**
+     * Records a bytecode modification.
+     */
     private void recordChange() {
         if (DEBUG) {
-            System.out.println("     ---> " + nameOf(code[opcodePos]));
+            debugOut.println("     ---> " + nameOf(inCode[opcodeBci] & 0xff));
         }
         changed = true;
     }
 
+    /**
+     * Interprets a load of a local variable onto the stack.
+     *
+     * @param index the local variable index
+     * @param wordOpcode if the local variable is a Word value, then the load instruction is replaced with this opcode
+     */
     public void loadRefOrWord(int index, int wordOpcode) {
         boolean isWord = locals[index];
         stack[sp++] = isWord;
         if (isWord) {
-            code[opcodePos] = (byte) wordOpcode;
+            outCode[opcodeBci] = (byte) wordOpcode;
             recordChange();
         }
     }
 
+    /**
+     * Interprets a load of a single-slot, non-Word local variable onto the stack.
+     *
+     * @param index the local variable index
+     */
     public void load1(int index) {
         stack[sp++] = locals[index];
     }
 
+    /**
+     * Interprets a load of a double-slot, non-Word local variable onto the stack.
+     *
+     * @param index the local variable index
+     */
     public void load2(int index) {
         stack[sp] = locals[index];
         stack[sp + 1] = locals[index + 1];
         sp += 2;
     }
 
+    /**
+     * Interprets a store to a local variable by popping the top value off the stack.
+     *
+     * @param index the local variable index
+     * @param wordOpcode if the local variable is a Word value, then the store instruction is replaced with this opcode
+     */
     public void storeRefOrWord(int index, int wordOpcode) {
         boolean isWord = stack[--sp];
         locals[index] = isWord;
         if (isWord) {
-            code[opcodePos] = (byte) wordOpcode;
+            inCode[opcodeBci] = (byte) wordOpcode;
             recordChange();
         }
     }
 
+    /**
+     * Interprets a store to a single-slot, non-Word local variable by popping the top value off the stack.
+     *
+     * @param index the local variable index
+     */
     public void store1(int index) {
         locals[index] = stack[--sp];
     }
 
+    /**
+     * Interprets a store to a double-slot, non-Word local variable by popping the top value off the stack.
+     *
+     * @param index the local variable index
+     */
     public void store2(int index) {
         locals[index] = stack[sp - 2];
         locals[index + 1] = stack[sp - 1];
         sp -= 2;
     }
 
+    /**
+     * Pops a single-slot value off the stack.
+     *
+     * @return whether the popped value was a Word
+     */
     public boolean pop1() {
         return stack[--sp];
     }
 
+    /**
+     * Pops n-slots off the stack.
+     *
+     * @param amount the number of slots to pop
+     */
     public void pop(int amount) {
         sp -= amount;
         assert sp >= 0;
     }
 
+    /**
+     * Determines if the top value on the stack is a Word.
+     */
     public boolean top() {
         return stack[sp - 1];
     }
 
-    public boolean lastTop() {
-        return stack[sp];
+    /**
+     * Reads an unsigned byte from the code stream.
+     *
+     * @return the unsigned byte value read
+     */
+    private int readU1() {
+        return inCode[bci++] & 0xff;
     }
 
-    public boolean local(int index) {
-        return locals[index];
+    /**
+     * Reads an unsigned 2-byte value from the code stream.
+     *
+     * @return the unsigned 2-byte value read
+     */
+    private int readU2() {
+        return (inCode[bci++] & 0xff) << 8 | inCode[bci++] & 0xff;
     }
 
-    private int readU2(int bci) {
-        return (code[bci] & 0xff) << 8 | code[bci + 1] & 0xff;
-    }
-
-    private int readU1(int bci, boolean wide) {
+    /**
+     * Reads an unsigned 1 or 2-byte value from the code stream.
+     *
+     * @param wide if {@code true}, a 2 byte value is read
+     * @return the unsigned 1 or 2 byte value read
+     */
+    private int readVarIndex(boolean wide) {
         if (wide) {
-            return code[bci] & 0xff << 8 | code[bci + 1] & 0xff;
+            return readU2();
         }
-        return code[bci] & 0xff;
+        return readU1();
     }
 
-    private int readS2(int bci) {
-        return code[bci] << 8 | code[bci + 1] & 0xff;
+    /**
+     * Reads a signed 2-byte value from the code stream.
+     *
+     * @return the signed 2-byte value read
+     */
+    private int readS2() {
+        return inCode[bci++] << 8 | inCode[bci++] & 0xff;
     }
 
-    private int readS4(int bci) {
-        return code[bci + 0]          << 24 |
-               (code[bci + 1] & 0xff) << 16 |
-               (code[bci + 2] & 0xff) << 8  |
-               (code[bci + 3] & 0xff);
+    /**
+     * Reads a signed 4-byte value from the code stream.
+     *
+     * @return the signed 4-byte value read
+     */
+    private int readS4() {
+        return (inCode[bci++]          << 24) |
+               (inCode[bci++] & 0xff) << 16 |
+               (inCode[bci++] & 0xff) << 8  |
+               (inCode[bci++] & 0xff);
     }
 
-    private int align4(int bci) {
-        final int remainder = bci & 0x3;
-        if (remainder != 0) {
-            return bci + 4 - remainder;
-        }
-        return bci;
+    private void align4() {
+        bci = (bci + 3) & ~0x3;
     }
 
+    /**
+     * Notifies this object that the current {@code INVOKE...} instruction is being replaced.
+     *
+     * @param opcode the replacement opcode
+     * @param operand the replacement 2-byte operand
+     */
     public void intrinsify(int opcode, int operand) {
-        int oldOpcode = code[opcodePos] & 0xff;
+        int oldOpcode = inCode[opcodeBci] & 0xff;
         assert oldOpcode >= INVOKEVIRTUAL && oldOpcode <= INVOKEINTERFACE;
-        code[opcodePos] = (byte) opcode;
-        code[opcodePos + 1] = (byte) (operand >> 8);
-        code[opcodePos + 2] = (byte) (operand >> 0);
+        assert operand >> 16 == 0 || operand >> 16 == -1 : "operand value cannot be encoded in 16 bits: " + operand;
+        outCode[opcodeBci] = (byte) opcode;
+        outCode[opcodeBci + 1] = (byte) (operand >> 8);
+        outCode[opcodeBci + 2] = (byte) (operand >> 0);
         recordChange();
     }
 
+    /**
+     * Performs abstract interpretation of the code with respect to the flow of Word typed values.
+     * This interpretation only parses each bytecode instruction at most once (unreachable code
+     * is never processed) by following control flow edges. That is, a basic block is not
+     * interpreted unless it is reachable along a control flow edge from another basic block
+     * that is (transitively) reachable from the entry basic block.
+     *
+     * It is assumed that the input code verifies. The means that all uses of a variable
+     * will match with a definition along all paths to the use and that the type (is a word
+     * or not) will be the same along each path.
+     *
+     * @return {@code true} if one or more instructions were modified
+     */
     public boolean run() {
         try {
             if (DEBUG) {
-                System.out.println(method);
+                debugOut.println(method);
             }
             parseBlocks();
             while (todoHandler != null) {
@@ -351,16 +533,19 @@ public final class BytecodeExtender {
             }
             return changed;
         } catch (Throwable e) {
-            int opcode = code[opcodePos] & 0xff;
-            Frame errorFrame = new Frame(opcodePos, sp, stack, locals, null);
+            int opcode = inCode[opcodeBci] & 0xff;
+            Frame errorFrame = new Frame(opcodeBci, sp, stack, locals, null);
             throw (InternalError) new InternalError("Error while preprocessing " + method + " {" + nameOf(opcode) + " @ " + errorFrame + "}").initCause(e);
         }
     }
 
+    /**
+     * Parses and processes all the basic blocks on the {@linkplain #todo to do} list.
+     */
     public void parseBlocks() {
         while (todo != null) {
             if (DEBUG) {
-                System.out.println("  TODO: " + todoAsString());
+                debugOut.println("  TODO: " + todoAsString());
             }
 
             Frame head = todo;
@@ -369,47 +554,50 @@ public final class BytecodeExtender {
 
             sp = head.get(stack, locals);
             head.visited = true;
-            parseBlock(head.bci);
+            this.bci = head.bci;
+            parseBlock();
             if (DEBUG) {
-                System.out.println("  ==============");
+                debugOut.println("  ==============");
             }
 
         }
     }
 
-    private void parseBlock(int bci) {
-        byte[] code = this.code;
-
+    /**
+     * Parses and processes a single basic block of bytecode.
+     *
+     * @param ci the entry point to the block
+     */
+    private void parseBlock() {
         while (true) {
-            opcodePos = bci;
+            opcodeBci = bci;
 
-            int opcode = code[bci++] & 0xff;
+            int opcode = readU1();
 
             int length = lengthOf(opcode);
             int nextBci = bci + length - 1;
             boolean wide;
             if (opcode == WIDE) {
-                opcode = code[bci++] & 0xff;
+                opcode = readU1();
                 wide = true;
                 if (opcode == IINC) {
-                    nextBci = opcodePos + 6;
+                    nextBci = opcodeBci + 6;
                 } else {
                     // ?LOAD, ?STORE, or RET
-                    nextBci = opcodePos + 4;
+                    nextBci = opcodeBci + 4;
                 }
             } else {
                 wide = false;
             }
 
             if (DEBUG) {
-                System.out.println("  sp=" + sp + "\t" + opcodePos + ": " + nameOf(opcode));
+                debugOut.println("  sp=" + sp + "\t" + opcodeBci + ": " + nameOf(opcode));
                 assert nameOf(opcode) != null : opcode;
             }
 
             switch (opcode) {
                 // Checkstyle: stop
 
-                // NO_EFFECT
                 case NOP          :
                 case IINC         :
                 case GOTO         :
@@ -425,7 +613,6 @@ public final class BytecodeExtender {
                 case DNEG         :
                 case L2D          :
                 case D2L          :
-                // POP1_PUSH1
                 case INEG         :
                 case FNEG         :
                 case I2F          :
@@ -438,8 +625,6 @@ public final class BytecodeExtender {
                 case ARRAYLENGTH  :
                 case CHECKCAST    :
                 case INSTANCEOF   : break;
-
-                // PUSH1
                 case ACONST_NULL  :
                 case ICONST_M1    :
                 case ICONST_0     :
@@ -457,20 +642,15 @@ public final class BytecodeExtender {
                 case LDC_W        :
                 case JSR          :
                 case NEW          :
-                // POP1_PUSH2
                 case I2L          :
                 case I2D          :
                 case F2L          :
                 case F2D          : push1(); break;
-
-                // PUSH2
                 case LDC2_W       :
                 case LCONST_0     :
                 case LCONST_1     :
                 case DCONST_0     :
                 case DCONST_1     : push2(); break;
-
-                // POP1
                 case POP          :
                 case IFEQ         :
                 case IFNE         :
@@ -518,8 +698,6 @@ public final class BytecodeExtender {
                 case D2F          :
                 case FCMPL        :
                 case FCMPG        : pop1(); break;
-
-                // POP2_
                 case POP2         :
                 case IF_ICMPEQ    :
                 case IF_ICMPNE    :
@@ -544,105 +722,57 @@ public final class BytecodeExtender {
                 case LAND         :
                 case LOR          :
                 case LXOR         : pop(2); break;
-
-
-                // LOAD1
                 case ILOAD        :
-                case FLOAD        : load1(readU1(bci, wide)); break;
-
-                // LOAD1_0
+                case FLOAD        : load1(readVarIndex(wide)); break;
                 case ILOAD_0      :
                 case FLOAD_0      : load1(0); break;
-
-                // LOAD1_1
                 case ILOAD_1      :
                 case FLOAD_1      : load1(1); break;
-
-                // LOAD1_2
                 case ILOAD_2      :
                 case FLOAD_2      : load1(2); break;
-
-                // LOAD1_3
                 case ILOAD_3      :
                 case FLOAD_3      : load1(3); break;
-
-                // LOAD2
                 case LLOAD        :
-                case DLOAD        : load2(readU1(bci, wide)); break;
-
-                // LOAD2_0
+                case DLOAD        : load2(readVarIndex(wide)); break;
                 case LLOAD_0      :
                 case DLOAD_0      : load2(0); break;
-
-                // LOAD2_1
                 case LLOAD_1      :
                 case DLOAD_1      : load2(1); break;
-
-                // LOAD2_2
                 case LLOAD_2      :
                 case DLOAD_2      : load2(2); break;
-
-                // LOAD2_3
                 case LLOAD_3      :
                 case DLOAD_3      : load2(3); break;
-
-                // STORE1
                 case ISTORE       :
-                case FSTORE       : store1(readU1(bci, wide)); break;
-
-                // STORE1_0
+                case FSTORE       : store1(readVarIndex(wide)); break;
                 case ISTORE_0     :
                 case FSTORE_0     : store1(0); break;
-
-                // STORE1_1
                 case ISTORE_1     :
                 case FSTORE_1     : store1(0); break;
-
-                // STORE1_2
                 case ISTORE_2     :
                 case FSTORE_2     : store1(0); break;
-
-                // STORE1_3
                 case ISTORE_3     :
                 case FSTORE_3     : store1(0); break;
-
-                // STORE2
                 case LSTORE       :
-                case DSTORE       : store2(readU1(bci, wide)); break;
-
-                // STORE2_0
+                case DSTORE       : store2(readVarIndex(wide)); break;
                 case LSTORE_0     :
                 case DSTORE_0     : store2(0); break;
-
-                // STORE2_1
                 case LSTORE_1     :
                 case DSTORE_1     : store2(1); break;
-
-                // STORE2_2
                 case LSTORE_2     :
                 case DSTORE_2     : store2(2); break;
-
-                // STORE2_3
                 case LSTORE_3     :
                 case DSTORE_3     : store2(3); break;
-
-
-                // POP3
                 case IASTORE      :
                 case FASTORE      :
                 case AASTORE      :
                 case BASTORE      :
                 case CASTORE      :
                 case SASTORE      :
-                // POP4_PUSH1
                 case LCMP         :
                 case DCMPL        :
                 case DCMPG        : pop(3); break;
-
-                // POP4
                 case LASTORE      :
                 case DASTORE      : pop(4); break;
-
                 case DUP:
                     push1(top());
                     break;
@@ -708,7 +838,8 @@ public final class BytecodeExtender {
                 }
 
                 case MULTIANEWARRAY: {
-                    int dimensions = code[bci + 2] & 0xff;
+                    readU2();
+                    int dimensions = readU1();
                     pop(dimensions);
                     push1();
                     break;
@@ -716,45 +847,43 @@ public final class BytecodeExtender {
 
                 case ARETURN: {
                     if (pop1()) {
-                        code[opcodePos] = (byte) WRETURN;
-                        changed = true;
-                        if (DEBUG) {
-                            System.out.println("     ---> wreturn");
-                        }
+                        outCode[opcodeBci] = (byte) WRETURN;
+                        recordChange();
                     }
                     break;
                 }
 
-                case ALOAD:     loadRefOrWord(readU1(bci, wide), WLOAD); break;
+                case ALOAD:     loadRefOrWord(readVarIndex(wide), WLOAD); break;
                 case ALOAD_0:   loadRefOrWord(0, WLOAD_0); break;
                 case ALOAD_1:   loadRefOrWord(0, WLOAD_1); break;
                 case ALOAD_2:   loadRefOrWord(0, WLOAD_2); break;
                 case ALOAD_3:   loadRefOrWord(0, WLOAD_3); break;
 
-                case ASTORE:    storeRefOrWord(readU1(bci, wide), WSTORE); break;
+                case ASTORE:    storeRefOrWord(readVarIndex(wide), WSTORE); break;
                 case ASTORE_0:  storeRefOrWord(0, WSTORE_0); break;
                 case ASTORE_1:  storeRefOrWord(0, WSTORE_1); break;
                 case ASTORE_2:  storeRefOrWord(0, WSTORE_2); break;
                 case ASTORE_3:  storeRefOrWord(0, WSTORE_3); break;
 
-                case INVOKEVIRTUAL:   intrinsifier.invokevirtual(this, readU2(bci));   break;
-                case INVOKESPECIAL:   intrinsifier.invokespecial(this, readU2(bci));   break;
-                case INVOKESTATIC:    intrinsifier.invokestatic(this, readU2(bci));    break;
-                case INVOKEINTERFACE: intrinsifier.invokeinterface(this, readU2(bci)); break;
+                case INVOKEVIRTUAL:   intrinsifier.invokevirtual(this, readU2());   break;
+                case INVOKESPECIAL:   intrinsifier.invokespecial(this, readU2());   break;
+                case INVOKESTATIC:    intrinsifier.invokestatic(this, readU2());    break;
+                case INVOKEINTERFACE: intrinsifier.invokeinterface(this, readU2()); break;
 
-                case GETFIELD:        intrinsifier.getfield(this, readU2(bci));        break;
-                case PUTFIELD:        intrinsifier.putfield(this, readU2(bci));        break;
-                case GETSTATIC:       intrinsifier.getstatic(this, readU2(bci));       break;
-                case PUTSTATIC:       intrinsifier.putstatic(this, readU2(bci));       break;
+                case GETFIELD:        intrinsifier.getfield(this, readU2());        break;
+                case PUTFIELD:        intrinsifier.putfield(this, readU2());        break;
+                case GETSTATIC:       intrinsifier.getstatic(this, readU2());       break;
+                case PUTSTATIC:       intrinsifier.putstatic(this, readU2());       break;
 
-                case JNICALL:         intrinsifier.jnicall(this, readU2(bci));         break;
+                case JNICALL:         intrinsifier.jnicall(this, readU2());         break;
 
                 default:
                     throw new InternalError("unexpected opcode " + opcode + " [" + nameOf(opcode) + "]");
             }
 
+            // Process exception handlers (if any)
             if (handlerMap != null && canTrap(opcode)) {
-                for (Handler handler = handlerMap[opcodePos]; handler != null; handler = handler.next) {
+                for (Handler handler = handlerMap[opcodeBci]; handler != null; handler = handler.next) {
                     Frame frame = handler.frame;
                     if (frame == null) {
                         frame = frameMap[handler.bci];
@@ -777,40 +906,32 @@ public final class BytecodeExtender {
             if (isBlockEnd(opcode) || frameMap[nextBci] != null) {
                 if (isBranch(opcode)) {
                     if (length == 3) {
-                        merge(opcodePos + readS2(bci));
+                        merge(opcodeBci + readS2());
                     } else {
                         assert length == 5;
-                        merge(opcodePos + readS4(bci));
+                        merge(opcodeBci + readS4());
                     }
                     if (isConditionalBranch(opcode)) {
-                        merge(opcodePos + length);
+                        merge(opcodeBci + length);
                     }
                 } else if (opcode == TABLESWITCH) {
-                    bci = align4(bci);
-                    final int defaultOffset = readS4(bci);
-                    bci += 4;
-                    final int lowMatch = readS4(bci);
-                    bci += 4;
-                    final int highMatch = readS4(bci);
-                    bci += 4;
+                    align4();
+                    final int defaultOffset = readS4();
+                    final int lowMatch = readS4();
+                    final int highMatch = readS4();
                     final int numberOfCases = highMatch - lowMatch + 1;
-                    merge(opcodePos + defaultOffset);
+                    merge(opcodeBci + defaultOffset);
                     for (int i = 0; i < numberOfCases; i++) {
-                        merge(opcodePos + readS4(bci));
-                        bci += 4;
+                        merge(opcodeBci + readS4());
                     }
                 } else if (opcode == LOOKUPSWITCH) {
-                    bci = align4(bci);
-                    final int defaultOffset = readS4(bci);
-                    bci += 4;
-                    final int numberOfCases = readS4(bci);
-                    bci += 4;
-                    merge(opcodePos + defaultOffset);
+                    align4();
+                    final int defaultOffset = readS4();
+                    final int numberOfCases = readS4();
+                    merge(opcodeBci + defaultOffset);
                     for (int i = 0; i < numberOfCases; i++) {
-                        readS4(bci);
-                        bci += 4;
-                        merge(opcodePos + readS4(bci));
-                        bci += 4;
+                        readS4();
+                        merge(opcodeBci + readS4());
                     }
                 }
 
@@ -837,6 +958,7 @@ public final class BytecodeExtender {
         }
     }
 
+    // DEBUG support
     private boolean isTodo(Frame frame) {
         for (Frame f = todo; f != null; f = f.next) {
             if (f == frame) {
@@ -847,10 +969,7 @@ public final class BytecodeExtender {
 
     }
 
-    private void addTodo(Frame frame) {
-
-    }
-
+    // DEBUG support
     private String todoAsString() {
         StringBuilder sb = new StringBuilder();
         sb.append('[');

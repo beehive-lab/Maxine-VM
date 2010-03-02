@@ -21,13 +21,10 @@
 
 package com.sun.max.vm.bytecode.graft;
 
-import java.lang.reflect.*;
-import java.util.*;
-
 import com.sun.c1x.bytecode.*;
-import com.sun.c1x.bytecode.BytecodeExtender.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.c1x.bytecode.BytecodeIntrinsifier.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
@@ -36,55 +33,36 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 /**
- *
+ * The Maxine-specific part of {@linkplain BytecodeIntrinsifier intrinsification}.
  *
  * @author Doug Simon
  */
-public class Intrinsics extends Intrinsifier {
+public class Intrinsics extends IntrinsifierClient {
 
     final ClassMethodActor compilee;
     final CodeAttribute codeAttribute;
     final ConstantPool cp;
+    public boolean unsafe;
+    public boolean extended;
 
+    /**
+     * Creates an {@link Intrinsics} instance to process the bytecode of a single method.
+     *
+     * @param compilee the method to be processed
+     * @param codeAttribute the code of the method to be processed
+     */
     public Intrinsics(ClassMethodActor compilee, CodeAttribute codeAttribute) {
         this.cp = codeAttribute.constantPool;
         this.compilee = compilee;
         this.codeAttribute = codeAttribute;
+        unsafe = compilee.isUnsafe();
     }
 
-    private static final HashMap<MethodActor, Integer> intrinsicsMap = new HashMap<MethodActor, Integer>();
-
-    @HOSTED_ONLY
-    public static boolean isUnsafeCast(Method method) {
-        final INTRINSIC intrinsic = method.getAnnotation(INTRINSIC.class);
-        if (intrinsic == null) {
-            return false;
-        }
-        return intrinsic.value() == Bytecodes.UNSAFE_CAST;
-    }
-
-    @HOSTED_ONLY
-    public static synchronized void register() {
-        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
-            for (ClassMethodActor classMethodActor : classActor.localStaticMethodActors()) {
-                registerMethod(classMethodActor);
-            }
-            for (ClassMethodActor classMethodActor : classActor.localVirtualMethodActors()) {
-                registerMethod(classMethodActor);
-            }
-        }
-    }
-
-    @HOSTED_ONLY
-    private static void registerMethod(ClassMethodActor classMethodActor) {
-        final INTRINSIC intrinsic = classMethodActor.getAnnotation(INTRINSIC.class);
-        if (intrinsic != null) {
-            Integer oldValue = intrinsicsMap.put(classMethodActor, intrinsic.value());
-            assert oldValue == null;
-        }
-    }
-
-    public void run() {
+    /**
+     * Creates the map denoting which local variables of the method being intrinsified
+     * initially hold {@link Word} values based its signature.
+     */
+    private boolean[] initLocals() {
         boolean[] locals = new boolean[codeAttribute.maxLocals];
         int i = 0;
         if (!compilee.isStatic()) {
@@ -98,126 +76,178 @@ public class Intrinsics extends Intrinsifier {
             }
             i += kind.stackSlots;
         }
+        return locals;
+    }
+
+    /**
+     * Processes the given code to intrinsify it.
+     *
+     * @return {@code} if the code is determined to be unsafe (i.e. cannot be compiled by the JIT compiler)
+     */
+    public boolean run() {
         try {
-            BytecodeExtender bce = new BytecodeExtender(this, compilee, codeAttribute.code(), codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, locals);
-            bce.run();
+            extended = new BytecodeIntrinsifier(this, compilee, codeAttribute.code(), null, codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, initLocals()).run();
+            return unsafe;
         } catch (Throwable e) {
-            String dis = "\n\n" + CodeAttributePrinter.toString(codeAttribute);
-            Throwable error = new InternalError("Error while intrinsifying " + compilee + dis).initCause(e);
-            error.printStackTrace();
-            new BytecodeExtender(this, compilee, codeAttribute.code(), codeAttribute.exceptionHandlerPositions(), codeAttribute.maxStack, locals).run();
-            throw (InternalError) error;
+            String msg = String.format("Error while intrinsifying " + compilee + "%n" + CodeAttributePrinter.toString(codeAttribute));
+            throw (InternalError) new InternalError(msg).initCause(e);
         }
     }
 
-    private void intrinsify(BytecodeExtender bce, int cpi, boolean isStatic) {
+    /**
+     * Determines if a given opcode is unsafe (i.e. cannot be compiled by the JIT compiler).
+     *
+     * @param opcode an opcode to test
+     */
+    private static boolean isUnsafe(int opcode) {
+        switch (opcode) {
+            // Checkstyle: stop
+            case Bytecodes.READGPR            :
+            case Bytecodes.WRITEGPR           :
+            case Bytecodes.SAFEPOINT          :
+            case Bytecodes.PAUSE              :
+            case Bytecodes.ADD_SP             :
+            case Bytecodes.READ_PC            :
+            case Bytecodes.FLUSHW             :
+            case Bytecodes.ALLOCA             :
+            case Bytecodes.STACKADDR          :
+            case Bytecodes.JNICALL            :
+            case Bytecodes.CALL               :
+            case Bytecodes.ICMP               :
+            case Bytecodes.WCMP               :
+            case Bytecodes.RET                :
+            case Bytecodes.JSR_W              :
+            case Bytecodes.JSR                : return true;
+            // Checkstyle: resume
+        }
+        return false;
+    }
+
+    /**
+     * Attempts to intrinsify a method invocation.
+     *
+     * @param bi the intrinsification engine
+     * @param cpi the constant pool index of the invocation to process
+     * @param isStatic specifies if the invocation is to a static method
+     */
+    private void intrinsify(BytecodeIntrinsifier bi, int cpi, boolean isStatic) {
         MethodRefConstant constant = cp.methodAt(cpi);
         TypeDescriptor holder = constant.holder(cp);
+        SignatureDescriptor sig = constant.signature(cp);
         boolean holderIsWord = holder.toKind().isWord;
         if (holderIsWord || constant.isResolvableWithoutClassLoading(cp)) {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
-                Integer intrinsic = intrinsicsMap.get(method);
-                if (intrinsic != null) {
+                int intrinsic = method.intrinsic();
+                if (intrinsic == Bytecodes.UNSAFE_CAST) {
+                    Kind fromKind = isStatic ? sig.parameterDescriptorAt(0).toKind() : holder.toKind();
+                    Kind toKind = sig.resultKind();
+                    bi.intrinsify(Bytecodes.UNSAFE_CAST, fromKind.asEnum.ordinal() << 8 | toKind.asEnum.ordinal());
+                } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
+                    if (!unsafe) {
+                        unsafe = isUnsafe(opcode);
+                    }
                     assert Bytecodes.isExtension(opcode);
-                    int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xff : cpi;
-                    bce.intrinsify(opcode, operand);
-                } else if (holderIsWord && !isStatic) {
-                    // Cannot dispatch dynamically on Word types
-                    bce.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
-
+                    int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xffff : cpi;
+                    bi.intrinsify(opcode, operand);
+                } else {
+                    if (!unsafe) {
+                        unsafe = (method.flags() & (Actor.FOLD | Actor.INLINE)) != 0;
+                    }
+                    if (holderIsWord && !isStatic) {
+                        // Cannot dispatch dynamically on Word types
+                        bi.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
+                    }
                 }
             } catch (HostOnlyClassError e) {
             } catch (HostOnlyMethodError e) {
             }
         }
 
-        SignatureDescriptor sig = constant.signature(cp);
-        invoke(bce, isStatic, sig);
+        invoke(bi, isStatic, sig);
     }
 
-    private void invoke(BytecodeExtender bce, boolean isStatic, SignatureDescriptor sig) {
+    private void invoke(BytecodeIntrinsifier bi, boolean isStatic, SignatureDescriptor sig) {
         for (int i = sig.numberOfParameters() - 1; i >= 0; --i) {
             Kind kind = sig.parameterDescriptorAt(i).toKind();
-            bce.pop(kind.stackSlots);
+            bi.pop(kind.stackSlots);
         }
 
         if (!isStatic) {
-            bce.pop(1);
+            bi.pop(1);
         }
         Kind resultKind = sig.resultKind();
         if (resultKind != Kind.VOID) {
             if (resultKind.isCategory1) {
-                bce.push1(resultKind.isWord);
+                bi.push1(resultKind.isWord);
             } else {
-                bce.push2();
+                bi.push2();
             }
         }
     }
 
     @Override
-    public void invokeinterface(BytecodeExtender bce, int cpi) {
-        intrinsify(bce, cpi, false);
+    public void invokeinterface(BytecodeIntrinsifier bi, int cpi) {
+        intrinsify(bi, cpi, false);
     }
 
     @Override
-    public void invokespecial(BytecodeExtender bce, int cpi) {
-        intrinsify(bce, cpi, false);
+    public void invokespecial(BytecodeIntrinsifier bi, int cpi) {
+        intrinsify(bi, cpi, false);
     }
 
     @Override
-    public void invokestatic(BytecodeExtender bce, int cpi) {
-        intrinsify(bce, cpi, true);
+    public void invokestatic(BytecodeIntrinsifier bi, int cpi) {
+        intrinsify(bi, cpi, true);
     }
 
     @Override
-    public void invokevirtual(BytecodeExtender bce, int cpi) {
-        intrinsify(bce, cpi, false);
+    public void invokevirtual(BytecodeIntrinsifier bi, int cpi) {
+        intrinsify(bi, cpi, false);
     }
 
     @Override
-    public void jnicall(BytecodeExtender bce, int cpi) {
+    public void jnicall(BytecodeIntrinsifier bi, int cpi) {
         SignatureDescriptor sig = SignatureDescriptor.create(cp.utf8At(cpi, "native function descriptor"));
-        invoke(bce, true, sig);
+        invoke(bi, true, sig);
     }
 
     @Override
-    public void getfield(BytecodeExtender bce, int cpi) {
+    public void getfield(BytecodeIntrinsifier bi, int cpi) {
         FieldRefConstant constant = cp.fieldAt(cpi);
         Kind kind = constant.type(cp).toKind();
-        bce.pop1();
+        bi.pop1();
         if (kind.isCategory1) {
-            bce.push1(kind.isWord);
+            bi.push1(kind.isWord);
         } else {
-            bce.push2();
+            bi.push2();
         }
     }
 
     @Override
-    public void getstatic(BytecodeExtender bce, int cpi) {
+    public void getstatic(BytecodeIntrinsifier bi, int cpi) {
         FieldRefConstant constant = cp.fieldAt(cpi);
         Kind kind = constant.type(cp).toKind();
         if (kind.isCategory1) {
-            bce.push1(kind.isWord);
+            bi.push1(kind.isWord);
         } else {
-            bce.push2();
+            bi.push2();
         }
     }
 
     @Override
-    public void putfield(BytecodeExtender bce, int cpi) {
+    public void putfield(BytecodeIntrinsifier bi, int cpi) {
         FieldRefConstant constant = cp.fieldAt(cpi);
         Kind kind = constant.type(cp).toKind();
-        bce.pop(kind.stackSlots);
-        bce.pop1();
+        bi.pop(kind.stackSlots);
+        bi.pop1();
     }
 
     @Override
-    public void putstatic(BytecodeExtender bce, int cpi) {
+    public void putstatic(BytecodeIntrinsifier bi, int cpi) {
         FieldRefConstant constant = cp.fieldAt(cpi);
         Kind kind = constant.type(cp).toKind();
-        bce.pop(kind.stackSlots);
+        bi.pop(kind.stackSlots);
     }
-
 }

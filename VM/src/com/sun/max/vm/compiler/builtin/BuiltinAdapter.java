@@ -588,6 +588,14 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitBuiltin(builtin, result, arguments);
     }
 
+    public void visitMostSignificantBit(MostSignificantBit builtin, IR_Type result, IR_Type[] arguments) {
+        visitSpecialBuiltin(builtin, result, arguments);
+    }
+
+    public void visitLeastSignificantBit(LeastSignificantBit builtin, IR_Type result, IR_Type[] arguments) {
+        visitSpecialBuiltin(builtin, result, arguments);
+    }
+
     public void visitGetIntegerRegister(GetIntegerRegister builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }

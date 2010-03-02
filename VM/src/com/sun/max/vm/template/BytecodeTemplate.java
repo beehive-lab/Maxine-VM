@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
  *
  * The prefix of each {@code BytecodeTemplate} enum constant name up to the first '$'
  * character (if any) corresponds to the name of a {@link Bytecodes} enum constant.
- * This convention is used to determine the {@linkplain #bytecode} implemented by a given
+ * This convention is used to determine the {@linkplain #opcode} implemented by a given
  * bytecode template.
  *
  * The remainder of an {@code BytecodeTemplate} enum constant's name specifies various
@@ -43,6 +43,7 @@ import com.sun.max.vm.type.*;
 public enum BytecodeTemplate {
     NOP,
     NOP$instrumented$MethodEntry,
+    WCONST_0,
     ACONST_NULL,
     ICONST_M1,
     ICONST_0,
@@ -51,13 +52,9 @@ public enum BytecodeTemplate {
     ICONST_3,
     ICONST_4,
     ICONST_5,
-    LCONST_0,
-    LCONST_1,
-    FCONST_0,
-    FCONST_1,
-    FCONST_2,
-    DCONST_0,
-    DCONST_1,
+    LCONST(Bytecodes.LCONST_0),
+    FCONST(Bytecodes.FCONST_0),
+    DCONST(Bytecodes.DCONST_0),
     BIPUSH,
     SIPUSH,
     LDC$int,
@@ -71,26 +68,7 @@ public enum BytecodeTemplate {
     FLOAD,
     DLOAD,
     ALOAD,
-    ILOAD_0,
-    ILOAD_1,
-    ILOAD_2,
-    ILOAD_3,
-    LLOAD_0,
-    LLOAD_1,
-    LLOAD_2,
-    LLOAD_3,
-    FLOAD_0,
-    FLOAD_1,
-    FLOAD_2,
-    FLOAD_3,
-    DLOAD_0,
-    DLOAD_1,
-    DLOAD_2,
-    DLOAD_3,
-    ALOAD_0,
-    ALOAD_1,
-    ALOAD_2,
-    ALOAD_3,
+    WLOAD,
     IALOAD,
     LALOAD,
     FALOAD,
@@ -104,26 +82,7 @@ public enum BytecodeTemplate {
     FSTORE,
     DSTORE,
     ASTORE,
-    ISTORE_0,
-    ISTORE_1,
-    ISTORE_2,
-    ISTORE_3,
-    LSTORE_0,
-    LSTORE_1,
-    LSTORE_2,
-    LSTORE_3,
-    FSTORE_0,
-    FSTORE_1,
-    FSTORE_2,
-    FSTORE_3,
-    DSTORE_0,
-    DSTORE_1,
-    DSTORE_2,
-    DSTORE_3,
-    ASTORE_0,
-    ASTORE_1,
-    ASTORE_2,
-    ASTORE_3,
+    WSTORE,
     IASTORE,
     LASTORE,
     FASTORE,
@@ -157,10 +116,14 @@ public enum BytecodeTemplate {
     LDIV,
     FDIV,
     DDIV,
+    WDIV,
+    WDIVI,
     IREM,
     LREM,
     FREM,
     DREM,
+    WREM,
+    WREMI,
     INEG,
     LNEG,
     FNEG,
@@ -228,6 +191,7 @@ public enum BytecodeTemplate {
     GETSTATIC$long,
     GETSTATIC$double,
     GETSTATIC$reference,
+    GETSTATIC$word,
     GETSTATIC$byte$init,
     GETSTATIC$boolean$init,
     GETSTATIC$char$init,
@@ -237,6 +201,7 @@ public enum BytecodeTemplate {
     GETSTATIC$long$init,
     GETSTATIC$double$init,
     GETSTATIC$reference$init,
+    GETSTATIC$word$init,
 
     PUTSTATIC$byte,
     PUTSTATIC$boolean,
@@ -247,6 +212,7 @@ public enum BytecodeTemplate {
     PUTSTATIC$long,
     PUTSTATIC$double,
     PUTSTATIC$reference,
+    PUTSTATIC$word,
     PUTSTATIC$byte$init,
     PUTSTATIC$boolean$init,
     PUTSTATIC$char$init,
@@ -256,6 +222,7 @@ public enum BytecodeTemplate {
     PUTSTATIC$long$init,
     PUTSTATIC$double$init,
     PUTSTATIC$reference$init,
+    PUTSTATIC$word$init,
 
     GETFIELD$byte,
     GETFIELD$boolean,
@@ -370,7 +337,96 @@ public enum BytecodeTemplate {
     MULTIANEWARRAY,
     MULTIANEWARRAY$resolved,
     IFNULL,
-    IFNONNULL;
+    IFNONNULL,
+
+    PREAD_BYTE,
+    PREAD_CHAR,
+    PREAD_SHORT,
+    PREAD_INT,
+    PREAD_FLOAT,
+    PREAD_LONG,
+    PREAD_DOUBLE,
+    PREAD_WORD,
+    PREAD_REFERENCE,
+
+    PREAD_BYTE_I,
+    PREAD_CHAR_I,
+    PREAD_SHORT_I,
+    PREAD_INT_I,
+    PREAD_FLOAT_I,
+    PREAD_LONG_I,
+    PREAD_DOUBLE_I,
+    PREAD_WORD_I,
+    PREAD_REFERENCE_I,
+
+    PWRITE_BYTE,
+    PWRITE_SHORT,
+    PWRITE_INT,
+    PWRITE_FLOAT,
+    PWRITE_LONG,
+    PWRITE_DOUBLE,
+    PWRITE_WORD,
+    PWRITE_REFERENCE,
+
+    PWRITE_BYTE_I,
+    PWRITE_SHORT_I,
+    PWRITE_INT_I,
+    PWRITE_FLOAT_I,
+    PWRITE_LONG_I,
+    PWRITE_DOUBLE_I,
+    PWRITE_WORD_I,
+    PWRITE_REFERENCE_I,
+
+    PGET_BYTE,
+    PGET_CHAR,
+    PGET_SHORT,
+    PGET_INT,
+    PGET_FLOAT,
+    PGET_LONG,
+    PGET_DOUBLE,
+    PGET_WORD,
+    PGET_REFERENCE,
+
+    PSET_BYTE,
+    PSET_SHORT,
+    PSET_INT,
+    PSET_FLOAT,
+    PSET_LONG,
+    PSET_DOUBLE,
+    PSET_WORD,
+    PSET_REFERENCE,
+
+    PCMPSWP_INT,
+    PCMPSWP_WORD,
+    PCMPSWP_REFERENCE,
+
+    PCMPSWP_INT_I,
+    PCMPSWP_WORD_I,
+    PCMPSWP_REFERENCE_I,
+
+    MOV_I2F,
+    MOV_F2I,
+    MOV_L2D,
+    MOV_D2L,
+
+    UWLT,
+    UWLTEQ,
+    UWGT,
+    UWGTEQ,
+    UGE,
+    WRETURN,
+
+//    JNICALL,
+//    READGPR,
+//    WRITEGPR,
+
+    MEMBAR_LOAD_LOAD,
+    MEMBAR_LOAD_STORE,
+    MEMBAR_STORE_LOAD,
+    MEMBAR_STORE_STORE,
+    MEMBAR_MEMOP_STORE,
+    MEMBAR_ALL;
+
 
     public static final EnumMap<KindEnum, BytecodeTemplate> PUTSTATICS = makeKindMap(Bytecodes.PUTSTATIC);
     public static final EnumMap<KindEnum, BytecodeTemplate> GETSTATICS = makeKindMap(Bytecodes.GETSTATIC);
@@ -404,18 +460,19 @@ public enum BytecodeTemplate {
     }
 
     /**
-     * The bytecode implemented by this template.
+     * The opcode of the bytecode instruction implemented by this template. This is a representative opcode
+     * if a template is used to implement more than one bytecode instruction.
      */
-    public final int bytecode;
+    public final int opcode;
 
     /**
-     * Denotes the template that omits the class initialization check required by the {@linkplain #bytecode} instruction.
+     * Denotes the template that omits the class initialization check required by the {@linkplain #opcode} instruction.
      * This field is only non-null for the template that includes the initialization check (i.e. the uninitialized case).
      */
     public BytecodeTemplate initialized;
 
     /**
-     * Denotes the template that omits the class resolution check required by the {@linkplain #bytecode} instruction.
+     * Denotes the template that omits the class resolution check required by the {@linkplain #opcode} instruction.
      * This field is only non-null for the template that includes the resolution check (i.e. the unresolved case).
      */
     public BytecodeTemplate resolved;
@@ -426,13 +483,18 @@ public enum BytecodeTemplate {
     public BytecodeTemplate instrumented;
 
     @HOSTED_ONLY
+    private BytecodeTemplate(int representativeOpcode) {
+        this.opcode = representativeOpcode;
+    }
+
+    @HOSTED_ONLY
     private BytecodeTemplate() {
         String name = name();
         int dollar = name.indexOf('$');
         if (dollar == -1) {
-            bytecode = Bytecodes.valueOf(name);
+            opcode = Bytecodes.valueOf(name);
         } else {
-            bytecode = Bytecodes.valueOf(name.substring(0, dollar));
+            opcode = Bytecodes.valueOf(name.substring(0, dollar));
         }
     }
 

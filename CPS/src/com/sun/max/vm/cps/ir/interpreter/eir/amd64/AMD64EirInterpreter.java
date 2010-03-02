@@ -36,6 +36,7 @@ import com.sun.max.vm.cps.eir.amd64.*;
 import com.sun.max.vm.cps.eir.amd64.AMD64EirInstruction.*;
 import com.sun.max.vm.cps.ir.interpreter.*;
 import com.sun.max.vm.cps.ir.interpreter.eir.*;
+import com.sun.max.vm.cps.ir.interpreter.eir.amd64.AMD64EirCPU.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -994,5 +995,37 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
                 ProgramError.unknownCase();
                 break;
         }
+    }
+
+    @Override
+    public void visit(BSF_I64 instruction) {
+        final long a = cpu.readWord(instruction.sourceOperand().location()).asAddress().toLong();
+        if (a == 0) {
+            cpu.set(ConditionFlag.ZF, true);
+            return;
+        }
+        int i = 0;
+       // Otherwise, search the bit index of least significant bit..
+        while ((a & (1L <<i)) == 0) {
+            i++;
+        }
+        cpu.writeInt(instruction.destinationLocation(), i);
+        cpu.set(ConditionFlag.ZF, false);
+    }
+
+    @Override
+    public void visit(BSR_I64 instruction) {
+        long a = cpu.readWord(instruction.sourceOperand().location()).asAddress().toLong();
+        if (a == 0) {
+            cpu.set(ConditionFlag.ZF, true);
+            return;
+        }
+        // Otherwise, search the bit index of most significant bit..
+        int i = 0;
+        while ( (a >>= 1) != 0) {
+            i++;
+        }
+        cpu.writeInt(instruction.destinationLocation(), i);
+        cpu.set(ConditionFlag.ZF, false);
     }
 }

@@ -79,8 +79,8 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         displacedMiscWord.set(lockword);
     }
 
-    public final Word compareAndSwapDisplacedMisc(Word suspectedValue, Word newValue) {
-        return displacedMiscWord.compareAndSwap(suspectedValue, newValue);
+    public final Word compareAndSwapDisplacedMisc(Word expectedValue, Word newValue) {
+        return displacedMiscWord.compareAndSwap(expectedValue, newValue);
     }
 
     public void reset() {

@@ -28,6 +28,7 @@ import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.cps.eir.*;
+import com.sun.max.vm.cps.eir.EirOperand.*;
 import com.sun.max.vm.cps.eir.amd64.AMD64EirTargetEmitter.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -419,9 +420,15 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
     }
 
     public abstract static class Move extends AMD64EirBinaryOperation {
+
+        /**
+         * @param conditional specificies if this is a conditional move. For the purpose of the register allocator, a
+         *            conditional move is an {@link Effect#UPDATE} as opposed to simply being a
+         *            {@link Effect#DEFINITION}.
+         */
         protected Move(EirBlock block, EirValue destination, PoolSet<EirLocationCategory> destinationLocationCategories,
-                                       EirValue source, PoolSet<EirLocationCategory> sourceLocationCategories) {
-            super(block, destination, EirOperand.Effect.DEFINITION, destinationLocationCategories, source, EirOperand.Effect.USE, sourceLocationCategories);
+                                       EirValue source, PoolSet<EirLocationCategory> sourceLocationCategories, boolean conditional) {
+            super(block, destination, conditional ? EirOperand.Effect.UPDATE : EirOperand.Effect.DEFINITION, destinationLocationCategories, source, EirOperand.Effect.USE, sourceLocationCategories);
             if (source instanceof EirVariable) {
                 final EirVariable variable = (EirVariable) source;
                 if (variable.aliasedVariables() != null) {
@@ -433,9 +440,15 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
             }
         }
 
+        /**
+         * Marker interface for a move instruction that it conditional. For the purpose of the register allocator,
+         * a conditional move is an {@link Effect#UPDATE} as opposed to simply being a {@link Effect#DEFINITION}.
+         */
+        public static interface Conditional {}
+
         public abstract static class GeneralToGeneral extends Move {
-            protected GeneralToGeneral(EirBlock block, EirValue destination, EirValue source) {
-                super(block, destination, G, source, G_L_S);
+            protected GeneralToGeneral(EirBlock block, EirValue destination, EirValue source, boolean conditional) {
+                super(block, destination, G, source, G_L_S, conditional);
             }
 
             protected abstract void emit_G_G(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64EirRegister.General sourceRegister);
@@ -470,7 +483,7 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
 
         public abstract static class GeneralToXMM extends Move {
             protected GeneralToXMM(EirBlock block, EirValue destination, EirValue source) {
-                super(block, destination, F, source, G_L_S);
+                super(block, destination, F, source, G_L_S, false);
             }
 
             protected abstract void emit_X_G(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, AMD64EirRegister.General sourceRegister);
@@ -505,7 +518,7 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
 
         public abstract static class XMMToXMM extends Move {
             protected XMMToXMM(EirBlock block, EirValue destination, EirValue source) {
-                super(block, destination, F, source, F_L_S);
+                super(block, destination, F, source, F_L_S, false);
             }
 
             protected abstract void emit_X_X(AMD64EirTargetEmitter emitter, AMD64XMMRegister destinationRegister, AMD64XMMRegister sourceRegister);
@@ -540,7 +553,7 @@ public abstract class AMD64EirBinaryOperation extends AMD64EirUnaryOperation {
 
         public abstract static class XMMToGeneral extends Move {
             protected XMMToGeneral(EirBlock block, EirValue destination, EirValue source) {
-                super(block, destination, G, source, F_L_S);
+                super(block, destination, G, source, F_L_S, false);
             }
 
             protected abstract void emit_G_X(AMD64EirTargetEmitter emitter, AMD64EirRegister.General destinationRegister, AMD64XMMRegister sourceRegister);

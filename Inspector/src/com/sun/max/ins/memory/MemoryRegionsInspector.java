@@ -136,7 +136,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
 
     @Override
     public void watchpointSetChanged() {
-        if (vmState().processState() != ProcessState.TERMINATED) {
+        if (vm().state().processState() != ProcessState.TERMINATED) {
             refreshView(true);
         }
     }

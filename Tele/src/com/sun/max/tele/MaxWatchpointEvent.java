@@ -32,12 +32,12 @@ public interface MaxWatchpointEvent {
     /**
      * @return the watchpoint that triggered the event.
      */
-    MaxWatchpoint maxWatchpoint();
+    MaxWatchpoint watchpoint();
 
     /**
      * @return the thread that triggered the watchpoint.
      */
-    MaxThread maxThread();
+    MaxThread thread();
 
     /**
      * @return the memory location where the watchpoint was triggered.
