@@ -270,7 +270,7 @@ public interface MaxVM {
      * @see #allocatedMemoryRegions()
      * @see #teleImmortalHeapRegion()
      */
-    TeleRuntimeMemoryRegion teleBootHeapRegion();
+    TeleLinearAllocationMemoryRegion teleBootHeapRegion();
 
     /**
      * @return surrogate for the immortal heap {@link MemoryRegion}
@@ -278,7 +278,7 @@ public interface MaxVM {
      * @see #allocatedMemoryRegions()
      * @see #teleBootHeapRegion()
      */
-    TeleRuntimeMemoryRegion teleImmortalHeapRegion();
+    TeleLinearAllocationMemoryRegion teleImmortalHeapRegion();
 
     /**
      * @return surrogates for all {@link MemoryRegion}s in the {@link Heap} of the VM.
@@ -287,13 +287,13 @@ public interface MaxVM {
      * @see #allocatedMemoryRegions()
      * @see #teleImmortalHeapRegion()
      */
-    IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions();
+    IndexedSequence<TeleLinearAllocationMemoryRegion> teleHeapRegions();
 
     /**
      * @return surrogate for the special memory region allocated for holding
      * remote copies of addresses being held in {@linkplain Reference references}.
      */
-    TeleRuntimeMemoryRegion teleRootsRegion();
+    TeleLinearAllocationMemoryRegion teleRootsRegion();
 
     /**
      * @param address a memory address in the VM.

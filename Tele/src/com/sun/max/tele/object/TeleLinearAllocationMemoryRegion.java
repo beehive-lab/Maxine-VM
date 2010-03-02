@@ -18,35 +18,41 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * @author Hannes Payer
- */
-package com.sun.max.memory;
+package com.sun.max.tele.object;
 
+import com.sun.max.atomic.*;
+import com.sun.max.memory.*;
+import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.reference.*;
 
-/**
- * Immortal memory region can be used for objects, which are not collected by the GC.
- *
- * @author Hannes Payer
- */
-public class ImmortalMemoryRegion extends LinearAllocationMemoryRegion{
 
-    public ImmortalMemoryRegion() {
+public class TeleLinearAllocationMemoryRegion extends TeleRuntimeMemoryRegion {
+
+    public TeleLinearAllocationMemoryRegion(TeleVM teleVM, Reference linearAllocationMemoryRegionReference) {
+        super(teleVM, linearAllocationMemoryRegionReference);
+
     }
 
-    public ImmortalMemoryRegion(String name) {
-        super(name);
+    /**
+     * Reads from the VM the mark field of the {@link LinearAllocationMemoryRegion}.
+     */
+    public Address mark() {
+        final Reference mark = teleVM().teleFields().LinearAllocationMemoryRegion_mark.readReference(reference());
+        return mark.readWord(AtomicWord.valueOffset()).asPointer();
     }
 
-    public void initialize(Size size) {
-        Pointer region = VirtualMemory.allocate(size, VirtualMemory.Type.HEAP);
-        if (region.equals(Pointer.zero())) {
-            FatalError.unexpected("Initialization of immortal memory region failed");
+    /**
+     * @return how much memory in region has been allocated to objects, {@link Size#zero()) if memory for region not allocated.
+     */
+    public Size allocatedSize() {
+        if (isAllocated()) {
+            final Address mark = mark();
+            if (!mark.isZero()) {
+                return mark.minus(start()).asSize();
+            }
         }
-        this.size = size;
-        this.start = region;
-        this.mark.set(region);
+        return Size.zero();
     }
+
 }

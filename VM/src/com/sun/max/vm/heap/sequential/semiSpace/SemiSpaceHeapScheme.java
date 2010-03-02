@@ -123,18 +123,18 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
     private StopTheWorldGCDaemon collectorThread;
 
-    private RuntimeMemoryRegion fromSpace = null;
-    private RuntimeMemoryRegion toSpace = null;
+    private LinearAllocationMemoryRegion fromSpace = null;
+    private LinearAllocationMemoryRegion toSpace = null;
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final RuntimeMemoryRegion growFromSpace = new RuntimeMemoryRegion(FROM_GROW_REGION_NAME);
+    private final LinearAllocationMemoryRegion growFromSpace = new LinearAllocationMemoryRegion(FROM_GROW_REGION_NAME);
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
-    private final RuntimeMemoryRegion growToSpace = new RuntimeMemoryRegion(TO_GROW_REGION_NAME);
+    private final LinearAllocationMemoryRegion growToSpace = new LinearAllocationMemoryRegion(TO_GROW_REGION_NAME);
 
     /**
      * The amount of memory reserved for allocating and raising an OutOfMemoryError when insufficient
@@ -198,8 +198,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
 
             try {
                 Heap.enableImmortalMemoryAllocation();
-                fromSpace = new RuntimeMemoryRegion(FROM_REGION_NAME);
-                toSpace = new RuntimeMemoryRegion(TO_REGION_NAME);
+                fromSpace = new LinearAllocationMemoryRegion(FROM_REGION_NAME);
+                toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
             } finally {
                 Heap.disableImmortalMemoryAllocation();
             }
@@ -447,7 +447,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      * Attempts to allocate memory of given size for given space.
      * If successful sets region start and size.
      */
-    private static Address allocateSpace(RuntimeMemoryRegion space, Size size) {
+    private static Address allocateSpace(LinearAllocationMemoryRegion space, Size size) {
         final Address base = virtualAllocOption.getValue() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
         if (!base.isZero()) {
             space.setStart(base);
@@ -475,7 +475,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
      * Copies the state of one space into another.
      * Used when growing the semispaces.
      */
-    private static void copySpaceState(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    private static void copySpaceState(LinearAllocationMemoryRegion from, LinearAllocationMemoryRegion to) {
         to.setStart(from.start());
         to.mark.set(from.start());
         to.setSize(from.size());
