@@ -895,10 +895,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
             end = cell.plus(size);
             while (end.greaterThan(top)) {
-                if (VmThread.isAttaching()) {
-                    Log.println("Out of memory on thread still attaching to the VM");
-                    MaxineVM.native_exit(1);
-                }
                 if (!Heap.collectGarbage(size)) {
                     /*
                      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we

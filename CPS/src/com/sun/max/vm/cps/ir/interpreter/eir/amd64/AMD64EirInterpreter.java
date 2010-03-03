@@ -1004,12 +1004,7 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
             cpu.set(ConditionFlag.ZF, true);
             return;
         }
-        int i = 0;
-       // Otherwise, search the bit index of least significant bit..
-        while ((a & (1L <<i)) == 0) {
-            i++;
-        }
-        cpu.writeInt(instruction.destinationLocation(), i);
+        cpu.writeInt(instruction.destinationLocation(),  (int) Long.lowestOneBit(a));
         cpu.set(ConditionFlag.ZF, false);
     }
 
@@ -1020,12 +1015,7 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
             cpu.set(ConditionFlag.ZF, true);
             return;
         }
-        // Otherwise, search the bit index of most significant bit..
-        int i = 0;
-        while ( (a >>= 1) != 0) {
-            i++;
-        }
-        cpu.writeInt(instruction.destinationLocation(), i);
+        cpu.writeInt(instruction.destinationLocation(), (int) Long.highestOneBit(a));
         cpu.set(ConditionFlag.ZF, false);
     }
 }
