@@ -415,10 +415,22 @@ public enum BytecodeTemplate {
     UWGTEQ,
     UGE,
     WRETURN,
+    SAFEPOINT,
+    PAUSE,
 
 //    JNICALL,
-//    READGPR,
-//    WRITEGPR,
+    READGPR_FP_CPU,
+    READGPR_SP_CPU,
+    READGPR_FP_ABI,
+    READGPR_SP_ABI,
+    READGPR_LATCH,
+
+    WRITEGPR_FP_CPU,
+    WRITEGPR_SP_CPU,
+    WRITEGPR_FP_ABI,
+    WRITEGPR_SP_ABI,
+    WRITEGPR_LATCH,
+    WRITEGPR_LINK,
 
     MEMBAR_LOAD_LOAD,
     MEMBAR_LOAD_STORE,
@@ -426,6 +438,8 @@ public enum BytecodeTemplate {
     MEMBAR_STORE_STORE,
     MEMBAR_MEMOP_STORE,
     MEMBAR_ALL;
+
+
 
 
     public static final EnumMap<KindEnum, BytecodeTemplate> PUTSTATICS = makeKindMap(Bytecodes.PUTSTATIC);

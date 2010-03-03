@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.jdwp.vm.proxy.VMValue.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.vm.actor.*;
@@ -219,6 +220,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     private AppendableSequence<TeleStaticMethodActor> readTeleStaticMethodActors() {
         final Reference teleStaticMethodActorsArrayReference = teleVM().teleFields().ClassActor_localStaticMethodActors.readReference(reference());
         final TeleArrayObject teleStaticMethodActorsArray = (TeleArrayObject) teleVM().makeTeleObject(teleStaticMethodActorsArrayReference);
+        ProgramError.check(teleStaticMethodActorsArray != null, "Can't find static methd actors array for " + classActor());
         final AppendableSequence<TeleStaticMethodActor> localTeleStaticMethodActors = new LinkSequence<TeleStaticMethodActor>();
         for (int index = 0; index < teleStaticMethodActorsArray.getLength(); index++) {
             final Reference staticMethodActorReference = teleStaticMethodActorsArray.readElementValue(index).asReference();

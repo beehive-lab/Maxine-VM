@@ -26,7 +26,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
@@ -128,11 +127,6 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     @Override
     public Word readWord(VmThreadLocal local) {
         return teleEnabledVmThreadLocalValues == null ? Pointer.zero() : teleEnabledVmThreadLocalValues.getWord(local);
-    }
-
-    @Override
-    public Word readRegister(Role role, TargetABI targetABI) {
-        return teleNativeThread.integerRegisters().get(role, targetABI);
     }
 
     @Override

@@ -29,7 +29,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -103,8 +102,7 @@ public @interface METHOD_SUBSTITUTIONS {
             ProgramError.check(substitutionFound, "no method with " + SUBSTITUTE.class.getSimpleName() + " annotation found in " + substitutor);
         }
 
-        public static void processAnnotationInfo(AnnotationInfo annotationInfo, ClassActor substitutor) {
-            assert annotationInfo.annotationTypeDescriptor().equals(JavaTypeDescriptor.forJavaClass(METHOD_SUBSTITUTIONS.class));
+        public static void processAnnotationInfo(METHOD_SUBSTITUTIONS annotation, ClassActor substitutor) {
 
             // These two checks make it impossible for method substitutions holders to have instance fields.
             // A substitute non-static method could never access such a field given that the receiver is
@@ -112,27 +110,18 @@ public @interface METHOD_SUBSTITUTIONS {
             ProgramError.check(substitutor.superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT, "method substitution class must directly subclass java.lang.Object");
             ProgramError.check(substitutor.localInstanceFieldActors().length == 0, "method substitution class cannot declare any dynamic fields");
 
-            Class holder = null;
-            final AnnotationInfo.NameElementPair[] nameElementPairs = annotationInfo.nameElementPairs();
-            final AnnotationInfo.NameElementPair outerClassNameElementPair = nameElementPairs[0];
-            if (outerClassNameElementPair.name().equals("value")) {
-                final AnnotationInfo.TypeElement typeElement = (AnnotationInfo.TypeElement) outerClassNameElementPair.element();
-                holder = typeElement.typeDescriptor().resolveType(substitutor.classLoader);
+            Class holder;
+            if (annotation.value() != METHOD_SUBSTITUTIONS.class) {
+                assert annotation.hiddenClass().isEmpty();
+                holder = annotation.value();
             } else {
-                assert outerClassNameElementPair.name().equals("hiddenClass");
-                final AnnotationInfo.StringElement stringElement = (AnnotationInfo.StringElement) outerClassNameElementPair.element();
-                holder = Classes.forName(stringElement.string(), false, substitutor.classLoader);
+                assert !annotation.hiddenClass().isEmpty();
+                holder = Classes.forName(annotation.hiddenClass(), false, substitutor.classLoader);
             }
-            if (nameElementPairs.length > 1) {
-                final AnnotationInfo.NameElementPair innerClassNameElementPair = nameElementPairs[1];
-                assert innerClassNameElementPair.name().equals("innerClass");
-                final AnnotationInfo.StringElement stringElement = (AnnotationInfo.StringElement) innerClassNameElementPair.element();
-                if (!stringElement.string().isEmpty()) {
-                    holder = Classes.getInnerClass(holder, stringElement.string());
-                    ProgramError.check(holder != null, "method substitution inner class not found: " + holder + "." + stringElement.string());
-                }
+
+            if (!annotation.innerClass().isEmpty()) {
+                holder = Classes.getInnerClass(holder, annotation.innerClass());
             }
-            ProgramError.check(holder != null, "method substitution class not found");
             register(holder, substitutor.toJava());
         }
 

@@ -765,6 +765,7 @@ public final class JDK_java_lang_System {
      * @param javaAndZipLibraryPaths an array of size 2 in which the path to the libjava.jnilib will be returned in
      *            element 0 and the path to libzip.jnilib will be returned in element 1
      */
+    @PLATFORM(os = "!(windows|darwin)")
     private static void initUnixPathProperties(Properties properties, String javaHome, String isa, String[] javaAndZipLibraryPaths) {
         FatalError.check(javaHome.endsWith("/jre"), "The java.home system property should end with \"/jre\"");
         final String jrePath = javaHome;
@@ -822,6 +823,7 @@ public final class JDK_java_lang_System {
      * @param javaAndZipLibraryPaths an array of size 2 in which the path to the java.dll will be returned in
      *            element 0 and the path to zip.dll will be returned in element 1
      */
+    @PLATFORM(os = "windows")
     private static void initWindowsPathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
         throw FatalError.unexpected("Initialization of paths on Windows is unimplemented");
     }
@@ -834,6 +836,7 @@ public final class JDK_java_lang_System {
      * @param javaAndZipLibraryPaths an array of size 2 in which the path to the {@code libjava.jnilib} will be returned in
      *            element 0 and the path to {@code libzip.jnilib} will be returned in element 1
      */
+    @PLATFORM(os = "darwin")
     private static void initDarwinPathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
         FatalError.check(javaHome.endsWith("/Home"), "The java.home system property should end with \"/Home\"");
         final String javaPath = Strings.chopSuffix(javaHome, "/Home");
@@ -868,6 +871,7 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "java.ext.dirs", extDirs);
     }
 
+    @PLATFORM(os = "!windows")
     private static void initBasicUnixProperties(Properties properties) {
         setIfAbsent(properties, "java.io.tmpdir", "/var/tmp");
         setIfAbsent(properties, "java.awt.printerjob", "sun.print.PSPrinterJob");

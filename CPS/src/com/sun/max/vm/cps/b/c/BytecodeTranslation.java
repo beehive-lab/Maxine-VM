@@ -55,6 +55,7 @@ import com.sun.max.vm.cps.cir.variable.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -1831,8 +1832,17 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case UWGTEQ:                 stackCall(GreaterEqual.BUILTIN); break;
             case UGE:                    stackCall(UnsignedIntGreaterEqual.BUILTIN); break;
             case JNICALL:                jnicall(operand); break;
-            case READGPR:                stackCall(GetIntegerRegister.BUILTIN); break;
-            case WRITEGPR:               stackCall(SetIntegerRegister.BUILTIN); break;
+            case READGPR_FP_CPU:         readgpr(Role.CPU_FRAME_POINTER); break;
+            case READGPR_SP_CPU:         readgpr(Role.CPU_STACK_POINTER); break;
+            case READGPR_FP_ABI:         readgpr(Role.ABI_FRAME_POINTER); break;
+            case READGPR_SP_ABI:         readgpr(Role.ABI_STACK_POINTER); break;
+            case READGPR_LATCH:          readgpr(Role.SAFEPOINT_LATCH); break;
+            case WRITEGPR_FP_CPU:        writegpr(Role.CPU_FRAME_POINTER); break;
+            case WRITEGPR_SP_CPU:        writegpr(Role.CPU_STACK_POINTER); break;
+            case WRITEGPR_FP_ABI:        writegpr(Role.ABI_FRAME_POINTER); break;
+            case WRITEGPR_SP_ABI:        writegpr(Role.ABI_STACK_POINTER); break;
+            case WRITEGPR_LATCH:         writegpr(Role.SAFEPOINT_LATCH); break;
+            case WRITEGPR_LINK:          writegpr(Role.LINK_ADDRESS); break;
             case MEMBAR_LOAD_LOAD:       membar(MemoryBarrier.loadLoad); break;
             case MEMBAR_LOAD_STORE:      membar(MemoryBarrier.loadStore); break;
             case MEMBAR_STORE_LOAD:      membar(MemoryBarrier.storeLoad); break;
@@ -1868,5 +1878,13 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     private void membar(PoolSet<MemoryBarrier> barrier) {
         callAndPush(new JavaBuiltinOperator(BarMemory.BUILTIN), CirConstant.fromObject(barrier));
+    }
+
+    private void readgpr(VMRegister.Role role) {
+        callAndPush(new JavaBuiltinOperator(GetIntegerRegister.BUILTIN), CirConstant.fromObject(role));
+    }
+
+    private void writegpr(VMRegister.Role role) {
+        callAndPush(new JavaBuiltinOperator(SetIntegerRegister.BUILTIN), CirConstant.fromObject(role), pop(Kind.WORD));
     }
 }

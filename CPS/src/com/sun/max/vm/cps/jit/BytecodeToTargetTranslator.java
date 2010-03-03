@@ -31,7 +31,6 @@ import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
@@ -977,11 +976,21 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.MEMBAR_ALL         : emit(MEMBAR_ALL); break;
 
                 case Bytecodes.WRETURN            : emitReturn(WRETURN); break;
+                case Bytecodes.SAFEPOINT          : emit(SAFEPOINT); skip(2); break;
+                case Bytecodes.PAUSE              : emit(PAUSE); skip(2); break;
 
-                case Bytecodes.READGPR            :
-                case Bytecodes.WRITEGPR           :
-                case Bytecodes.SAFEPOINT          :
-                case Bytecodes.PAUSE              :
+                case Bytecodes.READGPR_FP_CPU     : emit(READGPR_FP_CPU); skip(2); break;
+                case Bytecodes.READGPR_SP_CPU     : emit(READGPR_SP_CPU); skip(2); break;
+                case Bytecodes.READGPR_FP_ABI     : emit(READGPR_FP_ABI); skip(2); break;
+                case Bytecodes.READGPR_SP_ABI     : emit(READGPR_SP_ABI); skip(2); break;
+                case Bytecodes.READGPR_LATCH      : emit(READGPR_LATCH); skip(2); break;
+                case Bytecodes.WRITEGPR_FP_CPU    : emit(WRITEGPR_FP_CPU); skip(2); break;
+                case Bytecodes.WRITEGPR_SP_CPU    : emit(WRITEGPR_SP_CPU); skip(2); break;
+                case Bytecodes.WRITEGPR_FP_ABI    : emit(WRITEGPR_FP_ABI); skip(2); break;
+                case Bytecodes.WRITEGPR_SP_ABI    : emit(WRITEGPR_SP_ABI); skip(2); break;
+                case Bytecodes.WRITEGPR_LATCH     : emit(WRITEGPR_LATCH); skip(2); break;
+                case Bytecodes.WRITEGPR_LINK      : emit(WRITEGPR_LINK); skip(2); break;
+
                 case Bytecodes.ADD_SP             :
                 case Bytecodes.READ_PC            :
                 case Bytecodes.FLUSHW             :

@@ -304,6 +304,19 @@ public class Bytecodes {
 
     // Extended bytecodes with operand:
 
+    public static final int READGPR_FP_CPU        = READGPR  | 1 << 8;
+    public static final int READGPR_SP_CPU        = READGPR  | 2 << 8;
+    public static final int READGPR_FP_ABI        = READGPR  | 3 << 8;
+    public static final int READGPR_SP_ABI        = READGPR  | 4 << 8;
+    public static final int READGPR_LATCH         = READGPR  | 5 << 8;
+
+    public static final int WRITEGPR_FP_CPU       = WRITEGPR  | 1 << 8;
+    public static final int WRITEGPR_SP_CPU       = WRITEGPR  | 2 << 8;
+    public static final int WRITEGPR_FP_ABI       = WRITEGPR  | 3 << 8;
+    public static final int WRITEGPR_SP_ABI       = WRITEGPR  | 4 << 8;
+    public static final int WRITEGPR_LATCH        = WRITEGPR  | 5 << 8;
+    public static final int WRITEGPR_LINK         = WRITEGPR  | 6 << 8;
+
     // Pointer compare-and-swap with word-sized offset
     public static final int PCMPSWP_INT         = PCMPSWP  | 1 << 8;
     public static final int PCMPSWP_WORD        = PCMPSWP  | 2 << 8;

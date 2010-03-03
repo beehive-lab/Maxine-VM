@@ -20,11 +20,12 @@
  */
 package com.sun.max.vm.thread;
 
-import java.security.AccessControlContext;
-
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import java.security.*;
+
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
@@ -35,7 +36,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.refmaps.*;
-import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
@@ -44,7 +44,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -846,7 +845,7 @@ public class VmThread {
             Log.println("  Stack layout:");
             Address lastRegionStart = Address.zero();
             final int stackSize = stackEnd.minus(stackBase).toInt();
-            final Pointer stackPointer = SpecialBuiltin.getIntegerRegister(Role.CPU_STACK_POINTER);
+            final Pointer stackPointer = VMRegister.getCpuStackPointer();
             lastRegionStart = traceStackRegion("OS thread specific data and native frames", stackBase, stackPointer, stackEnd, lastRegionStart, stackSize);
             lastRegionStart = traceStackRegion("Frame of Java methods, native stubs and native functions", stackBase, stackYellowZoneEnd(), stackPointer, lastRegionStart, stackSize);
             lastRegionStart = traceStackRegion("Stack yellow zone", stackBase, stackYellowZone, stackYellowZoneEnd(), lastRegionStart, stackSize);
