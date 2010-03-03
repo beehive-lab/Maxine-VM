@@ -802,10 +802,10 @@ public abstract class TeleVM implements MaxVM {
         return regions;
     }
 
-    public final MemoryRegion memoryRegionContaining(Address address) {
+    public final MemoryRegion findMemoryRegion(Address address) {
         MemoryRegion memoryRegion = null;
         try {
-            memoryRegion = teleHeapManager.regionContaining(address);
+            memoryRegion = teleHeapManager.findMemoryRegion(address);
             if (memoryRegion == null) {
                 memoryRegion = teleCodeManager().findCodeRegion(address);
                 if (memoryRegion == null) {

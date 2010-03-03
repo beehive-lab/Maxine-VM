@@ -826,7 +826,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            final MemoryRegion memoryRegion = vm().memoryRegionContaining(address);
+            final MemoryRegion memoryRegion = vm().findMemoryRegion(address);
             if (memoryRegion != null) {
                 action = actions().selectMemoryRegion(memoryRegion);
             }
