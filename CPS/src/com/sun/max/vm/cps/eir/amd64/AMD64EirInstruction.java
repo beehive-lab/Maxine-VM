@@ -1737,6 +1737,10 @@ public interface AMD64EirInstruction {
         @Override
         public void emit(AMD64EirTargetEmitter emitter) {
             final AMD64GeneralRegister64 destinationRegister = destinationGeneralRegister().as64();
+            // Set destination register to -1. It's value will be unchanged if no bit is set in the source
+            emitter.assembler().xor(destinationRegister, destinationRegister);
+            emitter.assembler().notq(destinationRegister);
+
             switch (sourceOperand().location().category()) {
                 case INTEGER_REGISTER: {
                     emitter.assembler().bsr(destinationRegister, sourceGeneralRegister().as64());
@@ -1772,6 +1776,9 @@ public interface AMD64EirInstruction {
         @Override
         public void emit(AMD64EirTargetEmitter emitter) {
             final AMD64GeneralRegister64 destinationRegister = destinationGeneralRegister().as64();
+            // Set destination register to -1. It's value will be unchanged if no bit is set in the source
+            emitter.assembler().xor(destinationRegister, destinationRegister);
+            emitter.assembler().notq(destinationRegister);
             switch (sourceOperand().location().category()) {
                 case INTEGER_REGISTER: {
                     emitter.assembler().bsf(destinationRegister, sourceGeneralRegister().as64());

@@ -52,8 +52,9 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
      * A marking algorithm for the MSHeapScheme.
      */
     final HeapMarker heapMarker;
+
     /**
-     * Head of linked list of free space.
+     * Free Space Manager.
      */
     final FreeHeapSpace freeSpace;
 

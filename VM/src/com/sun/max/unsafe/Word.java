@@ -223,15 +223,17 @@ public abstract class Word {
     /**
      * @return bit index of the least significant bit set, or -1 if zero.
      */
+    @INLINE
     public final int leastSignificantBitSet() {
-        return isZero() ? -1 : SpecialBuiltin.leastSignificantBit(this);
+        return SpecialBuiltin.leastSignificantBit(this);
     }
 
     /**
      * @return bit index of the least significant bit set, or -1 if zero.
      */
+    @INLINE
     public final int mostSignificantBitSet() {
-        return isZero() ? -1 : SpecialBuiltin.mostSignificantBit(this);
+        return SpecialBuiltin.mostSignificantBit(this);
     }
 
     @HOSTED_ONLY
