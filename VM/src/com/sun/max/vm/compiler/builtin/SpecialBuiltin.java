@@ -142,6 +142,7 @@ public abstract class SpecialBuiltin extends Builtin {
      * @param value the word scan for the least significant bit
      * @return the index to the least significant bit within the specified word
      */
+    @INTRINSIC(LSB)
     @BUILTIN(LeastSignificantBit.class)
     public static native int leastSignificantBit(Word value);
 
@@ -159,6 +160,7 @@ public abstract class SpecialBuiltin extends Builtin {
      * @param value the word scan for the most significant bit
      * @return the index to the most significant bit within the specified word
      */
+    @INTRINSIC(MSB)
     @BUILTIN(MostSignificantBit.class)
     public static native int mostSignificantBit(Word value);
 

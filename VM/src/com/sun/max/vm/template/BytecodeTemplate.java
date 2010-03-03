@@ -415,6 +415,8 @@ public enum BytecodeTemplate {
     UWGTEQ,
     UGE,
     WRETURN,
+    LSB,
+    MSB,
 
 //    JNICALL,
 //    READGPR,
