@@ -2614,6 +2614,18 @@ public class BytecodeTemplateSource {
         JitStackFrameOperation.pokeInt(0, UnsafeCast.asInt(SpecialBuiltin.unsignedIntGreaterEqual(value1, value2)));
     }
 
+    @BYTECODE_TEMPLATE(LSB)
+    public static void lsb() {
+        Word value2 = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.pokeInt(0, value2.leastSignificantBitSet());
+    }
+
+    @BYTECODE_TEMPLATE(MSB)
+    public static void msb() {
+        Word value2 = JitStackFrameOperation.peekWord(0);
+        JitStackFrameOperation.pokeInt(0, value2.mostSignificantBitSet());
+    }
+
 //    @INTRINSIC(Bytecodes.UNSAFE_CAST)
 //    private static native VMRegister.Role asRole(Object object);
 //

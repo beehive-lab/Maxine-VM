@@ -299,6 +299,8 @@ public class Bytecodes {
     public static final int ADD_SP               = 245; // (for template JIT)
     public static final int READ_PC              = 246;
     public static final int FLUSHW               = 247;
+    public static final int LSB                      = 248;
+    public static final int MSB                      = 249;
 
     // End extended bytecodes
 
@@ -719,6 +721,8 @@ public class Bytecodes {
         def("add_sp"          , "bii"  , EXTENSION);
         def("read_pc"         , "bii"  , EXTENSION);
         def("flushw"          , "bii"  , EXTENSION);
+        def("lsb", "bii", EXTENSION);
+        def("msb", "bii", EXTENSION);
     }
     // Checkstyle: resume
 

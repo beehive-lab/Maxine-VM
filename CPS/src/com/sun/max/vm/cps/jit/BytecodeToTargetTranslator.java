@@ -976,6 +976,8 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.MEMBAR_ALL         : emit(MEMBAR_ALL); break;
 
                 case Bytecodes.WRETURN            : emitReturn(WRETURN); break;
+                case Bytecodes.LSB: emit(LSB); break;
+                case Bytecodes.MSB: emit(MSB); break;
 
                 case Bytecodes.READGPR            :
                 case Bytecodes.WRITEGPR           :
