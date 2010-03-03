@@ -235,7 +235,7 @@ public interface CompilationScheme extends VMScheme {
          * <strong>Important:</strong> The Inspector assumes that this method is loaded
          * and compiled in the boot image and that it will never be dynamically recompiled.
          *
-         * @param targetMethod
+         * @param targetMethod the method compilation just created
          */
         @INSPECTED
         @NEVER_INLINE
