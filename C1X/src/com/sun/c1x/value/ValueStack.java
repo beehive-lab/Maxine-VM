@@ -357,6 +357,14 @@ public class ValueStack {
     }
 
     /**
+     * Pushes a value onto the stack and checks that it is a word.
+     * @param x the instruction to push onto the stack
+     */
+    public void wpush(Value x) {
+        xpush(assertWord(x));
+    }
+
+    /**
      * Pushes a value onto the stack and checks that it is a JSR return address.
      * @param x the instruction to push onto the stack
      */
@@ -426,6 +434,14 @@ public class ValueStack {
      */
     public Value apop() {
         return assertObject(xpop());
+    }
+
+    /**
+     * Pops a value off of the stack and checks that it is a word.
+     * @return x the instruction popped off the stack
+     */
+    public Value wpop() {
+        return assertWord(xpop());
     }
 
     /**
@@ -688,6 +704,11 @@ public class ValueStack {
 
     private static Value assertObject(Value x) {
         assert x != null && x.kind == CiKind.Object;
+        return x;
+    }
+
+    private static Value assertWord(Value x) {
+        assert x != null && x.kind == CiKind.Word;
         return x;
     }
 

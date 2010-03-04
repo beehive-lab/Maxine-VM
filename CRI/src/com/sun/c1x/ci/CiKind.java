@@ -33,8 +33,8 @@ public enum CiKind {
     Char('c', "char", "jchar", 1),
     Int('i', "int", "jint", 1),
     Float('f', "float", "jfloat", 1),
-    Double('d', "double", "jdouble", 2),
     Long('l', "long", "jlong", 2),
+    Double('d', "double", "jdouble", 2),
     Object('a', "object", "jobject", 1),
     Word('w', "word", null, 1),
     Void('v', "void", "void", 0),
@@ -46,6 +46,8 @@ public enum CiKind {
         this.javaName = name;
         this.jniName = jniName;
         this.size = size;
+        switch (ch) {
+        }
     }
 
     /**
@@ -196,6 +198,29 @@ public enum CiKind {
     }
 
     /**
+     * Gets the basic type from a character.
+     * @param ch the character corresponding to the {@link #typeChar} of a {@link CiKind} constant.
+     * @return the basic type
+     */
+    public static CiKind fromTypeChar(char ch) {
+        switch (ch) {
+            case 'z': return Boolean;
+            case 'c': return Char;
+            case 'f': return Float;
+            case 'd': return Double;
+            case 'b': return Byte;
+            case 's': return Short;
+            case 'i': return Int;
+            case 'l': return Long;
+            case 'a': return Object;
+            case 'w': return Word;
+            case 'v': return Void;
+            case 'r': return Jsr;
+        }
+        throw new IllegalArgumentException("unknown type character: " + ch);
+    }
+
+    /**
      * Gets the array class which has elements of this basic type. This method
      * is only defined for primtive types.
      * @return the Java class which represents arrays of this basic type
@@ -252,6 +277,14 @@ public enum CiKind {
      */
     public final boolean isObject() {
         return this == CiKind.Object;
+    }
+
+    /**
+     * Checks whether this value type is a word type.
+     * @return {@code true} if this type is a word
+     */
+    public final boolean isWord() {
+        return this == CiKind.Word;
     }
 
     /**

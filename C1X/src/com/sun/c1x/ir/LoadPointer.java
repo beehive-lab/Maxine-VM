@@ -20,8 +20,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
-import com.sun.c1x.ci.CiKind;
 
 /**
  * The <code>LoadPointer</code> instruction represents a read of a pointer.
@@ -29,28 +29,26 @@ import com.sun.c1x.ci.CiKind;
  * stack banging, etc, and does not correspond to a Java operation.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public final class LoadPointer extends StateSplit {
-
-    Value pointer;
-    final boolean isVolatile;
-    final boolean canTrap;
-    final boolean isPrefetch;
+public final class LoadPointer extends PointerOp {
 
     /**
-     * Creates a new LoadPointer instance.
+     * Creates an instruction for a pointer load.
+     *
      * @param kind the kind of value loaded from the pointer
+     * @param opcode the opcode of the instruction
      * @param pointer the value producing the pointer
+     * @param displacement the value producing the displacement. This may be {@code null}.
+     * @param offsetOrIndex the value producing the scaled-index of the byte offset depending on whether {@code displacement} is {@code null}
      * @param canTrap {@code true} if the access can cause a trap
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
+     *
+     * @see PointerOp#PointerOp(CiKind, int, Value, Value, Value, boolean, ValueStack, boolean)
      */
-    public LoadPointer(CiKind kind, Value pointer, boolean canTrap, ValueStack stateBefore, boolean isVolatile) {
-        super(kind, stateBefore);
-        this.pointer = pointer;
-        this.isVolatile = isVolatile;
-        this.isPrefetch = false;
-        this.canTrap = canTrap;
+    public LoadPointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, boolean canTrap, ValueStack stateBefore, boolean isVolatile) {
+        super(kind, opcode, pointer, displacement, offsetOrIndex, canTrap, stateBefore, isVolatile);
     }
 
     /**
@@ -62,22 +60,4 @@ public final class LoadPointer extends StateSplit {
         v.visitLoadPointer(this);
     }
 
-    @Override
-    public boolean canTrap() {
-        return canTrap;
-    }
-
-    public Value pointer() {
-        return pointer;
-    }
-
-    /**
-     * Iterates over the input values to this instruction. In this case,
-     * it is only the pointer value.
-     * @param closure the closure to apply to each value
-     */
-    @Override
-    public void inputValuesDo(ValueClosure closure) {
-        pointer = closure.apply(pointer);
-    }
 }

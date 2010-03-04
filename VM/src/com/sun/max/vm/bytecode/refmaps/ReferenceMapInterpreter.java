@@ -30,6 +30,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.stackmap.*;
@@ -1359,8 +1360,8 @@ public abstract class ReferenceMapInterpreter {
 
 
                 case UNSAFE_CAST: {
-                    pop(KindEnum.VALUES.get(readUnsigned1()).asKind());
-                    push(KindEnum.VALUES.get(readUnsigned1()).asKind());
+                    pop(Intrinsics.toUnsafeCastOperand((char) readUnsigned1()));
+                    push(Intrinsics.toUnsafeCastOperand((char) readUnsigned1()));
                     break;
                 }
                 case WLOAD: {

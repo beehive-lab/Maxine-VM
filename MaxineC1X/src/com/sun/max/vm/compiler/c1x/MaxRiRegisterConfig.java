@@ -44,6 +44,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
 
     private final CiRegister safepointRegister;
     private final CiRegister stackPointerRegister;
+    private final CiRegister framePointerRegister;
     private final CiRegister scratchRegister;
     private final CiRegister returnRegisterInt;
     private final CiRegister returnRegisterFloat;
@@ -73,7 +74,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         RegisterRoleAssignment roles = abi.registerRoleAssignment;
         safepointRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.SAFEPOINT_LATCH, roles);
         stackPointerRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.CPU_STACK_POINTER, roles);
-        markUnallocatable(unallocatable, regMap, VMRegister.Role.CPU_FRAME_POINTER, roles);
+        framePointerRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.CPU_FRAME_POINTER, roles);
         scratchRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.ABI_SCRATCH, roles);
         markUnallocatable(unallocatable, regMap, VMRegister.Role.LITERAL_BASE_POINTER, roles);
         returnRegisterInt = regMap.get(roles.integerRegisterActingAs(VMRegister.Role.ABI_RETURN).name().toLowerCase());
@@ -140,6 +141,10 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
 
     public CiRegister getStackPointerRegister() {
         return stackPointerRegister;
+    }
+
+    public CiRegister getFramePointerRegister() {
+        return framePointerRegister;
     }
 
     public CiRegister getScratchRegister() {

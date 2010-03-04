@@ -139,25 +139,25 @@ public final class VMRegister {
     }
 
     @INLINE
-    @INTRINSIC(READGPR_SP_CPU)
+    @INTRINSIC(READREG_SP_CPU)
     public static Pointer getCpuStackPointer() {
         return SpecialBuiltin.getIntegerRegister(Role.CPU_STACK_POINTER);
     }
 
     @INLINE
-    @INTRINSIC(WRITEGPR_SP_CPU)
+    @INTRINSIC(WRITEREG_SP_CPU)
     public static void setCpuStackPointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.CPU_STACK_POINTER, value);
     }
 
     @INLINE
-    @INTRINSIC(READGPR_FP_CPU)
+    @INTRINSIC(READREG_FP_CPU)
     public static Pointer getCpuFramePointer() {
         return SpecialBuiltin.getIntegerRegister(Role.CPU_FRAME_POINTER);
     }
 
     @INLINE
-    @INTRINSIC(WRITEGPR_FP_CPU)
+    @INTRINSIC(WRITEREG_FP_CPU)
     public static void setCpuFramePointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.CPU_FRAME_POINTER, value);
     }
@@ -168,37 +168,37 @@ public final class VMRegister {
     }
 
     @INLINE
-    @INTRINSIC(READGPR_SP_ABI)
+    @INTRINSIC(READREG_SP_ABI)
     public static Pointer getAbiStackPointer() {
         return SpecialBuiltin.getIntegerRegister(Role.ABI_STACK_POINTER);
     }
 
     @INLINE
-    @INTRINSIC(WRITEGPR_SP_ABI)
+    @INTRINSIC(WRITEREG_SP_ABI)
     public static void setAbiStackPointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.ABI_STACK_POINTER, value);
     }
 
     @INLINE
-    @INTRINSIC(READGPR_FP_ABI)
+    @INTRINSIC(READREG_FP_ABI)
     public static Pointer getAbiFramePointer() {
         return SpecialBuiltin.getIntegerRegister(Role.ABI_FRAME_POINTER);
     }
 
     @INLINE
-    @INTRINSIC(WRITEGPR_FP_ABI)
+    @INTRINSIC(WRITEREG_FP_ABI)
     public static void setAbiFramePointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.ABI_FRAME_POINTER, value);
     }
 
     @INLINE
-    @INTRINSIC(READGPR_LATCH)
+    @INTRINSIC(READREG_LATCH)
     public static Pointer getSafepointLatchRegister() {
         return SpecialBuiltin.getIntegerRegister(Role.SAFEPOINT_LATCH);
     }
 
     @INLINE
-    @INTRINSIC(WRITEGPR_LATCH)
+    @INTRINSIC(WRITEREG_LATCH)
     public static void setSafepointLatchRegister(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.SAFEPOINT_LATCH, value);
     }
@@ -215,7 +215,7 @@ public final class VMRegister {
     }
 
     @INLINE
-    @INTRINSIC(WRITEGPR_LINK)
+    @INTRINSIC(WRITEREG_LINK)
     public static void setCallAddressRegister(Word value) {
         if (callAddressRegisterExists()) {
             SpecialBuiltin.setIntegerRegister(Role.LINK_ADDRESS, value);

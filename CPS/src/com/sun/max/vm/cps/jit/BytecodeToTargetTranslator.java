@@ -979,17 +979,17 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.SAFEPOINT          : emit(SAFEPOINT); skip(2); break;
                 case Bytecodes.PAUSE              : emit(PAUSE); skip(2); break;
 
-                case Bytecodes.READGPR_FP_CPU     : emit(READGPR_FP_CPU); skip(2); break;
-                case Bytecodes.READGPR_SP_CPU     : emit(READGPR_SP_CPU); skip(2); break;
-                case Bytecodes.READGPR_FP_ABI     : emit(READGPR_FP_ABI); skip(2); break;
-                case Bytecodes.READGPR_SP_ABI     : emit(READGPR_SP_ABI); skip(2); break;
-                case Bytecodes.READGPR_LATCH      : emit(READGPR_LATCH); skip(2); break;
-                case Bytecodes.WRITEGPR_FP_CPU    : emit(WRITEGPR_FP_CPU); skip(2); break;
-                case Bytecodes.WRITEGPR_SP_CPU    : emit(WRITEGPR_SP_CPU); skip(2); break;
-                case Bytecodes.WRITEGPR_FP_ABI    : emit(WRITEGPR_FP_ABI); skip(2); break;
-                case Bytecodes.WRITEGPR_SP_ABI    : emit(WRITEGPR_SP_ABI); skip(2); break;
-                case Bytecodes.WRITEGPR_LATCH     : emit(WRITEGPR_LATCH); skip(2); break;
-                case Bytecodes.WRITEGPR_LINK      : emit(WRITEGPR_LINK); skip(2); break;
+                case Bytecodes.READREG_FP_CPU     : emit(READREG_FP_CPU); skip(2); break;
+                case Bytecodes.READREG_SP_CPU     : emit(READREG_SP_CPU); skip(2); break;
+                case Bytecodes.READREG_FP_ABI     : emit(READREG_FP_ABI); skip(2); break;
+                case Bytecodes.READREG_SP_ABI     : emit(READREG_SP_ABI); skip(2); break;
+                case Bytecodes.READREG_LATCH      : emit(READREG_LATCH); skip(2); break;
+                case Bytecodes.WRITEREG_FP_CPU    : emit(WRITEREG_FP_CPU); skip(2); break;
+                case Bytecodes.WRITEREG_SP_CPU    : emit(WRITEREG_SP_CPU); skip(2); break;
+                case Bytecodes.WRITEREG_FP_ABI    : emit(WRITEREG_FP_ABI); skip(2); break;
+                case Bytecodes.WRITEREG_SP_ABI    : emit(WRITEREG_SP_ABI); skip(2); break;
+                case Bytecodes.WRITEREG_LATCH     : emit(WRITEREG_LATCH); skip(2); break;
+                case Bytecodes.WRITEREG_LINK      : emit(WRITEREG_LINK); skip(2); break;
 
                 case Bytecodes.ADD_SP             :
                 case Bytecodes.READ_PC            :

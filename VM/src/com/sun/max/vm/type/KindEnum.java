@@ -28,17 +28,17 @@ import com.sun.max.vm.value.*;
  * This one represents kinds as bare enums and 'Kind' represents kinds parametrized
  * with their corresponding 'Value' type.
  * Since operations on kinds usually have type parameters, we have not placed any of them here.
- * 
+ *
  * @see Kind
- * 
+ *
  * @author Bernd Mathiske
  */
 public enum KindEnum {
 
-    VOID {
+    BOOLEAN {
         @Override
-        public Kind<VoidValue> asKind() {
-            return Kind.VOID;
+        public Kind<BooleanValue> asKind() {
+            return Kind.BOOLEAN;
         }
     },
 
@@ -46,13 +46,6 @@ public enum KindEnum {
         @Override
         public Kind<ByteValue> asKind() {
             return Kind.BYTE;
-        }
-    },
-
-    BOOLEAN {
-        @Override
-        public Kind<BooleanValue> asKind() {
-            return Kind.BOOLEAN;
         }
     },
 
@@ -98,6 +91,13 @@ public enum KindEnum {
         }
     },
 
+    REFERENCE {
+        @Override
+        public Kind<ReferenceValue> asKind() {
+            return Kind.REFERENCE;
+        }
+    },
+
     WORD {
         @Override
         public Kind<WordValue> asKind() {
@@ -105,12 +105,14 @@ public enum KindEnum {
         }
     },
 
-    REFERENCE {
+    VOID {
         @Override
-        public Kind<ReferenceValue> asKind() {
-            return Kind.REFERENCE;
+        public Kind<VoidValue> asKind() {
+            return Kind.VOID;
         }
     };
+
+
 
     public abstract Kind asKind();
 

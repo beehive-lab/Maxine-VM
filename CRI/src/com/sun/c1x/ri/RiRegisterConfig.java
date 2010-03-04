@@ -38,6 +38,8 @@ public interface RiRegisterConfig {
 
     CiRegister getStackPointerRegister();
 
+    CiRegister getFramePointerRegister();
+
     CiRegister getScratchRegister();
 
     CiRegister getSafepointRegister(); // will be deprecated with XIR

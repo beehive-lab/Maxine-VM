@@ -20,6 +20,7 @@
  */
 package com.sun.c1x.ci;
 
+
 /**
  * This class represents a boxed value, such as integer, floating point number, or object reference,
  * within the compiler and across the compiler/runtime barrier.
@@ -29,20 +30,21 @@ package com.sun.c1x.ci;
 public final class CiConstant extends CiValue {
 
     public static final CiConstant NULL_OBJECT = new CiConstant(CiKind.Object, null);
-    public static final CiConstant INT_MINUS_1 = forInt(-1);
-    public static final CiConstant INT_0 = forInt(0);
-    public static final CiConstant INT_1 = forInt(1);
-    public static final CiConstant INT_2 = forInt(2);
-    public static final CiConstant INT_3 = forInt(3);
-    public static final CiConstant INT_4 = forInt(4);
-    public static final CiConstant INT_5 = forInt(5);
-    public static final CiConstant LONG_0 = forLong(0);
-    public static final CiConstant LONG_1 = forLong(1);
-    public static final CiConstant FLOAT_0 = forFloat(0);
-    public static final CiConstant FLOAT_1 = forFloat(1);
-    public static final CiConstant FLOAT_2 = forFloat(2);
-    public static final CiConstant DOUBLE_0 = forDouble(0);
-    public static final CiConstant DOUBLE_1 = forDouble(1);
+    public static final CiConstant ZERO = new CiConstant(CiKind.Word, 0L);
+    public static final CiConstant INT_MINUS_1 = new CiConstant(CiKind.Int, -1);
+    public static final CiConstant INT_0 = new CiConstant(CiKind.Int, 0);
+    public static final CiConstant INT_1 = new CiConstant(CiKind.Int, 1);
+    public static final CiConstant INT_2 = new CiConstant(CiKind.Int, 2);
+    public static final CiConstant INT_3 = new CiConstant(CiKind.Int, 3);
+    public static final CiConstant INT_4 = new CiConstant(CiKind.Int, 4);
+    public static final CiConstant INT_5 = new CiConstant(CiKind.Int, 5);
+    public static final CiConstant LONG_0 = new CiConstant(CiKind.Long, 0L);
+    public static final CiConstant LONG_1 = new CiConstant(CiKind.Long, 1L);
+    public static final CiConstant FLOAT_0 = new CiConstant(CiKind.Float, 0.0F);
+    public static final CiConstant FLOAT_1 = new CiConstant(CiKind.Float, 1.0F);
+    public static final CiConstant FLOAT_2 = new CiConstant(CiKind.Float, 2.0F);
+    public static final CiConstant DOUBLE_0 = new CiConstant(CiKind.Double, 0.0D);
+    public static final CiConstant DOUBLE_1 = new CiConstant(CiKind.Double, 1.0D);
 
     private final Object value;
 
@@ -295,7 +297,7 @@ public final class CiConstant extends CiValue {
      * @return a value type representing the long
      */
     public static CiConstant forLong(long i) {
-        return new CiConstant(CiKind.Long, i);
+        return i == 0 ? LONG_0 : i == 1 ? LONG_1 : new CiConstant(CiKind.Long, i);
     }
 
     /**
@@ -304,6 +306,15 @@ public final class CiConstant extends CiValue {
      * @return a value type representing the integer
      */
     public static CiConstant forInt(int i) {
+        switch (i) {
+            case -1 : return INT_MINUS_1;
+            case 0  : return INT_0;
+            case 1  : return INT_1;
+            case 2  : return INT_2;
+            case 3  : return INT_3;
+            case 4  : return INT_4;
+            case 5  : return INT_5;
+        }
         return new CiConstant(CiKind.Int, i);
     }
 

@@ -137,7 +137,7 @@ public class C1XOptions {
 
     // miscellaneous settings
     public static boolean SupportObjectConstants        = true;
-    public static boolean SupportWordTypes              = ____;
+    public static boolean SupportWordTypes              = true;
 
     // Linear scan settings
     public static boolean StressLinearScan              = ____;

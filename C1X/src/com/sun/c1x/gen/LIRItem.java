@@ -59,7 +59,7 @@ public class LIRItem {
         setInstruction(null);
     }
 
-    public void loadItemForce(LIROperand reg) {
+    public LIRItem loadItemForce(LIROperand reg) {
         LIROperand r = result();
         if (r != reg) {
             assert r.kind != CiKind.Illegal;
@@ -72,14 +72,16 @@ public class LIRItem {
             }
             result = reg;
         }
+        return this;
     }
 
-    public void loadItem(CiKind type) {
+    public LIRItem loadItem(CiKind type) {
         if (type == CiKind.Byte || type == CiKind.Boolean) {
             loadByteItem();
         } else {
             loadItem();
         }
+        return this;
     }
 
     public void loadForStore(CiKind type) {
@@ -173,7 +175,7 @@ public class LIRItem {
         result = opr;
     }
 
-    public void loadItem() {
+    public LIRItem loadItem() {
         if (isIllegal(result())) {
             // update the items result
             result = value.operand();
@@ -187,6 +189,7 @@ public class LIRItem {
                 setResult(reg);
             }
         }
+        return this;
     }
 
     public int asInt() {
