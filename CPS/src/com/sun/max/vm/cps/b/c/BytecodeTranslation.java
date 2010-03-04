@@ -1832,17 +1832,17 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case UWGTEQ:                 stackCall(GreaterEqual.BUILTIN); break;
             case UGE:                    stackCall(UnsignedIntGreaterEqual.BUILTIN); break;
             case JNICALL:                jnicall(operand); break;
-            case READGPR_FP_CPU:         readgpr(Role.CPU_FRAME_POINTER); break;
-            case READGPR_SP_CPU:         readgpr(Role.CPU_STACK_POINTER); break;
-            case READGPR_FP_ABI:         readgpr(Role.ABI_FRAME_POINTER); break;
-            case READGPR_SP_ABI:         readgpr(Role.ABI_STACK_POINTER); break;
-            case READGPR_LATCH:          readgpr(Role.SAFEPOINT_LATCH); break;
-            case WRITEGPR_FP_CPU:        writegpr(Role.CPU_FRAME_POINTER); break;
-            case WRITEGPR_SP_CPU:        writegpr(Role.CPU_STACK_POINTER); break;
-            case WRITEGPR_FP_ABI:        writegpr(Role.ABI_FRAME_POINTER); break;
-            case WRITEGPR_SP_ABI:        writegpr(Role.ABI_STACK_POINTER); break;
-            case WRITEGPR_LATCH:         writegpr(Role.SAFEPOINT_LATCH); break;
-            case WRITEGPR_LINK:          writegpr(Role.LINK_ADDRESS); break;
+            case READREG_FP_CPU:         readreg(Role.CPU_FRAME_POINTER); break;
+            case READREG_SP_CPU:         readreg(Role.CPU_STACK_POINTER); break;
+            case READREG_FP_ABI:         readreg(Role.ABI_FRAME_POINTER); break;
+            case READREG_SP_ABI:         readreg(Role.ABI_STACK_POINTER); break;
+            case READREG_LATCH:          readreg(Role.SAFEPOINT_LATCH); break;
+            case WRITEREG_FP_CPU:        writereg(Role.CPU_FRAME_POINTER); break;
+            case WRITEREG_SP_CPU:        writereg(Role.CPU_STACK_POINTER); break;
+            case WRITEREG_FP_ABI:        writereg(Role.ABI_FRAME_POINTER); break;
+            case WRITEREG_SP_ABI:        writereg(Role.ABI_STACK_POINTER); break;
+            case WRITEREG_LATCH:         writereg(Role.SAFEPOINT_LATCH); break;
+            case WRITEREG_LINK:          writereg(Role.LINK_ADDRESS); break;
             case MEMBAR_LOAD_LOAD:       membar(MemoryBarrier.loadLoad); break;
             case MEMBAR_LOAD_STORE:      membar(MemoryBarrier.loadStore); break;
             case MEMBAR_STORE_LOAD:      membar(MemoryBarrier.storeLoad); break;
@@ -1880,11 +1880,11 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         callAndPush(new JavaBuiltinOperator(BarMemory.BUILTIN), CirConstant.fromObject(barrier));
     }
 
-    private void readgpr(VMRegister.Role role) {
+    private void readreg(VMRegister.Role role) {
         callAndPush(new JavaBuiltinOperator(GetIntegerRegister.BUILTIN), CirConstant.fromObject(role));
     }
 
-    private void writegpr(VMRegister.Role role) {
+    private void writereg(VMRegister.Role role) {
         callAndPush(new JavaBuiltinOperator(SetIntegerRegister.BUILTIN), CirConstant.fromObject(role), pop(Kind.WORD));
     }
 }

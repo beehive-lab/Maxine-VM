@@ -102,8 +102,8 @@ public class Intrinsics extends IntrinsifierClient {
     private static boolean isUnsafe(int opcode) {
         switch (opcode) {
             // Checkstyle: stop
-            case Bytecodes.READGPR            :
-            case Bytecodes.WRITEGPR           :
+            case Bytecodes.READREG            :
+            case Bytecodes.WRITEREG           :
             case Bytecodes.SAFEPOINT          :
             case Bytecodes.PAUSE              :
             case Bytecodes.ADD_SP             :
@@ -121,6 +121,44 @@ public class Intrinsics extends IntrinsifierClient {
             // Checkstyle: resume
         }
         return false;
+    }
+
+    public static char toUnsafeOperand(Kind kind) {
+        switch (kind.asEnum) {
+            // Checkstyle: stop
+            case INT:        return 'i';
+            case BOOLEAN:    return 'z';
+            case BYTE:       return 'b';
+            case CHAR:       return 'c';
+            case DOUBLE:     return 'd';
+            case FLOAT:      return 'f';
+            case LONG:       return 'l';
+            case REFERENCE:  return 'a';
+            case SHORT:      return 's';
+            case WORD:       return 'w';
+            // Checkstyle: resume
+            default:
+                throw new IllegalArgumentException("Unknown UNSAFE_CAST type char operand: " + kind);
+        }
+    }
+
+    public static Kind toUnsafeCastOperand(char typeChar) {
+        switch (typeChar) {
+            // Checkstyle: stop
+            case 'i': return Kind.INT;
+            case 'z': return Kind.BOOLEAN;
+            case 'b': return Kind.BYTE;
+            case 'c': return Kind.CHAR;
+            case 'd': return Kind.DOUBLE;
+            case 'f': return Kind.FLOAT;
+            case 'l': return Kind.LONG;
+            case 'a': return Kind.REFERENCE;
+            case 's': return Kind.SHORT;
+            case 'w': return Kind.WORD;
+            // Checkstyle: resume
+            default:
+                throw new IllegalArgumentException("Unknown UNSAFE_CAST type char operand: " + typeChar);
+        }
     }
 
     /**
@@ -142,7 +180,9 @@ public class Intrinsics extends IntrinsifierClient {
                 if (intrinsic == Bytecodes.UNSAFE_CAST) {
                     Kind fromKind = isStatic ? sig.parameterDescriptorAt(0).toKind() : holder.toKind();
                     Kind toKind = sig.resultKind();
-                    bi.intrinsify(Bytecodes.UNSAFE_CAST, fromKind.asEnum.ordinal() << 8 | toKind.asEnum.ordinal());
+                    char fromChar = toUnsafeOperand(fromKind);
+                    char toChar = toUnsafeOperand(toKind);
+                    bi.intrinsify(Bytecodes.UNSAFE_CAST, fromChar << 8 | toChar);
                 } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
                     if (!unsafe) {

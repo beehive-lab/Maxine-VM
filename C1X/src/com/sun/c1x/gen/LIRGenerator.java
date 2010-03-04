@@ -31,6 +31,7 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.lir.LIRAddress.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
@@ -694,15 +695,49 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.move(forRegister(x.kind, x.register()), reg);
     }
 
+    private LIRAddress getAddressForPointerOp(PointerOp x, LIRItem pointer) {
+        LIRAddress addr;
+        if (x.displacement() == null) {
+            // address is [pointer + offset]
+            if (x.offset().isConstant() && x.offset().kind.isInt()) {
+                int displacement = x.offset().asConstant().asInt();
+                addr = new LIRAddress((LIRLocation) pointer.result(), displacement, x.kind);
+            } else {
+                LIRItem index = new LIRItem(x.offset(), this);
+                index.loadItem();
+                addr = new LIRAddress((LIRLocation) pointer.result(), (LIRLocation) index.result(), x.kind);
+            }
+        } else {
+            // address is [pointer + disp + (index * scale)]
+            assert (x.opcode & 0xff) == Bytecodes.PGET;
+            int displacement = x.displacement().asConstant().asInt();
+            LIRItem index = new LIRItem(x.index(), this);
+            index.loadItem();
+            Scale scale = Scale.fromInt(Util.log2(compilation.target.sizeInBytes(x.kind)));
+            addr = new LIRAddress((LIRLocation) pointer.result(), (LIRLocation) index.result(), scale, displacement, x.kind);
+        }
+        return addr;
+    }
+
     @Override
     public void visitLoadPointer(LoadPointer x) {
-        CiKind kind = x.kind;
         LIRDebugInfo info = maybeStateFor(x);
         LIRItem pointer = new LIRItem(x.pointer(), this);
-        // TODO: recognize more complex addressing modes
         pointer.loadItem();
-        LIROperand reg = rlockResult(x);
-        lir.load(new LIRAddress((LIRLocation) pointer.result(), 0, kind), reg, info);
+        LIROperand dst = rlockResult(x);
+        LIRAddress src = getAddressForPointerOp(x, pointer);
+        lir.load(src, dst, info);
+    }
+
+    @Override
+    public void visitStorePointer(StorePointer x) {
+        LIRDebugInfo info = maybeStateFor(x);
+        LIRItem pointer = new LIRItem(x.pointer(), this);
+        LIRItem value = new LIRItem(x.value(), this);
+        value.loadItem();
+        pointer.loadItem();
+        LIRAddress dst = getAddressForPointerOp(x, pointer);
+        lir.store(value.result(), dst, info);
     }
 
     @Override
@@ -1049,17 +1084,6 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIROperand reg = forRegister(x.kind, x.register());
         LIRItem src = new LIRItem(x.value(), this);
         lir.move(src.result(), reg);
-    }
-
-    @Override
-    public void visitStorePointer(StorePointer x) {
-        LIRDebugInfo info = maybeStateFor(x);
-        LIRItem pointer = new LIRItem(x.pointer(), this);
-        LIRItem value = new LIRItem(x.value(), this);
-        // TODO: recognize more complex addressing modes
-        value.loadItem();
-        pointer.loadItem();
-        lir.store(value.result(), new LIRAddress((LIRLocation) pointer.result(), 0, x.kind), info);
     }
 
     @Override

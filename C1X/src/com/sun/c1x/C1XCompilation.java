@@ -22,7 +22,6 @@
 package com.sun.c1x;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.c1x.alloc.*;
 import com.sun.c1x.asm.*;
@@ -320,7 +319,7 @@ public class C1XCompilation {
             CiTargetMethod targetMethod = masm().finishTargetMethod(runtime, -1);
 
             if (C1XOptions.PrintCFGToFile) {
-                cfgPrinter().printMachineCode(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
+                cfgPrinter().printMachineCode(runtime.disassemble(targetMethod));
             }
 
             if (C1XOptions.PrintTimers) {

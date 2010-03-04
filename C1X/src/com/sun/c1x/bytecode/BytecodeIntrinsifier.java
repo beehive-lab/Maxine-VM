@@ -855,15 +855,15 @@ public final class BytecodeIntrinsifier {
 
                 case ALOAD:     loadRefOrWord(readVarIndex(wide), WLOAD); break;
                 case ALOAD_0:   loadRefOrWord(0, WLOAD_0); break;
-                case ALOAD_1:   loadRefOrWord(0, WLOAD_1); break;
-                case ALOAD_2:   loadRefOrWord(0, WLOAD_2); break;
-                case ALOAD_3:   loadRefOrWord(0, WLOAD_3); break;
+                case ALOAD_1:   loadRefOrWord(1, WLOAD_1); break;
+                case ALOAD_2:   loadRefOrWord(2, WLOAD_2); break;
+                case ALOAD_3:   loadRefOrWord(3, WLOAD_3); break;
 
                 case ASTORE:    storeRefOrWord(readVarIndex(wide), WSTORE); break;
                 case ASTORE_0:  storeRefOrWord(0, WSTORE_0); break;
-                case ASTORE_1:  storeRefOrWord(0, WSTORE_1); break;
-                case ASTORE_2:  storeRefOrWord(0, WSTORE_2); break;
-                case ASTORE_3:  storeRefOrWord(0, WSTORE_3); break;
+                case ASTORE_1:  storeRefOrWord(1, WSTORE_1); break;
+                case ASTORE_2:  storeRefOrWord(2, WSTORE_2); break;
+                case ASTORE_3:  storeRefOrWord(3, WSTORE_3); break;
 
                 case INVOKEVIRTUAL:   intrinsifier.invokevirtual(this, readU2());   break;
                 case INVOKESPECIAL:   intrinsifier.invokespecial(this, readU2());   break;

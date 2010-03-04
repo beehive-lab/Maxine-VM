@@ -287,16 +287,68 @@ public class Bytecodes {
 
     public static final int UGE                  = 235; // Unsigned int greater-than-or-equal
 
-    public static final int READGPR              = 236;
-    public static final int WRITEGPR             = 237;
-    public static final int UNSAFE_CAST          = 238; // { u1 opcode; u1 fromKind; u1 toKind; }
+    /**
+     * Reads the value of a VM register.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // READREG
+     *           u2 register; // 1=CPU frame pointer, 2=CPU stack pointer, 3=ABI frame pointer, 4=ABI stack pointer, 5=Safepoint latch
+     *         }
+     * </pre>
+     */
+    public static final int READREG              = 236;
+
+    /**
+     * Writes the value of a VM register.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // WRITEREG
+     *           u2 register; // 1=CPU frame pointer, 2=CPU stack pointer, 3=ABI frame pointer, 4=ABI stack pointer, 5=Safepoint latch, 6=Link register
+     *         }
+     * </pre>
+     */
+    public static final int WRITEREG             = 237;
+
+    /**
+     * Unsafe cast of top value on stack. The valid type characters and their corresponding kinds are:
+     * <pre>
+     *  'z' = boolean
+     *  'c' = char
+     *  'f' = float
+     *  'd' = double
+     *  'b' = byte
+     *  's' = short
+     *  'i' = int
+     *  'l' = long
+     *  'a' = Object
+     *  'w' = Word
+     * </pre>
+     *
+     * <pre>
+     * Format: { u1 opcode;   // UNSAFE_CAST
+     *           u1 from;     // type char denoting input type
+     *           u1 to;       // type char denoting output type
+     *         }
+     * </pre>
+     */
+    public static final int UNSAFE_CAST          = 238;
     public static final int WRETURN              = 239;
     public static final int SAFEPOINT            = 240;
     public static final int ALLOCA               = 241;
+
+    /**
+     * Inserts a memory barrier.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // MEMBAR
+     *           u2 barrier;  // 1=LOAD_LOAD, 2=LOAD_STORE, 3=STORE_LOAD, 4=STORE_STORE, 5=MEMOP_STORE, 6=ALL
+     *         }
+     * </pre>
+     */
     public static final int MEMBAR               = 242;
     public static final int STACKADDR            = 243;
     public static final int PAUSE                = 244;
-    public static final int ADD_SP               = 245; // (for template JIT)
+    public static final int ADD_SP               = 245;
     public static final int READ_PC              = 246;
     public static final int FLUSHW               = 247;
 
@@ -304,18 +356,18 @@ public class Bytecodes {
 
     // Extended bytecodes with operand:
 
-    public static final int READGPR_FP_CPU        = READGPR  | 1 << 8;
-    public static final int READGPR_SP_CPU        = READGPR  | 2 << 8;
-    public static final int READGPR_FP_ABI        = READGPR  | 3 << 8;
-    public static final int READGPR_SP_ABI        = READGPR  | 4 << 8;
-    public static final int READGPR_LATCH         = READGPR  | 5 << 8;
+    public static final int READREG_FP_CPU        = READREG  | 1 << 8;
+    public static final int READREG_SP_CPU        = READREG  | 2 << 8;
+    public static final int READREG_FP_ABI        = READREG  | 3 << 8;
+    public static final int READREG_SP_ABI        = READREG  | 4 << 8;
+    public static final int READREG_LATCH         = READREG  | 5 << 8;
 
-    public static final int WRITEGPR_FP_CPU       = WRITEGPR  | 1 << 8;
-    public static final int WRITEGPR_SP_CPU       = WRITEGPR  | 2 << 8;
-    public static final int WRITEGPR_FP_ABI       = WRITEGPR  | 3 << 8;
-    public static final int WRITEGPR_SP_ABI       = WRITEGPR  | 4 << 8;
-    public static final int WRITEGPR_LATCH        = WRITEGPR  | 5 << 8;
-    public static final int WRITEGPR_LINK         = WRITEGPR  | 6 << 8;
+    public static final int WRITEREG_FP_CPU       = WRITEREG  | 1 << 8;
+    public static final int WRITEREG_SP_CPU       = WRITEREG  | 2 << 8;
+    public static final int WRITEREG_FP_ABI       = WRITEREG  | 3 << 8;
+    public static final int WRITEREG_SP_ABI       = WRITEREG  | 4 << 8;
+    public static final int WRITEREG_LATCH        = WRITEREG  | 5 << 8;
+    public static final int WRITEREG_LINK         = WRITEREG  | 6 << 8;
 
     // Pointer compare-and-swap with word-sized offset
     public static final int PCMPSWP_INT         = PCMPSWP  | 1 << 8;
@@ -720,8 +772,8 @@ public class Bytecodes {
         def("uge"             , "bii"  , EXTENSION);
         def("jnicall"         , "bii"  , EXTENSION | TRAP);
         def("call"            , "bii"  , EXTENSION | TRAP);
-        def("readgpr"         , "bii"  , EXTENSION);
-        def("writegpr"        , "bii"  , EXTENSION);
+        def("readreg"         , "bii"  , EXTENSION);
+        def("writereg"        , "bii"  , EXTENSION);
         def("unsafe_cast"     , "bii"  , EXTENSION);
         def("wreturn"         , "b"    , EXTENSION | TRAP | STOP);
         def("safepoint"       , "bii"  , EXTENSION | TRAP);
@@ -1043,6 +1095,41 @@ public class Bytecodes {
             case LSHL: return x << y;
             case LSHR: return x >> y;
             case LUSHR: return x >>> y;
+        }
+        return null;
+    }
+
+    @INTRINSIC(WDIV)
+    public static native long unsignedDivide(long x, long y);
+
+    @INTRINSIC(WDIVI)
+    public static native long unsignedDivideByInt(long x, int y);
+
+    @INTRINSIC(WREM)
+    public static native long unsignedRemainder(long x, long y);
+
+    @INTRINSIC(WREMI)
+    public static native long unsignedRemainderByInt(long x, int y);
+
+    /**
+     * This method attempts to fold a binary operation on two constant word inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return a <code>Long</code> instance representing the result of folding the operation,
+     * if it is foldable, <code>null</code> otherwise
+     */
+    public static Long foldWordOp2(int opcode, long x, long y) {
+        if (y == 0) {
+            return null;
+        }
+        // attempt to fold a binary operation with constant inputs
+        switch (opcode) {
+            case WDIV:  return unsignedDivide(x, y);
+            case WDIVI: return unsignedDivideByInt(x, (int) y);
+            case WREM:  return unsignedRemainder(x, y);
+            case WREMI: return unsignedRemainderByInt(x, (int) y);
         }
         return null;
     }

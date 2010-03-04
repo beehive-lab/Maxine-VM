@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -24,53 +24,77 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>StorePointer</code> instruction represents a write of a pointer.
- * This instruction is part of the HIR support for low-level operations, such as safepoints,
- * stack banging, etc, and does not correspond to a Java operation.
+ * The base class for pointer access operations.
  *
- * @author Ben L. Titzer
  * @author Doug Simon
  */
-public final class StorePointer extends PointerOp {
+public abstract class PointerOp extends StateSplit {
 
-    Value value;
+    public final int opcode;
+    protected Value pointer;
+    protected Value displacement;
+    protected Value offsetOrIndex;
+    protected final boolean isVolatile;
+    protected final boolean canTrap;
+    final boolean isPrefetch;
 
     /**
-     * Creates an instruction for a pointer store. If {@code displacement != null}, the effective of the address of the store is
+     * Creates an instruction for a pointer operation. If {@code displacement != null}, the effective of the address of the operation is
      * computed as the pointer plus a byte displacement plus a scaled index. Otherwise, the effective address is computed as the
      * pointer plus a byte offset.
      *
-     * @param kind the kind of value stored to the pointer
+     * @param kind the kind of value at the address accessed by the pointer operation
+     * @param opcode the opcode of the instruction
      * @param pointer the value producing the pointer
      * @param displacement the value producing the displacement. This may be {@code null}.
      * @param offsetOrIndex the value producing the scaled-index of the byte offset depending on whether {@code displacement} is {@code null}
-     * @param value the value to write to the pointer
      * @param canTrap {@code true} if the access can cause a trap
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public StorePointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, Value value, boolean canTrap, ValueStack stateBefore, boolean isVolatile) {
-        super(kind, opcode, pointer, displacement, offsetOrIndex, canTrap, stateBefore, isVolatile);
-        this.value = value;
-        setFlag(Flag.LiveStore);
+    public PointerOp(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, boolean canTrap, ValueStack stateBefore, boolean isVolatile) {
+        super(kind, stateBefore);
+        this.opcode = opcode;
+        this.pointer = pointer;
+        this.displacement = displacement;
+        this.offsetOrIndex = offsetOrIndex;
+        this.isVolatile = isVolatile;
+        this.canTrap = canTrap;
+        this.isPrefetch = false;
+    }
+
+    @Override
+    public boolean canTrap() {
+        return canTrap;
+    }
+
+    public Value pointer() {
+        return pointer;
+    }
+
+    public Value index() {
+        return offsetOrIndex;
+    }
+
+    public Value offset() {
+        return offsetOrIndex;
+    }
+
+    public Value displacement() {
+        return displacement;
     }
 
     /**
-     * Implements this instruction's half of the visitor pattern.
-     * @param v the visitor to accept
+     * Iterates over the input values to this instruction. In this case,
+     * it is only the pointer value.
+     * @param closure the closure to apply to each value
      */
     @Override
-    public void accept(ValueVisitor v) {
-        v.visitStorePointer(this);
-    }
-
-    public Value value() {
-        return value;
-    }
-
-    @Override
     public void inputValuesDo(ValueClosure closure) {
-        super.inputValuesDo(closure);
-        value = closure.apply(value);
+        pointer = closure.apply(pointer);
+        offsetOrIndex = closure.apply(offsetOrIndex);
+        if (displacement != null) {
+            displacement = closure.apply(displacement);
+        }
     }
 }

@@ -220,6 +220,23 @@ public interface RiRuntime {
     String disassemble(byte[] code);
 
     /**
+     * Returns the disassembly of the given code bytes. Used for debugging purposes only.
+     *
+     * @param code the code bytes that should be disassembled
+     * @return the disassembly as a String object
+     */
+    String disassemble(CiTargetMethod targetMethod);
+
+    /**
+     * Returns the disassembly of the given method in a {@code javap}-like format.
+     * Used for debugging purposes only.
+     *
+     * @param method the method that should be disassembled
+     * @return the disassembly as a String object
+     */
+    String disassemble(RiMethod method);
+
+    /**
      * Registers the given global stub and returns an object that can be used to identify it in the relocation
      * information.
      *

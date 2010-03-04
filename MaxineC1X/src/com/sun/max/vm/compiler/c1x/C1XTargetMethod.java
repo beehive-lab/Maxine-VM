@@ -54,7 +54,7 @@ import com.sun.max.vm.stack.amd64.*;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public class C1XTargetMethod extends TargetMethod {
+public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private static final int RJMP = 0xe9;
 
@@ -133,7 +133,7 @@ public class C1XTargetMethod extends TargetMethod {
     private void init(CiTargetMethod ciTargetMethod) {
 
         if (MaxineVM.isHosted()) {
-            // Save the target method for later gathering of calls
+            // Save the target method for later gathering of calls and duplication
             this.bootstrappingCiTargetMethod = ciTargetMethod;
         }
 
@@ -149,6 +149,24 @@ public class C1XTargetMethod extends TargetMethod {
                 adapter = generator.make(classMethodActor);
             }
             linkDirectCalls(adapter);
+        }
+    }
+
+    @Override
+    public TargetMethod duplicate() {
+        try {
+            C1XTargetMethod duplicate = (C1XTargetMethod) this.clone();
+
+            // Allocate and set the code and data buffer
+            final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, code.length);
+            Code.allocate(targetBundleLayout, duplicate);
+            duplicate.setData(scalarLiterals, referenceLiterals, code);
+
+            // TODO: Redo code patching
+
+            return duplicate;
+        } catch (CloneNotSupportedException e) {
+            throw FatalError.unexpected(null, e);
         }
     }
 
