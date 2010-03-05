@@ -26,17 +26,16 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * Internal representations of "primitive classes" such as 'int', 'char', etc.
  *
  * @author Bernd Mathiske
  */
-public final class PrimitiveClassActor<Value_Type extends Value<Value_Type>> extends ClassActor {
+public final class PrimitiveClassActor extends ClassActor {
 
     @HOSTED_ONLY
-    public PrimitiveClassActor(Kind<Value_Type> kind) {
+    public PrimitiveClassActor(Kind kind) {
         super(kind,
               NO_SPECIFIC_LAYOUT,
               HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER,

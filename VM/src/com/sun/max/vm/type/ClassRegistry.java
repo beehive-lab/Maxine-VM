@@ -76,15 +76,15 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public static final InterfaceActor CLONEABLE = createClass(Cloneable.class);
     public static final InterfaceActor SERIALIZABLE = createClass(Serializable.class);
 
-    public static final PrimitiveClassActor<VoidValue> VOID = createPrimitiveClass(Kind.VOID);
-    public static final PrimitiveClassActor<ByteValue> BYTE = createPrimitiveClass(Kind.BYTE);
-    public static final PrimitiveClassActor<BooleanValue> BOOLEAN = createPrimitiveClass(Kind.BOOLEAN);
-    public static final PrimitiveClassActor<ShortValue> SHORT = createPrimitiveClass(Kind.SHORT);
-    public static final PrimitiveClassActor<CharValue> CHAR = createPrimitiveClass(Kind.CHAR);
-    public static final PrimitiveClassActor<IntValue> INT = createPrimitiveClass(Kind.INT);
-    public static final PrimitiveClassActor<FloatValue> FLOAT = createPrimitiveClass(Kind.FLOAT);
-    public static final PrimitiveClassActor<LongValue> LONG = createPrimitiveClass(Kind.LONG);
-    public static final PrimitiveClassActor<DoubleValue> DOUBLE = createPrimitiveClass(Kind.DOUBLE);
+    public static final PrimitiveClassActor VOID = createPrimitiveClass(Kind.VOID);
+    public static final PrimitiveClassActor BYTE = createPrimitiveClass(Kind.BYTE);
+    public static final PrimitiveClassActor BOOLEAN = createPrimitiveClass(Kind.BOOLEAN);
+    public static final PrimitiveClassActor SHORT = createPrimitiveClass(Kind.SHORT);
+    public static final PrimitiveClassActor CHAR = createPrimitiveClass(Kind.CHAR);
+    public static final PrimitiveClassActor INT = createPrimitiveClass(Kind.INT);
+    public static final PrimitiveClassActor FLOAT = createPrimitiveClass(Kind.FLOAT);
+    public static final PrimitiveClassActor LONG = createPrimitiveClass(Kind.LONG);
+    public static final PrimitiveClassActor DOUBLE = createPrimitiveClass(Kind.DOUBLE);
 
     public static final ArrayClassActor<ByteValue> BYTE_ARRAY = createPrimitiveArrayClass(BYTE);
     public static final ArrayClassActor<BooleanValue> BOOLEAN_ARRAY = createPrimitiveArrayClass(BOOLEAN);
@@ -174,15 +174,15 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
      * Creates a ClassActor for a primitive type.
      */
     @HOSTED_ONLY
-    private static <Value_Type extends Value<Value_Type>> PrimitiveClassActor<Value_Type> createPrimitiveClass(Kind<Value_Type> kind) {
-        return put(new PrimitiveClassActor<Value_Type>(kind));
+    private static <Value_Type extends Value<Value_Type>> PrimitiveClassActor createPrimitiveClass(Kind<Value_Type> kind) {
+        return put(new PrimitiveClassActor(kind));
     }
 
     /**
      * Creates an ArrayClassActor for a primitive array type.
      */
     @HOSTED_ONLY
-    private static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createPrimitiveArrayClass(PrimitiveClassActor<Value_Type> componentClassActor) {
+    private static <Value_Type extends Value<Value_Type>> ArrayClassActor<Value_Type> createPrimitiveArrayClass(PrimitiveClassActor componentClassActor) {
         return put(new ArrayClassActor<Value_Type>(componentClassActor));
     }
 
