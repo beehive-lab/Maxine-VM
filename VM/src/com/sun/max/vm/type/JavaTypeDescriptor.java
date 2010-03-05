@@ -52,11 +52,13 @@ public final class JavaTypeDescriptor {
      * @author Ben L. Titzer
      */
     public static final class AtomicTypeDescriptor extends TypeDescriptorEntry {
+        public final Class javaClass;
         private Kind kind;
 
         @HOSTED_ONLY
-        AtomicTypeDescriptor(String name) {
+        AtomicTypeDescriptor(String name, Class javaClass) {
             super(name);
+            this.javaClass = javaClass;
         }
 
         @Override
@@ -66,7 +68,7 @@ public final class JavaTypeDescriptor {
 
         @Override
         public Class resolveType(ClassLoader classLoader) {
-            return kind.javaClass;
+            return javaClass;
         }
 
         @Override
@@ -132,15 +134,15 @@ public final class JavaTypeDescriptor {
         }
     }
 
-    public static final AtomicTypeDescriptor VOID = new AtomicTypeDescriptor("V");
-    public static final AtomicTypeDescriptor BYTE = new AtomicTypeDescriptor("B");
-    public static final AtomicTypeDescriptor BOOLEAN = new AtomicTypeDescriptor("Z");
-    public static final AtomicTypeDescriptor SHORT = new AtomicTypeDescriptor("S");
-    public static final AtomicTypeDescriptor CHAR = new AtomicTypeDescriptor("C");
-    public static final AtomicTypeDescriptor INT = new AtomicTypeDescriptor("I");
-    public static final AtomicTypeDescriptor FLOAT = new AtomicTypeDescriptor("F");
-    public static final AtomicTypeDescriptor LONG = new AtomicTypeDescriptor("J");
-    public static final AtomicTypeDescriptor DOUBLE = new AtomicTypeDescriptor("D");
+    public static final AtomicTypeDescriptor VOID = new AtomicTypeDescriptor("V", void.class);
+    public static final AtomicTypeDescriptor BYTE = new AtomicTypeDescriptor("B", byte.class);
+    public static final AtomicTypeDescriptor BOOLEAN = new AtomicTypeDescriptor("Z", boolean.class);
+    public static final AtomicTypeDescriptor SHORT = new AtomicTypeDescriptor("S", short.class);
+    public static final AtomicTypeDescriptor CHAR = new AtomicTypeDescriptor("C", char.class);
+    public static final AtomicTypeDescriptor INT = new AtomicTypeDescriptor("I", int.class);
+    public static final AtomicTypeDescriptor FLOAT = new AtomicTypeDescriptor("F", float.class);
+    public static final AtomicTypeDescriptor LONG = new AtomicTypeDescriptor("J", long.class);
+    public static final AtomicTypeDescriptor DOUBLE = new AtomicTypeDescriptor("D", double.class);
 
     private static final AtomicTypeDescriptor[] ATOMIC_DESCRIPTORS = {VOID, BYTE, BOOLEAN, SHORT, CHAR, INT, FLOAT, LONG, DOUBLE};
 
@@ -255,7 +257,7 @@ public final class JavaTypeDescriptor {
      */
     public static Class resolveToJavaClass(TypeDescriptor descriptor, ClassLoader classLoader) {
         if (descriptor instanceof AtomicTypeDescriptor) {
-            return ((AtomicTypeDescriptor) descriptor).toKind().javaClass;
+            return ((AtomicTypeDescriptor) descriptor).javaClass;
         }
 
         final String string = descriptor.toString();
@@ -560,7 +562,7 @@ public final class JavaTypeDescriptor {
 
     private static AtomicTypeDescriptor findAtomicTypeDescriptor(String name) {
         for (AtomicTypeDescriptor atom : ATOMIC_DESCRIPTORS) {
-            if (name.equals(atom.toKind().javaClass.getName())) {
+            if (name.equals(atom.javaClass.getName())) {
                 return atom;
             }
         }
@@ -569,7 +571,7 @@ public final class JavaTypeDescriptor {
 
     private static AtomicTypeDescriptor findAtomicTypeDescriptor(Class javaClass) {
         for (AtomicTypeDescriptor atom : ATOMIC_DESCRIPTORS) {
-            if (atom.toKind().javaClass == javaClass) {
+            if (atom.javaClass == javaClass) {
                 return atom;
             }
         }
