@@ -146,7 +146,7 @@ public class PrototypeObjectMirror implements ObjectMirror {
         field.setAccessible(true);
         final TypeDescriptor fieldDescriptor = fieldActor.descriptor();
         try {
-            if (KindTypeDescriptor.isWord(fieldDescriptor)) {
+            if (fieldDescriptor.toKind().isWord) {
                 final Class<Class<? extends Word>> type = null;
                 final Word word = value.toWord().as(StaticLoophole.cast(type, field.getType()));
                 field.set(object, word);
