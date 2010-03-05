@@ -130,7 +130,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
      * Determines if this is a primitive kind other than {@code void}.
      */
     public final boolean isPrimitiveValue() {
-        return JavaTypeDescriptor.isPrimitive(typeDescriptor);
+        return this != VOID && JavaTypeDescriptor.isPrimitive(typeDescriptor);
     }
 
     public final boolean isExtendedPrimitiveValue() {

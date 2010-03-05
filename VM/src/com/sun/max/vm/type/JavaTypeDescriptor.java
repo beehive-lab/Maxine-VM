@@ -46,6 +46,11 @@ public final class JavaTypeDescriptor {
     private JavaTypeDescriptor() {
     }
 
+    /**
+     * A type descriptor for void or a primitive type.
+     *
+     * @author Ben L. Titzer
+     */
     public static final class AtomicTypeDescriptor extends TypeDescriptorEntry {
         private Kind kind;
 
@@ -82,7 +87,7 @@ public final class JavaTypeDescriptor {
     }
 
     /**
-     * The special type descriptors corresponding to all the {@linkplain Word#getSubclasses() classes} in the {@link Word} hierarchy.
+     * A type descriptor for a {@linkplain Word#getSubclasses() class} in the {@link Word} hierarchy.
      *
      * @author Doug Simon
      */
