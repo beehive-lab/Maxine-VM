@@ -61,6 +61,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     protected Kind(KindEnum kindEnum, String name, Class javaClass, Class javaArrayClass, Class<Value_Type> valueClass, char character,
                    final Class boxedClass, TypeDescriptor typeDescriptor, WordWidth width) {
         this.asEnum = kindEnum;
+        kindEnum.setKind(this);
         this.name = SymbolTable.makeSymbol(name);
         this.javaClass = javaClass;
         this.javaArrayClass = javaArrayClass;
