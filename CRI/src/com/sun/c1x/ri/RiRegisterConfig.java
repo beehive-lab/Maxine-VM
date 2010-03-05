@@ -59,4 +59,12 @@ public interface RiRegisterConfig {
     int getCalleeSaveRegisterOffset(CiRegister register);
 
     CiRegister[] getRegisterReferenceMapOrder();
+    
+    /**
+     * Gets the integer register corresponding to a runtime-defined role.
+     * 
+     * @param id the identifier of a runtime-defined register role
+     * @return the integer register playing the role specified by {@code id}
+     */
+    CiRegister getIntegerRegister(int id);
 }

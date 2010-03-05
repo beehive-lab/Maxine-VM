@@ -1952,8 +1952,8 @@ public final class GraphBuilder {
                 case WREM           : // fall through
                 case WREMI          : genArithmeticOp(CiKind.Word, opcode, curState.copy()); break;
 
-                case READREG        : genLoadRegister(READREG | (s.readCPI() << 8)); break;
-                case WRITEREG       : genStoreRegister(WRITEREG | (s.readCPI() << 8)); break;
+                case READREG        : genLoadRegister(s.readCPI()); break;
+                case WRITEREG       : genStoreRegister(s.readCPI()); break;
 
                 case PREAD          : genLoadPointer(PREAD   | (s.readCPI() << 8)); break;
                 case PGET           : genLoadPointer(PGET    | (s.readCPI() << 8)); break;
@@ -1961,6 +1961,8 @@ public final class GraphBuilder {
                 case PSET           : genStorePointer(PSET   | (s.readCPI() << 8)); break;
 
                 case WRETURN        : genMethodReturn(wpop()); break;
+                case READ_PC        :
+
 //                case PCMPSWP: {
 //                    opcode |= readUnsigned2() << 8;
 //                    switch (opcode) {
@@ -2057,27 +2059,23 @@ public final class GraphBuilder {
         return end;
     }
 
-    private void genLoadRegister(int opcode) {
+    private void genLoadRegister(int registerId) {
         RiRegisterConfig registerConfig = compilation.target.registerConfig;
-        switch (opcode) {
-            case READREG_FP_CPU : wpush(append(new LoadRegister(CiKind.Word, registerConfig.getFramePointerRegister()))); break;
-            case READREG_SP_CPU : wpush(append(new LoadRegister(CiKind.Word, registerConfig.getStackPointerRegister()))); break;
-            case READREG_LATCH  : wpush(append(new LoadRegister(CiKind.Word, registerConfig.getSafepointRegister()))); break;
-            default:
-                throw new CiBailout("Unsupported READREG opcode " + opcode + "(" + nameOf(opcode) + ")");
+        CiRegister register = registerConfig.getIntegerRegister(registerId);
+        if (register == null) {
+            throw new CiBailout("Unsupported READREG operand " + registerId);
         }
+        wpush(append(new LoadRegister(CiKind.Word, register)));
     }
 
-    private void genStoreRegister(int opcode) {
+    private void genStoreRegister(int registerId) {
         RiRegisterConfig registerConfig = compilation.target.registerConfig;
-        Value value = pop(CiKind.Word);
-        switch (opcode) {
-            case WRITEREG_FP_CPU : append(new StoreRegister(CiKind.Word, registerConfig.getFramePointerRegister(), value)); break;
-            case WRITEREG_SP_CPU : append(new StoreRegister(CiKind.Word, registerConfig.getStackPointerRegister(), value)); break;
-            case WRITEREG_LATCH  : append(new StoreRegister(CiKind.Word, registerConfig.getSafepointRegister(), value)); break;
-            default:
-                throw new CiBailout("Unsupported WRITEREG opcode " + opcode + "(" + nameOf(opcode) + ")");
+        CiRegister register = registerConfig.getIntegerRegister(registerId);
+        if (register == null) {
+            throw new CiBailout("Unsupported WRITEREG operand " + registerId);
         }
+        Value value = pop(CiKind.Word);
+        append(new StoreRegister(CiKind.Word, register, value));
     }
 
     private static CiKind kindForPointerOp(int opcode) {

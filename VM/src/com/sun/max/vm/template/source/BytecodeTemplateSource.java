@@ -2654,60 +2654,60 @@ public class BytecodeTemplateSource {
         SpecialBuiltin.pause();
     }
 
-    @BYTECODE_TEMPLATE(READREG_FP_CPU)
+    @BYTECODE_TEMPLATE(READREG$fp_cpu)
     public static void readreg_fp_cpu() {
         JitStackFrameOperation.pushWord(VMRegister.getCpuFramePointer());
     }
 
-    @BYTECODE_TEMPLATE(READREG_SP_CPU)
+    @BYTECODE_TEMPLATE(READREG$sp_cpu)
     public static void readreg_sp_cpu() {
         JitStackFrameOperation.pushWord(VMRegister.getCpuStackPointer());
     }
 
-    @BYTECODE_TEMPLATE(READREG_FP_ABI)
+    @BYTECODE_TEMPLATE(READREG$fp_abi)
     public static void readreg_fp_abi() {
         JitStackFrameOperation.pushWord(VMRegister.getAbiFramePointer());
     }
 
-    @BYTECODE_TEMPLATE(READREG_SP_ABI)
+    @BYTECODE_TEMPLATE(READREG$sp_abi)
     public static void readreg_sp_abi() {
         JitStackFrameOperation.pushWord(VMRegister.getAbiStackPointer());
     }
 
-    @BYTECODE_TEMPLATE(READREG_LATCH)
+    @BYTECODE_TEMPLATE(READREG$latch)
     public static void readreg_latch() {
         JitStackFrameOperation.pushWord(VMRegister.getSafepointLatchRegister());
     }
 
-    @BYTECODE_TEMPLATE(WRITEREG_FP_CPU)
+    @BYTECODE_TEMPLATE(WRITEREG$fp_cpu)
     public static void writereg_fp_cpu() {
         Word value = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.removeSlots(1);
         VMRegister.setCpuFramePointer(value);
     }
 
-    @BYTECODE_TEMPLATE(WRITEREG_SP_CPU)
+    @BYTECODE_TEMPLATE(WRITEREG$sp_cpu)
     public static void writereg_sp_cpu() {
         Word value = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.removeSlots(1);
         VMRegister.setCpuStackPointer(value);
     }
 
-    @BYTECODE_TEMPLATE(WRITEREG_FP_ABI)
+    @BYTECODE_TEMPLATE(WRITEREG$fp_abi)
     public static void writereg_fp_abi() {
         Word value = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.removeSlots(1);
         VMRegister.setAbiFramePointer(value);
     }
 
-    @BYTECODE_TEMPLATE(WRITEREG_SP_ABI)
+    @BYTECODE_TEMPLATE(WRITEREG$sp_abi)
     public static void writereg_sp_abi() {
         Word value = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.removeSlots(1);
         VMRegister.setAbiStackPointer(value);
     }
 
-    @BYTECODE_TEMPLATE(WRITEREG_LATCH)
+    @BYTECODE_TEMPLATE(WRITEREG$latch)
     public static void writereg_latch() {
         Word value = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.removeSlots(1);
@@ -2715,7 +2715,7 @@ public class BytecodeTemplateSource {
     }
 
     @PLATFORM(cpu = "sparc")
-    @BYTECODE_TEMPLATE(WRITEREG_LINK)
+    @BYTECODE_TEMPLATE(WRITEREG$link)
     public static void writereg_link() {
         Word value = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.removeSlots(1);
