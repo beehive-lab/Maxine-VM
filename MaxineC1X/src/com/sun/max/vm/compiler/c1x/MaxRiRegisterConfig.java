@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
@@ -56,6 +57,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
     private final CiRegister[] generalParameterRegisters;
     private final CiRegister[] xmmParameterRegisters;
 
+    @HOSTED_ONLY
     public MaxRiRegisterConfig(VMConfiguration vmConfiguration) {
         if (vmConfiguration.platform.instructionSet() != InstructionSet.AMD64) {
             FatalError.unimplemented();
@@ -77,7 +79,12 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
 
         integerRegisterRoleMap = new CiRegister[Role.VALUES.length()];
         for (Role role : Role.VALUES) {
-            integerRegisterRoleMap[role.ordinal()] = regMap.get(roles.integerRegisterActingAs(role).name());
+            Symbol register = roles.integerRegisterActingAs(role);
+            if (register != null) {
+                CiRegister ciRegister = regMap.get(register.name().toLowerCase());
+                assert ciRegister != null;
+                integerRegisterRoleMap[role.ordinal()] = ciRegister;
+            }
         }
 
         safepointRegister = markUnallocatable(unallocatable, regMap, Role.SAFEPOINT_LATCH, roles);
@@ -210,7 +217,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return integerRegisterRoleMap[id];
     }
 
-    public CiLocation[] callingConvention(CiKind[] types, boolean outgoing) {
+    private CiLocation[] callingConvention(CiKind[] types, boolean outgoing) {
         CiLocation[] result = new CiLocation[types.length];
 
         int currentGeneral = 0;
@@ -266,6 +273,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return result;
     }
 
+    @HOSTED_ONLY
     private HashMap<String, CiRegister> buildRegisterMap(CiArchitecture arch) {
         HashMap<String, CiRegister> regMap = new HashMap<String, CiRegister>();
         for (CiRegister r : arch.registers) {
@@ -274,6 +282,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return regMap;
     }
 
+    @HOSTED_ONLY
     private CiRegister markUnallocatable(Set<String> unallocatable, HashMap<String, CiRegister> map, Role register, RegisterRoleAssignment roles) {
         Symbol intReg = roles.integerRegisterActingAs(register);
         if (intReg != null) {
