@@ -157,12 +157,11 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         try {
             C1XTargetMethod duplicate = (C1XTargetMethod) this.clone();
 
-            // Allocate and set the code and data buffer
-            final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals.length, referenceLiterals.length, code.length);
+            // Duplicate the code data buffer. There's no need to re-patch the data references in the
+            // duplicated code as all offsets to the data buffer are relative.
+            final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals == null ? 0 : scalarLiterals.length, referenceLiterals == null ? 0 : referenceLiterals.length, code.length);
             Code.allocate(targetBundleLayout, duplicate);
             duplicate.setData(scalarLiterals, referenceLiterals, code);
-
-            // TODO: Redo code patching
 
             return duplicate;
         } catch (CloneNotSupportedException e) {
@@ -210,6 +209,8 @@ public class C1XTargetMethod extends TargetMethod implements Cloneable {
         int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize();
         return ByteArrayBitMap.isSet(referenceMaps, byteIndex, registerReferenceMapSize(), registerIndex);
     }
+
+
 
     private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
         // Create the arrays for the scalar and the object reference literals

@@ -183,13 +183,15 @@ public class Intrinsics extends IntrinsifierClient {
                     char fromChar = toUnsafeOperand(fromKind);
                     char toChar = toUnsafeOperand(toKind);
                     bi.intrinsify(Bytecodes.UNSAFE_CAST, fromChar << 8 | toChar);
+                } else if (intrinsic == Bytecodes.CALL) {
+                    bi.intrinsify(intrinsic, cpi);
                 } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
                     if (!unsafe) {
                         unsafe = isUnsafe(opcode);
                     }
-                    assert Bytecodes.isExtension(opcode);
-                    int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xffff : cpi;
+                    assert !Bytecodes.isStandard(opcode);
+                    int operand = (intrinsic >> 8) & 0xffff;
                     bi.intrinsify(opcode, operand);
                 } else {
                     if (!unsafe) {
