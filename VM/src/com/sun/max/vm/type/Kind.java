@@ -31,6 +31,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.JavaTypeDescriptor.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -58,6 +59,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
     public final boolean isWord;
     public final boolean isReference;
 
+    @HOSTED_ONLY
     protected Kind(KindEnum kindEnum, String name, Class javaClass, Class javaArrayClass, Class<Value_Type> valueClass, char character,
                    final Class boxedClass, TypeDescriptor typeDescriptor, WordWidth width) {
         this.asEnum = kindEnum;
@@ -75,6 +77,9 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         this.stackSlots = !isCategory1 ? 2 : (character == 'V' ? 0 : 1);
         this.isWord = kindEnum == KindEnum.WORD;
         this.isReference = kindEnum == KindEnum.REFERENCE;
+        if (typeDescriptor instanceof AtomicTypeDescriptor) {
+            ((AtomicTypeDescriptor) typeDescriptor).setKind(this);
+        }
     }
 
     @Override

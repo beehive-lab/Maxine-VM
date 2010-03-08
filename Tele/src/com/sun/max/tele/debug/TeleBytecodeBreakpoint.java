@@ -657,11 +657,19 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 breakpointClassDescriptors.add(breakpoint.holderTypeDescriptorString);
             }
             // Create string containing class descriptors for all classes in which breakpoints are set, each terminated by a space.
-            final StringBuilder sb = new StringBuilder();
+            final StringBuilder typeDescriptorsBuilder = new StringBuilder();
             for (String descriptor : breakpointClassDescriptors) {
-                sb.append(descriptor).append(" ");
+                typeDescriptorsBuilder.append(descriptor).append(" ");
             }
-            final String breakpointClassDescriptorsString = sb.toString();
+            final String breakpointClassDescriptorsString = typeDescriptorsBuilder.toString();
+            if (breakpointClassDescriptorsString.length() > InspectableCodeInfo.BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH) {
+                final StringBuilder errMsg = new StringBuilder();
+                errMsg.append("Implementation Restriction exceeded: list of type descriptors for classes containing ");
+                errMsg.append("bytecode breakpoints must not exceed ");
+                errMsg.append(InspectableCodeInfo.BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH).append(" characters.  ");
+                errMsg.append("Current length=").append(breakpointClassDescriptorsString.length()).append(" characters.");
+                ProgramError.unexpected(errMsg.toString());
+            }
             Trace.line(TRACE_VALUE, tracePrefix + "Writing to VM type descriptors for breakpoint classes =\"" + breakpointClassDescriptorsString + "\"");
             // Write the string into the designated region in the VM, along with length and incremented epoch counter
             final int charsLength = breakpointClassDescriptorsString.length();

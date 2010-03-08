@@ -33,11 +33,13 @@ import com.sun.max.vm.runtime.Safepoint.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Access to thread local storage.
+ * Access to a block of thread local storage.
+ *
+ * @see VmThreadLocal
  *
  * @author Michael Van De Vanter
  */
-public abstract class TeleThreadLocals extends AbstractTeleVMHolder implements MaxThreadLocals {
+public abstract class TeleThreadLocalsBlock extends AbstractTeleVMHolder implements MaxThreadLocalsBlock {
 
     /**
      * Creates an accessor for thread local information, including cases where there is actually
@@ -48,15 +50,15 @@ public abstract class TeleThreadLocals extends AbstractTeleVMHolder implements M
      * @param memoryRegion the memory region, if any, holding thread local information
      * @return access to thread local information
      */
-    static TeleThreadLocals create(TeleNativeThread teleNativeThread, MemoryRegion memoryRegion) {
+    static TeleThreadLocalsBlock create(TeleNativeThread teleNativeThread, MemoryRegion memoryRegion) {
         return (memoryRegion == null) ?
-                        new NullThreadLocals(teleNativeThread) :
-                            new ThreadLocals(teleNativeThread, memoryRegion);
+                        new NullThreadLocalsBlock(teleNativeThread) :
+                            new ThreadLocalsBlock(teleNativeThread, memoryRegion);
     }
 
     private final TeleNativeThread teleNativeThread;
 
-    protected TeleThreadLocals(TeleNativeThread teleNativeThread) {
+    protected TeleThreadLocalsBlock(TeleNativeThread teleNativeThread) {
         super(teleNativeThread.teleVM());
         this.teleNativeThread = teleNativeThread;
     }
@@ -99,7 +101,7 @@ public abstract class TeleThreadLocals extends AbstractTeleVMHolder implements M
      *
      * @author Michael Van De Vanter
      */
-    protected static final class ThreadLocals extends TeleThreadLocals {
+    protected static final class ThreadLocalsBlock extends TeleThreadLocalsBlock {
 
         private static final int TRACE_LEVEL = 2;
 
@@ -110,7 +112,7 @@ public abstract class TeleThreadLocals extends AbstractTeleVMHolder implements M
 
         final int offsetToTriggeredThreadLocals;
 
-        public ThreadLocals(TeleNativeThread teleNativeThread, MemoryRegion memoryRegion) {
+        public ThreadLocalsBlock(TeleNativeThread teleNativeThread, MemoryRegion memoryRegion) {
             super(teleNativeThread);
             assert teleNativeThread != null;
             assert memoryRegion != null;
@@ -213,12 +215,12 @@ public abstract class TeleThreadLocals extends AbstractTeleVMHolder implements M
      *
      * @author Michael Van De Vanter
      */
-    protected static final class NullThreadLocals extends TeleThreadLocals {
+    protected static final class NullThreadLocalsBlock extends TeleThreadLocalsBlock {
 
         private static final int TRACE_LEVEL = 2;
 
 
-        public NullThreadLocals(TeleNativeThread teleNativeThread) {
+        public NullThreadLocalsBlock(TeleNativeThread teleNativeThread) {
             super(teleNativeThread);
         }
 

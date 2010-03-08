@@ -317,6 +317,9 @@ public abstract class LIRAssembler {
             case MembarRelease:
                 emitMembarRelease();
                 break;
+            case ReadPC:
+                emitReadPC(op.result());
+                break;
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -461,6 +464,8 @@ public abstract class LIRAssembler {
     protected abstract void emitLeal(LIRAddress inOpr, LIRLocation resultOpr);
 
     protected abstract void emitNegate(LIROp1 negate);
+
+    protected abstract void emitReadPC(LIROperand resultOpr);
 
     protected abstract void emitSafepoint(LIROperand inOpr, LIRDebugInfo info);
 

@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
+import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
@@ -33,6 +34,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.runtime.amd64.*;
 
 /**
@@ -48,12 +50,14 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
     private final CiRegister scratchRegister;
     private final CiRegister returnRegisterInt;
     private final CiRegister returnRegisterFloat;
+    private final CiRegister[] integerRegisterRoleMap;
     private final CiRegister[] allocatableRegisters;
     private final CiRegister[] registerReferenceMapOrder;
     private final HashMap<CiRegister, Integer> calleeSaveOffset;
     private final CiRegister[] generalParameterRegisters;
     private final CiRegister[] xmmParameterRegisters;
 
+    @HOSTED_ONLY
     public MaxRiRegisterConfig(VMConfiguration vmConfiguration) {
         if (vmConfiguration.platform.instructionSet() != InstructionSet.AMD64) {
             FatalError.unimplemented();
@@ -72,13 +76,24 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         TargetABI<AMD64GeneralRegister64, AMD64XMMRegister> amd64Abi = StaticLoophole.cast(type, abi);
 
         RegisterRoleAssignment roles = abi.registerRoleAssignment;
-        safepointRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.SAFEPOINT_LATCH, roles);
-        stackPointerRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.CPU_STACK_POINTER, roles);
-        framePointerRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.CPU_FRAME_POINTER, roles);
-        scratchRegister = markUnallocatable(unallocatable, regMap, VMRegister.Role.ABI_SCRATCH, roles);
-        markUnallocatable(unallocatable, regMap, VMRegister.Role.LITERAL_BASE_POINTER, roles);
-        returnRegisterInt = regMap.get(roles.integerRegisterActingAs(VMRegister.Role.ABI_RETURN).name().toLowerCase());
-        returnRegisterFloat = regMap.get(roles.floatingPointRegisterActingAs(VMRegister.Role.ABI_RETURN).name().toLowerCase());
+
+        integerRegisterRoleMap = new CiRegister[Role.VALUES.length()];
+        for (Role role : Role.VALUES) {
+            Symbol register = roles.integerRegisterActingAs(role);
+            if (register != null) {
+                CiRegister ciRegister = regMap.get(register.name().toLowerCase());
+                assert ciRegister != null;
+                integerRegisterRoleMap[role.ordinal()] = ciRegister;
+            }
+        }
+
+        safepointRegister = markUnallocatable(unallocatable, regMap, Role.SAFEPOINT_LATCH, roles);
+        stackPointerRegister = markUnallocatable(unallocatable, regMap, Role.CPU_STACK_POINTER, roles);
+        framePointerRegister = markUnallocatable(unallocatable, regMap, Role.CPU_FRAME_POINTER, roles);
+        scratchRegister = markUnallocatable(unallocatable, regMap, Role.ABI_SCRATCH, roles);
+        markUnallocatable(unallocatable, regMap, Role.LITERAL_BASE_POINTER, roles);
+        returnRegisterInt = regMap.get(roles.integerRegisterActingAs(Role.ABI_RETURN).name().toLowerCase());
+        returnRegisterFloat = regMap.get(roles.floatingPointRegisterActingAs(Role.ABI_RETURN).name().toLowerCase());
 
         assert safepointRegister != null;
         assert stackPointerRegister != null;
@@ -191,7 +206,18 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return registerReferenceMapOrder;
     }
 
-    public CiLocation[] callingConvention(CiKind[] types, boolean outgoing) {
+    public static class RegisterID {
+
+    }
+
+    public CiRegister getIntegerRegister(int id) {
+        if (id < 0 || id >= integerRegisterRoleMap.length) {
+            return null;
+        }
+        return integerRegisterRoleMap[id];
+    }
+
+    private CiLocation[] callingConvention(CiKind[] types, boolean outgoing) {
         CiLocation[] result = new CiLocation[types.length];
 
         int currentGeneral = 0;
@@ -247,6 +273,7 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return result;
     }
 
+    @HOSTED_ONLY
     private HashMap<String, CiRegister> buildRegisterMap(CiArchitecture arch) {
         HashMap<String, CiRegister> regMap = new HashMap<String, CiRegister>();
         for (CiRegister r : arch.registers) {
@@ -255,7 +282,8 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         return regMap;
     }
 
-    private CiRegister markUnallocatable(Set<String> unallocatable, HashMap<String, CiRegister> map, VMRegister.Role register, RegisterRoleAssignment roles) {
+    @HOSTED_ONLY
+    private CiRegister markUnallocatable(Set<String> unallocatable, HashMap<String, CiRegister> map, Role register, RegisterRoleAssignment roles) {
         Symbol intReg = roles.integerRegisterActingAs(register);
         if (intReg != null) {
             unallocatable.add(intReg.name().toLowerCase());

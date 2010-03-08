@@ -104,6 +104,15 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         masm.ret(0);
     }
 
+    /**
+     * Emits an instruction which assigns the address of the immediately succeeding instruction into {@code resultOpr}.
+     * This satisfies the requirements for correctly translating the {@link LoadPC} HIR instruction.
+     */
+    @Override
+    protected void emitReadPC(LIROperand resultOpr) {
+        masm.lea(resultOpr.asRegister(), Address.InternalRelocation);
+    }
+
     @Override
     protected void emitSafepoint(LIROperand tmp, LIRDebugInfo info) {
         masm.safepoint(info);
@@ -119,27 +128,37 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         masm.xchgptr(a, b);
     }
 
+    private CiKind realKind(CiKind kind) {
+        if (kind.isWord()) {
+            return is64 ? CiKind.Long : CiKind.Int;
+        }
+        return kind;
+    }
+
     @Override
     protected void const2reg(LIROperand src, LIROperand dest, LIRDebugInfo info) {
         assert isConstant(src) : "should not call otherwise";
         assert dest.isVariableOrRegister() : "should not call otherwise";
         LIRConstant c = (LIRConstant) src;
 
-        switch (c.kind) {
+        switch (realKind(c.kind)) {
             case Boolean:
             case Byte:
             case Char:
             case Short:
             case Jsr:
             case Int: {
-                masm.movl(dest.asRegister(), c.value.asInt());
+                masm.movl(dest.asRegister(), c.asInt());
                 break;
             }
 
-            case Word:
             case Long: {
                 if (is64) {
-                    masm.movptr(dest.asRegisterLow(), c.asLong());
+                    if (c.asLong() == 0L) {
+                        masm.xorptr(dest.asRegister(), dest.asRegister());
+                    } else {
+                        masm.movptr(dest.asRegisterLow(), c.asLong());
+                    }
                 } else {
                     masm.movptr(dest.asRegisterLow(), c.asIntLo());
                     masm.movptr(dest.asRegisterHigh(), c.asIntHi());
@@ -395,10 +414,10 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     }
 
     @Override
-    protected void reg2mem(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned) {
+    protected void reg2mem(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         LIRAddress toAddr = (LIRAddress) dest;
 
-        if (type == CiKind.Object) {
+        if (kind == CiKind.Object) {
             masm.verifyOop(src.asRegister());
         }
         if (info != null) {
@@ -407,7 +426,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             asm.recordImplicitException(codePos(), info);
         }
 
-        switch (type) {
+        switch (realKind(kind)) {
             case Float: {
                 if (src.isSingleXmm()) {
                     masm.movflt(asAddress(toAddr), asXmmFloatReg(src));
@@ -428,7 +447,6 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
 
             case Jsr: // fall through
             case Object: // fall through
-            case Word:
                 if (is64) {
                     masm.movptr(asAddress(toAddr), src.asRegister());
                 } else {
@@ -595,14 +613,14 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
     }
 
     @Override
-    protected void mem2reg(LIROperand src, LIROperand dest, CiKind type, LIRDebugInfo info, boolean unaligned) {
+    protected void mem2reg(LIROperand src, LIROperand dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         assert isAddress(src) : "should not call otherwise";
         assert dest.isVariableOrRegister() : "should not call otherwise";
 
         LIRAddress addr = (LIRAddress) src;
         Address fromAddr = asAddress(addr);
 
-        switch (type) {
+        switch (kind) {
             case Boolean: // fall through
             case Byte: // fall through
             case Char: // fall through
@@ -621,7 +639,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             asm.recordImplicitException(codePos(), info);
         }
 
-        switch (type) {
+        switch (realKind(kind)) {
             case Float: {
                 if (dest.isSingleXmm()) {
                     masm.movflt(asXmmFloatReg(dest), fromAddr);
@@ -653,7 +671,6 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 masm.movl2ptr(dest.asRegister(), fromAddr);
                 break;
 
-            case Word:
             case Long: {
                 CiRegister toLo = dest.asRegisterLow();
                 CiRegister toHi = dest.asRegisterHigh();
@@ -734,7 +751,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 throw Util.shouldNotReachHere();
         }
 
-        if (type == CiKind.Object) {
+        if (kind == CiKind.Object) {
             masm.verifyOop(dest.asRegister());
         }
     }

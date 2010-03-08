@@ -33,7 +33,6 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.value.*;
@@ -102,7 +101,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      * Holds a dummy if no thread local information is available:  i.e. either this is a non-Java thread, or
      * the thread is very early in its creation sequence.
      */
-    private final TeleThreadLocals threadLocals;
+    private final TeleThreadLocalsBlock threadLocalsBlock;
 
     private MaxThreadState state = SUSPENDED;
     private TeleTargetBreakpoint breakpoint;
@@ -143,7 +142,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         this.integerRegisters = new TeleIntegerRegisters(vmConfiguration);
         this.floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         this.stateRegisters = new TeleStateRegisters(vmConfiguration);
-        this.threadLocals = TeleThreadLocals.create(this, params.threadLocalsRegion);
+        this.threadLocalsBlock = TeleThreadLocalsBlock.create(this, params.threadLocalsRegion);
         this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
         this.teleStack = new TeleStack(teleProcess.teleVM(), this, new TeleNativeStackMemoryRegion(this, params.stackRegion));
     }
@@ -155,7 +154,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         final long currentProcessEpoch = teleProcess().epoch();
         if (framesRefreshedEpoch < currentProcessEpoch) {
             Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + currentProcessEpoch + ") for " + this);
-            threadLocals.refresh();
+            threadLocalsBlock.refresh();
             final IndexedSequence<StackFrame> newFrames = new TeleStackFrameWalker(teleProcess.teleVM(), this).frames();
             assert !newFrames.isEmpty();
             // See if the new stack is structurally equivalent to its predecessor, even if the contents of the top
@@ -231,7 +230,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     final void updateAfterGather(MaxThreadState state, Pointer instructionPointer, MemoryRegion threadLocalsRegion, int tlaSize) {
         this.state = state;
         stateRegisters.setInstructionPointer(instructionPointer);
-        threadLocals.updateAfterGather(threadLocalsRegion, tlaSize);
+        threadLocalsBlock.updateAfterGather(threadLocalsRegion, tlaSize);
     }
 
     /**
@@ -243,7 +242,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         Trace.line(TRACE_LEVEL, tracePrefix() + "refresh(epoch=" + epoch + ") for " + this);
         if (state.allowsDataAccess()) {
             refreshBreakpoint();
-            threadLocals.refresh();
+            threadLocalsBlock.refresh();
         }
     }
 
@@ -315,7 +314,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         final long processEpoch = teleProcess().epoch();
         if (framesRefreshedEpoch < processEpoch) {
             Trace.line(TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
-            threadLocals.refresh();
+            threadLocalsBlock.refresh();
             final TeleVM teleVM = teleProcess.teleVM();
             final IndexedSequence<StackFrame> newFrames = new TeleStackFrameWalker(teleVM, this).frames();
             assert !newFrames.isEmpty();
@@ -373,7 +372,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         clearFrames();
         breakpoint = null;
         frameCache = null;
-        threadLocals.clear();
+        threadLocalsBlock.clear();
         integerRegisters = null;
         stateRegisters = null;
         floatingPointRegisters = null;
@@ -412,8 +411,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         return teleStack;
     }
 
-    public final TeleThreadLocals locals() {
-        return threadLocals;
+    public final TeleThreadLocalsBlock localsBlock() {
+        return threadLocalsBlock;
     }
 
     /**
@@ -445,17 +444,8 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      */
     protected abstract boolean updateInstructionPointer(Address address);
 
-    public CodeLocation getReturnLocation() {
-        final StackFrame topFrame = frames().first();
-        final StackFrame topFrameCaller = topFrame.callerFrame();
-        if (topFrameCaller != null) {
-            return codeManager().createMachineCodeLocation(topFrameCaller);
-        }
-        return null;
-    }
-
     public TeleVmThread teleVmThread() {
-        return threadLocals.teleVmThread();
+        return threadLocalsBlock.teleVmThread();
     }
 
     public String vmThreadName() {

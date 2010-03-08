@@ -55,7 +55,7 @@ import com.sun.max.vm.value.*;
 public abstract class MethodActor extends MemberActor {
 
     /**
-     * Extended {@linkplain Bytecodes#isExtension(int) opcode} for an {@linkplain INTRINSIC intrinsic} method.
+     * Extended {@linkplain Bytecodes#isStandard(int) opcode} for an {@linkplain INTRINSIC intrinsic} method.
      * A value of 0 means this method is not an intrinsic method.
      */
     private final char intrinsic;
@@ -76,7 +76,7 @@ public abstract class MethodActor extends MemberActor {
     }
 
     /**
-     * Gets the {@linkplain Bytecodes#isExtension(int) extended opcode} of this method if
+     * Gets the {@linkplain Bytecodes#isStandard(int) extended opcode} of this method if
      * it is an {@link INTRINSIC} method.
      *
      * @return 0 if this method is not an intrinsic method

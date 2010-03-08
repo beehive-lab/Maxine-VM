@@ -110,6 +110,11 @@ public final class InspectableCodeInfo {
 
     /**
      * Makes information inspectable concerning a method compilation that has just completed.
+     * <br>
+     * <strong>Note:</strong> further optimization here is possible if it is determined that the string
+     * comparisons here (compare against every string in the list every time a method is compiled)
+     * take too long.  It is hard to imagine improving unless a bottleneck is being created by
+     * having a very large number of classes listed with bytecode breakpoints.
      *
      * @param targetMethod compilation just completed
      */

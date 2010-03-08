@@ -21,6 +21,8 @@
 
 package com.sun.max.vm.bytecode.graft;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.bytecode.BytecodeIntrinsifier.*;
 import com.sun.max.unsafe.*;
@@ -102,22 +104,22 @@ public class Intrinsics extends IntrinsifierClient {
     private static boolean isUnsafe(int opcode) {
         switch (opcode) {
             // Checkstyle: stop
-            case Bytecodes.READREG            :
-            case Bytecodes.WRITEREG           :
-            case Bytecodes.SAFEPOINT          :
-            case Bytecodes.PAUSE              :
-            case Bytecodes.ADD_SP             :
-            case Bytecodes.READ_PC            :
-            case Bytecodes.FLUSHW             :
-            case Bytecodes.ALLOCA             :
-            case Bytecodes.STACKADDR          :
-            case Bytecodes.JNICALL            :
-            case Bytecodes.CALL               :
-            case Bytecodes.ICMP               :
-            case Bytecodes.WCMP               :
-            case Bytecodes.RET                :
-            case Bytecodes.JSR_W              :
-            case Bytecodes.JSR                : return true;
+            case READREG            :
+            case WRITEREG           :
+            case SAFEPOINT          :
+            case PAUSE              :
+            case ADD_SP             :
+            case READ_PC            :
+            case FLUSHW             :
+            case ALLOCA             :
+            case STACKADDR          :
+            case JNICALL            :
+            case CALL               :
+            case ICMP               :
+            case WCMP               :
+            case RET                :
+            case JSR_W              :
+            case JSR                : return true;
             // Checkstyle: resume
         }
         return false;
@@ -177,19 +179,21 @@ public class Intrinsics extends IntrinsifierClient {
             try {
                 MethodActor method = constant.resolve(cp, cpi);
                 int intrinsic = method.intrinsic();
-                if (intrinsic == Bytecodes.UNSAFE_CAST) {
+                if (intrinsic == UNSAFE_CAST) {
                     Kind fromKind = isStatic ? sig.parameterDescriptorAt(0).toKind() : holder.toKind();
                     Kind toKind = sig.resultKind();
                     char fromChar = toUnsafeOperand(fromKind);
                     char toChar = toUnsafeOperand(toKind);
-                    bi.intrinsify(Bytecodes.UNSAFE_CAST, fromChar << 8 | toChar);
+                    bi.intrinsify(UNSAFE_CAST, fromChar << 8 | toChar);
+                } else if (intrinsic == CALL) {
+                    bi.intrinsify(intrinsic, cpi);
                 } else if (intrinsic != 0) {
                     int opcode = intrinsic & 0xff;
                     if (!unsafe) {
                         unsafe = isUnsafe(opcode);
                     }
-                    assert Bytecodes.isExtension(opcode);
-                    int operand = Bytecodes.isOpcode3(intrinsic) ? (intrinsic >> 8) & 0xffff : cpi;
+                    assert !isStandard(opcode);
+                    int operand = (intrinsic >> 8) & 0xffff;
                     bi.intrinsify(opcode, operand);
                 } else {
                     if (!unsafe) {
@@ -197,7 +201,7 @@ public class Intrinsics extends IntrinsifierClient {
                     }
                     if (holderIsWord && !isStatic) {
                         // Cannot dispatch dynamically on Word types
-                        bi.intrinsify(Bytecodes.INVOKESPECIAL, cpi);
+                        bi.intrinsify(INVOKESPECIAL, cpi);
                     }
                 }
             } catch (HostOnlyClassError e) {
