@@ -461,7 +461,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.begin(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
                 updateWatchpointCaches();
                 oldInstructionPointer = thread.instructionPointer();
-                oldReturnAddress = thread.getReturnLocation().address().asPointer();
+                oldReturnAddress = thread.stack().returnLocation().address().asPointer();
                 singleStep(thread, false);
                 Trace.end(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
             }
@@ -791,7 +791,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
         if (oldTeleTargetMethod != newTeleTargetMethod || newTeleTargetMethod.callEntryPoint().equals(newInstructionPointer)) {
             // Stepped into a different target method or back into the entry of the same target method (i.e. a recursive call):
-            return thread.getReturnLocation();
+            return thread.stack().returnLocation();
         }
         // Stepped over a normal, non-call instruction:
         return null;

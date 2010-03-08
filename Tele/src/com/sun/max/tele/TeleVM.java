@@ -1676,7 +1676,7 @@ public abstract class TeleVM implements MaxVM {
 
     public final  void returnFromFrame(final MaxThread thread, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
         final TeleNativeThread teleNativeThread = (TeleNativeThread) thread;
-        final CodeLocation returnLocation = teleNativeThread.getReturnLocation();
+        final CodeLocation returnLocation = teleNativeThread.stack().returnLocation();
         if (returnLocation == null) {
             throw new InvalidVMRequestException("No return location available");
         }
@@ -2115,11 +2115,11 @@ public abstract class TeleVM implements MaxVM {
                     registeredSingleStepThread = null;
 
                 } else if (registeredStepOutThread != null
-                        && registeredStepOutThread.getReturnLocation().address() != null) {
+                        && registeredStepOutThread.stack().returnLocation().address() != null) {
 
                     // There has been a thread registered for performing a step out
                     // => perform a step out instead of resume.
-                    final CodeLocation returnLocation = registeredStepOutThread.getReturnLocation();
+                    final CodeLocation returnLocation = registeredStepOutThread.stack().returnLocation();
                     assert returnLocation != null;
                     try {
                         TeleVM.this.runToInstruction(returnLocation, false, true);
