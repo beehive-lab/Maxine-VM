@@ -485,7 +485,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
             return;
         }
-        fillWithDeadObject(tlabAllocationMark, hardLimit);
+        fillWithTaggedDeadObject(tlabAllocationMark, hardLimit);
     }
 
     protected void resetTLABs() {

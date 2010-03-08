@@ -57,7 +57,7 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  * @Author Mick Jordan
  */
-public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements HeapScheme, CellVisitor {
+public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisitor {
 
     public static final String FROM_REGION_NAME = "Heap-From";
     public static final String TO_REGION_NAME = "Heap-To";
