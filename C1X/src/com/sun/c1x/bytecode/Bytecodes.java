@@ -288,23 +288,29 @@ public class Bytecodes {
     public static final int UGE                  = 235; // Unsigned int greater-than-or-equal
 
     /**
-     * Reads the value of a VM register.
+     * Reads the value of a register playing a runtime-defined role.
      *
      * <pre>
      * Format: { u1 opcode;   // READREG
-     *           u2 register; // 1=CPU frame pointer, 2=CPU stack pointer, 3=ABI frame pointer, 4=ABI stack pointer, 5=Safepoint latch
+     *           u2 role;     // runtime-defined register role id
      *         }
+     *
+     * Operand Stack:
+     *     ... => ..., value
      * </pre>
      */
     public static final int READREG              = 236;
 
     /**
-     * Writes the value of a VM register.
+     * Writes the value of a register playing a runtime-defined role.
      *
      * <pre>
      * Format: { u1 opcode;   // WRITEREG
-     *           u2 register; // 1=CPU frame pointer, 2=CPU stack pointer, 3=ABI frame pointer, 4=ABI stack pointer, 5=Safepoint latch, 6=Link register
+     *           u2 role;     // runtime-defined register role id
      *         }
+     *
+     * Operand Stack:
+     *     ..., value => ...
      * </pre>
      */
     public static final int WRITEREG             = 237;
@@ -355,19 +361,6 @@ public class Bytecodes {
     // End extended bytecodes
 
     // Extended bytecodes with operand:
-
-    public static final int READREG_FP_CPU        = READREG  | 1 << 8;
-    public static final int READREG_SP_CPU        = READREG  | 2 << 8;
-    public static final int READREG_FP_ABI        = READREG  | 3 << 8;
-    public static final int READREG_SP_ABI        = READREG  | 4 << 8;
-    public static final int READREG_LATCH         = READREG  | 5 << 8;
-
-    public static final int WRITEREG_FP_CPU       = WRITEREG  | 1 << 8;
-    public static final int WRITEREG_SP_CPU       = WRITEREG  | 2 << 8;
-    public static final int WRITEREG_FP_ABI       = WRITEREG  | 3 << 8;
-    public static final int WRITEREG_SP_ABI       = WRITEREG  | 4 << 8;
-    public static final int WRITEREG_LATCH        = WRITEREG  | 5 << 8;
-    public static final int WRITEREG_LINK         = WRITEREG  | 6 << 8;
 
     // Pointer compare-and-swap with word-sized offset
     public static final int PCMPSWP_INT         = PCMPSWP  | 1 << 8;
@@ -496,11 +489,6 @@ public class Bytecodes {
          * Denotes an instruction that is not defined in the JVM specification.
          */
         static final int EXTENSION = 0x00000020;
-
-        /**
-         * Denotes an {@link #EXTENSION} instruction whose complete opcode is 3 bytes long.
-         */
-        static final int OPCODE3 = 0x00000040;
 
         static final int TRAP        = 0x00000080;
         static final int COMMUTATIVE = 0x00000100;
@@ -845,11 +833,8 @@ public class Bytecodes {
      * @return the mnemonic for {@code opcode} or {@code "<illegal opcode: " + opcode + ">"} if {@code opcode} is not a legal opcode
      */
     public static String nameOf(int opcode) throws IllegalArgumentException {
-        if (isOpcode3(opcode)) {
-            String extName = extNames.get(Integer.valueOf(opcode));
-            if (extName == null) {
-                return "<illegal opcode: " + opcode + ">";
-            }
+        String extName = extNames.get(Integer.valueOf(opcode));
+        if (extName != null) {
             return extName;
         }
         String name = names[opcode & 0xff];
@@ -947,34 +932,24 @@ public class Bytecodes {
     }
 
     /**
-     * Determines if a given opcode denotes a bytecode extension. An extended bytecode instruction is one
-     * that is not part of the JVM specification.
+     * Determines if a given opcode denotes a standard bytecode. A standard bytecode is
+     * defined in the JVM specification.
      *
      * @param opcode an opcode to test
-     * @return {@code true} if {@code opcode} is an extended bytecode
+     * @return {@code true} if {@code opcode} is a standard bytecode
      */
-    public static boolean isExtension(int opcode) {
-        return (flags[opcode & 0xff] & EXTENSION) != 0;
+    public static boolean isStandard(int opcode) {
+        return (flags[opcode & 0xff] & EXTENSION) == 0;
     }
 
     /**
-     * Determines if a given extension opcode includes an operand value.
+     * Determines if a given opcode includes an operand value.
      *
      * @param opcode an opcode to test
      * @return {@code true} if {@code (opcode & ~0xff) != 0}
      */
-    public static boolean isOpcode3(int opcode) {
+    public static boolean isExtended(int opcode) {
         return (opcode & ~0xff) != 0;
-    }
-
-    /**
-     * Determines if a given extension opcode needs to be combined with its 2 byte operand
-     * to derive the a complete {@linkplain #isOpcode3(int) 3-byte} opcode.
-     *
-     * @param opcode an opcode to test
-     */
-    public static boolean hasOpcode3(int opcode) {
-        return (flags[opcode & 0xff] & OPCODE3) != 0;
     }
 
     /**
@@ -1226,20 +1201,21 @@ public class Bytecodes {
 
             assert !isConditionalBranch(opcode) || isBranch(opcode) : "a conditional branch must also be a branch";
 
-            if (isExtension(opcode)) {
+            if (!isStandard(opcode)) {
                 for (Field otherField : Bytecodes.class.getDeclaredFields()) {
                     if (otherField.getName().startsWith(field.getName()) && !otherField.equals(field)) {
                         String extName = otherField.getName();
                         int opcodeWithOperand = otherField.getInt(null);
-                        if (isOpcode3(opcodeWithOperand)) {
+                        if (isExtended(opcodeWithOperand)) {
                             assert length == 3;
-                            Bytecodes.flags[opcode] |= OPCODE3;
                             assert (opcodeWithOperand & 0xff) == opcode : "Extended opcode " + extName + " must share same low 8 bits as " + field.getName();
                             String oldValue = extNames.put(opcodeWithOperand, extName.toLowerCase());
                             assert oldValue == null;
                         }
                     }
                 }
+            } else {
+                assert !isExtended(opcode);
             }
 
         } catch (Exception e) {

@@ -75,7 +75,7 @@ public @interface UNSAFE {
         }
 
         private static boolean isUnsafeType(TypeDescriptor type, ClassActor classActor, ClassLoader classLoader) {
-            if (KindTypeDescriptor.isWord(type)) {
+            if (type.toKind().isWord) {
                 return true;
             }
             if (type.isResolvableWithoutClassLoading(classActor, classLoader)) {

@@ -43,9 +43,9 @@ public class TeleThreadManager extends AbstractTeleVMHolder implements MaxThread
     public MaxThread findThread(Address address) {
         for (MaxThread maxThread : threads()) {
             final MaxStack stack = maxThread.stack();
-            final MaxThreadLocals locals = maxThread.locals();
+            final MaxThreadLocalsBlock threadLocalsBlock = maxThread.localsBlock();
             if (stack.memoryRegion().contains(address) ||
-                            (locals.memoryRegion() != null && locals.memoryRegion().contains(address))) {
+                            (threadLocalsBlock.memoryRegion() != null && threadLocalsBlock.memoryRegion().contains(address))) {
                 return maxThread;
             }
         }

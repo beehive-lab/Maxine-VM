@@ -153,7 +153,7 @@ public final class LIRConstant extends LIROperand {
      * @return the reference to the input constant if succeeded.
      */
     public static LIRConstant assertType(LIRConstant c, CiKind t) {
-        assert c.kind == t : "constant has wrong type: " + c + ", should be " + t;
+        assert c.kind == t || (c.kind.isWord() && (t.isLong() || t.isInt())) : "constant has wrong type: " + c + ", should be " + t;
         return c;
     }
 
