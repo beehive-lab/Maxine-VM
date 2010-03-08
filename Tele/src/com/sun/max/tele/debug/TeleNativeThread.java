@@ -33,7 +33,6 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.value.*;
@@ -444,15 +443,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      * @return true if the instruction pointer was successfully updated, false otherwise
      */
     protected abstract boolean updateInstructionPointer(Address address);
-
-    public CodeLocation getReturnLocation() {
-        final StackFrame topFrame = frames().first();
-        final StackFrame topFrameCaller = topFrame.callerFrame();
-        if (topFrameCaller != null) {
-            return codeManager().createMachineCodeLocation(topFrameCaller);
-        }
-        return null;
-    }
 
     public TeleVmThread teleVmThread() {
         return threadLocals.teleVmThread();
