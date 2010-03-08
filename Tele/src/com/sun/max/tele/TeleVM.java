@@ -794,7 +794,7 @@ public abstract class TeleVM implements MaxVM {
             if (!stackRegion.size().isZero()) {
                 regions.append(stackRegion);
             }
-            final TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.locals().memoryRegion();
+            final TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.localsBlock().memoryRegion();
             if (threadLocalsRegion != null) {
                 regions.append(threadLocalsRegion);
             }
@@ -813,8 +813,8 @@ public abstract class TeleVM implements MaxVM {
                     if (maxThread != null) {
                         if (maxThread.stack().memoryRegion().contains(address)) {
                             memoryRegion = maxThread.stack().memoryRegion();
-                        } else if (maxThread.locals().memoryRegion() != null && maxThread.locals().memoryRegion().contains(address)) {
-                            memoryRegion = maxThread.locals().memoryRegion();
+                        } else if (maxThread.localsBlock().memoryRegion() != null && maxThread.localsBlock().memoryRegion().contains(address)) {
+                            memoryRegion = maxThread.localsBlock().memoryRegion();
                         }
                     }
                 }

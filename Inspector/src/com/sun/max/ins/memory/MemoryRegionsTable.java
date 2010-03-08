@@ -175,7 +175,7 @@ public final class MemoryRegionsTable extends InspectorTable {
                 if (!stack.memoryRegion().size().isZero()) {
                     sortedMemoryRegions.add(new StackRegionDisplay(stack));
                 }
-                MemoryRegion threadLocalsRegion = thread.locals().memoryRegion();
+                MemoryRegion threadLocalsRegion = thread.localsBlock().memoryRegion();
                 if (threadLocalsRegion != null) {
                     sortedMemoryRegions.add(new ThreadLocalsRegionDisplay(threadLocalsRegion));
                 }
