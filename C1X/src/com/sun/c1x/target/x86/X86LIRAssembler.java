@@ -104,6 +104,15 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
         masm.ret(0);
     }
 
+    /**
+     * Emits an instruction which assigns the address of the immediately succeeding instruction into {@code resultOpr}.
+     * This satisfies the requirements for correctly translating the {@link LoadPC} HIR instruction.
+     */
+    @Override
+    protected void emitReadPC(LIROperand resultOpr) {
+        masm.lea(resultOpr.asRegister(), Address.InternalRelocation);
+    }
+
     @Override
     protected void emitSafepoint(LIROperand tmp, LIRDebugInfo info) {
         masm.safepoint(info);
@@ -139,11 +148,7 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
             case Short:
             case Jsr:
             case Int: {
-                if (c.asInt() == 0) {
-                    masm.xorl(dest.asRegister(), dest.asRegister());
-                } else {
-                    masm.movl(dest.asRegister(), c.asInt());
-                }
+                masm.movl(dest.asRegister(), c.asInt());
                 break;
             }
 

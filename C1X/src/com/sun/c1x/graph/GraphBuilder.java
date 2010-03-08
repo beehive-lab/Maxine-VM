@@ -1961,7 +1961,8 @@ public final class GraphBuilder {
                 case PSET           : genStorePointer(PSET   | (s.readCPI() << 8)); break;
 
                 case WRETURN        : genMethodReturn(wpop()); break;
-                case READ_PC        :
+                case READ_PC        : genLoadPC(); break;
+                //case JNICALL        :
 
 //                case PCMPSWP: {
 //                    opcode |= readUnsigned2() << 8;
@@ -2057,6 +2058,10 @@ public final class GraphBuilder {
             scopeData.addToWorkList(succ);
         }
         return end;
+    }
+
+    private void genLoadPC() {
+        wpush(append(new LoadPC()));
     }
 
     private void genLoadRegister(int registerId) {

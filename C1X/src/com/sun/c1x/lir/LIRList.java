@@ -171,6 +171,10 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Safepoint, tmp, info));
     }
 
+    public void readPC(LIROperand dst) {
+        append(new LIROp0(LIROpcode.ReadPC, dst));
+    }
+
     public void convert(int code, LIROperand left, LIROperand dst, GlobalStub globalStub) {
         LIRConvert op = new LIRConvert(code, left, dst);
         op.globalStub = globalStub;

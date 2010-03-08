@@ -32,6 +32,7 @@ public enum LIROpcode {
         Label,
         StdEntry,
         OsrEntry,
+        ReadPC,
     RuntimeCall,
         Membar,
         MembarAcquire,
