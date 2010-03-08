@@ -339,7 +339,7 @@ public final class BootImageGenerator {
     }
 
     /**
-     * The main entrypoint, which creates a binary image generator and then runs it.
+     * The main entry point, which creates a binary image generator and then runs it.
      *
      * @param programArguments the arguments from the command line
      */

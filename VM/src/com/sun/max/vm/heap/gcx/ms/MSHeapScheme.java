@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.gcx;
+package com.sun.max.vm.heap.gcx.ms;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
@@ -28,6 +28,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
@@ -56,14 +57,14 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
     /**
      * Free Space Manager.
      */
-    final FreeHeapSpace freeSpace;
+    final FreeHeapSpaceManager freeSpace;
 
     Size totalUsedSpace;
 
     public MSHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
         heapMarker = new HeapMarker();
-        freeSpace = new FreeHeapSpace();
+        freeSpace = new FreeHeapSpaceManager();
         totalUsedSpace = Size.zero();
         committedHeapSpace = new RuntimeMemoryRegion("Heap");
     }
@@ -171,12 +172,12 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
         return thread instanceof StopTheWorldGCDaemon;
     }
 
-    @INLINE
+    @INLINE(override = true)
     public boolean isPinned(Object object) {
         return false;
     }
 
-    @INLINE
+    @INLINE(override = true)
     public boolean pin(Object object) {
         return false; // no supported
     }
@@ -192,11 +193,11 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
     public void runFinalization() {
     }
 
-    @INLINE
+    @INLINE(override = true)
     public void unpin(Object object) {
     }
 
-    @INLINE
+    @INLINE(override = true)
     public void writeBarrier(Reference from, Reference to) {
     }
 
