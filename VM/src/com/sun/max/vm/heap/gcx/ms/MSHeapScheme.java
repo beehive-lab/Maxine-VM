@@ -76,7 +76,7 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
         if (MaxineVM.isHosted()) {
             // Initialize stuff at VM-generation time.
 
-            // The monitor for the collector must be allocate in the image
+            // The monitor for the collector must be allocated in the image
             JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
