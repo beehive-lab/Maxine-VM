@@ -301,7 +301,7 @@ public class WordValueLabel extends ValueLabel {
                     thread = vm().threadManager().findThread(address);
                     if (thread != null && thread.stack().memoryRegion().contains(address)) {
                         displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.STACK_LOCATION_TEXT : DisplayMode.STACK_LOCATION;
-                    } else if (thread != null && thread.locals().memoryRegion() != null && thread.locals().memoryRegion().contains(address)) {
+                    } else if (thread != null && thread.localsBlock().memoryRegion() != null && thread.localsBlock().memoryRegion().contains(address)) {
                         displayMode = valueMode == ValueMode.REFERENCE ? DisplayMode.THREAD_LOCALS_BLOCK_LOCATION_TEXT : DisplayMode.THREAD_LOCALS_BLOCK_LOCATION;
                     } else {
                         if (valueMode == ValueMode.REFERENCE || valueMode == ValueMode.LITERAL_REFERENCE) {
@@ -471,7 +471,7 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 setText(hexString);
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.locals().memoryRegion().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
                 final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
                 setToolTipText("Thread locals:  thread=" + threadName + ", offset=" + hexOffsetString);
                 break;
@@ -480,7 +480,7 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordThreadLocalsBlockLocationDataColor());
                 final String threadName = inspection().nameDisplay().longName(thread);
-                final long offset = value().asWord().asAddress().minus(thread.locals().memoryRegion().start()).toLong();
+                final long offset = value().asWord().asAddress().minus(thread.localsBlock().memoryRegion().start()).toLong();
                 final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setText(threadName + " " + decimalOffsetString);
                 setToolTipText("Thread locals:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));

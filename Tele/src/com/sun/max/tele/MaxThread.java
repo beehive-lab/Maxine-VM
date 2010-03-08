@@ -106,7 +106,7 @@ public interface MaxThread {
      *
      * @return access to the thread locals block for this thread; null if not available
      */
-    MaxThreadLocals locals();
+    MaxThreadLocalsBlock localsBlock();
 
     /**
      * This thread's integer registers.
