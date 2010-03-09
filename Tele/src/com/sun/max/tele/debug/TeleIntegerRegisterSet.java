@@ -34,12 +34,13 @@ import com.sun.max.vm.runtime.VMRegister.*;
  *
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
-public final class TeleIntegerRegisters extends TeleRegisters {
+public final class TeleIntegerRegisterSet extends TeleRegisterSet {
 
     private final Symbol indirectCallRegister;
 
-    public TeleIntegerRegisters(VMConfiguration vmConfiguration) {
+    public TeleIntegerRegisterSet(VMConfiguration vmConfiguration) {
         super(symbolizer(vmConfiguration), vmConfiguration);
         switch (vmConfiguration.platform().processorKind.instructionSet) {
             case AMD64: {
@@ -77,18 +78,28 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      *
      * @return null if there is no fixed register used to for indirect calls on the target platform
      */
-    public Address getCallRegisterValue() {
+    Address getCallRegisterValue() {
         if (indirectCallRegister == null) {
             return null;
         }
-        return get(indirectCallRegister);
+        return getValue(indirectCallRegister);
     }
 
-    public Pointer stackPointer() {
+    /**
+     * Returns the value of the register that is used as the stack pointer.
+     *
+     * @return the current stack pointer
+     */
+    Pointer stackPointer() {
         return get(Role.CPU_STACK_POINTER, null);
     }
 
-    public Pointer framePointer() {
+    /**
+     * Returns the value of the register that is used as the frame pointer.
+     *
+     * @return the current frame pointer
+     */
+    Pointer framePointer() {
         return get(Role.CPU_FRAME_POINTER, null);
     }
 
@@ -100,9 +111,9 @@ public final class TeleIntegerRegisters extends TeleRegisters {
      *            then the {@linkplain TargetABIsScheme#nativeABI() native ABI} is used.
      * @return the value of the register denoted by {@code role} and {@code targetABI}
      */
-    public Pointer get(VMRegister.Role role, TargetABI targetABI) {
+    Pointer get(VMRegister.Role role, TargetABI targetABI) {
         final TargetABI abi = targetABI == null ? vmConfiguration.targetABIsScheme().nativeABI : targetABI;
         final Symbol register = abi.registerRoleAssignment.integerRegisterActingAs(role);
-        return get(register).asPointer();
+        return getValue(register).asPointer();
     }
 }

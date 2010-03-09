@@ -453,7 +453,7 @@ public final class MemoryRegionsTable extends InspectorTable {
         @Override
         Size allocated() {
             // Stack grows downward from the end of the region;
-            return end().minus(stack.thread().stackPointer()).asSize();
+            return end().minus(stack.thread().registers().stackPointer()).asSize();
         }
 
     }

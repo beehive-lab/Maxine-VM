@@ -546,9 +546,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     // The new compilation; don't bother to construct a representation of it unless there's a match and it's needed.
                     TeleTargetMethod teleTargetMethod = null;
 
-                    final String holderTypeDescriptorString = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter0)));
-                    final String methodName = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter1)));
-                    final String signatureDescriptorString = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(teleNativeThread.integerRegisters().get(parameter2)));
+                    final TeleIntegerRegisterSet integerRegisterSet = teleNativeThread.registers().integerRegisterSet();
+                    final String holderTypeDescriptorString = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(integerRegisterSet.getValue(parameter0)));
+                    final String methodName = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(integerRegisterSet.getValue(parameter1)));
+                    final String signatureDescriptorString = teleVM().getStringUnsafe(teleVM().wordToTemporaryReference(integerRegisterSet.getValue(parameter2)));
                     Trace.line(COMPILATION_TRACE_VALUE, "VM just compiled: " + holderTypeDescriptorString + " " + methodName + " " + signatureDescriptorString);
                     for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : breakpointCache) {
                         // Streamlined comparison using as little Inspector machinery as possible, since we take this break at every VM compilation
@@ -557,7 +558,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                                         signatureDescriptorString.equals(teleBytecodeBreakpoint.signatureDescriptorString)) {
                             // Match; must set a target breakpoint on the method just compiled; is is acceptable to incur some overhead now.
                             if (teleTargetMethod == null) {
-                                final Reference targetMethodReference = teleVM().wordToReference(teleNativeThread.integerRegisters().get(parameter3));
+                                final Reference targetMethodReference = teleVM().wordToReference(integerRegisterSet.getValue(parameter3));
                                 teleTargetMethod = (TeleTargetMethod) teleVM().makeTeleObject(targetMethodReference);
                             }
                             try {

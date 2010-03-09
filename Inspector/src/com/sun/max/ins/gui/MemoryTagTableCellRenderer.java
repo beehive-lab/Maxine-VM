@@ -62,12 +62,12 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
         setFont(style().defaultFont());
         // See if any registers point here
         if (thread != null) {
-            final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
-            if (teleIntegerRegisters == null) {
+            final TeleIntegerRegisterSet teleIntegerRegisterSet = thread.registers().integerRegisterSet();
+            if (teleIntegerRegisterSet == null) {
                 // Return a specialized renderer with its own content.
                 label = inspection().gui().getUnavailableDataTableCellRenderer();
             } else {
-                final String registerNameList = teleIntegerRegisters.findAsNameList(memoryRegion);
+                final String registerNameList = teleIntegerRegisterSet.findAsNameList(memoryRegion);
                 if (registerNameList.isEmpty()) {
                     label.setForeground(style().memoryDefaultTagTextColor());
                 } else {

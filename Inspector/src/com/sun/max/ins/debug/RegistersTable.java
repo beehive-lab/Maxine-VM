@@ -82,26 +82,27 @@ public final class RegistersTable extends InspectorTable {
         RegistersTableModel(Inspection inspection, MaxThread thread) {
             super(inspection);
             this.thread = thread;
-            final TeleIntegerRegisters integerRegisters = thread.integerRegisters();
-            final TeleStateRegisters stateRegisters = thread.stateRegisters();
-            final TeleFloatingPointRegisters floatingPointRegisters = thread.floatingPointRegisters();
-            nRegisters = integerRegisters.symbolizer().numberOfValues()
-                 + stateRegisters.symbolizer().numberOfValues()
-                 + floatingPointRegisters.symbolizer().numberOfValues();
+            final MaxRegisters registers = thread.registers();
+            final TeleIntegerRegisterSet integerRegisterSet = registers.integerRegisterSet();
+            final TeleStateRegisterSet stateRegisterSet = registers.stateRegisterSet();
+            final TeleFloatingPointRegisterSet floatingPointRegisterSet = registers.floatingPointRegisterSet();
+            nRegisters = integerRegisterSet.symbolizer().numberOfValues()
+                 + stateRegisterSet.symbolizer().numberOfValues()
+                 + floatingPointRegisterSet.symbolizer().numberOfValues();
             registerInfos = new RegisterInfo[nRegisters];
             int row = 0;
-            for (Symbol register : integerRegisters.symbolizer()) {
-                registerInfos[row] = new IntegerRegisterInfo(integerRegisters, register);
+            for (Symbol register : integerRegisterSet.symbolizer()) {
+                registerInfos[row] = new IntegerRegisterInfo(integerRegisterSet, register);
                 row++;
             }
 
-            for (Symbol register : stateRegisters.symbolizer()) {
-                registerInfos[row] = new StateRegisterInfo(stateRegisters, register);
+            for (Symbol register : stateRegisterSet.symbolizer()) {
+                registerInfos[row] = new StateRegisterInfo(stateRegisterSet, register);
                 row++;
             }
 
-            for (Symbol register : floatingPointRegisters.symbolizer()) {
-                registerInfos[row] = new FloatingPointRegisterInfo(floatingPointRegisters, register);
+            for (Symbol register : floatingPointRegisterSet.symbolizer()) {
+                registerInfos[row] = new FloatingPointRegisterInfo(floatingPointRegisterSet, register);
                 row++;
             }
             assert nRegisters == row;

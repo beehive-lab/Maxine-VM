@@ -38,7 +38,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
 
     private String condition;
     private StreamTokenizer streamTokenizer;
-    private TeleIntegerRegisters integerRegisters;
+    private TeleIntegerRegisterSet integerRegisterSet;
     private static Map<String, ? extends Symbol> integerRegisterSymbols;
     private Expression expression;
 
@@ -46,7 +46,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
         super(teleVM);
         this.condition = condition;
         if (integerRegisterSymbols == null) {
-            integerRegisterSymbols = Symbolizer.Static.toSymbolMap(TeleIntegerRegisters.symbolizer(teleVM.vmConfiguration()));
+            integerRegisterSymbols = Symbolizer.Static.toSymbolMap(TeleIntegerRegisterSet.symbolizer(teleVM.vmConfiguration()));
         }
         this.expression = parse();
     }
@@ -59,11 +59,11 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
         if (expression == null) {
             return false;
         }
-        integerRegisters = teleNativeThread.integerRegisters();
-        if (integerRegisters == null) {
+        integerRegisterSet = teleNativeThread.registers().integerRegisterSet();
+        if (integerRegisterSet == null) {
             return false;
         }
-        integerRegisters.symbolizer();
+        integerRegisterSet.symbolizer();
         try {
             final Expression result = expression.evaluate();
             if (result instanceof BooleanExpression) {
@@ -386,7 +386,7 @@ public class BreakpointCondition extends AbstractTeleVMHolder implements VMTrigg
 
         @Override
         Expression evaluate() {
-            return new NumberExpression(integerRegisters.get(register).toLong());
+            return new NumberExpression(integerRegisterSet.getValue(register).toLong());
         }
 
         @Override

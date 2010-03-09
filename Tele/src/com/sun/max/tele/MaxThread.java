@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.tele.debug.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -109,33 +107,9 @@ public interface MaxThread {
     MaxThreadLocalsBlock localsBlock();
 
     /**
-     * This thread's integer registers.
-     *
-     * @return the integer registers; null after thread dies.
+     * This thread's registers, which includes IP, FP, SP and other information.
      */
-    TeleIntegerRegisters integerRegisters();
-
-    /**
-     * This thread's floating point registers.
-     *
-     * @return the floating point registers; null after thread dies.
-     */
-    TeleFloatingPointRegisters floatingPointRegisters();
-
-    /**
-     * This thread's state registers.
-     *
-     * @return the state registers; null after thread dies.
-     */
-    TeleStateRegisters stateRegisters();
-
-    /**
-     * Current stack pointer.
-     *
-     * @return the current stack pointer for the thread, zero if thread has died.
-     * @see #stack()
-     */
-    Pointer stackPointer();
+    MaxRegisters registers();
 
     /**
      * Gets a description of the stack for this thread.
@@ -145,7 +119,7 @@ public interface MaxThread {
     /**
      * @return location of the instruction pointer for the thread; null if thread has died
      */
-    MaxCodeLocation instructionLocation();
+    MaxCodeLocation ipLocation();
 
     /**
      * Gets the surrogate for the heap object in the VM that implements this thread.

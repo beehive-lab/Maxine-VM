@@ -34,12 +34,12 @@ import com.sun.max.vm.value.*;
  */
 public abstract class RegisterInfo {
 
-    private final TeleRegisters teleRegisters;
+    private final TeleRegisterSet teleRegisterSet;
     private final Symbol register;
     private final ValueHistory<Value> valueHistory;
 
-    protected RegisterInfo(TeleRegisters teleRegisters, Symbol register) {
-        this.teleRegisters = teleRegisters;
+    protected RegisterInfo(TeleRegisterSet teleRegisterSet, Symbol register) {
+        this.teleRegisterSet = teleRegisterSet;
         this.register = register;
         this.valueHistory = new ArrayValueHistory<Value>(6);
     }
@@ -73,7 +73,7 @@ public abstract class RegisterInfo {
      * Read and cache the current value of the register; increment generation count.
      */
     public void refresh() {
-        final Address address = teleRegisters.get(register);
+        final Address address = teleRegisterSet.getValue(register);
         valueHistory.add(new WordValue(address));
     }
 
@@ -84,8 +84,8 @@ public abstract class RegisterInfo {
      * @author Michael Van De Vanter
      */
     public static final class IntegerRegisterInfo extends RegisterInfo {
-        public IntegerRegisterInfo(TeleIntegerRegisters registers, Symbol register) {
-            super(registers, register);
+        public IntegerRegisterInfo(TeleIntegerRegisterSet integerRegisterSet, Symbol register) {
+            super(integerRegisterSet, register);
         }
 
         @Override
@@ -104,11 +104,11 @@ public abstract class RegisterInfo {
 
         private final WordValueLabel.ValueMode displayMode;
 
-        public StateRegisterInfo(TeleStateRegisters registers, Symbol register) {
-            super(registers, register);
-            if (registers.isFlagsRegister(register)) {
+        public StateRegisterInfo(TeleStateRegisterSet stateRegisterSet, Symbol register) {
+            super(stateRegisterSet, register);
+            if (stateRegisterSet.isFlagsRegister(register)) {
                 displayMode = WordValueLabel.ValueMode.FLAGS_REGISTER;
-            } else if (registers.isInstructionPointerRegister(register)) {
+            } else if (stateRegisterSet.isInstructionPointerRegister(register)) {
                 displayMode = WordValueLabel.ValueMode.CALL_ENTRY_POINT;
             } else {
                 displayMode = WordValueLabel.ValueMode.INTEGER_REGISTER;
@@ -128,8 +128,8 @@ public abstract class RegisterInfo {
      * @author Michael Van De Vanter
      */
     public static final class FloatingPointRegisterInfo extends RegisterInfo {
-        public FloatingPointRegisterInfo(TeleFloatingPointRegisters registers, Symbol register) {
-            super(registers, register);
+        public FloatingPointRegisterInfo(TeleFloatingPointRegisterSet floatingPointRegisterSet, Symbol register) {
+            super(floatingPointRegisterSet, register);
         }
 
         @Override

@@ -309,12 +309,12 @@ public final class WatchpointsTable extends InspectorTable {
             // See if any registers point here
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
-                if (teleIntegerRegisters == null) {
+                final TeleIntegerRegisterSet teleIntegerRegisterSet = thread.registers().integerRegisterSet();
+                if (teleIntegerRegisterSet == null) {
                     // Return a specialized renderer with its own content.
                     label = gui().getUnavailableDataTableCellRenderer();
                 } else {
-                    final String registerNameList = teleIntegerRegisters.findAsNameList(watchpoint);
+                    final String registerNameList = teleIntegerRegisterSet.findAsNameList(watchpoint);
                     if (registerNameList.isEmpty()) {
                         label.setForeground(style().memoryDefaultTagTextColor());
                     } else {

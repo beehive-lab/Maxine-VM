@@ -40,22 +40,20 @@ import com.sun.max.vm.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TeleRegisters {
+public abstract class TeleRegisterSet {
 
     protected final VMConfiguration vmConfiguration;
+    final Endianness endianness;
     private final Symbolizer<? extends Symbol> symbolizer;
-
-    public final Symbolizer<? extends Symbol> symbolizer() {
-        return symbolizer;
-    }
 
     private final Address[] registerValues;
     private final byte[] registerData;
     private final ByteArrayInputStream registerDataInputStream;
 
-    protected TeleRegisters(Symbolizer<? extends Symbol> symbolizer, VMConfiguration vmConfiguration) {
+    protected TeleRegisterSet(Symbolizer<? extends Symbol> symbolizer, VMConfiguration vmConfiguration) {
         this.symbolizer = symbolizer;
         this.vmConfiguration = vmConfiguration;
+        this.endianness = vmConfiguration.platform().processorKind.dataModel.endianness;
         this.registerValues = new Address[symbolizer.numberOfValues()];
         this.registerData = new byte[symbolizer.numberOfValues() * Address.size()];
         this.registerDataInputStream = new ByteArrayInputStream(registerData);
@@ -69,13 +67,16 @@ public abstract class TeleRegisters {
         return registerData;
     }
 
+    public final Symbolizer<? extends Symbol> symbolizer() {
+        return symbolizer;
+    }
+
     /**
      * Refreshes the register values from the {@linkplain #registerData() raw buffer} holding the registers' values.
      * This method should be called whenever the raw buffer is updated.
      */
     public final void refresh() {
         registerDataInputStream.reset();
-        final Endianness endianness = vmConfiguration.platform().processorKind.dataModel.endianness;
         for (int i = 0; i != registerValues.length; i++) {
             try {
                 registerValues[i] = Word.read(registerDataInputStream, endianness).asAddress();
@@ -116,7 +117,7 @@ public abstract class TeleRegisters {
         return nameList;
     }
 
-    public Address get(int index) {
+    public Address getValueAt(int index) {
         return registerValues[index];
     }
 
@@ -126,7 +127,7 @@ public abstract class TeleRegisters {
      * @param register the register whose value is to be returned
      * @return the value of {@code register}
      */
-    public final Address get(Symbol register) {
+    public final Address getValue(Symbol register) {
         return registerValues[register.value()];
     }
 
@@ -139,7 +140,7 @@ public abstract class TeleRegisters {
      * @param register the register whose value is to be updated
      * @param value the new value of {@code register}
      */
-    public final void set(Symbol register, Address value) {
+    protected final void setValue(Symbol register, Address value) {
         registerValues[register.value()] = value;
     }
 
@@ -149,7 +150,7 @@ public abstract class TeleRegisters {
         int z = 0;
         for (Symbol s : symbolizer()) {
             registerNames[z] = s.name();
-            values[z] = get(s).toLong();
+            values[z] = getValue(s).toLong();
             z++;
         }
 

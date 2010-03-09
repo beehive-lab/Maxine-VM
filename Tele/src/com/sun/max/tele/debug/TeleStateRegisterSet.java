@@ -31,13 +31,14 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Bernd Mathiske
  * @author Laurent Daynes
+ * @author Michael Van De Vanter
  */
-public final class TeleStateRegisters extends TeleRegisters {
+public final class TeleStateRegisterSet extends TeleRegisterSet {
 
     private final Symbol instructionPointerRegister;
     private final Symbol flagsRegister;
 
-    public TeleStateRegisters(VMConfiguration vmConfiguration) {
+    public TeleStateRegisterSet(VMConfiguration vmConfiguration) {
         super(symbolizer(vmConfiguration), vmConfiguration);
         switch (vmConfiguration.platform().processorKind.instructionSet) {
             case AMD64: {
@@ -61,8 +62,8 @@ public final class TeleStateRegisters extends TeleRegisters {
      *
      * @return the value of the instruction pointer
      */
-    public Pointer instructionPointer() {
-        return get(instructionPointerRegister).asPointer();
+    Pointer instructionPointer() {
+        return getValue(instructionPointerRegister).asPointer();
     }
 
     /**
@@ -71,8 +72,8 @@ public final class TeleStateRegisters extends TeleRegisters {
      *
      * @param value the new value of the instruction pointer
      */
-    public void setInstructionPointer(Address value) {
-        set(instructionPointerRegister, value);
+    void setInstructionPointer(Address value) {
+        setValue(instructionPointerRegister, value);
     }
 
     private enum Amd64StateRegister implements Enumerable<Amd64StateRegister> {
