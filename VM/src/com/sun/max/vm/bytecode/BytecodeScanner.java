@@ -222,7 +222,7 @@ public final class BytecodeScanner {
             }
             default: {
                 int opcode = currentOpcode;
-                if (Bytecodes.isExtension(opcode)) {
+                if (!Bytecodes.isStandard(opcode)) {
                     int length = Bytecodes.lengthOf(opcode);
                     assert length != 0;
                     boolean parsedAllBytes = bytecodeVisitor.extension(opcode, true);
@@ -1147,7 +1147,7 @@ public final class BytecodeScanner {
             }
             default: {
                 int opcode = currentOpcode;
-                if (Bytecodes.isExtension(opcode)) {
+                if (!Bytecodes.isStandard(opcode)) {
                     int length = Bytecodes.lengthOf(opcode);
                     assert length != 0;
                     boolean parsedAllBytes = bytecodeVisitor.extension(opcode, false);

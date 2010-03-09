@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
+import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -39,13 +42,43 @@ public final class VMRegister {
     private VMRegister() {
     }
 
+    /**
+     * Constant corresponding to the ordinal of {@link Role#CPU_STACK_POINTER}.
+     */
+    public static final int CPU_SP = 0;
+
+    /**
+     * Constant corresponding to the ordinal of {@link Role#CPU_FRAME_POINTER}.
+     */
+    public static final int CPU_FP = 1;
+
+    /**
+     * Constant corresponding to the ordinal of {@link Role#ABI_STACK_POINTER}.
+     */
+    public static final int ABI_SP = 2;
+
+    /**
+     * Constant corresponding to the ordinal of {@link Role#ABI_FRAME_POINTER}.
+     */
+    public static final int ABI_FP = 3;
+
+    /**
+     * Constant corresponding to the ordinal of {@link Role#SAFEPOINT_LATCH}.
+     */
+    public static final int LATCH = 7;
+
+    /**
+     * Constant corresponding to the ordinal of {@link Role#LINK_ADDRESS}.
+     */
+    public static final int LINK = 9;
+
     public enum Role {
         /**
          * The register that is customarily used as "the stack pointer" on the target CPU.
          * Typically this register is not flexibly allocatable for other uses.
          * AMD64: RSP
          */
-        CPU_STACK_POINTER {
+        CPU_STACK_POINTER(CPU_SP) {
             @Override
             public Kind kind() {
                 return Kind.WORD;
@@ -55,7 +88,7 @@ public final class VMRegister {
          * The register that is customarily used as "frame pointer" on the target CPU.
          * AMD64: RBP
          */
-        CPU_FRAME_POINTER {
+        CPU_FRAME_POINTER(CPU_FP) {
             @Override
             public Kind kind() {
                 return Kind.WORD;
@@ -66,7 +99,7 @@ public final class VMRegister {
          * i.e. for code sequences that call, push, pop etc.
          * Typically this is the same as CPU_STACK_POINTER.
          */
-        ABI_STACK_POINTER {
+        ABI_STACK_POINTER(ABI_SP) {
             @Override
             public Kind kind() {
                 return Kind.WORD;
@@ -78,7 +111,7 @@ public final class VMRegister {
          * This may or may not be the same as CPU_FRAME_POINTER.
          * For the JIT it is, but the optimizing compiler uses CPU_STACK_POINTER instead.
          */
-        ABI_FRAME_POINTER {
+        ABI_FRAME_POINTER(ABI_FP) {
             @Override
             public Kind kind() {
                 return Kind.WORD;
@@ -100,7 +133,7 @@ public final class VMRegister {
         ABI_RESULT,
 
         ABI_SCRATCH,
-        SAFEPOINT_LATCH {
+        SAFEPOINT_LATCH(LATCH) {
             @Override
             public Kind kind() {
                 return Kind.WORD;
@@ -118,26 +151,22 @@ public final class VMRegister {
 
         },
         /**
-         * The register holding the address of the call instruction
+         * The register holding the address to which a call returns (e.g. {@code %i7 on SPARC}).
          * Not all platform defines one.
         */
-        CALL_INSTRUCTION_ADDRESS {
-            @Override
-            public Kind kind() {
-                return Kind.WORD;
-            }
-        },
-
-        /**
-         * The register holding the address of the call instruction for a frame-less call.
-         * Not all platform defines one.
-         */
-        FRAMELESS_CALL_INSTRUCTION_ADDRESS {
+        LINK_ADDRESS(LINK) {
             @Override
             public Kind kind() {
                 return Kind.WORD;
             }
         };
+
+        Role(int expectedOrdinal) {
+            assert expectedOrdinal == ordinal();
+        }
+
+        Role() {
+        }
 
         public static final IndexedSequence<Role> VALUES = new ArraySequence<Role>(values());
 
@@ -147,21 +176,25 @@ public final class VMRegister {
     }
 
     @INLINE
+    @INTRINSIC(READREG | (CPU_SP << 8))
     public static Pointer getCpuStackPointer() {
         return SpecialBuiltin.getIntegerRegister(Role.CPU_STACK_POINTER);
     }
 
     @INLINE
+    @INTRINSIC(WRITEREG | (CPU_SP << 8))
     public static void setCpuStackPointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.CPU_STACK_POINTER, value);
     }
 
     @INLINE
+    @INTRINSIC(READREG | (CPU_FP << 8))
     public static Pointer getCpuFramePointer() {
         return SpecialBuiltin.getIntegerRegister(Role.CPU_FRAME_POINTER);
     }
 
     @INLINE
+    @INTRINSIC(WRITEREG | (CPU_FP << 8))
     public static void setCpuFramePointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.CPU_FRAME_POINTER, value);
     }
@@ -172,72 +205,59 @@ public final class VMRegister {
     }
 
     @INLINE
+    @INTRINSIC(READREG | (ABI_SP << 8))
     public static Pointer getAbiStackPointer() {
         return SpecialBuiltin.getIntegerRegister(Role.ABI_STACK_POINTER);
     }
 
     @INLINE
+    @INTRINSIC(WRITEREG | (ABI_SP << 8))
     public static void setAbiStackPointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.ABI_STACK_POINTER, value);
     }
 
     @INLINE
+    @INTRINSIC(READREG | (ABI_FP << 8))
     public static Pointer getAbiFramePointer() {
         return SpecialBuiltin.getIntegerRegister(Role.ABI_FRAME_POINTER);
     }
 
     @INLINE
+    @INTRINSIC(WRITEREG | (ABI_FP << 8))
     public static void setAbiFramePointer(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.ABI_FRAME_POINTER, value);
     }
 
     @INLINE
+    @INTRINSIC(READREG | (LATCH << 8))
     public static Pointer getSafepointLatchRegister() {
         return SpecialBuiltin.getIntegerRegister(Role.SAFEPOINT_LATCH);
     }
 
     @INLINE
+    @INTRINSIC(WRITEREG | (LATCH << 8))
     public static void setSafepointLatchRegister(Word value) {
         SpecialBuiltin.setIntegerRegister(Role.SAFEPOINT_LATCH, value);
     }
 
     @INLINE
+    @INTRINSIC(READ_PC)
     public static Pointer getInstructionPointer() {
         return SpecialBuiltin.getInstructionPointer();
     }
 
     @FOLD
     private static boolean callAddressRegisterExists() {
-        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.CALL_INSTRUCTION_ADDRESS) != null;
+        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.LINK_ADDRESS) != null;
     }
 
     @INLINE
-    public static Pointer getCallAddressRegister() {
-        if (callAddressRegisterExists()) {
-            return SpecialBuiltin.getIntegerRegister(Role.CALL_INSTRUCTION_ADDRESS);
-        }
-        throw ProgramError.unexpected("There is no call address register in this target ABI");
-    }
-
-    @INLINE
+    @INTRINSIC(WRITEREG | (LINK << 8))
     public static void setCallAddressRegister(Word value) {
         if (callAddressRegisterExists()) {
-            SpecialBuiltin.setIntegerRegister(Role.CALL_INSTRUCTION_ADDRESS, value);
+            SpecialBuiltin.setIntegerRegister(Role.LINK_ADDRESS, value);
             return;
         }
         throw ProgramError.unexpected("There is no call address register in this target ABI");
-    }
-
-    @FOLD
-    private static boolean framelessCallAddressRegisterExists() {
-        return VMConfiguration.target().targetABIsScheme().optimizedJavaABI.registerRoleAssignment.integerRegisterActingAs(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS) != null;
-    }
-
-    @INLINE
-    public static Pointer getFramelessCallAddressRegister() {
-        if (framelessCallAddressRegisterExists()) {
-            return SpecialBuiltin.getIntegerRegister(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS);
-        }
-        throw ProgramError.unexpected("There is no frameless call address register in this target ABI");
     }
 }

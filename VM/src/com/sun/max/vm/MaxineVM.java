@@ -30,6 +30,7 @@ import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -366,7 +367,9 @@ public final class MaxineVM {
      */
     @HOSTED_ONLY
     public static boolean isHostedOnly(AccessibleObject member) {
-        return member.getAnnotation(HOSTED_ONLY.class) != null || isHostedOnly(Classes.getDeclaringClass(member));
+        return member.getAnnotation(HOSTED_ONLY.class) != null ||
+               !Platform.target().isAcceptedBy(member.getAnnotation(PLATFORM.class)) ||
+               isHostedOnly(Classes.getDeclaringClass(member));
     }
 
     /**
@@ -390,6 +393,11 @@ public final class MaxineVM {
         }
 
         if (javaClass.getAnnotation(HOSTED_ONLY.class) != null) {
+            HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
+            return true;
+        }
+
+        if (!Platform.target().isAcceptedBy(javaClass.getAnnotation(PLATFORM.class))) {
             HOSTED_CLASSES.put(javaClass, Boolean.TRUE);
             return true;
         }

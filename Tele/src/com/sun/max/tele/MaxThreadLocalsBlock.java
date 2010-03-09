@@ -28,7 +28,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxThreadLocals {
+public interface MaxThreadLocalsBlock {
 
     /**
      * Gets the thread that owns the thread locals block; doesn't change.

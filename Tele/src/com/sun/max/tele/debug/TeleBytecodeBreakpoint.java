@@ -37,6 +37,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
@@ -71,7 +72,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     private final String methodName;
     private final String signatureDescriptorString;
 
-    private boolean enabled = false;
+    private boolean enabled = true;
 
     // Breakpoints are unconditional by default.
     private BreakpointCondition condition = null;
@@ -83,7 +84,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      * All target code breakpoints created in compilations of the method in the VM.
      * Non-null iff this breakpoint is enabled; null if disabled.
      */
-    private AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints;
+    private AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
 
     /**
      * A new bytecode breakpoint, enabled by default, at a specified location.
@@ -102,12 +103,6 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         this.methodName = methodKey.name().string;
         this.signatureDescriptorString = methodKey.signature().string;
         Trace.line(TRACE_VALUE, tracePrefix() + "new=" + this);
-        try {
-            setEnabled(true);
-        } catch (MaxVMBusyException e) {
-            // Shouldn't happen; should only be called with VM lock already held.
-            ProgramError.unexpected("Failed to create bytecode breakpoint");
-        }
     }
 
     /**
@@ -332,16 +327,27 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
         private List<MaxBreakpointListener> breakpointListeners = new CopyOnWriteArrayList<MaxBreakpointListener>();
 
+        /**
+         * The number of times that the list of classes in which breakpoints are set has
+         * been written into the VM.
+         *
+         * @see InspectableCodeInfo
+         */
+        private int breakpointClassDescriptorsEpoch = 0;
+
         public BytecodeBreakpointManager(TeleVM teleVM) {
             super(teleVM);
             this.tracePrefix = "[" + getClass().getSimpleName() + "] ";
-            Trace.line(TRACE_VALUE, tracePrefix + "creating");
+            Trace.begin(TRACE_VALUE, tracePrefix + "initializing");
+            final long startTimeMillis = System.currentTimeMillis();
             this.teleTargetBreakpointManager = teleVM.teleProcess().targetBreakpointManager();
             // Predefine parameter accessors for reading compilation details
             parameter0 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(0);
             parameter1 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(1);
             parameter2 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(2);
             parameter3 = (Symbol) VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI.integerIncomingParameterRegisters.get(3);
+
+            Trace.end(TRACE_VALUE, tracePrefix() + "initializing", startTimeMillis);
         }
 
         /**
@@ -640,9 +646,41 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         }
 
         private void fireBreakpointsChanged() {
+            // Notify registered listeners
             for (final MaxBreakpointListener listener : breakpointListeners) {
                 listener.breakpointsChanged();
             }
+            // Notify the VM
+            // Gather classes in which there is at least one bytecode breakpoint set.
+            final Set<String> breakpointClassDescriptors = new HashSet<String>();
+            for (TeleBytecodeBreakpoint breakpoint : breakpointCache) {
+                breakpointClassDescriptors.add(breakpoint.holderTypeDescriptorString);
+            }
+            // Create string containing class descriptors for all classes in which breakpoints are set, each terminated by a space.
+            final StringBuilder typeDescriptorsBuilder = new StringBuilder();
+            for (String descriptor : breakpointClassDescriptors) {
+                typeDescriptorsBuilder.append(descriptor).append(" ");
+            }
+            final String breakpointClassDescriptorsString = typeDescriptorsBuilder.toString();
+            if (breakpointClassDescriptorsString.length() > InspectableCodeInfo.BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH) {
+                final StringBuilder errMsg = new StringBuilder();
+                errMsg.append("Implementation Restriction exceeded: list of type descriptors for classes containing ");
+                errMsg.append("bytecode breakpoints must not exceed ");
+                errMsg.append(InspectableCodeInfo.BREAKPOINT_DESCRIPTORS_ARRAY_LENGTH).append(" characters.  ");
+                errMsg.append("Current length=").append(breakpointClassDescriptorsString.length()).append(" characters.");
+                ProgramError.unexpected(errMsg.toString());
+            }
+            Trace.line(TRACE_VALUE, tracePrefix + "Writing to VM type descriptors for breakpoint classes =\"" + breakpointClassDescriptorsString + "\"");
+            // Write the string into the designated region in the VM, along with length and incremented epoch counter
+            final int charsLength = breakpointClassDescriptorsString.length();
+            final Reference charArrayReference = teleVM().teleFields().InspectableCodeInfo_breakpointClassDescriptorCharArray.readReference(teleVM());
+            ProgramError.check(charArrayReference != null && !charArrayReference.isZero(), "Can't locate inspectable code array for breakpoint classes");
+            final CharArrayLayout charArrayLayout = teleVM().layoutScheme().charArrayLayout;
+            for (int index = 0; index < charsLength; index++) {
+                charArrayLayout.setChar(charArrayReference, index, breakpointClassDescriptorsString.charAt(index));
+            }
+            teleVM().teleFields().InspectableCodeInfo_breakpointClassDescriptorsCharCount.writeInt(teleVM(), charsLength);
+            teleVM().teleFields().InspectableCodeInfo_breakpointClassDescriptorsEpoch.writeInt(teleVM(), ++breakpointClassDescriptorsEpoch);
         }
 
         /**

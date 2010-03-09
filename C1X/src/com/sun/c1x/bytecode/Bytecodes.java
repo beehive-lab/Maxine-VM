@@ -287,16 +287,74 @@ public class Bytecodes {
 
     public static final int UGE                  = 235; // Unsigned int greater-than-or-equal
 
-    public static final int READGPR              = 236;
-    public static final int WRITEGPR             = 237;
-    public static final int UNSAFE_CAST          = 238; // { u1 opcode; u1 fromKind; u1 toKind; }
+    /**
+     * Reads the value of a register playing a runtime-defined role.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // READREG
+     *           u2 role;     // runtime-defined register role id
+     *         }
+     *
+     * Operand Stack:
+     *     ... => ..., value
+     * </pre>
+     */
+    public static final int READREG              = 236;
+
+    /**
+     * Writes the value of a register playing a runtime-defined role.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // WRITEREG
+     *           u2 role;     // runtime-defined register role id
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ...
+     * </pre>
+     */
+    public static final int WRITEREG             = 237;
+
+    /**
+     * Unsafe cast of top value on stack. The valid type characters and their corresponding kinds are:
+     * <pre>
+     *  'z' = boolean
+     *  'c' = char
+     *  'f' = float
+     *  'd' = double
+     *  'b' = byte
+     *  's' = short
+     *  'i' = int
+     *  'l' = long
+     *  'a' = Object
+     *  'w' = Word
+     * </pre>
+     *
+     * <pre>
+     * Format: { u1 opcode;   // UNSAFE_CAST
+     *           u1 from;     // type char denoting input type
+     *           u1 to;       // type char denoting output type
+     *         }
+     * </pre>
+     */
+    public static final int UNSAFE_CAST          = 238;
     public static final int WRETURN              = 239;
     public static final int SAFEPOINT            = 240;
     public static final int ALLOCA               = 241;
+
+    /**
+     * Inserts a memory barrier.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // MEMBAR
+     *           u2 barrier;  // 1=LOAD_LOAD, 2=LOAD_STORE, 3=STORE_LOAD, 4=STORE_STORE, 5=MEMOP_STORE, 6=ALL
+     *         }
+     * </pre>
+     */
     public static final int MEMBAR               = 242;
     public static final int STACKADDR            = 243;
     public static final int PAUSE                = 244;
-    public static final int ADD_SP               = 245; // (for template JIT)
+    public static final int ADD_SP               = 245;
     public static final int READ_PC              = 246;
     public static final int FLUSHW               = 247;
     public static final int LSB                      = 248;
@@ -433,11 +491,6 @@ public class Bytecodes {
          * Denotes an instruction that is not defined in the JVM specification.
          */
         static final int EXTENSION = 0x00000020;
-
-        /**
-         * Denotes an {@link #EXTENSION} instruction whose complete opcode is 3 bytes long.
-         */
-        static final int OPCODE3 = 0x00000040;
 
         static final int TRAP        = 0x00000080;
         static final int COMMUTATIVE = 0x00000100;
@@ -709,8 +762,8 @@ public class Bytecodes {
         def("uge"             , "bii"  , EXTENSION);
         def("jnicall"         , "bii"  , EXTENSION | TRAP);
         def("call"            , "bii"  , EXTENSION | TRAP);
-        def("readgpr"         , "bii"  , EXTENSION);
-        def("writegpr"        , "bii"  , EXTENSION);
+        def("readreg"         , "bii"  , EXTENSION);
+        def("writereg"        , "bii"  , EXTENSION);
         def("unsafe_cast"     , "bii"  , EXTENSION);
         def("wreturn"         , "b"    , EXTENSION | TRAP | STOP);
         def("safepoint"       , "bii"  , EXTENSION | TRAP);
@@ -784,11 +837,8 @@ public class Bytecodes {
      * @return the mnemonic for {@code opcode} or {@code "<illegal opcode: " + opcode + ">"} if {@code opcode} is not a legal opcode
      */
     public static String nameOf(int opcode) throws IllegalArgumentException {
-        if (isOpcode3(opcode)) {
-            String extName = extNames.get(Integer.valueOf(opcode));
-            if (extName == null) {
-                return "<illegal opcode: " + opcode + ">";
-            }
+        String extName = extNames.get(Integer.valueOf(opcode));
+        if (extName != null) {
             return extName;
         }
         String name = names[opcode & 0xff];
@@ -886,34 +936,24 @@ public class Bytecodes {
     }
 
     /**
-     * Determines if a given opcode denotes a bytecode extension. An extended bytecode instruction is one
-     * that is not part of the JVM specification.
+     * Determines if a given opcode denotes a standard bytecode. A standard bytecode is
+     * defined in the JVM specification.
      *
      * @param opcode an opcode to test
-     * @return {@code true} if {@code opcode} is an extended bytecode
+     * @return {@code true} if {@code opcode} is a standard bytecode
      */
-    public static boolean isExtension(int opcode) {
-        return (flags[opcode & 0xff] & EXTENSION) != 0;
+    public static boolean isStandard(int opcode) {
+        return (flags[opcode & 0xff] & EXTENSION) == 0;
     }
 
     /**
-     * Determines if a given extension opcode includes an operand value.
+     * Determines if a given opcode includes an operand value.
      *
      * @param opcode an opcode to test
      * @return {@code true} if {@code (opcode & ~0xff) != 0}
      */
-    public static boolean isOpcode3(int opcode) {
+    public static boolean isExtended(int opcode) {
         return (opcode & ~0xff) != 0;
-    }
-
-    /**
-     * Determines if a given extension opcode needs to be combined with its 2 byte operand
-     * to derive the a complete {@linkplain #isOpcode3(int) 3-byte} opcode.
-     *
-     * @param opcode an opcode to test
-     */
-    public static boolean hasOpcode3(int opcode) {
-        return (flags[opcode & 0xff] & OPCODE3) != 0;
     }
 
     /**
@@ -1038,6 +1078,41 @@ public class Bytecodes {
         return null;
     }
 
+    @INTRINSIC(WDIV)
+    public static native long unsignedDivide(long x, long y);
+
+    @INTRINSIC(WDIVI)
+    public static native long unsignedDivideByInt(long x, int y);
+
+    @INTRINSIC(WREM)
+    public static native long unsignedRemainder(long x, long y);
+
+    @INTRINSIC(WREMI)
+    public static native long unsignedRemainderByInt(long x, int y);
+
+    /**
+     * This method attempts to fold a binary operation on two constant word inputs.
+     *
+     * @param opcode the bytecode operation to perform
+     * @param x the first input
+     * @param y the second input
+     * @return a <code>Long</code> instance representing the result of folding the operation,
+     * if it is foldable, <code>null</code> otherwise
+     */
+    public static Long foldWordOp2(int opcode, long x, long y) {
+        if (y == 0) {
+            return null;
+        }
+        // attempt to fold a binary operation with constant inputs
+        switch (opcode) {
+            case WDIV:  return unsignedDivide(x, y);
+            case WDIVI: return unsignedDivideByInt(x, (int) y);
+            case WREM:  return unsignedRemainder(x, y);
+            case WREMI: return unsignedRemainderByInt(x, (int) y);
+        }
+        return null;
+    }
+
     public static strictfp Float foldFloatOp2(int opcode, float x, float y) {
         switch (opcode) {
             case FADD: return x + y;
@@ -1130,20 +1205,21 @@ public class Bytecodes {
 
             assert !isConditionalBranch(opcode) || isBranch(opcode) : "a conditional branch must also be a branch";
 
-            if (isExtension(opcode)) {
+            if (!isStandard(opcode)) {
                 for (Field otherField : Bytecodes.class.getDeclaredFields()) {
                     if (otherField.getName().startsWith(field.getName()) && !otherField.equals(field)) {
                         String extName = otherField.getName();
                         int opcodeWithOperand = otherField.getInt(null);
-                        if (isOpcode3(opcodeWithOperand)) {
+                        if (isExtended(opcodeWithOperand)) {
                             assert length == 3;
-                            Bytecodes.flags[opcode] |= OPCODE3;
                             assert (opcodeWithOperand & 0xff) == opcode : "Extended opcode " + extName + " must share same low 8 bits as " + field.getName();
                             String oldValue = extNames.put(opcodeWithOperand, extName.toLowerCase());
                             assert oldValue == null;
                         }
                     }
                 }
+            } else {
+                assert !isExtended(opcode);
             }
 
         } catch (Exception e) {

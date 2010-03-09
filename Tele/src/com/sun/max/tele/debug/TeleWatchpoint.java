@@ -29,6 +29,7 @@ import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -575,7 +576,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         private void setRelocationWatchpoint(final Pointer origin) throws TooManyWatchpointsException {
             final TeleVM teleVM = watchpointManager.teleVM();
             final Pointer forwardPointerLocation = origin.plus(teleVM.gcForwardingPointerOffset());
-            final MemoryRegion forwardPointerRegion = new FixedMemoryRegion(forwardPointerLocation, teleVM.wordSize(), "Forwarding pointer for object relocation watchpoint");
+            final MemoryRegion forwardPointerRegion = new TeleMemoryRegion(forwardPointerLocation, teleVM.wordSize(), "Forwarding pointer for object relocation watchpoint");
             relocationWatchpoint = watchpointManager.createSystemWatchpoint("Object relocation watchpoint", forwardPointerRegion, relocationWatchpointSettings);
             relocationWatchpoint.setTriggerEventHandler(new VMTriggerEventHandler() {
 
@@ -670,7 +671,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     // The watchpoint's object has been collected; convert it to a fixed memory region watchpoint
                     try {
                         remove();
-                        final FixedMemoryRegion watchpointRegion = new FixedMemoryRegion(start(), size(), "Old memory location of watched object");
+                        final TeleMemoryRegion watchpointRegion = new TeleMemoryRegion(start(), size(), "Old memory location of watched object");
                         final TeleWatchpoint newRegionWatchpoint =
                             watchpointManager.createRegionWatchpoint("Replacement for watchpoint on GC'd object", watchpointRegion, getSettings());
                         Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint on collected object replaced: " + newRegionWatchpoint);
@@ -938,7 +939,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     String amendedDescription = (description == null) ? "" : description;
                     amendedDescription = amendedDescription + " (non-live object))";
                     final Pointer address = teleObject.origin().plus(arrayOffsetFromOrigin.plus(index * elementKind.width.numberOfBytes));
-                    final MemoryRegion region = new FixedMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
+                    final MemoryRegion region = new TeleMemoryRegion(address, Size.fromInt(elementKind.width.numberOfBytes), "");
                     teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
                 }
                 teleWatchpoint =  addClientWatchpoint(teleWatchpoint);

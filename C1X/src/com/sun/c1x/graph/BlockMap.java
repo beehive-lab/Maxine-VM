@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.graph;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import java.util.*;
 
 import com.sun.c1x.*;
@@ -258,17 +260,18 @@ public class BlockMap {
         while (bci < code.length) {
             int opcode = Bytes.beU1(code, bci);
             switch (opcode) {
-                case Bytecodes.ATHROW:
+                case ATHROW:
                     if (exceptionMap != null) {
                         exceptionMap.setCanTrap(bci);
                     }
                     // fall through
-                case Bytecodes.IRETURN: // fall through
-                case Bytecodes.LRETURN: // fall through
-                case Bytecodes.FRETURN: // fall through
-                case Bytecodes.DRETURN: // fall through
-                case Bytecodes.ARETURN: // fall through
-                case Bytecodes.RETURN:
+                case IRETURN: // fall through
+                case LRETURN: // fall through
+                case FRETURN: // fall through
+                case DRETURN: // fall through
+                case ARETURN: // fall through
+                case WRETURN: // fall through
+                case RETURN:
                     if (exceptionMap != null && exceptionMap.isObjectInit) {
                         exceptionMap.setCanTrap(bci);
                     }
@@ -276,45 +279,45 @@ public class BlockMap {
                     bci += 1; // these are all 1 byte opcodes
                     break;
 
-                case Bytecodes.RET:
+                case RET:
                     successorMap[bci] = NONE; // end of control flow
                     bci += 2; // ret is 2 bytes
                     break;
 
-                case Bytecodes.IFEQ:      // fall through
-                case Bytecodes.IFNE:      // fall through
-                case Bytecodes.IFLT:      // fall through
-                case Bytecodes.IFGE:      // fall through
-                case Bytecodes.IFGT:      // fall through
-                case Bytecodes.IFLE:      // fall through
-                case Bytecodes.IF_ICMPEQ: // fall through
-                case Bytecodes.IF_ICMPNE: // fall through
-                case Bytecodes.IF_ICMPLT: // fall through
-                case Bytecodes.IF_ICMPGE: // fall through
-                case Bytecodes.IF_ICMPGT: // fall through
-                case Bytecodes.IF_ICMPLE: // fall through
-                case Bytecodes.IF_ACMPEQ: // fall through
-                case Bytecodes.IF_ACMPNE: // fall through
-                case Bytecodes.IFNULL:    // fall through
-                case Bytecodes.IFNONNULL: {
+                case IFEQ:      // fall through
+                case IFNE:      // fall through
+                case IFLT:      // fall through
+                case IFGE:      // fall through
+                case IFGT:      // fall through
+                case IFLE:      // fall through
+                case IF_ICMPEQ: // fall through
+                case IF_ICMPNE: // fall through
+                case IF_ICMPLT: // fall through
+                case IF_ICMPGE: // fall through
+                case IF_ICMPGT: // fall through
+                case IF_ICMPLE: // fall through
+                case IF_ACMPEQ: // fall through
+                case IF_ACMPNE: // fall through
+                case IFNULL:    // fall through
+                case IFNONNULL: {
                     succ2(bci, bci + 3, bci + Bytes.beS2(code, bci + 1));
                     bci += 3; // these are all 3 byte opcodes
                     break;
                 }
 
-                case Bytecodes.GOTO: {
+                case GOTO: {
                     succ1(bci, bci + Bytes.beS2(code, bci + 1));
                     bci += 3; // goto is 3 bytes
                     break;
                 }
 
-                case Bytecodes.GOTO_W: {
+                case GOTO_W: {
                     succ1(bci, bci + Bytes.beS4(code, bci + 1));
                     bci += 5; // goto_w is 5 bytes
                     break;
                 }
 
-                case Bytecodes.JSR: {
+                case JSR: {
                     int target = bci + Bytes.beS2(code, bci + 1);
                     succ2(bci, bci + 3, target); // make JSR's a successor or not?
                     addEntrypoint(target, BlockBegin.BlockFlag.SubroutineEntry);
@@ -322,7 +325,7 @@ public class BlockMap {
                     break;
                 }
 
-                case Bytecodes.JSR_W: {
+                case JSR_W: {
                     int target = bci + Bytes.beS4(code, bci + 1);
                     succ2(bci, bci + 5, target);
                     addEntrypoint(target, BlockBegin.BlockFlag.SubroutineEntry);
@@ -330,29 +333,29 @@ public class BlockMap {
                     break;
                 }
 
-                case Bytecodes.TABLESWITCH: {
+                case TABLESWITCH: {
                     BytecodeSwitch sw = new BytecodeTableSwitch(code, bci);
                     makeSwitchSuccessors(bci, sw);
                     bci += sw.size();
                     break;
                 }
 
-                case Bytecodes.LOOKUPSWITCH: {
+                case LOOKUPSWITCH: {
                     BytecodeSwitch sw = new BytecodeLookupSwitch(code, bci);
                     makeSwitchSuccessors(bci, sw);
                     bci += sw.size();
                     break;
                 }
-                case Bytecodes.WIDE: {
-                    bci += Bytecodes.lengthOf(code, bci);
+                case WIDE: {
+                    bci += lengthOf(code, bci);
                     break;
                 }
 
                 default: {
-                    if (exceptionMap != null && Bytecodes.canTrap(opcode)) {
+                    if (exceptionMap != null && canTrap(opcode)) {
                         exceptionMap.setCanTrap(bci);
                     }
-                    bci += Bytecodes.lengthOf(opcode); // all variable length instructions are handled above
+                    bci += lengthOf(opcode); // all variable length instructions are handled above
                 }
             }
         }
@@ -464,12 +467,12 @@ public class BlockMap {
             while (true) {
                 // iterate over the bytecodes in this block
                 int opcode = code[bci] & 0xff;
-                if (opcode == Bytecodes.WIDE) {
+                if (opcode == WIDE) {
                     bci += processWideStore(code[bci + 1] & 0xff, code, bci);
-                } else if (Bytecodes.isStore(opcode)) {
+                } else if (isStore(opcode)) {
                     bci += processStore(opcode, code, bci);
                 } else {
-                    bci += Bytecodes.lengthOf(code, bci);
+                    bci += lengthOf(code, bci);
                 }
                 if (bci >= code.length || blockMap[bci] != null) {
                     // stop when we reach the next block
@@ -481,44 +484,44 @@ public class BlockMap {
 
     int processWideStore(int opcode, byte[] code, int bci) {
         switch (opcode) {
-            case Bytecodes.IINC:     storeOne(Bytes.beU2(code, bci + 2)); return 6;
-            case Bytecodes.ISTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
-            case Bytecodes.LSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
-            case Bytecodes.FSTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
-            case Bytecodes.DSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
-            case Bytecodes.ASTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
+            case IINC:     storeOne(Bytes.beU2(code, bci + 2)); return 6;
+            case ISTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
+            case LSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
+            case FSTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
+            case DSTORE:   storeTwo(Bytes.beU2(code, bci + 2)); return 3;
+            case ASTORE:   storeOne(Bytes.beU2(code, bci + 2)); return 3;
         }
-        return Bytecodes.lengthOf(code, bci);
+        return lengthOf(code, bci);
     }
 
     int processStore(int opcode, byte[] code, int bci) {
         switch (opcode) {
-            case Bytecodes.IINC:     storeOne(code[bci + 1] & 0xff); return 3;
-            case Bytecodes.ISTORE:   storeOne(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.LSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.FSTORE:   storeOne(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.DSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.ASTORE:   storeOne(code[bci + 1] & 0xff); return 2;
-            case Bytecodes.ISTORE_0: storeOne(0); return 1;
-            case Bytecodes.ISTORE_1: storeOne(1); return 1;
-            case Bytecodes.ISTORE_2: storeOne(2); return 1;
-            case Bytecodes.ISTORE_3: storeOne(3); return 1;
-            case Bytecodes.LSTORE_0: storeTwo(0); return 1;
-            case Bytecodes.LSTORE_1: storeTwo(1); return 1;
-            case Bytecodes.LSTORE_2: storeTwo(2); return 1;
-            case Bytecodes.LSTORE_3: storeTwo(3); return 1;
-            case Bytecodes.FSTORE_0: storeOne(0); return 1;
-            case Bytecodes.FSTORE_1: storeOne(1); return 1;
-            case Bytecodes.FSTORE_2: storeOne(2); return 1;
-            case Bytecodes.FSTORE_3: storeOne(3); return 1;
-            case Bytecodes.DSTORE_0: storeTwo(0); return 1;
-            case Bytecodes.DSTORE_1: storeTwo(1); return 1;
-            case Bytecodes.DSTORE_2: storeTwo(2); return 1;
-            case Bytecodes.DSTORE_3: storeTwo(3); return 1;
-            case Bytecodes.ASTORE_0: storeOne(0); return 1;
-            case Bytecodes.ASTORE_1: storeOne(1); return 1;
-            case Bytecodes.ASTORE_2: storeOne(2); return 1;
-            case Bytecodes.ASTORE_3: storeOne(3); return 1;
+            case IINC:     storeOne(code[bci + 1] & 0xff); return 3;
+            case ISTORE:   storeOne(code[bci + 1] & 0xff); return 2;
+            case LSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
+            case FSTORE:   storeOne(code[bci + 1] & 0xff); return 2;
+            case DSTORE:   storeTwo(code[bci + 1] & 0xff); return 2;
+            case ASTORE:   storeOne(code[bci + 1] & 0xff); return 2;
+            case ISTORE_0: storeOne(0); return 1;
+            case ISTORE_1: storeOne(1); return 1;
+            case ISTORE_2: storeOne(2); return 1;
+            case ISTORE_3: storeOne(3); return 1;
+            case LSTORE_0: storeTwo(0); return 1;
+            case LSTORE_1: storeTwo(1); return 1;
+            case LSTORE_2: storeTwo(2); return 1;
+            case LSTORE_3: storeTwo(3); return 1;
+            case FSTORE_0: storeOne(0); return 1;
+            case FSTORE_1: storeOne(1); return 1;
+            case FSTORE_2: storeOne(2); return 1;
+            case FSTORE_3: storeOne(3); return 1;
+            case DSTORE_0: storeTwo(0); return 1;
+            case DSTORE_1: storeTwo(1); return 1;
+            case DSTORE_2: storeTwo(2); return 1;
+            case DSTORE_3: storeTwo(3); return 1;
+            case ASTORE_0: storeOne(0); return 1;
+            case ASTORE_1: storeOne(1); return 1;
+            case ASTORE_2: storeOne(2); return 1;
+            case ASTORE_3: storeOne(3); return 1;
         }
         throw Util.shouldNotReachHere();
     }

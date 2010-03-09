@@ -54,7 +54,7 @@ import com.sun.max.vm.stack.amd64.*;
  * @author Ben L. Titzer
  * @author Thomas Wuerthinger
  */
-public class C1XTargetMethod extends TargetMethod {
+public class C1XTargetMethod extends TargetMethod implements Cloneable {
 
     private static final int RJMP = 0xe9;
 
@@ -133,7 +133,7 @@ public class C1XTargetMethod extends TargetMethod {
     private void init(CiTargetMethod ciTargetMethod) {
 
         if (MaxineVM.isHosted()) {
-            // Save the target method for later gathering of calls
+            // Save the target method for later gathering of calls and duplication
             this.bootstrappingCiTargetMethod = ciTargetMethod;
         }
 
@@ -149,6 +149,23 @@ public class C1XTargetMethod extends TargetMethod {
                 adapter = generator.make(classMethodActor);
             }
             linkDirectCalls(adapter);
+        }
+    }
+
+    @Override
+    public TargetMethod duplicate() {
+        try {
+            C1XTargetMethod duplicate = (C1XTargetMethod) this.clone();
+
+            // Duplicate the code data buffer. There's no need to re-patch the data references in the
+            // duplicated code as all offsets to the data buffer are relative.
+            final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(scalarLiterals == null ? 0 : scalarLiterals.length, referenceLiterals == null ? 0 : referenceLiterals.length, code.length);
+            Code.allocate(targetBundleLayout, duplicate);
+            duplicate.setData(scalarLiterals, referenceLiterals, code);
+
+            return duplicate;
+        } catch (CloneNotSupportedException e) {
+            throw FatalError.unexpected(null, e);
         }
     }
 
@@ -192,6 +209,8 @@ public class C1XTargetMethod extends TargetMethod {
         int byteIndex = stopIndex * totalReferenceMapSize() + frameReferenceMapSize();
         return ByteArrayBitMap.isSet(referenceMaps, byteIndex, registerReferenceMapSize(), registerIndex);
     }
+
+
 
     private void initCodeBuffer(CiTargetMethod ciTargetMethod) {
         // Create the arrays for the scalar and the object reference literals

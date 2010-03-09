@@ -51,7 +51,7 @@ public abstract class SpecialBuiltin extends Builtin {
      * @return the value of the register specified by {@code r}
      */
     @BUILTIN(GetIntegerRegister.class)
-    @INTRINSIC(READGPR)
+    @INTRINSIC(READREG)
     public static native Pointer getIntegerRegister(VMRegister.Role r);
 
     /**
@@ -75,7 +75,7 @@ public abstract class SpecialBuiltin extends Builtin {
      * @param the value to write to the register specified by {@code r}
      */
     @BUILTIN(SetIntegerRegister.class)
-    @INTRINSIC(WRITEGPR)
+    @INTRINSIC(WRITEREG)
     public static native Pointer setIntegerRegister(VMRegister.Role r, Word value);
 
     /**

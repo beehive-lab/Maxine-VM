@@ -152,10 +152,6 @@ public class CompiledPrototype extends Prototype {
         return methodActors.values();
     }
 
-    public BootstrapCompilerScheme compilerScheme() {
-        return vmConfiguration().bootCompilerScheme();
-    }
-
     public RuntimeCompilerScheme jitScheme() {
         return vmConfiguration().jitCompilerScheme();
     }

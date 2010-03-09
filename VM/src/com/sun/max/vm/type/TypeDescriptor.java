@@ -26,6 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.prototype.*;
@@ -84,8 +85,13 @@ public abstract class TypeDescriptor extends Descriptor {
     private static final GrowableMapping<String, TypeDescriptorEntry> canonicalTypeDescriptors = new ChainingValueChainedHashMapping<String, TypeDescriptorEntry>();
 
     static {
+        for (Class c : Word.getSubclasses()) {
+            String s = JavaTypeDescriptor.mangleClassName(c.getName(), '/');
+            WordTypeDescriptor wordTypeDescriptor = new WordTypeDescriptor(s, c);
+            canonicalTypeDescriptors.put(s, wordTypeDescriptor);
+        }
+
         Classes.initialize(JavaTypeDescriptor.class);
-        Classes.initialize(KindTypeDescriptor.class);
     }
 
     TypeDescriptor(String string) {
@@ -116,8 +122,8 @@ public abstract class TypeDescriptor extends Descriptor {
     /**
      * Gets the {@linkplain ClassActor#elementClassActor() element type} denoted by this type descriptor.
      */
-    public TypeDescriptor elementTypeDescriptor() {
-        if (!JavaTypeDescriptor.isArray(this)) {
+    public final TypeDescriptor elementTypeDescriptor() {
+        if (!JavaTypeDescriptor.isArray(this) || JavaTypeDescriptor.isPrimitive(this)) {
             return this;
         }
         return makeTypeDescriptor(toString().substring(JavaTypeDescriptor.getArrayDimensions(this)));
@@ -126,29 +132,38 @@ public abstract class TypeDescriptor extends Descriptor {
     /**
      * Gets the {@linkplain ClassActor#componentClassActor() component type} denoted by this type descriptor.
      */
-    public TypeDescriptor componentTypeDescriptor() {
-        if (!JavaTypeDescriptor.isArray(this)) {
+    public final TypeDescriptor componentTypeDescriptor() {
+        if (!JavaTypeDescriptor.isArray(this) || JavaTypeDescriptor.isPrimitive(this)) {
             return null;
         }
         return makeTypeDescriptor(toString().substring(1));
     }
 
+    /**
+     * Gets the kind denoted by this type descriptor.
+     *
+     * @return the kind denoted by this type descriptor
+     */
     public Kind toKind() {
-        assert !(this instanceof AtomicTypeDescriptor);
-        if (KindTypeDescriptor.isWord(this)) {
-            return Kind.WORD;
-        }
         return Kind.REFERENCE;
     }
 
     private static String stringToJava(String string) {
         switch (string.charAt(0)) {
-            case 'L':
-                return dottified(string.substring(1, string.length() - 1));
-            case '[':
-                return stringToJava(string.substring(1)) + "[]";
-            default:
-                return KindTypeDescriptor.toKind(string).name.toString();
+            // Checkstyle: stop
+            case 'L': return dottified(string.substring(1, string.length() - 1));
+            case '[': return stringToJava(string.substring(1)) + "[]";
+            case 'B': return "byte";
+            case 'C': return "char";
+            case 'D': return "double";
+            case 'F': return "float";
+            case 'I': return "int";
+            case 'J': return "long";
+            case 'S': return "short";
+            case 'V': return "void";
+            case 'Z': return "boolean";
+            default: throw ProgramError.unexpected("invalid type descriptor: " + "\"" + string + "\"");
+            // Checkstyle: resume
         }
     }
 

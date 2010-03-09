@@ -794,7 +794,7 @@ public abstract class TeleVM implements MaxVM {
             if (!stackRegion.size().isZero()) {
                 regions.append(stackRegion);
             }
-            final TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.locals().memoryRegion();
+            final TeleThreadLocalsMemoryRegion threadLocalsRegion = thread.localsBlock().memoryRegion();
             if (threadLocalsRegion != null) {
                 regions.append(threadLocalsRegion);
             }
@@ -802,19 +802,19 @@ public abstract class TeleVM implements MaxVM {
         return regions;
     }
 
-    public final MemoryRegion memoryRegionContaining(Address address) {
+    public final MemoryRegion findMemoryRegion(Address address) {
         MemoryRegion memoryRegion = null;
         try {
-            memoryRegion = teleHeapManager.regionContaining(address);
+            memoryRegion = teleHeapManager.findMemoryRegion(address);
             if (memoryRegion == null) {
-                memoryRegion = teleCodeManager().regionContaining(address);
+                memoryRegion = teleCodeManager().findCodeRegion(address);
                 if (memoryRegion == null) {
                     MaxThread maxThread = threadManager.findThread(address);
                     if (maxThread != null) {
                         if (maxThread.stack().memoryRegion().contains(address)) {
                             memoryRegion = maxThread.stack().memoryRegion();
-                        } else if (maxThread.locals().memoryRegion() != null && maxThread.locals().memoryRegion().contains(address)) {
-                            memoryRegion = maxThread.locals().memoryRegion();
+                        } else if (maxThread.localsBlock().memoryRegion() != null && maxThread.localsBlock().memoryRegion().contains(address)) {
+                            memoryRegion = maxThread.localsBlock().memoryRegion();
                         }
                     }
                 }
@@ -921,7 +921,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final boolean containsInCode(Address address) {
-        return teleCodeManager().contains(address);
+        return teleCodeManager().findCodeRegion(address) != null;
     }
 
     public final TeleCodeRegion teleBootCodeRegion() {
@@ -1676,7 +1676,7 @@ public abstract class TeleVM implements MaxVM {
 
     public final  void returnFromFrame(final MaxThread thread, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException {
         final TeleNativeThread teleNativeThread = (TeleNativeThread) thread;
-        final CodeLocation returnLocation = teleNativeThread.getReturnLocation();
+        final CodeLocation returnLocation = teleNativeThread.stack().returnLocation();
         if (returnLocation == null) {
             throw new InvalidVMRequestException("No return location available");
         }
@@ -2115,11 +2115,11 @@ public abstract class TeleVM implements MaxVM {
                     registeredSingleStepThread = null;
 
                 } else if (registeredStepOutThread != null
-                        && registeredStepOutThread.getReturnLocation().address() != null) {
+                        && registeredStepOutThread.stack().returnLocation().address() != null) {
 
                     // There has been a thread registered for performing a step out
                     // => perform a step out instead of resume.
-                    final CodeLocation returnLocation = registeredStepOutThread.getReturnLocation();
+                    final CodeLocation returnLocation = registeredStepOutThread.stack().returnLocation();
                     assert returnLocation != null;
                     try {
                         TeleVM.this.runToInstruction(returnLocation, false, true);

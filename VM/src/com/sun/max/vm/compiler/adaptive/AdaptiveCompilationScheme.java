@@ -63,7 +63,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
     /**
      * The compiler that is used as the default while bootstrapping.
      */
-    protected final BootstrapCompilerScheme bootCompiler;
+    protected final RuntimeCompilerScheme bootCompiler;
 
     /**
      * The baseline (JIT) compiler.
@@ -117,6 +117,8 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         this.mode = mode;
     }
 
+    private static final boolean TESTING_C1X_AS_BOOT_COMPILER = System.getProperty("test.c1x.boot") != null;
+
     /**
      * The constructor for this class initializes a new adaptive compilation system with the specified VM configuration,
      * configuring itself according to the compiler(s) selected in the VM configuration.
@@ -125,9 +127,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     public AdaptiveCompilationScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-        bootCompiler = vmConfiguration.bootCompilerScheme();
         optCompiler = vmConfiguration.optCompilerScheme();
         jitCompiler = vmConfiguration.jitCompilerScheme();
+        bootCompiler = TESTING_C1X_AS_BOOT_COMPILER ? optCompiler : vmConfiguration.bootCompilerScheme();
     }
 
     /**

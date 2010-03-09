@@ -307,7 +307,7 @@ public abstract class BytecodeVisitor {
     protected abstract void jnicall(int nativeFunctionDescriptorIndex);
 
     /**
-     * Parses an {@linkplain Bytecodes#isExtension(int) extended} bytecode instruction.
+     * Parses an {@linkplain Bytecodes#isStandard(int) extended} bytecode instruction.
      *
      * @param opcode the opcode of the extended bytecode instruction
      * @param isWide specifies if the WIDE prefix was parsed before the opcode
