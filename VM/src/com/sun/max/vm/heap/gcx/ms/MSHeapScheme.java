@@ -28,11 +28,13 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.gcx.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.tele.*;
 
 /**
  * A simple mark-sweep collector, without TLABs support. Only used for testing / debugging
@@ -80,6 +82,7 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
             JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
+            InspectableHeapInfo.init(committedHeapSpace);
          } else if (phase == MaxineVM.Phase.STARTING) {
 
          }
@@ -201,4 +204,21 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
     public void writeBarrier(Reference from, Reference to) {
     }
 
+    /**
+     * Class implementing the garbage collection routine.
+     * This is the {@link StopTheWorldGCDaemon}'s entry point to garbage collection.
+     */
+    final class Collect extends Collector {
+        @Override
+        public void collect(int invocationCount) {
+            HeapScheme.Static.notifyGCStarted();
+            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+
+            // TODO
+
+            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+            HeapScheme.Static.notifyGCCompleted();
+        }
+    }
 }
+
