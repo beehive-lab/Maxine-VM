@@ -117,7 +117,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public byte[] code() {
-        return asClassMethodActor("code()").originalCodeAttribute().code();
+        return codeAttribute("code()").code();
     }
 
     /**
@@ -138,7 +138,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public int maxLocals() {
-        return asClassMethodActor("maxLocals()").originalCodeAttribute().maxLocals;
+        return codeAttribute("maxLocals()").maxLocals;
     }
 
     /**
@@ -147,7 +147,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public int maxStackSize() {
-        return asClassMethodActor("maxStackSize()").originalCodeAttribute().maxStack;
+        return codeAttribute("maxStackSize()").maxStack;
     }
 
     /**
@@ -166,7 +166,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public boolean hasExceptionHandlers() {
-        final CodeAttribute codeAttribute = asClassMethodActor("hasExceptionHandlers()").originalCodeAttribute();
+        final CodeAttribute codeAttribute = codeAttribute("hasExceptionHandlers()");
         if (codeAttribute != null) {
             final Sequence<ExceptionHandlerEntry> handlerTable = codeAttribute.exceptionHandlerTable();
             return handlerTable != null && handlerTable.length() > 0;
@@ -308,7 +308,7 @@ public class MaxRiMethod implements RiMethod {
      * @throws MaxRiUnresolved if the method is unresolved
      */
     public int codeSize() {
-        return asClassMethodActor("codeSize()").originalCodeAttribute().code().length;
+        return codeAttribute("codeSize()").code().length;
     }
 
     /**
@@ -321,9 +321,8 @@ public class MaxRiMethod implements RiMethod {
             // return the cached exception handlers
             return exceptionHandlers;
         }
-        final ClassMethodActor classMethodActor = asClassMethodActor("exceptionHandlers()");
         exceptionHandlers = new ArrayList<RiExceptionHandler>();
-        CodeAttribute codeAttribute = classMethodActor.originalCodeAttribute();
+        CodeAttribute codeAttribute = codeAttribute("exceptionHandlers()");
         for (ExceptionHandlerEntry entry : codeAttribute.exceptionHandlerTable()) {
             RiType catchType;
             if (entry.catchTypeIndex() == 0) {
@@ -345,6 +344,10 @@ public class MaxRiMethod implements RiMethod {
             return (ClassMethodActor) methodActor;
         }
         throw unresolved(operation);
+    }
+
+    CodeAttribute codeAttribute(String operation) {
+        return asClassMethodActor(operation).originalCodeAttribute();
     }
 
     InterfaceMethodActor asInterfaceMethodActor(String operation) {

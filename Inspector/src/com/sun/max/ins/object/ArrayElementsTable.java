@@ -36,6 +36,7 @@ import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
@@ -241,7 +242,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         @Override
         public MemoryRegion getMemoryRegion(int row) {
-            return new FixedMemoryRegion(getAddress(row), Size.fromInt(elementSize), "");
+            return new TeleMemoryRegion(getAddress(row), Size.fromInt(elementSize), "");
         }
 
         @Override

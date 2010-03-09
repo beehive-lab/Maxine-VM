@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug;
 
 import com.sun.max.memory.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -29,7 +30,7 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class TeleThreadLocalsMemoryRegion extends FixedMemoryRegion {
+public final class TeleThreadLocalsMemoryRegion extends TeleMemoryRegion {
 
     public final TeleNativeThread teleNativeThread;
 

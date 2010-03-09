@@ -20,11 +20,12 @@
  */
 package com.sun.c1x.opt;
 
+import static com.sun.c1x.bytecode.Bytecodes.*;
+
 import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
@@ -43,12 +44,14 @@ public class Canonicalizer extends ValueVisitor {
 
     final RiRuntime runtime;
     final RiMethod method;
+    final CiTarget target;
     Value canonical;
     List<Instruction> extra;
 
-    public Canonicalizer(RiRuntime runtime, RiMethod method) {
+    public Canonicalizer(RiRuntime runtime, RiMethod method, CiTarget target) {
         this.runtime = runtime;
         this.method = method;
+        this.target = target;
     }
 
     public Value canonicalize(Instruction original) {
@@ -76,6 +79,10 @@ public class Canonicalizer extends ValueVisitor {
 
     private Constant longInstr(long v) {
         return addInstr(Constant.forLong(v));
+    }
+
+    private Constant wordInstr(long v) {
+        return addInstr(Constant.forWord(v));
     }
 
     private Value setCanonical(Value x) {
@@ -113,8 +120,12 @@ public class Canonicalizer extends ValueVisitor {
         return canonical = Constant.forDouble(val);
     }
 
+    private Value setWordConstant(long val) {
+        return canonical = Constant.forDouble(val);
+    }
+
     private void moveConstantToRight(Op2 x) {
-        if (x.x().isConstant() && Bytecodes.isCommutative(x.opcode())) {
+        if (x.x().isConstant() && isCommutative(x.opcode())) {
             x.swapOperands();
         }
     }
@@ -126,23 +137,23 @@ public class Canonicalizer extends ValueVisitor {
         if (x == y) {
             // the left and right operands are the same value, try reducing some operations
             switch (i.opcode()) {
-                case Bytecodes.ISUB: setIntConstant(0); return;
-                case Bytecodes.LSUB: setLongConstant(0); return;
-                case Bytecodes.IAND: // fall through
-                case Bytecodes.LAND: // fall through
-                case Bytecodes.IOR:  // fall through
-                case Bytecodes.LOR: setCanonical(x); return;
-                case Bytecodes.IXOR: setIntConstant(0); return;
-                case Bytecodes.LXOR: setLongConstant(0); return;
+                case ISUB: setIntConstant(0); return;
+                case LSUB: setLongConstant(0); return;
+                case IAND: // fall through
+                case LAND: // fall through
+                case IOR:  // fall through
+                case LOR: setCanonical(x); return;
+                case IXOR: setIntConstant(0); return;
+                case LXOR: setLongConstant(0); return;
             }
         }
 
-        CiKind xt = x.kind;
+        CiKind kind = x.kind;
         if (x.isConstant() && y.isConstant()) {
             // both operands are constants, try constant folding
-            switch (xt) {
+            switch (kind) {
                 case Int: {
-                    Integer val = Bytecodes.foldIntOp2(i.opcode(), x.asConstant().asInt(), y.asConstant().asInt());
+                    Integer val = foldIntOp2(i.opcode(), x.asConstant().asInt(), y.asConstant().asInt());
                     if (val != null) {
                         setIntConstant(val); // the operation was successfully folded to an int
                         return;
@@ -150,7 +161,7 @@ public class Canonicalizer extends ValueVisitor {
                     break;
                 }
                 case Long: {
-                    Long val = Bytecodes.foldLongOp2(i.opcode(), x.asConstant().asLong(), y.asConstant().asLong());
+                    Long val = foldLongOp2(i.opcode(), x.asConstant().asLong(), y.asConstant().asLong());
                     if (val != null) {
                         setLongConstant(val); // the operation was successfully folded to a long
                         return;
@@ -160,7 +171,7 @@ public class Canonicalizer extends ValueVisitor {
                 case Float: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
-                        Float val = Bytecodes.foldFloatOp2(i.opcode(), x.asConstant().asFloat(), y.asConstant().asFloat());
+                        Float val = foldFloatOp2(i.opcode(), x.asConstant().asFloat(), y.asConstant().asFloat());
                         if (val != null) {
                             setFloatConstant(val); // the operation was successfully folded to a float
                             return;
@@ -171,11 +182,19 @@ public class Canonicalizer extends ValueVisitor {
                 case Double: {
                     if (C1XOptions.CanonicalizeFloatingPoint) {
                         // try to fold a floating point operation
-                        Double val = Bytecodes.foldDoubleOp2(i.opcode(), x.asConstant().asDouble(), y.asConstant().asDouble());
+                        Double val = foldDoubleOp2(i.opcode(), x.asConstant().asDouble(), y.asConstant().asDouble());
                         if (val != null) {
                             setDoubleConstant(val); // the operation was successfully folded to a double
                             return;
                         }
+                    }
+                    break;
+                }
+                case Word: {
+                    Long val = foldWordOp2(i.opcode(), x.asConstant().asLong(), y.asConstant().asLong());
+                    if (val != null) {
+                        setLongConstant(val); // the operation was successfully folded to a word
+                        return;
                     }
                     break;
                 }
@@ -187,7 +206,7 @@ public class Canonicalizer extends ValueVisitor {
 
         if (i.y().isConstant()) {
             // the right side is a constant, try strength reduction
-            switch (xt) {
+            switch (kind) {
                 case Int: {
                     if (reduceIntOp2(i, i.x(), i.y().asConstant().asInt()) != null) {
                         return;
@@ -196,6 +215,12 @@ public class Canonicalizer extends ValueVisitor {
                 }
                 case Long: {
                     if (reduceLongOp2(i, i.x(), i.y().asConstant().asLong()) != null) {
+                        return;
+                    }
+                    break;
+                }
+                case Word: {
+                    if (reduceWordOp2(i, i.x(), i.y().asConstant().asLong()) != null) {
                         return;
                     }
                     break;
@@ -211,36 +236,36 @@ public class Canonicalizer extends ValueVisitor {
         // attempt to reduce a binary operation with a constant on the right
         int opcode = original.opcode();
         switch (opcode) {
-            case Bytecodes.IADD: return y == 0 ? setCanonical(x) : null;
-            case Bytecodes.ISUB: return y == 0 ? setCanonical(x) : null;
-            case Bytecodes.IMUL: {
+            case IADD: return y == 0 ? setCanonical(x) : null;
+            case ISUB: return y == 0 ? setCanonical(x) : null;
+            case IMUL: {
                 if (y == 1) {
                     return setCanonical(x);
                 }
                 if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
-                    return setCanonical(new ShiftOp(Bytecodes.ISHL, x, intInstr(Util.log2(y))));
+                    return setCanonical(new ShiftOp(ISHL, x, intInstr(Util.log2(y))));
                 }
                 return y == 0 ? setIntConstant(0) : null;
             }
-            case Bytecodes.IDIV: return y == 1 ? setCanonical(x) : null;
-            case Bytecodes.IREM: return y == 1 ? setCanonical(x) : null;
-            case Bytecodes.IAND: {
+            case IDIV: return y == 1 ? setCanonical(x) : null;
+            case IREM: return y == 1 ? setCanonical(x) : null;
+            case IAND: {
                 if (y == -1) {
                     return setCanonical(x);
                 }
                 return y == 0 ? setIntConstant(0) : null;
             }
-            case Bytecodes.IOR: {
+            case IOR: {
                 if (y == -1) {
                     return setIntConstant(-1);
                 }
                 return y == 0 ? setCanonical(x) : null;
             }
-            case Bytecodes.IXOR: return y == 0 ? setCanonical(x) : null;
-            case Bytecodes.ISHL: return reduceShift(false, opcode, Bytecodes.IUSHR, x, y);
-            case Bytecodes.ISHR: return reduceShift(false, opcode, 0, x, y);
-            case Bytecodes.IUSHR: return reduceShift(false, opcode, Bytecodes.ISHL, x, y);
+            case IXOR: return y == 0 ? setCanonical(x) : null;
+            case ISHL: return reduceShift(false, opcode, IUSHR, x, y);
+            case ISHR: return reduceShift(false, opcode, 0, x, y);
+            case IUSHR: return reduceShift(false, opcode, ISHL, x, y);
         }
         return null;
     }
@@ -270,21 +295,21 @@ public class Canonicalizer extends ValueVisitor {
                     // this is a chained shift of the form (e >> K << K)
                     if (islong) {
                         long mask = -1;
-                        if (opcode == Bytecodes.LUSHR) {
+                        if (opcode == LUSHR) {
                             mask = mask >>> y;
                         } else {
                             mask = mask << y;
                         }
                         // reduce to (e & mask)
-                        return setCanonical(new LogicOp(Bytecodes.LAND, s.x(), longInstr(mask)));
+                        return setCanonical(new LogicOp(LAND, s.x(), longInstr(mask)));
                     } else {
                         int mask = -1;
-                        if (opcode == Bytecodes.IUSHR) {
+                        if (opcode == IUSHR) {
                             mask = mask >>> y;
                         } else {
                             mask = mask << y;
                         }
-                        return setCanonical(new LogicOp(Bytecodes.IAND, s.x(), intInstr(mask)));
+                        return setCanonical(new LogicOp(IAND, s.x(), intInstr(mask)));
                     }
                 }
             }
@@ -300,36 +325,81 @@ public class Canonicalizer extends ValueVisitor {
         // attempt to reduce a binary operation with a constant on the right
         int opcode = original.opcode();
         switch (opcode) {
-            case Bytecodes.LADD: return y == 0 ? setCanonical(x) : null;
-            case Bytecodes.LSUB: return y == 0 ? setCanonical(x) : null;
-            case Bytecodes.LMUL: {
+            case LADD: return y == 0 ? setCanonical(x) : null;
+            case LSUB: return y == 0 ? setCanonical(x) : null;
+            case LMUL: {
                 if (y == 1) {
                     return setCanonical(x);
                 }
                 if (y > 0 && (y & y - 1) == 0 && C1XOptions.CanonicalizeMultipliesToShifts) {
                     // strength reduce multiply by power of 2 to shift operation
-                    return setCanonical(new ShiftOp(Bytecodes.LSHL, x, intInstr(Util.log2(y))));
+                    return setCanonical(new ShiftOp(LSHL, x, intInstr(Util.log2(y))));
                 }
                 return y == 0 ? setLongConstant(0) : null;
             }
-            case Bytecodes.LDIV: return y == 1 ? setCanonical(x) : null;
-            case Bytecodes.LREM: return y == 1 ? setCanonical(x) : null;
-            case Bytecodes.LAND: {
+            case LDIV: return y == 1 ? setCanonical(x) : null;
+            case LREM: return y == 1 ? setCanonical(x) : null;
+            case LAND: {
                 if (y == -1) {
                     return setCanonical(x);
                 }
                 return y == 0 ? setLongConstant(0) : null;
             }
-            case Bytecodes.LOR: {
+            case LOR: {
                 if (y == -1) {
                     return setLongConstant(-1);
                 }
                 return y == 0 ? setCanonical(x) : null;
             }
-            case Bytecodes.LXOR: return y == 0 ? setCanonical(x) : null;
-            case Bytecodes.LSHL: return reduceShift(true, opcode, Bytecodes.LUSHR, x, y);
-            case Bytecodes.LSHR: return reduceShift(true, opcode, 0, x, y);
-            case Bytecodes.LUSHR: return reduceShift(true, opcode, Bytecodes.LSHL, x, y);
+            case LXOR: return y == 0 ? setCanonical(x) : null;
+            case LSHL: return reduceShift(true, opcode, LUSHR, x, y);
+            case LSHR: return reduceShift(true, opcode, 0, x, y);
+            case LUSHR: return reduceShift(true, opcode, LSHL, x, y);
+        }
+        return null;
+    }
+
+    /*
+     *                 final int shift = Long.numberOfTrailingZeros(divisor.toLong());
+                if (shift == 0) {
+                    return new CirCall(normalContinuation, dividendValue);
+                }
+                final Builtin bltin = (Word.width() == 64) ? JavaBuiltin.LongUnsignedShiftedRight.BUILTIN : JavaBuiltin.IntUnsignedShiftedRight.BUILTIN;
+                return new CirCall(CirBuiltin.get(bltin), dividendValue, new CirConstant(IntValue.from(shift)), normalContinuation, exceptionContinuation);
+
+     * */
+
+    private Value reduceWordOp2(Op2 original, Value x, long y) {
+        if (y == 0) {
+            // Defer to arithmetic exception at runtime
+            return null;
+        }
+        // attempt to reduce a binary operation with a constant on the right
+        int opcode = original.opcode();
+        switch (opcode) {
+            case WDIVI:
+            case WDIV: {
+                if (y == 1) {
+                    return setCanonical(x);
+                }
+                if (Util.isPowerOf2(y)) {
+                    return setCanonical(new ShiftOp(target.arch.is64bit() ? LUSHR : IUSHR, x, intInstr(Util.log2(y))));
+                }
+            }
+            case WREMI:
+            case WREM: {
+                if (y == 1) {
+                    return setCanonical(wordInstr(0));
+                }
+                if (Util.isPowerOf2(y)) {
+                    if (target.arch.is64bit()) {
+                        long mask = y - 1L;
+                        return setCanonical(new LogicOp(LAND, x, longInstr(mask)));
+                    }
+                    int mask = (int) y - 1;
+                    return setCanonical(new LogicOp(IAND, x, intInstr(mask)));
+                }
+            }
         }
         return null;
     }
@@ -350,17 +420,17 @@ public class Canonicalizer extends ValueVisitor {
     private Value eliminateNarrowing(CiKind type, Convert c) {
         Value nv = null;
         switch (c.opcode()) {
-            case Bytecodes.I2B:
+            case I2B:
                 if (type == CiKind.Byte) {
                     nv = c.value();
                 }
                 break;
-            case Bytecodes.I2S:
+            case I2S:
                 if (type == CiKind.Short || type == CiKind.Byte) {
                     nv = c.value();
                 }
                 break;
-            case Bytecodes.I2C:
+            case I2C:
                 if (type == CiKind.Char || type == CiKind.Byte) {
                     nv = c.value();
                 }
@@ -528,7 +598,7 @@ public class Canonicalizer extends ValueVisitor {
                 case Float:
                     if (x.isConstant()) {
                         float xval = x.asConstant().asFloat(); // get the actual value of x (and y since x == y)
-                        Integer val = Bytecodes.foldFloatCompare(i.opcode(), xval, xval);
+                        Integer val = foldFloatCompare(i.opcode(), xval, xval);
                         assert val != null : "invalid opcode in float compare op";
                         setIntConstant(val);
                         return;
@@ -537,7 +607,7 @@ public class Canonicalizer extends ValueVisitor {
                 case Double:
                     if (x.isConstant()) {
                         double xval = x.asConstant().asDouble(); // get the actual value of x (and y since x == y)
-                        Integer val = Bytecodes.foldDoubleCompare(i.opcode(), xval, xval);
+                        Integer val = foldDoubleCompare(i.opcode(), xval, xval);
                         assert val != null : "invalid opcode in double compare op";
                         setIntConstant(val);
                         return;
@@ -550,16 +620,16 @@ public class Canonicalizer extends ValueVisitor {
             // both x and y are constants
             switch (xt) {
                 case Long:
-                    setIntConstant(Bytecodes.foldLongCompare(x.asConstant().asLong(), y.asConstant().asLong()));
+                    setIntConstant(foldLongCompare(x.asConstant().asLong(), y.asConstant().asLong()));
                     break;
                 case Float: {
-                    Integer val = Bytecodes.foldFloatCompare(i.opcode(), x.asConstant().asFloat(), y.asConstant().asFloat());
+                    Integer val = foldFloatCompare(i.opcode(), x.asConstant().asFloat(), y.asConstant().asFloat());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
                     break;
                 }
                 case Double: {
-                    Integer val = Bytecodes.foldDoubleCompare(i.opcode(), x.asConstant().asDouble(), y.asConstant().asDouble());
+                    Integer val = foldDoubleCompare(i.opcode(), x.asConstant().asDouble(), y.asConstant().asDouble());
                     assert val != null : "invalid opcode in float compare op";
                     setIntConstant(val);
                     break;
@@ -581,20 +651,20 @@ public class Canonicalizer extends ValueVisitor {
             // fold conversions between primitive types
             // Checkstyle: stop
             switch (i.opcode()) {
-                case Bytecodes.I2B: setIntConstant   ((byte)   v.asConstant().asInt()); return;
-                case Bytecodes.I2S: setIntConstant   ((short)  v.asConstant().asInt()); return;
-                case Bytecodes.I2C: setIntConstant   ((char)   v.asConstant().asInt()); return;
-                case Bytecodes.I2L: setLongConstant  (         v.asConstant().asInt()); return;
-                case Bytecodes.I2F: setFloatConstant (         v.asConstant().asInt()); return;
-                case Bytecodes.L2I: setIntConstant   ((int)    v.asConstant().asLong()); return;
-                case Bytecodes.L2F: setFloatConstant (         v.asConstant().asLong()); return;
-                case Bytecodes.L2D: setDoubleConstant(         v.asConstant().asLong()); return;
-                case Bytecodes.F2D: setDoubleConstant(         v.asConstant().asFloat()); return;
-                case Bytecodes.F2I: setIntConstant   ((int)    v.asConstant().asFloat()); return;
-                case Bytecodes.F2L: setLongConstant  ((long)   v.asConstant().asFloat()); return;
-                case Bytecodes.D2F: setFloatConstant ((float)  v.asConstant().asDouble()); return;
-                case Bytecodes.D2I: setIntConstant   ((int)    v.asConstant().asDouble()); return;
-                case Bytecodes.D2L: setLongConstant  ((long)   v.asConstant().asDouble()); return;
+                case I2B: setIntConstant   ((byte)   v.asConstant().asInt()); return;
+                case I2S: setIntConstant   ((short)  v.asConstant().asInt()); return;
+                case I2C: setIntConstant   ((char)   v.asConstant().asInt()); return;
+                case I2L: setLongConstant  (         v.asConstant().asInt()); return;
+                case I2F: setFloatConstant (         v.asConstant().asInt()); return;
+                case L2I: setIntConstant   ((int)    v.asConstant().asLong()); return;
+                case L2F: setFloatConstant (         v.asConstant().asLong()); return;
+                case L2D: setDoubleConstant(         v.asConstant().asLong()); return;
+                case F2D: setDoubleConstant(         v.asConstant().asFloat()); return;
+                case F2I: setIntConstant   ((int)    v.asConstant().asFloat()); return;
+                case F2L: setLongConstant  ((long)   v.asConstant().asFloat()); return;
+                case D2F: setFloatConstant ((float)  v.asConstant().asDouble()); return;
+                case D2I: setIntConstant   ((int)    v.asConstant().asDouble()); return;
+                case D2L: setLongConstant  ((long)   v.asConstant().asDouble()); return;
             }
             // Checkstyle: resume
         }
@@ -610,26 +680,26 @@ public class Canonicalizer extends ValueVisitor {
             // remove chained redundant conversions
             Convert c = (Convert) v;
             switch (c.opcode()) {
-                case Bytecodes.I2B: type = CiKind.Byte; break;
-                case Bytecodes.I2S: type = CiKind.Short; break;
-                case Bytecodes.I2C: type = CiKind.Char; break;
+                case I2B: type = CiKind.Byte; break;
+                case I2S: type = CiKind.Short; break;
+                case I2C: type = CiKind.Char; break;
             }
         }
 
         if (type != CiKind.Illegal) {
             // if any of the above matched
             switch (i.opcode()) {
-                case Bytecodes.I2B:
+                case I2B:
                     if (type == CiKind.Byte) {
                         setCanonical(v);
                     }
                     break;
-                case Bytecodes.I2S:
+                case I2S:
                     if (type == CiKind.Byte || type == CiKind.Short) {
                         setCanonical(v);
                     }
                     break;
-                case Bytecodes.I2C:
+                case I2C:
                     if (type == CiKind.Char) {
                         setCanonical(v);
                     }
@@ -641,13 +711,13 @@ public class Canonicalizer extends ValueVisitor {
             // check if the operation was IAND with a constant; it may have narrowed the value already
             Op2 op = (Op2) v;
             // constant should be on right hand side if there is one
-            if (op.opcode() == Bytecodes.IAND && op.y().isConstant()) {
+            if (op.opcode() == IAND && op.y().isConstant()) {
                 int safebits = 0;
                 int mask = op.y().asConstant().asInt();
                 switch (i.opcode()) {
-                    case Bytecodes.I2B: safebits = 0x7f; break;
-                    case Bytecodes.I2S: safebits = 0x7fff; break;
-                    case Bytecodes.I2C: safebits = 0xffff; break;
+                    case I2B: safebits = 0x7f; break;
+                    case I2S: safebits = 0x7fff; break;
+                    case I2C: safebits = 0xffff; break;
                 }
                 if (safebits != 0 && (mask & ~safebits) == 0) {
                     // the mask already cleared all the upper bits necessary.
@@ -995,7 +1065,7 @@ public class Canonicalizer extends ValueVisitor {
         Condition ifcond = i.condition();
         Value l = i.x();
         CompareOp cmp = (CompareOp) l;
-        boolean unorderedIsLess = cmp.opcode() == Bytecodes.FCMPL || cmp.opcode() == Bytecodes.DCMPL;
+        boolean unorderedIsLess = cmp.opcode() == FCMPL || cmp.opcode() == DCMPL;
         BlockBegin lssSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(-1), rtc));
         BlockBegin eqlSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(0), rtc));
         BlockBegin gtrSucc = i.successor(ifcond.foldCondition(CiConstant.forInt(1), rtc));
@@ -1124,7 +1194,7 @@ public class Canonicalizer extends ValueVisitor {
         if (i.base() instanceof ArithmeticOp) {
             // if the base is an arithmetic op, try reducing
             ArithmeticOp root = (ArithmeticOp) i.base();
-            if (!root.isLive() && root.opcode() == Bytecodes.LADD) {
+            if (!root.isLive() && root.opcode() == LADD) {
                 // match unsafe(x + y) if the x + y is not pinned
                 // try reducing (x + y) and (y + x)
                 Value y = root.y();
@@ -1136,7 +1206,7 @@ public class Canonicalizer extends ValueVisitor {
                 if (y instanceof Convert) {
                     // match unsafe(x + (long) y)
                     Convert convert = (Convert) y;
-                    if (convert.opcode() == Bytecodes.I2L && convert.value().kind.isInt()) {
+                    if (convert.opcode() == I2L && convert.value().kind.isInt()) {
                         // the conversion is redundant
                         setUnsafeRawOp(i, x, convert.value(), 0);
                     }
@@ -1169,7 +1239,7 @@ public class Canonicalizer extends ValueVisitor {
             // note that this case will not happen if C1XOptions.CanonicalizeMultipliesToShifts is true
             ArithmeticOp arith = (ArithmeticOp) index;
             CiKind st = arith.y().kind;
-            if (arith.opcode() == Bytecodes.IMUL && arith.y().isConstant() && st.isInt()) {
+            if (arith.opcode() == IMUL && arith.y().isConstant() && st.isInt()) {
                 int val = arith.y().asConstant().asInt();
                 switch (val) {
                     case 1: return setUnsafeRawOp(i, base, arith.x(), 0);

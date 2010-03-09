@@ -33,6 +33,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
@@ -369,7 +370,7 @@ public final class MemoryWordsInspector extends Inspector {
      * mode set to {@link ViewMode#PAGE}.
      */
     public MemoryWordsInspector(Inspection inspection, Address address) {
-        this(inspection, new FixedMemoryRegion(address, inspection.vm().pageSize(), ""), null, address, ViewMode.PAGE, null);
+        this(inspection, new TeleMemoryRegion(address, inspection.vm().pageSize(), ""), null, address, ViewMode.PAGE, null);
     }
 
     @Override

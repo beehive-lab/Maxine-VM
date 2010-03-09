@@ -20,103 +20,77 @@
  */
 package com.sun.max.vm.type;
 
+import java.io.*;
+import java.util.regex.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.ide.*;
+import com.sun.max.io.*;
+import com.sun.max.program.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Since enums cannot have type parameters, we see ourselves forced to declare two parallel classes.
- * This one represents kinds as bare enums and 'Kind' represents kinds parametrized
+ * This one represents kinds as bare enums and 'Kind' represents kinds parameterized
  * with their corresponding 'Value' type.
  * Since operations on kinds usually have type parameters, we have not placed any of them here.
- * 
+ *
  * @see Kind
- * 
+ *
  * @author Bernd Mathiske
  */
 public enum KindEnum {
 
-    VOID {
-        @Override
-        public Kind<VoidValue> asKind() {
-            return Kind.VOID;
-        }
-    },
+    BOOLEAN,
+    BYTE,
+    SHORT,
+    CHAR,
+    INT,
+    FLOAT,
+    LONG,
+    DOUBLE,
+    REFERENCE,
+    WORD,
+    VOID;
 
-    BYTE {
-        @Override
-        public Kind<ByteValue> asKind() {
-            return Kind.BYTE;
-        }
-    },
+    public final Kind asKind() {
+        return kind;
+    }
 
-    BOOLEAN {
-        @Override
-        public Kind<BooleanValue> asKind() {
-            return Kind.BOOLEAN;
-        }
-    },
+    Kind kind;
 
-    SHORT {
-        @Override
-        public Kind<ShortValue> asKind() {
-            return Kind.SHORT;
-        }
-    },
-
-    CHAR {
-        @Override
-        public Kind<CharValue> asKind() {
-            return Kind.CHAR;
-        }
-    },
-
-    INT {
-        @Override
-        public Kind<IntValue> asKind() {
-            return Kind.INT;
-        }
-    },
-
-    FLOAT {
-        @Override
-        public Kind<FloatValue> asKind() {
-            return Kind.FLOAT;
-        }
-    },
-
-    LONG {
-        @Override
-        public Kind<LongValue> asKind() {
-            return Kind.LONG;
-        }
-    },
-
-    DOUBLE {
-        @Override
-        public Kind<DoubleValue> asKind() {
-            return Kind.DOUBLE;
-        }
-    },
-
-    WORD {
-        @Override
-        public Kind<WordValue> asKind() {
-            return Kind.WORD;
-        }
-    },
-
-    REFERENCE {
-        @Override
-        public Kind<ReferenceValue> asKind() {
-            return Kind.REFERENCE;
-        }
-    };
-
-    public abstract Kind asKind();
+    @HOSTED_ONLY
+    void setKind(Kind kind) {
+        assert this.kind == null;
+        this.kind = kind;
+    }
 
     /**
      * Convenient way to get an immutable view of all the values of this enumerated type without paying the cost of
      * an array clone operation.
      */
     public static final IndexedSequence<KindEnum> VALUES = new ArraySequence<KindEnum>(values());
+
+    static {
+        // Sanity check to ensure that the values in Native/substrate/kind.h match those of this enum
+        final File file = new File(new File(JavaProject.findVcsProjectDirectory().getParentFile().getAbsoluteFile(), "Native/substrate/kind.h").getAbsolutePath());
+        try {
+            String content = new String(Files.toChars(file));
+            for (KindEnum kind : VALUES) {
+                String regex = ".*#define kind_" + kind.name() + "\\s+(\\d+).*";
+                Matcher matcher = Pattern.compile(regex, Pattern.DOTALL).matcher(content);
+                if (!matcher.matches()) {
+                    throw FatalError.unexpected("Could not find #define for kind_" + kind + " in " + file);
+                }
+                int value = Integer.parseInt(matcher.group(1));
+                if (value != kind.ordinal()) {
+                    throw FatalError.unexpected(String.format("Mismatch ordinal for kind %s: %s.%s.ordinal() = %d, kind_%s = %d (%s)",
+                                    kind, KindEnum.class.getName(), kind, kind.ordinal(), kind, value, file));
+                }
+            }
+        } catch (IOException e) {
+            ProgramError.unexpected("Error reading native header file " + file, e);
+        }
+    }
 }

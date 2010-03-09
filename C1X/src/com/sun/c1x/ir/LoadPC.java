@@ -21,34 +21,28 @@
 package com.sun.c1x.ir;
 
 import com.sun.c1x.ci.*;
-import com.sun.c1x.value.*;
 
 /**
- * The <code>LoadPointer</code> instruction represents a read of a pointer.
- * This instruction is part of the HIR support for low-level operations, such as safepoints,
- * stack banging, etc, and does not correspond to a Java operation.
+ * Pushes a value to the stack representing the
+ * current execution address. The exact address pushed is platform dependent as the
+ * mechanism for obtaining this address is platform dependent. For example on SPARC,
+ * this may be translated to {@code rd %pc %o1} which sets the address
+ * of {@code %pc} prior to execution of the instruction into {@code %o1}.
+ * On x86, the RIP-relative instruction {@code lea rax 0}
+ * loads the address of the instruction immediately
+ * following the {@code lea} instruction into register {@code rax}. Either of these
+ * satisfies the requirements of the VM purpose for which this instruction
+ * exists which is to initiate a stack walk from the current execution location.
  *
- * @author Ben L. Titzer
  * @author Doug Simon
  */
-public final class LoadPointer extends PointerOp {
+public final class LoadPC extends Instruction {
 
     /**
-     * Creates an instruction for a pointer load.
-     *
-     * @param kind the kind of value loaded from the pointer
-     * @param opcode the opcode of the instruction
-     * @param pointer the value producing the pointer
-     * @param displacement the value producing the displacement. This may be {@code null}.
-     * @param offsetOrIndex the value producing the scaled-index of the byte offset depending on whether {@code displacement} is {@code null}
-     * @param canTrap {@code true} if the access can cause a trap
-     * @param stateBefore the state before
-     * @param isVolatile {@code true} if the access is volatile
-     *
-     * @see PointerOp#PointerOp(CiKind, int, Value, Value, Value, boolean, ValueStack, boolean)
+     * Creates a new LoadPC instance.
      */
-    public LoadPointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, boolean canTrap, ValueStack stateBefore, boolean isVolatile) {
-        super(kind, opcode, pointer, displacement, offsetOrIndex, canTrap, stateBefore, isVolatile);
+    public LoadPC() {
+        super(CiKind.Word);
     }
 
     /**
@@ -57,7 +51,6 @@ public final class LoadPointer extends PointerOp {
      */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitLoadPointer(this);
+        v.visitLoadPC(this);
     }
-
 }

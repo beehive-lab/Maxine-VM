@@ -28,102 +28,56 @@ package com.sun.c1x.ir;
  * @author Ben L. Titzer
  */
 public abstract class ValueVisitor {
-    public void visitPhi(Phi i) {
-    }
-    public void visitLocal(Local i) {
-    }
-    public void visitConstant(Constant i) {
-    }
-    public void visitResolveClass(ResolveClass i) {
-    }
-    public void visitLoadRegister(LoadRegister i) {
-    }
-    public void visitStoreRegister(StoreRegister i) {
-    }
-    public void visitLoadPointer(LoadPointer i) {
-    }
-    public void visitStorePointer(StorePointer i) {
-    }
-    public void visitLoadField(LoadField i) {
-    }
-    public void visitStoreField(StoreField i) {
-    }
-    public void visitArrayLength(ArrayLength i) {
-    }
-    public void visitLoadIndexed(LoadIndexed i) {
-    }
-    public void visitStoreIndexed(StoreIndexed i) {
-    }
-    public void visitNegateOp(NegateOp i) {
-    }
-    public void visitArithmeticOp(ArithmeticOp i) {
-    }
-    public void visitShiftOp(ShiftOp i) {
-    }
-    public void visitLogicOp(LogicOp i) {
-    }
-    public void visitCompareOp(CompareOp i) {
-    }
-    public void visitIfOp(IfOp i) {
-    }
-    public void visitConvert(Convert i) {
-    }
-    public void visitNullCheck(NullCheck i) {
-    }
-    public void visitInvoke(Invoke i) {
-    }
-    public void visitNewInstance(NewInstance i) {
-    }
-    public void visitNewTypeArray(NewTypeArray i) {
-    }
-    public void visitNewObjectArray(NewObjectArray i) {
-    }
-    public void visitNewMultiArray(NewMultiArray i) {
-    }
-    public void visitCheckCast(CheckCast i) {
-    }
-    public void visitInstanceOf(InstanceOf i) {
-    }
-    public void visitMonitorEnter(MonitorEnter i) {
-    }
-    public void visitMonitorExit(MonitorExit i) {
-    }
-    public void visitIntrinsic(Intrinsic i) {
-    }
-    public void visitBlockBegin(BlockBegin i) {
-    }
-    public void visitGoto(Goto i) {
-    }
-    public void visitIf(If i) {
-    }
-    public void visitIfInstanceOf(IfInstanceOf i) {
-    }
-    public void visitTableSwitch(TableSwitch i) {
-    }
-    public void visitLookupSwitch(LookupSwitch i) {
-    }
-    public void visitReturn(Return i) {
-    }
-    public void visitThrow(Throw i) {
-    }
-    public void visitBase(Base i) {
-    }
-    public void visitOsrEntry(OsrEntry i) {
-    }
-    public void visitExceptionObject(ExceptionObject i) {
-    }
-    public void visitRoundFP(RoundFP i) {
-    }
-    public void visitUnsafeGetRaw(UnsafeGetRaw i) {
-    }
-    public void visitUnsafePutRaw(UnsafePutRaw i) {
-    }
-    public void visitUnsafeGetObject(UnsafeGetObject i) {
-    }
-    public void visitUnsafePutObject(UnsafePutObject i) {
-    }
-    public void visitUnsafePrefetchRead(UnsafePrefetchRead i) {
-    }
-    public void visitUnsafePrefetchWrite(UnsafePrefetchWrite i) {
-    }
+    // Checkstyle: stop
+    public void visitPhi(Phi i) {}
+    public void visitLocal(Local i) {}
+    public void visitConstant(Constant i) {}
+    public void visitResolveClass(ResolveClass i) {}
+    public void visitLoadPC(LoadPC i) {}
+    public void visitLoadRegister(LoadRegister i) {}
+    public void visitStoreRegister(StoreRegister i) {}
+    public void visitLoadPointer(LoadPointer i) {}
+    public void visitStorePointer(StorePointer i) {}
+    public void visitLoadField(LoadField i) {}
+    public void visitStoreField(StoreField i) {}
+    public void visitArrayLength(ArrayLength i) {}
+    public void visitLoadIndexed(LoadIndexed i) {}
+    public void visitStoreIndexed(StoreIndexed i) {}
+    public void visitNegateOp(NegateOp i) {}
+    public void visitArithmeticOp(ArithmeticOp i) {}
+    public void visitShiftOp(ShiftOp i) {}
+    public void visitLogicOp(LogicOp i) {}
+    public void visitCompareOp(CompareOp i) {}
+    public void visitIfOp(IfOp i) {}
+    public void visitConvert(Convert i) {}
+    public void visitNullCheck(NullCheck i) {}
+    public void visitInvoke(Invoke i) {}
+    public void visitNewInstance(NewInstance i) {}
+    public void visitNewTypeArray(NewTypeArray i) {}
+    public void visitNewObjectArray(NewObjectArray i) {}
+    public void visitNewMultiArray(NewMultiArray i) {}
+    public void visitCheckCast(CheckCast i) {}
+    public void visitInstanceOf(InstanceOf i) {}
+    public void visitMonitorEnter(MonitorEnter i) {}
+    public void visitMonitorExit(MonitorExit i) {}
+    public void visitIntrinsic(Intrinsic i) {}
+    public void visitBlockBegin(BlockBegin i) {}
+    public void visitGoto(Goto i) {}
+    public void visitIf(If i) {}
+    public void visitIfInstanceOf(IfInstanceOf i) {}
+    public void visitTableSwitch(TableSwitch i) {}
+    public void visitLookupSwitch(LookupSwitch i) {}
+    public void visitReturn(Return i) {}
+    public void visitThrow(Throw i) {}
+    public void visitBase(Base i) {}
+    public void visitOsrEntry(OsrEntry i) {}
+    public void visitExceptionObject(ExceptionObject i) {}
+    public void visitRoundFP(RoundFP i) {}
+    public void visitUnsafeGetRaw(UnsafeGetRaw i) {}
+    public void visitUnsafePutRaw(UnsafePutRaw i) {}
+    public void visitUnsafeGetObject(UnsafeGetObject i) {}
+    public void visitUnsafePutObject(UnsafePutObject i) {}
+    public void visitUnsafePrefetchRead(UnsafePrefetchRead i) {}
+    public void visitUnsafePrefetchWrite(UnsafePrefetchWrite i) {}
+    // Checkstyle: resume
 }

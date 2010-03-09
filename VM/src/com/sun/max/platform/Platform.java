@@ -22,6 +22,7 @@ package com.sun.max.platform;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -69,6 +70,74 @@ public final class Platform {
         } else {
             this.stackBias = 0;
         }
+    }
+
+    private static final Pattern NON_REGEX_TEST_PATTERN = Pattern.compile("\\w+");
+
+    /**
+     * Determines if a given string contains any {@linkplain Pattern regular expression}.
+     */
+    private static boolean isRegex(String input) {
+        for (int i = 0; i < input.length(); ++i) {
+            if (!Character.isLetterOrDigit(input.charAt(i)) && input.charAt(i) == '_') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isAcceptedBy(String input, String filter) {
+        if (filter.isEmpty()) {
+            return true;
+        }
+
+        boolean negate = filter.charAt(0) == '!';
+        if (negate) {
+            filter = filter.substring(1);
+        }
+        boolean result;
+        if (!isRegex(filter)) {
+            result = input.equalsIgnoreCase(filter);
+        } else {
+            Pattern pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE);
+            result = pattern.matcher(input).matches();
+        }
+        return negate ? !result : result;
+    }
+
+    /**
+     * Determines if this platform is accepted by a filter specified by a {@link PLATFORM} annotation.
+     * Each element of {@linkplain PLATFORM} is matched according to the following algorithm.
+     * <p>
+     * An element value of "" always matches the corresponding platform component.
+     * <p>
+     * An element value that does not contain any regular expressions (as specified by {@link Pattern})
+     * is used as a simple string filter that is compared for case-insensitive equality against the
+     * corresponding platform component. For example {@code @PLATFORM(os = "windows")} will match
+     * this platform object if {@code this.operatingSystem().name().equalsIgnoreCase("windows")}. A negative
+     * filter can be specified by prefixing {@code '!'} to the filter value. That is,
+     * {@code @PLATFORM(os = "!windows")} can be used to match any platform with a non-Windows
+     * operating system.
+     * <p>
+     * An element value that does contain a regular expression
+     * is used as a case-insensitive {@linkplain Pattern pattern} that is {@linkplain Pattern#matcher(CharSequence) matched}
+     * against the corresponding platform component. For example {@code @PLATFORM(cpu = "(amd64|ia32")} can
+     * be used to match an x86 based platform. At with simple string matching, a {@code '!'} prefix can
+     * be employed to specify a negative filter.
+     *
+     * @param filter a {@link PLATFORM} instance
+     * @return {@code true} is this platform is accepted by {@code filter}
+     */
+    public boolean isAcceptedBy(PLATFORM filter) {
+        if (filter != null) {
+            if (!isAcceptedBy(operatingSystem.name(), filter.os())) {
+                return false;
+            }
+            if (!isAcceptedBy(processorModel().name(), filter.cpu())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public Platform(ProcessorModel processorModel, OperatingSystem operatingSystem, int pageSize) {

@@ -55,7 +55,7 @@ public class LIROp0 extends LIRInstruction {
      * @param info used to emit debug information associated to this instruction
      */
     public LIROp0(LIROpcode opcode, LIROperand result, LIRDebugInfo info) {
-        super(opcode, LIROperand.IllegalLocation, info, false, null, 0, 0);
+        super(opcode, result, info, false, null, 0, 0);
         assert isInRange(opcode, LIROpcode.BeginOp0, LIROpcode.EndOp0) : "Opcode " + opcode + " is invalid for a LIROP0 instruction";
     }
 

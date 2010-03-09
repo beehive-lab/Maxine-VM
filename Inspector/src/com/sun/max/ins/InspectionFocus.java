@@ -299,7 +299,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             // User Model Policy:  select the memory region that contains the newly selected address; clears if not known.
             // If
-            setMemoryRegion(vm().memoryRegionContaining(address));
+            setMemoryRegion(vm().findMemoryRegion(address));
         }
     }
 

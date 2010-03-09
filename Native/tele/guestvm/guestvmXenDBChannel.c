@@ -277,7 +277,8 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeResume(JNIEnv 
     if (trace) log_println("resuming all runnable threads");
     if (threads_at_rest != NULL) free(threads_at_rest);
     resume_all();
-    /* Poll waiting for the thread to block on we get a suspendAll request */
+    /* Poll waiting for the thread to block or we get a suspendAll request, sleep for a short while to give domain chance to do something */
+    usleep(500);
     while(suspend_all_request == 0) {
         if (trace) log_println("waiting for a thread to block");
         threads = gather_threads(&num_threads);
@@ -298,7 +299,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeResume(JNIEnv 
         }
         free(threads);
         if (suspend_all_request == 0) {
-            sleep_time += 1000000;  // usecs
+            sleep_time += 2000;  // usecs
             usleep(sleep_time);
         }
     }

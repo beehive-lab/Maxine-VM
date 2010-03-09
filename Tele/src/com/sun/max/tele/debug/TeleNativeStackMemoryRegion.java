@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug;
 
 import com.sun.max.memory.*;
+import com.sun.max.tele.memory.*;
 
 /**
  * Description of the VM memory occupied by the stack for a thread.
@@ -28,7 +29,7 @@ import com.sun.max.memory.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class TeleNativeStackMemoryRegion extends FixedMemoryRegion {
+public final class TeleNativeStackMemoryRegion extends TeleMemoryRegion {
 
     public final TeleNativeThread teleNativeThread;
 

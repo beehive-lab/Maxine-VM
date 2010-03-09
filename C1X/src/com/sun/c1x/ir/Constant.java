@@ -52,7 +52,7 @@ public final class Constant extends Instruction {
     }
 
     /**
-     * Utility method to create an instruction for a double constant.
+     * Creates an instruction for a double constant.
      * @param d the double value for which to create the instruction
      * @return an instruction representing the double
      */
@@ -61,7 +61,7 @@ public final class Constant extends Instruction {
     }
 
     /**
-     * Utility method to create an instruction for a float constant.
+     * Creates an instruction for a float constant.
      * @param f the float value for which to create the instruction
      * @return an instruction representing the float
      */
@@ -70,7 +70,7 @@ public final class Constant extends Instruction {
     }
 
     /**
-     * Utility method to create an instruction for an long constant.
+     * Creates an instruction for an long constant.
      * @param i the long value for which to create the instruction
      * @return an instruction representing the long
      */
@@ -79,7 +79,7 @@ public final class Constant extends Instruction {
     }
 
     /**
-     * Utility method to create an instruction for an integer constant.
+     * Creates an instruction for an integer constant.
      * @param i the integer value for which to create the instruction
      * @return an instruction representing the integer
      */
@@ -88,7 +88,7 @@ public final class Constant extends Instruction {
     }
 
     /**
-     * Utility method to create an instruction for a boolean constant.
+     * Creates an instruction for a boolean constant.
      * @param i the boolean value for which to create the instruction
      * @return an instruction representing the boolean
      */
@@ -97,7 +97,7 @@ public final class Constant extends Instruction {
     }
 
     /**
-     * Utility method to create an instruction for an address (jsr/ret address) constant.
+     * Creates an instruction for an address (jsr/ret address) constant.
      * @param i the address value for which to create the instruction
      * @return an instruction representing the address
      */
@@ -106,12 +106,21 @@ public final class Constant extends Instruction {
     }
 
     /**
-     * Utility method to create an instruction for an object constant.
+     * Creates an instruction for an object constant.
      * @param o the object value for which to create the instruction
      * @return an instruction representing the object
      */
     public static Constant forObject(Object o) {
         return new Constant(CiConstant.forObject(o));
+    }
+
+    /**
+     * Creates an instruction for a word constant.
+     * @param val the word value for which to create the instruction
+     * @return an instruction representing the word
+     */
+    public static Constant forWord(long val) {
+        return new Constant(CiConstant.forWord(val));
     }
 
     @Override

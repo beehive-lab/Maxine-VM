@@ -35,6 +35,7 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
@@ -98,7 +99,7 @@ public final class MemoryRegionsTable extends InspectorTable {
             final int row = getSelectedRow();
             if (row >= 0) {
                 final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) getValueAt(row, 0);
-                focus().setMemoryRegion(memoryRegionDisplay.memoryRegion());
+                focus().setMemoryRegion(memoryRegionDisplay);
             }
         }
     }
@@ -174,7 +175,7 @@ public final class MemoryRegionsTable extends InspectorTable {
                 if (!stack.memoryRegion().size().isZero()) {
                     sortedMemoryRegions.add(new StackRegionDisplay(stack));
                 }
-                MemoryRegion threadLocalsRegion = thread.locals().memoryRegion();
+                MemoryRegion threadLocalsRegion = thread.localsBlock().memoryRegion();
                 if (threadLocalsRegion != null) {
                     sortedMemoryRegions.add(new ThreadLocalsRegionDisplay(threadLocalsRegion));
                 }
@@ -318,16 +319,10 @@ public final class MemoryRegionsTable extends InspectorTable {
     /**
      * Decorates a {@link MemoryRegion} with additional display-related behavior.
      */
-    private abstract class MemoryRegionDisplay implements MemoryRegion, Comparable<MemoryRegionDisplay> {
+    private abstract class MemoryRegionDisplay extends TeleMemoryRegion implements Comparable<MemoryRegionDisplay> {
 
-        abstract MemoryRegion memoryRegion();
-
-        public Address start() {
-            return memoryRegion().start();
-        }
-
-        public Size size() {
-            return memoryRegion().size();
+        public MemoryRegionDisplay(MemoryRegion memoryRegion) {
+            super(memoryRegion);
         }
 
         public int compareTo(MemoryRegionDisplay o) {
@@ -341,32 +336,13 @@ public final class MemoryRegionsTable extends InspectorTable {
             return size();
         }
 
-        public Address end() {
-            return memoryRegion().end();
-        }
-
-        public Address mark() {
-            return end();
-        }
-
-        public boolean contains(Address address) {
-            return memoryRegion().contains(address);
-        }
-
-        public boolean overlaps(MemoryRegion memoryRegion) {
-            return memoryRegion().overlaps(memoryRegion);
-        }
-
-        public boolean sameAs(MemoryRegion otherMemoryRegion) {
-            return Util.equal(this, otherMemoryRegion);
-        }
-
+        @Override
         public final String description() {
-            return inspection().nameDisplay().shortName(memoryRegion());
+            return inspection().nameDisplay().shortName(this);
         }
 
         public final String toolTipText() {
-            return inspection().nameDisplay().longName(memoryRegion());
+            return inspection().nameDisplay().longName(this);
         }
 
         private MemoryRegionValueLabel memoryRegionValueLabel;
@@ -426,6 +402,7 @@ public final class MemoryRegionsTable extends InspectorTable {
             }
         }
 
+        @Override
         public MemoryUsage getUsage() {
             return null;
         }
@@ -436,12 +413,8 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         private final TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion;
 
-        @Override
-        public MemoryRegion memoryRegion() {
-            return teleLinearAllocationMemoryRegion;
-        }
-
         HeapRegionDisplay(TeleLinearAllocationMemoryRegion teleLinearAllocationMemoryRegion) {
+            super(teleLinearAllocationMemoryRegion);
             this.teleLinearAllocationMemoryRegion = teleLinearAllocationMemoryRegion;
         }
 
@@ -456,12 +429,8 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         private final TeleCodeRegion teleCodeRegion;
 
-        @Override
-        MemoryRegion memoryRegion() {
-            return teleCodeRegion;
-        }
-
         CodeRegionDisplay(TeleCodeRegion teleCodeRegion) {
+            super(teleCodeRegion);
             this.teleCodeRegion = teleCodeRegion;
         }
 
@@ -476,12 +445,8 @@ public final class MemoryRegionsTable extends InspectorTable {
 
         private final MaxStack stack;
 
-        @Override
-        MemoryRegion memoryRegion() {
-            return stack.memoryRegion();
-        }
-
         StackRegionDisplay(MaxStack stack) {
+            super(stack.memoryRegion());
             this.stack = stack;
         }
 
@@ -495,30 +460,18 @@ public final class MemoryRegionsTable extends InspectorTable {
 
     private final class ThreadLocalsRegionDisplay extends MemoryRegionDisplay {
 
-        private final MemoryRegion threadLocalsRegion;
-
-        @Override
-        MemoryRegion memoryRegion() {
-            return threadLocalsRegion;
-        }
-
         ThreadLocalsRegionDisplay(MemoryRegion threadLocalsRegion) {
-            this.threadLocalsRegion = threadLocalsRegion;
+            super(threadLocalsRegion);
         }
+
     }
 
     private final class OtherRegionDisplay extends MemoryRegionDisplay {
 
-        private final MemoryRegion memoryRegion;
-
         OtherRegionDisplay(MemoryRegion memoryRegion) {
-            this.memoryRegion = memoryRegion;
+            super(memoryRegion);
         }
 
-        @Override
-        MemoryRegion memoryRegion() {
-            return memoryRegion;
-        }
     }
 
 }

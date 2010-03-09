@@ -34,6 +34,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.method.CodeLocation.*;
 import com.sun.max.tele.object.*;
@@ -460,7 +461,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 Trace.begin(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
                 updateWatchpointCaches();
                 oldInstructionPointer = thread.instructionPointer();
-                oldReturnAddress = thread.getReturnLocation().address().asPointer();
+                oldReturnAddress = thread.stack().returnLocation().address().asPointer();
                 singleStep(thread, false);
                 Trace.end(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
             }
@@ -790,7 +791,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
         if (oldTeleTargetMethod != newTeleTargetMethod || newTeleTargetMethod.callEntryPoint().equals(newInstructionPointer)) {
             // Stepped into a different target method or back into the entry of the same target method (i.e. a recursive call):
-            return thread.getReturnLocation();
+            return thread.stack().returnLocation();
         }
         // Stepped over a normal, non-call instruction:
         return null;
@@ -906,9 +907,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         assert state >= 0 && state < MaxThreadState.VALUES.length() : state;
         TeleNativeThread thread = handleToThreadMap.get(localHandle);
 
-        final MemoryRegion stackRegion = new FixedMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack region");
+        final MemoryRegion stackRegion = new TeleMemoryRegion(Address.fromLong(stackBase), Size.fromLong(stackSize), "stack region");
         MemoryRegion threadLocalsRegion =
-            (tlb == 0) ? null :  new FixedMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals region");
+            (tlb == 0) ? null :  new TeleMemoryRegion(Address.fromLong(tlb), Size.fromLong(tlbSize), "thread locals region");
 
         Params params = new Params();
         params.id = id;

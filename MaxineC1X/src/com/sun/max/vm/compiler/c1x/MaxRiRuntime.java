@@ -24,6 +24,8 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.ci.CiTargetMethod.*;
+import com.sun.c1x.ci.CiTargetMethod.Safepoint;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.target.x86.*;
 import com.sun.c1x.util.*;
@@ -246,6 +248,12 @@ public class MaxRiRuntime implements RiRuntime {
         }
     }
 
+    @Override
+    public String disassemble(RiMethod method) {
+        ClassMethodActor classMethodActor = asClassMethodActor(method, "disassemble()");
+        return classMethodActor.format("%f %R %H.%n(%P)") + String.format("%n%s", CodeAttributePrinter.toString(classMethodActor.codeAttribute()));
+    }
+
     public String disassemble(byte[] code) {
         if (MaxineVM.isHosted()) {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -254,23 +262,68 @@ public class MaxRiRuntime implements RiRuntime {
             final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
             final InlineDataDecoder inlineDataDecoder = null; //InlineDataDecoder.createFrom(teleTargetMethod.getEncodedInlineDataDescriptors());
             final Pointer startAddress = Pointer.fromInt(0);
+            final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false);
+            Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
+            return byteArrayOutputStream.toString();
+        }
+        return "";
+    }
+
+    @Override
+    public String disassemble(final CiTargetMethod targetMethod) {
+        if (MaxineVM.isHosted()) {
+            final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
+            writer.flush();
+            final ProcessorKind processorKind = VMConfiguration.target().platform().processorKind;
+            final InlineDataDecoder inlineDataDecoder = null;
+            final Pointer startAddress = Pointer.fromInt(0);
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+                private String toString(Call call) {
+                    if (call.runtimeCall != null) {
+                        return "{rt-call: " + call.runtimeCall.name() + "}";
+                    } else if (call.globalStubID != null) {
+                        return "{stub-call: " + call.globalStubID + "}";
+                    } else {
+                        return "{call: " + call.method + "}";
+                    }
+                }
+                private String siteInfo(int pcOffset) {
+                    for (Call call : targetMethod.directCalls) {
+                        if (call.pcOffset == pcOffset) {
+                            return toString(call);
+                        }
+                    }
+                    for (Call call : targetMethod.indirectCalls) {
+                        if (call.pcOffset == pcOffset) {
+                            return toString(call);
+                        }
+                    }
+                    for (Safepoint site : targetMethod.safepoints) {
+                        if (site.pcOffset == pcOffset) {
+                            return "{safepoint}";
+                        }
+                    }
+                    for (DataPatch site : targetMethod.dataReferences) {
+                        if (site.pcOffset == pcOffset) {
+                            return "{data: " + site.data + "}";
+                        }
+                    }
+                    return null;
+                }
+
                 @Override
                 protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
                     final String string = super.disassembledObjectString(disassembler, disassembledObject);
-                    if (string.startsWith("call ")) {
-                        final BytecodeLocation bytecodeLocation = null; //_teleTargetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
-                        if (bytecodeLocation != null) {
-                            final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
-                            if (methodRef != null) {
-                                final ConstantPool pool = bytecodeLocation.classMethodActor.codeAttribute().constantPool;
-                                return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
-                            }
-                        }
+
+                    String site = siteInfo(disassembledObject.startPosition());
+                    if (site != null) {
+                        return string + " " + site;
                     }
                     return string;
                 }
             };
+            byte[] code = Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize());
             Disassemble.disassemble(byteArrayOutputStream, code, processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
             return byteArrayOutputStream.toString();
         }

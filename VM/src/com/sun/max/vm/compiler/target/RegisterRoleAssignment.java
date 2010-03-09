@@ -72,7 +72,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
      * @param floatingPointRegisterType
      * @param floatingPointReturn
      * @param floatingPointScratch
-     * @param callInstructionAddress
+     * @param linkAddress
      * @param framelessCallInstructionAddress
      */
     @HOSTED_ONLY
@@ -88,7 +88,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
                     IntegerRegister_Type literalBasePointer,
                     Class<FloatingPointRegister_Type> floatingPointRegisterType,
                     FloatingPointRegister_Type floatingPointReturn, FloatingPointRegister_Type floatingPointScratch,
-                    IntegerRegister_Type callInstructionAddress, IntegerRegister_Type framelessCallInstructionAddress) {
+                    IntegerRegister_Type linkAddress) {
         final int roleCount = VMRegister.Role.VALUES.length();
         integerRegisters = Arrays.newInstance(integerRegisterType, roleCount);
         integerRegisters[CPU_STACK_POINTER.ordinal()] = cpuStackPointer;
@@ -100,8 +100,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
         integerRegisters[ABI_SCRATCH.ordinal()] = integerScratch;
         integerRegisters[SAFEPOINT_LATCH.ordinal()] = safepointLatch;
         integerRegisters[LITERAL_BASE_POINTER.ordinal()] = literalBasePointer;
-        integerRegisters[CALL_INSTRUCTION_ADDRESS.ordinal()] = callInstructionAddress;
-        integerRegisters[FRAMELESS_CALL_INSTRUCTION_ADDRESS.ordinal()] = framelessCallInstructionAddress;
+        integerRegisters[LINK_ADDRESS.ordinal()] = linkAddress;
 
         floatingPointRegisters = Arrays.newInstance(floatingPointRegisterType, roleCount);
         floatingPointRegisters[ABI_RETURN.ordinal()] = floatingPointReturn;
@@ -122,7 +121,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
                                   FloatingPointRegister_Type floatingPointReturn,
                                   FloatingPointRegister_Type floatingPointScratch) {
         this(integerRegisterType, cpuStackPointer, cpuFramePointer, abiStackPointer, abiFramePointer, integerReturn, integerReturn,
-                        integerScratch, safepointLatch, null, floatingPointRegisterType, floatingPointReturn, floatingPointScratch, null, null);
+                        integerScratch, safepointLatch, null, floatingPointRegisterType, floatingPointReturn, floatingPointScratch, null);
     }
 
     /**

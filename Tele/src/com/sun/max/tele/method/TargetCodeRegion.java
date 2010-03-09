@@ -20,8 +20,8 @@
  */
 package com.sun.max.tele.method;
 
-import com.sun.max.memory.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -29,7 +29,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
   */
-public class TargetCodeRegion extends FixedMemoryRegion {
+public class TargetCodeRegion extends TeleMemoryRegion {
 
     private final TeleTargetRoutine teleTargetRoutine;
 

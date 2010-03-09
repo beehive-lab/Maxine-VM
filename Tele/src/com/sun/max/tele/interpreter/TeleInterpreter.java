@@ -223,11 +223,6 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                     isWide = true;
                 }
 
-                if (hasOpcode3(opcode)) {
-                    int operand = readU2();
-                    opcode = opcode | operand << 8;
-                }
-
                 status = interpret(opcode, isWide);
 
                 if (status == MethodStatus.METHOD_END) {
@@ -1253,63 +1248,79 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
 
             case UNSAFE_CAST:            machine.skipBytes(2); break;
             case WCONST_0:               machine.skipBytes(2); push(WordValue.ZERO); break;
-            case PREAD_BYTE:             pointerLoad(Kind.BYTE, false); break;
-            case PREAD_CHAR:             pointerLoad(Kind.CHAR, false); break;
-            case PREAD_SHORT:            pointerLoad(Kind.SHORT, false); break;
-            case PREAD_INT:              pointerLoad(Kind.INT, false); break;
-            case PREAD_FLOAT:            pointerLoad(Kind.FLOAT, false); break;
-            case PREAD_LONG:             pointerLoad(Kind.LONG, false); break;
-            case PREAD_DOUBLE:           pointerLoad(Kind.DOUBLE, false); break;
-            case PREAD_WORD:             pointerLoad(Kind.WORD, false); break;
-            case PREAD_REFERENCE:        pointerLoad(Kind.REFERENCE, false); break;
-            case PREAD_BYTE_I:           pointerLoad(Kind.BYTE, true); break;
-            case PREAD_CHAR_I:           pointerLoad(Kind.CHAR, true); break;
-            case PREAD_SHORT_I:          pointerLoad(Kind.SHORT, true); break;
-            case PREAD_INT_I:            pointerLoad(Kind.INT, true); break;
-            case PREAD_FLOAT_I:          pointerLoad(Kind.FLOAT, true); break;
-            case PREAD_LONG_I:           pointerLoad(Kind.LONG, true); break;
-            case PREAD_DOUBLE_I:         pointerLoad(Kind.DOUBLE, true); break;
-            case PREAD_WORD_I:           pointerLoad(Kind.WORD, true); break;
-            case PREAD_REFERENCE_I:      pointerLoad(Kind.REFERENCE, true); break;
-            case PWRITE_BYTE:
-            case PWRITE_SHORT:
-            case PWRITE_INT:
-            case PWRITE_FLOAT:
-            case PWRITE_LONG:
-            case PWRITE_DOUBLE:
-            case PWRITE_WORD:
-            case PWRITE_REFERENCE:
-            case PWRITE_BYTE_I:
-            case PWRITE_SHORT_I:
-            case PWRITE_INT_I:
-            case PWRITE_FLOAT_I:
-            case PWRITE_LONG_I:
-            case PWRITE_DOUBLE_I:
-            case PWRITE_WORD_I:
-            case PWRITE_REFERENCE_I:     throw FatalError.unexpected("Cannot interpret pointer writes remotely");
-            case PGET_BYTE:              pointerGet(Kind.BYTE); break;
-            case PGET_CHAR:              pointerGet(Kind.CHAR); break;
-            case PGET_SHORT:             pointerGet(Kind.SHORT); break;
-            case PGET_INT:               pointerGet(Kind.INT); break;
-            case PGET_FLOAT:             pointerGet(Kind.FLOAT); break;
-            case PGET_LONG:              pointerGet(Kind.LONG); break;
-            case PGET_DOUBLE:            pointerGet(Kind.DOUBLE); break;
-            case PGET_WORD:              pointerGet(Kind.WORD); break;
-            case PGET_REFERENCE:         pointerGet(Kind.REFERENCE); break;
-            case PSET_BYTE:
-            case PSET_SHORT:
-            case PSET_INT:
-            case PSET_FLOAT:
-            case PSET_LONG:
-            case PSET_DOUBLE:
-            case PSET_WORD:
-            case PSET_REFERENCE:
-            case PCMPSWP_INT:
-            case PCMPSWP_WORD:
-            case PCMPSWP_REFERENCE:
-            case PCMPSWP_INT_I:
-            case PCMPSWP_WORD_I:
-            case PCMPSWP_REFERENCE_I:    throw FatalError.unexpected("Cannot interpret pointer writes remotely");
+
+
+            case PCMPSWP:
+            case MEMBAR:
+            case PGET:
+            case PSET:
+            case PREAD:
+            case PWRITE: {
+                int operand = readU2();
+                opcode = opcode | operand << 8;
+                switch (opcode) {
+
+                    case PREAD_BYTE:             pointerLoad(Kind.BYTE, false); break;
+                    case PREAD_CHAR:             pointerLoad(Kind.CHAR, false); break;
+                    case PREAD_SHORT:            pointerLoad(Kind.SHORT, false); break;
+                    case PREAD_INT:              pointerLoad(Kind.INT, false); break;
+                    case PREAD_FLOAT:            pointerLoad(Kind.FLOAT, false); break;
+                    case PREAD_LONG:             pointerLoad(Kind.LONG, false); break;
+                    case PREAD_DOUBLE:           pointerLoad(Kind.DOUBLE, false); break;
+                    case PREAD_WORD:             pointerLoad(Kind.WORD, false); break;
+                    case PREAD_REFERENCE:        pointerLoad(Kind.REFERENCE, false); break;
+                    case PREAD_BYTE_I:           pointerLoad(Kind.BYTE, true); break;
+                    case PREAD_CHAR_I:           pointerLoad(Kind.CHAR, true); break;
+                    case PREAD_SHORT_I:          pointerLoad(Kind.SHORT, true); break;
+                    case PREAD_INT_I:            pointerLoad(Kind.INT, true); break;
+                    case PREAD_FLOAT_I:          pointerLoad(Kind.FLOAT, true); break;
+                    case PREAD_LONG_I:           pointerLoad(Kind.LONG, true); break;
+                    case PREAD_DOUBLE_I:         pointerLoad(Kind.DOUBLE, true); break;
+                    case PREAD_WORD_I:           pointerLoad(Kind.WORD, true); break;
+                    case PREAD_REFERENCE_I:      pointerLoad(Kind.REFERENCE, true); break;
+                    case PWRITE_BYTE:
+                    case PWRITE_SHORT:
+                    case PWRITE_INT:
+                    case PWRITE_FLOAT:
+                    case PWRITE_LONG:
+                    case PWRITE_DOUBLE:
+                    case PWRITE_WORD:
+                    case PWRITE_REFERENCE:
+                    case PWRITE_BYTE_I:
+                    case PWRITE_SHORT_I:
+                    case PWRITE_INT_I:
+                    case PWRITE_FLOAT_I:
+                    case PWRITE_LONG_I:
+                    case PWRITE_DOUBLE_I:
+                    case PWRITE_WORD_I:
+                    case PWRITE_REFERENCE_I:     throw FatalError.unexpected("Cannot interpret pointer writes remotely");
+                    case PGET_BYTE:              pointerGet(Kind.BYTE); break;
+                    case PGET_CHAR:              pointerGet(Kind.CHAR); break;
+                    case PGET_SHORT:             pointerGet(Kind.SHORT); break;
+                    case PGET_INT:               pointerGet(Kind.INT); break;
+                    case PGET_FLOAT:             pointerGet(Kind.FLOAT); break;
+                    case PGET_LONG:              pointerGet(Kind.LONG); break;
+                    case PGET_DOUBLE:            pointerGet(Kind.DOUBLE); break;
+                    case PGET_WORD:              pointerGet(Kind.WORD); break;
+                    case PGET_REFERENCE:         pointerGet(Kind.REFERENCE); break;
+                    case PSET_BYTE:
+                    case PSET_SHORT:
+                    case PSET_INT:
+                    case PSET_FLOAT:
+                    case PSET_LONG:
+                    case PSET_DOUBLE:
+                    case PSET_WORD:
+                    case PSET_REFERENCE:
+                    case PCMPSWP_INT:
+                    case PCMPSWP_WORD:
+                    case PCMPSWP_REFERENCE:
+                    case PCMPSWP_INT_I:
+                    case PCMPSWP_WORD_I:
+                    case PCMPSWP_REFERENCE_I:    throw FatalError.unexpected("Cannot interpret pointer writes remotely");
+                    default:                     machine.raiseException(new ClassFormatError("Unsupported bytecode: " + opcode + " [" + Bytecodes.nameOf(opcode) + "]"));
+                }
+                break;
+            }
             case MOV_I2F:                machine.skipBytes(2); push(FloatValue.from(Float.intBitsToFloat(pop().asInt()))); break;
             case MOV_F2I:                machine.skipBytes(2); push(IntValue.from(Float.floatToRawIntBits(pop().asFloat()))); break;
             case MOV_L2D:                machine.skipBytes(2); push(DoubleValue.from(Double.longBitsToDouble(pop().asLong()))); break;

@@ -25,6 +25,7 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import java.io.*;
 import java.lang.reflect.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -45,22 +46,19 @@ public final class JavaTypeDescriptor {
     private JavaTypeDescriptor() {
     }
 
-    public abstract static class AtomicTypeDescriptor extends TypeDescriptorEntry {
+    /**
+     * A type descriptor for void or a primitive type.
+     *
+     * @author Ben L. Titzer
+     */
+    public static final class AtomicTypeDescriptor extends TypeDescriptorEntry {
         public final Class javaClass;
+        private Kind kind;
 
+        @HOSTED_ONLY
         AtomicTypeDescriptor(String name, Class javaClass) {
             super(name);
             this.javaClass = javaClass;
-        }
-
-        @Override
-        public TypeDescriptor componentTypeDescriptor() {
-            return null;
-        }
-
-        @Override
-        public TypeDescriptor elementTypeDescriptor() {
-            return this;
         }
 
         @Override
@@ -75,67 +73,76 @@ public final class JavaTypeDescriptor {
 
         @Override
         public String toJavaString() {
-            return toKind().name.toString();
+            return kind.name.toString();
+        }
+
+        @HOSTED_ONLY
+        void setKind(Kind kind) {
+            assert this.kind == null;
+            this.kind = kind;
         }
 
         @Override
-        public abstract Kind<?> toKind();
+        public Kind toKind() {
+            return kind;
+        }
     }
 
-    public static final AtomicTypeDescriptor VOID = new AtomicTypeDescriptor("V", void.class) {
-        @Override
-        public Kind<?> toKind() {
-            return Kind.VOID;
+    /**
+     * A type descriptor for a {@linkplain Word#getSubclasses() class} in the {@link Word} hierarchy.
+     *
+     * @author Doug Simon
+     */
+    public static final class WordTypeDescriptor extends TypeDescriptorEntry {
+        /**
+         * The {@link Class} instance of a {@linkplain Boxed non-boxed} word type descriptor
+         * or the {@link Class#getName() name} of the class implementing a boxed word type.
+         * The latter only exist when in hosted mode.
+         */
+        public final Object javaClass;
+
+        @HOSTED_ONLY
+        WordTypeDescriptor(String name, Class javaClass) {
+            super(name);
+            this.javaClass = Boxed.class.isAssignableFrom(javaClass) ? javaClass.getName() : javaClass;
         }
-    };
-    public static final AtomicTypeDescriptor BYTE = new AtomicTypeDescriptor("B", byte.class) {
+
         @Override
-        public Kind<?> toKind() {
-            return Kind.BYTE;
+        public boolean isResolvableWithoutClassLoading(ClassActor holder, ClassLoader classLoader) {
+            return javaClass instanceof Class;
         }
-    };
-    public static final AtomicTypeDescriptor BOOLEAN = new AtomicTypeDescriptor("Z", boolean.class) {
+
         @Override
-        public Kind<?> toKind() {
-            return Kind.BOOLEAN;
+        public Class resolveType(ClassLoader classLoader) {
+            if (javaClass instanceof Class) {
+                return (Class) javaClass;
+            }
+            throw new NoClassDefFoundError(javaClass.toString());
         }
-    };
-    public static final AtomicTypeDescriptor SHORT = new AtomicTypeDescriptor("S", short.class) {
+
         @Override
-        public Kind<?> toKind() {
-            return Kind.SHORT;
+        public String toJavaString() {
+            if (javaClass instanceof Class) {
+                return ((Class) javaClass).getName();
+            }
+            return javaClass.toString();
         }
-    };
-    public static final AtomicTypeDescriptor CHAR = new AtomicTypeDescriptor("C", char.class) {
+
         @Override
-        public Kind<?> toKind() {
-            return Kind.CHAR;
+        public Kind toKind() {
+            return Kind.WORD;
         }
-    };
-    public static final AtomicTypeDescriptor INT = new AtomicTypeDescriptor("I", int.class) {
-        @Override
-        public Kind<?> toKind() {
-            return Kind.INT;
-        }
-    };
-    public static final AtomicTypeDescriptor FLOAT = new AtomicTypeDescriptor("F", float.class) {
-        @Override
-        public Kind<?> toKind() {
-            return Kind.FLOAT;
-        }
-    };
-    public static final AtomicTypeDescriptor LONG = new AtomicTypeDescriptor("J", long.class) {
-        @Override
-        public Kind<?> toKind() {
-            return Kind.LONG;
-        }
-    };
-    public static final AtomicTypeDescriptor DOUBLE = new AtomicTypeDescriptor("D", double.class) {
-        @Override
-        public Kind<?> toKind() {
-            return Kind.DOUBLE;
-        }
-    };
+    }
+
+    public static final AtomicTypeDescriptor VOID = new AtomicTypeDescriptor("V", void.class);
+    public static final AtomicTypeDescriptor BYTE = new AtomicTypeDescriptor("B", byte.class);
+    public static final AtomicTypeDescriptor BOOLEAN = new AtomicTypeDescriptor("Z", boolean.class);
+    public static final AtomicTypeDescriptor SHORT = new AtomicTypeDescriptor("S", short.class);
+    public static final AtomicTypeDescriptor CHAR = new AtomicTypeDescriptor("C", char.class);
+    public static final AtomicTypeDescriptor INT = new AtomicTypeDescriptor("I", int.class);
+    public static final AtomicTypeDescriptor FLOAT = new AtomicTypeDescriptor("F", float.class);
+    public static final AtomicTypeDescriptor LONG = new AtomicTypeDescriptor("J", long.class);
+    public static final AtomicTypeDescriptor DOUBLE = new AtomicTypeDescriptor("D", double.class);
 
     private static final AtomicTypeDescriptor[] ATOMIC_DESCRIPTORS = {VOID, BYTE, BOOLEAN, SHORT, CHAR, INT, FLOAT, LONG, DOUBLE};
 

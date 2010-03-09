@@ -171,6 +171,10 @@ public class LIRList {
         append(new LIROp1(LIROpcode.Safepoint, tmp, info));
     }
 
+    public void readPC(LIROperand dst) {
+        append(new LIROp0(LIROpcode.ReadPC, dst));
+    }
+
     public void convert(int code, LIROperand left, LIROperand dst, GlobalStub globalStub) {
         LIRConvert op = new LIRConvert(code, left, dst);
         op.globalStub = globalStub;
@@ -396,12 +400,12 @@ public class LIRList {
         append(new LIRCompareAndSwap(LIROpcode.CasInt, addr, cmpValue, newValue, t1, t2));
     }
 
-    public void store(LIROperand src, LIRAddress addr, LIRDebugInfo info) {
-        append(new LIROp1(LIROpcode.Move, src, addr, addr.kind, info));
+    public void store(LIROperand src, LIRAddress dst, LIRDebugInfo info) {
+        append(new LIROp1(LIROpcode.Move, src, dst, dst.kind, info));
     }
 
-    public void load(LIRAddress addr, LIROperand src, LIRDebugInfo info) {
-        append(new LIROp1(LIROpcode.Move, addr, src, addr.kind, info));
+    public void load(LIRAddress src, LIROperand dst, LIRDebugInfo info) {
+        append(new LIROp1(LIROpcode.Move, src, dst, src.kind, info));
     }
 
     public static void printBlock(BlockBegin x) {

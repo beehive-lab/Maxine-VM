@@ -100,7 +100,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         tabbedPane = new JTabbedPane();
         if (thread != null) {
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-                final MaxThreadLocalsArea threadLocalsArea = thread.locals().threadLocalsAreaFor(state);
+                final MaxThreadLocalsArea threadLocalsArea = thread.localsBlock().threadLocalsAreaFor(state);
                 if (threadLocalsArea != null) {
                     final ThreadLocalsAreaPanel panel = new ThreadLocalsAreaPanel(inspection(), thread, threadLocalsArea, viewPreferences);
                     tabbedPane.add(state.toString(), panel);
@@ -182,7 +182,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            final MaxThreadLocalsArea threadLocalsArea = thread.locals().threadLocalsAreaFor(state);
+            final MaxThreadLocalsArea threadLocalsArea = thread.localsBlock().threadLocalsAreaFor(state);
             final ThreadLocalsAreaPanel panel = threadLocalsPanelFor(state);
             if (threadLocalsArea != null) {
                 if (panel == null) {

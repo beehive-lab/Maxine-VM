@@ -98,6 +98,7 @@ public abstract class AbstractAssembler {
 
         if (C1XOptions.PrintAssembly) {
             Util.printSection("Target Method", Util.SECTION_CHARACTER);
+            TTY.println("Frame size: %d", targetMethod);
             TTY.println("Frame size: %d", targetMethod.frameSize());
             TTY.println("Register size: %d", targetMethod.referenceRegisterCount());
 
@@ -105,7 +106,7 @@ public abstract class AbstractAssembler {
             Util.printBytes("Code", targetMethod.targetCode(), targetMethod.targetCodeSize(), C1XOptions.PrintAssemblyBytesPerLine);
 
             Util.printSection("Disassembly", Util.SUB_SECTION_CHARACTER);
-            TTY.println(runtime.disassemble(Arrays.copyOf(targetMethod.targetCode(), targetMethod.targetCodeSize())));
+            TTY.println(runtime.disassemble(targetMethod));
 
             Util.printSection("Safepoints", Util.SUB_SECTION_CHARACTER);
             for (CiTargetMethod.Safepoint x : targetMethod.safepoints) {

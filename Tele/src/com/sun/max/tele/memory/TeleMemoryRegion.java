@@ -18,16 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.memory;
+package com.sun.max.tele.memory;
 
 import java.lang.management.*;
 
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
+ * Representation of a span of memory in the VM.
+ *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
-public class FixedMemoryRegion implements MemoryRegion {
+public class TeleMemoryRegion implements MemoryRegion {
 
     private final Address start;
 
@@ -61,18 +65,22 @@ public class FixedMemoryRegion implements MemoryRegion {
         this.description = description;
     }
 
-    public FixedMemoryRegion(Address start, Size size, String description) {
+    public TeleMemoryRegion(Address start, Size size, String description) {
         this.start = start;
         this.size = size;
         this.end = start.plus(size);
         this.description = description;
     }
 
-    public FixedMemoryRegion(MemoryRegion memoryRegion, String description) {
+    public TeleMemoryRegion(MemoryRegion memoryRegion, String description) {
         start = memoryRegion.start();
         size = memoryRegion.size();
         end = memoryRegion.end();
         this.description = description;
+    }
+
+    public TeleMemoryRegion(MemoryRegion memoryRegion) {
+        this(memoryRegion, memoryRegion.description());
     }
 
     public boolean contains(Address address) {

@@ -259,7 +259,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
      * @return the allocated heap {@link LinearAllocationMemoryRegion} in the VM that contains the address,
      * possibly the boot heap; null if none.
      */
-    public TeleLinearAllocationMemoryRegion regionContaining(Address address) {
+    public TeleLinearAllocationMemoryRegion findMemoryRegion(Address address) {
         if (teleBootHeapRegion.contains(address)) {
             return teleBootHeapRegion;
         }
@@ -295,7 +295,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder implements TeleH
             // The call is nested within a call to {@link #refresh}, assume all is well.
             return true;
         }
-        return regionContaining(address) != null;
+        return findMemoryRegion(address) != null;
     }
 
     /**

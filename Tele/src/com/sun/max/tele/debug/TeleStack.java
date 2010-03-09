@@ -24,6 +24,10 @@ import java.io.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.method.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -35,6 +39,11 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
 
     private final TeleNativeThread teleNativeThread;
     private final TeleNativeStackMemoryRegion memoryRegion;
+
+    /**
+     * Location of the caller return address relative to the saved location in a stack frame, usually 0 but see SPARC.
+     */
+    private final int  offsetToReturnPC;
 
     /**
      * VM state the last time we updated the frames.
@@ -55,6 +64,7 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         super(teleVM);
         this.teleNativeThread = teleNativeThread;
         this.memoryRegion = memoryRegion;
+        this.offsetToReturnPC = teleVM.vmConfiguration().platform.processorKind.instructionSet.offsetToReturnPC;
     }
 
     public MaxThread thread() {
@@ -67,6 +77,36 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
 
     public MaxStackFrame top() {
         return frames().first();
+    }
+
+    public CodeLocation returnLocation() {
+        final StackFrame topFrame = teleNativeThread.frames().first();
+        final StackFrame topFrameCaller = topFrame.callerFrame();
+        if (topFrameCaller == null) {
+            return null;
+        }
+        Pointer instructionPointer = topFrameCaller.ip;
+        if (instructionPointer.isZero()) {
+            return null;
+        }
+        final StackFrame callee = topFrameCaller.calleeFrame();
+        if (callee == null) {
+            // Top frame, not a call return so no adjustment.
+            return codeManager().createMachineCodeLocation(instructionPointer, "top stack frame IP");
+        }
+        // Add a platform-specific offset from the stored code address to the actual call return site.
+        final TargetMethod calleeTargetMethod = callee.targetMethod();
+        if (calleeTargetMethod != null) {
+            final ClassMethodActor calleeClassMethodActor = calleeTargetMethod.classMethodActor();
+            if (calleeClassMethodActor != null) {
+                if (calleeClassMethodActor.isTrapStub()) {
+                    // Special case, where the IP caused a trap; no adjustment.
+                    return codeManager().createMachineCodeLocation(instructionPointer, "stack frame return");
+                }
+            }
+        }
+        // An ordinary call; apply a platform-specific adjustment to get the real return address.
+        return codeManager().createMachineCodeLocation(instructionPointer.plus(offsetToReturnPC), "stack frame return");
     }
 
     public IndexedSequence<MaxStackFrame> frames() {
