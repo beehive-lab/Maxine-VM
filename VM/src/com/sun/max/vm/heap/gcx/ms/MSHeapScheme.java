@@ -68,7 +68,10 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
         heapMarker = new HeapMarker();
         freeSpace = new FreeHeapSpaceManager();
         totalUsedSpace = Size.zero();
-        committedHeapSpace = new RuntimeMemoryRegion("Heap");
+        // TODO: we don't really need a LinearAllocationMemoryRegion here, just a RuntimeMemoryRegion.
+        // However, the inspector assumes we're using LinearAllocationMemoryRegion for any "heap" region.
+
+        committedHeapSpace = new LinearAllocationMemoryRegion("Heap");
     }
 
 

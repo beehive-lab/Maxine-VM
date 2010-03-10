@@ -27,6 +27,7 @@ import com.sun.max.atomic.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -41,8 +42,10 @@ import com.sun.max.vm.runtime.*;
  * are left as dark matter (dead object if parsing the heap is required).
  * Each chunk of free space is at least 4-words large, and holds in its last two words the
  * address to the next free space (or 0 if none) and its size.
+ *
  * Tiny objects (i.e., objects of size equals to 2 words) are handled specially and allocated from
- * a special pool.
+ * a special pool. TODO: we may be better off replacing this with allocating a min
+ * cell size required for the marking algorithm for tiny object .
  *
  * @author Laurent Daynes.
  */
@@ -152,6 +155,7 @@ public class FreeHeapSpaceManager {
             // against the current chunk limit.
             Pointer cell;
             Pointer nextMark;
+            size = DebugHeap.adjustForDebugTag(size.asPointer()).asSize();
             do {
                 cell = top();
                 nextMark = cell.plus(size);
@@ -164,7 +168,7 @@ public class FreeHeapSpaceManager {
                     continue;
                 }
             } while(mark.compareAndSwap(cell, nextMark) != cell);
-            return cell;
+            return DebugHeap.adjustForDebugTag(cell);
         }
 
         /**
@@ -187,10 +191,11 @@ public class FreeHeapSpaceManager {
                     return cell;
                 }
             } while(mark.compareAndSwap(cell, end) != cell);
-            HeapSchemeAdaptor.fillWithDeadObject(cell.asPointer(), end.asPointer());
+            HeapSchemeAdaptor.fillWithTaggedDeadObject(cell.asPointer(), end.asPointer());
             return cell;
         }
 
+        // FIXME: revisit this.
         Pointer allocateAligned(Size size, int alignment) {
             Pointer cell;
             Pointer alignedCell;
@@ -199,7 +204,7 @@ public class FreeHeapSpaceManager {
                 cell = top();
                 alignedCell = cell.aligned(alignment).asPointer();
                 if (alignedCell.minus(cell).lessThan(TINY_OBJECT_SIZE)) {
-                    // Needs enough space to insert an dead object if we want
+                    // Needs enough space to insert a dead object if we want
                     // the heap to be parseable.
                     alignedCell = alignedCell.plus(alignment);
                 }
@@ -219,7 +224,7 @@ public class FreeHeapSpaceManager {
             } while(mark.compareAndSwap(cell, nextMark) != cell);
             // Make junk before aligned cell a dead object.
             if (alignedCell.greaterThan(cell)) {
-                HeapSchemeAdaptor.fillWithDeadObject(cell, alignedCell);
+                HeapSchemeAdaptor.fillWithTaggedDeadObject(cell, alignedCell);
             }
             return alignedCell;
         }
