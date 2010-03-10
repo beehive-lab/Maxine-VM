@@ -25,7 +25,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>Op2</code> class is the base of arithmetic and logic operations with two inputs.
+ * The {@code Op2} class is the base of arithmetic and logic operations with two inputs.
  *
  * @author Ben L. Titzer
  */

@@ -30,7 +30,7 @@ import java.util.regex.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>Bytecodes</code> class defines constants associated with bytecodes,
+ * The {@code Bytecodes} class defines constants associated with bytecodes,
  * in particular the opcode numbers for each bytecode.
  *
  * @author Ben L. Titzer
@@ -335,11 +335,36 @@ public class Bytecodes {
      *           u1 from;     // type char denoting input type
      *           u1 to;       // type char denoting output type
      *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., value
      * </pre>
      */
     public static final int UNSAFE_CAST          = 238;
     public static final int WRETURN              = 239;
     public static final int SAFEPOINT            = 240;
+
+    /**
+     * Allocates a requested block of memory within the current activation frame.
+     * The allocated memory is reclaimed when the method returns.
+     *
+     * The allocation is for the lifetime of the method execution. That is, the compiler
+     * reserves the space in the compiled size of the frame. As such, a failure
+     * to allocate the requested space will result in a {@link StackOverflowError}
+     * when the method's prologue is executed.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // ALLOCA
+     *           u2 unused;
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., value
+     * </pre>
+     *
+     * @param size bytes to allocate. This must be a compile-time constant.
+     * @return the address of the allocated block. <b>The contents of the block are uninitialized</b>.
+     */
     public static final int ALLOCA               = 241;
 
     /**
@@ -1006,8 +1031,8 @@ public class Bytecodes {
      * @param opcode the bytecode operation to perform
      * @param x the first input
      * @param y the second input
-     * @return a <code>Integer</code> instance representing the result of folding the operation,
-     * if it is foldable, <code>null</code> otherwise
+     * @return a {@code Integer} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
      */
     public static Integer foldIntOp2(int opcode, int x, int y) {
         // attempt to fold a binary operation with constant inputs
@@ -1043,8 +1068,8 @@ public class Bytecodes {
      * @param opcode the bytecode operation to perform
      * @param x the first input
      * @param y the second input
-     * @return a <code>Long</code> instance representing the result of folding the operation,
-     * if it is foldable, <code>null</code> otherwise
+     * @return a {@code Long} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
      */
     public static Long foldLongOp2(int opcode, long x, long y) {
         // attempt to fold a binary operation with constant inputs
@@ -1092,8 +1117,8 @@ public class Bytecodes {
      * @param opcode the bytecode operation to perform
      * @param x the first input
      * @param y the second input
-     * @return a <code>Long</code> instance representing the result of folding the operation,
-     * if it is foldable, <code>null</code> otherwise
+     * @return a {@code Long} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
      */
     public static Long foldWordOp2(int opcode, long x, long y) {
         if (y == 0) {

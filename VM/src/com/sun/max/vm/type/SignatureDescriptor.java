@@ -204,7 +204,7 @@ public abstract class SignatureDescriptor extends Descriptor {
     public int computeNumberOfSlots() {
         int n = 0;
         for (int i = 1; i != typeDescriptors.length; ++i) {
-            n += typeDescriptors[i].toKind().isCategory1 ? 1 : 2;
+            n += typeDescriptors[i].toKind().stackSlots;
         }
         return n;
     }

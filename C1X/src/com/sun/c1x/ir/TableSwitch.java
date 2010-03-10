@@ -25,7 +25,7 @@ import java.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>TableSwitch</code> instruction represents a table switch.
+ * The {@code TableSwitch} instruction represents a table switch.
  *
  * @author Ben L. Titzer
  */
@@ -39,7 +39,7 @@ public final class TableSwitch extends Switch {
      * @param successors the list of successors
      * @param lowKey the lowest integer key in the table
      * @param stateBefore the state before the switch
-     * @param isSafepoint <code>true</code> if this instruction is a safepoint
+     * @param isSafepoint {@code true} if this instruction is a safepoint
      */
     public TableSwitch(Value value, List<BlockBegin> successors, int lowKey, ValueStack stateBefore, boolean isSafepoint) {
         super(value, successors, stateBefore, isSafepoint);

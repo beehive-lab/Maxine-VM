@@ -30,6 +30,8 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.FrameMap.*;
+import com.sun.c1x.lir.LIRCall.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.xir.*;
@@ -95,6 +97,10 @@ public class LIRList {
 
     public void callIndirect(RiMethod method, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
         append(new LIRCall(LIROpcode.IndirectCall, method, result, arguments, info, false));
+    }
+
+    public void callNative(LIROperand address, String symbol, LIROperand result, List<LIROperand> arguments, LIRDebugInfo info) {
+        append(new LIRCall(LIROpcode.NativeCall, new NativeFunction(address, symbol), result, arguments, info, false));
     }
 
     public void membar() {
@@ -169,6 +175,14 @@ public class LIRList {
 
     public void safepoint(LIROperand tmp, LIRDebugInfo info) {
         append(new LIROp1(LIROpcode.Safepoint, tmp, info));
+    }
+
+    public void readPC(LIROperand dst) {
+        append(new LIROp0(LIROpcode.ReadPC, dst));
+    }
+
+    public void alloca(StackBlock stackBlock, LIROperand dst) {
+        append(new LIRStackAllocate(dst, stackBlock));
     }
 
     public void convert(int code, LIROperand left, LIROperand dst, GlobalStub globalStub) {

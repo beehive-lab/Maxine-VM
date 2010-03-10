@@ -24,7 +24,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>NewObjectArray</code> instruction represents an allocation of an object array.
+ * The {@code NewObjectArray} instruction represents an allocation of an object array.
  *
  * @author Ben L. Titzer
  */

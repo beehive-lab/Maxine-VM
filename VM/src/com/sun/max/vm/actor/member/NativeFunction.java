@@ -95,6 +95,13 @@ public class NativeFunction {
     }
 
     /**
+     * Determines if the native function pointer has been linked.
+     */
+    public boolean isLinked() {
+        return !address.isZero();
+    }
+
+    /**
      * Sets (or clears) the machine code address for this native function.
      */
     public void setAddress(Word address) {

@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.util.Util;
 
 /**
- * The <code>LIROp1</code> class definition. The LIROp1 instruction has only one input operand.
+ * The {@code LIROp1} class definition. The LIROp1 instruction has only one input operand.
  *
  * @author Marcelo Cintra
  */

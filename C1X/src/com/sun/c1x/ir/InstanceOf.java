@@ -27,7 +27,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>InstanceOf</code> instruction represents an instanceof test.
+ * The {@code InstanceOf} instruction represents an instanceof test.
  *
  * @author Ben L. Titzer
  */

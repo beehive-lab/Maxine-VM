@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>LIRConstant</code> class definition.
+ * The {@code LIRConstant} class definition.
  *
  * @author Marcelo Cintra
  */

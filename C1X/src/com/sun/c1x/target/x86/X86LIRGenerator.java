@@ -139,7 +139,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         }
         if (needsCardMark) {
             // This store will need a precise card mark, so go ahead and
-            // compute the full adddres instead of computing once for the
+            // compute the full address instead of computing once for the
             // store and again for the card mark.
             LIRLocation tmp = newPointerRegister();
             lir.leal(addr, tmp);

@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>NewTypeArray</code> class definition.
+ * The {@code NewTypeArray} class definition.
  *
  * @author Ben L. Titzer
  */

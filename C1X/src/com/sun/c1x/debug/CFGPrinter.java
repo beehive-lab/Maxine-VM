@@ -24,6 +24,7 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.c1x.alloc.*;
+import com.sun.c1x.ci.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
@@ -61,14 +62,17 @@ public class CFGPrinter {
     }
 
     private final LogStream out;
+    private final CiTarget target;
 
     /**
      * Creates a control flow graph printer.
      *
      * @param os where the output generated via this printer shown be written
+     * @param target the target architecture description
      */
-    public CFGPrinter(OutputStream os) {
+    public CFGPrinter(OutputStream os, CiTarget target) {
         out = new LogStream(os);
+        this.target = target;
     }
 
     private void begin(String string) {
@@ -166,13 +170,6 @@ public class CFGPrinter {
             out.print("loop_depth ").println(block.loopDepth());
         }
 
-        /* TODO: Uncomment (and fix) once LIR is implemented
-        if (block.firstLirInstructionId() != -1) {
-            _out.print("first_lir_id ").println(block.firstLirInstructionId());
-            _out.print("last_lir_id ").println(block.lastLirInstructionId());
-        }
-        */
-
         if (printHIR) {
             printState(block);
             printHIR(block);
@@ -231,7 +228,7 @@ public class CFGPrinter {
         do {
             begin("locals");
             out.print("size ").println(state.localsSize());
-            out.print("method \"").print(Util.format("%f %r %H.%n(%p)", state.scope().method, true)).println('"');
+            out.print("method \"").print(Util.format("%f %h.%n(%p):%r", state.scope().method, false)).println('"');
             int i = 0;
             while (i < state.localsSize()) {
                 Value value = state.localAt(i);
@@ -305,7 +302,7 @@ public class CFGPrinter {
         out.print(i.bci()).print(' ').print(useCount).print(' ');
         printLirOperand(i);
         out.print(i).print(' ');
-        new InstructionPrinter(out, true).printInstruction(i);
+        new InstructionPrinter(out, true, target).printInstruction(i);
 
         out.println(" <|@");
     }
@@ -344,7 +341,8 @@ public class CFGPrinter {
         out.print("name \"").print(label).println('"');
         startBlock.iteratePreOrder(new BlockClosure() {
             public void apply(BlockBegin block) {
-                printBlock(block, block.end().successors(), block.exceptionHandlerBlocks(), printHIR, printLIR);
+                List<BlockBegin> successors = block.end() != null ? block.end().successors() : new ArrayList<BlockBegin>(0);
+                printBlock(block, successors, block.exceptionHandlerBlocks(), printHIR, printLIR);
             }
         });
         end("cfg");

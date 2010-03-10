@@ -26,7 +26,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>Invoke</code> instruction represents all kinds of method calls.
+ * The {@code Invoke} instruction represents all kinds of method calls.
  *
  * @author Ben L. Titzer
  */
@@ -85,7 +85,7 @@ public final class Invoke extends StateSplit {
 
     /**
      * Gets the instruction that produces the receiver object for this invocation, if any.
-     * @return the instruction that produces the receiver object for this invocation if any, <code>null</code> if this
+     * @return the instruction that produces the receiver object for this invocation if any, {@code null} if this
      *         invocation does not take a receiver object
      */
     public Value receiver() {
@@ -119,7 +119,7 @@ public final class Invoke extends StateSplit {
 
     /**
      * Checks whether this instruction can trap.
-     * @return <code>true</code>, conservatively assuming the called method may throw an exception
+     * @return {@code true}, conservatively assuming the called method may throw an exception
      */
     @Override
     public boolean canTrap() {
@@ -133,7 +133,7 @@ public final class Invoke extends StateSplit {
 
     /**
      * Checks whether this invocation has a receiver object.
-     * @return <code>true</code> if this invocation has a receiver object; <code>false</code> otherwise, if this is a
+     * @return {@code true} if this invocation has a receiver object; {@code false} otherwise, if this is a
      *         static call
      */
     public boolean hasReceiver() {

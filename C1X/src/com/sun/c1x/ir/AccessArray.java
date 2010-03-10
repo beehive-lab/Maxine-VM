@@ -76,7 +76,7 @@ public abstract class AccessArray extends StateSplit {
 
     /**
      * Checks whether this instruction can cause a trap.
-     * @return <code>true</code> if this instruction can cause a trap
+     * @return {@code true} if this instruction can cause a trap
      */
     @Override
     public boolean canTrap() {

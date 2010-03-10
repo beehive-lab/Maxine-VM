@@ -39,6 +39,12 @@ public interface RiMethod {
     String name();
 
     /**
+     * Gets the symbol used to link this method if it is native, otherwise {@code null}.
+     * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
+     */
+    String jniSymbol();
+    
+    /**
      * Gets the holder of the method as a compiler interface type.
      * @return the holder
      */
@@ -155,10 +161,10 @@ public interface RiMethod {
     boolean isInitializer();
 
     /**
-     * Checks whether this method has been overriden. Decisions made based
-     * on a method being overriden must be registered as dependencies.
+     * Checks whether this method has been overridden. Decisions made based
+     * on a method being overridden must be registered as dependencies.
      * NOTE THAT THIS OPERATION IS ONLY AVAILABLE ON RESOLVED METHODS.
-     * @return {@code true} if the method has been overriden
+     * @return {@code true} if the method has been overridden
      */
     boolean isOverridden();
 

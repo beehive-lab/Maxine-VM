@@ -194,8 +194,8 @@ public interface RiType {
     RiMethod resolveMethodImpl(RiMethod method);
 
     /**
-     * Gets the basic type of this compiler interface type.
-     * @return the basic type
+     * Gets the kind of this compiler interface type.
+     * @return the kind
      */
     CiKind kind();
 
@@ -207,9 +207,9 @@ public interface RiType {
     CiConstant getEncoding(Representation r);
 
     /**
-     * Gets the basic type used to represent the specified part of this type.
+     * Gets the kind used to represent the specified part of this type.
      * @param r the part of the this type
-     * @return the basic type of constants for the specified part of the type
+     * @return the kind of constants for the specified part of the type
      */
     CiKind getRepresentationKind(Representation r);
 }

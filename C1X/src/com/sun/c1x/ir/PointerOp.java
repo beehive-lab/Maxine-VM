@@ -85,8 +85,7 @@ public abstract class PointerOp extends StateSplit {
     }
 
     /**
-     * Iterates over the input values to this instruction. In this case,
-     * it is only the pointer value.
+     * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each value
      */
     @Override

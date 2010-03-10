@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 /**
- * The <code>BlockClosure</code> interface represents a closure for iterating over blocks.
+ * The {@code BlockClosure} interface represents a closure for iterating over blocks.
  *
  * @author Ben L. Titzer
  */

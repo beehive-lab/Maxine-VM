@@ -25,7 +25,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LoadIndexed</code> instruction represents a read from an element of an array.
+ * The {@code LoadIndexed} instruction represents a read from an element of an array.
  *
  * @author Ben L. Titzer
  */

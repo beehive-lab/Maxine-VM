@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>CompareOp</code> instruction represents comparisons such as equals, not equal, etc.
+ * The {@code CompareOp} instruction represents comparisons such as equals, not equal, etc.
  *
  * @author Ben L. Titzer
  */

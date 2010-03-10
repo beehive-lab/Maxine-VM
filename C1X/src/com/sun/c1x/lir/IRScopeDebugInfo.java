@@ -26,7 +26,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ir.*;
 
 /**
- * The <code>IRScopeDebugInfo</code> class definition.
+ * The {@code IRScopeDebugInfo} class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger

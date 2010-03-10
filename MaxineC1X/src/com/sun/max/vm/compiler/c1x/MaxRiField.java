@@ -98,8 +98,8 @@ public class MaxRiField implements RiField {
     }
 
     /**
-     * Gets the basic type for the this field.
-     * @return the basic type for this field
+     * Gets the C1X kind for the this field.
+     * @return the C1X kind for this field
      */
     public CiKind kind() {
         return basicType;

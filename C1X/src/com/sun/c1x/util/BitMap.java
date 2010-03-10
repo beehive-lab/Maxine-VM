@@ -23,7 +23,7 @@ package com.sun.c1x.util;
 import java.util.*;
 
 /**
- * The <code>BitMap</code> class implements a bitmap that stores a single bit for
+ * The {@code BitMap} class implements a bitmap that stores a single bit for
  * a range of integers (0-n).
  *
  * @author Ben L. Titzer
@@ -144,7 +144,7 @@ public class BitMap {
      *
      * @param i
      *            the index of the bit to get
-     * @return <code>true</code> if the bit at the specified position is <code>1</code>
+     * @return {@code true} if the bit at the specified position is {@code 1}
      */
     public boolean get(int i) {
         if (checkIndex(i) < 32) {
@@ -161,7 +161,7 @@ public class BitMap {
      * bitmap does not cover the specified index.
      *
      * @param i the index of the bit to get
-     * @return <code>true</code> if the bit at the specified position is <code>1</code>
+     * @return {@code true} if the bit at the specified position is {@code 1}
      */
     public boolean getDefault(int i) {
         if (i < 0 || i >= length) {

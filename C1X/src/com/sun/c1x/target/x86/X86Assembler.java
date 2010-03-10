@@ -472,6 +472,16 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
+    public final void nativeCall(CiRegister dst, String symbol, LIRDebugInfo info) {
+        int before = codeBuffer.position();
+        int encode = prefixqAndEncode(dst.encoding);
+        emitByte(0xFF);
+        emitByte(0xD0 | encode);
+        int after = codeBuffer.position();
+        recordIndirectCall(before, after, symbol, info);
+        recordExceptionHandlers(after, info);
+    }
+
     public final int directCall(Object target, LIRDebugInfo info) {
         int before = codeBuffer.position();
         emitByte(0xE8);
@@ -1088,9 +1098,13 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void movl(CiRegister dst, int imm32) {
-        int encode = prefixAndEncode(dst.encoding);
-        emitByte(0xB8 | encode);
-        emitInt(imm32);
+        if (imm32 == 0) {
+            xorl(dst, dst);
+        } else {
+            int encode = prefixAndEncode(dst.encoding);
+            emitByte(0xB8 | encode);
+            emitInt(imm32);
+        }
     }
 
     public final void movl(CiRegister dst, CiRegister src) {
