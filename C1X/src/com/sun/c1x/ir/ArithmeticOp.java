@@ -25,7 +25,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>ArithmeticOp</code> class represents arithmetic operations such as addition, subtraction, etc.
+ * The {@code ArithmeticOp} class represents arithmetic operations such as addition, subtraction, etc.
  *
  * @author Ben L. Titzer
  */
@@ -76,7 +76,7 @@ public final class ArithmeticOp extends Op2 {
 
     /**
      * Checks whether this instruction has strict fp semantics.
-     * @return <code>true</code> if this instruction has strict fp semantics
+     * @return {@code true} if this instruction has strict fp semantics
      */
     public boolean isStrictFP() {
         return checkFlag(Flag.IsStrictFP);
@@ -85,7 +85,7 @@ public final class ArithmeticOp extends Op2 {
     /**
      * Checks whether this instruction can cause a trap. For arithmetic operations,
      * only division and remainder operations can cause traps.
-     * @return <code>true</code> if this instruction can cause a trap
+     * @return {@code true} if this instruction can cause a trap
      */
     @Override
     public boolean canTrap() {

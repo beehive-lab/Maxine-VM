@@ -24,7 +24,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>LIRBlock</code> class definition.
+ * The {@code LIRBlock} class definition.
  *
  * @author Ben L. Titzer
  */

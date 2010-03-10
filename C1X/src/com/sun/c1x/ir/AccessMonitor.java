@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>AccessMonitor</code> instruction is the base class of both monitor acquisition and release.
+ * The {@code AccessMonitor} instruction is the base class of both monitor acquisition and release.
  *
  * @author Ben L. Titzer
  */

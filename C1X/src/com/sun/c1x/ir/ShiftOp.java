@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 /**
- * The <code>ShiftOp</code> class represents shift operations.
+ * The {@code ShiftOp} class represents shift operations.
  *
  * @author Ben L. Titzer
  */

@@ -32,7 +32,7 @@ import com.sun.c1x.ri.RiRuntime;
 import com.sun.c1x.ri.RiType;
 
 /**
- * The <code>CodeGen</code> class definition.
+ * The {@code CodeGen} class definition.
  *
  * @author Ben L. Titzer
  */

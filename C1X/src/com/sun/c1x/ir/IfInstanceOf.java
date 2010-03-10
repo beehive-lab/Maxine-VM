@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 
 /**
- * The <code>IfInstanceOf</code> instruction represents a branch on the outcome of an instanceof test.
+ * The {@code IfInstanceOf} instruction represents a branch on the outcome of an instanceof test.
  *
  * @author Ben L. Titzer
  */
@@ -39,7 +39,7 @@ public final class IfInstanceOf extends BlockEnd {
      * Constructs a new IfInstanceOf instruction.
      * @param targetClass the class to check against
      * @param object the instruction which produces the object value
-     * @param testIsInstance <code>true</code> if positive instanceof check implies going to true successor
+     * @param testIsInstance {@code true} if positive instanceof check implies going to true successor
      * @param instanceofBCI the bytecode index of the instanceof instruction
      * @param trueSucc the block representing the true successor
      * @param falseSucc the block representing the false successor
@@ -80,7 +80,7 @@ public final class IfInstanceOf extends BlockEnd {
 
     /**
      * Checks whether this instruction succeeds if the object is or is not an instance of the target class.
-     * @return <code>true</code> if a successful instanceof implies going to the true successor
+     * @return {@code true} if a successful instanceof implies going to the true successor
      */
     public boolean testIsInstance() {
         return testIsInstance;
@@ -104,7 +104,7 @@ public final class IfInstanceOf extends BlockEnd {
 
     /**
      * Gets the block corresponding to the specified outcome of the branch.
-     * @param istrue <code>true</code> if the true successor is requested, <code>false</code> otherwise
+     * @param istrue {@code true} if the true successor is requested, {@code false} otherwise
      * @return the corresponding successor
      */
     public BlockBegin successor(boolean istrue) {

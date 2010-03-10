@@ -30,7 +30,7 @@ import java.util.regex.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>Bytecodes</code> class defines constants associated with bytecodes,
+ * The {@code Bytecodes} class defines constants associated with bytecodes,
  * in particular the opcode numbers for each bytecode.
  *
  * @author Ben L. Titzer
@@ -1031,8 +1031,8 @@ public class Bytecodes {
      * @param opcode the bytecode operation to perform
      * @param x the first input
      * @param y the second input
-     * @return a <code>Integer</code> instance representing the result of folding the operation,
-     * if it is foldable, <code>null</code> otherwise
+     * @return a {@code Integer} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
      */
     public static Integer foldIntOp2(int opcode, int x, int y) {
         // attempt to fold a binary operation with constant inputs
@@ -1068,8 +1068,8 @@ public class Bytecodes {
      * @param opcode the bytecode operation to perform
      * @param x the first input
      * @param y the second input
-     * @return a <code>Long</code> instance representing the result of folding the operation,
-     * if it is foldable, <code>null</code> otherwise
+     * @return a {@code Long} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
      */
     public static Long foldLongOp2(int opcode, long x, long y) {
         // attempt to fold a binary operation with constant inputs
@@ -1117,8 +1117,8 @@ public class Bytecodes {
      * @param opcode the bytecode operation to perform
      * @param x the first input
      * @param y the second input
-     * @return a <code>Long</code> instance representing the result of folding the operation,
-     * if it is foldable, <code>null</code> otherwise
+     * @return a {@code Long} instance representing the result of folding the operation,
+     * if it is foldable, {@code null} otherwise
      */
     public static Long foldWordOp2(int opcode, long x, long y) {
         if (y == 0) {

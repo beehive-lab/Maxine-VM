@@ -105,7 +105,7 @@ public class C1XCompilation {
     /**
      * Checks whether this compilation is for an on-stack replacement.
      *
-     * @return <code>true</code> if this compilation is for an on-stack replacement
+     * @return {@code true} if this compilation is for an on-stack replacement
      */
     public boolean isOsrCompilation() {
         return osrBCI >= 0;
@@ -124,7 +124,7 @@ public class C1XCompilation {
      * Records an assumption made by this compilation that the specified type is a leaf class.
      *
      * @param type the type that is assumed to be a leaf class
-     * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
+     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
      */
     public boolean recordLeafTypeAssumption(RiType type) {
         return false;
@@ -134,7 +134,7 @@ public class C1XCompilation {
      * Records an assumption made by this compilation that the specified method is a leaf method.
      *
      * @param method the method that is assumed to be a leaf method
-     * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
+     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
      */
     public boolean recordLeafMethodAssumption(RiMethod method) {
         return false;
@@ -144,14 +144,14 @@ public class C1XCompilation {
      * Records an assumption that the specified type has no finalizable subclasses.
      *
      * @param receiverType the type that is assumed to have no finalizable subclasses
-     * @return <code>true</code> if the assumption was recorded and can be assumed; <code>false</code> otherwise
+     * @return {@code true} if the assumption was recorded and can be assumed; {@code false} otherwise
      */
     public boolean recordNoFinalizableSubclassAssumption(RiType receiverType) {
         return false;
     }
 
     /**
-     * Gets the <code>RiType</code> corresponding to <code>java.lang.Throwable</code>.
+     * Gets the {@code RiType} corresponding to {@code java.lang.Throwable}.
      *
      * @return the compiler interface type for Throwable
      */
@@ -186,7 +186,7 @@ public class C1XCompilation {
      * Builds the block map for the specified method.
      *
      * @param method the method for which to build the block map
-     * @param osrBCI the OSR bytecode index; <code>-1</code> if this is not an OSR
+     * @param osrBCI the OSR bytecode index; {@code -1} if this is not an OSR
      * @return the block map for the specified method
      */
     public BlockMap getBlockMap(RiMethod method, int osrBCI) {

@@ -28,7 +28,7 @@ import com.sun.c1x.bytecode.Bytecodes;
 import com.sun.c1x.ri.RiMethod;
 
 /**
- * The <code>Printer</code> class definition.
+ * The {@code Printer} class definition.
  *
  * @author Ben L. Titzer
  */

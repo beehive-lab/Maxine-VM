@@ -24,7 +24,7 @@ import com.sun.c1x.asm.*;
 import com.sun.c1x.debug.*;
 
 /**
- * The <code>LIRLabel</code> class definition.
+ * The {@code LIRLabel} class definition.
  *
  * @author Marcelo Cintra
  */

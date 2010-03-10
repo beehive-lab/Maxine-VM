@@ -21,7 +21,7 @@
 package com.sun.c1x.lir;
 
 /**
- * The <code>LirOpcode</code> enum represents the Operation code of each LIR instruction.
+ * The {@code LirOpcode} enum represents the Operation code of each LIR instruction.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger

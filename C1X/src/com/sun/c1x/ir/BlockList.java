@@ -24,7 +24,7 @@ import java.util.Iterator;
 import java.util.Arrays;
 
 /**
- * The <code>BlockList</code> class implements a specialized list data structure for representing
+ * The {@code BlockList} class implements a specialized list data structure for representing
  * the predecessor and successor lists of basic blocks.
  *
  * @author Ben L. Titzer

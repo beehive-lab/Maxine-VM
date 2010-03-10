@@ -78,14 +78,14 @@ public abstract class Instruction extends Value {
 
     /**
      * Checks whether this instruction has already been added to its basic block.
-     * @return <code>true</code> if this instruction has been added to the basic block containing it
+     * @return {@code true} if this instruction has been added to the basic block containing it
      */
     public final boolean isAppended() {
         return bci != BCI_NOT_APPENDED;
     }
 
     /**
-     * Gets the next instruction after this one in the basic block, or <code>null</code>
+     * Gets the next instruction after this one in the basic block, or {@code null}
      * if this instruction is the end of a basic block.
      * @return the next instruction after this one in the basic block
      */
@@ -174,7 +174,7 @@ public abstract class Instruction extends Value {
      * Checks that this instruction is equal to another instruction for the purposes
      * of value numbering.
      * @param i the other instruction
-     * @return <code>true</code> if this instruction is equivalent to the specified
+     * @return {@code true} if this instruction is equivalent to the specified
      * instruction w.r.t. value numbering
      */
     public boolean valueEqual(Instruction i) {
@@ -191,7 +191,7 @@ public abstract class Instruction extends Value {
 
     /**
      * Tests whether this instruction can trap.
-     * @return <code>true</code> if this instruction can cause a trap.
+     * @return {@code true} if this instruction can cause a trap.
      */
     public boolean canTrap() {
         return false;

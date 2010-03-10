@@ -26,7 +26,7 @@ import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>LIRTypeCheck</code> class definition.
+ * The {@code LIRTypeCheck} class definition.
  *
  * @author Marcelo Cintra
  *

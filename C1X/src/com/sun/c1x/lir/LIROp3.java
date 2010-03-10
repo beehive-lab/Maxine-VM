@@ -21,7 +21,7 @@
 package com.sun.c1x.lir;
 
 /**
- * The <code>LIROp3</code> class definition.
+ * The {@code LIROp3} class definition.
  *
  * @author Marcelo Cintra
  *

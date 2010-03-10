@@ -25,9 +25,9 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.ci.CiCodePos;
 
 /**
- * The <code>FrameState</code> class represents an immutable view of the state of a frame
+ * The {@code FrameState} class represents an immutable view of the state of a frame
  * (i.e. it does not have push, pop, or store operations). It is represented more compactly
- * than a <code>ValueStack</code>. Its immutability eliminates a large number of bugs in
+ * than a {@code ValueStack}. Its immutability eliminates a large number of bugs in
  * caching of states within the IR.
  *
  * @author Ben L. Titzer

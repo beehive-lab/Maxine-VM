@@ -29,7 +29,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.xir.*;
 
 /**
- * The <code>Backend</code> class represents a compiler backend for C1X.
+ * The {@code Backend} class represents a compiler backend for C1X.
  *
  * @author Ben L. Titzer
  */

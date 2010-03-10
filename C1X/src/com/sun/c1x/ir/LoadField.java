@@ -24,7 +24,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LoadField</code> instruction represents a read of a static or instance field.
+ * The {@code LoadField} instruction represents a read of a static or instance field.
  *
  * @author Ben L. Titzer
  */
@@ -54,8 +54,8 @@ public final class LoadField extends AccessField {
     /**
      * Gets the exact type of the field being accessed. If the field type is
      * a primitive array or an instance class and the class is loaded and final,
-     * then the exact type is the same as the declared type. Otherwise it is <code>null</code>
-     * @return the exact type of the field if known; <code>null</code> otherwise
+     * then the exact type is the same as the declared type. Otherwise it is {@code null}
+     * @return the exact type of the field if known; {@code null} otherwise
      */
     @Override
     public RiType exactType() {

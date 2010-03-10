@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>Address</code> class definition.
+ * The {@code Address} class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger

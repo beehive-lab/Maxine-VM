@@ -23,7 +23,7 @@ package com.sun.c1x.graph;
 import com.sun.c1x.ir.*;
 
 /**
- * The <code>BlockUtil</code> class contains a number of utilities for manipulating a CFG of basic blocks.
+ * The {@code BlockUtil} class contains a number of utilities for manipulating a CFG of basic blocks.
  *
  * @author Ben L. Titzer
  */

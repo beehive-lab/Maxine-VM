@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>StoreIndexed</code> instruction represents a write to an array element.
+ * The {@code StoreIndexed} instruction represents a write to an array element.
  *
  * @author Ben L. Titzer
  */
@@ -57,7 +57,7 @@ public final class StoreIndexed extends AccessIndexed {
 
     /**
      * Checks if this instruction needs a write barrier.
-     * @return <code>true</code> if this instruction needs a write barrier
+     * @return {@code true} if this instruction needs a write barrier
      */
     public boolean needsWriteBarrier() {
         return !checkFlag(Flag.NoWriteBarrier);
@@ -65,7 +65,7 @@ public final class StoreIndexed extends AccessIndexed {
 
     /**
      * Checks if this instruction needs a store check.
-     * @return <code>true</code> if this instruction needs a store check
+     * @return {@code true} if this instruction needs a store check
      */
     public boolean needsStoreCheck() {
         return !checkFlag(Flag.NoStoreCheck);

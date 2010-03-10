@@ -39,7 +39,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LIRAssembler</code> class definition.
+ * The {@code LIRAssembler} class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger

@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>AccessIndexed</code> class is the base class of instructions that read or write
+ * The {@code AccessIndexed} class is the base class of instructions that read or write
  * elements of an array.
  *
  * @author Ben L. Titzer

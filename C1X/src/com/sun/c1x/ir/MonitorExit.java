@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>MonitorExit</code> instruction represents a monitor release.
+ * The {@code MonitorExit} instruction represents a monitor release.
  *
  * @author Ben L. Titzer
  */

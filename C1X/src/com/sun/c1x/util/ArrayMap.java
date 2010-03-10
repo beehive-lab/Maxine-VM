@@ -21,7 +21,7 @@
 package com.sun.c1x.util;
 
 /**
- * The <code>ArrayMap</code> class implements an efficient one-level map which is implemented
+ * The {@code ArrayMap} class implements an efficient one-level map which is implemented
  * as an array. Note that because of the one-level array inside, this data structure performs best
  * when the range of integer keys is small and densely used. Note that the implementation can
  * handle arbitrary intervals, including negative numbers, up to intervals of size 2^31 - 1.
@@ -37,13 +37,13 @@ public class ArrayMap<T> {
     int low;
 
     /**
-     * Constructs a new <code>ArrayMap</code> with no initial assumptions.
+     * Constructs a new {@code ArrayMap} with no initial assumptions.
      */
     public ArrayMap() {
     }
 
     /**
-     * Constructs a new <code>ArrayMap</code> that initially covers the specified interval.
+     * Constructs a new {@code ArrayMap} that initially covers the specified interval.
      * Note that this map will automatically expand if necessary later.
      * @param low the low index, inclusive
      * @param high the high index, exclusive
@@ -80,7 +80,7 @@ public class ArrayMap<T> {
     /**
      * Gets the value at the specified index in the map.
      * @param i the index
-     * @return the value at the specified index; <code>null</code> if there is no value at the specified index,
+     * @return the value at the specified index; {@code null} if there is no value at the specified index,
      * or if the index is out of the currently stored range
      */
     public T get(int i) {
