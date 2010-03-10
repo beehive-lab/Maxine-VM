@@ -18,48 +18,54 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.ins.debug;
 
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
+import com.sun.max.vm.value.*;
 
 /**
- * Immutable (thread-safe) record of a thread triggering a breakpoint in the VM.
+ * Wrapper for the description of a machine register in the VM that
+ * adds a history of the values.
  *
  * @author Michael Van De Vanter
  */
-public class TeleBreakpointEvent implements MaxBreakpointEvent {
+public final class RegisterHistory {
 
-    private final TeleBreakpoint teleBreakpoint;
-    private final TeleNativeThread teleNativeThread;
-    private final Address address;
+    private final MaxRegister register;
+    private final ValueHistory<Value> valueHistory;
 
-    public TeleBreakpointEvent(TeleBreakpoint teleBreakpoint, TeleNativeThread teleNativeThread) {
-        this.teleBreakpoint = teleBreakpoint;
-        this.teleNativeThread = teleNativeThread;
-        this.address = teleNativeThread.registers().instructionPointer();
+    public RegisterHistory(MaxRegister register) {
+        this.register = register;
+        this.valueHistory = new ArrayValueHistory<Value>(6);
     }
 
-    public MaxThread thread() {
-        return teleNativeThread;
+    public String name() {
+        return register.name();
     }
 
-    public MaxBreakpoint breakpoint() {
-        return teleBreakpoint;
+    /**
+     * @return the current value of the register, as cached by most recent {@link #refresh()}.
+     */
+    public Value value() {
+        return valueHistory.get();
     }
 
-    public  Address address() {
-        return address;
+    /**
+     * @return the age, in generations, of the current value, since recording began.
+     * 0 if different from immediate predecessor; -1 if no different value ever recorded
+     */
+    public int age() {
+        return valueHistory.getAge();
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder(50);
-        sb.append(getClass().getSimpleName()).append("( thread ");
-        final String breakpointString = teleBreakpoint == null ? "anonymous breakpoint" : teleBreakpoint.toString();
-        sb.append(teleNativeThread.toShortString()).append(" @ ").append(address.toHexString());
-        sb.append(" for ").append(breakpointString);
-        sb.append(")");
-        return sb.toString();
+    /**
+     * Read and cache the current value of the register; increment generation count.
+     */
+    public void refresh() {
+        final Address address = register.value();
+        valueHistory.add(new WordValue(address));
     }
+
 }

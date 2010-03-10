@@ -22,44 +22,34 @@ package com.sun.max.tele.debug;
 
 import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 
-/**
- * Immutable (thread-safe) record of a thread triggering a breakpoint in the VM.
- *
- * @author Michael Van De Vanter
- */
-public class TeleBreakpointEvent implements MaxBreakpointEvent {
 
-    private final TeleBreakpoint teleBreakpoint;
-    private final TeleNativeThread teleNativeThread;
-    private final Address address;
+public final class TeleRegister implements MaxRegister {
 
-    public TeleBreakpointEvent(TeleBreakpoint teleBreakpoint, TeleNativeThread teleNativeThread) {
-        this.teleBreakpoint = teleBreakpoint;
-        this.teleNativeThread = teleNativeThread;
-        this.address = teleNativeThread.registers().instructionPointer();
+    private final TeleRegisters teleRegisters;
+    private final Symbol register;
+
+    protected TeleRegister(TeleRegisters teleRegisters, Symbol register) {
+
+        this.teleRegisters = teleRegisters;
+        this.register = register;
     }
 
-    public MaxThread thread() {
-        return teleNativeThread;
+    public String name() {
+        return register.name();
     }
 
-    public MaxBreakpoint breakpoint() {
-        return teleBreakpoint;
+    public Address value() {
+        return teleRegisters.getValue(register);
     }
 
-    public  Address address() {
-        return address;
+    public boolean isFlagsRegister() {
+        return teleRegisters.isFlagsRegister(register);
     }
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder(50);
-        sb.append(getClass().getSimpleName()).append("( thread ");
-        final String breakpointString = teleBreakpoint == null ? "anonymous breakpoint" : teleBreakpoint.toString();
-        sb.append(teleNativeThread.toShortString()).append(" @ ").append(address.toHexString());
-        sb.append(" for ").append(breakpointString);
-        sb.append(")");
-        return sb.toString();
+    public boolean isInstructionPointerRegister() {
+        return teleRegisters.isInstructionPointerRegister(register);
     }
+
 }
