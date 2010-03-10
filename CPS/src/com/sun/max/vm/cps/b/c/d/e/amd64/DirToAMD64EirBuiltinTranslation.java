@@ -1281,7 +1281,7 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
     @Override
     public void visitMostSignificantBit(MostSignificantBit builtin,  DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 1  && (dirArguments[0].kind().equals(Kind.LONG)|| dirArguments[0].kind().isWord);
+        assert dirArguments.length == 1  && (dirArguments[0].kind().equals(Kind.LONG) || dirArguments[0].kind().isWord);
         final EirValue result = dirToEirValue(dirResult);
         final EirValue value = dirToEirValue(dirArguments[0]);
         addInstruction(new  AMD64EirInstruction.BSR_I64(eirBlock(), result, value));

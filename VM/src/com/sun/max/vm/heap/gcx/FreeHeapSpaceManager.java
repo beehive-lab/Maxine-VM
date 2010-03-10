@@ -53,8 +53,9 @@ public class FreeHeapSpaceManager {
 
     private static final VMIntOption freeChunkMinSizeOption =
         register(new VMIntOption("-XX:FreeChunkMinSize=", 512,
-        "Minimum size of contiguous space considered for free space management. Below this size, the space is ignored (dark matter)"),
-        MaxineVM.Phase.PRISTINE);
+                        "Minimum size of contiguous space considered for free space management." +
+                        "Below this size, the space is ignored (dark matter)"),
+                        MaxineVM.Phase.PRISTINE);
 
     @CONSTANT_WHEN_NOT_ZERO
     static Size minLargeObjectSize;
@@ -62,7 +63,7 @@ public class FreeHeapSpaceManager {
     @CONSTANT_WHEN_NOT_ZERO
     static Size minFreeChunkSize;
 
-    final private static Size TINY_OBJECT_SIZE = Size.fromInt(Word.size() * 2);
+    private static  final   Size TINY_OBJECT_SIZE = Size.fromInt(Word.size() * 2);
 
 
     static interface AllocationFailureHandler {
@@ -77,21 +78,21 @@ public class FreeHeapSpaceManager {
      * request.
      *
      * FIXME: needs HEADROOM like semi-space to make sure we're never left with not enough space
-     * at the end of a chunk to plan a dead object (for heap parsability).
+     * at the end of a chunk to plant a dead object (for heap parsability).
      */
     class HeapSpaceAllocator {
         /**
-         * Start of allocating chunk
+         * Start of allocating chunk.
          */
         private Address start;
         /**
-         * End of allocating Chunk
+         * End of allocating Chunk.
          */
         private Address end;
         /**
-         * Allocation mark in the current chunk
+         * Allocation mark in the current chunk.
          */
-        private AtomicWord mark;
+        private final AtomicWord mark = new AtomicWord();
 
         private AllocationFailureHandler allocationFailureHandler;
 
@@ -113,7 +114,8 @@ public class FreeHeapSpaceManager {
 
         // FIXME: concurrency
         void clear() {
-            end = start = Address.zero();
+            start = Address.zero();
+            end = Address.zero();
             mark.set(Address.zero());
         }
 
@@ -126,6 +128,7 @@ public class FreeHeapSpaceManager {
             mark.set(start);
         }
 
+        @INLINE
         private Pointer top() {
             return mark.get().asPointer();
         }
@@ -140,7 +143,7 @@ public class FreeHeapSpaceManager {
          * @param size
          * @return
          */
-        Pointer allocate(Size size) {
+        final Pointer allocate(Size size) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(size.isWordAligned(), "Size must be word aligned");
             }
@@ -153,9 +156,6 @@ public class FreeHeapSpaceManager {
                 cell = top();
                 nextMark = cell.plus(size);
                 if (nextMark.greaterThan(end)) {
-                    if (isLarge(size)) {
-                        return allocateLarge(size);
-                    }
                     cell = allocationFailureHandler.handleAllocationFailure(this, size);
                     if (!cell.isZero()) {
                         return cell;
@@ -244,7 +244,7 @@ public class FreeHeapSpaceManager {
         Address initialFreeChunk = tinyObjectFreePoolStart.plus(Size.K);
 
         tinyObjectAllocator.initialize(tinyObjectFreePoolStart, Size.K, TINY_OBJECT_SIZE);
-        smallObjectAllocator.initialize(initialFreeChunk,committedSpace.size().minus(Size.K), minLargeObjectSize);
+        smallObjectAllocator.initialize(initialFreeChunk, committedSpace.size().minus(Size.K), minLargeObjectSize);
         largeObjectAllocator.initialize(Address.zero(), Size.zero(), Size.fromLong(Long.MAX_VALUE));
     }
 
@@ -300,27 +300,32 @@ public class FreeHeapSpaceManager {
             // REVISIT THIS
             HeapFreeChunk prevChunk = null;
             HeapFreeChunk chunk = HeapFreeChunk.toHeapFreeChunk(freeChunks);
-            HeapFreeChunk head= chunk;
-            while(chunk != null) {
-               if (chunk.size.greaterEqual(size)) {
-                   // Found one. Move it ahead of the list.
-                   prevChunk.next = chunk.next;
-                   chunk.next = head;
-                   return Reference.fromJava(chunk).toOrigin().asAddress();
-               }
-               prevChunk = chunk;
-               chunk = chunk.next;
+            HeapFreeChunk head = chunk;
+            while (chunk != null) {
+                if (chunk.size.greaterEqual(size)) {
+                    // Found one. Move it ahead of the list.
+                    prevChunk.next = chunk.next;
+                    chunk.next = head;
+                    return Reference.fromJava(chunk).toOrigin().asAddress();
+                }
+                prevChunk = chunk;
+                chunk = chunk.next;
             }
             return Address.zero();
         }
 
         public Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size) {
-           return handleAllocationFailure(allocator, size, Word.size());
+            return handleAllocationFailure(allocator, size, Word.size());
         }
 
         @Override
         public Pointer handleAllocationFailure(HeapSpaceAllocator allocator, Size size, int alignment) {
+            if (allocator.isLarge(size)) {
+                return allocateLarge(size);
+            }
             if (!Heap.collectGarbage(size)) {
+                // FIXME: handle the case where there isn't enough memory for this -- put in common the safety zone code of semi-space ?
+                throw new OutOfMemoryError();
             }
             return null;
         }

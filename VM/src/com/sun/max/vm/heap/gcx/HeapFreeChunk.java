@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
 package com.sun.max.vm.heap.gcx;
 
 import static com.sun.c1x.bytecode.Bytecodes.*;
@@ -19,9 +39,9 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Laurent Daynes
  */
-class HeapFreeChunk {
+final class HeapFreeChunk {
 
-    static final private Hub heapFreeChunkHub = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
+    private static final  Hub heapFreeChunkHub = ClassActor.fromJava(HeapFreeChunk.class).dynamicHub();
 
     /**
      * Index of the word storing the address to the next free space within the current free heap space.
@@ -46,7 +66,7 @@ class HeapFreeChunk {
     }
 
     /**
-     * Format dead space into a free chunk
+     * Format dead space into a free chunk.
      * @param deadSpace
      * @param size
      * @return
