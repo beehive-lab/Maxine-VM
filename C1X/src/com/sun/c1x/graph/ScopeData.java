@@ -29,7 +29,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>ScopeData</code> class represents inlining context when parsing the bytecodes
+ * The {@code ScopeData} class represents inlining context when parsing the bytecodes
  * of an inlined method.
  *
  * @author Ben L. Titzer
@@ -212,7 +212,7 @@ public class ScopeData {
 
     /**
      * Checks whether this ScopeData has any handlers.
-     * @return <code>true</code> if there are any exception handlers
+     * @return {@code true} if there are any exception handlers
      */
     public boolean hasHandler() {
         return hasHandler;
@@ -269,7 +269,7 @@ public class ScopeData {
 
     /**
      * Checks whether this ScopeData is parsing a JSR.
-     * @return <code>true</code> if this scope data is parsing a JSR
+     * @return {@code true} if this scope data is parsing a JSR
      */
     public boolean parsingJsr() {
         return jsrEntryBci > 0;
@@ -441,7 +441,7 @@ public class ScopeData {
     /**
      * Removes the next block from the worklist. The list is sorted topologically, so the
      * block with the lowest depth first number in the list will be removed and returned.
-     * @return the next block from the worklist; <code>null</code> if there are no blocks
+     * @return the next block from the worklist; {@code null} if there are no blocks
      * in the worklist
      */
     public BlockBegin removeFromWorkList() {

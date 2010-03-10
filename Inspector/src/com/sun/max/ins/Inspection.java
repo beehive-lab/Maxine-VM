@@ -176,7 +176,7 @@ public final class Inspection implements InspectionHolder {
                 ThreadLocalsInspector.make(this);
                 StackInspector.make(this);
                 BreakpointsInspector.make(this);
-                focus.setCodeLocation(focus.thread().instructionLocation());
+                focus.setCodeLocation(focus.thread().ipLocation());
             } catch (Throwable throwable) {
                 System.err.println("Error during initialization");
                 throwable.printStackTrace();

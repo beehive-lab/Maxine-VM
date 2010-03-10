@@ -46,7 +46,7 @@ public interface RiField {
 
     /**
      * Gets the kind of this field.
-     * @return the basic type
+     * @return the kind
      */
     CiKind kind();
 

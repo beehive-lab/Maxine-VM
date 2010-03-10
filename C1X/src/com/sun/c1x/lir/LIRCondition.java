@@ -21,7 +21,7 @@
 package com.sun.c1x.lir;
 
 /**
- * The <code>LIRCondition</code> enum represents the condition types available on LIR instructions .
+ * The {@code LIRCondition} enum represents the condition types available on LIR instructions .
  *
  * @author Marcelo Cintra
  *

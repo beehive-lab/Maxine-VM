@@ -30,12 +30,13 @@ import com.sun.c1x.value.*;
 import com.sun.c1x.util.Util;
 
 /**
- * An {@link com.sun.c1x.ir.ValueVisitor} for {@linkplain #printInstruction(Value) printing}
+ * A {@link ValueVisitor} for {@linkplain #printInstruction(Value) printing}
  * an {@link Instruction} as an expression or statement.
  *
  * @author Doug Simon
  */
 public class InstructionPrinter extends ValueVisitor {
+
     /**
      * Formats a given instruction as value is a {@linkplain com.sun.c1x.value.ValueStack frame state}. If the instruction is a phi defined at a given
      * block, its {@linkplain com.sun.c1x.ir.Phi#operand() operands} are appended to the returned string.
@@ -129,10 +130,12 @@ public class InstructionPrinter extends ValueVisitor {
 
     private final LogStream out;
     private final boolean printPhis;
+    private final CiTarget target;
 
-    public InstructionPrinter(LogStream out, boolean printPhis) {
+    public InstructionPrinter(LogStream out, boolean printPhis, CiTarget target) {
         this.out = out;
         this.printPhis = printPhis;
+        this.target = target;
     }
 
     public LogStream out() {
@@ -358,12 +361,16 @@ public class InstructionPrinter extends ValueVisitor {
         return value instanceof Phi && ((Phi) value).block() == block;
     }
 
+    private String nameOf(RiType type) {
+        return Util.toJavaName(type);
+    }
+
     @Override
     public void visitCheckCast(CheckCast checkcast) {
         out.print("checkcast(").
              print(checkcast.object()).
              print(") ").
-             print(checkcast.targetClass().name());
+             print(nameOf(checkcast.targetClass()));
     }
 
     @Override
@@ -453,7 +460,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitInstanceOf(InstanceOf i) {
-        out.print("instanceof(").print(i.object()).print(") ").print(i.targetClass().name());
+        out.print("instanceof(").print(i.object()).print(") ").print(nameOf(i.targetClass()));
     }
 
     @Override
@@ -474,30 +481,28 @@ public class InstructionPrinter extends ValueVisitor {
         if (invoke.hasReceiver()) {
             out.print(invoke.receiver()).print('.');
             argStart = 1;
-          }
+        }
 
-          out.print(Bytecodes.nameOf(invoke.opcode())).print('(');
-          Value[] arguments = invoke.arguments();
-          for (int i = argStart; i < arguments.length; i++) {
-              if (i > argStart) {
-                  out.print(", ");
-              }
-              out.print(arguments[i]);
-          }
-          out.println(')');
-          INSTRUCTION.advance(out);
-          RiMethod target = invoke.target();
-          out.print(target.holder().name()).print('.').print(target.name()).print(target.signatureType().asString());
+        RiMethod target = invoke.target();
+        out.print(target.name()).print('(');
+        Value[] arguments = invoke.arguments();
+        for (int i = argStart; i < arguments.length; i++) {
+            if (i > argStart) {
+                out.print(", ");
+            }
+            out.print(arguments[i]);
+        }
+        out.print(Util.format(") [method: %H.%n(%p):%r]", target, false));
     }
 
     @Override
     public void visitLoadField(LoadField i) {
         out.print(i.object()).
-             print("._").
-             print(i.offset()).
-             print(" (").
-             print(i.field().type().kind().typeChar).
-             print(")");
+             print(".").
+             print(i.field().name()).
+             print(" [field: ").
+             print(Util.format("%h.%n:%t", i.field(), false)).
+             print("]");
     }
 
     @Override
@@ -549,7 +554,7 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitNewInstance(NewInstance newInstance) {
-        out.print("new instance ").print(newInstance.instanceClass().name());
+        out.print("new instance ").print(nameOf(newInstance.instanceClass()));
     }
 
     @Override
@@ -562,12 +567,12 @@ public class InstructionPrinter extends ValueVisitor {
           }
           out.print(dimensions[i]);
         }
-        out.print("] ").print(newMultiArray.elementKind.name());
+        out.print("] ").print(nameOf(newMultiArray.elementKind));
     }
 
     @Override
     public void visitNewObjectArray(NewObjectArray newObjectArray) {
-        out.print("new object array [").print(newObjectArray.length()).print("] ").print(newObjectArray.elementClass().name());
+        out.print("new object array [").print(newObjectArray.length()).print("] ").print(nameOf(newObjectArray.elementClass()));
     }
 
     @Override
@@ -614,7 +619,13 @@ public class InstructionPrinter extends ValueVisitor {
 
     @Override
     public void visitStoreField(StoreField store) {
-        out.print(store.object()).print("._").print(store.offset()).print(" := ").print(store.value()).print(" (").print(store.field().type().kind().typeChar).print(')');
+        out.print(store.object()).
+            print(".").
+            print(store.field().name()).
+            print(" := ").
+            print(store.value()).
+            print(" [type: ").print(Util.format("%h.%n:%t", store.field(), false)).
+            print(']');
     }
 
     @Override
@@ -680,5 +691,67 @@ public class InstructionPrinter extends ValueVisitor {
             out.print(", index ").print(unsafe.index()).print(", log2_scale ").print(unsafe.log2Scale());
         }
         out.print(", value ").print(unsafe.value()).print(')');
+    }
+
+    @Override
+    public void visitLoadPC(LoadPC i) {
+        out.print("load_pc");
+    }
+
+    @Override
+    public void visitLoadPointer(LoadPointer i) {
+        out.print("*(").print(i.pointer());
+        if (i.displacement() == null) {
+            out.print(" + ").print(i.offset());
+        } else {
+            int scale = Util.log2(target.sizeInBytes(i.kind));
+            out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
+        }
+        out.print(")");
+    }
+
+    @Override
+    public void visitLoadRegister(LoadRegister i) {
+        out.print(i.register().toString());
+    }
+
+    @Override
+    public void visitNativeCall(NativeCall invoke) {
+        out.print(invoke.nativeMethod.jniSymbol()).print('(');
+        Value[] arguments = invoke.arguments;
+        for (int i = 0; i < arguments.length; i++) {
+            if (i > 0) {
+                out.print(", ");
+            }
+            out.print(arguments[i]);
+        }
+        out.println(')');
+    }
+
+    @Override
+    public void visitResolveClass(ResolveClass i) {
+        out.println("resolve[").print(nameOf(i.type)).print("-" + i.portion + "]");
+    }
+
+    @Override
+    public void visitStorePointer(StorePointer i) {
+        out.print("*(").print(i.pointer());
+        if (i.displacement() == null) {
+            out.print(" + ").print(i.offset());
+        } else {
+            int scale = Util.log2(target.sizeInBytes(i.kind));
+            out.print(" + ").print(i.displacement()).print(" + (").print(i.index()).print(" * " + scale + ")");
+        }
+        out.print(" := ").print(i.value());
+    }
+
+    @Override
+    public void visitStoreRegister(StoreRegister i) {
+        out.print(i.register().toString()).print(" := ").print(i.value());
+    }
+
+    @Override
+    public void visitStackAllocate(StackAllocate i) {
+        out.print("alloca(").print(i.size()).print(")");
     }
 }

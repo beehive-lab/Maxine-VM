@@ -418,6 +418,24 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
+     * Creates a comma-separated list of register names.
+     *
+     * @param registers a possibly empty list of registers
+     * @return a string containing the register names, separated by comma-space
+     */
+    public String registerNameList(Sequence<MaxRegister> registers) {
+        String nameList = "";
+        for (MaxRegister register : registers) {
+            if (nameList.length() > 0) {
+                nameList += ",";
+            }
+            nameList += register.name();
+        }
+        return nameList;
+
+    }
+
+    /**
      * Renderer for a textual label reference pointing at heap objects in the VM.
      */
     private static interface ReferenceRenderer {

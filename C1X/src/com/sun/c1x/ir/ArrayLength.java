@@ -26,7 +26,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>ArrayLength</code> instruction gets the length of an array.
+ * The {@code ArrayLength} instruction gets the length of an array.
  *
  * @author Ben L. Titzer
  */

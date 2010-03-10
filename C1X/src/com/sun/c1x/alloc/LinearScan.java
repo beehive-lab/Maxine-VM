@@ -2842,8 +2842,8 @@ public class LinearScan {
         }
     }
 
-    public int numberOfSpillSlots(CiKind type) {
-        return compilation.target.spillSlots[type.ordinal()];
+    public int numberOfSpillSlots(CiKind kind) {
+        return compilation.target.spillSlotSize(kind);
     }
 
     // TODO: Platform specific!!

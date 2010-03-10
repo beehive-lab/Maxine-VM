@@ -460,7 +460,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             public void execute() throws OSExecutionRequestException {
                 Trace.begin(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
                 updateWatchpointCaches();
-                oldInstructionPointer = thread.instructionPointer();
+                oldInstructionPointer = thread.registers().instructionPointer();
                 oldReturnAddress = thread.stack().returnLocation().address().asPointer();
                 singleStep(thread, false);
                 Trace.end(TRACE_VALUE, tracePrefix() + STEP_OVER + " perform");
@@ -468,7 +468,8 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
             @Override
             public void notifyProcessStopped() {
-                final CodeLocation stepOutLocation = getStepoutLocation(thread, oldReturnAddress, oldInstructionPointer, thread.instructionPointer());
+                final CodeLocation stepOutLocation =
+                    getStepoutLocation(thread, oldReturnAddress, oldInstructionPointer, thread.registers().instructionPointer());
                 if (stepOutLocation != null) {
                     try {
                         runToInstruction(stepOutLocation, true, withClientBreakpoints);
@@ -721,9 +722,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 threadsStarted.add(thread);
                 Trace.line(TRACE_VALUE, "    "  + thread + " STARTED");
             }
-            final Pointer instructionPointer = thread.instructionPointer();
+            final Pointer instructionPointer = thread.registers().instructionPointer();
             if (!instructionPointer.isZero()) {
-                newInstructionPointers.add(thread.instructionPointer().toLong());
+                newInstructionPointers.add(instructionPointer.toLong());
             }
         }
         Trace.end(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:", startTimeMillis);

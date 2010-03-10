@@ -26,7 +26,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>NullCheck</code> class represents an explicit null check instruction.
+ * The {@code NullCheck} class represents an explicit null check instruction.
  *
  * @author Ben L. Titzer
  */
@@ -58,7 +58,7 @@ public final class NullCheck extends StateSplit {
 
     /**
      * Checks whether this instruction can cause a trap.
-     * @return <code>true</code> if this instruction can cause a trap
+     * @return {@code true} if this instruction can cause a trap
      */
     @Override
     public boolean canTrap() {

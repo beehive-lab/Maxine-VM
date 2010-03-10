@@ -268,4 +268,9 @@ public interface RiRuntime {
      * @return {@code true} if the tested type represents {@code Object[]}.
      */
     boolean isObjectArrayType(RiType type);
+    
+    /**
+     * Gets the {@linkplain RiSnippets snippets} provided by the runtime.
+     */
+    RiSnippets getSnippets();
 }

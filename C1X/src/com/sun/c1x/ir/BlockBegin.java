@@ -30,7 +30,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>BlockBegin</code> instruction represents the beginning of a basic block,
+ * The {@code BlockBegin} instruction represents the beginning of a basic block,
  * and holds a lot of information about the basic block, including the successor and
  * predecessor blocks, exception handlers, liveness information, etc.
  *
@@ -254,7 +254,7 @@ public final class BlockBegin extends Instruction {
     /**
      * Check whether this block has the specified flag set.
      * @param flag the flag to test
-     * @return <code>true</code> if this block has the flag
+     * @return {@code true} if this block has the flag
      */
     public boolean checkBlockFlag(BlockFlag flag) {
         return (blockFlags & flag.mask) != 0;

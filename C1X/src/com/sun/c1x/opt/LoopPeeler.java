@@ -28,7 +28,7 @@ import com.sun.c1x.opt.Loop.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LoopPeeler</code> performs the loop peeling optimization in
+ * The {@code LoopPeeler} performs the loop peeling optimization in
  * a set of loops.
  *
  *
@@ -92,7 +92,7 @@ import com.sun.c1x.value.*;
  * @author Marcelo Cintra
  *
  */
-public class LoopPeeler extends ValueVisitor {
+public class LoopPeeler extends DefaultValueVisitor {
 
     private Instruction lastInstruction;
     private Map<Value, Value> valueMap;

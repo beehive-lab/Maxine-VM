@@ -21,7 +21,7 @@
 package com.sun.c1x.bytecode;
 
 /**
- * The <code>BytecodeTableSwitch</code> class is a utility for processing tableswitch bytecodes.
+ * The {@code BytecodeTableSwitch} class is a utility for processing tableswitch bytecodes.
  *
  * @author Ben L. Titzer
  */

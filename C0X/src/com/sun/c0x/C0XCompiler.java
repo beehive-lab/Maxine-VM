@@ -28,7 +28,7 @@ import com.sun.c1x.ri.RiRuntime;
 import com.sun.c1x.xir.RiXirGenerator;
 
 /**
- * The <code>C0XCompiler</code> class definition.
+ * The {@code C0XCompiler} class definition.
  *
  * @author Ben L. Titzer
  */

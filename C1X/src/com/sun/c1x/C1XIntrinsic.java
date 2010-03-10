@@ -278,7 +278,7 @@ public enum C1XIntrinsic {
      * Looks up an intrinsic for the specified method.
      * @param method the compiler interface method
      * @return a reference to the intrinsic for the method, if the method is an intrinsic
-     * (and is loaded); <code>null</code> otherwise
+     * (and is loaded); {@code null} otherwise
      */
     public static C1XIntrinsic getIntrinsic(RiMethod method) {
         RiType holder = method.holder();
@@ -310,7 +310,7 @@ public enum C1XIntrinsic {
     /**
      * Looks up the foldable reflective method for a compiler interface method, if it one is registered.
      * @param riMethod the compiler interface method
-     * @return the reflective method for the compiler interface method, if one is register; <code>null</code>
+     * @return the reflective method for the compiler interface method, if one is register; {@code null}
      * otherwise
      */
     public static Method getFoldableMethod(RiMethod riMethod) {

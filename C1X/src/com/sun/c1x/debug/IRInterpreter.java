@@ -213,7 +213,7 @@ public class IRInterpreter {
         }
     }
 
-    private class Evaluator extends ValueVisitor {
+    private class Evaluator extends DefaultValueVisitor {
 
         private final RiMethod method;
         private BlockBegin block;
@@ -1650,6 +1650,11 @@ public class IRInterpreter {
         @Override
         public void visitUnsafePrefetchWrite(UnsafePrefetchWrite i) {
             jumpNextInstruction();
+        }
+
+        @Override
+        protected void visit(Value value) {
+            fail("unimplemented: visiting value of type " + value.getClass().getSimpleName());
         }
 
         public CiConstant run() throws InvocationTargetException {

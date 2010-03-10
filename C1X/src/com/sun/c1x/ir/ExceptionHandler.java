@@ -26,7 +26,7 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.ri.*;
 
 /**
- * The <code>ExceptionHandler</code> class represents an exception handler for a Java bytecode method.
+ * The {@code ExceptionHandler} class represents an exception handler for a Java bytecode method.
  *
  * @author Ben L. Titzer
  */
@@ -85,7 +85,7 @@ public class ExceptionHandler {
     /**
      * Utility method to check if this exception handler covers the specified bytecode index.
      * @param bci the bytecode index to check
-     * @return <code>true</code> if this exception handler covers the specified bytecode
+     * @return {@code true} if this exception handler covers the specified bytecode
      */
     public final boolean covers(int bci) {
         return handler.startBCI() <= bci && bci < handler.endBCI();

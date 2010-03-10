@@ -53,7 +53,7 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
 
     /**
      * Returns a frame size aligned according to the platform's stack frame alignment requirement. For example, on
-     * Darwin, the stack pointer (i.e. %rsp) must be a 16-byte aligned value. The returned value will account an extra
+     * Darwin x86, the stack pointer (i.e. %rsp or %sp) must be a 16-byte aligned value. The returned value will account an extra
      * word in the frame for platforms where the caller's return address is pushed to the stack by a call instruction.
      *
      * @param frameSize the size of a stack frame which is not necessarily aligned. This value does not include the

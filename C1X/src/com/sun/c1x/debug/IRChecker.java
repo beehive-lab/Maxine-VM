@@ -30,17 +30,17 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.Util;
 
 /**
- * The <code>IRChecker</code> class walks over the IR graph and checks
+ * The {@code IRChecker} class walks over the IR graph and checks
  * that each instruction has the appropriate type for its inputs and output,
  * as well as other structural properties of the IR graph.
  *
  * @author Marcelo Cintra
  * @author Ben L. Titzer
  */
-public class IRChecker extends ValueVisitor {
+public class IRChecker extends DefaultValueVisitor {
 
     /**
-     * The <code>IRCheckException</code> class is thrown when the IRChecker detects
+     * The {@code IRCheckException} class is thrown when the IRChecker detects
      * a problem with the IR.
      *
      * @author Marcelo Cintra
@@ -126,6 +126,11 @@ public class IRChecker extends ValueVisitor {
                 instr = instr.next();
             }
         }
+    }
+
+    @Override
+    protected void visit(Value value) {
+        fail("unimplemented: visiting value of type " + value.getClass().getSimpleName());
     }
 
     /**
@@ -929,6 +934,8 @@ public class IRChecker extends ValueVisitor {
             assertKind(i.index(), CiKind.Int);
         }
     }
+
+
 
     private void assertKind(Value i, CiKind kind) {
         assertNonNull(i, "Value should not be null");

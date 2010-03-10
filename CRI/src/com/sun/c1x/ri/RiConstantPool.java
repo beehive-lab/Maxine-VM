@@ -24,7 +24,7 @@ import com.sun.c1x.ci.CiConstant;
 
 /**
  * This interface represents the runtime representation of the constant pool that is
- * used by the compilers when parsing bytecode. The <code>lookup</code> methods look up a constant
+ * used by the compilers when parsing bytecode. The {@code lookup} methods look up a constant
  * pool entry without performing  resolution, and are used during compilation.
  *
  * @author Ben L. Titzer
@@ -146,6 +146,13 @@ public interface RiConstantPool {
      * @return a reference to the compiler interface type
      */
     RiType lookupType(char cpi);
+
+    /**
+     * Looks up a method signature.
+     * @param cpi the constant pool index
+     * @return the method signature at index {@code cpi} in this constant pool
+     */
+    RiSignature lookupSignature(char cpi);
 
     /**
      * Looks up a constant at the specified index.

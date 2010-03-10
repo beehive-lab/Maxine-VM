@@ -51,7 +51,7 @@ import com.sun.c1x.util.*;
  *
  * @author Ben L. Titzer
  */
-public class NullCheckEliminator extends ValueVisitor {
+public class NullCheckEliminator extends DefaultValueVisitor {
 
     static class IfEdge {
         final BlockBegin ifBlock;

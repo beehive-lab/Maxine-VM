@@ -76,17 +76,19 @@ public class CiTargetMethod {
     public static final class Call extends Site {
         public final CiRuntimeCall runtimeCall;
         public final RiMethod method;
+        public final String symbol;
         public final Object globalStubID;
 
         public final CiDebugInfo debugInfo;
         public final byte[] stackMap;
         public final byte[] registerMap;
 
-        Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, Object globalStubID, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
+        Call(int pcOffset, CiRuntimeCall runtimeCall, RiMethod method, String symbol, Object globalStubID, byte[] registerMap, byte[] stackMap, CiDebugInfo debugInfo) {
             super(pcOffset);
             this.runtimeCall = runtimeCall;
             this.method = method;
             this.stackMap = stackMap;
+            this.symbol = symbol;
             this.globalStubID = globalStubID;
             this.registerMap = registerMap;
             this.debugInfo = debugInfo;
@@ -98,6 +100,9 @@ public class CiTargetMethod {
             if (runtimeCall != null) {
                 sb.append("Runtime call to ");
                 sb.append(runtimeCall.name());
+            } else if (symbol != null) {
+                sb.append("Native call to ");
+                sb.append(symbol);
             } else if (globalStubID != null) {
                 sb.append("Global stub call to ");
                 sb.append(globalStubID);
@@ -232,7 +237,7 @@ public class CiTargetMethod {
      * Records a direct method call to the specified method in the code.
      *
      * @param codePos the position in the code array
-     * @param target the method or runtime call or stub being called
+     * @param target the {@linkplain RiMethod method}, {@linkplain CiRuntimeCall runtime call}, {@linkplain String native function} or stub being called
      * @param debugInfo the debug info for the call site
      * @param stackMap the bitmap that indicates which stack locations
      * @param direct true if this is a direct call, false otherwise
@@ -240,7 +245,8 @@ public class CiTargetMethod {
     public void recordCall(int codePos, Object target, CiDebugInfo debugInfo, byte[] stackMap, boolean direct) {
         CiRuntimeCall rt = target instanceof CiRuntimeCall ? (CiRuntimeCall) target : null;
         RiMethod meth = target instanceof RiMethod ? (RiMethod) target : null;
-        final Call callSite = new Call(codePos, rt, meth, target, null, stackMap, debugInfo);
+        String symbol = target instanceof String ? (String) target : null;
+        final Call callSite = new Call(codePos, rt, meth, symbol, target, null, stackMap, debugInfo);
         if (direct) {
             directCalls.add(callSite);
         } else {

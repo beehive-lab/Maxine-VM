@@ -25,7 +25,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>NewArray</code> class is the base of all instructions that allocate arrays.
+ * The {@code NewArray} class is the base of all instructions that allocate arrays.
  *
  * @author Ben L. Titzer
  */
@@ -56,7 +56,7 @@ public abstract class NewArray extends StateSplit {
     /**
      * Checks whether this instruction can trap.
      * @return <true>true</code>, conservatively assuming that this instruction can throw such
-     * exceptions as <code>OutOfMemoryError</code>
+     * exceptions as {@code OutOfMemoryError}
      */
     @Override
     public boolean canTrap() {

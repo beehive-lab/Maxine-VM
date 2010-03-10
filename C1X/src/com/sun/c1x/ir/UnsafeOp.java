@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>UnsafeOp</code> class is the base of all unsafe operations.
+ * The {@code UnsafeOp} class is the base of all unsafe operations.
  *
  * @author Ben L. Titzer
  */
@@ -33,7 +33,7 @@ public abstract class UnsafeOp extends Instruction {
     /**
      * Creates a new UnsafeOp instruction.
      * @param unsafeOpKind the kind of the operation
-     * @param isStore <code>true</code> if this is a store operation
+     * @param isStore {@code true} if this is a store operation
      */
     public UnsafeOp(CiKind unsafeOpKind, boolean isStore) {
         super(isStore ? CiKind.Void : unsafeOpKind.stackType());

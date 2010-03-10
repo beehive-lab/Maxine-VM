@@ -32,7 +32,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.Util;
 
 /**
- * The <code>C0XCompiler</code> class is a sketch of a new baseline compiler design which borrows
+ * The {@code C0XCompiler} class is a sketch of a new baseline compiler design which borrows
  * ideas, basic infrastructure, and the runtime interface from C1X. The design is very simple--
  * always compile a single method at a time, with essentially no optimizations (except register
  * allocation) and no inlining. The result is a quick, single-pass compiler that compiles

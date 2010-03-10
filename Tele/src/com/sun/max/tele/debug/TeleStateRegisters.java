@@ -31,6 +31,7 @@ import com.sun.max.vm.runtime.*;
  *
  * @author Bernd Mathiske
  * @author Laurent Daynes
+ * @author Michael Van De Vanter
  */
 public final class TeleStateRegisters extends TeleRegisters {
 
@@ -61,8 +62,8 @@ public final class TeleStateRegisters extends TeleRegisters {
      *
      * @return the value of the instruction pointer
      */
-    public Pointer instructionPointer() {
-        return get(instructionPointerRegister).asPointer();
+    Pointer instructionPointer() {
+        return getValue(instructionPointerRegister).asPointer();
     }
 
     /**
@@ -71,8 +72,8 @@ public final class TeleStateRegisters extends TeleRegisters {
      *
      * @param value the new value of the instruction pointer
      */
-    public void setInstructionPointer(Address value) {
-        set(instructionPointerRegister, value);
+    void setInstructionPointer(Address value) {
+        setValue(instructionPointerRegister, value);
     }
 
     private enum Amd64StateRegister implements Enumerable<Amd64StateRegister> {
@@ -132,7 +133,7 @@ public final class TeleStateRegisters extends TeleRegisters {
     /**
      * Gets the symbols representing all the state registers of the instruction set denoted by a given VM configuration.
      */
-    public static Symbolizer<? extends Symbol> symbolizer(VMConfiguration vmConfiguration) {
+    private static Symbolizer<? extends Symbol> symbolizer(VMConfiguration vmConfiguration) {
         switch (vmConfiguration.platform().processorKind.instructionSet) {
             case AMD64:
                 return Amd64StateRegister.ENUMERATOR;
@@ -143,11 +144,13 @@ public final class TeleStateRegisters extends TeleRegisters {
         }
     }
 
-    public boolean isInstructionPointerRegister(Symbol register) {
+    @Override
+    boolean isInstructionPointerRegister(Symbol register) {
         return register == instructionPointerRegister;
     }
 
-    public boolean isFlagsRegister(Symbol register) {
+    @Override
+    boolean isFlagsRegister(Symbol register) {
         return register == flagsRegister;
     }
 
