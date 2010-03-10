@@ -174,7 +174,7 @@ public class IR {
 
     private void print(boolean cfgOnly) {
         TTY.println("IR for " + compilation.method);
-        final InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
+        final InstructionPrinter ip = new InstructionPrinter(TTY.out, true, compilation.target);
         final BlockPrinter bp = new BlockPrinter(this, ip, cfgOnly, false);
         startBlock.iteratePreOrder(bp);
     }

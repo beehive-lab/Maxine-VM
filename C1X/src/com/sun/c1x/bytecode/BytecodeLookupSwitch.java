@@ -21,7 +21,7 @@
 package com.sun.c1x.bytecode;
 
 /**
- * The <code>BytecodeLookupSwitch</code> class is a utility for processing lookupswitch bytecodes.
+ * The {@code BytecodeLookupSwitch} class is a utility for processing lookupswitch bytecodes.
  *
  * @author Ben L. Titzer
  */

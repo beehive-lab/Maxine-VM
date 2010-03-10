@@ -80,24 +80,23 @@ import com.sun.max.vm.type.*;
 public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMTriggerEventHandler, MaxWatchpoint {
 
     // TODO (mlvdv) Consider a response when user tries to set a watchpoint on first header word.  May mean that
-    //  there can be multiple watchpoints at a location.  Work through the use cases.
+    // there can be multiple watchpoints at a location.  Work through the use cases.
     // Note that system watchpoint code does not check for too many or for overlap.
 
     /**
-     * Distinguishes among uses for watchpoints,
-     * independently of how the location is specified.
+     * Distinguishes among uses for watchpoints, independently of how the location is specified.
      */
     private enum WatchpointKind {
 
         /**
-         * A watchpoint created on behalf of a client external to the {@link TeleVM}.  Such
+         * A watchpoint created on behalf of a client external to the VM.  Such
          * a watchpoint is presumed to be managed completely by the client:  creation/deletion,
          * enable/disable etc.  Only client watchpoints are visible to the client in ordinary use.
          */
         CLIENT,
 
         /**
-         * A watchpoint created by one of the services int he {@link TeleVM}, generally in order
+         * A watchpoint created by one of the services in the VM, generally in order
          * to catch certain events in the VM so that state can be synchronized for
          * some purpose.  Presumed to be managed completely by the service using it.  These
          * are generally not visible to clients.

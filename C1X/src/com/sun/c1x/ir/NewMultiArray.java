@@ -24,7 +24,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>NewMultiArray</code> instruction represents an allocation of a multi-dimensional object
+ * The {@code NewMultiArray} instruction represents an allocation of a multi-dimensional object
  * array.
  *
  * @author Ben L. Titzer

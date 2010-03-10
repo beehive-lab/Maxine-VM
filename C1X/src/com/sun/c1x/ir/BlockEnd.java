@@ -27,7 +27,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>BlockEnd</code> instruction is a base class for all instructions that end a basic
+ * The {@code BlockEnd} instruction is a base class for all instructions that end a basic
  * block, including branches, switches, throws, and gotos.
  *
  * @author Ben L. Titzer
@@ -42,7 +42,7 @@ public abstract class BlockEnd extends Instruction {
      * Constructs a new block end with the specified value type.
      * @param type the type of the value produced by this instruction
      * @param stateAfter the value stack after the end of this block
-     * @param isSafepoint <code>true</code> if this instruction is a safepoint instruction
+     * @param isSafepoint {@code true} if this instruction is a safepoint instruction
      */
     public BlockEnd(CiKind type, ValueStack stateAfter, boolean isSafepoint) {
         super(type);
@@ -68,7 +68,7 @@ public abstract class BlockEnd extends Instruction {
 
     /**
      * Checks whether this instruction is a safepoint.
-     * @return <code>true</code> if this instruction is a safepoint
+     * @return {@code true} if this instruction is a safepoint
      */
     public boolean isSafepoint() {
         return checkFlag(Value.Flag.IsSafepoint);

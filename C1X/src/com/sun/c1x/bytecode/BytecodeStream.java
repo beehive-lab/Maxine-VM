@@ -23,7 +23,7 @@ package com.sun.c1x.bytecode;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>CiBytecodeStream</code> class implements a utility that makes iterating over
+ * The {@code CiBytecodeStream} class implements a utility that makes iterating over
  * bytecodes and reading operands simpler and less error prone. For example, it handles
  * the WIDE instruction and wide variants of instructions internally.
  *
@@ -37,7 +37,7 @@ public class BytecodeStream {
     int nextBCI;
 
     /**
-     * Creates a new <code>BytecodeStream</code> for the specified bytecode.
+     * Creates a new {@code BytecodeStream} for the specified bytecode.
      * @param code the array of bytes that contains the bytecode
      */
     public BytecodeStream(byte[] code) {

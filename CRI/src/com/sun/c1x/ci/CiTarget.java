@@ -38,7 +38,11 @@ public class CiTarget {
     public final RiRegisterConfig registerConfig;
     public final int pageSize;
     public final boolean isMP;
-    public final int[] spillSlots;
+    private final int[] spillSlotsPerKindMap;
+    
+    /**
+     * The spill slot size for values that occupy 1 {@linkplain CiKind#sizeInSlots() Java slot}.
+     */
     public final int spillSlotSize;
 
     public int referenceSize;
@@ -63,28 +67,37 @@ public class CiTarget {
         this.pageSize = pageSize;
         this.isMP = isMP;
         this.allocatableRegs = new CiRegister.AllocationSet(registerConfig.getAllocatableRegisters(), registerConfig.getRegisterReferenceMapOrder(), registerConfig.getCallerSaveRegisters());
-        this.spillSlots = new int[CiKind.values().length];
+        this.spillSlotsPerKindMap = new int[CiKind.values().length];
 
         for (CiKind k : CiKind.values()) {
-            // initialize the number of spill slots required for each basic type
+            // initialize the number of spill slots required for each kind
             int size = k.sizeInBytes(referenceSize, arch.wordSize);
             int slots = 0;
             while (slots * spillSlotSize < size) {
                 slots++;
             }
-            spillSlots[k.ordinal()] = slots;
+            spillSlotsPerKindMap[k.ordinal()] = slots;
         }
     }
 
     /**
-     * Gets the size in bytes of the specified basic type for this target.
-     * @param basicType the basic type for which to get the size
-     * @return the size in bytes of the basic type
+     * Gets the size in bytes of the specified kind for this target.
+     * @param kind the kind for which to get the size
+     * @return the size in bytes of {@code kind}
      */
-    public int sizeInBytes(CiKind basicType) {
-        return basicType.sizeInBytes(referenceSize, arch.wordSize);
+    public int sizeInBytes(CiKind kind) {
+        return kind.sizeInBytes(referenceSize, arch.wordSize);
     }
 
+    /**
+     * Gets the spill slot size for a specified kind in this target.
+     * @param kind the kind for which to get the spill slot size
+     * @return the spill slot size in bytes of {@code kind}
+     */
+    public int spillSlotSize(CiKind kind) {
+        return spillSlotsPerKindMap[kind.ordinal()];
+    }
+    
     public boolean supportsSSE() {
         return true;
     }

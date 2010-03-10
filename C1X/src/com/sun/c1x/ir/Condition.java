@@ -73,7 +73,7 @@ public enum Condition {
 
     /**
      * Checks if this conditional operation is commutative.
-     * @return <code>true</code> if this operation is commutative
+     * @return {@code true} if this operation is commutative
      */
     public final boolean isCommutative() {
         return this == eql || this == neq;
@@ -83,8 +83,8 @@ public enum Condition {
      * Attempts to fold a comparison between two constants and return the result.
      * @param lt the constant on the left side of the comparison
      * @param rt the constant on the right side of the comparison
-     * @return <code>Boolean.TRUE</code> if the comparison is known to be true,
-     * <code>Boolean.FALSE</code> if the comparison is known to be false, <code>null</code> otherwise.
+     * @return {@code Boolean.TRUE} if the comparison is known to be true,
+     * {@code Boolean.FALSE} if the comparison is known to be false, {@code null} otherwise.
      */
     public Boolean foldCondition(CiConstant lt, CiConstant rt) {
         switch (lt.kind) {

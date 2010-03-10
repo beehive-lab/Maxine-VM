@@ -24,7 +24,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>IfOp</code> class represents a comparison that yields one of two values.
+ * The {@code IfOp} class represents a comparison that yields one of two values.
  * Note that these nodes are not built directly from the bytecode but are introduced
  * by conditional expression elimination.
  *
@@ -78,7 +78,7 @@ public final class IfOp extends Op2 {
 
     /**
      * Checks whether this comparison operator is commutative (i.e. it is either == or !=).
-     * @return <code>true</code> if this comparison is commutative
+     * @return {@code true} if this comparison is commutative
      */
     public boolean isCommutative() {
         return cond == Condition.eql || cond == Condition.neq;

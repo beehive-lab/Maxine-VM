@@ -112,7 +112,7 @@ public abstract class Value {
      * Gets the instruction that should be substituted for this one. Note that this
      * method is recursive; if the substituted instruction has a substitution, then
      * the final substituted instruction will be returned. If there is no substitution
-     * for this instruction, <code>this</code> will be returned.
+     * for this instruction, {@code this} will be returned.
      * @return the substitution for this instruction
      */
     public final Value subst() {
@@ -124,7 +124,7 @@ public abstract class Value {
 
     /**
      * Checks whether this instruction has a substitute.
-     * @return <code>true</code> if this instruction has a substitution.
+     * @return {@code true} if this instruction has a substitution.
      */
     public final boolean hasSubst() {
         return subst != null;
@@ -172,7 +172,7 @@ public abstract class Value {
     /**
      * Check whether this instruction has the specified flag set.
      * @param flag the flag to test
-     * @return <code>true</code> if this instruction has the flag
+     * @return {@code true} if this instruction has the flag
      */
     public final boolean checkFlag(Flag flag) {
         return (flags & flag.mask) != 0;
@@ -197,7 +197,7 @@ public abstract class Value {
     /**
      * Set or clear a flag on this instruction.
      * @param flag the flag to set
-     * @param val if <code>true</code>, set the flag, otherwise clear it
+     * @param val if {@code true}, set the flag, otherwise clear it
      */
     public final void setFlag(Flag flag, boolean val) {
         if (val) {
@@ -211,7 +211,7 @@ public abstract class Value {
      * Initialize a flag on this instruction. Assumes the flag is not initially set,
      * e.g. in the constructor of an instruction.
      * @param flag the flag to set
-     * @param val if <code>true</code>, set the flag, otherwise do nothing
+     * @param val if {@code true}, set the flag, otherwise do nothing
      */
     public final void initFlag(Flag flag, boolean val) {
         if (val) {
@@ -221,7 +221,7 @@ public abstract class Value {
 
     /**
      * Checks whether this instruction produces a value which is guaranteed to be non-null.
-     * @return <code>true</code> if this instruction's value is not null
+     * @return {@code true} if this instruction's value is not null
      */
     public final boolean isNonNull() {
         return checkFlag(Flag.NonNull);
@@ -229,7 +229,7 @@ public abstract class Value {
 
     /**
      * Checks whether this instruction needs a null check.
-     * @return <code>true</code> if this instruction needs a null check
+     * @return {@code true} if this instruction needs a null check
      */
     public final boolean needsNullCheck() {
         return !checkFlag(Flag.NoNullCheck);
@@ -299,7 +299,7 @@ public abstract class Value {
 
     /**
      * Computes the exact type of the result of this instruction, if possible.
-     * @return the exact type of the result of this instruction, if it is known; <code>null</code> otherwise
+     * @return the exact type of the result of this instruction, if it is known; {@code null} otherwise
      */
     public RiType exactType() {
         return null; // default: unknown exact type
@@ -307,7 +307,7 @@ public abstract class Value {
 
     /**
      * Computes the declared type of the result of this instruction, if possible.
-     * @return the declared type of the result of this instruction, if it is known; <code>null</code> otherwise
+     * @return the declared type of the result of this instruction, if it is known; {@code null} otherwise
      */
     public RiType declaredType() {
         return null; // default: unknown declared type

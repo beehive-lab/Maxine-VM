@@ -88,6 +88,14 @@ public class MaxRiMethod implements RiMethod {
         return methodRef.name(constantPool.constantPool).toString();
     }
 
+    public String jniSymbol() {
+        NativeFunction nativeFunction = asClassMethodActor("jniSymbol()").nativeFunction;
+        if (nativeFunction != null) {
+            return nativeFunction.makeSymbol();
+        }
+        return null;
+    }
+
     /**
      * Gets the compiler interface type of the holder of this method.
      * @return the holder of this method

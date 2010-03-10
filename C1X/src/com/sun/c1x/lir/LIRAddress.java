@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>LIRAddress</code> class represents an operand that is in
+ * The {@code LIRAddress} class represents an operand that is in
  * memory. It includes a base address, and index, a scale and a displacement.
  *
  * @author Marcelo Cintra
@@ -97,7 +97,7 @@ public final class LIRAddress extends LIROperand {
     /**
      * The equals() for object comparisons.
      *
-     * @return <code>true</code> if this address is equal to the other address
+     * @return {@code true} if this address is equal to the other address
      */
     @Override
     public boolean equals(Object other) {

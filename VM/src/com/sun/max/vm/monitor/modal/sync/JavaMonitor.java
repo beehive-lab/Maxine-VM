@@ -53,15 +53,15 @@ public interface JavaMonitor {
     void monitorNotify(boolean all);
 
     /**
-     * Tests if this <code>JavaMonitor</code> is owned by the given thread.
+     * Tests if this {@code JavaMonitor} is owned by the given thread.
      *
      * @param thread the thread to test for ownership
-     * @return true if <code>thread</code> owns this monitor; false otherwise
+     * @return true if {@code thread} owns this monitor; false otherwise
      */
     boolean isOwnedBy(VmThread thread);
 
     /**
-     * Returns the displaced misc header word of this <code>JavaMonitor</code>'s bound object.
+     * Returns the displaced misc header word of this {@code JavaMonitor}'s bound object.
      * This must be previously set by {@link #setDisplacedMisc(Word) setDisplacedMisc()}.
      *
      * @return the displaced misc header word

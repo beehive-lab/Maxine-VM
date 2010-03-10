@@ -23,9 +23,10 @@ package com.sun.c1x.lir;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
+import com.sun.c1x.util.*;
 
 /**
- * The <code>LIRTypeCheck</code> class definition.
+ * The {@code LIRTypeCheck} class definition.
  *
  * @author Marcelo Cintra
  *
@@ -143,7 +144,7 @@ public class LIRTypeCheck extends LIRInstruction {
     @Override
     public void printInstruction(LogStream out) {
         if (code != LIROpcode.StoreCheck) {
-          out.print(klass().name());
+          out.print(Util.toJavaName(klass()));
           out.print(" ");
           if (isFastCheck()) {
               out.print("fastCheck ");

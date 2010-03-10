@@ -206,6 +206,11 @@ public class MaxRiConstantPool implements RiConstantPool {
         return typeFrom(constantPool.classAt(cpi), cpi);
     }
 
+    public RiSignature lookupSignature(char cpi) {
+        SignatureDescriptor descriptor = SignatureDescriptor.create(constantPool.utf8At(cpi).string);
+        return cacheSignature(descriptor);
+    }
+
     /**
      * Looks up a constant at the specified index, without performing any resolution.
      * @param cpi the constant pool index

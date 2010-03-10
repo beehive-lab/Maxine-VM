@@ -32,13 +32,13 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>Canonicalizer</code> reduces instructions to a canonical form by folding constants,
+ * The {@code Canonicalizer} reduces instructions to a canonical form by folding constants,
  * putting constants on the right side of commutative operators, simplifying conditionals,
  * and several other transformations.
  *
  * @author Ben L. Titzer
  */
-public class Canonicalizer extends ValueVisitor {
+public class Canonicalizer extends DefaultValueVisitor {
 
     private static final Object[] NO_ARGUMENTS = {};
 

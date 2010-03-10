@@ -192,7 +192,7 @@ public abstract class ReferenceMapInterpreter {
                 if (parameterKind.isReference) {
                     updateLocal(activeLocals, true);
                 }
-                activeLocals += parameterKind.isCategory1 ? 1 : 2;
+                activeLocals += parameterKind.stackSlots;
             }
         }
 

@@ -251,7 +251,7 @@ public final class CiConstant extends CiValue {
      * Checks whether this constant equals another object. This is only
      * true if the other object is a constant and has the same value.
      * @param o the object to compare equality
-     * @return <code>true</code> if this constant is equivalent to the specified object
+     * @return {@code true} if this constant is equivalent to the specified object
      */
     @Override
     public boolean equals(Object o) {
@@ -260,7 +260,7 @@ public final class CiConstant extends CiValue {
 
     /**
      * Checks whether this constant is the default value for its type.
-     * @return <code>true</code> if the value is the default value for its type; <code>false</code> otherwise
+     * @return {@code true} if the value is the default value for its type; {@code false} otherwise
      */
     public boolean isDefaultValue() {
         switch (kind) {

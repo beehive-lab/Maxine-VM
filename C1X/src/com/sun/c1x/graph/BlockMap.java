@@ -31,14 +31,14 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>BlockMap</code> class builds a mapping between bytecodes and basic blocks
+ * The {@code BlockMap} class builds a mapping between bytecodes and basic blocks
  * and builds a conservative control flow graph. Note that this class serves a similar role
- * to <code>BlockListBuilder</code>, but makes fewer assumptions about what the compiler
+ * to {@code BlockListBuilder}, but makes fewer assumptions about what the compiler
  * interface provides. It builds all basic blocks for the control flow graph without requiring
  * the compiler interface to provide a bitmap of the beginning of basic blocks. It makes
  * two linear passes; one over the bytecodes to build block starts and successor lists,
  * and one pass over the block map to build the CFG. Note that the CFG built by this class
- * is <i>not</i> connected to the actual <code>BlockBegin</code> instances; this class does,
+ * is <i>not</i> connected to the actual {@code BlockBegin} instances; this class does,
  * however, compute and assign the reverse postorder number of the blocks.
  *
  * @author Ben L. Titzer
@@ -49,7 +49,7 @@ public class BlockMap {
     private static final List<BlockBegin> NONE_LIST = Util.uncheckedCast(Collections.EMPTY_LIST);
 
     /**
-     * The <code>ExceptionMap</code> class is used internally to track exception handlers
+     * The {@code ExceptionMap} class is used internally to track exception handlers
      * while iterating over the bytecode and the control flow graph. Since methods with
      * exception handlers are much less frequent than those without, the common case
      * does not need to construct an exception map.
@@ -149,7 +149,7 @@ public class BlockMap {
     /**
      * Gets the block that begins at the specified bytecode index.
      * @param bci the bytecode index of the start of the block
-     * @return the block starting at the specified index, if it exists; <code>null</code> otherwise
+     * @return the block starting at the specified index, if it exists; {@code null} otherwise
      */
     public BlockBegin get(int bci) {
         if (bci < blockMap.length) {
@@ -194,9 +194,9 @@ public class BlockMap {
 
     /**
      * Builds the block map and conservative CFG and numbers blocks.
-     * @param computeStoresInLoops <code>true</code> if the block map builder should
+     * @param computeStoresInLoops {@code true} if the block map builder should
      * make a second pass over the bytecodes for blocks in loops
-     * @return <code>true</code> if the block map was built successfully; <code>false</code> otherwise
+     * @return {@code true} if the block map was built successfully; {@code false} otherwise
      */
     public boolean build(boolean computeStoresInLoops) {
         if (exceptionMap != null) {

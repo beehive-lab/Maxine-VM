@@ -73,10 +73,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     private final TeleProcess teleProcess;
     private int suspendCount;
 
-    private long registersEpoch;
-    private TeleIntegerRegisters integerRegisters;
-    private TeleStateRegisters stateRegisters;
-    private TeleFloatingPointRegisters floatingPointRegisters;
+    private final TeleRegisterSet teleRegisterSet;
 
     private final TeleStack teleStack;
 
@@ -139,9 +136,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         this.localHandle = params.localHandle;
         this.handle = params.handle;
         final VMConfiguration vmConfiguration = teleProcess.teleVM().vmConfiguration();
-        this.integerRegisters = new TeleIntegerRegisters(vmConfiguration);
-        this.floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
-        this.stateRegisters = new TeleStateRegisters(vmConfiguration);
+        this.teleRegisterSet = new TeleRegisterSet(teleProcess.teleVM(), this);
         this.threadLocalsBlock = TeleThreadLocalsBlock.create(this, params.threadLocalsRegion);
         this.breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind.instructionSet == InstructionSet.SPARC;
         this.teleStack = new TeleStack(teleProcess.teleVM(), this, new TeleNativeStackMemoryRegion(this, params.stackRegion));
@@ -200,26 +195,11 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         return teleProcess;
     }
 
-    public TeleIntegerRegisters integerRegisters() {
-        refreshRegisters();
-        return integerRegisters;
-    }
-
-    public TeleFloatingPointRegisters floatingPointRegisters() {
-        refreshRegisters();
-        return floatingPointRegisters;
-    }
-
-    public TeleStateRegisters stateRegisters() {
-        refreshRegisters();
-        return stateRegisters;
-    }
-
     /**
      * Updates this thread with the information information made available while
      * {@linkplain TeleProcess#gatherThreads(AppendableSequence) gathering} threads. This information is made available
      * by the native tele layer as threads are discovered. Subsequent refreshing of cached thread state (such a
-     * {@linkplain #refreshRegisters() registers}, {@linkplain #refreshFrames(boolean) stack frames} and
+     * {@linkplain TeleRegisterSet#refresh() registers}, {@linkplain #refreshFrames(boolean) stack frames} and
      * {@linkplain #refreshThreadLocals() VM thread locals}) depends on this information being available and up to date.
      *
      * @param state the state of the thread
@@ -229,7 +209,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      */
     final void updateAfterGather(MaxThreadState state, Pointer instructionPointer, MemoryRegion threadLocalsRegion, int tlaSize) {
         this.state = state;
-        stateRegisters.setInstructionPointer(instructionPointer);
+        teleRegisterSet.setInstructionPointer(instructionPointer);
         threadLocalsBlock.updateAfterGather(threadLocalsRegion, tlaSize);
     }
 
@@ -243,24 +223,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         if (state.allowsDataAccess()) {
             refreshBreakpoint();
             threadLocalsBlock.refresh();
-        }
-    }
-
-    /**
-     * Refreshes the cached state of this thread's registers from the corresponding thread in the tele process.
-     */
-    private synchronized void refreshRegisters() {
-        final long processEpoch = teleProcess().epoch();
-        if (registersEpoch < processEpoch && isLive()) {
-            registersEpoch = processEpoch;
-            Trace.line(TRACE_LEVEL, tracePrefix() + "refreshRegisters (epoch=" + processEpoch + ") for " + this);
-
-            if (!readRegisters(integerRegisters.registerData(), floatingPointRegisters.registerData(), stateRegisters.registerData())) {
-                ProgramError.unexpected("Error while updating registers for thread: " + this);
-            }
-            integerRegisters.refresh();
-            floatingPointRegisters.refresh();
-            stateRegisters.refresh();
         }
     }
 
@@ -288,7 +250,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
             this.breakpoint = breakpoint;
             final Address address = this.breakpoint.codeLocation().address();
             if (updateInstructionPointer(address)) {
-                stateRegisters.setInstructionPointer(address);
+                teleRegisterSet.setInstructionPointer(address);
                 Trace.line(TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoc)h=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
                 ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + address + " was hit: " + this);
@@ -373,9 +335,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         breakpoint = null;
         frameCache = null;
         threadLocalsBlock.clear();
-        integerRegisters = null;
-        stateRegisters = null;
-        floatingPointRegisters = null;
     }
 
     public final int id() {
@@ -394,19 +353,6 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         return localHandle;
     }
 
-    public final Pointer stackPointer() {
-        if (!isLive()) {
-            return Pointer.zero();
-        }
-        refreshRegisters();
-        return integerRegisters.stackPointer();
-    }
-
-    final Pointer framePointer() {
-        refreshRegisters();
-        return integerRegisters.framePointer();
-    }
-
     public final TeleStack stack() {
         return teleStack;
     }
@@ -415,25 +361,17 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         return threadLocalsBlock;
     }
 
-    /**
-     * @return the current instruction pointer of this thread
-     */
-    final Pointer instructionPointer() {
-        if (!isLive()) {
-            return Pointer.zero();
-        }
-        // No need to call refreshRegisters(): the instruction pointer is updated by updateAfterGather() which
-        // ensures that it is always in sync.
-        return stateRegisters.instructionPointer();
+    public TeleRegisterSet registers() {
+        return teleRegisterSet;
     }
 
-    public final MachineCodeLocation instructionLocation() {
+    public final MachineCodeLocation ipLocation() {
         if (!isLive()) {
             return null;
         }
-        // No need to call refreshRegisters(): the instruction pointer is updated by updateAfterGather() which
+        // No need to refresh registers: the instruction pointer is updated by updateAfterGather() which
         // ensures that it is always in sync.
-        return codeManager().createMachineCodeLocation(stateRegisters.instructionPointer(), "Instruction pointer");
+        return codeManager().createMachineCodeLocation(teleRegisterSet.instructionPointer(), "Instruction pointer");
     }
 
     /**
@@ -489,10 +427,10 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
      * The implementation of this method in {@link TeleNativeThread} uses the convention for x86 architectures where the
      * the instruction pointer is at the instruction following the breakpoint instruction.
      */
-    Pointer breakpointAddressFromInstructionPointer() {
-        final Pointer instructionPointer = instructionPointer();
+    private Pointer breakpointAddressFromInstructionPointer() {
+        final Pointer instructionPointer = teleRegisterSet.instructionPointer();
         if (breakpointIsAtInstructionPointer) {
-            return instructionPointer();
+            return instructionPointer;
         }
         return instructionPointer.minus(teleProcess().targetBreakpointManager().codeSize());
     }
@@ -528,7 +466,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         sb.append(",state=").append(state);
         sb.append(",type=").append(isPrimordial() ? "primordial" : (isJava() ? "Java" : "native"));
         if (isLive()) {
-            sb.append(",ip=0x").append(instructionPointer().toHexString());
+            sb.append(",ip=0x").append(teleRegisterSet.instructionPointer().toHexString());
             if (isJava()) {
                 sb.append(",stack_start=0x").append(stack().memoryRegion().start().toHexString());
                 sb.append(",stack_size=").append(stack().memoryRegion().size().toLong());
@@ -668,7 +606,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
             } else if (l instanceof IntegerRegister) {
                 final IntegerRegister integerRegister = (IntegerRegister) l;
                 final int integerRegisterIndex = integerRegister.index();
-                final Address address = integerRegisters().get(integerRegisterIndex);
+                final Address address = teleRegisterSet.teleIntegerRegisters().getValueAt(integerRegisterIndex);
 
                 if (kind.isReference) {
                     return TeleReferenceValue.from(teleVM(), Reference.fromOrigin(address.asPointer()));
@@ -690,7 +628,7 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
         public long getInstructionPointer() {
             // On top frame, the instruction pointer is incorrect, so take it from the thread!
             if (isTopFrame) {
-                return instructionPointer().asAddress().toLong();
+                return teleRegisterSet.instructionPointer().asAddress().toLong();
             }
             return stackFrame.ip.asAddress().toLong();
         }
@@ -882,7 +820,9 @@ public abstract class TeleNativeThread extends AbstractTeleVMHolder implements C
     }
 
     public RegistersGroup getRegistersGroup() {
-        final Registers[] registers = new Registers[]{integerRegisters().getRegisters("Integer Registers"), stateRegisters().getRegisters("State Registers"), floatingPointRegisters().getRegisters("Floating Point Registers")};
+        final Registers[] registers = new Registers[]{teleRegisterSet.teleIntegerRegisters().getRegisters("Integer Registers"),
+                        teleRegisterSet.teleStateRegisters().getRegisters("State Registers"),
+                        teleRegisterSet.teleFloatingPointRegisters().getRegisters("Floating Point Registers")};
         return new RegistersGroup(registers);
     }
 }

@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>Convert</code> class represents a conversion between primitive types.
+ * The {@code Convert} class represents a conversion between primitive types.
  *
  * @author Ben L. Titzer
  */
