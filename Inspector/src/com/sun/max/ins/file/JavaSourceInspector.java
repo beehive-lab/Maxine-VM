@@ -21,23 +21,46 @@
 package com.sun.max.ins.file;
 
 import java.io.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.text.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 
 /**
- * Inspector for Java source code.
+ * A very simple inspector for Java source code.
  *
  * @author Michael Van De Vanter
- *
  */
-public final class JavaSourceInspector  extends FileInspector {
+public final class JavaSourceInspector extends FileInspector {
+
+    private static final Map<File, JavaSourceInspector> inspectors =
+        new Hashtable<File, JavaSourceInspector>();
+
+    /**
+     * Displays an inspector containing the source code for a Java class.
+     */
+    public static JavaSourceInspector make(Inspection inspection, ClassActor classActor, File sourceFile) {
+        assert sourceFile != null;
+        JavaSourceInspector inspector = inspectors.get(sourceFile);
+        if (inspector == null) {
+            inspector = new JavaSourceInspector(inspection, sourceFile);
+            inspectors.put(sourceFile, inspector);
+        }
+        return inspector;
+    }
 
     private JTextArea textArea;
+
+    private JavaSourceInspector(Inspection inspection, File file) {
+        super(inspection, file);
+        final InspectorFrame frame = createFrame(true);
+        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
+    }
 
     @Override
     public String getTextForTitle() {
@@ -59,26 +82,6 @@ public final class JavaSourceInspector  extends FileInspector {
         gui().moveToMiddle(this);
     }
 
-    private JavaSourceInspector(Inspection inspection, File file) {
-        super(inspection, file);
-        final InspectorFrame frame = createFrame(true);
-        frame.makeMenu(MenuKind.DEFAULT_MENU).add(defaultMenuItems(MenuKind.DEFAULT_MENU));
-    }
-
-    /**
-     * Displays an inspector containing the source code for a Java class.
-     */
-    public static JavaSourceInspector make(Inspection inspection, ClassActor classActor, File sourceFile) {
-        assert sourceFile != null;
-        JavaSourceInspector javaSourceInspector = null;
-        final UniqueInspector.Key<JavaSourceInspector> key = UniqueInspector.Key.create(JavaSourceInspector.class, sourceFile);
-        javaSourceInspector = UniqueInspector.find(inspection, key);
-        if (javaSourceInspector == null) {
-            javaSourceInspector = new JavaSourceInspector(inspection, sourceFile);
-        }
-        return javaSourceInspector;
-    }
-
     @Override
     public void highlightLine(int lineNumber) {
         try {
@@ -90,6 +93,13 @@ public final class JavaSourceInspector  extends FileInspector {
 
     public void viewConfigurationChanged() {
         reconstructView();
+    }
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing for " + getTitle());
+        inspectors.remove(file());
+        super.inspectorClosing();
     }
 
 }
