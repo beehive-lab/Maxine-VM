@@ -53,6 +53,24 @@ public interface MaxThreadManager {
     MaxThread findThread(Address address);
 
     /**
+     * Finds the thread stack whose memory contains a specific address from among those threads
+     * known to be live in the current VM state.
+     *
+     * @param address A memory location in the VM
+     * @return the stack whose storage includes the address
+     */
+    MaxStack findStack(Address address);
+
+    /**
+     * Finds the thread locals block whose memory contains a specific address from among
+     * those threads those known to be live in the current VM state.
+     *
+     * @param address A memory location in the VM
+     * @return the thread locals block whose storage includes the address
+     */
+    MaxThreadLocalsBlock findThreadLocalsBlock(Address address);
+
+    /**
      * Finds a thread by ID from among those known to be live in the current VM state.
      * <br>
      * Thread-safe
