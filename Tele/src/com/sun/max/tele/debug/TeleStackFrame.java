@@ -20,9 +20,11 @@
  */
 package com.sun.max.tele.debug;
 
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleStackFrameWalker.*;
+import com.sun.max.tele.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -132,6 +134,10 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
         return stackFrame.fp;
     }
 
+    public MemoryRegion memoryRegion() {
+        return null;
+    }
+
     public final MaxCodeLocation codeLocation() {
         return codeLocation;
     }
@@ -153,6 +159,8 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
     static final class CompiledFrame extends TeleStackFrame<CompiledStackFrame> implements MaxStackFrame.Compiled {
 
+        private MemoryRegion memoryRegion = null;
+
         protected CompiledFrame(TeleVM teleVM, TeleStack teleStack, int position, CompiledStackFrame compiledStackFrame) {
             super(teleVM, teleStack, position, compiledStackFrame);
         }
@@ -163,6 +171,14 @@ public abstract class TeleStackFrame<StackFrame_Type extends StackFrame> extends
 
         public Pointer slotBase() {
             return stackFrame.slotBase();
+        }
+
+        @Override
+        public MemoryRegion memoryRegion() {
+            if (memoryRegion == null) {
+                memoryRegion = new TeleMemoryRegion(slotBase(), Size.fromInt(layout().frameSize()), "stack frame");
+            }
+            return memoryRegion;
         }
 
         public Offset biasedFPOffset(Offset offset) {
