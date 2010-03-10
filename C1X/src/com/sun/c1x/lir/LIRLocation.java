@@ -23,7 +23,7 @@ package com.sun.c1x.lir;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>LIRLocation</code> class represents a LIROperand that is either a stack slot or a CPU register.
+ * The {@code LIRLocation} class represents a LIROperand that is either a stack slot or a CPU register.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger

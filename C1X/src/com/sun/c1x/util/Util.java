@@ -30,7 +30,7 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.ri.*;
 
 /**
- * The <code>Util</code> class contains a motley collection of utility methods used throughout the compiler.
+ * The {@code Util} class contains a motley collection of utility methods used throughout the compiler.
  *
  * @author Ben L. Titzer
  * @author Doug Simon

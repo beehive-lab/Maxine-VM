@@ -29,7 +29,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>ValueStack</code> class encapsulates the state of local variables and the stack at a particular point in
+ * The {@code ValueStack} class encapsulates the state of local variables and the stack at a particular point in
  * the abstract interpretation.
  *
  * @author Ben L. Titzer
@@ -175,7 +175,7 @@ public class ValueStack {
     /**
      * Checks whether the stack is empty.
      *
-     * @return <code>true</code> the stack is currently empty
+     * @return {@code true} the stack is currently empty
      */
     public final boolean stackEmpty() {
         return stackIndex == 0;
@@ -184,7 +184,7 @@ public class ValueStack {
     /**
      * Checks whether there are any active locks.
      *
-     * @return <code>true</code> if there are <i>no</i> active locks
+     * @return {@code true} if there are <i>no</i> active locks
      */
     public final boolean noActiveLocks() {
         return locksSize() == 0;
@@ -280,7 +280,7 @@ public class ValueStack {
     /**
      * Get the value on the stack at the specified stack index.
      *
-     * @param i the index into the stack, with <code>0</code> being the bottom of the stack
+     * @param i the index into the stack, with {@code 0} being the bottom of the stack
      * @return the instruction at the specified position in the stack
      */
     public Value stackAt(int i) {

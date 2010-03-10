@@ -30,7 +30,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.util.Util;
 
 /**
- * The <code>IRChecker</code> class walks over the IR graph and checks
+ * The {@code IRChecker} class walks over the IR graph and checks
  * that each instruction has the appropriate type for its inputs and output,
  * as well as other structural properties of the IR graph.
  *
@@ -40,7 +40,7 @@ import com.sun.c1x.util.Util;
 public class IRChecker extends DefaultValueVisitor {
 
     /**
-     * The <code>IRCheckException</code> class is thrown when the IRChecker detects
+     * The {@code IRCheckException} class is thrown when the IRChecker detects
      * a problem with the IR.
      *
      * @author Marcelo Cintra

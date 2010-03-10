@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>Constant</code> instruction represents a constant such as an integer value,
+ * The {@code Constant} instruction represents a constant such as an integer value,
  * long, float, object reference, address, etc.
  *
  * @author Ben L. Titzer

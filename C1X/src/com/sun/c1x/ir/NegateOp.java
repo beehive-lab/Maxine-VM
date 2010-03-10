@@ -24,7 +24,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>NegateOp</code> instruction negates its operand.
+ * The {@code NegateOp} instruction negates its operand.
  *
  * @author Ben L. Titzer
  */

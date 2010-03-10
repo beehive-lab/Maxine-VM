@@ -24,7 +24,7 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.debug.*;
 
 /**
- * The <code>LIRConvert</code> class definition.
+ * The {@code LIRConvert} class definition.
  *
  * @author Marcelo Cintra
  *

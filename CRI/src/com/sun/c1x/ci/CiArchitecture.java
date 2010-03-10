@@ -124,7 +124,7 @@ public abstract class CiArchitecture {
 
     /**
      * Checks whether this is a 32-bit architecture.
-     * @return <code>true</code> if this architecture is 32-bit
+     * @return {@code true} if this architecture is 32-bit
      */
     public boolean is32bit() {
         return wordSize == 4;
@@ -132,7 +132,7 @@ public abstract class CiArchitecture {
 
     /**
      * Checks whether this is a 64-bit architecture.
-     * @return <code>true</code> if this architecture is 64-bit
+     * @return {@code true} if this architecture is 64-bit
      */
     public boolean is64bit() {
         return wordSize == 8;
@@ -140,7 +140,7 @@ public abstract class CiArchitecture {
 
     /**
      * Checks whether the backend is x86.
-     * @return <code>true</code> if the backend of this architecture is x86
+     * @return {@code true} if the backend of this architecture is x86
      */
     public boolean isX86() {
         return "x86".equals(platform);
@@ -148,7 +148,7 @@ public abstract class CiArchitecture {
 
     /**
      * Checks whether the backend is SPARC.
-     * @return <code>true</code> if the backend of this architecture is SPARC
+     * @return {@code true} if the backend of this architecture is SPARC
      */
     public boolean isSPARC() {
         return "SPARC".equals(platform);

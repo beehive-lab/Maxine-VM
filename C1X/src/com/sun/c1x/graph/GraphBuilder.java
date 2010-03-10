@@ -34,7 +34,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>GraphBuilder</code> class parses the bytecode of a method and builds the IR graph.
+ * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
  * A number of optimizations may be performed during parsing of the bytecode, including value
  * numbering, inlining, constant folding, strength reduction, etc.
  *

@@ -89,8 +89,8 @@ public enum CiKind {
     }
 
     /**
-     * Checks whether this type is valid as an <code>int</code> on the Java operand stack.
-     * @return {@code true} if this type is represented by an <code>int</code> on the operand stack
+     * Checks whether this type is valid as an {@code int} on the Java operand stack.
+     * @return {@code true} if this type is represented by an {@code int} on the operand stack
      */
     public boolean isInt() {
         return ordinal() <= Int.ordinal();

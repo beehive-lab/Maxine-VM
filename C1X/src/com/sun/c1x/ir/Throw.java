@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>Throw</code> instruction represents a throw of an exception.
+ * The {@code Throw} instruction represents a throw of an exception.
  *
  * @author Ben L. Titzer
  */
@@ -64,7 +64,7 @@ public final class Throw extends BlockEnd {
 
     /**
      * Checks whether this instruction can trap.
-     * @return <code>true</code> because this instruction definitely throws an exception!
+     * @return {@code true} because this instruction definitely throws an exception!
      */
     @Override
     public boolean canTrap() {

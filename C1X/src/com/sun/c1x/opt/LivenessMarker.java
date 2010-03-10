@@ -26,7 +26,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LivenessMarker</code> class walks over an IR graph and marks instructions
+ * The {@code LivenessMarker} class walks over an IR graph and marks instructions
  * whose values are live, either because they are needed to compute the method's result,
  * may produce a side-effect, or are needed for deoptimization.
  *

@@ -24,7 +24,7 @@ import com.sun.c1x.ci.CiConstant;
 
 /**
  * This interface represents the runtime representation of the constant pool that is
- * used by the compilers when parsing bytecode. The <code>lookup</code> methods look up a constant
+ * used by the compilers when parsing bytecode. The {@code lookup} methods look up a constant
  * pool entry without performing  resolution, and are used during compilation.
  *
  * @author Ben L. Titzer

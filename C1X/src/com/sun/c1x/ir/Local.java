@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
 
 /**
- * The <code>Local</code> instruction is a placeholder for an incoming argument
+ * The {@code Local} instruction is a placeholder for an incoming argument
  * to a function call.
  *
  * @author Ben L. Titzer
@@ -57,7 +57,7 @@ public final class Local extends Value {
 
     /**
      * Computes the declared type of the result of this instruction, if possible.
-     * @return the declared type of the result of this instruction, if it is known; <code>null</code> otherwise
+     * @return the declared type of the result of this instruction, if it is known; {@code null} otherwise
      */
     @Override
     public RiType declaredType() {

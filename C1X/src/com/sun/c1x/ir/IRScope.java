@@ -27,7 +27,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>IRScope</code> class represents an inlining context in the compilation
+ * The {@code IRScope} class represents an inlining context in the compilation
  * of a method.
  *
  * @author Ben L. Titzer
@@ -93,7 +93,7 @@ public class IRScope {
 
     /**
      * Returns whether this IR scope is the top scope (i.e. has no caller).
-     * @return <code>true</code> if this inlining scope has no parent
+     * @return {@code true} if this inlining scope has no parent
      */
     public final boolean isTopScope() {
         return caller == null;

@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>UnsafeRawOp</code> class is the base class of all unsafe raw operations.
+ * The {@code UnsafeRawOp} class is the base class of all unsafe raw operations.
  *
  * @author Ben L. Titzer
  */
@@ -37,7 +37,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * Creates a new UnsafeRawOp instruction.
      * @param opKind the kind of the operation
      * @param addr the instruction generating the base address (a long)
-     * @param isStore <code>true</code> if this operation is a store
+     * @param isStore {@code true} if this operation is a store
      */
     public UnsafeRawOp(CiKind opKind, Value addr, boolean isStore) {
         super(opKind, isStore);
@@ -51,7 +51,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
      * @param addr the instruction generating the base address (a long)
      * @param index the instruction generating the index
      * @param log2scale the log base 2 of the scaling factor
-     * @param isStore <code>true</code> if this operation is a store
+     * @param isStore {@code true} if this operation is a store
      */
     public UnsafeRawOp(CiKind opKind, Value addr, Value index, int log2scale, boolean isStore) {
         this(opKind, addr, isStore);
@@ -78,7 +78,7 @@ public abstract class UnsafeRawOp extends UnsafeOp {
 
     /**
      * Checks whether this instruction has an index.
-     * @return <code>true</code> if this instruction has an index
+     * @return {@code true} if this instruction has an index
      */
     public boolean hasIndex() {
         return index != null;

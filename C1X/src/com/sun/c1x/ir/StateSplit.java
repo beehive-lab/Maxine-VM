@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>StateSplit</code> class is the abstract base class of all instructions
+ * The {@code StateSplit} class is the abstract base class of all instructions
  * that store a copy of the value stack state.
  *
  * @author Ben L. Titzer

@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>UnsafePutRaw</code> instruction represents an unsafe store operation.
+ * The {@code UnsafePutRaw} instruction represents an unsafe store operation.
  *
  * @author Ben L. Titzer
  */

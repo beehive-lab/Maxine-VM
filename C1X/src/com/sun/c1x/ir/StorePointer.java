@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>StorePointer</code> instruction represents a write of a pointer.
+ * The {@code StorePointer} instruction represents a write of a pointer.
  * This instruction is part of the HIR support for low-level operations, such as safepoints,
  * stack banging, etc, and does not correspond to a Java operation.
  *

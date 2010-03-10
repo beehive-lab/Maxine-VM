@@ -24,7 +24,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>StoreField</code> instruction represents a write to a static or instance field.
+ * The {@code StoreField} instruction represents a write to a static or instance field.
  *
  * @author Ben L. Titzer
  */
@@ -56,7 +56,7 @@ public final class StoreField extends AccessField {
 
     /**
      * Checks whether this instruction needs a write barrier.
-     * @return <code>true</code> if this instruction needs a write barrier
+     * @return {@code true} if this instruction needs a write barrier
      */
     public boolean needsWriteBarrier() {
         return !checkFlag(Flag.NoWriteBarrier);

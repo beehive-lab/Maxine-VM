@@ -23,7 +23,7 @@ package com.sun.c1x.bytecode;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>BytecodeSwitch</code> class definition.
+ * The {@code BytecodeSwitch} class definition.
  *
  * @author Ben L. Titzer
  */

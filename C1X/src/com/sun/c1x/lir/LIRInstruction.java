@@ -30,7 +30,7 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
 
 /**
- * The <code>LIRInstruction</code> class definition.
+ * The {@code LIRInstruction} class definition.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger

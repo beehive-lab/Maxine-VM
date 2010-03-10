@@ -31,7 +31,7 @@ import com.sun.c1x.ri.RiMethod;
 import com.sun.c1x.util.Bytes;
 
 /**
- * The <code>BlockMarker</code> class computes the starts of all basic blocks by iterating over the bytecodes,
+ * The {@code BlockMarker} class computes the starts of all basic blocks by iterating over the bytecodes,
  * if this information is not available from the verifier.
  *
  * @author Ben L. Titzer
