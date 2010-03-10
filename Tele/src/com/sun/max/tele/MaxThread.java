@@ -109,7 +109,7 @@ public interface MaxThread {
     /**
      * This thread's registers, which includes IP, FP, SP and other information.
      */
-    MaxRegisters registers();
+    MaxRegisterSet registers();
 
     /**
      * Gets a description of the stack for this thread.

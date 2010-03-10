@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.tele.debug.*;
+import com.sun.max.collect.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -28,7 +29,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public interface MaxRegisters {
+public interface MaxRegisterSet {
 
     /**
      * Gets the thread that owns these registers; doesn't change.
@@ -77,24 +78,37 @@ public interface MaxRegisters {
     Address getCallRegisterValue();
 
     /**
+     * Returns the registers that currently point into a region of memory in the VM.
+     *
+     * @param memoryRegion description of a region of memory in the VM
+     * @return all registers that currently point into the region; empty if none.
+     */
+    Sequence<MaxRegister> find(MemoryRegion memoryRegion);
+
+    /**
+     * This threads registers:  integer, floating point, and state.
+     */
+    Sequence<MaxRegister> allRegisters();
+
+    /**
      * This thread's integer registers.
      *
      * @return the integer registers; null after thread dies.
      */
-    TeleIntegerRegisterSet integerRegisterSet();
+    Sequence<MaxRegister> integerRegisters();
 
     /**
      * This thread's floating point registers.
      *
      * @return the floating point registers; null after thread dies.
      */
-    TeleFloatingPointRegisterSet floatingPointRegisterSet();
+    Sequence<MaxRegister> floatingPointRegisters();
 
     /**
      * This thread's state registers.
      *
      * @return the state registers; null after thread dies.
      */
-    TeleStateRegisterSet stateRegisterSet();
+    Sequence<MaxRegister> stateRegisters();
 
 }

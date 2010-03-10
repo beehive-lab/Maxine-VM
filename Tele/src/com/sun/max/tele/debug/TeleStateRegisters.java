@@ -33,12 +33,12 @@ import com.sun.max.vm.runtime.*;
  * @author Laurent Daynes
  * @author Michael Van De Vanter
  */
-public final class TeleStateRegisterSet extends TeleRegisterSet {
+public final class TeleStateRegisters extends TeleRegisters {
 
     private final Symbol instructionPointerRegister;
     private final Symbol flagsRegister;
 
-    public TeleStateRegisterSet(VMConfiguration vmConfiguration) {
+    public TeleStateRegisters(VMConfiguration vmConfiguration) {
         super(symbolizer(vmConfiguration), vmConfiguration);
         switch (vmConfiguration.platform().processorKind.instructionSet) {
             case AMD64: {
@@ -133,7 +133,7 @@ public final class TeleStateRegisterSet extends TeleRegisterSet {
     /**
      * Gets the symbols representing all the state registers of the instruction set denoted by a given VM configuration.
      */
-    public static Symbolizer<? extends Symbol> symbolizer(VMConfiguration vmConfiguration) {
+    private static Symbolizer<? extends Symbol> symbolizer(VMConfiguration vmConfiguration) {
         switch (vmConfiguration.platform().processorKind.instructionSet) {
             case AMD64:
                 return Amd64StateRegister.ENUMERATOR;
@@ -144,11 +144,13 @@ public final class TeleStateRegisterSet extends TeleRegisterSet {
         }
     }
 
-    public boolean isInstructionPointerRegister(Symbol register) {
+    @Override
+    boolean isInstructionPointerRegister(Symbol register) {
         return register == instructionPointerRegister;
     }
 
-    public boolean isFlagsRegister(Symbol register) {
+    @Override
+    boolean isFlagsRegister(Symbol register) {
         return register == flagsRegister;
     }
 

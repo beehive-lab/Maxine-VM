@@ -739,7 +739,7 @@ public abstract class TeleVM implements MaxVM {
     }
 
     public final String visualizeStateRegister(long flags) {
-        return TeleStateRegisterSet.flagsToString(this, flags);
+        return TeleStateRegisters.flagsToString(this, flags);
     }
 
     /**
