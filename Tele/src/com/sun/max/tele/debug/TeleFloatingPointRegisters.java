@@ -32,9 +32,9 @@ import com.sun.max.vm.runtime.*;
  * @author Laurent Daynes
  * @author Michael Van De Vanter
  */
-public final class TeleFloatingPointRegisterSet extends TeleRegisterSet {
+public final class TeleFloatingPointRegisters extends TeleRegisters {
 
-    public TeleFloatingPointRegisterSet(VMConfiguration vmConfiguration) {
+    public TeleFloatingPointRegisters(VMConfiguration vmConfiguration) {
         super(symbolizer(vmConfiguration), vmConfiguration);
     }
 

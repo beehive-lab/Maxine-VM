@@ -27,7 +27,6 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.memory.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 
 /**
  * A renderer suitable for a table "Tag" cell in an Inspector display where each row corresponds to a memory region.
@@ -62,19 +61,14 @@ public abstract class MemoryTagTableCellRenderer extends InspectorLabel implemen
         setFont(style().defaultFont());
         // See if any registers point here
         if (thread != null) {
-            final TeleIntegerRegisterSet teleIntegerRegisterSet = thread.registers().integerRegisterSet();
-            if (teleIntegerRegisterSet == null) {
-                // Return a specialized renderer with its own content.
-                label = inspection().gui().getUnavailableDataTableCellRenderer();
+            final Sequence<MaxRegister> registers = thread.registers().find(memoryRegion);
+            if (registers.isEmpty()) {
+                label.setForeground(style().memoryDefaultTagTextColor());
             } else {
-                final String registerNameList = teleIntegerRegisterSet.findAsNameList(memoryRegion);
-                if (registerNameList.isEmpty()) {
-                    label.setForeground(style().memoryDefaultTagTextColor());
-                } else {
-                    labelText += registerNameList + "-->";
-                    toolTipText += "Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location";
-                    setForeground(style().memoryRegisterTagTextColor());
-                }
+                final String registerNameList = inspection().nameDisplay().registerNameList(registers);
+                labelText += registerNameList + "-->";
+                toolTipText += "Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location";
+                setForeground(style().memoryRegisterTagTextColor());
             }
         }
         // If a watchpoint is currently triggered here, add a pointer icon.

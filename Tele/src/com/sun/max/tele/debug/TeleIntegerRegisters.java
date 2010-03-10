@@ -36,11 +36,11 @@ import com.sun.max.vm.runtime.VMRegister.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class TeleIntegerRegisterSet extends TeleRegisterSet {
+public final class TeleIntegerRegisters extends TeleRegisters {
 
     private final Symbol indirectCallRegister;
 
-    public TeleIntegerRegisterSet(VMConfiguration vmConfiguration) {
+    public TeleIntegerRegisters(VMConfiguration vmConfiguration) {
         super(symbolizer(vmConfiguration), vmConfiguration);
         switch (vmConfiguration.platform().processorKind.instructionSet) {
             case AMD64: {

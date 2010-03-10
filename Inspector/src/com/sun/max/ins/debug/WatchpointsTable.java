@@ -29,12 +29,12 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
@@ -309,19 +309,14 @@ public final class WatchpointsTable extends InspectorTable {
             // See if any registers point here
             final MaxThread thread = focus().thread();
             if (thread != null) {
-                final TeleIntegerRegisterSet teleIntegerRegisterSet = thread.registers().integerRegisterSet();
-                if (teleIntegerRegisterSet == null) {
-                    // Return a specialized renderer with its own content.
-                    label = gui().getUnavailableDataTableCellRenderer();
+                final Sequence<MaxRegister> registers = thread.registers().find(watchpoint);
+                if (registers.isEmpty()) {
+                    label.setForeground(style().memoryDefaultTagTextColor());
                 } else {
-                    final String registerNameList = teleIntegerRegisterSet.findAsNameList(watchpoint);
-                    if (registerNameList.isEmpty()) {
-                        label.setForeground(style().memoryDefaultTagTextColor());
-                    } else {
-                        labelText += registerNameList + "-->";
-                        toolTipText += "Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location";
-                        setForeground(style().memoryRegisterTagTextColor());
-                    }
+                    final String registerNameList = inspection().nameDisplay().registerNameList(registers);
+                    labelText += registerNameList + "-->";
+                    toolTipText += "Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location";
+                    setForeground(style().memoryRegisterTagTextColor());
                 }
             }
             // If a watchpoint is currently triggered here, add a pointer icon.
