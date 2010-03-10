@@ -222,7 +222,7 @@ public class IR {
         newSucc.setNext(e, bci);
         newSucc.setEnd(e);
         // setup states
-        ValueStack s = source.end().stateAfter();
+        FrameState s = source.end().stateAfter();
         newSucc.setStateBefore(s.copy());
         e.setStateAfter(s.immutableCopy());
         assert newSucc.stateBefore().localsSize() == s.localsSize();
