@@ -59,6 +59,7 @@ import com.sun.max.vm.type.*;
 public class MaxRiRuntime implements RiRuntime {
 
     private final C1XCompilerScheme compilerScheme;
+    private RiSnippets nativeLinkage;
 
     public MaxRiRuntime(C1XCompilerScheme compilerScheme) {
         this.compilerScheme = compilerScheme;
@@ -133,8 +134,7 @@ public class MaxRiRuntime implements RiRuntime {
      * to allow the compiler to use its own heuristics
      */
     public boolean mustInline(RiMethod method) {
-        ClassMethodActor classMethodActor = asClassMethodActor(method, "mustInline()");
-        return classMethodActor.isInline() && !classMethodActor.isUnsafe();
+        return asClassMethodActor(method, "mustInline()").isInline();
     }
 
     /**
@@ -145,7 +145,7 @@ public class MaxRiRuntime implements RiRuntime {
      */
     public boolean mustNotInline(RiMethod method) {
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline() || classMethodActor.isUnsafe();
+        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 
     /**
@@ -282,6 +282,8 @@ public class MaxRiRuntime implements RiRuntime {
                 private String toString(Call call) {
                     if (call.runtimeCall != null) {
                         return "{rt-call: " + call.runtimeCall.name() + "}";
+                    } else if (call.symbol != null) {
+                        return "{native-call: " + call.symbol + "}";
                     } else if (call.globalStubID != null) {
                         return "{stub-call: " + call.globalStubID + "}";
                     } else {
@@ -418,5 +420,13 @@ public class MaxRiRuntime implements RiRuntime {
             return c.isArrayClassActor() && c == ClassActor.fromJava(Object[].class);
         }
         return false;
+    }
+
+    @Override
+    public RiSnippets getSnippets() {
+        if (nativeLinkage == null) {
+            nativeLinkage = new MaxRiSnippets(this);
+        }
+        return nativeLinkage;
     }
 }

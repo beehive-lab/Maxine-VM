@@ -23,6 +23,7 @@ package com.sun.c1x.value;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
@@ -42,9 +43,17 @@ public class ValueStack {
     private final IRScope scope;
     private ArrayList<Value> locks;
 
+    /**
+     * The number of extra stack slots required for doing IR wrangling during
+     * {@linkplain GraphBuilder bytecode parsing}. While this may hide stack
+     * overflow issues in the original bytecode, the assumption is that such
+     * issues must be caught by the verifier.
+     */
+    private static final int EXTRA_STACK_SLOTS = 1;
+
     public ValueStack(IRScope irScope, int maxLocals, int maxStack) {
         this.scope = irScope;
-        this.values = new Value[maxLocals + maxStack];
+        this.values = new Value[maxLocals + maxStack + EXTRA_STACK_SLOTS];
         this.maxLocals = maxLocals;
     }
 

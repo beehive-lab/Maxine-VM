@@ -36,7 +36,7 @@ public enum CiKind {
     Long('l', "long", "jlong", 2),
     Double('d', "double", "jdouble", 2),
     Object('a', "object", "jobject", 1),
-    Word('w', "word", null, 1),
+    Word('w', "word", "jword", 1),
     Void('v', "void", "void", 0),
     Jsr('r', "jsr", null, 1),
     Illegal(' ', "illegal", null, -1);
@@ -51,38 +51,38 @@ public enum CiKind {
     }
 
     /**
-     * The name of the basic type as a single character.
+     * The name of the kind as a single character.
      */
     public final char typeChar;
 
     /**
-     * The name of this basic type which will also be it Java programming language name if
+     * The name of this kind which will also be it Java programming language name if
      * it is {@linkplain #isPrimitive() primitive} or {@code void}.
      */
     public final String javaName;
 
     /**
-     * The JNI name of this basic type; {@code null} if this basic type is not a valid JNI type.
+     * The JNI name of this kind; {@code null} if this kind is not a valid JNI type.
      */
     public final String jniName;
 
     /**
-     * The size of this basic type in terms of abstract JVM words. Note that this may
+     * The size of this kind in terms of abstract JVM words. Note that this may
      * differ with actual size of this type in it machine representation.
      */
     public final int size;
 
     /**
-     * Checks whether this basic type is valid as the type of a field.
-     * @return {@code true} if this basic type is valid as the type of a Java field
+     * Checks whether this kind is valid as the type of a field.
+     * @return {@code true} if this kind is valid as the type of a Java field
      */
     public boolean isValidFieldType() {
         return ordinal() <= Object.ordinal();
     }
 
     /**
-     * Checks whether this basic type is valid as the return type of a method.
-     * @return {@code true} if this basic type is valid as the return type of a Java method
+     * Checks whether this kind is valid as the return type of a method.
+     * @return {@code true} if this kind is valid as the return type of a Java method
      */
     public boolean isValidReturnType() {
         return ordinal() <= Void.ordinal();
@@ -106,8 +106,8 @@ public enum CiKind {
     }
 
     /**
-     * Gets the basic type that represents this basic type when on the Java operand stack.
-     * @return the basic type used on the operand stack
+     * Gets the kind that represents this kind when on the Java operand stack.
+     * @return the kind used on the operand stack
      */
     public CiKind stackType() {
         if (ordinal() <= Int.ordinal()) {
@@ -117,18 +117,18 @@ public enum CiKind {
     }
 
     /**
-     * Gets the size of this basic type in terms of the number of Java slots.
-     * @return the size of the basic type in slots
+     * Gets the size of this kind in terms of the number of Java slots.
+     * @return the size of the kind in slots
      */
     public int sizeInSlots() {
         return size;
     }
 
     /**
-     * Gets the size of this basic type in bytes.
+     * Gets the size of this kind in bytes.
      * @param referenceSize the size of an object reference
      * @param wordSize the size of a word in bytes
-     * @return the size of this basic type in bytes
+     * @return the size of this kind in bytes
      */
     public int sizeInBytes(int referenceSize, int wordSize) {
         switch (this) {
@@ -148,20 +148,20 @@ public enum CiKind {
     }
 
     /**
-     * Gets the element size of this basic type in bytes.
+     * Gets the element size of this kind in bytes.
      * @param oopSize the size of an object reference
      * @param wordSize the size of a word
-     * @return the size of this basic type in bytes
+     * @return the size of this kind in bytes
      */
     public int elementSizeInBytes(int oopSize, int wordSize) {
         return sizeInBytes(oopSize, wordSize);
     }
 
     /**
-     * Gets the basic type of array elements for the array type code that appears
+     * Gets the kind of array elements for the array type code that appears
      * in a newarray bytecode.
      * @param code the array type code
-     * @return the basic type from the array type code
+     * @return the kind from the array type code
      */
     public static CiKind fromArrayTypeCode(int code) {
         switch (code) {
@@ -178,9 +178,9 @@ public enum CiKind {
     }
 
     /**
-     * Gets the basic type from the character describing a primitive or void.
+     * Gets the kind from the character describing a primitive or void.
      * @param ch the character
-     * @return the basic type
+     * @return the kind
      */
     public static CiKind fromPrimitiveOrVoidTypeChar(char ch) {
         switch (ch) {
@@ -198,9 +198,9 @@ public enum CiKind {
     }
 
     /**
-     * Gets the basic type from a character.
+     * Gets the kind from a character.
      * @param ch the character corresponding to the {@link #typeChar} of a {@link CiKind} constant.
-     * @return the basic type
+     * @return the kind
      */
     public static CiKind fromTypeChar(char ch) {
         switch (ch) {
@@ -221,9 +221,9 @@ public enum CiKind {
     }
 
     /**
-     * Gets the array class which has elements of this basic type. This method
+     * Gets the array class which has elements of this kind. This method
      * is only defined for primtive types.
-     * @return the Java class which represents arrays of this basic type
+     * @return the Java class which represents arrays of this kind
      */
     public Class<?> primitiveArrayClass() {
         switch (this) {
@@ -236,7 +236,7 @@ public enum CiKind {
             case Int:     return int[].class;
             case Long:    return long[].class;
         }
-        throw new IllegalArgumentException("not a primitive basic type");
+        throw new IllegalArgumentException("not a primitive kind");
     }
 
     /**

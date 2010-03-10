@@ -335,7 +335,7 @@ public class C1XCompilation {
         if (C1XOptions.PrintCFGToFile && cfgPrinter == null) {
             OutputStream cfgFileStream = CFGPrinter.cfgFileStream();
             if (cfgFileStream != null) {
-                cfgPrinter = new CFGPrinter(cfgFileStream);
+                cfgPrinter = new CFGPrinter(cfgFileStream, target);
                 cfgPrinter.printCompilation(method);
             }
         }

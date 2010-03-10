@@ -296,8 +296,8 @@ public class MaxRiType implements RiType {
     }
 
     /**
-     * Gets the basic type for this compiler interface type.
-     * @return the basic type
+     * Gets the Kind for this compiler interface type.
+     * @return the kind
      */
     public CiKind kind() {
         return basicType;
@@ -319,9 +319,9 @@ public class MaxRiType implements RiType {
     }
 
     /**
-     * Converts a kind to a basic type.
-     * @param kind the kind
-     * @return the associated basic type
+     * Converts a Maxine kind to a C1X kind.
+     * @param kind a Maxine kind
+     * @return the associated C1X kind
      */
     public static CiKind kindToBasicType(Kind kind) {
         switch (kind.asEnum) {

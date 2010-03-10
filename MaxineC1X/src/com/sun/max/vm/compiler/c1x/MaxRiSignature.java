@@ -82,10 +82,10 @@ public class MaxRiSignature implements RiSignature {
     }
 
     /**
-     * Gets the basic type of the specified argument.
+     * Gets the kind of the specified argument.
      * This is typically implemented more efficiently than getting the actual type.
      * @param index the index of the argument
-     * @return the basic type of the argument
+     * @return the kind of the argument
      */
     public CiKind argumentKindAt(int index) {
         return basicTypes[index];

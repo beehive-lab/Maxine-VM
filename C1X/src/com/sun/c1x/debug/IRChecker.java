@@ -37,7 +37,7 @@ import com.sun.c1x.util.Util;
  * @author Marcelo Cintra
  * @author Ben L. Titzer
  */
-public class IRChecker extends ValueVisitor {
+public class IRChecker extends DefaultValueVisitor {
 
     /**
      * The <code>IRCheckException</code> class is thrown when the IRChecker detects
@@ -126,6 +126,11 @@ public class IRChecker extends ValueVisitor {
                 instr = instr.next();
             }
         }
+    }
+
+    @Override
+    protected void visit(Value value) {
+        fail("unimplemented: visiting value of type " + value.getClass().getSimpleName());
     }
 
     /**
@@ -929,6 +934,8 @@ public class IRChecker extends ValueVisitor {
             assertKind(i.index(), CiKind.Int);
         }
     }
+
+
 
     private void assertKind(Value i, CiKind kind) {
         assertNonNull(i, "Value should not be null");

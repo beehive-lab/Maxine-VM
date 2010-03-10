@@ -92,7 +92,7 @@ import com.sun.c1x.value.*;
  * @author Marcelo Cintra
  *
  */
-public class LoopPeeler extends ValueVisitor {
+public class LoopPeeler extends DefaultValueVisitor {
 
     private Instruction lastInstruction;
     private Map<Value, Value> valueMap;

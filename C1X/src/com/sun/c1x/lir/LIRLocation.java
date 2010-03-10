@@ -51,8 +51,8 @@ public final class LIRLocation extends LIROperand {
     }
 
     /**
-     * Creates a new LIRLocation representing either a variable or a stack location, with negative indices
-     * represent stack locations.
+     * Creates a new LIRLocation representing either a variable or a stack location, with negative indexes
+     * representing stack locations.
      *
      * @param kind the kind of the location
      * @param number the variable index or the stack location index if negative

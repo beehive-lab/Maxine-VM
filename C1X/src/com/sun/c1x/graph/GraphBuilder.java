@@ -1357,6 +1357,10 @@ public final class GraphBuilder {
     }
 
     boolean checkInliningConditions(RiMethod target) {
+        if (compilation.runtime.mustInline(target)) {
+            C1XMetrics.InlineForcedMethods++;
+            return true;
+        }
         if (!C1XOptions.OptInline) {
             return false; // all inlining is turned off
         }
@@ -1368,10 +1372,6 @@ public final class GraphBuilder {
         }
         if (recursiveInlineLevel(target) > C1XOptions.MaximumRecursiveInlineLevel) {
             return cannotInline(target, "recursive inlining too deep");
-        }
-        if (compilation.runtime.mustInline(target)) {
-            C1XMetrics.InlineForcedMethods++;
-            return true;
         }
         if (target.codeSize() > scopeData.maxInlineSize()) {
             return cannotInline(target, "inlinee too large for this level");
@@ -1438,7 +1438,7 @@ public final class GraphBuilder {
             continuationExisted = false;
         }
         // record the number of predecessors before inlining, to determine
-        // whether the the inlined method has added edges to the continuation
+        // whether the inlined method has added edges to the continuation
         int continuationPredecessors = continuationBlock.predecessors().size();
 
         // push the target scope
@@ -1962,7 +1962,8 @@ public final class GraphBuilder {
 
                 case WRETURN        : genMethodReturn(wpop()); break;
                 case READ_PC        : genLoadPC(); break;
-                //case JNICALL        :
+                case JNICALL        : genNativeCall(s.readCPI()); break;
+                case ALLOCA         : genStackAllocate(); break;
 
 //                case PCMPSWP: {
 //                    opcode |= readUnsigned2() << 8;
@@ -2058,6 +2059,56 @@ public final class GraphBuilder {
             scopeData.addToWorkList(succ);
         }
         return end;
+    }
+
+    private void genStackAllocate() {
+        Value size = pop(CiKind.Word);
+        wpush(append(new StackAllocate(size)));
+    }
+
+    private void appendSnippetCall(RiSnippetCall snippetCall, ValueStack stateBefore, char cpi) {
+        Value[] args = new Value[snippetCall.arguments.length];
+        RiMethod snippet = snippetCall.snippet;
+        RiSignature signature = snippet.signatureType();
+        assert signature.argumentCount(!snippet.isStatic()) == args.length;
+        for (int i = args.length - 1; i >= 0; --i) {
+            CiKind argKind = signature.argumentKindAt(i);
+            if (snippetCall.arguments[i] == null) {
+                args[i] = pop(argKind);
+            } else {
+                args[i] = new Constant(snippetCall.arguments[i]);
+            }
+        }
+
+        if (!tryRemoveCall(snippet, args, true)) {
+            if (!tryInline(snippet, args, null, stateBefore)) {
+                appendInvoke(snippetCall.opcode, snippet, args, true, cpi, constantPool(), stateBefore);
+            }
+        }
+    }
+
+    private void genNativeCall(char cpi) {
+        ValueStack stateBefore = curState.immutableCopy();
+        RiSignature sig = constantPool().lookupSignature(cpi);
+        Value[] args = curState.popArguments(sig.argumentSlots(false));
+
+
+        RiSnippets snippets = compilation.runtime.getSnippets();
+
+        RiMethod nativeMethod = scope().method;
+        RiSnippetCall linkSnippet = snippets.link(nativeMethod);
+        Value nativeFunctionAddress;
+        if (linkSnippet.result != null) {
+            nativeFunctionAddress = appendConstant(linkSnippet.result);
+        } else {
+            appendSnippetCall(linkSnippet, stateBefore, cpi);
+            nativeFunctionAddress = pop(CiKind.Word);
+        }
+
+        appendSnippetCall(snippets.enterNative(nativeMethod), stateBefore, cpi);
+        CiKind returnKind = sig.returnKind();
+        push(returnKind, append(new NativeCall(nativeMethod, returnKind, nativeFunctionAddress, args, stateBefore)));
+        appendSnippetCall(snippets.enterVM(nativeMethod), stateBefore, cpi);
     }
 
     private void genLoadPC() {

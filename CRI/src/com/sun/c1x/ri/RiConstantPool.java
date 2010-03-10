@@ -148,6 +148,13 @@ public interface RiConstantPool {
     RiType lookupType(char cpi);
 
     /**
+     * Looks up a method signature.
+     * @param cpi the constant pool index
+     * @return the method signature at index {@code cpi} in this constant pool
+     */
+    RiSignature lookupSignature(char cpi);
+
+    /**
      * Looks up a constant at the specified index.
      * @param cpi the constant pool index
      * @return the {@code CiConstant} instance representing the constant

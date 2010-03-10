@@ -335,11 +335,36 @@ public class Bytecodes {
      *           u1 from;     // type char denoting input type
      *           u1 to;       // type char denoting output type
      *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., value
      * </pre>
      */
     public static final int UNSAFE_CAST          = 238;
     public static final int WRETURN              = 239;
     public static final int SAFEPOINT            = 240;
+
+    /**
+     * Allocates a requested block of memory within the current activation frame.
+     * The allocated memory is reclaimed when the method returns.
+     *
+     * The allocation is for the lifetime of the method execution. That is, the compiler
+     * reserves the space in the compiled size of the frame. As such, a failure
+     * to allocate the requested space will result in a {@link StackOverflowError}
+     * when the method's prologue is executed.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // ALLOCA
+     *           u2 unused;
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value => ..., value
+     * </pre>
+     *
+     * @param size bytes to allocate. This must be a compile-time constant.
+     * @return the address of the allocated block. <b>The contents of the block are uninitialized</b>.
+     */
     public static final int ALLOCA               = 241;
 
     /**

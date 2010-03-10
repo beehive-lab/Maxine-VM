@@ -38,7 +38,7 @@ import com.sun.c1x.util.*;
  *
  * @author Ben L. Titzer
  */
-public class Canonicalizer extends ValueVisitor {
+public class Canonicalizer extends DefaultValueVisitor {
 
     private static final Object[] NO_ARGUMENTS = {};
 

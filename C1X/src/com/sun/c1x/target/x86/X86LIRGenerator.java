@@ -663,12 +663,6 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void visitLoadPC(LoadPC x) {
-        LIROperand reg = rlockResult(x);
-        lir.readPC(reg);
-    }
-
-    @Override
     protected void genNewInstance(NewInstance x) {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
 

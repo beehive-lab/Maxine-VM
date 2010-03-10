@@ -20,6 +20,8 @@
  */
 package com.sun.c1x.lir;
 
+import static com.sun.c1x.lir.LIROperand.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -29,11 +31,12 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
+import com.sun.c1x.lir.FrameMap.*;
+import com.sun.c1x.lir.LIRCall.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
-import static com.sun.c1x.lir.LIROperand.*;
 
 /**
  * The <code>LIRAssembler</code> class definition.
@@ -162,7 +165,7 @@ public abstract class LIRAssembler {
 
         if (C1XOptions.PrintLIRWithAssembly) {
             // don't print Phi's
-            InstructionPrinter ip = new InstructionPrinter(TTY.out, false);
+            InstructionPrinter ip = new InstructionPrinter(TTY.out, false, compilation.target);
             ip.printBlock(block);
         }
 
@@ -245,6 +248,9 @@ public abstract class LIRAssembler {
                 break;
             case IndirectCall:
                 emitIndirectCall(op.target, op.info, op.lastArgument());
+                break;
+            case NativeCall:
+                emitNativeCall(op.nativeFunction(), op.info);
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -467,6 +473,8 @@ public abstract class LIRAssembler {
 
     protected abstract void emitReadPC(LIROperand resultOpr);
 
+    protected abstract void emitStackAllocate(StackBlock stackBlock, LIROperand resultOpr);
+
     protected abstract void emitSafepoint(LIROperand inOpr, LIRDebugInfo info);
 
     protected abstract void emitReturn(LIROperand inOpr);
@@ -515,7 +523,7 @@ public abstract class LIRAssembler {
 
     protected abstract void emitDirectCall(Object target, LIRDebugInfo info);
 
-    protected abstract void emitDirectCall(RiMethod ciMethod, LIRDebugInfo info);
+    protected abstract void emitNativeCall(NativeFunction nativeFunction, LIRDebugInfo info);
 
     protected abstract void emitInterfaceCall(RiMethod ciMethod, LIROperand receiver, LIRDebugInfo info, GlobalStub globalStub);
 
