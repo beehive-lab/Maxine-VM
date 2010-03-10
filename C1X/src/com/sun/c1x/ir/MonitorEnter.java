@@ -35,7 +35,7 @@ public final class MonitorEnter extends AccessMonitor {
      * @param lockNumber the number of the lock
      * @param stateBefore the state before
      */
-    public MonitorEnter(Value object, int lockNumber, ValueStack stateBefore) {
+    public MonitorEnter(Value object, int lockNumber, FrameState stateBefore) {
         super(object, stateBefore, lockNumber);
         if (object.isNonNull()) {
             redundantNullCheck();

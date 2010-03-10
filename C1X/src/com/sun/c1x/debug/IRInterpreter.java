@@ -102,8 +102,8 @@ public class IRInterpreter {
         private class ValueMapInitializer implements BlockClosure {
 
             public void apply(BlockBegin block) {
-                ValueStack valueStack = block.stateBefore();
-                ArrayList<Phi> phis = (ArrayList<Phi>) valueStack.allPhis(block);
+                FrameState state = block.stateBefore();
+                ArrayList<Phi> phis = (ArrayList<Phi>) state.allPhis(block);
 
                 for (Phi phi : phis) {
                     for (int j = 0; j < phi.operandCount(); j++) {
@@ -179,8 +179,8 @@ public class IRInterpreter {
             instructionValueMap.put(i, new Val(iCounter, value));
         }
 
-        public Environment(ValueStack valueStack, CiConstant[] values, IR ir) {
-            assert values.length <= valueStack.localsSize() : "Incorrect number of initialization arguments";
+        public Environment(FrameState state, CiConstant[] values, IR ir) {
+            assert values.length <= state.localsSize() : "Incorrect number of initialization arguments";
             ir.startBlock.iteratePreOrder(new ValueMapInitializer());
             int index = 0;
 
@@ -188,7 +188,7 @@ public class IRInterpreter {
                 Object obj;
                 // These conversions are necessary since the input values are
                 // parsed as integers
-                Value local = valueStack.localAt(index);
+                Value local = state.localAt(index);
                 if (local.kind == CiKind.Float && value.kind == CiKind.Int) {
                     obj = (float) value.asInt();
                 } else if ((local.kind == CiKind.Double && value.kind == CiKind.Int)) {
@@ -1682,35 +1682,35 @@ public class IRInterpreter {
             }
         }
 
-        public void valuesDo(ValueStack valueStack, ValueClosure closure) {
-            final int maxLocals = valueStack.localsSize();
+        public void valuesDo(FrameState state, ValueClosure closure) {
+            final int maxLocals = state.localsSize();
             if (maxLocals > 0) {
                 System.out.println("** Locals **");
                 for (int i = 0; i < maxLocals; i++) {
                     System.out.print("[" + i + "]: ");
-                    closure.apply(valueStack.loadLocal(i));
+                    closure.apply(state.loadLocal(i));
                 }
             }
-            final int maxStack = valueStack.stackSize();
+            final int maxStack = state.stackSize();
             if (maxStack > 0) {
                 System.out.println("\n** Stack **");
                 for (int i = 0; i < maxStack; i++) {
                     System.out.print("[" + i + "]: ");
-                    closure.apply(valueStack.stackAt(i));
+                    closure.apply(state.stackAt(i));
                 }
             }
 
-            final int maxLocks = valueStack.locksSize();
+            final int maxLocks = state.locksSize();
             if (maxLocks > 0) {
                 System.out.println("\n** Locks **");
                 for (int i = 0; i < maxLocks; i++) {
-                    closure.apply(valueStack.lockAt(i));
+                    closure.apply(state.lockAt(i));
                 }
             }
-            ValueStack state = valueStack.scope().callerState();
-            if (state != null) {
+            FrameState callerState = state.scope().callerState();
+            if (callerState != null) {
                 System.out.println("\n** Caller state **");
-                valuesDo(state, closure);
+                valuesDo(callerState, closure);
             }
         }
 
@@ -1728,7 +1728,7 @@ public class IRInterpreter {
             System.out.println();
         }
 
-        private void printState(ValueStack state) {
+        private void printState(FrameState state) {
             valuesDo(state, new ValueClosure() {
 
                     public Value apply(Value i) {

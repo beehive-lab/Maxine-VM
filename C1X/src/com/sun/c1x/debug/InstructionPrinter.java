@@ -38,7 +38,7 @@ import com.sun.c1x.util.Util;
 public class InstructionPrinter extends ValueVisitor {
 
     /**
-     * Formats a given instruction as value is a {@linkplain com.sun.c1x.value.ValueStack frame state}. If the instruction is a phi defined at a given
+     * Formats a given instruction as value is a {@linkplain com.sun.c1x.value.FrameState frame state}. If the instruction is a phi defined at a given
      * block, its {@linkplain com.sun.c1x.ir.Phi#operand() operands} are appended to the returned string.
      *
      * @param index the index of the value in the frame state
@@ -286,7 +286,7 @@ public class InstructionPrinter extends ValueVisitor {
         boolean hasPhisOnStack = false;
 
         if (end != null && end.stateAfter() != null) {
-            ValueStack state = block.stateBefore();
+            FrameState state = block.stateBefore();
 
             int i = 0;
             while (!hasPhisOnStack && i < state.stackSize()) {
@@ -315,7 +315,7 @@ public class InstructionPrinter extends ValueVisitor {
             out.println();
             out.println("Locals:");
 
-            ValueStack state = block.stateBefore();
+            FrameState state = block.stateBefore();
             do {
                 int i = 0;
                 while (i < state.localsSize()) {

@@ -39,7 +39,7 @@ public class LIRDebugInfo {
         public abstract CiValue getLocation(Value value);
     }
 
-    public final ValueStack stack;
+    public final FrameState state;
     public final int bci;
     public final List<ExceptionHandler> exceptionHandlers;
 
@@ -48,17 +48,17 @@ public class LIRDebugInfo {
     private CiDebugInfo debugInfo;
     private CiDebugInfo.Frame debugFrame;
 
-    public LIRDebugInfo(ValueStack state, int bci, List<ExceptionHandler> exceptionHandlers) {
+    public LIRDebugInfo(FrameState state, int bci, List<ExceptionHandler> exceptionHandlers) {
         this.bci = bci;
         this.scopeDebugInfo = null;
-        this.stack = state;
+        this.state = state;
         this.exceptionHandlers = exceptionHandlers;
     }
 
     private LIRDebugInfo(LIRDebugInfo info) {
         this.bci = info.bci;
         this.scopeDebugInfo = null;
-        this.stack = info.stack;
+        this.state = info.state;
 
         // deep copy of exception handlers
         if (info.exceptionHandlers != null) {
@@ -78,7 +78,7 @@ public class LIRDebugInfo {
     public void allocateDebugInfo(int registerSize, int frameSize, CiTarget target) {
         byte[] registerRefMap = registerSize > 0 ? newRefMap(registerSize) : null;
         byte[] stackRefMap = frameSize > 0 ? newRefMap(frameSize / target.spillSlotSize) : null;
-        debugInfo = new CiDebugInfo(stack.scope().toCodeSite(bci), null, registerRefMap, stackRefMap);
+        debugInfo = new CiDebugInfo(state.scope().toCodeSite(bci), null, registerRefMap, stackRefMap);
     }
 
     public void setOop(CiLocation location, CiTarget target) {
@@ -97,7 +97,7 @@ public class LIRDebugInfo {
     }
 
     public void buildDebugFrame(ValueLocator locator) {
-        debugFrame = makeFrame(stack, bci, locator);
+        debugFrame = makeFrame(state, bci, locator);
     }
 
     public byte[] registerRefMap() {
@@ -117,9 +117,9 @@ public class LIRDebugInfo {
         return debugInfo != null;
     }
 
-    private CiDebugInfo.Frame makeFrame(ValueStack stack, int bci, ValueLocator locator) {
+    private CiDebugInfo.Frame makeFrame(FrameState state, int bci, ValueLocator locator) {
         // XXX: cache the debug information for each value stack if equivalent to previous
-        return createFrame(stack, bci, locator);
+        return createFrame(state, bci, locator);
     }
 
     private byte[] newRefMap(int slots) {
@@ -133,49 +133,49 @@ public class LIRDebugInfo {
         array[index] = (byte) (array[index] | (1 << offset));
     }
 
-    private CiDebugInfo.Frame createFrame(ValueStack stack, int bci, ValueLocator locator) {
-        int stackBegin = stack.callerStackSize();
+    private CiDebugInfo.Frame createFrame(FrameState state, int bci, ValueLocator locator) {
+        int stackBegin = state.callerStackSize();
         int numStack = 0;
         int numLocals = 0;
         int numLocks;
-        for (int i = 0; i < stack.localsSize(); i++) {
-            if (stack.localAt(i) != null) {
+        for (int i = 0; i < state.localsSize(); i++) {
+            if (state.localAt(i) != null) {
                 numLocals = 1 + i;
             }
         }
-        for (int i = 0; i < stack.stackSize(); i++) {
-            if (stack.stackAt(i) != null) {
+        for (int i = 0; i < state.stackSize(); i++) {
+            if (state.stackAt(i) != null) {
                 numStack = 1 + i;
             }
         }
-        numLocks = stack.locksSize();
+        numLocks = state.locksSize();
 
         CiValue[] values = new CiValue[numLocals + numStack + numLocks];
         int pos = 0;
-        for (int i = 0; i < stack.localsSize(); i++, pos++) {
-            Value v = stack.localAt(i);
+        for (int i = 0; i < state.localsSize(); i++, pos++) {
+            Value v = state.localAt(i);
             if (v != null) {
                 values[pos] = locator.getLocation(v);
             }
         }
-        for (int i = stackBegin; i < stack.stackSize(); i++, pos++) {
-            Value v = stack.stackAt(i);
+        for (int i = stackBegin; i < state.stackSize(); i++, pos++) {
+            Value v = state.stackAt(i);
             if (v != null) {
                 values[pos] = locator.getLocation(v);
             }
         }
-        for (int i = 0; i < stack.locksSize(); i++, pos++) {
-            Value v = stack.lockAt(i);
+        for (int i = 0; i < state.locksSize(); i++, pos++) {
+            Value v = state.lockAt(i);
             assert v != null;
             values[pos] = locator.getLocation(v);
         }
 
-        ValueStack caller = stack.scope().callerState();
+        FrameState caller = state.scope().callerState();
         CiDebugInfo.Frame parent = null;
         if (caller != null) {
-             parent = makeFrame(caller, stack.scope().callerBCI(), locator);
+             parent = makeFrame(caller, state.scope().callerBCI(), locator);
         }
-        return new CiDebugInfo.Frame(parent, stack.scope().toCodeSite(bci), values, numLocals, numStack, numLocks);
+        return new CiDebugInfo.Frame(parent, state.scope().toCodeSite(bci), values, numLocals, numStack, numLocks);
     }
 
 }

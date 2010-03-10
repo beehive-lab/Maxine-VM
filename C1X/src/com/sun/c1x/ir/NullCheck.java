@@ -39,7 +39,7 @@ public final class NullCheck extends StateSplit {
      * @param obj the instruction producing the object to check against null
      * @param stateBefore the state before executing the null check
      */
-    public NullCheck(Value obj, ValueStack stateBefore) {
+    public NullCheck(Value obj, FrameState stateBefore) {
         super(obj.kind, stateBefore);
         this.object = obj;
         setFlag(Flag.NonNull);
