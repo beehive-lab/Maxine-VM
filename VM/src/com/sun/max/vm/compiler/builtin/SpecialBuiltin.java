@@ -148,7 +148,7 @@ public abstract class SpecialBuiltin extends Builtin {
 
     public static class LeastSignificantBit extends SpecialBuiltin {
         @Override
-       public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 1;
             visitor.visitLeastSignificantBit(this, result, arguments);
         }
@@ -166,7 +166,7 @@ public abstract class SpecialBuiltin extends Builtin {
 
     public static class MostSignificantBit extends SpecialBuiltin {
         @Override
-       public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 1;
             visitor.visitMostSignificantBit(this, result, arguments);
         }

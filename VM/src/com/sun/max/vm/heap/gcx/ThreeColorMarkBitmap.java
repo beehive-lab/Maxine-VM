@@ -59,11 +59,11 @@ public class ThreeColorMarkBitmap {
      */
     static final byte WHITE = 0;
     /**
-     * 2-bit mark for black object
+     * 2-bit mark for black object.
      */
     static final byte BLACK = 1;
     /**
-     * 2-bit mark for grey objects
+     * 2-bit mark for grey objects.
      */
     static final byte  GREY =  3;
     /**
@@ -81,7 +81,7 @@ public class ThreeColorMarkBitmap {
 
     final RuntimeMemoryRegion colorMap;
 
-    final static int LOG2_BYTES_PER_BITS = Word.widthValue().log2numberOfBits;
+    static final  int LOG2_BYTES_PER_BITS = Word.widthValue().log2numberOfBits;
 
     /**
      * Return the size in bytes required for a ThreeColorMarkBitmap to cover a contiguous heap area of the specified size.
@@ -89,8 +89,8 @@ public class ThreeColorMarkBitmap {
      * @param coveredAreaSize
      * @return the size a three color mark bitmaps should have to cover the specified area size.
      */
-     Size bitmapSize(Size coveredAreaSize) {
-        return coveredAreaSize.dividedBy((wordsCoveredPerBit * Word.widthValue().numberOfBits));
+    Size bitmapSize(Size coveredAreaSize) {
+        return coveredAreaSize.dividedBy(wordsCoveredPerBit * Word.widthValue().numberOfBits);
     }
 
     /**
@@ -99,7 +99,7 @@ public class ThreeColorMarkBitmap {
     public ThreeColorMarkBitmap(int wordsCoveredPerBit) {
         this.wordsCoveredPerBit = wordsCoveredPerBit;
         colorMap = new RuntimeMemoryRegion("Mark Bitmap");
-   }
+    }
 
     /**
      * Initialize a three color mark bitmap for the covered area.

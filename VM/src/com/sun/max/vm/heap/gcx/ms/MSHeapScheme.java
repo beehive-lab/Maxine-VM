@@ -83,9 +83,7 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
             InspectableHeapInfo.init(committedHeapSpace);
-         } else if (phase == MaxineVM.Phase.STARTING) {
-
-         }
+        }
     }
 
     /**
@@ -111,10 +109,11 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
         final Address endOfHeap = committedHeapSpace.start().plus(maxSize);
         final Size size = heapMarker.memoryRequirement(maxSize);
-        if (! VirtualMemory.allocatePageAlignedAtFixedAddress(endOfHeap, size,  VirtualMemory.Type.DATA)) {
+        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(endOfHeap, size,  VirtualMemory.Type.DATA)) {
             reportPristineMemoryFailure("heap marker data", size);
         }
         heapMarker.initialize(committedHeapSpace, endOfHeap, size);
+        freeSpace.initialize(committedHeapSpace);
     }
 
 

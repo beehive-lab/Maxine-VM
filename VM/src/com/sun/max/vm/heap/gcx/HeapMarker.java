@@ -64,7 +64,7 @@ public class HeapMarker {
      * @return
      */
     public Size memoryRequirement(Size maxHeapSize) {
-       return markBitmaps.bitmapSize(maxHeapSize);
+        return markBitmaps.bitmapSize(maxHeapSize);
     }
 
 
