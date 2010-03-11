@@ -22,9 +22,11 @@ package test.com.sun.max.vm;
 
 import java.io.*;
 import java.util.*;
+import java.util.Arrays;
 
 import junit.framework.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 
@@ -63,44 +65,41 @@ public class MaxineTesterConfiguration {
     static final Map<String, String[]> jtLoadParams = new HashMap<String, String[]>();
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
 
+    private static Class[] findOutputTests() {
+        final ArrayList<Class> result = new ArrayList<Class>();
+        new ClassSearch() {
+            @Override
+            protected boolean visitClass(String className) {
+                if (className.startsWith("test.output.")) {
+                    Class<?> javaClass = Classes.forName(className, false, ClassSearch.class.getClassLoader());
+                    try {
+                        javaClass.getDeclaredMethod("main", String[].class);
+                        result.add(javaClass);
+                    } catch (Exception e) {
+                    }
+                }
+                return true;
+            }
+        }.run(Classpath.fromSystem());
+        Class[] classes = result.toArray(new Class[result.size()]);
+        Arrays.sort(classes, new Comparator<Class>() {
+            public int compare(Class o1, Class o2) {
+                return o1.getSimpleName().compareTo(o2.getSimpleName());
+            }
+        });
+        return classes;
+    }
+
     static {
+        // Register all "test.output.*" classes on the class path
+        output(findOutputTests());
+
+        // Refine expectation for certain output tests
         output(test.output.AWTFont.class,                  FAIL_DARWIN, RAND_SPARC);
         output(test.output.JavacTest.class,                RAND_LINUX);
-        output(test.output.CLDelegation.class);
-        output(test.output.CatchOutOfMemory.class);
-        output(test.output.MixedFrames.class);
-        output(test.output.AttachThread.class);
-        output(test.output.PrintDate.class);
-        output(test.output.HelloWorld.class);
-        output(test.output.HelloWorldGC.class);
-        output(test.output.ExitCode.class);
-        output(test.output.FloatNanTest.class);
-        output(test.output.GetResource.class);
-        output(test.output.SafepointWhileInNative.class);
-        output(test.output.SafepointWhileInJava.class);
-        output(test.output.BlockingQueue.class);
-        output(test.output.Recursion.class);
-        output(test.output.StaticInitializers.class);
-        output(test.output.LocalCatch.class);
-        output(test.output.Printf.class);
-        output(test.output.GCTest0.class);
-        output(test.output.GCTest1.class);
-        output(test.output.GCTest2.class);
-        output(test.output.GCTest3.class);
-        output(test.output.GCTest4.class);
-        output(test.output.GCTest5.class);
-        output(test.output.GCTest6.class);
-        output(test.output.GCTest7.class, RAND_ALL);
-        output(test.output.HelloWorldReflect.class);
-        output(test.output.JREJarLoadTest.class);
-        output(test.output.FileReader.class);
-        output(test.output.ZipFileReader.class);
-        output(test.output.WeakReferenceTest01.class);
-        output(test.output.WeakReferenceTest02.class);
-        output(test.output.WeakReferenceTest03.class);
-        output(test.output.WeakReferenceTest04.class);
-        output(test.output.MegaThreads.class, RAND_ALL);
-        output(test.output.ShutdownTest.class);
+        output(test.output.GCTest7.class,                  RAND_ALL);
+        output(test.output.MegaThreads.class,              RAND_ALL);
+
 
         jtt(jtt.jasm.Invokevirtual_private01.class, RAND_ALL); // may fail due to incorrect invokevirtual / invokespecial optimization
         jtt(jtt.except.BC_invokespecial01.class, RAND_ALL);      // may fail due to incorrect invokevirtual / invokespecial optimization
@@ -236,8 +235,12 @@ public class MaxineTesterConfiguration {
     }
 
     private static void output(Class javaClass, Expectation... results) {
-        zeeOutputTests.add(javaClass);
+        assert zeeOutputTests.contains(javaClass) : "Output test " + javaClass + " not found by findOutputTests()";
         addExpectedResults(javaClass.getName(), results);
+    }
+
+    private static void output(Class... javaClasses) {
+        zeeOutputTests.addAll(Arrays.asList(javaClasses));
     }
 
     private static void jtt(Class javaClass, Expectation... results) {
