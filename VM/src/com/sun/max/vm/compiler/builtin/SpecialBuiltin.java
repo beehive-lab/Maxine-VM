@@ -138,13 +138,21 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
-     * Return the index to the least significant bit set in a word value.
-     * @param value the word scan for the least significant bit
-     * @return the index to the least significant bit within the specified word
+     * Returns the index to the least significant bit set in a given value.
+     *
+     * @param value the value to scan for the least significant bit
+     * @return the index to the least significant bit within {@code value} or {@code -1} if {@code value == 0}
      */
     @INTRINSIC(LSB)
     @BUILTIN(LeastSignificantBit.class)
-    public static native int leastSignificantBit(Word value);
+    public static int leastSignificantBit(Word value) {
+        long l = value.asAddress().toLong();
+        if (l == 0) {
+            return -1;
+        }
+        long lowestOneBit = Long.lowestOneBit(l);
+        return Long.numberOfTrailingZeros(lowestOneBit);
+    }
 
     public static class LeastSignificantBit extends SpecialBuiltin {
         @Override
@@ -156,13 +164,21 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
-     * Return the index to the most significant bit set in a word value.
-     * @param value the word scan for the most significant bit
-     * @return the index to the most significant bit within the specified word
+     * Returns the index to the most significant bit set in a given value.
+     *
+     * @param value the value to scan for the most significant bit
+     * @return the index to the most significant bit within {@code value} or {@code -1} if {@code value == 0}
      */
     @INTRINSIC(MSB)
     @BUILTIN(MostSignificantBit.class)
-    public static native int mostSignificantBit(Word value);
+    public static int mostSignificantBit(Word value) {
+        long l = value.asAddress().toLong();
+        if (l == 0) {
+            return -1;
+        }
+        long highestOneBit = Long.highestOneBit(l);
+        return Long.numberOfTrailingZeros(highestOneBit);
+    }
 
     public static class MostSignificantBit extends SpecialBuiltin {
         @Override
