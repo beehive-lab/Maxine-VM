@@ -410,11 +410,6 @@ public abstract class Actor {
 
     @INLINE
     public final void beUnsafe() {
-
-        if (toString().equals("com.sun.c1x.debug.IRInterpreter$Evaluator.visitNegateOp(NegateOp)")) {
-            System.console();
-        }
-
         flags |= UNSAFE;
     }
 
