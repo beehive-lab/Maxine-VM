@@ -31,7 +31,7 @@ import com.sun.c1x.value.*;
  */
 public final class ArithmeticOp extends Op2 {
 
-    ValueStack stateBefore;
+    FrameState stateBefore;
 
     /**
      * Creates a new arithmetic operation.
@@ -41,7 +41,7 @@ public final class ArithmeticOp extends Op2 {
      * @param isStrictFP indicates this operation has strict rounding semantics
      * @param stateBefore the value stack for instructions that may trap
      */
-    public ArithmeticOp(int opcode, Value x, Value y, boolean isStrictFP, ValueStack stateBefore) {
+    public ArithmeticOp(int opcode, Value x, Value y, boolean isStrictFP, FrameState stateBefore) {
         super(x.kind.meet(y.kind), opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
         if (stateBefore != null) {
@@ -70,7 +70,7 @@ public final class ArithmeticOp extends Op2 {
      * @return the lock stack
      */
     @Override
-    public ValueStack stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 

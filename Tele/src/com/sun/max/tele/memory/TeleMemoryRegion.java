@@ -88,8 +88,7 @@ public class TeleMemoryRegion implements MemoryRegion {
     }
 
     public boolean overlaps(MemoryRegion memoryRegion) {
-        return (start.greaterEqual(memoryRegion.start()) && start.lessThan(memoryRegion.end())) ||
-               (end.greaterEqual(memoryRegion.start()) && end.lessThan(memoryRegion.end()));
+        return start.lessThan(memoryRegion.end()) && end.greaterThan(memoryRegion.start());
     }
 
     public boolean sameAs(MemoryRegion otherMemoryRegion) {

@@ -191,7 +191,7 @@ public class CFGPrinter {
     private void printState(BlockBegin block) {
         begin("states");
 
-        ValueStack state = block.stateBefore();
+        FrameState state = block.stateBefore();
 
         if (state.stackSize() > 0) {
           begin("stack");

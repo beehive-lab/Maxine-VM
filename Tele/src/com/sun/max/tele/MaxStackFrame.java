@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele;
 
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
@@ -89,6 +90,15 @@ public interface MaxStackFrame {
      * @see Cursor#fp()
      */
     Pointer fp();
+
+    /**
+     * Gets a description of the memory occupied by this frame in the VM.
+     * <br>
+     * Thread-safe
+     *
+     * @return the memory occupied by this frame; null if unknown or unavailable
+     */
+    MemoryRegion memoryRegion();
 
     /**
      * Get's the conceptual location in code for each frame, independent of underlying

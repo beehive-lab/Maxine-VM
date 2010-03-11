@@ -25,19 +25,19 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.ci.CiCodePos;
 
 /**
- * The {@code FrameState} class represents an immutable view of the state of a frame
+ * The {@code FrameStateInfo} class represents an immutable view of the state of a frame
  * (i.e. it does not have push, pop, or store operations). It is represented more compactly
  * than a {@code ValueStack}. Its immutability eliminates a large number of bugs in
  * caching of states within the IR.
  *
  * @author Ben L. Titzer
  */
-public class JavaFrameState {
+public class FrameStateInfo {
 
     /**
      * The frame state of the caller method, if any.
      */
-    public final JavaFrameState caller;
+    public final FrameStateInfo caller;
 
     /**
      * The code position of this frame state.
@@ -55,7 +55,7 @@ public class JavaFrameState {
      * @param pos the code position for this frame state
      * @param state the value stack containing the values
      */
-    public JavaFrameState(JavaFrameState caller, CiCodePos pos, ValueStack state) {
+    public FrameStateInfo(FrameStateInfo caller, CiCodePos pos, FrameState state) {
         this.pos = pos;
         this.caller = caller;
         this.localsSize = (char) state.localsSize();
@@ -75,7 +75,7 @@ public class JavaFrameState {
         assert verify(state);
     }
 
-    private boolean verify(ValueStack state) {
+    private boolean verify(FrameState state) {
         if (caller == null) {
             assert pos.caller == null : "should not have caller";
             assert state.scope().isTopScope() : "should be top scope";
@@ -86,7 +86,7 @@ public class JavaFrameState {
         return true;
     }
 
-    public ValueStack asValueStack() {
+    public FrameState asFrameState() {
         // TODO: efficiently copy this frame state into a value stack
         throw Util.unimplemented();
     }

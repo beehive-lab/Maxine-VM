@@ -67,7 +67,7 @@ public class ScopeData {
     BlockBegin continuation;
 
     // Without return value of inlined method on stack
-    ValueStack continuationState;
+    FrameState continuationState;
 
     // Number of returns seen in this scope
     int numReturns;
@@ -78,7 +78,7 @@ public class ScopeData {
     // allows us to perform LVN and folding across inlined scopes.
     BlockBegin cleanupBlock;       // The block to which the return was added
     Instruction cleanupReturnPrev; // Instruction before return instruction
-    ValueStack cleanupState;       // State of that block (not yet pinned)
+    FrameState cleanupState;       // State of that block (not yet pinned)
 
     // We track the destination bci of the jsr only to determine
     // bailout conditions, since we only handle a subset of all of the
@@ -231,7 +231,7 @@ public class ScopeData {
      * @return the size of the stack
      */
     public int callerStackSize() {
-        ValueStack state = scope.callerState();
+        FrameState state = scope.callerState();
         return state == null ? 0 : state.stackSize();
     }
 
@@ -255,7 +255,7 @@ public class ScopeData {
      * Gets the state at the continuation point.
      * @return the state at the continuation point
      */
-    public ValueStack continuationState() {
+    public FrameState continuationState() {
         return continuationState;
     }
 
@@ -263,7 +263,7 @@ public class ScopeData {
      * Sets the state at the continuation point.
      * @param state the state at the continuation
      */
-    public void setContinuationState(ValueStack state) {
+    public void setContinuationState(FrameState state) {
         continuationState = state;
     }
 
@@ -343,7 +343,7 @@ public class ScopeData {
      * @param returnPrev the previous return
      * @param returnState the state at the previous return
      */
-    public void setInlineCleanupInfo(BlockBegin block, Instruction returnPrev, ValueStack returnState) {
+    public void setInlineCleanupInfo(BlockBegin block, Instruction returnPrev, FrameState returnState) {
         cleanupBlock = block;
         cleanupReturnPrev = returnPrev;
         cleanupState = returnState;
@@ -369,7 +369,7 @@ public class ScopeData {
      * Gets the state for when inlining fails.
      * @return the state
      */
-    public ValueStack inlineCleanupState() {
+    public FrameState inlineCleanupState() {
         return cleanupState;
     }
 

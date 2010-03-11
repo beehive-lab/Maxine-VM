@@ -43,7 +43,7 @@ public final class NewMultiArray extends NewArray {
      * @param cpi the constant pool index for resolution
      * @param riConstantPool the constant pool for resolution
      */
-    public NewMultiArray(RiType elementKind, Value[] dimensions, ValueStack stateBefore, char cpi, RiConstantPool riConstantPool) {
+    public NewMultiArray(RiType elementKind, Value[] dimensions, FrameState stateBefore, char cpi, RiConstantPool riConstantPool) {
         super(null, stateBefore);
         this.constantPool = riConstantPool;
         this.elementKind = elementKind;

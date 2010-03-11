@@ -21,6 +21,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -43,6 +44,17 @@ public interface MaxThreadLocalsBlock {
      * Gets the VM thread locals area corresponding to a given safepoint state.
      */
     MaxThreadLocalsArea threadLocalsAreaFor(Safepoint.State state);
+
+    /**
+     * Gets the thread locals area in this thread, if any, that includes
+     * a specified memory address in the VM.
+     * <br>
+     * Thread-safe
+     *
+     * @param address a memory location in the VM
+     * @return the thread locals area in this thread that contains the address, null if none.
+     */
+    MaxThreadLocalsArea findThreadLocalsArea(Address address);
 
     /**
      * Gets description of VM memory containing
