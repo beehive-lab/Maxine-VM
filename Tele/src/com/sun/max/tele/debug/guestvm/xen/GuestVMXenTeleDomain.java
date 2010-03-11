@@ -148,7 +148,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     @Override
     protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        return GuestVMXenDBChannel.deactivateWatchpoint(domainId, teleWatchpoint);
+        return GuestVMXenDBChannel.deactivateWatchpoint(domainId, teleWatchpoint.memoryRegion());
     }
 
     @Override

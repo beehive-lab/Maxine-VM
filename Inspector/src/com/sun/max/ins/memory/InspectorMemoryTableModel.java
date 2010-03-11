@@ -74,7 +74,7 @@ public abstract class InspectorMemoryTableModel extends InspectorTableModel {
         DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
         if (vm().watchpointManager() != null) {
             for (MaxWatchpoint watchpoint : vm().watchpointManager().watchpoints()) {
-                if (watchpoint.overlaps(getMemoryRegion(row))) {
+                if (watchpoint.memoryRegion().overlaps(getMemoryRegion(row))) {
                     if (watchpoints.isEmpty()) {
                         watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(watchpoint);
                     } else if (watchpoints.length() == 1) {
