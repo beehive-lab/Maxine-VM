@@ -183,7 +183,8 @@ public class MaxineTesterConfiguration {
         auto("test_arrayCopyForKinds(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)",  FAIL_ALL);
         auto("test_catchNull(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_throw)",               FAIL_ALL);
         auto("test_sameNullsArrayCopy(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_jdk_System)", FAIL_ALL);
-        auto("test_count_bits(test.com.sun.max.vm.cps.CompilerTest_regressions)", FAIL_SPARC);
+        auto("test_count_bits(test.com.sun.max.vm.cps.eir.sparc.SPARCEirTranslatorTest_regressions)", FAIL_ALL);
+        auto("test_count_bits(test.com.sun.max.vm.cps.sparc.SPARCTranslatorTest_regressions)", FAIL_ALL);
 
         imageConfig("java", "-run=java");
         imageConfig("cpscps", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
