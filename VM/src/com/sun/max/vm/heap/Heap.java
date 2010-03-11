@@ -90,7 +90,7 @@ public final class Heap {
      * @return the size of the maximum heap specified on the command line
      */
     private static Size maxSizeOption() {
-        if (maxHeapSizeOption.isPresent() || maxHeapSizeOption.getValue().greaterThan(initialHeapSizeOption.getValue())) {
+        if (maxHeapSizeOption.isPresent() && maxHeapSizeOption.getValue().greaterThan(initialHeapSizeOption.getValue())) {
             return maxHeapSizeOption.getValue();
         }
         return initialHeapSizeOption.getValue();
