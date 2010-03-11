@@ -31,13 +31,13 @@ import com.sun.c1x.value.*;
  */
 public abstract class StateSplit extends Instruction {
 
-    protected ValueStack stateBefore;
+    protected FrameState stateBefore;
 
     /**
      * Creates a new state split with the specified value type.
      * @param type the type of the value that this instruction produces
      */
-    public StateSplit(CiKind type, ValueStack stateBefore) {
+    public StateSplit(CiKind type, FrameState stateBefore) {
         super(type);
         this.stateBefore = stateBefore;
     }
@@ -46,7 +46,7 @@ public abstract class StateSplit extends Instruction {
      * Sets the state after this instruction has executed.
      * @param stateBefore the state
      */
-    public void setStateBefore(ValueStack stateBefore) {
+    public void setStateBefore(FrameState stateBefore) {
         this.stateBefore = stateBefore;
     }
 
@@ -55,7 +55,7 @@ public abstract class StateSplit extends Instruction {
      * @return the state
      */
     @Override
-    public ValueStack stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 }

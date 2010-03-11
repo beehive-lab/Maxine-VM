@@ -30,7 +30,7 @@ import com.sun.max.tele.object.*;
  * @author Michael Van De Vanter
  * @author Hannes Payer
  */
-public interface MaxWatchpoint extends MemoryRegion {
+public interface MaxWatchpoint {
 
     /**
      * A collection of configuration settings for watchpoints.
@@ -56,6 +56,15 @@ public interface MaxWatchpoint extends MemoryRegion {
             this.enabledDuringGC = enabledDuringGC;
         }
     }
+
+    /**
+     * Gets a description of the memory span being watched in the VM.
+     * <br>
+     * Thread-safe
+     *
+     * @return the memory being watched in the VM
+     */
+    MemoryRegion memoryRegion();
 
     /**
      * Gets current settings.
@@ -152,5 +161,14 @@ public interface MaxWatchpoint extends MemoryRegion {
      * @see #isRelocatable()
      */
     TeleObject getTeleObject();
+
+    /**
+     * Gets a short textual description concerning the intention of the watchpoint.
+     * <br>
+     * Thread-safe
+     *
+     * @return a short, human-readable description
+     */
+    String description();
 
 }

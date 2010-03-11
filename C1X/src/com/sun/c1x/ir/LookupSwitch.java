@@ -42,7 +42,7 @@ public final class LookupSwitch extends Switch {
      * @param stateBefore the state before the switch
      * @param isSafepoint {@code true} if this instruction is a safepoint
      */
-    public LookupSwitch(Value value, List<BlockBegin> successors, int[] keys, ValueStack stateBefore, boolean isSafepoint) {
+    public LookupSwitch(Value value, List<BlockBegin> successors, int[] keys, FrameState stateBefore, boolean isSafepoint) {
         super(value, successors, stateBefore, isSafepoint);
         this.keys = keys;
     }

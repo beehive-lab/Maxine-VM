@@ -158,7 +158,7 @@ public final class GuestVMXenDBChannel {
 
     public static synchronized boolean activateWatchpoint(int domainId, TeleWatchpoint teleWatchpoint) {
         final WatchpointSettings settings = teleWatchpoint.getSettings();
-        return nativeActivateWatchpoint(domainId, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
+        return nativeActivateWatchpoint(domainId, teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
     }
 
     public static synchronized boolean deactivateWatchpoint(int domainId, MemoryRegion memoryRegion) {

@@ -39,7 +39,7 @@ public abstract class AccessMonitor extends StateSplit {
      * @param stateBefore the state before executing the monitor operation
      * @param lockNumber the number of the lock being acquired
      */
-    public AccessMonitor(Value object, ValueStack stateBefore, int lockNumber) {
+    public AccessMonitor(Value object, FrameState stateBefore, int lockNumber) {
         super(CiKind.Illegal, stateBefore);
         this.object = object;
         this.lockNumber = lockNumber;

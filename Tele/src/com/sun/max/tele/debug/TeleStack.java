@@ -138,6 +138,15 @@ public class TeleStack extends AbstractTeleVMHolder implements MaxStack {
         return maxStackFrames;
     }
 
+    public MaxStackFrame findStackFrame(Address address) {
+        for (MaxStackFrame stackFrame : frames()) {
+            if (stackFrame.memoryRegion().contains(address)) {
+                return stackFrame;
+            }
+        }
+        return null;
+    }
+
     public TeleVMState lastUpdated() {
         return lastUpdatedState;
     }
