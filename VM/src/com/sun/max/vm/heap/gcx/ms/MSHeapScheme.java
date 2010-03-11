@@ -23,18 +23,18 @@ package com.sun.max.vm.heap.gcx.ms;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.StopTheWorldGCDaemon.*;
 import com.sun.max.vm.heap.gcx.*;
-import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.tele.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * A simple mark-sweep collector, without TLABs support. Only used for testing / debugging
@@ -44,7 +44,14 @@ import com.sun.max.vm.tele.*;
  *
  * @author Laurent Daynes
  */
-public class MSHeapScheme extends HeapSchemeAdaptor {
+public class MSHeapScheme extends HeapSchemeWithTLAB {
+    /**
+     * Size to reserve at the end of a TLABs to guarantee that a dead object can always be
+     * appended to a TLAB to fill unused space before a TLAB refill.
+     * The headroom is used to compute a soft limit that'll be used as the tlab's top.
+     */
+    @CONSTANT_WHEN_NOT_ZERO
+    private static Size TLAB_HEADROOM;
 
     /**
      * Region describing the currently committed heap space.
@@ -68,10 +75,7 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
         heapMarker = new HeapMarker();
         freeSpace = new FreeHeapSpaceManager();
         totalUsedSpace = Size.zero();
-        // TODO: we don't really need a LinearAllocationMemoryRegion here, just a RuntimeMemoryRegion.
-        // However, the inspector assumes we're using LinearAllocationMemoryRegion for any "heap" region.
-
-        committedHeapSpace = new LinearAllocationMemoryRegion("Heap");
+        committedHeapSpace = new RuntimeMemoryRegion("Heap");
     }
 
 
@@ -79,13 +83,14 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isHosted()) {
-            // Initialize stuff at VM-generation time.
+            // VM-generation time initialization.
+            // Add a word if tagging the heap.
+            TLAB_HEADROOM = MIN_OBJECT_SIZE.plus(MaxineVM.isDebug() ? Word.size() : 0);
 
             // The monitor for the collector must be allocated in the image
             JavaMonitorManager.bindStickyMonitor(this);
         } else  if (phase == MaxineVM.Phase.PRISTINE) {
             allocateHeapAndGCStorage();
-            InspectableHeapInfo.init(committedHeapSpace);
         }
     }
 
@@ -131,43 +136,6 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
 
     public boolean contains(Address address) {
         return committedHeapSpace.contains(address);
-    }
-
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public final Object clone(Object object) {
-        final Size size = Layout.size(Reference.fromJava(object));
-        final Pointer cell = freeSpace.allocate(size);
-        return Cell.plantClone(cell, size, object);
-    }
-
-    @INLINE
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public final Object createArray(DynamicHub hub, int length) {
-        final Size size = Layout.getArraySize(hub.classActor.componentClassActor().kind, length);
-        final Pointer cell =  freeSpace.allocate(size);
-        return Cell.plantArray(cell, size, hub, length);
-    }
-
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public final Object createHybrid(DynamicHub hub) {
-        final Size size = hub.tupleSize;
-        final Pointer cell = freeSpace.allocate(size);
-        return Cell.plantHybrid(cell, size, hub);
-    }
-
-    @INLINE
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public final Object createTuple(Hub hub) {
-        final Size size = hub.tupleSize;
-        final Pointer cell = freeSpace.allocate(size);
-        return Cell.plantTuple(cell, hub);
-    }
-
-    @NO_SAFEPOINTS("object allocation and initialization must be atomic")
-    public final Hybrid expandHybrid(Hybrid hybrid, int length) {
-        final Size size = Layout.hybridLayout().getArraySize(length);
-        final Pointer cell = freeSpace.allocate(size);
-        return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
 
     public final void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
@@ -221,6 +189,99 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
             HeapScheme.Static.notifyGCCompleted();
         }
+    }
+
+    @Override
+    protected void doBeforeTLABRefill(Pointer tlabAllocationMark, Pointer tlabEnd) {
+        // Need to plant a dead object in the leftover to make the heap parseable (required for sweeping).
+        Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+        if (tlabAllocationMark.greaterThan(tlabEnd)) {
+            FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
+            return;
+        }
+        fillWithTaggedDeadObject(tlabAllocationMark, hardLimit);
+    }
+
+
+    private ResetTLAB resetTLAB = new ResetTLAB() {
+        @Override
+        protected void doBeforeReset(Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabTop) {
+            doBeforeTLABRefill(tlabMark, tlabTop);
+        }
+    };
+    protected void resetTLABs() {
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, resetTLAB);
+    }
+
+    /**
+     * Allocate a chunk of memory of the specified size and refill a thread's TLAB with it.
+     * @param enabledVmThreadLocals the thread whose TLAB will be refilled
+     * @param tlabSize the size of the chunk of memory used to refill the TLAB
+     */
+    private void allocateAndRefillTLAB(Pointer enabledVmThreadLocals, Size tlabSize) {
+        Pointer tlab = freeSpace.allocateTLAB(tlabSize);
+        if (MaxineVM.isDebug()) {
+            DebugHeap.writeCellPadding(tlab, tlab.plus(tlabSize));
+        }
+        if (Heap.traceAllocation()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.printCurrentThread(false);
+            Log.print(": Allocated TLAB at ");
+            Log.print(tlab);
+            Log.print(" [TOP=");
+            Log.print(tlab.plus(tlab.plus(tlabSize.minus(TLAB_HEADROOM)).asAddress()));
+            Log.print(", end=");
+            Log.print(tlab.plus(tlabSize));
+            Log.print(", size=");
+            Log.print(tlabSize.toInt());
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+        refillTLAB(enabledVmThreadLocals, tlab, tlabSize.minus(TLAB_HEADROOM));
+    }
+
+    @Override
+    protected Pointer handleTLABOverflow(Size size, Pointer enabledVmThreadLocals, Pointer tlabMark, Pointer tlabEnd) {      // Should we refill the TLAB ?
+        final TLABRefillPolicy refillPolicy = TLABRefillPolicy.getForCurrentThread(enabledVmThreadLocals);
+        if (refillPolicy == null) {
+            // No policy yet for the current thread. This must be the first time this thread uses a TLAB (it does not have one yet).
+            ProgramError.check(tlabMark.isZero(), "thread must not have a TLAB yet");
+            if (!usesTLAB()) {
+                // We're not using TLAB. So let's assign the never refill tlab policy.
+                TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, NEVER_REFILL_TLAB);
+                return freeSpace.allocate(size);
+            }
+            // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
+            final Size tlabSize = initialTlabSize();
+            allocateAndRefillTLAB(enabledVmThreadLocals, tlabSize);
+            // Let's do a bit of dirty meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
+            // So the tlab allocation is going to succeed here
+            TLABRefillPolicy.setForCurrentThread(enabledVmThreadLocals, new SimpleTLABRefillPolicy(tlabSize));
+            // Now, address the initial request. Note that we may recurse down to handleTLABOverflow again here if the
+            // request is larger than the TLAB size. However, this second call will succeed and allocate outside of the tlab.
+            return tlabAllocate(size);
+        }
+        final Size nextTLABSize = refillPolicy.nextTlabSize();
+        if (size.greaterThan(nextTLABSize)) {
+            // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
+            return freeSpace.allocate(size);
+        }
+        final Pointer hardLimit = tlabEnd.plus(TLAB_HEADROOM);
+        final Pointer cell = DebugHeap.adjustForDebugTag(tlabMark);
+        if (cell.plus(size).equals(hardLimit)) {
+            // Can actually fit the object in the TLAB.
+            setTlabAllocationMark(enabledVmThreadLocals, hardLimit);
+            // allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
+            return cell;
+        }
+
+        if (!refillPolicy.shouldRefill(size, tlabMark)) {
+            // Size would fit in a new tlab, but the policy says we shouldn't refill the tlab yet, so allocate directly in the heap.
+            return freeSpace.allocate(size);
+        }
+        // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
+        allocateAndRefillTLAB(enabledVmThreadLocals, nextTLABSize);
+        return tlabAllocate(size);
     }
 }
 
