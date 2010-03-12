@@ -80,13 +80,14 @@ public @interface METHOD_SUBSTITUTIONS {
                     final Method originalMethod = findMethod(substitutee, substituteName, SignatureDescriptor.fromJava(substituteMethod));
                     ProgramError.check(originalMethod != null, "could not find method in " + substitutee + " substituted by " + substituteMethod);
                     final ClassMethodActor originalMethodActor = ClassMethodActor.fromJava(originalMethod);
-                    if (originalToSubstitute.put(originalMethodActor, ClassMethodActor.fromJava(substituteMethod)) != null) {
+                    ClassMethodActor substituteMethodActor = ClassMethodActor.fromJava(substituteMethod);
+                    if (originalToSubstitute.put(originalMethodActor, substituteMethodActor) != null) {
                         ProgramError.unexpected("a substitute has already been registered for " + originalMethod);
                     }
-                    if (substituteToOriginal.put(ClassMethodActor.fromJava(substituteMethod), originalMethodActor) != null) {
+                    if (substituteToOriginal.put(substituteMethodActor, originalMethodActor) != null) {
                         ProgramError.unexpected("only one original method per substitute allowed - " + substituteMethod);
                     }
-                    originalMethodActor.beUnsafe();
+                    originalMethodActor.setFlagsFromSubstitute(substituteMethodActor);
                     MaxineVM.registerImageMethod(originalMethodActor); // TODO: loosen this requirement
                 } else {
                     // Any other method in the substitutor class must be either inlined or static.

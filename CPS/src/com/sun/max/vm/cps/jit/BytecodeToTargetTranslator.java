@@ -32,7 +32,6 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -993,8 +992,8 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.WRETURN            : emitReturn(WRETURN); break;
                 case Bytecodes.SAFEPOINT          : emit(SAFEPOINT); skip(2); break;
                 case Bytecodes.PAUSE              : emit(PAUSE); skip(2); break;
-                case Bytecodes.LSB: emit(LSB); break;
-                case Bytecodes.MSB: emit(MSB); break;
+                case Bytecodes.LSB                : emit(LSB); skip(2); break;
+                case Bytecodes.MSB                : emit(MSB); skip(2); break;
 
                 case Bytecodes.READREG            : emit(READREGS.get(Role.VALUES.get(readU2()))); break;
                 case Bytecodes.WRITEREG           : emit(WRITEREGS.get(Role.VALUES.get(readU2()))); break;
@@ -1277,20 +1276,6 @@ public abstract class BytecodeToTargetTranslator {
         return index;
     }
 
-    /**
-     * Checks if a given method invocation can be correctly compiled by this compiler.
-     *
-     * @param callee a method being invoked
-     * @param opcode the invoke instruction
-     * @throws UnsupportedInstructionError if a compiler that performs more analysis and/or optimization is required to compile the given method invocation
-     */
-    private void checkInvocation(MethodActor callee) {
-        final int badFlags = Actor.FOLD | Actor.INLINE;
-        if ((callee.flags() & badFlags) != 0) {
-            throw new InternalError("Invocation of method " + callee + " cannot be compiled with JIT" + errorSuffix());
-        }
-    }
-
     private void emitInvokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = constantPool.classMethodAt(index);
         SignatureDescriptor signature = classMethodRef.signature(constantPool);
@@ -1300,7 +1285,6 @@ public abstract class BytecodeToTargetTranslator {
             if (isResolved(classMethodRef, index)) {
                 try {
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
-                    checkInvocation(virtualMethodActor);
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal()) {
                         // this is an invokevirtual to a private or final method, treat it like invokespecial
                         emitInvokespecial(index);
@@ -1346,7 +1330,6 @@ public abstract class BytecodeToTargetTranslator {
             if (isResolved(interfaceMethodRef, index)) {
                 try {
                     InterfaceMethodActor interfaceMethodActor = (InterfaceMethodActor) interfaceMethodRef.resolve(constantPool, index);
-                    checkInvocation(interfaceMethodActor);
                     if (shouldProfileMethodCall(interfaceMethodActor)) {
                         TargetMethod code = getCode(template.instrumented);
                         beginBytecode(template.opcode);
@@ -1384,7 +1367,6 @@ public abstract class BytecodeToTargetTranslator {
         try {
             if (isResolved(classMethodRef, index)) {
                 VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(constantPool, index);
-                checkInvocation(virtualMethodActor);
                 TargetMethod code = getCode(template.resolved);
                 beginBytecode(template.opcode);
                 recordDirectBytecodeCall(code, virtualMethodActor);
@@ -1407,7 +1389,6 @@ public abstract class BytecodeToTargetTranslator {
         try {
             if (isResolved(classMethodRef, index)) {
                 StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(constantPool, index);
-                checkInvocation(staticMethodActor);
                 if (staticMethodActor.holder().isInitialized()) {
                     TargetMethod code = getCode(template.initialized);
                     beginBytecode(template.opcode);

@@ -922,7 +922,8 @@ public final class ClassfileReader {
                                         final int accessFlagsMask = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
                                         flags &= ~accessFlagsMask;
                                         flags |= substituteeActor.flags() & accessFlagsMask;
-                                        substituteeActor.beUnsafe();
+
+                                        flags |= substituteeActor.flags() & SUBSTITUTION_ADOPTED_FLAGS;
                                         break;
                                     }
                                 }

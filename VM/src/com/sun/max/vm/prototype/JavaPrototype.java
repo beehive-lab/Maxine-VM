@@ -383,9 +383,6 @@ public class JavaPrototype extends Prototype {
                     // This enables detection of violations of said requirement:
                     ClassActor.prohibitPackagePrefix(new com.sun.max.Package());
 
-                    // The logic for determining unsafeness is now in Intrinsics.java and Actor.<init>()
-                    // UNSAFE.Static.determineMethods();
-
                     VmThreadLocal.completeInitialization();
 
                 } else {

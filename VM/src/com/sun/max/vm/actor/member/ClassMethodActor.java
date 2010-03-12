@@ -131,12 +131,12 @@ public abstract class ClassMethodActor extends MethodActor {
 
     @INLINE
     public final boolean noSafepoints() {
-        return noSafepoints(compilee().flags());
+        return noSafepoints(flags());
     }
 
     @INLINE
     public final boolean isDeclaredFoldable() {
-        return isDeclaredFoldable(compilee().flags());
+        return isDeclaredFoldable(flags());
     }
 
     /**

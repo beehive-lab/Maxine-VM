@@ -582,15 +582,19 @@ public class CompiledPrototype extends Prototype {
         return ProgramError.unexpected("Error occurred while compiling " + classMethodActor, error);
     }
 
-    public void compileUnsafeMethods() {
-        Trace.begin(1, "compiling unsafe methods");
-        for (ClassMethodActor classMethodActor : UNSAFE.Static.methods()) {
-            if (!(classMethodActor.isNative() && classMethodActor.isVmEntryPoint())) {
-                worklist.add(classMethodActor);
-            }
+    public void compileFoldableMethods() {
+        Trace.begin(1, "compiling foldable methods");
+        for (ClassActor classActor : ClassRegistry.BOOT_CLASS_REGISTRY) {
+            classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
+                public void run(ClassMethodActor classMethodActor) {
+                    if (classMethodActor.isDeclaredFoldable()) {
+                        add(classMethodActor, null, null);
+                    }
+                }
+            });
         }
         compileWorklist();
-        Trace.end(1, "compiling unsafe methods");
+        Trace.end(1, "compiling foldable methods");
     }
 
     private boolean hasCode(MethodActor methodActor) {
