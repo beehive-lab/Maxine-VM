@@ -59,7 +59,7 @@ import com.sun.max.vm.type.*;
 public class MaxRiRuntime implements RiRuntime {
 
     private final C1XCompilerScheme compilerScheme;
-    private RiSnippets nativeLinkage;
+    private RiSnippets snippets;
 
     public MaxRiRuntime(C1XCompilerScheme compilerScheme) {
         this.compilerScheme = compilerScheme;
@@ -82,7 +82,7 @@ public class MaxRiRuntime implements RiRuntime {
     }
 
     private MaxRiConstantPool getConstantPool(ClassMethodActor classMethodActor) {
-        final ConstantPool cp = classMethodActor.holder().constantPool();
+        final ConstantPool cp = classMethodActor.compilee().codeAttribute().constantPool;
         synchronized (this) {
             MaxRiConstantPool constantPool = constantPools.get(cp);
             if (constantPool == null) {
@@ -134,7 +134,11 @@ public class MaxRiRuntime implements RiRuntime {
      * to allow the compiler to use its own heuristics
      */
     public boolean mustInline(RiMethod method) {
-        return asClassMethodActor(method, "mustInline()").isInline();
+        if (!method.isLoaded()) {
+            return false;
+        }
+        ClassMethodActor classMethodActor = asClassMethodActor(method, "mustInline()");
+        return classMethodActor.isInline() && !classMethodActor.isUnsafe();
     }
 
     /**
@@ -144,8 +148,11 @@ public class MaxRiRuntime implements RiRuntime {
      * {@code false} to allow the compiler to use its own heuristics
      */
     public boolean mustNotInline(RiMethod method) {
+        if (!method.isLoaded()) {
+            return false;
+        }
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
+        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline() || classMethodActor.isUnsafe();
     }
 
     /**
@@ -424,9 +431,9 @@ public class MaxRiRuntime implements RiRuntime {
 
     @Override
     public RiSnippets getSnippets() {
-        if (nativeLinkage == null) {
-            nativeLinkage = new MaxRiSnippets(this);
+        if (snippets == null) {
+            snippets = new MaxRiSnippets(this);
         }
-        return nativeLinkage;
+        return snippets;
     }
 }
