@@ -994,6 +994,28 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 break;
             }
 
+            case Bytecodes.MOV_I2F:
+            case Bytecodes.MOV_L2D:
+                if (dest.isSingleXmm()) {
+                    masm.movdl(asXmmFloatReg(dest), src.asRegister());
+                } else if (dest.isDoubleXmm()) {
+                    masm.movdq(asXmmDoubleReg(dest), src.asRegister());
+                } else {
+                    throw Util.unimplemented("no fpu stack");
+                }
+                break;
+
+            case Bytecodes.MOV_F2I:
+            case Bytecodes.MOV_D2L:
+                if (src.isSingleXmm()) {
+                    masm.movdl(dest.asRegister(), asXmmFloatReg(src));
+                } else if (src.isDoubleXmm()) {
+                    masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
+                } else {
+                    throw Util.unimplemented("no fpu stack");
+                }
+                break;
+
             default:
                 throw Util.shouldNotReachHere();
         }

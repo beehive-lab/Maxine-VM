@@ -1992,13 +1992,12 @@ public final class GraphBuilder {
 //                    }
 //                    break;
 //                }
-//                case MOV_I2F:
-//                case MOV_F2I:
-//                case MOV_L2D:
-//                case MOV_D2L: {
-//                    skip2();
-//                    break;
-//                }
+
+                case MOV_I2F:  genConvert(opcode, CiKind.Int, CiKind.Float ); break;
+                case MOV_F2I:  genConvert(opcode, CiKind.Float, CiKind.Int ); break;
+                case MOV_L2D: genConvert(opcode, CiKind.Long, CiKind.Double ); break;
+                case MOV_D2L: genConvert(opcode, CiKind.Double, CiKind.Long ); break;
+
 //                case UWLT:
 //                case UWLTEQ:
 //                case UWGT:
