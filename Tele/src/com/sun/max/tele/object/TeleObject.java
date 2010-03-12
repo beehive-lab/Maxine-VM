@@ -231,14 +231,14 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     /**
      * @return the size of the memory occupied by this object in the VM, including header.
      */
-    public abstract Size objectSize();
+    protected abstract Size objectSize();
 
     /**
      * Gets the current area of memory in which the object is stored.
      *
      * @return current memory region occupied by this object in the VM, subject to relocation by GC.
      */
-    public final MemoryRegion memoryRegion() {
+    public final MemoryRegion objectMemoryRegion() {
         if (isObsolete() || isDead()) {
             //Log.println("STATE DEAD: " + lastValidPointer + " " + specificLayout.originToCell(lastValidPointer));
             return new TeleMemoryRegion(specificLayout.originToCell(lastValidPointer), objectSize(), "");

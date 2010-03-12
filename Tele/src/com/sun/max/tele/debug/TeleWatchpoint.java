@@ -631,7 +631,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 case LIVE:
                     // A relocatable watchpoint on a live object should have been relocated
                     // (eagerly) just as the relocation took place.   Check that the locations match.
-                    if (!teleObject.memoryRegion().start().plus(offset).equals(memoryRegion().start())) {
+                    if (!teleObject.objectMemoryRegion().start().plus(offset).equals(memoryRegion().start())) {
                         ProgramWarning.message("Watchpoint relocation failure - watchpoint on live object at wrong location " + this);
                     }
                     break;
@@ -667,7 +667,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
         private TeleWholeObjectWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, TeleObject teleObject, WatchpointSettings settings)
             throws TooManyWatchpointsException, DuplicateWatchpointException {
-            super(kind, watchpointManager, description, teleObject, Offset.zero(), teleObject.objectSize(), settings);
+            super(kind, watchpointManager, description, teleObject, Offset.zero(), teleObject.objectMemoryRegion().size(), settings);
         }
     }
 
@@ -839,7 +839,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 } else {
                     String amendedDescription = (description == null) ? "" : description;
                     amendedDescription = amendedDescription + " (non-live object))";
-                    final MemoryRegion region = teleObject.memoryRegion();
+                    final MemoryRegion region = teleObject.objectMemoryRegion();
                     teleWatchpoint = new TeleRegionWatchpoint(WatchpointKind.CLIENT, this, amendedDescription, region, settings);
                 }
                 teleWatchpoint = addClientWatchpoint(teleWatchpoint);

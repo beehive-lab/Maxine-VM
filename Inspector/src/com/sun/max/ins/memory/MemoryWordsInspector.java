@@ -362,7 +362,7 @@ public final class MemoryWordsInspector extends Inspector {
      * mode set to {@link ViewMode#OBJECT}.
      */
     public MemoryWordsInspector(Inspection inspection, TeleObject teleObject) {
-        this(inspection, teleObject.memoryRegion(), null, teleObject.origin(), teleObject.isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
+        this(inspection, teleObject.objectMemoryRegion(), null, teleObject.origin(), teleObject.isLive() ? ViewMode.OBJECT : ViewMode.WORD, null);
     }
 
     /**
@@ -650,7 +650,7 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToCurrentObject() {
         TeleObject teleObject = vm().findObjectAt(origin);
         if (teleObject != null) {
-            MemoryRegion objectMemoryRegion = teleObject.memoryRegion();
+            MemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final int newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.wordCount);
@@ -666,7 +666,7 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToPreviousObject() {
         final TeleObject teleObject = vm().findObjectPreceding(origin, 1000000);
         if (teleObject != null) {
-            MemoryRegion objectMemoryRegion = teleObject.memoryRegion();
+            MemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             final Address start = objectMemoryRegion.start().aligned(wordSize.toInt());
             // User model policy, grow the size of the viewing region if needed, but never shrink it.
             final int newWordCount = Math.max(wordsInRegion(objectMemoryRegion), memoryWordRegion.wordCount);
@@ -680,7 +680,7 @@ public final class MemoryWordsInspector extends Inspector {
     private void moveToNextObject() {
         final TeleObject teleObject = vm().findObjectFollowing(origin, 1000000);
         if (teleObject != null) {
-            final MemoryRegion objectMemoryRegion = teleObject.memoryRegion();
+            final MemoryRegion objectMemoryRegion = teleObject.objectMemoryRegion();
             // Start stays the same
             final Address start = memoryWordRegion.start();
             // Default is to leave the viewed size the same
