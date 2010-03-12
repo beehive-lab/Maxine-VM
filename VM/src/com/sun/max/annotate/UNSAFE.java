@@ -43,6 +43,7 @@ import com.sun.max.vm.classfile.*;
  * <li>{@link BUILTIN}</li>
  * <li>{@link C_FUNCTION}</li>
  * <li>{@link VM_ENTRY_POINT}</li>
+ * <li>{@link ACCESSOR}</li>
  * <li>{@link SUBSTITUTE}: the substitutee is unsafe</li>
  * <li>{@link LOCAL_SUBSTITUTION}: the substitutee is unsafe</li>
  * </ul>

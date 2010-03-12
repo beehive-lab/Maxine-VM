@@ -56,6 +56,7 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.type.ClassRegistry.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -858,6 +859,7 @@ public final class ClassfileReader {
 
                 int substituteeIndex = -1;
                 int intrinsic = 0;
+                Class accessor = null;
 
                 if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
                     for (Annotation annotation : getAnnotations(name, descriptor)) {
@@ -875,6 +877,9 @@ public final class ClassfileReader {
                             flags |= NO_SAFEPOINTS;
                         } else if (annotation.annotationType() == BUILTIN.class) {
                             flags |= BUILTIN | UNSAFE;
+                        } else if (annotation.annotationType() == ACCESSOR.class) {
+                            accessor = ((ACCESSOR) annotation).value();
+                            flags |= UNSAFE;
                         } else if (annotation.annotationType() == PLATFORM.class) {
                             if (!Platform.target().isAcceptedBy((PLATFORM) annotation)) {
                                 continue nextMethod;
@@ -963,6 +968,7 @@ public final class ClassfileReader {
 
                 classRegistry.set(GENERIC_SIGNATURE, methodActor, genericSignature);
                 classRegistry.set(CHECKED_EXCEPTIONS, methodActor, checkedExceptions);
+                classRegistry.set(Property.ACCESSOR, methodActor, accessor);
                 classRegistry.set(RUNTIME_VISIBLE_ANNOTATION_BYTES, methodActor, runtimeVisibleAnnotationsBytes);
                 classRegistry.set(RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES, methodActor, runtimeVisibleParameterAnnotationsBytes);
                 classRegistry.set(ANNOTATION_DEFAULT_BYTES, methodActor, annotationDefaultBytes);

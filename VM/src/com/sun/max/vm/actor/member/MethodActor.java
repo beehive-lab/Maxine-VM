@@ -246,6 +246,15 @@ public abstract class MethodActor extends MemberActor {
         return holder().classRegistry().get(CHECKED_EXCEPTIONS, this);
     }
 
+    /**
+     * Gets the value of the {@link ACCESSOR} annotation that was applied to this method.
+     *
+     * @return {@code null} if this method has no {@link ACCESSOR} annotation
+     */
+    public final Class accessor() {
+        return holder().classRegistry().get(ACCESSOR, this);
+    }
+
     public static MethodActor fromJava(Method javaMethod) {
         if (MaxineVM.isHosted()) {
             return JavaPrototype.javaPrototype().toMethodActor(javaMethod);
