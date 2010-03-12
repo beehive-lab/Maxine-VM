@@ -267,7 +267,14 @@ public class JTGenerator {
             writer.println("}");
         } else {
             // check the return value against the expected return value
-            if (useEquals(run.expectedValue)) {
+            if (run.expectedValue instanceof JavaExecHarness.MethodCall) {
+                writer.println("runString = " + runString + ";");
+                writer.print("if (!");
+                genValue(run.expectedValue);
+                writer.print("(");
+                genTestCall(testCase, run);
+                writer.println(")) {");
+            } else if (useEquals(run.expectedValue)) {
                 writer.println("runString = " + runString + ";");
                 writer.print("if (");
                 genValue(run.expectedValue);
@@ -316,6 +323,8 @@ public class JTGenerator {
             writer.print("(byte) " + String.valueOf(v));
         } else if (v instanceof String) {
             writer.print("\"" + String.valueOf(v) + "\"");
+        } else if (v instanceof JavaExecHarness.CodeLiteral) {
+            writer.print(v.toString());
         } else {
             writer.print(String.valueOf(v));
         }
@@ -339,6 +348,8 @@ public class JTGenerator {
         } else if (expectedValue instanceof Short) {
             return true;
         } else if (expectedValue instanceof Byte) {
+            return true;
+        } else if (expectedValue instanceof JavaExecHarness.CodeLiteral) {
             return true;
         }
         return false;

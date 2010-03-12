@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,26 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.jdk;
+package jtt.exbytecode;
 
-import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.builtin.*;
 
-/**
- * The {@code JDK_java_lang_Float} class implements substitutions for the
- * float class.
- *
- * @author Ben L. Titzer
+// register -> register
+
+/*
+ * @Harness: java
+ * @Runs: `java.lang.Double.NaN = 0x7ff8000000000000L; 1.0d = 0x3ff0000000000000L; -1.0d = -4616189618054758400L; 473729.5945321d = 4691882224927966680L
  */
-@METHOD_SUBSTITUTIONS(Float.class)
-public class JDK_java_lang_Float {
-    @SUBSTITUTE
-    public static int floatToRawIntBits(float f) {
-        return SpecialBuiltin.floatToInt(f);
+
+public class EBC_movd2l_01 {
+    public static long test(double arg) {
+        return SpecialBuiltin.doubleToLong(arg);
     }
 
-    @SUBSTITUTE
-    public static float intBitsToFloat(int i) {
-        return SpecialBuiltin.intToFloat(i);
-    }
 }
