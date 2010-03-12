@@ -36,7 +36,7 @@ public class EBC_movl2d_03 {
         return doTest(new D(), arg);
     }
 
-    private static double doTest (D d, long arg) {
+    private static double doTest(D d, long arg) {
         d.d = SpecialBuiltin.longToDouble(arg);
         return d.d;
     }
