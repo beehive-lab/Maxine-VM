@@ -34,7 +34,7 @@ public class EBC_movf2i_03 {
     }
     public static int test(float arg) {
         return doTest(new I(), arg);
-   }
+    }
 
     private static int doTest(I i, float arg) {
         i.i = SpecialBuiltin.floatToInt(arg);
