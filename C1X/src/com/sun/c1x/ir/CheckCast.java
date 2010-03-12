@@ -27,7 +27,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>CheckCast</code> instruction represents a checkcast bytecode.
+ * The {@code CheckCast} instruction represents a checkcast bytecode.
  *
  * @author Ben L. Titzer
  */
@@ -39,7 +39,7 @@ public final class CheckCast extends TypeCheck {
      * @param object the instruction producing the object
      * @param stateBefore the state before the cast
      */
-    public CheckCast(RiType targetClass, Value targetClassInstruction, Value object, ValueStack stateBefore) {
+    public CheckCast(RiType targetClass, Value targetClassInstruction, Value object, FrameState stateBefore) {
         super(targetClass, targetClassInstruction, object, CiKind.Object, stateBefore);
         initFlag(Flag.NonNull, object.isNonNull());
     }

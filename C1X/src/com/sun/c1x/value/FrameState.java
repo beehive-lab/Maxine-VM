@@ -23,17 +23,18 @@ package com.sun.c1x.value;
 import java.util.*;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ri.*;
 import com.sun.c1x.util.*;
 
 /**
- * The <code>ValueStack</code> class encapsulates the state of local variables and the stack at a particular point in
- * the abstract interpretation.
+ * The {@code FrameState} class encapsulates the frame state (i.e. local variables and
+ * operand stack) at a particular point in the abstract interpretation.
  *
  * @author Ben L. Titzer
  */
-public class ValueStack {
+public class FrameState {
 
     private final Value[] values; // manages both stack and locals
     private int stackIndex;
@@ -42,9 +43,17 @@ public class ValueStack {
     private final IRScope scope;
     private ArrayList<Value> locks;
 
-    public ValueStack(IRScope irScope, int maxLocals, int maxStack) {
+    /**
+     * The number of extra stack slots required for doing IR wrangling during
+     * {@linkplain GraphBuilder bytecode parsing}. While this may hide stack
+     * overflow issues in the original bytecode, the assumption is that such
+     * issues must be caught by the verifier.
+     */
+    private static final int EXTRA_STACK_SLOTS = 1;
+
+    public FrameState(IRScope irScope, int maxLocals, int maxStack) {
         this.scope = irScope;
-        this.values = new Value[maxLocals + maxStack];
+        this.values = new Value[maxLocals + maxStack + EXTRA_STACK_SLOTS];
         this.maxLocals = maxLocals;
     }
 
@@ -56,8 +65,8 @@ public class ValueStack {
      * @param withLocks indicates whether to copy the lock state
      * @return a new value stack with the specified components
      */
-    public ValueStack copy(boolean withLocals, boolean withStack, boolean withLocks) {
-        final ValueStack other = new ValueStack(scope, localsSize(), maxStackSize());
+    public FrameState copy(boolean withLocals, boolean withStack, boolean withLocks) {
+        final FrameState other = new FrameState(scope, localsSize(), maxStackSize());
         if (withLocals && withStack) {
             // fast path: use array copy
             System.arraycopy(values, 0, other.values, 0, valuesSize());
@@ -76,12 +85,12 @@ public class ValueStack {
         return other;
     }
 
-    public ValueStack copyLocks() {
+    public FrameState copyLocks() {
         int size = scope().lockStackSize();
         if (stackSize() == 0) {
             size = 0;
         }
-        ValueStack s = new ValueStack(scope(), localsSize(), maxStackSize());
+        FrameState s = new FrameState(scope(), localsSize(), maxStackSize());
         s.replaceLocks(this);
         s.replaceLocals(this);
         s.replaceStack(this);
@@ -89,15 +98,15 @@ public class ValueStack {
         return s;
     }
 
-    public ValueStack copy() {
+    public FrameState copy() {
         return copy(true, true, true);
     }
 
-    public ValueStack immutableCopy() {
+    public FrameState immutableCopy() {
         return copy(true, true, true);
     }
 
-    public boolean isSameAcrossScopes(ValueStack other) {
+    public boolean isSameAcrossScopes(FrameState other) {
         assert stackSize() == other.stackSize();
         assert localsSize() == other.localsSize();
         assert locksSize() == other.locksSize();
@@ -166,7 +175,7 @@ public class ValueStack {
     /**
      * Checks whether the stack is empty.
      *
-     * @return <code>true</code> the stack is currently empty
+     * @return {@code true} the stack is currently empty
      */
     public final boolean stackEmpty() {
         return stackIndex == 0;
@@ -175,7 +184,7 @@ public class ValueStack {
     /**
      * Checks whether there are any active locks.
      *
-     * @return <code>true</code> if there are <i>no</i> active locks
+     * @return {@code true} if there are <i>no</i> active locks
      */
     public final boolean noActiveLocks() {
         return locksSize() == 0;
@@ -240,7 +249,7 @@ public class ValueStack {
      *
      * @param with the value stack containing the new local variables
      */
-    public void replaceLocals(ValueStack with) {
+    public void replaceLocals(FrameState with) {
         assert with.maxLocals == maxLocals;
         System.arraycopy(with.values, 0, values, 0, maxLocals);
     }
@@ -250,7 +259,7 @@ public class ValueStack {
      *
      * @param with the value stack containing the new local variables
      */
-    public void replaceStack(ValueStack with) {
+    public void replaceStack(FrameState with) {
         System.arraycopy(with.values, with.maxLocals, values, maxLocals, with.stackIndex);
         stackIndex = with.stackIndex;
     }
@@ -260,7 +269,7 @@ public class ValueStack {
      *
      * @param with the value stack containing the new local variables
      */
-    public void replaceLocks(ValueStack with) {
+    public void replaceLocks(FrameState with) {
         if (with.locks == null) {
             locks = null;
         } else {
@@ -271,7 +280,7 @@ public class ValueStack {
     /**
      * Get the value on the stack at the specified stack index.
      *
-     * @param i the index into the stack, with <code>0</code> being the bottom of the stack
+     * @param i the index into the stack, with {@code 0} being the bottom of the stack
      * @return the instruction at the specified position in the stack
      */
     public Value stackAt(int i) {
@@ -522,10 +531,10 @@ public class ValueStack {
      * @param scope the IRScope representing the inlined method
      * @return a new value stack representing the state at the beginning of inlining the specified method into this one
      */
-    public ValueStack pushScope(IRScope scope) {
+    public FrameState pushScope(IRScope scope) {
         assert scope.caller == this.scope;
         RiMethod method = scope.method;
-        ValueStack res = new ValueStack(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
+        FrameState res = new FrameState(scope, method.maxLocals(), maxStackSize() + method.maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(this);
         return res;
@@ -536,11 +545,11 @@ public class ValueStack {
      * IRScope.
      * @return a new value stack representing the state at exit from this value stack
      */
-    public ValueStack popScope() {
+    public FrameState popScope() {
         IRScope callingScope = scope.caller;
         assert callingScope != null;
         assert maxStackSize() >= scope.method.maxStackSize();
-        ValueStack res = new ValueStack(callingScope, callingScope.method.maxLocals(), maxStackSize());
+        FrameState res = new FrameState(callingScope, callingScope.method.maxLocals(), maxStackSize());
         res.replaceStack(this);
         res.replaceLocks(this);
         res.replaceLocals(scope.callerState());
@@ -598,7 +607,7 @@ public class ValueStack {
                 }
             }
         }
-        ValueStack state = this.scope().callerState();
+        FrameState state = this.scope().callerState();
         if (state != null) {
             state.valuesDo(closure);
         }
@@ -609,11 +618,11 @@ public class ValueStack {
     }
 
     public int callerStackSize() {
-        ValueStack callerState = scope().callerState();
+        FrameState callerState = scope().callerState();
         return callerState == null ? 0 : callerState.stackSize();
     }
 
-    public void checkPhis(BlockBegin block, ValueStack other) {
+    public void checkPhis(BlockBegin block, FrameState other) {
         checkSize(other);
         final int max = valuesSize();
         for (int i = 0; i < max; i++) {
@@ -636,7 +645,7 @@ public class ValueStack {
         }
     }
 
-    private void checkSize(ValueStack other) {
+    private void checkSize(FrameState other) {
         if (other.stackIndex != stackIndex) {
             throw new CiBailout("stack sizes do not match");
         } else if (other.maxLocals != maxLocals) {
@@ -644,7 +653,7 @@ public class ValueStack {
         }
     }
 
-    public void mergeAndInvalidate(BlockBegin block, ValueStack other) {
+    public void mergeAndInvalidate(BlockBegin block, FrameState other) {
         checkSize(other);
         for (int i = 0; i < valuesSize(); i++) {
             Value x = values[i];
@@ -789,11 +798,11 @@ public class ValueStack {
     public Iterable<Value> allLiveStateValues() {
         // TODO: implement a more efficient iterator for use in linear scan
         List<Value> result = new ArrayList<Value>(valuesSize());
-        for (ValueStack stack = this; stack != null; stack = stack.scope.callerState()) {
-            int max = stack.valuesSize();
+        for (FrameState state = this; state != null; state = state.scope.callerState()) {
+            int max = state.valuesSize();
 
             for (int i = 0; i < max; i++) {
-                Value instr = stack.values[i];
+                Value instr = state.values[i];
                 if (instr != null && instr.isLive()) {
                     result.add(instr);
                 }

@@ -418,6 +418,8 @@ public enum BytecodeTemplate {
     WRETURN,
     SAFEPOINT,
     PAUSE,
+    LSB,
+    MSB,
 
 //    JNICALL,
     READREG$fp_cpu,

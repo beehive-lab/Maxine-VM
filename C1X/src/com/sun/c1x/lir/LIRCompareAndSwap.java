@@ -21,7 +21,7 @@
 package com.sun.c1x.lir;
 
 /**
- * The <code>LIRCompareAndSwap</code> class definition.
+ * The {@code LIRCompareAndSwap} class definition.
  *
  * @author Marcelo Cintra
  *

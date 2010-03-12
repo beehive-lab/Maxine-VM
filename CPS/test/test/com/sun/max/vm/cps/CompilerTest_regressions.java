@@ -57,6 +57,26 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         super(name);
     }
 
+    public int  count_bits(long bitmap) {
+        int count = 0;
+        do {
+            int bitIndex =  Address.fromLong(bitmap).leastSignificantBitSet();
+            if (bitIndex < 0) {
+                return count;
+            }
+            count++;
+            bitmap &= ~(1L << bitIndex);
+
+        } while (true);
+    }
+
+    public void test_count_bits() {
+        final ClassMethodActor methodActor = getClassMethodActor("count_bits", SignatureDescriptor.create(int.class, long.class));
+        if (methodActor != null) {
+            compileMethod(methodActor);
+        }
+    }
+
     public void test_JniHandles_createStackHandle() {
         compileMethod(DynamicLinker.class, "lookupSymbol");
     }

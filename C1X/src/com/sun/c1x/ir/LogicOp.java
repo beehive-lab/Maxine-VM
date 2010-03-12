@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 /**
- * The <code>LogicOp</code> class definition.
+ * The {@code LogicOp} class definition.
  *
  * @author Ben L. Titzer
  */

@@ -775,7 +775,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(focus().thread().instructionLocation());
+            focus().setCodeLocation(focus().thread().ipLocation());
         }
     }
 
@@ -1363,7 +1363,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxWatchpoint watchpoint = focus().watchpoint();
             if (watchpoint != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), watchpoint, "Watchpoint " + watchpoint.description());
+                final Inspector inspector =
+                    new MemoryWordsInspector(inspection(), watchpoint.memoryRegion(), "Watchpoint " + watchpoint.description());
                 inspector.highlight();
             } else {
                 gui().errorMessage("no watchpoint selected");
@@ -2095,7 +2096,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(focus().thread().instructionLocation());
+            focus().setCodeLocation(focus().thread().ipLocation());
         }
 
         @Override
@@ -2382,7 +2383,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             // Most likely situation is that we are just about to call a native method in which case RAX is the address
             final MaxThread thread = focus().thread();
             assert thread != null;
-            final Address indirectCallAddress = thread.integerRegisters().getCallRegisterValue();
+            final Address indirectCallAddress = thread.registers().getCallRegisterValue();
             final Address initialAddress = indirectCallAddress == null ? vm().bootImageStart() : indirectCallAddress;
             new AddressInputDialog(inspection(), initialAddress, "View native code containing code address...", "View Code") {
                 @Override

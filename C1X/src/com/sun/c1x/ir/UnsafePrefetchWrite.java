@@ -21,7 +21,7 @@
 package com.sun.c1x.ir;
 
 /**
- * The <code>UnsafePrefetchWrite</code> instruction represents a prefetch write.
+ * The {@code UnsafePrefetchWrite} instruction represents a prefetch write.
  *
  * @author Ben L. Titzer
  */

@@ -192,7 +192,7 @@ public abstract class ReferenceMapInterpreter {
                 if (parameterKind.isReference) {
                     updateLocal(activeLocals, true);
                 }
-                activeLocals += parameterKind.isCategory1 ? 1 : 2;
+                activeLocals += parameterKind.stackSlots;
             }
         }
 
@@ -1581,6 +1581,12 @@ public abstract class ReferenceMapInterpreter {
                     skip2();
                     break;
                 }
+                case LSB:
+                case MSB:
+                    skip2();
+                    popCategory2(); // pop Word whose bits are scanned
+                    pushCategory1(); // push back an int with the bit index or -1
+                    break;
                 default: {
                     FatalError.unexpected("Unknown bytcode");
                 }

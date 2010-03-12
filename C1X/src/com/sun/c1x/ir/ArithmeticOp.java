@@ -25,13 +25,13 @@ import com.sun.c1x.bytecode.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>ArithmeticOp</code> class represents arithmetic operations such as addition, subtraction, etc.
+ * The {@code ArithmeticOp} class represents arithmetic operations such as addition, subtraction, etc.
  *
  * @author Ben L. Titzer
  */
 public final class ArithmeticOp extends Op2 {
 
-    ValueStack stateBefore;
+    FrameState stateBefore;
 
     /**
      * Creates a new arithmetic operation.
@@ -41,7 +41,7 @@ public final class ArithmeticOp extends Op2 {
      * @param isStrictFP indicates this operation has strict rounding semantics
      * @param stateBefore the value stack for instructions that may trap
      */
-    public ArithmeticOp(int opcode, Value x, Value y, boolean isStrictFP, ValueStack stateBefore) {
+    public ArithmeticOp(int opcode, Value x, Value y, boolean isStrictFP, FrameState stateBefore) {
         super(x.kind.meet(y.kind), opcode, x, y);
         initFlag(Flag.IsStrictFP, isStrictFP);
         if (stateBefore != null) {
@@ -70,13 +70,13 @@ public final class ArithmeticOp extends Op2 {
      * @return the lock stack
      */
     @Override
-    public ValueStack stateBefore() {
+    public FrameState stateBefore() {
         return stateBefore;
     }
 
     /**
      * Checks whether this instruction has strict fp semantics.
-     * @return <code>true</code> if this instruction has strict fp semantics
+     * @return {@code true} if this instruction has strict fp semantics
      */
     public boolean isStrictFP() {
         return checkFlag(Flag.IsStrictFP);
@@ -85,7 +85,7 @@ public final class ArithmeticOp extends Op2 {
     /**
      * Checks whether this instruction can cause a trap. For arithmetic operations,
      * only division and remainder operations can cause traps.
-     * @return <code>true</code> if this instruction can cause a trap
+     * @return {@code true} if this instruction can cause a trap
      */
     @Override
     public boolean canTrap() {

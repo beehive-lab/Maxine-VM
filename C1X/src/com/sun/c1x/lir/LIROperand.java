@@ -25,7 +25,7 @@ import com.sun.c1x.ir.Value;
 import com.sun.c1x.C1XMetrics;
 
 /**
- * The <code>LIROperand</code> class represents an operand, either
+ * The {@code LIROperand} class represents an operand, either
  * a constant, an address calculation, a register, or a stack slot.
  *
  * @author Marcelo Cintra

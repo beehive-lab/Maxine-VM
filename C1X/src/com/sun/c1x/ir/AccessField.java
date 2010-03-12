@@ -45,7 +45,7 @@ public abstract class AccessField extends StateSplit {
      * @param stateBefore the state before the field access
      * @param isLoaded indicates if the class is loaded
      */
-    public AccessField(Value object, RiField field, boolean isStatic, ValueStack stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
+    public AccessField(Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
         super(field.kind().stackType(), stateBefore);
         this.cpi = cpi;
         this.constantPool = constantPool;
@@ -92,7 +92,7 @@ public abstract class AccessField extends StateSplit {
 
     /**
      * Checks whether this field access is an access to a static field.
-     * @return <code>true</code> if this field access is to a static field
+     * @return {@code true} if this field access is to a static field
      */
     public boolean isStatic() {
         return checkFlag(Flag.IsStatic);
@@ -100,7 +100,7 @@ public abstract class AccessField extends StateSplit {
 
     /**
      * Checks whether the class of the field of this access is loaded.
-     * @return <code>true</code> if the class is loaded
+     * @return {@code true} if the class is loaded
      */
     public boolean isLoaded() {
         return checkFlag(Flag.IsLoaded);
@@ -124,7 +124,7 @@ public abstract class AccessField extends StateSplit {
 
     /**
      * Checks whether this field access will require patching.
-     * @return <code>true</code> if this field access will require patching
+     * @return {@code true} if this field access will require patching
      */
     public boolean needsPatching() {
         return checkFlag(Flag.NeedsPatching);
@@ -133,7 +133,7 @@ public abstract class AccessField extends StateSplit {
     /**
      * Checks whether this field access may cause a trap or an exception, which
      * is if it either requires a null check or needs patching.
-     * @return <code>true</code> if this field access can cause a trap
+     * @return {@code true} if this field access can cause a trap
      */
     @Override
     public boolean canTrap() {

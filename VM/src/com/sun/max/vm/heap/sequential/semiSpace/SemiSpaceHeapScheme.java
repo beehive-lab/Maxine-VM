@@ -57,7 +57,7 @@ import com.sun.max.vm.thread.*;
  * @author Laurent Daynes
  * @Author Mick Jordan
  */
-public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements HeapScheme, CellVisitor {
+public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisitor {
 
     public static final String FROM_REGION_NAME = "Heap-From";
     public static final String TO_REGION_NAME = "Heap-To";
@@ -257,11 +257,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
         }
 
         if (!heapAllocationOk) {
-            Log.println("Error occurred during initialization of VM");
-            Log.print("Could not reserve ");
-            Log.print(heapAllocationSize.toLong());
-            Log.println(" bytes of memory for object heap");
-            MaxineVM.native_exit(1);
+            reportPristineMemoryFailure("object heap", heapAllocationSize);
         } else {
             if (Heap.verbose()) {
                 Log.print("Allocated ");
@@ -899,10 +895,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Hea
             cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
             end = cell.plus(size);
             while (end.greaterThan(top)) {
-                if (VmThread.isAttaching()) {
-                    Log.println("Out of memory on thread still attaching to the VM");
-                    MaxineVM.native_exit(1);
-                }
                 if (!Heap.collectGarbage(size)) {
                     /*
                      * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we

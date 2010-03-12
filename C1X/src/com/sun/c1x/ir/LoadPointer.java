@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>LoadPointer</code> instruction represents a read of a pointer.
+ * The {@code LoadPointer} instruction represents a read of a pointer.
  * This instruction is part of the HIR support for low-level operations, such as safepoints,
  * stack banging, etc, and does not correspond to a Java operation.
  *
@@ -45,9 +45,9 @@ public final class LoadPointer extends PointerOp {
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      *
-     * @see PointerOp#PointerOp(CiKind, int, Value, Value, Value, boolean, ValueStack, boolean)
+     * @see PointerOp#PointerOp(CiKind, int, Value, Value, Value, boolean, FrameState, boolean)
      */
-    public LoadPointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, boolean canTrap, ValueStack stateBefore, boolean isVolatile) {
+    public LoadPointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, boolean canTrap, FrameState stateBefore, boolean isVolatile) {
         super(kind, opcode, pointer, displacement, offsetOrIndex, canTrap, stateBefore, isVolatile);
     }
 

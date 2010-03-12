@@ -486,55 +486,68 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "compile: " + worklist.size() + " new methods");
         final CodeRegion region = Code.bootCodeRegion;
         final Address oldMark = region.getAllocationMark();
-        int submittedCompilations = totalCompilations;
         final int initialNumberOfCompilations = totalCompilations;
-
-        final ExecutorService compilationService = Executors.newFixedThreadPool(numberOfCompilerThreads);
-        final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compilationService);
         final CompilationScheme compilationScheme = vmConfiguration().compilationScheme();
 
-        while (true) {
+        if (numberOfCompilerThreads == 1) {
             while (!worklist.isEmpty()) {
                 final MethodActor methodActor = worklist.removeFirst();
                 if (hasCode(methodActor)) {
-                    ++submittedCompilations;
-                    compilationCompletionService.submit(new Callable<TargetMethod>() {
-                        public TargetMethod call() throws Exception {
-                            try {
-                                RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
-                                TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
-                                assert result != null;
-                                return result;
-                            } catch (Throwable error) {
-                                throw reportCompilationError(methodActor, error);
+                    RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
+                    TargetMethod targetMethod = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
+                    processNewTargetMethod(targetMethod);
+                }
+            }
+        } else {
+            int submittedCompilations = totalCompilations;
+
+            final ExecutorService compilationService = Executors.newFixedThreadPool(numberOfCompilerThreads);
+            final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compilationService);
+
+            while (true) {
+                while (!worklist.isEmpty()) {
+                    final MethodActor methodActor = worklist.removeFirst();
+                    if (hasCode(methodActor)) {
+                        ++submittedCompilations;
+                        compilationCompletionService.submit(new Callable<TargetMethod>() {
+                            public TargetMethod call() throws Exception {
+                                try {
+                                    RuntimeCompilerScheme compiler = recommendedCompiler.get(methodActor);
+                                    TargetMethod result = compilationScheme.synchronousCompile((ClassMethodActor) methodActor, compiler);
+                                    assert result != null;
+                                    return result;
+                                } catch (Throwable error) {
+                                    throw reportCompilationError(methodActor, error);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
+                }
+                if (totalCompilations >= submittedCompilations) {
+                    if (!worklist.isEmpty()) {
+                        continue;
+                    }
+                    break;
+                }
+                try {
+                    final TargetMethod targetMethod = compilationCompletionService.take().get();
+                    assert targetMethod != null;
+                    processNewTargetMethod(targetMethod);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException executionException) {
+                    compilationService.shutdownNow();
+                    ProgramError.unexpected(executionException.getCause());
+                }
+                ++totalCompilations;
+                if (totalCompilations % 200 == 0) {
+                    Trace.line(1, "compiled: " + totalCompilations + " (" + methodActors.length() + " methods)");
                 }
             }
-            if (totalCompilations >= submittedCompilations) {
-                if (!worklist.isEmpty()) {
-                    continue;
-                }
-                break;
-            }
-            try {
-                final TargetMethod targetMethod = compilationCompletionService.take().get();
-                assert targetMethod != null;
-                processNewTargetMethod(targetMethod);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException executionException) {
-                compilationService.shutdownNow();
-                ProgramError.unexpected(executionException.getCause());
-            }
-            ++totalCompilations;
-            if (totalCompilations % 200 == 0) {
-                Trace.line(1, "compiled: " + totalCompilations + " (" + methodActors.length() + " methods)");
-            }
+
+            compilationService.shutdown();
         }
 
-        compilationService.shutdown();
         final int newCompilations = totalCompilations - initialNumberOfCompilations;
         Trace.end(1, "new compilations: " + newCompilations);
         if (newCompilations == 0) {

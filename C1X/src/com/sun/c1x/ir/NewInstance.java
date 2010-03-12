@@ -25,7 +25,7 @@ import com.sun.c1x.ri.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>NewInstance</code> instruction represents the allocation of an instance class object.
+ * The {@code NewInstance} instruction represents the allocation of an instance class object.
  *
  * @author Ben L. Titzer
  */
@@ -41,7 +41,7 @@ public final class NewInstance extends StateSplit {
      * @param cpi the constant pool index
      * @param stateBefore the state before executing this instruction
      */
-    public NewInstance(RiType type, char cpi, RiConstantPool constantPool, ValueStack stateBefore) {
+    public NewInstance(RiType type, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
         super(CiKind.Object, stateBefore);
         this.instanceClass = type;
         this.cpi = cpi;
@@ -59,7 +59,7 @@ public final class NewInstance extends StateSplit {
 
     /**
      * Checks whether this instruction can trap.
-     * @return <code>true</code>, assuming that allocation can cause OutOfMemory or other exceptions
+     * @return {@code true}, assuming that allocation can cause OutOfMemory or other exceptions
      */
     @Override
     public boolean canTrap() {

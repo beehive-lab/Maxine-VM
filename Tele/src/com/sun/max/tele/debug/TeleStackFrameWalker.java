@@ -50,9 +50,10 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         this.teleVM = teleVM;
         this.teleNativeThread = teleNativeThread;
         this.teleEnabledVmThreadLocalValues = teleNativeThread.localsBlock().threadLocalsAreaFor(Safepoint.State.ENABLED);
-        this.cpuInstructionPointer = teleNativeThread.instructionPointer();
-        this.cpuStackPointer = teleNativeThread.stackPointer();
-        this.cpuFramePointer = teleNativeThread.framePointer();
+        final TeleRegisterSet registers = teleNativeThread.registers();
+        this.cpuInstructionPointer = registers.instructionPointer();
+        this.cpuStackPointer = registers.stackPointer();
+        this.cpuFramePointer = registers.framePointer();
     }
 
     /**
@@ -131,8 +132,9 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public void useABI(TargetABI targetABI) {
-        final Pointer abiStackPointer = teleNativeThread.integerRegisters().get(VMRegister.Role.ABI_STACK_POINTER, targetABI);
-        final Pointer abiFramePointer = teleNativeThread.integerRegisters().get(VMRegister.Role.ABI_FRAME_POINTER, targetABI);
+        final TeleIntegerRegisters teleIntegerRegisters = teleNativeThread.registers().teleIntegerRegisters();
+        final Pointer abiStackPointer = teleIntegerRegisters.get(VMRegister.Role.ABI_STACK_POINTER, targetABI);
+        final Pointer abiFramePointer = teleIntegerRegisters.get(VMRegister.Role.ABI_FRAME_POINTER, targetABI);
         advance(cpuInstructionPointer, abiStackPointer, abiFramePointer);
     }
 }

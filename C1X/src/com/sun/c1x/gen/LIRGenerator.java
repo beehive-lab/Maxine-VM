@@ -20,17 +20,20 @@
  */
 package com.sun.c1x.gen;
 
+import static com.sun.c1x.lir.LIROperand.*;
+
 import java.util.*;
 
 import com.sun.c1x.*;
-import com.sun.c1x.globalstub.GlobalStub;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
+import com.sun.c1x.globalstub.*;
 import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.lir.LIRAddress.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.ri.*;
@@ -39,7 +42,6 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 import com.sun.c1x.xir.*;
 import com.sun.c1x.xir.CiXirAssembler.*;
-import static com.sun.c1x.lir.LIROperand.*;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -208,7 +210,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.jump(x.defaultSuccessor());
     }
 
-    private void setOperandsForLocals(ValueStack state) {
+    private void setOperandsForLocals(FrameState state) {
         CallingConvention args = compilation.frameMap().incomingArguments();
         int javaIndex = 0;
         for (int i = 0; i < args.operands.length; i++) {
@@ -435,7 +437,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             LIROperand osrBuffer = currentBlock.next().operand();
             callRuntime(CiRuntimeCall.OSRMigrationEnd, null, osrBuffer);
 
-            ValueStack state = (x.stateAfter() != null) ? x.stateAfter() : x.stateAfter();
+            FrameState state = (x.stateAfter() != null) ? x.stateAfter() : x.stateAfter();
 
             // increment backedge counter if needed
             incrementBackedgeCounter(stateFor(x, state));
@@ -638,7 +640,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         LIROperand resultRegister = resultRegisterFor(x.kind);
-        List<LIROperand> argList = visitInvokeArguments(x);
+        List<LIROperand> argList = visitInvokeArguments(x.signature(), x.arguments());
 
         if (destinationAddress != null) {
             // emit direct or indirect call to the destination address
@@ -690,6 +692,19 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
+    public void visitNativeCall(NativeCall x) {
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
+        LIROperand resultRegister = resultRegisterFor(x.kind);
+        CiKind[] signature = new CiKind[x.arguments.length];
+        for (int i = 0; i < signature.length; ++i) {
+            signature[i] = x.arguments[i].kind;
+        }
+        List<LIROperand> argList = visitInvokeArguments(signature, x.arguments);
+        LIROperand nativeFunction = operandForInstruction(x.address());
+        lir.callNative(nativeFunction, x.nativeMethod.jniSymbol(), resultRegister, argList, info);
+    }
+
+    @Override
     public void visitLoadRegister(LoadRegister x) {
         LIROperand reg = rlockResult(x);
         lir.move(forRegister(x.kind, x.register()), reg);
@@ -738,6 +753,20 @@ public abstract class LIRGenerator extends ValueVisitor {
         pointer.loadItem();
         LIRAddress dst = getAddressForPointerOp(x, pointer);
         lir.store(value.result(), dst, info);
+    }
+
+    @Override
+    public void visitLoadPC(LoadPC x) {
+        LIROperand result = rlockResult(x);
+        lir.readPC(result);
+    }
+
+    @Override
+    public void visitStackAllocate(StackAllocate x) {
+        LIROperand result = rlockResult(x);
+        assert x.size().isConstant() : "ALLOCA bytecode 'size' operand is not a constant: " + x.size();
+        StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size().asConstant().asInt());
+        lir.alloca(stackBlock, result);
     }
 
     @Override
@@ -848,19 +877,19 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected GlobalStub stubFor(CiRuntimeCall runtimeCall) {
         GlobalStub stub = compilation.compiler.lookupGlobalStub(runtimeCall);
-        compilation.frameMap().usingGlobalStub(stub);
+        compilation.frameMap().usesGlobalStub(stub);
         return stub;
     }
 
     protected GlobalStub stubFor(GlobalStub.Id globalStub) {
         GlobalStub stub = compilation.compiler.lookupGlobalStub(globalStub);
-        compilation.frameMap().usingGlobalStub(stub);
+        compilation.frameMap().usesGlobalStub(stub);
         return stub;
     }
 
     protected GlobalStub stubFor(XirTemplate template) {
         GlobalStub stub = compilation.compiler.lookupGlobalStub(template);
-        compilation.frameMap().usingGlobalStub(stub);
+        compilation.frameMap().usesGlobalStub(stub);
         return stub;
     }
 
@@ -1900,7 +1929,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected void moveToPhi(ValueStack curState) {
+    protected void moveToPhi(FrameState curState) {
         // Moves all stack values into their phi position
         BlockBegin bb = currentBlock;
         if (bb.numberOfSux() == 1) {
@@ -1912,7 +1941,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 int maxPhis = curState.valuesSize();
                 PhiResolver resolver = new PhiResolver(this, currentVariableNumber + maxPhis * 2);
 
-                ValueStack suxState = sux.stateBefore();
+                FrameState suxState = sux.stateBefore();
 
                 for (int index = 0; index < suxState.stackSize(); index++) {
                     moveToPhi(resolver, curState.stackAt(index), suxState.stackAt(index));
@@ -2030,14 +2059,14 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected void walkState(Instruction x, ValueStack state) {
+    protected void walkState(Instruction x, FrameState state) {
         if (state == null) {
             return;
         }
         for (int index = 0; index < state.stackSize(); index++) {
             walkStateInstruction(state.stackAt(index));
         }
-        ValueStack s = state;
+        FrameState s = state;
         int bci = x.bci();
 
         while (s != null) {
@@ -2097,18 +2126,17 @@ public abstract class LIRGenerator extends ValueVisitor {
         return stateFor(x, x.stateBefore());
     }
 
-    protected LIRDebugInfo stateFor(Instruction x, ValueStack state) {
+    protected LIRDebugInfo stateFor(Instruction x, FrameState state) {
         return stateFor(x, state, false);
     }
 
-    protected LIRDebugInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
+    protected LIRDebugInfo stateFor(Instruction x, FrameState state, boolean ignoreXhandler) {
         return new LIRDebugInfo(state, x.bci(), ignoreXhandler ? null : x.exceptionHandlers());
     }
 
-    List<LIROperand> visitInvokeArguments(Invoke x) {
+    List<LIROperand> visitInvokeArguments(CiKind[] signature, Value[] args) {
         // for each argument, load it into the correct location
-        CallingConvention cc = compilation.frameMap().javaCallingConvention(x.signature(), true, true);
-        Value[] args = x.arguments();
+        CallingConvention cc = compilation.frameMap().javaCallingConvention(signature, true, true);
         List<LIROperand> argList = new ArrayList<LIROperand>(args.length);
         int j = 0;
         for (Value arg : args) {
@@ -2197,7 +2225,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void maybePrintCurrentInstruction() {
         if (currentInstruction != null && lastInstructionPrinted != currentInstruction) {
             lastInstructionPrinted = currentInstruction;
-            InstructionPrinter ip = new InstructionPrinter(TTY.out, true);
+            InstructionPrinter ip = new InstructionPrinter(TTY.out, true, compilation.target);
             ip.printInstructionListing(currentInstruction);
         }
     }

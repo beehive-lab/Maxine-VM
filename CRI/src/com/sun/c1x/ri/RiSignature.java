@@ -24,7 +24,8 @@ import com.sun.c1x.ci.*;
 
 /**
  * This interface represents a method signature provided by the runtime.
- *
+ * 
+ * @see <a href="http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#7035">Method Descriptors</a>
  * @author Ben L. Titzer
  */
 public interface RiSignature {
@@ -43,9 +44,9 @@ public interface RiSignature {
     RiType argumentTypeAt(int index);
 
     /**
-     * Gets the argument basic type at the specified position.
+     * Gets the argument kind at the specified position.
      * @param index the index into the parameters, with {@code 0} indicating the first parameter
-     * @return the basic type of the argument at the specified position
+     * @return the kind of the argument at the specified position
      */
     CiKind argumentKindAt(int index);
 

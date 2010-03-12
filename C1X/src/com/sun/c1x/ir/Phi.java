@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>Phi</code> instruction represents the merging of dataflow
+ * The {@code Phi} instruction represents the merging of dataflow
  * in the instruction graph. It refers to a join block and a variable.
  *
  * @author Ben L. Titzer
@@ -56,7 +56,7 @@ public final class Phi extends Value {
 
     /**
      * Check whether this phi corresponds to a local variable.
-     * @return <code>true</code> if this phi refers to a local variable
+     * @return {@code true} if this phi refers to a local variable
      */
     public boolean isLocal() {
         return index >= 0;
@@ -64,7 +64,7 @@ public final class Phi extends Value {
 
     /**
      * Check whether this phi corresponds to a stack location.
-     * @return <code>true</code> if this phi refers to a stack location
+     * @return {@code true} if this phi refers to a stack location
      */
     public boolean isOnStack() {
         return index < 0;
@@ -95,7 +95,7 @@ public final class Phi extends Value {
      * @return the instruction that produced the value in the i'th predecessor
      */
     public Value operandAt(int i) {
-        ValueStack state;
+        FrameState state;
         if (block.isExceptionEntry()) {
             state = block.exceptionHandlerStates().get(i);
         } else {
@@ -109,7 +109,7 @@ public final class Phi extends Value {
      * @param state the state to access
      * @return the instruction producing the value
      */
-    public Value operandIn(ValueStack state) {
+    public Value operandIn(FrameState state) {
         if (isLocal()) {
             return state.localAt(localIndex());
         } else {

@@ -23,7 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.ci.*;
 
 /**
- * The <code>ExceptionObject</code> instruction represents the incoming exception object to an exception handler.
+ * The {@code ExceptionObject} instruction represents the incoming exception object to an exception handler.
  *
  * @author Ben L. Titzer
  */

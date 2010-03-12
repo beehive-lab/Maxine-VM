@@ -38,7 +38,7 @@ public abstract class AccessArray extends StateSplit {
      * @param array the instruction that produces the array object value
      * @param stateBefore the lock stack
      */
-    public AccessArray(CiKind type, Value array, ValueStack stateBefore) {
+    public AccessArray(CiKind type, Value array, FrameState stateBefore) {
         super(type, stateBefore);
         this.array = array;
         if (array.isNonNull()) {
@@ -76,7 +76,7 @@ public abstract class AccessArray extends StateSplit {
 
     /**
      * Checks whether this instruction can cause a trap.
-     * @return <code>true</code> if this instruction can cause a trap
+     * @return {@code true} if this instruction can cause a trap
      */
     @Override
     public boolean canTrap() {

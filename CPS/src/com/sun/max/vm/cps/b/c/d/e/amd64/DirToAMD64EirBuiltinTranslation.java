@@ -1272,6 +1272,22 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
+    public void  visitLeastSignificantBit(LeastSignificantBit builtin, DirValue dirResult, DirValue[] dirArguments) {
+        assert dirArguments.length == 1 && (dirArguments[0].kind().equals(Kind.LONG) || dirArguments[0].kind().isWord);
+        final EirValue result = dirToEirValue(dirResult);
+        final EirValue value = dirToEirValue(dirArguments[0]);
+        addInstruction(new  AMD64EirInstruction.BSF_I64(eirBlock(), result, value));
+    }
+
+    @Override
+    public void visitMostSignificantBit(MostSignificantBit builtin,  DirValue dirResult, DirValue[] dirArguments) {
+        assert dirArguments.length == 1  && (dirArguments[0].kind().equals(Kind.LONG) || dirArguments[0].kind().isWord);
+        final EirValue result = dirToEirValue(dirResult);
+        final EirValue value = dirToEirValue(dirArguments[0]);
+        addInstruction(new  AMD64EirInstruction.BSR_I64(eirBlock(), result, value));
+    }
+
+    @Override
     public void visitAdjustJitStack(AdjustJitStack builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirArguments.length == 1;
         final EirValue registerPointerValue = methodTranslation().integerRegisterRoleValue(VMRegister.Role.ABI_STACK_POINTER);

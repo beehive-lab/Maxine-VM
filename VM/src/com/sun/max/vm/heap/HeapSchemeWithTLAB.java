@@ -24,7 +24,6 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -35,7 +34,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A HeapScheme adaptor with support for thread local allocation buffers (TLABs). The adaptor factors out methods for
@@ -97,70 +95,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      */
     private static final VmThreadLocal ALLOCATION_DISABLED
         = new VmThreadLocal(TLAB_DISABLED_THREAD_LOCAL_NAME, false, "HeapSchemeWithTLAB: disables per thread allocation if non-zero");
-
-    /**
-     * Local copy of Dynamic Hub for java.lang.Object to speed up filling cell with dead object.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    private static DynamicHub OBJECT_HUB;
-
-    /**
-     * Local copy of Dynamic Hub for byte [] to speed up filling cell with dead object.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    private static DynamicHub BYTE_ARRAY_HUB;
-
-    /**
-     * Size of an java.lang.Object instance, presumably the minimum object size.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    protected static Size MIN_OBJECT_SIZE;
-    /**
-     * Size of a byte array header.
-     */
-    @CONSTANT_WHEN_NOT_ZERO
-    private static Size BYTE_ARRAY_HEADER_SIZE;
-
-    /**
-     * Plants a dead instance of java.lang.Object at the specified pointer.
-     */
-    private static void plantDeadObject(Pointer cell) {
-        DebugHeap.writeCellTag(cell);
-        final Pointer origin = Layout.tupleCellToOrigin(cell);
-        Memory.clearWords(cell, MIN_OBJECT_SIZE.dividedBy(Word.size()).toInt());
-        Layout.writeHubReference(origin, Reference.fromJava(OBJECT_HUB));
-    }
-
-    /**
-     * Plants a dead byte array at the specified cell.
-     */
-    private static void plantDeadByteArray(Pointer cell, Size size) {
-        DebugHeap.writeCellTag(cell);
-        final int length = size.minus(BYTE_ARRAY_HEADER_SIZE).toInt();
-        final Pointer origin = Layout.arrayCellToOrigin(cell);
-        Memory.clearWords(cell, BYTE_ARRAY_HEADER_SIZE.dividedBy(Word.size()).toInt());
-        Layout.writeArrayLength(origin, length);
-        Layout.writeHubReference(origin, Reference.fromJava(BYTE_ARRAY_HUB));
-    }
-
-    /**
-     * Helper function to fill an area with a dead object.
-     * Used to make a dead area in the heap parseable by GCs.
-     *
-     * @param start start of the dead heap area
-     * @param end end of the dead heap area
-     */
-    public static void fillWithDeadObject(Pointer start, Pointer end) {
-        Pointer cell = DebugHeap.adjustForDebugTag(start);
-        Size deadObjectSize = end.minus(cell).asSize();
-        if (deadObjectSize.greaterThan(MIN_OBJECT_SIZE)) {
-            plantDeadByteArray(cell, deadObjectSize);
-        } else if (deadObjectSize.equals(MIN_OBJECT_SIZE)) {
-            plantDeadObject(cell);
-        } else {
-            FatalError.unexpected("Not enough space to fit a dead object");
-        }
-    }
 
     /**
      * A procedure for resetting the TLAB of a thread.
@@ -241,12 +175,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (MaxineVM.isHosted()) {
-            OBJECT_HUB = ClassRegistry.OBJECT.dynamicHub();
-            BYTE_ARRAY_HUB = ClassRegistry.BYTE_ARRAY.dynamicHub();
-            MIN_OBJECT_SIZE = OBJECT_HUB.tupleSize;
-            BYTE_ARRAY_HEADER_SIZE = Layout.byteArrayLayout().getArraySize(Kind.BYTE, 0);
-        } else if (phase == MaxineVM.Phase.PRISTINE) {
+        if (phase == MaxineVM.Phase.PRISTINE) {
             useTLAB = useTLABOption.getValue();
             initialTlabSize = tlabSizeOption.getValue();
             if (initialTlabSize.lessThan(0)) {

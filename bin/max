@@ -97,7 +97,7 @@ while [ "${1:0:1}" = "-" ]; do
             ;;
         -java_home )
             shift
-            JAVA_HOME=$1
+            export JAVA_HOME=$1
             ;;
         -maxine )
             shift

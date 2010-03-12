@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>StorePointer</code> instruction represents a write of a pointer.
+ * The {@code StorePointer} instruction represents a write of a pointer.
  * This instruction is part of the HIR support for low-level operations, such as safepoints,
  * stack banging, etc, and does not correspond to a Java operation.
  *
@@ -49,7 +49,7 @@ public final class StorePointer extends PointerOp {
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public StorePointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, Value value, boolean canTrap, ValueStack stateBefore, boolean isVolatile) {
+    public StorePointer(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, Value value, boolean canTrap, FrameState stateBefore, boolean isVolatile) {
         super(kind, opcode, pointer, displacement, offsetOrIndex, canTrap, stateBefore, isVolatile);
         this.value = value;
         setFlag(Flag.LiveStore);

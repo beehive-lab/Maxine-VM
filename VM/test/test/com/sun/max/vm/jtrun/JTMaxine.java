@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * The <code>JTMaxine</code> class implements a main program for running the generated Java tester tests
+ * The {@code JTMaxine} class implements a main program for running the generated Java tester tests
  * specifically within the Maxine VM.
  *
  * @author Ben L. Titzer

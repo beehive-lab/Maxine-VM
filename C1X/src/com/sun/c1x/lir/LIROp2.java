@@ -24,7 +24,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 
 /**
- * The <code>LIROp2</code> class represents a LIR instruction that performs an operation on two operands.
+ * The {@code LIROp2} class represents a LIR instruction that performs an operation on two operands.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger

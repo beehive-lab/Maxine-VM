@@ -179,7 +179,6 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
     public static Object tlabRetrieveMutex = new Object();
     public static boolean inGC = false;
     public static boolean inScavenging = false;
-    public static BeltTLAB[] scavengerTLABs = new BeltTLAB[numberOfGCThreads + 1];
 
     public BeltCellVisitor cellVisitor() {
         return cellVisitor;
@@ -486,7 +485,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeWithTLAB {
             FatalError.check(hardLimit.equals(tlabAllocationMark), "TLAB allocation mark cannot be greater than TLAB End");
             return;
         }
-        fillWithDeadObject(tlabAllocationMark, hardLimit);
+        fillWithTaggedDeadObject(tlabAllocationMark, hardLimit);
     }
 
     protected void resetTLABs() {

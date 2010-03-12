@@ -52,7 +52,7 @@ public abstract class PointerOp extends StateSplit {
      * @param stateBefore the state before
      * @param isVolatile {@code true} if the access is volatile
      */
-    public PointerOp(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, boolean canTrap, ValueStack stateBefore, boolean isVolatile) {
+    public PointerOp(CiKind kind, int opcode, Value pointer, Value displacement, Value offsetOrIndex, boolean canTrap, FrameState stateBefore, boolean isVolatile) {
         super(kind, stateBefore);
         this.opcode = opcode;
         this.pointer = pointer;
@@ -85,8 +85,7 @@ public abstract class PointerOp extends StateSplit {
     }
 
     /**
-     * Iterates over the input values to this instruction. In this case,
-     * it is only the pointer value.
+     * Iterates over the input values to this instruction.
      * @param closure the closure to apply to each value
      */
     @Override

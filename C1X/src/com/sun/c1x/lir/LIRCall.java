@@ -26,13 +26,28 @@ import com.sun.c1x.ci.CiRuntimeCall;
 import java.util.*;
 
 /**
- * This class represents a call instruction; either to a runtime method or a Java method.
+ * This class represents a call instruction; either to a {@linkplain CiRuntimeCall runtime method},
+ * a {@linkplain RiMethod Java method}, a native function or a global stub.
  *
  * @author Marcelo Cintra
  */
 public class LIRCall extends LIRInstruction {
 
+    public static final class NativeFunction {
+        public final LIROperand address;
+        public final String symbol;
+        public NativeFunction(LIROperand address, String symbol) {
+            this.address = address;
+            this.symbol = symbol;
+        }
+    }
+
+    /**
+     * The target of the call. This will be a {@link CiRuntimeCall}, {@link RiMethod} or {@link LIROperand}
+     * object denoting a call to the runtime, a Java method or a native function respectively.
+     */
     public final Object target;
+
     public final List<LIROperand> arguments;
 
     private static LIROperand[] toArray(List<LIROperand> arguments) {
@@ -65,6 +80,10 @@ public class LIRCall extends LIRInstruction {
 
     public RiMethod method() {
         return (RiMethod) target;
+    }
+
+    public NativeFunction nativeFunction() {
+        return (NativeFunction) target;
     }
 
     public CiRuntimeCall runtimeCall() {

@@ -138,6 +138,58 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     /**
+     * Returns the index to the least significant bit set in a given value.
+     *
+     * @param value the value to scan for the least significant bit
+     * @return the index to the least significant bit within {@code value} or {@code -1} if {@code value == 0}
+     */
+    @INTRINSIC(LSB)
+    @BUILTIN(LeastSignificantBit.class)
+    public static int leastSignificantBit(Word value) {
+        long l = value.asAddress().toLong();
+        if (l == 0) {
+            return -1;
+        }
+        long lowestOneBit = Long.lowestOneBit(l);
+        return Long.numberOfTrailingZeros(lowestOneBit);
+    }
+
+    public static class LeastSignificantBit extends SpecialBuiltin {
+        @Override
+        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+            assert arguments.length == 1;
+            visitor.visitLeastSignificantBit(this, result, arguments);
+        }
+        public static final LeastSignificantBit BUILTIN = new LeastSignificantBit();
+    }
+
+    /**
+     * Returns the index to the most significant bit set in a given value.
+     *
+     * @param value the value to scan for the most significant bit
+     * @return the index to the most significant bit within {@code value} or {@code -1} if {@code value == 0}
+     */
+    @INTRINSIC(MSB)
+    @BUILTIN(MostSignificantBit.class)
+    public static int mostSignificantBit(Word value) {
+        long l = value.asAddress().toLong();
+        if (l == 0) {
+            return -1;
+        }
+        long highestOneBit = Long.highestOneBit(l);
+        return Long.numberOfTrailingZeros(highestOneBit);
+    }
+
+    public static class MostSignificantBit extends SpecialBuiltin {
+        @Override
+        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+            assert arguments.length == 1;
+            visitor.visitMostSignificantBit(this, result, arguments);
+        }
+        public static final MostSignificantBit BUILTIN = new MostSignificantBit();
+    }
+
+    /**
      * @see Pause
      */
     @BUILTIN(Pause.class)

@@ -23,10 +23,8 @@ package com.sun.max.tele.debug;
 import java.io.*;
 import java.util.Arrays;
 
-import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -40,14 +38,11 @@ import com.sun.max.vm.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TeleRegisters {
+abstract class TeleRegisters {
 
     protected final VMConfiguration vmConfiguration;
+    final Endianness endianness;
     private final Symbolizer<? extends Symbol> symbolizer;
-
-    public final Symbolizer<? extends Symbol> symbolizer() {
-        return symbolizer;
-    }
 
     private final Address[] registerValues;
     private final byte[] registerData;
@@ -56,10 +51,41 @@ public abstract class TeleRegisters {
     protected TeleRegisters(Symbolizer<? extends Symbol> symbolizer, VMConfiguration vmConfiguration) {
         this.symbolizer = symbolizer;
         this.vmConfiguration = vmConfiguration;
+        this.endianness = vmConfiguration.platform().processorKind.dataModel.endianness;
         this.registerValues = new Address[symbolizer.numberOfValues()];
         this.registerData = new byte[symbolizer.numberOfValues() * Address.size()];
         this.registerDataInputStream = new ByteArrayInputStream(registerData);
         Arrays.fill(this.registerValues, Address.zero());
+    }
+
+    /**
+     * Gets the value of a given register.
+     *
+     * @param register the register whose value is to be returned
+     * @return the value of {@code register}
+     */
+    final Address getValue(Symbol register) {
+        return registerValues[register.value()];
+    }
+
+    /**
+     * Determines whether a particular register is the instruction pointer.
+     *
+     * @param register
+     * @return whether the register is the instruction pointer
+     */
+    boolean isInstructionPointerRegister(Symbol register) {
+        return false;
+    }
+
+    /**
+     * Determines whether a particular register is a flags register.
+     *
+     * @param register
+     * @return whether the register is a flags register
+     */
+    boolean isFlagsRegister(Symbol register) {
+        return false;
     }
 
     /**
@@ -69,13 +95,16 @@ public abstract class TeleRegisters {
         return registerData;
     }
 
+    final Symbolizer<? extends Symbol> symbolizer() {
+        return symbolizer;
+    }
+
     /**
      * Refreshes the register values from the {@linkplain #registerData() raw buffer} holding the registers' values.
      * This method should be called whenever the raw buffer is updated.
      */
-    public final void refresh() {
+    final void refresh() {
         registerDataInputStream.reset();
-        final Endianness endianness = vmConfiguration.platform().processorKind.dataModel.endianness;
         for (int i = 0; i != registerValues.length; i++) {
             try {
                 registerValues[i] = Word.read(registerDataInputStream, endianness).asAddress();
@@ -85,49 +114,8 @@ public abstract class TeleRegisters {
         }
     }
 
-    /**
-     * @return a list of the registers in this set that point into the described area of memory in the VM..
-     */
-    public Sequence<Symbol> find(MemoryRegion memoryRegion) {
-        final AppendableSequence<Symbol> symbols = new ArrayListSequence<Symbol>(4);
-        if (memoryRegion != null) {
-            for (int index = 0; index < registerValues.length; index++) {
-                final Address address = registerValues[index];
-                if (memoryRegion.contains(address)) {
-                    symbols.append(symbolizer.fromValue(index));
-                }
-            }
-        }
-        return symbols;
-    }
-
-    /**
-     * @return a comma-separated list of the register names in this set that
-     * point into the described area of memory in the VM.
-     */
-    public String findAsNameList(MemoryRegion memoryRegion) {
-        String nameList = "";
-        for (Symbol registerSymbol : find(memoryRegion)) {
-            if (nameList.length() > 0) {
-                nameList += ",";
-            }
-            nameList += registerSymbol.name();
-        }
-        return nameList;
-    }
-
-    public Address get(int index) {
+    Address getValueAt(int index) {
         return registerValues[index];
-    }
-
-    /**
-     * Gets the value of a given register.
-     *
-     * @param register the register whose value is to be returned
-     * @return the value of {@code register}
-     */
-    public final Address get(Symbol register) {
-        return registerValues[register.value()];
     }
 
     /**
@@ -139,17 +127,17 @@ public abstract class TeleRegisters {
      * @param register the register whose value is to be updated
      * @param value the new value of {@code register}
      */
-    public final void set(Symbol register, Address value) {
+    protected final void setValue(Symbol register, Address value) {
         registerValues[register.value()] = value;
     }
 
-    public Registers getRegisters(String name) {
+    Registers getRegisters(String name) {
         final String[] registerNames = new String[symbolizer().numberOfValues()];
         final long[] values = new long[registerNames.length];
         int z = 0;
         for (Symbol s : symbolizer()) {
             registerNames[z] = s.name();
-            values[z] = get(s).toLong();
+            values[z] = getValue(s).toLong();
             z++;
         }
 

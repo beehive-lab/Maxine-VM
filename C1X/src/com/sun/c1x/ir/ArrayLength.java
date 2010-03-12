@@ -26,7 +26,7 @@ import com.sun.c1x.util.*;
 import com.sun.c1x.value.*;
 
 /**
- * The <code>ArrayLength</code> instruction gets the length of an array.
+ * The {@code ArrayLength} instruction gets the length of an array.
  *
  * @author Ben L. Titzer
  */
@@ -37,7 +37,7 @@ public final class ArrayLength extends AccessArray {
      * @param array the instruction producing the array
      * @param stateBefore the state before executing this instruction
      */
-    public ArrayLength(Value array, ValueStack stateBefore) {
+    public ArrayLength(Value array, FrameState stateBefore) {
         super(CiKind.Int, array, stateBefore);
         setFlag(Flag.NoBoundsCheck);
         if (array.isNonNull()) {

@@ -355,7 +355,7 @@ public class C1XTest {
     }
 
     private static boolean isCompilable(MethodActor method) {
-        return method instanceof ClassMethodActor && !method.isAbstract() && !method.isNative() && !method.isBuiltin() && !method.isIntrinsic();
+        return method instanceof ClassMethodActor && !method.isAbstract() /*&& !method.isNative()*/ && !method.isBuiltin() && !method.isIntrinsic();
     }
 
     enum PatternType {

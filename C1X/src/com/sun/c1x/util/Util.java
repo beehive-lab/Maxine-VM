@@ -30,7 +30,7 @@ import com.sun.c1x.debug.*;
 import com.sun.c1x.ri.*;
 
 /**
- * The <code>Util</code> class contains a motley collection of utility methods used throughout the compiler.
+ * The {@code Util} class contains a motley collection of utility methods used throughout the compiler.
  *
  * @author Ben L. Titzer
  * @author Doug Simon
@@ -230,7 +230,7 @@ public class Util {
      * Gets a string for a given method formatted according to a given format specification. A format specification is
      * composed of characters that are to be copied verbatim to the result and specifiers that denote an attribute of
      * the method that is to be copied to the result. A specifier is a single character preceded by a '%' character. The
-     * accepted specifiers and the method attribute they denote are described below:
+     * accepted specifiers and the method attributes they denote are described below:
      *
      * <pre>
      *     Specifier | Description                                          | Example(s)
@@ -298,6 +298,81 @@ public class Util {
                     }
                     case 'f': {
                         sb.append(!method.isLoaded() ? "unresolved" : method.isStatic() ? "static" : "virtual");
+                        break;
+                    }
+                    case '%': {
+                        sb.append('%');
+                        break;
+                    }
+                    default: {
+                        throw new UnknownFormatConversionException(String.valueOf(specifier));
+                    }
+                }
+            } else {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Gets a string for a given field formatted according to a given format specification. A format specification is
+     * composed of characters that are to be copied verbatim to the result and specifiers that denote an attribute of
+     * the field that is to be copied to the result. A specifier is a single character preceded by a '%' character. The
+     * accepted specifiers and the field attributes they denote are described below:
+     *
+     * <pre>
+     *     Specifier | Description                                          | Example(s)
+     *     ----------+------------------------------------------------------------------------------------------
+     *     'T'       | Qualified type                                       | "int" "java.lang.String"
+     *     't'       | Unqualified type                                     | "int" "String"
+     *     'H'       | Qualified holder                                     | "java.util.Map.Entry"
+     *     'h'       | Unqualified holder                                   | "Entry"
+     *     'n'       | Field name                                           | "age"
+     *     'f'       | Indicator if field is unresolved, static or instance | "unresolved" "static" "instance"
+     *     '%'       | A '%' character                                      | "%"
+     * </pre>
+     *
+     * @param format a format specification
+     * @param field the field to be formatted
+     * @param kinds if {@code true} then {@code field}'s type is printed in the
+     *            {@linkplain CiKind#jniName JNI} form of its {@linkplain CiKind kind}
+     * @return the result of formatting this field according to {@code format}
+     * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
+     */
+    public static String format(String format, RiField field, boolean kinds) throws IllegalFormatException {
+        final StringBuilder sb = new StringBuilder();
+        int index = 0;
+        RiType type = field.type();
+        while (index < format.length()) {
+            final char ch = format.charAt(index++);
+            if (ch == '%') {
+                if (index >= format.length()) {
+                    throw new UnknownFormatConversionException("An unquoted '%' character cannot terminate a field format specification");
+                }
+                final char specifier = format.charAt(index++);
+                boolean qualified = false;
+                switch (specifier) {
+                    case 'T':
+                        qualified = true;
+                        // fall through
+                    case 't': {
+                        sb.append(kinds ? type.kind().jniName : toJavaName(type, qualified));
+                        break;
+                    }
+                    case 'H':
+                        qualified = true;
+                        // fall through
+                    case 'h': {
+                        sb.append(toJavaName(field.holder(), qualified));
+                        break;
+                    }
+                    case 'n': {
+                        sb.append(field.name());
+                        break;
+                    }
+                    case 'f': {
+                        sb.append(!field.isLoaded() ? "unresolved" : field.isStatic() ? "static" : "instance");
                         break;
                     }
                     case '%': {
