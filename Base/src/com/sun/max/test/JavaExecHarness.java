@@ -37,6 +37,23 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
 
     private final Executor executor;
 
+    public class CodeLiteral {
+        public String codeLiteral;
+        CodeLiteral(String codeLiteral) {
+            this.codeLiteral = codeLiteral;
+        }
+        @Override
+        public String toString() {
+            return codeLiteral;
+        }
+    }
+
+    public class MethodCall extends CodeLiteral {
+        MethodCall(String codeCall) {
+            super(codeCall);
+        }
+    }
+
     public interface Executor {
         void initialize(JavaTestCase testCase, boolean loadingPackages);
 
@@ -257,6 +274,13 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         } else if (peekAndEat(iterator, "null")) {
             // the null value (null)
             return null;
+        } else if (iterator.current() == '`') {
+            expectChar(iterator, '`');
+            return new CodeLiteral(parseCodeLiteral(iterator));
+        } else if (iterator.current() == '(') {
+            expectChar(iterator, '(');
+            expectChar(iterator, ')');
+            return new MethodCall(parseCodeLiteral(iterator));
         }
         throw ProgramError.unexpected("invalid value at " + iterator.getIndex());
     }
@@ -345,6 +369,15 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
     }
 
     private Class<? extends Throwable> parseException(CharacterIterator iterator) {
+        final String exceptionName = parseCodeLiteral(iterator);
+        try {
+            return Class.forName(exceptionName).asSubclass(Throwable.class);
+        } catch (ClassNotFoundException e) {
+            throw raiseParseErrorAt("Unknown exception type", iterator);
+        }
+    }
+
+    private String parseCodeLiteral(CharacterIterator iterator) {
         final StringBuilder buf = new StringBuilder();
         while (true) {
             final char ch = iterator.current();
@@ -355,11 +388,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
                 break;
             }
         }
-        try {
-            return Class.forName(buf.toString()).asSubclass(Throwable.class);
-        } catch (ClassNotFoundException e) {
-            throw raiseParseErrorAt("Unknown exception type", iterator);
-        }
+        return buf.toString();
     }
 
     private boolean skipPeekAndEat(CharacterIterator iterator, char c) {

@@ -18,26 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.jdk;
+package jtt.exbytecode;
 
-import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.builtin.*;
 
-/**
- * The {@code JDK_java_lang_Float} class implements substitutions for the
- * float class.
- *
- * @author Ben L. Titzer
- */
-@METHOD_SUBSTITUTIONS(Float.class)
-public class JDK_java_lang_Float {
-    @SUBSTITUTE
-    public static int floatToRawIntBits(float f) {
-        return SpecialBuiltin.floatToInt(f);
+// register -> memory
+
+/*
+ * @Harness: java
+ * @Runs: `java.lang.Float.NaN = 0x7fc00000; 1.0f = 0x3f800000; -1.0f = -1082130432; 473000.0f = 0x48e6f500
+*/
+public class EBC_movf2i_03 {
+    static class I {
+        int i;
+    }
+    public static int test(float arg) {
+        return doTest(new I(), arg);
     }
 
-    @SUBSTITUTE
-    public static float intBitsToFloat(int i) {
-        return SpecialBuiltin.intToFloat(i);
+    private static int doTest(I i, float arg) {
+        i.i = SpecialBuiltin.floatToInt(arg);
+        return i.i;
+
     }
+
 }
