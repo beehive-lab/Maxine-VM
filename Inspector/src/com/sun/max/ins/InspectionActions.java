@@ -3531,7 +3531,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         SetObjectWatchpointAction(TeleObject teleObject, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleObject = teleObject;
-            this.memoryRegion = teleObject.memoryRegion();
+            this.memoryRegion = teleObject.objectMemoryRegion();
             refresh(true);
         }
 
