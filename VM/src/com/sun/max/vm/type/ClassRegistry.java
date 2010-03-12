@@ -448,6 +448,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         CHECKED_EXCEPTIONS(MethodActor.class, TypeDescriptor[].class, MethodActor.NO_CHECKED_EXCEPTIONS),
         CONSTANT_VALUE(FieldActor.class, Value.class, null),
         ANNOTATION_DEFAULT_BYTES(MethodActor.class, byte[].class, MethodActor.NO_ANNOTATION_DEFAULT_BYTES),
+        ACCESSOR(MethodActor.class, Class.class, null),
         INVOCATION_STUB(false, MethodActor.class, GeneratedStub.class, null),
         RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES(MethodActor.class, byte[].class, MethodActor.NO_RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES);
 
