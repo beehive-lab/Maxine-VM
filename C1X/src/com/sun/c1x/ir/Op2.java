@@ -36,13 +36,13 @@ public abstract class Op2 extends Instruction {
 
     /**
      * Creates a new Op2 instance.
-     * @param type the result type of this instruction
+     * @param kind the result type of this instruction
      * @param opcode the bytecode opcode
      * @param x the first input instruction
      * @param y the second input instruction
      */
-    public Op2(CiKind type, int opcode, Value x, Value y) {
-        super(type);
+    public Op2(CiKind kind, int opcode, Value x, Value y) {
+        super(kind);
         this.opcode = opcode;
         this.x = x;
         this.y = y;

@@ -87,7 +87,7 @@ public abstract class CodeGen {
 
     abstract void genThrow(Location thrown);
 
-    abstract void genReturn(CiKind basicType, Location value);
+    abstract void genReturn(CiKind kind, Location value);
 
     abstract void genTableswitch(BytecodeTableSwitch bytecodeTableSwitch, Location key);
 
@@ -107,13 +107,13 @@ public abstract class CodeGen {
 
     abstract Location genIncrement(Location l);
 
-    abstract Location genCompareOp(CiKind basicType, int opcode, Location x, Location y);
+    abstract Location genCompareOp(CiKind kind, int opcode, Location x, Location y);
 
     abstract Location genConvert(int opcode, CiKind from, CiKind to, Location value);
 
-    abstract Location genArrayLoad(CiKind basicType, Location array, Location index);
+    abstract Location genArrayLoad(CiKind kind, Location array, Location index);
 
-    abstract void genArrayStore(CiKind basicType, Location array, Location index, Location value);
+    abstract void genArrayStore(CiKind kind, Location array, Location index, Location value);
 
     abstract Location genIntOp2(int opcode, Location x, Location y);
 

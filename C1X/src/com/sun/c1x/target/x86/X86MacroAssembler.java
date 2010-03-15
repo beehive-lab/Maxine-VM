@@ -667,7 +667,7 @@ public class X86MacroAssembler extends X86Assembler {
         int off;
         if (is64 || target.isP6()) {
             off = codeBuffer.position();
-            movsbl(dst, src); // movsxb
+            movsxb(dst, src); // movsxb
         } else {
             off = loadUnsignedByte(dst, src);
             shll(dst, 24);
@@ -702,7 +702,7 @@ public class X86MacroAssembler extends X86Assembler {
         int off;
         if (is64 || target.isP6() || src.uses(dst)) {
             off = codeBuffer.position();
-            movzbl(dst, src); // movzxb
+            movzxb(dst, src); // movzxb
         } else {
             xorl(dst, dst);
             off = codeBuffer.position();
@@ -718,7 +718,7 @@ public class X86MacroAssembler extends X86Assembler {
         int off;
         if (is64 || target.isP6() || src.uses(dst)) {
             off = codeBuffer.position();
-            movzwl(dst, src); // movzxw
+            movzxl(dst, src); // movzxw
         } else {
             xorl(dst, dst);
             off = codeBuffer.position();
@@ -805,7 +805,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void signExtendByte(CiRegister reg) {
         if (is64 || target.isP6() && reg.isByte()) {
-            movsbl(reg, reg); // movsxb
+            movsxb(reg, reg); // movsxb
         } else {
             shll(reg, 24);
             sarl(reg, 24);
@@ -814,7 +814,7 @@ public class X86MacroAssembler extends X86Assembler {
 
     void signExtendShort(CiRegister reg) {
         if (is64 || target.isP6()) {
-            movswl(reg, reg); // movsxw
+            movsxw(reg, reg); // movsxw
         } else {
             shll(reg, 16);
             sarl(reg, 16);

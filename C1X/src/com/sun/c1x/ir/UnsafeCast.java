@@ -22,45 +22,41 @@ package com.sun.c1x.ir;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.ri.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
 
 /**
- * The {@code CheckCast} instruction represents a {@link Bytecodes#CHECKCAST}.
+ * The {@code UnsafeCast} instruction represents a {@link Bytecodes#UNSAFE_CAST}
+ * where the kind of the value being cast is not the same size (in terms {@linkplain CiKind#jvmSlots} JVM
+ * slots) as the kind being cast to. All other applications of {@link Bytecodes#UNSAFE_CAST}
+ * are translated by simply using the input value as the output value. That is,
+ * in these cases, the frame state is simply left as is.
  *
- * @author Ben L. Titzer
+ * @author Doug Simon
  */
-public final class CheckCast extends TypeCheck {
+public final class UnsafeCast extends Instruction {
 
     /**
-     * Creates a new CheckCast instruction.
-     * @param targetClass the class being casted to
-     * @param object the instruction producing the object
-     * @param stateBefore the state before the cast
+     * The instruction that produced the value being unsafe cast.
      */
-    public CheckCast(RiType targetClass, Value targetClassInstruction, Value object, FrameState stateBefore) {
-        super(targetClass, targetClassInstruction, object, CiKind.Object, stateBefore);
-        initFlag(Flag.NonNull, object.isNonNull());
+    private Value value;
+
+    /**
+     * Creates a new UnsafeCast instruction.
+     *
+     * @param toKind the the being cast to
+     * @param value the value being cast
+     */
+    public UnsafeCast(CiKind toKind, Value value) {
+        super(toKind);
+        this.value = value;
     }
 
     /**
-     * Gets the declared type of the result of this instruction.
-     * @return the declared type of the result
+     * Gets the instruction that produced the value being unsafe cast.
      */
-    @Override
-    public RiType declaredType() {
-        return targetClass;
+    public Value value() {
+        return value;
     }
 
-    /**
-     * Gets the exact type of the result of this instruction.
-     * @return the exact type of the result
-     */
-    @Override
-    public RiType exactType() {
-        return targetClass.exactType();
-    }
 
     /**
      * Implements this instruction's half of the visitor pattern.
@@ -68,21 +64,15 @@ public final class CheckCast extends TypeCheck {
      */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitCheckCast(this);
+        v.visitUnsafeCast(this);
     }
 
+    /**
+     * Iterates over the input values to this instruction.
+     * @param closure the closure to apply
+     */
     @Override
-    public int valueNumber() {
-        return targetClass.isLoaded() ? Util.hash1(Bytecodes.CHECKCAST, object) : 0;
+    public void inputValuesDo(ValueClosure closure) {
+        value = closure.apply(value);
     }
-
-    @Override
-    public boolean valueEqual(Instruction i) {
-        if (i instanceof CheckCast) {
-            CheckCast o = (CheckCast) i;
-            return targetClass == o.targetClass && object == o.object;
-        }
-        return false;
-    }
-
 }

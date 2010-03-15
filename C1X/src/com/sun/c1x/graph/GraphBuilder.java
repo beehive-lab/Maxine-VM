@@ -27,6 +27,7 @@ import java.util.*;
 import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
 import com.sun.c1x.ci.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.opt.*;
 import com.sun.c1x.ri.*;
@@ -42,6 +43,18 @@ import com.sun.c1x.value.*;
  */
 public final class GraphBuilder {
 
+    /**
+     * The minimum value to which {@link C1XOptions#TraceGraphBuilderLevel} must be set to trace
+     * the bytecode instructions as they are parsed.
+     */
+    public static final int TRACELEVEL_INSTRUCTIONS = 1;
+
+    /**
+     * The minimum value to which {@link C1XOptions#TraceGraphBuilderLevel} must be set to trace
+     * the frame state before each bytecode instruction as it is parsed.
+     */
+    public static final int TRACELEVEL_STATE = 2;
+
     final IR ir;
     final C1XCompilation compilation;
     final CiStatistics stats;
@@ -53,6 +66,8 @@ public final class GraphBuilder {
     BlockBegin curBlock;                   // the current block
     FrameState curState;                   // the current execution state
     Instruction lastInstr;                 // the last instruction added
+    final LogStream log;
+    final int traceLevel;
 
     boolean skipBlock;                     // skip processing of the rest of this block
     private Value rootMethodSynchronizedObject;
@@ -72,6 +87,13 @@ public final class GraphBuilder {
         this.localValueMap = C1XOptions.OptLocalValueNumbering ? new ValueMap() : null;
         this.canonicalizer = C1XOptions.OptCanonicalize ? new Canonicalizer(compilation.runtime, compilation.method, compilation.target) : null;
         RiMethod rootMethod = compilation.method;
+
+        traceLevel = C1XOptions.TraceGraphBuilderLevel;
+        log = traceLevel > 0 ? new LogStream(TTY.out) : null;
+        if (log != null) {
+            log.println();
+            log.println("Compiling " + compilation.method);
+        }
 
         // 1. create the start block
         ir.startBlock = new BlockBegin(0, ir.nextBlockNumber());
@@ -252,7 +274,7 @@ public final class GraphBuilder {
 
     void pushReturn(CiKind kind, Value x) {
         if (kind != CiKind.Void) {
-            curState.push(kind.stackType(), x);
+            curState.push(kind.stackKind(), x);
         }
     }
 
@@ -449,7 +471,7 @@ public final class GraphBuilder {
             }
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
-            push(constant.kind.stackType(), appendConstant(constant));
+            push(constant.kind.stackKind(), appendConstant(constant));
         } else {
             throw new Error("lookupConstant returned an object of incorrect type");
         }
@@ -463,12 +485,12 @@ public final class GraphBuilder {
         if (cseArrayLength(array)) {
             length = append(new ArrayLength(array, stateBefore));
         }
-        push(type.stackType(), append(new LoadIndexed(array, index, length, type, stateBefore)));
+        push(type.stackKind(), append(new LoadIndexed(array, index, length, type, stateBefore)));
     }
 
     void genStoreIndexed(CiKind type) {
         FrameState stateBefore = curState.immutableCopy();
-        Value value = pop(type.stackType());
+        Value value = pop(type.stackKind());
         Value index = ipop();
         Value array = apop();
         Value length = null;
@@ -570,7 +592,7 @@ public final class GraphBuilder {
     void genArithmeticOp(CiKind kind, int opcode, FrameState state) {
         Value y = pop(kind);
         Value x = pop(kind);
-        Value result = append(new ArithmeticOp(opcode, x, y, method().isStrictFP(), state));
+        Value result = append(new ArithmeticOp(opcode, kind, x, y, method().isStrictFP(), state));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             result = roundFp(result);
         }
@@ -602,8 +624,8 @@ public final class GraphBuilder {
     }
 
     void genConvert(int opcode, CiKind from, CiKind to) {
-        CiKind tt = to.stackType();
-        push(tt, append(new Convert(opcode, pop(from.stackType()), tt)));
+        CiKind tt = to.stackKind();
+        push(tt, append(new Convert(opcode, pop(from.stackKind()), tt)));
     }
 
     void genIncrement() {
@@ -611,7 +633,7 @@ public final class GraphBuilder {
         int delta = stream().readIncrement();
         Value x = curState.localAt(index);
         Value y = append(Constant.forInt(delta));
-        curState.storeLocal(index, append(new ArithmeticOp(IADD, x, y, method().isStrictFP(), null)));
+        curState.storeLocal(index, append(new ArithmeticOp(IADD, CiKind.Int, x, y, method().isStrictFP(), null)));
     }
 
     void genGoto(int fromBCI, int toBCI) {
@@ -653,9 +675,16 @@ public final class GraphBuilder {
         appendWithoutOptimization(t, bci);
     }
 
-    void genUnsafeCast(char fromTypeChar, char toTypeChar) {
-//        CiKind from = CiKind.fromTypeChar(fromTypeChar);
-//        CiKind to = CiKind.fromTypeChar(toTypeChar);
+    void genUnsafeCast(int operand) {
+        curState.unsafe = true;
+        char fromTypeChar = (char) (operand >> 8);
+        char toTypeChar = (char) (operand & 0xff);
+        CiKind from = CiKind.fromTypeChar(fromTypeChar);
+        CiKind to = CiKind.fromTypeChar(toTypeChar);
+        if (from.sizeInSlots() != to.sizeInSlots()) {
+            assert from.isWord() || to.isWord() : "cannot use UNSAFE_CAST between two types that have a different JVM slot size";
+            curState.push(to, append(new UnsafeCast(to, curState.pop(from))));
+        }
     }
 
     void genCheckCast() {
@@ -728,7 +757,7 @@ public final class GraphBuilder {
         FrameState stateBefore = curState.immutableCopy();
         RiField field = constantPool().lookupPutField(cpi);
         boolean isLoaded = !C1XOptions.TestPatching && field.isLoaded();
-        Value value = pop(field.kind().stackType());
+        Value value = pop(field.kind().stackKind());
         appendOptimizedStoreField(new StoreField(apop(), field, value, false, stateBefore, isLoaded, cpi, constantPool()));
     }
 
@@ -748,7 +777,7 @@ public final class GraphBuilder {
         RiType holder = field.holder();
         boolean isInitialized = !C1XOptions.TestPatching && field.isLoaded() && holder.isLoaded() && holder.isInitialized();
         Value container = genResolveClass(RiType.Representation.StaticFields, holder, isInitialized, cpi, stateBefore);
-        Value value = pop(field.kind().stackType());
+        Value value = pop(field.kind().stackKind());
         StoreField store = new StoreField(container, field, value, true, stateBefore, isInitialized, cpi, constantPool());
         appendOptimizedStoreField(store);
     }
@@ -779,7 +808,7 @@ public final class GraphBuilder {
             Value replacement = memoryMap.load(load);
             if (replacement != load) {
                 // the memory buffer found a replacement for this load (no need to append)
-                push(kind.stackType(), replacement);
+                push(kind.stackKind(), replacement);
                 return;
             }
         }
@@ -789,7 +818,7 @@ public final class GraphBuilder {
             // local optimization happened, replace its value in the memory map
             memoryMap.setResult(load, optimized);
         }
-        push(kind.stackType(), optimized);
+        push(kind.stackKind(), optimized);
     }
 
     void genInvokeStatic(RiMethod target, char cpi, RiConstantPool constantPool) {
@@ -875,7 +904,7 @@ public final class GraphBuilder {
 
     private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, char cpi, RiConstantPool constantPool, FrameState stateBefore) {
         CiKind resultType = returnKind(target);
-        Value result = append(new Invoke(opcode, resultType.stackType(), args, isStatic, target.vtableIndex(), target, cpi, constantPool, stateBefore));
+        Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target.vtableIndex(), target, cpi, constantPool, stateBefore));
         if (C1XOptions.RoundFPResults && scopeData.scope.method.isStrictFP()) {
             pushReturn(resultType, roundFp(result));
         } else {
@@ -1280,7 +1309,7 @@ public final class GraphBuilder {
         int index = 0;
         if (!method.isStatic()) {
             // add the receiver and assume it is non null
-            Local local = new Local(CiKind.Object, index);
+            Local local = new Local(method.holder().kind(), index);
             local.setFlag(Value.Flag.NonNull, true);
             local.setDeclaredType(method.holder());
             state.storeLocal(index, local);
@@ -1290,7 +1319,7 @@ public final class GraphBuilder {
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i);
-            CiKind vt = type.kind().stackType();
+            CiKind vt = type.kind().stackKind();
             Local local = new Local(vt, index);
             if (type.isLoaded()) {
                 local.setDeclaredType(type);
@@ -1337,7 +1366,7 @@ public final class GraphBuilder {
         CiKind resultType = returnKind(target);
 
         // create the intrinsic node
-        Intrinsic result = new Intrinsic(resultType.stackType(), intrinsic, target, args, isStatic, curState.copy(), preservesState, canTrap);
+        Intrinsic result = new Intrinsic(resultType.stackKind(), intrinsic, target, args, isStatic, curState.copy(), preservesState, canTrap);
         pushReturn(resultType, append(result));
         stats.intrinsicCount++;
         return true;
@@ -1353,7 +1382,29 @@ public final class GraphBuilder {
     }
 
     boolean tryInline(RiMethod target, Value[] args, RiType knownHolder, FrameState stateBefore) {
-        return checkInliningConditions(target) && tryInlineFull(target, args, knownHolder, stateBefore);
+        if (checkInliningConditions(target)) {
+            if (traceLevel > 0) {
+                log.adjustIndentation(1);
+                log.println("\\");
+                log.adjustIndentation(1);
+                if (traceLevel < TRACELEVEL_STATE) {
+                    log.println("|   [inlining " + target + "]");
+                    log.println("|");
+                }
+            }
+            inline(target, args, knownHolder, stateBefore);
+            if (traceLevel > 0) {
+                if (traceLevel < TRACELEVEL_STATE) {
+                    log.println("|");
+                    log.println("|   [return to " + curState.scope().method + "]");
+                }
+                log.adjustIndentation(-1);
+                log.println("/");
+                log.adjustIndentation(-1);
+            }
+            return true;
+        }
+        return false;
     }
 
     boolean checkInliningConditions(RiMethod target) {
@@ -1413,12 +1464,12 @@ public final class GraphBuilder {
         return false;
     }
 
-    boolean tryInlineFull(RiMethod target, Value[] args, RiType knownHolder, FrameState stateBefore) {
+    void inline(RiMethod target, Value[] args, RiType knownHolder, FrameState stateBefore) {
         BlockBegin orig = curBlock;
         if (!target.isStatic()) {
             // the receiver object must be nullchecked for instance methods
             Value receiver = args[0];
-            if (!receiver.isNonNull()) {
+            if (!receiver.isNonNull() && !receiver.kind.isWord()) {
                 NullCheck check = new NullCheck(receiver, stateBefore);
                 args[0] = check;
                 append(check);
@@ -1534,7 +1585,6 @@ public final class GraphBuilder {
         }
 
         stats.inlineCount++;
-        return true;
     }
 
     private Value synchronizedObject(FrameState state, RiMethod target) {
@@ -1699,6 +1749,7 @@ public final class GraphBuilder {
 
         skipBlock = false;
         assert curState != null;
+        RiMethod method = method();
         BytecodeStream s = scopeData.stream;
         s.setBCI(bci);
 
@@ -1707,6 +1758,7 @@ public final class GraphBuilder {
         boolean pushException = block.isExceptionEntry() && block.next() == null;
         int prevBCI = bci;
         int endBCI = s.endBCI();
+
         while (bci < endBCI) {
             BlockBegin nextBlock = blockAt(bci);
             if (nextBlock != null && nextBlock != block) {
@@ -1728,6 +1780,9 @@ public final class GraphBuilder {
                 apush(append(new ExceptionObject()));
                 pushException = false;
             }
+
+            traceState();
+            traceInstruction(bci, s, opcode);
 
             // Checkstyle: stop
             switch (opcode) {
@@ -1933,7 +1988,7 @@ public final class GraphBuilder {
                 case JSR_W          : genJsr(s.readFarBranchDest()); break;
 
 
-                case UNSAFE_CAST    : genUnsafeCast((char) s.readByte(), (char) s.readByte()); break;
+                case UNSAFE_CAST    : genUnsafeCast(s.readCPI()); break;
                 case WLOAD          : loadLocal(s.readLocalIndex(), CiKind.Word); break;
                 case WLOAD_0        : loadLocal(0, CiKind.Word); break;
                 case WLOAD_1        : loadLocal(1, CiKind.Word); break;
@@ -2060,6 +2115,37 @@ public final class GraphBuilder {
         return end;
     }
 
+    private void traceState() {
+        if (traceLevel >= TRACELEVEL_STATE) {
+            log.println(String.format("|   state [nr locals = %d, stack depth = %d, method = %s]", curState.localsSize(), curState.stackSize(), curState.scope().method));
+            for (int i = 0; i < curState.localsSize(); ++i) {
+                Value value = curState.localAt(i);
+                log.println(String.format("|   local[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind.javaName, value));
+            }
+            for (int i = 0; i < curState.stackSize(); ++i) {
+                Value value = curState.stackAt(i);
+                log.println(String.format("|   stack[%d] = %-8s : %s", i, value == null ? "bogus" : value.kind.javaName, value));
+            }
+        }
+    }
+
+    private void traceInstruction(int bci, BytecodeStream s, int opcode) {
+        if (traceLevel >= TRACELEVEL_INSTRUCTIONS) {
+            StringBuilder sb = new StringBuilder(40);
+            sb.append('|');
+            if (bci < 10) {
+                sb.append("  ");
+            } else if (bci < 100) {
+                sb.append(' ');
+            }
+            sb.append(bci).append(": ").append(Bytecodes.nameOf(opcode));
+            for (int i = bci + 1; i < s.nextBCI(); ++i) {
+                sb.append(' ').append(s.readUByte(i));
+            }
+            log.println(sb.toString());
+        }
+    }
+
     private void genStackAllocate() {
         Value size = pop(CiKind.Word);
         wpush(append(new StackAllocate(size)));
@@ -2075,7 +2161,7 @@ public final class GraphBuilder {
             if (snippetCall.arguments[i] == null) {
                 args[i] = pop(argKind);
             } else {
-                args[i] = new Constant(snippetCall.arguments[i]);
+                args[i] = append(new Constant(snippetCall.arguments[i]));
             }
         }
 

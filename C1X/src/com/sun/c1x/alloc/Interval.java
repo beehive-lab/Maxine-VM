@@ -107,12 +107,12 @@ public final class Interval {
     }
 
     CiKind type() {
-        assert registerNumber == -1 || registerNumber >= CiRegister.MaxPhysicalRegisterNumber : "cannot access type for fixed interval";
+        assert registerNumber == -1 || registerNumber >= CiRegister.LowestVirtualRegisterNumber : "cannot access type for fixed interval";
         return type;
     }
 
     void setType(CiKind type) {
-        assert registerNumber < CiRegister.MaxPhysicalRegisterNumber || this.type == CiKind.Illegal || this.type == type : "overwriting existing type";
+        assert registerNumber < CiRegister.LowestVirtualRegisterNumber || this.type == CiKind.Illegal || this.type == type : "overwriting existing type";
         assert type != CiKind.Boolean && type != CiKind.Byte && type != CiKind.Char : "these kinds should have int type registers";
         this.type = type;
     }
@@ -538,7 +538,7 @@ public final class Interval {
 
         // do not add use positions for precolored intervals because
         // they are never used
-        if (useKind != IntervalUseKind.NoUse && registerNumber() >= CiRegister.MaxPhysicalRegisterNumber) {
+        if (useKind != IntervalUseKind.NoUse && registerNumber() >= CiRegister.LowestVirtualRegisterNumber) {
             assert usePosAndKinds.size() % 2 == 0 : "must be";
             for (int i = 0; i < usePosAndKinds.size(); i += 2) {
                 assert pos <= usePosAndKinds.get(i) : "already added a use-position with lower position";
@@ -669,7 +669,7 @@ public final class Interval {
     }
 
     boolean isVirtualInterval() {
-        return registerNumber() >= CiRegister.MaxPhysicalRegisterNumber;
+        return registerNumber() >= CiRegister.LowestVirtualRegisterNumber;
     }
 
     // split this interval at the specified position and return
@@ -759,7 +759,7 @@ public final class Interval {
 
     private String typeName() {
         String typeName;
-        if (registerNumber() < CiRegister.MaxPhysicalRegisterNumber) {
+        if (registerNumber() < CiRegister.LowestVirtualRegisterNumber) {
             typeName = "fixed";
         } else {
             typeName = type().name();
@@ -769,7 +769,7 @@ public final class Interval {
 
     public void print(LogStream out, LinearScan allocator) {
         LIROperand opr = LIROperand.IllegalLocation;
-        if (registerNumber() < CiRegister.MaxPhysicalRegisterNumber) {
+        if (registerNumber() < CiRegister.LowestVirtualRegisterNumber) {
             // need a temporary operand for fixed intervals because type() cannot be called
             if (allocator.isCpu(assignedReg())) {
                 opr = LIROperand.forRegister(CiKind.Int, allocator.toRegister(assignedReg()));

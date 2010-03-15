@@ -23,6 +23,8 @@ package com.sun.c1x.ci;
 import java.util.Arrays;
 import java.util.ArrayList;
 
+import com.sun.c1x.ri.RiRegisterConfig;
+
 /**
  * This class represents a machine register.
  *
@@ -34,36 +36,68 @@ public final class CiRegister {
     /**
      * Invalid register.
      */
-    public static final CiRegister None = new CiRegister(-1, -1, "noreg");
+    public static final CiRegister None = new CiRegister(-1, -1, -1, "noreg");
 
     /**
      * Stack register of the current method.
      */
-    public static final CiRegister Stack = new CiRegister(-2, -2, "stackreg", RegisterFlag.CPU);
+    public static final CiRegister Stack = new CiRegister(-2, -2, -2, "stackreg", RegisterFlag.CPU);
 
     /**
      * Stack register relative to the caller stack. When this register is used in relative addressing, it means that the
      * offset is based to stack register of the caller and not to the stack register of the current method.
      */
-    public static final CiRegister CallerStack = new CiRegister(-3, -3, "caller-stackreg", RegisterFlag.CPU);
+    public static final CiRegister CallerStack = new CiRegister(-3, -3, -3, "caller-stackreg", RegisterFlag.CPU);
 
-    public static final int MaxPhysicalRegisterNumber = 40;
+    public static final int LowestVirtualRegisterNumber = 40;
 
+    /**
+     * The identifier for this register that is unique across all the registers in a {@link RiRegisterConfig}. 
+     */
     public final int number;
+    
+    /**
+     * The size of this register in bits.
+     */
+    public final int width;
+    
+    /**
+     * The mnemonic of this register.
+     */
     public final String name;
+    
     public final int encoding;
 
     private final int flags;
 
     public enum RegisterFlag {
-        CPU, Byte, XMM, MMX;
+        /**
+         * Denotes an integral (i.e. non floating point) register.
+         */
+        CPU,
+        
+        /**
+         * Denotes a register whose lowest order byte can be addressed separately.
+         */
+        Byte,
+        
+        /**
+         * Denotes a 64-bit XMM register.
+         */
+        XMM,
+        
+        /**
+         * Denotes an 80-bit MMX register.
+         */
+        MMX;
 
         public final int mask = 1 << (ordinal() + 1);
     }
 
-    public CiRegister(int number, int encoding, String name, RegisterFlag... flags) {
-        assert number < MaxPhysicalRegisterNumber : "cannot have a register number greater or equal " + MaxPhysicalRegisterNumber;
+    public CiRegister(int width, int number, int encoding, String name, RegisterFlag... flags) {
+        assert number < LowestVirtualRegisterNumber : "cannot have a register number greater or equal " + LowestVirtualRegisterNumber;
         this.number = number;
+        this.width = width;
         this.name = name;
         this.flags = createMask(flags);
         this.encoding = encoding;
@@ -85,10 +119,16 @@ public final class CiRegister {
         return number >= 0;
     }
 
+    /**
+     * Determines if this an XMM register.
+     */
     public boolean isXmm() {
         return checkFlag(RegisterFlag.XMM);
     }
 
+    /**
+     * Determines if this a general purpose register.
+     */
     public boolean isCpu() {
         return checkFlag(RegisterFlag.CPU);
     }
@@ -97,6 +137,9 @@ public final class CiRegister {
         return checkFlag(RegisterFlag.Byte);
     }
 
+    /**
+     * Determines if this an MMX register.
+     */
     public boolean isMMX() {
         return checkFlag(RegisterFlag.MMX);
     }

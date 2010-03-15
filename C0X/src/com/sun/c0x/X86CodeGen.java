@@ -138,14 +138,14 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     void genPutField(RiField field, Location object, Location value) {
-        CiKind basicType = field.kind();
+        CiKind kind = field.kind();
         CiRegister objReg = allocSrc(object, CiKind.Object);
-        CiRegister valReg = allocSrc(value, basicType);
+        CiRegister valReg = allocSrc(value, kind);
         if (field.isLoaded()) {
             // the field is loaded, emit a single store instruction
             recordImplicitExceptionPoint(NullPointerException.class);
             // XXX: write barrier
-            emitStore(basicType, new Address(objReg, field.offset()), valReg);
+            emitStore(kind, new Address(objReg, field.offset()), valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
             unimplemented(CiKind.Void);
@@ -154,30 +154,30 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     Location genGetField(RiField field, Location object) {
-        CiKind basicType = field.kind();
+        CiKind kind = field.kind();
         CiRegister objReg = allocSrc(object, CiKind.Object);
         if (field.isLoaded()) {
             // the field is loaded, emit a single load instruction
-            CiRegister valReg = allocDst(basicType);
+            CiRegister valReg = allocDst(kind);
             recordImplicitExceptionPoint(NullPointerException.class);
-            emitLoad(basicType, valReg, new Address(objReg, field.offset()));
+            emitLoad(kind, valReg, new Address(objReg, field.offset()));
             return location(valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
-            return unimplemented(basicType);
+            return unimplemented(kind);
         }
     }
 
     @Override
     void getPutStatic(RiField field, Location value) {
-        CiKind basicType = field.kind();
-        CiRegister valReg = allocSrc(value, basicType);
+        CiKind kind = field.kind();
+        CiRegister valReg = allocSrc(value, kind);
         if (field.isLoaded() && field.holder().isInitialized()) {
             // TODO: convert CiConstant to object
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             CiRegister objReg = allocSrc(l, CiKind.Object);
             // XXX: write barrier
-            emitStore(basicType, new Address(objReg, field.offset()), valReg);
+            emitStore(kind, new Address(objReg, field.offset()), valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
             unimplemented(CiKind.Void);
@@ -186,17 +186,17 @@ public class X86CodeGen extends CodeGen {
 
     @Override
     Location genGetStatic(RiField field) {
-        CiKind basicType = field.kind();
-        CiRegister valReg = allocDst(basicType);
+        CiKind kind = field.kind();
+        CiRegister valReg = allocDst(kind);
         if (field.isLoaded() && field.holder().isInitialized()) {
             // TODO: convert CiConstant to object
             Location l = genObjectConstant(field.holder().getEncoding(RiType.Representation.StaticFields));
             CiRegister objReg = allocSrc(l, CiKind.Object);
-            emitLoad(basicType, valReg, new Address(objReg, field.offset()));
+            emitLoad(kind, valReg, new Address(objReg, field.offset()));
             return location(valReg);
         } else {
             // TODO: call global stub to resolve the field and get its offset
-            return unimplemented(basicType);
+            return unimplemented(kind);
         }
     }
 
@@ -206,8 +206,8 @@ public class X86CodeGen extends CodeGen {
     }
 
     @Override
-    void genReturn(CiKind basicType, Location value) {
-        allocDst(target.registerConfig.getReturnRegister(basicType), basicType);
+    void genReturn(CiKind kind, Location value) {
+        allocDst(target.registerConfig.getReturnRegisters(kind)[0], kind);
         // TODO: adjust stack pointer
         asm.ret(0);
     }
@@ -261,7 +261,7 @@ public class X86CodeGen extends CodeGen {
     }
 
     @Override
-    Location genCompareOp(CiKind basicType, int opcode, Location x, Location y) {
+    Location genCompareOp(CiKind kind, int opcode, Location x, Location y) {
         return unimplemented(CiKind.Int);
     }
 
@@ -271,13 +271,13 @@ public class X86CodeGen extends CodeGen {
         CiRegister dst = allocDst(to);
         switch (opcode) {
             case Bytecodes.I2B:
-                asm.movsbl(dst, src);
+                asm.movsxb(dst, src);
                 return location(dst);
             case Bytecodes.I2S:
-                asm.movswl(dst, src);
+                asm.movsxw(dst, src);
                 return location(dst);
             case Bytecodes.I2C:
-                asm.movzwl(dst, src);
+                asm.movzxl(dst, src);
                 return location(dst);
             case Bytecodes.I2L:
                 assert is64bit;
@@ -353,28 +353,28 @@ public class X86CodeGen extends CodeGen {
     }
 
     @Override
-    Location genArrayLoad(CiKind basicType, Location array, Location index) {
-        int arrayElemSize = target.sizeInBytes(basicType);
-        int arrayBaseOffset = runtime.firstArrayElementOffset(basicType);
+    Location genArrayLoad(CiKind kind, Location array, Location index) {
+        int arrayElemSize = target.sizeInBytes(kind);
+        int arrayBaseOffset = runtime.firstArrayElementOffset(kind);
         CiRegister objReg = allocSrc(array, CiKind.Object);
         CiRegister indReg = allocSrc(index, CiKind.Int);
         genBoundsCheck(objReg, indReg);
-        CiRegister dst = allocDst(basicType);
+        CiRegister dst = allocDst(kind);
         Address elemAddress = new Address(objReg, indReg, Address.ScaleFactor.fromInt(arrayElemSize), arrayBaseOffset);
-        emitLoad(basicType, dst, elemAddress);
+        emitLoad(kind, dst, elemAddress);
         return location(dst);
     }
 
     @Override
-    void genArrayStore(CiKind basicType, Location array, Location index, Location value) {
-        int arrayElemSize = target.sizeInBytes(basicType);
-        int arrayBaseOffset = runtime.firstArrayElementOffset(basicType);
+    void genArrayStore(CiKind kind, Location array, Location index, Location value) {
+        int arrayElemSize = target.sizeInBytes(kind);
+        int arrayBaseOffset = runtime.firstArrayElementOffset(kind);
         CiRegister objReg = allocSrc(array, CiKind.Object);
         CiRegister indReg = allocSrc(index, CiKind.Int);
-        CiRegister valReg = allocSrc(value, basicType);
+        CiRegister valReg = allocSrc(value, kind);
         genBoundsCheck(objReg, indReg);
         Address elemAddress = new Address(objReg, indReg, Address.ScaleFactor.fromInt(arrayElemSize), arrayBaseOffset);
-        emitStore(basicType, elemAddress, valReg);
+        emitStore(kind, elemAddress, valReg);
     }
 
     private void genBoundsCheck(CiRegister objReg, CiRegister indReg) {
@@ -661,11 +661,11 @@ public class X86CodeGen extends CodeGen {
         return location(dst);
     }
 
-    private void emitLoad(CiKind basicType, CiRegister dst, Address elemAddress) {
-        switch (basicType) {
+    private void emitLoad(CiKind kind, CiRegister dst, Address elemAddress) {
+        switch (kind) {
             case Byte:
             case Boolean:
-                asm.movsbl(dst, elemAddress);
+                asm.movsxb(dst, elemAddress);
                 break;
             case Short:
                 asm.movswl(dst, elemAddress);
@@ -702,8 +702,8 @@ public class X86CodeGen extends CodeGen {
         }
     }
 
-    private void emitStore(CiKind basicType, Address elemAddress, CiRegister valReg) {
-        switch (basicType) {
+    private void emitStore(CiKind kind, Address elemAddress, CiRegister valReg) {
+        switch (kind) {
             case Byte:
             case Boolean:
                 asm.movb(elemAddress, valReg);
@@ -743,48 +743,48 @@ public class X86CodeGen extends CodeGen {
         }
     }
 
-    Location unimplemented(CiKind basicType) {
-        return new C0XCompilation.Register(fakeRegisterNum--, basicType);
+    Location unimplemented(CiKind kind) {
+        return new C0XCompilation.Register(fakeRegisterNum--, kind);
     }
 
-    Location unimplemented(CiKind basicType, String msg) {
-        return new C0XCompilation.Register(fakeRegisterNum--, basicType);
+    Location unimplemented(CiKind kind, String msg) {
+        return new C0XCompilation.Register(fakeRegisterNum--, kind);
     }
 
-    CiRegister allocDst(CiKind basicType) {
-        return defaultRegister(basicType);
+    CiRegister allocDst(CiKind kind) {
+        return defaultRegister(kind);
     }
 
-    CiRegister allocDst(CiRegister r, CiKind basicType) {
+    CiRegister allocDst(CiRegister r, CiKind kind) {
         return r;
     }
 
-    CiRegister allocSrc(Location l, CiKind basicType) {
-        return defaultRegister(basicType);
+    CiRegister allocSrc(Location l, CiKind kind) {
+        return defaultRegister(kind);
     }
 
-    CiRegister allocSrc(Location l, CiRegister r, CiKind basicType) {
+    CiRegister allocSrc(Location l, CiRegister r, CiKind kind) {
         return r;
     }
 
-    CiRegister allocSrcDst(Location l, CiKind basicType) {
-        return defaultRegister(basicType);
+    CiRegister allocSrcDst(Location l, CiKind kind) {
+        return defaultRegister(kind);
     }
 
-    CiRegister allocSrcDst(Location l, CiRegister r, CiKind basicType) {
+    CiRegister allocSrcDst(Location l, CiRegister r, CiKind kind) {
         return r;
     }
 
-    CiRegister allocTmp(CiKind basicType) {
-        return defaultRegister(basicType);
+    CiRegister allocTmp(CiKind kind) {
+        return defaultRegister(kind);
     }
 
-    CiRegister allocTmp(CiRegister r, CiKind basicType) {
+    CiRegister allocTmp(CiRegister r, CiKind kind) {
         return r;
     }
 
-    private CiRegister defaultRegister(CiKind basicType) {
-        return basicType == CiKind.Float || basicType == CiKind.Double ? X86.xmm0 : X86.rax;
+    private CiRegister defaultRegister(CiKind kind) {
+        return kind == CiKind.Float || kind == CiKind.Double ? X86.xmm0 : X86.rax;
     }
 
     Location location(CiRegister r) {

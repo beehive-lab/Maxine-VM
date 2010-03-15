@@ -350,6 +350,22 @@ public class LIRList {
         append(new LIROp3(LIROpcode.Lrem, left, right, tmp, res, info));
     }
 
+    public void wdiv(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Wdiv, left, right, tmp, res, info));
+    }
+
+    public void wrem(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Wrem, left, right, tmp, res, info));
+    }
+
+    public void wdivi(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Wdivi, left, right, tmp, res, info));
+    }
+
+    public void wremi(LIROperand left, LIROperand right, LIROperand res, LIROperand tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.Wremi, left, right, tmp, res, info));
+    }
+
     public void cmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, LIRDebugInfo info) {
         append(new LIROp2(LIROpcode.Cmp, condition, new LIRAddress(base, disp, CiKind.Int), LIROperand.forInt(c), info));
     }

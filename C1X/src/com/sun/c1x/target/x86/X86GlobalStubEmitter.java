@@ -458,7 +458,9 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         asm.directCall(call, null);
 
         if (call.resultKind != CiKind.Void) {
-            this.storeArgument(0, target.registerConfig.getReturnRegister(call.resultKind));
+            CiRegister[] returnRegisters = target.registerConfig.getReturnRegisters(call.resultKind);
+            assert returnRegisters.length == 1;
+            this.storeArgument(0, returnRegisters[0]);
         }
     }
 }

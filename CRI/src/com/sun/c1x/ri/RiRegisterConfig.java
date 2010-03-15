@@ -34,7 +34,7 @@ import com.sun.c1x.ci.CiLocation;
  */
 public interface RiRegisterConfig {
 
-    CiRegister getReturnRegister(CiKind kind);
+    CiRegister[] getReturnRegisters(CiKind kind);
 
     CiRegister getStackPointerRegister();
 

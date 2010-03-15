@@ -1205,14 +1205,14 @@ public abstract class X86Assembler extends AbstractAssembler {
         }
     }
 
-    public final void movsbl(CiRegister dst, Address src) { // movsxb
+    public final void movsxb(CiRegister dst, Address src) { // movsxb
         prefix(src, dst);
         emitByte(0x0F);
         emitByte(0xBE);
         emitOperand(dst, src);
     }
 
-    public final void movsbl(CiRegister dst, CiRegister src) { // movsxb
+    public final void movsxb(CiRegister dst, CiRegister src) { // movsxb
         assert is64 || src.isByte() : "must have byte register";
         int encode = prefixAndEncode(dst.encoding, src.encoding, true);
         emitByte(0x0F);
@@ -1289,10 +1289,16 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(dst, src);
     }
 
-    public final void movswl(CiRegister dst, CiRegister src) { // movsxw
+    public final void movsxw(CiRegister dst, CiRegister src) { // movsxw
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xBF);
+        emitByte(0xC0 | encode);
+    }
+
+    public final void movzxd(CiRegister dst, CiRegister src) { // movzxd
+        int encode = prefixAndEncode(dst.encoding, src.encoding);
+        emitByte(0x63);
         emitByte(0xC0 | encode);
     }
 
@@ -1318,14 +1324,14 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitOperand(src, dst);
     }
 
-    public final void movzbl(CiRegister dst, Address src) { // movzxb
+    public final void movzxb(CiRegister dst, Address src) { // movzxb
         prefix(src, dst);
         emitByte(0x0F);
         emitByte(0xB6);
         emitOperand(dst, src);
     }
 
-    public final void movzbl(CiRegister dst, CiRegister src) { // movzxb
+    public final void movzxb(CiRegister dst, CiRegister src) { // movzxb
         assert is64 || src.isByte() : "must have byte register";
         int encode = prefixAndEncode(dst.encoding, src.encoding, true);
         emitByte(0x0F);
@@ -1333,14 +1339,14 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0xC0 | encode);
     }
 
-    public final void movzwl(CiRegister dst, Address src) { // movzxw
+    public final void movzxl(CiRegister dst, Address src) { // movzxw
         prefix(src, dst);
         emitByte(0x0F);
         emitByte(0xB7);
         emitOperand(dst, src);
     }
 
-    public final void movzwl(CiRegister dst, CiRegister src) { // movzxw
+    public final void movzxl(CiRegister dst, CiRegister src) { // movzxw
         int encode = prefixAndEncode(dst.encoding, src.encoding);
         emitByte(0x0F);
         emitByte(0xB7);
@@ -2570,10 +2576,8 @@ public abstract class X86Assembler extends AbstractAssembler {
      * Creates prefix and the encoding of the lower 6 bits of the ModRM-Byte. It emits an operand prefix. If the given
      * operands exceed 3 bits, the 4th bit is encoded in the prefix.
      *
-     * @param regEnc
-     *            the encoding of the register part of the ModRM-Byte
-     * @param rmEnc
-     *            the encoding of the r/m part of the ModRM-Byte
+     * @param regEnc the encoding of the register part of the ModRM-Byte
+     * @param rmEnc the encoding of the r/m part of the ModRM-Byte
      * @return the lower 6 bits of the ModRM-Byte that should be emitted
      */
     int prefixqAndEncode(int regEnc, int rmEnc) {
@@ -2891,6 +2895,12 @@ public abstract class X86Assembler extends AbstractAssembler {
         prefixq(dst);
         emitByte(0xFF);
         emitOperand(X86.rcx, dst);
+    }
+
+    public final void divq(CiRegister src) {
+        int encode = prefixqAndEncode(src.encoding);
+        emitByte(0xF7);
+        emitByte(0xF0 | encode);
     }
 
     public final void idivq(CiRegister src) {

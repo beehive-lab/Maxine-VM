@@ -134,7 +134,7 @@ public class MaxRiMethod implements RiMethod {
      * @return {@code true} if bytecode is available for the method
      */
     public boolean hasCode() {
-        if (methodActor instanceof ClassMethodActor && !methodActor.isNative()) {
+        if (methodActor instanceof ClassMethodActor) {
             return ((ClassMethodActor) methodActor).originalCodeAttribute() != null;
         }
         return false;

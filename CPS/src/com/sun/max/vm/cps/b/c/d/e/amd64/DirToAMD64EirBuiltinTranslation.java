@@ -250,8 +250,8 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
             final EirValue dividend = dirToEirValue(dirArguments[0]);
             assign(dividendKind, result, dividend);
             final EirValue divisor = dirToEirValue(dirArguments[1]);
-            final EirVariable rd = createEirVariable(dividendKind);
-            createOperation(rd, result, divisor);
+            final EirVariable rdx = createEirVariable(dividendKind);
+            createOperation(rdx, result, divisor);
         }
 
         protected Division(Kind kind, DirValue dirResult, DirValue[] dirArguments) {
@@ -263,9 +263,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitIntDivided(IntDivided builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Division(Kind.INT, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                addInstruction(new CDQ(eirBlock(), rd, ra));
-                addInstruction(new IDIV_I32(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                addInstruction(new CDQ(eirBlock(), rdx, rax));
+                addInstruction(new IDIV_I32(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -274,9 +274,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitLongDivided(LongDivided builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Division(Kind.LONG, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                addInstruction(new CQO(eirBlock(), rd, ra));
-                addInstruction(new IDIV_I64(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                addInstruction(new CQO(eirBlock(), rdx, rax));
+                addInstruction(new IDIV_I64(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -326,9 +326,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitIntRemainder(IntRemainder builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Remainder(Kind.INT, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                addInstruction(new CDQ(eirBlock(), rd, ra));
-                addInstruction(new IDIV_I32(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                addInstruction(new CDQ(eirBlock(), rdx, rax));
+                addInstruction(new IDIV_I32(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -337,9 +337,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitLongRemainder(LongRemainder builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Remainder(Kind.LONG, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                addInstruction(new CQO(eirBlock(), rd, ra));
-                addInstruction(new IDIV_I64(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                addInstruction(new CQO(eirBlock(), rdx, rax));
+                addInstruction(new IDIV_I64(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -796,9 +796,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitDividedByAddress(DividedByAddress builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Division(Kind.LONG, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                instructionTranslation().assignZero(Kind.LONG, rd);
-                addInstruction(new DIV_I64(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                instructionTranslation().assignZero(Kind.LONG, rdx);
+                addInstruction(new DIV_I64(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -807,11 +807,11 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitDividedByInt(DividedByInt builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Division(Kind.LONG, Kind.INT, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                instructionTranslation().assignZero(Kind.LONG, rd);
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                instructionTranslation().assignZero(Kind.LONG, rdx);
                 final EirVariable zeroExtendedDivisor = createEirVariable(Kind.LONG);
                 addInstruction(new MOVZXD(eirBlock(), zeroExtendedDivisor, divisor));
-                addInstruction(new DIV_I64(eirBlock(), rd, ra, zeroExtendedDivisor));
+                addInstruction(new DIV_I64(eirBlock(), rdx, rax, zeroExtendedDivisor));
             }
         };
     }
@@ -820,9 +820,9 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitRemainderByAddress(RemainderByAddress builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Remainder(Kind.LONG, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                instructionTranslation().assignZero(Kind.LONG, rd);
-                addInstruction(new DIV_I64(eirBlock(), rd, ra, divisor));
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                instructionTranslation().assignZero(Kind.LONG, rdx);
+                addInstruction(new DIV_I64(eirBlock(), rdx, rax, divisor));
             }
         };
     }
@@ -831,11 +831,11 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     public void visitRemainderByInt(RemainderByInt builtin, DirValue dirResult, DirValue[] dirArguments) {
         new Remainder(Kind.LONG, Kind.INT, dirResult, dirArguments) {
             @Override
-            protected void createOperation(EirValue rd, EirValue ra, EirValue divisor) {
-                instructionTranslation().assignZero(Kind.LONG, rd);
+            protected void createOperation(EirValue rdx, EirValue rax, EirValue divisor) {
+                instructionTranslation().assignZero(Kind.LONG, rdx);
                 final EirVariable zeroExtendedDivisor = createEirVariable(Kind.LONG);
                 addInstruction(new MOVZXD(eirBlock(), zeroExtendedDivisor, divisor));
-                addInstruction(new DIV_I64(eirBlock(), rd, ra, zeroExtendedDivisor));
+                addInstruction(new DIV_I64(eirBlock(), rdx, rax, zeroExtendedDivisor));
             }
         };
     }

@@ -132,8 +132,8 @@ public class C0XCompilation {
     }
 
     abstract class RegisterAllocator {
-        abstract Register allocate(CiKind basicType);
-        abstract Register allocate(int physNum, CiKind basicType);
+        abstract Register allocate(CiKind kind);
+        abstract Register allocate(int physNum, CiKind kind);
         abstract void release(Register r);
         abstract void spill();
 
@@ -228,7 +228,7 @@ public class C0XCompilation {
         int max = sig.argumentCount(false);
         for (int i = 0; i < max; i++) {
             RiType type = sig.argumentTypeAt(i);
-            CiKind vt = type.kind().stackType();
+            CiKind vt = type.kind().stackKind();
             frameState.state[index] = produce(vt);
             index += vt.sizeInSlots();
         }
@@ -677,8 +677,8 @@ public class C0XCompilation {
         codeGen.genThrow(thrown);
     }
 
-    private void doReturn(CiKind basicType, Location value) {
-        codeGen.genReturn(basicType, value);
+    private void doReturn(CiKind kind, Location value) {
+        codeGen.genReturn(kind, value);
     }
 
     private void doTableswitch(BytecodeTableSwitch bytecodeTableSwitch) {
@@ -714,9 +714,9 @@ public class C0XCompilation {
         enqueue(targetBCI, currentState.copy());
     }
 
-    private void doIfSame(CiKind basicType, Condition cond, int nextBCI, int targetBCI) {
-        Location y = popX(basicType);
-        Location x = popX(basicType);
+    private void doIfSame(CiKind kind, Condition cond, int nextBCI, int targetBCI) {
+        Location y = popX(kind);
+        Location x = popX(kind);
         codeGen.genIfSame(cond, x, y, nextBCI, targetBCI);
         enqueue(nextBCI, currentState);
         enqueue(targetBCI, currentState.copy());
@@ -735,10 +735,10 @@ public class C0XCompilation {
         currentState.state[index] = r;
     }
 
-    private void doCompareOp(CiKind basicType, int opcode) {
-        Location y = popX(basicType);
-        Location x = popX(basicType);
-        Location r = codeGen.genCompareOp(basicType, opcode, x, y);
+    private void doCompareOp(CiKind kind, int opcode) {
+        Location y = popX(kind);
+        Location x = popX(kind);
+        Location r = codeGen.genCompareOp(kind, opcode, x, y);
         push1(r);
     }
 
@@ -748,18 +748,18 @@ public class C0XCompilation {
         pushX(r, to);
     }
 
-    private void doArrayLoad(CiKind basicType) {
+    private void doArrayLoad(CiKind kind) {
         Location index = pop1();
         Location array = pop1();
-        Location r = codeGen.genArrayLoad(basicType, array, index);
-        pushX(r, basicType);
+        Location r = codeGen.genArrayLoad(kind, array, index);
+        pushX(r, kind);
     }
 
-    private void doArrayStore(CiKind basicType) {
-        Location value = popX(basicType);
+    private void doArrayStore(CiKind kind) {
+        Location value = popX(kind);
         Location index = pop1();
         Location array = pop1();
-        codeGen.genArrayStore(basicType, array, index, value);
+        codeGen.genArrayStore(kind, array, index, value);
     }
 
     private void doIntOp2(int opcode) {
@@ -837,7 +837,7 @@ public class C0XCompilation {
             return;
         } else if (con instanceof CiConstant) {
             CiConstant constant = (CiConstant) con;
-            switch (constant.kind.stackType()) {
+            switch (constant.kind.stackKind()) {
                 case Int:    push1(codeGen.genIntConstant(constant.asInt())); return;
                 case Long:   push2(codeGen.genLongConstant(constant.asLong())); return;
                 case Float:  push1(codeGen.genFloatConstant(constant.asFloat())); return;
@@ -950,8 +950,8 @@ public class C0XCompilation {
         currentState.state[currentState.stackIndex++] = val;
     }
 
-    void pushX(Location val, CiKind basicType) {
-        if (basicType.isDoubleWord()) {
+    void pushX(Location val, CiKind kind) {
+        if (kind.isDoubleWord()) {
             push2(val);
         } else {
             push1(val);
@@ -987,8 +987,8 @@ public class C0XCompilation {
         return result;
     }
 
-    Location popX(CiKind basicType) {
-        return basicType.isDoubleWord() ? pop2() : pop1();
+    Location popX(CiKind kind) {
+        return kind.isDoubleWord() ? pop2() : pop1();
     }
 
     void push2(Location val) {
@@ -1001,8 +1001,8 @@ public class C0XCompilation {
         return currentState.state[--currentState.stackIndex];
     }
 
-    Location produce(CiKind basicType) {
-        return new Register(regNum++, basicType);
+    Location produce(CiKind kind) {
+        return new Register(regNum++, kind);
     }
 
     RiConstantPool constantPool() {

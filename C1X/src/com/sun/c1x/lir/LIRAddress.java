@@ -40,7 +40,14 @@ public final class LIRAddress extends LIROperand {
         Times4,
         Times8;
 
-        public static Scale fromInt(int shift) {
+        Scale() {
+            multiplier = 2 ^ ordinal();
+        }
+
+        /**
+         * Gets the Scale constant whose {@linkplain #multiplier} log base 2 is equal to a given value.
+         */
+        public static Scale fromLog2(int shift) {
             assert shift < SCALE.length;
             return SCALE[shift];
         }
@@ -48,6 +55,8 @@ public final class LIRAddress extends LIROperand {
         public int toInt() {
             return ordinal();
         }
+
+        public final int multiplier;
     }
 
     public final LIRLocation base;
@@ -114,18 +123,8 @@ public final class LIRAddress extends LIROperand {
         out.append("Base:").append(base);
         if (LIROperand.isLegal(index)) {
             out.append(" Index:").append(index);
-            switch (scale) {
-                case Times1:
-                    break;
-                case Times2:
-                    out.append(" * 2");
-                    break;
-                case Times4:
-                    out.append(" * 4");
-                    break;
-                case Times8:
-                    out.append(" * 8");
-                    break;
+            if (scale != Scale.Times1) {
+                out.append(" * ").append(scale.multiplier);
             }
         }
         out.append(" Disp: %d").append(displacement);
@@ -142,11 +141,11 @@ public final class LIRAddress extends LIROperand {
             assert displacement == 0 || LIROperand.isIllegal(index) : "can't have both";
         } else if (architecture.is64bit()) {
             assert base.isVariableOrRegister() : "wrong base operand";
-            assert LIROperand.isIllegal(index) || index.isDoubleCpu() : "wrong index operand";
+            assert LIROperand.isIllegal(index) || index.isDoubleRegister() : "wrong index operand";
             assert base.kind == CiKind.Object || base.kind == CiKind.Long : "wrong type for addresses";
         } else {
-            assert base.isSingleCpu() : "wrong base operand";
-            assert LIROperand.isIllegal(index) || index.isSingleCpu() : "wrong index operand";
+            assert base.isSingleRegister() : "wrong base operand";
+            assert LIROperand.isIllegal(index) || index.isSingleRegister() : "wrong index operand";
             assert base.kind == CiKind.Object || base.kind == CiKind.Int : "wrong type for addresses";
         }
     }

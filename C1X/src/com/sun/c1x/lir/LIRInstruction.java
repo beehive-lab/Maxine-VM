@@ -324,7 +324,7 @@ public abstract class LIRInstruction {
     }
 
     /**
-     * Gets the lock stack for this instruction.
+     * Gets the result operand for this instruction.
      *
      * @return return the result operand
      */

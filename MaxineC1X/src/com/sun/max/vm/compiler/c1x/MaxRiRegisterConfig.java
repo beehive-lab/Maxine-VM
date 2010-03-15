@@ -48,8 +48,8 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
     private final CiRegister stackPointerRegister;
     private final CiRegister framePointerRegister;
     private final CiRegister scratchRegister;
-    private final CiRegister returnRegisterInt;
-    private final CiRegister returnRegisterFloat;
+    private final CiRegister[] returnRegisterInt;
+    private final CiRegister[] returnRegisterFloat;
     private final CiRegister[] integerRegisterRoleMap;
     private final CiRegister[] allocatableRegisters;
     private final CiRegister[] registerReferenceMapOrder;
@@ -92,8 +92,8 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         framePointerRegister = markUnallocatable(unallocatable, regMap, Role.CPU_FRAME_POINTER, roles);
         scratchRegister = markUnallocatable(unallocatable, regMap, Role.ABI_SCRATCH, roles);
         markUnallocatable(unallocatable, regMap, Role.LITERAL_BASE_POINTER, roles);
-        returnRegisterInt = regMap.get(roles.integerRegisterActingAs(Role.ABI_RETURN).name().toLowerCase());
-        returnRegisterFloat = regMap.get(roles.floatingPointRegisterActingAs(Role.ABI_RETURN).name().toLowerCase());
+        returnRegisterInt = new CiRegister[] {regMap.get(roles.integerRegisterActingAs(Role.ABI_RETURN).name().toLowerCase())};
+        returnRegisterFloat = new CiRegister[] {regMap.get(roles.floatingPointRegisterActingAs(Role.ABI_RETURN).name().toLowerCase())};
 
         assert safepointRegister != null;
         assert stackPointerRegister != null;
@@ -144,12 +144,12 @@ public class MaxRiRegisterConfig implements RiRegisterConfig {
         xmmParameterRegisters = xmmList.toArray(new CiRegister[xmmList.size()]);
     }
 
-    public CiRegister getReturnRegister(CiKind kind) {
+    public CiRegister[] getReturnRegisters(CiKind kind) {
         if (kind == CiKind.Float || kind == CiKind.Double) {
             return returnRegisterFloat;
         }
         if (kind == CiKind.Void || kind == CiKind.Illegal) {
-            return CiRegister.None;
+            return null;
         }
         return returnRegisterInt;
     }

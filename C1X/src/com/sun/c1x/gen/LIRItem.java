@@ -21,6 +21,7 @@
 package com.sun.c1x.gen;
 
 import com.sun.c1x.ci.*;
+import com.sun.c1x.gen.LIRGenerator.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
@@ -59,11 +60,18 @@ public class LIRItem {
         setInstruction(null);
     }
 
+    private CiKind nonWordKind(CiKind kind) {
+        if (kind.isWord()) {
+            return gen.is64 ? CiKind.Long : CiKind.Int;
+        }
+        return kind;
+    }
+
     public LIRItem loadItemForce(LIROperand reg) {
         LIROperand r = result();
         if (r != reg) {
             assert r.kind != CiKind.Illegal;
-            if (r.kind != reg.kind) {
+            if (nonWordKind(r.kind) != nonWordKind(reg.kind)) {
                 // moves between different types need an intervening spill slot
                 LIROperand tmp = gen.forceToSpill(r, reg.kind);
                 gen.lir.move(tmp, reg);
@@ -101,7 +109,7 @@ public class LIRItem {
         assert !destroysRegister || (!result.isVariableOrRegister() || result.isVariable()) : "shouldn't use setDestroysRegister with physical registers";
         if (destroysRegister && result.isVariableOrRegister()) {
             if (isIllegal(newResult)) {
-                newResult = gen.newRegister(value.kind);
+                newResult = gen.newVariable(value.kind);
                 gen.lir.move(result, newResult);
             }
             return newResult;
@@ -130,7 +138,7 @@ public class LIRItem {
             if (!res.isVariable() || !gen.isVarFlagSet(res, LIRGenerator.VariableFlag.MustBeByteReg)) {
                 // make sure that it is a byte register
                 assert !value.kind.isFloat() && !value.kind.isDouble() : "can't load floats in byte register";
-                LIROperand reg = gen.rlockByte(CiKind.Byte);
+                LIROperand reg = gen.newVariable(CiKind.Byte, VariableFlag.MustBeByteReg);
                 gen.lir.move(res, reg);
                 result = reg;
             }
@@ -181,7 +189,7 @@ public class LIRItem {
             result = value.operand();
         }
         if (!result().isVariableOrRegister()) {
-            LIROperand reg = gen.newRegister(value.kind);
+            LIROperand reg = gen.newVariable(value.kind);
             gen.lir.move(result(), reg);
             if (isConstant(result())) {
                 result = reg;

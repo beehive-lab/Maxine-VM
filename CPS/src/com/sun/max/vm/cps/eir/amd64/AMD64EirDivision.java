@@ -29,8 +29,8 @@ import com.sun.max.vm.cps.eir.*;
  */
 public abstract class AMD64EirDivision extends AMD64EirUnaryOperation {
 
-    private final EirOperand rd;
-    private final EirOperand ra;
+    private final EirOperand rdx;
+    private final EirOperand rax;
 
     public EirOperand divisor() {
         return operand();
@@ -40,25 +40,25 @@ public abstract class AMD64EirDivision extends AMD64EirUnaryOperation {
         return divisor().location();
     }
 
-    protected AMD64EirDivision(EirBlock block, EirValue rd, EirValue ra, EirValue divisor) {
+    protected AMD64EirDivision(EirBlock block, EirValue rdx, EirValue rax, EirValue divisor) {
         super(block, divisor, EirOperand.Effect.USE, G_L_S);
-        this.rd = new EirOperand(this, EirOperand.Effect.UPDATE, G);
-        this.rd.setRequiredLocation(AMD64EirRegister.General.RDX);
-        this.rd.setEirValue(rd);
-        this.ra = new EirOperand(this, EirOperand.Effect.UPDATE, G);
-        this.ra.setRequiredLocation(AMD64EirRegister.General.RAX);
-        this.ra.setEirValue(ra);
+        this.rdx = new EirOperand(this, EirOperand.Effect.UPDATE, G);
+        this.rdx.setRequiredLocation(AMD64EirRegister.General.RDX);
+        this.rdx.setEirValue(rdx);
+        this.rax = new EirOperand(this, EirOperand.Effect.UPDATE, G);
+        this.rax.setRequiredLocation(AMD64EirRegister.General.RAX);
+        this.rax.setEirValue(rax);
     }
 
     @Override
     public void visitOperands(EirOperand.Procedure visitor) {
         super.visitOperands(visitor);
-        visitor.run(rd);
-        visitor.run(ra);
+        visitor.run(rdx);
+        visitor.run(rax);
     }
 
     @Override
     public String toString() {
-        return super.toString() + ", rd: " + rd + ", ra: " + ra;
+        return super.toString() + ", rd: " + rdx + ", ra: " + rax;
     }
 }

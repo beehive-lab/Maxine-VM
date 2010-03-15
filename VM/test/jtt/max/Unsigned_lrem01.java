@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,26 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.ir;
-
-import com.sun.c1x.ci.*;
-
-/**
- * The {@code UnsafeOp} class is the base of all unsafe operations.
- *
- * @author Ben L. Titzer
+/*
+ * @Harness: java
+ * @Runs: (-1L,8L)=0x7L; (6L,3L)=0L; (0xFFFFL,16L)=0xFL
  */
-public abstract class UnsafeOp extends Instruction {
-    public final CiKind unsafeOpKind;
+package jtt.max;
 
-    /**
-     * Creates a new UnsafeOp instruction.
-     * @param unsafeOpKind the kind of the operation
-     * @param isStore {@code true} if this is a store operation
-     */
-    public UnsafeOp(CiKind unsafeOpKind, boolean isStore) {
-        super(isStore ? CiKind.Void : unsafeOpKind.stackKind());
-        this.unsafeOpKind = unsafeOpKind;
+import com.sun.max.lang.*;
+
+public final class Unsigned_lrem01 {
+    private Unsigned_lrem01() {
     }
 
+    public static long test(long dividend, long divisor) {
+        return Unsigned.lrem(dividend, divisor);
+    }
 }

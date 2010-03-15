@@ -74,10 +74,8 @@ public class C1XOptions {
     public static boolean PrintCFGToFile                     = ____;
     public static boolean PrintMetrics                       = ____;
     public static boolean PrintTimers                        = ____;
-    public static boolean PrintCFG                           = ____;
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintExceptionHandlers             = ____;
-    public static boolean PrintNotLoaded                     = ____;
     public static boolean PrintXirTemplates                  = ____;
     public static boolean PrintIRWithLIR                     = ____;
     public static boolean FatalUnimplemented                 = ____;
@@ -88,6 +86,7 @@ public class C1XOptions {
     public static int     TraceLinearScanLevel               = 0;
     public static boolean TraceRelocation                    = ____;
     public static boolean TraceLIRVisit                      = ____;
+    public static int     TraceGraphBuilderLevel             = 0;
     public static boolean PrintLoopList                      = ____;
 
     // canonicalizer settings

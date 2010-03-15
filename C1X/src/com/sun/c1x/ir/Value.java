@@ -23,6 +23,7 @@ package com.sun.c1x.ir;
 import com.sun.c1x.C1XOptions;
 import com.sun.c1x.C1XMetrics;
 import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.opt.*;
 import com.sun.c1x.ri.RiType;
 import com.sun.c1x.ri.RiRuntime;
 import com.sun.c1x.lir.*;
@@ -91,8 +92,8 @@ public abstract class Value {
 
     /**
      * Checks whether this instruction is live (i.e. code should be generated for it).
-     * This is computed in a dedicated pass by {@link com.sun.c1x.opt.LivenessMarker}.
-     * An instruction be live because its value is needed by another live instruction,
+     * This is computed in a dedicated pass by {@link LivenessMarker}.
+     * An instruction is live because its value is needed by another live instruction,
      * because its value is needed for deoptimization, or the program is control dependent
      * upon it.
      * @return {@code true} if this instruction should be considered live

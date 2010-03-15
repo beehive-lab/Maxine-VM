@@ -33,14 +33,14 @@ public final class CiRegisterLocation extends CiLocation {
 
     public CiRegisterLocation(CiKind kind, CiRegister first, CiRegister second) {
         super(kind);
-        assert kind.size == 2;
+        assert kind.jvmSlots == 2;
         this.first = first;
         this.second = second;
     }
 
     public CiRegisterLocation(CiKind kind, CiRegister first) {
         super(kind);
-        assert kind.size == 1;
+        assert kind.jvmSlots == 1;
         this.first = first;
         this.second = null;
     }

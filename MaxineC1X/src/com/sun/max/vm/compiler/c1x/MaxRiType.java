@@ -46,7 +46,7 @@ public class MaxRiType implements RiType {
     final MaxRiConstantPool constantPool;
     ClassActor classActor;
     TypeDescriptor typeDescriptor;
-    final CiKind basicType;
+    final CiKind kind;
     final int cpi;
 
     /**
@@ -58,7 +58,7 @@ public class MaxRiType implements RiType {
         this.constantPool = constantPool;
         this.classActor = classActor;
         this.typeDescriptor = classActor.typeDescriptor;
-        this.basicType = kindToBasicType(typeDescriptor.toKind());
+        this.kind = kindToCiKind(typeDescriptor.toKind());
         this.cpi = cpi;
     }
 
@@ -71,7 +71,7 @@ public class MaxRiType implements RiType {
     public MaxRiType(MaxRiConstantPool constantPool, ClassConstant classRef, int cpi) {
         this.constantPool = constantPool;
         this.typeDescriptor = classRef.typeDescriptor();
-        this.basicType = kindToBasicType(typeDescriptor.toKind());
+        this.kind = kindToCiKind(typeDescriptor.toKind());
         this.cpi = cpi;
     }
 
@@ -94,7 +94,7 @@ public class MaxRiType implements RiType {
         }
 
         this.typeDescriptor = typeDescriptor;
-        this.basicType = kindToBasicType(typeDescriptor.toKind());
+        this.kind = kindToCiKind(typeDescriptor.toKind());
         this.cpi = cpi;
     }
 
@@ -296,11 +296,11 @@ public class MaxRiType implements RiType {
     }
 
     /**
-     * Gets the Kind for this compiler interface type.
+     * Gets the kind for this compiler interface type.
      * @return the kind
      */
     public CiKind kind() {
-        return basicType;
+        return kind;
     }
 
     ClassActor asClassActor(String operation) {
@@ -323,7 +323,7 @@ public class MaxRiType implements RiType {
      * @param kind a Maxine kind
      * @return the associated C1X kind
      */
-    public static CiKind kindToBasicType(Kind kind) {
+    public static CiKind kindToCiKind(Kind kind) {
         switch (kind.asEnum) {
             case BYTE:
                 return CiKind.Byte;
