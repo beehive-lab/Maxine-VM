@@ -108,11 +108,11 @@ public class MSHeapScheme extends HeapSchemeAdaptor {
 
         // Initialize the heap marker's data structures. Needs to make sure it is outside of the heap reserved space.
         final Address endOfHeap = committedHeapSpace.start().plus(maxSize);
-        final Size size = heapMarker.memoryRequirement(maxSize);
-        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(endOfHeap, size,  VirtualMemory.Type.DATA)) {
-            reportPristineMemoryFailure("heap marker data", size);
+        final Size heapMarkerDatasize = heapMarker.memoryRequirement(maxSize);
+        if (!VirtualMemory.allocatePageAlignedAtFixedAddress(endOfHeap, heapMarkerDatasize,  VirtualMemory.Type.DATA)) {
+            reportPristineMemoryFailure("heap marker data", heapMarkerDatasize);
         }
-        heapMarker.initialize(committedHeapSpace, endOfHeap, size);
+        heapMarker.initialize(committedHeapSpace, endOfHeap, heapMarkerDatasize);
         freeSpace.initialize(committedHeapSpace);
     }
 
