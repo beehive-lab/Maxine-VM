@@ -210,7 +210,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.jump(x.defaultSuccessor());
     }
 
-    private void setOperandsForLocals(ValueStack state) {
+    private void setOperandsForLocals(FrameState state) {
         CallingConvention args = compilation.frameMap().incomingArguments();
         int javaIndex = 0;
         for (int i = 0; i < args.operands.length; i++) {
@@ -437,7 +437,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             LIROperand osrBuffer = currentBlock.next().operand();
             callRuntime(CiRuntimeCall.OSRMigrationEnd, null, osrBuffer);
 
-            ValueStack state = (x.stateAfter() != null) ? x.stateAfter() : x.stateAfter();
+            FrameState state = (x.stateAfter() != null) ? x.stateAfter() : x.stateAfter();
 
             // increment backedge counter if needed
             incrementBackedgeCounter(stateFor(x, state));
@@ -1929,7 +1929,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected void moveToPhi(ValueStack curState) {
+    protected void moveToPhi(FrameState curState) {
         // Moves all stack values into their phi position
         BlockBegin bb = currentBlock;
         if (bb.numberOfSux() == 1) {
@@ -1941,7 +1941,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 int maxPhis = curState.valuesSize();
                 PhiResolver resolver = new PhiResolver(this, currentVariableNumber + maxPhis * 2);
 
-                ValueStack suxState = sux.stateBefore();
+                FrameState suxState = sux.stateBefore();
 
                 for (int index = 0; index < suxState.stackSize(); index++) {
                     moveToPhi(resolver, curState.stackAt(index), suxState.stackAt(index));
@@ -2059,14 +2059,14 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected void walkState(Instruction x, ValueStack state) {
+    protected void walkState(Instruction x, FrameState state) {
         if (state == null) {
             return;
         }
         for (int index = 0; index < state.stackSize(); index++) {
             walkStateInstruction(state.stackAt(index));
         }
-        ValueStack s = state;
+        FrameState s = state;
         int bci = x.bci();
 
         while (s != null) {
@@ -2126,11 +2126,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         return stateFor(x, x.stateBefore());
     }
 
-    protected LIRDebugInfo stateFor(Instruction x, ValueStack state) {
+    protected LIRDebugInfo stateFor(Instruction x, FrameState state) {
         return stateFor(x, state, false);
     }
 
-    protected LIRDebugInfo stateFor(Instruction x, ValueStack state, boolean ignoreXhandler) {
+    protected LIRDebugInfo stateFor(Instruction x, FrameState state, boolean ignoreXhandler) {
         return new LIRDebugInfo(state, x.bci(), ignoreXhandler ? null : x.exceptionHandlers());
     }
 

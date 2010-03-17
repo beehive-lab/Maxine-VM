@@ -21,7 +21,6 @@
 package com.sun.max.tele.debug;
 
 import java.io.*;
-import java.lang.management.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -110,7 +109,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
 
     private final WatchpointKind kind;
 
-    private volatile RuntimeMemoryRegion memoryRegion;
+    private final String description;
+
+    private volatile MemoryRegion memoryRegion;
 
     /**
      * Watchpoints manager.
@@ -150,44 +151,20 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         this.kind = kind;
         this.watchpointManager = watchpointManager;
         this.settings = settings;
-        this.memoryRegion = new RuntimeMemoryRegion(start, size);
-        this.memoryRegion.setDescription(description);
+        this.memoryRegion = new TeleMemoryRegion(start, size, "watchpoint region");
+        this.description = description;
     }
 
     private TeleWatchpoint(WatchpointKind kind, WatchpointManager watchpointManager, String description, MemoryRegion memoryRegion, WatchpointSettings settings) {
         this(kind, watchpointManager, description, memoryRegion.start(), memoryRegion.size(), settings);
     }
 
-    public final Address start() {
-        return memoryRegion.start();
-    }
-
-    public final Size size() {
-        return memoryRegion.size();
-    }
-
-    public final Address end() {
-        return memoryRegion.end();
-    }
-
-    public final  boolean contains(Address address) {
-        return memoryRegion.contains(address);
-    }
-
-    public final  boolean overlaps(MemoryRegion memoryRegion) {
-        return this.memoryRegion.overlaps(memoryRegion);
-    }
-
-    public final boolean sameAs(MemoryRegion memoryRegion) {
-        return this.memoryRegion.sameAs(memoryRegion);
+    public final MemoryRegion memoryRegion() {
+        return memoryRegion;
     }
 
     public final String description() {
-        return memoryRegion.description();
-    }
-
-    public final  MemoryUsage getUsage() {
-        return memoryRegion.getUsage();
+        return description;
     }
 
     @Override
@@ -195,7 +172,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         // For the purposes of the collection, define ordering and equality in terms of start location only.
         if (o instanceof TeleWatchpoint) {
             final TeleWatchpoint teleWatchpoint = (TeleWatchpoint) o;
-            return start().equals(teleWatchpoint.start());
+            return memoryRegion().start().equals(teleWatchpoint.memoryRegion().start());
         }
         return false;
     }
@@ -336,9 +313,9 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         }
         sb.append(", ").append(isEnabled() ? "enabled" : "disabled");
         sb.append(", ").append(isActive() ? "active" : "inactive");
-        sb.append(", 0x").append(start().toHexString());
-        sb.append(", size=").append(size().toString());
-        sb.append(", \"").append(description()).append("\"");
+        sb.append(", 0x").append(memoryRegion.start().toHexString());
+        sb.append(", size=").append(memoryRegion.size().toString());
+        sb.append(", \"").append(description).append("\"");
         sb.append("}");
         return sb.toString();
     }
@@ -368,11 +345,11 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
      * Future usage: e.g. for conditional Watchpoints
      */
     private void updateMemoryCache() {
-        if (memoryCache == null || memoryCache.length != size().toInt()) {
-            memoryCache = new byte[size().toInt()];
+        if (memoryCache == null || memoryCache.length != memoryRegion().size().toInt()) {
+            memoryCache = new byte[memoryRegion().size().toInt()];
         }
         try {
-            memoryCache = watchpointManager.teleVM().dataAccess().readFully(start(), size().toInt());
+            memoryCache = watchpointManager.teleVM().dataAccess().readFully(memoryRegion().start(), memoryRegion().size().toInt());
         } catch (DataIOError e) {
             // Must be a watchpoint in an address space that doesn't (yet?) exist in the VM process.
             memoryCache = null;
@@ -380,9 +357,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
     }
 
     private void setStart(Address start) {
-        final RuntimeMemoryRegion newMemoryRegion = new RuntimeMemoryRegion(memoryRegion);
-        newMemoryRegion.setStart(start);
-        memoryRegion = newMemoryRegion;
+        memoryRegion = new TeleMemoryRegion(start, memoryRegion.size(), "");
     }
 
     /**
@@ -467,7 +442,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         } else {  // not active
             setStart(newAddress);
         }
-        Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint reset " + start().toHexString());
+        Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint reset " + memoryRegion().start().toHexString());
         watchpointManager.updateAfterWatchpointChanges();
         return true;
     }
@@ -588,7 +563,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                         } else {
                             TeleObjectWatchpoint.this.teleObject = newTeleObject;
                             final Pointer newWatchpointStart = newTeleObject.origin().plus(thisWatchpoint.offset);
-                            Trace.line(TRACE_VALUE, thisWatchpoint.tracePrefix() + " relocating watchpoint " + thisWatchpoint.start().toHexString() + "-->" + newWatchpointStart.toHexString());
+                            Trace.line(TRACE_VALUE, thisWatchpoint.tracePrefix() + " relocating watchpoint " + thisWatchpoint.memoryRegion().start().toHexString() + "-->" + newWatchpointStart.toHexString());
                             thisWatchpoint.relocate(newWatchpointStart);
                             // Now replace this relocation watchpoint for the next time the objects gets moved.
                             thisWatchpoint.clearRelocationWatchpoint();
@@ -599,7 +574,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                             }
                         }
                     } else {
-                        Trace.line(TRACE_VALUE, thisWatchpoint.tracePrefix() + " relocating watchpoint (IGNORED) 0x" + thisWatchpoint.start().toHexString());
+                        Trace.line(TRACE_VALUE, thisWatchpoint.tracePrefix() + " relocating watchpoint (IGNORED) 0x" + thisWatchpoint.memoryRegion().start().toHexString());
                     }
 
                     return false;
@@ -656,7 +631,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                 case LIVE:
                     // A relocatable watchpoint on a live object should have been relocated
                     // (eagerly) just as the relocation took place.   Check that the locations match.
-                    if (!teleObject.memoryRegion().start().plus(offset).equals(start())) {
+                    if (!teleObject.memoryRegion().start().plus(offset).equals(memoryRegion().start())) {
                         ProgramWarning.message("Watchpoint relocation failure - watchpoint on live object at wrong location " + this);
                     }
                     break;
@@ -670,7 +645,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
                     // The watchpoint's object has been collected; convert it to a fixed memory region watchpoint
                     try {
                         remove();
-                        final TeleMemoryRegion watchpointRegion = new TeleMemoryRegion(start(), size(), "Old memory location of watched object");
+                        final TeleMemoryRegion watchpointRegion = new TeleMemoryRegion(memoryRegion().start(), memoryRegion().size(), "Old memory location of watched object");
                         final TeleWatchpoint newRegionWatchpoint =
                             watchpointManager.createRegionWatchpoint("Replacement for watchpoint on GC'd object", watchpointRegion, getSettings());
                         Trace.line(TRACE_VALUE, tracePrefix() + "Watchpoint on collected object replaced: " + newRegionWatchpoint);
@@ -745,7 +720,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             public int compare(TeleWatchpoint o1, TeleWatchpoint o2) {
                 // For the purposes of the collection, define equality and comparison to be based
                 // exclusively on starting address.
-                return o1.start().compareTo(o2.start());
+                return o1.memoryRegion().start().compareTo(o2.memoryRegion().start());
             }
         };
 
@@ -1022,7 +997,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
         public Sequence<MaxWatchpoint> findWatchpoints(MemoryRegion memoryRegion) {
             DeterministicSet<MaxWatchpoint> watchpoints = DeterministicSet.Static.empty(MaxWatchpoint.class);
             for (MaxWatchpoint maxWatchpoint : clientWatchpointsCache) {
-                if (maxWatchpoint.overlaps(memoryRegion)) {
+                if (maxWatchpoint.memoryRegion().overlaps(memoryRegion)) {
                     if (watchpoints.isEmpty()) {
                         watchpoints = new DeterministicSet.Singleton<MaxWatchpoint>(maxWatchpoint);
                     } else if (watchpoints.length() == 1) {
@@ -1048,7 +1023,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         TeleWatchpoint findClientWatchpointContaining(Address address) {
             for (MaxWatchpoint maxWatchpoint : clientWatchpointsCache) {
-                if (maxWatchpoint.contains(address)) {
+                if (maxWatchpoint.memoryRegion().contains(address)) {
                     return (TeleWatchpoint) maxWatchpoint;
                 }
             }
@@ -1093,7 +1068,7 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
          */
         TeleWatchpoint findSystemWatchpoint(Address address) {
             for (MaxWatchpoint maxWatchpoint : systemWatchpointsCache) {
-                if (maxWatchpoint.contains(address)) {
+                if (maxWatchpoint.memoryRegion().contains(address)) {
                     return (TeleWatchpoint) maxWatchpoint;
                 }
             }
@@ -1184,10 +1159,15 @@ public abstract class TeleWatchpoint extends AbstractTeleVMHolder implements VMT
             // Check for possible overlaps with predecessor or successor (according to start location)
             final TeleWatchpoint lowerWatchpoint = clientWatchpoints.lower(teleWatchpoint);
             final TeleWatchpoint higherWatchpoint = clientWatchpoints.higher(teleWatchpoint);
-            if ((lowerWatchpoint != null && lowerWatchpoint.overlaps(teleWatchpoint)) ||
-                            (higherWatchpoint != null && higherWatchpoint.overlaps(teleWatchpoint))) {
+            if ((lowerWatchpoint != null && lowerWatchpoint.memoryRegion().overlaps(teleWatchpoint.memoryRegion())) ||
+                            (higherWatchpoint != null && higherWatchpoint.memoryRegion().overlaps(teleWatchpoint.memoryRegion()))) {
                 clientWatchpoints.remove(teleWatchpoint);
-                throw new DuplicateWatchpointException("Watchpoint already exists that overlaps with start=" + teleWatchpoint.start().toHexString() + ", size=" + teleWatchpoint.size().toString());
+                final StringBuilder msgBuilder = new StringBuilder();
+                msgBuilder.append("Watchpoint already exists that overlaps with start=");
+                msgBuilder.append(teleWatchpoint.memoryRegion().start().toHexString());
+                msgBuilder.append(", size=");
+                msgBuilder.append(teleWatchpoint.memoryRegion().size().toString());
+                throw new DuplicateWatchpointException(msgBuilder.toString());
             }
             if (!teleVM().isInGC() || teleWatchpoint.settings.enabledDuringGC) {
                 // Try to activate the new watchpoint

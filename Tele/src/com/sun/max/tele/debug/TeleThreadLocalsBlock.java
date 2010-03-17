@@ -133,6 +133,17 @@ public abstract class TeleThreadLocalsBlock extends AbstractTeleVMHolder impleme
         }
 
         @Override
+        public MaxThreadLocalsArea findThreadLocalsArea(Address address) {
+            for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+                final TeleThreadLocalsArea threadLocalsArea = threadLocalsAreaFor(state);
+                if (threadLocalsArea.memoryRegion().contains(address)) {
+                    return threadLocalsArea;
+                }
+            }
+            return null;
+        }
+
+        @Override
         public TeleVmThread teleVmThread() {
             refresh();
             final TeleThreadLocalsArea enabledThreadLocalsArea = areas.get(Safepoint.State.ENABLED);
@@ -231,6 +242,11 @@ public abstract class TeleThreadLocalsBlock extends AbstractTeleVMHolder impleme
 
         @Override
         public TeleThreadLocalsArea threadLocalsAreaFor(State state) {
+            return null;
+        }
+
+        @Override
+        public MaxThreadLocalsArea findThreadLocalsArea(Address address) {
             return null;
         }
 

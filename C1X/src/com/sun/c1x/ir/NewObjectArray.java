@@ -42,7 +42,7 @@ public final class NewObjectArray extends NewArray {
      * @param cpi the constant pool index
      * @param constantPool the constant pool
      */
-    public NewObjectArray(RiType elementClass, Value length, ValueStack stateBefore, char cpi, RiConstantPool constantPool) {
+    public NewObjectArray(RiType elementClass, Value length, FrameState stateBefore, char cpi, RiConstantPool constantPool) {
         super(length, stateBefore);
         this.constantPool = constantPool;
         this.elementClass = elementClass;

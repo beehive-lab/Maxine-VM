@@ -46,7 +46,7 @@ public class PhiSimplifier implements BlockClosure {
      * @param block the block to apply the simplification to
      */
     public void apply(BlockBegin block) {
-        ValueStack state = block.stateBefore();
+        FrameState state = block.stateBefore();
         for (int i = 0; i < state.stackSize(); i++) {
             simplify(state.stackAt(i));
         }

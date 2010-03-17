@@ -196,12 +196,12 @@ public final class SolarisTeleProcess extends TeleProcess {
     @Override
     protected boolean activateWatchpoint(TeleWatchpoint teleWatchpoint) {
         final WatchpointSettings settings = teleWatchpoint.getSettings();
-        return nativeActivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
+        return nativeActivateWatchpoint(processHandle, teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong(), true, settings.trapOnRead, settings.trapOnWrite, settings.trapOnExec);
     }
 
     @Override
     protected boolean deactivateWatchpoint(TeleWatchpoint teleWatchpoint) {
-        return nativeDeactivateWatchpoint(processHandle, teleWatchpoint.start().toLong(), teleWatchpoint.size().toLong());
+        return nativeDeactivateWatchpoint(processHandle, teleWatchpoint.memoryRegion().start().toLong(), teleWatchpoint.memoryRegion().size().toLong());
     }
 
     /**
