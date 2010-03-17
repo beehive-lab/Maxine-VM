@@ -1098,13 +1098,9 @@ public abstract class X86Assembler extends AbstractAssembler {
     }
 
     public final void movl(CiRegister dst, int imm32) {
-        if (imm32 == 0) {
-            xorl(dst, dst);
-        } else {
-            int encode = prefixAndEncode(dst.encoding);
-            emitByte(0xB8 | encode);
-            emitInt(imm32);
-        }
+        int encode = prefixAndEncode(dst.encoding);
+        emitByte(0xB8 | encode);
+        emitInt(imm32);
     }
 
     public final void movl(CiRegister dst, CiRegister src) {
