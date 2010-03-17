@@ -122,6 +122,10 @@ public class StackInspector extends Inspector implements TableColumnViewPreferen
             return stackFrame.fp();
         }
 
+        public MemoryRegion memoryRegion() {
+            return null;
+        }
+
         public MaxCodeLocation codeLocation() {
             return stackFrame.codeLocation();
         }

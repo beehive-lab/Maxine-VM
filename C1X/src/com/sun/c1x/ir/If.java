@@ -48,7 +48,7 @@ public final class If extends BlockEnd {
      * @param isSafepoint {@code true} if this branch should be considered a safepoint
      */
     public If(Value x, Condition cond, boolean unorderedIsTrue, Value y,
-              BlockBegin trueSucc, BlockBegin falseSucc, ValueStack stateBefore, boolean isSafepoint) {
+              BlockBegin trueSucc, BlockBegin falseSucc, FrameState stateBefore, boolean isSafepoint) {
         super(CiKind.Illegal, stateBefore, isSafepoint);
         this.x = x;
         this.y = y;

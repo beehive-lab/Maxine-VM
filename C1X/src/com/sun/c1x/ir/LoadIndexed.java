@@ -39,7 +39,7 @@ public final class LoadIndexed extends AccessIndexed {
      * @param elementType the element type
      * @param stateBefore the state before executing this instruction
      */
-    public LoadIndexed(Value array, Value index, Value length, CiKind elementType, ValueStack stateBefore) {
+    public LoadIndexed(Value array, Value index, Value length, CiKind elementType, FrameState stateBefore) {
         super(array, index, length, elementType, stateBefore);
     }
 

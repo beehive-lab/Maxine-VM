@@ -1363,7 +1363,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MaxWatchpoint watchpoint = focus().watchpoint();
             if (watchpoint != null) {
-                final Inspector inspector = new MemoryWordsInspector(inspection(), watchpoint, "Watchpoint " + watchpoint.description());
+                final Inspector inspector =
+                    new MemoryWordsInspector(inspection(), watchpoint.memoryRegion(), "Watchpoint " + watchpoint.description());
                 inspector.highlight();
             } else {
                 gui().errorMessage("no watchpoint selected");

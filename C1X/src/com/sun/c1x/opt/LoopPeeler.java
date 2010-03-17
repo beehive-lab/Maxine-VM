@@ -160,7 +160,7 @@ public class LoopPeeler extends DefaultValueVisitor {
                     BlockBegin newPhiBlock = (BlockBegin) lookup(phi.block());
                     boolean phiIsLocal = phi.isLocal();
                     int phiIndex = phiIsLocal ? phi.localIndex() : phi.stackIndex();
-                    ValueStack stateBefore = newPhiBlock.stateBefore();
+                    FrameState stateBefore = newPhiBlock.stateBefore();
 
                     if (phiIsLocal) {
                         stateBefore.setupPhiForLocal(newPhiBlock, phiIndex);
@@ -258,7 +258,7 @@ public class LoopPeeler extends DefaultValueVisitor {
         addInstruction(other);
     }
 
-    private ValueStack copyStateBefore(ValueStack stateBefore) {
+    private FrameState copyStateBefore(FrameState stateBefore) {
         return stateBefore != null ? stateBefore.copy() : null;
     }
 
@@ -778,15 +778,15 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     private boolean insertPhi(Edge edge, Map <Value, Value> mapValueToPhi) {
         BlockBegin clonedExit = (BlockBegin) lookup(edge.source);
-        ValueStack exit = edge.source.end().stateAfter();
-        ValueStack other = clonedExit.end().stateAfter();
+        FrameState exit = edge.source.end().stateAfter();
+        FrameState other = clonedExit.end().stateAfter();
         boolean hasSubstitution = false;
 
         assert exit.stackSize() == other.stackSize();
         assert exit.localsSize() == other.localsSize();
         assert exit.locksSize() == other.locksSize();
 
-        ValueStack stateAtDestination = edge.destination.stateBefore();
+        FrameState stateAtDestination = edge.destination.stateBefore();
         for (int i = 0; i < stateAtDestination.localsSize(); i++) {
             Value x = exit.localAt(i);
             Value y = other.localAt(i);

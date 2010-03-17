@@ -601,8 +601,8 @@ public class LinearScan {
                 n = op.infoCount();
                 for (k = 0; k < n; k++) {
                     LIRDebugInfo info = op.infoAt(k);
-                    ValueStack stack = info.stack;
-                    for (Value value : stack.allLiveStateValues()) {
+                    FrameState state = info.state;
+                    for (Value value : state.allLiveStateValues()) {
                         setLiveGenKill(value, op, liveGen, liveKill);
                     }
                 }
@@ -1337,8 +1337,8 @@ public class LinearScan {
                 n = op.infoCount();
                 for (k = 0; k < n; k++) {
                     LIRDebugInfo info = op.infoAt(k);
-                    ValueStack stack = info.stack;
-                    for (Value value : stack.allLiveStateValues()) {
+                    FrameState state = info.state;
+                    for (Value value : state.allLiveStateValues()) {
                         addUse(value, blockFrom, opId + 1, IntervalUseKind.NoUse);
                     }
                 }
@@ -2332,7 +2332,7 @@ public class LinearScan {
         }
     }
 
-    IRScopeDebugInfo computeDebugInfoForScope(int opId, IRScope curScope, ValueStack curState, ValueStack innermostState, int curBci, int stackEnd, int locksEnd) {
+    IRScopeDebugInfo computeDebugInfoForScope(int opId, IRScope curScope, FrameState curState, FrameState innermostState, int curBci, int stackEnd, int locksEnd) {
         if (true) {
             return null;
         }
@@ -2340,7 +2340,7 @@ public class LinearScan {
         int stackBegin;
         int locksBegin;
 
-        ValueStack callerState = curScope.callerState();
+        FrameState callerState = curScope.callerState();
         if (callerState != null) {
             // process recursively to compute outermost scope first
             stackBegin = callerState.stackSize();
@@ -2428,7 +2428,7 @@ public class LinearScan {
         }
         // Util.traceLinearScan(3, "creating debug information at opId %d", opId);
 
-        ValueStack innermostState = info.stack;
+        FrameState innermostState = info.state;
         assert innermostState != null : "why is it missing?";
 
         IRScope innermostScope = innermostState.scope();
