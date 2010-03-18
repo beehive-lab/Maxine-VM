@@ -1019,8 +1019,9 @@ public class Canonicalizer extends DefaultValueVisitor {
         Value l = i.x();
         Value r = i.y();
 
-        if (l == r) {
+        if (l == r && !l.kind.isFloatOrDouble()) {
             // this is a comparison of x op x
+            // No opt for float/double due to NaN case
             reduceReflexiveIf(i);
             return;
         }

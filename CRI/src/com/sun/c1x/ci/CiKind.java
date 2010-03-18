@@ -289,6 +289,14 @@ public enum CiKind {
     }
 
     /**
+     * Checks whether this value type is float or double.
+     * @return {@code true} if this type is float or double
+     */
+    public final boolean isFloatOrDouble() {
+        return this == CiKind.Double || this == CiKind.Float;
+    }
+
+   /**
      * Checks whether this value type is an object type.
      * @return {@code true} if this type is an object
      */
