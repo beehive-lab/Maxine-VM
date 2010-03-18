@@ -33,6 +33,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -347,9 +348,10 @@ public class CompiledPrototype extends Prototype {
                 return false;
             }
         }
-        if (methodActor.isBuiltin() && !SpecialBuiltin.class.isAssignableFrom(methodActor.holder().toJava())) {
-//            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
-//            addMethods(methodActor, stubClassActor.localVirtualMethodActors(), Relationship.INTERFACE_CALL);
+        if (Actor.isDeclaredFoldable(methodActor.flags())) {
+            // All foldable methods must have their stubs precompiled in the image
+            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
+            addMethods(referrer, stubClassActor.localVirtualMethodActors(), relationship);
         }
         methodActors.put(methodActor, new Link(methodActor, referrer, relationship));
         worklist.add(methodActor);
