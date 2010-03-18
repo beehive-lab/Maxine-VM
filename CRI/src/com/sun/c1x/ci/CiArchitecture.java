@@ -143,7 +143,7 @@ public abstract class CiArchitecture {
      * @return {@code true} if the backend of this architecture is x86
      */
     public boolean isX86() {
-        return "x86".equals(platform);
+        return false;
     }
 
     /**
@@ -151,7 +151,7 @@ public abstract class CiArchitecture {
      * @return {@code true} if the backend of this architecture is SPARC
      */
     public boolean isSPARC() {
-        return "SPARC".equals(platform);
+        return false;
     }
 
     /**
@@ -160,7 +160,6 @@ public abstract class CiArchitecture {
      * @return {@code true} if this architecture uses two-operand mode
      */
     public boolean twoOperandMode() {
-        // TODO: override this method in appropriate subclasses
-        return isX86();
+        return false;
     }
 }

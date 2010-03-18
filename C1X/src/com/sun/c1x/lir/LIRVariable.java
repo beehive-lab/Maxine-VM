@@ -36,7 +36,7 @@ public class LIRVariable extends LIROperand {
 
     public LIRVariable(CiKind kind, int index) {
         super(kind);
-        assert index >= CiRegister.MaxPhysicalRegisterNumber;
+        assert index >= CiRegister.LowestVirtualRegisterNumber;
         this.index = index;
     }
 

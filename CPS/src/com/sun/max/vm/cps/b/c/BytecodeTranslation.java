@@ -1860,10 +1860,10 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             case ADD_SP:                 stackCall(AdjustJitStack.BUILTIN); break;
             case READ_PC:                stackCall(GetInstructionPointer.BUILTIN); break;
             case FLUSHW:                 stackCall(FlushRegisterWindows.BUILTIN); break;
-            case LSB:                 stackCall(LeastSignificantBit.BUILTIN); break;
-            case MSB:                 stackCall(MostSignificantBit.BUILTIN); break;
+            case LSB:                    stackCall(LeastSignificantBit.BUILTIN); break;
+            case MSB:                    stackCall(MostSignificantBit.BUILTIN); break;
 
-           case CALL: {
+            case CALL: {
                 Invocation inv = invoke(operand, 0);
                 completeInvocation(new Call(inv.sig), inv.sig.resultKind(), inv.args);
                 break;

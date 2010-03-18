@@ -1449,8 +1449,8 @@ public interface AMD64EirInstruction {
 
     public static class DIV_I64 extends AMD64EirDivision {
 
-        public DIV_I64(EirBlock block, EirValue rd, EirValue ra, EirValue divisor) {
-            super(block, rd, ra, divisor);
+        public DIV_I64(EirBlock block, EirValue rdx, EirValue rax, EirValue divisor) {
+            super(block, rdx, rax, divisor);
         }
 
         @Override
@@ -1553,8 +1553,8 @@ public interface AMD64EirInstruction {
 
     public static class IDIV_I32 extends AMD64EirDivision {
 
-        public IDIV_I32(EirBlock block, EirValue rd, EirValue ra, EirValue divisor) {
-            super(block, rd, ra, divisor);
+        public IDIV_I32(EirBlock block, EirValue rdx, EirValue rax, EirValue divisor) {
+            super(block, rdx, rax, divisor);
         }
 
         @Override
@@ -1593,8 +1593,8 @@ public interface AMD64EirInstruction {
 
     public static class IDIV_I64 extends AMD64EirDivision {
 
-        public IDIV_I64(EirBlock block, EirValue rd, EirValue ra, EirValue divisor) {
-            super(block, rd, ra, divisor);
+        public IDIV_I64(EirBlock block, EirValue rdx, EirValue rax, EirValue divisor) {
+            super(block, rdx, rax, divisor);
         }
 
         @Override

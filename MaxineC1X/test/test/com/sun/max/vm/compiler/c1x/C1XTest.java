@@ -61,7 +61,7 @@ public class C1XTest {
         "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1,
         "Set the verbosity level of the testing framework.");
-    private static final Option<Boolean> printBailoutOption = options.newBooleanOption("print-bailout", false,
+    private static final Option<Boolean> printBailoutOption = options.newBooleanOption("print-bailout", true,
         "Print bailout exceptions.");
     private static final Option<Boolean> printBailoutSizeOption = options.newBooleanOption("print-bailout-size", false,
         "Print the size of bailed out methods, which helps choosing the simplest failure case for debugging..");

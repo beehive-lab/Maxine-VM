@@ -1328,8 +1328,8 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
             case SAFEPOINT:              machine.skipBytes(2); break;
             case PAUSE:                  machine.skipBytes(2); break;
             case FLUSHW:                 machine.skipBytes(2); break;
-            case LSB:   machine.skipBytes(2); push((int) Long.lowestOneBit(pop().asLong())); break;
-            case MSB:   machine.skipBytes(2); push((int) Long.highestOneBit(pop().asLong())); break;
+            case LSB:                    machine.skipBytes(2); push((int) Long.lowestOneBit(pop().asLong())); break;
+            case MSB:                    machine.skipBytes(2); push((int) Long.highestOneBit(pop().asLong())); break;
             case UWGT: {
                 machine.skipBytes(2);
                 Address value2 = pop().asWord().asAddress();

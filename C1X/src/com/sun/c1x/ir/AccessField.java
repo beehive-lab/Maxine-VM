@@ -46,7 +46,7 @@ public abstract class AccessField extends StateSplit {
      * @param isLoaded indicates if the class is loaded
      */
     public AccessField(Value object, RiField field, boolean isStatic, FrameState stateBefore, boolean isLoaded, char cpi, RiConstantPool constantPool) {
-        super(field.kind().stackType(), stateBefore);
+        super(field.kind().stackKind(), stateBefore);
         this.cpi = cpi;
         this.constantPool = constantPool;
         this.object = object;

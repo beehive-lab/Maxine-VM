@@ -83,11 +83,22 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    // Flags that can be set on variables
+    /**
+     * Flags that can be set on {@linkplain LIRLocation#isVariable() variables}.
+     */
     public enum VariableFlag {
-        MustStartInMemory, // needs to be assigned a memory location at beginning, but may then be loaded in a register
-        MustBeByteReg,     // must be in a byte register
-        Last
+        /**
+         * Denotes a variable that needs to be assigned a memory location
+         * at the beginning, but may then be loaded in a register.
+         */
+        MustStartInMemory,
+
+        /**
+         * Denotes a variable that must be assigned to a byte-sized register.
+         */
+        MustBeByteReg;
+
+        public static final VariableFlag[] VALUES = values();
     }
 
     protected final C1XCompilation compilation;
@@ -102,7 +113,12 @@ public abstract class LIRGenerator extends ValueVisitor {
     private Value currentInstruction;
     private Value lastInstructionPrinted; // Debugging only
 
+    /**
+     * Maps a {@linkplain LIRLocation#variableNumber() variable number} to the instruction
+     * that defines the variable.
+     */
     ArrayMap<Value> instructionForOperand;
+
     // XXX: refactor this to use 2 one dimensional bitmaps
     private BitMap2D varFlags; // flags which can be set on a per-variable basis
 
@@ -112,8 +128,8 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     public LIRGenerator(C1XCompilation compilation) {
         this.compilation = compilation;
-        this.currentVariableNumber = CiRegister.MaxPhysicalRegisterNumber;
-        this.varFlags = new BitMap2D(0, VariableFlag.Last.ordinal());
+        this.currentVariableNumber = CiRegister.LowestVirtualRegisterNumber;
+        this.varFlags = new BitMap2D(0, VariableFlag.VALUES.length);
         this.ir = compilation.hir();
         this.xir = C1XOptions.UseXIR ? new XirSupport(compilation.compiler.xir) : null;
         this.is32 = compilation.target.arch.is32bit();
@@ -123,6 +139,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         instructionForOperand = new ArrayMap<Value>();
         constants = new ArrayList<LIRConstant>();
         regForConstants = new ArrayList<LIROperand>();
+
         init();
     }
 
@@ -141,8 +158,8 @@ public abstract class LIRGenerator extends ValueVisitor {
         blockDoEpilog(block);
     }
 
-    public Value instructionForVar(int regNum) {
-        return instructionForOperand.get(regNum);
+    public Value instructionForVariable(int variableNumber) {
+        return instructionForOperand.get(variableNumber);
     }
 
     public boolean isVarFlagSet(int varNum, VariableFlag f) {
@@ -155,7 +172,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     public void setVarFlag(int varNum, VariableFlag f) {
         if (varFlags.sizeInBits() == 0) {
-            BitMap2D temp = new BitMap2D(100, VariableFlag.Last.ordinal());
+            BitMap2D temp = new BitMap2D(100, VariableFlag.VALUES.length);
             temp.clear();
             varFlags = temp;
         }
@@ -180,7 +197,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIRItem array = new LIRItem(x.array(), this);
         array.loadItem();
-        LIROperand reg = rlockResult(x);
+        LIROperand reg = createResultVariable(x);
 
         LIRDebugInfo info = null;
         if (x.needsNullCheck()) {
@@ -217,19 +234,19 @@ public abstract class LIRGenerator extends ValueVisitor {
             LIROperand src = args.operands[i];
             assert isLegal(src) : "check";
 
-            LIROperand dest = rlock(src.kind.stackType());
+            LIROperand dest = newVariable(src.kind.stackKind());
             lir.move(src, dest, src.kind);
 
             // Assign new location to Local instruction for this local
             Value instr = state.localAt(javaIndex);
             Local local = ((Local) instr);
-            CiKind type = src.kind.stackType();
-            assert type == local.kind.stackType() : "local type check failed";
+            CiKind type = src.kind.stackKind();
+            assert type == local.kind.stackKind() : "local type check failed";
             if (local.isLive()) {
                 local.setOperand(dest);
                 instructionForOperand.put(dest.variableNumber(), local);
             }
-            javaIndex += type.size;
+            javaIndex += type.jvmSlots;
         }
     }
 
@@ -403,7 +420,7 @@ public abstract class LIRGenerator extends ValueVisitor {
                 res = forConstant(x);
             }
             if (isConstant(res)) {
-                LIROperand reg = rlockResult(x);
+                LIROperand reg = createResultVariable(x);
                 lir.move(res, reg);
             } else {
                 setResult(x, res);
@@ -422,7 +439,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             operandForPhi(phi);
         }
 
-        LIROperand result = newRegister(CiKind.Object);
+        LIROperand result = newVariable(CiKind.Object);
         LIRLocation threadReg = forRegister(CiKind.Object, compilation.target.registerConfig.getThreadRegister());
         lir.move(new LIRAddress(threadReg, compilation.runtime.threadExceptionOffset(), CiKind.Object), result);
         setResult(x, result);
@@ -476,7 +493,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
         LIRItem tVal = new LIRItem(x.trueValue(), this);
         LIRItem fVal = new LIRItem(x.falseValue(), this);
-        LIROperand reg = rlockResult(x);
+        LIROperand reg = createResultVariable(x);
 
         lir.cmp(lirCond(x.condition()), left.result(), right.result());
         lir.cmove(lirCond(x.condition()), tVal.result(), fVal.result(), reg);
@@ -510,7 +527,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case java_lang_System$currentTimeMillis: {
                 assert x.numberOfArguments() == 0 : "wrong type";
                 LIROperand reg = callRuntimeWithResult(CiRuntimeCall.JavaTimeMillis, null, (LIROperand[]) null);
-                LIROperand result = rlockResult(x);
+                LIROperand result = createResultVariable(x);
                 lir.move(reg, result);
                 break;
             }
@@ -518,7 +535,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             case java_lang_System$nanoTime: {
                 assert x.numberOfArguments() == 0 : "wrong type";
                 LIROperand reg = callRuntimeWithResult(CiRuntimeCall.JavaTimeNanos, null, (LIROperand[]) null);
-                LIROperand result = rlockResult(x);
+                LIROperand result = createResultVariable(x);
                 lir.move(reg, result);
                 break;
             }
@@ -686,7 +703,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         if (isLegal(resultRegister)) {
-            LIROperand result = rlockResult(x);
+            LIROperand result = createResultVariable(x);
             lir.move(resultRegister, result);
         }
     }
@@ -700,13 +717,13 @@ public abstract class LIRGenerator extends ValueVisitor {
             signature[i] = x.arguments[i].kind;
         }
         List<LIROperand> argList = visitInvokeArguments(signature, x.arguments);
-        LIROperand nativeFunction = operandForInstruction(x.address());
+        LIROperand nativeFunction = load(x.address());
         lir.callNative(nativeFunction, x.nativeMethod.jniSymbol(), resultRegister, argList, info);
     }
 
     @Override
     public void visitLoadRegister(LoadRegister x) {
-        LIROperand reg = rlockResult(x);
+        LIROperand reg = createResultVariable(x);
         lir.move(forRegister(x.kind, x.register()), reg);
     }
 
@@ -728,7 +745,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             int displacement = x.displacement().asConstant().asInt();
             LIRItem index = new LIRItem(x.index(), this);
             index.loadItem();
-            Scale scale = Scale.fromInt(Util.log2(compilation.target.sizeInBytes(x.kind)));
+            Scale scale = Scale.fromLog2(Util.log2(compilation.target.sizeInBytes(x.kind)));
             addr = new LIRAddress((LIRLocation) pointer.result(), (LIRLocation) index.result(), scale, displacement, x.kind);
         }
         return addr;
@@ -739,7 +756,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRDebugInfo info = maybeStateFor(x);
         LIRItem pointer = new LIRItem(x.pointer(), this);
         pointer.loadItem();
-        LIROperand dst = rlockResult(x);
+        LIROperand dst = createResultVariable(x);
         LIRAddress src = getAddressForPointerOp(x, pointer);
         lir.load(src, dst, info);
     }
@@ -757,16 +774,23 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitLoadPC(LoadPC x) {
-        LIROperand result = rlockResult(x);
+        LIROperand result = createResultVariable(x);
         lir.readPC(result);
     }
 
     @Override
     public void visitStackAllocate(StackAllocate x) {
-        LIROperand result = rlockResult(x);
+        LIROperand result = createResultVariable(x);
         assert x.size().isConstant() : "ALLOCA bytecode 'size' operand is not a constant: " + x.size();
         StackBlock stackBlock = compilation.frameMap().reserveStackBlock(x.size().asConstant().asInt());
         lir.alloca(stackBlock, result);
+    }
+
+    @Override
+    public void visitUnsafeCast(UnsafeCast i) {
+        LIROperand src = load(i.value());
+        LIROperand dst = createResultVariable(i);
+        lir.move(src, dst);
     }
 
     @Override
@@ -800,7 +824,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             lir.nullCheck(object.result(), info.copy());
         }
 
-        LIROperand reg = rlockResult(x, fieldType);
+        LIROperand reg = createResultVariable(x);
         LIRAddress address;
         if (info != null && needsPatching) {
             LIRConstant cpi = forInt(x.cpi);
@@ -872,7 +896,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             }
         }
 
-        lir.move(arrayAddr, rlockResult(x, x.elementKind()), (LIRDebugInfo) null);
+        lir.move(arrayAddr, createResultVariable(x), (LIRDebugInfo) null);
     }
 
     protected GlobalStub stubFor(CiRuntimeCall runtimeCall) {
@@ -896,9 +920,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitLocal(Local x) {
         if (isIllegal(x.operand())) {
-            // allocate a variable for this local
-            x.setOperand(rlock(x.kind));
-            instructionForOperand.put(x.operand().variableNumber(), x);
+            createResultVariable(x);
         }
     }
 
@@ -945,7 +967,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         // construct our frame and model the production of incoming pointer
         // to the OSR buffer.
         lir.osrEntry(osrBufferPointer());
-        LIROperand result = rlockResult(x);
+        LIROperand result = createResultVariable(x);
         lir.move(osrBufferPointer(), result);
     }
 
@@ -988,7 +1010,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             return CallingConvention.locationToOperand(fixed.location);
         }
 
-        return newRegister(temp.kind);
+        return newVariable(temp.kind);
     }
 
     private LIROperand allocateOperand(XirArgument arg, XirOperand var) {
@@ -1012,7 +1034,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             // This snippet has a result that must be separately allocated
             // Otherwise it is assumed that the result is part of the inputs
             if (resultOperand.kind != CiKind.Void && resultOperand.kind != CiKind.Illegal) {
-                outputOperand = rlockResult(x, resultOperand.kind);
+                outputOperand = createResultVariable(x);
                 assert operands[resultOperand.index] == null;
             }
             operands[resultOperand.index] = outputOperand;
@@ -1032,7 +1054,7 @@ public abstract class LIRGenerator extends ValueVisitor {
 
             if (op.isVariableOrRegister()) {
                 if (snippet.template.isParameterDestroyed(paramIndex)) {
-                    LIROperand newOp = newRegister(op.kind);
+                    LIROperand newOp = newVariable(op.kind);
                     lir.move(op, newOp);
                     inputTempOperands.add(newOp);
                     inputTempOperandsIndices.add(param.index);
@@ -1278,7 +1300,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         off.loadItem();
         src.loadItem();
 
-        LIRLocation reg = rlockResult(x, x.unsafeOpKind);
+        LIRLocation reg = createResultVariable(x);
 
         if (x.isVolatile() && compilation.runtime.isMP()) {
             lir.membarAcquire();
@@ -1300,7 +1322,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             idx.loadNonconstant();
         }
 
-        LIROperand reg = rlockResult(x, x.unsafeOpKind);
+        LIROperand reg = createResultVariable(x);
 
         int log2scale = 0;
         if (x.hasIndex()) {
@@ -1315,7 +1337,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (is32) {
             // XXX: what about floats and doubles and objects? (used in OSR)
             if (x.base().kind.isLong()) {
-                baseOp = newRegister(CiKind.Int);
+                baseOp = newVariable(CiKind.Int);
                 lir.convert(Bytecodes.L2I, base.result(), baseOp, null);
             } else {
                 assert x.base().kind.isInt() : "must be";
@@ -1333,13 +1355,13 @@ public abstract class LIRGenerator extends ValueVisitor {
         } else {
 
             if (compilation.target.arch.isX86()) {
-                addr = new LIRAddress(baseOp, (LIRLocation) indexOp, LIRAddress.Scale.fromInt(log2scale), 0, dstType);
+                addr = new LIRAddress(baseOp, (LIRLocation) indexOp, LIRAddress.Scale.fromLog2(log2scale), 0, dstType);
 
             } else if (compilation.target.arch.isSPARC()) {
                 if (isIllegal(indexOp) || log2scale == 0) {
                     addr = new LIRAddress(baseOp, (LIRLocation) indexOp, dstType);
                 } else {
-                    LIRLocation tmp = newRegister(CiKind.Int);
+                    LIRLocation tmp = newVariable(CiKind.Int);
                     lir.shiftLeft(indexOp, log2scale, tmp);
                     addr = new LIRAddress(baseOp, tmp, dstType);
                 }
@@ -1414,7 +1436,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (is32) {
             // XXX: what about floats and doubles and objects? (used in OSR)
             if (x.base().kind.isLong()) {
-                baseOp = newRegister(CiKind.Int);
+                baseOp = newVariable(CiKind.Int);
                 lir.convert(Bytecodes.L2I, base.result(), baseOp, null);
             } else {
                 assert x.base().kind.isInt() : "must be";
@@ -1423,7 +1445,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         LIRLocation indexOp = (LIRLocation) idx.result();
         if (log2scale != 0) {
             // temporary fix (platform dependent code without shift on Intel would be better)
-            indexOp = newRegister(CiKind.Int);
+            indexOp = newVariable(CiKind.Int);
             lir.move(idx.result(), indexOp);
             lir.shiftLeft(indexOp, log2scale, indexOp);
         }
@@ -1460,16 +1482,16 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     LIROperand forceToSpill(LIROperand value, CiKind t) {
         assert isLegal(value) : "value should not be illegal";
-        assert t.size == value.kind.size : "size mismatch";
+        assert t.jvmSlots == value.kind.jvmSlots : "size mismatch";
         if (!value.isVariableOrRegister()) {
             // force into a register
-            LIROperand r = newRegister(value.kind);
+            LIROperand r = newVariable(value.kind);
             lir.move(value, r);
             value = r;
         }
 
         // create a spill location
-        LIROperand tmp = newRegister(t, VariableFlag.MustStartInMemory);
+        LIROperand tmp = newVariable(t, VariableFlag.MustStartInMemory);
         // move from register to spill
         lir.move(value, tmp);
         return tmp;
@@ -1512,7 +1534,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             C1XMetrics.LoadConstantIterations++;
         }
 
-        LIROperand result = newRegister(kind);
+        LIROperand result = newVariable(kind);
         lir.move(c, result);
         constants.add(c);
         regForConstants.add(result);
@@ -1527,11 +1549,11 @@ public abstract class LIRGenerator extends ValueVisitor {
             if (md != null) {
                 int takenCountOffset = md.branchTakenCountOffset(bci);
                 int notTakenCountOffset = md.branchNotTakenCountOffset(bci);
-                LIRLocation mdReg = newRegister(CiKind.Object);
+                LIRLocation mdReg = newVariable(CiKind.Object);
                 lir.move(forObject(md.encoding().asObject()), mdReg);
-                LIRLocation dataOffsetReg = newRegister(CiKind.Int);
+                LIRLocation dataOffsetReg = newVariable(CiKind.Int);
                 lir.cmove(lirCond(cond), forInt(takenCountOffset), forInt(notTakenCountOffset), dataOffsetReg);
-                LIRLocation dataReg = newRegister(CiKind.Int);
+                LIRLocation dataReg = newVariable(CiKind.Int);
                 LIRAddress dataAddr = new LIRAddress(mdReg, dataOffsetReg, CiKind.Int);
                 lir.move(dataAddr, dataReg);
                 LIROperand fakeIncrValue = new LIRAddress(dataReg, 1, CiKind.Int);
@@ -1542,41 +1564,23 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected LIROperand rlockResult(Instruction x) {
-        // does an rlock and sets result
-        LIROperand reg = newRegister(x.kind);
-        setResult(x, reg);
-        return reg;
-    }
-
-    private LIRLocation rlock(CiKind type) {
-        // does an rlock and sets result
-        LIRLocation reg;
-        switch (type) {
-            case Short:
-            case Char:
-            case Byte:
-            case Boolean:
-                reg = rlockByte(type);
-                break;
-            default:
-                reg = newRegister(type);
-                break;
-        }
-
-        return reg;
-    }
-
-    private LIRLocation rlockResult(Instruction x, CiKind type) {
-        LIRLocation reg = rlock(type);
-        setResult(x, reg);
-        return reg;
+    /**
+     * Allocates a variable to hold the result of a given instruction.
+     * This can only be performed once for any given instruction.
+     *
+     * @param x an instruction that produces a result
+     * @return the variable assigned to hold the result produced by {@code x}
+     */
+    protected LIRLocation createResultVariable(Value x) {
+        LIRLocation var = newVariable(x.kind);
+        setResult(x, var);
+        return var;
     }
 
     private void visitFPIntrinsics(Intrinsic x) {
         assert x.numberOfArguments() == 1 : "wrong type";
         LIRItem value = new LIRItem(x.argumentAt(0), this);
-        LIROperand reg = rlockResult(x);
+        LIROperand reg = createResultVariable(x);
         value.loadItem();
         LIROperand tmp = forceToSpill(value.result(), x.kind);
         lir.move(tmp, reg);
@@ -1783,7 +1787,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     protected final LIROperand callRuntimeWithResult(CiRuntimeCall runtimeCall, LIRDebugInfo info, LIROperand... args) {
-        LIROperand result = newRegister(runtimeCall.resultKind);
+        LIROperand result = newVariable(runtimeCall.resultKind);
         LIRLocation location = callRuntime(runtimeCall, info, args);
         lir.move(location, result);
         return result;
@@ -1963,22 +1967,27 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    protected final LIRLocation newPointerRegister() {
-        // returns a register suitable for doing pointer math
-        // XXX: revisit this when there is a CiKind for Pointers
-        if (is64) {
-            return newRegister(CiKind.Long);
-        } else {
-            return newRegister(CiKind.Int);
+    /**
+     * Creates a new {@linkplain LIRLocation#isVariable() LIR variable}.
+     *
+     * @param kind the kind of the variable
+     * @return a new LIR variable
+     */
+    public LIRLocation newVariable(CiKind kind) {
+        if (kind == CiKind.Boolean || kind == CiKind.Byte) {
+            return newVariable(kind, VariableFlag.MustBeByteReg);
         }
+        assert kind != CiKind.Void;
+        return forVariable(currentVariableNumber++, kind);
     }
 
-    public LIRLocation newRegister(CiKind type) {
-        assert type != CiKind.Void;
-        return forVariable(currentVariableNumber++, type);
-    }
-
-    public LIRLocation newRegister(CiKind type, VariableFlag flag) {
+    /**
+     * Creates a new {@linkplain LIRLocation#isVariable() LIR variable}.
+     *
+     * @param kind the kind of the variable
+     * @return a new LIR variable
+     */
+    public LIRLocation newVariable(CiKind type, VariableFlag flag) {
         assert type != CiKind.Void;
         LIRLocation location = forVariable(currentVariableNumber++, type);
         setVarFlag(location, flag);
@@ -1995,9 +2004,7 @@ public abstract class LIRGenerator extends ValueVisitor {
             } else {
                 assert x instanceof Phi || x instanceof Local : "only for Phi and Local";
                 // allocate a variable for this local or phi
-                operand = rlock(x.kind);
-                x.setOperand(operand);
-                instructionForOperand.put(operand.variableNumber(), x);
+                createResultVariable(x);
             }
         }
         return x.operand();
@@ -2006,7 +2013,7 @@ public abstract class LIRGenerator extends ValueVisitor {
     private LIROperand operandForPhi(Phi phi) {
         if (phi.operand() == null || isIllegal(phi.operand())) {
             // allocate a variable for this phi
-            phi.setOperand(rlock(phi.kind));
+            phi.setOperand(newVariable(phi.kind));
             instructionForOperand.put(phi.operand().variableNumber(), phi);
         }
         return phi.operand();
@@ -2023,14 +2030,15 @@ public abstract class LIRGenerator extends ValueVisitor {
         x.clearOperand();
     }
 
-    protected void setResult(Instruction x, LIROperand opr) {
+    protected LIROperand setResult(Value x, LIROperand opr) {
         assert isLegal(opr) : "must set to valid value";
         assert isIllegal(x.operand()) : "operand should never change";
-        assert !opr.isVariableOrRegister() || opr.isVariable() : "should never set result to a physical register";
+        assert !opr.isRegister() : "should never set result to a physical register";
         x.setOperand(opr);
         if (opr.isVariable()) {
             instructionForOperand.put(opr.variableNumber(), x);
         }
+        return opr;
     }
 
     protected void shiftOp(int code, LIROperand resultOp, LIROperand value, LIROperand count, LIROperand tmp) {
@@ -2181,12 +2189,12 @@ public abstract class LIRGenerator extends ValueVisitor {
         if (kind == CiKind.Void) {
             return IllegalLocation;
         }
-        CiRegister returnRegister = compilation.target.registerConfig.getReturnRegister(kind);
+        CiRegister[] returnRegisters = compilation.target.registerConfig.getReturnRegisters(kind);
         assert is64 : "64 bit only for now";
-        if (kind.size == 2) {
-            return forRegisters(kind, returnRegister, returnRegister);
+        if (returnRegisters.length == 2) {
+            return forRegisters(kind, returnRegisters[0], returnRegisters[1]);
         }
-        return forRegister(kind, returnRegister);
+        return forRegister(kind, returnRegisters[0]);
     }
 
     protected static LIRCondition lirCond(Condition cond) {
@@ -2239,8 +2247,6 @@ public abstract class LIRGenerator extends ValueVisitor {
     protected abstract LIROperand exceptionPcOpr();
 
     protected abstract LIROperand osrBufferPointer();
-
-    protected abstract LIRLocation rlockByte(CiKind type);
 
     protected abstract LIROperand safepointPollRegister();
 

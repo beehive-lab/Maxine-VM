@@ -232,17 +232,9 @@ public class C1XCompilation {
     }
 
     public CiResult compile() {
-        setCurrent(this);
-
-        if (C1XOptions.PrintCompilation) {
-            TTY.println();
-            TTY.println("Compiling method: " + method.toString());
-        }
-
         CiTargetMethod targetMethod;
         try {
-            hir = new IR(this);
-            hir.build();
+            emitHIR();
             emitLIR();
             targetMethod = emitCode();
 
@@ -265,13 +257,8 @@ public class C1XCompilation {
             TTY.println();
             TTY.println("Compiling method: " + method.toString());
         }
-        try {
-            hir = new IR(this);
-            hir.build();
-        } catch (Throwable t) {
-            CiBailout bailout = new CiBailout("Unexpected exception while compiling: " + method, t);
-            throw bailout;
-        }
+        hir = new IR(this);
+        hir.build();
         return hir;
     }
 

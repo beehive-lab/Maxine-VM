@@ -43,7 +43,7 @@ import com.sun.max.vm.value.*;
 public class MaxRiField implements RiField {
 
     final MaxRiConstantPool constantPool;
-    final CiKind basicType; // cached for performance
+    final CiKind kind; // cached for performance
     final FieldRefConstant fieldRef;
     final int cpi;
     FieldActor fieldActor;
@@ -56,7 +56,7 @@ public class MaxRiField implements RiField {
     public MaxRiField(MaxRiConstantPool constantPool, FieldActor fieldActor, int cpi) {
         this.constantPool = constantPool;
         this.fieldActor = fieldActor;
-        this.basicType = MaxRiType.kindToBasicType(fieldActor.kind);
+        this.kind = MaxRiType.kindToCiKind(fieldActor.kind);
         this.fieldRef = null;
         this.cpi = cpi;
     }
@@ -70,7 +70,7 @@ public class MaxRiField implements RiField {
     public MaxRiField(MaxRiConstantPool constantPool, FieldRefConstant fieldRef, int cpi) {
         this.constantPool = constantPool;
         this.fieldRef = fieldRef;
-        this.basicType = MaxRiType.kindToBasicType(fieldRef.type(constantPool.constantPool).toKind());
+        this.kind = MaxRiType.kindToCiKind(fieldRef.type(constantPool.constantPool).toKind());
         this.cpi = cpi;
     }
 
@@ -102,7 +102,7 @@ public class MaxRiField implements RiField {
      * @return the C1X kind for this field
      */
     public CiKind kind() {
-        return basicType;
+        return kind;
     }
 
     /**
@@ -180,7 +180,7 @@ public class MaxRiField implements RiField {
             }
             Value v = fieldActor.constantValue();
             if (v != null) {
-                return new CiConstant(MaxRiType.kindToBasicType(v.kind()), v.asBoxedJavaValue());
+                return new CiConstant(MaxRiType.kindToCiKind(v.kind()), v.asBoxedJavaValue());
             }
             if (C1XOptions.CanonicalizeFinalFields) {
                 if (MaxineVM.isHosted()) {
@@ -188,7 +188,7 @@ public class MaxRiField implements RiField {
                 } else {
                     v = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
                 }
-                return new CiConstant(MaxRiType.kindToBasicType(v.kind()), v.asBoxedJavaValue());
+                return new CiConstant(MaxRiType.kindToCiKind(v.kind()), v.asBoxedJavaValue());
             }
         }
         return null;

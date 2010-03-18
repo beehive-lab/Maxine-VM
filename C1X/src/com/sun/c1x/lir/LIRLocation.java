@@ -23,16 +23,26 @@ package com.sun.c1x.lir;
 import com.sun.c1x.ci.*;
 
 /**
- * The {@code LIRLocation} class represents a LIROperand that is either a stack slot or a CPU register.
+ * The {@code LIRLocation} class represents a LIROperand that is either a {@linkplain #isStack() stack slot},
+ * a {@linkplain #isRegister() CPU register} or a {@linkplain #isVariable() variable}.
+ * Each definition and use of a variable must be given a physical location by the register
+ * allocator.
  *
  * @author Marcelo Cintra
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public final class LIRLocation extends LIROperand {
 
-    public final CiRegister location1;
-    public final CiRegister location2;
+    public final CiRegister register1;
+    public final CiRegister register2;
+
+    /**
+     * The index for this location. A negative value indicates a {@linkplain #isStack() stack location},
+     * a value of 0 indicates a {@linkplain #isRegister() physical CPU register} and a value greater
+     * or equals to {@link CiRegister#LowestVirtualRegisterNumber} indicates a {@linkplain #isVariable() virtual register}.
+     */
     public final int index;
 
     /**
@@ -43,54 +53,55 @@ public final class LIRLocation extends LIROperand {
      */
     LIRLocation(CiKind kind, CiRegister number) {
         super(kind);
-        assert kind.size == 1 || (kind.size == -1 && number == CiRegister.None);
+        assert kind.jvmSlots != -1 || number == CiRegister.None;
         assert number != null;
-        this.location1 = number;
-        this.location2 = CiRegister.None;
+        this.register1 = number;
+        this.register2 = CiRegister.None;
         index = 0;
     }
 
     /**
-     * Creates a new LIRLocation representing either a variable or a stack location, with negative indexes
-     * representing stack locations.
+     * Creates a new location representing either a variable or a stack location, with negative indexes representing
+     * stack locations.
      *
-     * @param kind the kind of the location
-     * @param number the variable index or the stack location index if negative
+     * @param kind the kind of the variable or a stack location
+     * @param number the variable index (if greater than {@link CiRegister#LowestVirtualRegisterNumber}) or the stack
+     *            location index (if negative)
      */
     LIRLocation(CiKind kind, int number) {
         super(kind);
-        assert number < 0 || number >= CiRegister.MaxPhysicalRegisterNumber;
-        this.location1 = CiRegister.None;
-        this.location2 = CiRegister.None;
+        assert number < 0 || number >= CiRegister.LowestVirtualRegisterNumber;
+        this.register1 = CiRegister.None;
+        this.register2 = CiRegister.None;
         this.index = number;
     }
 
     /**
-     * Creates a new LIRLocation representing a CPU register pair.
+     * Creates a new location representing a CPU register pair.
      *
      * @param kind the kind of the location
-     * @param location1 the number of the location
-     * @param location2 the number of the second location
+     * @param register1 the first register
+     * @param register2 the second register
      */
-    LIRLocation(CiKind kind, CiRegister location1, CiRegister location2) {
+    LIRLocation(CiKind kind, CiRegister register1, CiRegister register2) {
         super(kind);
-        assert kind.size == 2;
-        assert location1 != null && location2 != null;
-        this.location1 = location1;
-        this.location2 = location2;
+        assert kind.jvmSlots == 2;
+        assert register1 != null && register2 != null;
+        this.register1 = register1;
+        this.register2 = register2;
         index = 0;
     }
 
     @Override
     public int hashCode() {
-        return location1.number + location2.number + index;
+        return register1.number + register2.number + index;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o instanceof LIRLocation) {
             LIRLocation l = (LIRLocation) o;
-            return l.kind == kind && l.location1 == location1 && l.location2 == location2 && l.index == index;
+            return l.kind == kind && l.register1 == register1 && l.register2 == register2 && l.index == index;
         }
         return false;
     }
@@ -102,13 +113,14 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public int variableNumber() {
-        assert index >= CiRegister.MaxPhysicalRegisterNumber;
+        assert index >= CiRegister.LowestVirtualRegisterNumber : illegalOperation("variableNumber()");
         return index;
     }
 
     @Override
     public boolean isSingleStack() {
-        return isStack() && kind.sizeInSlots() == 1;
+        final boolean kindFitsInWord = true;
+        return isStack() && kindFitsInWord;
     }
 
     @Override
@@ -118,22 +130,24 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public boolean isVariable() {
-        return index >= CiRegister.MaxPhysicalRegisterNumber;
+        return index >= CiRegister.LowestVirtualRegisterNumber;
     }
 
     @Override
-    public boolean isFixedCpu() {
-        return !isStack() && index < CiRegister.MaxPhysicalRegisterNumber;
+    public boolean isRegister() {
+        return index == 0;
     }
 
     @Override
-    public boolean isSingleCpu() {
-        return !isStack() && location2 == CiRegister.None && location1.isCpu();
+    public boolean isSingleRegister() {
+        // TODO: Modify for 32-bit
+        return register1.isCpu() && register1.width >= 32;
     }
 
     @Override
-    public boolean isDoubleCpu() {
-        return !isStack() && location2 != CiRegister.None && location1.isCpu() && location2.isCpu();
+    public boolean isDoubleRegister() {
+        // TODO: Modify for 32-bit
+        return register1.isCpu() && register1.width >= 64;
     }
 
     @Override
@@ -143,63 +157,65 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public boolean isSingleXmm() {
-        return !isStack() && location1.isXmm() && kind.sizeInSlots() == 1;
+        // TODO: Modify for 32-bit
+        return register1.isXmm() && register1.width >= 32;
     }
 
     @Override
     public boolean isDoubleXmm() {
-        return !isStack() && location1.isXmm() && kind.sizeInSlots() == 2;
+        // TODO: Modify for 32-bit
+        return register1.isXmm() && register1.width >= 64;
     }
 
     @Override
     public int stackIndex() {
-        assert (isSingleStack() || isDoubleStack()) && !this.isVariable() : "type check";
+        assert isStack() : illegalOperation("stackIndex()");
         return -index - 1;
     }
 
     @Override
     public int singleStackIndex() {
-        assert isSingleStack() && !this.isVariable() : "type check";
+        assert isSingleStack() : illegalOperation("singleStackIndex()");
         return -index - 1;
     }
 
     @Override
     public int doubleStackIndex() {
-        assert isDoubleStack() && !this.isVariable() : "type check";
+        assert isDoubleStack() : illegalOperation("doubleStackIndex()");
         return -index - 1;
     }
 
     @Override
     public CiRegister asRegister() {
-        assert location1 == location2 || location2 == CiRegister.None;
-        return this.location1;
+        assert register1 == register2 || register2 == CiRegister.None : illegalOperation("asRegister()");
+        return this.register1;
     }
 
     @Override
     public CiRegister asRegisterLow() {
-        return this.location1;
+        return register1;
     }
 
     @Override
     public CiRegister asRegisterHigh() {
-        return this.location2;
+        return register2;
     }
 
     @Override
-    public int cpuRegNumber() {
-        assert index == 0;
-        return location1.number;
+    public int registerNumber() {
+        assert index == 0 : illegalOperation("cpuRegNumber()");
+        return register1.number;
     }
 
     @Override
-    public int cpuRegNumberLow() {
-        assert index == 0;
-        return location1.number;
+    public int registerNumberLow() {
+        assert index == 0 : illegalOperation("cpuRegNumberLow()");
+        return register1.number;
     }
 
     @Override
-    public int cpuRegNumberHigh() {
-        assert index == 0;
-        return location2.number;
+    public int registerNumberHigh() {
+        assert index == 0 : illegalOperation("cpuRegNumberHigh()");
+        return register2.number;
     }
 }

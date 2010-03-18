@@ -320,7 +320,7 @@ public class LoopPeeler extends DefaultValueVisitor {
 
     @Override
     public void visitArithmeticOp(ArithmeticOp i) {
-        ArithmeticOp other = new ArithmeticOp(i.opcode(), lookup(i.x()), lookup(i.y()), i.isStrictFP(), i.stateBefore() != null ? i.stateBefore().copy() : null);
+        ArithmeticOp other = new ArithmeticOp(i.opcode(), i.kind, lookup(i.x()), lookup(i.y()), i.isStrictFP(), i.stateBefore() != null ? i.stateBefore().copy() : null);
         other.setBCI(i.bci());
         if (i.canTrap()) {
             other.setExceptionHandlers(i.exceptionHandlers());

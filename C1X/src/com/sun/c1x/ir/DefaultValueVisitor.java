@@ -85,6 +85,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitStoreRegister(StoreRegister i) { visit(i); }
     @Override public void visitTableSwitch(TableSwitch i) { visit(i); }
     @Override public void visitThrow(Throw i) { visit(i); }
+    @Override public void visitUnsafeCast(UnsafeCast i) { visit(i); }
     @Override public void visitUnsafeGetObject(UnsafeGetObject i) { visit(i); }
     @Override public void visitUnsafeGetRaw(UnsafeGetRaw i) { visit(i); }
     @Override public void visitUnsafePrefetchRead(UnsafePrefetchRead i) { visit(i); }

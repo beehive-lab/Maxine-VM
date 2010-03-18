@@ -75,6 +75,7 @@ public abstract class ValueVisitor {
     public abstract void visitStoreRegister(StoreRegister i);
     public abstract void visitTableSwitch(TableSwitch i);
     public abstract void visitThrow(Throw i);
+    public abstract void visitUnsafeCast(UnsafeCast i);
     public abstract void visitUnsafeGetObject(UnsafeGetObject i);
     public abstract void visitUnsafeGetRaw(UnsafeGetRaw i);
     public abstract void visitUnsafePrefetchRead(UnsafePrefetchRead i);

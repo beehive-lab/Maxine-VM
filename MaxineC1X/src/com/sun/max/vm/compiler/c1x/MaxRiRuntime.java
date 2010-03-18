@@ -78,7 +78,7 @@ public class MaxRiRuntime implements RiRuntime {
      * @return the compiler interface constant pool for the specified method
      */
     public RiConstantPool getConstantPool(RiMethod method) {
-        return getConstantPool(this.asClassMethodActor(method, "getConstantPool()"));
+        return getConstantPool(asClassMethodActor(method, "getConstantPool()"));
     }
 
     private MaxRiConstantPool getConstantPool(ClassMethodActor classMethodActor) {
@@ -134,11 +134,7 @@ public class MaxRiRuntime implements RiRuntime {
      * to allow the compiler to use its own heuristics
      */
     public boolean mustInline(RiMethod method) {
-        if (!method.isLoaded()) {
-            return false;
-        }
-        ClassMethodActor classMethodActor = asClassMethodActor(method, "mustInline()");
-        return classMethodActor.isInline() && !classMethodActor.isUnsafe();
+        return method.isLoaded() && asClassMethodActor(method, "mustInline()").isInline();
     }
 
     /**
@@ -152,7 +148,7 @@ public class MaxRiRuntime implements RiRuntime {
             return false;
         }
         final ClassMethodActor classMethodActor = asClassMethodActor(method, "mustNotInline()");
-        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline() || classMethodActor.isUnsafe();
+        return classMethodActor.originalCodeAttribute() == null || classMethodActor.isNeverInline();
     }
 
     /**

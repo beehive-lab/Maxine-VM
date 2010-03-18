@@ -293,7 +293,7 @@ public abstract class LIRAssembler {
                 break;
             case NullCheck:
                 asm.recordImplicitException(codePos(), op.info);
-                assert op.operand().isSingleCpu();
+                assert op.operand().isSingleRegister();
                 asm.nullCheck(op.operand().asRegister());
                 break;
             default:

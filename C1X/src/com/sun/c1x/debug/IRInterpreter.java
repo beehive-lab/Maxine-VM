@@ -450,7 +450,7 @@ public class IRInterpreter {
             CiConstant xval = environment.lookup(i.x());
             CiConstant yval = environment.lookup(i.y());
 
-            assertKind(xval.kind.stackType(), yval.kind.stackType(), i.kind.stackType());
+            assertKind(xval.kind.stackKind(), yval.kind.stackKind(), i.kind.stackKind());
 
             switch (i.opcode()) {
                 case Bytecodes.IADD:
@@ -547,19 +547,19 @@ public class IRInterpreter {
 
             switch (i.opcode()) {
                 case Bytecodes.ISHL:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forInt((xval.asInt() << (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.ISHR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forInt((xval.asInt() >> (yval.asInt() & 0x1F))), instructionCounter);
                     break;
 
                 case Bytecodes.IUSHR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 32) : "Illegal shift constant in a ISH instruction";
                     s = yval.asInt() & 0x1f;
                     int iresult = xval.asInt() >> s;
@@ -570,22 +570,22 @@ public class IRInterpreter {
                     break;
 
                 case Bytecodes.LSHL:
-                    assertKind(xval.kind.stackType(), CiKind.Long);
-                    assertKind(yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), CiKind.Long);
+                    assertKind(yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forLong((xval.asLong() << (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LSHR:
-                    assertKind(xval.kind.stackType(), CiKind.Long);
-                    assertKind(yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), CiKind.Long);
+                    assertKind(yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     environment.bind(i, CiConstant.forLong((xval.asLong() >> (yval.asInt() & 0x3F))), instructionCounter);
                     break;
 
                 case Bytecodes.LUSHR:
-                    assertKind(xval.kind.stackType(), CiKind.Long);
-                    assertKind(yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), CiKind.Long);
+                    assertKind(yval.kind.stackKind(), CiKind.Int);
                     assert (yval.asInt() < 64) : "Illegal shift constant in a ISH instruction";
                     s = yval.asInt() & 0x3f;
                     long lresult = xval.asLong() >> s;
@@ -607,27 +607,27 @@ public class IRInterpreter {
 
             switch (i.opcode()) {
                 case Bytecodes.IAND:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() & yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() | yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.IXOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Int);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Int);
                     environment.bind(i, CiConstant.forInt((xval.asInt() ^ yval.asInt())), instructionCounter);
                     break;
                 case Bytecodes.LAND:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() & yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() | yval.asLong())), instructionCounter);
                     break;
                 case Bytecodes.LXOR:
-                    assertKind(xval.kind.stackType(), yval.kind.stackType(), CiKind.Long);
+                    assertKind(xval.kind.stackKind(), yval.kind.stackKind(), CiKind.Long);
                     environment.bind(i, CiConstant.forLong((xval.asLong() ^ yval.asLong())), instructionCounter);
                     break;
                 default:
@@ -878,9 +878,7 @@ public class IRInterpreter {
                 environment.bind(i, fromBoxedJavaValue(result.boxedValue()), instructionCounter);
             } catch (InvocationTargetException e) {
                 unexpected(i, e.getTargetException());
-            } catch (CiBailout e) {
-                unexpected(i, e.getCause());
-            } catch (StackOverflowError e) {
+            } catch (Throwable e) {
                 unexpected(i, e);
             }
             jumpNextInstruction();
