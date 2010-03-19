@@ -35,6 +35,7 @@ public abstract class ValueVisitor {
     public abstract void visitBlockBegin(BlockBegin i);
     public abstract void visitCheckCast(CheckCast i);
     public abstract void visitCompareOp(CompareOp i);
+    public abstract void visitWCompareOp(WCompareOp i);
     public abstract void visitConstant(Constant i);
     public abstract void visitConvert(Convert i);
     public abstract void visitExceptionObject(ExceptionObject i);

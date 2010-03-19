@@ -877,8 +877,14 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                     case Greater:
                         acond = X86Assembler.Condition.greater;
                         break;
+                    case Below:
+                        acond = X86Assembler.Condition.below;
+                        break;
                     case BelowEqual:
                         acond = X86Assembler.Condition.belowEqual;
+                        break;
+                    case Above:
+                        acond = X86Assembler.Condition.above;
                         break;
                     case AboveEqual:
                         acond = X86Assembler.Condition.aboveEqual;
@@ -1224,9 +1230,17 @@ public class X86LIRAssembler extends LIRAssembler implements LocalStubVisitor {
                 acond = X86Assembler.Condition.greater;
                 ncond = X86Assembler.Condition.lessEqual;
                 break;
+            case Below:
+                acond = X86Assembler.Condition.below;
+                ncond = X86Assembler.Condition.aboveEqual;
+                break;
             case BelowEqual:
                 acond = X86Assembler.Condition.belowEqual;
                 ncond = X86Assembler.Condition.above;
+                break;
+            case Above:
+                acond = X86Assembler.Condition.above;
+                ncond = X86Assembler.Condition.belowEqual;
                 break;
             case AboveEqual:
                 acond = X86Assembler.Condition.aboveEqual;

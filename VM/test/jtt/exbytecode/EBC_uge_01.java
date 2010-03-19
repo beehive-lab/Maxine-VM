@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,26 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
-
-/**
- * The {@code LIRCondition} enum represents the condition types available on LIR instructions .
- *
- * @author Marcelo Cintra
- *
+/*
+ * @Harness: java
+ * @Runs: (64, 47) = true; (-2, 1) = true; (-2,-2) = true
  */
-public enum LIRCondition {
-    // XXX: this class can probably be folded into Instruction.Condition
-    Equal,
-    NotEqual,
-    Less,
-    LessEqual,
-    GreaterEqual,
-    Greater,
-    Below,
-    BelowEqual,
-    Above,
-    AboveEqual,
-    Always,
-    Unknown
+
+package jtt.exbytecode;
+
+import com.sun.max.vm.compiler.builtin.*;
+
+public class EBC_uge_01 {
+    public static boolean test(int a, int b) {
+        return SpecialBuiltin.unsignedIntGreaterEqual(a, b);
+    }
+
 }
