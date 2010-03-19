@@ -623,6 +623,13 @@ public final class GraphBuilder {
         ipush(append(new CompareOp(opcode, x, y, stateBefore)));
     }
 
+    void genWCompareOp(CiKind kind, int opcode) {
+        FrameState stateBefore = curState.immutableCopy();
+        Value y = pop(kind);
+        Value x = pop(kind);
+        ipush(append(new WCompareOp(opcode, x, y, stateBefore)));
+    }
+
     void genConvert(int opcode, CiKind from, CiKind to) {
         CiKind tt = to.stackKind();
         push(tt, append(new Convert(opcode, pop(from.stackKind()), tt)));
@@ -2053,15 +2060,13 @@ public final class GraphBuilder {
                 case MOV_L2D: genConvert(opcode, CiKind.Long, CiKind.Double ); break;
                 case MOV_D2L: genConvert(opcode, CiKind.Double, CiKind.Long ); break;
 
-//                case UWLT:
-//                case UWLTEQ:
-//                case UWGT:
-//                case UWGTEQ:
-//                case UGE: {
-//                    skip2();
-//                    popCategory1();
-//                    break;
-//                }
+                case UWLT:   // fall through
+                case UWLTEQ: // fall through
+                case UWGT: // fall through
+                case UWGTEQ: genWCompareOp(CiKind.Word, opcode); break;
+
+                case UGE: genWCompareOp(CiKind.Int, opcode); break;
+
 //                case MEMBAR: {
 //                    skip2();
 //                    break;

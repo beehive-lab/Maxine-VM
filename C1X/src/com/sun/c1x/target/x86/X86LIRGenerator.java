@@ -589,6 +589,28 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
+    public void visitWCompareOp(WCompareOp x) {
+        LIRItem left = new LIRItem(x.x(), this);
+        LIRItem right = new LIRItem(x.y(), this);
+        left.setDestroysRegister();  // are we sure? why? copied from visitCompareOp
+        left.loadItem();
+        right.loadItem();
+        LIRCondition condition = LIRCondition.Unknown;
+        switch (x.opcode()) {
+            case Bytecodes.UWLT: condition = LIRCondition.Below; break;
+            case Bytecodes.UWGT: condition = LIRCondition.Above; break;
+            case Bytecodes.UWLTEQ: condition = LIRCondition.BelowEqual; break;
+            case Bytecodes.UWGTEQ: condition = LIRCondition.AboveEqual; break;
+            case Bytecodes.UGE: condition = LIRCondition.AboveEqual; break;
+            default:
+                Util.unimplemented();
+        }
+        LIROperand result = createResultVariable(x);
+        lir.cmp(condition, left.result(), right.result());
+        lir.cmove(condition, LIROperand.forInt(1), LIROperand.forInt(0), result);
+    }
+
+    @Override
     protected void genAttemptUpdate(Intrinsic x) {
         assert x.numberOfArguments() == 3 : "wrong type";
         LIRItem obj = new LIRItem(x.argumentAt(0), this); // AtomicLong object

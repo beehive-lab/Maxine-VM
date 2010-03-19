@@ -383,6 +383,15 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
+    public void visitWCompareOp(WCompareOp compareOp) {
+        out.print(compareOp.x()).
+             print(' ').
+             print(Bytecodes.operator(compareOp.opcode())).
+             print(' ').
+             print(compareOp.y());
+    }
+
+    @Override
     public void visitConstant(Constant constant) {
         CiConstant type = constant.value;
         if (type == CiConstant.NULL_OBJECT) {
