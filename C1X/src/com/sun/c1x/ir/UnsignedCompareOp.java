@@ -20,28 +20,37 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.bytecode.Bytecodes.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.value.*;
 
 /**
- * The {@code WCompareOp} instruction represents comparisons between word types,
- * for the {@code UWLT} etc., bytecodes. These have different result semantics to the standard compare ops.
+ * Unsigned comparisons.
  *
  * @author Mick Jordan
+ * @see UnsignedComparisons
  */
-public final class WCompareOp extends Op2 {
+public final class UnsignedCompareOp extends Op2 {
 
     FrameState stateBefore;
 
     /**
+     * One of the constants defined in {@link UnsignedComparisons} denoting the type of this comparison.
+     */
+    public final int op;
+
+    /**
      * Creates a new compare operation.
+     *
      * @param opcode the bytecode opcode
+     * @param op the comparison type
      * @param x the first input
      * @param y the second input
      * @param stateBefore the state before the comparison is performed
      */
-    public WCompareOp(int opcode, Value x, Value y, FrameState stateBefore) {
+    public UnsignedCompareOp(int opcode, int op, Value x, Value y, FrameState stateBefore) {
         super(CiKind.Int, opcode, x, y);
+        this.op = op;
         this.stateBefore = stateBefore;
     }
 
@@ -60,6 +69,6 @@ public final class WCompareOp extends Op2 {
      */
     @Override
     public void accept(ValueVisitor v) {
-        v.visitWCompareOp(this);
+        v.visitUnsignedCompareOp(this);
     }
 }

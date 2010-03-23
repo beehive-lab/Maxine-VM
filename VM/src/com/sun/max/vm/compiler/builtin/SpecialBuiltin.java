@@ -21,10 +21,10 @@
 package com.sun.max.vm.compiler.builtin;
 
 import static com.sun.c1x.bytecode.Bytecodes.*;
+import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import com.sun.c1x.bytecode.*;
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -294,7 +294,7 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     @BUILTIN(UnsignedIntGreaterEqual.class)
-    @INTRINSIC(UGE)
+    @INTRINSIC(UCMP | (ABOVE_EQUAL << 8))
     public static boolean unsignedIntGreaterEqual(int value1, int value2) {
         final long unsignedInt1 = value1 & 0xFFFFFFFFL;
         final long unsignedInt2 = value2 & 0xFFFFFFFFL;
@@ -363,11 +363,11 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final CompareWords BUILTIN = new CompareWords();
     }
 
-    public static class BarMemory extends SpecialBuiltin {
+    @BUILTIN(BarMemory.class)
+    public static void barMemory(int barriers) {
+    }
 
-        public BarMemory() {
-            super(MemoryBarrier.class);
-        }
+    public static class BarMemory extends SpecialBuiltin {
 
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {

@@ -305,7 +305,7 @@ public class X86CodeGen extends CodeGen {
                 Label endLabel = new Label();
                 asm.cvttss2sil(dst, src);
                 asm.cmp32(dst, Integer.MIN_VALUE);
-                asm.jcc(X86Assembler.Condition.notEqual, endLabel);
+                asm.jcc(X86Assembler.ConditionFlag.notEqual, endLabel);
                 recordGlobalStubCallPoint();
 // TODO                asm.callGlobalStub(GlobalStub.f2i, dst, src);
                 asm.bind(endLabel);
@@ -317,7 +317,7 @@ public class X86CodeGen extends CodeGen {
                 asm.cvttss2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
-                asm.jcc(X86Assembler.Condition.notEqual, endLabel);
+                asm.jcc(X86Assembler.ConditionFlag.notEqual, endLabel);
 // TODO                asm.callGlobalStub(GlobalStub.f2i, dst, src);
                 asm.bind(endLabel);
                 return location(dst);
@@ -329,7 +329,7 @@ public class X86CodeGen extends CodeGen {
                 Label endLabel = new Label();
                 asm.cvttsd2sil(dst, src);
                 asm.cmp32(dst, Integer.MIN_VALUE);
-                asm.jcc(X86Assembler.Condition.notEqual, endLabel);
+                asm.jcc(X86Assembler.ConditionFlag.notEqual, endLabel);
 // TODO                asm.callGlobalStub(GlobalStub.d2i, dst, src);
                 asm.bind(endLabel);
                 return location(dst);
@@ -340,7 +340,7 @@ public class X86CodeGen extends CodeGen {
                 asm.cvttsd2siq(dst, src);
                 asm.mov64(rscratch1, Long.MIN_VALUE);
                 asm.cmpq(dst, rscratch1);
-                asm.jcc(X86Assembler.Condition.notEqual, endLabel);
+                asm.jcc(X86Assembler.ConditionFlag.notEqual, endLabel);
 // TODO                asm.callGlobalStub(GlobalStub.d2i, dst, src);
                 asm.bind(endLabel);
                 return location(dst);

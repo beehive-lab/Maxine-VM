@@ -20,10 +20,7 @@
  */
 package com.sun.max.vm.cps.b.c.d.e.amd64;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
-import com.sun.max.memory.*;
-import com.sun.max.program.*;
+import com.sun.c1x.bytecode.Bytecodes.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.AddressBuiltin.*;
 import com.sun.max.vm.compiler.builtin.IEEE754Builtin.*;
@@ -1356,26 +1353,20 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     @Override
     public void visitBarMemory(BarMemory builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirResult == null;
-        if (!dirArguments[0].isConstant()) {
-            ProgramWarning.message("optimizer failed to determine a memory barrier argument as a known constant => emitting a full barrier just in case");
-            addInstruction(new MFENCE(eirBlock()));
-            return;
-        }
+        assert dirArguments[0].isConstant();
         final DirConstant dirConstant = (DirConstant) dirArguments[0];
-        final Class<PoolSet<MemoryBarrier>> type = null;
-        final PoolSet<MemoryBarrier> memoryBarriers = StaticLoophole.cast(type, dirConstant.value().asObject());
-        if (methodTranslation().memoryModel.barriers.containsAll(memoryBarriers)) {
+        assert dirConstant.value().kind() == Kind.INT;
+        final int explicitMemoryBarriers = dirConstant.value().asInt() & ~methodTranslation().memoryModel.impliedBarriers;
+        if (0 == explicitMemoryBarriers) {
             return;
         }
-        if (memoryBarriers.length() == 1) {
-            if (memoryBarriers.contains(MemoryBarrier.LOAD_LOAD)) {
-                addInstruction(new LFENCE(eirBlock()));
-                return;
-            }
-            if (memoryBarriers.contains(MemoryBarrier.STORE_STORE)) {
-                addInstruction(new SFENCE(eirBlock()));
-                return;
-            }
+        if (explicitMemoryBarriers == MemoryBarriers.LOAD_LOAD) {
+            addInstruction(new LFENCE(eirBlock()));
+            return;
+        }
+        if (explicitMemoryBarriers == MemoryBarriers.STORE_STORE) {
+            addInstruction(new SFENCE(eirBlock()));
+            return;
         }
         addInstruction(new MFENCE(eirBlock()));
     }

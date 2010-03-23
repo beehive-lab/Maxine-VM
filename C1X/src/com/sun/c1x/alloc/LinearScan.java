@@ -109,10 +109,6 @@ public class LinearScan {
 
     int regNumHi(LIROperand opr) {
         assert opr.isVariableOrRegister() : "should not call this otherwise";
-
-        if (opr.isDoubleRegister()) {
-            return opr.registerNumberHigh();
-        }
         return -1;
     }
 
@@ -385,7 +381,7 @@ public class LinearScan {
     void eliminateSpillMoves() {
         // Util.traceLinearScan(3, " Eliminating unnecessary spill moves");
 
-        // collect all intervals that must be stored after their definion.
+        // collect all intervals that must be stored after their definition.
         // the list is sorted by Interval.spillDefinitionPos
         Interval interval;
         Interval[] result = createUnhandledLists(mustStoreAtDefinition, null);
@@ -1185,30 +1181,30 @@ public class LinearScan {
         }
     }
 
-    void handleDoublewordMoves(LIRInstruction op) {
-        // special handling for doubleword move from memory to register:
-        // in this case the registers of the input Pointer and the result
-        // registers must not overlap . add a temp range for the input registers
-        if (op.code == LIROpcode.Move) {
-            LIROp1 move = (LIROp1) op;
-
-            LIROperand inOpr = move.operand();
-
-            if (move.result().isDoubleRegister() && LIROperand.isLocation(inOpr)) {
-                if (inOpr instanceof LIRAddress) {
-                    final LIRAddress pointer = (LIRAddress) inOpr;
-                    LIRLocation base = pointer.base;
-                    if (LIROperand.isLegal(base)) {
-                        addTemp(base, op.id, IntervalUseKind.NoUse, registerKind(base));
-                    }
-                    LIRLocation index = pointer.index;
-                    if (LIROperand.isLegal(index)) {
-                        addTemp(index, op.id, IntervalUseKind.NoUse, registerKind(index));
-                    }
-                }
-            }
-        }
-    }
+//    void handleDoublewordMoves(LIRInstruction op) {
+//        // special handling for doubleword move from memory to register:
+//        // in this case the registers of the input Pointer and the result
+//        // registers must not overlap . add a temp range for the input registers
+//        if (op.code == LIROpcode.Move) {
+//            LIROp1 move = (LIROp1) op;
+//
+//            LIROperand inOpr = move.operand();
+//
+//            if (move.result().isDoubleRegister() && LIROperand.isLocation(inOpr)) {
+//                if (inOpr instanceof LIRAddress) {
+//                    final LIRAddress pointer = (LIRAddress) inOpr;
+//                    LIRLocation base = pointer.base;
+//                    if (LIROperand.isLegal(base)) {
+//                        addTemp(base, op.id, IntervalUseKind.NoUse, registerKind(base));
+//                    }
+//                    LIRLocation index = pointer.index;
+//                    if (LIROperand.isLegal(index)) {
+//                        addTemp(index, op.id, IntervalUseKind.NoUse, registerKind(index));
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     void addRegisterHints(LIRInstruction op) {
         switch (op.code) {
@@ -1345,7 +1341,7 @@ public class LinearScan {
 
                 // special steps for some instructions (especially moves)
                 handleMethodArguments(op);
-                handleDoublewordMoves(op);
+//                handleDoublewordMoves(op);
                 addRegisterHints(op);
 
             } // end of instruction iteration
@@ -1660,7 +1656,7 @@ public class LinearScan {
             if (instr instanceof LIRBranch) {
                 LIRBranch branch = (LIRBranch) instr;
                 // insert moves before branch
-                assert branch.cond() == LIRCondition.Always : "block does not end with an unconditional jump";
+                assert branch.cond() == Condition.TRUE : "block does not end with an unconditional jump";
                 moveResolver.setInsertPosition(fromBlock.lir(), instructions.size() - 2);
             } else {
                 moveResolver.setInsertPosition(fromBlock.lir(), instructions.size() - 1);
@@ -1701,7 +1697,7 @@ public class LinearScan {
                 List<LIRInstruction> instructions = block.lir().instructionsList();
                 assert instructions.get(0).code == LIROpcode.Label : "block must start with label";
                 assert instructions.get(instructions.size() - 1).code == LIROpcode.Branch : "block with successors must end with branch";
-                assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == LIRCondition.Always : "block with successor must end with unconditional branch";
+                assert ((LIRBranch) instructions.get(instructions.size() - 1)).cond() == Condition.TRUE : "block with successor must end with unconditional branch";
 
                 // check if block is empty (only label and branch)
                 if (instructions.size() == 2) {
@@ -2094,7 +2090,7 @@ public class LinearScan {
                     if (instr instanceof LIRBranch) {
                         LIRBranch branch = (LIRBranch) instr;
                         if (block.lirBlock.liveOut.get(opr.variableNumber())) {
-                            assert branch.cond() == LIRCondition.Always : "block does not end with an unconditional jump";
+                            assert branch.cond() == Condition.TRUE : "block does not end with an unconditional jump";
                             throw new CiBailout("can't get split child for the last branch of a block because the information would be incorrect (moves are inserted before the branch in resolveDataFlow)");
                         }
                     }
@@ -2233,12 +2229,12 @@ public class LinearScan {
             scopeValues.add(location);
             return 1;
 
-        } else if (opr.isSingleRegister()) {
+        } else if (opr.kind.isInt() && opr.isRegister()) {
             CiLocation location = new CiRegisterLocation(opr.kind, opr.asRegister());
             scopeValues.add(location);
             return 1;
 
-        } else if (opr.isSingleXmm() && compilation.target.arch.isX86()) {
+        } else if (opr.kind.isFloat() && opr.isRegister() && compilation.target.arch.isX86()) {
             CiLocation location = new CiRegisterLocation(opr.kind, opr.asRegister());
             scopeValues.add(location);
             return 1;
@@ -2248,14 +2244,13 @@ public class LinearScan {
             CiValue first = null;
             CiValue second = null;
 
-            if (opr.isDoubleStack()) {
+            if (opr.kind.isDouble() && opr.isStack()) {
                 assert compilation.target.arch.is64bit();
                 first = new CiStackLocation(opr.kind, opr.doubleStackIndex(), compilation.target.spillSlotSize, false);
-            } else if (opr.isDoubleRegister()) {
+            } else if (opr.kind.isLong() && opr.isRegister()) {
                 assert compilation.target.arch.is64bit();
                 first = new CiRegisterLocation(opr.kind, opr.asRegister());
-            } else if (opr.isDoubleXmm() && compilation.target.arch.isX86()) {
-                assert opr.asRegisterLow() == opr.asRegisterHigh() : "assumed in calculation";
+            } else if (opr.kind.isDouble() && opr.isRegister() && compilation.target.arch.isX86()) {
                 first = new CiRegisterLocation(opr.kind, opr.asRegister());
 
             } else {

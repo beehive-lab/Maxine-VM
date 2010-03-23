@@ -971,7 +971,7 @@ public abstract class BytecodeToTargetTranslator {
                         case Bytecodes.MEMBAR_STORE_LOAD  : emit(MEMBAR_STORE_LOAD); break;
                         case Bytecodes.MEMBAR_STORE_STORE : emit(MEMBAR_STORE_STORE); break;
                         case Bytecodes.MEMBAR_MEMOP_STORE : emit(MEMBAR_MEMOP_STORE); break;
-                        case Bytecodes.MEMBAR_ALL         : emit(MEMBAR_ALL); break;
+                        case Bytecodes.MEMBAR_FENCE         : emit(MEMBAR_FENCE); break;
 
                         default                           : throw new InternalError("Unsupported opcode" + errorSuffix());
                     }
@@ -982,11 +982,6 @@ public abstract class BytecodeToTargetTranslator {
                 case Bytecodes.MOV_F2I            : emit(MOV_F2I); skip(2); break;
                 case Bytecodes.MOV_L2D            : emit(MOV_L2D); skip(2); break;
                 case Bytecodes.MOV_D2L            : emit(MOV_D2L); skip(2); break;
-                case Bytecodes.UWLT               : emit(UWLT); skip(2); break;
-                case Bytecodes.UWLTEQ             : emit(UWLTEQ); skip(2); break;
-                case Bytecodes.UWGT               : emit(UWGT); skip(2); break;
-                case Bytecodes.UWGTEQ             : emit(UWGTEQ); skip(2); break;
-                case Bytecodes.UGE                : emit(UGE); skip(2); break;
 
 
                 case Bytecodes.WRETURN            : emitReturn(WRETURN); break;

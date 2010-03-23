@@ -670,27 +670,27 @@ public class IRInterpreter {
             final CiConstant y = environment.lookup(i.y());
 
             switch (i.condition()) {
-                case eql:
+                case EQ:
                     bindIfOp(i, x.equals(y), tval, fval);
                     break;
 
-                case neq:
+                case NE:
                     bindIfOp(i, !x.equals(y), tval, fval);
                     break;
 
-                case gtr:
+                case GT:
                     bindIfOp(i, x.asInt() > y.asInt(), tval, fval);
                     break;
 
-                case geq:
+                case GE:
                     bindIfOp(i, x.asInt() >= y.asInt(), tval, fval);
                     break;
 
-                case lss:
+                case LT:
                     bindIfOp(i, x.asInt() < y.asInt(), tval, fval);
                     break;
 
-                case leq:
+                case LE:
                     bindIfOp(i, x.asInt() <= y.asInt(), tval, fval);
                     break;
             }
@@ -1292,7 +1292,7 @@ public class IRInterpreter {
             int cmp = compareValues(x, y);
 
             switch (i.condition()) {
-                case eql:
+                case EQ:
                     if (cmp == 0) {
                         jump(i.successor(true));
                     } else {
@@ -1300,7 +1300,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case neq:
+                case NE:
                     if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
                     } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
@@ -1312,7 +1312,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case gtr:
+                case GT:
                     if (cmp == 1) {
                         jump(i.successor(true));
                     } else {
@@ -1320,7 +1320,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case geq:
+                case GE:
                     if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
                     } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {
@@ -1333,7 +1333,7 @@ public class IRInterpreter {
 
                     break;
 
-                case lss:
+                case LT:
                     if (cmp == -1) {
                         jump(i.successor(true));
                     } else {
@@ -1341,7 +1341,7 @@ public class IRInterpreter {
                     }
                     break;
 
-                case leq:
+                case LE:
                     if (x.kind.isDouble() && (Double.isNaN(x.asDouble()) || Double.isNaN(y.asDouble()))) {
                         jump(i.unorderedSuccessor());
                     } else if (x.kind.isFloat() && (Float.isNaN(x.asFloat()) || Float.isNaN(y.asFloat()))) {

@@ -383,7 +383,7 @@ public class InstructionPrinter extends ValueVisitor {
     }
 
     @Override
-    public void visitWCompareOp(WCompareOp compareOp) {
+    public void visitUnsignedCompareOp(UnsignedCompareOp compareOp) {
         out.print(compareOp.x()).
              print(' ').
              print(Bytecodes.operator(compareOp.opcode())).

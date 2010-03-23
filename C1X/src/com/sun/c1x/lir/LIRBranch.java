@@ -25,7 +25,6 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.debug.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
 
 /**
  * @author Marcelo Cintra
@@ -34,7 +33,7 @@ import com.sun.c1x.util.*;
  */
 public class LIRBranch extends LIRInstruction {
 
-    private LIRCondition cond;
+    private Condition cond;
     private CiKind type;
     private Label label;
     private BlockBegin block;  // if this is a branch to a block, this is the block
@@ -47,7 +46,7 @@ public class LIRBranch extends LIRInstruction {
      * @param label target label
      *
      */
-    public LIRBranch(LIRCondition cond, Label label) {
+    public LIRBranch(Condition cond, Label label) {
         super(LIROpcode.Branch, LIROperand.IllegalLocation, null, false, null, 0, 0);
         this.cond = cond;
         this.label = label;
@@ -61,7 +60,7 @@ public class LIRBranch extends LIRInstruction {
      * @param stub
      *
      */
-    public LIRBranch(LIRCondition cond, CiKind type, LocalStub stub) {
+    public LIRBranch(Condition cond, CiKind type, LocalStub stub) {
         super(LIROpcode.Branch, LIROperand.IllegalLocation, null, false, stub, 0, 0);
         this.cond = cond;
         this.label = stub.entry;
@@ -76,7 +75,7 @@ public class LIRBranch extends LIRInstruction {
      * @param block
      *
      */
-    public LIRBranch(LIRCondition cond, CiKind type, BlockBegin block) {
+    public LIRBranch(Condition cond, CiKind type, BlockBegin block) {
         super(LIROpcode.Branch, LIROperand.IllegalLocation, null, false, null, 0, 0);
         this.cond = cond;
         this.type = type;
@@ -85,7 +84,7 @@ public class LIRBranch extends LIRInstruction {
         this.ublock = null;
     }
 
-    public LIRBranch(LIRCondition cond, CiKind type, BlockBegin block, BlockBegin ublock) {
+    public LIRBranch(Condition cond, CiKind type, BlockBegin block, BlockBegin ublock) {
         super(LIROpcode.CondFloatBranch, LIROperand.IllegalLocation, null, false, null, 0, 0);
         this.cond = cond;
         this.type = type;
@@ -97,7 +96,7 @@ public class LIRBranch extends LIRInstruction {
     /**
      * @return the condition
      */
-    public LIRCondition cond() {
+    public Condition cond() {
         return cond;
     }
 
@@ -127,31 +126,7 @@ public class LIRBranch extends LIRInstruction {
     }
 
     public void negateCondition() {
-        switch (this.cond) {
-            case AboveEqual:
-                cond = LIRCondition.NotEqual;
-                break;
-            case NotEqual:
-                cond = LIRCondition.Equal;
-                break;
-            case Equal:
-                cond = LIRCondition.NotEqual;
-                break;
-            case Less:
-                cond = LIRCondition.GreaterEqual;
-                break;
-            case LessEqual:
-                cond = LIRCondition.Greater;
-                break;
-            case GreaterEqual:
-                cond = LIRCondition.Less;
-                break;
-            case Greater:
-                cond = LIRCondition.LessEqual;
-                break;
-            default:
-                Util.shouldNotReachHere();
-        }
+        cond = cond.negate();
     }
 
     @Override

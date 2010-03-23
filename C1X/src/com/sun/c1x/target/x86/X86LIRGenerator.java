@@ -21,7 +21,7 @@
 
 package com.sun.c1x.target.x86;
 
-import java.util.*;
+import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
 
 import com.sun.c1x.*;
 import com.sun.c1x.bytecode.*;
@@ -30,7 +30,6 @@ import com.sun.c1x.gen.*;
 import com.sun.c1x.globalstub.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.ri.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 
@@ -145,12 +144,12 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genCmpMemInt(LIRCondition condition, LIRLocation base, int disp, int c, LIRDebugInfo info) {
+    protected void genCmpMemInt(Condition condition, LIRLocation base, int disp, int c, LIRDebugInfo info) {
         lir.cmpMemInt(condition, base, disp, c, info);
     }
 
     @Override
-    protected void genCmpRegMem(LIRCondition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, LIRDebugInfo info) {
+    protected void genCmpRegMem(Condition condition, LIROperand reg, LIRLocation base, int disp, CiKind type, LIRDebugInfo info) {
         lir.cmpRegMem(condition, reg, new LIRAddress(base, disp, type), info);
     }
 
@@ -170,89 +169,6 @@ public final class X86LIRGenerator extends LIRGenerator {
             }
         }
         return false;
-    }
-
-    @Override
-    protected void genStoreIndexed(StoreIndexed x) {
-        assert x.isLive() : "";
-        boolean needsRangeCheck = true;
-        boolean objStore = x.elementKind() == CiKind.Object;
-        boolean needsWriteBarrier = objStore && x.needsWriteBarrier();
-        boolean needsStoreCheck = objStore && x.needsStoreCheck();
-
-        LIRItem array = new LIRItem(x.array(), this);
-        LIRItem index = new LIRItem(x.index(), this);
-        LIRItem value = new LIRItem(x.value(), this);
-        LIRItem length = new LIRItem(this);
-
-        array.loadItem();
-        index.loadNonconstant();
-
-        if (x.length() != null) {
-            needsRangeCheck = x.needsRangeCheck();
-            if (needsRangeCheck) {
-                length.setInstruction(x.length());
-                length.loadItem();
-            }
-        }
-        if (needsStoreCheck) {
-            value.loadItem();
-        } else {
-            value.loadForStore(x.elementKind());
-        }
-
-        setNoResult(x);
-
-        // the CodeEmitInfo must be duplicated for each different
-        // LIR-instruction because spilling can occur anywhere between two
-        // instructions and so the debug information must be different
-        LIRDebugInfo rangeCheckInfo = stateFor(x);
-        LIRDebugInfo nullCheckInfo = null;
-        if (x.needsNullCheck()) {
-            nullCheckInfo = rangeCheckInfo.copy();
-        }
-
-        emitArrayStore((LIRLocation) array.result(), index.result(), value.result(), length.result(), x.elementKind(), needsRangeCheck, needsStoreCheck, needsWriteBarrier, nullCheckInfo, rangeCheckInfo);
-    }
-
-    private void emitSafeArrayStore(LIRLocation array, LIROperand index, LIROperand value, CiKind elementType, boolean needsBarrier) {
-        emitArrayStore(array, index, value, ILLEGAL, elementType, false, false, needsBarrier, null, null);
-    }
-
-    private void emitArrayStore(LIRLocation array, LIROperand index, LIROperand value, LIROperand length, CiKind elementType, boolean needsRangeCheck, boolean needsStoreCheck, boolean needsBarrier,
-                    LIRDebugInfo nullCheckInfo, LIRDebugInfo rangeCheckInfo) {
-        // emit array address setup early so it schedules better
-        LIRAddress arrayAddr = genArrayAddress(array, index, elementType, needsBarrier);
-
-        if (C1XOptions.GenBoundsChecks && needsRangeCheck) {
-            ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArrayIndexOutOfBoundsException), rangeCheckInfo, index);
-            if (length != ILLEGAL) {
-                lir.cmp(LIRCondition.BelowEqual, length, index);
-                lir.branch(LIRCondition.BelowEqual, CiKind.Int, stub);
-            } else {
-                arrayRangeCheck(array, index, nullCheckInfo, rangeCheckInfo, stub);
-                // rangeCheck also does the null check
-                nullCheckInfo = null;
-            }
-        }
-
-        if (C1XOptions.GenArrayStoreCheck && needsStoreCheck) {
-            LIROperand tmp1 = newVariable(CiKind.Object);
-            LIROperand tmp2 = newVariable(CiKind.Object);
-            LIROperand tmp3 = newVariable(CiKind.Object);
-
-            lir.storeCheck(value, array, tmp1, tmp2, tmp3, rangeCheckInfo.copy(), null, stubFor(CiRuntimeCall.SlowStoreCheck));
-        }
-
-        if (needsBarrier) {
-            // Needs GC write barriers.
-            preBarrier(arrayAddr, false, null);
-            lir.move(value, arrayAddr, nullCheckInfo);
-            // Seems to be a precise
-            postBarrier(arrayAddr, value);
-        } else {
-            lir.move(value, arrayAddr, nullCheckInfo);
-        }
     }
 
     @Override
@@ -316,8 +232,8 @@ public final class X86LIRGenerator extends LIRGenerator {
 
                 if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
                     ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArithmeticException), info);
-                    lir.cmp(LIRCondition.Equal, divisor, LIROperand.forLong(0));
-                    lir.branch(LIRCondition.Equal, CiKind.Long, stub);
+                    lir.cmp(Condition.EQ, divisor, LIROperand.forLong(0));
+                    lir.branch(Condition.EQ, CiKind.Long, stub);
                     info = null;
                 }
                 LIROperand result = createResultVariable(x);
@@ -375,8 +291,8 @@ public final class X86LIRGenerator extends LIRGenerator {
 
             if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
                 ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArithmeticException), info);
-                lir.cmp(LIRCondition.Equal, divisor, LIROperand.forInt(0));
-                lir.branch(LIRCondition.Equal, CiKind.Int, stub);
+                lir.cmp(Condition.EQ, divisor, LIROperand.forInt(0));
+                lir.branch(Condition.EQ, CiKind.Int, stub);
                 info = null;
             }
             LIROperand result = createResultVariable(x);
@@ -451,8 +367,8 @@ public final class X86LIRGenerator extends LIRGenerator {
 
                 if (C1XOptions.GenExplicitDiv0Checks && x.needsZeroCheck()) {
                     ThrowStub stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowArithmeticException), info);
-                    lir.cmp(LIRCondition.Equal, divisor, LIROperand.forLong(0));
-                    lir.branch(LIRCondition.Equal, CiKind.Long, stub);
+                    lir.cmp(Condition.EQ, divisor, LIROperand.forLong(0));
+                    lir.branch(Condition.EQ, CiKind.Long, stub);
                     info = null;
                 }
                 LIROperand result = createResultVariable(x);
@@ -583,25 +499,23 @@ public final class X86LIRGenerator extends LIRGenerator {
         } else if (x.x().kind.isLong()) {
             lir.lcmp2int(left.result(), right.result(), reg);
         } else {
-            // Is Unimplemented in C1
             Util.unimplemented();
         }
     }
 
     @Override
-    public void visitWCompareOp(WCompareOp x) {
+    public void visitUnsignedCompareOp(UnsignedCompareOp x) {
         LIRItem left = new LIRItem(x.x(), this);
         LIRItem right = new LIRItem(x.y(), this);
         left.setDestroysRegister();  // are we sure? why? copied from visitCompareOp
         left.loadItem();
         right.loadItem();
-        LIRCondition condition = LIRCondition.Unknown;
-        switch (x.opcode()) {
-            case Bytecodes.UWLT: condition = LIRCondition.Below; break;
-            case Bytecodes.UWGT: condition = LIRCondition.Above; break;
-            case Bytecodes.UWLTEQ: condition = LIRCondition.BelowEqual; break;
-            case Bytecodes.UWGTEQ: condition = LIRCondition.AboveEqual; break;
-            case Bytecodes.UGE: condition = LIRCondition.AboveEqual; break;
+        Condition condition = null;
+        switch (x.op) {
+            case BELOW_THAN  : condition = Condition.BT; break;
+            case ABOVE_THAN  : condition = Condition.AT; break;
+            case BELOW_EQUAL : condition = Condition.BE; break;
+            case ABOVE_EQUAL : condition = Condition.AE; break;
             default:
                 Util.unimplemented();
         }
@@ -636,7 +550,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // generate conditional move of boolean result
         LIROperand result = createResultVariable(x);
-        lir.cmove(LIRCondition.Equal, LIROperand.forInt(1), LIROperand.forInt(0), result);
+        lir.cmove(Condition.EQ, LIROperand.forInt(1), LIROperand.forInt(0), result);
     }
 
     @Override
@@ -692,7 +606,7 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         // generate conditional move of boolean result
         LIROperand result = createResultVariable(x);
-        lir.cmove(LIRCondition.Equal, LIROperand.forInt(1), LIROperand.forInt(0), result);
+        lir.cmove(Condition.EQ, LIROperand.forInt(1), LIROperand.forInt(0), result);
         if (type.isObject()) { // Write-barrier needed for Object fields.
             // Seems to be precise
             postBarrier(addr, val.result());
@@ -752,141 +666,8 @@ public final class X86LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    protected void genNewInstance(NewInstance x) {
-        LIRDebugInfo info = stateFor(x, x.stateBefore());
-
-        RiType type = x.instanceClass();
-        if (x.instanceClass().isLoaded()) {
-            LIROperand hub = LIROperand.forRegister(CiKind.Object, X86.rdi);
-            lir.oop2reg(type.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
-            // all allocation is done with a runtime call for now
-            setResult(x, callRuntimeWithResult(CiRuntimeCall.NewInstance, info, hub));
-        } else {
-            LIRConstant cpi = LIROperand.forInt(x.cpi);
-            LIROperand cp = LIROperand.forConstant(x.constantPool.encoding());
-            // all allocation is done with a runtime call for now
-            setResult(x, callRuntimeWithResult(CiRuntimeCall.UnresolvedNewInstance, info, cpi, cp));
-        }
-    }
-
-    @Override
-    protected void genNewTypeArray(NewTypeArray x) {
-        LIRDebugInfo info = stateFor(x, x.stateBefore());
-        LIROperand hub = LIROperand.forRegister(CiKind.Object, X86.rdi);
-        LIROperand length = x.length().operand();
-        lir.oop2reg(compilation.runtime.primitiveArrayType(x.elementKind()).getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
-
-        // all allocation is done with a runtime call for now
-        setResult(x, callRuntimeWithResult(CiRuntimeCall.NewArray, info, hub, length));
-    }
-
-    private LIRLocation emitNewTypeArray(CiKind type, CiKind elementType, LIROperand length, LIRDebugInfo info) {
-        LIROperand hub = LIROperand.forRegister(CiKind.Object, X86.rdi);
-        lir.oop2reg(compilation.runtime.primitiveArrayType(elementType).getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
-
-        // all allocation is done with a runtime call for now
-        return callRuntime(CiRuntimeCall.NewArray, info, hub, length);
-    }
-
-    @Override
-    protected void genNewObjectArray(NewObjectArray x) {
-        LIRDebugInfo info = stateFor(x, x.stateBefore());
-
-        RiType arrayType = x.elementClass().arrayOf();
-        if (arrayType.isLoaded()) {
-            LIROperand hub = LIROperand.forRegister(CiKind.Object, X86.rdi);
-            LIROperand length = force(x.length(), X86.rsi);
-            lir.oop2reg(arrayType.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
-            // all allocation is done with a runtime call for now
-            setResult(x, callRuntimeWithResult(CiRuntimeCall.NewArray, info, hub, length));
-        } else {
-            LIROperand length = load(x.length());
-            LIROperand cpi = LIROperand.forInt(x.cpi);
-            LIROperand cp = LIROperand.forConstant(x.constantPool.encoding());
-            // all allocation is done with a runtime call for now
-            setResult(x, callRuntimeWithResult(CiRuntimeCall.UnresolvedNewArray, info, cpi, cp, length));
-        }
-    }
-
-    @Override
-    protected void genNewMultiArray(NewMultiArray x) {
-        Value[] dims = x.dimensions();
-
-        List<LIRItem> items = new ArrayList<LIRItem>(dims.length);
-        for (int i = 0; i < dims.length; i++) {
-            LIRItem size = new LIRItem(dims[i], this);
-            items.add(i, size);
-        }
-
-        // need to get the info before, as the items may become invalid through itemFree
-        boolean resolved = x.elementKind.isLoaded();
-        if (!resolved || C1XOptions.TestPatching) {
-            // cannot re-use same xhandlers for multiple CodeEmitInfos, so
-            // clone all handlers.
-            x.setExceptionHandlers(new ArrayList<ExceptionHandler>(x.exceptionHandlers()));
-        }
-
-        LIRDebugInfo info = stateFor(x, x.stateBefore());
-
-        LIROperand length = LIROperand.forRegister(CiKind.Int, X86.rbx);
-        lir.move(LIROperand.forInt(dims.length), length);
-        LIRLocation dimensions = emitNewTypeArray(CiKind.Object, CiKind.Int, length, info);
-        for (int i = 0; i < dims.length; i++) {
-            LIRItem size = items.get(i);
-            size.loadNonconstant();
-            emitSafeArrayStore(dimensions, LIROperand.forInt(i), size.result(), CiKind.Int, false);
-        }
-
-        if (resolved) {
-            LIROperand hub = newVariable(CiKind.Object);
-            lir.oop2reg(x.elementKind.getEncoding(RiType.Representation.ObjectHub).asObject(), hub);
-            setResult(x, callRuntimeWithResult(CiRuntimeCall.NewMultiArray, info.copy(), hub, dimensions));
-        } else {
-            LIRConstant cpi = LIROperand.forInt(x.cpi);
-            LIROperand cp = LIROperand.forConstant(x.constantPool.encoding());
-            setResult(x, callRuntimeWithResult(CiRuntimeCall.UnresolvedNewMultiArray, info.copy(), cpi, cp, dimensions));
-        }
-    }
-
-    @Override
     public void visitBlockBegin(BlockBegin x) {
         // nothing to do for now
-    }
-
-    @Override
-    protected void genCheckCast(CheckCast x) {
-        LIRItem obj = new LIRItem(x.object(), this);
-
-        obj.loadItem();
-
-        // info for exceptions
-        LIRDebugInfo info = stateFor(x, x.stateBefore());
-        LocalStub stub = null;
-        boolean directCompare = x.directCompare();
-        GlobalStub globalStub = null;
-        if (directCompare) {
-            // this is a direct check, make a slow path
-            stub = new ThrowStub(stubFor(CiRuntimeCall.ThrowClassCastException), info, obj.result());
-            info = null;
-        } else {
-            globalStub = stubFor(CiRuntimeCall.SlowCheckCast);
-        }
-        LIROperand reg = createResultVariable(x);
-        lir.checkcast(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), ILLEGAL, ILLEGAL, directCompare, info, stub, globalStub);
-    }
-
-    @Override
-    protected void genInstanceOf(InstanceOf x) {
-        LIRItem obj = new LIRItem(x.object(), this);
-        // result and test object may not be in same register
-        LIROperand reg = createResultVariable(x);
-        LIRDebugInfo patchingInfo = null;
-        obj.loadItem();
-        GlobalStub globalStub = null;
-        if (!x.directCompare()) {
-            globalStub = stubFor(CiRuntimeCall.SlowInstanceOf);
-        }
-        lir.genInstanceof(reg, obj.result(), x.targetClass(), x.targetClassInstruction.operand(), newVariable(CiKind.Object), ILLEGAL, x.directCompare(), patchingInfo,  globalStub);
     }
 
     @Override
@@ -903,7 +684,7 @@ public final class X86LIRGenerator extends LIRGenerator {
         if (kind.isLong()) {
             // for longs, only conditions "eql", "neq", "lss", "geq" are valid;
             // mirror for other conditions
-            if (cond == Condition.gtr || cond == Condition.leq) {
+            if (cond == Condition.GT || cond == Condition.LE) {
                 cond = cond.mirror();
                 xin = yitem;
                 yin = xitem;
@@ -911,7 +692,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             xin.setDestroysRegister();
         }
         xin.loadItem();
-        if (kind.isLong() && LIROperand.isConstant(yin.result()) && yin.asLong() == 0 && (cond == Condition.eql || cond == Condition.neq)) {
+        if (kind.isLong() && LIROperand.isConstant(yin.result()) && yin.asLong() == 0 && (cond == Condition.EQ || cond == Condition.NE)) {
             // dont load item
         } else if (kind.isLong() || kind.isFloat() || kind.isDouble()) {
             // longs cannot handle constants at right side
@@ -929,59 +710,16 @@ public final class X86LIRGenerator extends LIRGenerator {
 
         LIROperand left = xin.result();
         LIROperand right = yin.result();
-        lir.cmp(lirCond(cond), left, right);
+        lir.cmp(cond, left, right);
         profileBranch(x, cond);
         moveToPhi(x.stateAfter());
         if (x.x().kind.isFloat() || x.x().kind.isDouble()) {
-            lir.branch(lirCond(cond), right.kind, x.trueSuccessor(), x.unorderedSuccessor());
+            lir.branch(cond, right.kind, x.trueSuccessor(), x.unorderedSuccessor());
         } else {
-            lir.branch(lirCond(cond), right.kind, x.trueSuccessor());
+            lir.branch(cond, right.kind, x.trueSuccessor());
         }
         assert x.defaultSuccessor() == x.falseSuccessor() : "wrong destination above";
         lir.jump(x.defaultSuccessor());
-    }
-
-    @Override
-    protected void genTraceBlockEntry(BlockBegin block) {
-        callRuntime(CiRuntimeCall.TraceBlockEntry, null, LIROperand.forInt(block.blockID));
-    }
-
-    @Override
-    protected void genVolatileFieldStore(LIROperand value, LIRAddress address, LIRDebugInfo info) {
-        if (address.kind == CiKind.Long) {
-            address = new LIRAddress(address.base, address.index, address.scale, address.displacement, CiKind.Double);
-            // Transfer the value atomically by using FP moves. This means
-            // the value has to be moved between CPU and FPU registers. It
-            // always has to be moved through spill slot since there's no
-            // quick way to pack the value into an SSE register.
-            LIROperand tempDouble = newVariable(CiKind.Double);
-            LIROperand spill = newVariable(CiKind.Long, VariableFlag.MustStartInMemory);
-            lir.move(value, spill);
-            lir.volatileMove(spill, tempDouble, CiKind.Long, null);
-            lir.volatileMove(tempDouble, address, CiKind.Long, info);
-        } else {
-            lir.store(value, address, info);
-        }
-    }
-
-    @Override
-    protected void genVolatileFieldLoad(LIRAddress address, LIROperand result, LIRDebugInfo info) {
-        if (address.kind == CiKind.Long) {
-            address = new LIRAddress(address.base, address.index, address.scale, address.displacement, CiKind.Double);
-            // Transfer the value atomically by using FP moves. This means
-            // the value has to be moved between CPU and FPU registers. In
-            // SSE0 and SSE1 mode it has to be moved through spill slot but in
-            // SSE2+ mode it can be moved directly.
-            LIROperand tempDouble = newVariable(CiKind.Double);
-            lir.volatileMove(address, tempDouble, CiKind.Long, info);
-            lir.volatileMove(tempDouble, result, CiKind.Long, null);
-            if (C1XOptions.SSEVersion < 2) {
-                // no spill slot needed in SSE2 mode because xmm.cpu register move is possible
-                setVarFlag(result, VariableFlag.MustStartInMemory);
-            }
-        } else {
-            lir.load(address, result, info);
-        }
     }
 
     @Override

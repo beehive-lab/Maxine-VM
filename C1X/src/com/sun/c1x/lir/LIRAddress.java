@@ -140,12 +140,12 @@ public final class LIRAddress extends LIROperand {
             assert scale == Scale.Times1 : "Scaled addressing mode not available on SPARC and should not be used";
             assert displacement == 0 || LIROperand.isIllegal(index) : "can't have both";
         } else if (architecture.is64bit()) {
-            assert base.isVariableOrRegister() : "wrong base operand";
-            assert LIROperand.isIllegal(index) || index.isDoubleRegister() : "wrong index operand";
+            assert base.isRegister() : "wrong base operand";
+            assert LIROperand.isIllegal(index) || index.isRegister() : "wrong index operand";
             assert base.kind == CiKind.Object || base.kind == CiKind.Long : "wrong type for addresses";
         } else {
-            assert base.isSingleRegister() : "wrong base operand";
-            assert LIROperand.isIllegal(index) || index.isSingleRegister() : "wrong index operand";
+            assert base.isRegister() : "wrong base operand";
+            assert LIROperand.isIllegal(index) || index.isRegister() : "wrong index operand";
             assert base.kind == CiKind.Object || base.kind == CiKind.Int : "wrong type for addresses";
         }
     }

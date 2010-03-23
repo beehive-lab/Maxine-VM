@@ -138,34 +138,34 @@ public final class LIRLocation extends LIROperand {
         return index == 0;
     }
 
-    @Override
-    public boolean isSingleRegister() {
-        // TODO: Modify for 32-bit
-        return register1.isCpu() && register1.width >= 32;
-    }
+//    @Override
+//    public boolean isSingleRegister() {
+//        // TODO: Modify for 32-bit
+//        return register1.isCpu() && register1.width >= 32;
+//    }
 
-    @Override
-    public boolean isDoubleRegister() {
-        // TODO: Modify for 32-bit
-        return register1.isCpu() && register1.width >= 64;
-    }
+//    @Override
+//    public boolean isDoubleRegister() {
+//        // TODO: Modify for 32-bit
+//        return register1.isCpu() && register1.width >= 64;
+//    }
 
     @Override
     public boolean isVariableOrRegister() {
         return !isStack();
     }
 
-    @Override
-    public boolean isSingleXmm() {
-        // TODO: Modify for 32-bit
-        return register1.isXmm() && register1.width >= 32;
-    }
-
-    @Override
-    public boolean isDoubleXmm() {
-        // TODO: Modify for 32-bit
-        return register1.isXmm() && register1.width >= 64;
-    }
+//    @Override
+//    public boolean isSingleXmm() {
+//        // TODO: Modify for 32-bit
+//        return register1.isXmm() && register1.width >= 32;
+//    }
+//
+//    @Override
+//    public boolean isDoubleXmm() {
+//        // TODO: Modify for 32-bit
+//        return register1.isXmm() && register1.width >= 64;
+//    }
 
     @Override
     public int stackIndex() {
@@ -191,15 +191,15 @@ public final class LIRLocation extends LIROperand {
         return this.register1;
     }
 
-    @Override
-    public CiRegister asRegisterLow() {
-        return register1;
-    }
-
-    @Override
-    public CiRegister asRegisterHigh() {
-        return register2;
-    }
+//    @Override
+//    public CiRegister asRegisterLow() {
+//        return register1;
+//    }
+//
+//    @Override
+//    public CiRegister asRegisterHigh() {
+//        return register2;
+//    }
 
     @Override
     public int registerNumber() {

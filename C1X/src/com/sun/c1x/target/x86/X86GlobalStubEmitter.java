@@ -314,8 +314,8 @@ public class X86GlobalStubEmitter implements GlobalStubEmitter {
         }
         Label nan = new Label();
         Label ret = new Label();
-        asm.jccb(Condition.parity, nan);
-        asm.jccb(Condition.below, ret);
+        asm.jccb(ConditionFlag.parity, nan);
+        asm.jccb(ConditionFlag.below, ret);
 
         // input is > 0 -> return maxInt
         // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff

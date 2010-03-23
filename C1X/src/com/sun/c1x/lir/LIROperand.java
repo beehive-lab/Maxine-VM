@@ -56,14 +56,7 @@ public class LIROperand {
             out.append("dblStack:").append(doubleStackIndex());
         } else if (isVariable()) {
             out.append("V").append(variableNumber());
-        } else if (isSingleRegister()) {
-            out.append(asRegister().name);
-        } else if (isDoubleRegister()) {
-            out.append(asRegisterHigh().name);
-            out.append(asRegisterLow().name);
-        } else if (isSingleXmm()) {
-            out.append(asRegister().name);
-        } else if (isDoubleXmm()) {
+        } else if (isRegister()) {
             out.append(asRegister().name);
         } else {
             out.append("Unknown Operand");
@@ -108,30 +101,30 @@ public class LIROperand {
     /**
      * Determines if this is a general purpose register that can hold a 32-bit value.
      */
-    public boolean isSingleRegister() {
-        return false;
-    }
+//    public boolean isSingleRegister() {
+//        return false;
+//    }
 
     /**
      * Determines if this is a general purpose register that can hold a 64-bit value.
      */
-    public boolean isDoubleRegister() {
-        return false;
-    }
+//    public boolean isDoubleRegister() {
+//        return false;
+//    }
 
     /**
      * Determines if this is an {@linkplain RegisterFlag#XMM XMM} register that can hold a 32-bit value.
      */
-    public boolean isSingleXmm() {
-        return false;
-    }
+//    public boolean isSingleXmm() {
+//        return false;
+//    }
 
     /**
      * Determines if this is an {@linkplain RegisterFlag#XMM XMM} register that can hold a 64-bit value.
      */
-    public boolean isDoubleXmm() {
-        return false;
-    }
+//    public boolean isDoubleXmm() {
+//        return false;
+//    }
 
     protected Error illegalOperation(String operation) {
         throw new InternalError("Cannot call " + operation + " on " + this);
@@ -172,13 +165,13 @@ public class LIROperand {
         throw illegalOperation("asRegister()");
     }
 
-    public CiRegister asRegisterLow() {
-        throw illegalOperation("asRegisterLow()");
-    }
-
-    public CiRegister asRegisterHigh() {
-        throw illegalOperation("asRegisterHigh()");
-    }
+//    public CiRegister asRegisterLow() {
+//        throw illegalOperation("asRegisterLow()");
+//    }
+//
+//    public CiRegister asRegisterHigh() {
+//        throw illegalOperation("asRegisterHigh()");
+//    }
 
     public CiRegister asPointerRegister(CiArchitecture architecture) {
         return asRegister();

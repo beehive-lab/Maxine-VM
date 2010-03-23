@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,26 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.lir;
+package jtt.bytecode;
 
 /**
- * The {@code LIRCondition} enum represents the condition types available on LIR instructions .
+ * Tests that class initialization is triggered by 'getstatic'.
  *
- * @author Marcelo Cintra
- *
+ * @Harness: java
+ * @Runs: 0 = 42
  */
-public enum LIRCondition {
-    // XXX: this class can probably be folded into Instruction.Condition
-    Equal,
-    NotEqual,
-    Less,
-    LessEqual,
-    GreaterEqual,
-    Greater,
-    Below,
-    BelowEqual,
-    Above,
-    AboveEqual,
-    Always,
-    Unknown
+public class BC_getstatic_clinit {
+    static int f;
+    public static int test(int a) {
+        return Nested.g + f;
+    }
+
+    static class Nested {
+        static int g;
+        static {
+            f = 42;
+        }
+    }
 }

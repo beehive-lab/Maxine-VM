@@ -623,11 +623,11 @@ public final class GraphBuilder {
         ipush(append(new CompareOp(opcode, x, y, stateBefore)));
     }
 
-    void genWCompareOp(CiKind kind, int opcode) {
+    void genUnsignedCompareOp(CiKind kind, int opcode, int op) {
         FrameState stateBefore = curState.immutableCopy();
         Value y = pop(kind);
         Value x = pop(kind);
-        ipush(append(new WCompareOp(opcode, x, y, stateBefore)));
+        ipush(append(new UnsignedCompareOp(opcode, op, x, y, stateBefore)));
     }
 
     void genConvert(int opcode, CiKind from, CiKind to) {
@@ -1946,20 +1946,20 @@ public final class GraphBuilder {
                 case FCMPG          : genCompareOp(CiKind.Float, opcode); break;
                 case DCMPL          : genCompareOp(CiKind.Double, opcode); break;
                 case DCMPG          : genCompareOp(CiKind.Double, opcode); break;
-                case IFEQ           : genIfZero(Condition.eql); break;
-                case IFNE           : genIfZero(Condition.neq); break;
-                case IFLT           : genIfZero(Condition.lss); break;
-                case IFGE           : genIfZero(Condition.geq); break;
-                case IFGT           : genIfZero(Condition.gtr); break;
-                case IFLE           : genIfZero(Condition.leq); break;
-                case IF_ICMPEQ      : genIfSame(CiKind.Int, Condition.eql); break;
-                case IF_ICMPNE      : genIfSame(CiKind.Int, Condition.neq); break;
-                case IF_ICMPLT      : genIfSame(CiKind.Int, Condition.lss); break;
-                case IF_ICMPGE      : genIfSame(CiKind.Int, Condition.geq); break;
-                case IF_ICMPGT      : genIfSame(CiKind.Int, Condition.gtr); break;
-                case IF_ICMPLE      : genIfSame(CiKind.Int, Condition.leq); break;
-                case IF_ACMPEQ      : genIfSame(CiKind.Object, Condition.eql); break;
-                case IF_ACMPNE      : genIfSame(CiKind.Object, Condition.neq); break;
+                case IFEQ           : genIfZero(Condition.EQ); break;
+                case IFNE           : genIfZero(Condition.NE); break;
+                case IFLT           : genIfZero(Condition.LT); break;
+                case IFGE           : genIfZero(Condition.GE); break;
+                case IFGT           : genIfZero(Condition.GT); break;
+                case IFLE           : genIfZero(Condition.LE); break;
+                case IF_ICMPEQ      : genIfSame(CiKind.Int, Condition.EQ); break;
+                case IF_ICMPNE      : genIfSame(CiKind.Int, Condition.NE); break;
+                case IF_ICMPLT      : genIfSame(CiKind.Int, Condition.LT); break;
+                case IF_ICMPGE      : genIfSame(CiKind.Int, Condition.GE); break;
+                case IF_ICMPGT      : genIfSame(CiKind.Int, Condition.GT); break;
+                case IF_ICMPLE      : genIfSame(CiKind.Int, Condition.LE); break;
+                case IF_ACMPEQ      : genIfSame(CiKind.Object, Condition.EQ); break;
+                case IF_ACMPNE      : genIfSame(CiKind.Object, Condition.NE); break;
                 case GOTO           : genGoto(s.currentBCI(), s.readBranchDest()); break;
                 case JSR            : genJsr(s.readBranchDest()); break;
                 case RET            : genRet(s.readLocalIndex()); break;
@@ -1989,8 +1989,8 @@ public final class GraphBuilder {
                 case MONITORENTER   : genMonitorEnter(s.currentBCI(), curState.copy()); break;
                 case MONITOREXIT    : genMonitorExit(s.currentBCI(), curState.copy()); break;
                 case MULTIANEWARRAY : genNewMultiArray(s.readCPI()); break;
-                case IFNULL         : genIfNull(Condition.eql); break;
-                case IFNONNULL      : genIfNull(Condition.neq); break;
+                case IFNULL         : genIfNull(Condition.EQ); break;
+                case IFNONNULL      : genIfNull(Condition.NE); break;
                 case GOTO_W         : genGoto(s.currentBCI(), s.readFarBranchDest()); break;
                 case JSR_W          : genJsr(s.readFarBranchDest()); break;
 
@@ -2027,6 +2027,14 @@ public final class GraphBuilder {
                 case JNICALL        : genNativeCall(s.readCPI()); break;
                 case ALLOCA         : genStackAllocate(); break;
 
+                case MOV_I2F        : genConvert(opcode, CiKind.Int, CiKind.Float ); break;
+                case MOV_F2I        : genConvert(opcode, CiKind.Float, CiKind.Int ); break;
+                case MOV_L2D        : genConvert(opcode, CiKind.Long, CiKind.Double ); break;
+                case MOV_D2L        : genConvert(opcode, CiKind.Double, CiKind.Long ); break;
+
+                case UCMP           : genUnsignedCompareOp(CiKind.Int, opcode, s.readCPI());
+                case UWCMP          : genUnsignedCompareOp(CiKind.Word, opcode, s.readCPI());
+
 //                case PCMPSWP: {
 //                    opcode |= readUnsigned2() << 8;
 //                    switch (opcode) {
@@ -2054,18 +2062,6 @@ public final class GraphBuilder {
 //                    }
 //                    break;
 //                }
-
-                case MOV_I2F:  genConvert(opcode, CiKind.Int, CiKind.Float ); break;
-                case MOV_F2I:  genConvert(opcode, CiKind.Float, CiKind.Int ); break;
-                case MOV_L2D: genConvert(opcode, CiKind.Long, CiKind.Double ); break;
-                case MOV_D2L: genConvert(opcode, CiKind.Double, CiKind.Long ); break;
-
-                case UWLT:   // fall through
-                case UWLTEQ: // fall through
-                case UWGT: // fall through
-                case UWGTEQ: genWCompareOp(CiKind.Word, opcode); break;
-
-                case UGE: genWCompareOp(CiKind.Int, opcode); break;
 
 //                case MEMBAR: {
 //                    skip2();

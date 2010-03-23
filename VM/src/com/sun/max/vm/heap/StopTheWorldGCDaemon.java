@@ -24,7 +24,7 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.runtime.Safepoint.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.max.memory.*;
+import com.sun.c1x.bytecode.Bytecodes.*;
 import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
@@ -261,7 +261,7 @@ public class StopTheWorldGCDaemon extends BlockingServerDaemon {
 
                     // Ensures the GC_STATE variable is visible for each thread before the GC thread reads
                     // the MUTATOR_STATE variable for each thread.
-                    MemoryBarrier.storeLoad();
+                    MemoryBarriers.storeLoad();
 
                     if (Heap.traceGCPhases()) {
                         Log.println("GCDaemon: Waiting for all mutators to stop");

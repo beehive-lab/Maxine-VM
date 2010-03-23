@@ -161,9 +161,7 @@ public class C1XOptions {
     public static boolean DetailedAsserts               = ____;
 
     // Runtime settings
-    public static boolean UseXIR                        = ____;
     public static boolean UseBiasedLocking              = ____;
-    public static boolean UseTLAB                       = ____;
     public static int     ReadPrefetchInstr             = 0;
     public static boolean UseFastLocking                = ____;
     public static boolean UseSlowPath                   = ____;

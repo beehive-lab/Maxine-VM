@@ -1048,10 +1048,10 @@ public class Canonicalizer extends DefaultValueVisitor {
 
         if (isNullConstant(r) && l.isNonNull()) {
             // this is a comparison of null against something that is not null
-            if (ifcond == Condition.eql) {
+            if (ifcond == Condition.EQ) {
                 // new() == null is always false
                 setCanonical(new Goto(i.falseSuccessor(), i.stateAfter(), i.isSafepoint()));
-            } else if (ifcond == Condition.neq) {
+            } else if (ifcond == Condition.NE) {
                 // new() != null is always true
                 setCanonical(new Goto(i.trueSuccessor(), i.stateAfter(), i.isSafepoint()));
             }
@@ -1084,15 +1084,15 @@ public class Canonicalizer extends DefaultValueVisitor {
             BlockBegin tsux;
             BlockBegin fsux;
             if (lssSucc == eqlSucc) {
-                cond = Condition.leq;
+                cond = Condition.LE;
                 tsux = lssSucc;
                 fsux = gtrSucc;
             } else if (lssSucc == gtrSucc) {
-                cond = Condition.neq;
+                cond = Condition.NE;
                 tsux = lssSucc;
                 fsux = eqlSucc;
             } else if (eqlSucc == gtrSucc) {
-                cond = Condition.geq;
+                cond = Condition.GE;
                 tsux = eqlSucc;
                 fsux = lssSucc;
             } else {
@@ -1113,12 +1113,12 @@ public class Canonicalizer extends DefaultValueVisitor {
         // simplify reflexive comparisons If (x op x) to Goto
         BlockBegin succ;
         switch (i.condition()) {
-            case eql: succ = i.successor(true); break;
-            case neq: succ = i.successor(false); break;
-            case lss: succ = i.successor(false); break;
-            case leq: succ = i.successor(true); break;
-            case gtr: succ = i.successor(false); break;
-            case geq: succ = i.successor(true); break;
+            case EQ: succ = i.successor(true); break;
+            case NE: succ = i.successor(false); break;
+            case LT: succ = i.successor(false); break;
+            case LE: succ = i.successor(true); break;
+            case GT: succ = i.successor(false); break;
+            case GE: succ = i.successor(true); break;
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -1151,7 +1151,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         if (max == 1) {
             // replace switch with If
             Constant key = intInstr(i.lowKey());
-            If newIf = new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            If newIf = new If(v, Condition.EQ, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
             newIf.setStateAfter(i.stateAfter());
             setCanonical(newIf);
         }
@@ -1185,7 +1185,7 @@ public class Canonicalizer extends DefaultValueVisitor {
         if (max == 1) {
             // replace switch with If
             Constant key = intInstr(i.keyAt(0));
-            If newIf = new If(v, Condition.eql, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
+            If newIf = new If(v, Condition.EQ, false, key, i.successors().get(0), i.defaultSuccessor(), null, i.isSafepoint());
             newIf.setStateAfter(i.stateAfter());
             setCanonical(newIf);
         }

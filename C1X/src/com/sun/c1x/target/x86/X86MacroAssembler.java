@@ -81,7 +81,6 @@ public class X86MacroAssembler extends X86Assembler {
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
             movl(r, new Address(X86.rsp, offset));
         } else {
-            assert is64 : "64 bit only for now";
             movq(r, new Address(X86.rsp, offset));
         }
     }
@@ -100,19 +99,11 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void increment(CiRegister reg, int value) {
-        if (is64) {
-            incrementq(reg, value);
-        } else {
-            incrementl(reg, value);
-        }
+        incrementq(reg, value);
     }
 
     void decrement(CiRegister reg, int value) {
-        if (is64) {
-            decrementq(reg, value);
-        } else {
-            decrementl(reg, value);
-        }
+        decrementq(reg, value);
     }
 
     void cmpoop(Address src1, Object obj) {
@@ -137,138 +128,8 @@ public class X86MacroAssembler extends X86Assembler {
         }
     }
 
-    // Note: yLo will be destroyed
-    void lcmp2int(CiRegister xHi, CiRegister xLo, CiRegister yHi, CiRegister yLo) {
-        if (is64) {
-            // 64 Bit does not use this!
-            Util.shouldNotReachHere();
-        }
-
-        // Long compare for Java (semantics as described in JVM spec.)
-        Label high = new Label();
-        Label low = new Label();
-        Label done = new Label();
-
-        cmpl(xHi, yHi);
-        jcc(Condition.less, low);
-        jcc(Condition.greater, high);
-        // xHi is the return register
-        xorl(xHi, xHi);
-        cmpl(xLo, yLo);
-        jcc(Condition.below, low);
-        jcc(Condition.equal, done);
-
-        bind(high);
-        xorl(xHi, xHi);
-        increment(xHi, 1);
-        jmp(done);
-
-        bind(low);
-        xorl(xHi, xHi);
-        decrementl(xHi, 1);
-
-        bind(done);
-    }
-
-    void lmul(int xRspOffset, int yRspOffset) {
-        // Multiplication of two Java long values stored on the stack
-        // as illustrated below. Result is in X86Register.rdx:X86Register.rax.
-        //
-        // X86Register.rsp --. [ ?? ] \ \
-        // .... | yRspOffset |
-        // [ yLo ] / (in bytes) | xRspOffset
-        // [ yHi ] | (in bytes)
-        // .... |
-        // [ xLo ] /
-        // [ xHi ]
-        // ....
-        //
-        // Basic idea: lo(result) = lo(xLo * yLo)
-        // hi(result) = hi(xLo * yLo) + lo(xHi * yLo) + lo(xLo * yHi)
-        Address xHi = new Address(X86.rsp, xRspOffset + wordSize);
-        Address xLo = new Address(X86.rsp, xRspOffset);
-        Address yHi = new Address(X86.rsp, yRspOffset + wordSize);
-        Address yLo = new Address(X86.rsp, yRspOffset);
-        Label quick = new Label();
-        // load xHi, yHi and check if quick
-        // multiplication is possible
-        movl(X86.rbx, xHi);
-        movl(X86.rcx, yHi);
-        movl(X86.rax, X86.rbx);
-        orl(X86.rbx, X86.rcx); // X86Register.rbx, = 0 <=> xHi = 0 and yHi = 0
-        jcc(X86Assembler.Condition.zero, quick); // if X86Register.rbx, = 0 do quick multiply
-        // do full multiplication
-        // 1st step
-        mull(yLo); // xHi * yLo
-        movl(X86.rbx, X86.rax); // save lo(xHi * yLo) in X86Register.rbx,
-        // 2nd step
-        movl(X86.rax, xLo);
-        mull(X86.rcx); // xLo * yHi
-        addl(X86.rbx, X86.rax); // add lo(xLo * yHi) to X86Register.rbx,
-        // 3rd step
-        bind(quick); // note: X86Register.rbx, = 0 if quick multiply!
-        movl(X86.rax, xLo);
-        mull(yLo); // xLo * yLo
-        addl(X86.rdx, X86.rbx); // correct hi(xLo * yLo)
-    }
-
-    void lneg(CiRegister hi, CiRegister lo) {
-        assert !is64 : "should not be used in 64 bit mode";
-        negl(lo);
-        adcl(hi, 0);
-        negl(hi);
-    }
-
-    void lshl(CiRegister hi, CiRegister lo) {
-        // Java shift left long support (semantics as described in JVM spec., p.305)
-        // (basic idea for shift counts s >= n: x << s == (x << n) << (s - n))
-        // shift value is in X86Register.rcx !
-        assert hi != X86.rcx : "must not use X86Register.rcx";
-        assert lo != X86.rcx : "must not use X86Register.rcx";
-        CiRegister s = X86.rcx; // shift count
-        int n = wordSize * Byte.SIZE;
-        Label l = new Label();
-        andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
-        cmpl(s, n); // if (s < n)
-        jcc(X86Assembler.Condition.less, l); // else (s >= n)
-        movl(hi, lo); // x := x << n
-        xorl(lo, lo);
-        // Note: subl(s, n) is not needed since the Intel shift instructions work X86Register.rcx mod n!
-        bind(l); // s (mod n) < n
-        shldl(hi, lo); // x := x << s
-        shll(lo);
-    }
-
-    void lshr(CiRegister hi, CiRegister lo, boolean signExtension) {
-        // Java shift right long support (semantics as described in JVM spec., p.306 & p.310)
-        // (basic idea for shift counts s >= n: x >> s == (x >> n) >> (s - n))
-        assert hi != X86.rcx : "must not use X86Register.rcx";
-        assert lo != X86.rcx : "must not use X86Register.rcx";
-        CiRegister s = X86.rcx; // shift count
-        int n = wordSize * Byte.SIZE;
-        Label l = new Label();
-        andl(s, 0x3f); // s := s & 0x3f (s < 0x40)
-        cmpl(s, n); // if (s < n)
-        jcc(X86Assembler.Condition.less, l); // else (s >= n)
-        movl(lo, hi); // x := x >> n
-        if (signExtension) {
-            sarl(hi, 31);
-        } else {
-            xorl(hi, hi);
-        }
-        // Note: subl(s, n) is not needed since the Intel shift instructions work X86Register.rcx mod n!
-        bind(l); // s (mod n) < n
-        shrdl(lo, hi); // x := x >> s
-        if (signExtension) {
-            sarl(hi);
-        } else {
-            shrl(hi);
-        }
-    }
-
     void movoop(CiRegister dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
-        assert is64 : "64 bit only for now";
         if (obj.isNull()) {
             this.xorq(dst, dst);
         } else {
@@ -278,7 +139,6 @@ public class X86MacroAssembler extends X86Assembler {
 
     void movoop(Address dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
-        assert is64 : "64 bit only for now";
         if (obj.isNull()) {
             xorq(rscratch1, rscratch1);
         } else {
@@ -289,52 +149,29 @@ public class X86MacroAssembler extends X86Assembler {
 
     // src should NEVER be a real pointer. Use AddressLiteral for true pointers
     void movptr(Address dst, long src) {
-        if (is32) {
-            movl(dst, Util.safeToInt(src));
-        } else if (is64) {
-            mov64(rscratch1, src);
-            movq(dst, rscratch1);
-        } else {
-            Util.shouldNotReachHere();
-        }
+        mov64(rscratch1, src);
+        movq(dst, rscratch1);
     }
 
     void pushptr(Address src) {
-        if (is64) {
-            pushq(src);
-        } else {
-            pushl(src);
-        }
+        pushq(src);
     }
 
     void popptr(Address src) {
-        if (is64) {
-            popq(src);
-        } else {
-            popl(src);
-        }
+        popq(src);
     }
 
     void xorptr(CiRegister dst, CiRegister src) {
-        if (is64) {
-            xorq(dst, src);
-        } else {
-            xorl(dst, src);
-        }
+        xorq(dst, src);
     }
 
     void xorptr(CiRegister dst, Address src) {
-        if (is64) {
-            xorq(dst, src);
-        } else {
-            xorl(dst, src);
-        }
+        xorq(dst, src);
     }
 
     // 64 bit versions
 
     int correctedIdivq(CiRegister reg) {
-        assert is64;
         // Full implementation of Java ldiv and lrem; checks for special
         // case as described in JVM spec. : p.243 & p.271. The function
         // returns the (pc) offset of the idivl instruction - may be needed
@@ -354,11 +191,11 @@ public class X86MacroAssembler extends X86Assembler {
 
         // check for special case
         cmpq(X86.rax, recordDataReferenceInCode(CiConstant.forLong(minLong)));
-        jcc(X86Assembler.Condition.notEqual, normalCase);
+        jcc(X86Assembler.ConditionFlag.notEqual, normalCase);
         xorl(X86.rdx, X86.rdx); // prepare X86Register.rdx for possible special case (where
         // remainder = 0)
         cmpq(reg, -1);
-        jcc(X86Assembler.Condition.equal, specialCase);
+        jcc(X86Assembler.ConditionFlag.equal, specialCase);
 
         // handle normal case
         bind(normalCase);
@@ -373,7 +210,6 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void decrementq(CiRegister reg, int value) {
-        assert is64;
         if (value == Integer.MIN_VALUE) {
             subq(reg, value);
             return;
@@ -393,7 +229,6 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void incrementq(CiRegister reg, int value) {
-        assert is64;
         if (value == Integer.MIN_VALUE) {
             addq(reg, value);
             return;
@@ -414,52 +249,33 @@ public class X86MacroAssembler extends X86Assembler {
 
     // These are mostly for initializing null
     void movptr(Address dst, int src) {
-        assert is64;
         movslq(dst, src);
     }
 
     void movptr(CiRegister dst, long src) {
-        assert is64;
         mov64(dst, src);
     }
 
     void stop(String msg) {
         if (C1XOptions.GenAssertionCode) {
-            if (is64) {
-                // TODO: pass a pointer to the message
-                directCall(CiRuntimeCall.Debug, null);
-                hlt();
-            } else {
-                throw Util.unimplemented();
-            }
+            // TODO: pass a pointer to the message
+            directCall(CiRuntimeCall.Debug, null);
+            hlt();
         }
     }
 
     // Now versions that are common to 32/64 bit
 
     void addptr(CiRegister dst, int imm32) {
-
-        if (is64) {
-            addq(dst, imm32);
-        } else {
-            addl(dst, imm32);
-        }
+        addq(dst, imm32);
     }
 
     void addptr(CiRegister dst, CiRegister src) {
-        if (is64) {
-            addq(dst, src);
-        } else {
-            addl(dst, src);
-        }
+        addq(dst, src);
     }
 
     void addptr(Address dst, CiRegister src) {
-        if (is64) {
-            addq(dst, src);
-        } else {
-            addl(dst, src);
-        }
+        addq(dst, src);
     }
 
     @Override
@@ -470,11 +286,7 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void andptr(CiRegister dst, int imm32) {
-        if (is64) {
-            andq(dst, imm32);
-        } else {
-            andl(dst, imm32);
-        }
+        andq(dst, imm32);
     }
 
     void c2bool(CiRegister x) {
@@ -483,7 +295,7 @@ public class X86MacroAssembler extends X86Assembler {
         // since C-style booleans are stored in one byte
         // only! (was bug)
         andl(x, 0xFF);
-        setb(X86Assembler.Condition.notZero, x);
+        setb(X86Assembler.ConditionFlag.notZero, x);
     }
 
     public final void cmp32(CiRegister src1, int imm) {
@@ -501,17 +313,17 @@ public class X86MacroAssembler extends X86Assembler {
         Label l = new Label();
         if (unorderedIsLess) {
             movl(dst, -1);
-            jcc(X86Assembler.Condition.parity, l);
-            jcc(X86Assembler.Condition.below, l);
+            jcc(X86Assembler.ConditionFlag.parity, l);
+            jcc(X86Assembler.ConditionFlag.below, l);
             movl(dst, 0);
-            jcc(X86Assembler.Condition.equal, l);
+            jcc(X86Assembler.ConditionFlag.equal, l);
             increment(dst, 1);
         } else { // unordered is greater
             movl(dst, 1);
-            jcc(X86Assembler.Condition.parity, l);
-            jcc(X86Assembler.Condition.above, l);
+            jcc(X86Assembler.ConditionFlag.parity, l);
+            jcc(X86Assembler.ConditionFlag.above, l);
             movl(dst, 0);
-            jcc(X86Assembler.Condition.equal, l);
+            jcc(X86Assembler.ConditionFlag.equal, l);
             decrementl(dst, 1);
         }
         bind(l);
@@ -525,61 +337,40 @@ public class X86MacroAssembler extends X86Assembler {
         Label l = new Label();
         if (unorderedIsLess) {
             movl(dst, -1);
-            jcc(X86Assembler.Condition.parity, l);
-            jcc(X86Assembler.Condition.below, l);
+            jcc(X86Assembler.ConditionFlag.parity, l);
+            jcc(X86Assembler.ConditionFlag.below, l);
             movl(dst, 0);
-            jcc(X86Assembler.Condition.equal, l);
+            jcc(X86Assembler.ConditionFlag.equal, l);
             increment(dst, 1);
         } else { // unordered is greater
             movl(dst, 1);
-            jcc(X86Assembler.Condition.parity, l);
-            jcc(X86Assembler.Condition.above, l);
+            jcc(X86Assembler.ConditionFlag.parity, l);
+            jcc(X86Assembler.ConditionFlag.above, l);
             movl(dst, 0);
-            jcc(X86Assembler.Condition.equal, l);
+            jcc(X86Assembler.ConditionFlag.equal, l);
             decrementl(dst, 1);
         }
         bind(l);
     }
 
     void cmpptr(CiRegister src1, CiRegister src2) {
-        if (is64) {
-            cmpq(src1, src2);
-        } else {
-            cmpl(src1, src2);
-        }
+        cmpq(src1, src2);
     }
 
     void cmpptr(CiRegister src1, Address src2) {
-        if (is64) {
-            cmpq(src1, src2);
-        } else {
-            cmpl(src1, src2);
-        }
+        cmpq(src1, src2);
     }
 
     void cmpptr(CiRegister src1, int src2) {
-        if (is64) {
-            cmpq(src1, src2);
-        } else {
-            cmpl(src1, src2);
-        }
+        cmpq(src1, src2);
     }
 
     void cmpptr(Address src1, int src2) {
-        if (is64) {
-            cmpq(src1, src2);
-        } else {
-            cmpl(src1, src2);
-        }
+        cmpq(src1, src2);
     }
 
     void cmpxchgptr(CiRegister reg, Address adr) {
-        if (is64) {
-            cmpxchgq(reg, adr);
-        } else {
-            cmpxchgl(reg, adr);
-        }
-
+        cmpxchgq(reg, adr);
     }
 
     void decrementl(CiRegister reg, int value) {
@@ -618,11 +409,6 @@ public class X86MacroAssembler extends X86Assembler {
         } else {
             subl(dst, value);
         }
-    }
-
-    // Defines obj : preserves varSizeInBytes
-    void edenAllocate(CiRegister obj, CiRegister varSizeInBytes, int conSizeInBytes, CiRegister t1, Label slowCase) {
-        throw Util.unimplemented();
     }
 
     void incrementl(CiRegister reg, int value) {
@@ -664,15 +450,8 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     int loadSignedByte(CiRegister dst, Address src) {
-        int off;
-        if (is64 || target.isP6()) {
-            off = codeBuffer.position();
-            movsxb(dst, src); // movsxb
-        } else {
-            off = loadUnsignedByte(dst, src);
-            shll(dst, 24);
-            sarl(dst, 24);
-        }
+        int off = codeBuffer.position();
+        movsxb(dst, src); // movsxb
         return off;
     }
 
@@ -681,33 +460,19 @@ public class X86MacroAssembler extends X86Assembler {
     // manual : which means 16 bits : that usage is found nowhere in HotSpot code.
     // The term "word" in HotSpot means a 32- or 64-bit machine word.
     int loadSignedShort(CiRegister dst, Address src) {
-        int off;
-        if (is64 || target.isP6()) {
-            // This is dubious to me since it seems safe to do a signed 16 => 64 bit
-            // version but this is what 64bit has always done. This seems to imply
-            // that users are only using 32bits worth.
-            off = codeBuffer.position();
-            movswl(dst, src); // movsxw
-        } else {
-            off = loadUnsignedShort(dst, src);
-            shll(dst, 16);
-            sarl(dst, 16);
-        }
+        // This is dubious to me since it seems safe to do a signed 16 => 64 bit
+        // version but this is what 64bit has always done. This seems to imply
+        // that users are only using 32bits worth.
+        int off = codeBuffer.position();
+        movswl(dst, src); // movsxw
         return off;
     }
 
     int loadUnsignedByte(CiRegister dst, Address src) {
         // According to Intel Doc. AP-526 : "Zero-Extension of Short" : p.16 :
         // and "3.9 Partial Register Penalties" : p. 22.
-        int off;
-        if (is64 || target.isP6() || src.uses(dst)) {
-            off = codeBuffer.position();
-            movzxb(dst, src); // movzxb
-        } else {
-            xorl(dst, dst);
-            off = codeBuffer.position();
-            movb(dst, src);
-        }
+        int off = codeBuffer.position();
+        movzxb(dst, src); // movzxb
         return off;
     }
 
@@ -715,60 +480,30 @@ public class X86MacroAssembler extends X86Assembler {
     int loadUnsignedShort(CiRegister dst, Address src) {
         // According to Intel Doc. AP-526, "Zero-Extension of Short", p.16,
         // and "3.9 Partial Register Penalties", p. 22).
-        int off;
-        if (is64 || target.isP6() || src.uses(dst)) {
-            off = codeBuffer.position();
-            movzxl(dst, src); // movzxw
-        } else {
-            xorl(dst, dst);
-            off = codeBuffer.position();
-            movw(dst, src);
-        }
+        int off = codeBuffer.position();
+        movzxl(dst, src); // movzxw
         return off;
     }
 
     void movptr(CiRegister dst, CiRegister src) {
-
-        if (is64) {
-
-            movq(dst, src);
-        } else {
-            movl(dst, src);
-        }
+        movq(dst, src);
     }
 
     void movptr(CiRegister dst, Address src) {
-
-        if (is64) {
-            movq(dst, src);
-        } else {
-            movl(dst, src);
-        }
+        movq(dst, src);
     }
 
     void movptr(Address dst, CiRegister src) {
-        if (is64) {
-            movq(dst, src);
-        } else {
-            movl(dst, src);
-        }
+        movq(dst, src);
     }
 
     // sign extend as need a l to ptr sized element
     void movl2ptr(CiRegister dst, Address src) {
-        if (is64) {
-            movslq(dst, src);
-        } else {
-            movl(dst, src);
-        }
+        movslq(dst, src);
     }
 
     void movl2ptr(CiRegister dst, CiRegister src) {
-        if (is64) {
-            movslq(dst, src);
-        } else if (dst != src) {
-            movl(dst, src);
-        }
+        movslq(dst, src);
     }
 
     @Override
@@ -788,23 +523,15 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void shlptr(CiRegister dst, int imm8) {
-        if (is64) {
-            shlq(dst, imm8);
-        } else {
-            shll(dst, imm8);
-        }
+        shlq(dst, imm8);
     }
 
     void shrptr(CiRegister dst, int imm8) {
-        if (is64) {
-            shrq(dst, imm8);
-        } else {
-            shrl(dst, imm8);
-        }
+        shrq(dst, imm8);
     }
 
     void signExtendByte(CiRegister reg) {
-        if (is64 || target.isP6() && reg.isByte()) {
+        if (reg.isByte()) {
             movsxb(reg, reg); // movsxb
         } else {
             shll(reg, 24);
@@ -813,72 +540,19 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void signExtendShort(CiRegister reg) {
-        if (is64 || target.isP6()) {
-            movsxw(reg, reg); // movsxw
-        } else {
-            shll(reg, 16);
-            sarl(reg, 16);
-        }
+        movsxw(reg, reg); // movsxw
     }
 
     void subptr(CiRegister dst, int imm32) {
-        if (is64) {
-            subq(dst, imm32);
-        } else {
-            subl(dst, imm32);
-        }
+        subq(dst, imm32);
     }
 
     void subptr(CiRegister dst, CiRegister src) {
-        if (is64) {
-            subq(dst, src);
-        } else {
-            subl(dst, src);
-        }
+        subq(dst, src);
     }
 
     void testptr(CiRegister dst, CiRegister src) {
-        if (is64) {
-            testq(dst, src);
-        } else {
-            testl(dst, src);
-        }
-    }
-
-    // Defines obj : preserves varSizeInBytes : okay for t2 == varSizeInBytes.
-    void tlabAllocate(RiRuntime runtime, CiRegister obj, CiRegister varSizeInBytes, int conSizeInBytes, CiRegister t1, CiRegister t2, Label slowCase) {
-        assert CiRegister.assertDifferentRegisters(obj, t1, t2);
-        assert CiRegister.assertDifferentRegisters(obj, varSizeInBytes, t1);
-        Util.unimplemented();
-//        CiRegister end = t2;
-//        CiRegister thread = t1;
-//        if (is64) {
-//            thread = runtime.threadRegister();
-//        }
-//
-//        verifyTlab(runtime);
-//
-//        if (!is64) {
-//            getThread(thread);
-//        }
-//
-//        movptr(obj, new Address(thread, runtime.threadTlabTopOffset()));
-//        if (varSizeInBytes == CiRegister.None) {
-//            lea(end, new Address(obj, conSizeInBytes));
-//        } else {
-//            lea(end, new Address(obj, varSizeInBytes, Address.ScaleFactor.times1));
-//        }
-//        cmpptr(end, new Address(thread, runtime.threadTlabEndOffset()));
-//        jcc(X86Assembler.Condition.above, slowCase);
-//
-//        // update the tlab top pointer
-//        movptr(new Address(thread, runtime.threadTlabTopOffset()), end);
-//
-//        // recover varSizeInBytes if necessary
-//        if (varSizeInBytes == end) {
-//            subptr(varSizeInBytes, obj);
-//        }
-//        verifyTlab(runtime);
+        testq(dst, src);
     }
 
     boolean verifyOop(CiRegister reg) {
@@ -934,27 +608,15 @@ public class X86MacroAssembler extends X86Assembler {
     }
 
     void addptr(Address dst, int src) {
-        if (is64) {
-            addq(dst, src);
-        } else {
-            addl(dst, src);
-        }
+        addq(dst, src);
     }
 
     void addptr(CiRegister dst, Address src) {
-        if (is64) {
-            addq(dst, src);
-        } else {
-            addl(dst, src);
-        }
+        addq(dst, src);
     }
 
     void andptr(CiRegister src1, CiRegister src2) {
-        if (is64) {
-            andq(src1, src2);
-        } else {
-            andl(src1, src2);
-        }
+        andq(src1, src2);
     }
 
     int lockObject(RiRuntime runtime, CiRegister hdr, CiRegister obj, CiRegister dispHdr, CiRegister scratch, Label slowCase) {
@@ -996,219 +658,60 @@ public class X86MacroAssembler extends X86Assembler {
         }
         Label notNull = new Label();
         testptr(r, r);
-        jcc(X86Assembler.Condition.notZero, notNull);
+        jcc(X86Assembler.ConditionFlag.notZero, notNull);
         stop("non-null oop required");
         bind(notNull);
         verifyOop(r);
     }
 
     void xchgptr(CiRegister src1, CiRegister src2) {
-        if (is64) {
-            xchgq(src1, src2);
-        } else {
-            xchgl(src1, src2);
-        }
+        xchgq(src1, src2);
     }
 
-    void allocateArray(RiRuntime runtime, CiRegister obj, CiRegister len, CiRegister t1, CiRegister t2, int headerSize, Address.ScaleFactor scaleFactor, CiRegister klass, Label slowCase) {
-        assert obj == X86.rax : "obj must be in X86Register.rax :  for cmpxchg";
-        assert CiRegister.assertDifferentRegisters(obj, len, t1, t2, klass);
-
-        // determine alignment mask
-        assert (wordSize & 1) == 0 : "must be a multiple of 2 for masking code to work";
-
-        // check for negative or excessive length
-        cmpptr(len, runtime.maximumArrayLength());
-        jcc(X86Assembler.Condition.above, slowCase);
-
-        CiRegister arrSize = t2; // okay to be the same
-
-        int getMinObjAlignmentInBytesMask = 0xbadbabe; // runtime.getMinObjAlignmentInBytesMask()
-        // align object end
-        movptr(arrSize, headerSize * wordSize + getMinObjAlignmentInBytesMask);
-        lea(arrSize, new Address(arrSize, len, scaleFactor));
-        andptr(arrSize, ~getMinObjAlignmentInBytesMask);
-
-        tryAllocate(runtime, obj, arrSize, 0, t1, t2, slowCase);
-
-        initializeHeader(runtime, obj, klass, len, t1, t2);
-
-        // clear rest of allocated space
-        initializeBody(obj, arrSize, headerSize * wordSize, len);
-
-        verifyOop(obj);
+    void cmov(ConditionFlag cc, CiRegister dst, CiRegister src) {
+        cmovq(cc, dst, src);
     }
 
-    // Defines obj, preserves varSizeInBytes
-    void tryAllocate(RiRuntime runtime, CiRegister obj, CiRegister varSizeInBytes, int conSizeInBytes, CiRegister t1, CiRegister t2, Label slowCase) {
-        if (C1XOptions.UseTLAB) {
-            tlabAllocate(runtime, obj, varSizeInBytes, conSizeInBytes, t1, t2, slowCase);
-        } else {
-            edenAllocate(obj, varSizeInBytes, conSizeInBytes, t1, slowCase);
-        }
+    void cmovptr(ConditionFlag cc, CiRegister dst, Address src) {
+        cmovq(cc, dst, src);
     }
 
-    void initializeHeader(RiRuntime runtime, CiRegister obj, CiRegister klass, CiRegister len, CiRegister t1, CiRegister t2) {
-        Util.unimplemented();
-    }
-
-    // preserves obj, destroys lenInBytes
-    void initializeBody(CiRegister obj, CiRegister lenInBytes, int hdrSizeInBytes, CiRegister t1) {
-        Label done = new Label();
-        assert obj != lenInBytes && obj != t1 && t1 != lenInBytes : "registers must be different";
-        assert (hdrSizeInBytes & (wordSize - 1)) == 0 : "header size is not a multiple of BytesPerWord";
-        CiRegister index = lenInBytes;
-        // index is positive and ptr sized
-        subptr(index, hdrSizeInBytes);
-        jcc(X86Assembler.Condition.zero, done);
-        // initialize topmost word, divide index by 2, check if odd and test if zero
-        // note: for the remaining code to work, index must be a multiple of BytesPerWord
-
-        if (C1XOptions.GenAssertionCode) {
-            Label l = new Label();
-            testptr(index, wordSize - 1);
-            jcc(X86Assembler.Condition.zero, l);
-            stop("index is not a multiple of BytesPerWord");
-            bind(l);
-        }
-        xorptr(t1, t1); // use zero reg to clear memory (shorter code)
-        if (C1XOptions.UseIncDec) {
-            shrptr(index, 3); // divide by 8/16 and set carry flag if bit 2 was set
-        } else {
-            shrptr(index, 2); // use 2 instructions to avoid partial flag stall
-            shrptr(index, 1);
-        }
-
-        if (is32) {
-            // index could have been not a multiple of 8 (i.e., bit 2 was set)
-            Label even = new Label();
-            // note: if index was a multiple of 8, than it cannot
-            // be 0 now otherwise it must have been 0 before
-            // => if it is even, we don't need to check for 0 again
-            jcc(X86Assembler.Condition.carryClear, even);
-            // clear topmost word (no jump needed if conditional assignment would work here)
-            movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - 0 * wordSize), t1);
-            // index could be 0 now, need to check again
-            jcc(X86Assembler.Condition.zero, done);
-            bind(even);
-        }
-
-        // initialize remaining object fields: X86Register.rdx is a multiple of 2 now
-        Label loop = new Label();
-        bind(loop);
-        movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - 1 * wordSize), t1);
-        if (is32) {
-            movptr(new Address(obj, index, Address.ScaleFactor.times8, hdrSizeInBytes - 2 * wordSize), t1);
-        }
-        decrement(index, 1);
-        jcc(X86Assembler.Condition.notZero, loop);
-
-        // done
-        bind(done);
-    }
-
-    void allocateObject(RiRuntime runtime, CiRegister obj, CiRegister t1, CiRegister t2, int headerSize, int objectSize, CiRegister klass, Label slowCase) {
-        assert obj == X86.rax : "obj must be in X86Register.rax :  for cmpxchg";
-        assert obj != t1 && obj != t2 && t1 != t2 : "registers must be different"; // XXX really?
-        assert headerSize >= 0 && objectSize >= headerSize : "illegal sizes";
-
-        tryAllocate(runtime, obj, CiRegister.None, objectSize * wordSize, t1, t2, slowCase);
-
-        initializeObject(runtime, obj, klass, CiRegister.None, objectSize * wordSize, t1, t2);
-    }
-
-    void initializeObject(RiRuntime runtime, CiRegister obj, CiRegister klass, CiRegister varSizeInBytes, int conSizeInBytes, CiRegister t1, CiRegister t2) {
-        throw Util.unimplemented();
-    }
-
-    void cmov(Condition cc, CiRegister dst, CiRegister src) {
-        if (is64) {
-            cmovq(cc, dst, src);
-        } else {
-            cmovl(cc, dst, src);
-        }
-    }
-
-    void cmovptr(Condition cc, CiRegister dst, Address src) {
-        if (is64) {
-            cmovq(cc, dst, src);
-        } else {
-            cmovl(cc, dst, src);
-        }
-    }
-
-    void cmovptr(Condition cc, CiRegister dst, CiRegister src) {
-        if (is64) {
-            cmovq(cc, dst, src);
-        } else {
-            cmovl(cc, dst, src);
-        }
+    void cmovptr(ConditionFlag cc, CiRegister dst, CiRegister src) {
+        cmovq(cc, dst, src);
     }
 
     void orptr(CiRegister dst, CiRegister src) {
-        if (is64) {
-            orq(dst, src);
-        } else {
-            orl(dst, src);
-        }
+        orq(dst, src);
     }
 
     void orptr(CiRegister dst, int src) {
-        if (is64) {
-            orq(dst, src);
-        } else {
-            orl(dst, src);
-        }
+        orq(dst, src);
     }
 
     void shlptr(CiRegister dst) {
-        if (is64) {
-            shlq(dst);
-        } else {
-            shll(dst);
-        }
+        shlq(dst);
     }
 
     void shrptr(CiRegister dst) {
-        if (is64) {
-            shrq(dst);
-        } else {
-            shrl(dst);
-        }
+        shrq(dst);
     }
 
     void sarptr(CiRegister dst) {
-        if (is64) {
-            sarq(dst);
-        } else {
-            sarl(dst);
-        }
+        sarq(dst);
     }
 
     void sarptr(CiRegister dst, int src) {
-        if (is64) {
-            sarq(dst, src);
-        } else {
-            sarl(dst, src);
-        }
+        sarq(dst, src);
     }
 
     void negptr(CiRegister dst) {
-        if (is64) {
-            negq(dst);
-        } else {
-            negl(dst);
-        }
+        negq(dst);
     }
 
     private void bangStackWithOffset(int offset) {
         // stack grows down, caller passes positive offset
         assert offset > 0 :  "must bang with negative offset";
-        if (is64) {
-            movq(new Address(X86.rsp, (-offset)), X86.rax);
-        } else {
-            movl(new Address(X86.rsp, (-offset)), X86.rax);
-        }
+        movq(new Address(X86.rsp, (-offset)), X86.rax);
     }
 
     @Override

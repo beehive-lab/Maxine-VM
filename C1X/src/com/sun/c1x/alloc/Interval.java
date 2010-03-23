@@ -754,7 +754,13 @@ public final class Interval {
 
     @Override
     public String toString() {
-        return "#" + registerNumber() + ":" + typeName() + "[" + from() + "," + to() + "]";
+        String to;
+        if (cachedTo == -1) {
+            to = "?";
+        } else {
+            to = String.valueOf(to());
+        }
+        return "#" + registerNumber() + ":" + typeName() + "[" + from() + "," + to + "]";
     }
 
     private String typeName() {

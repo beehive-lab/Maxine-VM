@@ -21,6 +21,7 @@
 package com.sun.c1x.bytecode;
 
 import static com.sun.c1x.bytecode.Bytecodes.Flags.*;
+import static com.sun.c1x.bytecode.Bytecodes.MemoryBarriers.*;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -280,12 +281,37 @@ public class Bytecodes {
     public static final int MOV_L2D              = 229;
     public static final int MOV_D2L              = 230;
 
-    public static final int UWLT                 = 231; // Unsigned word less-than
-    public static final int UWLTEQ               = 232; // Unsigned word less-than-or-equal
-    public static final int UWGT                 = 233; // Unsigned word greater-than
-    public static final int UWGTEQ               = 234; // Unsigned word greater-than-or-equal
+    /**
+     * Unsigned integer comparison.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // UCMP
+     *           u2 op;       // ABOVE_EQUAL, ABOVE_THAN, BELOW_EQUAL or BELOW_THAN
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value, value => ..., value
+     * </pre>
+     *
+     * @see UnsignedComparisons
+     */
+    public static final int UCMP                 = 231;
 
-    public static final int UGE                  = 235; // Unsigned int greater-than-or-equal
+    /**
+     * Unsigned word comparison.
+     *
+     * <pre>
+     * Format: { u1 opcode;   // UCMP
+     *           u2 op;       // ABOVE_EQUAL, ABOVE_THAN, BELOW_EQUAL or BELOW_THAN
+     *         }
+     *
+     * Operand Stack:
+     *     ..., value, value => ..., value
+     * </pre>
+     *
+     * @see UnsignedComparisons
+     */
+    public static final int UWCMP                = 232;
 
     /**
      * Reads the value of a register playing a runtime-defined role.
@@ -299,7 +325,7 @@ public class Bytecodes {
      *     ... => ..., value
      * </pre>
      */
-    public static final int READREG              = 236;
+    public static final int READREG              = 233;
 
     /**
      * Writes the value of a register playing a runtime-defined role.
@@ -313,7 +339,7 @@ public class Bytecodes {
      *     ..., value => ...
      * </pre>
      */
-    public static final int WRITEREG             = 237;
+    public static final int WRITEREG             = 234;
 
     /**
      * Unsafe cast of top value on stack. The valid type characters and their corresponding kinds are:
@@ -340,9 +366,9 @@ public class Bytecodes {
      *     ..., value => ..., value
      * </pre>
      */
-    public static final int UNSAFE_CAST          = 238;
-    public static final int WRETURN              = 239;
-    public static final int SAFEPOINT            = 240;
+    public static final int UNSAFE_CAST          = 235;
+    public static final int WRETURN              = 236;
+    public static final int SAFEPOINT            = 237;
 
     /**
      * Allocates a requested block of memory within the current activation frame.
@@ -365,7 +391,7 @@ public class Bytecodes {
      * @param size bytes to allocate. This must be a compile-time constant.
      * @return the address of the allocated block. <b>The contents of the block are uninitialized</b>.
      */
-    public static final int ALLOCA               = 241;
+    public static final int ALLOCA               = 238;
 
     /**
      * Inserts a memory barrier.
@@ -374,16 +400,19 @@ public class Bytecodes {
      * Format: { u1 opcode;   // MEMBAR
      *           u2 barrier;  // 1=LOAD_LOAD, 2=LOAD_STORE, 3=STORE_LOAD, 4=STORE_STORE, 5=MEMOP_STORE, 6=ALL
      *         }
+     *
+     * Operand Stack:
+     *     ... => ...
      * </pre>
      */
-    public static final int MEMBAR               = 242;
-    public static final int STACKADDR            = 243;
-    public static final int PAUSE                = 244;
-    public static final int ADD_SP               = 245;
-    public static final int READ_PC              = 246;
-    public static final int FLUSHW               = 247;
-    public static final int LSB                  = 248;
-    public static final int MSB                  = 249;
+    public static final int MEMBAR               = 239;
+    public static final int STACKADDR            = 240;
+    public static final int PAUSE                = 241;
+    public static final int ADD_SP               = 242;
+    public static final int READ_PC              = 243;
+    public static final int FLUSHW               = 244;
+    public static final int LSB                  = 245;
+    public static final int MSB                  = 246;
 
     // End extended bytecodes
 
@@ -459,14 +488,127 @@ public class Bytecodes {
     public static final int PSET_WORD          = PSET   | 7 << 8;
     public static final int PSET_REFERENCE     = PSET   | 8 << 8;
 
-    public static final int MEMBAR_LOAD_LOAD   = MEMBAR   | 1 << 8;
-    public static final int MEMBAR_LOAD_STORE  = MEMBAR   | 2 << 8;
-    public static final int MEMBAR_STORE_LOAD  = MEMBAR   | 3 << 8;
-    public static final int MEMBAR_STORE_STORE = MEMBAR   | 4 << 8;
-    public static final int MEMBAR_MEMOP_STORE = MEMBAR   | 5 << 8;
-    public static final int MEMBAR_ALL         = MEMBAR   | 6 << 8;
+    public static final int MEMBAR_LOAD_LOAD   = MEMBAR   | LOAD_LOAD << 8;
+    public static final int MEMBAR_LOAD_STORE  = MEMBAR   | LOAD_STORE << 8;
+    public static final int MEMBAR_STORE_LOAD  = MEMBAR   | STORE_LOAD << 8;
+    public static final int MEMBAR_STORE_STORE = MEMBAR   | STORE_STORE << 8;
+    public static final int MEMBAR_MEMOP_STORE = MEMBAR   | MEMOP_STORE << 8;
+    public static final int MEMBAR_FENCE       = MEMBAR   | FENCE << 8;
 
     // Other constants:
+
+    public static class UnsignedComparisons {
+        public static final int ABOVE_THAN    = 1;
+        public static final int ABOVE_EQUAL   = 2;
+        public static final int BELOW_THAN    = 3;
+        public static final int BELOW_EQUAL   = 4;
+
+        @INTRINSIC(UCMP | (ABOVE_EQUAL << 8))
+        public static native boolean aboveOrEqual(int x, int y);
+
+        @INTRINSIC(UCMP | (BELOW_EQUAL << 8))
+        public static native boolean belowOrEqual(int x, int y);
+
+        @INTRINSIC(UCMP | (ABOVE_THAN << 8))
+        public static native boolean aboveThan(int x, int y);
+
+        @INTRINSIC(UCMP | (BELOW_THAN << 8))
+        public static native boolean belowThan(int x, int y);
+    }
+
+    /**
+     * Constants for memory barriers.
+     *
+     * The documentation for each constant is taken from the
+     * <a href="http://gee.cs.oswego.edu/dl/jmm/cookbook.html">The JSR-133 Cookbook for Compiler Writers</a>
+     * written by Doug Lea.
+     */
+    public static class MemoryBarriers {
+
+        /**
+         * The sequence {@code Load1; LoadLoad; Load2} ensures that {@code Load1}'s data are loaded before data accessed
+         * by {@code Load2} and all subsequent load instructions are loaded. In general, explicit {@code LoadLoad}
+         * barriers are needed on processors that perform speculative loads and/or out-of-order processing in which
+         * waiting load instructions can bypass waiting stores. On processors that guarantee to always preserve load
+         * ordering, these barriers amount to no-ops.
+         */
+        public static final int LOAD_LOAD   = 0x0001;
+
+        /**
+         * The sequence {@code Load1; LoadStore; Store2} ensures that {@code Load1}'s data are loaded before all data
+         * associated with {@code Store2} and subsequent store instructions are flushed. {@code LoadStore} barriers are
+         * needed only on those out-of-order processors in which waiting store instructions can bypass loads.
+         */
+        public static final int LOAD_STORE  = 0x0002;
+
+        /**
+         * The sequence {@code Store1; StoreLoad; Load2} ensures that {@code Store1}'s data are made visible to other
+         * processors (i.e., flushed to main memory) before data accessed by {@code Load2} and all subsequent load
+         * instructions are loaded. {@code StoreLoad} barriers protect against a subsequent load incorrectly using
+         * {@code Store1}'s data value rather than that from a more recent store to the same location performed by a
+         * different processor. Because of this, on the processors discussed below, a {@code StoreLoad} is strictly
+         * necessary only for separating stores from subsequent loads of the same location(s) as were stored before the
+         * barrier. {@code StoreLoad} barriers are needed on nearly all recent multiprocessors, and are usually the most
+         * expensive kind. Part of the reason they are expensive is that they must disable mechanisms that ordinarily
+         * bypass cache to satisfy loads from write-buffers. This might be implemented by letting the buffer fully
+         * flush, among other possible stalls.
+         */
+        public static final int STORE_LOAD  = 0x0004;
+
+        /**
+         * The sequence {@code Store1; StoreStore; Store2} ensures that {@code Store1}'s data are visible to other
+         * processors (i.e., flushed to memory) before the data associated with {@code Store2} and all subsequent store
+         * instructions. In general, {@code StoreStore} barriers are needed on processors that do not otherwise
+         * guarantee strict ordering of flushes from write buffers and/or caches to other processors or main memory.
+         */
+        public static final int STORE_STORE = 0x0008;
+
+        public static final int MEMOP_STORE = STORE_STORE | LOAD_STORE;
+        public static final int FENCE = LOAD_LOAD | LOAD_STORE | STORE_STORE | STORE_LOAD;
+
+        /**
+         * Ensures all preceding loads complete before any subsequent loads.
+         */
+        @INTRINSIC(MEMBAR_LOAD_LOAD)
+        public static void loadLoad() {
+        }
+
+        /**
+         * Ensures all preceding loads complete before any subsequent stores.
+         */
+        @INTRINSIC(MEMBAR_LOAD_STORE)
+        public static void loadStore() {
+        }
+
+        /**
+         * Ensures all preceding stores complete before any subsequent loads.
+         */
+        @INTRINSIC(MEMBAR_STORE_LOAD)
+        public static void storeLoad() {
+        }
+
+        /**
+         * Ensures all preceding stores complete before any subsequent stores.
+         */
+        @INTRINSIC(MEMBAR_STORE_STORE)
+        public static void storeStore() {
+        }
+
+        /**
+         * Ensures all preceding stores and loads complete before any subsequent stores.
+         */
+        @INTRINSIC(MEMBAR_MEMOP_STORE)
+        public static void memopStore() {
+        }
+
+        /**
+         * Ensures all preceding stores and loads complete before any subsequent stores and loads.
+         */
+        @INTRINSIC(MEMBAR_FENCE)
+        public static void fence() {
+        }
+
+    }
 
     public static final int ILLEGAL = 255;
     public static final int END = 256;
@@ -780,11 +922,8 @@ public class Bytecodes {
         def("mov_f2i"         , "bii"  , EXTENSION | TRAP);
         def("mov_l2d"         , "bii"  , EXTENSION | TRAP);
         def("mov_d2l"         , "bii"  , EXTENSION | TRAP);
-        def("uwlt"            , "bii"  , EXTENSION);
-        def("uwlteq"          , "bii"  , EXTENSION);
-        def("uwgt"            , "bii"  , EXTENSION);
-        def("uwgteq"          , "bii"  , EXTENSION);
-        def("uge"             , "bii"  , EXTENSION);
+        def("ucmp"            , "bii"  , EXTENSION);
+        def("uwcmp"            , "bii"  , EXTENSION);
         def("jnicall"         , "bii"  , EXTENSION | TRAP);
         def("call"            , "bii"  , EXTENSION | TRAP);
         def("readreg"         , "bii"  , EXTENSION);
@@ -1285,7 +1424,7 @@ public class Bytecodes {
                         String value = matcher.group(4);
                         int opcode = Integer.parseInt(value);
                         if (names[opcode] == null || !names[opcode].equalsIgnoreCase(name)) {
-                            throw new RuntimeException("Missing definition of name and flags for " + name + " -- " + names[opcode]);
+                            throw new RuntimeException("Missing definition of name and flags for " + opcode + ":" + name + " -- " + names[opcode]);
                         }
                         if (opcode != lastExtendedOpcode + 1) {
                             System.err.println("Fixed declaration of opcode " + name + " to be " + (lastExtendedOpcode + 1) + " (was " + value + ")");

@@ -50,8 +50,6 @@ public abstract class LIRAssembler {
     public final C1XCompilation compilation;
     public final AbstractAssembler asm;
     public final FrameMap frameMap;
-    public final boolean is32;
-    public final boolean is64;
 
     protected final List<LocalStub> localStubs;
     protected final List<SlowPath> xirSlowPath;
@@ -73,8 +71,6 @@ public abstract class LIRAssembler {
         this.compilation = compilation;
         this.asm = compilation.masm();
         this.frameMap = compilation.frameMap();
-        this.is32 = compilation.target.arch.is32bit();
-        this.is64 = compilation.target.arch.is64bit();
         this.localStubs = new ArrayList<LocalStub>();
         this.branchTargetBlocks = new ArrayList<BlockBegin>();
         this.xirSlowPath = new ArrayList<SlowPath>();
@@ -293,7 +289,7 @@ public abstract class LIRAssembler {
                 break;
             case NullCheck:
                 asm.recordImplicitException(codePos(), op.info);
-                assert op.operand().isSingleRegister();
+                assert op.operand().isRegister();
                 asm.nullCheck(op.operand().asRegister());
                 break;
             default:
@@ -497,11 +493,11 @@ public abstract class LIRAssembler {
 
     protected abstract void emitShiftOp(LIROpcode code, LIROperand inOpr1, int asJint, LIROperand resultOpr);
 
-    protected abstract void emitConditionalMove(LIRCondition condition, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr);
+    protected abstract void emitConditionalMove(Condition condition, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr);
 
     protected abstract void emitCompareFloatInt(LIROpcode code, LIROperand inOpr1, LIROperand inOpr2, LIROperand resultOpr, LIROp2 op);
 
-    protected abstract void emitCompare(LIRCondition condition, LIROperand inOpr1, LIROperand inOpr2, LIROp2 op);
+    protected abstract void emitCompare(Condition condition, LIROperand inOpr1, LIROperand inOpr2, LIROp2 op);
 
     protected abstract void emitBranch(LIRBranch branch);
 
@@ -510,8 +506,6 @@ public abstract class LIRAssembler {
     protected abstract void emitLIROp2(LIROp2 op2);
 
     protected abstract void emitOp3(LIROp3 op3);
-
-    protected abstract void emitTypeCheck(LIRTypeCheck typeCheck);
 
     protected abstract void emitCompareAndSwap(LIRCompareAndSwap compareAndSwap);
 

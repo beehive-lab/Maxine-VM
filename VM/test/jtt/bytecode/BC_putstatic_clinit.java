@@ -18,34 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.memory;
-
-import static com.sun.c1x.bytecode.Bytecodes.MemoryBarriers.*;
-
-import com.sun.c1x.bytecode.Bytecodes.*;
+package jtt.bytecode;
 
 /**
- * SMP memory models.
+ * Tests that class initialization is triggered by 'putstatic'.
  *
- * @author Bernd Mathiske
+ * @Harness: java
+ * @Runs: 0 = 11
  */
-public enum MemoryModel {
-    SequentialConsistency(LOAD_LOAD | LOAD_STORE | STORE_LOAD | STORE_STORE),
-    TotalStoreOrder(LOAD_LOAD | LOAD_STORE | STORE_STORE),
-    AMD64(LOAD_STORE | STORE_STORE),
-    PartialStoreOrder(LOAD_LOAD),
-    RelaxedMemoryOrder(0);
-
-    /**
-     * Mask of {@linkplain MemoryBarriers memory barrier} flags denoting the barriers that
-     * are not required to be explicitly inserted under this memory model.
-     */
-    public final int impliedBarriers;
-
-    /**
-     * @param barriers the barriers that are implied everywhere in the code by this memory model
-     */
-    private MemoryModel(int barriers) {
-        this.impliedBarriers = barriers;
+public class BC_putstatic_clinit {
+    private static int field;
+    public static int test(int a) {
+        Nested.g = a;
+        return field;
+    }
+    static class Nested {
+        static int g = 11;
+        static {
+            field = g;
+        }
     }
 }
