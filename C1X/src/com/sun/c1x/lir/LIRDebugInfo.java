@@ -89,9 +89,9 @@ public class LIRDebugInfo {
             int stackMapIndex = offset / target.arch.wordSize;
             setBit(debugInfo.frameRefMap, stackMapIndex);
         } else {
-            int index = target.allocatableRegs.referenceMapIndex[location.first().number];
-            assert index >= 0 : "object cannot be in non-object register " + location.first();
-            assert location.isSingleRegister() : "objects can only be in a single register";
+            int index = target.allocatableRegs.referenceMapIndex[location.register().number];
+            assert index >= 0 : "object cannot be in non-object register " + location.register();
+            assert location.isRegister() : "objects can only be in a single register";
             setBit(debugInfo.registerRefMap, index);
         }
     }

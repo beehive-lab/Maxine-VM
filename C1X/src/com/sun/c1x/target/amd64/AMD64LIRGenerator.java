@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 
-package com.sun.c1x.target.x86;
+package com.sun.c1x.target.amd64;
 
 import static com.sun.c1x.bytecode.Bytecodes.UnsignedComparisons.*;
 
@@ -39,28 +39,26 @@ import com.sun.c1x.util.*;
  * @author Thomas Wuerthinger
  * @author Ben L. Titzer
  */
-public final class X86LIRGenerator extends LIRGenerator {
+public final class AMD64LIRGenerator extends LIRGenerator {
 
-    private static final LIRLocation IDIV_IN = LIROperand.forRegister(CiKind.Int, X86.rax);
-    private static final LIRLocation IDIV_OUT = LIROperand.forRegister(CiKind.Int, X86.rax);
-    private static final LIRLocation IREM_OUT = LIROperand.forRegister(CiKind.Int, X86.rdx);
-    private static final LIRLocation IDIV_TMP = LIROperand.forRegister(CiKind.Int, X86.rdx);
+    private static final LIRLocation IDIV_IN = LIROperand.forRegister(CiKind.Int, AMD64.rax);
+    private static final LIRLocation IDIV_OUT = LIROperand.forRegister(CiKind.Int, AMD64.rax);
+    private static final LIRLocation IREM_OUT = LIROperand.forRegister(CiKind.Int, AMD64.rdx);
+    private static final LIRLocation IDIV_TMP = LIROperand.forRegister(CiKind.Int, AMD64.rdx);
 
-    private static final LIRLocation LDIV_IN = LIROperand.forRegister(CiKind.Long, X86.rax);
-    private static final LIRLocation LDIV_OUT = LIROperand.forRegister(CiKind.Long, X86.rax);
-    private static final LIRLocation LREM_OUT = LIROperand.forRegister(CiKind.Long, X86.rdx);
-    private static final LIRLocation LDIV_TMP = LIROperand.forRegister(CiKind.Long, X86.rdx);
+    private static final LIRLocation LDIV_IN = LIROperand.forRegister(CiKind.Long, AMD64.rax);
+    private static final LIRLocation LDIV_OUT = LIROperand.forRegister(CiKind.Long, AMD64.rax);
+    private static final LIRLocation LREM_OUT = LIROperand.forRegister(CiKind.Long, AMD64.rdx);
+    private static final LIRLocation LDIV_TMP = LIROperand.forRegister(CiKind.Long, AMD64.rdx);
 
-    private static final LIROperand LONG_0_32 = LIROperand.forRegisters(CiKind.Long, X86.rax, X86.rdx);
-    private static final LIROperand LONG_0_64 = LIROperand.forRegister(CiKind.Long, X86.rax);
+    private static final LIROperand LONG_0_64 = LIROperand.forRegister(CiKind.Long, AMD64.rax);
 
-    private static final LIROperand LONG_1_32 = LIROperand.forRegisters(CiKind.Long, X86.rbx, X86.rcx);
-    private static final LIROperand LONG_1_64 = LIROperand.forRegister(CiKind.Long, X86.rbx);
+    private static final LIROperand LONG_1_64 = LIROperand.forRegister(CiKind.Long, AMD64.rbx);
 
-    private static final LIRLocation SHIFT_COUNT_IN = LIROperand.forRegister(CiKind.Int, X86.rcx);
+    private static final LIRLocation SHIFT_COUNT_IN = LIROperand.forRegister(CiKind.Int, AMD64.rcx);
     protected static final LIRLocation ILLEGAL = LIROperand.IllegalLocation;
 
-    public X86LIRGenerator(C1XCompilation compilation) {
+    public AMD64LIRGenerator(C1XCompilation compilation) {
         super(compilation);
         assert is32 || is64 : "unknown word size: " + compilation.target.arch.wordSize;
         assert is32 != is64 : "can't be both 32 and 64 bit";
@@ -264,7 +262,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             left.loadItem();
             right.loadItem();
 
-            LIROperand reg = is32 ? LONG_0_32 : LONG_0_64;
+            LIROperand reg = LONG_0_64;
             arithmeticOpLong(opcode, reg, left.result(), right.result(), null);
             LIROperand result = createResultVariable(x);
             lir.move(reg, result);
@@ -406,7 +404,7 @@ public final class X86LIRGenerator extends LIRGenerator {
             left.loadItem();
             right.loadItem();
 
-            LIROperand reg = is32 ? LONG_0_32 : LONG_0_64;
+            LIROperand reg = LONG_0_64;
             arithmeticOpLong(opcode, reg, left.result(), right.result(), null);
             LIROperand result = createResultVariable(x);
             lir.move(reg, result);
@@ -532,10 +530,10 @@ public final class X86LIRGenerator extends LIRGenerator {
         LIRItem newValue = new LIRItem(x.argumentAt(2), this); // replace field with newValue if it matches cmpValue
 
         // compare value must be in rdx,eax (hi,lo); may be destroyed by cmpxchg8 instruction
-        cmpValue.loadItemForce(is32 ? LONG_0_32 : LONG_0_64);
+        cmpValue.loadItemForce(LONG_0_64);
 
         // new value must be in rcx,ebx (hi,lo)
-        newValue.loadItemForce(is32 ? LONG_1_32 : LONG_1_64);
+        newValue.loadItemForce(LONG_1_64);
 
         // object pointer register is overwritten with field address
         obj.loadItem();
@@ -571,15 +569,15 @@ public final class X86LIRGenerator extends LIRGenerator {
         offset.loadNonconstant();
 
         if (type.isObject()) {
-            cmp.loadItemForce(LIROperand.forRegister(CiKind.Object, X86.rax));
+            cmp.loadItemForce(LIROperand.forRegister(CiKind.Object, AMD64.rax));
             val.loadItem();
         } else if (type.isInt()) {
-            cmp.loadItemForce(LIROperand.forRegister(CiKind.Int, X86.rax));
+            cmp.loadItemForce(LIROperand.forRegister(CiKind.Int, AMD64.rax));
             val.loadItem();
         } else if (type.isLong()) {
             assert is64 : "32-bit not implemented";
-            cmp.loadItemForce(LIROperand.forRegister(CiKind.Long, X86.rax));
-            val.loadItemForce(LIROperand.forRegister(CiKind.Long, X86.rbx));
+            cmp.loadItemForce(LIROperand.forRegister(CiKind.Long, AMD64.rax));
+            val.loadItemForce(LIROperand.forRegister(CiKind.Long, AMD64.rbx));
         } else {
             Util.shouldNotReachHere();
         }

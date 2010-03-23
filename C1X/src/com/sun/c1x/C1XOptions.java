@@ -86,7 +86,7 @@ public class C1XOptions {
     public static int     TraceLinearScanLevel               = 0;
     public static boolean TraceRelocation                    = ____;
     public static boolean TraceLIRVisit                      = ____;
-    public static int     TraceGraphBuilderLevel             = 0;
+    public static int     TraceBytecodeParserLevel           = 0;
     public static boolean PrintLoopList                      = ____;
 
     // canonicalizer settings

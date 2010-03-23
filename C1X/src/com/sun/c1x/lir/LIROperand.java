@@ -20,10 +20,9 @@
  */
 package com.sun.c1x.lir;
 
+import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
-import com.sun.c1x.ci.CiRegister.*;
-import com.sun.c1x.ir.Value;
-import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.ir.*;
 
 /**
  * An LIR operand is either a {@linkplain #isConstant(LIROperand) constant}, an {@linkplain #isAddress(LIROperand) address},
@@ -98,34 +97,6 @@ public class LIROperand {
         return false;
     }
 
-    /**
-     * Determines if this is a general purpose register that can hold a 32-bit value.
-     */
-//    public boolean isSingleRegister() {
-//        return false;
-//    }
-
-    /**
-     * Determines if this is a general purpose register that can hold a 64-bit value.
-     */
-//    public boolean isDoubleRegister() {
-//        return false;
-//    }
-
-    /**
-     * Determines if this is an {@linkplain RegisterFlag#XMM XMM} register that can hold a 32-bit value.
-     */
-//    public boolean isSingleXmm() {
-//        return false;
-//    }
-
-    /**
-     * Determines if this is an {@linkplain RegisterFlag#XMM XMM} register that can hold a 64-bit value.
-     */
-//    public boolean isDoubleXmm() {
-//        return false;
-//    }
-
     protected Error illegalOperation(String operation) {
         throw new InternalError("Cannot call " + operation + " on " + this);
     }
@@ -146,14 +117,6 @@ public class LIROperand {
         throw illegalOperation("registerNumber()");
     }
 
-    public int registerNumberLow() {
-        throw illegalOperation("registerNumberLow()");
-    }
-
-    public int registerNumberHigh() {
-        throw illegalOperation("registerNumberHigh()");
-    }
-
     public int variableNumber() {
         throw illegalOperation("variableNumber()");
     }
@@ -164,14 +127,6 @@ public class LIROperand {
         }
         throw illegalOperation("asRegister()");
     }
-
-//    public CiRegister asRegisterLow() {
-//        throw illegalOperation("asRegisterLow()");
-//    }
-//
-//    public CiRegister asRegisterHigh() {
-//        throw illegalOperation("asRegisterHigh()");
-//    }
 
     public CiRegister asPointerRegister(CiArchitecture architecture) {
         return asRegister();
@@ -186,18 +141,6 @@ public class LIROperand {
      */
     public static LIRLocation forRegister(CiKind kind, CiRegister reg) {
         return new LIRLocation(kind, reg);
-    }
-
-    /**
-     * Creates a new LIR {@linkplain LIRLocation#isRegister() register}-pair operand.
-     *
-     * @param reg1 the first register
-     * @param reg2 the second register
-     * @param kind the kind of the register
-     * @return a LIR register-pair operand
-     */
-    public static LIRLocation forRegisters(CiKind kind, CiRegister reg1, CiRegister reg2) {
-        return new LIRLocation(kind, reg1, reg2);
     }
 
     /**

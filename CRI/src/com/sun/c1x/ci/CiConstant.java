@@ -228,9 +228,9 @@ public final class CiConstant extends CiValue {
      * Converts this constant to the jsr reference it represents.
      * @return the object which this constant represents
      */
-    public Object asJsr() {
+    public int asJsr() {
         if (kind == CiKind.Jsr) {
-            return value;
+            return (Integer) value;
         }
         throw new Error("Constant is not jsr: " + this);
     }

@@ -18,19 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.x86;
+package com.sun.c1x.target.amd64;
 
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ci.CiRegister.*;
 
 /**
- * This class represents the X86 architecture.
+ * This class represents the AMD64 architecture.
  *
  * @author Thomas Wuerthinger
  */
-public class X86 extends CiArchitecture {
+public class AMD64 extends CiArchitecture {
 
-    // Registers for 32 bit and 64 bit architecture
+    // General purpose CPU registers
     public static final CiRegister rax = new CiRegister(64, 1, 0, "rax", RegisterFlag.CPU, RegisterFlag.Byte);
     public static final CiRegister rcx = new CiRegister(64, 2, 1, "rcx", RegisterFlag.CPU, RegisterFlag.Byte);
     public static final CiRegister rdx = new CiRegister(64, 3, 2, "rdx", RegisterFlag.CPU, RegisterFlag.Byte);
@@ -39,9 +39,7 @@ public class X86 extends CiArchitecture {
     public static final CiRegister rbp = new CiRegister(64, 6, 5, "rbp", RegisterFlag.CPU);
     public static final CiRegister rsi = new CiRegister(64, 7, 6, "rsi", RegisterFlag.CPU, RegisterFlag.Byte); // (tw) check if byte flag is correct
     public static final CiRegister rdi = new CiRegister(64, 8, 7, "rdi", RegisterFlag.CPU, RegisterFlag.Byte); // (tw) check if byte flag is correct
-    public static final CiRegister[] cpuRegisters = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi};
 
-    // CPU registers only on 64 bit architecture
     public static final CiRegister r8 = new CiRegister(64, 9, 8, "r8", RegisterFlag.CPU);
     public static final CiRegister r9 = new CiRegister(64, 10, 9, "r9", RegisterFlag.CPU);
     public static final CiRegister r10 = new CiRegister(64, 11, 10, "r10", RegisterFlag.CPU);
@@ -50,7 +48,7 @@ public class X86 extends CiArchitecture {
     public static final CiRegister r13 = new CiRegister(64, 14, 13, "r13", RegisterFlag.CPU);
     public static final CiRegister r14 = new CiRegister(64, 15, 14, "r14", RegisterFlag.CPU);
     public static final CiRegister r15 = new CiRegister(64, 16, 15, "r15", RegisterFlag.CPU);
-    public static final CiRegister[] cpuRegisters64 = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15};
+    public static final CiRegister[] cpuRegisters = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15};
 
     // XMM registers
     public static final CiRegister xmm0 = new CiRegister(128, 17, 0, "xmm0", RegisterFlag.XMM);
@@ -61,9 +59,7 @@ public class X86 extends CiArchitecture {
     public static final CiRegister xmm5 = new CiRegister(128, 22, 5, "xmm5", RegisterFlag.XMM);
     public static final CiRegister xmm6 = new CiRegister(128, 23, 6, "xmm6", RegisterFlag.XMM);
     public static final CiRegister xmm7 = new CiRegister(128, 24, 7, "xmm7", RegisterFlag.XMM);
-    public static final CiRegister[] xmmRegisters = {xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
 
-    // XMM registers only on 64 bit architecture
     public static final CiRegister xmm8 = new CiRegister(128, 25, 8, "xmm8", RegisterFlag.XMM);
     public static final CiRegister xmm9 = new CiRegister(128, 26, 9, "xmm9", RegisterFlag.XMM);
     public static final CiRegister xmm10 = new CiRegister(128, 27, 10, "xmm10", RegisterFlag.XMM);
@@ -72,13 +68,12 @@ public class X86 extends CiArchitecture {
     public static final CiRegister xmm13 = new CiRegister(128, 30, 13, "xmm13", RegisterFlag.XMM);
     public static final CiRegister xmm14 = new CiRegister(128, 31, 14, "xmm14", RegisterFlag.XMM);
     public static final CiRegister xmm15 = new CiRegister(128, 32, 15, "xmm15", RegisterFlag.XMM);
-    public static final CiRegister[] xmmRegisters64 = {xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
+    public static final CiRegister[] xmmRegisters = {xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
 
-    public static final CiRegister[] allRegisters =   {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
-    public static final CiRegister[] allRegisters64 = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
+    public static final CiRegister[] allRegisters = {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
 
-    public X86(String name, int wordSize, CiRegister[] registers, int framePadding) {
-        super(name, wordSize, "x86", ByteOrder.LittleEndian, registers, 1, wordSize);
+    public AMD64() {
+        super("AMD64", 8, "x86", ByteOrder.LittleEndian, allRegisters, 1, 8);
     }
 
     @Override

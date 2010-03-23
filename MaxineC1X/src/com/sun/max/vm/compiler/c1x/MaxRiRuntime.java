@@ -27,7 +27,7 @@ import com.sun.c1x.ci.*;
 import com.sun.c1x.ci.CiTargetMethod.*;
 import com.sun.c1x.ci.CiTargetMethod.Safepoint;
 import com.sun.c1x.ri.*;
-import com.sun.c1x.target.x86.*;
+import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -65,8 +65,8 @@ public class MaxRiRuntime implements RiRuntime {
         this.compilerScheme = compilerScheme;
     }
 
-    private static final CiRegister[] generalParameterRegisters = new CiRegister[]{X86.rdi, X86.rsi, X86.rdx, X86.rcx, X86.r8, X86.r9};
-    private static final CiRegister[] xmmParameterRegisters = new CiRegister[]{X86.xmm0, X86.xmm1, X86.xmm2, X86.xmm3, X86.xmm4, X86.xmm5, X86.xmm6, X86.xmm7};
+    private static final CiRegister[] generalParameterRegisters = new CiRegister[]{AMD64.rdi, AMD64.rsi, AMD64.rdx, AMD64.rcx, AMD64.r8, AMD64.r9};
+    private static final CiRegister[] xmmParameterRegisters = new CiRegister[]{AMD64.xmm0, AMD64.xmm1, AMD64.xmm2, AMD64.xmm3, AMD64.xmm4, AMD64.xmm5, AMD64.xmm6, AMD64.xmm7};
 
     final MaxRiConstantPool globalConstantPool = new MaxRiConstantPool(this, null);
 

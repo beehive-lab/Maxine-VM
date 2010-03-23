@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.x86;
+package com.sun.c1x.target.amd64;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
@@ -31,7 +31,7 @@ import com.sun.c1x.util.*;
  *
  * @author Thomas Wuerthinger
  */
-public abstract class X86Assembler extends AbstractAssembler {
+public abstract class AMD64Assembler extends AbstractAssembler {
 
     private static final int MinEncodingNeedsRex = 8;
 
@@ -89,7 +89,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         private static final int REXWRXB = 0x4F;
     }
 
-    public X86Assembler(CiTarget target) {
+    public AMD64Assembler(CiTarget target) {
         super(target);
     }
 
@@ -175,7 +175,7 @@ public abstract class X86Assembler extends AbstractAssembler {
             if (index.isValid()) {
                 assert scale != Address.ScaleFactor.noScale : "inconsistent Address";
                 // [base + indexscale + disp]
-                if (disp == 0 && base != X86.rbp && (base != X86.r13)) {
+                if (disp == 0 && base != AMD64.rbp && (base != AMD64.r13)) {
                     // [base + indexscale]
                     // [00 reg 100][ss index base]
                     assert index != target.stackPointerRegister : "illegal addressing mode";
@@ -196,7 +196,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                     emitByte(scale.value << 6 | indexenc | baseenc);
                     emitInt(disp);
                 }
-            } else if (base == target.stackPointerRegister || (base == X86.r12)) {
+            } else if (base == target.stackPointerRegister || (base == AMD64.r12)) {
                 // [rsp + disp]
                 if (disp == 0) {
                     // [rsp]
@@ -218,8 +218,8 @@ public abstract class X86Assembler extends AbstractAssembler {
                 }
             } else {
                 // [base + disp]
-                assert base != target.stackPointerRegister && (base != X86.r12) : "illegal addressing mode";
-                if (disp == 0 && base != X86.rbp && (base != X86.r13)) {
+                assert base != target.stackPointerRegister && (base != AMD64.r12) : "illegal addressing mode";
+                if (disp == 0 && base != AMD64.rbp && (base != AMD64.r13)) {
                     // [base]
                     // [00 reg base]
                     emitByte(0x00 | regenc | baseenc);
@@ -302,7 +302,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     public final void addl(Address dst, int imm32) {
         prefix(dst);
-        emitArithOperand(0x81, X86.rax, dst, imm32);
+        emitArithOperand(0x81, AMD64.rax, dst, imm32);
     }
 
     public final void addl(Address dst, CiRegister src) {
@@ -497,7 +497,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         int before = codeBuffer.position();
         prefix(addr);
         emitByte(0xFF);
-        emitOperand(X86.rdx, addr);
+        emitOperand(AMD64.rdx, addr);
         int after = codeBuffer.position();
         recordIndirectCall(before, after, target, info);
         recordExceptionHandlers(after, info);
@@ -525,14 +525,14 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void cmpb(Address dst, int imm8) {
         prefix(dst);
         emitByte(0x80);
-        emitOperand(X86.rdi, dst, 1);
+        emitOperand(AMD64.rdi, dst, 1);
         emitByte(imm8);
     }
 
     public final void cmpl(Address dst, int imm32) {
         prefix(dst);
         emitByte(0x81);
-        emitOperand(X86.rdi, dst, 4);
+        emitOperand(AMD64.rdi, dst, 4);
         emitInt(imm32);
     }
 
@@ -556,7 +556,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         assert !(dst.base.encoding >= MinEncodingNeedsRex) && !(dst.index.encoding >= MinEncodingNeedsRex) : "no extended registers";
         emitByte(0x66);
         emitByte(0x81);
-        emitOperand(X86.rdi, dst, 2);
+        emitOperand(AMD64.rdi, dst, 2);
         emitShort(imm16);
     }
 
@@ -569,9 +569,9 @@ public abstract class X86Assembler extends AbstractAssembler {
             // Emit a synthetic, non-atomic, CAS equivalent.
             // Beware. The synthetic form sets all ICCs, not just ZF.
             // cmpxchg r,[m] is equivalent to X86.rax, = CAS (m, X86.rax, r)
-            cmpl(X86.rax, adr);
-            movl(X86.rax, adr);
-            if (reg != X86.rax) {
+            cmpl(AMD64.rax, adr);
+            movl(AMD64.rax, adr);
+            if (reg != AMD64.rax) {
                 Label l = new Label();
                 jcc(ConditionFlag.notEqual, l);
                 movl(adr, reg);
@@ -683,7 +683,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         // Don't use it directly. Use Macrodecrement() instead.
         prefix(dst);
         emitByte(0xFF);
-        emitOperand(X86.rcx, dst);
+        emitOperand(AMD64.rcx, dst);
     }
 
     public final void divsd(CiRegister dst, Address src) {
@@ -764,7 +764,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         // Don't use it directly. Use Macroincrement() instead.
         prefix(dst);
         emitByte(0xFF);
-        emitOperand(X86.rax, dst);
+        emitOperand(AMD64.rax, dst);
     }
 
     public final void jcc(ConditionFlag cc, Label l) {
@@ -819,7 +819,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void jmp(Address adr) {
         prefix(adr);
         emitByte(0xFF);
-        emitOperand(X86.rsp, adr);
+        emitOperand(AMD64.rsp, adr);
     }
 
     public final void jmp(Label l) {
@@ -964,7 +964,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void movb(Address dst, int imm8) {
         prefix(dst);
         emitByte(0xC6);
-        emitOperand(X86.rax, dst, 1);
+        emitOperand(AMD64.rax, dst, 1);
         emitByte(imm8);
     }
 
@@ -1074,7 +1074,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void movl(Address dst, int imm32) {
         prefix(dst);
         emitByte(0xC7);
-        emitOperand(X86.rax, dst, 4);
+        emitOperand(AMD64.rax, dst, 4);
         emitInt(imm32);
     }
 
@@ -1248,7 +1248,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         emitByte(0x66); // switch to 16-bit mode
         prefix(dst);
         emitByte(0xC7);
-        emitOperand(X86.rax, dst, 2);
+        emitOperand(AMD64.rax, dst, 2);
         emitShort(imm16);
     }
 
@@ -1297,7 +1297,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void mull(Address src) {
         prefix(src);
         emitByte(0xF7);
-        emitOperand(X86.rsp, src);
+        emitOperand(AMD64.rsp, src);
     }
 
     public final void mull(CiRegister src) {
@@ -1654,7 +1654,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void orl(Address dst, int imm32) {
         prefix(dst);
         emitByte(0x81);
-        emitOperand(X86.rcx, dst, 4);
+        emitOperand(AMD64.rcx, dst, 4);
         emitInt(imm32);
     }
 
@@ -1734,7 +1734,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         // NOTE: this will adjust stack by 8byte on 64bits
         prefix(dst);
         emitByte(0x8F);
-        emitOperand(X86.rax, dst);
+        emitOperand(AMD64.rax, dst);
     }
 
     public final void prefetchPrefix(Address src) {
@@ -1745,38 +1745,38 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void prefetchnta(Address src) {
         prefetchPrefix(src);
         emitByte(0x18);
-        emitOperand(X86.rax, src); // 0, src
+        emitOperand(AMD64.rax, src); // 0, src
     }
 
     public final void prefetchr(Address src) {
         prefetchPrefix(src);
         emitByte(0x0D);
-        emitOperand(X86.rax, src); // 0, src
+        emitOperand(AMD64.rax, src); // 0, src
     }
 
     public final void prefetcht0(Address src) {
         prefetchPrefix(src);
         emitByte(0x18);
-        emitOperand(X86.rcx, src); // 1, src
+        emitOperand(AMD64.rcx, src); // 1, src
 
     }
 
     public final void prefetcht1(Address src) {
         prefetchPrefix(src);
         emitByte(0x18);
-        emitOperand(X86.rdx, src); // 2, src
+        emitOperand(AMD64.rdx, src); // 2, src
     }
 
     public final void prefetcht2(Address src) {
         prefetchPrefix(src);
         emitByte(0x18);
-        emitOperand(X86.rbx, src); // 3, src
+        emitOperand(AMD64.rbx, src); // 3, src
     }
 
     public final void prefetchw(Address src) {
         prefetchPrefix(src);
         emitByte(0x0D);
-        emitOperand(X86.rcx, src); // 1, src
+        emitOperand(AMD64.rcx, src); // 1, src
     }
 
     public final void pshufd(CiRegister dst, CiRegister src, int mode) {
@@ -1834,7 +1834,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         assert dst.isXmm();
         // HMM Table D-1 says sse2 or mmx
 
-        int encode = prefixqAndEncode(X86.xmm2.encoding, dst.encoding);
+        int encode = prefixqAndEncode(AMD64.xmm2.encoding, dst.encoding);
         emitByte(0x66);
         emitByte(0x0F);
         emitByte(0x73);
@@ -1897,7 +1897,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         // Note this will push 64bit on 64bit
         prefix(src);
         emitByte(0xFF);
-        emitOperand(X86.rsi, src);
+        emitOperand(AMD64.rsi, src);
     }
 
     public final void pxor(CiRegister dst, Address src) {
@@ -2000,7 +2000,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     public final void sbbl(Address dst, int imm32) {
         prefix(dst);
-        emitArithOperand(0x81, X86.rbx, dst, imm32);
+        emitArithOperand(0x81, AMD64.rbx, dst, imm32);
     }
 
     public final void sbbl(CiRegister dst, int imm32) {
@@ -2081,11 +2081,11 @@ public abstract class X86Assembler extends AbstractAssembler {
         prefix(dst);
         if (Util.is8bit(imm32)) {
             emitByte(0x83);
-            emitOperand(X86.rbp, dst, 1);
+            emitOperand(AMD64.rbp, dst, 1);
             emitByte(imm32 & 0xFF);
         } else {
             emitByte(0x81);
-            emitOperand(X86.rbp, dst, 4);
+            emitOperand(AMD64.rbp, dst, 4);
             emitInt(imm32);
         }
     }
@@ -2503,7 +2503,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     public final void addq(Address dst, int imm32) {
         prefixq(dst);
-        emitArithOperand(0x81, X86.rax, dst, imm32);
+        emitArithOperand(0x81, AMD64.rax, dst, imm32);
     }
 
     public final void addq(Address dst, CiRegister src) {
@@ -2574,7 +2574,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         prefix(adr);
         emitByte(0x0F);
         emitByte(0xAE);
-        emitOperand(X86.rdi, adr);
+        emitOperand(AMD64.rdi, adr);
     }
 
     public final void cmovq(ConditionFlag cc, CiRegister dst, CiRegister src) {
@@ -2594,7 +2594,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void cmpq(Address dst, int imm32) {
         prefixq(dst);
         emitByte(0x81);
-        emitOperand(X86.rdi, dst, 4);
+        emitOperand(AMD64.rdi, dst, 4);
         emitInt(imm32);
     }
 
@@ -2675,7 +2675,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         // Don't use it directly. Use Macrodecrementq() instead.
         prefixq(dst);
         emitByte(0xFF);
-        emitOperand(X86.rcx, dst);
+        emitOperand(AMD64.rcx, dst);
     }
 
     public final void divq(CiRegister src) {
@@ -2722,7 +2722,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         // Don't use it directly. Use Macroincrementq() instead.
         prefixq(dst);
         emitByte(0xFF);
-        emitOperand(X86.rax, dst);
+        emitOperand(AMD64.rax, dst);
     }
 
     public final void leaq(CiRegister dst, Address src) {
@@ -2802,7 +2802,7 @@ public abstract class X86Assembler extends AbstractAssembler {
         assert isSimm32(imm32) : "lost bits";
         prefixq(dst);
         emitByte(0xC7);
-        emitOperand(X86.rax, dst, 4);
+        emitOperand(AMD64.rax, dst, 4);
         emitInt(imm32);
     }
 
@@ -2875,7 +2875,7 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void orq(Address dst, int imm32) {
         prefixq(dst);
         emitByte(0x81);
-        emitOperand(X86.rcx, dst, 4);
+        emitOperand(AMD64.rcx, dst, 4);
         emitInt(imm32);
     }
 
@@ -2916,13 +2916,13 @@ public abstract class X86Assembler extends AbstractAssembler {
     public final void popq(Address dst) {
         prefixq(dst);
         emitByte(0x8F);
-        emitOperand(X86.rax, dst);
+        emitOperand(AMD64.rax, dst);
     }
 
     public final void pushq(Address src) {
         prefixq(src);
         emitByte(0xFF);
-        emitOperand(X86.rsi, src);
+        emitOperand(AMD64.rsi, src);
     }
 
     public final void rclq(CiRegister dst, int imm8) {
@@ -2959,7 +2959,7 @@ public abstract class X86Assembler extends AbstractAssembler {
 
     public final void sbbq(Address dst, int imm32) {
         prefixq(dst);
-        emitArithOperand(0x81, X86.rbx, dst, imm32);
+        emitArithOperand(0x81, AMD64.rbx, dst, imm32);
     }
 
     public final void sbbq(CiRegister dst, int imm32) {
@@ -3027,11 +3027,11 @@ public abstract class X86Assembler extends AbstractAssembler {
         prefixq(dst);
         if (Util.is8bit(imm32)) {
             emitByte(0x83);
-            emitOperand(X86.rbp, dst, 1);
+            emitOperand(AMD64.rbp, dst, 1);
             emitByte(imm32 & 0xFF);
         } else {
             emitByte(0x81);
-            emitOperand(X86.rbp, dst, 4);
+            emitOperand(AMD64.rbp, dst, 4);
             emitInt(imm32);
         }
     }
@@ -3134,7 +3134,7 @@ public abstract class X86Assembler extends AbstractAssembler {
                 // the code where this idiom is used, in particular the
                 // orderAccess code.
                 lock();
-                addl(new Address(X86.rsp, 0), 0); // Assert the lock# signal here
+                addl(new Address(AMD64.rsp, 0), 0); // Assert the lock# signal here
             }
         }
     }

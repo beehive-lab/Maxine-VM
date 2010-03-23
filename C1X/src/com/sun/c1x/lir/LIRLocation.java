@@ -36,7 +36,6 @@ import com.sun.c1x.ci.*;
 public final class LIRLocation extends LIROperand {
 
     public final CiRegister register1;
-    public final CiRegister register2;
 
     /**
      * The index for this location. A negative value indicates a {@linkplain #isStack() stack location},
@@ -56,7 +55,6 @@ public final class LIRLocation extends LIROperand {
         assert kind.jvmSlots != -1 || number == CiRegister.None;
         assert number != null;
         this.register1 = number;
-        this.register2 = CiRegister.None;
         index = 0;
     }
 
@@ -72,36 +70,19 @@ public final class LIRLocation extends LIROperand {
         super(kind);
         assert number < 0 || number >= CiRegister.LowestVirtualRegisterNumber;
         this.register1 = CiRegister.None;
-        this.register2 = CiRegister.None;
         this.index = number;
-    }
-
-    /**
-     * Creates a new location representing a CPU register pair.
-     *
-     * @param kind the kind of the location
-     * @param register1 the first register
-     * @param register2 the second register
-     */
-    LIRLocation(CiKind kind, CiRegister register1, CiRegister register2) {
-        super(kind);
-        assert kind.jvmSlots == 2;
-        assert register1 != null && register2 != null;
-        this.register1 = register1;
-        this.register2 = register2;
-        index = 0;
     }
 
     @Override
     public int hashCode() {
-        return register1.number + register2.number + index;
+        return register1.number + index;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o instanceof LIRLocation) {
             LIRLocation l = (LIRLocation) o;
-            return l.kind == kind && l.register1 == register1 && l.register2 == register2 && l.index == index;
+            return l.kind == kind && l.register1 == register1 && l.index == index;
         }
         return false;
     }
@@ -187,35 +168,13 @@ public final class LIRLocation extends LIROperand {
 
     @Override
     public CiRegister asRegister() {
-        assert register1 == register2 || register2 == CiRegister.None : illegalOperation("asRegister()");
+        assert isRegister() : illegalOperation("asRegister()");
         return this.register1;
     }
-
-//    @Override
-//    public CiRegister asRegisterLow() {
-//        return register1;
-//    }
-//
-//    @Override
-//    public CiRegister asRegisterHigh() {
-//        return register2;
-//    }
 
     @Override
     public int registerNumber() {
         assert index == 0 : illegalOperation("cpuRegNumber()");
         return register1.number;
-    }
-
-    @Override
-    public int registerNumberLow() {
-        assert index == 0 : illegalOperation("cpuRegNumberLow()");
-        return register1.number;
-    }
-
-    @Override
-    public int registerNumberHigh() {
-        assert index == 0 : illegalOperation("cpuRegNumberHigh()");
-        return register2.number;
     }
 }

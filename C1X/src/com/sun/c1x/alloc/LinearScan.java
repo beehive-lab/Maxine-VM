@@ -2008,11 +2008,7 @@ public class LinearScan {
                     if (compilation.target.arch.is64bit()) {
                         return LIROperand.forRegister(CiKind.Long, toRegister(assignedReg));
                     } else {
-                        if (compilation.target.arch.isSPARC()) {
-                            return LIROperand.forRegisters(CiKind.Long, toRegister(assignedRegHi), toRegister(assignedReg));
-                        } else {
-                            return LIROperand.forRegisters(CiKind.Long, toRegister(assignedReg), toRegister(assignedRegHi));
-                        }
+                        throw Util.unimplemented("32-bit not supported");
                     }
                 }
 
@@ -2032,17 +2028,9 @@ public class LinearScan {
                         assert isXmm(assignedReg) : "no xmm register";
                         assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double xmm values are stored in one register)";
                         return LIROperand.forRegister(CiKind.Double, toRegister(assignedReg));
-                    }
-
-                    LIROperand result;
-                    if (compilation.target.arch.isSPARC()) {
-                        assert assignedReg % 2 == 0 && assignedReg + 1 == interval.assignedRegHi() : "must be sequential and even";
-                        result = LIROperand.forRegisters(CiKind.Double, toRegister(interval.assignedRegHi()), toRegister(assignedReg));
                     } else {
-                        assert interval.assignedRegHi() == getAnyreg() : "must not have hi register (double fpu values are stored in one register on Intel)";
-                        result = LIROperand.forRegister(CiKind.Double, toRegister(assignedReg));
+                        throw Util.unimplemented("32-bit not supported");
                     }
-                    return result;
                 }
 
                 default: {

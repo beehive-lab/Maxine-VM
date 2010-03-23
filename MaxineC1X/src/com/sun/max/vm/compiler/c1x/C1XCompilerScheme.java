@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.c1x;
 import com.sun.c1x.*;
 import com.sun.c1x.ci.*;
 import com.sun.c1x.ri.*;
+import com.sun.c1x.target.amd64.*;
 import com.sun.c1x.xir.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -83,7 +84,15 @@ public class C1XCompilerScheme extends AbstractVMScheme implements RuntimeCompil
                 // create the CiTarget object passed to C1X
                 MaxRiRegisterConfig config = new MaxRiRegisterConfig(configuration);
                 InstructionSet isa = configuration.platform().processorKind.instructionSet;
-                CiArchitecture arch = CiArchitecture.findArchitecture(isa.name().toLowerCase());
+                CiArchitecture arch;
+                switch (isa) {
+                    case AMD64:
+                        arch = new AMD64();
+                        break;
+                    default:
+                        throw FatalError.unimplemented();
+                }
+
                 TargetABI<?, ?> targetABI = configuration.targetABIsScheme().optimizedJavaABI;
 
                 c1xTarget = new CiTarget(arch, config, configuration.platform.pageSize, true);

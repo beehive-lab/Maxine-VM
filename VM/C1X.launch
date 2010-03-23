@@ -24,7 +24,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="test.com.sun.max.vm.compiler.c1x.C1XTest"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-C1X:+DetailedAsserts -C1X:OptLevel=2 -C1X:+PrintCFGToFile -C1X:+PrintLIR BC_dadd:test"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-C1X:OptLevel=2 -C1X:TraceBytecodeParserLevel=2 -C1X:+PrintCFGToFile Log:log_lock"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="MaxineC1X"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea"/>
 </launchConfiguration>

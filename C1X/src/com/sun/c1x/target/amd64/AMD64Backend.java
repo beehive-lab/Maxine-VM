@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.c1x.target.x86;
+package com.sun.c1x.target.amd64;
 
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
@@ -30,14 +30,13 @@ import com.sun.c1x.target.*;
 import com.sun.c1x.xir.*;
 
 /**
- * The {@code X86Backend} class represents the backend for the x86 architectures,
- * i.e. {@link AMD64}.
+ * The {@code X86Backend} class represents the backend for the AMD64 architecture.
  *
  * @author Ben L. Titzer
  */
-public class X86Backend extends Backend {
+public class AMD64Backend extends Backend {
 
-    public X86Backend(C1XCompiler compiler) {
+    public AMD64Backend(C1XCompiler compiler) {
         super(compiler);
     }
     /**
@@ -47,7 +46,7 @@ public class X86Backend extends Backend {
      */
     @Override
     public LIRGenerator newLIRGenerator(C1XCompilation compilation) {
-        return new X86LIRGenerator(compilation);
+        return new AMD64LIRGenerator(compilation);
     }
 
     /**
@@ -57,7 +56,7 @@ public class X86Backend extends Backend {
      */
     @Override
     public LIRAssembler newLIRAssembler(C1XCompilation compilation) {
-        return new X86LIRAssembler(compilation);
+        return new AMD64LIRAssembler(compilation);
     }
 
     @Override
@@ -66,16 +65,16 @@ public class X86Backend extends Backend {
     }
     @Override
     public AbstractAssembler newAssembler() {
-        return new X86MacroAssembler(compiler, compiler.target);
+        return new AMD64MacroAssembler(compiler, compiler.target);
     }
 
     @Override
     public CiXirAssembler newXirAssembler() {
-        return new X86XirAssembler();
+        return new AMD64XirAssembler();
     }
 
     @Override
     public GlobalStubEmitter newGlobalStubEmitter() {
-        return new X86GlobalStubEmitter(compiler);
+        return new AMD64GlobalStubEmitter(compiler);
     }
 }

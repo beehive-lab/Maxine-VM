@@ -40,7 +40,12 @@ public abstract class CiArchitecture {
     public final int wordSize;
 
     /**
-     * The name of the platform associated with this architecture. May either be "x86" or "SPARC".
+     * The name of this architecture (e.g. "AMD64", "SPARCv9").
+     */
+    public final String name;
+
+    /**
+     * The name of the platform associated with this architecture (e.g. "X86" or "SPARC").
      */
     public final String platform;
 
@@ -69,31 +74,7 @@ public abstract class CiArchitecture {
      */
     public final int machineCodeCallDisplacementOffset;
 
-    public final String name;
-
     public final int returnAddressSize;
-
-    /**
-     * Reflectively instantiates an architecture given its name.
-     *
-     * @param name
-     *            the name of the wanted architecture
-     * @return the newly created architecture object
-     */
-    public static CiArchitecture findArchitecture(String name) {
-        // load and instantiate the backend via reflection
-        String className = "com.sun.c1x.target." + name.toUpperCase();
-        try {
-            Class<?> javaClass = Class.forName(className);
-            return (CiArchitecture) javaClass.newInstance();
-        } catch (InstantiationException e) {
-            throw new Error("could not instantiate architecture class: " + className);
-        } catch (IllegalAccessException e) {
-            throw new Error("could not access architecture class: " + className);
-        } catch (ClassNotFoundException e) {
-            throw new Error("could not find architecture class: " + className);
-        }
-    }
 
     protected CiArchitecture(String name, int wordSize, String backend, ByteOrder byteOrder, CiRegister[] registers, int nativeCallDisplacementOffset, int returnAddressSize) {
         this.name = name;
